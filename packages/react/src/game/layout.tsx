@@ -42,7 +42,7 @@ export type Part = PartName | ReactNode
 /** Where the parts go: a column at the side, and the stage. No side column, and the stage is all there is. */
 export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[] }
 
-/** The base UI's own layout: everything at the side, the scene on the stage. */
+/** The React UI's own layout: everything at the side, the scene on the stage. */
 export const DEFAULT_LAYOUT = {
   sidebar: ['title', 'stats', 'entities', 'menu', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
   stage: ['scene', 'inputs', 'quests', 'debug'],
@@ -106,11 +106,11 @@ export function Parts({ parts }: { parts: readonly Part[] }) {
 
 export type SidebarProps = {
   className?: string
-  /** What goes in it, in order: the base UI's own side column if left out. */
+  /** What goes in it, in order: the React UI's own side column if left out. */
   parts?: readonly Part[]
 }
 
-/** The side column on its own: its parts, the base UI's if none are given. */
+/** The side column on its own: its parts, the React UI's if none are given. */
 export function Sidebar({ className, parts = DEFAULT_LAYOUT.sidebar }: SidebarProps) {
   return (
     <aside className={cn('flex flex-col gap-4', className)} data-sidebar>

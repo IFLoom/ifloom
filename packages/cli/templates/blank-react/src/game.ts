@@ -1,0 +1,42 @@
+/**
+ * Your game. It's plain data: scenes, the choices in them, a stat, and the
+ * words, kept apart from the scenes in `prose` so they're easy to edit.
+ *
+ * The docs: https://ifloom.github.io/ifloom/ (or `docs/` in the IFLoom checkout).
+ */
+import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+
+const story: Pack = {
+  id: 'story',
+  schema: SCHEMA,
+  stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
+  scenes: [
+    {
+      id: 'start',
+      title: 'The door',
+      body: [{ text: 'start' }],
+      choices: [
+        { id: 'knock', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'scene', id: 'inside' }] },
+        { id: 'wait', effects: [{ kind: 'scene', id: 'inside' }] },
+      ],
+    },
+    {
+      id: 'inside',
+      title: 'Inside',
+      // The engine remembers every choice, so a later scene can ask about one.
+      body: [{ text: 'inside' }, { text: 'inside/knocked', when: { chose: 'start/knock' } }],
+      choices: [{ id: 'again', effects: [{ kind: 'scene', id: 'start' }] }],
+    },
+  ],
+  prose: {
+    start: 'A door you have never noticed before stands at the end of the hall.',
+    'start#knock': 'Knock',
+    'start#wait': 'Wait for someone to open it',
+    inside: 'It opens onto a quiet room with a kettle just coming to the boil.',
+    'inside/knocked': 'Someone calls out that they will be with you in a minute.',
+    'inside#again': 'Start again',
+  },
+}
+
+/** The game, and anything the loader found wrong with it. `ifloom check` reads this. */
+export default loadGame([story], { id: '{{name}}', title: '{{title}}', introScene: 'start' })

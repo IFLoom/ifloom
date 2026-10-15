@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Everything the CLI exports, from `@ifloom/cli` and `@ifloom/cli/vite`, is on
- * its docs page. A developer learns the CLI from docs.ifloom.com alone, so an
+ * its docs page. A developer learns the CLI from the docs site alone, so an
  * export the page does not name is a feature nobody can find.
  */
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')

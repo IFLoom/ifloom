@@ -7,7 +7,7 @@ const SOURCES = import.meta.glob(['../../src/**/*.{ts,tsx}'], {
   eager: true,
 }) as Record<string, string>
 
-describe('the base UI', () => {
+describe('the React UI', () => {
   // A built game opens from disk: nothing may be fetched or imported while it runs.
   it('never loads anything at runtime', () => {
     const offenders = Object.entries(SOURCES).flatMap(([file, source]) => {

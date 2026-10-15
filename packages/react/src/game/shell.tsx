@@ -7,14 +7,14 @@ import { Notices } from './notices.tsx'
 export type GameShellProps = Omit<GameProviderProps, 'children'> & {
   className?: string
   /**
-   * Which parts go where: the base UI's own if left out. With no `sidebar`,
+   * Which parts go where: the React UI's own if left out. With no `sidebar`,
    * the stage is the whole page: `layout={READING_LAYOUT}` for a novel.
    */
   layout?: Layout
 }
 
 /**
- * The whole base UI: a side column and the stage, notices over the corner.
+ * The whole React UI: a side column and the stage, notices over the corner.
  * Which parts go in each is the layout's; every part is also exported on its
  * own, so a game that wants another page entirely builds it from the same pieces.
  */

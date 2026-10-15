@@ -64,7 +64,7 @@ function play(g: Game) {
   return runner
 }
 
-describe('the base UI', () => {
+describe('the React UI', () => {
   it('draws the scene, and a choice sends its command', () => {
     play(game())
     expect(screen.getByRole('heading', { name: 'Morning' })).toBeTruthy()

@@ -3,12 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "description": "A small management game on IFLoom: a caf\u00e9 run a week at a time, with staff and dishes that each keep their own numbers.",
+  "description": "A small management game on IFLoom: a café run a week at a time, with staff and dishes that each keep their own numbers.",
   "type": "module",
   "scripts": {
     "dev": "ifloom dev",
     "build": "ifloom build",
     "check": "ifloom check",
     "playtest": "ifloom playtest --turns 8 --out playtest/season.txt"
+  },
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/react": "0.0.0"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "0.0.0"
   }
 }

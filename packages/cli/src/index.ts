@@ -5,3 +5,5 @@ export type { TurnMetrics, Playtest, PlaytestOptions, Policy } from './playtest.
 export { explorer, metricsText, playtest, screenText } from './playtest.ts'
 export type { Probe } from './snapshot.ts'
 export { snapshot } from './snapshot.ts'
+export type { NewGameOptions, TemplateName } from './new.ts'
+export { TEMPLATES, newGame } from './new.ts'

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Everything the engine exports is in the reference. A developer learns the
- * engine from docs.ifloom.com alone, so an export no page names is a feature
+ * engine from the docs site alone, so an export no page names is a feature
  * nobody can find.
  */
 const INDEX = import.meta.glob('../../src/index.ts', {

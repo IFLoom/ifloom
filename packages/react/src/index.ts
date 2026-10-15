@@ -1,5 +1,5 @@
 /**
- * @ifloom/ui — the base UI: React components, built on shadcn/ui, that draw
+ * @ifloom/react — the React UI: components, built on shadcn/ui, that draw
  * an IFLoom game's view and send its commands.
  *
  * `GameShell` is the whole thing in one component. Everything it is made of is
@@ -15,6 +15,8 @@ export { GameShell } from './game/shell.tsx'
 export { Actions, DEFAULT_LAYOUT, Parts, READING_LAYOUT, Sidebar, Title } from './game/layout.tsx'
 export type { Layout, Part, PartName, SidebarProps } from './game/layout.tsx'
 export type { GameShellProps } from './game/shell.tsx'
+export { mountGame } from './game/mount.tsx'
+export type { MountOptions } from './game/mount.tsx'
 export { SceneStage, Beat } from './game/scene.tsx'
 export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'
 export { Clock, StatList, LocationPanel, PeoplePanel } from './game/sidebar.tsx'

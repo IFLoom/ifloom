@@ -12,5 +12,21 @@
     "playtest": "ifloom playtest --turns 7 --out playtest/week.txt",
     "snapshot": "ifloom snapshot",
     "build:one-file": "ifloom build --inline-assets --out dist-one"
+  },
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/phone": "0.0.0",
+    "@ifloom/plugin-calendar": "0.0.0",
+    "@ifloom/plugin-cast": "0.0.0",
+    "@ifloom/plugin-debug": "0.0.0",
+    "@ifloom/plugin-devices": "0.0.0",
+    "@ifloom/plugin-feed": "0.0.0",
+    "@ifloom/plugin-places": "0.0.0",
+    "@ifloom/plugin-quests": "0.0.0",
+    "@ifloom/plugin-wardrobe": "0.0.0",
+    "@ifloom/react": "0.0.0"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "0.0.0"
   }
 }

@@ -1,0 +1,7 @@
+@import "@ifloom/react/styles.css";
+
+/* Change the look here. The React UI reads these theme variables. */
+:root {
+  --primary: oklch(0.45 0.09 40);
+  --radius: 0.75rem;
+}

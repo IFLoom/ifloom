@@ -1,0 +1,19 @@
+{
+  "name": "{{name}}",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ifloom dev",
+    "build": "ifloom build",
+    "check": "ifloom check",
+    "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
+  },
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/react": "0.0.0"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "0.0.0"
+  }
+}

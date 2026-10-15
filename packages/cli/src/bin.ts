@@ -2,6 +2,8 @@
 /**
  * ifloom — the command line.
  *
+ *   ifloom new <name> [--template blank]
+ *                            a new game in games/<name>, from blank, vanilla, novel, cafe or town
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art, checked to open from disk;
@@ -19,13 +21,14 @@
  * (a function of the game returning `{ name, state }`s; the start if absent).
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 import { startingState, type Game, type GameState } from '@ifloom/engine'
 import { build, createServer } from 'vite'
 import { buildFiles, checkBuild, inlineAssets } from './build.ts'
 import { checkGame, gameFrom } from './check.ts'
 import { explorer, metricsText, playtest, type Policy } from './playtest.ts'
 import { snapshot, type Probe } from './snapshot.ts'
+import { TEMPLATES, newGame, type TemplateName } from './new.ts'
 
 const [command = 'help', ...rest] = process.argv.slice(2)
 /** The first argument that is neither a flag nor a flag's value. */
@@ -119,6 +122,24 @@ async function snap(entry?: string): Promise<number> {
   })
 }
 
+/** A new game in games/<name>, and what to type next. */
+function create(name: string | undefined, template: string | undefined): number {
+  if (!name) {
+    console.error(`Give the new game a name: ifloom new my-story [--template ${TEMPLATES.join('|')}]`)
+    return 1
+  }
+  try {
+    const { dir } = newGame({ name, template: template as TemplateName | undefined })
+    console.log(`Made ${name} in ${relative(process.cwd(), dir) || '.'} from the ${template ?? 'blank'} template. Next:\n`)
+    console.log('  npm install')
+    console.log(`  npm run dev -w ${name}`)
+    return 0
+  } catch (error) {
+    console.error((error as Error).message)
+    return 1
+  }
+}
+
 async function main(): Promise<number> {
   switch (command) {
     case 'dev': {
@@ -145,8 +166,10 @@ async function main(): Promise<number> {
       return play(positional())
     case 'snapshot':
       return snap(positional())
+    case 'new':
+      return create(positional(), flag('template'))
     default:
-      console.log('ifloom dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]')
+      console.log('ifloom new <name> [--template blank|vanilla|novel|cafe|town] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]')
       return command === 'help' ? 0 : 1
   }
 }

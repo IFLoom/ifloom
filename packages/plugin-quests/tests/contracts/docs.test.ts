@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Everything the quests plugin exports is on its docs page. A developer learns
- * the plugin from docs.ifloom.com alone, so an export the page does not name is
+ * the plugin from the docs site alone, so an export the page does not name is
  * a feature nobody can find.
  */
 const INDEX = import.meta.glob('../../src/index.ts', {

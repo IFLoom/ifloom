@@ -1,9 +1,9 @@
 {
-  "name": "@ifloom/ui",
+  "name": "@ifloom/react",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "description": "The base UI for IFLoom games: React and shadcn/ui components that draw the view, for authors to use, restyle and extend.",
+  "description": "The React UI for IFLoom games: components that draw the view, for authors to use, restyle and extend. Other frameworks use the engine directly.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -24,6 +24,8 @@
     "@radix-ui/react-slot": "^1.3.3",
     "@radix-ui/react-tabs": "^1.1.21",
     "@radix-ui/react-tooltip": "^1.2.16",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.50.0",

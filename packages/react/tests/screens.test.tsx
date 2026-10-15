@@ -50,7 +50,7 @@ function play(options: Parameters<typeof createRunner>[2] = {}) {
 
 const click = (element: Element) => act(() => void fireEvent.click(element))
 
-describe('the base UI’s screens', () => {
+describe('the React UI’s screens', () => {
   it('wears and takes off clothes', () => {
     const runner = play()
     const panel = document.querySelector('[data-wardrobe]') as HTMLElement

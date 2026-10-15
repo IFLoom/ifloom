@@ -1,0 +1,67 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, screen } from '@testing-library/react'
+import { SCHEMA, loadGame, memoryDriver, saves } from '@ifloom/engine'
+import { mountGame } from '../src/index.ts'
+
+const loaded = () =>
+  loadGame(
+    [
+      {
+        id: 'letter',
+        schema: SCHEMA,
+        scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ kind: 'scene', id: null }] }] }],
+        prose: { mat: 'A letter on the mat.', 'mat#open': 'Open it' },
+      },
+    ],
+    { id: 'letter', title: 'The Letter', introScene: 'mat' },
+  )
+
+afterEach(() => {
+  document.body.innerHTML = ''
+  vi.restoreAllMocks()
+})
+
+function page(): HTMLElement {
+  const root = document.createElement('div')
+  root.id = 'root'
+  document.body.append(root)
+  return root
+}
+
+describe('mountGame', () => {
+  it('draws the game into #root and returns a runner that plays it', async () => {
+    page()
+    let runner!: ReturnType<typeof mountGame>
+    await act(async () => {
+      runner = mountGame(loaded())
+    })
+    expect(screen.getByText('A letter on the mat.')).toBeTruthy()
+    await act(async () => void runner.apply({ type: 'choose', id: 'open' }))
+    expect(runner.state.sceneId).toBeNull()
+  })
+
+  it('warns about the problems the loader found', async () => {
+    page()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const broken = loaded()
+    await act(async () => void mountGame({ game: broken.game, problems: [{ pack: 'letter', where: 'scene mat', what: 'no prose for "x"' }] }))
+    expect(warn).toHaveBeenCalledWith('letter · scene mat · no prose for "x"')
+  })
+
+  it('takes its own root and runner options', async () => {
+    const root = page()
+    root.id = 'elsewhere'
+    let runner!: ReturnType<typeof mountGame>
+    const store = saves(loaded().game, memoryDriver())
+    await act(async () => {
+      runner = mountGame(loaded(), { root, runner: { saves: store, history: false } })
+    })
+    expect(runner.saves).toBe(store)
+    expect(runner.offers.undo).toBe(false)
+  })
+
+  it('says when there is nowhere to draw', () => {
+    expect(() => mountGame(loaded())).toThrow(/#root/)
+  })
+})

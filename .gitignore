@@ -6,3 +6,6 @@ dist
 docs/.vitepress/cache
 docs/.vitepress/dist
 playtest/
+
+# Your own games, as workspaces of this checkout
+games/

@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRunner, indexedDbDriver, localStorageDriver, mods, saves, startingState } from '@ifloom/engine'
-import { GameShell } from '@ifloom/ui'
+import { GameShell } from '@ifloom/react'
 import { smallTown } from './game.ts'
 import './styles.css'
 

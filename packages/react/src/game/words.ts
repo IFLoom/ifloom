@@ -2,7 +2,7 @@ import type { Game } from '@ifloom/engine'
 import { useGame } from './context.tsx'
 
 /**
- * The base UI's own words, in English. A game overrides any of them through
+ * The React UI's own words, in English. A game overrides any of them through
  * `game.strings` with a `ui.` in front — `{ 'ui.quests': 'Journal' }` — the same
  * table the engine's own lines come from.
  */

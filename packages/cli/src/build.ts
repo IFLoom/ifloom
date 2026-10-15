@@ -59,7 +59,7 @@ const TYPES: Record<string, string> = {
 /**
  * Put every file in a built folder's `art/` into its `index.html` as a data
  * URL, under its path, and remove the folder: one file with everything in it.
- * The base UI's pictures look a path up there first (`assetUrl`). Worth it for
+ * The React UI's pictures look a path up there first (`assetUrl`). Worth it for
  * a small game; a large one is better left as a folder. Returns how many files
  * went in and how big the page is now.
  */

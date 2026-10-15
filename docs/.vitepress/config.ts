@@ -86,6 +86,7 @@ export default defineConfig({
             { text: 'Randomness', link: '/reference/random' },
             { text: 'Audio', link: '/reference/audio' },
             { text: 'The audio player', link: '/reference/audio-player' },
+            { text: 'Media', link: '/reference/media' },
           ],
         },
       ],

@@ -105,6 +105,7 @@ type PostDef = {
   when: Condition
   body: Block[]
   image?: string
+  video?: string
   likes?: number
 }
 ```
@@ -117,6 +118,7 @@ type PostDef = {
 | `when` | It appears the first time this holds at the end of a command. |
 | `body` | Its words, as [prose blocks](/reference/scenes#block). |
 | `image` | An image path, passed through to the view. |
+| `video` | A video path, such as `'art/clips/fete.mp4'`, passed through to the view. A UI plays it like a GIF: by itself, looping and muted. |
 | `likes` | How many likes it has when it appears. `0` if you leave it out. |
 
 These are the showcase's two posts. Ava's appears on the second day and Sam's on the third:
@@ -133,13 +135,14 @@ const posts: PostDef[] = [
 
 ### The player's own posts
 
-The player posts with the `feed/post` effect. It names the feed and gives the post an id. It can also carry a prose key for the words, an image and a starting number of likes:
+The player posts with the `feed/post` effect. It names the feed and gives the post an id. It can also carry a prose key for the words, an image, a video and a starting number of likes:
 
 ```ts
 import { postTo } from '@ifloom/plugin-feed'
 
 const long = { custom: 'feed/post', with: { feed: 'social', id: 'river', text: 'own.river', image: 'art/photo/river.svg' } }
 const short = postTo('social', 'river', { text: 'own.river', image: 'art/photo/river.svg' })   // the same
+const clip = postTo('social', 'ducks', { text: 'own.ducks', video: 'art/clips/ducks.mp4' })
 ```
 
 The post is stamped with the current [turn](/reference/state). If the player has already posted that id, nothing happens, so an action that posts the same id twice makes one post. A `feed` the plugin wasn't given does nothing either. The player's own posts never count as [unseen](#values).
@@ -305,7 +308,7 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'feed/post', with: { feed, id, text?, image?, likes? } }` | `postTo(feed, id, { text?, image?, likes? })` | The player posts, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
+| `{ custom: 'feed/post', with: { feed, id, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ custom: 'feed/react', with: { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
 They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', id: 'river' } }` (see [plugin calls](/reference/custom#plugincall)). Where only plain effects go, such as an item's `use` or what `rules.turn` returns, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
@@ -385,7 +388,9 @@ type PostView = {
   name: string
   portrait: string | null
   text: string
+  beats: SceneBeat[]
   image: string | null
+  video: string | null
   turn: number
   likes: number
   comments: { from: string; name: string; text: string }[]
@@ -399,7 +404,9 @@ type PostView = {
 | `name` | The poster's name if they're a [cast](/plugins/cast) character, or `from` as written. On the player's own posts it's the game's `playerName` [variable](/reference/state#flags) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
 | `portrait` | A cast character's portrait (their `portrait`, or `art/character/<id>.jpg`), or `null`. Always `null` for the player's own. |
 | `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
+| `beats` | `text` parsed into [beats](/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/reference/prose#videos) sits in order with them. |
 | `image` | The image path, or `null`. |
+| `video` | The video path, or `null`. The [React UI](/react/) draws it next to the image (coming in the same change). |
 | `turn` | The [turn](/reference/state#turn) it appeared or was posted on. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `likes` | The likes it started with, plus every `feed/react` since. |
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |
@@ -436,6 +443,7 @@ type OwnPost = {
   turn: number
   text?: string
   image?: string
+  video?: string
   likes: number
   comments: Comment[]
 }
@@ -460,7 +468,7 @@ The helpers write the content objects for you, typed. `postTo` and `react` retur
 ### Helpers
 
 ```ts
-const postTo: (feedId: string, id: string, post?: { text?: string; image?: string; likes?: number }) => EffectRef
+const postTo: (feedId: string, id: string, post?: { text?: string; image?: string; video?: string; likes?: number }) => EffectRef
 const react: (post: string, reaction: { likes?: number; from?: string; text?: string }) => EffectRef
 const seeFeed: (feedId?: string) => Command
 const hasPosted: (gte?: number, feedId?: string) => Condition

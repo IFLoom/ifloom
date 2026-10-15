@@ -68,6 +68,7 @@ type SceneView = {
   portrait?: string
   body?: string                  // the scene's prose, with its markup
   media?: SceneMedia[]
+  stage?: MediaStage             // a layered picture with hotspots
   audio?: Record<string, string | null>   // background audio by channel while the scene is open
   choices: SceneChoice[]
 }
@@ -85,7 +86,8 @@ What `render` returns.
 | `panelData` | Whatever that panel needs. The engine passes it through without looking inside. |
 | `portrait` | Replaces the speaker's portrait as the stage image. |
 | `body` | The scene's prose, with its [markup](/reference/prose#markup). The view parses it into beats. If it's left out, the scene has no body text. |
-| `media` | Pictures that aren't in the prose. See [`SceneMedia`](#scenemedia). |
+| `media` | Pictures and videos that aren't in the prose. See [`SceneMedia`](#scenemedia). |
+| `stage` | A layered picture with hotspots, drawn as the scene's stage. See [The stage](#the-stage). |
 | `audio` | What plays on [background channels](/reference/audio#what-plays-on-a-background-channel) while the scene is open, by channel. It wins over effects, places and the default. `null` silences a channel. |
 | `choices` | Every choice the scene knows about, including hidden ones. |
 
@@ -174,14 +176,37 @@ const shown = counter.render(state, sceneContext(state, game))
 import type { SceneMedia } from '@ifloom/engine'
 
 type SceneMedia = {
-  src: string                        // resolved with artSrc
+  src?: string                       // resolved with artSrc
+  pool?: string                      // or a pick from this pool
+  tags?: string[]                    // the tags the pick should have
   alt?: string
-  size: 'inline' | 'wide'
-  at?: 'lead' | 'end'                // default 'end'
+  size?: 'inline' | 'wide'           // default 'inline'
+  at?: 'lead' | 'end'
+  video?: boolean                    // a .mp4 or .webm is a video anyway
+  controls?: boolean
+  once?: boolean
+  sound?: boolean
+  poster?: string
 }
 ```
 
-A picture attached to a `SceneView` outside the prose. `lead` puts it before the body, as an establishing still, and `end` puts it after. `src` goes through [`artSrc`](/reference/prose#artsrc), so `'scene/market-morning'` becomes `art/scene/market-morning.jpg`. `size` is `inline` or `wide`, as for [images in prose](/reference/prose#images).
+A picture or a video, in a data scene's [`{ media }` block](#block) or a `SceneView`'s `media` list. Give a file as `src`, which goes through [`artSrc`](/reference/prose#artsrc) (`'scene/market-morning'` becomes `art/scene/market-morning.jpg`), or ask a [pool](/reference/media#pools) for one with `pool` and `tags`. `size` is `inline` or `wide`, as for [images in prose](/reference/prose#images).
+
+It's a video when `video` is `true` or the file ends in `.mp4` or `.webm`. `controls`, `once`, `sound` and `poster` are the [video flags](/reference/prose#videos), and they mean the same as in markup.
+
+`at` says where it goes:
+
+- **Left out**, a `{ media }` block sits where it is in the body, in order with the prose. A hand-built scene's `media` list has no place in the body, so its entries go after it.
+- **`lead`** puts it before the body, as an establishing still.
+- **`end`** puts it after the body.
+
+```ts
+{ media: { src: 'scene/market-morning', size: 'wide', at: 'lead' } }
+{ media: { src: 'clips/kettle.mp4', alt: 'The kettle coming to the boil' } }
+{ media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }
+```
+
+**Gotcha.** An in-place `{ media }` block is written into the scene's `body` as the markup that draws it, such as `[[widevideo:clips/kettle.mp4|The kettle]]`. So `view.scene.body` shows it as markup, and anything that reads a body as text sees it too. Alt text loses any `|` or `]`, which the markup can't hold.
 
 ## DataScene
 
@@ -197,6 +222,7 @@ type DataScene = {
   panel?: string
   panelData?: string      // the name of a custom panel on the game
   audio?: Record<string, string | null>   // background audio by channel while it's open
+  stage?: MediaStage      // a layered picture with hotspots
   body: Block[]
   choices: Choice[]
 }
@@ -248,17 +274,56 @@ type Block =
   | { media: SceneMedia; when?: Condition }
 ```
 
-Blocks render in order, and a block whose `when` fails is dropped. Rendered text blocks are joined with a blank line between them.
+Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them.
 
 - **`text`** renders the prose at that key. An unwritten key renders nothing.
 - **`variants`** renders one member of a named set of variants, drawn by [`drawVariant`](#drawvariant) (or a custom runtime's `prose.draw`). What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually just an image line) goes in front of the drawn member.
-- **`media`** renders a [`SceneMedia`](#scenemedia), with no prose key.
+- **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
 
 **Gotchas.**
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
 - In a [place's body](/plugins/places#the-stage), or any plugin's [stage](/reference/plugins#stage), a `variants` block has no choice to record its draw, so the count never moves. The member is picked by the save's seed and the [turn](/reference/state#turn). A room deals a fresh line each turn and the same line every time the player looks in that turn, and it can deal the same line two turns running.
+
+### The stage
+
+A scene can have a stage: a picture made of layers, with hotspots on it that the player can click. The flat in the showcase has a room, a lamp that only shows in the evening, and the front door as a hotspot that takes the scene's `leave` choice.
+
+```ts
+const flat: DataScene = {
+  id: 'flat.morning',
+  stage: {
+    aspect: '16/9',
+    layers: [
+      { id: 'room', src: 'scene/flat' },
+      { id: 'lamp', src: 'scene/flat-lamp.png', when: { flag: 'evening' } },
+      { id: 'rain', pool: 'window', tags: ['rain'] },
+    ],
+    hotspots: [
+      { id: 'door', rect: [78, 20, 18, 75], label: 'The front door', choice: 'leave' },
+      { id: 'lamp', rect: [10, 10, 12, 30], label: 'The lamp', command: { type: 'activity', id: 'read' }, layer: 'lamp' },
+    ],
+  },
+  body: [{ text: 'flat.morning' }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+}
+```
+
+Layers are drawn bottom first. Each one is a file (`src`) or a pick from a [pool](/reference/media#pools) (`pool` and `tags`), shown while its `when` holds. A layer is a video when `video` is `true` or its file is a `.mp4` or `.webm`, and it takes the same video flags as a [`SceneMedia`](#scenemedia).
+
+A hotspot is a rectangle, `[x, y, width, height]` in percent of the stage from the top left. It does exactly one of two things:
+
+- **`choice`** takes a choice of this scene, by id. It's greyed out exactly when the choice's button is, with the same reason, and it's left out while the choice is hidden.
+- **`command`** sends any [command](/reference/commands), and is greyed out by the same rules as an [action's button](/reference/view#renderaction).
+
+A hotspot with a `when` that fails is left out, and so is one whose `layer` isn't shown. `label` is what a screen reader reads.
+
+The view resolves the stage into [`view.scene.stage`](/reference/view#the-scene), and the [React UI](/react/) draws it with its hotspots as buttons over the picture (coming in the same change). See [Media](/reference/media#the-stage) for the types. A hand-built scene can return a `stage` from `render` too.
+
+**Gotchas.**
+- The loader reports a hotspot with both or neither of `command` and `choice`, a `choice` the scene doesn't have, a rect outside 0 to 100 or running off the edge, two hotspots with one id, a `layer` no layer has, and an unknown pool or tag.
+- `view.scene.stageImage` is still set as before, next to `stage`. A UI decides which to draw.
 
 ### Choice
 

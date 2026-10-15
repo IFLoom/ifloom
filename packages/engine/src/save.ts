@@ -84,6 +84,8 @@ const MIGRATIONS: Record<number, (state: Saved) => Saved> = {
   8: (state) => ({ ...state, settings: {} }),
   // 9 → 10: audio. Nothing has been played on a save from before it, and no scene counted as a showing.
   9: (state) => ({ ...state, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } }),
+  // 10 → 11: media. Nothing has been picked from a pool yet; the first view picks as it always would.
+  10: (state) => ({ ...state, media: { picks: {} } }),
 }
 
 /** Carry a save forward to the current version, or give up on it. */

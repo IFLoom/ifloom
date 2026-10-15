@@ -11,9 +11,13 @@ import { activityById } from './activity.ts'
 import { settingAffects } from './settings.ts'
 import {
   artSrc,
+  mediaKind,
   parseBeats,
+  videoView,
   type SceneBeat,
 } from './sceneBody.ts'
+import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './media.ts'
+import type { SceneMedia } from './game.ts'
 import { sceneContext } from './context.ts'
 import { audioView, type AudioView } from './audio.ts'
 import type { FlagValue, Command, Effect, GameState, StatKey, Stats } from './types.ts'
@@ -77,6 +81,8 @@ export type View = {
     panelData: unknown
     speaker: SpeakerView | null
     stageImage: string | null
+    /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
+    stage: StageView | null
     choices: RenderedChoice[]
   }
   actions: RenderedChoice[]
@@ -305,15 +311,88 @@ function standing(state: GameState, game: Game): View['scene'] {
     id: null,
     title: stage?.title ?? game.title,
     body,
-    beats: parseBeats(body),
+    beats: beatsOf(state, game, stage?.id ?? '', body, 'media' in rendered ? rendered.media : undefined),
     frame: 'stage',
     tags: [],
     panel: null,
     panelData: null,
     speaker: null,
     stageImage: null,
+    stage: null,
     choices: [],
   }
+}
+
+/**
+ * A body's beats, with media that opens or closes it around them. Media with no
+ * `at` in a hand-built scene's list goes at the end, as it always has; a data
+ * scene's `{ media }` blocks are already in the body, in place.
+ */
+function beatsOf(state: GameState, game: Game, owner: string, body: string, media: readonly SceneMedia[] | undefined): SceneBeat[] {
+  const placed = (media ?? []).flatMap((item, index) => {
+    const shown = resolveMedia(item, state, game, owner, `media.${index}`)
+    return shown ? [{ at: shown.at ?? 'end', beats: parseBeats(mediaMarkup(shown)) }] : []
+  })
+  return [
+    ...placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats),
+    ...parseBeats(body),
+    ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats),
+  ]
+}
+
+/**
+ * A stage as the UI draws it: the layers whose `when` holds, each with its
+ * file (a pool's pick, kept per owner and layer as `stage:<index>`), and the
+ * hotspots on them. A hotspot tied to a layer that isn't shown is left out. A
+ * `choice` hotspot takes that choice's command and availability from
+ * `choices`, the scene's rendered choices, and is left out when the choice is
+ * not on offer; a `command` hotspot is worked out as any action's button is.
+ * Exported for plugins that draw a stage of their own: a place's.
+ */
+export function stageView(
+  state: GameState,
+  game: Game,
+  stage: MediaStage | undefined,
+  owner: string,
+  choices: readonly RenderedChoice[] | null = null,
+): StageView | null {
+  if (!stage) return null
+  const layers: StageLayerView[] = []
+  stage.layers.forEach((layer, index) => {
+    if (!holds(state, layer.when, game)) return
+    const src = layer.pool !== undefined
+      ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` })
+      : (layer.src ?? null)
+    if (!src) return
+    const video = Boolean(layer.video) || mediaKind(src) === 'video'
+    layers.push({
+      id: layer.id ?? null,
+      src: artSrc(src, video ? 'video' : 'image'),
+      ...(video ? { video: videoView(layer) } : {}),
+    })
+  })
+  const shown = new Set(layers.map((layer) => layer.id))
+  const hotspots: HotspotView[] = []
+  for (const hotspot of stage.hotspots ?? []) {
+    if (!holds(state, hotspot.when, game)) continue
+    if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
+    let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
+    if (hotspot.choice !== undefined) button = choices?.find((choice) => choice.id === hotspot.choice)
+    else if (hotspot.command && !hiddenByLock(state, game, hotspot.command)) {
+      button = renderAction(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command })
+    }
+    if (!button) continue
+    hotspots.push({
+      id: hotspot.id,
+      rect: hotspot.rect,
+      label: hotspot.label,
+      command: button.command,
+      ...(button.disabled !== undefined ? { disabled: button.disabled } : {}),
+      ...(button.warning !== undefined ? { warning: button.warning } : {}),
+      ...(hotspot.layer !== undefined ? { layer: hotspot.layer } : {}),
+    })
+  }
+  return { aspect: stage.aspect ?? null, layers, hotspots }
 }
 
 function statView(state: GameState, game: Game, stat: StatDef, stats: Stats = state.stats): StatView {
@@ -478,6 +557,7 @@ function renderDialogue(
       panelData: null,
       speaker: null,
       stageImage: null,
+      stage: null,
       choices: [
         { id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' } },
       ],
@@ -487,26 +567,28 @@ function renderDialogue(
   // again here would overwrite a declarative scene's composed body with
   // whatever single block happens to share the scene's id.
   const rendered = scene.render(state, sceneContext(state, game))
-  const media = (rendered.media ?? []).map((item) => ({
-    beat: {
-      kind: 'image' as const,
-      src: artSrc(item.src),
-      alt: item.alt,
-      size: item.size,
-    },
-    at: item.at ?? 'end',
-  }))
-  const beats = [
-    ...media.filter((item) => item.at === 'lead').map((item) => item.beat),
-    ...parseBeats(rendered.body ?? ''),
-    ...media.filter((item) => item.at !== 'lead').map((item) => item.beat),
-  ]
+  // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
+  const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body')
+  const beats = beatsOf(state, game, state.sceneId, body, rendered.media)
+  const choices: RenderedChoice[] = rendered.choices
+    .filter((choice) => choice.visible !== false)
+    .map((choice) => ({
+      id: choice.id,
+      label: choice.label,
+      price: priceOfEffects(state, game, choice.effects),
+      // The choice's own reason first; then a lock or a plugin's guard, as the reducer will ask.
+      disabled: choice.disabled ?? whyNot(state, game, { type: 'choose', id: choice.id }),
+      tags: choice.tags,
+      irreversible: choice.irreversible,
+      warning: warningOf(state, game, { type: 'choose', id: choice.id }, choice.effects),
+      command: { type: 'choose', id: choice.id } as const,
+    }))
   const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
   const frame = rendered.frame ?? scene.frame ?? (speaker ? 'talk' : 'stage')
   return { audio: rendered.audio, scene: {
     id: state.sceneId,
     title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
-    body: rendered.body ?? '',
+    body,
     beats,
     frame,
     tags: rendered.tags ?? scene.tags ?? [],
@@ -514,21 +596,8 @@ function renderDialogue(
     panelData: rendered.panelData ?? null,
     speaker,
     stageImage: rendered.portrait ?? speaker?.portrait ?? null,
-    choices: rendered.choices
-      .filter((choice) => choice.visible !== false)
-      .map((choice) => {
-        return {
-          id: choice.id,
-          label: choice.label,
-          price: priceOfEffects(state, game, choice.effects),
-          // The choice's own reason first; then a lock or a plugin's guard, as the reducer will ask.
-          disabled: choice.disabled ?? whyNot(state, game, { type: 'choose', id: choice.id }),
-          tags: choice.tags,
-          irreversible: choice.irreversible,
-          warning: warningOf(state, game, { type: 'choose', id: choice.id }, choice.effects),
-          command: { type: 'choose', id: choice.id } as const,
-        }
-      }),
+    stage: stageView(state, game, rendered.stage, state.sceneId, choices),
+    choices,
   } }
 }
 

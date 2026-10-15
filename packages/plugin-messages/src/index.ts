@@ -16,6 +16,7 @@ import {
   definePlugin,
   holds,
   notify,
+  parseBeats,
   pluginQuery,
   renderScene,
   say,
@@ -26,6 +27,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type SceneBeat,
 } from '@ifloom/engine'
 
 /** Where messages go: texts, email, the doormat. */
@@ -73,8 +75,13 @@ export type MessageView = {
   from: string
   /** The sender's name if they are a character, else `from` as written. */
   name: string
-  /** The words, filled in. */
+  /** The words, filled in, with any picture and video markup in them. */
   text: string
+  /**
+   * The words as beats, as a scene's are: paragraphs, and the pictures and
+   * videos in them in the order written, from markup or `{ media }` blocks.
+   */
+  beats: SceneBeat[]
   /** The turn it arrived. */
   turn: number
   read: boolean
@@ -240,11 +247,13 @@ export function messages(options: MessagesOptions) {
             const thread = threadOf(message)
             const sent = slice.replied[message.id]
             const label = (reply: string) => game.prose?.line(`${message.id}#${reply}`, state) ?? reply
+            const text = renderScene({ id: message.id, body: message.body, choices: [] }, state, runtime).body ?? ''
             const shown: MessageView = {
               id: message.id,
               from: message.from,
               name: personOf(game, state, message.from).name,
-              text: renderScene({ id: message.id, body: message.body, choices: [] }, state, runtime).body ?? '',
+              text,
+              beats: parseBeats(text),
               turn: slice.arrived[message.id],
               read: Boolean(slice.read[message.id]),
               replies: offered(state, game, slice, message).map((reply) => ({

@@ -134,3 +134,32 @@ describe('messages', () => {
     )
   })
 })
+
+describe('pictures and videos in a message', () => {
+  it('come as beats, in the order written, from markup and from media blocks', () => {
+    const g = game({
+      prose: {
+        'ava.hi': 'Hi.',
+        'ava.hi#bye': 'Bye',
+        'msg.ducks': 'Look at the ducks!\n\n[[video:ducks|A duck on the pond]]',
+      },
+      media: { pools: { pond: [{ src: 'pond/morning.jpg', tags: ['morning'] }] } },
+      data: {
+        cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
+        messages: {
+          messages: [
+            { id: 'msg.ducks', channel: 'texts', from: 'ava', when: { flag: 'out' }, body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }] },
+          ],
+        },
+      },
+    })
+    const state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const message = shown(state, g).channels[0].threads[0].messages[0]
+    expect(message.beats).toEqual([
+      { kind: 'text', text: 'Look at the ducks!' },
+      { kind: 'video', src: 'art/ducks.mp4', alt: 'A duck on the pond', size: 'inline', autoplay: true, loop: true, muted: true, controls: false },
+      { kind: 'image', src: 'art/pond/morning.jpg', size: 'inline' },
+    ])
+  })
+})
+

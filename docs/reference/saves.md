@@ -298,7 +298,7 @@ Carries a parsed state forward to `SAVE_VERSION`, one version at a time, or give
 
 The steps live in an internal table keyed by the version each step upgrades from, so entry `1` turns a version-1 save into version 2. If any step on the way is missing, the save is dropped rather than loaded into a shape the engine would misread. A save whose version is higher than `SAVE_VERSION` is dropped too.
 
-There are nine steps so far.
+There are ten steps so far.
 
 - **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/reference/state#flags) of the same names, so <code v-pre>{{playerName}}</code> still fills in, and adds an empty [`chosen`](/reference/state#chosen).
 - **2 → 3** brings in the [turn](/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/reference/state#storylines), and each [collection](/reference/collections) entry's and [notice](/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
@@ -309,6 +309,7 @@ There are nine steps so far.
 - **7 → 8** takes `standing` and `rapport` off every [storyline](/reference/state#storylines), keeping its `closedUntil` and `flags` (a missing `closedUntil` becomes `null`, missing `flags` `{}`). They're dropped, not carried anywhere. A relationship is now a [stat](/reference/stats#entity-stats) the game declares on the [cast](/plugins/cast)'s `character` kind, and the engine can't know which stat a game meant.
 - **8 → 9** adds an empty [`settings`](/reference/state#settings). When the save next loads, [`hydrate`](/reference/commands#hydrate) gives each `play` [setting](/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
 - **9 → 10** adds [`audio`](/reference/audio#audiostate): `{ channels: {}, cues: [], seq: 0, shown: 0, started: {} }`. No `audio` effect had run, so every channel plays the place's audio or the game's default, and the count of scenes entered starts again from 0.
+- **10 → 11** adds [`media`](/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
 
 A save from version 0 doesn't load.
 
@@ -317,7 +318,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 10
+const SAVE_VERSION: 11
 ```
 
 The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes, and the bump ships with its migration step. A bump without one would make every player's existing saves unreadable.

@@ -31,6 +31,7 @@ type GameState = {
   plugins: Record<string, PluginSlice>
   settings: Record<string, FlagValue>
   audio: AudioState
+  media: MediaState
 }
 ```
 
@@ -212,6 +213,14 @@ audio: AudioState
 
 What [`audio`](/reference/effects#audio) effects have put on channels, the last 20 [`sound`](/reference/effects#sound) effects, how many times a scene has been entered, and what each background channel started playing and when. It's what keeps [`view.audio`](/reference/view#audio)'s choices and cue keys the same after a reload. See [`AudioState`](/reference/audio#audiostate).
 
+### media
+
+```ts
+media: MediaState   // { picks: Record<string, string> }
+```
+
+The file each [pool](/reference/media#pools) request was given, by pick key, such as `{ 'door|red,night|flat.morning|0.0': 'door/red-night.jpg' }`. The reducer adds a pick after each command the first time something on screen asks for it, so a revisit and a reload show the same file. See [`MediaState`](/reference/media#mediastate). A save from before version 11 loads with none.
+
 ## New Game+
 
 When a player finishes your game, you can let them start again with some of what they had. List what carries over in `game.carryOver`, and say when the game counts as finished with `game.finished`:
@@ -258,7 +267,7 @@ The [loader](/reference/loader#the-checks) reports a stat or item in `carryOver`
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 10
+const SAVE_VERSION = 11
 ```
 
 The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carries older shapes forward:
@@ -274,3 +283,4 @@ The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carri
 | 8 | Took `standing` and `rapport` off each [storyline](#storylines). |
 | 9 | Added [`settings`](#settings). |
 | 10 | Added [`audio`](#audio). |
+| 11 | Added [`media`](#media). |

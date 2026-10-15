@@ -82,3 +82,27 @@ describe('feeds', () => {
     expect(shown(state, g).feeds[0].posts[0]).toMatchObject({ likes: 5, comments: [{ from: 'Sam', name: 'Sam', text: 'Save me a slice' }] })
   })
 })
+
+describe('video on a post', () => {
+  it('sits beside the picture, on other people’s posts and the player’s own', () => {
+    const pack: Pack = {
+      id: 'town',
+      schema: SCHEMA,
+      activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'film', effects: [postTo('social', 'pond', { text: 'own.pond', video: 'clips/pond.mp4' })] }],
+      prose: { 'post.fete': 'Bunting going up.\n\n[[widevideo:fete|once]]', 'own.pond': 'Ducks.' },
+      data: { feed: { posts: [{ id: 'fete', feed: 'board', from: 'Parish council', when: day({ gte: 1 }), body: [{ text: 'post.fete' }], image: 'art/fete.jpg', video: 'art/fete.webm' }] } },
+    }
+    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', introScene: 'none', plugins: [clock, plugin] })
+    expect(problems).toEqual([])
+    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
+    state = apply(state, g, { type: 'activity', id: 'film' }).state
+    const [social, board] = shown(state, g).feeds
+    expect(social.posts[0]).toMatchObject({ id: 'pond', image: null, video: 'clips/pond.mp4', beats: [{ kind: 'text', text: 'Ducks.' }] })
+    expect(board.posts[0]).toMatchObject({ id: 'fete', image: 'art/fete.jpg', video: 'art/fete.webm' })
+    expect(board.posts[0].beats).toEqual([
+      { kind: 'text', text: 'Bunting going up.' },
+      { kind: 'video', src: 'art/fete.mp4', size: 'wide', autoplay: true, loop: false, muted: true, controls: false },
+    ])
+  })
+})
+

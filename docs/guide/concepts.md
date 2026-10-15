@@ -156,7 +156,7 @@ A save is a snapshot of the state, with details for a load screen: the turn, the
 
 The driver says where saves are kept: `localStorage`, IndexedDB, memory for tests, or one you write for a desktop wrapper. The engine has no default, so the game chooses.
 
-Each save carries a version. The format is at version 10 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
+Each save carries a version. The format is at version 11 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
 
 See [Saves](/reference/saves).
 

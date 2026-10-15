@@ -113,6 +113,7 @@ type LocationDef = {
   parent?: string
   exits: readonly string[]
   art: string
+  stage?: MediaStage
   locked?: { when: Condition; reason: string; hide?: boolean }[]
   body: Block[]
   actions?: ActionDef[]
@@ -129,8 +130,9 @@ type LocationDef = {
 | `parent` | The place it's inside, such as a room's building. [`places/within`](#conditions) follows it. |
 | `exits` | The places one step away. Exits are one-way, so list the way back on the other place too. |
 | `art` | The background image, passed through to the view. |
+| `stage` | A layered picture with hotspots, as a [scene's stage](/reference/scenes#the-stage). Its hotspots send a `command`, because a place has no choices. See [The picture stage](#the-picture-stage). |
 | `locked` | Walking in here is refused while one of these [conditions](/reference/conditions) holds. The first that holds gives the `reason`, which is both the refusal and the exit's `disabled` text. With `hide: true`, the exit is left off the screen while it holds, instead of greyed out. |
-| `body` | What the player reads here while no scene is open. These are [prose blocks](/reference/scenes#block), exactly as in a data scene's body. |
+| `body` | What the player reads here while no scene is open. These are [prose blocks](/reference/scenes#block), exactly as in a data scene's body, so pictures and videos sit in it in order, from markup or `{ media }` blocks. |
 | `actions` | What there is to do here, as [`ActionDef`](/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
 | `audio` | What plays on background [audio channels](/reference/audio#channels) while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. `null` silences a channel. See [Audio](#audio). |
 
@@ -370,6 +372,36 @@ The body is drawn under the place's own id, not the plugin's. A [`variants`](/re
 
 The first plugin that has a stage fills the screen. While the player is nowhere, places has no stage, and the screen shows the game's title with an empty body.
 
+### The picture stage
+
+A place can give a `stage` as well as its `art`: layers of pictures or videos with hotspots on them. The café in the showcase has the room, the counter from a pool, and a lamp that comes on in the evening:
+
+```ts
+{
+  id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street', 'cafe.back'], art: 'place/cafe',
+  stage: {
+    aspect: '16/9',
+    layers: [
+      { id: 'room', src: 'place/cafe' },
+      { id: 'counter', pool: 'counter', tags: ['day'] },
+      { id: 'lamp', src: 'place/cafe-lamp.png', when: { flag: 'evening' } },
+    ],
+    hotspots: [
+      { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
+      { id: 'back', rect: [85, 30, 15, 70], label: 'The back door', command: go('cafe.back') },
+    ],
+  },
+  body: [{ text: 'place.cafe' }],
+}
+```
+
+The plugin draws it into its view as `location.stage`, next to `art`, with the engine's [`stageView`](/reference/view#stageview). A hotspot is greyed out with the same reason as the button for its command, so the back door reads `Staff only.` until the player works there. A pool's pick is kept under the place's id, so the counter looks the same every time the player comes in. The [React UI](/react/) draws the stage in place of `art` (coming in the same change).
+
+**Gotchas.**
+- The hotspots are left out while a scene is open, or while a lock stops everything, as the exits are. The layers stay.
+- A hotspot with a `choice` is reported, because a place has no choices.
+- The idle screen's [`view.scene.stage`](/reference/view#the-scene) stays `null`. A place's stage is only in `view.plugins.places`.
+
 ### The buttons
 
 The room's `actions` are offered as plugin [buttons](/reference/plugins#buttons). They're drawn while no scene is open, before the game's own `actions`, and priced and greyed out exactly like them. In the café of the example, `view.actions` lists the café's `coffee` button first, then the game's buttons.
@@ -396,14 +428,14 @@ Walk back out to the high street and the ambience stops, because the street name
 
 ```ts
 type PlacesView = {
-  location: { id: string; name: string; tag: string; kind: LocationKind; art: string } | null
+  location: { id: string; name: string; tag: string; kind: LocationKind; art: string; stage: StageView | null } | null
   exits: ExitView[]
 }
 ```
 
 | Field | What it is |
 |---|---|
-| `location` | Where the player is. `null` when nowhere, or when `at` names a place the game no longer has. |
+| `location` | Where the player is. `null` when nowhere, or when `at` names a place the game no longer has. Its `stage` is the place's [picture stage](#the-picture-stage) as a [`StageView`](/reference/media#stageview), or `null` when it has none. |
 | `exits` | The ways out, in the order the place lists them. Empty while a scene is open, or while a lock stops everything ([`lockedOut`](/reference/locks#lockedout)). |
 
 An exit is left out when:
@@ -440,7 +472,7 @@ On a new game in the flat:
 
 ```ts
 {
-  location: { id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', art: 'place/flat' },
+  location: { id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', art: 'place/flat', stage: null },
   exits: [{ id: 'high-street', name: 'High Street', tag: 'Small Town', kind: 'street', art: 'place/high-street', command: go('high-street') }],
 }
 ```
@@ -518,6 +550,7 @@ town · activity swim · unknown location "lido"
 - Anything a `locked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown location "moon"`).
 - A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/reference/loader#audio).
+- Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/reference/loader#media).
 
 ```text
 base · options start · unknown location "nowhere"
@@ -526,6 +559,7 @@ town · locations yard · is inside itself
 town · locations yard · no prose for "place.yard"
 town · locations yard · action dig: unknown location "moon"
 town · locations cafe · audio: unknown track "rain"
+town · locations cafe · hotspot menu: names choice "order", but only a scene has choices
 ```
 
 ## Gotchas

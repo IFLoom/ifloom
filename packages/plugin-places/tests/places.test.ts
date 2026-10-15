@@ -80,7 +80,7 @@ describe('places', () => {
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', frame: 'stage' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
-      location: { id: 'house', name: 'House', tag: 'Town', kind: 'room', art: 'place/house' },
+      location: { id: 'house', name: 'House', tag: 'Town', kind: 'room', art: 'place/house', stage: null },
       exits: [{ id: 'street', name: 'Street', tag: 'Town', kind: 'room', art: 'place/street', command: go('street') }],
     })
   })
@@ -227,6 +227,90 @@ describe('places', () => {
         'sounds · locations cafe: audio: track "knock" is a sound on channel "sfx", not background audio',
         'sounds · locations cafe: audio: channel "sfx" plays sounds, not background audio',
         'sounds · locations cafe: audio: track "knock" is a sound on channel "sfx", not background audio',
+      ])
+    })
+  })
+
+  describe('a place’s stage', () => {
+    /** The café with a layered picture: the room, a lamp in the evening, and hotspots on them. */
+    function withStage(stage: LocationDef['stage']) {
+      const pictures: Pack = {
+        id: 'pictures',
+        schema: SCHEMA,
+        media: { pools: { counter: [{ src: 'cafe/counter-day.jpg', tags: ['day'] }, { src: 'cafe/counter-night.jpg', tags: ['night'] }] } },
+        data: { places: { locations: [place('cafe', ['street', 'back'], { kind: 'venue', stage })] } },
+      }
+      const { game: g, problems } = loadGame([town, pictures], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'cafe' })] })
+      return { g, problems }
+    }
+
+    const stage: LocationDef['stage'] = {
+      aspect: '16/9',
+      layers: [
+        { id: 'room', src: 'cafe/room' },
+        { id: 'counter', pool: 'counter', tags: ['day'] },
+        { id: 'lamp', src: 'cafe/lamp.png', when: { flag: 'evening' } },
+      ],
+      hotspots: [
+        { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
+        { id: 'lamp', rect: [70, 5, 10, 10], label: 'The lamp', command: { type: 'activity', id: 'nap' }, layer: 'lamp' },
+        { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: go('back') },
+      ],
+    }
+
+    it('draws its shown layers and their hotspots in the view slice, beside the art', () => {
+      const { g, problems } = withStage(stage)
+      expect(problems).toEqual([])
+      const location = shown(startingState(g), g).location!
+      expect(location.art).toBe('place/cafe')
+      expect(location.stage).toEqual({
+        aspect: '16/9',
+        layers: [
+          { id: 'room', src: 'art/cafe/room.jpg' },
+          { id: 'counter', src: 'art/cafe/counter-day.jpg' },
+        ],
+        hotspots: [
+          { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
+          // The back room is staff only: greyed out with the exit's own reason.
+          { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: go('back'), disabled: 'Staff only.' },
+        ],
+      })
+    })
+
+    it('shows a layer and its hotspot once the layer’s condition holds', () => {
+      const { g } = withStage(stage)
+      const evening = { ...startingState(g), flags: { evening: true } }
+      const location = shown(evening, g).location!
+      expect(location.stage!.layers.map((layer) => layer.id)).toEqual(['room', 'counter', 'lamp'])
+      expect(location.stage!.hotspots.map((hotspot) => hotspot.id)).toEqual(['menu', 'lamp', 'door'])
+    })
+
+    it('keeps the picture but drops the hotspots while a scene is open, as the exits go', () => {
+      const { g } = withStage(stage)
+      const busy = { ...startingState(g), sceneId: 'anything' }
+      expect(shown(busy, g).location!.stage).toMatchObject({ layers: [{ id: 'room' }, { id: 'counter' }], hotspots: [] })
+    })
+
+    it('records the pool’s pick after a command, under the place', () => {
+      const { g } = withStage(stage)
+      const after = apply(startingState(g), g, { type: 'activity', id: 'nap' }).state
+      expect(after.media.picks).toEqual({ 'counter|day|cafe|stage:1': 'cafe/counter-day.jpg' })
+    })
+
+    it('reports a choice hotspot, an unknown pool, a bad rect and an unknown layer', () => {
+      const { problems } = withStage({
+        layers: [{ id: 'room', pool: 'shelves' }],
+        hotspots: [
+          { id: 'menu', rect: [90, 0, 20, 10], label: 'Menu', choice: 'order' },
+          { id: 'lamp', rect: [0, 0, 10, 10], label: 'Lamp', command: { type: 'activity', id: 'dance' }, layer: 'lamp' },
+        ],
+      })
+      expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+        'locations cafe: stage layer room: unknown pool "shelves"',
+        'locations cafe: hotspot menu: names choice "order", but only a scene has choices',
+        'locations cafe: hotspot menu: rect runs off the stage: x + width and y + height must be 100 or less',
+        'locations cafe: hotspot lamp: unknown layer "lamp"',
+        'locations cafe: hotspot lamp: unknown activity "dance"',
       ])
     })
   })

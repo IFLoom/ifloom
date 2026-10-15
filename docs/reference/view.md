@@ -86,14 +86,15 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 |---|---|---|
 | `id` | `string \| null` | The scene, or `null` for the stage. |
 | `title` | `string` | The title in the scene's rendered [`SceneView`](/reference/scenes#sceneview), else the scene's own, else the title of a plugin's [stage](/reference/plugins#stage) (the room's name, with the places plugin), else the game's `title`. |
-| `body` | `string` | The raw prose. |
-| `beats` | [`SceneBeat[]`](/reference/prose#scenebeat) | The prose parsed, with the scene's media merged in. Draw these, not `body`. |
+| `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
+| `beats` | [`SceneBeat[]`](/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. |
 | `frame` | `'stage' \| 'talk'` | The layout. It's the render's `frame`, else the scene's, else `talk` when there's a speaker and `stage` when there isn't. The screen with no scene open is `stage`. |
 | `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The stage has none. |
 | `panel` | `string \| null` | A bespoke panel to draw instead of the choice list. |
 | `panelData` | `unknown` | What that panel needs. Opaque to the engine. |
 | `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking. The id is the render's `speaker`, else the scene's, and the first plugin whose [`speaker`](/reference/plugins#speakers) knows it says who it is (the [cast](/plugins/cast#speakers) does for its characters). `null` otherwise. Never guessed from the scene's id. |
 | `stageImage` | `string \| null` | The big picture: the render's `portrait`, else the speaker's portrait, else `null`. |
+| `stage` | [`StageView`](/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/plugins/places#placesview)). |
 | `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices. Hidden ones (`visible: false`) are left out, and disabled ones stay. |
 
 If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
@@ -235,6 +236,39 @@ button.disabled  // 'You cannot get there from here.'
 ```
 
 **Gotcha.** It doesn't test the action's `when`. Leave out the actions whose `when` doesn't hold before rendering them, as the view does.
+
+## stageView
+
+```ts
+import { stageView } from '@ifloom/engine'
+
+function stageView(
+  state: GameState,
+  game: Game,
+  stage: MediaStage | undefined,
+  owner: string,
+  choices?: readonly RenderedChoice[] | null,
+): StageView | null
+```
+
+Resolves a [stage](/reference/scenes#the-stage) into what a UI draws, as the view does for `view.scene.stage`. Use it in a plugin that has a stage of its own, as the [places plugin](/plugins/places#placesview) does for a room.
+
+- **Layers** whose `when` fails are left out. A pool layer gets its file from the [pool pick](/reference/media#pools) for `owner` and the slot `stage:<index>`, and one whose pool has nothing is left out too.
+- **A `choice` hotspot** takes the command, `disabled` and `warning` of the choice with that id in `choices`, and is left out when there's no such choice. Pass the scene's rendered choices. With none (`null`, the default), every choice hotspot is left out.
+- **A `command` hotspot** is a button made by [`renderAction`](#renderaction). It's left out while a lock with `hide: true` stops its command.
+- **Any hotspot** is left out while its `when` fails or its `layer` isn't shown.
+
+It returns `null` when `stage` is undefined.
+
+```ts
+import { stageView } from '@ifloom/engine'
+
+// The café's stage, as the places plugin draws it:
+const stage = stageView(state, game, cafe.stage, 'cafe')
+stage?.hotspots.find((hotspot) => hotspot.id === 'door')?.disabled  // 'Staff only.'
+```
+
+**Gotcha.** It only reads picks. The reducer records them after each command (see [Media](/reference/media#pools)), so calling it is pure.
 
 ## StatView
 

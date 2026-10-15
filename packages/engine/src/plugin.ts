@@ -6,6 +6,7 @@ import type { EffectRef } from './custom.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef } from './entities.ts'
+import type { MediaStage } from './media.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -214,6 +215,12 @@ export type CheckTools = {
   commandProblems: (command: Command) => string[]
   /** What background audio by channel names that the game does not have, or can't play there: a place's `audio`. */
   audioProblems: (audio: Record<string, string | null> | undefined) => string[]
+  /**
+   * What is wrong with a stage that has no scene, such as a place's: pools,
+   * flags, hotspot rects, layers, and the conditions and commands it names. A
+   * hotspot there can't name a choice.
+   */
+  stageProblems: (stage: MediaStage | undefined) => string[]
 }
 
 /** One entry of a plugin's content in a pack: an id, and whatever fields the plugin reads. */

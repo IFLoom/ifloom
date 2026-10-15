@@ -9,6 +9,8 @@ import type { StatDef } from './stats.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { Custom } from './custom.ts'
 import type { GameAudio } from './audio.ts'
+import type { GameMedia, MediaStage } from './media.ts'
+import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene, type DataScene } from './scene.ts'
 import type {
   Command,
@@ -53,16 +55,30 @@ export type SceneChoice = {
   effects: Effect[]
 }
 
+/**
+ * A picture or a video in a scene's body, as a `{ media }` block or in
+ * `SceneView.media`. Give a file as `src`, or ask a pool for one with `pool`
+ * and `tags`.
+ */
 export type SceneMedia = {
-  src: string
+  src?: string
+  /** A pool in `game.media.pools` to pick the file from. */
+  pool?: string
+  /** The tags the pick should have, most important first. See `poolCandidates`. */
+  tags?: string[]
   alt?: string
-  size: 'inline' | 'wide'
+  /** `'inline'` if left out. */
+  size?: 'inline' | 'wide'
   /**
-   * Where it sits relative to the prose. `lead` opens the scene, which is where
-   * a establishing still belongs; anything else follows the body.
+   * Where it sits. Left out, a `{ media }` block sits where it is in the body,
+   * in order with the prose. `lead` opens the scene, which is where an
+   * establishing still belongs; `end` follows the body. In a hand-built
+   * scene's `media`, left out means `end`.
    */
   at?: 'lead' | 'end'
-}
+  /** Draw it as a video. A `.mp4` or `.webm` file is one anyway. */
+  video?: boolean
+} & VideoFlags
 
 export type SceneView = {
   title?: string
@@ -87,6 +103,8 @@ export type SceneView = {
   /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
   media?: SceneMedia[]
+  /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
+  stage?: MediaStage
   /** What plays on background channels while the scene is open, by channel. Null silences one. */
   audio?: Record<string, string | null>
   choices: SceneChoice[]
@@ -243,6 +261,8 @@ export type Game = {
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   /** The game's sounds and channels. No audio if left out. */
   audio?: GameAudio
+  /** The game's pools of pictures and videos. None if left out. */
+  media?: GameMedia
 }
 
 export function itemById(game: Game, id: string) {

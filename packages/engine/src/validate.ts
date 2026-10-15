@@ -12,6 +12,7 @@ import { sceneContext } from './context.ts'
 import { referenced, type Condition } from './condition.ts'
 import { isDataScene } from './scene.ts'
 import { cueProblems, manifestProblems, markupProblems, placementProblems } from './audio.ts'
+import { mediaMarkupProblems, poolManifestProblems, sceneMediaProblems, stageProblems, type MediaStage } from './media.ts'
 import { settingConditionProblems, settingProblems } from './settings.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
@@ -92,14 +93,20 @@ export function validatePack(
   }
 
   for (const { where, what } of manifestProblems(game)) say(where, what)
+  for (const { where, what } of poolManifestProblems(game)) say(where, what)
   for (const scene of game.scenes) {
     if (!isDataScene(scene)) continue
     const where = `scene ${scene.id}`
     for (const what of placementProblems(game, scene.audio ?? {})) say(where, what)
+    for (const block of scene.body) {
+      if ('media' in block) for (const what of sceneMediaProblems(game, block.media)) say(where, what)
+    }
+    checkStage(game, where, scene.stage, scene.choices.map((choice) => choice.id), say)
     // The sounds and voices its prose names, line by line.
     const keys = scene.body.flatMap((block) => ('text' in block ? [block.text] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []))
     for (const key of keys) {
-      for (const what of markupProblems(game, game.prose?.line(key) ?? '')) say(where, what)
+      const text = game.prose?.line(key) ?? ''
+      for (const what of [...markupProblems(game, text), ...mediaMarkupProblems(game, text)]) say(where, what)
     }
     // Choices' other effects are checked by probes, rendered; their audio is checked here without one.
     for (const choice of scene.choices) {
@@ -141,7 +148,9 @@ function checkProbe(
     duplicates(view.choices.map((choice) => choice.id)).forEach((id) =>
       say(where, `duplicate choice id ${id}`),
     )
-    for (const what of [...placementProblems(game, view.audio ?? {}), ...markupProblems(game, view.body ?? '')]) say(where, what)
+    for (const what of [...placementProblems(game, view.audio ?? {}), ...markupProblems(game, view.body ?? ''), ...mediaMarkupProblems(game, view.body ?? '')]) say(where, what)
+    // A hand-built scene's stage is only known once it renders.
+    if (!isDataScene(listed)) checkStage(game, where, view.stage, view.choices.map((choice) => choice.id), say)
     for (const choice of view.choices) {
       for (const effect of choice.effects) {
         checkEffect(game, storylineIds, `${where} choice ${choice.id}`, effect, say)
@@ -149,6 +158,21 @@ function checkProbe(
     }
   }
 
+}
+
+/** What is wrong with a stage: its shape, and the commands its hotspots send. */
+function checkStage(
+  game: Game,
+  where: string,
+  stage: MediaStage | undefined,
+  choices: readonly string[] | null,
+  say: (where: string, what: string) => void,
+): void {
+  if (!stage) return
+  for (const what of stageProblems(game, stage, choices)) say(where, what)
+  for (const hotspot of stage.hotspots ?? []) {
+    if (hotspot.command) checkCommand(game, `${where} hotspot ${hotspot.id}`, hotspot.command, say)
+  }
 }
 
 function checkCommand(

@@ -21,6 +21,8 @@ import { fireTriggers } from './triggers.ts'
 import { inputById, inputValue } from './inputs.ts'
 import { settingAffects, startingSettings } from './settings.ts'
 import { emptyAudio, noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
+import { emptyMedia, hasPools, notingPicks } from './media.ts'
+import { view } from './view.ts'
 import { migratePlugins, pluginCommand, pluginEffect, runAfter, runHooks, startingPlugins, useApplier } from './plugin.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -99,6 +101,7 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
     settings: startingSettings(game, options.settings),
     // The opening scene is the first showing.
     audio: { ...emptyAudio(), shown: game.introScene ? 1 : 0 },
+    media: emptyMedia(),
   }
   if (!options.carry) return noteStarted(fresh, game)
   // Carried over first, so variables the caller gives still win.
@@ -131,6 +134,7 @@ export function hydrate(state: GameState, game: Game): GameState {
   if (!next.created) next = { ...next, created: {} }
   if (!next.removed) next = { ...next, removed: [] }
   if (!next.audio) next = { ...next, audio: emptyAudio() }
+  if (!next.media) next = { ...next, media: emptyMedia() }
   // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
   const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
   if (lacking.length || !next.settings) {
@@ -190,6 +194,20 @@ function witnessed(before: GameState, after: GameState): GameState {
 }
 
 /**
+ * Record the pool picks the screen now shows that the save doesn't hold yet:
+ * the open scene's, the place's, anything a plugin's view draws. The view only
+ * reads `state.media.picks`, so it stays pure; this is where they are written.
+ * Only a game with pools pays for it.
+ */
+function notePicks(state: GameState, game: Game): GameState {
+  if (!hasPools(game)) return state
+  const picks = notingPicks(() => view(state, game))
+  if (!Object.keys(picks).length) return state
+  const media = state.media ?? emptyMedia()
+  return { ...state, media: { ...media, picks: { ...media.picks, ...picks } } }
+}
+
+/**
  * Run a command and say whether it took. Prefer this over `dispatch` anywhere
  * the answer matters — a refusal and a no-op look identical in the state alone.
  */
@@ -214,7 +232,7 @@ export function apply(
   try {
     const ran = run(current, game, command)
     const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))
-    return { state: noteStarted(runAfter(game, current, next), game), ok: true }
+    return { state: notePicks(noteStarted(runAfter(game, current, next), game), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, refused: error.detail }

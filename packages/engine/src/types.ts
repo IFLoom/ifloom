@@ -9,8 +9,9 @@ import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { PluginSlice } from './plugin.ts'
 import type { AudioState } from './audio.ts'
+import type { MediaState } from './media.ts'
 
-export const SAVE_VERSION = 10 as const
+export const SAVE_VERSION = 11 as const
 
 export type FlagValue = boolean | number | string
 
@@ -92,6 +93,8 @@ export type GameState = {
   settings: Record<string, FlagValue>
   /** What effects have put on the audio channels, the last few sounds, and the count of scenes entered. */
   audio: AudioState
+  /** The file each pool request was given, so a revisit and a reload show the same one. */
+  media: MediaState
 }
 
 export type Command =

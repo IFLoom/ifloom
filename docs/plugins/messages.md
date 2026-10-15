@@ -116,7 +116,7 @@ type MessageDef = {
 | `from` | Who sent it. Either a [cast](/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). A character's name and portrait are looked up, and anything else is shown as written. |
 | `thread` | The thread it goes in. If you leave it out, the thread is the sender, so every message from `ava` in a channel goes in one thread. |
 | `when` | It arrives the first time this [condition](/reference/conditions) holds at the end of a command. |
-| `body` | Its words, as [prose blocks](/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. |
+| `body` | Its words, as [prose blocks](/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
 | `replies` | What the player can send back. The player sends one, once. Leave it out for a message with no replies. |
 
 ### ReplyDef
@@ -441,6 +441,7 @@ type MessageView = {
   from: string
   name: string
   text: string
+  beats: SceneBeat[]
   turn: number
   read: boolean
   replies: { id: string; label: string; command: Command }[]
@@ -452,11 +453,21 @@ type MessageView = {
 |---|---|
 | `from` | The sender, as written. |
 | `name` | The sender's name if they're a [cast](/plugins/cast) character, or `from` as written. |
-| `text` | The body, rendered for the current state. It has the blocks whose `when` holds, with tokens filled in. |
+| `text` | The body, rendered for the current state. It has the blocks whose `when` holds, with tokens filled in. Any picture or video is in it as markup. |
+| `beats` | `text` parsed into [beats](/reference/prose#scenebeat), as a scene's body is. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
 | `turn` | The [turn](/reference/state#turn) it arrived on. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
 | `replies` | The replies on offer now, each with its label and the command that sends it. Empty once one is sent. |
 | `replied` | The label of the reply sent, or `null`. |
+
+A message has no picture field of its own. Put pictures and videos in its body, where they sit in order with the words:
+
+```ts
+// prose 'ava.ducks': 'Look who turned up at the pond!\n\n[[video:clips/ducks|Two ducks on the pond]]'
+{ id: 'ava.ducks', channel: 'texts', from: 'ava', when: { flag: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
+```
+
+The [React UI](/react/) draws message beats, videos included (coming in the same change).
 
 ## The state
 

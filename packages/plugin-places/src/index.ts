@@ -14,6 +14,7 @@ import {
   lockOn,
   lockedOut,
   say,
+  stageView,
   warningOf,
   whyNot,
   type ActionDef,
@@ -24,9 +25,11 @@ import {
   type EffectRef,
   type Game,
   type GameState,
+  type MediaStage,
   type PluginArgs,
   type PluginProblem,
   type Requirement,
+  type StageView,
 } from '@ifloom/engine'
 
 export type LocationKind = 'street' | 'venue' | 'room'
@@ -43,6 +46,11 @@ export type LocationDef = {
   /** The places one step away. */
   exits: readonly string[]
   art: string
+  /**
+   * A layered picture with hotspots, drawn in place of `art` when the UI
+   * supports it. A hotspot here sends a `command`; a place has no choices.
+   */
+  stage?: MediaStage
   /**
    * Travel here is refused while one of these holds, with its reason: a door
    * shut for the night, a gate locked until a quest is done. With `hide`, the
@@ -86,8 +94,12 @@ export type ExitView = {
 
 /** What the UI reads at `view.plugins.places`. */
 export type PlacesView = {
-  /** Where the player is; null when nowhere. */
-  location: { id: string; name: string; tag: string; kind: LocationKind; art: string } | null
+  /**
+   * Where the player is; null when nowhere. `stage` is the place's stage as the
+   * engine's `stageView` draws it, or null when it has none. Its hotspots are
+   * left out while a scene is open or a lock holds everything, as the exits are.
+   */
+  location: { id: string; name: string; tag: string; kind: LocationKind; art: string; stage: StageView | null } | null
   /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
   exits: ExitView[]
 }
@@ -207,8 +219,11 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         if (warning) exit.warning = warning
         exits.push(exit)
       }
+      const stage = place ? stageView(state, game, place.stage, place.id) : null
       return {
-        location: place ? { id: place.id, name: place.name, tag: place.tag, kind: place.kind, art: place.art } : null,
+        location: place
+          ? { id: place.id, name: place.name, tag: place.tag, kind: place.kind, art: place.art, stage: stage && !idle ? { ...stage, hotspots: [] } : stage }
+          : null,
         exits,
       }
     },
@@ -216,7 +231,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args) : []) : kind === 'effects' ? (name === 'move' ? ids(args) : []) : name === 'go' ? ids(args) : []
       return named.filter((id) => !locationById(game, id)).map((id) => `unknown location "${id}"`)
     },
-    check: (game, { conditionProblems, blockProblems, commandProblems, audioProblems }) => {
+    check: (game, { conditionProblems, blockProblems, commandProblems, audioProblems, stageProblems }) => {
       const problems: PluginProblem[] = []
       const say = (id: string, what: string) => problems.push({ list: 'locations', id, what })
       if (options.start !== undefined && !locationById(game, options.start)) problems.push({ list: 'options', id: 'start', what: `unknown location "${options.start}"` })
@@ -228,6 +243,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         }
         for (const what of blockProblems(place.body)) say(place.id, what)
         for (const what of audioProblems(place.audio)) say(place.id, `audio: ${what}`)
+        for (const what of stageProblems(place.stage)) say(place.id, what)
         for (const entry of place.locked ?? []) for (const what of conditionProblems(entry.when)) say(place.id, what)
         for (const action of place.actions ?? []) {
           for (const what of [

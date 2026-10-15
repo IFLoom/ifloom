@@ -12,6 +12,7 @@ import {
   defaultRuntime,
   definePlugin,
   holds,
+  parseBeats,
   pluginQuery,
   renderScene,
   say,
@@ -22,6 +23,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type SceneBeat,
 } from '@ifloom/engine'
 
 export type FeedDef = { id: string; name: string }
@@ -37,6 +39,8 @@ export type PostDef = {
   /** Its words, as prose blocks. */
   body: Block[]
   image?: string
+  /** A video clip on the post, as a path from the page like `image`. Drawn like a GIF: playing, looping, muted. */
+  video?: string
   /** Likes it shows when it appears. */
   likes?: number
 }
@@ -53,6 +57,7 @@ export type OwnPost = {
   /** A prose key. */
   text?: string
   image?: string
+  video?: string
   likes: number
   comments: Comment[]
 }
@@ -76,9 +81,13 @@ export type PostView = {
   from: string
   name: string
   portrait: string | null
-  /** The words, filled in. */
+  /** The words, filled in, with any picture and video markup in them. */
   text: string
+  /** The words as beats, as a scene's are, with pictures and videos in the order written. */
+  beats: SceneBeat[]
   image: string | null
+  /** The post's video clip, or null. Drawn like a GIF: playing, looping, muted. */
+  video: string | null
   /** The turn it appeared, or was posted. */
   turn: number
   likes: number
@@ -154,7 +163,7 @@ export function feed(options: FeedOptions) {
     },
     effects: {
       /**
-       * `{ custom: 'feed/post', with: { feed, id, text?, image?, likes? } }`: the
+       * `{ custom: 'feed/post', with: { feed, id, text?, image?, video?, likes? } }`: the
        * player posts. An id already posted is left as it is.
        */
       post: (state, args, { slice, set }) => {
@@ -167,6 +176,7 @@ export function feed(options: FeedOptions) {
           turn: state.turn,
           text: args.text === undefined ? undefined : String(args.text),
           image: args.image === undefined ? undefined : String(args.image),
+          video: args.video === undefined ? undefined : String(args.video),
           likes: Number(args.likes ?? 0),
           comments: [],
         }
@@ -237,7 +247,9 @@ export function feed(options: FeedOptions) {
             name: personOf(game, state, post.from).name,
             portrait: personOf(game, state, post.from).portrait,
             text: renderScene({ id: post.id, body: post.body, choices: [] }, state, runtime).body ?? '',
+            beats: [],
             image: post.image ?? null,
+            video: post.video ?? null,
             turn: slice.appeared[post.id],
             likes: (post.likes ?? 0) + (slice.reactions[post.id]?.likes ?? 0),
             comments: comments(slice.reactions[post.id]?.comments ?? []),
@@ -252,7 +264,9 @@ export function feed(options: FeedOptions) {
             name: typeof state.flags.playerName === 'string' ? state.flags.playerName : say(game, 'feed/you'),
             portrait: null,
             text: words(post.text),
+            beats: [],
             image: post.image ?? null,
+            video: post.video ?? null,
             turn: post.turn,
             likes: post.likes,
             comments: comments(post.comments),
@@ -261,7 +275,7 @@ export function feed(options: FeedOptions) {
           }))
         const posts = [...theirs, ...mine]
           .sort((a, b) => b.turn - a.turn || b.order - a.order)
-          .map(({ order: _order, ...post }) => post)
+          .map(({ order: _order, ...post }) => ({ ...post, beats: parseBeats(post.text) }))
         return { id: entry.id, name: entry.name, posts, unseen: unseenIn(slice, game, entry.id) }
       })
       return { feeds, unseen: feeds.reduce((sum, entry) => sum + entry.unseen, 0) }
@@ -283,7 +297,7 @@ export function feed(options: FeedOptions) {
 }
 
 /** An effect: the player posts to a feed. `text` is a prose key. */
-export const postTo = (feedId: string, id: string, post: { text?: string; image?: string; likes?: number } = {}): EffectRef => ({
+export const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
   custom: 'feed/post',
   with: { feed: feedId, id, ...post },
 })

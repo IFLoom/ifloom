@@ -965,6 +965,7 @@ type CheckTools = {
   blockProblems: (blocks: readonly Block[]) => string[]
   commandProblems: (command: Command) => string[]
   audioProblems: (audio: Record<string, string | null> | undefined) => string[]
+  stageProblems: (stage: MediaStage | undefined) => string[]
 }
 ```
 
@@ -973,9 +974,10 @@ What the loader lends a plugin's `check`. Each one returns problems worded as th
 | Tool | Checks |
 |---|---|
 | `conditionProblems(condition)` | A [condition](/reference/conditions), as under [In a condition](/reference/loader#in-a-condition). `undefined` has no problems. |
-| `blockProblems(blocks)` | Prose keys with no prose, [`variants`](/reference/scenes#block) with no lines, and each block's `when` and a `variants` block's `gate`. Use it for a [stage](#stage) or any other blocks the plugin draws. |
+| `blockProblems(blocks)` | Prose keys with no prose, [`variants`](/reference/scenes#block) with no lines, each block's `when` and a `variants` block's `gate`, and a `{ media }` block's pool, tags and flags. Use it for a [stage](#stage) or any other blocks the plugin draws. |
 | `commandProblems(command)` | A `scene`, `activity`, `use` or `custom` [command](/reference/commands#command), as under [In a command](/reference/loader#in-a-command). A `custom` command of an [absent partner](#cooperates) isn't reported. Other command types have no problems. Use it for [buttons](#buttons) built from the plugin's content. |
 | `audioProblems(audio)` | Background audio by channel, as under [Audio](/reference/loader#audio): an unknown track or channel, a cue channel, or a sound's track on a background channel. `undefined` has no problems. Use it for what your [`audio`](#audio) hook plays. |
+| `stageProblems(stage)` | A [stage](/reference/scenes#the-stage) with no scene, such as a place's, as under [Media](/reference/loader#media): its layers' pools, tags and flags, its hotspots' rects, ids, layers and commands, and the conditions on both. A hotspot can't name a `choice` here. `undefined` has no problems. Draw the stage with [`stageView`](/reference/view#stageview). |
 
 The stall checks the sign it hangs and the scene its closing button opens, both from its own content:
 

@@ -20,6 +20,7 @@ import type { Condition } from './condition.ts'
 import { customCall, customCondition, customEffectsUsed, hasCustomEffect, type Custom } from './custom.ts'
 import { proseStore } from './prose.ts'
 import { sceneReferences, type Block, type DataScene } from './scene.ts'
+import { mediaMarkupProblems, poolManifestProblems, sceneMediaProblems, stageProblems, type GameMedia, type MediaStage, type PoolFile } from './media.ts'
 import { cueProblems, manifestProblems, markupProblems, placementProblems, type ChannelDef, type GameAudio, type PlaylistDef, type TrackDef } from './audio.ts'
 
 /**
@@ -77,6 +78,8 @@ export type Pack = {
    * entries win too.
    */
   audio?: Partial<GameAudio>
+  /** Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. */
+  media?: GameMedia
 }
 
 export type Problem = {
@@ -164,6 +167,12 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     Object.assign(defaults, audio.default ?? {})
   }
   addAudio('base', base.audio)
+  // Media pools, merged by id: a later pack's pool replaces an earlier one's whole.
+  const pools = new Map<string, { value: PoolFile[]; from: string }>()
+  const addMedia = (from: string, media: GameMedia | undefined) => {
+    for (const [id, files] of Object.entries(media?.pools ?? {})) pools.set(id, { value: files, from })
+  }
+  addMedia('base', base.media)
   const strings: Record<string, string> = { ...base.strings }
   const variants: Record<string, string[]> = {}
   // The base game's own functions come first; packs lay theirs over by name.
@@ -225,6 +234,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     Object.assign(prose, pack.prose ?? {})
     for (const key of Object.keys(pack.prose ?? {})) proseFrom.set(key, pack.id)
     addAudio(pack.id, pack.audio)
+    addMedia(pack.id, pack.media)
     Object.assign(strings, pack.strings ?? {})
     for (const [name, members] of Object.entries(pack.variants ?? {})) {
       variants[name] = [...(variants[name] ?? []), ...members]
@@ -293,6 +303,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     if (Object.keys(defaults).length) audio.default = defaults
     game.audio = audio
   } else delete game.audio
+  if (pools.size) game.media = { ...game.media, pools: Object.fromEntries([...pools].map(([id, entry]) => [id, entry.value])) }
   // Plugins' entities, made from their content now it is merged; one the game declares itself wins.
   for (const plugin of base.plugins ?? []) {
     for (const entity of plugin.entities?.(game) ?? []) {
@@ -354,6 +365,22 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       ...refs.prose.filter((key) => prose[key] === undefined).map((key) => `no prose for "${key}"`),
       ...refs.variants.filter((name) => !variants[name]?.length).map((name) => `variants "${name}" has no lines`),
       ...blocks.flatMap((block) => [block.when, ...('variants' in block ? Object.values(block.gate ?? {}) : [])]).flatMap(conditionProblems),
+      ...blocks.flatMap((block) => ('media' in block ? sceneMediaProblems(game, block.media) : [])),
+    ]
+  }
+
+  /**
+   * What is wrong with a stage: its shape, then the conditions and commands it
+   * names. `choices` are its scene's choice ids, or null for a place's.
+   */
+  function stageChecks(stage: MediaStage | undefined, choices: readonly string[] | null): string[] {
+    if (!stage) return []
+    return [
+      ...stageProblems(game, stage, choices),
+      ...(stage.layers ?? []).flatMap((layer, index) => conditionProblems(layer.when).map((what) => `stage layer ${layer.id ?? index}: ${what}`)),
+      ...(stage.hotspots ?? []).flatMap((hotspot) =>
+        [...conditionProblems(hotspot.when), ...(hotspot.command ? commandProblems(hotspot.command) : [])].map((what) => `hotspot ${hotspot.id}: ${what}`),
+      ),
     ]
   }
 
@@ -417,6 +444,10 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     ]
     checkConditions(conditions, from, `scene ${value.id}`)
     for (const what of placementProblems(game, value.audio ?? {})) problems.push({ pack: from, where: `scene ${value.id}`, what })
+    for (const block of value.body) {
+      if ('media' in block) for (const what of sceneMediaProblems(game, block.media)) problems.push({ pack: from, where: `scene ${value.id}`, what })
+    }
+    for (const what of stageChecks(value.stage, value.choices.map((choice) => choice.id))) problems.push({ pack: from, where: `scene ${value.id}`, what })
   }
 
   // Audio: the manifest, then every sound and voice the prose names.
@@ -427,6 +458,11 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   }
   for (const [key, text] of Object.entries(prose)) {
     for (const what of markupProblems(game, text)) problems.push({ pack: proseFrom.get(key) ?? 'base', where: `prose ${key}`, what })
+    for (const what of mediaMarkupProblems(game, text)) problems.push({ pack: proseFrom.get(key) ?? 'base', where: `prose ${key}`, what })
+  }
+  // Media: the pools themselves. What asks for them is checked where it is.
+  for (const { where, what } of poolManifestProblems(game)) {
+    problems.push({ pack: pools.get(where.slice('pool '.length))?.from ?? 'base', where, what })
   }
 
   // Activities are data too, and are checked the same way: everything a
@@ -539,7 +575,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   // Each plugin checks its own content; the problem is pinned on the pack the entry came from.
   for (const plugin of game.plugins ?? []) {
     const audioProblems = (audio: Record<string, string | null> | undefined) => (audio ? placementProblems(game, audio) : [])
-    for (const problem of plugin.check?.(game, { conditionProblems, blockProblems, commandProblems, audioProblems }) ?? []) {
+    const placeStage = (stage: MediaStage | undefined) => stageChecks(stage, null)
+    for (const problem of plugin.check?.(game, { conditionProblems, blockProblems, commandProblems, audioProblems, stageProblems: placeStage }) ?? []) {
       const from = data.get(plugin.id)?.get(problem.list)?.get(problem.id)?.from ?? 'base'
       problems.push({ pack: from, where: `${problem.list} ${problem.id}`, what: problem.what })
     }

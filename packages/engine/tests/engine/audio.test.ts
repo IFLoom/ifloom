@@ -338,9 +338,8 @@ describe('audio', () => {
   describe('saves', () => {
     it('carry a version-9 save forward with nothing played and no showings', () => {
       const { game: g } = game()
-      const { audio: _audio, ...now } = startingState(g)
-      expect(SAVE_VERSION).toBe(10)
-      expect(migrate({ ...now, version: 9 })).toEqual({ ...now, version: 10, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
+      const { audio: _audio, media: _media, ...now } = startingState(g)
+      expect(migrate({ ...now, version: 9 })).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
     })
 
     it('keep the effects’ channels and cues', () => {

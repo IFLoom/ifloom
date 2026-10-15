@@ -3,6 +3,7 @@ import { holds } from './condition.ts'
 import type { Game, Scene, SceneChoice, SceneMedia, SceneView } from './game.ts'
 import { markUsed, usedThisTurn } from './once.ts'
 import { roll } from './random.ts'
+import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './media.ts'
 import {
   buildEffects,
   customEffectsUsed,
@@ -38,6 +39,10 @@ export type Block =
        */
       art?: Record<string, string>
     }
+  /**
+   * A picture or a video. Left without `at`, it sits here in the body, in
+   * order with the prose, exactly as its markup would.
+   */
   | { media: SceneMedia; when?: Condition }
 
 
@@ -92,6 +97,8 @@ export type DataScene = {
   panelData?: string
   /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
   audio?: Record<string, string | null>
+  /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
+  stage?: MediaStage
   body: Block[]
   choices: Choice[]
 }
@@ -194,15 +201,21 @@ export function renderScene(
   /** Every block this render used, in order. Later ones win a label. */
   const drawn: string[] = []
 
-  for (const block of scene.body) {
-    if (!holds(state, block.when, runtime.game)) continue
+  scene.body.forEach((block, index) => {
+    if (!holds(state, block.when, runtime.game)) return
     const resolved = blockText(scene, block, state, runtime)
-    if (resolved.media) media.push(resolved.media)
-    if (resolved.text) parts.push(resolved.text)
+    // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
+    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index))
+    if (shown) {
+      // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
+      if (shown.at) media.push(shown)
+      else parts.push(mediaMarkup(shown))
+    }
+    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index)))
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)
-  }
+  })
 
   const choices: SceneChoice[] = []
   for (const choice of scene.choices) {
@@ -264,6 +277,7 @@ export function renderScene(
       : undefined,
     body: parts.join('\n\n'),
     media: media.length ? media : undefined,
+    ...(scene.stage ? { stage: scene.stage } : {}),
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }

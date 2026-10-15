@@ -127,6 +127,9 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[img:place/market]]` | `{ kind: 'image', size: 'inline', src }` |
 | `[[wide:scene/market-morning\|The market at seven]]` | `{ kind: 'image', size: 'wide', src, alt }` |
 | `[[wide:scene/sign.svg\|A painted sign\|rot]]` | adds `rotate: true` |
+| `[[video:clips/kettle]]` | `{ kind: 'video', size: 'inline', src, autoplay, loop, muted, controls }` |
+| `[[widevideo:clips/rain\|controls\|Rain on the window]]` | `{ kind: 'video', size: 'wide', src, alt, ... }` |
+| `[[img:@door\|red,night]]` | `image`, with a file picked from the pool `door` |
 | `[[mail]] … [[/mail]]` | `{ kind: 'mail', headers, body }` |
 | `[[sticky]] … [[/sticky]]` | `{ kind: 'prop', face: 'sticky', text }` |
 | `[[clip]] … [[/clip]]` | `{ kind: 'prop', face: 'clip', text }` |
@@ -166,7 +169,54 @@ Ava looks up from the till.
 
 Write `[[size:path|…]]`, with size `img` (inline) or `wide`. Optional parts follow the path, each after a `|`. `rot` turns the picture (`rotate: true`), and any other part is the alt text. So `[[img:place/market|rot]]` is rotated with no alt, and `[[img:place/market|rot|The market]]` is the same as `[[img:place/market|The market|rot]]`. The path goes through [`artSrc`](#artsrc).
 
-**Gotcha.** The image must be a paragraph on its own. If there's anything else in the paragraph, or a size word other than `img` or `wide`, the whole paragraph is drawn as plain text, brackets included.
+**Gotcha.** The image must be a paragraph on its own. If there's anything else in the paragraph, or a size word other than `img`, `wide`, `video` or `widevideo`, the whole paragraph is drawn as plain text, brackets included.
+
+### Videos
+
+`[[video:path|…]]` puts a short clip in the text, and `[[widevideo:path|…]]` puts a wide one. By default a clip behaves like a GIF: it plays by itself, loops, has no sound and plays inline. Flags after the path change that, in any order:
+
+| Flag | What it does |
+|---|---|
+| `controls` | Shows the player's controls. The clip then waits for the player to press play (`autoplay: false`). |
+| `once` | Plays once instead of looping. |
+| `sound` | Plays with sound instead of muted. |
+| `poster=path` | Shows this picture before the clip plays. The path goes through `artSrc`. |
+
+Any other part is the alt text, as for a picture.
+
+```md
+The kettle starts to rattle on the hob.
+
+[[video:clips/kettle|A kettle coming to the boil]]
+
+[[widevideo:clips/high-street|controls|sound|poster=clips/high-street-still|The high street on market day]]
+```
+
+A bare name is an `.mp4` (`clips/kettle` is `art/clips/kettle.mp4`). A path ending in `.mp4` or `.webm` is drawn as a video whichever markup names it, so `[[img:clips/kettle.mp4]]` is a video too. An animated `.gif` or `.webp` is a picture.
+
+The [React UI](/react/) draws video beats (coming in the same change as this markup). A UI of your own reads the flags off the beat.
+
+**Gotchas:**
+- Only one part can be the alt text. The loader reports a second one, because it's usually a misspelt flag (`contols`).
+- A `name=value` part with a name that isn't a flag, such as `speed=2`, is reported as an unknown flag.
+- The loader reports a video flag on a picture, and `rot` on a video.
+
+### Pools
+
+Instead of a path, write `@` and the name of a [pool](/reference/media#pools) to have the engine pick a file for you. The first part after the pool is always the tags you want, separated by commas.
+
+```md
+[[img:@door|red,night|The front door]]
+
+[[video:@window|rain]]
+```
+
+The engine picks a file with every tag. If no file has them all, it drops the last tag and tries again, down to any file in the pool. The pick is drawn from the save's seed and remembered, so the same markup in the same place shows the same file on every visit and after a reload. See [Media](/reference/media#pools) for the details.
+
+**Gotchas:**
+- The tags part comes first even when it's empty. Write `[[img:@door||A front door]]` for alt text with no tags, because `[[img:@door|A front door]]` asks for a tag called "A front door".
+- If the pool has nothing to give, the markup is left out.
+- The loader reports an unknown pool and a tag no file in the pool has.
 
 ### Sound and voice
 
@@ -210,12 +260,27 @@ type SceneBeat =
   | { kind: 'mono'; text: string }
   | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string }
   | { kind: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
+  | {
+      kind: 'video'
+      src: string
+      poster?: string
+      alt?: string
+      size: 'inline' | 'wide'
+      autoplay: boolean
+      loop: boolean
+      muted: boolean
+      controls: boolean
+    }
   | { kind: 'mail'; headers: { key: string; value: string }[]; body: string }
   | { kind: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
   | { kind: 'sound'; track: string }
 ```
 
-One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`. The view merges a scene's [`media`](/reference/scenes#scenemedia) in as `image` beats, with `lead` media first, then the body, then the rest.
+One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`.
+
+A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`, worked out from its [flags](#videos). Without flags they're `true`, `true`, `true` and `false`. With `controls`, `autoplay` is `false`.
+
+A data scene's `{ media }` blocks become `image` or `video` beats where they are in the body. Media with `at: 'lead'` comes before the body, and media with `at: 'end'` (or a hand-built scene's [`media`](/reference/scenes#scenemedia) with no `at`) comes after it.
 
 ## parseBeats
 
@@ -232,14 +297,31 @@ The parser described above. [`view`](/reference/view) already calls it, so you o
 ```ts
 import { artSrc } from '@ifloom/engine'
 
-function artSrc(path: string): string
+function artSrc(path: string, kind?: 'image' | 'video'): string
 ```
 
-Resolves a picture's path. Everything in the engine resolves pictures through it. It strips a leading `/`, `art/` or `/art/`, puts `art/` in front, and adds `.jpg` unless the path already ends in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.webm`, `.mp4` or `.svg`.
+Resolves a picture's or a video's path. Everything in the engine resolves media through it. It strips a leading `/`, `art/` or `/art/`, and puts `art/` in front. If the path doesn't already end in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`, `.svg`, `.mp4` or `.webm`, it adds `.jpg`, or `.mp4` when `kind` is `'video'`.
 
 ```ts
-artSrc('place/cafe')          // 'art/place/cafe.jpg'
-artSrc('/art/place/cafe.png') // 'art/place/cafe.png'
+artSrc('place/cafe')             // 'art/place/cafe.jpg'
+artSrc('/art/place/cafe.png')    // 'art/place/cafe.png'
+artSrc('clips/kettle', 'video')  // 'art/clips/kettle.mp4'
 ```
 
 The result is relative on purpose. A built game is a folder opened from disk or from a subpath, where a path starting `/` would point at the root of the drive or host instead of beside `index.html`. Put your pictures in `art/` next to the game's `index.html`. Sound files work the same way under `audio/`, through [`audioSrc`](/reference/audio#audiosrc).
+
+## mediaKind
+
+```ts
+import { mediaKind } from '@ifloom/engine'
+
+function mediaKind(src: string): 'image' | 'video'
+```
+
+Whether a file is drawn as a picture or a video, by its extension. `.mp4` and `.webm` are videos, and everything else is a picture, animated `.gif` and `.webp` included.
+
+```ts
+mediaKind('clips/kettle.mp4') // 'video'
+mediaKind('place/cafe.webp')  // 'image'
+```
+

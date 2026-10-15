@@ -40,6 +40,7 @@ type Game = {
   plugins?: readonly Plugin[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   audio?: GameAudio
+  media?: GameMedia
 }
 ```
 
@@ -71,6 +72,7 @@ type Game = {
 | `plugins` | The [plugins](/reference/plugins) the game is built with, in the order their hooks run. You choose them when you build the game, on the base you pass to [`loadGame`](/reference/loader#loadgame). |
 | `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging `base.data` and every pack's `data` by entry id. |
 | `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/reference/audio#gameaudio). `loadGame` merges the base's and every pack's by id. Leave it out and the game is silent. See [Audio](/reference/audio). |
+| `media` | The game's pools of pictures and videos, which content picks from by tags: `{ pools: { door: [{ src: 'door/red-night.jpg', tags: ['red', 'night'] }] } }`. A [`GameMedia`](/reference/media#gamemedia). `loadGame` merges the base's and every pack's pools by id. Leave it out and there are no pools. See [Media](/reference/media). |
 
 A new game starts at turn 0 with `introScene` open. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/reference/commands#startingstate).
 
@@ -234,6 +236,7 @@ It always checks:
 - [settings](/reference/settings): duplicate ids, each declaration, and every `{ setting }` condition the game declares as data
 - that the stats and items in `carryOver` are declared
 - [audio](/reference/audio): `game.audio` itself, each data scene's `audio`, the `[[sound:id]]` and `[[voice:id]]` in its prose, and the `audio` and `sound` effects on its choices, with the same [checks](/reference/loader#audio) as the loader
+- [media](/reference/media): empty pools, each data scene's `{ media }` blocks and `stage`, and the picture and video markup in its prose, with the same [checks](/reference/loader#media) as the loader, plus the commands its hotspots send
 
 In those effect lists, it reports:
 
@@ -248,7 +251,7 @@ In those effect lists, it reports:
 
 A short-form `{ custom }` call isn't looked inside.
 
-With `probes`, every scene is also rendered against each probe state. Anything that throws is reported, along with duplicate choice ids, the ids in the rendered choices' effects, and the audio and markup in what it rendered.
+With `probes`, every scene is also rendered against each probe state. Anything that throws is reported, along with duplicate choice ids, the ids in the rendered choices' effects, the audio and markup in what it rendered, and a hand-written scene's rendered `stage`.
 
 **Gotchas.**
 - Without probes, the choices of hand-written scenes are never looked at. Pass a few states that reach different branches.

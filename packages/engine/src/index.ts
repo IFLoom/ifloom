@@ -65,8 +65,11 @@ export { definePlugin, migratePlugins, pluginById, pluginQuery, pluginSpeaker } 
 export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
 export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from './scene.ts'
 export { fillTokens, proseStore } from './prose.ts'
-export type { SceneBeat } from './sceneBody.ts'
-export { artSrc, parseBeats } from './sceneBody.ts'
+export type { SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
+export { artSrc, mediaKind, parseBeats } from './sceneBody.ts'
+
+// Media: pools, and the stage
+export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './media.ts'
 
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './audio.ts'
@@ -183,4 +186,4 @@ export type {
   NoticesView,
   SettingView,
 } from './view.ts'
-export { renderAction, view } from './view.ts'
+export { renderAction, stageView, view } from './view.ts'

@@ -32,6 +32,7 @@ type Pack = {
   patches?: Patch[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   audio?: Partial<GameAudio>
+  media?: GameMedia
 }
 ```
 
@@ -48,6 +49,7 @@ type Pack = {
 | `patches` | Applied straight away, in order. See [Patches](#patches). |
 | `data` | Content for the game's [plugins](/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/plugins/places#in-a-pack) and `data.cast.characters` for the [cast](/plugins/cast#in-a-pack). |
 | `audio` | [Audio](/reference/audio#gameaudio), over the base's own `audio`. `tracks` merge by id, and a later pack's track replaces an earlier one. `channels` merge by id too, field by field. A later pack's `mute` wins, and its `default` wins channel by channel. |
+| `media` | [Media](/reference/media#gamemedia), over the base's own `media`. `pools` merge by id, and a later pack's pool replaces an earlier one with the same id as a whole. To add a file to a pool, a mod redeclares the pool with every file. |
 
 ### How packs merge
 
@@ -244,13 +246,41 @@ Wherever content names [audio](/reference/audio), the loader checks it against `
 | `duck.to is not between 0 and 1` | A channel's `duck.to`. |
 | `mode is not "background" or "cue"` | A channel's `mode`. |
 
+### Media
+
+Wherever content asks for a picture or a video, the loader checks it against `game.media`. That's the picture and video [markup](/reference/prose#videos) in every prose entry, a data scene's `{ media }` blocks and `stage`, and a place's `stage` (through the places plugin's check).
+
+| Problem | When |
+|---|---|
+| `unknown pool "…"` | Markup (`[[img:@door]]`), a `{ media }` block or a stage layer names a pool `game.media.pools` doesn't have. |
+| `no file in pool "…" is tagged "…"` | A request asks for a tag no file in the pool has. The pick would still fall back to other files, but a tag nothing has is usually a typo. |
+| `a pool with no files` | A pool is empty. Reported as `pool <id>`. |
+| `file <n> has no src` | A file in a pool has no `src`. Reported as `pool <id>`. |
+| `unknown flag "…" in …` | Markup has a `name=value` part whose name isn't a flag, such as `speed=2`. |
+| `"…" and "…" can't all be alt text in …; is one a misspelt flag?` | Markup has more than one part that isn't a flag. |
+| `video flag "…" on a picture` | `controls`, `once`, `sound` or `poster` on a picture: `[[img:]]` markup, a `{ media }` block or a stage layer whose file isn't a video. A pool with a video in it may take them. |
+| `flag "rot" turns a picture, not a video, in …` | `rot` on video markup. |
+| `media: needs a src or a pool`, `media: has both a src and a pool` | A `{ media }` block. A stage layer gets the same, after `stage layer <id>:`. |
+| `stage layer <id>: two layers share this id` | Two layers of one stage have the same `id`. A layer with no `id` is named by its index. |
+| `hotspot <id>: needs exactly one of command and choice` | A hotspot has both, or neither. |
+| `hotspot <id>: no choice "…" in this scene` | A hotspot's `choice` isn't one of the scene's choices. |
+| `hotspot <id>: names choice "…", but only a scene has choices` | A place's hotspot has a `choice`. |
+| `hotspot <id>: rect must be four numbers: [x, y, width, height]` | A hotspot's `rect` isn't four numbers. |
+| `hotspot <id>: rect is outside 0 to 100` | A number in the rect is below 0 or above 100. |
+| `hotspot <id>: rect has no width or height` | The width or the height is 0. |
+| `hotspot <id>: rect runs off the stage: x + width and y + height must be 100 or less` | The rect goes past the right or bottom edge. |
+| `hotspot <id>: two hotspots share this id` | Two hotspots of one stage have the same `id`. |
+| `hotspot <id>: unknown layer "…"` | A hotspot's `layer` names no layer of its stage. |
+
+A hotspot's `command` and `when`, and a layer's `when`, are checked as any [command](#in-a-command) and [condition](#in-a-condition) are, with `hotspot <id>:` or `stage layer <id>:` in front.
+
 ### Where each check runs
 
 | `where` | Checked |
 |---|---|
 | `pack` | `written for schema …, this engine reads …`: the pack's `schema` isn't [`SCHEMA`](#schema). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
-| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. Its `audio`, as a placement (see [Audio](#audio)). |
+| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. Its `audio`, as a placement (see [Audio](#audio)). Its `{ media }` blocks and its `stage` (see [Media](#media)). |
 | `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. |
 | `trigger <id>` | Its `when`, and its `effects` as an effect list. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
@@ -267,9 +297,10 @@ Wherever content names [audio](/reference/audio), the loader checks it against `
 | `channel <id>` | A channel's `volume` setting, `duck` and `mode`. |
 | `audio` | `game.audio.mute`. Reported against the last pack that set it, or `base`. |
 | `audio default` | The tracks in `game.audio.default`, as placements. |
-| `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]` in every prose entry, variants members included, reported against the pack that wrote it. |
+| `pool <id>` | An empty pool, or a file with no `src`. See [Media](#media). |
+| `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]`, and the pools and flags in picture and video markup, in every prose entry, variants members included, reported against the pack that wrote it. |
 
-A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems`, `commandProblems` and `audioProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body, actions and audio, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
+A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems`, `commandProblems`, `audioProblems` and `stageProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body, actions, audio and stage, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
 
 **Absent partners.** A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/reference/plugins#cooperates). In play it simply isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
 
@@ -302,8 +333,9 @@ mod:new-menu · entity dish:pie · no dish stat named "coins"
 - every `{ setting }` condition in `finished`, triggers, inputs, the game's actions, activities' requirements and data scenes, as the loader checks it;
 - the stats and items in `carryOver`;
 - [audio](#audio): `game.audio` itself, each data scene's `audio`, the markup in its blocks' prose, and the `audio` and `sound` effects on its choices, item uses and activities. Plugins' content, such as a place's `audio`, is left to the loader.
+- [media](#media): empty pools, each data scene's `{ media }` blocks and `stage`, the picture and video markup in its blocks' prose, and the commands its hotspots send. A place's `stage` is left to the loader.
 
-With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids, the effects of the choices it rendered, and the audio and markup in what it rendered.
+With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids, the effects of the choices it rendered, the audio and markup in what it rendered, and a hand-written scene's rendered `stage`.
 
 Its treatment of [absent partners](#the-checks) differs from the loader's in one place. It excuses a long-form custom effect of a cooperating plugin the game lacks, but not a custom command, so a game action whose command belongs to a missing partner is reported.
 

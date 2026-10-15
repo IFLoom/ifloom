@@ -27,7 +27,7 @@ describe('hash', () => {
   })
 
   it('is stable, because a save has to deal the same cards twice', () => {
-    expect(hash('psych')).toBe(hash('psych'))
+    expect(hash('loom')).toBe(hash('loom'))
   })
 })
 

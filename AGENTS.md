@@ -58,6 +58,6 @@ npm run docs:build   # fails on dead links
 `ROADMAP.md` is the order of work and the list of known problems; read it
 before starting a step, and update it when one lands.
 
-The first game built on the engine (a separate private repo) is frozen at the
-tag `psych-compatible` and is not kept building against later engine changes;
-it is refactored onto the engine once the roadmap's core steps are done.
+The first game built on the engine (a separate private repo) is frozen and is
+not kept building against later engine changes; it is refactored onto the
+engine once the roadmap's core steps are done.

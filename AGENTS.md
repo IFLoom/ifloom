@@ -21,10 +21,11 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-devices` (`@ifloom/plugin-devices`) | Devices with apps built from sections; opening one is free and doesn't leave the room. |
 | `packages/phone` (`@ifloom/phone`) | A bundle, not a plugin: `phone()` wires devices, messages and feed into a smartphone. |
 | `packages/plugin-debug` (`@ifloom/plugin-debug`) | Debug commands that ignore locks; left out of release builds. |
-| `packages/ui` (`@ifloom/ui`) | The base UI: React and shadcn/ui (Radix, Tailwind v4). Reads plugins' views by shape and depends on no plugin. |
-| `packages/cli` (`@ifloom/cli`) | `ifloom dev`, `build`, `check`, and the Vite preset `@ifloom/cli/vite`. |
+| `packages/react` (`@ifloom/react`) | The React UI: React and shadcn/ui (Radix, Tailwind v4), and `mountGame`. Reads plugins' views by shape and depends on no plugin. One UI among possible others: nothing else depends on it. |
+| `packages/cli` (`@ifloom/cli`) | `ifloom new`, `dev`, `build`, `check`, `playtest`, `snapshot`, and the Vite preset `@ifloom/cli/vite`. Owns the build tools (Vite, Tailwind, the plugins) as dependencies, so a game lists only `@ifloom/*`. Templates in `templates/`; `ifloom new` also copies the examples. |
 | `examples/showcase` | Small Town: the game that uses every feature. Its tests play it; the docs point at its source. |
-| `examples/novel` | The Letter: a linear novel with no plugins, places or clock — the smallest shape of game. |
+| `examples/novel` | The Letter: a linear novel with no plugins, places or clock, the smallest shape of game. |
+| `games/` | Not in git: users' own games, made by `npm run new -- <name>`, as workspaces of the checkout. |
 | `examples/cafe` | The Corner Café: a management game a week at a time, with staff and dishes as entities. |
 
 A first-party plugin is a package of its own that imports only `@ifloom/engine` (its `tests/contracts/boundary.test.ts` holds it to that) and requires no other plugin. It may work with others when the game has them, by name only: it lists them in `cooperates` and asks them through conditions, effects and `query`. It is documented under `docs/plugins/`, and a docs contract fails on any export the page does not name.
@@ -34,9 +35,10 @@ A first-party plugin is a package of its own that imports only `@ifloom/engine` 
 ## Rules the engine keeps
 
 - **Deterministic.** Every draw goes through `random.ts`, hashed from the save's seed, the turn and a name. Same save, same cards.
-- **Nothing loads at runtime** — everything a game needs is bundled when it is built, because a game opened from disk can fetch nothing. `tests/contracts/boundary.test.ts` enforces it.
+- **Nothing loads at runtime.** Everything a game needs is bundled when it is built, because a game opened from disk can fetch nothing. `tests/contracts/boundary.test.ts` enforces it.
 - **No genre, no game.** The engine knows no stat, phase, place or person by name; a game declares them and supplies its own logic through `pack.rules`. Examples, comments and docs use everyday, neutral fiction.
 - **Standalone.** The engine imports nothing outside its own folder.
+- **Framework-neutral.** The engine and plugins import no UI framework; React lives only in `@ifloom/react`, and the Vite preset adds React and Tailwind only for games that depend on them. The `vanilla` template proves a game runs without React.
 
 ## Words
 
@@ -44,7 +46,7 @@ Author-facing words, used in docs and new API: scene, choice, action, location, 
 
 ## Docs
 
-Anything the engine exports is documented in `docs/` (VitePress, published as docs.ifloom.com). A change to the exports ships with its docs: load the `ifloom-docs` skill.
+Anything the engine exports is documented in `docs/` (VitePress, published at https://ifloom.github.io/ifloom/). A change to the exports ships with its docs: load the `ifloom-docs` skill.
 
 ## Verify
 

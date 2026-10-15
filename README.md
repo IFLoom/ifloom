@@ -8,8 +8,13 @@ You write the game in TypeScript and the engine runs it. A finished game builds
 to a single `index.html` that opens straight from disk or uploads to itch.io as
 it is.
 
-> **Pre-release.** Nothing here is a stable API yet, and the packages are not on
+> **Pre-release.** Nothing here is a stable API yet, and the packages aren't on
 > npm. See the [roadmap](ROADMAP.md).
+
+**Docs:** in [`docs/`](docs); run `npm run docs:dev` to read them in a browser.
+They'll be published at https://ifloom.github.io/ifloom/, with
+[llms.txt](https://ifloom.github.io/ifloom/llms.txt) and
+[llms-full.txt](https://ifloom.github.io/ifloom/llms-full.txt) for AI agents.
 
 ## What a game looks like
 
@@ -49,8 +54,8 @@ export const letter: Pack = {
 ```
 
 The engine works out what is on screen and which choices are available, and
-explains why the others are not. You can draw the screen yourself, or let
-`@ifloom/ui` draw it for you in React.
+explains why the others are not. You can draw the screen yourself with any
+framework, or let `@ifloom/react` draw it for you in React.
 
 ## How it is put together
 
@@ -69,16 +74,17 @@ A few guarantees hold for every game:
   and automated playtests all depend on this.
 - **Everything is bundled.** A game loads nothing over the network at runtime,
   so it still works when opened from a file.
-- **The engine is headless.** It has no DOM and runs the same in a browser, in
-  Node or in a test.
+- **The engine is headless.** It has no DOM and no UI framework, and runs the
+  same in a browser, in Node or in a test. The React UI is one way to draw a
+  game; plain DOM, Vue or Svelte work just as well.
 
 ## Packages
 
 | Package | What it is |
 |---|---|
 | `@ifloom/engine` | The core: state, commands, scenes, conditions, effects and saves. |
-| `@ifloom/ui` | React components that draw a game's screen, for you to restyle and extend. |
-| `@ifloom/cli` | `ifloom dev`, `build`, `check`, `playtest` and `snapshot`. |
+| `@ifloom/react` | The React UI: components that draw a game's screen, and `mountGame` to start one in a line. |
+| `@ifloom/cli` | `ifloom new`, `dev`, `build`, `check`, `playtest` and `snapshot`, and the Vite preset. |
 | `@ifloom/plugin-calendar` | Days, times of day, weeks, sleep and a curfew. |
 | `@ifloom/plugin-places` | Locations with exits, and travel between them. |
 | `@ifloom/plugin-cast` | Characters with schedules, conversations, calls and relationship stats. |
@@ -98,22 +104,45 @@ A few guarantees hold for every game:
 | [`examples/cafe`](examples/cafe) | *The Corner Café*: a management game played a week at a time. |
 | [`examples/showcase`](examples/showcase) | *Small Town*: a life sim that uses every feature. |
 
-Play one in the browser:
+## Getting started
+
+Until the packages are on npm, you work inside a clone of this repo. You'll
+need Node 22.18 or later (24 is recommended).
 
 ```bash
+git clone https://github.com/IFLoom/ifloom.git
+cd ifloom
 npm install
-npm run dev -w @ifloom/example-novel
+npm run dev -w @ifloom/example-novel   # play The Letter in your browser
 ```
+
+To start your own game:
+
+```bash
+npm run new -- my-story    # makes games/my-story, which git ignores
+npm install
+npm run dev -w my-story
+```
+
+That gives you a small two-scene game drawn with the React UI. Add
+`--template` to start from something else:
+
+| Template | What you get |
+|---|---|
+| `blank` | The default: two scenes, drawn with the React UI. |
+| `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte and the rest. |
+| `novel`, `cafe`, `town` | A copy of one of the examples. |
+
+Your game's `package.json` lists only `@ifloom/*` packages; the build tools come
+with `@ifloom/cli`. The [installation guide](docs/guide/installation.md) also
+covers keeping your game in its own folder outside the checkout.
 
 ## Documentation
 
-The docs live in [`docs/`](docs). To browse them locally, run
-`npm run docs:dev`. Start with the introduction, then *Shapes of game* and
-*Your first game*.
+The docs are in [`docs/`](docs). Run `npm run docs:dev` to browse them locally. A good order
+for a first read is the introduction, *Your first story*, then *Shapes of game*.
 
-## Working on it
-
-Requires Node 22.6 or later.
+## Working on the engine
 
 ```bash
 npm install

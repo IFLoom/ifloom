@@ -1,10 +1,10 @@
-import { ArrowLeftIcon, TriangleAlertIcon, XIcon } from 'lucide-react'
+import { ArrowLeftIcon, TriangleAlertIcon, Volume2Icon, XIcon } from 'lucide-react'
 import { overridable } from './overrides.tsx'
 
 /** The icons the UI draws, by what they're for. */
-export type IconName = 'close' | 'back' | 'warning'
+export type IconName = 'close' | 'back' | 'warning' | 'voice'
 
-const ICONS = { close: XIcon, back: ArrowLeftIcon, warning: TriangleAlertIcon }
+const ICONS = { close: XIcon, back: ArrowLeftIcon, warning: TriangleAlertIcon, voice: Volume2Icon }
 
 function IconImpl({ name, label }: { name: IconName; label?: string }) {
   const Glyph = ICONS[name]

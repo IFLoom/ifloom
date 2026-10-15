@@ -116,6 +116,7 @@ type MountOptions = Omit<GameShellProps, 'runner'> & {
   start?: GameState
   runner?: RunnerOptions
   app?: ComponentType
+  audio?: false | AudioOptions
 }
 ```
 
@@ -133,6 +134,7 @@ It sets up what most games want:
 | `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/react/customising#_6-replace-a-component). |
 | `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/react/customising#_4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
+| `audio` | On when the game lists any tracks in [`game.audio`](/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/reference/audio-player#startaudio) as its [options](/reference/audio-player#audiooptions). See [Sound](#sound). |
 
 Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` and `className` are ignored, and the rest go to the provider.
 
@@ -314,6 +316,39 @@ The runner exists from the start, whichever screen is showing. New game replaces
 
 Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/reference/state#new-game) and declares `carryOver`. You can also add screens of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/guide/title-screen) walks through it all, and [Screens](/react/components#screens) lists every option and component.
 
+## Sound
+
+When the game lists any tracks in [`game.audio`](/reference/audio), `mountGame` starts the [audio player](/reference/audio-player) for you. Music starts on the player's first click or key press, and each sound plays once. You don't need to add anything to the page, and the settings screen already draws the game's volume and mute settings.
+
+To see what it's doing, pass it a log:
+
+```ts
+mountGame(game, { audio: { log: console.debug } })
+```
+
+`audio: false` leaves sound off, for a game that plays it some other way.
+
+A spoken line with a voice, `Ava: "Morning!" [[voice:ava.morning]]`, gets a small button after its words that plays the line again. The button is the part `voice-replay`, labelled with `ui.replayVoice`. It only shows while the player is running, so a game with `audio: false` doesn't get it. A sound beat, `[[sound:knock]]`, draws nothing.
+
+### useAudio
+
+```ts
+function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
+```
+
+If you draw [`GameShell`](#gameshell) yourself rather than with `mountGame`, start the player with `useAudio`. It starts when the component mounts and stops when it unmounts. Inside a [`GameProvider`](/react/components#gameprovider) it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/reference/audio-player#audiooptions), and are read once, when the player starts.
+
+```tsx
+import { useAudio, GameShell } from '@ifloom/react'
+
+function App() {
+  useAudio({ runner })
+  return <GameShell runner={runner} />
+}
+```
+
+It returns the [player](/reference/audio-player#audioplayer) once it has started, and `null` before then. Use one or the other: `mountGame` with `useAudio` inside it would play every sound twice.
+
 ## Theming
 
 The look comes from a theme preset, CSS variables for the fonts, sizes and colours, and a `data-part` attribute on every element for your own CSS. Below that you can change the built-in Tailwind classes, replace any component, or replace the page's frame. [Make it your own](/react/customising) covers all of it, from the smallest change to the biggest.
@@ -420,6 +455,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/re
 | `ui.noSettings` | `There are no settings.` | |
 | `ui.credits` | `Credits` | |
 | `ui.titleScreen` | `Title screen` | |
+| `ui.replayVoice` | `Hear it again` | |
 
 Which component uses which keys:
 
@@ -428,7 +464,7 @@ Which component uses which keys:
 - **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Inventory](/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
 - **[Price tag](/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
-- **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter.
+- **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, and `ui.replayVoice`, the label on a spoken line's replay button.
 - **[Notices](/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button.
 - **[Devices](/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.

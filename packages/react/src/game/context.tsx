@@ -69,6 +69,11 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
   )
 }
 
+/** The game in context, or null outside a `GameProvider`. */
+export function useGameIfAny(): GameContextValue | null {
+  return useContext(GameContext)
+}
+
 /** The runner, the current view and `send`. Only inside a `GameProvider`. */
 export function useGame(): GameContextValue {
   const value = useContext(GameContext)

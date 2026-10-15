@@ -21,6 +21,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-devices` (`@ifloom/plugin-devices`) | Devices with apps built from sections; opening one is free and doesn't leave the room. |
 | `packages/phone` (`@ifloom/phone`) | A bundle, not a plugin: `phone()` wires devices, messages and feed into a smartphone. |
 | `packages/plugin-debug` (`@ifloom/plugin-debug`) | Debug commands that ignore locks; left out of release builds. |
+| `packages/audio` (`@ifloom/audio`) | The audio player: `startAudio(runner)` plays `view.audio` in the browser with plain `HTMLAudioElement`s. Imports only the engine; any UI can use it. |
 | `packages/react` (`@ifloom/react`) | The React UI: React and shadcn/ui (Radix, Tailwind v4), and `mountGame`. Reads plugins' views by shape and depends on no plugin. One UI among possible others: nothing else depends on it. |
 | `packages/cli` (`@ifloom/cli`) | `ifloom new`, `dev`, `build`, `check`, `playtest`, `snapshot`, and the Vite preset `@ifloom/cli/vite`. Owns the build tools (Vite, Tailwind, the plugins) as dependencies, so a game lists only `@ifloom/*`. Templates in `templates/`; `ifloom new` also copies the examples. |
 | `examples/showcase` | Small Town: the game that uses every feature. Its tests play it; the docs point at its source. |

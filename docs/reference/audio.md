@@ -1,6 +1,6 @@
 # Audio
 
-You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/reference/effects#audio) and [`sound`](/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/reference/view#audio). The `@ifloom/audio` package, coming in the same change, reads that and does the playing in the browser.
+You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/reference/effects#audio) and [`sound`](/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/reference/view#audio). The [audio player](/reference/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/react/#sound) starts it for you.
 
 ```ts
 import {
@@ -116,7 +116,7 @@ One sound file.
 
 | Field | What it does | Default |
 |---|---|---|
-| `src` | The file, relative to the game's public folder. It goes through [`audioSrc`](#audiosrc). | |
+| `src` | The file, relative to the game's `public/audio/` folder. It goes through [`audioSrc`](#audiosrc). [`ifloom check`](/cli/#ifloom-check) reports a file that isn't there. | |
 | `channel` | The channel it belongs to. A `sound` effect and `[[sound:id]]` play it there. A background channel only takes tracks whose channel is a background one. | `'sfx'` |
 | `loop` | Whether it repeats while it's on a background channel. | `true` |
 | `volume` | Its own volume, from 0 to 1. | `1` |
@@ -305,7 +305,7 @@ The loader and [`validatePack`](/reference/game#validatepack) check everything a
 
 ## Gotchas
 
-- **The engine plays nothing.** Without a player such as `@ifloom/audio`, `view.audio` is only data.
+- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/reference/audio-player), `view.audio` is only data.
 - **A sound effect is kept, a scene's sound isn't.** A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out, so a player that has just started marks every key it can see as already heard. Otherwise loading a save would replay old sounds.
 - **A stage's prose doesn't cue.** `[[sound:id]]` in a [place's](/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
 - **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.

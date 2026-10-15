@@ -85,6 +85,7 @@ export default defineConfig({
             { text: 'Progress and limits', link: '/reference/progress' },
             { text: 'Randomness', link: '/reference/random' },
             { text: 'Audio', link: '/reference/audio' },
+            { text: 'The audio player', link: '/reference/audio-player' },
           ],
         },
       ],

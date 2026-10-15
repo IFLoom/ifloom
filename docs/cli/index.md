@@ -6,8 +6,8 @@
 |---|---|
 | `ifloom new <name> [--template t] [--theme t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run. |
 | `ifloom dev` | Serves the game in a browser, reloading as you edit. |
-| `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures beside it (or inside it), then checks the folder opens from disk. |
-| `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find. |
+| `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures and sound beside it (or the pictures inside it), then checks the folder opens from disk. |
+| `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find, and every sound file missing from `public/`. |
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
 
@@ -88,13 +88,13 @@ ifloom build --inline-assets --out dist-one   # the pictures inside index.html t
 
 Runs `vite build` with the game's config into `--out` (default `dist`), emptying the folder first. With `--inline-assets`, it then puts every file in the folder's `art/` into `index.html` with [`inlineAssets`](#inlineassets), and says how many went in.
 
-Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
+Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. When the game's `src/game.ts` loads, it also checks that every track in [`game.audio`](/reference/audio) has its file in the folder's `audio/`. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
 
 ```
 index.html  424.5 kB
 ```
 
-With the preset, that's the whole game: one HTML file with the script and stylesheet inside it, and the pictures in `art/` beside it. See [Shipping a game](/guide/shipping) for why it has to be one file.
+With the preset, that's the whole game: one HTML file with the script and stylesheet inside it, the pictures in `art/` beside it, and the sound in `audio/`. See [Shipping a game](/guide/shipping) for why it has to be one file.
 
 ### One file, pictures and all
 
@@ -108,6 +108,7 @@ index.html  440.6 kB
 **Gotchas.**
 
 - **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/react/components#picture) (and so every portrait, stage picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/react/components#asseturl). Otherwise it points at a file that's no longer there.
+- **Sound is never inlined.** The `audio/` folder stays beside `index.html`, and the command says so. Music and voices run to megabytes, and the page would have to read all of it before the game first draws. A game with sound ships as a folder, so `--inline-assets` gives a page with the pictures inside and `audio/` beside it.
 - **Inline only a small game.** Every picture goes in the page, a third bigger than the file because of base64, and is read before the game first draws. A game with a few hundred kilobytes of art is fine as one file. One with megabytes of art is better as a folder.
 
 **What it doesn't check.** The build isn't searched for `fetch` or a dynamic `import()`. A bundled library can name `fetch` without ever calling it, so finding the word in the output means nothing. The engine's and the UI's own contract tests check their source never loads anything at runtime. Your own code has to keep that rule too.
@@ -126,6 +127,12 @@ No problems.
 ```
 
 It exits with `1` if there are any problems. Run it in CI beside your tests.
+
+It also looks for every track's sound file in the game's `public/` folder, where Vite copies it from into the build. A track's `src` goes through [`audioSrc`](/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`. A missing one is reported as:
+
+```
+track calm: no file public/audio/music/calm.ogg
+```
 
 ### What the module exports
 
@@ -339,7 +346,7 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line.
 
 ```ts
-import { TEMPLATES, THEMES, buildFiles, checkBuild, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
+import { TEMPLATES, THEMES, buildFiles, checkAudio, checkBuild, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
 import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
 ```
 
@@ -376,13 +383,14 @@ const { theme } = newGame({ name: 'market-day', theme: 'paper', into: '/tmp/mark
 ### checkBuild
 
 ```ts
-function checkBuild(dir: string): string[]
+function checkBuild(dir: string, game?: Game): string[]
 ```
 
 Returns what's wrong with a built folder as a game that opens from disk, or an empty list when nothing is. It reads `dir/index.html` and reports:
 
 - each `<script src>` and each stylesheet `<link>` that's a full address (`https://…`, `//…`) or starts with `/`;
-- each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`).
+- each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`);
+- given the `game`, each track whose sound file isn't in the folder, as [`checkAudio`](#checkaudio) reports it.
 
 With no `index.html`, the one problem is `no index.html in <dir>`.
 
@@ -417,7 +425,7 @@ function inlineAssets(dir: string, folder?: string): { files: number; bytes: num
 
 What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL. They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then the folder is removed. It returns how many files went in and the size of the page afterwards, in bytes.
 
-The type in each URL comes from the file's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.svg`, `.mp3`, `.ogg`, `.webm` or `.mp4`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/react/components#asseturl) reads it.
+The type in each URL comes from the file's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.svg`, `.mp3`, `.ogg`, `.oga`, `.opus`, `.wav`, `.m4a`, `.aac`, `.flac`, `.webm` or `.mp4`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/react/components#asseturl) reads it.
 
 ```ts
 import { checkBuild, inlineAssets } from '@ifloom/cli'
@@ -431,14 +439,15 @@ checkBuild('dist')   // []
 - **The map's keys are the paths the game uses**, `art/…`, as [`artSrc`](/reference/prose#artsrc) writes them. With another `folder`, they start with that folder's name instead.
 - **With nothing to inline, the page is left alone.** When there's no `art/` folder, or it's empty, no script is added and nothing is removed. The result says `files: 0`.
 - **A second run changes nothing.** On a folder already inlined there's no `art/` left, so the same rule applies.
+- **`audio/` isn't touched.** The sound files the [audio player](/reference/audio-player) plays stay beside the page. You could pass `folder: 'audio'`, but the player looks for files beside the page and never reads the map, so they wouldn't play.
 
 ### checkGame
 
 ```ts
-function checkGame(module: Record<string, unknown>): string[]
+function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
-Everything wrong with the game a module exports: the problems it came with, then [`validatePack`](/reference/game#validatepack)'s. This is what `ifloom check` prints. The module is read as in [What the module exports](#what-the-module-exports).
+Everything wrong with the game a module exports: the problems it came with, then [`validatePack`](/reference/game#validatepack)'s. Given `publicDir`, it also adds every sound file missing from it, with [`checkAudio`](#checkaudio). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
 
 ```ts
 import { expect, it } from 'vitest'
@@ -451,6 +460,21 @@ it('has no problems', () => {
 ```
 
 In a test, this is `ifloom check` without the command line. Small Town's own build test does this.
+
+### checkAudio
+
+```ts
+function checkAudio(game: Game, dir: string): string[]
+```
+
+Every track in [`game.audio`](/reference/audio) whose file isn't in `dir`. Each track's `src` goes through [`audioSrc`](/reference/audio#audiosrc), so pass the folder the page sits in: `public` before a build, or the built folder after one. Playlists only name other tracks, so they aren't looked for.
+
+```ts
+import { checkAudio } from '@ifloom/cli'
+
+checkAudio(game, 'public') // ['track knock: no file public/audio/knock.ogg']
+checkAudio(game, 'dist')   // []
+```
 
 ### gameFrom
 

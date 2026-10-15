@@ -17,6 +17,7 @@ import {
   Notices, QuestLog,
   DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
   MessagesSection, FeedSection, DebugPanel,
+  useAudio,
   UI_STRINGS, uiSay, useWords,
   PART_KEYS, UiProvider, usePart, overridable,
   type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption,
@@ -391,10 +392,10 @@ Parts: `page` (with `data-has-sidebar` when there's a side column), `stage` and 
 ```tsx
 function Icon(props: { name: IconName; label?: string }): JSX.Element
 
-type IconName = 'close' | 'back' | 'warning'
+type IconName = 'close' | 'back' | 'warning' | 'voice'
 ```
 
-One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, and `warning` on a choice with a warning. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
+One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice with a warning, and `voice` on a spoken line's replay button. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
 
 ## The stage
 
@@ -432,10 +433,11 @@ One beat of a scene's body, drawn by kind:
 |---|---|
 | `text` | A paragraph. |
 | `mono` | A paragraph in a monospace font. |
-| `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. |
+| `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/react/#sound) is running. |
 | `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. |
 | `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
 | `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
+| `sound` | Nothing. The audio player plays it. |
 
 ```tsx
 import { Beat } from '@ifloom/react'
@@ -445,7 +447,7 @@ import { Beat } from '@ifloom/react'
 
 The [`Backlog`](#backlog) draws its beats with `Beat` too, so a replacement `Beat` changes both.
 
-Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header` and `mail-body`.
+Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body` and `voice-replay`.
 
 ### Picture
 
@@ -1349,6 +1351,23 @@ A [feed](/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (
 Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
 
 Replaceable as `FeedSection` in [`components`](#components). Parts: `feed`, `post`, `post-author`, `post-portrait`, `post-image`, `post-text`, `post-meta`, `post-comment`, `post-comment-name` and `button`.
+
+## Sound
+
+### useAudio
+
+```ts
+function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
+```
+
+Plays the game's sound with the [audio player](/reference/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner; outside one, pass `runner`. The other options go to [`startAudio`](/reference/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/react/#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/react/#sound).
+
+```tsx
+function App() {
+  useAudio({ runner, log: console.debug })
+  return <GameShell runner={runner} />
+}
+```
 
 ## Words
 

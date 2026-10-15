@@ -7,9 +7,9 @@
  *                            --theme paper|terminal|studio|storybook picks the React UI's preset
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
- *                            one HTML file and its art, checked to open from disk;
- *                            --inline-assets puts the art inside the file too
- *   ifloom check [module]    every problem the loader and validatePack find
+ *                            one HTML file and its art and sound, checked to open from disk;
+ *                            --inline-assets puts the art inside the file too (never the sound)
+ *   ifloom check [module]    every problem the loader and validatePack find, and sound files missing from public/
  *   ifloom playtest [module] [--turns 7] [--out playtest.txt]
  *                            play it day by day; every screen to a transcript, the numbers to .metrics
  *   ifloom snapshot [module] [--out snapshots/scenes.txt] [--update]
@@ -64,9 +64,19 @@ function renders(text: string): string[] {
   return text.split(/\n(?==== )/).map((block) => block.trimEnd())
 }
 
+/** The game in src/game.ts, to check its sound files are in the build; undefined if there's none or it won't load. */
+async function builtGame(): Promise<Game | undefined> {
+  if (!existsSync(resolve('src/game.ts'))) return undefined
+  try {
+    return await withModule(undefined, (module) => gameFrom(module).game)
+  } catch {
+    return undefined
+  }
+}
+
 async function check(entry?: string): Promise<number> {
   return withModule(entry, (module) => {
-    const problems = checkGame(module)
+    const problems = checkGame(module, 'public')
     for (const problem of problems) console.log(problem)
     console.log(problems.length ? `${problems.length} problem${problems.length === 1 ? '' : 's'}.` : 'No problems.')
     return problems.length ? 1 : 0
@@ -156,8 +166,9 @@ async function main(): Promise<number> {
       if (rest.includes('--inline-assets')) {
         const inlined = inlineAssets(out)
         console.log(`Put ${inlined.files} file${inlined.files === 1 ? '' : 's'} from art/ into index.html.`)
+        if (existsSync(resolve(out, 'audio'))) console.log('Left audio/ beside it: sound is too big to put in the page.')
       }
-      const problems = checkBuild(out)
+      const problems = checkBuild(out, await builtGame())
       for (const file of buildFiles(out).slice(0, 5)) console.log(`${file.file}  ${(file.bytes / 1024).toFixed(1)} kB`)
       for (const problem of problems) console.error(problem)
       return problems.length ? 1 : 0

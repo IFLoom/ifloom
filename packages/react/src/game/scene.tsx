@@ -1,10 +1,29 @@
-import type { SceneBeat } from '@ifloom/engine'
+import { audioSrc, type SceneBeat } from '@ifloom/engine'
 import { cn } from '../lib/utils.ts'
+import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
+import { Icon } from './icon.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { useWords } from './words.ts'
+
+/** A small button that plays a spoken line's voice again, when the game's sound is playing. */
+function VoiceReplay({ voice }: { voice: string }) {
+  const { runner } = useGame()
+  const player = usePlayer(runner)
+  const words = useWords()
+  const button = usePart('voice-replay', 'ml-2 inline-flex size-6 items-center justify-center rounded-full align-middle text-muted-foreground hover:text-foreground [&_svg]:size-4')
+  const tracks = runner.game.audio?.tracks
+  const track = tracks && Object.hasOwn(tracks, voice) ? tracks[voice] : undefined
+  if (!player || !track || 'playlist' in track) return null
+  const label = words('replayVoice')
+  return (
+    <button {...button} type="button" title={label} onClick={() => player.play(audioSrc(track.src), 'voice', track.volume ?? 1)}>
+      <Icon name="voice" label={label} />
+    </button>
+  )
+}
 
 function BeatImpl({ beat }: { beat: SceneBeat }) {
   const words = useWords()
@@ -22,7 +41,12 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
     case 'mono':
       return <p {...mono} data-beat="mono">{beat.text}</p>
     case 'say':
-      return <p {...say} data-beat="say" data-who={beat.who}>{beat.text}</p>
+      return (
+        <p {...say} data-beat="say" data-who={beat.who}>
+          {beat.text}
+          {beat.voice ? <VoiceReplay voice={beat.voice} /> : null}
+        </p>
+      )
     case 'image':
       return <Picture {...image} data-beat="image" src={beat.src} alt={beat.alt ?? ''} />
     case 'mail':
@@ -42,12 +66,16 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
           {beat.text}
         </div>
       )
+    case 'sound':
+      // Heard, not seen: the audio player plays it.
+      return null
   }
 }
 
 /**
  * One beat of a scene's body: narration, a spoken line, a picture, a letter, a
- * sign. Each carries `data-part="beat"` and `data-beat` with its kind. Replace
+ * sign. A sound beat draws nothing, and a spoken line with a voice gets a
+ * button to hear it again while the game's sound is playing. Each carries `data-part="beat"` and `data-beat` with its kind. Replace
  * it in `components` to draw some kinds your own way and hand the rest to `Default`.
  */
 export const Beat = overridable('Beat', BeatImpl)

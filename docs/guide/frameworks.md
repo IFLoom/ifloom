@@ -269,6 +269,29 @@ import App from './App.svelte'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
+## Sound
+
+If your game lists tracks in [`game.audio`](/reference/audio), add [`@ifloom/audio`](/reference/audio-player) to its `package.json` and start the player once, next to the runner. It works the same whatever draws the page, because it reads the runner, not your components. The vanilla template has the line ready in `src/main.ts`, commented out:
+
+```ts
+import { startAudio } from '@ifloom/audio'
+
+const runner = browserRunner(game)
+startAudio(runner)
+```
+
+In the Vue and Svelte sketches above, the line goes in `src/runner.ts`, after `browserRunner`. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
+
+A spoken line with a voice is a `say` [beat](/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/reference/audio-player#audioplayer) with the track's file:
+
+```ts
+import { audioSrc } from '@ifloom/engine'
+
+const player = startAudio(runner)
+const track = game.audio?.tracks[beat.voice]
+if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
+```
+
 ## Next
 
 - [The runner](/reference/runner) lists everything else a runner does, such as undo, saves and the backlog.

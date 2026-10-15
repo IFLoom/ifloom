@@ -21,6 +21,7 @@ export type { Classes, Components, Override, PartKey, UiOptions } from './game/o
 export { Icon } from './game/icon.tsx'
 export type { IconName } from './game/icon.tsx'
 export { mountGame } from './game/mount.tsx'
+export { useAudio } from './game/audio.ts'
 export type { MountOptions } from './game/mount.tsx'
 export { SceneStage, Beat } from './game/scene.tsx'
 export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'

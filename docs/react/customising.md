@@ -485,6 +485,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `mail-header` | One header line of a letter (a `mail` beat). |
 | `mail-body` | A letter's body. |
+| `voice-replay` | The button after a spoken line that plays its voice again. |
 
 ### Choices and buttons
 

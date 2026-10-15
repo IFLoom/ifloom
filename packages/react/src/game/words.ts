@@ -77,6 +77,7 @@ export const UI_STRINGS = {
   noSettings: 'There are no settings.',
   credits: 'Credits',
   titleScreen: 'Title screen',
+  replayVoice: 'Hear it again',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

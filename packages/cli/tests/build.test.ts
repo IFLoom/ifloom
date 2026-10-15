@@ -64,3 +64,52 @@ describe('checkGame', () => {
     expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 })
+
+import { checkAudio } from '../src/index.ts'
+
+describe('the sound files', () => {
+  const game = () =>
+    loadGame(
+      [
+        {
+          id: 'cafe',
+          schema: SCHEMA,
+          scenes: [{ id: 'door', body: [], choices: [] }],
+          audio: {
+            tracks: {
+              calm: { src: 'music/calm.ogg', channel: 'music' },
+              knock: { src: '/audio/knock.mp3' },
+              bell: { src: 'bell' },
+              radio: { playlist: ['calm'] },
+            },
+          },
+        },
+      ],
+      { id: 'cafe', title: 'The Café', introScene: 'door' },
+    )
+
+  it('reports each track whose file is missing from the public folder, where the page looks for it', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
+    mkdirSync(join(dir, 'audio', 'music'), { recursive: true })
+    writeFileSync(join(dir, 'audio', 'music', 'calm.ogg'), '')
+    writeFileSync(join(dir, 'audio', 'knock.mp3'), '')
+    expect(checkAudio(game().game, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
+    expect(checkGame({ default: game() }, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
+    // Without a folder to look in, check reads only the game.
+    expect(checkGame({ default: game() })).toEqual([])
+  })
+
+  it('reports them missing from a build too', () => {
+    const dir = built('<html><script type="module">go()</script></html>')
+    expect(checkBuild(dir, game().game)).toHaveLength(3)
+    expect(checkBuild(dir)).toEqual([])
+  })
+
+  it('leaves sound out of the page with --inline-assets', () => {
+    const dir = built('<html><head></head></html>')
+    mkdirSync(join(dir, 'audio'), { recursive: true })
+    writeFileSync(join(dir, 'audio', 'bell.ogg'), 'x')
+    expect(inlineAssets(dir).files).toBe(0)
+    expect(existsSync(join(dir, 'audio', 'bell.ogg'))).toBe(true)
+  })
+})

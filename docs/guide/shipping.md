@@ -45,7 +45,9 @@ Leave the [debug plugin](/plugins/debug#leave-it-out-of-release-builds) out of t
 
 Put pictures in `public/art/`. Vite copies `public/` into the build as it is, so they land in `dist/art/` beside the page.
 
-A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. See [One file, pictures and all](/cli/#one-file-pictures-and-all) for what it costs.
+Sound files go in `public/audio/` the same way, and land in `dist/audio/`. A browser plays them from beside a page opened from disk. `ifloom check` reports any track whose file is missing (see [The audio player](/reference/audio-player)).
+
+A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. Sound stays in `audio/` beside it, so a game with sound is always a folder. See [One file, pictures and all](/cli/#one-file-pictures-and-all) for what it costs.
 
 Then open `dist/index.html` straight from disk to check it. Testing only through `vite preview` hides the problem, because a local server is not `file://`.
 

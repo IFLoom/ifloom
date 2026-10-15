@@ -13,6 +13,10 @@ if (problems.length) console.warn(problems)
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
 const runner = browserRunner(game)
 
+// Sound, if the game lists tracks in `audio`: add @ifloom/audio to package.json,
+// import { startAudio } from it, and uncomment this line.
+// startAudio(runner)
+
 const root = document.querySelector<HTMLElement>('#root')!
 
 function draw(view: View): void {

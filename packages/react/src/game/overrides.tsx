@@ -43,7 +43,7 @@ export const PART_KEYS = [
   'people', 'people-title', 'person', 'person-portrait', 'person-name', 'person-role', 'person-actions',
   // Scenes
   'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
-  'beat', 'mail-header', 'mail-body',
+  'beat', 'mail-header', 'mail-body', 'voice-replay',
   // Choices and buttons
   'actions', 'choices', 'choice', 'choice-label', 'choice-warning', 'choice-price', 'choice-irreversible', 'choice-reason',
   'button', 'badge',

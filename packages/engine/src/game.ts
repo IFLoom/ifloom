@@ -12,7 +12,7 @@ import type { GameAudio } from './audio.ts'
 import type { GameMedia, MediaStage } from './media.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene, type DataScene } from './scene.ts'
-import type { MigrationTools } from './save.ts'
+import type { MigrationTools } from './intake.ts'
 import type {
   Command,
   Effect,

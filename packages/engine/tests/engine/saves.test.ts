@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { describe, expect, it } from 'vitest'
 import { indexedDbDriver, localStorageDriver, memoryDriver, type SaveDriver, type StorageLike } from '../../src/drivers.ts'
-import { startingState } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
 import { withCafe } from '../fixtures/cafe.ts'

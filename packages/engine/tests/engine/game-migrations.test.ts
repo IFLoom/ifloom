@@ -4,8 +4,9 @@ import type { Game } from '../../src/game.ts'
 import { SCHEMA, loadGame } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
-import { apply, hydrate, startingState } from '../../src/reduce.ts'
-import { migrateGame, saves, type SaveFile } from '../../src/save.ts'
+import { apply } from '../../src/reduce.ts'
+import { loadState, startingState } from '../../src/intake.ts'
+import { saves, type SaveFile } from '../../src/save.ts'
 import { statValue } from '../../src/stats.ts'
 import type { GameState } from '../../src/types.ts'
 import { view } from '../../src/view.ts'
@@ -80,7 +81,7 @@ describe('the game’s own migrations', () => {
     expect(loaded.meta.gameVersion).toBe(1)
     // A save already at version 2 runs only the last step.
     ran.length = 0
-    expect(migrateGame({ ...startingState(game), gameVersion: 2 }, game)).toMatchObject({ gameVersion: 3 })
+    expect(loadState({ ...startingState(game), gameVersion: 2 }, game)).toMatchObject({ gameVersion: 3 })
     expect(ran).toEqual(['2:undefined'])
   })
 
@@ -89,9 +90,9 @@ describe('the game’s own migrations', () => {
     const newer = { ...startingState(game), gameVersion: 3 }
     expect(saves(game, memoryDriver()).importText(fileOf(game, newer))).toBe('That save was made with a newer version of this game.')
     const said = { ...game, strings: { gameNewer: 'Update the game first.' } }
-    expect(migrateGame(newer, said)).toBe('Update the game first.')
+    expect(loadState(newer, said)).toBe('Update the game first.')
     // A game that declares no version is version 1.
-    expect(typeof migrateGame({ ...startingState(before), gameVersion: 2 }, before)).toBe('string')
+    expect(typeof loadState({ ...startingState(before), gameVersion: 2 }, before)).toBe('string')
   })
 
   it('fill what the game declares only when a step asks, and only the kinds it asks for', () => {
@@ -135,9 +136,9 @@ describe('the game’s own migrations', () => {
     expect(loaded.state.settings).toEqual({ hints: true })
     expect(loaded.state.entities.staff.ana.name).toBe('Ana')
     expect(loaded.state).not.toHaveProperty('gameVersion')
-    // Hydrate does the same for a state that never went through a save.
-    expect(hydrate(old, game).settings).toEqual({ hints: true })
-    expect(hydrate(old, grown({ version: 1 })).settings).toEqual({})
+    // loadState does the same for a state that never went through a save.
+    expect((loadState(old, game) as GameState).settings).toEqual({ hints: true })
+    expect((loadState(old, grown({ version: 1 })) as GameState).settings).toEqual({})
   })
 
   it('report a step keyed outside the versions it could carry', () => {

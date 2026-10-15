@@ -8,207 +8,24 @@ import {
 } from './game.ts'
 import { activityById, payCost } from './activity.ts'
 import { sceneContext } from './context.ts'
-import { emptyStoryline, storylineOf } from './storylines.ts'
-import type { Command, Effect, FlagValue, GameState, StorylineState } from './types.ts'
-import { SAVE_VERSION } from './types.ts'
-import { clampStat, startingStats, statDef, statLevel } from './stats.ts'
-import { bindCurrent, entitiesOf, entityOf, newEntity, removeEntity, startingEntities, writeEntity } from './entities.ts'
+import { storylineOf } from './storylines.ts'
+import type { Command, Effect, FlagValue, GameState } from './types.ts'
+import { clampStat, statDef, statLevel } from './stats.ts'
+import { bindCurrent, entitiesOf, entityOf, newEntity, removeEntity, writeEntity } from './entities.ts'
 import { holds } from './condition.ts'
-import { hash, weighted } from './random.ts'
+import { weighted } from './random.ts'
 import { collect, discard } from './collections.ts'
 import { dismiss, notify } from './notices.ts'
 import { fireTriggers } from './triggers.ts'
 import { inputById, inputValue } from './inputs.ts'
-import { settingAffects, startingSettings } from './settings.ts'
-import { emptyAudio, noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
+import { noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
 import { emptyMedia, hasPools, notingPicks } from './media.ts'
 import { view } from './view.ts'
-import { migratePlugins, pluginCommand, pluginEffect, runAfter, runHooks, startingPlugins, useApplier } from './plugin.ts'
+import { pluginCommand, pluginEffect, runAfter, runHooks, useApplier } from './plugin.ts'
+import { startingState } from './intake.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, n))
-}
-
-export type StartOptions = {
-  /** Fixes the save's random draws. Left out, it is hashed from the game's id, so tests deal the same cards. */
-  seed?: number
-  /** Variables to write before the first scene: a name from a title screen, a difficulty. */
-  flags?: Record<string, FlagValue>
-  /**
-   * The player's stored values for the game's `play` settings, usually the
-   * profile's `settings`. A setting given no value, or one it doesn't take,
-   * starts at its default; ids the game doesn't declare are ignored.
-   */
-  settings?: Record<string, unknown>
-  /**
-   * The state a finished game ended on, for a New Game+: the stats, variables
-   * and items the game's `carryOver` lists are copied from it.
-   */
-  carry?: GameState
-}
-
-/** What `carryOver` takes from the game before, laid over a fresh state. */
-function carried(state: GameState, game: Game, from: GameState): GameState {
-  const listed = game.carryOver
-  if (!listed) return state
-  const stats = { ...state.stats }
-  for (const id of listed.stats ?? []) {
-    if (typeof from.stats?.[id] === 'number') stats[id] = clampStat(state, game, id, from.stats[id])
-  }
-  const flags = { ...state.flags }
-  for (const key of listed.flags ?? []) {
-    if (from.flags?.[key] !== undefined) flags[key] = from.flags[key]
-  }
-  const items = { ...state.items }
-  const itemIds = listed.items === 'all' ? Object.keys(items) : (listed.items ?? [])
-  for (const id of itemIds) {
-    if (id in items && typeof from.items?.[id] === 'number') items[id] = from.items[id]
-  }
-  return { ...state, stats, flags, items }
-}
-
-export function startingState(game: Game, options: StartOptions = {}): GameState {
-  const storylines: Record<string, StorylineState> = {}
-  for (const storyline of game.storylines) {
-    storylines[storyline.id] = emptyStoryline()
-  }
-  const items: Record<string, number> = {}
-  for (const item of game.items) {
-    items[item.id] = item.start ?? (item.kind === 'gear' ? 1 : 0)
-  }
-  const fresh: GameState = {
-    version: SAVE_VERSION,
-    seed: options.seed ?? hash(game.id),
-    phase: game.startPhase ?? '',
-    turn: 0,
-    sceneId: game.introScene ?? null,
-    stats: startingStats(game),
-    entities: startingEntities(game),
-    created: {},
-    removed: [],
-    storylines,
-    flags: { ...options.flags },
-    items,
-    collections: {},
-    notices: [],
-    fired: {},
-    plugins: startingPlugins(game),
-    // The opening scene is on screen from the first frame, so it counts as seen
-    // without a command ever having been run.
-    seen: game.introScene ? { [game.introScene]: 1 } : {},
-    seenOn: game.introScene ? { [game.introScene]: 0 } : {},
-    chosen: {},
-    settings: startingSettings(game, options.settings),
-    // The opening scene is the first showing.
-    audio: { ...emptyAudio(), shown: game.introScene ? 1 : 0 },
-    media: emptyMedia(),
-    // Only a game that declares a version stamps its saves with one.
-    ...(game.version !== undefined ? { gameVersion: game.version } : {}),
-  }
-  if (!options.carry) return noteStarted(fresh, game)
-  // Carried over first, so variables the caller gives still win.
-  const plus = carried(fresh, game, options.carry)
-  return noteStarted({ ...plus, flags: { ...plus.flags, ...options.flags } }, game)
-}
-
-/**
- * What `MigrationTools.fill` can fill: the player's stats and each entity's
- * (start values), items (start counts), variables the game resets each turn
- * (`rules.resets`), play settings (defaults) and declared entities.
- */
-export type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
-
-const FILL_KINDS: readonly FillKind[] = ['stats', 'items', 'variables', 'settings', 'entities']
-
-/**
- * A state with what the game declares and the save lacks filled in: only the
- * kinds asked for, every kind if left out. Nothing the save already has is
- * changed, and an entity removed in play is not brought back.
- */
-export function fillDeclared(state: GameState, game: Game, kinds: readonly FillKind[] = FILL_KINDS): GameState {
-  let next = state
-  if (kinds.includes('stats')) {
-    const kept = (game.stats ?? []).filter((stat) => stat.derive === undefined)
-    const lacking = kept.filter((stat) => !stat.of && next.stats?.[stat.id] === undefined)
-    if (lacking.length) next = { ...next, stats: { ...next.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } }
-    for (const [kind, entities] of Object.entries(next.entities ?? {})) {
-      const owned = kept.filter((stat) => stat.of === kind)
-      for (const [id, entity] of Object.entries(entities)) {
-        const missing = owned.filter((stat) => entity.stats?.[stat.id] === undefined)
-        if (!missing.length) continue
-        const stats = { ...entity.stats, ...Object.fromEntries(missing.map((stat) => [stat.id, stat.start ?? 0])) }
-        next = writeEntity(next, `${kind}:${id}`, { ...entity, stats })
-      }
-    }
-  }
-  if (kinds.includes('items')) {
-    const lacking = game.items.filter((item) => next.items?.[item.id] === undefined)
-    if (lacking.length) {
-      next = { ...next, items: { ...next.items, ...Object.fromEntries(lacking.map((item) => [item.id, item.start ?? (item.kind === 'gear' ? 1 : 0)])) } }
-    }
-  }
-  if (kinds.includes('variables')) {
-    const lacking = Object.entries(game.rules?.resets ?? {}).filter(([key]) => next.flags?.[key] === undefined)
-    if (lacking.length) next = { ...next, flags: { ...next.flags, ...Object.fromEntries(lacking) } }
-  }
-  if (kinds.includes('settings')) {
-    // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
-    const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
-    if (lacking.length || !next.settings) {
-      next = { ...next, settings: { ...next.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
-    }
-  }
-  if (kinds.includes('entities')) {
-    // A declared entity the save does not have (a mod's, a new version's) joins it, unless it was removed in play.
-    const missing = (game.entities ?? []).filter(
-      (entity) => !next.entities?.[entity.of]?.[entity.id] && !(next.removed ?? []).includes(`${entity.of}:${entity.id}`),
-    )
-    for (const entity of missing) next = writeEntity(next, `${entity.of}:${entity.id}`, newEntity(game, entity.of, entity))
-  }
-  return next
-}
-
-/**
- * A state brought into the shape this engine and game expect: the parts of
- * the state every save needs (lists, records, audio, media, a settings
- * object), and each plugin's state brought up to date.
- *
- * A game that declares no `version` also gets its declared play settings and
- * entities filled in here, as it always has. A game that declares one fills
- * them itself, in its migration steps, with `tools.fill()`.
- */
-export function hydrate(state: GameState, game: Game): GameState {
-  let next = state
-  let storylines = state.storylines
-  let changed = false
-  for (const def of game.storylines) {
-    if (!storylines[def.id]) {
-      if (!changed) {
-        storylines = { ...storylines }
-        changed = true
-      }
-      storylines[def.id] = emptyStoryline()
-    }
-  }
-  if (changed) next = { ...next, storylines }
-  if (!next.collections) next = { ...next, collections: {} }
-  if (!next.notices) next = { ...next, notices: [] }
-  if (!next.fired) next = { ...next, fired: {} }
-  if (!next.seen) next = { ...next, seen: {} }
-  if (!next.seenOn) next = { ...next, seenOn: {} }
-  if (!next.chosen) next = { ...next, chosen: {} }
-  if (typeof next.turn !== 'number') next = { ...next, turn: 0 }
-  if (!next.entities) next = { ...next, entities: {} }
-  if (!next.created) next = { ...next, created: {} }
-  if (!next.removed) next = { ...next, removed: [] }
-  if (!next.audio) next = { ...next, audio: emptyAudio() }
-  if (!next.media) next = { ...next, media: emptyMedia() }
-  if (game.version === undefined) next = fillDeclared(next, game, ['settings', 'entities'])
-  else if (!next.settings) next = { ...next, settings: {} }
-  // A save that cannot be carried forward was refused when it was read; here
-  // the plugins' states are only brought up to date.
-  const upgraded = migratePlugins(next, game)
-  return typeof upgraded === 'string' ? next : upgraded
 }
 
 export type Applied = {
@@ -316,12 +133,9 @@ export function apply(
     }
   }
   if (!state) return { state: startingState(game), ok: true }
-  // A plugin state that cannot be carried forward is refused, never run: the
-  // plugin's next write would stamp it with the current version, and it would
-  // then load as if it were readable.
-  const unreadable = migratePlugins(state, game)
-  if (typeof unreadable === 'string') return { state, ok: false, refused: unreadable }
-  const current = hydrate(state, game)
+  // Every state comes in through `startingState` or `loadState`, so it is
+  // already in this engine's and this game's shape.
+  const current = state
   try {
     const ran = run(current, game, command)
     const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))

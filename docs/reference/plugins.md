@@ -155,7 +155,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ```ts
 import {
-  definePlugin, migratePlugins, pluginById, pluginQuery, pluginSpeaker,
+  definePlugin, pluginById, pluginQuery, pluginSpeaker,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
@@ -432,7 +432,7 @@ type PluginSlice = { version: number; state: unknown }
 
 Each plugin's state lives in [`state.plugins`](/reference/state#plugins), keyed by plugin id, along with the version of its shape. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. [`startingState`](/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/reference/state), it must be plain JSON.
 
-When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/reference/saves#migrate) follow the same rule.
+When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/reference/saves#loadstate) follow the same rule.
 
 ```ts
 version: 2,
@@ -441,38 +441,22 @@ migrations: {
 },
 ```
 
-### migratePlugins
+### When a save loads
 
-```ts
-import { migratePlugins } from '@ifloom/engine'
-
-function migratePlugins(state: GameState, game: Game): GameState | string
-```
-
-Brings every plugin's state up to the version the game has:
+[`loadState`](/reference/saves#loadstate) brings every plugin's state up to the version the game has. It runs after the engine's own steps and before the game's [migrations](/reference/saves#the-game-s-own-migrations):
 
 - a plugin added since the save was made starts fresh from `start`;
 - an older state is carried forward one step at a time;
 - the state of a plugin the game no longer has is kept as it is, unused.
 
-It returns the reason as a string when it can't:
+A save it can't carry forward is refused with one of these reasons:
 
 | Returns | When |
 |---|---|
 | `That save was made with a newer version of <id>.` | The saved version is higher than the plugin's. |
 | `That save's <id> is from a version this game cannot read.` | A step on the way is missing. |
 
-Both are the engine's [`pluginNewer` and `pluginUnreadable`](/reference/strings#saves) strings, so a game can reword them.
-
-It returns the same object when nothing changed. [`saves().read` and `importText`](/reference/saves#saves) run it and refuse a save with its reason. [`hydrate`](/reference/commands#hydrate) runs it too, so every command does. [`apply`](/reference/commands#apply) refuses to run a command on a state `migratePlugins` gives a reason for, so a plugin never writes over a state it couldn't read.
-
-**Gotcha.** [`hydrate`](/reference/commands#hydrate) doesn't refuse. It keeps the old plugin state as it is, and a [`view`](/reference/view) drawn from it lets the plugin read a shape it may not expect. Load saves through [`saves()`](/reference/saves#saves) or the [runner](/reference/runner), which refuse such a save. If you read a state some other way, call `migratePlugins` yourself and check for a string:
-
-```ts
-const ready = migratePlugins(state, game)
-if (typeof ready === 'string') showMessage(ready)
-else state = ready
-```
+Both are the engine's [`pluginNewer` and `pluginUnreadable`](/reference/strings#saves) strings, so a game can reword them. The [save store](/reference/saves#saves), the runner and [`replay`](/reference/runner#replay) all load through `loadState`, so a plugin never sees a state it couldn't read.
 
 ## Hooks
 
@@ -1062,7 +1046,7 @@ mod:sunday-market · cards market · unknown storyline "sam"
 
 ## Saves
 
-A save records each plugin's version in [`meta.plugins`](/reference/saves#savemeta). A save made with a plugin the game no longer has still loads, keeps that plugin's state untouched, and names the plugin in [`missingPlugins`](/reference/saves#loadedsave). A save whose plugin state can't be carried forward is refused with [`migratePlugins`](#migrateplugins)'s reason.
+A save records each plugin's version in [`meta.plugins`](/reference/saves#savemeta). A save made with a plugin the game no longer has still loads, keeps that plugin's state untouched, and names the plugin in [`missingPlugins`](/reference/saves#loadedsave). A save whose plugin state can't be carried forward is refused with one of the reasons in [When a save loads](#when-a-save-loads).
 
 ## definePlugin
 

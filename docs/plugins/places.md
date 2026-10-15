@@ -487,7 +487,7 @@ type PlacesState = { at: string | null }
 
 What the plugin keeps in a save, at `state.plugins.places`: the id of the place the player is in, or `null` for nowhere. A UI reads the view, not this. Code reads it with [`where(state)`](#helpers).
 
-The engine once kept the player's location itself, at `state.locationId`. [`migrate`](/reference/saves#migrate) carries a save from then (save version 5 or older) forward, moving `locationId` to `plugins.places` as `{ version: 1, state: { at } }`. A save that already has a `places` entry keeps it.
+The engine once kept the player's location itself, at `state.locationId`. [`loadState`](/reference/saves#loadstate) carries a save from then (save version 5 or older) forward, moving `locationId` to `plugins.places` as `{ version: 1, state: { at } }`. A save that already has a `places` entry keeps it.
 
 ## Strings
 

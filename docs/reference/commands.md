@@ -18,7 +18,7 @@ type Applied = {
 }
 ```
 
-Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in (filled in for an older save, see below), and `refused` says why.
+Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `refused` says why.
 
 ```ts
 import { apply } from '@ifloom/engine'
@@ -36,14 +36,12 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 ### What happens, in order
 
 1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run.
-2. **Can the state be read?** If a [plugin](/reference/plugins)'s state in it is newer than the plugin, or has no [migration](/reference/plugins#migrateplugins) route forward, the command is refused with that reason and nothing runs.
-3. **Fill in the state.** A storyline the save lacks gets an empty one, missing fields from an older shape get defaults, and each plugin's state is brought up to date. See [`hydrate`](#hydrate).
-4. **Can it be done?** [`whyNot`](/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/reference/locks) first, then a plugin's [guard](/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
-5. **A warning?** If [`warningOf`](/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
-6. **Run it.** If [`rules.commands`](/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
-7. **Triggers.** Each [trigger](/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/reference/triggers#when-triggers-fire).
-8. **Seen.** If the player is now looking at a different scene than before, that scene's [`seen`](/reference/state#seen) count goes up by one, and [`seenOn`](/reference/state#seenon) records the current [turn](/reference/state#turn) if it's the first time. A scene a trigger opened counts.
-9. **After hooks.** Each plugin's [`after` hook](/reference/plugins#hooks) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
+2. **Can it be done?** [`whyNot`](/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/reference/locks) first, then a plugin's [guard](/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
+3. **A warning?** If [`warningOf`](/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
+4. **Run it.** If [`rules.commands`](/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
+5. **Triggers.** Each [trigger](/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/reference/triggers#when-triggers-fire).
+6. **Seen.** If the player is now looking at a different scene than before, that scene's [`seen`](/reference/state#seen) count goes up by one, and [`seenOn`](/reference/state#seenon) records the current [turn](/reference/state#turn) if it's the first time. A scene a trigger opened counts.
+7. **After hooks.** Each plugin's [`after` hook](/reference/plugins#hooks) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
 
 Locks are checked before the game's own handler, so a lock can stop a command the game handles itself.
 
@@ -68,12 +66,12 @@ type StartOptions = {
 }
 ```
 
-Returns a new game at turn 0, with `introScene` open and counted as seen. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/reference/view#the-idle-screen).
+Returns a new game at turn 0, with `introScene` open and counted as seen. Every other state, such as a save, comes in through [`loadState`](/reference/saves#loadstate). `apply` expects a state from one of the two and doesn't check its shape itself. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/reference/view#the-idle-screen).
 
 - Each [plugin](/reference/plugins)'s state is its `start`. For example, where the player stands is the [places plugin](/plugins/places#placesoptions)'s `start` option.
 - The phase is `game.startPhase`, or `''`.
 - Every declared storyline is empty.
-- Each `gear` item is held once and each `stuff` item not at all, unless the item's `start` says otherwise.
+- Each `gear` item is held once and each `stuff` item not at all, unless the item's `start` says otherwise. `itemStart(item)` gives that number for one item.
 - Each declared [stat](/reference/stats) is at its `start`. The engine adds no stats of its own.
 - Each `play` [setting](/reference/settings) is at the value given in `settings`, or its default.
 
@@ -101,33 +99,6 @@ let fixed = startingState(game)
 **Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/reference/random) and [rolls](/reference/random#roll). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
 The engine keeps no player name. A name is a variable like any other, so pass it in `flags` or ask for it with an [input](/reference/inputs). Prose reads it back with <code v-pre>{{playerName}}</code>, and [`SaveMeta.player`](/reference/saves#savemeta) shows a `playerName` variable that is a string.
-
-## hydrate
-
-```ts
-function hydrate(state: GameState, game: Game): GameState
-```
-
-Fills in what an older state lacks for this game:
-
-- an empty storyline for each declared storyline the save has never heard of
-- empty defaults for fields added since the save was written (`seen`, `seenOn`, `chosen`, `collections`, `notices`, `fired`, `entities`, `created`, [`removed`](/reference/state#removed), [`audio`](/reference/state#audio)), and `turn` 0 if the state has none
-- the default of every `play` [setting](/reference/settings) the game declares that the save has no value for, such as one added in an update, or all of them in a save from before version 9
-- every [entity](/reference/entities) the game declares that the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. That covers one a mod or a new version of the game declares, or one a plugin's [`entities`](/reference/plugins#kinds-and-entities) make.
-
-The last two only happen in a game that declares no [`version`](/reference/saves#the-game-s-own-migrations). A game that declares one fills new settings and entities in its migration steps, with `tools.fill()`, and `hydrate` only makes sure `settings` is an object.
-
-It then runs [`migratePlugins`](/reference/plugins#migrateplugins), so a plugin added since the save starts fresh and an older plugin state is carried forward. It returns the same object when nothing was missing.
-
-[`apply`](#apply) runs it on every command, so you rarely need it. Call it when you read a loaded save directly before any command has run on it, for example to draw the first [`view`](/reference/view).
-
-```ts
-import { hydrate } from '@ifloom/engine'
-
-const state = hydrate(loadedSave, game) // a storyline, or a member of staff, added in an update is now there
-```
-
-**Gotcha.** `hydrate` never refuses. A plugin state it can't carry forward, because it's newer than the plugin or has no migration route, is kept as it is. Drawing a [`view`](/reference/view) from it lets the plugin read a shape it may not expect. [`apply`](#apply) refuses to run a command on such a state, and [`saves().read`](/reference/saves#saves) refuses the save, both with the reason. For a state read some other way, call [`migratePlugins`](/reference/plugins#migrateplugins) yourself first.
 
 ## Command
 

@@ -1,4 +1,3 @@
-import { say } from './strings.ts'
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import type { EffectRef } from './custom.ts'
@@ -390,50 +389,6 @@ export function pluginValue(game: Game | undefined, name: string) {
   const found = member(game, name, 'values')
   if (!found || !game) return undefined
   return (state: GameState) => found.fn(state, pluginContext(found.plugin, state, game))
-}
-
-/** Every plugin's starting state, for a new game. */
-export function startingPlugins(game: Game): Record<string, PluginSlice> {
-  const out: Record<string, PluginSlice> = {}
-  for (const plugin of game.plugins ?? []) {
-    if (plugin.start) out[plugin.id] = { version: plugin.version, state: plugin.start(game) }
-  }
-  return out
-}
-
-/**
- * Bring every plugin's state up to the version the game has: a plugin added
- * since the save starts fresh, an older state is carried forward step by step.
- * Returns the reason it cannot when a state is newer than its plugin or has no
- * route forward. The state of a plugin the game no longer has is kept as it is.
- */
-export function migratePlugins(state: GameState, game: Game): GameState | string {
-  let plugins = state.plugins ?? {}
-  let changed = !state.plugins
-  for (const plugin of game.plugins ?? []) {
-    const slice = plugins[plugin.id]
-    if (!slice) {
-      if (!plugin.start) continue
-      plugins = { ...plugins, [plugin.id]: { version: plugin.version, state: plugin.start(game) } }
-      changed = true
-      continue
-    }
-    if (slice.version === plugin.version) continue
-    if (slice.version > plugin.version) {
-      return say(game, 'pluginNewer', { plugin: plugin.id })
-    }
-    let version = slice.version
-    let inner = slice.state
-    while (version < plugin.version) {
-      const step = plugin.migrations?.[version]
-      if (!step) return say(game, 'pluginUnreadable', { plugin: plugin.id })
-      inner = step(inner)
-      version += 1
-    }
-    plugins = { ...plugins, [plugin.id]: { version, state: inner } }
-    changed = true
-  }
-  return changed ? { ...state, plugins } : state
 }
 
 /** Run one hook on every plugin that has it, in the order the game lists them. */

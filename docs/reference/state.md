@@ -131,7 +131,7 @@ For each kind, the last number given to an entity created in play without an id 
 removed: string[]
 ```
 
-The declared [entities](/reference/entities) that were [removed](/reference/effects#remove) in play, as references in the order they went, such as `['staff:ben']`. [`hydrate`](/reference/commands#hydrate) adds every declared entity a save doesn't have, such as one a mod or a new version of the game declares. It skips these, so an entity that left stays gone. An entity created in play is never recorded here, because nothing would bring it back. A new game starts with `[]`, and a save from before version 7 loads with `[]`. See [Entities in old saves](/reference/entities#entities-in-old-saves).
+The declared [entities](/reference/entities) that were [removed](/reference/effects#remove) in play, as references in the order they went, such as `['staff:ben']`. Loading a save with [`loadState`](/reference/saves#loadstate) adds every declared entity it doesn't have, such as one a mod or a new version of the game declares. It skips these, so an entity that left stays gone. An entity created in play is never recorded here, because nothing would bring it back. A new game starts with `[]`, and a save from before version 7 loads with `[]`. See [Entities in old saves](/reference/entities#entities-in-old-saves).
 
 ### storylines
 
@@ -201,7 +201,7 @@ type PluginSlice = { version: number; state: unknown }
 
 Each [plugin](/reference/plugins)'s own state, by plugin id, with the version of its shape, as in `{ quests: { version: 1, state: { ... } } }`. [`startingState`](/reference/commands#startingstate) fills it from each plugin's `start`. A plugin with no state has no entry.
 
-Read and write it through the plugin, not by hand. Inside the plugin, use its context's `slice` and `set`. Outside it, use [`definePlugin`](/reference/plugins#defineplugin)'s `read` and `write`. An older save's entry is carried forward by [`migratePlugins`](/reference/plugins#migrateplugins), and the entry of a plugin the game no longer has is kept untouched.
+Read and write it through the plugin, not by hand. Inside the plugin, use its context's `slice` and `set`. Outside it, use [`definePlugin`](/reference/plugins#defineplugin)'s `read` and `write`. An older save's entry is carried forward when the save [loads](/reference/plugins#when-a-save-loads), and the entry of a plugin the game no longer has is kept untouched.
 
 ### settings
 
@@ -276,7 +276,7 @@ The [content checker](/reference/checks) reports a stat or item in `carryOver` t
 const SAVE_VERSION = 11
 ```
 
-The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carries older shapes forward:
+The shape of `GameState` this engine writes. [`loadState`](/reference/saves#loadstate) carries older shapes forward:
 
 | Version | Change |
 |---|---|

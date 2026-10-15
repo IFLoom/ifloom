@@ -452,7 +452,7 @@ type CalendarState = { day: number; period: string }
 
 What the plugin keeps in a save, at `state.plugins.calendar`: the day, from `0`, and the period's id. A UI reads the view, not this.
 
-The engine once kept a clock of its own, at `state.time`. [`migrate`](/reference/saves#migrate) carries a save from then (save version 4 or older) forward. Its `time` moves to `plugins.calendar` as `{ version: 1, state: { day, period } }`, with the same day and period, except that the old last period, `'sleep'`, becomes `'late'`. A save that already has a `calendar` entry keeps it. In a game without the calendar, the entry is never read.
+The engine once kept a clock of its own, at `state.time`. [`loadState`](/reference/saves#loadstate) carries a save from then (save version 4 or older) forward. Its `time` moves to `plugins.calendar` as `{ version: 1, state: { day, period } }`, with the same day and period, except that the old last period, `'sleep'`, becomes `'late'`. A save that already has a `calendar` entry keeps it. In a game without the calendar, the entry is never read.
 
 To set the clock by hand while testing, use the [debug plugin](/plugins/debug)'s `debug/time` command. It goes through [`calendar/set`](#effects). It's refused in a game with no calendar.
 

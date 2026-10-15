@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
+import type { GameState } from '../../src/types.ts'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
-import { apply, startingState } from '../../src/reduce.ts'
+import { apply } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { settingValue } from '../../src/settings.ts'
@@ -125,7 +127,7 @@ describe('the setting command', () => {
     runner.apply({ type: 'setting', id: 'patience', value: 10 })
     expect(runner.log().commands.map((command) => command.type)).toEqual(['setting', 'activity', 'setting'])
     expect(replay(g, runner.log())).toEqual(runner.state)
-    expect(replay(g, runner.log()).settings).toEqual({ hints: false, difficulty: 'usual', patience: 10 })
+    expect((replay(g, runner.log()) as GameState).settings).toEqual({ hints: false, difficulty: 'usual', patience: 10 })
   })
 })
 

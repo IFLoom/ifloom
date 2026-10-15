@@ -65,7 +65,7 @@ export type {
   SpeakerView,
   StageDef,
 } from './plugin.ts'
-export { definePlugin, migratePlugins, pluginById, pluginQuery, pluginSpeaker } from './plugin.ts'
+export { definePlugin, pluginById, pluginQuery, pluginSpeaker } from './plugin.ts'
 
 // Scenes and prose
 export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
@@ -101,8 +101,10 @@ export type { StringKey, Strings } from './strings.ts'
 export { STRINGS, say } from './strings.ts'
 
 // Running the game
-export type { Applied, FillKind, StartOptions } from './reduce.ts'
-export { apply, applyEffects, dispatch, hydrate, startingState } from './reduce.ts'
+export type { Applied } from './reduce.ts'
+export { apply, applyEffects, dispatch } from './reduce.ts'
+export type { FillKind, MigrationTools, StartOptions } from './intake.ts'
+export { itemStart, loadState, startingState } from './intake.ts'
 
 // Conditions, and why they hold
 export type { Condition, Range } from './condition.ts'
@@ -160,8 +162,8 @@ export { SCHEMA, loadGame } from './loader.ts'
 export type { Checked, FileRef, Probe, Problem } from './check.ts'
 export { checkGame, describeProblem } from './check.ts'
 export type { Reference } from './references.ts'
-export type { LoadedSave, MigrationTools, SaveFile, SaveMeta, Saves } from './save.ts'
-export { deserialize, migrate, migrateGame, saves, serialize } from './save.ts'
+export type { LoadedSave, SaveFile, SaveMeta, Saves } from './save.ts'
+export { saves } from './save.ts'
 export type { IndexedDbLike, SaveDriver, StorageLike } from './drivers.ts'
 export { indexedDbDriver, localStorageDriver, memoryDriver } from './drivers.ts'
 export type { InstalledMod, ModFile, Mods } from './mods.ts'

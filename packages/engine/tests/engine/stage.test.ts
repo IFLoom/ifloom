@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { definePlugin } from '../../src/plugin.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
-import { startingState } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
 

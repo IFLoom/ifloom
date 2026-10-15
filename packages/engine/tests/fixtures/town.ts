@@ -1,7 +1,7 @@
 import type { ActivityDef } from '../../src/activity.ts'
 import type { Game } from '../../src/game.ts'
 import { proseStore } from '../../src/prose.ts'
-import { startingState } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import type { GameState } from '../../src/types.ts'
 
 /**

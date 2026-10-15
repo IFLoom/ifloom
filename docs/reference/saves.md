@@ -10,7 +10,7 @@ Saving has two parts:
 ```ts
 import {
   saves, memoryDriver, localStorageDriver, indexedDbDriver,
-  serialize, deserialize, migrate, SAVE_VERSION,
+  loadState, SAVE_VERSION,
   type Saves, type SaveDriver, type SaveFile, type SaveMeta, type LoadedSave,
   type StorageLike, type IndexedDbLike,
 } from '@ifloom/engine'
@@ -177,24 +177,18 @@ else await store.write('1', loaded.state, { name: loaded.meta.name, played: load
 |---|---|
 | `'That is not a save file.'` | Not JSON, or JSON that isn't an IFLoom save. |
 | `'That save belongs to another game (<id>).'` | The save's `meta.game` isn't this game's id. |
-| `'That save is from a version this game cannot read.'` | [`migrate`](#migrate) found no route to the current version. |
+| `'That save is from a version this game cannot read.'` | The save's format [version](#save-version) is one the engine can't carry forward. |
 | `'That save was made with a newer version of <plugin>.'` | A [plugin](/reference/plugins)'s state in the save is newer than the game's plugin. |
-| `'That save's <plugin> is from a version this game cannot read.'` | A plugin's state has no [migration](/reference/plugins#migrateplugins) route to its current version. |
+| `'That save's <plugin> is from a version this game cannot read.'` | A plugin's state has no [migration](/reference/plugins#when-a-save-loads) route to its current version. |
 | `'That save was made with a newer version of this game.'` | The save's [game version](#the-game-s-own-migrations) is higher than `game.version`. |
 
 These are the engine's English. A game rewords them in the [strings table](/reference/strings#saves) as `notASave`, `otherGame`, `saveTooOld`, `pluginNewer`, `pluginUnreadable` and `gameNewer`.
 
-A save is carried forward in this order:
-
-1. the engine's own format, with [`migrate`](#migrate);
-2. each plugin's state, with [`migratePlugins`](/reference/plugins#migrateplugins), so a plugin added since the save was made starts fresh and an older plugin state is carried forward;
-3. the game's own steps, with [`migrateGame`](#migrategame), if the game declares a [version](#the-game-s-own-migrations);
-4. [`hydrate`](/reference/commands#hydrate), which fills in the fields the state needs and a storyline the save lacks. In a game that declares no version, it also adds new play settings and declared entities.
+The state inside the file is loaded with [`loadState`](#loadstate), which carries it forward or refuses it with one of these reasons.
 
 **Gotchas:**
 - `write` without `played` records `0`. The runner passes the time played for you. When you write an imported save yourself, pass `loaded.meta.played` on.
 - `write` without `name` makes one from the state, so an imported save written that way loses the player's name for it. Pass `loaded.meta.name`.
-- `read` and `importText` refuse a save whose plugin state can't be carried forward, and [`apply`](/reference/commands#apply) refuses to run a command on such a state. [`hydrate`](/reference/commands#hydrate) doesn't refuse, so a [`view`](/reference/view) drawn from a state you read some other way can hand a plugin a shape it doesn't expect. Load saves through the store (or the [runner](/reference/runner), which uses it), or call [`migratePlugins`](/reference/plugins#migrateplugins) yourself and check for a string.
 
 ### Keys
 
@@ -204,7 +198,7 @@ A save is carried forward in this order:
 
 The keys carry the game's id because a game opened from disk shares one storage origin with every other game opened from disk in the same browser, and game hosts such as itch.io serve many games from shared domains. Without the id, two IFLoom games would overwrite each other's `'auto'`. The id is `game.id`, so pick one unique to your game and never change it.
 
-The keys don't carry the save format's version. That's stored inside each save and handled by [`migrate`](#migrate). A key that changed with each version would lose every existing save on the first update.
+The keys don't carry the save format's version. That's stored inside each save and handled by [`loadState`](#loadstate). A key that changed with each version would lose every existing save on the first update.
 
 ## SaveFile
 
@@ -274,54 +268,52 @@ if (loaded && typeof loaded !== 'string' && loaded.missingPacks.length) {
 }
 ```
 
-## serialize
+## loadState
 
 ```ts
-function serialize(state: GameState): string
+function loadState(raw: unknown, game: Game): GameState | string
 ```
 
-`JSON.stringify(state)`. It writes a bare state, without a [`SaveFile`](#savefile)'s details. Use it for snapshot tests, debugging and storage of your own.
-
-## deserialize
+Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/reference/runner#commandlog), or a state you parsed yourself. It returns the state, or the reason it can't, as one of the [refusals](#saves) above.
 
 ```ts
-function deserialize(raw: string): GameState | null
+import { createRunner, loadState } from '@ifloom/engine'
+
+const state = loadState(JSON.parse(text), game)
+if (typeof state === 'string') throw new Error(state)
+const runner = createRunner(game, state)
 ```
 
-Parses a bare state, [migrates](#migrate) it to the current version, and checks it has a `turn` (a number) and `stats`. It returns `null` for bad JSON, a state with no migration route or one missing those fields. It never throws.
+It does these in order:
 
-```ts
-const state = deserialize(serialize(before))
-```
+1. The engine's own steps, from the state's `version` up to `SAVE_VERSION`. A state with no `version`, or one higher than `SAVE_VERSION`, is refused.
+2. Each field the state lacks gets its load default, such as `[]` for `removed` or empty audio for `audio`. A field an older format didn't have needs no step of its own.
+3. Each [plugin's state](/reference/plugins#when-a-save-loads) is carried forward, and a plugin added since starts fresh.
+4. The game's own [migrations](#the-game-s-own-migrations), if the game declares a `version`.
+5. What the game declares and the save lacks is added: a storyline, and in a game with no `version`, its `play` settings and declared entities. See [Filling new content](#filling-new-content).
 
-**Gotcha:** `deserialize` reads what `serialize` wrote, not a save file. Read a save store's saves with `read` or `importText`.
+The [save store](#saves)'s `read` and `importText`, and [`replay`](/reference/runner#replay), all load through it. A state that comes back from it, or from [`startingState`](/reference/commands#startingstate), is ready for [`apply`](/reference/commands#apply), which doesn't check the shape again.
 
-## migrate
+A state already in today's shape comes back equal to what went in, apart from anything the game has declared since.
 
-```ts
-function migrate(data: unknown): GameState | null
-```
+### The engine's steps
 
-Carries a parsed state forward to `SAVE_VERSION`, one version at a time, or gives up and returns `null`. A state with no `version` counts as version `0`. The save store runs every save it reads through `migrate`.
-
-The steps live in an internal table keyed by the version each step upgrades from, so entry `1` turns a version-1 save into version 2. If any step on the way is missing, the save is dropped rather than loaded into a shape the engine would misread. A save whose version is higher than `SAVE_VERSION` is dropped too.
-
-There are ten steps so far.
+These are the changes to the save format so far, with what loading a save from before each one does:
 
 - **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/reference/state#flags) of the same names, so <code v-pre>{{playerName}}</code> still fills in, and adds an empty [`chosen`](/reference/state#chosen).
 - **2 → 3** brings in the [turn](/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/reference/state#storylines), and each [collection](/reference/collections) entry's and [notice](/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
-- **3 → 4** brings in [entities](/reference/entities): it adds an empty [`entities`](/reference/state#entities) and an empty [`created`](/reference/state#created). `migrate` doesn't know the game, so it doesn't put in the game's declared entities. [`hydrate`](/reference/commands#hydrate) adds them when the save is next played.
+- **3 → 4** brings in [entities](/reference/entities): the save gets an empty [`entities`](/reference/state#entities) and an empty [`created`](/reference/state#created), The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
 - **4 → 5** takes the clock out of the engine. The save's `time: { day, period }` moves into the [calendar plugin](/plugins/calendar#calendarstate)'s state, `plugins.calendar = { version: 1, state: { day, period } }`, with the old last period `'sleep'` renamed `'late'`, the calendar's word for it. A save that already has a `plugins.calendar` keeps it. A game without the calendar keeps the entry unused, as it keeps the state of any plugin it doesn't have.
-- **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/plugins/places#placesoptions), because [`migratePlugins`](/reference/plugins#migrateplugins) gives any plugin missing from a save its starting state. A game without the places plugin keeps the entry unused.
-- **6 → 7** adds an empty [`removed`](/reference/state#removed), the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and [`hydrate`](/reference/commands#hydrate) puts it back at its start.
+- **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/plugins/places#placesoptions), because a plugin missing from a save gets its starting state when it loads. A game without the places plugin keeps the entry unused.
+- **6 → 7** brings in [`removed`](/reference/state#removed), empty on an older save, the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and loading puts it back at its start.
 - **7 → 8** takes `standing` and `rapport` off every [storyline](/reference/state#storylines), keeping its `closedUntil` and `flags` (a missing `closedUntil` becomes `null`, missing `flags` `{}`). They're dropped, not carried anywhere. A relationship is now a [stat](/reference/stats#entity-stats) the game declares on the [cast](/plugins/cast)'s `character` kind, and the engine can't know which stat a game meant.
-- **8 → 9** adds an empty [`settings`](/reference/state#settings). When the save next loads, [`hydrate`](/reference/commands#hydrate) gives each `play` [setting](/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
+- **8 → 9** brings in [`settings`](/reference/state#settings), empty on an older save. Step 5 then gives each `play` [setting](/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
 - **9 → 10** adds [`audio`](/reference/audio#audiostate): `{ channels: {}, cues: [], seq: 0, shown: 0, started: {} }`. No `audio` effect had run, so every channel plays the place's audio or the game's default, and the count of scenes entered starts again from 0.
 - **10 → 11** adds [`media`](/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
 
 A save from version 0 doesn't load.
 
-**Gotcha:** `migrate` doesn't check fields. Use `deserialize` for a bare state read from disk.
+**Gotcha.** `loadState` doesn't check that fields hold the right kind of value. A hand-edited state with `stats: 'lots'` loads, and breaks the first time something reads a stat.
 
 ## SAVE_VERSION
 
@@ -329,7 +321,7 @@ A save from version 0 doesn't load.
 const SAVE_VERSION: 11
 ```
 
-The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes, and the bump ships with its migration step. A bump without one would make every player's existing saves unreadable.
+The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes. A new field only needs its load default, which the engine declares next to the field's new-game value. A field that changes shape needs a step that reshapes the old one, shipped with the bump.
 
 ## The game's own migrations
 
@@ -364,7 +356,7 @@ A reader who saved at the door after two lies under version 1 loads with `fibs: 
 
 When a save loads, the engine reads the version it was made with, runs every step from there up to the game's `version` in order, and stamps the state with the new version. A version-1 save in a version-3 game runs step 1 and then step 2. A save that's already at the game's version runs nothing.
 
-The steps run after the engine's own [`migrate`](#migrate) and the plugins' [`migratePlugins`](/reference/plugins#migrateplugins), so a step always sees a state in today's engine shape, and before [`hydrate`](/reference/commands#hydrate).
+The steps run inside [`loadState`](#loadstate), after the engine's own steps and the plugins' migrations, so a step always sees a state in today's engine shape. They run before the game's new storylines, settings and entities are added.
 
 ### Where the version is kept
 
@@ -380,9 +372,9 @@ A save made with a newer version of the game than the one loading it is refused 
 
 Once a game declares a `version`, the engine stops filling newly declared content into old saves by itself. Nothing new is filled in unless one of your steps calls `tools.fill()`. That covers stats, items, variables, play settings and entities.
 
-A game with no `version` keeps the engine's old behaviour, so a game that existed before versions doesn't change. Every time [`hydrate`](/reference/commands#hydrate) runs, it gives a save the default of each `play` setting it lacks and each declared entity it doesn't have. It doesn't fill stats, items or variables.
+A game with no `version` keeps the engine's old behaviour, so a game that existed before versions doesn't change. Every time a save loads, it gets the default of each `play` setting it lacks and each declared entity it doesn't have. It doesn't fill stats, items or variables.
 
-So when you set `version` for the first time, even `version: 1`, `hydrate` stops adding settings and entities. When an update declares a new setting, entity or stat, raise the version and fill it in the step:
+So when you set `version` for the first time, even `version: 1`, loading stops adding settings and entities. When an update declares a new setting, entity or stat, raise the version and fill it in the step:
 
 ```ts
 import type { Game } from '@ifloom/engine'
@@ -442,22 +434,6 @@ type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
 | `settings` | Each `play` [setting](/reference/settings) the save lacks, at its default. |
 | `entities` | Each declared [entity](/reference/entities) the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. |
 
-### migrateGame
-
-```ts
-import { migrateGame } from '@ifloom/engine'
-
-function migrateGame(state: GameState, game: Game): GameState | string
-```
-
-Runs the game's own steps on a state, from its `gameVersion` (1 if it has none) up to `game.version`, and stamps the state with the new version. It returns the refusal, a string, for a save from a newer version. A game with no `version` is at version 1, so nothing runs and the state isn't stamped.
-
-The save store calls it for every save it [reads](#saves), and so does the [runner](/reference/runner) through the store. You only need it for a state you load another way, such as one from [`deserialize`](#deserialize), which doesn't run it:
-
-```ts
-const raw = deserialize(text)
-const state = raw && migrateGame(raw, game)
-if (typeof state === 'string') showMessage(state)
-```
+### Checks
 
 The [content checker](/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.

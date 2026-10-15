@@ -3,9 +3,9 @@ import { audioChannels, audioSrc, type GameAudio } from '../../src/audio.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
-import { apply, startingState } from '../../src/reduce.ts'
+import { apply } from '../../src/reduce.ts'
+import { loadState, startingState } from '../../src/intake.ts'
 import { replay } from '../../src/runner.ts'
-import { deserialize, migrate, serialize } from '../../src/save.ts'
 import { parseBeats } from '../../src/sceneBody.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
 import { problemsOf } from '../fixtures/checked.ts'
@@ -228,7 +228,7 @@ describe('audio', () => {
       const again = play(state, g, { type: 'choose', id: 'again' })
       // The scene's beats keep their keys; the buzz is new.
       expect(keys(again)).toEqual([`cue:${state.seed}:1`, ...keys(state)])
-      expect(keys(deserialize(serialize(again))!)).toEqual(keys(again))
+      expect(keys(loadState(JSON.parse(JSON.stringify(again)), g) as GameState)).toEqual(keys(again))
     })
 
     it('are new each time the scene is entered', () => {
@@ -260,7 +260,7 @@ describe('audio', () => {
       expect([...order.tracks].sort()).toEqual(['a', 'b', 'c', 'd'])
       // Started on turn 1, and still drawn from turn 1 after a turn has passed.
       expect(played.audio.started.music).toEqual({ track: 'radio', turn: 1 })
-      expect(view(replay(g, { game: g.id, start, commands: [...commands] }), g).audio.channels.music.playlist).toEqual(order)
+      expect(view(replay(g, { game: g.id, start, commands: [...commands] }) as GameState, g).audio.channels.music.playlist).toEqual(order)
       // Another seed, another order.
       const others = [1, 2, 3, 4, 5].map((seed) => view(play({ ...start, seed }, g, ...commands), g).audio.channels.music.playlist!.tracks.join())
       expect(others.some((tracks) => tracks !== order.tracks.join())).toBe(true)
@@ -340,13 +340,13 @@ describe('audio', () => {
     it('carry a version-9 save forward with nothing played and no showings', () => {
       const { game: g } = game()
       const { audio: _audio, media: _media, ...now } = startingState(g)
-      expect(migrate({ ...now, version: 9 })).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
+      expect(loadState({ ...now, version: 9 }, g)).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
     })
 
     it('keep the effects’ channels and cues', () => {
       const { game: g } = game()
       const state = play({ ...startingState(g), flags: { at: 'house' } }, g, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'buzz' })
-      expect(deserialize(serialize(state))!.audio).toEqual(state.audio)
+      expect((loadState(JSON.parse(JSON.stringify(state)), g) as GameState).audio).toEqual(state.audio)
     })
   })
 })

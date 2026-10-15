@@ -1,7 +1,3 @@
-/**
- * The save format's version. Every change to the shape of `GameState` bumps
- * it and adds a step to `MIGRATIONS` in save.ts.
- */
 import type { CollectionEntry, CollectionItem } from './collections.ts'
 import type { Notice } from './notices.ts'
 import type { EntityState } from './entities.ts'
@@ -11,6 +7,11 @@ import type { PluginSlice } from './plugin.ts'
 import type { AudioState } from './audio.ts'
 import type { MediaState } from './media.ts'
 
+/**
+ * The save format's version. A change to the shape of `GameState` bumps it.
+ * A new field declares its defaults in `FIELDS` (intake.ts); a field whose
+ * shape changes also gets a step in `STEPS` there.
+ */
 export const SAVE_VERSION = 11 as const
 
 export type FlagValue = boolean | number | string
@@ -33,6 +34,7 @@ export type StorylineState = {
   flags: Record<string, FlagValue>
 }
 
+/** The whole save. Each field's new-game value and load default are declared in `FIELDS`, intake.ts. */
 export type GameState = {
   version: typeof SAVE_VERSION
   /** Fixed per save. Keeps variant variants from dealing identically every run. */

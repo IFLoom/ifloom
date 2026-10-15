@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import type { GameState } from '../../src/types.ts'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
-import { applyEffects, hydrate, startingState } from '../../src/reduce.ts'
+import { applyEffects } from '../../src/reduce.ts'
+import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 
 /** The café's staff and its menu: two kinds, each with stats of its own, and one stat of the player's. */
@@ -208,11 +210,11 @@ describe('declared entities and old saves', () => {
     // A save from before Ben was written in: he joins it.
     const { ben: _ben, ...staff } = start.entities.staff
     const older = { ...start, entities: { ...start.entities, staff } }
-    expect(Object.keys(hydrate(older, g).entities.staff)).toEqual(['ana', 'ben'])
+    expect(Object.keys((loadState(older, g) as GameState).entities.staff)).toEqual(['ana', 'ben'])
     // Ben left in play: he does not come back.
     const left = applyEffects(start, g, [{ kind: 'remove', of: 'staff:ben' }])
     expect(left.removed).toEqual(['staff:ben'])
-    expect(Object.keys(hydrate(left, g).entities.staff)).toEqual(['ana'])
+    expect(Object.keys((loadState(left, g) as GameState).entities.staff)).toEqual(['ana'])
     // Taken on again by name: no longer gone for good, and removed only once however often.
     const back = applyEffects(left, g, [{ kind: 'create', of: 'staff', entity: { id: 'ben', name: 'Ben' } }])
     expect(back.removed).toEqual([])

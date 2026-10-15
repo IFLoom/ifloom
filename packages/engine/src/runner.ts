@@ -1,7 +1,8 @@
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import { localStorageDriver } from './drivers.ts'
-import { apply, startingState, type Applied, type StartOptions } from './reduce.ts'
+import { apply, type Applied } from './reduce.ts'
+import { loadState, startingState, type StartOptions } from './intake.ts'
 import { pluginContext } from './plugin.ts'
 import { profile as makeProfile, type Profile } from './profile.ts'
 import { settingRefusal } from './settings.ts'
@@ -80,9 +81,15 @@ export type BacklogEntry = {
  */
 export type CommandLog = { game: string; start: GameState; commands: Command[] }
 
-/** Play a command log back against a game. Commands that are refused are skipped, as they were then. */
-export function replay(game: Game, log: CommandLog): GameState {
-  let state = log.start
+/**
+ * Play a command log back against a game. Its start comes in through
+ * `loadState`, so a log from an older engine or game still plays; the reason
+ * comes back when it can't. Commands that are refused are skipped, as they were then.
+ */
+export function replay(game: Game, log: CommandLog): GameState | string {
+  const start = loadState(log.start, game)
+  if (typeof start === 'string') return start
+  let state = start
   for (const command of log.commands) state = apply(state, game, command).state
   return state
 }

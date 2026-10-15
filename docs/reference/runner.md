@@ -20,7 +20,7 @@ If you use the React UI, you usually don't call `createRunner` yourself. [`mount
 function createRunner(game: Game, start: GameState, options?: RunnerOptions): Runner
 ```
 
-Starts a runner on `start`, which is usually [`startingState`](/reference/commands#startingstate) or a state from a save. This is how the showcase makes its runner:
+Starts a runner on `start`, which is usually [`startingState`](/reference/commands#startingstate) or a state from a save. A state from anywhere else goes through [`loadState`](/reference/saves#loadstate) first, since the runner doesn't check its shape. This is how the showcase makes its runner:
 
 ```ts
 import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
@@ -218,8 +218,8 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 | `offers` | `{ undo: boolean, backlog: boolean }`: whether the game turned on `history` and `backlog`, so a menu shows only what's on offer. |
 | `played()` | Time played in milliseconds, counting from the time recorded in any save loaded. |
 | `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to its [`SaveMeta`](/reference/saves#savemeta). `name` defaults to one made from when and where (see [`SaveMeta`](/reference/saves#savemeta)). |
-| `load(slot)` | Reads a slot and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to the [`LoadedSave`](/reference/saves#loadedsave), to `null` for an empty slot, or to a string saying why the save couldn't be read. On `null` or a string, the runner is unchanged. |
-| `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/reference/saves), exactly as `load` would. |
+| `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to the [`LoadedSave`](/reference/saves#loadedsave), to `null` for an empty slot, or to a string saying why the save couldn't be read. On `null` or a string, the runner is unchanged. |
+| `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/reference/saves), exactly as `load` would. The [`LoadedSave`](/reference/saves#loadedsave) has already been through `loadState`. |
 | `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported. |
 | `profile` | The [`Profile`](/reference/profile) the runner was made with, or `undefined`. |
 | `setUiSetting(id, value)` | Changes a `ui` setting in the profile. See [below](#setuisetting). |
@@ -292,10 +292,12 @@ Everything you need to play a game back exactly: the game's id, the state it sta
 ## replay
 
 ```ts
-function replay(game: Game, log: CommandLog): GameState
+function replay(game: Game, log: CommandLog): GameState | string
 ```
 
 Plays a command log back and returns the state it leads to. The engine is deterministic, so the same log against the same game gives the same state every time.
+
+The log's `start` goes through [`loadState`](/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. If it can't be loaded, `replay` returns the reason instead of a state.
 
 ```ts
 import { replay, type CommandLog } from '@ifloom/engine'

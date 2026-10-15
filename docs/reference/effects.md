@@ -258,7 +258,7 @@ choices: [
 
 Takes an [entity](/reference/entities) out of the game, with its stats and variables. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
 
-An entity the game declares is also recorded in [`state.removed`](/reference/state#removed). That keeps it gone, rather than being put back by [`hydrate`](/reference/commands#hydrate), which adds declared entities a save lacks. An entity created in play isn't recorded.
+An entity the game declares is also recorded in [`state.removed`](/reference/state#removed). That keeps it gone, rather than being put back when the save [loads](/reference/entities#entities-in-old-saves), which adds declared entities a save lacks. An entity created in play isn't recorded.
 
 ### each
 

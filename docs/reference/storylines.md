@@ -62,4 +62,4 @@ import { emptyStoryline } from '@ifloom/engine'
 function emptyStoryline(): StorylineState
 ```
 
-A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/reference/commands#startingstate) gives every declared storyline one, and [`hydrate`](/reference/commands#hydrate) adds one for a storyline the save lacks, such as one a mod has added since.
+A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.

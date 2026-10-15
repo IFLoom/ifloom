@@ -3,7 +3,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import { SCHEMA, loadGame } from '../../src/loader.ts'
 import { mods, readMod } from '../../src/mods.ts'
 import { saves } from '../../src/save.ts'
-import { startingState } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 
 const mod = (extra: object = {}) =>

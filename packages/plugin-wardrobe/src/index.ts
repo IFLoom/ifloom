@@ -8,7 +8,7 @@
  * by itself. The slots are the game's: a coat and boots, armour and a ring,
  * a uniform with a cap.
  */
-import { definePlugin, itemById, say, type Command, type Condition, type Game, type PluginProblem } from '@ifloom/engine'
+import { definePlugin, itemById, itemStart, say, type Command, type Condition, type Game, type PluginProblem } from '@ifloom/engine'
 
 /** A place on the body something can be worn. */
 export type WardrobeSlot = { id: string; label: string }
@@ -47,7 +47,7 @@ function clothing(game: Game, id: string): ClothingDef | undefined {
 /** How many of an item a new game starts with, as the engine counts it. */
 function startCount(game: Game, id: string): number {
   const item = itemById(game, id)
-  return item ? (item.start ?? (item.kind === 'gear' ? 1 : 0)) : 0
+  return item ? itemStart(item) : 0
 }
 
 function name(game: Game, id: string): string {

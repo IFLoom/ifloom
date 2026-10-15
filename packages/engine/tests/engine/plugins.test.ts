@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { definePlugin } from '../../src/plugin.ts'
 import type { Condition } from '../../src/condition.ts'
-import { apply, startingState } from '../../src/reduce.ts'
+import { apply } from '../../src/reduce.ts'
+import { loadState, startingState } from '../../src/intake.ts'
 import { holds } from '../../src/condition.ts'
 import { whyNot } from '../../src/availability.ts'
 import { view } from '../../src/view.ts'
@@ -104,13 +105,10 @@ describe('plugins', () => {
     expect(whyNot(begin(game), game, { type: 'custom', name: 'shells/juggle' })).toBe('There is no such thing to do.')
   })
 
-  it('refuse to run on a state their plugin cannot read', () => {
+  it('refuse a state their plugin cannot read', () => {
     const game = withShells()
     const newer = { ...begin(game), plugins: { shells: { version: 3, state: { weird: true } } } }
-    expect(apply(newer, game, { type: 'activity', id: 'wait' })).toMatchObject({
-      ok: false,
-      refused: 'That save was made with a newer version of shells.',
-    })
+    expect(loadState(newer, game)).toBe('That save was made with a newer version of shells.')
   })
 
   it('can be stopped by a lock, one command or the whole plugin', () => {

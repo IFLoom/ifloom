@@ -3,8 +3,8 @@ import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
 import { SCHEMA, loadGame } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
-import { startingState } from '../../src/reduce.ts'
-import { migrate, saves } from '../../src/save.ts'
+import { loadState, startingState } from '../../src/intake.ts'
+import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
 import { fixture } from '../fixtures/town.ts'
 
@@ -72,8 +72,9 @@ describe('version 9 saves', () => {
   ]
 
   it('carries a version-8 state forward with no settings', () => {
-    const { settings: _settings, audio: _audio, ...now } = startingState(fixture())
-    expect(migrate({ ...now, version: 8 })).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
+    const g = fixture()
+    const { settings: _settings, audio: _audio, ...now } = startingState(g)
+    expect(loadState({ ...now, version: 8 }, g)).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
   })
 
   it('loads a version-8 save with every play setting at its default', async () => {

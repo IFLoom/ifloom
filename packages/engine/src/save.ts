@@ -1,153 +1,9 @@
 import { say } from './strings.ts'
 import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
-import { migratePlugins, pluginById, pluginLabel } from './plugin.ts'
-import { SAVE_VERSION, type GameState } from './types.ts'
-import { fillDeclared, hydrate, type FillKind } from './reduce.ts'
-
-/** What a step of `game.migrations` is given besides the state. */
-export type MigrationTools = {
-  /**
-   * The state this step was given, with what the game declares and the save
-   * lacks filled in: the kinds asked for, or every kind if left out. Nothing
-   * is filled unless a step calls this. See `FillKind`.
-   */
-  fill: (kinds?: FillKind[]) => GameState
-}
-
-/**
- * Carry a save forward through the game's own `migrations`, from the version
- * it records (1 if none) to `game.version`. Run after the engine's and
- * plugins' migrations. Returns the reason, through `say`, when the save is
- * from a newer version of the game.
- */
-export function migrateGame(state: GameState, game: Game): GameState | string {
-  const target = game.version ?? 1
-  let version = state.gameVersion ?? 1
-  if (version > target) return say(game, 'gameNewer')
-  let next = state
-  while (version < target) {
-    const step = game.migrations?.[version]
-    if (step) {
-      const given = next
-      next = step(given, { fill: (kinds) => fillDeclared(given, game, kinds) })
-    }
-    version += 1
-  }
-  if (game.version === undefined) return next
-  return next.gameVersion === game.version ? next : { ...next, gameVersion: game.version }
-}
-
-export function serialize(state: GameState): string {
-  return JSON.stringify(state)
-}
-
-/** A save as it came off disk: some version of the shape, not necessarily this one. */
-type Saved = Record<string, unknown> & { version?: unknown }
-
-/**
- * One step per save version, keyed by the version it upgrades *from*.
- *
- * A save with no route to the current version is dropped rather than loaded
- * into a shape the engine would misread. This is the only place old saves are
- * allowed to be understood: when the save format changes after release, bump
- * `SAVE_VERSION` and add the step that carries the previous version forward in
- * the same change.
- */
-const MIGRATIONS: Record<number, (state: Saved) => Saved> = {
-  // 1 → 2: the player's name moves into variables, and choices start being remembered.
-  1: ({ playerName, playerFirst, playerLast, ...state }) => ({
-    ...state,
-    flags: { playerName, playerFirst, playerLast, ...(state.flags as object) },
-    chosen: {},
-  }),
-  // 2 → 3: one clock, the turn. A day was the only turn there was, so the turn
-  // is the day, and everything stamped with a day is stamped with that turn.
-  2: (state) => {
-    const time = state.time as { day: number } | undefined
-    const stamped = <T extends { day?: number }>(list: T[] = []) =>
-      list.map(({ day, ...rest }) => ({ ...rest, turn: day ?? 0 }))
-    const flags = Object.fromEntries(
-      Object.entries((state.flags ?? {}) as Record<string, unknown>).map(([key, value]) => [
-        key.startsWith('day:') ? `turn:${key.slice(4)}` : key,
-        value,
-      ]),
-    )
-    const storylines = Object.fromEntries(
-      Object.entries((state.storylines ?? {}) as Record<string, { closedUntilDay?: number | null }>).map(
-        ([id, { closedUntilDay, ...rest }]) => [id, { ...rest, closedUntil: closedUntilDay ?? null }],
-      ),
-    )
-    const collections = Object.fromEntries(
-      Object.entries((state.collections ?? {}) as Record<string, { day?: number }[]>).map(([id, list]) => [id, stamped(list)]),
-    )
-    return { ...state, turn: time?.day ?? 0, flags, storylines, collections, notices: stamped(state.notices as { day?: number }[]) }
-  },
-  // 3 → 4: entities, which a save from before them has none of.
-  3: (state) => ({ ...state, entities: {}, created: {} }),
-  // 4 → 5: the clock leaves the engine for the calendar plugin, with the same day and period
-  // (the last one, 'sleep', is the calendar's 'late'). A game without the calendar keeps it unused.
-  4: ({ time, ...state }) => {
-    const clock = time as { day: number; period: string } | undefined
-    if (!clock) return state
-    const plugins = { ...(state.plugins as Record<string, unknown>) }
-    plugins.calendar ??= { version: 1, state: { day: clock.day, period: clock.period === 'sleep' ? 'late' : clock.period } }
-    return { ...state, plugins }
-  },
-  // 5 → 6: where the player is leaves the engine for the places plugin.
-  5: ({ locationId, ...state }) => {
-    if (locationId === null || locationId === undefined) return state
-    const plugins = { ...(state.plugins as Record<string, unknown>) }
-    plugins.places ??= { version: 1, state: { at: locationId } }
-    return { ...state, plugins }
-  },
-  // 6 → 7: entities removed in play are remembered, so declared ones a save lacks can be added.
-  6: (state) => ({ ...state, removed: [] }),
-  // 7 → 8: storylines lose standing and rapport. A relationship is a stat the game declares on the cast's
-  // characters now, and the engine cannot know which; a version-7 save's standing is dropped.
-  7: (state) => ({
-    ...state,
-    storylines: Object.fromEntries(
-      Object.entries((state.storylines ?? {}) as Record<string, { closedUntil?: number | null; flags?: Record<string, unknown> }>).map(
-        ([id, { closedUntil, flags }]) => [id, { closedUntil: closedUntil ?? null, flags: flags ?? {} }],
-      ),
-    ),
-  }),
-  // 8 → 9: play settings join the state. Each one the game declares takes its default when the save loads.
-  8: (state) => ({ ...state, settings: {} }),
-  // 9 → 10: audio. Nothing has been played on a save from before it, and no scene counted as a showing.
-  9: (state) => ({ ...state, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } }),
-  // 10 → 11: media. Nothing has been picked from a pool yet; the first view picks as it always would.
-  10: (state) => ({ ...state, media: { picks: {} } }),
-}
-
-/** Carry a save forward to the current version, or give up on it. */
-export function migrate(data: unknown): GameState | null {
-  if (!data || typeof data !== 'object') return null
-  let state = data as Saved
-  let version = typeof state.version === 'number' ? state.version : 0
-  while (version < SAVE_VERSION) {
-    const step = MIGRATIONS[version]
-    if (!step) return null
-    version += 1
-    state = { ...step(state), version }
-  }
-  if (version !== SAVE_VERSION) return null
-  return state as unknown as GameState
-}
-
-export function deserialize(raw: string): GameState | null {
-  try {
-    const data = migrate(JSON.parse(raw))
-    if (!data) return null
-    if (typeof data.turn !== 'number' || !data.stats) {
-      return null
-    }
-    return data
-  } catch {
-    return null
-  }
-}
+import { pluginById, pluginLabel } from './plugin.ts'
+import type { GameState } from './types.ts'
+import { loadState } from './intake.ts'
 
 /** What a save says about itself, for a load screen. */
 export type SaveMeta = {
@@ -198,7 +54,7 @@ function isSaveFile(data: unknown): data is { ifloom: 1; meta: SaveMeta; state: 
  *
  * Keys carry the game's id: opened from disk, every game shares one storage
  * origin in Chromium, and itch.io serves many games from shared domains. The
- * format's version lives inside the save (`migrate`), never in the key, so a
+ * format's version lives inside the save (`loadState`), never in the key, so a
  * new version never orphans an old save. Slots are names — `'auto'`,
  * `'quick'`, `'1'` — chosen by the game.
  */
@@ -235,18 +91,14 @@ export function saves(game: Game, driver: SaveDriver) {
     }
     if (!isSaveFile(data)) return say(game, 'notASave')
     if (data.meta.game !== game.id) return say(game, 'otherGame', { game: data.meta.game })
-    const carried = migrate(data.state)
-    if (!carried) return say(game, 'saveTooOld')
-    const plugged = migratePlugins(carried, game)
-    if (typeof plugged === 'string') return plugged
-    const state = migrateGame(plugged, game)
+    const state = loadState(data.state, game)
     if (typeof state === 'string') return state
     const missingPacks = (data.meta.packs ?? []).filter((id) => !(game.packs ?? []).includes(id))
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
-    // Brought up to date with the game as it is now: a declared entity the save lacks joins it.
     // A save from before game versions says nothing of one: it was version 1.
-    const meta = { ...data.meta, gameVersion: data.meta.gameVersion ?? carried.gameVersion ?? 1 }
-    return { meta, state: hydrate(state, game), missingPacks, missingPlugins }
+    const recorded = (data.state as { gameVersion?: number }).gameVersion
+    const meta = { ...data.meta, gameVersion: data.meta.gameVersion ?? recorded ?? 1 }
+    return { meta, state, missingPacks, missingPlugins }
   }
 
   return {

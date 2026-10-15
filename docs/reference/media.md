@@ -172,7 +172,7 @@ The visit isn't part of the key. A scene shows the same door every time it opens
 type MediaState = { picks: Record<string, string> }
 ```
 
-What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and a save from before version 11 is [migrated](/reference/saves#migrate) to that.
+What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and a save from before version 11 [loads](/reference/saves#loadstate) with that.
 
 ## The stage
 

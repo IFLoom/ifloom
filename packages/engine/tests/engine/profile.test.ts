@@ -3,7 +3,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { profile } from '../../src/profile.ts'
-import { startingState } from '../../src/reduce.ts'
+import { startingState } from '../../src/intake.ts'
 import { createRunner } from '../../src/runner.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 

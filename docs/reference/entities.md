@@ -155,25 +155,28 @@ An entity the game declares has the id you give it. One [created](/reference/eff
 
 ## Entities in old saves
 
-A save made before the game declared an entity doesn't have it. That happens when an update writes Ben into the café, or when the player turns on a mod that adds staff. [`hydrate`](/reference/commands#hydrate), which [`apply`](/reference/commands#apply) runs before every command, adds every declared entity a save lacks, set up as a new game would have it.
+A save made before the game declared an entity doesn't have it. That happens when an update writes Ben into the café, or when the player turns on a mod that adds staff. When the save loads, [`loadState`](/reference/saves#loadstate) adds every declared entity it lacks, set up as a new game would have it. A game that declares a [`version`](/reference/saves#filling-new-content) adds them in its own migration step instead, with `tools.fill()`.
 
-The exception is an entity that left in play. A [`remove`](/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/reference/state#removed), and `hydrate` skips those. If Ben quit, he doesn't come back on the next load. An entity created in play isn't recorded, since nothing would bring it back.
+The exception is an entity that left in play. A [`remove`](/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/reference/state#removed), and loading skips those. If Ben quit, he doesn't come back on the next load. An entity created in play isn't recorded, since nothing would bring it back.
 
 ```ts
-import { applyEffects, hydrate } from '@ifloom/engine'
+import { applyEffects, loadState, type GameState } from '@ifloom/engine'
+
+// loadState gives a string for a save it refuses; these two load.
+const staff = (state: GameState) => Object.keys((loadState(state, game) as GameState).entities.staff)
 
 const older = { ...save, entities: { ...save.entities, staff: { ana: save.entities.staff.ana } } }
-Object.keys(hydrate(older, game).entities.staff)    // ['ana', 'ben']: Ben joins
+staff(older)    // ['ana', 'ben']: Ben joins
 
 const left = applyEffects(save, game, [{ kind: 'remove', of: 'staff:ben' }])
-left.removed                                        // ['staff:ben']
-Object.keys(hydrate(left, game).entities.staff)     // ['ana']: he stays gone
+left.removed    // ['staff:ben']
+staff(left)     // ['ana']: he stays gone
 ```
 
 **Gotchas.**
-- **When it happens.** A save read back from the [store](/reference/saves) is hydrated as it's read, and every command hydrates the state it runs on. A state from anywhere else, such as a save's text you parsed yourself, gets the missing entities once you call `hydrate` or run its first command.
+- **When it happens.** Only when a state loads. A save read back from the [store](/reference/saves) or the [runner](/reference/runner) loads through `loadState`. A state you parsed yourself gets the missing entities once you pass it to `loadState`. Commands don't add them.
 - **Taken on again.** A `create` that names a removed declared entity's id brings it back and takes it out of `removed`. Removing it again records it once.
-- **Saves from before version 7 recorded no removals.** Their `removed` starts empty, so a declared entity removed in such a save is put back at its start. See the [6 → 7 step](/reference/saves#migrate).
+- **Saves from before version 7 recorded no removals.** Their `removed` starts empty, so a declared entity removed in such a save is put back at its start. See the [6 → 7 step](/reference/saves#the-engine-s-steps).
 - **A dropped declaration isn't taken out.** An entity the game no longer declares stays in a save that has it, until an effect removes it.
 
 ## Functions

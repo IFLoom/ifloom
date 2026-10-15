@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
-import { apply, startingState } from '../../src/reduce.ts'
+import { apply } from '../../src/reduce.ts'
+import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import { replay } from '../../src/runner.ts'
-import { deserialize, migrate, serialize } from '../../src/save.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { artSrc, mediaKind, parseBeats } from '../../src/sceneBody.ts'
 import { pickKey, poolCandidates } from '../../src/media.ts'
@@ -196,7 +196,7 @@ describe('pools', () => {
     const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', id: 'doorstep' }] }] })
     const after = apply(startingState(g, { seed: 7 }), g, { type: 'activity', id: 'knock' }).state
     const shown = view(after, g).scene.beats[3]
-    const loaded = deserialize(serialize(after))!
+    const loaded = loadState(JSON.parse(JSON.stringify(after)), g) as GameState
     const more: Game = { ...g, media: { pools: { ...pools, door: [{ src: 'door/blue-dusk.jpg', tags: ['blue', 'red'] }, ...pools.door] } } }
     expect(view(loaded, more).scene.beats[3]).toEqual(shown)
     // A pick whose file has gone from the pool is drawn again.
@@ -212,7 +212,7 @@ describe('pools', () => {
     for (const command of commands) state = apply(state, g, command).state
     const replayed = replay(g, { game: g.id, start, commands })
     expect(replayed).toEqual(state)
-    expect(view(replayed, g).scene.beats).toEqual(view(state, g).scene.beats)
+    expect(view(replayed as GameState, g).scene.beats).toEqual(view(state, g).scene.beats)
   })
 
   it('resolve in a hand-built scene’s body and media, by position', () => {
@@ -396,6 +396,6 @@ describe('saves', () => {
     const g = game([])
     const { media: _media, ...now } = startingState(g)
     expect(SAVE_VERSION).toBe(11)
-    expect(migrate({ ...now, version: 10 })).toEqual({ ...now, version: 11, media: { picks: {} } })
+    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: 11, media: { picks: {} } })
   })
 })

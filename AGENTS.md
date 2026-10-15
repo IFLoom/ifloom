@@ -43,7 +43,9 @@ A first-party plugin is a package of its own that imports only `@ifloom/engine` 
 
 ## Words
 
-Author-facing words, used in docs and new API: scene, choice, action, location, character, storyline, stage, stat, variable, requires, effects, cost, once/cooldown, turn, kind, entity, trigger, lock, variants, block, tag, item, save, mod. Developer words: plugin, pack, hook, panel, view, state slice, snapshot. The code uses these words too (storyline, character, `View`, `Game`, `Pack`, stages, blocks, variants); `docs/guide/status.md` lists the few renames still to come.
+Author-facing words, used in docs and new API: scene, choice, action, location, character, storyline, stage, stat, variable, requires, effects, cost, once/cooldown, turn, kind, entity, trigger, lock, variants, block, tag, item, save, mod. Developer words: plugin, pack, hook, panel, view, state slice, snapshot, content checker (`checkGame`, the one walk that checks a game's content and lists the files it names). The code uses these words too (storyline, character, `View`, `Game`, `Pack`, stages, blocks, variants); `docs/guide/status.md` lists the few renames still to come.
+
+Decisions a future review must not re-open are in `docs/adr/`.
 
 ## Docs
 

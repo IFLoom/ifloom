@@ -6,7 +6,7 @@
  *   import { startAudio } from '@ifloom/audio'
  *   const player = startAudio(runner)
  */
-import type { AudioChannelView, AudioCue, AudioView, CommandLog, Runner, SettingView } from '@ifloom/engine'
+import { settingValue, type AudioChannelView, type AudioCue, type AudioView, type CommandLog, type Runner } from '@ifloom/engine'
 
 /** The parts of an `HTMLAudioElement` the player uses. Tests pass a fake through `createAudio`. */
 export type AudioLike = {
@@ -90,9 +90,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   const log = options.log ?? (() => {})
   const root = options.root ?? (typeof document === 'undefined' ? undefined : document)
 
-  const first = runner.view()
-  let audio: AudioView = first.audio
-  let settings: SettingView[] = first.settings
+  let audio: AudioView = runner.view().audio
   let lastLog: CommandLog = runner.log()
   let stored: Record<string, unknown> = {}
   let unlocked = false
@@ -111,27 +109,17 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
 
   // Settings
 
-  function storedValue(id: string): unknown {
-    return Object.hasOwn(stored, id) ? stored[id] : undefined
-  }
-
   /** A range setting as 0 to 1 from its min to its max; 1 if the game has no such setting. */
   function rangeGain(id: string): number {
-    const setting = settings.find((entry) => entry.id === id)
+    const setting = runner.game.settings?.find((entry) => entry.id === id)
     if (!setting || setting.kind !== 'range') return 1
-    const min = setting.min ?? 0
-    const max = setting.max ?? 1
-    const value = storedValue(id)
-    const at = typeof value === 'number' && value >= min && value <= max ? value : Number(setting.default)
-    return max > min ? clamp((at - min) / (max - min)) : 1
+    const at = Number(settingValue(runner.game, stored, id))
+    return setting.max > setting.min ? clamp((at - setting.min) / (setting.max - setting.min)) : 1
   }
 
   function muted(): boolean {
     const id = audio.muteSetting
-    if (!id) return false
-    const value = storedValue(id)
-    if (typeof value === 'boolean') return value
-    return settings.find((entry) => entry.id === id)?.default === true
+    return id ? settingValue(runner.game, stored, id) === true : false
   }
 
   function gain(channel: string): number {
@@ -349,7 +337,6 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
     if (stopped) return
     const full = runner.view()
     audio = full.audio
-    settings = full.settings
     const commandLog = runner.log()
     // One command more is play going on. Anything else (a load, a new game, an
     // undo) is a jump: the sound effects kept in that state are old news. A

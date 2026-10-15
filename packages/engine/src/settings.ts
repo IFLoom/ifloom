@@ -32,6 +32,18 @@ export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'n
 }
 
 /**
+ * A setting's current value from the player's stored settings (the profile's
+ * `settings`): the stored value if the setting can still take it, else the
+ * setting's default. Undefined for a setting the game doesn't declare.
+ */
+export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): FlagValue | undefined {
+  const setting = settingById(game, id)
+  if (!setting) return undefined
+  const value = stored && Object.hasOwn(stored, id) ? stored[id] : undefined
+  return value !== undefined && !settingFault(setting, value) ? (value as FlagValue) : setting.default
+}
+
+/**
  * Why this value can't be given to this setting, as the player reads it;
  * undefined if it can. `affects` is the kind of setting the caller sets: the
  * `setting` command sets `play` ones, `runner.setUiSetting` sets `ui` ones.

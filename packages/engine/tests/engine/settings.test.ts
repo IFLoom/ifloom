@@ -6,6 +6,7 @@ import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.t
 import { apply, startingState } from '../../src/reduce.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import { validatePack } from '../../src/validate.ts'
+import { settingValue } from '../../src/settings.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
@@ -271,5 +272,29 @@ describe('validatePack’s settings checks', () => {
       'carryOver: stat charm is not declared',
       'carryOver: item umbrella does not exist',
     ])
+  })
+})
+
+describe('settingValue', () => {
+  it('gives the stored value when the setting can take it', () => {
+    const stored = { hints: false, difficulty: 'hard', patience: 8, textSize: 'large' }
+    expect(settingValue(game(), stored, 'hints')).toBe(false)
+    expect(settingValue(game(), stored, 'difficulty')).toBe('hard')
+    expect(settingValue(game(), stored, 'patience')).toBe(8)
+    expect(settingValue(game(), stored, 'textSize')).toBe('large')
+  })
+
+  it('falls back to the default for a missing or unsuitable value', () => {
+    expect(settingValue(game(), undefined, 'hints')).toBe(true)
+    expect(settingValue(game(), {}, 'difficulty')).toBe('usual')
+    expect(settingValue(game(), { hints: 'yes' }, 'hints')).toBe(true)
+    expect(settingValue(game(), { difficulty: 'brutal' }, 'difficulty')).toBe('usual')
+    expect(settingValue(game(), { patience: 12 }, 'patience')).toBe(4)
+    expect(settingValue(game(), { patience: 3 }, 'patience')).toBe(4)
+    expect(settingValue(game(), { patience: '6' }, 'patience')).toBe(4)
+  })
+
+  it('is undefined for a setting the game does not declare', () => {
+    expect(settingValue(game(), { volume: 5 }, 'volume')).toBeUndefined()
   })
 })

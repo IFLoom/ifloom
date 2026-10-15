@@ -6,6 +6,8 @@ export default defineConfig({
   description: 'An interactive fiction engine for TypeScript: linear novels, management games and life sims on one core.',
   base: '/ifloom/',
   cleanUrls: true,
+  // Decision records are for contributors, not the site.
+  srcExclude: ['adr/**'],
   vite: { plugins: [llmstxt()] },
   lastUpdated: true,
   themeConfig: {

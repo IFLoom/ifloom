@@ -4,7 +4,7 @@
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * screen, and the in-game menu leads back to `title`.
  */
-import type { FlagValue, GameState, SaveMeta, SettingView } from '@ifloom/engine'
+import { settingValue, type FlagValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -102,26 +102,18 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
   return value
 }
 
-/** Whether a stored value still suits a setting, which may have changed since it was stored. */
-function suits(setting: SettingView, value: unknown): value is FlagValue {
-  if (setting.kind === 'toggle') return typeof value === 'boolean'
-  if (setting.kind === 'choice') return (setting.options ?? []).some((option) => option.value === value)
-  return typeof value === 'number' && value >= (setting.min ?? -Infinity) && value <= (setting.max ?? Infinity)
-}
-
 /**
  * A setting's current value. A play setting's comes from the game state (the
  * view); a ui setting's from the profile, live as it changes. Undefined for a
  * setting the game doesn't declare.
  */
 export function useSetting(id: string): FlagValue | undefined {
-  const { view } = useGame()
+  const { runner, view } = useGame()
   const stored = useProfile<Record<string, unknown>>('settings')
   const setting = view.settings.find((entry) => entry.id === id)
   if (!setting) return undefined
   if (setting.affects === 'play') return setting.value ?? setting.default
-  const value = stored?.[id]
-  return suits(setting, value) ? value : setting.default
+  return settingValue(runner.game, stored, id)
 }
 
 /** Gives the screens below it a place among the screens. `GameShell` uses it when `screens` is on. */
@@ -345,8 +337,7 @@ function SettingsScreenImpl({ className }: { className?: string }) {
   const valueOf = (setting: SettingView): FlagValue => {
     if (setting.affects === 'play' && inGame) return setting.value ?? setting.default
     if (setting.id in changed) return changed[setting.id]
-    const value = stored?.[setting.id]
-    return suits(setting, value) ? value : setting.default
+    return settingValue(runner.game, stored, setting.id) ?? setting.default
   }
   const change = (setting: SettingView, value: FlagValue) => {
     if (setting.affects === 'ui') {

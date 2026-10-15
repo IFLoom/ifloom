@@ -79,7 +79,7 @@ audio: {
 }
 ```
 
-A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the stored values from [`runner.profile`](/reference/profile) and listens for changes, so moving a slider on the settings screen changes the volume at once. Until the player has stored a value, or when the runner has no profile, it uses the setting's `default`.
+A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the stored values from [`runner.profile`](/reference/profile) and listens for changes, so moving a slider on the settings screen changes the volume at once. It reads each value with [`settingValue`](/reference/settings#settingvalue), so until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, it uses the setting's `default`.
 
 ## AudioOptions
 

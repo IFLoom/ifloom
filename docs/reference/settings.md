@@ -75,6 +75,21 @@ Content reads a play setting with the [`{ setting }`](/reference/conditions#sett
 
 A UI reads every setting, play and ui alike, from [`view.settings`](/reference/view#settings). That's enough to draw the whole settings screen. A `ui` setting's `value` there is `null`, so read it from the profile.
 
+### settingValue
+
+```ts
+function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): FlagValue | undefined
+```
+
+`settingValue` reads a setting from the player's stored settings, which are the profile's `settings`. It gives the stored value if the setting can still take it, and the setting's `default` otherwise. A stored value is checked the same way the `setting` command checks one, so a number outside the range or off the `step`, or an option you've since removed, falls back to the default. It returns `undefined` for an id the game doesn't declare.
+
+```ts
+const stored = await runner.profile?.get<Record<string, unknown>>('settings')
+const size = settingValue(runner.game, stored, 'textSize')
+```
+
+Use it for `ui` settings, and for play settings before a game starts. During a game, a play setting's value is in the state, and `view.settings` has it. React's [`useSetting`](/react/components#usesetting) and the [audio player](/reference/audio-player#volume-and-mute) both read settings this way.
+
 ## Changing a setting
 
 A play setting changes through the [`setting`](/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it.

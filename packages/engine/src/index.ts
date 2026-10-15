@@ -23,6 +23,7 @@ export type {
   StoryletFields,
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
+export { settingValue } from './settings.ts'
 export type { Formula, StatDef, StatLevels } from './stats.ts'
 export {
   clampStat,

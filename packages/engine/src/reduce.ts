@@ -20,6 +20,7 @@ import { dismiss, notify } from './notices.ts'
 import { fireTriggers } from './triggers.ts'
 import { inputById, inputValue } from './inputs.ts'
 import { settingAffects, startingSettings } from './settings.ts'
+import { emptyAudio, noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
 import { migratePlugins, pluginCommand, pluginEffect, runAfter, runHooks, startingPlugins, useApplier } from './plugin.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -96,11 +97,13 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
     seenOn: game.introScene ? { [game.introScene]: 0 } : {},
     chosen: {},
     settings: startingSettings(game, options.settings),
+    // The opening scene is the first showing.
+    audio: { ...emptyAudio(), shown: game.introScene ? 1 : 0 },
   }
-  if (!options.carry) return fresh
+  if (!options.carry) return noteStarted(fresh, game)
   // Carried over first, so variables the caller gives still win.
   const plus = carried(fresh, game, options.carry)
-  return { ...plus, flags: { ...plus.flags, ...options.flags } }
+  return noteStarted({ ...plus, flags: { ...plus.flags, ...options.flags } }, game)
 }
 
 export function hydrate(state: GameState, game: Game): GameState {
@@ -127,6 +130,7 @@ export function hydrate(state: GameState, game: Game): GameState {
   if (!next.entities) next = { ...next, entities: {} }
   if (!next.created) next = { ...next, created: {} }
   if (!next.removed) next = { ...next, removed: [] }
+  if (!next.audio) next = { ...next, audio: emptyAudio() }
   // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
   const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
   if (lacking.length || !next.settings) {
@@ -178,9 +182,11 @@ function refuse(detail: string): never {
 function witnessed(before: GameState, after: GameState): GameState {
   const id = after.sceneId
   if (!id || id === before.sceneId) return after
-  const seen = { ...after.seen, [id]: (after.seen[id] ?? 0) + 1 }
-  if (after.seenOn?.[id] !== undefined) return { ...after, seen }
-  return { ...after, seen, seenOn: { ...after.seenOn, [id]: after.turn } }
+  // A new showing: its sounds get keys of their own.
+  const shown = sceneShown(after)
+  const seen = { ...shown.seen, [id]: (shown.seen[id] ?? 0) + 1 }
+  if (shown.seenOn?.[id] !== undefined) return { ...shown, seen }
+  return { ...shown, seen, seenOn: { ...shown.seenOn, [id]: shown.turn } }
 }
 
 /**
@@ -208,7 +214,7 @@ export function apply(
   try {
     const ran = run(current, game, command)
     const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))
-    return { state: runAfter(game, current, next), ok: true }
+    return { state: noteStarted(runAfter(game, current, next), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, refused: error.detail }
@@ -476,6 +482,10 @@ function applyEffect(
         },
       }
     }
+    case 'audio':
+      return setChannel(state, effect.channel, effect.track)
+    case 'sound':
+      return soundCue(state, effect.track)
     case 'turn': {
       let next = state
       for (let n = 0; n < (effect.by ?? 1); n += 1) next = endTurn(next, game)

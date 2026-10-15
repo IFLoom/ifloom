@@ -53,6 +53,11 @@ export type LocationDef = {
   body: Block[]
   /** What there is to do here, offered as buttons. */
   actions?: ActionDef[]
+  /**
+   * What plays here while the player is here, by channel: `{ ambience: 'cafe.murmur' }`.
+   * Null silences a channel. An open scene's audio and an `audio` effect's win over it.
+   */
+  audio?: Record<string, string | null>
 }
 
 export type PlacesOptions = {
@@ -184,6 +189,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       return place ? { id: place.id, title: place.name, body: place.body } : undefined
     },
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
+    audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
     view: (state, { slice, game }): PlacesView => {
       const place = locationById(game, slice.at)
       const idle = !state.sceneId && !lockedOut(state, game)
@@ -210,7 +216,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args) : []) : kind === 'effects' ? (name === 'move' ? ids(args) : []) : name === 'go' ? ids(args) : []
       return named.filter((id) => !locationById(game, id)).map((id) => `unknown location "${id}"`)
     },
-    check: (game, { conditionProblems, blockProblems, commandProblems }) => {
+    check: (game, { conditionProblems, blockProblems, commandProblems, audioProblems }) => {
       const problems: PluginProblem[] = []
       const say = (id: string, what: string) => problems.push({ list: 'locations', id, what })
       if (options.start !== undefined && !locationById(game, options.start)) problems.push({ list: 'options', id: 'start', what: `unknown location "${options.start}"` })
@@ -221,6 +227,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
           else if (ancestors(game, place.id).includes(place.id)) say(place.id, 'is inside itself')
         }
         for (const what of blockProblems(place.body)) say(place.id, what)
+        for (const what of audioProblems(place.audio)) say(place.id, `audio: ${what}`)
         for (const entry of place.locked ?? []) for (const what of conditionProblems(entry.when)) say(place.id, what)
         for (const action of place.actions ?? []) {
           for (const what of [

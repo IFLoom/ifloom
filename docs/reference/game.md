@@ -39,6 +39,7 @@ type Game = {
   packs?: string[]
   plugins?: readonly Plugin[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
+  audio?: GameAudio
 }
 ```
 
@@ -69,6 +70,7 @@ type Game = {
 | `rules` | The game's own logic. See [Rules and hooks](/reference/rules). |
 | `plugins` | The [plugins](/reference/plugins) the game is built with, in the order their hooks run. You choose them when you build the game, on the base you pass to [`loadGame`](/reference/loader#loadgame). |
 | `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging `base.data` and every pack's `data` by entry id. |
+| `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/reference/audio#gameaudio). `loadGame` merges the base's and every pack's by id. Leave it out and the game is silent. See [Audio](/reference/audio). |
 
 A new game starts at turn 0 with `introScene` open. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/reference/commands#startingstate).
 
@@ -231,6 +233,7 @@ It always checks:
 - that every stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares
 - [settings](/reference/settings): duplicate ids, each declaration, and every `{ setting }` condition the game declares as data
 - that the stats and items in `carryOver` are declared
+- [audio](/reference/audio): `game.audio` itself, each data scene's `audio`, the `[[sound:id]]` and `[[voice:id]]` in its prose, and the `audio` and `sound` effects on its choices, with the same [checks](/reference/loader#audio) as the loader
 
 In those effect lists, it reports:
 
@@ -241,10 +244,11 @@ In those effect lists, it reports:
 - a `collect` entry's or a `notify` effect's `text` that names a prose key the game doesn't have (`no prose for …`)
 - a long-form `{ kind: 'custom', name }` effect that names no plugin effect the game has (`no plugin effect named …`), unless it's an [absent partner](/reference/loader#the-checks) a plugin cooperates with
 - the plain effects inside an `each`, checked as any other effect with `'$'` standing for one of the kind
+- an `audio` or `sound` effect naming an unknown track or channel, or a track that can't play there
 
 A short-form `{ custom }` call isn't looked inside.
 
-With `probes`, every scene is also rendered against each probe state. Anything that throws is reported, along with duplicate choice ids and the ids in the rendered choices' effects.
+With `probes`, every scene is also rendered against each probe state. Anything that throws is reported, along with duplicate choice ids, the ids in the rendered choices' effects, and the audio and markup in what it rendered.
 
 **Gotchas.**
 - Without probes, the choices of hand-written scenes are never looked at. Pass a few states that reach different branches.

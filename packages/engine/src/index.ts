@@ -67,6 +67,10 @@ export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from
 export { fillTokens, proseStore } from './prose.ts'
 export type { SceneBeat } from './sceneBody.ts'
 export { artSrc, parseBeats } from './sceneBody.ts'
+
+// Audio
+export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './audio.ts'
+export { audioChannels, audioSrc } from './audio.ts'
 export { sceneContext } from './context.ts'
 
 // The state

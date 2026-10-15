@@ -11,6 +11,7 @@ import {
 import { sceneContext } from './context.ts'
 import { referenced, type Condition } from './condition.ts'
 import { isDataScene } from './scene.ts'
+import { cueProblems, manifestProblems, markupProblems, placementProblems } from './audio.ts'
 import { settingConditionProblems, settingProblems } from './settings.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
@@ -90,6 +91,26 @@ export function validatePack(
     for (const id of game.carryOver.items) if (!itemById(game, id)) say('carryOver', `item ${id} does not exist`)
   }
 
+  for (const { where, what } of manifestProblems(game)) say(where, what)
+  for (const scene of game.scenes) {
+    if (!isDataScene(scene)) continue
+    const where = `scene ${scene.id}`
+    for (const what of placementProblems(game, scene.audio ?? {})) say(where, what)
+    // The sounds and voices its prose names, line by line.
+    const keys = scene.body.flatMap((block) => ('text' in block ? [block.text] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []))
+    for (const key of keys) {
+      for (const what of markupProblems(game, game.prose?.line(key) ?? '')) say(where, what)
+    }
+    // Choices' other effects are checked by probes, rendered; their audio is checked here without one.
+    for (const choice of scene.choices) {
+      for (const effect of choice.effects) {
+        if (!customCall(effect) && ((effect as Effect).kind === 'audio' || (effect as Effect).kind === 'sound')) {
+          checkEffect(game, storylineIds, `${where} choice ${choice.id}`, effect as Effect, say)
+        }
+      }
+    }
+  }
+
   for (const state of probes) {
     checkProbe(game, storylineIds, state, say)
   }
@@ -120,6 +141,7 @@ function checkProbe(
     duplicates(view.choices.map((choice) => choice.id)).forEach((id) =>
       say(where, `duplicate choice id ${id}`),
     )
+    for (const what of [...placementProblems(game, view.audio ?? {}), ...markupProblems(game, view.body ?? '')]) say(where, what)
     for (const choice of view.choices) {
       for (const effect of choice.effects) {
         checkEffect(game, storylineIds, `${where} choice ${choice.id}`, effect, say)
@@ -198,6 +220,12 @@ function checkEffect(
       }
       return
     }
+    case 'audio':
+      for (const what of placementProblems(game, { [effect.channel]: effect.track })) say(where, what)
+      return
+    case 'sound':
+      for (const what of cueProblems(game, effect.track)) say(where, what)
+      return
     case 'each':
       // Only the plain effects can be checked here; a custom one is worked out in play.
       for (const inner of bindCurrent(effect.effects, anyOf(effect.of))) {

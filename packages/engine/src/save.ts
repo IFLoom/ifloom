@@ -82,6 +82,8 @@ const MIGRATIONS: Record<number, (state: Saved) => Saved> = {
   }),
   // 8 → 9: play settings join the state. Each one the game declares takes its default when the save loads.
   8: (state) => ({ ...state, settings: {} }),
+  // 9 → 10: audio. Nothing has been played on a save from before it, and no scene counted as a showing.
+  9: (state) => ({ ...state, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } }),
 }
 
 /** Carry a save forward to the current version, or give up on it. */

@@ -20,6 +20,7 @@ import type { Condition } from './condition.ts'
 import { customCall, customCondition, customEffectsUsed, hasCustomEffect, type Custom } from './custom.ts'
 import { proseStore } from './prose.ts'
 import { sceneReferences, type Block, type DataScene } from './scene.ts'
+import { cueProblems, manifestProblems, markupProblems, placementProblems, type ChannelDef, type GameAudio, type PlaylistDef, type TrackDef } from './audio.ts'
 
 /**
  * Content arrives as ordered packs and is merged into one game.
@@ -70,6 +71,12 @@ export type Pack = {
    * one's by id, as scenes do.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
+  /**
+   * Sounds, channels and defaults over the game's own. A later pack's track
+   * or channel replaces an earlier one's by id; its `mute` and `default`
+   * entries win too.
+   */
+  audio?: Partial<GameAudio>
 }
 
 export type Problem = {
@@ -138,6 +145,25 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   byId(inputs, base.inputs, 'base')
   addSettings(base.settings, 'base')
   const prose: Record<string, string> = {}
+  /** Which pack each prose key came from, for markup problems. */
+  const proseFrom = new Map<string, string>()
+  // Audio, merged by id: tracks and channels, then the mute setting and each channel's default.
+  const tracks = new Map<string, { value: TrackDef | PlaylistDef; from: string }>()
+  const channels = new Map<string, { value: ChannelDef; from: string }>()
+  const defaults: Record<string, string> = {}
+  let mute: string | undefined
+  let audioFrom = 'base'
+  let hasAudio = false
+  const addAudio = (from: string, audio: Partial<GameAudio> | undefined) => {
+    if (!audio) return
+    hasAudio = true
+    for (const [id, value] of Object.entries(audio.tracks ?? {})) tracks.set(id, { value, from })
+    for (const [id, value] of Object.entries(audio.channels ?? {})) channels.set(id, { value: { ...channels.get(id)?.value, ...value }, from })
+    if (audio.mute !== undefined || audio.default !== undefined) audioFrom = from
+    if (audio.mute !== undefined) mute = audio.mute
+    Object.assign(defaults, audio.default ?? {})
+  }
+  addAudio('base', base.audio)
   const strings: Record<string, string> = { ...base.strings }
   const variants: Record<string, string[]> = {}
   // The base game's own functions come first; packs lay theirs over by name.
@@ -197,6 +223,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     byId(inputs, pack.inputs, pack.id)
     addSettings(pack.settings, pack.id)
     Object.assign(prose, pack.prose ?? {})
+    for (const key of Object.keys(pack.prose ?? {})) proseFrom.set(key, pack.id)
+    addAudio(pack.id, pack.audio)
     Object.assign(strings, pack.strings ?? {})
     for (const [name, members] of Object.entries(pack.variants ?? {})) {
       variants[name] = [...(variants[name] ?? []), ...members]
@@ -258,6 +286,13 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       ]),
     ),
   }
+  if (hasAudio) {
+    const audio: GameAudio = { tracks: Object.fromEntries([...tracks].map(([id, entry]) => [id, entry.value])) }
+    if (channels.size) audio.channels = Object.fromEntries([...channels].map(([id, entry]) => [id, entry.value]))
+    if (mute !== undefined) audio.mute = mute
+    if (Object.keys(defaults).length) audio.default = defaults
+    game.audio = audio
+  } else delete game.audio
   // Plugins' entities, made from their content now it is merged; one the game declares itself wins.
   for (const plugin of base.plugins ?? []) {
     for (const entity of plugin.entities?.(game) ?? []) {
@@ -381,6 +416,17 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       ]),
     ]
     checkConditions(conditions, from, `scene ${value.id}`)
+    for (const what of placementProblems(game, value.audio ?? {})) problems.push({ pack: from, where: `scene ${value.id}`, what })
+  }
+
+  // Audio: the manifest, then every sound and voice the prose names.
+  for (const { where, what } of manifestProblems(game)) {
+    const [list, id] = [where.slice(0, where.indexOf(' ')), where.slice(where.indexOf(' ') + 1)]
+    const from = list === 'track' ? tracks.get(id)?.from : list === 'channel' ? channels.get(id)?.from : audioFrom
+    problems.push({ pack: from ?? 'base', where, what })
+  }
+  for (const [key, text] of Object.entries(prose)) {
+    for (const what of markupProblems(game, text)) problems.push({ pack: proseFrom.get(key) ?? 'base', where: `prose ${key}`, what })
   }
 
   // Activities are data too, and are checked the same way: everything a
@@ -423,6 +469,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       if (effect.kind === 'scene' && effect.id !== null && !sceneIds.has(effect.id)) {
         out.push(`goes to unknown scene "${effect.id}"`)
       }
+      if (effect.kind === 'audio') out.push(...placementProblems(game, { [effect.channel]: effect.track }))
+      if (effect.kind === 'sound') out.push(...cueProblems(game, effect.track))
     }
     return out
   }
@@ -490,7 +538,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   }
   // Each plugin checks its own content; the problem is pinned on the pack the entry came from.
   for (const plugin of game.plugins ?? []) {
-    for (const problem of plugin.check?.(game, { conditionProblems, blockProblems, commandProblems }) ?? []) {
+    const audioProblems = (audio: Record<string, string | null> | undefined) => (audio ? placementProblems(game, audio) : [])
+    for (const problem of plugin.check?.(game, { conditionProblems, blockProblems, commandProblems, audioProblems }) ?? []) {
       const from = data.get(plugin.id)?.get(problem.list)?.get(problem.id)?.from ?? 'base'
       problems.push({ pack: from, where: `${problem.list} ${problem.id}`, what: problem.what })
     }

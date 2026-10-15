@@ -58,6 +58,8 @@ type Effect =
   | { kind: 'collect'; to: string; entry: CollectionItem }
   | { kind: 'discard'; from: string; id: string }
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
+  | { kind: 'audio'; channel: string; track?: string | null }
+  | { kind: 'sound'; track: string }
 ```
 
 ### stat
@@ -267,6 +269,32 @@ The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#
 ```
 
 Raises a [notice](/reference/notices), which is something the game tells the player outside a scene. `title` is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest [`NOTICES_KEPT`](/reference/notices#notices-kept) are kept.
+
+### audio
+
+```ts
+{ kind: 'audio', channel: 'music', track: 'radio' }
+```
+
+Puts a track or playlist on a background [channel](/reference/audio#channels) and keeps it in the save, in `state.audio.channels`. It plays over the place's audio and the game's default, but an open scene that names the same channel still wins while it's open. See [what plays on a background channel](/reference/audio#what-plays-on-a-background-channel).
+
+- **`track: null`** silences the channel, place and default included.
+- **Leave `track` out** to hand the channel back, so the place's audio or the game's default plays again.
+
+```ts
+{ kind: 'audio', channel: 'music', track: null }  // the music stops
+{ kind: 'audio', channel: 'music' }               // back to whatever the flat or the default plays
+```
+
+The loader reports an unknown track or channel, a cue channel such as `sfx`, and a sound effect's track put on a background channel.
+
+### sound
+
+```ts
+{ kind: 'sound', track: 'knock' }
+```
+
+Plays a [track](/reference/audio#trackdef) once, on its own channel (`sfx` unless the track says otherwise). The state keeps the last 20 in `state.audio.cues`, each with a running count, and [`view.audio.cues`](/reference/audio#sounds-and-voices) gives each a key so a player plays it once. The loader reports an unknown track, a playlist, and a track on a background channel.
 
 ## Computed effects
 

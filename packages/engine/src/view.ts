@@ -15,6 +15,7 @@ import {
   type SceneBeat,
 } from './sceneBody.ts'
 import { sceneContext } from './context.ts'
+import { audioView, type AudioView } from './audio.ts'
 import type { FlagValue, Command, Effect, GameState, StatKey, Stats } from './types.ts'
 import { bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
 
@@ -101,6 +102,8 @@ export type View = {
   plugins: Record<string, unknown>
   /** Every setting the game declares, in order, for a settings screen. */
   settings: SettingView[]
+  /** What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. */
+  audio: AudioView
 }
 
 /** A setting as a settings screen draws it. */
@@ -190,13 +193,14 @@ export type InputView = {
  */
 export function view(state: GameState, game: Game): View {
   const idle = !lockedOut(state, game) && !state.sceneId
+  const dialogue = renderDialogue(state, game)
 
   return {
     title: game.title,
     phase: state.phase,
     turn: state.turn,
     when: pluginLabel(game, state),
-    scene: renderDialogue(state, game) ?? standing(state, game),
+    scene: dialogue?.scene ?? standing(state, game),
     actions: idle ? idleActions(state, game) : [],
     stats: statsOf(state, game),
     statsById: statsById(state, game),
@@ -208,6 +212,7 @@ export function view(state: GameState, game: Game): View {
     inputs: inputsOf(state, game),
     plugins: pluginViews(state, game),
     settings: settingsOf(state, game),
+    audio: audioView(state, game, dialogue ? { audio: dialogue.audio, beats: dialogue.scene.beats } : null),
   }
 }
 
@@ -454,14 +459,15 @@ function priceOfEffects(
   return priced(state, game, { stats }, effects)
 }
 
+/** The open scene as the screen draws it, and what it puts on the audio channels. */
 function renderDialogue(
   state: GameState,
   game: Game,
-): View['scene'] | null {
+): { scene: View['scene']; audio?: Record<string, string | null> } | null {
   if (!state.sceneId) return null
   const scene = sceneById(game, state.sceneId)
   if (!scene) {
-    return {
+    return { scene: {
       id: state.sceneId,
       title: pluginStage(game, state)?.title ?? game.title,
       body: say(game, 'momentPassed'),
@@ -475,7 +481,7 @@ function renderDialogue(
       choices: [
         { id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' } },
       ],
-    }
+    } }
   }
   // Markdown is laid over legacy scenes by `bake` in the content pack. Doing it
   // again here would overwrite a declarative scene's composed body with
@@ -497,7 +503,7 @@ function renderDialogue(
   ]
   const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
   const frame = rendered.frame ?? scene.frame ?? (speaker ? 'talk' : 'stage')
-  return {
+  return { audio: rendered.audio, scene: {
     id: state.sceneId,
     title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
     body: rendered.body ?? '',
@@ -523,7 +529,7 @@ function renderDialogue(
           command: { type: 'choose', id: choice.id } as const,
         }
       }),
-  }
+  } }
 }
 
 /** Who is speaking: the id the scene names, as a plugin knows them. Never guessed from the scene's id. */

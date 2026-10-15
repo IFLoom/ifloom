@@ -185,6 +185,7 @@ type Plugin<S = any> = {
   speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
   kinds?: readonly KindDef[]
   entities?: (game: Game) => readonly EntityDef[]
+  audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => unknown
   profile?: {
     onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
@@ -218,6 +219,7 @@ type Plugin<S = any> = {
 | `speaker` | Who a scene's `speaker` id is: a name, a colour and a picture. See [Speakers](#speakers). |
 | `kinds` | [Kinds](/reference/entities#kinddef) of entity the plugin brings. See [Kinds and entities](#kinds-and-entities). |
 | `entities` | [Entities](/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
+| `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
 | `check` | Checks the plugin's content when the game is loaded. See [Content and checks](#content-and-checks). |
@@ -792,6 +794,25 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 - Like the game's own actions, they aren't offered while a scene is open or while a lock that stops everything is on ([`lockedOut`](/reference/locks#lockedout)).
 - The loader doesn't see them. Check what their commands name in [`check`](#content-and-checks) with `commandProblems`.
 
+## Audio
+
+```ts
+audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
+```
+
+What the plugin puts on background [audio channels](/reference/audio#channels), by channel, such as `{ ambience: 'cafe.murmur' }`. Return `undefined` or `{}` to leave every channel alone. The [places plugin](/plugins/places#audio) uses it to play the location's `audio` while the player is there.
+
+```ts
+// The stall rings its bell while the market is on.
+audio: (state) => (state.flags.marketOpen ? { ambience: 'market.bell' } : undefined),
+```
+
+It comes third of [four levels](/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/reference/effects#audio) both win over it, and it wins over the game's default. When several plugins name the same channel, the first in `game.plugins` wins. `null` silences a channel, and a channel you leave out goes to the next plugin, then the default.
+
+**Gotchas.**
+- The engine asks it on every [`view`](/reference/view) and after every command, so keep it cheap.
+- The loader doesn't see the tracks it names. Check them in [`check`](#content-and-checks) with `audioProblems`.
+
 ## Speakers
 
 ```ts
@@ -943,6 +964,7 @@ type CheckTools = {
   conditionProblems: (condition: Condition | undefined) => string[]
   blockProblems: (blocks: readonly Block[]) => string[]
   commandProblems: (command: Command) => string[]
+  audioProblems: (audio: Record<string, string | null> | undefined) => string[]
 }
 ```
 
@@ -953,6 +975,7 @@ What the loader lends a plugin's `check`. Each one returns problems worded as th
 | `conditionProblems(condition)` | A [condition](/reference/conditions), as under [In a condition](/reference/loader#in-a-condition). `undefined` has no problems. |
 | `blockProblems(blocks)` | Prose keys with no prose, [`variants`](/reference/scenes#block) with no lines, and each block's `when` and a `variants` block's `gate`. Use it for a [stage](#stage) or any other blocks the plugin draws. |
 | `commandProblems(command)` | A `scene`, `activity`, `use` or `custom` [command](/reference/commands#command), as under [In a command](/reference/loader#in-a-command). A `custom` command of an [absent partner](#cooperates) isn't reported. Other command types have no problems. Use it for [buttons](#buttons) built from the plugin's content. |
+| `audioProblems(audio)` | Background audio by channel, as under [Audio](/reference/loader#audio): an unknown track or channel, a cue channel, or a sound's track on a background channel. `undefined` has no problems. Use it for what your [`audio`](#audio) hook plays. |
 
 The stall checks the sign it hangs and the scene its closing button opens, both from its own content:
 

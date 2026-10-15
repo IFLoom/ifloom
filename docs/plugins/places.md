@@ -116,6 +116,7 @@ type LocationDef = {
   locked?: { when: Condition; reason: string; hide?: boolean }[]
   body: Block[]
   actions?: ActionDef[]
+  audio?: Record<string, string | null>
 }
 ```
 
@@ -131,6 +132,7 @@ type LocationDef = {
 | `locked` | Walking in here is refused while one of these [conditions](/reference/conditions) holds. The first that holds gives the `reason`, which is both the refusal and the exit's `disabled` text. With `hide: true`, the exit is left off the screen while it holds, instead of greyed out. |
 | `body` | What the player reads here while no scene is open. These are [prose blocks](/reference/scenes#block), exactly as in a data scene's body. |
 | `actions` | What there is to do here, as [`ActionDef`](/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
+| `audio` | What plays on background [audio channels](/reference/audio#channels) while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. `null` silences a channel. See [Audio](#audio). |
 
 ### LocationKind
 
@@ -376,6 +378,16 @@ The room's `actions` are offered as plugin [buttons](/reference/plugins#buttons)
 
 The place's `name`, which the view joins into [`view.when`](/reference/view#the-clock-and-the-player) after any plugin listed before it. With the calendar first, that reads `Day 1 · Monday morning · High Street`. There's no label while the player is nowhere.
 
+### Audio
+
+The place the player is at supplies its `audio` through the plugin's [`audio` hook](/reference/plugins#audio). In the showcase, the café has its murmur and the music carries on from the game's default:
+
+```ts
+place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'], audio: { ambience: 'cafe.murmur' } })
+```
+
+Walk back out to the high street and the ambience stops, because the street names none. A place's audio is the third of [four levels](/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/reference/effects#audio) both win over it, and it wins over the game's default. A room inside another doesn't take its parent's audio, so give the back room its own if it should sound the same. Nothing plays while the player is nowhere.
+
 ## The view
 
 `view(state, game).plugins.places` is a `PlacesView`.
@@ -505,6 +517,7 @@ town · activity swim · unknown location "lido"
 - Anything the `body` names that the game doesn't have, such as prose keys, variants or conditions (`no prose for "…"`).
 - Anything a `locked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown location "moon"`).
+- A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/reference/loader#audio).
 
 ```text
 base · options start · unknown location "nowhere"
@@ -512,6 +525,7 @@ town · locations yard · exit to unknown location "lane"
 town · locations yard · is inside itself
 town · locations yard · no prose for "place.yard"
 town · locations yard · action dig: unknown location "moon"
+town · locations cafe · audio: unknown track "rain"
 ```
 
 ## Gotchas

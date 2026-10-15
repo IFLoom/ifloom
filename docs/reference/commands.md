@@ -111,7 +111,7 @@ function hydrate(state: GameState, game: Game): GameState
 Fills in what an older state lacks for this game:
 
 - an empty storyline for each declared storyline the save has never heard of
-- empty defaults for fields added since the save was written (`seen`, `seenOn`, `chosen`, `collections`, `notices`, `fired`, `entities`, `created`, [`removed`](/reference/state#removed)), and `turn` 0 if the state has none
+- empty defaults for fields added since the save was written (`seen`, `seenOn`, `chosen`, `collections`, `notices`, `fired`, `entities`, `created`, [`removed`](/reference/state#removed), [`audio`](/reference/state#audio)), and `turn` 0 if the state has none
 - the default of every `play` [setting](/reference/settings) the game declares that the save has no value for, such as one added in an update, or all of them in a save from before version 9
 - every [entity](/reference/entities) the game declares that the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. That covers one a mod or a new version of the game declares, or one a plugin's [`entities`](/reference/plugins#kinds-and-entities) make.
 

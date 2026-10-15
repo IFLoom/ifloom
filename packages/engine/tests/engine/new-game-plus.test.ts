@@ -71,9 +71,8 @@ describe('version 9 saves', () => {
   ]
 
   it('carries a version-8 state forward with no settings', () => {
-    const { settings: _settings, ...now } = startingState(fixture())
-    expect(migrate({ ...now, version: 8 })).toEqual({ ...now, version: SAVE_VERSION, settings: {} })
-    expect(SAVE_VERSION).toBe(9)
+    const { settings: _settings, audio: _audio, ...now } = startingState(fixture())
+    expect(migrate({ ...now, version: 8 })).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
   })
 
   it('loads a version-8 save with every play setting at its default', async () => {

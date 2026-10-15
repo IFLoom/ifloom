@@ -68,6 +68,7 @@ type SceneView = {
   portrait?: string
   body?: string                  // the scene's prose, with its markup
   media?: SceneMedia[]
+  audio?: Record<string, string | null>   // background audio by channel while the scene is open
   choices: SceneChoice[]
 }
 ```
@@ -85,6 +86,7 @@ What `render` returns.
 | `portrait` | Replaces the speaker's portrait as the stage image. |
 | `body` | The scene's prose, with its [markup](/reference/prose#markup). The view parses it into beats. If it's left out, the scene has no body text. |
 | `media` | Pictures that aren't in the prose. See [`SceneMedia`](#scenemedia). |
+| `audio` | What plays on [background channels](/reference/audio#what-plays-on-a-background-channel) while the scene is open, by channel. It wins over effects, places and the default. `null` silences a channel. |
 | `choices` | Every choice the scene knows about, including hidden ones. |
 
 ## SceneChoice
@@ -194,6 +196,7 @@ type DataScene = {
   tags?: string[]
   panel?: string
   panelData?: string      // the name of a custom panel on the game
+  audio?: Record<string, string | null>   // background audio by channel while it's open
   body: Block[]
   choices: Choice[]
 }
@@ -225,6 +228,16 @@ const hello: DataScene = {
 ```
 
 Its prose lives under the keys `ava.hi` and `ava.hi/regular`, the members of the variants `ava.smalltalk` (`ava.smalltalk/rain` and the rest), and the labels `ava.hi#chat`, `ava.hi#compliment` and `ava.hi#bye`. See [The showcase](/guide/showcase#data-scenes-variants-and-once-a-turn-choices) for how it plays.
+
+### audio
+
+A data scene's `audio` names what plays on [background channels](/reference/audio#channels) while it's open, and `renderScene` passes it on to the `SceneView`. Here the flat goes quiet for a letter:
+
+```ts
+{ id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ text: 'flat.letter' }], choices: [/* ... */] }
+```
+
+A channel the scene doesn't name keeps playing whatever an effect, the place or the default says. For one-shot sounds, use `[[sound:id]]` in the [prose](/reference/prose#sound-and-voice). The loader reports an unknown track or channel, and a sound effect's track put on a background channel.
 
 ### Block
 

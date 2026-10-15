@@ -7,10 +7,13 @@ export type PropFace = 'sticky' | 'clip' | 'diary'
 export type SceneBeat =
   | { kind: 'text'; text: string }
   | { kind: 'mono'; text: string }
-  | { kind: 'say'; who: 'character' | 'player'; text: string }
+  /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. */
+  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string }
   | { kind: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
   | { kind: 'mail'; headers: MailHeader[]; body: string }
   | { kind: 'prop'; face: PropFace; text: string }
+  /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
+  | { kind: 'sound'; track: string }
 
 /**
  * Where the game's pictures live, relative to the page.
@@ -55,13 +58,31 @@ export function parseMail(text: string): {
   return { headers, body: lines.slice(i).join('\n').trim() }
 }
 
+/** A block as a spoken line, if it is one: `Name: "…"`, or a bare quote answering the line before. */
+function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<SceneBeat, { kind: 'say' }> | null {
+  const named = block.match(/^([A-Za-z][A-Za-z' -]*):\s*"([\s\S]+)"$/)
+  if (named) return { kind: 'say', who: named[1] === 'You' ? 'player' : 'character', text: named[2] }
+  const quoted = quoteOnly(block)
+  if (quoted !== null) return { kind: 'say', who: lastSay === 'character' ? 'player' : 'character', text: quoted }
+  return null
+}
+
 function parseBlocks(body: string): SceneBeat[] {
   let lastSay: 'character' | 'player' | null = null
   return body
     .split('\n\n')
     .map((block) => block.trim())
     .filter(Boolean)
-    .map((block) => {
+    .map((block): SceneBeat => {
+      const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
+      if (sound) return { kind: 'sound', track: sound[1].trim() }
+      // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
+      const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
+      const said = voiced ? spoken(voiced[1], lastSay) : null
+      if (voiced && said) {
+        lastSay = said.who
+        return { ...said, voice: voiced[2].trim() }
+      }
       const image = block.match(/^\[\[(img|wide):([^\]|]+)((?:\|[^\]|]*)*)\]\]$/)
       if (image) {
         lastSay = null
@@ -81,17 +102,10 @@ function parseBlocks(body: string): SceneBeat[] {
         lastSay = null
         return { kind: 'mono' as const, text: block.slice(2) }
       }
-      const named = block.match(/^([A-Za-z][A-Za-z' -]*):\s*"([\s\S]+)"$/)
-      if (named) {
-        const who: 'character' | 'player' = named[1] === 'You' ? 'player' : 'character'
-        lastSay = who
-        return { kind: 'say' as const, who, text: named[2] }
-      }
-      const quoted = quoteOnly(block)
-      if (quoted !== null) {
-        const who: 'character' | 'player' = lastSay === 'character' ? 'player' : 'character'
-        lastSay = who
-        return { kind: 'say' as const, who, text: quoted }
+      const line = spoken(block, lastSay)
+      if (line) {
+        lastSay = line.who
+        return line
       }
       lastSay = null
       return { kind: 'text' as const, text: block }

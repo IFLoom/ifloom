@@ -148,6 +148,13 @@ export type Plugin<S = any> = {
    * is loaded. One the game declares itself, with the same kind and id, wins.
    */
   entities?: (game: Game) => readonly EntityDef[]
+  /**
+   * What plays on background channels, by channel: a place's ambience. Below
+   * an open scene's choice and an `audio` effect's, above the game's default.
+   * Null silences a channel; a channel left out is the next plugin's, then
+   * the default's. The first plugin that names a channel wins it.
+   */
+  audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   /** What the UI needs from this plugin, at `view.plugins[id]`. */
   view?: (state: GameState, context: PluginContext<S>) => unknown
   /**
@@ -205,6 +212,8 @@ export type CheckTools = {
   blockProblems: (blocks: readonly Block[]) => string[]
   /** What a button's command names that the game does not have. */
   commandProblems: (command: Command) => string[]
+  /** What background audio by channel names that the game does not have, or can't play there: a place's `audio`. */
+  audioProblems: (audio: Record<string, string | null> | undefined) => string[]
 }
 
 /** One entry of a plugin's content in a pack: an id, and whatever fields the plugin reads. */
@@ -482,6 +491,18 @@ export function pluginArgProblems(game: Game, kind: 'conditions' | 'effects' | '
 /** Does any plugin guard or price commands? If none does, nothing needs to know a command's effects. */
 export function pluginsWatch(game: Game): boolean {
   return (game.plugins ?? []).some((plugin) => plugin.guard || plugin.price)
+}
+
+/** What the plugins put on background channels: for each channel, the first plugin's that names it. */
+export function pluginAudio(game: Game, state: GameState): Record<string, string | null> {
+  const out: Record<string, string | null> = {}
+  for (const plugin of game.plugins ?? []) {
+    const audio = plugin.audio?.(state, pluginContext(plugin, state, game))
+    for (const [channel, track] of Object.entries(audio ?? {})) {
+      if (track !== undefined && !Object.hasOwn(out, channel)) out[channel] = track
+    }
+  }
+  return out
 }
 
 /** Every plugin's view, by id. */

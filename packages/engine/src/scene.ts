@@ -90,6 +90,8 @@ export type DataScene = {
    * the same trade `{ custom: 'name' }` already makes for effects.
    */
   panelData?: string
+  /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
+  audio?: Record<string, string | null>
   body: Block[]
   choices: Choice[]
 }
@@ -262,6 +264,7 @@ export function renderScene(
       : undefined,
     body: parts.join('\n\n'),
     media: media.length ? media : undefined,
+    ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }
 }

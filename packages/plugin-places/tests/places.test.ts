@@ -172,4 +172,62 @@ describe('places', () => {
       'locations yard: action dig: unknown location "moon"',
     ])
   })
+
+  describe('audio', () => {
+    /** The town with sounds: music everywhere by default, the café's murmur on the ambience channel. */
+    function withSound(extra: Partial<LocationDef> = {}) {
+      const sounds: Pack = {
+        id: 'sounds',
+        schema: SCHEMA,
+        audio: {
+          tracks: {
+            calm: { src: 'calm.ogg', channel: 'music' },
+            murmur: { src: 'cafe-murmur.ogg', channel: 'ambience' },
+            knock: { src: 'knock.ogg' },
+          },
+          default: { music: 'calm' },
+        },
+        activities: [
+          { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', track: null }] },
+          { id: 'listen', effects: [{ kind: 'audio', channel: 'ambience' }] },
+        ],
+        data: { places: { locations: [place('cafe', ['street'], { kind: 'venue', audio: { ambience: 'murmur' }, ...extra })] } },
+      }
+      const { game: g, problems } = loadGame([town, sounds], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' })] })
+      return { g, problems }
+    }
+
+    it('play the place’s channels while the player is there, over the game’s default', () => {
+      const { g, problems } = withSound({ audio: { ambience: 'murmur', music: null } })
+      expect(problems).toEqual([])
+      const street = startingState(g)
+      expect(view(street, g).audio.channels.ambience.track).toBeNull()
+      expect(view(street, g).audio.channels.music.track).toBe('calm')
+      const cafe = walk(g, street, 'cafe')
+      expect(view(cafe, g).audio.channels.ambience).toMatchObject({ track: 'murmur', src: 'audio/cafe-murmur.ogg', loop: true })
+      // The café silences the music.
+      expect(view(cafe, g).audio.channels.music.track).toBeNull()
+      expect(view(walk(g, cafe, 'street'), g).audio.channels.ambience.track).toBeNull()
+    })
+
+    it('give way to an audio effect', () => {
+      const { g } = withSound()
+      const cafe = walk(g, startingState(g), 'cafe')
+      const hushed = apply(cafe, g, { type: 'activity', id: 'hush' }).state
+      expect(view(hushed, g).audio.channels.ambience.track).toBeNull()
+      // Handed back, the place's murmur plays again.
+      const back = apply(hushed, g, { type: 'activity', id: 'listen' }).state
+      expect(view(back, g).audio.channels.ambience.track).toBe('murmur')
+    })
+
+    it('report a place’s unknown track, or a sound on a background channel', () => {
+      const { problems } = withSound({ audio: { ambience: 'rain', music: 'knock', sfx: 'knock' } })
+      expect(problems.map((problem) => `${problem.pack} · ${problem.where}: ${problem.what}`)).toEqual([
+        'sounds · locations cafe: audio: unknown track "rain"',
+        'sounds · locations cafe: audio: track "knock" is a sound on channel "sfx", not background audio',
+        'sounds · locations cafe: audio: channel "sfx" plays sounds, not background audio',
+        'sounds · locations cafe: audio: track "knock" is a sound on channel "sfx", not background audio',
+      ])
+    })
+  })
 })

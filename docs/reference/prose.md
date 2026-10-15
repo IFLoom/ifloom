@@ -131,6 +131,8 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[sticky]] … [[/sticky]]` | `{ kind: 'prop', face: 'sticky', text }` |
 | `[[clip]] … [[/clip]]` | `{ kind: 'prop', face: 'clip', text }` |
 | `[[diary]] … [[/diary]]` | `{ kind: 'prop', face: 'diary', text }` |
+| `[[sound:knock]]` | `{ kind: 'sound', track }`. Nothing to draw. |
+| `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 
 ### Speech
 
@@ -166,6 +168,25 @@ Write `[[size:path|…]]`, with size `img` (inline) or `wide`. Optional parts fo
 
 **Gotcha.** The image must be a paragraph on its own. If there's anything else in the paragraph, or a size word other than `img` or `wide`, the whole paragraph is drawn as plain text, brackets included.
 
+### Sound and voice
+
+`[[sound:id]]` on a paragraph of its own plays a [track](/reference/audio#trackdef) once when the scene is shown. It becomes a `sound` beat, which a UI draws as nothing. `[[voice:id]]` at the end of a spoken line is that line read aloud. It's kept on the `say` beat as `voice`, and the line is drawn without it.
+
+```md
+The phone buzzes on the table.
+
+[[sound:buzz]]
+
+Ava: "Are you coming to the café?" [[voice:ava.cafe]]
+```
+
+The open scene's sound and voice beats are in [`view.audio.cues`](/reference/audio#sounds-and-voices), in beat order, each with a key that changes only when the scene is entered again. Voices go to the `voice` channel. `@ifloom/audio` plays them, one voice after another.
+
+**Gotchas:**
+- `[[voice:id]]` only counts at the end of a [spoken line](#speech). Anywhere else it stays in the text, brackets included.
+- In a place's body (the [stage](/reference/plugins#stage)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
+- The loader reports an unknown track, a playlist, and a track on a background channel such as `music`.
+
 ### Fenced sections
 
 `[[mail]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` open a section that runs to the matching close tag, across blank lines. Text before and after is parsed as usual. In `mail`, leading `From:`, `To:`, `Cc:`, `Bcc:`, `Subject:` and `Date:` lines become `headers` (`{ key, value }`, in order). One blank line after them is skipped, and the rest is `body`.
@@ -187,13 +208,14 @@ import type { SceneBeat } from '@ifloom/engine'
 type SceneBeat =
   | { kind: 'text'; text: string }
   | { kind: 'mono'; text: string }
-  | { kind: 'say'; who: 'character' | 'player'; text: string }
+  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string }
   | { kind: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
   | { kind: 'mail'; headers: { key: string; value: string }[]; body: string }
   | { kind: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
+  | { kind: 'sound'; track: string }
 ```
 
-One drawable piece of a scene. A UI switches on `kind`. The view merges a scene's [`media`](/reference/scenes#scenemedia) in as `image` beats, with `lead` media first, then the body, then the rest.
+One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`. The view merges a scene's [`media`](/reference/scenes#scenemedia) in as `image` beats, with `lead` media first, then the body, then the rest.
 
 ## parseBeats
 
@@ -220,4 +242,4 @@ artSrc('place/cafe')          // 'art/place/cafe.jpg'
 artSrc('/art/place/cafe.png') // 'art/place/cafe.png'
 ```
 
-The result is relative on purpose. A built game is a folder opened from disk or from a subpath, where a path starting `/` would point at the root of the drive or host instead of beside `index.html`. Put your pictures in `art/` next to the game's `index.html`.
+The result is relative on purpose. A built game is a folder opened from disk or from a subpath, where a path starting `/` would point at the root of the drive or host instead of beside `index.html`. Put your pictures in `art/` next to the game's `index.html`. Sound files work the same way under `audio/`, through [`audioSrc`](/reference/audio#audiosrc).

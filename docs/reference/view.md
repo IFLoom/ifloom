@@ -155,6 +155,23 @@ if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 
 That's enough to draw a whole settings screen from the view. See [`SettingView`](#settingview) for where each value comes from.
 
+### audio
+
+| Field | Type | Meaning |
+|---|---|---|
+| `audio` | [`AudioView`](/reference/audio#audioview) | What should be playing on each [channel](/reference/audio#channels), and the one-shot sounds that are due. Empty (`{ channels: {}, cues: [], muteSetting: null }`) when the game has no `audio`. |
+
+Each background channel has already been chosen by priority: the open scene, then an effect, then a plugin such as the place, then the game's default. Each cue has a key that stays the same across view calls and reloads, so a player plays it once:
+
+```ts
+const { channels, cues, muteSetting } = screen.audio
+channels.ambience.src      // 'audio/cafe-murmur.ogg' at the café
+channels.music.volumeSetting  // 'musicVolume': read its value from the profile
+cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
+```
+
+The engine never reads the [profile](/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. `@ifloom/audio`, coming in the same change, does all of this. See [Audio](/reference/audio).
+
 ### plugins
 
 | Field | Type | Meaning |

@@ -8,8 +8,9 @@ import type { EntityState } from './entities.ts'
 import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { PluginSlice } from './plugin.ts'
+import type { AudioState } from './audio.ts'
 
-export const SAVE_VERSION = 9 as const
+export const SAVE_VERSION = 10 as const
 
 export type FlagValue = boolean | number | string
 
@@ -89,6 +90,8 @@ export type GameState = {
   plugins: Record<string, PluginSlice>
   /** The value of each `play` setting the game declares, by id. */
   settings: Record<string, FlagValue>
+  /** What effects have put on the audio channels, the last few sounds, and the count of scenes entered. */
+  audio: AudioState
 }
 
 export type Command =
@@ -151,3 +154,10 @@ export type Effect =
   | { kind: 'discard'; from: string; id: string }
   /** Tell the player something outside a scene. `text` is a prose key. */
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
+  /**
+   * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', track: 'calm' }`.
+   * `track: null` silences the channel; leaving `track` out hands it back to the place or the game's default.
+   */
+  | { kind: 'audio'; channel: string; track?: string | null }
+  /** Play a sound once, on its track's channel. */
+  | { kind: 'sound'; track: string }

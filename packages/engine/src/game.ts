@@ -8,6 +8,7 @@ import type { Lock } from './locks.ts'
 import type { StatDef } from './stats.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { Custom } from './custom.ts'
+import type { GameAudio } from './audio.ts'
 import { bakeScene, isDataScene, type DataScene } from './scene.ts'
 import type {
   Command,
@@ -86,6 +87,8 @@ export type SceneView = {
   /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
   media?: SceneMedia[]
+  /** What plays on background channels while the scene is open, by channel. Null silences one. */
+  audio?: Record<string, string | null>
   choices: SceneChoice[]
 }
 
@@ -238,6 +241,8 @@ export type Game = {
    * Merged from packs by id, as scenes are.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
+  /** The game's sounds and channels. No audio if left out. */
+  audio?: GameAudio
 }
 
 export function itemById(game: Game, id: string) {

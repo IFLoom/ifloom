@@ -30,6 +30,7 @@ type GameState = {
   fired: Record<string, number>
   plugins: Record<string, PluginSlice>
   settings: Record<string, FlagValue>
+  audio: AudioState
 }
 ```
 
@@ -203,6 +204,14 @@ settings: Record<string, FlagValue>
 
 The value of each `play` [setting](/reference/settings) the game declares, by id, such as `{ hints: true, difficulty: 'usual' }`. A `ui` setting is never here. A new game takes the values passed to [`startingState`](/reference/commands#startingstate) as `settings`, and each setting given none starts at its default. The [`setting`](/reference/commands#setting) command changes one, and [`{ setting }`](/reference/conditions#setting) reads it. A save from before version 9 loads with each declared play setting at its default.
 
+### audio
+
+```ts
+audio: AudioState
+```
+
+What [`audio`](/reference/effects#audio) effects have put on channels, the last 20 [`sound`](/reference/effects#sound) effects, how many times a scene has been entered, and what each background channel started playing and when. It's what keeps [`view.audio`](/reference/view#audio)'s choices and cue keys the same after a reload. See [`AudioState`](/reference/audio#audiostate).
+
 ## New Game+
 
 When a player finishes your game, you can let them start again with some of what they had. List what carries over in `game.carryOver`, and say when the game counts as finished with `game.finished`:
@@ -249,7 +258,7 @@ The [loader](/reference/loader#the-checks) reports a stat or item in `carryOver`
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 9
+const SAVE_VERSION = 10
 ```
 
 The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carries older shapes forward:
@@ -264,3 +273,4 @@ The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carri
 | 7 | Added [`removed`](#removed). |
 | 8 | Took `standing` and `rapport` off each [storyline](#storylines). |
 | 9 | Added [`settings`](#settings). |
+| 10 | Added [`audio`](#audio). |

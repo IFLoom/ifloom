@@ -31,6 +31,7 @@ type Pack = {
   custom?: Custom
   patches?: Patch[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
+  audio?: Partial<GameAudio>
 }
 ```
 
@@ -46,6 +47,7 @@ type Pack = {
 | `custom` | [Custom functions](/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`) and then by name. A later pack's function replaces an earlier one's of the same kind and name, and the rest are kept. |
 | `patches` | Applied straight away, in order. See [Patches](#patches). |
 | `data` | Content for the game's [plugins](/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/plugins/places#in-a-pack) and `data.cast.characters` for the [cast](/plugins/cast#in-a-pack). |
+| `audio` | [Audio](/reference/audio#gameaudio), over the base's own `audio`. `tracks` merge by id, and a later pack's track replaces an earlier one. `channels` merge by id too, field by field. A later pack's `mute` wins, and its `default` wins channel by channel. |
 
 ### How packs merge
 
@@ -192,6 +194,7 @@ Effect lists are checked on triggers, data scene choices and activities. The loa
 | `unknown collection "…"` | A `collect` or `discard` names a collection nobody declares. |
 | `no prose for "…"` | A `notify`'s `text`, or a `collect` entry's `text`, names prose that isn't written. |
 | `goes to unknown scene "…"` | A `scene` effect goes to a scene that doesn't exist. |
+| An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
 
 Inside an `each`, its `where` is checked as a condition and its `effects` as an effect list, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
 
@@ -218,13 +221,36 @@ A stat is either the player's or belongs to a [kind](/reference/entities). Where
 | `stat "…" is the player's, not <ref>'s` | The player's stat, named with an `of`. |
 | `stat "…" belongs to <kind>, not <other>` | A stat named on an entity of another kind. |
 
+### Audio
+
+Wherever content names [audio](/reference/audio), the loader checks it against `game.audio`. A background placement is a scene's `audio`, a place's `audio`, an `audio` effect, or `game.audio.default`. A sound is a `sound` effect, `[[sound:id]]` or `[[voice:id]]`.
+
+| Problem | When |
+|---|---|
+| `unknown track "…"` | Anything names a track that `game.audio.tracks` doesn't have: a placement, a sound, the markup in any prose, or a playlist. |
+| `unknown channel "…"` | A placement names a channel that isn't declared or one of the [four defaults](/reference/audio#channels). |
+| `channel "…" plays sounds, not background audio` | A placement names a cue channel, such as `sfx`. |
+| `track "…" is a sound on channel "…", not background audio` | A placement or a playlist names a track whose channel is a cue channel. A track with no `channel` is on `sfx`. |
+| `track "…" is background audio on channel "…", not a sound` | A sound names a track on a background channel, such as `music`. |
+| `"…" is a playlist, not a sound` | A sound names a playlist. |
+| `on undeclared channel "…"` | A track's `channel` isn't a channel the game has. |
+| `volume is not between 0 and 1` | A track's `volume`. |
+| `a playlist with no tracks` | A playlist's list is empty. |
+| `"…" is a playlist; a playlist holds tracks` | A playlist names another playlist. |
+| `unknown setting "…"` | A channel's `volume`, or `game.audio.mute`, names a setting the game doesn't declare. |
+| `setting "…" is not a ui range setting` | A channel's `volume` names a setting that isn't a `ui` range. |
+| `setting "…" is not a ui toggle setting` | `game.audio.mute` names a setting that isn't a `ui` toggle. |
+| `ducks under unknown channel "…"` | A channel's `duck.under` names a channel the game doesn't have. |
+| `duck.to is not between 0 and 1` | A channel's `duck.to`. |
+| `mode is not "background" or "cue"` | A channel's `mode`. |
+
 ### Where each check runs
 
 | `where` | Checked |
 |---|---|
 | `pack` | `written for schema …, this engine reads …`: the pack's `schema` isn't [`SCHEMA`](#schema). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
-| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. |
+| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. Its `audio`, as a placement (see [Audio](#audio)). |
 | `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. |
 | `trigger <id>` | Its `when`, and its `effects` as an effect list. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
@@ -237,8 +263,13 @@ A stat is either the player's or belongs to a [kind](/reference/entities). Where
 | `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. Reported against `base`. |
 | `data <plugin>` | `the game has no plugin named "<plugin>"`: a pack carries content for a plugin the game wasn't built with. That content is skipped. |
 | `<list> <id>` | Whatever the plugin's own [`check`](/reference/plugins#content-and-checks) finds in its content, reported against the pack the entry came from. |
+| `track <id>` | A track's channel and volume, and a playlist's tracks. See [Audio](#audio). |
+| `channel <id>` | A channel's `volume` setting, `duck` and `mode`. |
+| `audio` | `game.audio.mute`. Reported against the last pack that set it, or `base`. |
+| `audio default` | The tracks in `game.audio.default`, as placements. |
+| `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]` in every prose entry, variants members included, reported against the pack that wrote it. |
 
-A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems` and `commandProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body and actions, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
+A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems`, `commandProblems` and `audioProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body, actions and audio, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
 
 **Absent partners.** A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/reference/plugins#cooperates). In play it simply isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
 
@@ -269,9 +300,10 @@ mod:new-menu · entity dish:pie · no dish stat named "coins"
 - that a stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares;
 - the [settings](/reference/settings): duplicate ids, and each one's declaration as the loader checks it;
 - every `{ setting }` condition in `finished`, triggers, inputs, the game's actions, activities' requirements and data scenes, as the loader checks it;
-- the stats and items in `carryOver`.
+- the stats and items in `carryOver`;
+- [audio](#audio): `game.audio` itself, each data scene's `audio`, the markup in its blocks' prose, and the `audio` and `sound` effects on its choices, item uses and activities. Plugins' content, such as a place's `audio`, is left to the loader.
 
-With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids and the effects of the choices it rendered.
+With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids, the effects of the choices it rendered, and the audio and markup in what it rendered.
 
 Its treatment of [absent partners](#the-checks) differs from the loader's in one place. It excuses a long-form custom effect of a cooperating plugin the game lacks, but not a custom command, so a game action whose command belongs to a missing partner is reported.
 

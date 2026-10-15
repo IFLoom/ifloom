@@ -12,6 +12,9 @@ import { cn } from '../lib/utils.ts'
 import type { Actions, Sidebar, Title } from './layout.tsx'
 import type { Clock, LocationPanel, PeoplePanel, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
+import type { Hotspot, Stage } from './stage.tsx'
+import type { Video } from './video.tsx'
+import type { MediaViewer } from './viewer.tsx'
 import type { ChoiceButton, ChoiceList, PriceTag } from './choices.tsx'
 import type { Notice, Notices } from './notices.tsx'
 import type { QuestLog } from './quests.tsx'
@@ -44,6 +47,8 @@ export const PART_KEYS = [
   // Scenes
   'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
   'beat', 'mail-header', 'mail-body', 'voice-replay',
+  // Pictures, videos, the stage and the viewer
+  'video', 'stage-picture', 'stage-layer', 'hotspot', 'hotspot-warning', 'viewer-open', 'viewer', 'viewer-close',
   // Choices and buttons
   'actions', 'choices', 'choice', 'choice-label', 'choice-warning', 'choice-price', 'choice-irreversible', 'choice-reason',
   'button', 'badge',
@@ -125,6 +130,10 @@ export type Components = Partial<{
   FeedSection: Override<PropsOf<typeof FeedSection>>
   DebugPanel: Override<PropsOf<typeof DebugPanel>>
   Picture: Override<PropsOf<typeof Picture>>
+  Video: Override<PropsOf<typeof Video>>
+  Stage: Override<PropsOf<typeof Stage>>
+  Hotspot: Override<PropsOf<typeof Hotspot>>
+  MediaViewer: Override<PropsOf<typeof MediaViewer>>
   Icon: Override<PropsOf<typeof Icon>>
   TitleScreen: Override<PropsOf<typeof TitleScreen>>
   SettingsScreen: Override<PropsOf<typeof SettingsScreen>>
@@ -141,19 +150,22 @@ export type UiOptions = {
   classes?: Classes
   /** Drop every built-in class. The structure and the `data-part`s stay, for your own styles. */
   unstyled?: boolean
+  /** Let the player click a picture or a video in the story to see it large. On if left out. */
+  viewer?: boolean
 }
 
 const NONE = {}
-const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false })
+const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true })
 
-/** Gives the components below it a game's `components`, `classes` and `unstyled`. `GameProvider` uses it. */
-export function UiProvider({ components = NONE, classes = NONE, unstyled = false, children }: UiOptions & { children: ReactNode }) {
+/** Gives the components below it a game's `components`, `classes`, `unstyled` and `viewer`. `GameProvider` uses it. */
+export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, children }: UiOptions & { children: ReactNode }) {
   const parent = useContext(UiContext)
   // Nested providers add to the outer one, so a screen can restyle just its own corner.
   const value = {
     components: parent.components === NONE ? components : { ...parent.components, ...components },
     classes: parent.classes === NONE ? classes : { ...parent.classes, ...classes },
     unstyled: unstyled || parent.unstyled,
+    viewer: viewer ?? parent.viewer,
   }
   return <UiContext.Provider value={value}>{children}</UiContext.Provider>
 }
@@ -168,6 +180,11 @@ export function usePart(name: PartKey, defaults: string, extra?: string): { 'dat
   const custom = classes[name]
   const className = typeof custom === 'function' ? cn(custom(base), extra) : cn(base, custom, extra)
   return { 'data-part': name, className }
+}
+
+/** Whether the media viewer is on: `viewer` in the UI options. */
+export function useViewerOn(): boolean {
+  return useContext(UiContext).viewer
 }
 
 /** A built-in component that a game can replace by `name`. Used for every component the UI exports. */

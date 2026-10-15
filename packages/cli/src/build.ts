@@ -1,12 +1,13 @@
-import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { readdirSync, readFileSync, rmdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
 import type { Game } from '@ifloom/engine'
-import { checkAudio } from './check.ts'
+import { checkFiles } from './check.ts'
 
 /**
  * Check a built folder is a game that opens from disk: an `index.html`, and
  * nothing it loads from anywhere but beside it. Given the game, also every
- * sound file it lists that isn't in the folder. Returns what is wrong.
+ * sound, picture and video file it names that isn't in the folder (or, for
+ * art, in the page, after `--inline-assets`). Returns what is wrong.
  *
  * That code never fetches at runtime is held by the engine's and UI's own
  * contract tests, on their source: a bundled library mentions `fetch` without
@@ -33,8 +34,19 @@ export function checkBuild(dir: string, game?: Game): string[] {
     // A browser refuses a module script from a file beside a page opened from disk.
     else if (module) problems.push(`index.html loads the module script ${url}, which won't load from disk; build as one file`)
   }
-  if (game) problems.push(...checkAudio(game, dir))
+  if (game) problems.push(...checkFiles(game, dir, inlinedAssets(html)))
   return problems
+}
+
+/** The files `--inline-assets` put in a page, by path. */
+function inlinedAssets(html: string): Set<string> {
+  const map = html.match(/<script>window\.__ifloomAssets=([\s\S]*?)<\/script>/)
+  if (!map) return new Set()
+  try {
+    return new Set(Object.keys(JSON.parse(map[1]) as Record<string, string>))
+  } catch {
+    return new Set()
+  }
 }
 
 /** Every file in a built folder, with its size, largest first. */
@@ -66,24 +78,40 @@ const TYPES: Record<string, string> = {
   '.mp4': 'video/mp4',
 }
 
-/**
- * Put every file in a built folder's `art/` into its `index.html` as a data
- * URL, under its path, and remove the folder: one file with everything in it.
- * The React UI's pictures look a path up there first (`assetUrl`). Worth it for
- * a small game; a large one is better left as a folder. Sound in `audio/` is
- * never put in: it is too big, and the player plays it from beside the page.
- * Returns how many files went in and how big the page is now.
- */
-export function inlineAssets(dir: string, folder = 'art'): { files: number; bytes: number } {
-  let files: { file: string; bytes: number }[]
-  try {
-    files = buildFiles(join(dir, folder))
-  } catch {
-    files = []
+/** Files too big to put in the page: videos stay beside it, as sound does. */
+const LEFT_BESIDE = /\.(mp4|webm)$/i
+
+/** Remove a folder's empty folders, and the folder itself if that leaves it empty. */
+function pruneEmpty(dir: string): void {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) pruneEmpty(path)
   }
+  if (!readdirSync(dir).length) rmdirSync(dir)
+}
+
+/**
+ * Put every picture in a built folder's `art/` into its `index.html` as a data
+ * URL, under its path, and remove it from the folder: one file with the art in
+ * it. The React UI's pictures look a path up there first (`assetUrl`). Worth it
+ * for a small game; a large one is better left as a folder. Sound in `audio/`
+ * and videos (`.mp4`, `.webm`) are never put in: they are too big, and are
+ * played from beside the page, so `art/` stays with only the videos in it.
+ * Returns how many files went in, how big the page is now, and how many videos
+ * were left beside it.
+ */
+export function inlineAssets(dir: string, folder = 'art'): { files: number; bytes: number; videos: number } {
+  let all: { file: string; bytes: number }[]
+  try {
+    all = buildFiles(join(dir, folder))
+  } catch {
+    all = []
+  }
+  const files = all.filter((entry) => !LEFT_BESIDE.test(entry.file))
+  const videos = all.length - files.length
   const page = join(dir, 'index.html')
   // Nothing to put in — no art, or a folder already inlined: leave the page as it is.
-  if (!files.length) return { files: 0, bytes: statSync(page).size }
+  if (!files.length) return { files: 0, bytes: statSync(page).size, videos }
   const map: Record<string, string> = {}
   for (const { file } of files) {
     const type = TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream'
@@ -96,6 +124,7 @@ export function inlineAssets(dir: string, folder = 'art'): { files: number; byte
     .replace(/<script>window\.__ifloomAssets=[\s\S]*?<\/script>/, '')
     .replace(/<head>/i, (head) => `${head}${script}`)
   writeFileSync(page, html)
-  rmSync(join(dir, folder), { recursive: true, force: true })
-  return { files: files.length, bytes: Buffer.byteLength(html) }
+  for (const { file } of files) rmSync(join(dir, folder, file), { force: true })
+  pruneEmpty(join(dir, folder))
+  return { files: files.length, bytes: Buffer.byteLength(html), videos }
 }

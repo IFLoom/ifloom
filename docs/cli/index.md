@@ -6,8 +6,8 @@
 |---|---|
 | `ifloom new <name> [--template t] [--theme t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run. |
 | `ifloom dev` | Serves the game in a browser, reloading as you edit. |
-| `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures and sound beside it (or the pictures inside it), then checks the folder opens from disk. |
-| `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find, and every sound file missing from `public/`. |
+| `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures, videos and sound beside it (or the pictures inside it), then checks the folder opens from disk. |
+| `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find, and every sound, picture and video file missing from `public/`. |
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
 
@@ -86,9 +86,9 @@ ifloom build --out public                     # anywhere else
 ifloom build --inline-assets --out dist-one   # the pictures inside index.html too
 ```
 
-Runs `vite build` with the game's config into `--out` (default `dist`), emptying the folder first. With `--inline-assets`, it then puts every file in the folder's `art/` into `index.html` with [`inlineAssets`](#inlineassets), and says how many went in.
+Runs `vite build` with the game's config into `--out` (default `dist`), emptying the folder first. With `--inline-assets`, it then puts every picture in the folder's `art/` into `index.html` with [`inlineAssets`](#inlineassets), and says how many went in and how many videos it left beside the page.
 
-Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. When the game's `src/game.ts` loads, it also checks that every track in [`game.audio`](/reference/audio) has its file in the folder's `audio/`. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
+Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. When the game's `src/game.ts` loads, it also checks that every sound, picture and video the game names has its file in the folder, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). A picture `--inline-assets` put in the page counts as there. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
 
 ```
 index.html  424.5 kB
@@ -98,10 +98,11 @@ With the preset, that's the whole game: one HTML file with the script and styles
 
 ### One file, pictures and all
 
-`--inline-assets` turns the folder into a single `index.html` with nothing beside it. Each picture is written into the page as a `data:` URL, and the `art/` folder is removed. The base UI looks up every picture it draws in the page first, with [`assetUrl`](/react/components#asseturl), so the game needs no change. Small Town's `build:one-file` script is `ifloom build --inline-assets --out dist-one`.
+`--inline-assets` turns the folder into a single `index.html`. Each picture is written into the page as a `data:` URL and removed from `art/`. Videos stay in `art/` beside the page, so a game with no video and no sound has nothing beside it at all. The base UI looks up every picture it draws in the page first, with [`assetUrl`](/react/components#asseturl), so the game needs no change. Small Town's `build:one-file` script is `ifloom build --inline-assets --out dist-one`.
 
 ```
 Put 4 files from art/ into index.html.
+Left 1 video in art/ beside it: video is too big to put in the page.
 index.html  440.6 kB
 ```
 
@@ -109,6 +110,7 @@ index.html  440.6 kB
 
 - **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/react/components#picture) (and so every portrait, stage picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/react/components#asseturl). Otherwise it points at a file that's no longer there.
 - **Sound is never inlined.** The `audio/` folder stays beside `index.html`, and the command says so. Music and voices run to megabytes, and the page would have to read all of it before the game first draws. A game with sound ships as a folder, so `--inline-assets` gives a page with the pictures inside and `audio/` beside it.
+- **Videos are never inlined either.** A `.mp4` or `.webm` file stays in `art/`, and the command says how many it left. [`Video`](/react/components#video) asks [`assetUrl`](/react/components#asseturl) too, finds nothing in the page, and plays the file beside it. An animated `.gif` or `.webp` is a picture, so it does go in.
 - **Inline only a small game.** Every picture goes in the page, a third bigger than the file because of base64, and is read before the game first draws. A game with a few hundred kilobytes of art is fine as one file. One with megabytes of art is better as a folder.
 
 **What it doesn't check.** The build isn't searched for `fetch` or a dynamic `import()`. A bundled library can name `fetch` without ever calling it, so finding the word in the output means nothing. The engine's and the UI's own contract tests check their source never loads anything at runtime. Your own code has to keep that rule too.
@@ -128,10 +130,18 @@ No problems.
 
 It exits with `1` if there are any problems. Run it in CI beside your tests.
 
-It also looks for every track's sound file in the game's `public/` folder, where Vite copies it from into the build. A track's `src` goes through [`audioSrc`](/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`. A missing one is reported as:
+It also looks for every file the game names in its `public/` folder, where Vite copies them from into the build.
+
+- **Sound.** A track's `src` goes through [`audioSrc`](/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`.
+- **Pictures and video.** The files in [pools](/reference/media#pools), stage layers, `{ media }` blocks, picture and video markup in prose, and plugin data such as a post's `video`. These go through [`artSrc`](/reference/prose#artsrc), so `[[video:cafe/steam]]` must be at `public/art/cafe/steam.mp4`. [`checkMedia`](#checkmedia) lists exactly what it looks at.
+
+A missing file is reported with where it's named:
 
 ```
 track calm: no file public/audio/music/calm.ogg
+pool door: no file public/art/door/red-night.jpg
+prose flat.knock: no file public/art/flat/kettle.mp4
+data.places.locations[cafe].stage.layers[0]: no file public/art/cafe/room.jpg
 ```
 
 ### What the module exports
@@ -346,7 +356,7 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line.
 
 ```ts
-import { TEMPLATES, THEMES, buildFiles, checkAudio, checkBuild, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
+import { TEMPLATES, THEMES, buildFiles, checkAudio, checkBuild, checkGame, checkMedia, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
 import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
 ```
 
@@ -390,7 +400,7 @@ Returns what's wrong with a built folder as a game that opens from disk, or an e
 
 - each `<script src>` and each stylesheet `<link>` that's a full address (`https://…`, `//…`) or starts with `/`;
 - each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`);
-- given the `game`, each track whose sound file isn't in the folder, as [`checkAudio`](#checkaudio) reports it.
+- given the `game`, each sound file that isn't in the folder, as [`checkAudio`](#checkaudio) reports it, and each picture and video, as [`checkMedia`](#checkmedia) reports it. A picture already in the page from `--inline-assets` counts as there.
 
 With no `index.html`, the one problem is `no index.html in <dir>`.
 
@@ -420,17 +430,17 @@ buildFiles('dist') // [{ file: 'index.html', bytes: 434640 }, { file: 'art/place
 ### inlineAssets
 
 ```ts
-function inlineAssets(dir: string, folder?: string): { files: number; bytes: number }
+function inlineAssets(dir: string, folder?: string): { files: number; bytes: number; videos: number }
 ```
 
-What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL. They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then the folder is removed. It returns how many files went in and the size of the page afterwards, in bytes.
+What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
 
 The type in each URL comes from the file's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.svg`, `.mp3`, `.ogg`, `.oga`, `.opus`, `.wav`, `.m4a`, `.aac`, `.flac`, `.webm` or `.mp4`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/react/components#asseturl) reads it.
 
 ```ts
 import { checkBuild, inlineAssets } from '@ifloom/cli'
 
-inlineAssets('dist') // { files: 4, bytes: 451164 }
+inlineAssets('dist') // { files: 4, bytes: 451164, videos: 1 }
 checkBuild('dist')   // []
 ```
 
@@ -438,7 +448,7 @@ checkBuild('dist')   // []
 
 - **The map's keys are the paths the game uses**, `art/…`, as [`artSrc`](/reference/prose#artsrc) writes them. With another `folder`, they start with that folder's name instead.
 - **With nothing to inline, the page is left alone.** When there's no `art/` folder, or it's empty, no script is added and nothing is removed. The result says `files: 0`.
-- **A second run changes nothing.** On a folder already inlined there's no `art/` left, so the same rule applies.
+- **A second run changes nothing.** On a folder already inlined only videos are left in `art/`, if anything, so the same rule applies.
 - **`audio/` isn't touched.** The sound files the [audio player](/reference/audio-player) plays stay beside the page. You could pass `folder: 'audio'`, but the player looks for files beside the page and never reads the map, so they wouldn't play.
 
 ### checkGame
@@ -447,7 +457,7 @@ checkBuild('dist')   // []
 function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
-Everything wrong with the game a module exports: the problems it came with, then [`validatePack`](/reference/game#validatepack)'s. Given `publicDir`, it also adds every sound file missing from it, with [`checkAudio`](#checkaudio). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
+Everything wrong with the game a module exports: the problems it came with, then [`validatePack`](/reference/game#validatepack)'s. Given `publicDir`, it also adds every sound, picture and video file missing from it, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
 
 ```ts
 import { expect, it } from 'vitest'
@@ -475,6 +485,37 @@ import { checkAudio } from '@ifloom/cli'
 checkAudio(game, 'public') // ['track knock: no file public/audio/knock.ogg']
 checkAudio(game, 'dist')   // []
 ```
+
+### checkMedia
+
+```ts
+function checkMedia(game: Game, dir: string, inlined?: ReadonlySet<string>): string[]
+```
+
+Every picture and video the game names whose file isn't in `dir`. Pass the folder the page sits in: `public` before a build, or the built folder after one. It looks at:
+
+- every file in [`game.media`](/reference/media#gamemedia)'s pools;
+- `{ media }` blocks and stage layers, in data scenes and in plugin data such as a place's [stage](/plugins/places#the-picture-stage), with their posters;
+- `image` and `video` fields, such as a post's or a notice's, as page paths;
+- picture and video markup (`[[img:…]]`, `[[wide:…]]`, `[[video:…]]`, `[[widevideo:…]]`) in the prose that scenes, places, messages and posts name, and their `poster=` flags.
+
+Media blocks, layers and markup go through [`artSrc`](/reference/prose#artsrc), as the page would. Each problem says where the file is named, then `no file` and the path it looked for.
+
+```ts
+import { checkMedia } from '@ifloom/cli'
+
+checkMedia(game, 'public') // ['prose flat.knock: no file public/art/flat/kettle.mp4']
+checkMedia(game, 'dist')   // []
+```
+
+`inlined` lists paths that are in the page itself after `--inline-assets`, which count as there. [`checkBuild`](#checkbuild) passes them.
+
+**Gotchas.**
+
+- **A pool request isn't looked for on its own.** `[[img:@door|night]]` and `{ pool: 'door' }` are covered by the pool's files, and the loader reports an unknown pool.
+- **Prose is found through what names it.** A prose key that no scene, place, message or post uses isn't read, because the game never shows it.
+- **A place's `art` and a character's portrait aren't looked for.** The places plugin asks every place for `art`, but no UI draws it, so many games have none. A [`Picture`](/react/components#picture) with a missing file draws nothing, so a missing portrait shows as no portrait.
+- **A hand-built scene's media isn't seen.** Its body and `media` come from a function, so only a [data scene](/reference/scenes)'s are checked.
 
 ### gameFrom
 

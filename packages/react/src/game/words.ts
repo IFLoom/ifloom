@@ -78,6 +78,8 @@ export const UI_STRINGS = {
   credits: 'Credits',
   titleScreen: 'Title screen',
   replayVoice: 'Hear it again',
+  zoom: 'Enlarge',
+  closeViewer: 'Close',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

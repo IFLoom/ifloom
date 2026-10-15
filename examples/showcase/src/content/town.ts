@@ -10,7 +10,7 @@ import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
-import { here, person, type CharacterDef } from '@ifloom/plugin-cast'
+import { here, person, talk, type CharacterDef } from '@ifloom/plugin-cast'
 import { prose } from './prose.ts'
 
 const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: string }): LocationDef => ({
@@ -39,6 +39,12 @@ const locations: LocationDef[] = [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
       { id: 'sandwich', label: 'Buy a sandwich for later', command: { type: 'activity', id: 'buySandwich' } },
     ],
+    // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
+    stage: {
+      aspect: '16/10',
+      layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
+      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+    },
     body: [
       { text: 'place.cafe' },
       { text: 'place.cafe/ava', when: here('ava') },

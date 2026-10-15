@@ -137,3 +137,36 @@
   background: var(--card);
   box-shadow: var(--shadow-card);
 }
+
+/* Pictures and clips: cards, with a ring on the hotspots like the focus ring. */
+[data-part="stage-picture"],
+[data-part="video"][data-beat] {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="hotspot"] {
+  border-radius: calc(var(--radius) - 0.4rem);
+}
+
+[data-part="hotspot"]:hover:not([aria-disabled]) {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 0;
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+[data-part="hotspot"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-part="viewer"] img,
+[data-part="viewer"] video {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="viewer-close"] {
+  border: 1px solid var(--border);
+  background: var(--card);
+}

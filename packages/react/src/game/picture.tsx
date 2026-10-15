@@ -8,6 +8,8 @@ function PictureImpl({ onError, ...props }: ComponentProps<'img'> & { 'data-part
   if (!props.src || failed === props.src) return null
   return (
     <img
+      loading="lazy"
+      decoding="async"
       {...props}
       src={assetUrl(String(props.src))}
       onError={(event) => {
@@ -21,7 +23,8 @@ function PictureImpl({ onError, ...props }: ComponentProps<'img'> & { 'data-part
 /**
  * An image that takes no space if its file is missing (a portrait the game
  * hasn't drawn yet, art left out of a build) instead of showing a broken icon.
- * Every picture the UI draws goes through it, so replacing it in `components`
- * changes them all.
+ * It loads lazily (`loading="lazy"`, `decoding="async"`), so a picture far down
+ * the page waits until the player scrolls near it. Every picture the UI draws
+ * goes through it, so replacing it in `components` changes them all.
  */
 export const Picture = overridable('Picture', PictureImpl)

@@ -1,9 +1,12 @@
+import type { Command, SceneBeat } from '@ifloom/engine'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 import { Picture } from './picture.tsx'
+import { Beat } from './scene.tsx'
+import { Video } from './video.tsx'
 
 /** The messages plugin's view, as the UI reads it. */
 type MessagesData = {
@@ -16,7 +19,7 @@ type MessagesData = {
       name: string
       portrait: string | null
       unread: number
-      messages: { id: string; text: string; read: boolean; replies: { id: string; label: string; command: import('@ifloom/engine').Command }[]; replied: string | null }[]
+      messages: { id: string; text: string; beats?: SceneBeat[]; read: boolean; replies: { id: string; label: string; command: Command }[]; replied: string | null }[]
     }[]
   }[]
 }
@@ -27,11 +30,34 @@ type FeedData = {
     id: string
     name: string
     unseen: number
-    posts: { id: string; name: string; portrait: string | null; text: string; image: string | null; likes: number; comments: { name: string; text: string }[]; mine: boolean }[]
+    posts: {
+      id: string
+      name: string
+      portrait: string | null
+      text: string
+      beats?: SceneBeat[]
+      image: string | null
+      video?: string | null
+      likes: number
+      comments: { name: string; text: string }[]
+      mine: boolean
+    }[]
   }[]
 }
 
 type SectionProps = { data: unknown; with: Record<string, unknown> }
+
+/** A message's or a post's words: its beats, as a scene's are drawn, or its text when the plugin gives none. */
+function Words({ beats, text }: { beats?: SceneBeat[]; text: string }) {
+  if (!beats) return <>{text}</>
+  return (
+    <>
+      {beats.map((beat, index) => (
+        <Beat key={index} beat={beat} />
+      ))}
+    </>
+  )
+}
 
 function MessagesSectionImpl({ data, with: options }: SectionProps) {
   const { send } = useGame()
@@ -42,7 +68,7 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
   const title = usePart('thread-title', 'flex items-center gap-2 font-medium')
   const portrait = usePart('thread-portrait', 'size-6 rounded-full object-cover')
   const message = usePart('message', 'flex flex-col gap-1')
-  const theirs = usePart('bubble', 'max-w-[85%] rounded-2xl rounded-tl-sm bg-secondary px-3 py-2 text-sm')
+  const theirs = usePart('bubble', 'flex max-w-[85%] flex-col gap-2 rounded-2xl rounded-tl-sm bg-secondary px-3 py-2 text-sm')
   const mine = usePart('bubble', 'max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground')
   const channel = (data as MessagesData | undefined)?.channels.find((entry) => entry.id === options.channel)
   if (!channel) return null
@@ -61,9 +87,9 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
           </h4>
           {thread.messages.map((entry) => (
             <div key={entry.id} {...message}>
-              <p {...theirs} data-from="them">
-                {entry.text}
-              </p>
+              <div {...theirs} data-from="them">
+                <Words beats={entry.beats} text={entry.text} />
+              </div>
               {entry.replied ? (
                 <p {...mine} data-from="player">
                   {entry.replied}
@@ -83,7 +109,8 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
  * A messages channel in an app: its threads, newest first, each with its
  * messages, the reply sent, and the replies on offer, with a button to mark
  * the channel read. Each bubble is a `'bubble'` part, `data-from="them"` or
- * `data-from="player"`.
+ * `data-from="player"`. A message's words are drawn as beats through `Beat`,
+ * so pictures and clips in it show as they do in a scene.
  */
 export const MessagesSection = overridable('MessagesSection', MessagesSectionImpl)
 
@@ -96,7 +123,8 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   const author = usePart('post-author', 'flex items-center gap-2 text-sm font-medium')
   const portrait = usePart('post-portrait', 'size-6 rounded-full object-cover')
   const image = usePart('post-image', 'w-full rounded')
-  const text = usePart('post-text', 'text-sm')
+  const text = usePart('post-text', 'flex flex-col gap-2 text-sm')
+  const clip = usePart('post-image', 'w-full rounded')
   const meta = usePart('post-meta', 'text-xs text-muted-foreground')
   const comment = usePart('post-comment', 'text-xs')
   const commenter = usePart('post-comment-name', 'font-medium')
@@ -116,7 +144,12 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
             {post.name}
           </p>
           {post.image ? <Picture {...image} src={post.image} alt="" /> : null}
-          {post.text ? <p {...text}>{post.text}</p> : null}
+          {post.video ? <Video className={clip.className} src={post.video} autoplay loop muted controls={false} /> : null}
+          {post.beats?.length || (!post.beats && post.text) ? (
+            <div {...text}>
+              <Words beats={post.beats} text={post.text} />
+            </div>
+          ) : null}
           <p {...meta}>{words('likes', { n: post.likes })}</p>
           {post.comments.map((entry, index) => (
             <p key={index} {...comment}>
@@ -129,5 +162,9 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   )
 }
 
-/** A feed in an app: posts newest first, with likes and comments, and a button to mark the feed seen. */
+/**
+ * A feed in an app: posts newest first, with likes and comments, and a button
+ * to mark the feed seen. A post's words are drawn as beats through `Beat`, and
+ * its `video` through `Video`, like a GIF.
+ */
 export const FeedSection = overridable('FeedSection', FeedSectionImpl)

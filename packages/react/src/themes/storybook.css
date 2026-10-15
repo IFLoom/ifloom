@@ -142,3 +142,42 @@
   background: var(--card);
   border-radius: var(--radius);
 }
+
+/* Pictures and clips: rounded cards with the soft drop the buttons have. */
+[data-part="stage-picture"],
+[data-part="video"][data-beat],
+[data-part="viewer-open"] img {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="hotspot"] {
+  border-radius: calc(var(--radius) * 0.6);
+}
+
+[data-part="hotspot"]:hover:not([aria-disabled]) {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+  background: color-mix(in oklch, var(--secondary) 25%, transparent);
+}
+
+[data-part="hotspot"]:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-part="hotspot-warning"] {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+[data-part="viewer"] img,
+[data-part="viewer"] video {
+  border-radius: var(--radius);
+}
+
+[data-part="viewer-close"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-card);
+}

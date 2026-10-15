@@ -202,3 +202,50 @@
   border-width: 0 0 1px;
   padding-inline: 0;
 }
+
+/* Pictures and clips: plates in a book, with a thin rule round them. */
+[data-part="stage-picture"],
+[data-part="video"][data-beat],
+[data-part="beat"][data-beat="image"] {
+  border-radius: 0;
+  border: 1px solid var(--border);
+  padding: 0.35rem;
+  background: var(--card);
+}
+
+[data-part="stage-picture"] {
+  padding: 0;
+}
+
+[data-part="hotspot"] {
+  border-radius: 0;
+}
+
+[data-part="hotspot"]:hover:not([aria-disabled]) {
+  outline: 1px solid var(--card);
+  outline-offset: -3px;
+  background: color-mix(in oklch, var(--card) 18%, transparent);
+}
+
+[data-part="hotspot"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-part="viewer"] {
+  padding: 0.6rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+[data-part="viewer"] img,
+[data-part="viewer"] video {
+  border-radius: 0;
+}
+
+[data-part="viewer-close"] {
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--primary);
+}

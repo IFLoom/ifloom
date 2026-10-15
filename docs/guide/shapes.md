@@ -335,4 +335,20 @@ The React UI's default layout is made for a life sim, so Small Town's `src/main.
 
 That's [`DEFAULT_LAYOUT`](/react/#layouts). At the side it draws the title with the calendar's day and period, the stats, any entity tables, the player's menu and the devices, then where the player is and the exits, who is here, what to do, the inventory and the wardrobe. On the stage it draws the scene, the inputs, the quests and the debug panel.
 
+### Pictures and clips in the story
+
+Any shape of game can put pictures and short clips into its prose. They sit where you write them, between paragraphs:
+
+```md
+The kettle clicks off. Rain runs down the window.
+
+[[img:flat/window|Rain on the window]]
+
+You pour the tea and watch the steam curl up.
+
+[[video:flat/steam]]
+```
+
+A clip plays like a GIF unless you add flags, such as `|controls` or `|sound`. The React UI draws both, and the player can click either one to see it large. Small Town's café also has a [stage](/reference/media#the-stage): a picture of the counter while Ava is on shift, with a hotspot on her that talks to her. [Media](/reference/media) covers pools of pictures, stages and the rules for video.
+
 The core knows no person, place or time of day, so a novel carries none of these plugins, and a management game carries only the ones it uses. The plugins find each other by name. They ask for answers through `queries`, as the cast asks `places/here`. A plugin can also name the plugins it `cooperates` with, so content may use their conditions and effects in a game that leaves them out. The loader lets it pass, the condition is false and the effect does nothing. See [Writing a plugin](/reference/plugins).

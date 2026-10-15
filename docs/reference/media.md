@@ -1,6 +1,6 @@
 # Media
 
-Pictures and videos reach the screen in three ways. You write them into prose as [markup](/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/reference/scenes#scenemedia), or build a [stage](/reference/scenes#the-stage), a layered picture with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the stage's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/reference/view#the-scene) and the stage in `view.scene.stage`, and the [React UI](/react/) draws them (coming in the same change as these features).
+Pictures and videos reach the screen in three ways. You write them into prose as [markup](/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/reference/scenes#scenemedia), or build a [stage](/reference/scenes#the-stage), a layered picture with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the stage's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/reference/view#the-scene) and the stage in `view.scene.stage`, and the [React UI](/react/#pictures-and-video) draws them: beats with [`Beat`](/react/components#beat) and [`Video`](/react/components#video), the stage with [`Stage`](/react/components#stage) and its [`Hotspot`](/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/react/components#mediaviewer).
 
 ```ts
 import {
@@ -282,7 +282,7 @@ type VideoView = {
 How a video layer plays, with the defaults filled in. A `video` [beat](/reference/prose#scenebeat) carries the same fields. Without flags, a video plays by itself, loops, is muted and has no controls, like a GIF. `controls` turns `autoplay` off, so a clip with controls waits for the player. `poster` has been through `artSrc`.
 
 **Gotchas.**
-- `muted: false` asks for sound. Browsers often refuse to start a video with sound by itself, so a UI may need the player to press play. The React UI (coming in the same change) also follows the game's audio settings for a video with sound.
+- `muted: false` asks for sound. Browsers often refuse to start a video with sound by itself, so a UI may need the player to press play. The React UI's [`Video`](/react/components#video) also follows the game's mute and volume settings for a video with sound.
 - `mediaKind` decides picture or video by the file's extension alone. A file in `art/` with no extension is a picture (`.jpg`), unless its markup says `video` (`.mp4`).
 
 ## Checks

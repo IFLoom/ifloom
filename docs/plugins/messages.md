@@ -467,7 +467,7 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 { id: 'ava.ducks', channel: 'texts', from: 'ava', when: { flag: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
 ```
 
-The [React UI](/react/) draws message beats, videos included (coming in the same change).
+The React UI's [`MessagesSection`](/react/components#messagessection) draws each message's beats with [`Beat`](/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
 
 ## The state
 

@@ -319,7 +319,7 @@ A hotspot is a rectangle, `[x, y, width, height]` in percent of the stage from t
 
 A hotspot with a `when` that fails is left out, and so is one whose `layer` isn't shown. `label` is what a screen reader reads.
 
-The view resolves the stage into [`view.scene.stage`](/reference/view#the-scene), and the [React UI](/react/) draws it with its hotspots as buttons over the picture (coming in the same change). See [Media](/reference/media#the-stage) for the types. A hand-built scene can return a `stage` from `render` too.
+The view resolves the stage into [`view.scene.stage`](/reference/view#the-scene), and the [React UI](/react/) draws it with [`Stage`](/react/components#stage), with its hotspots as buttons over the picture. See [Media](/reference/media#the-stage) for the types. A hand-built scene can return a `stage` from `render` too.
 
 **Gotchas.**
 - The loader reports a hotspot with both or neither of `command` and `choice`, a `choice` the scene doesn't have, a rect outside 0 to 100 or running off the edge, two hotspots with one id, a `layer` no layer has, and an unknown pool or tag.

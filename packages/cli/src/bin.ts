@@ -8,7 +8,7 @@
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art and sound, checked to open from disk;
- *                            --inline-assets puts the art inside the file too (never the sound)
+ *                            --inline-assets puts the art inside the file too (never sound or video)
  *   ifloom check [module]    every problem the loader and validatePack find, and sound files missing from public/
  *   ifloom playtest [module] [--turns 7] [--out playtest.txt]
  *                            play it day by day; every screen to a transcript, the numbers to .metrics
@@ -166,6 +166,7 @@ async function main(): Promise<number> {
       if (rest.includes('--inline-assets')) {
         const inlined = inlineAssets(out)
         console.log(`Put ${inlined.files} file${inlined.files === 1 ? '' : 's'} from art/ into index.html.`)
+        if (inlined.videos) console.log(`Left ${inlined.videos} video${inlined.videos === 1 ? '' : 's'} in art/ beside it: video is too big to put in the page.`)
         if (existsSync(resolve(out, 'audio'))) console.log('Left audio/ beside it: sound is too big to put in the page.')
       }
       const problems = checkBuild(out, await builtGame())

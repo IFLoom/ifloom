@@ -9,7 +9,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Frame, Icon,
   DEFAULT_LAYOUT, READING_LAYOUT, Parts, Title, Actions,
-  SceneStage, Beat, Picture, assetUrl, ChoiceButton, ChoiceList, PriceTag,
+  SceneStage, Beat, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Sidebar, Clock, StatList, EntityTable, LocationPanel, PeoplePanel, Inventory, WardrobePanel,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -25,6 +25,7 @@ import {
   type SavesState, type ModsState, type DevicesState, type DeviceState,
   type ScreensOptions, type Screen, type ScreenDef, type ScreenState, type Credit, type GateOptions,
   type Classes, type Components, type Override, type PartKey, type UiOptions,
+  type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
@@ -260,10 +261,11 @@ type UiOptions = {
   components?: Components
   classes?: Classes
   unstyled?: boolean
+  viewer?: boolean
 }
 ```
 
-What [`mountGame`](/react/#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do.
+What [`mountGame`](/react/#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out.
 
 ### Components
 
@@ -275,7 +277,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Icon`, `TitleScreen`, `SettingsScreen`, `LoadScreen`, `CreditsScreen` and `GateScreen`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitleScreen`, `SettingsScreen`, `LoadScreen`, `CreditsScreen` and `GateScreen`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -392,10 +394,10 @@ Parts: `page` (with `data-has-sidebar` when there's a side column), `stage` and 
 ```tsx
 function Icon(props: { name: IconName; label?: string }): JSX.Element
 
-type IconName = 'close' | 'back' | 'warning' | 'voice'
+type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom'
 ```
 
-One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice with a warning, and `voice` on a spoken line's replay button. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
+One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, and `zoom` for enlarging a picture. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
 
 ## The stage
 
@@ -411,7 +413,7 @@ From top to bottom, it draws:
 
 - the speaker's portrait, unless [`view.scene.speaker`](/reference/view#speakerview) or its `portrait` is `null`;
 - the title;
-- the stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape;
+- the scene's [`Stage`](#stage) when [`view.scene.stage`](/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape;
 - each [`Beat`](#beat) of the body;
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist).
 
@@ -434,7 +436,8 @@ One beat of a scene's body, drawn by kind:
 | `text` | A paragraph. |
 | `mono` | A paragraph in a monospace font. |
 | `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/react/#sound) is running. |
-| `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. |
+| `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. Clicking it opens the [`MediaViewer`](#mediaviewer). |
+| `video` | A [`Video`](#video), sized as a picture is. Clicking it opens the `MediaViewer`, unless the clip has controls, which have a full-screen button of their own. |
 | `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
 | `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
 | `sound` | Nothing. The audio player plays it. |
@@ -445,9 +448,11 @@ import { Beat } from '@ifloom/react'
 <Beat beat={{ kind: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
 ```
 
-The [`Backlog`](#backlog) draws its beats with `Beat` too, so a replacement `Beat` changes both.
+The [`Backlog`](#backlog), [`MessagesSection`](#messagessection) and [`FeedSection`](#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
 
-Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body` and `voice-replay`.
+While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
+
+Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body`, `voice-replay` and `viewer-open`. A video beat is a `video` part, with `data-beat="video"`.
 
 ### Picture
 
@@ -456,6 +461,8 @@ function Picture(props: ComponentProps<'img'>): JSX.Element | null
 ```
 
 An `<img>` that draws nothing, and takes no space, when its file is missing or `src` is empty. You get no broken-image icon for a portrait that isn't drawn yet or art left out of a build. It takes every `<img>` prop, and still calls your `onError`. Every picture in the UI's components is a `Picture`.
+
+It loads lazily, with `loading="lazy"` and `decoding="async"`, so a picture far down a long scene or a feed waits until the player scrolls near it. Pass `loading="eager"` to load one straight away.
 
 ```tsx
 import { Picture } from '@ifloom/react'
@@ -468,6 +475,101 @@ A `Picture` remembers which `src` failed. When the same element gets a new `src`
 Its `src` goes through [`assetUrl`](#asseturl), so it finds a picture that `ifloom build --inline-assets` put inside the page.
 
 Replaceable as `Picture` in [`components`](#components). Parts: none of its own. It carries the `data-part` of the place it's drawn, such as `scene-portrait` or `notice-image`.
+
+### Video
+
+```tsx
+function Video(props: VideoProps): JSX.Element
+
+type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
+  src: string
+  poster?: string
+  alt?: string
+  autoplay: boolean
+  loop: boolean
+  muted: boolean
+  controls: boolean
+}
+```
+
+A video clip. [`Beat`](#beat) draws `video` beats with it, [`Stage`](#stage) draws video layers with it, and [`FeedSection`](#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/reference/prose#videos) or a [`VideoView`](/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
+
+```tsx
+import { Video } from '@ifloom/react'
+
+<Video src="art/cafe/steam.mp4" poster="art/cafe/steam.jpg" autoplay loop muted controls={false} />
+```
+
+It loads nothing until it scrolls into view. Until then it has `preload="none"`. When an `IntersectionObserver` sees it on screen, it switches to `preload="auto"` (or `"metadata"` for a clip that waits for the player) and starts playing if `autoplay` is set. It pauses when it scrolls out of view, and plays again when it comes back. Where there's no `IntersectionObserver`, it plays straight away with the `autoplay` attribute.
+
+**Sound.** A clip with `muted: false` follows the game's [audio settings](/reference/audio), as the audio player does:
+
+- it's muted while the ui setting named by [`view.audio.muteSetting`](/reference/audio#audioview) is on;
+- its volume is the volume setting of the game's `video` channel, if the game declares one, or else of its `sfx` channel, scaled from the setting's `min` to its `max`;
+- with neither setting, it plays at full volume.
+
+The values are read with [`useSetting`](#usesetting), so a change on the settings screen applies at once.
+
+**Gotcha.** Browsers often refuse to start a clip with sound by itself. Give a clip with sound `controls` (the `|controls` flag), so the player presses play.
+
+Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video` in [`components`](#components). Parts: `video`.
+
+### Stage
+
+```tsx
+function Stage(props: { stage: StageView; className?: string }): JSX.Element
+```
+
+A layered picture with hotspots, from a [`StageView`](/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationPanel`](#locationpanel) draws a place's `location.stage`.
+
+```tsx
+import { Stage, useGame } from '@ifloom/react'
+
+function Room() {
+  const { view } = useGame()
+  return view.scene.stage ? <Stage stage={view.scene.stage} className="max-w-2xl" /> : null
+}
+```
+
+It draws a box with the stage's `aspect` as its `aspect-ratio`. With no `aspect`, it takes the first layer's own shape once that has loaded, and `16/9` until then. The layers are stacked inside it, bottom first, each filling the box with `object-fit: cover`. A picture layer is a [`Picture`](#picture) and a video layer is a [`Video`](#video), each with `data-layer` set to the layer's id. The [`Hotspot`](#hotspot)s go on top.
+
+**Gotcha.** Every layer fills the whole box, so a layer above the first needs transparent areas (a PNG, a WebP or an SVG) for the ones below to show through.
+
+Replaceable as `Stage` in [`components`](#components). Parts: `stage-picture` (the box) and `stage-layer`.
+
+### Hotspot
+
+```tsx
+function Hotspot(props: { hotspot: HotspotView }): JSX.Element
+```
+
+One hotspot on a [`Stage`](#stage), from a [`HotspotView`](/reference/media#hotspotview). It's a `<button>` placed over the picture by its `rect`, in percent, with `data-hotspot` set to its id. Clicking it sends its `command`.
+
+- **Label.** Its `aria-label` is the hotspot's `label`, which is also its tooltip.
+- **Look.** It's invisible until the player points at it, which shows a faint outline, or tabs to it, which shows the focus ring.
+- **Greyed out.** A hotspot with `disabled` is dimmed and gets `aria-disabled`. It stays in the tab order so a keyboard player can find it, but clicking it sends nothing. Its reason is in `title`, after the label, and in a screen-reader-only span the button points at with `aria-describedby`.
+- **Warning.** A hotspot with a `warning` shows the warning [`Icon`](#icon) in its corner, and its warning is in `title` and read out the same way.
+
+Replaceable as `Hotspot` in [`components`](#components). Parts: `hotspot` and `hotspot-warning`.
+
+### MediaViewer
+
+```tsx
+function MediaViewer(props: MediaViewerProps): JSX.Element
+
+type MediaViewerProps = { media: ViewerMedia; open: boolean; onOpenChange: (open: boolean) => void }
+type ViewerMedia = Extract<SceneBeat, { kind: 'image' } | { kind: 'video' }>
+```
+
+A picture or a clip from the story, shown large over the page. [`Beat`](#beat) opens it when the player clicks an `image` or a `video` beat, in a scene, the [backlog](#backlog), a message or a post. Stage layers don't open it. It's a [`Dialog`](#dialog), so Escape, a click outside and its close button (`ui.closeViewer`) all close it, and focus goes back to the picture.
+
+Turn it off for the whole game with `viewer: false` in [`UiOptions`](#uioptions):
+
+```ts
+mountGame(loadGame(packs, base), { viewer: false })
+```
+
+Replaceable as `MediaViewer` in [`components`](#components). Parts: `viewer` (the dialog), `viewer-close` and `dialog-overlay`.
 
 ### assetUrl
 
@@ -484,7 +586,7 @@ assetUrl('art/place/cafe.jpg')   // 'data:image/jpeg;base64,…' in a one-file b
 assetUrl('./art/place/cafe.jpg') // the same
 ```
 
-[`Picture`](#picture) calls it, and so does [`DeviceScreen`](#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
+[`Picture`](#picture) and [`Video`](#video) call it, and so does [`DeviceScreen`](#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
 
 **Gotcha.** A component of your own that draws a picture from a path, with an `<img>` or a CSS `background-image`, must call `assetUrl` too or use a `Picture`. In a one-file build the `art/` folder is gone, so the bare path points at nothing.
 
@@ -634,6 +736,8 @@ function LocationPanel(): JSX.Element | null
 ```
 
 Where the player is, with its name and tag, and an outline button for each exit. It reads the [places](/plugins/places) plugin's view at [`view.plugins.places`](/plugins/places#the-view), by its shape, without importing the plugin. Each button sends the exit's own [`command`](/plugins/places#exitview) and carries `data-exit`. An exit the player can't take is greyed out.
+
+A place with a [stage](/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
 
 It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). So a novel's sidebar has no empty box.
 
@@ -1334,7 +1438,7 @@ These are the two built-in renderers for an app's `{ plugin }` section. [`GamePr
 const MessagesSection: PluginSectionComponent
 ```
 
-A [messages](/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. Under each message is the reply the player sent, or the replies on offer as buttons.
+A [messages](/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. A message's [`beats`](/plugins/messages#messageview) are drawn with [`Beat`](#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons.
 
 Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, a **Mark all read** button (`ui.allRead`) sends `messages/read` for the channel. It draws nothing if the channel isn't in the view.
 
@@ -1346,7 +1450,7 @@ Replaceable as `MessagesSection` in [`components`](#components). Parts: `channel
 const FeedSection: PluginSectionComponent
 ```
 
-A [feed](/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture and text, its likes (`ui.likes`) and its comments.
+A [feed](/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/plugins/feed#postview), drawn with [`Beat`](#beat), so pictures and clips in them show in order.
 
 Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
 

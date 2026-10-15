@@ -1,6 +1,6 @@
 /** @ifloom/cli — the command line's parts, for scripts that want them without the command line. */
 export { buildFiles, checkBuild, inlineAssets } from './build.ts'
-export { checkAudio, checkGame, gameFrom } from './check.ts'
+export { checkAudio, checkGame, checkMedia, gameFrom } from './check.ts'
 export type { TurnMetrics, Playtest, PlaytestOptions, Policy } from './playtest.ts'
 export { explorer, metricsText, playtest, screenText } from './playtest.ts'
 export type { Probe } from './snapshot.ts'

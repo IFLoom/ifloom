@@ -122,6 +122,20 @@ The office's list is checked in order, so the most particular reason comes first
 
 Any kind of location can be locked this way.
 
+### A stage with a hotspot
+
+`town.ts`, the `cafe` location's `stage`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [stage](/plugins/places#the-picture-stage) layer, with a hotspot on her that sends the cast's `talk('ava')`:
+
+```ts
+stage: {
+  aspect: '16/10',
+  layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
+  hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+},
+```
+
+The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationPanel`](/react/components#locationpanel) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
+
 ### People and schedules
 
 `town.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/plugins/cast)'s characters, in the pack's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
@@ -260,5 +274,6 @@ The default export of `src/game.ts` is a function that returns the release build
 
 ## What it doesn't show yet
 
-- **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. A game that wants a picture of the room draws it with a component of its own in its [layout](/react/#layouts).
+- **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. The café's [stage](#a-stage-with-a-hotspot) is the one picture of a place, drawn from a photo the town already has.
+- **Video and layers.** Small Town has no video and no picture with transparent parts, so its one stage has a single layer. [Media](/reference/media) shows a stage with a clip layered over a picture.
 - **A patch.** The example mod adds prose and variants, but no mod patches a choice into one of the town's scenes. See [Patches](/reference/loader#patches).

@@ -225,3 +225,59 @@ body {
 [data-part="setting"] {
   border-radius: 0;
 }
+
+/* Pictures and clips: a framed screen, scanlines on the stage. */
+[data-part="stage-picture"],
+[data-part="video"][data-beat],
+[data-part="beat"][data-beat="image"] {
+  border-radius: 0;
+  border: 1px solid var(--border);
+}
+
+[data-part="stage-picture"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, transparent 0 2px, rgb(0 0 0 / 0.18) 2px 3px);
+}
+
+[data-part="hotspot"] {
+  z-index: 1;
+  border-radius: 0;
+}
+
+[data-part="hotspot"]:hover:not([aria-disabled]) {
+  outline: 1px dashed var(--primary);
+  outline-offset: -1px;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+}
+
+[data-part="hotspot"]:focus-visible {
+  outline: 2px dashed var(--primary);
+  outline-offset: 2px;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+}
+
+[data-part="hotspot-warning"] {
+  border-radius: 0;
+  background: var(--background);
+  color: var(--price);
+}
+
+[data-part="viewer"] {
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+[data-part="viewer"] img,
+[data-part="viewer"] video {
+  border-radius: 0;
+}
+
+[data-part="viewer-close"] {
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+}

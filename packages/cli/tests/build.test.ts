@@ -113,3 +113,85 @@ describe('the sound files', () => {
     expect(existsSync(join(dir, 'audio', 'bell.ogg'))).toBe(true)
   })
 })
+
+import { feed } from '@ifloom/plugin-feed'
+import { checkMedia } from '../src/index.ts'
+
+describe('the picture and video files', () => {
+  const game = () =>
+    loadGame(
+      [
+        {
+          id: 'town',
+          schema: SCHEMA,
+          media: { pools: { door: [{ src: 'door/blue.jpg', tags: ['blue'] }, { src: 'door/red.jpg', tags: ['red'] }] } },
+          scenes: [
+            {
+              id: 'knock',
+              stage: {
+                layers: [{ id: 'hall', src: 'flat/hall' }, { id: 'rain', src: 'flat/rain', video: true, poster: 'flat/rain-still' }, { pool: 'door' }],
+                hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
+              },
+              body: [{ text: 'knock' }, { media: { src: 'flat/letter.png' } }, { media: { pool: 'door', tags: ['red'] } }],
+              choices: [{ id: 'answer', effects: [{ kind: 'scene', id: null }] }],
+            },
+          ],
+          prose: {
+            knock: 'Someone knocks.\n\n[[img:flat/cup.svg|A cup]]\n\n[[widevideo:flat/kettle|once|poster=flat/kettle.jpg]]\n\n[[img:@door|blue]]',
+            'knock#answer': 'Answer it',
+            'post.cafe': 'Cakes.\n\n[[wide:cafe/cakes]]',
+          },
+          data: {
+            feed: { posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }] },
+          },
+        },
+      ],
+      { id: 'town', title: 'Town', introScene: 'knock', plugins: [feed({ feeds: [{ id: 'town', name: 'Town' }] })] },
+    )
+
+  const touch = (dir: string, ...files: string[]) => {
+    for (const file of files) {
+      mkdirSync(join(dir, file, '..'), { recursive: true })
+      writeFileSync(join(dir, file), '')
+    }
+  }
+
+  it('reports each one missing from the public folder: pools, stage layers, media blocks, markup and plugin data', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
+    touch(dir, 'art/door/blue.jpg', 'art/flat/hall.jpg', 'art/flat/cup.svg', 'art/cafe/cakes.jpg')
+    const missing = (file: string) => `: no file ${join(dir, file)}`
+    const found = checkMedia(game().game, dir)
+    expect(found).toEqual(
+      expect.arrayContaining([
+        `pool door${missing('art/door/red.jpg')}`,
+        expect.stringMatching(/^scenes\[knock\]\.stage\.layers\[1\]: no file .*art\/flat\/rain\.mp4$/),
+        expect.stringMatching(/^scenes\[knock\]\.stage\.layers\[1\]: no file .*art\/flat\/rain-still\.jpg$/),
+        expect.stringMatching(/^scenes\[knock\]\.body\[1\]\.media: no file .*art\/flat\/letter\.png$/),
+        `prose knock${missing('art/flat/kettle.mp4')}`,
+        `prose knock${missing('art/flat/kettle.jpg')}`,
+        expect.stringMatching(/\.video: no file .*art\/cafe\/steam\.mp4$/),
+      ]),
+    )
+    expect(found).toHaveLength(7)
+    // checkGame reads them too, beside the sound.
+    expect(checkGame({ default: game() }, dir)).toEqual(found)
+  })
+
+  it('finds nothing missing when every file is there', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
+    touch(dir, 'art/door/blue.jpg', 'art/door/red.jpg', 'art/flat/hall.jpg', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/flat/letter.png')
+    touch(dir, 'art/flat/cup.svg', 'art/flat/kettle.mp4', 'art/flat/kettle.jpg', 'art/cafe/cakes.jpg', 'art/cafe/steam.mp4')
+    expect(checkMedia(game().game, dir)).toEqual([])
+  })
+
+  it('leaves videos beside the page with --inline-assets, and counts the pictures in the page as there', () => {
+    const dir = built('<html><head></head></html>')
+    touch(dir, 'art/door/blue.jpg', 'art/door/red.jpg', 'art/flat/hall.jpg', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/flat/letter.png')
+    touch(dir, 'art/flat/cup.svg', 'art/flat/kettle.mp4', 'art/flat/kettle.jpg', 'art/cafe/cakes.jpg', 'art/cafe/steam.mp4')
+    expect(inlineAssets(dir)).toMatchObject({ files: 8, videos: 3 })
+    expect(existsSync(join(dir, 'art', 'flat', 'rain.mp4'))).toBe(true)
+    expect(existsSync(join(dir, 'art', 'flat', 'hall.jpg'))).toBe(false)
+    expect(existsSync(join(dir, 'art', 'door'))).toBe(false)
+    expect(checkBuild(dir, game().game)).toEqual([])
+  })
+})

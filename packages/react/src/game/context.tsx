@@ -48,7 +48,7 @@ export type GameProviderProps = UiOptions & {
  */
 const NONE = {}
 
-export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, children }: GameProviderProps) {
+export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, children }: GameProviderProps) {
   const state = useSyncExternalStore(
     (listener) => runner.subscribe(() => listener()),
     () => runner.state,
@@ -62,7 +62,7 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
   )
   return (
     <GameContext.Provider value={value}>
-      <UiProvider components={components} classes={classes} unstyled={unstyled}>
+      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer}>
         {children}
       </UiProvider>
     </GameContext.Provider>

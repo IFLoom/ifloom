@@ -406,7 +406,7 @@ type PostView = {
 | `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
 | `beats` | `text` parsed into [beats](/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/reference/prose#videos) sits in order with them. |
 | `image` | The image path, or `null`. |
-| `video` | The video path, or `null`. The [React UI](/react/) draws it next to the image (coming in the same change). |
+| `video` | The video path, or `null`. The React UI's [`FeedSection`](/react/components#feedsection) draws it under the image with [`Video`](/react/components#video). |
 | `turn` | The [turn](/reference/state#turn) it appeared or was posted on. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `likes` | The likes it started with, plus every `feed/react` since. |
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |

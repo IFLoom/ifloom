@@ -1,9 +1,10 @@
-import type { Command, RenderedChoice } from '@ifloom/engine'
+import type { Command, RenderedChoice, StageView } from '@ifloom/engine'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceButton } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
+import { Stage } from './stage.tsx'
 
 function ClockImpl() {
   const { view } = useGame()
@@ -39,7 +40,7 @@ export const StatList = overridable('StatList', StatListImpl)
 
 /** The places plugin's view, read by its shape: the UI depends on no plugin. */
 type PlacesShape = {
-  location: { id: string; name: string; tag: string } | null
+  location: { id: string; name: string; tag: string; stage?: StageView | null } | null
   exits: { id: string; name: string; disabled?: string; warning?: string; command: Command }[]
 }
 
@@ -57,6 +58,7 @@ function LocationPanelImpl() {
   if (!location) return null
   return (
     <section {...section}>
+      {location.stage?.layers.length ? <Stage stage={location.stage} /> : null}
       <div>
         <h3 {...name}>{location.name}</h3>
         <p {...tag}>{location.tag}</p>
@@ -81,7 +83,10 @@ function LocationPanelImpl() {
   )
 }
 
-/** Where the player is, and the exits from it: each a button, greyed out with its reason. */
+/**
+ * Where the player is, and the exits from it: each a button, greyed out with its
+ * reason. A place with a stage shows it above its name, hotspots and all.
+ */
 export const LocationPanel = overridable('LocationPanel', LocationPanelImpl)
 
 /** The cast plugin's view of who is here, read by its shape: the UI depends on no plugin. */

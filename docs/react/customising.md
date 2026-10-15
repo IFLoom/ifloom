@@ -159,13 +159,15 @@ Some parts carry a second attribute that says more:
 
 | Attribute | On | Values |
 |---|---|---|
-| `data-beat` | Every `beat` | The beat's kind: `text`, `mono`, `say`, `image`, `mail` or `prop`. |
+| `data-beat` | Every `beat`, and a video beat's `video` | The beat's kind: `text`, `mono`, `say`, `image`, `video`, `mail` or `prop`. |
 | `data-who` | A `say` beat | `character` or `player`. |
 | `data-face` | A `prop` beat | The prop's face, such as a sign or a note. |
 | `data-from` | Every `bubble` | `them` or `player`. |
 | `data-has-sidebar` | The `page` | Present when the layout has a side column. |
 | `data-frame` | A device's `dialog` | The device's frame: `phone`, `laptop`, or a name of the game's own. |
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
+| `data-layer` | Every `stage-layer` | The layer's id, when it has one. |
+| `data-hotspot` | Every `hotspot` | The hotspot's id. |
 
 The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-item`, `data-quest` and the rest, each holding the id of what it shows. [Components](/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
@@ -487,6 +489,19 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `mail-body` | A letter's body. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |
 
+### Pictures, videos and the stage
+
+| Part | What it is |
+|---|---|
+| `video` | A video clip, drawn by [`Video`](/react/components#video). A video beat's carries `data-beat="video"`. |
+| `stage-picture` | A layered [`Stage`](/react/components#stage)'s box, with the stage's `aspect-ratio`. |
+| `stage-layer` | One layer in it, a picture or a video. Carries `data-layer` with the layer's id. |
+| `hotspot` | A hotspot button over the stage. Carries `data-hotspot`, and `aria-disabled` when it's greyed out. |
+| `hotspot-warning` | The warning icon in a hotspot's corner. |
+| `viewer-open` | The button around a picture or a clip in the story that opens the viewer. |
+| `viewer` | The [`MediaViewer`](/react/components#mediaviewer) dialog, holding the picture or the clip. |
+| `viewer-close` | The viewer's close button. |
+
 ### Choices and buttons
 
 | Part | What it is |
@@ -613,13 +628,13 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `thread-title` | The thread's heading, with the sender's name. |
 | `thread-portrait` | The sender's portrait. |
 | `message` | One message with the reply under it. |
-| `bubble` | A message bubble. Carries `data-from`, `them` or `player`. |
+| `bubble` | A message bubble. Carries `data-from`, `them` or `player`. The message's beats are inside it. |
 | `feed` | A feed. Carries `data-feed`. |
 | `post` | One post. Carries `data-post`. |
 | `post-author` | The poster's name and portrait. |
 | `post-portrait` | The poster's portrait. |
 | `post-image` | The post's picture. |
-| `post-text` | Its text. |
+| `post-text` | Its words, as beats. |
 | `post-meta` | Its likes. |
 | `post-comment` | One comment. |
 | `post-comment-name` | The commenter's name. |

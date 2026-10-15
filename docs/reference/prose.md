@@ -194,7 +194,7 @@ The kettle starts to rattle on the hob.
 
 A bare name is an `.mp4` (`clips/kettle` is `art/clips/kettle.mp4`). A path ending in `.mp4` or `.webm` is drawn as a video whichever markup names it, so `[[img:clips/kettle.mp4]]` is a video too. An animated `.gif` or `.webp` is a picture.
 
-The [React UI](/react/) draws video beats (coming in the same change as this markup). A UI of your own reads the flags off the beat.
+The React UI draws video beats with [`Video`](/react/components#video). A UI of your own reads the flags off the beat.
 
 **Gotchas:**
 - Only one part can be the alt text. The loader reports a second one, because it's usually a misspelt flag (`contols`).

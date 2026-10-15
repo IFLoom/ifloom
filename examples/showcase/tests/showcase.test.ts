@@ -10,7 +10,7 @@ import type { MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
-import { go, type PlacesState } from '@ifloom/plugin-places'
+import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { call, talk } from '@ifloom/plugin-cast'
 import { clock, openCamera, smallTown } from '../src/game.ts'
 
@@ -66,6 +66,14 @@ describe('Small Town', () => {
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
     expect(view(state, game).scene.body).toContain('very yellow')
     expect(holds(state, wearing('raincoat'), game)).toBe(true)
+
+    // The café's stage: the counter while Ava is on shift, and a hotspot on her that talks to her.
+    const cafe = (view(state, game).plugins.places as PlacesView).location!
+    expect(cafe.stage).toEqual({
+      aspect: '16/10',
+      layers: [{ id: 'counter', src: 'art/photo/ava.svg' }],
+      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+    })
 
     state = run(state, act('coffee'))
     expect(state.stats).toMatchObject({ coins: 9, energy: 95 })

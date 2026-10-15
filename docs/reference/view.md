@@ -171,7 +171,7 @@ channels.music.volumeSetting  // 'musicVolume': read its value from the profile
 cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
 ```
 
-The engine never reads the [profile](/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. `@ifloom/audio`, coming in the same change, does all of this. See [Audio](/reference/audio).
+The engine never reads the [profile](/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/reference/audio-player) does all of this. See [Audio](/reference/audio).
 
 ### plugins
 

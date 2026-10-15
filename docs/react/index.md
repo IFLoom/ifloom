@@ -134,6 +134,7 @@ It sets up what most games want:
 | `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/react/customising#_6-replace-a-component). |
 | `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/react/customising#_4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
+| `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
 | `audio` | On when the game lists any tracks in [`game.audio`](/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/reference/audio-player#startaudio) as its [options](/reference/audio-player#audiooptions). See [Sound](#sound). |
 
 Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` and `className` are ignored, and the rest go to the provider.
@@ -349,6 +350,24 @@ function App() {
 
 It returns the [player](/reference/audio-player#audioplayer) once it has started, and `null` before then. Use one or the other: `mountGame` with `useAudio` inside it would play every sound twice.
 
+## Pictures and video
+
+The UI draws every picture and clip the engine puts in the view, with no setup:
+
+- `image` and `video` [beats](/reference/prose#images) in a scene, a message or a post, through [`Beat`](/react/components#beat);
+- a scene's or a place's [stage](/reference/media#the-stage), a layered picture with hotspots, through [`Stage`](/react/components#stage);
+- a post's `video`, through [`Video`](/react/components#video).
+
+Clips play like GIFs unless their flags say otherwise. They load and start only when they scroll into view, and pause when they scroll out. A clip with sound follows the game's mute and volume settings, as the [`Video`](/react/components#video) entry explains. Pictures load lazily too.
+
+Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/react/components#mediaviewer). Escape or the close button closes it. To turn that off:
+
+```ts
+mountGame(game, { viewer: false })
+```
+
+`GameShell` and `GameProvider` take the same `viewer` prop.
+
 ## Theming
 
 The look comes from a theme preset, CSS variables for the fonts, sizes and colours, and a `data-part` attribute on every element for your own CSS. Below that you can change the built-in Tailwind classes, replace any component, or replace the page's frame. [Make it your own](/react/customising) covers all of it, from the smallest change to the biggest.
@@ -456,6 +475,8 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/re
 | `ui.credits` | `Credits` | |
 | `ui.titleScreen` | `Title screen` | |
 | `ui.replayVoice` | `Hear it again` | |
+| `ui.zoom` | `Enlarge` | |
+| `ui.closeViewer` | `Close` | |
 
 Which component uses which keys:
 
@@ -464,7 +485,8 @@ Which component uses which keys:
 - **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Inventory](/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
 - **[Price tag](/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
-- **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, and `ui.replayVoice`, the label on a spoken line's replay button.
+- **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
+- **[Media viewer](/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
 - **[Notices](/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button.
 - **[Devices](/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.

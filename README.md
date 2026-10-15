@@ -83,7 +83,7 @@ A few guarantees hold for every game:
 | Package | What it is |
 |---|---|
 | `@ifloom/engine` | The core: state, commands, scenes, conditions, effects and saves. |
-| `@ifloom/react` | The React UI: components that draw a game's screen, and `mountGame` to start one in a line. |
+| `@ifloom/react` | The React UI: components that draw a game's screen, and `mountGame` to start one in a line. It comes with four theme presets, and every part of it can be restyled or replaced. |
 | `@ifloom/cli` | `ifloom new`, `dev`, `build`, `check`, `playtest` and `snapshot`, and the Vite preset. |
 | `@ifloom/plugin-calendar` | Days, times of day, weeks, sleep and a curfew. |
 | `@ifloom/plugin-places` | Locations with exits, and travel between them. |
@@ -132,6 +132,10 @@ That gives you a small two-scene game drawn with the React UI. Add
 | `blank` | The default: two scenes, drawn with the React UI. |
 | `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte and the rest. |
 | `novel`, `cafe`, `town` | A copy of one of the examples. |
+
+A React game also gets a theme preset (`paper`, `terminal`, `studio` or
+`storybook`), picked at random for a blank game. Choose one with `--theme`:
+`npm run new -- my-story --theme paper`.
 
 Your game's `package.json` lists only `@ifloom/*` packages; the build tools come
 with `@ifloom/cli`. The [installation guide](docs/guide/installation.md) also

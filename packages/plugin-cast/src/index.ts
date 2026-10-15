@@ -126,8 +126,8 @@ export const OFFSTAGE = 'offstage'
 
 /** A list from arguments: `{ 'cast/here': ['ava'] }` arrives as `{ value: ['ava'] }`. */
 function ids(args: PluginArgs, key = 'value'): string[] {
-  // Who is asked about may be written `who` or as the short form's value; places only as `at`.
-  const value = key === 'at' ? args.at : (args[key] ?? args.who ?? args.value)
+  // Who is asked about may be written `value`, `who` or `id`; places only as `at`.
+  const value = key === 'at' ? args.at : (args[key] ?? args.who ?? args.id)
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 

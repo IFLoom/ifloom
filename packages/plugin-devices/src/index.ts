@@ -54,7 +54,7 @@ export type Section =
   | { actions: ActionDef[] }
   /** A collection's entries, newest first. */
   | { collection: string }
-  /** The people the player can call and has met (the game's `rules.storylines.started`), with a Call button each. */
+  /** The people the player can call and has met (the cast plugin's `cast/contacts`), with a Call button each. */
   | { contacts: true }
   /** Another plugin's view, for the UI to draw with that plugin's renderer: a channel, a feed. */
   | { plugin: string; with?: Record<string, unknown> }

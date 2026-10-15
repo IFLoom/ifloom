@@ -139,7 +139,7 @@ export function cornerCafe(): { game: Game; problems: string[] } {
 }
 
 const built = cornerCafe()
-export default built.game
+export default built
 
 /** Where `ifloom playtest` starts: the doors already open. */
 export const start = (game: Game) => ({ ...startingState(game), sceneId: null })

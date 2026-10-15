@@ -89,7 +89,7 @@ export function theLetter(): { game: Game; problems: string[] } {
 }
 
 const built = theLetter()
-export default built.game
+export default built
 
 /** Where `ifloom playtest` starts: a reader who has already typed a name. */
 export const start = (game: Game) => startingState(game, { flags: { playerName: 'Sam' } })

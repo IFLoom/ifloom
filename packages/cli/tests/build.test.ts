@@ -2,7 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { checkBuild } from '../src/index.ts'
+import { SCHEMA, loadGame } from '@ifloom/engine'
+import { checkBuild, checkGame } from '../src/index.ts'
 
 function built(html: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'ifloom-build-'))
@@ -50,5 +51,16 @@ describe('inlineAssets', () => {
     // Again: nothing left to put in, and the pictures already in stay.
     expect(inlineAssets(dir).files).toBe(0)
     expect(readFileSync(join(dir, 'index.html'), 'utf8')).toBe(html)
+  })
+})
+
+describe('checkGame', () => {
+  it('prints a loader problem in the loader\'s words', () => {
+    const loaded = loadGame([{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', id: 'nowhere' }] }] }] }], {
+      id: 'town',
+      title: 'Town',
+      introScene: 'intro',
+    })
+    expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 })

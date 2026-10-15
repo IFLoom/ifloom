@@ -66,7 +66,7 @@ export type Stage = {
    */
   scene?: string
   /**
-   * Whole days that must have passed since the previous stage's scene was
+   * Turns that must have passed since the previous stage's scene was
    * first seen. A floor under the stat in `needs`: income can be measured
    * wrong, or change, and a ladder paced on income alone collapses into a
    * fortnight the first time it does. The previous stage must name its scene.

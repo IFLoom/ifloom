@@ -83,12 +83,7 @@ export type SceneView = {
    */
   panelData?: unknown
   portrait?: string
-  storyKey?: string
-  /**
-   * Omit it to say markdown owns this scene's prose. `applyStory` fills it from
-   * `docs/story/scenes.md`; a scene may only leave it out when every key it can
-   * produce is written there (see the story coverage test).
-   */
+  /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
   media?: SceneMedia[]
   choices: SceneChoice[]

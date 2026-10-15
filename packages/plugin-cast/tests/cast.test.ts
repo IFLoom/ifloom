@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Command, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { SCHEMA, apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Command, type Game, type GameState, type Pack } from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { call, cast, hasMet, here, isAt, person, talk, type CastView, type CharacterDef } from '../src/index.ts'
@@ -129,6 +129,14 @@ describe('the cast', () => {
     expect(holds(met, hasMet('ava'), g)).toBe(true)
     expect(shown(met, g).people.map((person) => person.id)).toEqual(['ava'])
     expect(view(clock.write(met, { day: 0, period: 'evening' }), g).plugins.cast).toBeDefined()
+  })
+
+  it('answer queries about whoever is named, as value, who or id', () => {
+    const { game: g } = game()
+    const cafe = run(g, startingState(g), go('cafe'))
+    const where = pluginQuery(g, 'cast/where')!
+    expect([where(cafe, { value: 'ava' }), where(cafe, { who: 'ava' }), where(cafe, { id: 'ava' })]).toEqual(['cafe', 'cafe', 'cafe'])
+    expect(where(cafe, { id: 'nobody' })).toBeUndefined()
   })
 
   it('say who is speaking in their scenes', () => {

@@ -70,6 +70,13 @@ export const UI_STRINGS = {
   itemCount: '×{n}',
   wearItem: 'Wear {item}',
   mailHeader: '{key}: {value}',
+  newGame: 'New game',
+  continue: 'Continue',
+  newGamePlus: 'New Game+',
+  settings: 'Settings',
+  noSettings: 'There are no settings.',
+  credits: 'Credits',
+  titleScreen: 'Title screen',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

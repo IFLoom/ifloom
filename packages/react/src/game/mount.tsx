@@ -2,7 +2,7 @@ import { StrictMode, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import { browserRunner, describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
 import { GameProvider } from './context.tsx'
-import { GameShell, type GameShellProps } from './shell.tsx'
+import { GameShell, WithScreens, type GameShellProps } from './shell.tsx'
 
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
   /** Where to draw it: an element, or a selector for one. `'#root'` if left out. */
@@ -14,6 +14,7 @@ export type MountOptions = Omit<GameShellProps, 'runner'> & {
   /**
    * Your own root component, drawn instead of `GameShell`. It sits inside the
    * game's provider, so `useGame()` and every built-in component work in it.
+   * With `screens` on, it's drawn on the `game` screen.
    */
   app?: ComponentType
 }
@@ -39,12 +40,14 @@ export function mountGame(loaded: Game | { game: Game; problems?: readonly unkno
   if (!element) throw new Error(`mountGame: nothing in the page matches ${String(root)}.`)
 
   const runner = browserRunner(game, { start, ...runnerOptions })
-  const { layout: _layout, className: _className, ...provider } = shell
+  const { layout: _layout, className: _className, screens, ...provider } = shell
   createRoot(element).render(
     <StrictMode>
       {App ? (
         <GameProvider runner={runner} {...provider}>
-          <App />
+          <WithScreens screens={screens}>
+            <App />
+          </WithScreens>
         </GameProvider>
       ) : (
         <GameShell runner={runner} {...shell} />

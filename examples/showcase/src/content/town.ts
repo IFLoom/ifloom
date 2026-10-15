@@ -28,7 +28,7 @@ const locations: LocationDef[] = [
   {
     ...place({ id: 'high-street', name: 'High Street', kind: 'street', exits: ['flat', 'cafe', 'park', 'office'] }),
     // The street, then a line about the weather, drawn afresh each day.
-    body: [{ text: 'place.high-street' }, { variants: 'street.weather' }],
+    body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street/hint', when: { setting: 'hints' } }],
     actions: [{ id: 'scarf', label: 'Buy a scarf at the market', command: { type: 'activity', id: 'buyScarf' } }],
   },
   {
@@ -97,6 +97,23 @@ const characters: CharacterDef[] = [
 export const town: Pack = {
   id: 'town',
   schema: SCHEMA,
+  // What the player can change on the settings screen. `hints` is part of the
+  // game (the high street reads it); `textSize` only changes how the page looks,
+  // and main.tsx puts it on the page root for styles.css.
+  settings: [
+    { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+    {
+      id: 'textSize',
+      label: 'Text size',
+      kind: 'choice',
+      affects: 'ui',
+      options: [
+        { value: 'normal', label: 'Normal' },
+        { value: 'large', label: 'Large' },
+      ],
+      default: 'normal',
+    },
+  ],
   storylines: [
     { id: 'ava', name: 'Ava' },
     { id: 'sam', name: 'Sam' },

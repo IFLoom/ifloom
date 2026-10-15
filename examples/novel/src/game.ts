@@ -8,6 +8,8 @@
  */
 import { SCHEMA, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
 
+const readIt = { kind: 'flag', key: 'readBefore', value: true } as const
+
 export const letter: Pack = {
   id: 'letter',
   schema: SCHEMA,
@@ -17,7 +19,12 @@ export const letter: Pack = {
     {
       id: 'ch1.mat',
       title: 'Chapter one: the mat',
-      body: [{ text: 'ch1.mat' }, { text: 'ch1.mat/named', when: { flag: 'playerName' } }],
+      body: [
+        { text: 'ch1.mat' },
+        // Only in a New Game+, which carries `readBefore` over from a finished read.
+        { text: 'ch1.mat/again', when: { flag: 'readBefore' } },
+        { text: 'ch1.mat/named', when: { flag: 'playerName' } },
+      ],
       choices: [
         { id: 'open', when: { flag: 'playerName' }, effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
         { id: 'shelf', when: { flag: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
@@ -52,8 +59,9 @@ export const letter: Pack = {
         { text: 'ch3.door/tangle', when: { flag: 'lies', gte: 2 } },
       ],
       choices: [
-        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ kind: 'scene', id: 'end.kept' }] },
-        { id: 'post', effects: [{ kind: 'scene', id: 'end.posted' }] },
+        // Either ending marks the story as read, for a New Game+ to carry over.
+        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [readIt, { kind: 'scene', id: 'end.kept' }] },
+        { id: 'post', effects: [readIt, { kind: 'scene', id: 'end.posted' }] },
       ],
     },
     { id: 'end.kept', title: 'The end', body: [{ text: 'end.kept' }], choices: [] },
@@ -62,6 +70,7 @@ export const letter: Pack = {
   prose: {
     'ch1.mat':
       'The flat still smells of someone else’s cooking. On the mat, under the takeaway menus, is a letter with a stamp from the seaside and a name on it that isn’t yours: J. Hart.',
+    'ch1.mat/again': 'You have the oddest feeling you have stood here before, with this exact letter in your hand.',
     'ch1.mat/named': 'You turn it over, {{playerName}}. The flap is barely stuck.',
     'ch1.mat#open': 'Open it',
     'ch1.mat#shelf': 'Put it on the shelf by the door',
@@ -84,7 +93,15 @@ export const letter: Pack = {
 
 /** The game: the pack over a base that names only its first scene. */
 export function theLetter(): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame([letter], { id: 'the-letter', title: 'The Letter', introScene: 'ch1.mat' })
+  const { game, problems } = loadGame([letter], {
+    id: 'the-letter',
+    title: 'The Letter',
+    introScene: 'ch1.mat',
+    // Reaching either ending finishes the game, and the title screen then offers New Game+.
+    finished: { scene: ['end.kept', 'end.posted'] },
+    // A New Game+ keeps only this: that the reader has been through it once.
+    carryOver: { flags: ['readBefore'] },
+  })
   return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }
 

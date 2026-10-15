@@ -141,3 +141,87 @@ body {
   outline: 2px solid var(--ring, currentColor);
   outline-offset: 2px;
 }
+
+/* The title screen: a boot prompt. */
+[data-part="title-screen"],
+[data-part="gate-screen"] {
+  justify-content: center;
+}
+
+[data-part="title-name"] {
+  text-align: left;
+  font-size: clamp(1.75rem, 6vw, 3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+[data-part="title-name"]::after {
+  content: "_";
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+[data-part="title-subtitle"] {
+  text-align: left;
+}
+
+[data-part="title-subtitle"]::before {
+  content: "// ";
+}
+
+[data-part="title-buttons"] {
+  margin: 0;
+  max-width: none;
+  gap: 0.25rem;
+  counter-reset: title-button;
+}
+
+[data-part="title-button"] {
+  all: unset;
+  counter-increment: title-button;
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  font-family: var(--font-body);
+}
+
+[data-part="title-button"]::before {
+  content: counter(title-button) ". ";
+  color: var(--muted-foreground);
+}
+
+[data-part="title-button"]:hover,
+[data-part="title-button"]:focus-visible {
+  background: var(--foreground);
+  color: var(--background);
+  text-shadow: none;
+}
+
+[data-part="screen-heading"]::before,
+[data-part="gate-title"]::before {
+  content: "> ";
+  color: var(--muted-foreground);
+}
+
+[data-part="screen-heading"],
+[data-part="gate-title"] {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-part="screen-back"],
+[data-part="gate-confirm"],
+[data-part="gate-decline"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}
+
+[data-part="setting"] {
+  border-radius: 0;
+}

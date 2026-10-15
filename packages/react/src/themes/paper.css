@@ -128,3 +128,77 @@
   outline: 2px solid var(--ring, currentColor);
   outline-offset: 2px;
 }
+
+/* The title screen: a title page. */
+[data-part="title-screen"],
+[data-part="gate-screen"] {
+  text-align: center;
+  align-items: center;
+}
+
+[data-part="title-name"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  letter-spacing: 0.06em;
+}
+
+[data-part="title-subtitle"] {
+  font-style: italic;
+}
+
+[data-part="title-subtitle"]::before,
+[data-part="title-subtitle"]::after {
+  content: " ❧ ";
+  font-style: normal;
+}
+
+[data-part="title-buttons"] {
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+[data-part="title-button"],
+[data-part="gate-confirm"],
+[data-part="gate-decline"],
+[data-part="screen-back"] {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
+[data-part="title-button"]:hover,
+[data-part="gate-confirm"]:hover,
+[data-part="gate-decline"]:hover,
+[data-part="screen-back"]:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+[data-part="title-button"]:focus-visible,
+[data-part="gate-confirm"]:focus-visible,
+[data-part="gate-decline"]:focus-visible,
+[data-part="screen-back"]:focus-visible {
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: 2px;
+}
+
+[data-part="screen-heading"],
+[data-part="gate-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  text-align: center;
+}
+
+[data-part="gate-text"] {
+  text-align: left;
+}
+
+[data-part="setting"] {
+  border-width: 0 0 1px;
+  padding-inline: 0;
+}

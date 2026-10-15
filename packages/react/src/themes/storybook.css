@@ -96,3 +96,49 @@
 [data-part="menu-button"] {
   border-radius: 999px;
 }
+
+/* The title screen: a storybook cover. */
+[data-part="title-screen"],
+[data-part="gate-screen"] {
+  align-items: center;
+  text-align: center;
+}
+
+[data-part="title-art"] {
+  border: 6px solid var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="title-name"] {
+  font-size: clamp(2.75rem, 9vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--primary);
+}
+
+[data-part="title-subtitle"] {
+  font-weight: 600;
+}
+
+[data-part="title-button"],
+[data-part="screen-back"],
+[data-part="gate-confirm"],
+[data-part="gate-decline"] {
+  height: auto;
+  padding: 0.8rem 1.75rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="screen-heading"],
+[data-part="gate-title"] {
+  font-weight: 800;
+}
+
+[data-part="setting"] {
+  background: var(--card);
+  border-radius: var(--radius);
+}

@@ -95,3 +95,45 @@
 [data-part="notice"] {
   border: none;
 }
+
+/* The title screen: a launch card. */
+[data-part="title-screen"],
+[data-part="gate-screen"] {
+  align-items: center;
+  text-align: center;
+}
+
+[data-part="title-name"] {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+[data-part="title-subtitle"] {
+  font-size: 1.15rem;
+}
+
+[data-part="title-buttons"] {
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="title-button"] {
+  height: 2.75rem;
+  border-radius: calc(var(--radius) - 0.25rem);
+  font-weight: 600;
+}
+
+[data-part="screen-heading"],
+[data-part="gate-title"] {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+[data-part="setting"] {
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}

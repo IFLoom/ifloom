@@ -119,15 +119,21 @@ A bakery, a launderette, a bus stop with a bench nobody sits on. The café on th
 
 A fine drizzle that never quite becomes rain.
 
+Hint: the café is open in the day, and whoever runs it likes a chat.
+
 === place:high-street @ first-morning
 A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.
 
 Wind down the street, rattling the bakery sign.
 
+Hint: the café is open in the day, and whoever runs it likes a chat.
+
 === place:high-street @ a-week-in
 A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.
 
 Wind down the street, rattling the bakery sign.
+
+Hint: the café is open in the day, and whoever runs it likes a chat.
 
 === place:office @ moving-day
 Strip lights, a kettle, a stack of forms that never gets shorter.

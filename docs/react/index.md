@@ -26,6 +26,7 @@ The engine doesn't need this package. The UI only reads the [view](/reference/vi
 - **The sidebar.** The game's title and the clock, when a plugin such as the [calendar](/plugins/calendar) says what time it is. Then the stats, the player's menu, the device buttons, where the player is and the exits (with the [places](/plugins/places) plugin), who is here and what you can do with them, the room's and the game's actions, what the player carries, and what they're wearing.
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
 - **Notices**, in the corner (the layout's overlay), each with a button to dismiss it.
+- **A title screen**, if you turn on [`screens`](#screens): the title, New game, Continue, Load, Settings and Credits, before the game itself.
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/reference/mods), each on, off or removed, with a button to restart the game with the change.
 - **Quests**, under the stage, when the game has the [quests plugin](/plugins/quests).
 - **Devices**, in a dialog, when the game has the [devices plugin](/plugins/devices) or the [phone](/plugins/phone). This covers the home screen and each app's sections, including [messages](/plugins/messages) and [feeds](/plugins/feed).
@@ -126,8 +127,9 @@ It sets up what most games want:
 |---|---|
 | `root` | `'#root'`. An element, or a selector for one. It throws if nothing matches. |
 | `start` | A new game, `startingState(game, { seed })`, with a random seed so each playthrough draws its own variants. |
-| `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
-| `app` | None, so `GameShell` is drawn. Your own root component, drawn inside a [`GameProvider`](/react/components#gameprovider) instead. `useGame`, the hooks and every built-in component work in it. See [Write your own root](/react/customising#_8-write-your-own-root). |
+| `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
+| `screens` | Off, so the game starts straight away. `true`, or [`ScreensOptions`](/react/components#screensoptions), opens on a title screen. See [Screens](#screens). |
+| `app` | None, so `GameShell` is drawn. Your own root component, drawn inside a [`GameProvider`](/react/components#gameprovider) instead. `useGame`, the hooks and every built-in component work in it. With `screens` on, it's drawn on the `game` screen. See [Write your own root](/react/customising#_8-write-your-own-root). |
 | `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/react/customising#_6-replace-a-component). |
 | `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/react/customising#_4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
@@ -149,7 +151,7 @@ When you need more control, build the runner yourself (with [`browserRunner`](/r
 ```tsx
 // src/main.tsx
 import { createRoot } from 'react-dom/client'
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
 import loaded from './game.ts'
 import './styles.css'
@@ -157,11 +159,12 @@ import './styles.css'
 const { game } = loaded
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
   saves: saves(game, localStorageDriver()),
+  profile: profile(game, localStorageDriver()),
   history: { depth: 50 },
   autosave: { every: 'turn' },
 })
 
-createRoot(document.getElementById('root')!).render(<GameShell runner={runner} />)
+createRoot(document.getElementById('root')!).render(<GameShell runner={runner} screens />)
 ```
 
 The shell redraws whenever the runner's state changes, so undo, loading a save and a command sent from anywhere else all show at once.
@@ -181,6 +184,7 @@ type GameShellProps = {
   unstyled?: boolean
   className?: string
   layout?: Layout
+  screens?: boolean | ScreensOptions
 }
 ```
 
@@ -193,6 +197,7 @@ type GameShellProps = {
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/react/customising). |
 | `className` | Classes on the page, merged over its own. |
 | `layout` | Which parts go in the side column, on the stage and in the overlay, in order. If you leave it out, you get [`DEFAULT_LAYOUT`](/react/components#default-layout). See [Layouts](#layouts). |
+| `screens` | The title screen and the screens around the game. Off if you leave it out. See [Screens](#screens). |
 
 The page is drawn by a [`Frame`](/react/components#frame). With a side column, it's a two-column grid on wide screens, with the column on the left (`--width-sidebar` wide) and the stage on the right, up to `--width-page` in all. It stacks on narrow screens. Without a side column, the page is a single column, up to `--width-reading` wide, holding the stage. The overlay, with the notices, is fixed in the bottom-right corner either way.
 
@@ -285,6 +290,29 @@ const [title, ...rest] = DEFAULT_LAYOUT.sidebar
 - **Move the notices, don't copy them.** To put `'notices'` on the stage, also set `overlay: []`, or they're drawn in both places. An empty overlay draws nothing over the page.
 - **Give your own nodes a `key`.** They're drawn from a list, so React asks for one.
 - **Leave out `'inputs'` only if the game has no [inputs](/reference/inputs).** Nothing else sends `input`, so without it the player can't give the value. The same goes for `'actions'` in a game whose buttons are its only way forward, as the café's are.
+
+## Screens
+
+Turn on `screens` and the game opens on a title screen, with the game's title and the buttons New game, Continue, Load, Settings and Credits:
+
+```ts
+import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import game from './game.ts'
+
+mountGame(game, {
+  layout: READING_LAYOUT,
+  screens: {
+    subtitle: 'A novel in three chapters',
+    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
+  },
+})
+```
+
+`screens: true` gives the title screen with nothing extra. With `screens` off or left out, the game starts straight away, as before.
+
+The runner exists from the start, whichever screen is showing. New game replaces its state with [`runner.newGame`](/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/react/components#gamemenu) gains **Settings** and **Title screen**.
+
+Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/reference/state#new-game) and declares `carryOver`. You can also add screens of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/guide/title-screen) walks through it all, and [Screens](/react/components#screens) lists every option and component.
 
 ## Theming
 
@@ -385,11 +413,18 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/re
 | `ui.debugScene` | `Scene` | |
 | `ui.debugTime` | `Time` | |
 | `ui.debugTurn` | `Turn` | |
+| `ui.newGame` | `New game` | |
+| `ui.continue` | `Continue` | |
+| `ui.newGamePlus` | `New Game+` | |
+| `ui.settings` | `Settings` | |
+| `ui.noSettings` | `There are no settings.` | |
+| `ui.credits` | `Credits` | |
+| `ui.titleScreen` | `Title screen` | |
 
 Which component uses which keys:
 
 - **[Debug panel](/react/components#debugpanel)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
-- **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog` and `ui.mods`. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
+- **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titleScreen`. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
 - **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Inventory](/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
 - **[Price tag](/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
@@ -400,6 +435,8 @@ Which component uses which keys:
 - **[Backlog](/react/components#backlog)**: `ui.backlog` to `ui.chose`.
 - **[Input fields](/react/components#inputfield)**: `ui.enter`.
 - **[Mod manager](/react/components#modmanager)**: `ui.mods` to `ui.applyMods`, plus `ui.remove` from the saves menu for its **Delete** button.
+- **[Title screen](/react/components#titlescreen)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`.
+- **[Settings](/react/components#settingsscreen), [load](/react/components#loadscreen) and [credits](/react/components#creditsscreen) screens**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load screen also uses `ui.noSaves` and `ui.importSave`.
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/reference/strings) and its plugins' strings.
 

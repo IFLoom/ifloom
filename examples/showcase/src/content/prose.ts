@@ -6,6 +6,7 @@ export const prose: Record<string, string> = {
 
   'place.flat': 'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
   'place.high-street': 'A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.',
+  'place.high-street/hint': 'Hint: the café is open in the day, and whoever runs it likes a chat.',
   'place.cafe': 'Six tables, one of them wobbly. The coffee machine sighs like it has been working since dawn, which it has.',
   'place.cafe/ava': 'Ava is behind the counter, flour to the elbows, and nods you in.',
   'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',

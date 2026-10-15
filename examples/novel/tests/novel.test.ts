@@ -64,4 +64,16 @@ describe('The Letter', () => {
     expect(view(timid, game).scene.choices.map((choice) => choice.id)).toEqual(['post'])
     expect(read(timid, choose('post')).sceneId).toBe('end.posted')
   })
+
+  it('counts as finished at either ending, and a New Game+ remembers the first read', () => {
+    const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
+    const ended = read(named, choose('shelf'), choose('deny'), choose('post'))
+    expect(holds(ended, game.finished!, game)).toBe(true)
+    expect(holds(named, game.finished!, game)).toBe(false)
+    expect(view(named, game).scene.body).not.toContain('stood here before')
+    const again = startingState(game, { carry: ended })
+    expect(again.flags.readBefore).toBe(true)
+    expect(again.flags.lies).toBeUndefined()
+    expect(view(again, game).scene.body).toContain('stood here before')
+  })
 })

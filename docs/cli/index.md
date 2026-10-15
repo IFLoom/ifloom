@@ -54,7 +54,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 
 | Template | What you get |
 |---|---|
-| `blank` | A two-scene game drawn with the [React UI](/react/) in its reading layout. The default. |
+| `blank` | A two-scene game drawn with the [React UI](/react/) in its reading layout, opening on a [title screen](/guide/title-screen). The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte or anything else (see [Using another framework](/guide/frameworks)). |
 | `novel` | A copy of The Letter, `examples/novel`. |
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |

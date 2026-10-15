@@ -33,7 +33,7 @@ These are the [CLI](/cli/)'s commands, `ifloom dev`, `build`, `check`, `playtest
 | `src/content/prose.ts` | Every word the player reads, by key. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. |
 | `src/content/custom.ts` | The only code in the content: an effect worked out from the state, and a value the prose prints. |
 | `src/game.ts` | The game put together: the pack, the plugins, the phone, the rules, the locks and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
-| `src/main.tsx` | The page. It loads the player's mods over the town, makes a [runner](/reference/runner) with undo, a backlog, saves and autosave, and draws it with the [React UI](/react/)'s `GameShell` and its mod manager. |
+| `src/main.tsx` | The page. It loads the player's mods over the town, makes a [runner](/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/react/)'s `GameShell`, its title screen and its mod manager. |
 | `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/react/customising#_1-pick-a-theme-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/reference/mods) for a player to add. It isn't part of the game. |
@@ -85,6 +85,12 @@ Each character's `portrait` in `town.ts` names its `.svg` file. If it were left 
 - a Saves menu to save, load, export and import
 
 None of it needs any change to the game's content.
+
+### The title screen and settings
+
+`src/main.tsx` and the `settings` in `town.ts`. `GameShell` gets `screens` with a subtitle and two lines of credits, so the game opens on a title screen. The runner gets a [profile](/reference/profile), which keeps the player's settings between games.
+
+The town declares two [settings](/reference/settings). `hints` is a play setting, on by default, and the high street shows a hint line only `when: { setting: 'hints' }`. `textSize` is a ui setting with the options `normal` and `large`. `main.tsx` copies it from the profile to `data-text-size` on the page's `<html>`, now and whenever it changes, and `styles.css` makes the root font bigger for `large`. [The title screen and settings](/guide/title-screen) explains both.
 
 ### The calendar
 

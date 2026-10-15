@@ -24,7 +24,7 @@ describe('choices the player made', () => {
   })
 
   it('a choice that names a scene or choice the game does not have is reported', () => {
-    const { id, title, introScene } = fixture()
+    const { id, title } = fixture()
     const { problems } = loadGame(
       [
         {
@@ -44,7 +44,7 @@ describe('choices the player made', () => {
           prose: { 'ch1.door': 'A door.', 'ch1.door#knock': 'Knock', 'ch1.door#thanks': 'Thanks', 'ch1.door#later': 'Later' },
         },
       ],
-      { id, title, introScene },
+      { id, title },
     )
     expect(problems.map((problem) => problem.what)).toEqual([
       'gated on unknown choice "ch1.door/kick"',

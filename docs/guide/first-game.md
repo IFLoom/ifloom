@@ -287,17 +287,9 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 ```
 
-The loader checks every data scene as it goes, and each plugin checks its own content. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem comes with the pack it came from, and `problems` is empty here. The full list is under [the checks](/reference/loader#the-checks).
+The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem comes with the pack it came from, and `problems` is empty here. The full list is on [Checking content](/reference/checks).
 
-`validatePack` checks the rest of the game, such as two things with the same id, and returns an empty list when there's nothing wrong:
-
-```ts
-import { validatePack } from '@ifloom/engine'
-
-console.log(validatePack(game)) // []
-```
-
-Put both in a test, so a broken id fails before anybody plays. `ifloom check` runs both too. See [The game](/reference/game).
+Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/reference/checks#checkgame) in the same way.
 
 List the calendar first in `plugins`. It moves the clock on when a turn ends, and plugins listed after it see the new day. The places come after it, so the header reads the day first and then the place. The cast can go anywhere in the list, because it asks the places plugin where the player is by name. See [Calendar](/plugins/calendar#install), [Places](/plugins/places#install) and [Cast](/plugins/cast#install).
 
@@ -522,7 +514,6 @@ import {
   memoryDriver,
   saves,
   startingState,
-  validatePack,
   view,
   type ActivityDef,
   type DataScene,
@@ -674,7 +665,7 @@ export const { game, problems } = loadGame(
 
 // Check it, then play a little.
 for (const problem of problems) console.warn(describeProblem(problem))
-console.assert(validatePack(game).length === 0)
+console.assert(problems.length === 0)
 
 let state = startingState(game, { flags: { playerName: 'Sam' } })
 state = dispatch(state, game, { type: 'choose', id: 'bed' })

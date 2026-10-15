@@ -9,7 +9,7 @@
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art and sound, checked to open from disk;
  *                            --inline-assets puts the art inside the file too (never sound or video)
- *   ifloom check [module]    every problem the loader and validatePack find, and sound files missing from public/
+ *   ifloom check [module]    every problem the content checker finds, and files missing from public/
  *   ifloom playtest [module] [--turns 7] [--out playtest.txt]
  *                            play it day by day; every screen to a transcript, the numbers to .metrics
  *   ifloom snapshot [module] [--out snapshots/scenes.txt] [--update]

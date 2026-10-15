@@ -1,6 +1,6 @@
 # Conditions
 
-A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [loader](/reference/loader#the-checks) can check every id in it.
+A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/reference/checks) can check every id in it.
 
 ```ts
 import type { Condition } from '@ifloom/engine'
@@ -17,7 +17,7 @@ const regularAtTheCafe: Condition = {
 ```
 
 ```ts
-import { holds, inRange, explain, explainText, referenced, tier, type Condition, type Range, type Explanation } from '@ifloom/engine'
+import { holds, inRange, explain, explainText, tier, type Condition, type Range, type Explanation } from '@ifloom/engine'
 ```
 
 When a choice is greyed out or a line is missing and you can't see why, [`explain`](#explain) walks the condition and tells you which part failed and what it read.
@@ -126,7 +126,7 @@ Tests a `play` [setting](/reference/settings), the value in [`state.settings`](/
 { id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
 ```
 
-**Gotcha.** Conditions can only read `play` settings. A `ui` setting isn't in the state, so the [loader](/reference/loader#in-a-condition) reports a condition that names one, along with an unknown setting and an `is` the setting can't take.
+**Gotcha.** Conditions can only read `play` settings. A `ui` setting isn't in the state, so the [loader](/reference/checks#in-a-condition) reports a condition that names one, along with an unknown setting and an `is` the setting can't take.
 
 ### chose
 
@@ -138,7 +138,7 @@ Tests a `play` [setting](/reference/settings), the value in [`state.settings`](/
 
 How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a variable.
 
-**Gotcha.** The [loader](/reference/loader#the-checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
+**Gotcha.** The [content checker](/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
 
 ### seen
 
@@ -207,7 +207,7 @@ How many [entities](/reference/entities) of a kind there are, against a [range](
 
 A `count` binds its own `'$'`. Inside an [`each`](/reference/effects#each)'s `where`, the `'$'` in a `count`'s `where` is the one being counted, not the one the `each` is on.
 
-The [loader](/reference/loader#the-checks) checks the kind and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, or `1 staff where it holds; wants more than 0` with a `where`. It doesn't break down what `where` read for each one.
+The [content checker](/reference/checks) checks the kind and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, or `1 staff where it holds; wants more than 0` with a `where`. It doesn't break down what `where` read for each one.
 
 ### entity
 
@@ -278,7 +278,7 @@ tier(12, [5, 10, 20])  // 2
 { storyline: 'ava', open: false }   // closed for now
 ```
 
-Whether a [storyline](/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/reference/storylines#storylineof-and-storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [loader](/reference/loader#the-checks) reports one the game doesn't declare.
+Whether a [storyline](/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/reference/storylines#storylineof-and-storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [content checker](/reference/checks) reports one the game doesn't declare.
 
 [`explain`](#explain) says `storyline ava is closed; wants it open`.
 
@@ -312,7 +312,7 @@ How many of an item the player has. Something the [wardrobe plugin](/plugins/war
 
 What's in a [collection](/reference/collections). With `id`, it's true when an entry with that id is there, and any range is ignored. Without `id`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
 
-The [loader](/reference/loader#the-checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
+The [content checker](/reference/checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
 
 ### has
 
@@ -321,8 +321,6 @@ The [loader](/reference/loader#the-checks) reports a collection the game doesn't
 ```
 
 The player has at least one. It's the same as a bare `{ item: 'raincoat' }`. With the [wardrobe plugin](/plugins/wardrobe), a worn raincoat counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
-
-**Gotcha.** The loader doesn't check the item id in `{ has }`. Use `{ item }` if you want it checked.
 
 ### scene
 
@@ -385,7 +383,7 @@ const town: Game = {
 ```
 
 **Gotchas.**
-- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [loader](/reference/loader#the-checks) reports it.
+- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/reference/checks) reports it.
 - Without a `game`, every `{ custom }` is false.
 
 ### Plugin shorthand
@@ -506,36 +504,3 @@ console.log(explainText(why))
 //   ✗ not: the part below holds
 //     ✓ custom condition places/at
 ```
-
-## referenced
-
-```ts
-function referenced(condition: Condition | undefined): {
-  storylines: string[]; items: string[]
-  custom: string[]; scenes: string[]; stats: string[]
-  collections: string[]; choices: string[]; kinds: string[]
-  owned: { stat: string; of?: string }[]
-  calls: { custom: string; with?: Record<string, unknown> }[]
-  settings: { setting: string; is?: FlagValue }[]
-}
-```
-
-Lists every id a condition names, by kind, so you can check them against a game. The [loader](/reference/loader#the-checks) uses it, and hands plugins its `conditionProblems` to check their own content with.
-
-- `kinds` holds the [kinds](/reference/entities) from `{ count }`, from `{ entity }` and from every `of` (the part before the colon, since `'$'` names none). It looks inside a `count`'s `where` too.
-- `stats` and `owned` include the stat a `{ level }` names, as well as `{ stat }`'s and `{ tier }`'s.
-- `owned` is every stat a `{ stat }` or `{ level }` names, with whose it is (`of`), for checking it belongs there.
-- `settings` is every setting a `{ setting }` reads, with the `is` it compares to, if any.
-- `custom` is every custom or plugin condition by name, a [short call](#plugin-shorthand) included.
-- `calls` is every such call with what it passes in `with`. A short call's value that isn't an object comes back as `{ value }`, for a plugin's [`argProblems`](/reference/plugins#checking-calls) to check.
-
-Place and character ids belong to plugins, so they aren't listed on their own. They come back under `custom` and `calls`, as in `places/at` with `{ value: ['cafe'] }`.
-
-```ts
-import { referenced } from '@ifloom/engine'
-
-referenced({ all: [{ 'places/at': 'cafe' }, { storyline: 'ava' }] })
-// { storylines: ['ava'], custom: ['places/at'], calls: [{ custom: 'places/at', with: { value: 'cafe' } }], ... }
-```
-
-**Gotcha.** It doesn't collect the item in `{ has }`, so the loader doesn't check it.

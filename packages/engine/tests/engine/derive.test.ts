@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain, explainText } from '../../src/explain.ts'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { statLevel, statValue, type Formula, type StatDef } from '../../src/stats.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
@@ -70,7 +71,7 @@ describe('derived stats', () => {
       expect(after.stats.skill).toBeUndefined()
       expect(statValue(after, game, 'skill')).toBe(10)
     }
-    expect(validatePack(game)).toEqual(expect.arrayContaining(['activity set: stat skill is derived and never written']))
+    expect(problemsOf(game)).toEqual(expect.arrayContaining(['activity set: stat "skill" is derived: it is worked out, never written']))
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,

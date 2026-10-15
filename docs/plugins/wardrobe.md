@@ -323,13 +323,13 @@ The game's clothes, merged from its packs: `game.data.wardrobe.clothes`.
 
 When the game loads, the plugin reports:
 
-- Clothing whose id isn't an item (`clothes <id>`, `no item has this id`).
+- Clothing whose id isn't an item (`clothes <id>`, `unknown item "…"`).
 - Clothing for a slot the game doesn't have (`clothes <id>`, `no slot called "…"`).
 - A `start` slot the game doesn't have (`start <slot>`, `no slot by this name`).
 - A `start` item that isn't clothing for that slot (`start <slot>`, `"…" is not clothing for this slot`).
 - A `start` item the player doesn't start with (`start <slot>`, `the player does not start with "…"`).
 
-Clothing problems are pinned on the pack that brought the entry. `start` problems are pinned on `base`.
+Clothing problems are pinned on the pack that brought the entry. `start` problems are pinned on `base`. A `wardrobe/wearing` condition or a `wardrobe/wear` command naming an item the game doesn't have gives `unknown item "…"` where it's written.
 
 ```text
 mod:winter · clothes gloves · no slot called "hands"

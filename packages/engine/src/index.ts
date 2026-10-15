@@ -51,6 +51,7 @@ export { buildEffects, customCondition, customEffect, customPanel, customValue, 
 export type {
   Asked,
   CheckTools,
+  ContentReferences,
   DefinedPlugin,
   Plugin,
   PluginArgs,
@@ -58,6 +59,7 @@ export type {
   PluginContext,
   PluginEntry,
   PluginProblem,
+  PluginReferences,
   PluginSlice,
   Refusal,
   SpeakerView,
@@ -104,7 +106,7 @@ export { apply, applyEffects, dispatch, hydrate, startingState } from './reduce.
 
 // Conditions, and why they hold
 export type { Condition, Range } from './condition.ts'
-export { holds, inRange, referenced } from './condition.ts'
+export { holds, inRange } from './condition.ts'
 export type { Explanation } from './explain.ts'
 export { explain, explainText } from './explain.ts'
 
@@ -153,9 +155,11 @@ export { chance, hash, pick, roll, weighted } from './random.ts'
 export { tier } from './tier.ts'
 
 // Loading, checking and saving
-export type { Loaded, Pack, Patch, Problem } from './loader.ts'
-export { SCHEMA, describeProblem, loadGame } from './loader.ts'
-export { validatePack } from './validate.ts'
+export type { Loaded, Pack, Patch } from './loader.ts'
+export { SCHEMA, loadGame } from './loader.ts'
+export type { Checked, FileRef, Probe, Problem } from './check.ts'
+export { checkGame, describeProblem } from './check.ts'
+export type { Reference } from './references.ts'
 export type { LoadedSave, MigrationTools, SaveFile, SaveMeta, Saves } from './save.ts'
 export { deserialize, migrate, migrateGame, saves, serialize } from './save.ts'
 export type { IndexedDbLike, SaveDriver, StorageLike } from './drivers.ts'

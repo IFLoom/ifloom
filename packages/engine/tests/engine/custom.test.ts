@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { buildEffects } from '../../src/custom.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { SCHEMA, loadGame } from '../../src/loader.ts'
 import { proseStore } from '../../src/prose.ts'
 import { view } from '../../src/view.ts'
@@ -26,7 +26,7 @@ describe('custom functions belong to their game', () => {
 
   it('reports a ceiling that names a value nobody declared', () => {
     const game = { ...fixture(), stats: [{ id: 'puff', label: 'Puff', max: { value: 'gone' } }] }
-    expect(validatePack(game).join('\n')).toContain('max names value gone, which the game does not declare')
+    expect(problemsOf(game)).toContain('stat puff: no custom value named "gone"')
   })
 
   it('keeps the base game’s functions when packs are loaded over it', () => {

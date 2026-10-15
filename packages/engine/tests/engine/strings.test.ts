@@ -25,7 +25,7 @@ describe('the strings table', () => {
   })
 
   it('come from packs too, so a translation can ship as a mod, later packs winning', () => {
-    const { scenes: _s, items, storylines, activities, stats, ...base } = fixture()
+    const { scenes: _s, introScene: _in, items, storylines, activities, stats, ...base } = fixture()
     const town = { id: 'town', schema: SCHEMA, items, storylines, activities, stats, scenes: _s }
     const dutch = { id: 'nl', schema: SCHEMA, strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
     const fixes = { id: 'nl-fixes', schema: SCHEMA, strings: { tooEarly: 'Nog te vroeg.' } }

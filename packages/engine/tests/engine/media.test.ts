@@ -4,7 +4,7 @@ import { apply, startingState } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import { replay } from '../../src/runner.ts'
 import { deserialize, migrate, serialize } from '../../src/save.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { artSrc, mediaKind, parseBeats } from '../../src/sceneBody.ts'
 import { pickKey, poolCandidates } from '../../src/media.ts'
 import { SAVE_VERSION, type Command, type GameState } from '../../src/types.ts'
@@ -372,7 +372,7 @@ describe('media checks', () => {
     ])
   })
 
-  it('are made by validatePack too', () => {
+  it('are made for a hand-built game too, and its scenes rendered against probes', () => {
     const { game: g } = town(
       [
         { id: 'flat', body: [{ text: 'flat.bad' }, { media: { pool: 'cupboard' } }], stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] }, choices: [] },
@@ -380,13 +380,13 @@ describe('media checks', () => {
       ],
       { prose: { 'flat.bad': '[[img:@door|green]]' }, media: { pools: { ...pools, shelf: [] } } },
     )
-    expect(validatePack(g, [startingState(g)])).toEqual([
-      'pool shelf: a pool with no files',
+    expect(problemsOf(g, [{ name: 'start', state: startingState(g) }])).toEqual([
       'scene flat: media: unknown pool "cupboard"',
       'scene flat: hotspot x: no choice "nope" in this scene',
-      'scene flat: no file in pool "door" is tagged "green"',
-      'scene porch (turn 0): hotspot y: unknown layer "b"',
-      'scene porch (turn 0) hotspot y: scene garden does not exist',
+      'pool shelf: a pool with no files',
+      'prose flat.bad: no file in pool "door" is tagged "green"',
+      'scene porch (start): hotspot y: unknown layer "b"',
+      'scene porch (start): hotspot y: opens unknown scene "garden"',
     ])
   })
 })

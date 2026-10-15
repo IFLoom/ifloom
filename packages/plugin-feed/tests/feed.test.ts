@@ -37,7 +37,7 @@ function game(): Game {
       effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'comment.wow' })] },
     },
   }
-  const loaded = loadGame([pack], { id: 'feeds', title: 'Feeds', introScene: 'none', plugins: [clock, plugin] })
+  const loaded = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -92,7 +92,7 @@ describe('video on a post', () => {
       prose: { 'post.fete': 'Bunting going up.\n\n[[widevideo:fete|once]]', 'own.pond': 'Ducks.' },
       data: { feed: { posts: [{ id: 'fete', feed: 'board', from: 'Parish council', when: day({ gte: 1 }), body: [{ text: 'post.fete' }], image: 'art/fete.jpg', video: 'art/fete.webm' }] } },
     }
-    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', introScene: 'none', plugins: [clock, plugin] })
+    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
     expect(problems).toEqual([])
     let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
     state = apply(state, g, { type: 'activity', id: 'film' }).state

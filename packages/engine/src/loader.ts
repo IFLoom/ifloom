@@ -1,27 +1,17 @@
-import { absentPartner, pluginArgProblems, pluginCommand, type PluginEntry } from './plugin.ts'
+import type { PluginEntry } from './plugin.ts'
 import type { CollectionDef } from './collections.ts'
 import type { InputDef } from './inputs.ts'
 import type { TriggerDef } from './triggers.ts'
-import type { Command, Effect } from './types.ts'
-import type { EffectRef } from './custom.ts'
-import { statProblems, type StatDef } from './stats.ts'
-import { anyOf, bindCurrent, parseRef, statOwnerProblem, type EntityDef, type KindDef } from './entities.ts'
+import type { StatDef } from './stats.ts'
+import type { EntityDef, KindDef } from './entities.ts'
 import type { ActivityDef } from './activity.ts'
-import { referenced } from './condition.ts'
-import type {
-  Game,
-  ItemDef,
-  Scene,
-  SettingDef,
-  StorylineDef,
-} from './game.ts'
-import { settingConditionProblems, settingProblems } from './settings.ts'
-import type { Condition } from './condition.ts'
-import { customCall, customCondition, customEffectsUsed, hasCustomEffect, type Custom } from './custom.ts'
+import type { Game, ItemDef, Scene, SettingDef, StorylineDef } from './game.ts'
+import type { Custom } from './custom.ts'
 import { memberKey, proseStore, type VariantMember } from './prose.ts'
-import { sceneReferences, type Block, type DataScene } from './scene.ts'
-import { mediaMarkupProblems, poolManifestProblems, sceneMediaProblems, stageProblems, type GameMedia, type MediaStage, type PoolFile } from './media.ts'
-import { cueProblems, manifestProblems, markupProblems, placementProblems, type ChannelDef, type GameAudio, type PlaylistDef, type TrackDef } from './audio.ts'
+import type { DataScene } from './scene.ts'
+import type { GameMedia, PoolFile } from './media.ts'
+import type { ChannelDef, GameAudio, PlaylistDef, TrackDef } from './audio.ts'
+import { checkContent, type Problem, type Source } from './check.ts'
 
 /**
  * Content arrives as ordered packs and is merged into one game.
@@ -86,12 +76,6 @@ export type Pack = {
   media?: GameMedia
 }
 
-export type Problem = {
-  pack: string
-  where: string
-  what: string
-}
-
 export type Loaded = {
   game: Game
   prose: Record<string, string>
@@ -113,7 +97,9 @@ function isData(scene: Scene | DataScene): scene is DataScene {
 
 /**
  * Merge packs in order and report everything wrong with the result, naming
- * the pack that introduced it. A mod author gets "mod:spicier · scene
+ * the pack that introduced it. The result is checked with the content checker
+ * (`checkGame`); this adds only which pack each problem came from, and what is
+ * wrong with the packs themselves. A mod author gets "mod:spicier · scene
  * allie.talk · choice kiss · unknown scene 'allie.snog'", not a stack trace.
  */
 export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 'storylines' | 'activities' | 'stats'>): Loaded {
@@ -206,17 +192,6 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     }
   }
   addData('base', base.data)
-  const pluginIds = new Set<string>()
-  for (const plugin of base.plugins ?? []) {
-    if (!/^[a-z0-9-]+$/i.test(plugin.id)) {
-      problems.push({ pack: 'base', where: `plugin ${plugin.id}`, what: 'a plugin id is letters, digits and "-" only' })
-    }
-    if (pluginIds.has(plugin.id)) {
-      problems.push({ pack: 'base', where: `plugin ${plugin.id}`, what: 'two plugins share this id' })
-    }
-    pluginIds.add(plugin.id)
-  }
-
   for (const pack of packs) {
     if (pack.schema !== SCHEMA) {
       problems.push({
@@ -327,324 +302,32 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   // Scenes read their words from here; the store fills tokens for the save.
   game.prose = proseStore(game, prose, weightedVariants)
 
-  // Everything a declarative scene points at has to exist.
-  const sceneIds = new Set(game.scenes.map((scene) => scene.id))
-  const storylineIds = new Set(game.storylines.map((storyline) => storyline.id))
-  const itemIds = new Set(game.items.map((item) => item.id))
-  const statIds = new Set(stats.keys())
-  const kindIds = new Set(kinds.keys())
-  const collectionIds = new Set(collections.keys())
-  /** Every name a scene is drawn from, for `{ kind: 'scene', from }`. */
-  const drawnFrom = new Set(game.scenes.flatMap((scene) => scene.drawnFrom ?? []))
-
-  /** Everything a condition names that the game does not have, as a problem's `what`. */
-  function conditionProblems(condition: Condition | undefined): string[] {
-    const out: string[] = []
-    const used = referenced(condition)
-    const missing = (ids: string[], have: Set<string>, what: string) => {
-      for (const id of ids) if (!have.has(id)) out.push(`${what} "${id}"`)
+  // Now merged, the game is checked as any game is, and each problem is pinned on the pack that brought it.
+  const packOf = (source: Source): string => {
+    if (source === undefined) return 'base'
+    if ('plugin' in source) return data.get(source.plugin)?.get(source.list)?.get(source.id)?.from ?? 'base'
+    if (source.list === 'audio') return audioFrom
+    const from: Record<typeof source.list, Map<string, { from: string }> | undefined> = {
+      scene: scenes,
+      item: items,
+      storyline: storylines,
+      activity: activities,
+      stat: stats,
+      kind: kinds,
+      entity: entities,
+      collection: collections,
+      trigger: triggers,
+      input: inputs,
+      setting: settings,
+      track: tracks,
+      channel: channels,
+      pool: pools,
+      prose: undefined,
     }
-    missing(used.storylines, storylineIds, 'unknown storyline')
-    missing(used.items, itemIds, 'unknown item')
-    missing(used.stats, statIds, 'unknown stat')
-    missing(used.collections, collectionIds, 'unknown collection')
-    missing(used.scenes, sceneIds, 'gated on unknown scene')
-    missing(used.kinds, kindIds, 'unknown kind')
-    for (const { stat, of } of used.owned) {
-      const def = stats.get(stat)?.value
-      const problem = def && statOwnerProblem(def.of, stat, of)
-      if (problem) out.push(problem)
-    }
-    for (const key of used.choices) {
-      const cut = key.lastIndexOf('/')
-      const scene = cut > 0 ? scenes.get(key.slice(0, cut))?.value : undefined
-      if (!scene) out.push(`gated on a choice in unknown scene "${key}"`)
-      // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.
-      else if (isData(scene) && !scene.choices.some((choice) => choice.id === key.slice(cut + 1))) {
-        out.push(`gated on unknown choice "${key}"`)
-      }
-    }
-    for (const name of used.custom) {
-      if (!customCondition(game, name) && !absentPartner(game, name)) out.push(`no custom condition named "${name}"`)
-    }
-    for (const call of used.calls) out.push(...pluginArgProblems(game, 'conditions', call.custom, call.with ?? {}))
-    for (const { setting, is } of used.settings) out.push(...settingConditionProblems(game, setting, is))
-    return out
+    if (source.list === 'prose') return proseFrom.get(source.id) ?? 'base'
+    return from[source.list]?.get(source.id)?.from ?? 'base'
   }
-
-  /** What blocks name that the game does not have: prose keys, variants, and the conditions on them. */
-  function blockProblems(blocks: readonly Block[]): string[] {
-    const refs = sceneReferences({ id: '', body: [...blocks], choices: [] })
-    return [
-      ...refs.prose.filter((key) => prose[key] === undefined).map((key) => `no prose for "${key}"`),
-      ...refs.variants.filter((name) => !variants[name]?.length).map((name) => `variants "${name}" has no lines`),
-      ...blocks.flatMap((block) => [block.when, ...('variants' in block ? Object.values(block.gate ?? {}) : [])]).flatMap(conditionProblems),
-      ...blocks.flatMap((block) => ('media' in block ? sceneMediaProblems(game, block.media) : [])),
-    ]
-  }
-
-  /**
-   * What is wrong with a stage: its shape, then the conditions and commands it
-   * names. `choices` are its scene's choice ids, or null for a place's.
-   */
-  function stageChecks(stage: MediaStage | undefined, choices: readonly string[] | null): string[] {
-    if (!stage) return []
-    return [
-      ...stageProblems(game, stage, choices),
-      ...(stage.layers ?? []).flatMap((layer, index) => conditionProblems(layer.when).map((what) => `stage layer ${layer.id ?? index}: ${what}`)),
-      ...(stage.hotspots ?? []).flatMap((hotspot) =>
-        [...conditionProblems(hotspot.when), ...(hotspot.command ? commandProblems(hotspot.command) : [])].map((what) => `hotspot ${hotspot.id}: ${what}`),
-      ),
-    ]
-  }
-
-  /** What a button's command names that the game does not have. */
-  function commandProblems(command: Command): string[] {
-    switch (command.type) {
-      case 'scene':
-        return sceneIds.has(command.id) ? [] : [`opens unknown scene "${command.id}"`]
-      case 'activity':
-        return activities.has(command.id) ? [] : [`unknown activity "${command.id}"`]
-      case 'use':
-        return itemIds.has(command.itemId) ? [] : [`unknown item "${command.itemId}"`]
-      case 'custom':
-        if (!pluginCommand(game, command.name) && !absentPartner(game, command.name)) return [`no plugin command named "${command.name}"`]
-        return pluginArgProblems(game, 'commands', command.name, command.with ?? {})
-      default:
-        return []
-    }
-  }
-
-  /** Report everything these conditions name that the game does not have. */
-  function checkConditions(conditions: (Condition | undefined)[], from: string, where: string): void {
-    for (const condition of conditions) {
-      for (const what of conditionProblems(condition)) problems.push({ pack: from, where, what })
-    }
-  }
-
-  for (const { value, from } of scenes.values()) {
-    if (!isData(value)) continue
-    const refs = sceneReferences(value)
-    for (const key of refs.prose) {
-      if (prose[key] === undefined) {
-        problems.push({ pack: from, where: `scene ${value.id}`, what: `no prose for "${key}"` })
-      }
-    }
-    for (const name of refs.variants) {
-      if (!variants[name]?.length) {
-        problems.push({ pack: from, where: `scene ${value.id}`, what: `variants "${name}" has no lines` })
-      }
-    }
-    for (const name of refs.custom) {
-      if (!hasCustomEffect(game, name) && !absentPartner(game, name)) {
-        problems.push({ pack: from, where: `scene ${value.id}`, what: `no custom effect named "${name}"` })
-      }
-    }
-    for (const id of refs.scenes) {
-      if (!sceneIds.has(id)) {
-        problems.push({ pack: from, where: `scene ${value.id}`, what: `goes to unknown scene "${id}"` })
-      }
-    }
-    const conditions = [
-      ...value.body.flatMap((block) => [
-        block.when,
-        ...('variants' in block ? Object.values(block.gate ?? {}) : []),
-      ]),
-      ...value.choices.flatMap((choice) => [
-        choice.when,
-        ...(choice.blocked ?? []).map((entry) => entry.when),
-        ...(choice.labels ?? []).map((entry) => entry.when),
-      ]),
-    ]
-    checkConditions(conditions, from, `scene ${value.id}`)
-    for (const what of placementProblems(game, value.audio ?? {})) problems.push({ pack: from, where: `scene ${value.id}`, what })
-    for (const block of value.body) {
-      if ('media' in block) for (const what of sceneMediaProblems(game, block.media)) problems.push({ pack: from, where: `scene ${value.id}`, what })
-    }
-    for (const what of stageChecks(value.stage, value.choices.map((choice) => choice.id))) problems.push({ pack: from, where: `scene ${value.id}`, what })
-  }
-
-  // Audio: the manifest, then every sound and voice the prose names.
-  for (const { where, what } of manifestProblems(game)) {
-    const [list, id] = [where.slice(0, where.indexOf(' ')), where.slice(where.indexOf(' ') + 1)]
-    const from = list === 'track' ? tracks.get(id)?.from : list === 'channel' ? channels.get(id)?.from : audioFrom
-    problems.push({ pack: from ?? 'base', where, what })
-  }
-  for (const [key, text] of Object.entries(prose)) {
-    for (const what of markupProblems(game, text)) problems.push({ pack: proseFrom.get(key) ?? 'base', where: `prose ${key}`, what })
-    for (const what of mediaMarkupProblems(game, text)) problems.push({ pack: proseFrom.get(key) ?? 'base', where: `prose ${key}`, what })
-  }
-  // Media: the pools themselves. What asks for them is checked where it is.
-  for (const { where, what } of poolManifestProblems(game)) {
-    problems.push({ pack: pools.get(where.slice('pool '.length))?.from ?? 'base', where, what })
-  }
-
-  // Activities are data too, and are checked the same way: everything a
-  // condition names has to exist.
-  /** What an effect list names that the game does not have: collections, prose, scenes, custom effects. */
-  function effectProblems(refs: readonly EffectRef[]): string[] {
-    const out: string[] = []
-    for (const ref of refs) {
-      const call = customCall(ref)
-      if (call) {
-        if (!hasCustomEffect(game, call.custom) && !absentPartner(game, call.custom)) out.push(`no custom effect named "${call.custom}"`)
-        out.push(...pluginArgProblems(game, 'effects', call.custom, call.with ?? {}))
-        continue
-      }
-      const effect = ref as Effect
-      // The kind an entity effect names, when it names one rather than `'$'`.
-      const named = effect.kind === 'create' || effect.kind === 'each' ? effect.of : 'of' in effect && effect.of !== undefined ? parseRef(effect.of)?.kind : undefined
-      if (named !== undefined && !kindIds.has(named)) out.push(`unknown kind "${named}"`)
-      if (effect.kind === 'stat' || effect.kind === 'setStat') {
-        const def = stats.get(effect.key)?.value
-        const problem = def && statOwnerProblem(def.of, effect.key, effect.of)
-        if (problem) out.push(problem)
-        if (def?.derive !== undefined) out.push(`stat "${effect.key}" is derived: it is worked out, never written`)
-      }
-      if (effect.kind === 'create') {
-        for (const key of Object.keys(effect.entity.stats ?? {})) {
-          if (stats.get(key)?.value.derive !== undefined) out.push(`stat "${key}" is derived: it is worked out, never written`)
-        }
-      }
-      if (effect.kind === 'each') {
-        // Inside, `'$'` is one of the kind it runs over.
-        const one = anyOf(effect.of)
-        const inner = [...conditionProblems(bindCurrent(effect.where, one)), ...effectProblems(bindCurrent(effect.effects, one))]
-        out.push(...inner.map((what) => (what.startsWith('in each ') ? what : `in each ${effect.of}: ${what}`)))
-      }
-      if ((effect.kind === 'collect' || effect.kind === 'discard')) {
-        const id = effect.kind === 'collect' ? effect.to : effect.from
-        if (!collectionIds.has(id)) out.push(`unknown collection "${id}"`)
-      }
-      if (effect.kind === 'notify' && effect.text !== undefined && prose[effect.text] === undefined) {
-        out.push(`no prose for "${effect.text}"`)
-      }
-      if (effect.kind === 'collect' && effect.entry.text !== undefined && prose[effect.entry.text] === undefined) {
-        out.push(`no prose for "${effect.entry.text}"`)
-      }
-      if (effect.kind === 'scene') {
-        if ('from' in effect) {
-          if (!drawnFrom.has(effect.from)) out.push(`draws from "${effect.from}", but no scene is drawn from it`)
-          if (effect.otherwise !== undefined && !sceneIds.has(effect.otherwise)) out.push(`goes to unknown scene "${effect.otherwise}"`)
-        } else if (effect.id !== null && !sceneIds.has(effect.id)) out.push(`goes to unknown scene "${effect.id}"`)
-      }
-      if (effect.kind === 'audio') out.push(...placementProblems(game, { [effect.channel]: effect.track }))
-      if (effect.kind === 'sound') out.push(...cueProblems(game, effect.track))
-    }
-    return out
-  }
-
-  for (const { value, from } of stats.values()) {
-    if (value.of !== undefined && !kindIds.has(value.of)) problems.push({ pack: from, where: `stat ${value.id}`, what: `belongs to unknown kind "${value.of}"` })
-  }
-  // Derived stats and levels: formulas, cycles, thresholds.
-  for (const { where, what } of statProblems(game)) {
-    problems.push({ pack: stats.get(where.slice('stat '.length))?.from ?? 'base', where, what })
-  }
-  // Storylets: a weight needs a draw to weigh in, and must be above 0.
-  for (const { value, from } of scenes.values()) {
-    const where = `scene ${value.id}`
-    const drawn = Boolean(value.drawnFrom?.length)
-    if (value.weight !== undefined && !(value.weight > 0)) problems.push({ pack: from, where, what: 'weight must be above 0' })
-    if (value.weight !== undefined && !drawn) problems.push({ pack: from, where, what: 'has a weight but no drawnFrom, so it is never drawn' })
-    if (value.when !== undefined && !drawn) problems.push({ pack: from, where, what: 'has a when but no drawnFrom; when only gates draws' })
-    checkConditions([value.when], from, where)
-  }
-  // The game's own migrations: one step per version below the game's.
-  if (game.version !== undefined && !(Number.isInteger(game.version) && game.version >= 1)) {
-    problems.push({ pack: 'base', where: 'version', what: 'version must be a whole number, 1 or more' })
-  }
-  for (const key of Object.keys(game.migrations ?? {})) {
-    const n = Number(key)
-    if (!Number.isInteger(n) || n < 1 || n >= (game.version ?? 1)) {
-      problems.push({ pack: 'base', where: `migration ${key}`, what: `a step is keyed by the version it upgrades from, 1 to ${(game.version ?? 1) - 1}` })
-    }
-  }
-  for (const { value, from } of entities.values()) {
-    const where = `entity ${value.of}:${value.id}`
-    if (!kindIds.has(value.of)) problems.push({ pack: from, where, what: `unknown kind "${value.of}"` })
-    // Object keys that look like numbers sort first, which would scramble the order entities came in.
-    if (/^\d+$/.test(value.id)) problems.push({ pack: from, where, what: 'an entity id must not be a whole number' })
-    for (const key of Object.keys(value.stats ?? {})) {
-      if (stats.get(key)?.value.of !== value.of) problems.push({ pack: from, where, what: `no ${value.of} stat named "${key}"` })
-      else if (stats.get(key)?.value.derive !== undefined) problems.push({ pack: from, where, what: `stat "${key}" is derived: it is worked out, never written` })
-    }
-  }
-  for (const { value, from } of triggers.values()) {
-    checkConditions([value.when], from, `trigger ${value.id}`)
-    for (const what of effectProblems(value.effects)) problems.push({ pack: from, where: `trigger ${value.id}`, what })
-  }
-  for (const { value, from } of settings.values()) {
-    for (const what of settingProblems(value)) problems.push({ pack: from, where: `setting ${value.id}`, what })
-  }
-  checkConditions([game.finished], 'base', 'finished')
-  for (const id of game.carryOver?.stats ?? []) {
-    const def = stats.get(id)?.value
-    if (!def) problems.push({ pack: 'base', where: 'carryOver', what: `unknown stat "${id}"` })
-    else if (def.of !== undefined) problems.push({ pack: 'base', where: 'carryOver', what: `stat "${id}" belongs to ${def.of}, not the player` })
-  }
-  if (Array.isArray(game.carryOver?.items)) {
-    for (const id of game.carryOver.items) {
-      if (!itemIds.has(id)) problems.push({ pack: 'base', where: 'carryOver', what: `unknown item "${id}"` })
-    }
-  }
-  for (const { value, from } of inputs.values()) {
-    const where = `input ${value.id}`
-    checkConditions([value.when], from, where)
-    if (value.kind === 'choice' && !value.options?.length) problems.push({ pack: from, where, what: 'a choice with no options' })
-    if (value.min !== undefined && value.max !== undefined && value.min > value.max) {
-      problems.push({ pack: from, where, what: 'min is above max' })
-    }
-  }
-  // Collections, notices and scenes named in data scenes' and activities' own effects.
-  for (const { value, from } of scenes.values()) {
-    if (!isData(value)) continue
-    for (const choice of value.choices) {
-      // Custom effects and scenes a choice names are reported above; everything else here.
-      for (const what of effectProblems(choice.effects).filter((what) => !/^no custom effect named|^goes to unknown scene/.test(what))) {
-        problems.push({ pack: from, where: `scene ${value.id}`, what })
-      }
-    }
-  }
-
-  for (const { value, from } of activities.values()) {
-    // Custom effects an activity names are reported below; everything else here.
-    for (const what of effectProblems(value.effects ?? []).filter((what) => !/^no custom effect named/.test(what))) {
-      problems.push({ pack: from, where: `activity ${value.id}`, what })
-    }
-    checkConditions((value.requires ?? []).map((entry) => entry.when), from, `activity ${value.id}`)
-    for (const id of Object.keys(value.cost?.stats ?? {})) {
-      if (stats.get(id)?.value.derive !== undefined) problems.push({ pack: from, where: `activity ${value.id}`, what: `spends stat "${id}", which is derived and never written` })
-    }
-    for (const name of customEffectsUsed(value.effects ?? [])) {
-      if (!hasCustomEffect(game, name) && !absentPartner(game, name)) {
-        problems.push({ pack: from, where: `activity ${value.id}`, what: `no custom effect named "${name}"` })
-      }
-    }
-  }
-  // Each plugin checks its own content; the problem is pinned on the pack the entry came from.
-  for (const plugin of game.plugins ?? []) {
-    const audioProblems = (audio: Record<string, string | null> | undefined) => (audio ? placementProblems(game, audio) : [])
-    const placeStage = (stage: MediaStage | undefined) => stageChecks(stage, null)
-    for (const problem of plugin.check?.(game, { conditionProblems, blockProblems, commandProblems, audioProblems, stageProblems: placeStage }) ?? []) {
-      const from = data.get(plugin.id)?.get(problem.list)?.get(problem.id)?.from ?? 'base'
-      problems.push({ pack: from, where: `${problem.list} ${problem.id}`, what: problem.what })
-    }
-  }
-
-  // The game's own actions, offered everywhere, come with the base.
-  for (const action of game.actions ?? []) {
-    checkConditions(
-      [action.when, ...(action.blocked ?? []).map((entry) => entry.when)],
-      'base',
-      `action ${action.id}`,
-    )
-    for (const what of commandProblems(action.command)) problems.push({ pack: 'base', where: `action ${action.id}`, what })
-  }
+  problems.push(...checkContent(game, [], packOf).problems)
 
   return { game, prose, variants, problems }
-}
-
-export function describeProblem(problem: Problem): string {
-  return `${problem.pack} · ${problem.where} · ${problem.what}`
 }

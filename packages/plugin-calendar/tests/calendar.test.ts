@@ -200,11 +200,11 @@ describe('the calendar', () => {
       plugins: [calendar({ periods: ['am', 'am'], start: { period: 'noon' }, sleep: { from: ['pm'] }, weekend: [9], curfew: { flag: 'x', of: 'pet:cat' } })],
     })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'options curfew: unknown kind "pet"',
       'options periods: two periods share an id',
       'options start: no period called "noon"',
       'options sleep: no period called "pm"',
       'options weekend: no day 9 in a week of 7',
-      'options curfew: unknown kind "pet"',
     ])
   })
 })

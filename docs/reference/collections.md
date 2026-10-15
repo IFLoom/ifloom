@@ -161,7 +161,7 @@ The declaration with that id, or `undefined`.
   // in an activity: effects: [{ custom: 'logWage' }]
   ```
 
-- **`text` is a prose key.** Write the words in the pack's `prose` and name the key. The loader reports a key with no prose as `no prose for "…"`.
-- **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The loader reports `unknown collection "…"` in triggers, activities and data scene choices. [`validatePack`](/reference/game#validatepack) reports `collection … is not declared` in item uses and activities.
+- **`text` is a prose key.** Write the words in the pack's `prose` and name the key. The [content checker](/reference/checks) reports a key with no prose as `no prose for "…"`.
+- **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The [content checker](/reference/checks) reports `unknown collection "…"` wherever the effect is.
 - **`max` drops the oldest without telling anyone.** That includes entries a condition may be waiting for. Only ask for an entry by id in a collection without a `max`, or one large enough that it can't have rolled off.
 - **`discard` takes one entry by id.** There's no effect that empties a collection.

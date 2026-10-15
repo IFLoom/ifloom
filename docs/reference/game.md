@@ -181,10 +181,11 @@ type ProseStore = {
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
   weight?: (name: string, key: string) => number
+  keys?: () => string[]
 }
 ```
 
-The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. Data scenes read it through the [default runtime](/reference/scenes#defaultruntime). See [Prose and markup](/reference/prose).
+The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. `keys` lists every key the store has words for, so the [content checker](/reference/checks) can read the markup in all of them. Without it, the checker reads only the keys content names. Data scenes read it through the [default runtime](/reference/scenes#defaultruntime). See [Prose and markup](/reference/prose).
 
 **Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/reference/loader#loadgame) sets it. A game built by hand sets it with [`proseStore`](/reference/prose#prosestore-1).
 
@@ -218,51 +219,6 @@ import { itemById } from '@ifloom/engine'
 itemById(game, 'sandwich')?.kind   // 'stuff'
 ```
 
-## validatePack
+## Checking a game
 
-```ts
-function validatePack(game: Game, probes?: readonly GameState[]): string[]
-```
-
-Checks that every id the game points at resolves. It returns one line per problem, as `where: what`, and an empty array means the game is clean. Run it from a test so a broken id fails at commit time instead of mid-game.
-
-```ts
-import { startingState, validatePack } from '@ifloom/engine'
-
-const morning = { ...startingState(game), sceneId: null, turn: 2 }
-expect(validatePack(game, [morning])).toEqual([])
-```
-
-It always checks:
-
-- duplicate ids among items, scenes, storylines and activities
-- that `introScene` exists, if the game gives one
-- the effects in each item's `use` and each activity's `effects` (when they're a list), as described below
-- that every stat an activity's `cost` spends is declared
-- the commands of the game's own `actions`: a scene that doesn't exist, an item that doesn't exist, or a `{ type: 'custom' }` command that names no [plugin command](/reference/plugins#plugincommand) the game has (`no plugin command named …`)
-- that every stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares
-- [derived stats](/reference/stats#derived-stats) and [levels](/reference/stats#levels): a formula naming an unknown stat or another owner's, a cycle, a derived stat that's `spendable` or has a `start`, and `levels.at` that's empty, out of order or outside the stat's range
-- [settings](/reference/settings): duplicate ids, each declaration, and every `{ setting }` condition the game declares as data
-- that the stats and items in `carryOver` are declared
-- [audio](/reference/audio): `game.audio` itself, each data scene's `audio`, the `[[sound:id]]` and `[[voice:id]]` in its prose, and the `audio` and `sound` effects on its choices, with the same [checks](/reference/loader#audio) as the loader
-- [media](/reference/media): empty pools, each data scene's `{ media }` blocks and `stage`, and the picture and video markup in its prose, with the same [checks](/reference/loader#media) as the loader, plus the commands its hotspots send
-
-In those effect lists, it reports:
-
-- a `scene` effect to a scene that doesn't exist, or an `item` effect on an item that doesn't exist
-- a [storylet](/reference/storylets) draw, `{ kind: 'scene', from }`, from a set no scene is drawn from (`no scene is drawn from …`), or with an `otherwise` that doesn't exist
-- a `storylineFlag` or `closeStoryline` effect on an undeclared storyline
-- a `stat` or `setStat` effect on a stat that isn't [declared](/reference/stats), on a [derived stat](/reference/stats#derived-stats) (`stat … is derived and never written`), or on the wrong owner (a player's stat given an `of`, or an entity's stat without one or with another kind's)
-- a `collect` or `discard` effect on an undeclared [collection](/reference/collections) (`collection … is not declared`)
-- a `collect` entry's or a `notify` effect's `text` that names a prose key the game doesn't have (`no prose for …`)
-- a long-form `{ kind: 'custom', name }` effect that names no plugin effect the game has (`no plugin effect named …`), unless it's an [absent partner](/reference/loader#the-checks) a plugin cooperates with
-- the plain effects inside an `each`, checked as any other effect with `'$'` standing for one of the kind
-- an `audio` or `sound` effect naming an unknown track or channel, or a track that can't play there
-
-A short-form `{ custom }` call isn't looked inside.
-
-With `probes`, every scene is also rendered against each probe state. Anything that throws is reported, along with duplicate choice ids, the ids in the rendered choices' effects, the audio and markup in what it rendered, and a hand-written scene's rendered `stage`.
-
-**Gotchas.**
-- Without probes, the choices of hand-written scenes are never looked at. Pass a few states that reach different branches.
-- Conditions, data scenes, triggers and the custom functions content names are checked by the [loader](/reference/loader#the-checks), not here. So are a place's exits, body and actions (by the [places plugin](/plugins/places#checks)) and characters (by the [cast plugin](/plugins/cast#checks)).
+[`checkGame`](/reference/checks#checkgame) checks that everything the game names resolves, and lists the files it names. Run it from a test so a broken id fails at commit time instead of mid-game. [`loadGame`](/reference/loader#loadgame) runs it for you. [Checking content](/reference/checks) has the whole list.

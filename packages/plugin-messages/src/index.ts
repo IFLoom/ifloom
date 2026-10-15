@@ -281,22 +281,32 @@ export function messages(options: MessagesOptions) {
       })
       return { channels, unread: unreadIn(slice, game) }
     },
-    check: (game, { conditionProblems }) => {
+    references: {
+      // The message a condition or a reply names.
+      calls: (_kind, _name, args) => (args.message === undefined ? [] : [{ entry: String(args.message), plugin: 'messages', list: 'messages', noun: 'message' }]),
+      content: (game) =>
+        messageDefs(game).map((message) => ({
+          list: 'messages',
+          id: message.id,
+          refs: [
+            { when: message.when },
+            { blocks: message.body },
+            ...(message.replies ?? []).flatMap((reply) => [
+              { prose: `${message.id}#${reply.id}` },
+              { within: `reply ${reply.id}`, refs: [{ when: reply.when }, { effects: reply.effects }] },
+            ]),
+          ],
+        })),
+    },
+    check: (game) => {
       const problems: PluginProblem[] = []
       for (const message of messageDefs(game)) {
         const say = (what: string) => problems.push({ list: 'messages', id: message.id, what })
         if (!channelIds.has(message.channel)) say(`no channel called "${message.channel}"`)
-        for (const what of conditionProblems(message.when)) say(what)
-        for (const block of message.body ?? []) {
-          if ('text' in block && game.prose?.line(block.text) === undefined) say(`no prose for "${block.text}"`)
-          for (const what of conditionProblems(block.when)) say(what)
-        }
         const ids = new Set<string>()
         for (const reply of message.replies ?? []) {
           if (ids.has(reply.id)) say(`two replies are called "${reply.id}"`)
           ids.add(reply.id)
-          if (game.prose?.line(`${message.id}#${reply.id}`) === undefined) say(`no prose for "${message.id}#${reply.id}"`)
-          for (const what of conditionProblems(reply.when)) say(`reply ${reply.id}: ${what}`)
         }
       }
       return problems

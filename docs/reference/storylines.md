@@ -52,7 +52,7 @@ storylineOpen(state, 'ava')              // true on a new game
 storylineOf(state, 'ava').flags.met      // undefined until a storylineFlag sets it
 ```
 
-**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [loader](/reference/loader#the-checks) reports a condition that names an unknown storyline. It doesn't check the `storylineFlag` and `closeStoryline` effects, though. [`validatePack`](/reference/game#validatepack) checks those, but only in item uses, activity effects and the choices of scenes it renders against probe states.
+**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/reference/checks) reports a condition, a `storylineFlag` effect or a `closeStoryline` effect that names an unknown storyline.
 
 ## emptyStoryline
 

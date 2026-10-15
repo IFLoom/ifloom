@@ -19,8 +19,8 @@ const stall = definePlugin<{ open: boolean }>({
   buttons: () => [{ id: 'haggle', label: 'Haggle', command: { type: 'custom', name: 'stall/haggle' } }],
   argProblems: (kind, name, args) =>
     kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.value)) ? [`nobody sells "${String(args.value)}"`] : [],
-  check: (game, { blockProblems, commandProblems }) =>
-    [...blockProblems([{ text: 'stall.sign' }]), ...commandProblems({ type: 'scene', id: 'stall.closing' })].map((what) => ({ list: 'stall', id: game.id, what })),
+  check: (game, { problems }) =>
+    problems([{ blocks: [{ text: 'stall.sign' }] }, { command: { type: 'scene', id: 'stall.closing' } }]).map((what) => ({ list: 'stall', id: game.id, what })),
 })
 
 const market: Pack = {

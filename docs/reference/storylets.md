@@ -165,7 +165,7 @@ While Ava is on shift and nothing has been seen, the window seat has weight 3, A
 
 ## The checks
 
-The [loader](/reference/loader#the-checks) reports:
+The [content checker](/reference/checks) reports:
 
 | Problem | Where | When |
 |---|---|---|
@@ -175,6 +175,6 @@ The [loader](/reference/loader#the-checks) reports:
 | `has a weight but no drawnFrom, so it is never drawn` | `scene <id>` | A `weight` on a scene that isn't in any set. |
 | `has a when but no drawnFrom; when only gates draws` | `scene <id>` | A `when` on a scene that isn't in any set. |
 
-A storylet's `when` is checked like [any other condition](/reference/loader#in-a-condition), for unknown stats, scenes and so on.
+A storylet's `when` is checked like [any other condition](/reference/checks#in-a-condition), for unknown stats, scenes and so on.
 
-[`validatePack`](/reference/game#validatepack) checks the effect in item uses and activities too. It says `no scene is drawn from <name>` and `scene <id> does not exist`.
+The effect is checked wherever it is, in item uses and activities too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.

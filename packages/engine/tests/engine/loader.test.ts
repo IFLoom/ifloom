@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { fixture } from '../fixtures/town.ts'
 
@@ -20,7 +21,7 @@ const broken: Pack = {
 
 /** The town's rules and settings, with none of its content. */
 function baseOf() {
-  const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, ...base } = fixture()
+  const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, ...base } = fixture()
   return base
 }
 

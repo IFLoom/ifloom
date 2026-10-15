@@ -3,7 +3,7 @@ import { storylineOf, storylineOpen } from './storylines.ts'
 import { customCall, customCondition, type PluginCall } from './custom.ts'
 import { statBand, statLevel, statValue } from './stats.ts'
 import { turnsSince } from './progress.ts'
-import { anyOf, bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
+import { bindCurrent, entitiesOf, entityOf } from './entities.ts'
 import type {
   FlagValue,
   GameState,
@@ -205,70 +205,4 @@ export function holds(
   if ('turn' in condition) return inRange(state.turn, condition)
   if ('phase' in condition) return condition.phase.includes(state.phase)
   return false
-}
-
-/** Every id a condition refers to, for the loader to check against the pack. */
-export function referenced(condition: Condition | undefined): {
-  storylines: string[]
-  items: string[]
-  custom: string[]
-  scenes: string[]
-  stats: string[]
-  collections: string[]
-  /** `scene/choice` keys from `{ chose }`. */
-  choices: string[]
-  /** Kinds from `{ count }`, `{ entity }` and every `of`. */
-  kinds: string[]
-  /** Every stat a `{ stat }` names, with whose: for the loader to check it belongs there. */
-  owned: { stat: string; of?: string }[]
-  /** Every call to a custom or plugin condition, with what it asks. */
-  calls: { custom: string; with?: Record<string, unknown> }[]
-  /** Every setting a `{ setting }` reads, with the value it compares to. */
-  settings: { setting: string; is?: FlagValue }[]
-} {
-  const out = { storylines: [] as string[], items: [] as string[], custom: [] as string[], scenes: [] as string[], stats: [] as string[], collections: [] as string[], choices: [] as string[], kinds: [] as string[], owned: [] as { stat: string; of?: string }[], calls: [] as { custom: string; with?: Record<string, unknown> }[], settings: [] as { setting: string; is?: FlagValue }[] }
-  // The kind in an `of`; `'$'` names none of its own.
-  const kindOf = (ref: string | undefined) => {
-    const parts = ref === undefined ? undefined : parseRef(ref)
-    if (parts) out.kinds.push(parts.kind)
-  }
-  const walk = (entry: Condition | undefined): void => {
-    if (!entry) return
-    if ('all' in entry) return entry.all.forEach(walk)
-    if ('any' in entry) return entry.any.forEach(walk)
-    if ('not' in entry) return walk(entry.not)
-    const call = customCall(entry)
-    if (call) {
-      out.custom.push(call.custom)
-      out.calls.push(call)
-      return
-    }
-    if ('setting' in entry) out.settings.push({ setting: entry.setting, is: entry.is })
-    else if ('storylineFlag' in entry) out.storylines.push(entry.storylineFlag.storyline)
-    else if ('counter' in entry) out.storylines.push(entry.counter.storyline)
-    else if ('storyline' in entry) out.storylines.push(entry.storyline)
-    else if ('collection' in entry) out.collections.push(entry.collection)
-    else if ('item' in entry) out.items.push(entry.item)
-    else if ('scene' in entry) out.scenes.push(...entry.scene)
-    else if ('stat' in entry) {
-      out.stats.push(entry.stat)
-      out.owned.push({ stat: entry.stat, of: entry.of })
-      kindOf(entry.of)
-    } else if ('level' in entry) {
-      out.stats.push(entry.level)
-      out.owned.push({ stat: entry.level, of: entry.of })
-      kindOf(entry.of)
-    } else if ('count' in entry) {
-      out.kinds.push(entry.count)
-      // Its `'$'` is one of the kind it counts.
-      walk(bindCurrent(entry.where, anyOf(entry.count)))
-    } else if ('entity' in entry) kindOf(entry.entity)
-    else if ('tier' in entry) out.stats.push(entry.tier)
-    else if ('flag' in entry) kindOf(entry.of)
-    else if ('seen' in entry) out.scenes.push(entry.seen)
-    else if ('since' in entry) out.scenes.push(entry.since)
-    else if ('chose' in entry) out.choices.push(entry.chose)
-  }
-  walk(condition)
-  return out
 }

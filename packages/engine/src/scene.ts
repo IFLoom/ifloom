@@ -6,7 +6,6 @@ import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './media.ts'
 import {
   buildEffects,
-  customEffectsUsed,
   customPanel,
   type EffectRef,
 } from './custom.ts'
@@ -281,39 +280,6 @@ export function renderScene(
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }
-}
-
-/** Every id a scene refers to, for the loader to check. */
-export function sceneReferences(scene: DataScene): {
-  prose: string[]
-  variants: string[]
-  scenes: string[]
-  custom: string[]
-} {
-  const prose: string[] = []
-  const variants: string[] = []
-  const scenes: string[] = []
-  const custom: string[] = []
-  for (const block of scene.body) {
-    if ('text' in block) prose.push(block.text)
-    if ('variants' in block) {
-      variants.push(block.variants)
-      variants.push(...Object.values(block.art ?? {}))
-    }
-  }
-  for (const choice of scene.choices) {
-    prose.push(choice.label ?? `${scene.id}#${choice.id}`)
-    for (const entry of choice.labels ?? []) prose.push(entry.key)
-    custom.push(...customEffectsUsed(choice.effects))
-    for (const effect of choice.effects) {
-      if ('kind' in effect && effect.kind === 'scene') {
-        if ('from' in effect) {
-          if (effect.otherwise) scenes.push(effect.otherwise)
-        } else if (effect.id) scenes.push(effect.id)
-      }
-    }
-  }
-  return { prose, variants, scenes, custom }
 }
 
 /**

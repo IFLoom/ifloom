@@ -84,7 +84,7 @@ A [derived stat](/reference/stats#derived-stats) is never written, so a `stat` e
 
 With `of`, the stat belongs to an [entity](/reference/entities). `of` is an [entity reference](/reference/entities#entityref) such as `'staff:ana'`, or `'$'` inside an [`each`](#each). The value is held to the stat's range as the player's would be. If the entity isn't there, the effect does nothing. `rules.onStat` isn't called, because it only runs for the player's stats. A negative amount here is never part of a button's [price](/reference/view#price), even on a spendable stat.
 
-**Gotcha.** At run time, nothing stops a `stat` effect from naming the player's `coins` with `of: 'staff:ana'`. It gives Ana a `coins` of her own, which nothing shows. The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) report a stat named on the wrong owner, so run them.
+**Gotcha.** At run time, nothing stops a `stat` effect from naming the player's `coins` with `of: 'staff:ana'`. It gives Ana a `coins` of her own, which nothing shows. The [content checker](/reference/checks) reports a stat named on the wrong owner, so run it.
 
 ### setStat
 
@@ -114,7 +114,7 @@ Runs a [plugin](/reference/plugins)'s effect, by its full name, on the state the
 
 In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/reference/custom#plugincall). [`buildEffects`](/reference/custom#buildeffects) turns either into this one. Item uses and [`rules.turn`](/reference/rules#turn) only take plain effects, so write the long form there.
 
-**Gotcha.** The [loader](/reference/loader#the-checks) checks the name in the short forms but not in the long form. [`validatePack`](/reference/game#validatepack) does check the long form, in item uses, activities, inside an `each`, and in scene choices when you give it probe states. Nothing checks it in `rules.turn`, so a typo there silently does nothing.
+**Gotcha.** The [content checker](/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form, wherever the effect is data. `rules.turn` is a function, so nothing checks a name it returns, and a typo there silently does nothing.
 
 ### storylineFlag
 
@@ -146,7 +146,7 @@ With `of`, both forms set a variable on an [entity](/reference/entities) instead
 { kind: 'scene', id: null }
 ```
 
-Puts a scene on screen, or closes it with `null`. The id isn't checked when the effect runs, but `validatePack` and the loader check it. Only the scene left on screen at the end of the command counts as [seen](/reference/state#seen).
+Puts a scene on screen, or closes it with `null`. The id isn't checked when the effect runs, but the [content checker](/reference/checks) checks it. Only the scene left on screen at the end of the command counts as [seen](/reference/state#seen).
 
 #### Drawing a storylet
 
@@ -213,7 +213,7 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 
 Adds an entry to a [collection](/reference/collections), stamped with the current [turn](/reference/state#turn). `entry` is a [`CollectionItem`](/reference/collections#collectionitem), and its `text` is a prose key. If the id is already in the collection, the effect does nothing and the entry there is left as it is. When the collection goes over its `max`, the oldest entries go.
 
-The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) both check the collection and the `text`.
+The [content checker](/reference/checks) checks the collection and the `text`.
 
 ### discard
 
@@ -247,7 +247,7 @@ choices: [
 - The id it was given isn't handed back. To refer to someone created without an id, go through them all with [`each`](#each) or [`entitiesOf`](/reference/entities#entitiesof), or give an `id` of your own.
 - An `id` that's a whole number, such as `'7'`, does nothing, just like one that's already taken. It would otherwise jump to the front of the kind's order. See [Ids](/reference/entities#ids).
 - `entity.stats` is taken as written, not held to range, until an effect next moves it.
-- The [loader](/reference/loader#the-checks) reports a kind the game doesn't declare.
+- The [content checker](/reference/checks) reports a kind the game doesn't declare.
 
 ### remove
 
@@ -276,7 +276,7 @@ Runs `effects` once for every [entity](/reference/entities) of kind `of`, in the
 
 An effect inside that doesn't name `'$'` still runs once per entity. `{ kind: 'stat', key: 'coins', by: -10 }` in an `each` over three members of staff takes 30 coins.
 
-The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) both look inside an `each`, with `'$'` standing for one of its kind, so a stat named on `'$'` has to belong to that kind.
+The [content checker](/reference/checks) looks inside an `each`, with `'$'` standing for one of its kind, so a stat named on `'$'` has to belong to that kind.
 
 ### notify
 
@@ -347,5 +347,5 @@ You write a [plugin](/reference/plugins)'s effect the same way, with the plugin'
 - `{ custom }` works in the choices of a [data scene](/reference/scenes#datascene), in an [activity](/reference/actions#activitydef)'s `effects`, in a [trigger](/reference/triggers)'s `effects`, inside an `each`, and in what a custom effect returns. The [shorthand](/reference/custom#plugincall) works in all the same places. Neither is an `Effect`, so item uses and `rules.turn` take plain effects.
 - A game's custom effect is worked out from the state before any of the list applies, so it doesn't see what the effects before it in the same list did. A plugin's effect does, even one a game's custom effect returns. The custom effect is worked out up front, but the plugin effect in its result runs in its turn.
 - Custom effects that return custom effects are worked out up to 10 deep, all against the same state. One that names itself, or a loop of them, adds nothing past that.
-- A name that neither the game nor its plugins declare adds nothing. The [loader](/reference/loader#the-checks) reports it.
+- A name that neither the game nor its plugins declare adds nothing. The [content checker](/reference/checks) reports it.
 - To flatten a list yourself, in a custom runtime for example, use [`buildEffects`](/reference/custom#buildeffects).

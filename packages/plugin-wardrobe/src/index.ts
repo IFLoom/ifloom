@@ -128,10 +128,15 @@ export function wardrobe(options: WardrobeOptions) {
         .filter((entry) => (state.items[entry.id] ?? 0) > 0 && slice.worn[entry.slot] !== entry.id)
         .map((entry) => ({ id: entry.id, name: name(game, entry.id), slot: entry.slot })),
     }),
+    references: {
+      // The item a condition or `wear` names.
+      calls: (_kind, _name, args) => (args.item === undefined ? [] : [{ item: String(args.item) }]),
+      // A piece of clothing is an item, by its id.
+      content: (game) => clothes(game).map((entry) => ({ list: 'clothes', id: entry.id, refs: [{ item: entry.id }] })),
+    },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const entry of clothes(game)) {
-        if (!itemById(game, entry.id)) problems.push({ list: 'clothes', id: entry.id, what: 'no item has this id' })
         if (!slotIds.has(entry.slot)) problems.push({ list: 'clothes', id: entry.id, what: `no slot called "${entry.slot}"` })
       }
       for (const [slot, item] of Object.entries(options.start ?? {})) {

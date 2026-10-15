@@ -274,20 +274,30 @@ export function quests() {
       },
     },
     view: (state, { slice, game }) => questsView(advance(slice, state, game), game),
-    check: (game, { conditionProblems }) => {
+    references: {
+      // The quest a condition, effect or command names. Tracking or looking with none is fine.
+      calls: (_kind, _name, args) => (args.quest === undefined ? [] : [{ entry: String(args.quest), plugin: 'quests', list: 'quests', noun: 'quest' }]),
+      content: (game) =>
+        questDefs(game).map((quest) => ({
+          list: 'quests',
+          id: quest.id,
+          refs: [
+            ...(quest.storyline ? [{ storyline: quest.storyline }] : []),
+            ...(quest.stages ?? []).map((stage) => ({ within: `stage ${stage.id}`, refs: [{ when: stage.done }] })),
+            { within: 'starts', refs: [{ when: quest.starts }] },
+          ],
+        })),
+    },
+    check: (game) => {
       const problems: PluginProblem[] = []
-      const storylines = new Set(game.storylines.map((storyline) => storyline.id))
       for (const quest of questDefs(game)) {
         const say = (what: string) => problems.push({ list: 'quests', id: quest.id, what })
         if (!quest.stages?.length) say('has no stages')
-        if (quest.storyline && !storylines.has(quest.storyline)) say(`unknown storyline "${quest.storyline}"`)
         const ids = new Set<string>()
         for (const stage of quest.stages ?? []) {
           if (ids.has(stage.id)) say(`two stages are called "${stage.id}"`)
           ids.add(stage.id)
-          for (const what of conditionProblems(stage.done)) say(`stage ${stage.id}: ${what}`)
         }
-        for (const what of conditionProblems(quest.starts)) say(`starts: ${what}`)
       }
       return problems
     },

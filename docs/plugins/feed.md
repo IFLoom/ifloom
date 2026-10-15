@@ -488,13 +488,15 @@ When the game loads, the plugin reports these problems against the pack each pos
 
 - A feed the game wasn't given (`no feed called "…"`).
 - Anything `when` names that the game doesn't have, such as `unknown storyline "…"`.
-- A body block with no prose (`no prose for "…"`), and anything the block's `when` names.
+- A body block with no prose (`no prose for "…"`), a `variants` block with no lines, a `{ media }` block's pool or flags, and anything the block's `when` names.
 
 ```text
 mod:summer-fete · posts fete.stalls · no feed called "newsletter"
 ```
 
-The player's own posts and reactions are made by effects, so they aren't checked when the game loads. A `feed/post` to a feed the game wasn't given does nothing when it runs, and a `text` with no prose shows as `''`.
+A post's `image` and `video` are listed in the checker's [`files`](/reference/checks#fileref), as paths from the page.
+
+The player's own posts and reactions are made by effects, and those are checked wherever the effect is. A `feed/post` or `feed/react` whose `text` has no prose gives `no prose for "…"`, and a `feed/post`'s `image` and `video` are listed in `files`. A `feed/appeared` condition naming a post the game doesn't have gives `unknown post "…"`. A `feed/post` to a feed the game wasn't given isn't reported, and does nothing when it runs.
 
 ## Gotchas
 
@@ -503,7 +505,7 @@ The player's own posts and reactions are made by effects, so they aren't checked
 - **A post appears once.** After that it stays, whatever `when` does.
 - **No notice.** Unlike a [message](/plugins/messages), a post raises no [notice](/reference/notices) when it appears. Badge a feed from `feed/unseen-<feed>`, or add a [trigger](/reference/triggers) with a `notify` effect for a post that should pop up.
 - **`feed/unseen-<feed>` names come from your feeds.** A feed called `social` gives `feed/unseen-social`. If you rename the feed, every badge that names the old value stops counting.
-- **Own-post and comment prose keys aren't checked.** The loader checks the prose of every `PostDef`, but not the `text` keys that `feed/post` and `feed/react` carry, because it doesn't read effects. A missing one shows as `''`, so look at the screen after posting.
+- **Own-post and comment prose keys are checked where they're written.** A `text` key that a [custom effect](/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` variable.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.

@@ -172,7 +172,7 @@ describe('the cast', () => {
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places(), cast()] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'activity wave: unknown character "ghost"',
-      'characters mole: talks in unknown scene "mole.hi"',
+      'characters mole: talk: opens unknown scene "mole.hi"',
       'characters mole: unknown storyline "tunnels"',
       'characters mole: unknown location "burrow"',
     ])

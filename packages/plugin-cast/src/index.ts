@@ -282,32 +282,38 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
         people: everyone.filter((def) => met(state, game, def)).map((def) => personOf(state, context, def)),
       }
     },
-    argProblems: (kindOf, name, args, game) => {
-      const named = kindOf === 'conditions' ? (name === 'at' ? ids(args, 'who') : ids(args)) : ids(args, 'who')
-      return named.filter((id) => !characterById(game, id)).map((id) => `unknown character "${id}"`)
+    references: {
+      // The people a call names, as value, who or id.
+      calls: (kindOf, name, args) => {
+        const named = kindOf === 'conditions' ? (name === 'at' ? ids(args, 'who') : ids(args)) : ids(args, 'who')
+        return named.map((id) => ({ entry: id, plugin: ID, list: 'characters', noun: 'character' }))
+      },
+      content: (game) => {
+        // Inside a character's own conditions, `'$'` is them.
+        const one = anyOf(kind)
+        return charactersOf(game).map((def) => ({
+          list: 'characters',
+          id: def.id,
+          refs: [
+            { within: 'talk', refs: talkOptions(def).map((option) => ({ scene: option.scene, as: 'open' as const })) },
+            { within: 'call', refs: def.call?.scene ? [{ scene: def.call.scene, as: 'open' as const }] : [] },
+            ...(def.storyline !== undefined ? [{ storyline: def.storyline }] : []),
+            ...[...(def.schedule ?? []).map((block) => block.when), ...talkOptions(def).map((option) => option.when), def.call?.when, def.met].map((when) => ({ when: bindCurrent(when, one) })),
+            // Only a portrait the game gives: the one left out is the UI's to fall back from.
+            ...(def.portrait !== undefined ? [{ picture: def.portrait }] : []),
+          ],
+        }))
+      },
     },
-    check: (game, { conditionProblems }) => {
+    check: (game) => {
       const problems: PluginProblem[] = []
       const sayOf = (id: string, what: string) => problems.push({ list: 'characters', id, what })
-      const scenes = new Set(game.scenes.map((scene) => scene.id))
-      const storylines = new Set(game.storylines.map((storyline) => storyline.id))
       // Places are the places plugin's, asked by name; without it there is no map to check against.
       const askPlaces = pluginQuery(game, 'places/known')
       const blank = askPlaces ? startingState(game) : undefined
       const known = askPlaces ? (id: string) => Boolean(askPlaces(blank!, { value: id })) : undefined
-      const one = anyOf(kind)
       for (const def of charactersOf(game)) {
-        for (const option of talkOptions(def)) if (!scenes.has(option.scene)) sayOf(def.id, `talks in unknown scene "${option.scene}"`)
-        if (def.call?.scene && !scenes.has(def.call.scene)) sayOf(def.id, `calls open unknown scene "${def.call.scene}"`)
         if (def.call && !def.call.scene && !talkOptions(def).length) sayOf(def.id, 'can be called, but a call opens no scene: give call a scene, or them a talk')
-        if (def.storyline !== undefined && !storylines.has(def.storyline)) sayOf(def.id, `unknown storyline "${def.storyline}"`)
-        const conditions = [
-          ...(def.schedule ?? []).map((block) => block.when),
-          ...talkOptions(def).map((option) => option.when),
-          def.call?.when,
-          def.met,
-        ]
-        for (const when of conditions) for (const what of conditionProblems(bindCurrent(when, one))) sayOf(def.id, what)
         if (known) {
           for (const place of [def.home, ...(def.schedule ?? []).map((block) => block.location)]) {
             if (place !== undefined && place !== OFFSTAGE && !known(place)) sayOf(def.id, `unknown location "${place}"`)

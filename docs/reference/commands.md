@@ -231,4 +231,4 @@ Runs a [plugin's command](/reference/plugins#plugincommand) by its full name, wi
 
 It's refused with `There is no such thing to do.` if none of the game's plugins has a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
 
-[`validatePack`](/reference/game#validatepack) reports a button whose command names no plugin command.
+The [content checker](/reference/checks#in-a-command) reports a button whose command names no plugin command, unless the plugin is an [absent partner](/reference/checks#absent-partners).

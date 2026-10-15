@@ -82,7 +82,7 @@ How a list draws depends on its weights:
 
 The members counted are the ones left after a [`variants` block](/reference/scenes#block)'s `gate`, so if every member with a weight is gated out, the rest rotate.
 
-A pack that adds to another pack's list adds its members with their weights. The [loader](/reference/loader#the-checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
+A pack that adds to another pack's list adds its members with their weights. The [content checker](/reference/checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
 
 **Gotcha.** The store needs the game, because <code v-pre>{{v:name}}</code> reads `game.custom.values` and the game's plugins. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 

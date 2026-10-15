@@ -2,7 +2,7 @@
 
 A scene is one screen of story: some prose, and the choices under it. The engine runs every scene the same way, as an object with a `render` function that turns the current state into a [`SceneView`](#sceneview). You can write a scene in either of two ways, and list both kinds side by side in `game.scenes`:
 
-- **Declare it as data**, as a [`DataScene`](#datascene). Its prose lives in [prose keys](/reference/prose), its conditions and effects are data, and the [loader](/reference/loader#the-checks) can check every id it names. The engine renders it for you (see [Running data scenes](#running-data-scenes)). Most scenes should be data scenes.
+- **Declare it as data**, as a [`DataScene`](#datascene). Its prose lives in [prose keys](/reference/prose), its conditions and effects are data, and the [content checker](/reference/checks) can check every id it names. The engine renders it for you (see [Running data scenes](#running-data-scenes)). Most scenes should be data scenes.
 - **Write it by hand**, as a [`Scene`](#scene). You get full control in plain TypeScript, for a screen that doesn't fit blocks and choices.
 
 Either kind can also be a [storylet](/reference/storylets), a scene an effect draws at random from a named set. See [`StoryletFields`](#storyletfields).
@@ -56,7 +56,7 @@ const counter: Scene = {
 }
 ```
 
-**Gotcha.** The loader only checks data scenes, not hand-written ones. [`validatePack`](/reference/game#validatepack) looks at a hand-written scene's choices only when you give it probe states. Otherwise a typo in a scene id inside a hand-written effect turns up at run time, when the player lands on a scene that doesn't exist and reads "The moment has passed." (the [`momentPassed`](/reference/strings#buttons-and-labels) string).
+**Gotcha.** The [content checker](/reference/checks) can't see inside a hand-written scene. It looks at one's choices only when you give [`checkGame`](/reference/checks#probes) probe states. Otherwise a typo in a scene id inside a hand-written effect turns up at run time, when the player lands on a scene that doesn't exist and reads "The moment has passed." (the [`momentPassed`](/reference/strings#buttons-and-labels) string).
 
 ## SceneView
 
@@ -388,7 +388,7 @@ const custom: Custom = {
 // DataScene: { id: 'cafe.menu', panel: 'MenuPanel', panelData: 'menuPrices', ... }
 ```
 
-**Gotcha.** An unknown name gives `panelData: undefined`, not an error, and the loader doesn't check panel names.
+**Gotcha.** An unknown name gives `panelData: undefined`, not an error. The [content checker](/reference/checks) reports a data scene's unknown one as `no custom panel named "…"`, but can't see a hand-written scene's.
 
 ## StoryletFields
 

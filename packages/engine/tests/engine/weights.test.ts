@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { poolPick } from '../../src/media.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { pick, weighted } from '../../src/random.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
 
@@ -78,7 +79,7 @@ describe('weights in content', () => {
     expect(counts['door/blue.jpg']).toBeGreaterThan(320)
     expect(counts['door/red.jpg']).toBeGreaterThan(10)
     const zero: Game = { ...game, media: { pools: { door: [{ src: 'door/blue.jpg', weight: 0 }] } } }
-    expect(validatePack(zero)).toContain('pool door: file 0 has a weight of 0; a weight must be above 0')
+    expect(problemsOf(zero)).toContain('pool door: file 0 has a weight of 0; a weight must be above 0')
   })
 
   it('put a heavier playlist track earlier in a shuffled order', () => {
@@ -109,7 +110,7 @@ describe('weights in content', () => {
         },
       },
     }
-    const problems = validatePack(game)
+    const problems = problemsOf(game)
     expect(problems).toContain('track radio: "a" has a weight of -1; a weight must be above 0')
     expect(problems).toContain('track album: "a" has a weight, but only a shuffled playlist uses weights')
   })

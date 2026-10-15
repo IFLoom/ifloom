@@ -3,7 +3,7 @@ import { holds } from '../../src/condition.ts'
 import type { Game } from '../../src/game.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { formatStat, statDef, statMax } from '../../src/stats.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
@@ -54,7 +54,7 @@ describe('stats', () => {
       ...fixture(),
       activities: [{ id: 'train', effects: [{ kind: 'stat' as const, key: 'strength', by: 1 }] }],
     }
-    expect(validatePack(game).some((problem) => problem.includes('stat strength is not declared'))).toBe(true)
+    expect(problemsOf(game)).toContain('activity train: unknown stat "strength"')
   })
 })
 
@@ -122,9 +122,9 @@ describe('checking declared stats', () => {
         { id: 'rest', effects: [{ kind: 'setStat', key: 'sleep', to: 1 }] },
       ],
     }
-    const problems = validatePack(game).join('\n')
-    expect(problems).toContain('stat gold, which is not declared')
-    expect(problems).toContain('stat sleep is not declared')
-    expect(problems).toContain('value neverRegistered, which the game does not declare')
+    const problems = problemsOf(game)
+    expect(problems).toContain('activity buy: spends unknown stat "gold"')
+    expect(problems).toContain('activity rest: unknown stat "sleep"')
+    expect(problems).toContain('stat puff: no custom value named "neverRegistered"')
   })
 })

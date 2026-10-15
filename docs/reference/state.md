@@ -266,7 +266,7 @@ Nothing else comes across. The turn, scenes seen, storylines, entities and plugi
 
 **Gotcha.** Carry from the state the player finished on. If you start the New Game+ from a title screen after a reload, load the save first, or keep that state yourself. The profile records only when the game was finished, not the state.
 
-The [loader](/reference/loader#the-checks) reports a stat or item in `carryOver` that the game doesn't declare, and a stat that belongs to a kind rather than the player.
+The [content checker](/reference/checks) reports a stat or item in `carryOver` that the game doesn't declare, and a stat that belongs to a kind rather than the player.
 
 ## Constants
 

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, describeProblem, loadGame } from '../../src/loader.ts'
+import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { startingState } from '../../src/reduce.ts'
 import { migrate, saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
@@ -54,7 +55,7 @@ describe('New Game+', () => {
   })
 
   it('is checked by the loader: unknown stats and items, and stats that are not the player’s', () => {
-    const { scenes: _s, items: _i, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
+    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
     const problems = loadGame([{ id: 'core', schema: SCHEMA, stats, items: [] }], {
       ...base,
       kinds: [{ id: 'staff', label: 'Staff', plural: 'Staff' }],

@@ -123,4 +123,4 @@ The declaration with that id, or `undefined`.
 - **Choice values are compared exactly.** `1` and `'1'` are different options.
 - **An input writes a game variable, not a stat.** To let the player set a number that effects spend, have a choice or activity read the variable through a [custom effect](/reference/effects#computed-effects).
 - **It works with a scene open.** Inputs aren't refused with `Finish this first.`, so a scene can ask for a name halfway through. To keep an input to one scene, use `when` (for example `{ scene: ['intro'] }`) or a [lock](/reference/locks) that denies `'input'`.
-- **The loader checks the declaration.** It reports a `'choice'` input with no options and a `min` above `max`. See [The checks](/reference/loader#the-checks).
+- **The loader checks the declaration.** It reports a `'choice'` input with no options and a `min` above `max`. See [Checking content](/reference/checks).

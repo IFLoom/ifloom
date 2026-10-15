@@ -267,16 +267,20 @@ writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 function anyOf(kind: string): EntityRef
 ```
 
-Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the loader's checks, which then know whose stats a `{ stat, of: '$' }` names. A plugin's [`check`](/reference/plugins#content-and-checks) does this for its own conditions written per entity:
+Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/reference/plugins#references) do this for its own conditions written per entity:
 
 ```ts
 import { anyOf, bindCurrent, type Condition } from '@ifloom/engine'
 
 // in definePlugin({ ... })
-check: (game, { conditionProblems }) =>
-  ((game.data?.regulars?.people ?? []) as readonly { id: string; when?: Condition }[]).flatMap((person) =>
-    conditionProblems(bindCurrent(person.when, anyOf('regular'))).map((what) => ({ list: 'people', id: person.id, what })),
-  ),
+references: {
+  content: (game) =>
+    ((game.data?.regulars?.people ?? []) as readonly { id: string; when?: Condition }[]).map((person) => ({
+      list: 'people',
+      id: person.id,
+      refs: [{ when: bindCurrent(person.when, anyOf('regular')) }],
+    })),
+},
 ```
 
 ### bindCurrent
@@ -300,6 +304,6 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 ## Gotchas
 
 - **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and bands by id alone.
-- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) both report it, and the loader also reports a kind the game doesn't declare.
+- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.

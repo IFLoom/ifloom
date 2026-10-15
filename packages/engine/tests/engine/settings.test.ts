@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { createRunner, replay } from '../../src/runner.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { settingValue } from '../../src/settings.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -43,7 +44,7 @@ function game(patch: Partial<Game> = {}): Game {
 
 /** A game loaded from a pack with a scene whose choices read settings. */
 function loaded(scene?: Pack['scenes']) {
-  const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = fixture()
+  const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = fixture()
   const pack: Pack = {
     id: 'core',
     schema: SCHEMA,
@@ -185,14 +186,14 @@ describe('ui settings', () => {
 
 describe('the loader’s settings checks', () => {
   const problemsOf = (pack: Partial<Pack>, base: Partial<Game> = {}) => {
-    const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
     return loadGame([{ id: 'core', schema: SCHEMA, ...pack }], { ...rest, ...base }).problems.map(describeProblem)
   }
 
   it('finds two settings with one id in one list, but lets a later pack redeclare one', () => {
     const toggle: SettingDef = { id: 'hints', label: 'Hints', kind: 'toggle', default: true }
     expect(problemsOf({ settings: [toggle, toggle] })).toEqual(['core · setting hints · two settings share this id'])
-    const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
     const twice = loadGame(
       [
         { id: 'core', schema: SCHEMA, settings: [toggle] },
@@ -251,8 +252,8 @@ describe('the loader’s settings checks', () => {
   })
 })
 
-describe('validatePack’s settings checks', () => {
-  it('mirrors the loader', () => {
+describe('settings checks in a hand-built game', () => {
+  it('are the loader’s', () => {
     const g = game({
       introScene: undefined,
       settings: [
@@ -263,14 +264,14 @@ describe('validatePack’s settings checks', () => {
       finished: { any: [{ setting: 'volume' }, { setting: 'textSize' }, { setting: 'patience', is: 3 }] },
       carryOver: { stats: ['charm'], items: ['umbrella'] },
     })
-    expect(validatePack(g)).toEqual([
-      'settings: duplicate id hints',
+    expect(problemsOf(g)).toEqual([
+      'setting hints: two settings share this id',
       'setting upside: min is above max',
       'finished: unknown setting "volume"',
       'finished: setting "textSize" is a ui setting; conditions read only play settings',
       'finished: 3 for setting "patience" is not in steps of 2',
-      'carryOver: stat charm is not declared',
-      'carryOver: item umbrella does not exist',
+      'carryOver: unknown stat "charm"',
+      'carryOver: unknown item "umbrella"',
     ])
   })
 })

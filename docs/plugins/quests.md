@@ -383,6 +383,8 @@ When the game loads, the plugin reports these problems against the pack each que
 mod:sunday-market · quests stall · stage haggle: unknown character "trader"
 ```
 
+A quest condition, effect or command that names a quest the game doesn't have gives `unknown quest "…"` where it's written, such as `town · activity ask · unknown quest "stal"`.
+
 ## Gotchas
 
 - **Stages are done in order.** A later stage whose condition holds early doesn't count until every stage before it is done, and it only counts then if it still holds. In the example, if `hadCoffee` were somehow set before the player stepped out, the quest would still say "Step out onto the high street." Reaching the high street would then finish both stages at once.

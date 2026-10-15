@@ -190,13 +190,13 @@ describe('entities', () => {
       { id: 'cafe', title: 'The Café' },
     )
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'trigger empty: unknown kind "staf"',
+      'trigger empty: unknown kind "dishes"',
+      'trigger empty: in each dishes: unknown kind "meal"',
       'stat shine: belongs to unknown kind "car"',
       'entity pet:cat: unknown kind "pet"',
       'entity dish:7: an entity id must not be a whole number',
       'entity staff:cleo: no staff stat named "coins"',
-      'trigger empty: unknown kind "staf"',
-      'trigger empty: unknown kind "dishes"',
-      'trigger empty: in each dishes: unknown kind "meal"',
     ])
   })
 })

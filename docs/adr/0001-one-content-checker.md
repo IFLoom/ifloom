@@ -1,6 +1,6 @@
 # 0001. One content checker
 
-**Status:** Accepted, 2026-10-16
+**Status:** Accepted and implemented, 2026-10-16
 
 ## Context
 
@@ -8,7 +8,7 @@ The engine checked content in two places. `loadGame` checked a loaded game's pac
 
 ## Decision
 
-There is one public checker, `checkGame(game, { probes? })`, which runs on any `Game` and returns its problems and the files it names. `loadGame` calls it and only adds which pack each problem came from, and `validatePack` is removed. The implementation is still to come.
+There is one public checker, `checkGame(game, { probes? })`, which runs on any `Game` and returns its problems and the files it names. `loadGame` calls it and only adds which pack each problem came from, and `validatePack` is removed. What each kind of condition, effect and command names is one table, `references.ts`, and plugins declare `references` for their own calls and content. It's implemented in `packages/engine/src/check.ts` and `references.ts`, and the commit is coming.
 
 ## Why
 

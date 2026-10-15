@@ -58,7 +58,7 @@ The engine keeps no time of day either. An activity that takes time says so in i
 
 **Gotchas.**
 - A custom effect sees the state before the cost was paid.
-- The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) check an activity's ids. Neither looks inside a custom effect, and an undeclared one adds nothing.
+- The [content checker](/reference/checks) checks an activity's ids. It doesn't look inside a custom effect, and an undeclared one adds nothing.
 - The engine adds no button of its own. To let the player wait in any room, declare a `wait` activity and offer it from the game's [`actions`](/reference/game#game), as the showcase does:
 
 ```ts

@@ -49,7 +49,7 @@ function game(extra: Partial<Pack> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([pack], { id: 'msgs', title: 'Msgs', introScene: 'none', plugins: [clock, cast(), plugin] })
+  const loaded = loadGame([pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -121,7 +121,7 @@ describe('messages', () => {
           data: { messages: { messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }] } },
         },
       ],
-      { id: 'g', title: 'g', introScene: 'none', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(loaded.problems).toEqual(
       expect.arrayContaining([

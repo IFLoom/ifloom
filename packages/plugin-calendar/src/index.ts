@@ -242,7 +242,10 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
         curfew: curfewBinds(state, context) && !state.sceneId && index(slice.period) === P - 1,
       }
     },
-    check: (_game, { conditionProblems }) => {
+    references: {
+      content: () => (curfew ? [{ list: 'options', id: 'curfew', refs: [{ when: curfew }] }] : []),
+    },
+    check: () => {
       const problems: PluginProblem[] = []
       const say = (id: string, what: string) => problems.push({ list: 'options', id, what })
       if (!P) say('periods', 'a calendar needs at least one period')
@@ -256,7 +259,6 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
         for (const id of sleep.from) known(id, 'sleep')
       }
       for (const day of weekend) if (day < 0 || day >= week) say('weekend', `no day ${day} in a week of ${week}`)
-      if (curfew) for (const what of conditionProblems(curfew)) say('curfew', what)
       return problems
     },
   })

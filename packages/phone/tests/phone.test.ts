@@ -129,7 +129,7 @@ function game(): Game {
   const loaded = loadGame([town], {
     id: 'phone-town',
     title: 'Phone town',
-    introScene: 'none',
+
     plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
     collections: kit.collections,
     rules: {

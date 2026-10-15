@@ -513,13 +513,13 @@ When the game loads, the plugin reports these problems against the pack each mes
 - A body block with no prose (`no prose for "…"`), and anything the block's `when` names.
 - Two replies with the same id (`two replies are called "…"`).
 - A reply with no label (`no prose for "<message id>#<reply id>"`).
-- Anything a reply's `when` names, such as `reply <id>: unknown storyline "…"`.
+- Anything a reply's `when` or `effects` name, such as `reply <id>: unknown storyline "…"`.
 
 ```text
 mod:summer-fete · messages fete.invite · no prose for "fete.invite#maybe"
 ```
 
-The plugin doesn't check the effects on a reply.
+A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `messages/reply` command, naming a message the game doesn't have gives `unknown message "…"` where it's written.
 
 ## Gotchas
 

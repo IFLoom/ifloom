@@ -113,7 +113,7 @@ How many notices the state keeps. When a 51st is raised, the oldest goes, whethe
 
 ## Gotchas
 
-- **`text` is a prose key, not words.** The loader reports one with no prose (`no prose for "…"`) in triggers, activities and data scene choices. `title` is the opposite. It's written out and never looked up.
+- **`text` is a prose key, not words.** The [content checker](/reference/checks) reports one with no prose (`no prose for "…"`) wherever the effect is. `title` is the opposite. It's written out and never looked up.
 - **Notices are capped at `NOTICES_KEPT`.** They're for news, not records. Put anything the player must be able to find again in a [collection](/reference/collections).
 - **Give a notice an `id` if it can be raised more than once.** Without one, a notice raised every turn adds a copy each time. With one, it replaces itself.
 - **A made-up id is only unique among the notices kept.** It's `notice.<turn>.<n>`, the first one not in the list, so once an old notice has gone its id can be handed out again. If you want to replace or dismiss a notice by id later, name it yourself.

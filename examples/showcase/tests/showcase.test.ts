@@ -3,7 +3,7 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, holds, startingState, view, validatePack, type Command, type GameState } from '@ifloom/engine'
+import { apply, checkGame, holds, startingState, view, type Command, type GameState } from '@ifloom/engine'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
@@ -34,7 +34,8 @@ const quests = (state: GameState) => view(state, game).plugins.quests as QuestsV
 describe('Small Town', () => {
   it('loads with nothing wrong', () => {
     expect(problems).toEqual([])
-    expect(validatePack(game)).toEqual([])
+    // Checked again as it stands, the loaded game is the same.
+    expect(checkGame(game).problems).toEqual([])
   })
 
   it('holds the player in moving day until they unpack', () => {

@@ -1,22 +1,27 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { artSrc, audioSrc, describeProblem, mediaKind, validatePack, type Game, type Problem } from '@ifloom/engine'
+import { artSrc, audioSrc, checkGame as checkContent, describeProblem, mediaKind, type Game, type Problem } from '@ifloom/engine'
 
 /** What a game module can export: a game, `{ game, problems }`, or a function that returns either. */
 type Exported = Game | { game: Game; problems?: unknown[] } | (() => Game | { game: Game; problems?: unknown[] })
 
-/** The game a module exports, as `default` or `game`, with whatever problems its loader reported. */
+/**
+ * The game a module exports, as `default` or `game`, with its content
+ * checker's problems. A loaded game comes with them, since `loadGame` ran the
+ * checker; a hand-built one is checked here. Either way each is listed once.
+ */
 export function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[] } {
   let found = (module.default ?? module.game) as Exported | undefined
   if (typeof found === 'function') found = found()
   if (!found) throw new Error('The game module exports no game: export it as `default` or `game`.')
-  if ('game' in found && typeof found.game === 'object') {
-    return { game: found.game, problems: (found.problems ?? []).map(asText) }
+  if ('game' in found && typeof found.game === 'object' && Array.isArray(found.problems)) {
+    return { game: found.game, problems: found.problems.map(asText) }
   }
-  return { game: found as Game, problems: [] }
+  const game = ('game' in found && typeof found.game === 'object' ? found.game : found) as Game
+  return { game, problems: checkContent(game).problems.map(describeProblem) }
 }
 
-/** A loader problem in the loader's own words; anything else as a string. */
+/** A problem as `describeProblem` words it; anything else as a string. */
 function asText(problem: unknown): string {
   return typeof problem === 'object' && problem !== null && 'what' in problem ? describeProblem(problem as Problem) : String(problem)
 }
@@ -149,11 +154,11 @@ export function checkFiles(game: Game, dir: string, inlined?: ReadonlySet<string
 }
 
 /**
- * Everything wrong with a game: its loader's problems, then `validatePack`'s,
- * then, given the game's public folder, every sound, picture and video file
- * that isn't in it.
+ * Everything wrong with a game: the engine's content checker's problems,
+ * once, then, given the game's public folder, every sound, picture and video
+ * file that isn't in it.
  */
 export function checkGame(module: Record<string, unknown>, publicDir?: string): string[] {
   const { game, problems } = gameFrom(module)
-  return [...problems, ...validatePack(game), ...(publicDir === undefined ? [] : checkFiles(game, publicDir))]
+  return [...problems, ...(publicDir === undefined ? [] : checkFiles(game, publicDir))]
 }

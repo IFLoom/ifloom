@@ -220,7 +220,7 @@ The game's [mods](/reference/mods), for the [mod manager](#modmanager). Pass it 
 | Field | What it is |
 |---|---|
 | `store` | The [`Mods`](/reference/mods#mods) store the game loaded its mods from at start-up. |
-| `problems` | What the [loader](/reference/loader#the-checks) found, as [`describeProblem`](/reference/loader#problem-and-describeproblem) writes it. Each problem that starts `mod:<id> ` is shown under that mod. The rest aren't shown. |
+| `problems` | What the [content checker](/reference/checks) found, as [`describeProblem`](/reference/checks#problem-and-describeproblem) writes it. Each problem that starts `mod:<id> ` is shown under that mod. The rest aren't shown. |
 | `onChange` | Builds the game again with the mods as they now are, usually `() => location.reload()`. Without it, the manager never offers to restart. |
 
 ```tsx

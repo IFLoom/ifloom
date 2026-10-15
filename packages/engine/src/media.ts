@@ -228,7 +228,7 @@ export function mediaMarkup(media: SceneMedia): string {
   return `[[${tag}:${parts.join('|')}]]`
 }
 
-// Checks, shared by the loader and validatePack.
+// Checks, used by the content checker (check.ts).
 
 /** What is wrong with asking this pool for these tags. */
 export function poolProblems(game: Game, pool: string, tags: readonly string[] = []): string[] {

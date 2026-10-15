@@ -74,6 +74,7 @@ export default defineConfig({
             { text: 'Saves', link: '/reference/saves' },
             { text: 'The profile', link: '/reference/profile' },
             { text: 'Packs and loading', link: '/reference/loader' },
+            { text: 'Checking content', link: '/reference/checks' },
             { text: 'Mods', link: '/reference/mods' },
           ],
         },

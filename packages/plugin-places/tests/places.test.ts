@@ -163,13 +163,13 @@ describe('places', () => {
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places({ start: 'nowhere' })] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity swim: unknown location "pier"',
       'activity swim: unknown location "lido"',
+      'activity swim: unknown location "pier"',
       'options start: unknown location "nowhere"',
-      'locations yard: exit to unknown location "lane"',
-      'locations yard: is inside itself',
       'locations yard: no prose for "place.yard"',
       'locations yard: action dig: unknown location "moon"',
+      'locations yard: exit to unknown location "lane"',
+      'locations yard: is inside itself',
     ])
   })
 

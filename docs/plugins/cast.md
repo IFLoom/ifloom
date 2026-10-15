@@ -569,7 +569,7 @@ const person: (who: string, kind?: string) => string
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `who`) or `cast/met` is looked up wherever the loader checks conditions, and so is every character in a `cast/talk` or `cast/call` on a game action or a plugin's button. One the game doesn't have is reported where it's named:
+**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `who`) or `cast/met` is looked up wherever the [content checker](/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
 
 ```text
 town · activity wave · unknown character "ghost"
@@ -577,21 +577,21 @@ town · activity wave · unknown character "ghost"
 
 **The characters themselves.** These are pinned on the pack each came from, with `where` as `characters <id>`. The plugin reports:
 
-- A `talk` scene the game doesn't have (`talks in unknown scene "…"`).
-- A `call.scene` the game doesn't have (`calls open unknown scene "…"`).
+- A `talk` scene the game doesn't have (`talk: opens unknown scene "…"`).
+- A `call.scene` the game doesn't have (`call: opens unknown scene "…"`).
 - A `call` with no `call.scene` and no `talk`, so a call would open nothing (`can be called, but a call opens no scene: give call a scene, or them a talk`).
 - A `storyline` the game doesn't have (`unknown storyline "…"`).
 - Anything a `schedule`, `talk` or `call` `when`, or `met`, names that the game doesn't have. `'$'` stands for any character here, so `{ stat: 'trust', of: '$' }` is checked against the stats declared `of: 'character'`.
 - With the places plugin, a `home` or schedule `location` it doesn't know (asked through [`places/known`](/plugins/places#queries)). `OFFSTAGE` is accepted. Without places, these aren't checked.
 
 ```text
-town · characters mole · talks in unknown scene "mole.hi"
+town · characters mole · talk: opens unknown scene "mole.hi"
 town · characters mole · unknown storyline "tunnels"
 town · characters mole · unknown location "burrow"
 town · characters vole · can be called, but a call opens no scene: give call a scene, or them a talk
 ```
 
-The places in `cast/at` aren't checked.
+The places in `cast/at` aren't checked. A `portrait` the game gives is listed in the checker's [`files`](/reference/checks#fileref), so `ifloom check` looks for it. The default one, `art/character/<id>.jpg`, isn't.
 
 ## Gotchas
 

@@ -23,6 +23,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type Reference,
   type SceneBeat,
 } from '@ifloom/engine'
 
@@ -280,16 +281,33 @@ export function feed(options: FeedOptions) {
       })
       return { feeds, unseen: feeds.reduce((sum, entry) => sum + entry.unseen, 0) }
     },
-    check: (game, { conditionProblems }) => {
+    references: {
+      calls: (kind, name, args) => {
+        if (kind === 'conditions' && name === 'appeared') return [{ entry: String(args.post), plugin: 'feed', list: 'posts', noun: 'post' }]
+        if (kind !== 'effects') return []
+        // What the player posts or comments: its words, and its picture or video as a path from the page.
+        const refs: Reference[] = []
+        if (args.text !== undefined) refs.push({ prose: String(args.text) })
+        if (name === 'post' && args.image !== undefined) refs.push({ picture: String(args.image), asWritten: true })
+        if (name === 'post' && args.video !== undefined) refs.push({ video: String(args.video), asWritten: true })
+        return refs
+      },
+      content: (game) =>
+        postDefs(game).map((post) => ({
+          list: 'posts',
+          id: post.id,
+          refs: [
+            { when: post.when },
+            { blocks: post.body },
+            ...(post.image !== undefined ? [{ picture: post.image, asWritten: true }] : []),
+            ...(post.video !== undefined ? [{ video: post.video, asWritten: true }] : []),
+          ],
+        })),
+    },
+    check: (game) => {
       const problems: PluginProblem[] = []
       for (const post of postDefs(game)) {
-        const say = (what: string) => problems.push({ list: 'posts', id: post.id, what })
-        if (!feedIds.has(post.feed)) say(`no feed called "${post.feed}"`)
-        for (const what of conditionProblems(post.when)) say(what)
-        for (const block of post.body ?? []) {
-          if ('text' in block && game.prose?.line(block.text) === undefined) say(`no prose for "${block.text}"`)
-          for (const what of conditionProblems(block.when)) say(what)
-        }
+        if (!feedIds.has(post.feed)) problems.push({ list: 'posts', id: post.id, what: `no feed called "${post.feed}"` })
       }
       return problems
     },

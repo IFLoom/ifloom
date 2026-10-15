@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { audioChannels, audioSrc, type GameAudio } from '../../src/audio.ts'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { replay } from '../../src/runner.ts'
 import { deserialize, migrate, serialize } from '../../src/save.ts'
 import { parseBeats } from '../../src/sceneBody.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
 
@@ -287,9 +288,12 @@ describe('audio', () => {
     it('report every audio problem in the loader, against the pack it came from', () => {
       const problems = game([house, broken]).problems.map(describeProblem)
       expect(problems).toEqual([
+        'broken · scene bad · "radio" is a playlist, not a sound',
         'broken · scene bad · track "knock" is a sound on channel "sfx", not background audio',
         'broken · scene bad · channel "sfx" plays sounds, not background audio',
         'broken · scene bad · unknown channel "stereo"',
+        'broken · activity bang · unknown track "bang"',
+        'broken · activity bang · unknown track "gone"',
         'broken · track hiss · on undeclared channel "radio"',
         'broken · track hiss · volume is not between 0 and 1',
         'broken · track mix · track "knock" is a sound on channel "sfx", not background audio',
@@ -300,9 +304,6 @@ describe('audio', () => {
         'broken · audio default · track "knock" is a sound on channel "sfx", not background audio',
         'broken · prose bad.text · track "calm" is background audio on channel "music", not a sound',
         'broken · prose bad.text · unknown track "nobody"',
-        'broken · scene bad · "radio" is a playlist, not a sound',
-        'broken · activity bang · unknown track "bang"',
-        'broken · activity bang · unknown track "gone"',
       ])
     })
 
@@ -314,9 +315,9 @@ describe('audio', () => {
       ])
     })
 
-    it('report the same in validatePack', () => {
+    it('report the same for the game, checked again', () => {
       const { game: g } = game([house, broken])
-      expect(validatePack(g)).toEqual(
+      expect(problemsOf(g)).toEqual(
         expect.arrayContaining([
           'track hiss: on undeclared channel "radio"',
           'track mix: unknown track "nothing"',
@@ -324,14 +325,14 @@ describe('audio', () => {
           'audio: setting "musicVolume" is not a ui toggle setting',
           'audio default: track "knock" is a sound on channel "sfx", not background audio',
           'scene bad: unknown channel "stereo"',
-          'scene bad: track "calm" is background audio on channel "music", not a sound',
-          'scene bad: unknown track "nobody"',
-          'scene bad choice go: "radio" is a playlist, not a sound',
+          'prose bad.text: track "calm" is background audio on channel "music", not a sound',
+          'prose bad.text: unknown track "nobody"',
+          'scene bad: "radio" is a playlist, not a sound',
           'activity bang: unknown track "bang"',
           'activity bang: unknown track "gone"',
         ]),
       )
-      expect(validatePack(game().game)).toEqual([])
+      expect(problemsOf(game().game)).toEqual([])
     })
   })
 

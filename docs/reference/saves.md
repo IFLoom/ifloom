@@ -460,4 +460,4 @@ const state = raw && migrateGame(raw, game)
 if (typeof state === 'string') showMessage(state)
 ```
 
-The [loader](/reference/loader#the-checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.
+The [content checker](/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.

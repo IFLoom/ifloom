@@ -549,8 +549,10 @@ town · activity swim · unknown location "lido"
 - Anything the `body` names that the game doesn't have, such as prose keys, variants or conditions (`no prose for "…"`).
 - Anything a `locked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown location "moon"`).
-- A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/reference/loader#audio).
-- Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/reference/loader#media).
+- A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/reference/checks#audio).
+- Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/reference/checks#media).
+
+A stage layer's file is listed in the checker's [`files`](/reference/checks#fileref). A place's `art` isn't, because no UI draws it.
 
 ```text
 base · options start · unknown location "nowhere"

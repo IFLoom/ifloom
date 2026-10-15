@@ -28,6 +28,7 @@ import {
   type MediaStage,
   type PluginArgs,
   type PluginProblem,
+  type Reference,
   type Requirement,
   type StageView,
 } from '@ifloom/engine'
@@ -123,6 +124,9 @@ export function where(state: GameState): string | null {
 }
 
 /** A list from arguments: `{ 'places/at': ['cafe'] }` arrives as `{ value: ['cafe'] }`. */
+/** A reference to one of the game's locations. */
+const location = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
+
 function ids(args: PluginArgs): string[] {
   const value = args.value ?? args.at ?? args.to ?? args.id
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
@@ -227,30 +231,39 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         exits,
       }
     },
-    argProblems: (kind, name, args, game) => {
-      const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args) : []) : kind === 'effects' ? (name === 'move' ? ids(args) : []) : name === 'go' ? ids(args) : []
-      return named.filter((id) => !locationById(game, id)).map((id) => `unknown location "${id}"`)
+    references: {
+      // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`.
+      calls: (kind, name, args) => {
+        const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args) : []) : kind === 'effects' ? (name === 'move' ? ids(args) : []) : name === 'go' ? ids(args) : []
+        return named.map(location)
+      },
+      content: (game) => [
+        ...(options.start !== undefined ? [{ list: 'options', id: 'start', refs: [location(options.start)] }] : []),
+        ...locationsOf(game).map((place) => ({
+          list: 'locations',
+          id: place.id,
+          refs: [
+            { blocks: place.body },
+            { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
+            // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
+            { stage: place.stage, choices: null },
+            ...(place.locked ?? []).map((entry) => ({ when: entry.when })),
+            ...(place.actions ?? []).map((action) => ({
+              within: `action ${action.id}`,
+              refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
+            })),
+          ],
+        })),
+      ],
     },
-    check: (game, { conditionProblems, blockProblems, commandProblems, audioProblems, stageProblems }) => {
+    check: (game) => {
       const problems: PluginProblem[] = []
       const say = (id: string, what: string) => problems.push({ list: 'locations', id, what })
-      if (options.start !== undefined && !locationById(game, options.start)) problems.push({ list: 'options', id: 'start', what: `unknown location "${options.start}"` })
       for (const place of locationsOf(game)) {
         for (const exit of place.exits) if (!locationById(game, exit)) say(place.id, `exit to unknown location "${exit}"`)
         if (place.parent !== undefined) {
           if (!locationById(game, place.parent)) say(place.id, `inside unknown location "${place.parent}"`)
           else if (ancestors(game, place.id).includes(place.id)) say(place.id, 'is inside itself')
-        }
-        for (const what of blockProblems(place.body)) say(place.id, what)
-        for (const what of audioProblems(place.audio)) say(place.id, `audio: ${what}`)
-        for (const what of stageProblems(place.stage)) say(place.id, what)
-        for (const entry of place.locked ?? []) for (const what of conditionProblems(entry.when)) say(place.id, what)
-        for (const action of place.actions ?? []) {
-          for (const what of [
-            ...conditionProblems(action.when),
-            ...(action.blocked ?? []).flatMap((entry) => conditionProblems(entry.when)),
-            ...commandProblems(action.command),
-          ]) say(place.id, `action ${action.id}: ${what}`)
         }
       }
       return problems

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { apply } from '../../src/reduce.ts'
 import { holds } from '../../src/condition.ts'
 import { view } from '../../src/view.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { proseStore } from '../../src/prose.ts'
 import type { Game } from '../../src/game.ts'
 import { begin, fixture, townProse } from '../fixtures/town.ts'
@@ -66,8 +66,8 @@ describe('collections', () => {
 
   it('are checked: an effect into a collection the game does not declare is reported', () => {
     const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', kind: 'gear' as const, use: { label: 'Snap', effects: [{ kind: 'collect' as const, to: 'album', entry: { id: 'x' } }] } }] }
-    expect(validatePack(game).join('\n')).toContain('collection album is not declared')
+    expect(problemsOf(game)).toContain('item camera: unknown collection "album"')
     const notes = { ...withGallery(), items: [{ id: 'pen', name: 'pen', desc: '', kind: 'gear' as const, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } }] }
-    expect(validatePack(notes).join('\n')).toContain('no prose for note.unwritten')
+    expect(problemsOf(notes)).toContain('item pen: no prose for "note.unwritten"')
   })
 })

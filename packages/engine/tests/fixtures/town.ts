@@ -41,6 +41,8 @@ export function fixture(rules: Game['rules'] = {}): Game {
     ],
     items: [],
     scenes: [
+      // Where a new game opens: nothing to read, and nothing to do but carry on.
+      { id: 'start', render: () => ({ choices: [] }) },
       {
         id: 'rosa.hello',
         render: () => ({ body: 'Rosa looks up from the dough.', choices: [{ id: 'bye', label: 'Bye', effects: [{ kind: 'scene', id: null }] }] }),

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, describeProblem, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { describeProblem } from '../../src/check.ts'
 import { apply, startingState } from '../../src/reduce.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import type { DataScene } from '../../src/scene.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 
 const leave = [{ id: 'leave', effects: [{ kind: 'scene' as const, id: null }] }]
 
@@ -102,9 +103,9 @@ describe('storylets', () => {
     )
   })
 
-  it('are checked by validatePack too', () => {
+  it('are checked in a hand-built game too', () => {
     const { game } = cafe([gossip, quiet])
     const broken = { ...game, activities: [{ id: 'sit', effects: [{ kind: 'scene' as const, from: 'nowhere', otherwise: 'cafe.gone' }] }] }
-    expect(validatePack(broken)).toEqual(expect.arrayContaining(['activity sit: no scene is drawn from nowhere', 'activity sit: scene cafe.gone does not exist']))
+    expect(problemsOf(broken)).toEqual(expect.arrayContaining(['activity sit: draws from "nowhere", but no scene is drawn from it', 'activity sit: goes to unknown scene "cafe.gone"']))
   })
 })

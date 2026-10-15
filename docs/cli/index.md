@@ -7,7 +7,7 @@
 | `ifloom new <name> [--template t] [--theme t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run. |
 | `ifloom dev` | Serves the game in a browser, reloading as you edit. |
 | `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures, videos and sound beside it (or the pictures inside it), then checks the folder opens from disk. |
-| `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find, and every sound, picture and video file missing from `public/`. |
+| `ifloom check [module]` | Loads the game and lists every problem the [content checker](/reference/checks) finds, once, and every sound, picture and video file missing from `public/`. |
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
 
@@ -122,7 +122,7 @@ ifloom check                     # reads src/game.ts
 ifloom check src/release.ts      # another module
 ```
 
-Loads the module through Vite, so it can import TypeScript, the engine and anything your config resolves. It takes the game the module exports and prints every problem, one per line, then a count:
+Loads the module through Vite, so it can import TypeScript, the engine and anything your config resolves. It takes the game the module exports and prints every problem the [content checker](/reference/checks) finds, one per line, then a count. A loaded game's problems come from `loadGame`, which ran the checker already. A game built by hand is checked here, and its problems name the pack `game`. Either way each problem is printed once.
 
 ```
 No problems.
@@ -149,7 +149,7 @@ data.places.locations[cafe].stage.layers[0]: no file public/art/cafe/room.jpg
 Export the game as `default` or as `game`, in any of these shapes:
 
 - a [`Game`](/reference/game#game);
-- what [`loadGame`](/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed first. They can be the loader's [`Problem`](/reference/loader#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are;
+- what [`loadGame`](/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are;
 - a function, called with no arguments, that returns either of those.
 
 The simplest module returns what `loadGame` gave it:
@@ -457,7 +457,7 @@ checkBuild('dist')   // []
 function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
-Everything wrong with the game a module exports: the problems it came with, then [`validatePack`](/reference/game#validatepack)'s. Given `publicDir`, it also adds every sound, picture and video file missing from it, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
+Everything wrong with the game a module exports: the problems it came with from `loadGame`, or for a game built by hand, what [`checkGame`](/reference/checks#checkgame) finds in it. Given `publicDir`, it also adds every sound, picture and video file missing from it, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
 
 ```ts
 import { expect, it } from 'vitest'
@@ -523,7 +523,7 @@ checkMedia(game, 'dist')   // []
 function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[] }
 ```
 
-The game a module exports, and the problems it came with as text. Loader [`Problem`](/reference/loader#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. It throws when the module has neither a `default` nor a `game` export.
+The game a module exports, and its problems as text. A module that exports what `loadGame` returns comes with its problems: [`Problem`](/reference/checks#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. A game exported without problems, such as one built by hand, is checked with [`checkGame`](/reference/checks#checkgame) here. It throws when the module has neither a `default` nor a `game` export.
 
 ```ts
 import { gameFrom } from '@ifloom/cli'

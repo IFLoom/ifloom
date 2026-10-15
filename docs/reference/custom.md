@@ -1,6 +1,6 @@
 # Custom functions
 
-Most content is data, such as conditions, effects and prose, which a tool can read, a mod can ship and the [loader](/reference/loader#the-checks) can check. When something has to be worked out in code, such as whether it's market day or what a loaf costs today, you declare a custom function on `game.custom` and content calls it by name.
+Most content is data, such as conditions, effects and prose, which a tool can read, a mod can ship and the [content checker](/reference/checks) can check. When something has to be worked out in code, such as whether it's market day or what a loaf costs today, you declare a custom function on `game.custom` and content calls it by name.
 
 ```ts
 import type { Game } from '@ifloom/engine'
@@ -63,7 +63,7 @@ custom: {
 { text: 'ava.hi/usual', when: { custom: 'visitedAtLeast', with: { times: 10 } } }
 ```
 
-**Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [loader](/reference/loader#the-checks) reports it, and [`explain`](/reference/conditions#explain) shows it as `custom condition isRegular is not declared by the game`.
+**Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/reference/checks) reports it, and [`explain`](/reference/conditions#explain) shows it as `custom condition isRegular is not declared by the game`.
 
 ## Effects
 
@@ -111,7 +111,7 @@ A plugin's condition or effect in short, with its full name as the only key and 
 { custom: 'quests/done', with: { quest: 'bread' } }
 ```
 
-It works anywhere a [condition](/reference/conditions) or an [`EffectRef`](#effects) goes, and the [loader](/reference/loader#the-checks) checks the name as it checks `{ custom }`.
+It works anywhere a [condition](/reference/conditions) or an [`EffectRef`](#effects) goes, and the [content checker](/reference/checks) checks the name as it checks `{ custom }`.
 
 How the value is read:
 
@@ -152,7 +152,7 @@ custom: {
 
 Prose writes <code v-pre>A loaf is {{v:breadPrice}} today.</code>, and a stat writes `max: { value: 'energyCeiling' }`.
 
-**Gotcha.** An unknown name in prose is left on screen as <code v-pre>{{v:breadPrice}}</code>, so you can see what's missing. An unknown stat ceiling quietly gives 100, but [`validatePack`](/reference/game#validatepack) reports it.
+**Gotcha.** An unknown name in prose is left on screen as <code v-pre>{{v:breadPrice}}</code>, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/reference/checks) reports it as `no custom value named "…"`.
 
 ## Panels
 
@@ -170,7 +170,7 @@ custom: {
 // DataScene: { id: 'market.stall', panel: 'StallPanel', panelData: 'stallPrices', ... }
 ```
 
-**Gotcha.** An unknown name gives `panelData: undefined` rather than an error, and the loader doesn't check panel names.
+**Gotcha.** An unknown name gives `panelData: undefined` rather than an error. The [content checker](/reference/checks) reports a data scene's unknown one as `no custom panel named "…"`.
 
 ## Looking them up
 

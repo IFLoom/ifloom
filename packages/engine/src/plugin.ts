@@ -1,12 +1,11 @@
 import { say } from './strings.ts'
-import type { Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import type { EffectRef } from './custom.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef } from './entities.ts'
-import type { MediaStage } from './media.ts'
+import type { Reference } from './references.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -169,15 +168,21 @@ export type Plugin<S = any> = {
     onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   }
   /**
-   * Check this plugin's content when the game is loaded. `conditionProblems` lists what
-   * a condition names that the game does not have, as the loader words it.
+   * What this plugin's calls and content name, for the content checker to
+   * resolve as it resolves the engine's own. See `PluginReferences`.
+   */
+  references?: PluginReferences
+  /**
+   * Rules of this plugin's own that a reference can't say: two entries with
+   * one id, an exit to nowhere. Run by the content checker after the
+   * references; `tools` words anything else the plugin names as the checker does.
    */
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
   /**
    * What is wrong with how content calls one of this plugin's conditions,
-   * effects or commands, by name without the prefix: `['no place called "moon"']`.
-   * The loader asks it of every call it finds, so a plugin can check the
-   * names content passes it as the engine checks its own.
+   * effects or commands, by name without the prefix, by a rule of the
+   * plugin's own: `['nobody sells "fish"']`. Names it can say as references
+   * belong in `references.calls` instead. Asked of every call the checker finds.
    */
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 }
@@ -205,22 +210,33 @@ export type StageDef = {
   id?: string
 }
 
-/** What the loader lends a plugin's `check`, to word its problems as the loader words its own. */
-export type CheckTools = {
-  /** What a condition names that the game does not have. */
-  conditionProblems: (condition: Condition | undefined) => string[]
-  /** What blocks name that the game does not have: prose keys, variants, conditions. */
-  blockProblems: (blocks: readonly Block[]) => string[]
-  /** What a button's command names that the game does not have. */
-  commandProblems: (command: Command) => string[]
-  /** What background audio by channel names that the game does not have, or can't play there: a place's `audio`. */
-  audioProblems: (audio: Record<string, string | null> | undefined) => string[]
+/**
+ * What a plugin's calls and content name. The content checker resolves every
+ * reference against the game and reports what is missing, worded and placed
+ * as its own problems are.
+ */
+export type PluginReferences = {
   /**
-   * What is wrong with a stage that has no scene, such as a place's: pools,
-   * flags, hotspot rects, layers, and the conditions and commands it names. A
-   * hotspot there can't name a choice.
+   * What a call to one of its conditions, effects or commands names, by name
+   * without the prefix, from what content passes in `with`: a location, a
+   * character, a prose key. Asked of every call the checker finds.
    */
-  stageProblems: (stage: MediaStage | undefined) => string[]
+  calls?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  /**
+   * What its content names, entry by entry: `{ list: 'locations', id: 'cafe',
+   * refs: [...] }`. A problem is reported against `<list> <id>`, and pinned
+   * on the pack that entry came from.
+   */
+  content?: (game: Game) => readonly ContentReferences[]
+}
+
+/** What one entry of a plugin's content names. `list` and `id` say where, as a `PluginProblem` does. */
+export type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
+
+/** What the content checker lends a plugin's `check`. */
+export type CheckTools = {
+  /** What these references name that the game doesn't have, in the checker's words. */
+  problems: (refs: readonly Reference[]) => string[]
 }
 
 /** One entry of a plugin's content in a pack: an id, and whatever fields the plugin reads. */

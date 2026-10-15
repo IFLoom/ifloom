@@ -357,7 +357,7 @@ export function audioView(
   return { channels, cues, muteSetting: game.audio.mute ?? null }
 }
 
-// Checks, shared by the loader and validatePack.
+// Checks, used by the content checker (check.ts).
 
 /** What is wrong with putting these tracks on these background channels: a scene's `audio`, a place's, the game's default. */
 export function placementProblems(game: Game, audio: Record<string, string | null | undefined>): string[] {

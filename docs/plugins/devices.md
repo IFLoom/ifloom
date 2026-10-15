@@ -502,19 +502,19 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 - an app on a device the plugin wasn't given (`no device called "…"`)
 - anything the app's `when`, a `locked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
-- a count badge naming a value no plugin and no custom function has (`no value named "…"`)
+- a count badge naming a value no plugin and no custom function has (`no custom value named "…"`)
 - a collection the game doesn't declare (`unknown collection "…"`)
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
 - a panel the game has no custom panel for (`no custom panel named "…"`)
 - a prose block with no prose (`no prose for "…"`), and anything its `when` names
-- anything an action's `when` or `command` names that the game doesn't have, checked as the game's own [actions](/reference/actions#actiondef) are
+- anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, checked as the game's own [actions](/reference/actions#actiondef) are
 
 The action check catches an unknown scene, activity or item, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
 A problem with an app from a pack is pinned on that pack. One with an app given to `devices(...)` is pinned on `base`.
 
 ```text
-base · apps mail · no value named "messages/unread-mail"
+base · apps mail · no custom value named "messages/unread-mail"
 mod:radio · apps tuner · no custom panel named "dial"
 ```
 

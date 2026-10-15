@@ -29,6 +29,7 @@ import {
   type GameState,
   type ActionDef,
   type PluginProblem,
+  type Reference,
   type RenderedChoice,
 } from '@ifloom/engine'
 
@@ -274,33 +275,39 @@ export function devices(options: DevicesOptions) {
         }
       }),
     }),
-    check: (game, { conditionProblems, commandProblems }) => {
+    references: {
+      content: (game) =>
+        apps(game).map((app) => ({
+          list: 'apps',
+          id: app.id,
+          refs: [
+            { when: app.when },
+            ...(app.locked ?? []).map((entry) => ({ when: entry.when })),
+            ...(app.badge && 'count' in app.badge ? [{ value: app.badge.count }] : []),
+            ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
+            ...app.sections.flatMap((section): Reference[] => {
+              if ('collection' in section) return [{ collection: section.collection }]
+              if ('panel' in section) return [{ panel: section.panel }]
+              if ('prose' in section) return [{ blocks: section.prose }]
+              if ('actions' in section) {
+                return section.actions.map((action) => ({
+                  within: `action ${action.id}`,
+                  refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
+                }))
+              }
+              return []
+            }),
+          ],
+        })),
+    },
+    check: (game) => {
       const problems: PluginProblem[] = []
-      const collections = new Set((game.collections ?? []).map((entry) => entry.id))
       const pluginIds = new Set((game.plugins ?? []).map((plugin) => plugin.id))
       for (const app of apps(game)) {
         const say = (what: string) => problems.push({ list: 'apps', id: app.id, what })
         if (!deviceIds.has(app.on)) say(`no device called "${app.on}"`)
-        for (const what of conditionProblems(app.when)) say(what)
-        for (const entry of app.locked ?? []) for (const what of conditionProblems(entry.when)) say(what)
-        if (app.badge && 'count' in app.badge && !customValue(game, app.badge.count)) say(`no value named "${app.badge.count}"`)
-        if (app.badge && 'when' in app.badge) for (const what of conditionProblems(app.badge.when)) say(what)
         for (const section of app.sections) {
-          if ('collection' in section && !collections.has(section.collection)) say(`unknown collection "${section.collection}"`)
           if ('plugin' in section && !pluginIds.has(section.plugin)) say(`the game has no plugin named "${section.plugin}"`)
-          if ('panel' in section && !customPanel(game, section.panel)) say(`no custom panel named "${section.panel}"`)
-          if ('prose' in section) {
-            for (const block of section.prose) {
-              if ('text' in block && game.prose?.line(block.text) === undefined) say(`no prose for "${block.text}"`)
-              for (const what of conditionProblems(block.when)) say(what)
-            }
-          }
-          if ('actions' in section) {
-            for (const action of section.actions) {
-              for (const what of conditionProblems(action.when)) say(`action ${action.id}: ${what}`)
-              for (const what of commandProblems(action.command)) say(`action ${action.id}: ${what}`)
-            }
-          }
         }
       }
       return problems

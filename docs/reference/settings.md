@@ -114,7 +114,7 @@ A save keeps the play settings it was made with. Loading it doesn't apply the pl
 
 ## Checks
 
-The [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) report:
+The [content checker](/reference/checks) and [`loadGame`](/reference/loader#what-the-loader-adds) report:
 
 - two settings with the same id in one list
 - a `default` the setting can't take

@@ -97,7 +97,7 @@ export function customPanel(game: Game | undefined, name: string): CustomPanel |
  * custom effect is worked out here, from the state before any of the list
  * applies; a plugin's is passed on as `{ kind: 'custom' }` and runs in its turn,
  * on the state the effects before it left. A custom effect nobody has
- * contributes nothing; the loader and `validatePack` report it by name.
+ * contributes nothing; the content checker (`checkGame`) reports it by name.
  */
 export function buildEffects(state: GameState, game: Game, refs: readonly EffectRef[], depth = 0): Effect[] {
   const out: Effect[] = []
@@ -116,9 +116,4 @@ export function buildEffects(state: GameState, game: Game, refs: readonly Effect
     if (fn && depth < 10) out.push(...buildEffects(state, game, fn(state, ref.with ?? {}), depth + 1))
   }
   return out
-}
-
-/** Every custom effect a list names, for the loader to check. */
-export function customEffectsUsed(refs: readonly EffectRef[]): string[] {
-  return refs.flatMap((ref) => customCall(ref)?.custom ?? [])
 }

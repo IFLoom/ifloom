@@ -63,7 +63,7 @@ function game(extra: QuestDef[] = []): Game {
   const loaded = loadGame([town], {
     id: 'bread-town',
     title: 'Bread town',
-    introScene: 'none',
+
     plugins: [plugin],
   })
   expect(loaded.problems).toEqual([])
@@ -157,13 +157,13 @@ describe('quests', () => {
     }
     const loaded = loadGame(
       [{ id: 'mod', schema: SCHEMA, data: { quests: { quests: [broken] } } }],
-      { id: 'g', title: 'g', introScene: 'none', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'quests broken', what: 'unknown storyline "nobody"' },
       { pack: 'mod', where: 'quests broken', what: 'stage a: unknown item "moonstone"' },
-      { pack: 'mod', where: 'quests broken', what: 'two stages are called "a"' },
       { pack: 'mod', where: 'quests broken', what: 'starts: no custom condition named "quests/nope"' },
+      { pack: 'mod', where: 'quests broken', what: 'two stages are called "a"' },
     ])
   })
 

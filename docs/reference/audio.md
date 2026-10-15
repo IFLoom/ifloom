@@ -322,7 +322,7 @@ audioChannels(game).music  // { mode: 'background', crossfade: 1000, volume: 'mu
 
 ## Checks
 
-The loader and [`validatePack`](/reference/game#validatepack) check everything audio names. The list is under [the checks](/reference/loader#audio).
+The [content checker](/reference/checks) checks everything audio names. The list is under [Audio](/reference/checks#audio). It also lists every track's file in [`files`](/reference/checks#fileref).
 
 ## Gotchas
 

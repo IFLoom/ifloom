@@ -59,7 +59,7 @@ type StatDef = {
 | `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
 
 **Gotchas.**
-- You have to declare a stat before you use it. [`validatePack`](/reference/game#validatepack) and the [loader](/reference/loader#the-checks) report content that names an undeclared stat, or names a stat on the wrong owner.
+- You have to declare a stat before you use it. The [content checker](/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.
 - Keep money in whole minor units, such as pence or cents, and let your UI place the decimal point. Sums and saves stay exact that way.
 - Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
 - `spendable` changes what's shown, not what's allowed. Any stat can be in an activity's `cost`, and the activity's price lists it either way.
@@ -325,7 +325,7 @@ A derived stat that another formula reads is held to its range before the other 
 
 A derived stat is never written. A `stat` or `setStat` effect on one does nothing, a [cost](/reference/actions#activitycost) doesn't spend it, and a [`create`](/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
 
-The [loader](/reference/loader#the-checks) reports each of these:
+The [content checker](/reference/checks) reports each of these:
 
 - a `stat` or `setStat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
 - an activity whose `cost` spends one (`spends stat "…", which is derived and never written`);
@@ -333,7 +333,7 @@ The [loader](/reference/loader#the-checks) reports each of these:
 - a formula that names a stat the game doesn't declare, or one with another owner;
 - a cycle, such as `service` reading `mood` while `mood` reads `service`. It's reported as `derive goes round in a cycle: service → mood → service`. If you run the game anyway, a formula that goes round reads 0 once it's 64 steps deep.
 
-[`validatePack`](/reference/game#validatepack) reports the same formula, `spendable`, `start` and cycle problems, and a `stat` or `setStat` effect on a derived stat in item uses and activities.
+These come from the [content checker](/reference/checks), wherever the effect or the stat is.
 
 ## Levels
 
@@ -394,7 +394,7 @@ The React UI's [`StatList`](/react/components#statlist) shows a levelled stat's 
 
 ### The checks
 
-The loader and [`validatePack`](/reference/game#validatepack) report, against `stat <id>`:
+The [content checker](/reference/checks) reports, against `stat <id>`:
 
 - `levels.at needs at least one threshold`, for an empty or missing `at`;
 - `levels.at must go up, each threshold above the last`, for thresholds out of order or repeated;

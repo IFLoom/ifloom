@@ -79,7 +79,7 @@ const { game } = loadGame([cafe], {
 
 After five coffees, `loyalty.read(state, game)` is `{ stamps: 5 }`, the counter says `Your card has 5 stamps.`, and Claim a free coffee is on offer.
 
-That's a working plugin. The engine saves its state with the game, and the [loader](/reference/loader#the-checks) reports a call to a name the plugin doesn't have, such as `cafe · activity coffee · no custom effect named "loyalty/stomp"`. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
+That's a working plugin. The engine saves its state with the game, and the [content checker](/reference/checks) reports a call to a name the plugin doesn't have, such as `cafe · activity coffee · no custom effect named "loyalty/stomp"`. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
 
 ## A worked example
 
@@ -159,6 +159,7 @@ import {
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
+  type PluginReferences, type ContentReferences,
 } from '@ifloom/engine'
 
 type Plugin<S = any> = {
@@ -190,6 +191,7 @@ type Plugin<S = any> = {
   profile?: {
     onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   }
+  references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 }
@@ -199,7 +201,7 @@ type Plugin<S = any> = {
 
 | Field | What it is |
 |---|---|
-| `id` | Its name, and the prefix on everything it adds: `loyalty` gives `loyalty/stamp`. Letters, digits and `-` only. The loader reports any other id, and two plugins with the same one. |
+| `id` | Its name, and the prefix on everything it adds: `loyalty` gives `loyalty/stamp`. Letters, digits and `-` only. The [content checker](/reference/checks) reports any other id, and two plugins with the same one. |
 | `version` | The version of its state's shape. Bump it when the shape changes, and add a step to `migrations`. Saves record it. |
 | `start` | Its state in a new game. A plugin with no state leaves this out. |
 | `migrations` | One step per version, keyed by the version it upgrades from. See [State and migrations](#state-and-migrations). |
@@ -222,8 +224,9 @@ type Plugin<S = any> = {
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
-| `check` | Checks the plugin's content when the game is loaded. See [Content and checks](#content-and-checks). |
-| `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, checked when the game is loaded. See [Checking calls](#checking-calls). |
+| `references` | What its calls and content name, for the [content checker](/reference/checks) to resolve. See [References](#references). |
+| `check` | Rules of its own about its content, checked with the rest of the game. See [check](#check). |
+| `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, by a rule of its own. See [Checking calls](#checking-calls). |
 
 ## PluginContext
 
@@ -265,7 +268,7 @@ return set({ ...slice, stamps: slice.stamps + 1 }, moved)
 type PluginArgs = Record<string, unknown>
 ```
 
-What content passes in `with`, unchecked. It's `{}` when `with` is left out. Read it defensively, for example `Number(args.atLeast ?? 1)` or `String(args.quest ?? '')`, because content is data and a mod can pass anything. To report bad arguments when the game loads, give the plugin [`argProblems`](#checking-calls).
+What content passes in `with`, unchecked. It's `{}` when `with` is left out. Read it defensively, for example `Number(args.atLeast ?? 1)` or `String(args.quest ?? '')`, because content is data and a mod can pass anything. To have the names it passes checked when the game loads, give the plugin [`references`](#references), and for rules of its own, [`argProblems`](#checking-calls).
 
 ## PluginCommand
 
@@ -339,7 +342,7 @@ A plugin usually exports small typed helpers that write these objects for author
 
 **Gotchas.**
 - A value name in prose is letters, digits, `_` and `-` after the `/`, so <code v-pre>{{v:loyalty/stamps-left}}</code> prints. Anything else isn't a token and is left on screen as written.
-- A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [loader](/reference/loader#the-checks) reports most of them when the game loads.
+- A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/reference/checks) reports most of them when the game loads.
 
 ## Queries
 
@@ -388,7 +391,7 @@ const bedtime = pluginQuery(game, 'calendar/bedtime')?.(state) ?? false
 cooperates?: string[]
 ```
 
-The ids of plugins this one works with when the game has them. Content written for this plugin may then name those plugins' conditions, effects and commands, in full or [in short](/reference/custom#plugincall), even in a game without them. The loader doesn't report them, and in play the condition is false, the effect does nothing and the command is refused.
+The ids of plugins this one works with when the game has them. Content written for this plugin may then name those plugins' conditions, effects and commands, in full or [in short](/reference/custom#plugincall), even in a game without them. The [content checker](/reference/checks#absent-partners) doesn't report them, and in play the condition is false, the effect does nothing and the command is refused.
 
 ```ts
 export const loyalty = definePlugin<Card>({
@@ -403,7 +406,7 @@ export const loyalty = definePlugin<Card>({
 **Gotchas.**
 - It only covers plugins the game doesn't have. In a game that has the partner, a name the partner doesn't declare is reported as usual.
 - A plugin nobody lists in `cooperates` is still reported, as `no custom condition named "calendar/weekend"`.
-- [`validatePack`](/reference/game#validatepack) excuses a long-form `{ kind: 'custom' }` effect of an absent partner, but still reports a game action whose `custom` command belongs to one. See [What validatePack adds](/reference/loader#what-validatepack-adds).
+- It covers every form: a condition, an effect in either form, and a command. See [Absent partners](/reference/checks#absent-partners).
 - A value in prose from an absent partner is left on screen.
 
 ## Effects run in order
@@ -774,7 +777,7 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 - The first answer wins, so a plugin listed earlier in `game.plugins` hides a later one's stage. Only answer when the stage is yours. The stall's is `undefined` once it's packed up.
 - A scene with no title of its own takes the stage's title, then the game's. The stall's scenes are headed The market stall while it's open.
 - Only `view.scene` changes. In a game with the [places plugin](/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
-- The loader doesn't see a stage's blocks, because they're worked out in play. Check the prose keys they name in [`check`](#content-and-checks) with `blockProblems`.
+- The content checker doesn't see a stage's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
 
 ## Buttons
 
@@ -792,7 +795,7 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 **Gotchas.**
 - A button whose `when` doesn't hold is left out, and so is one whose command is stopped by a [lock](/reference/locks) with `hide: true`. Any other lock greys it out with its line, like any button.
 - Like the game's own actions, they aren't offered while a scene is open or while a lock that stops everything is on ([`lockedOut`](/reference/locks#lockedout)).
-- The loader doesn't see them. Check what their commands name in [`check`](#content-and-checks) with `commandProblems`.
+- The content checker doesn't see them. Say what their commands name in [`references`](#references), as `{ command }`.
 
 ## Audio
 
@@ -811,7 +814,7 @@ It comes third of [four levels](/reference/audio#what-plays-on-a-background-chan
 
 **Gotchas.**
 - The engine asks it on every [`view`](/reference/view) and after every command, so keep it cheap.
-- The loader doesn't see the tracks it names. Check them in [`check`](#content-and-checks) with `audioProblems`.
+- The content checker doesn't see the tracks it names. Say them in [`references`](#references), as `{ channel, track }`.
 
 ## Speakers
 
@@ -891,7 +894,7 @@ entities?: (game: Game) => readonly EntityDef[]
 A plugin can bring the [kinds](/reference/entities#kinddef) of thing it keeps, and the [entities](/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and variables that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
 - **`kinds`** are merged by the [loader](/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in a pack, replaces the plugin's. That's how a game renames one.
-- **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/reference/game#game) and are [checked](/reference/loader#the-checks) like any declared entity, against the plugin's id.
+- **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/reference/game#game) and are [checked](/reference/checks) like any declared entity, against the plugin's id.
 
 The regulars above, each also an entity with a stat of their own:
 
@@ -946,14 +949,59 @@ The [loader](/reference/loader#pack) merges `data` as it merges scenes: a later 
 type PluginEntry = { id: string; [field: string]: unknown }
 ```
 
-One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and a pack's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so a pack writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types where it reads them, and checks them in `check`.
+One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and a pack's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so a pack writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types where it reads them, says what they name in [`references`](#references), and checks its own rules in [`check`](#check).
 
-`check(game, tools)` runs once the game is loaded. It returns a [`PluginProblem`](#pluginproblem) for each fault in the plugin's content. The loader lends it [`CheckTools`](#checktools), so the plugin can check its conditions, blocks and buttons with the loader's own checks, in the same words:
+### References
 
 ```ts
-check: (game, { conditionProblems }) =>
+references?: PluginReferences
+
+type PluginReferences = {
+  calls?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  content?: (game: Game) => readonly ContentReferences[]
+}
+
+type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
+```
+
+What the plugin's calls and content name, so the [content checker](/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
+
+- **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, and a [short call](/reference/custom#plugincall)'s value that isn't an object arrives as `{ value }`. The checker asks it about every call it finds, wherever the call is.
+- **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the pack that entry came from.
+
+Each returns a list of [`Reference`](/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/reference/checks#plugin-references) lists them all.
+
+The loyalty plugin's cards each have a condition, and its `stamp` effect names a card:
+
+```ts
+references: {
+  calls: (kind, name, args) =>
+    kind === 'effects' && name === 'stamp' ? [{ entry: String(args.card), plugin: 'loyalty', list: 'cards', noun: 'card' }] : [],
+  content: (game) =>
+    (game.data?.loyalty?.cards ?? []).map((card) => ({ list: 'cards', id: card.id, refs: [{ when: (card as { when?: Condition }).when }] })),
+},
+// mod:sunday-market · cards market · unknown storyline "sam"
+// town · activity buy · unknown card "bakery"
+```
+
+A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the problems inside, so a list of buttons reads as the places plugin's do: `locations yard · action dig · unknown location "moon"`. A file a reference names, such as a post's picture, goes into the checker's [`files`](/reference/checks#fileref).
+
+**Gotchas.**
+- A call to a plugin the game doesn't have isn't asked about. The name is reported or let through as [Absent partners](/reference/checks#absent-partners) says.
+- An `{ entry }` reference to a plugin the game doesn't have isn't checked. That's how the cast can name the places plugin's locations without needing it.
+
+### check
+
+```ts
+check?: (game: Game, tools: CheckTools) => PluginProblem[]
+```
+
+Rules of the plugin's own that a reference can't say, such as two stages of one quest with the same id, or an exit to a place that isn't there. It runs after the references, once the game is loaded. It returns a [`PluginProblem`](#pluginproblem) for each fault.
+
+```ts
+check: (game) =>
   (game.data?.loyalty?.cards ?? []).flatMap((card) =>
-    conditionProblems((card as { id: string; when?: Condition }).when).map((what) => ({ list: 'cards', id: card.id, what })),
+    Number((card as { stampsToFill?: number }).stampsToFill) > 0 ? [] : [{ list: 'cards', id: card.id, what: 'stampsToFill must be above 0' }],
   ),
 ```
 
@@ -961,31 +1009,17 @@ check: (game, { conditionProblems }) =>
 
 ```ts
 type CheckTools = {
-  conditionProblems: (condition: Condition | undefined) => string[]
-  blockProblems: (blocks: readonly Block[]) => string[]
-  commandProblems: (command: Command) => string[]
-  audioProblems: (audio: Record<string, string | null> | undefined) => string[]
-  stageProblems: (stage: MediaStage | undefined) => string[]
+  problems: (refs: readonly Reference[]) => string[]
 }
 ```
 
-What the loader lends a plugin's `check`. Each one returns problems worded as the loader words its own, or an empty list when there are none. They're the checks listed under [The checks](/reference/loader#the-checks).
-
-| Tool | Checks |
-|---|---|
-| `conditionProblems(condition)` | A [condition](/reference/conditions), as under [In a condition](/reference/loader#in-a-condition). `undefined` has no problems. |
-| `blockProblems(blocks)` | Prose keys with no prose, [`variants`](/reference/scenes#block) with no lines, each block's `when` and a `variants` block's `gate`, and a `{ media }` block's pool, tags and flags. Use it for a [stage](#stage) or any other blocks the plugin draws. |
-| `commandProblems(command)` | A `scene`, `activity`, `use` or `custom` [command](/reference/commands#command), as under [In a command](/reference/loader#in-a-command). A `custom` command of an [absent partner](#cooperates) isn't reported. Other command types have no problems. Use it for [buttons](#buttons) built from the plugin's content. |
-| `audioProblems(audio)` | Background audio by channel, as under [Audio](/reference/loader#audio): an unknown track or channel, a cue channel, or a sound's track on a background channel. `undefined` has no problems. Use it for what your [`audio`](#audio) hook plays. |
-| `stageProblems(stage)` | A [stage](/reference/scenes#the-stage) with no scene, such as a place's, as under [Media](/reference/loader#media): its layers' pools, tags and flags, its hotspots' rects, ids, layers and commands, and the conditions on both. A hotspot can't name a `choice` here. `undefined` has no problems. Draw the stage with [`stageView`](/reference/view#stageview). |
-
-The stall checks the sign it hangs and the scene its closing button opens, both from its own content:
+What the content checker lends `check`. `problems` resolves references as `references` does and returns the problems, worded as the checker words its own, or an empty list. Use it for something `check` works out, which a reference list can't hold until then. The stall checks the sign it hangs and the scene its closing button opens:
 
 ```ts
-check: (game, { blockProblems, commandProblems }) =>
+check: (game, { problems }) =>
   (game.data?.stall?.signs ?? []).flatMap((sign) => {
     const { text, closing } = sign as { id: string; text: string; closing: string }
-    return [...blockProblems([{ text }]), ...commandProblems({ type: 'scene', id: closing })]
+    return problems([{ blocks: [{ text }] }, { command: { type: 'scene', id: closing } }])
       .map((what) => ({ list: 'signs', id: sign.id, what }))
   }),
 // mod:sunday-market · signs early · no prose for "stall.sign"
@@ -998,7 +1032,7 @@ check: (game, { blockProblems, commandProblems }) =>
 argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 ```
 
-What's wrong with how content calls one of this plugin's conditions, effects or commands. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, and a [short call](/reference/custom#plugincall)'s value that isn't an object arrives as `{ value }`. Return the problems, worded for the author, or `[]`.
+What's wrong with how content calls one of this plugin's conditions, effects or commands, by a rule of the plugin's own. It takes what `references.calls` takes. Return the problems, worded for the author, or `[]`. A name the call gives, such as a location, belongs in `references.calls` instead.
 
 ```ts
 argProblems: (kind, name, args) =>
@@ -1012,11 +1046,7 @@ activities: [{ id: 'ask', requires: [{ when: { 'stall/sells': 'fish' }, reason: 
 // town · activity ask · nobody sells "fish"
 ```
 
-The loader asks it about every call it checks, and reports each problem as the call's own, where the call is. That covers every condition, effect list and command in [The checks](/reference/loader#the-checks), and everything another plugin's `check` passes to `conditionProblems`, `blockProblems` or `commandProblems`. The [cast](/plugins/cast#checks), for example, passes its characters' schedule conditions in.
-
-**Gotchas.**
-- A call to a plugin the game doesn't have isn't asked about. The name is reported or let through as the [checks](/reference/loader#the-checks) say.
-- A location's actions are the places plugin's content. The [places plugin](/plugins/places#checks) passes their commands to `commandProblems` itself, so a `go('lido')` on a button is reported as `action swim: unknown location "lido"`.
+The checker asks it about every call it finds and reports each problem as the call's own, where the call is.
 
 ### PluginProblem
 
@@ -1024,7 +1054,7 @@ The loader asks it about every call it checks, and reports each problem as the c
 type PluginProblem = { list: string; id: string; what: string }
 ```
 
-Which list, which entry, and what's wrong. The loader turns it into a [`Problem`](/reference/loader#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the pack that entry came from, or on `base` if it came from no pack:
+Which list, which entry, and what's wrong. The content checker turns it into a [`Problem`](/reference/checks#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the pack that entry came from, or on `base` if it came from no pack:
 
 ```text
 mod:sunday-market · cards market · unknown storyline "sam"
@@ -1077,5 +1107,5 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 - **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, put a requirement on the activity, or have a [guard](#guards) refuse any command that would apply the effect.
-- **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/reference/rules#turn) take plain [effects](/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. [`validatePack`](/reference/game#validatepack) reports a name no plugin has, but the loader doesn't.
+- **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/reference/rules#turn) take plain [effects](/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.

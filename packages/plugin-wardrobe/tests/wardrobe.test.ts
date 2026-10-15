@@ -43,7 +43,7 @@ function game(extra: Partial<Pack> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([town], { id: 'wet', title: 'Wet', introScene: 'none', plugins: [plugin] })
+  const loaded = loadGame([town], { id: 'wet', title: 'Wet', plugins: [plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -113,10 +113,10 @@ describe('the wardrobe', () => {
   it('reports clothes that are not items or name a slot the game does not have', () => {
     const loaded = loadGame(
       [{ id: 'mod', schema: SCHEMA, data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }],
-      { id: 'g', title: 'g', introScene: 'none', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(loaded.problems).toEqual([
-      { pack: 'mod', where: 'clothes cape', what: 'no item has this id' },
+      { pack: 'mod', where: 'clothes cape', what: 'unknown item "cape"' },
       { pack: 'mod', where: 'clothes cape', what: 'no slot called "back"' },
       { pack: 'base', where: 'start feet', what: '"boots" is not clothing for this slot' },
     ])
@@ -129,7 +129,7 @@ describe('the wardrobe', () => {
           data: { wardrobe: { clothes: [{ id: 'boots', slot: 'feet' }] } },
         },
       ],
-      { id: 'g', title: 'g', introScene: 'none', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(unowned.problems).toContainEqual({ pack: 'base', where: 'start feet', what: 'the player does not start with "boots"' })
   })

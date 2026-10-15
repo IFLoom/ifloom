@@ -153,6 +153,11 @@ export type ProseStore = {
   variants: (name: string) => string[]
   /** A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. */
   weight?: (name: string, key: string) => number
+  /**
+   * Every key the store has words for, so the content checker can read all
+   * the prose's markup. Left out, it reads only the keys content names.
+   */
+  keys?: () => string[]
 }
 
 /** A thread of the story, followed by its stages and flags, and closed for a while if need be. */

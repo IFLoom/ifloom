@@ -303,4 +303,4 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/referenc
 
 ## Checks
 
-The loader and [`validatePack`](/reference/game#validatepack) report unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a stage's hotspots and layers. The full list is under [Media](/reference/loader#media) in the loader's checks.
+The [content checker](/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a stage's hotspots and layers. The full list is under [Media](/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/reference/checks#fileref).

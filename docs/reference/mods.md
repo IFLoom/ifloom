@@ -88,7 +88,7 @@ else read.pack.id // 'mod:fog-season'
 
 The store's `add` calls it for you. Only call it yourself to look at a file without keeping it.
 
-**Gotcha.** It checks the outside of the file, not the content. A pack that names a scene nobody wrote reads fine here. [`loadGame`](/reference/loader#the-checks) reports it as a problem, against `mod:<id>`.
+**Gotcha.** It checks the outside of the file, not the content. A pack that names a scene nobody wrote reads fine here. [`loadGame`](/reference/checks) reports it as a problem, against `mod:<id>`.
 
 ## mods
 

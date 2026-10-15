@@ -8,7 +8,7 @@ import { view } from '../../src/view.ts'
 import { saves } from '../../src/save.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
-import { validatePack } from '../../src/validate.ts'
+import { problemsOf } from '../fixtures/checked.ts'
 import { fillTokens } from '../../src/prose.ts'
 import type { Game } from '../../src/game.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -51,10 +51,9 @@ const shells = definePlugin<Tally>({
     turn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
   },
   view: (_state, { slice }) => ({ count: slice.found.length }),
-  check: (game, { conditionProblems }) =>
-    (game.data?.shells?.spots ?? []).flatMap((spot) =>
-      conditionProblems((spot as { id: string; when?: Condition }).when).map((what) => ({ list: 'spots', id: spot.id, what })),
-    ),
+  references: {
+    content: (game) => (game.data?.shells?.spots ?? []).map((spot) => ({ list: 'spots', id: spot.id, refs: [{ when: (spot as { id: string; when?: Condition }).when }] })),
+  },
 })
 
 function withShells(): Game {
@@ -165,7 +164,7 @@ describe('plugins', () => {
   })
 
   it('take content from packs, merged by id, and check it', () => {
-    const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
+    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
     const beach: Pack = {
       id: 'beach',
       schema: SCHEMA,
@@ -185,11 +184,10 @@ describe('plugins', () => {
       ...withShells(),
       actions: [{ id: 'drop', label: 'Drop', command: { type: 'custom' as const, name: 'shells/fling' } }],
     }
-    expect(validatePack(game).join('\n')).toContain('game action drop')
-    expect(validatePack(game).join('\n')).toContain('no plugin command named shells/fling')
+    expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
     const night = { ...withShells(), rules: { turn: () => ({ effects: [{ kind: 'custom' as const, name: 'shells/polish' }] }) } }
     const items = { ...night, items: [{ id: 'cloth', name: 'cloth', desc: '', kind: 'stuff' as const, use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
-    expect(validatePack(items).join('\n')).toContain('no plugin effect named shells/polish')
+    expect(problemsOf(items)).toContain('item cloth: no plugin effect named "shells/polish"')
   })
 })
 
@@ -217,10 +215,10 @@ describe('plugins working together', () => {
       { id: 'swim', effects: [{ 'tides/turn': {} }] },
     ],
   }
-  const { id, title, introScene } = fixture()
+  const { id, title } = fixture()
 
   it('call each other in short, and answer queries', () => {
-    const { game, problems } = loadGame([pack], { id, title, introScene, plugins: [tides, beach] })
+    const { game, problems } = loadGame([pack], { id, title, plugins: [tides, beach] })
     expect(problems).toEqual([])
     const state = startingState(game)
     expect(holds(state, { 'tides/high': true }, game)).toBe(false)
@@ -231,7 +229,7 @@ describe('plugins working together', () => {
   })
 
   it('let content name a partner the game does not have: the loader passes it, and it is not there', () => {
-    const { game, problems } = loadGame([pack], { id, title, introScene, plugins: [beach] })
+    const { game, problems } = loadGame([pack], { id, title, plugins: [beach] })
     expect(problems).toEqual([])
     const state = { ...startingState(game), sceneId: null }
     expect(view(state, game).plugins.beach).toEqual({ next: 'no tides here' })
@@ -240,7 +238,7 @@ describe('plugins working together', () => {
   })
 
   it('still report a plugin nobody cooperates with', () => {
-    const { problems } = loadGame([pack], { id, title, introScene })
+    const { problems } = loadGame([pack], { id, title })
     expect(problems.map((problem) => problem.what)).toContain('no custom condition named "tides/high"')
     expect(problems.map((problem) => problem.what)).toContain('no custom effect named "tides/turn"')
   })

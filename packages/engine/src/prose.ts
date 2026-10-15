@@ -12,8 +12,8 @@ import type { GameState } from './types.ts'
  * - `{{v:name}}` — one of the game's custom values.
  *
  * A token naming a value the game does not have is left as it is, so the
- * missing name shows on screen instead of vanishing; `validatePack` and the
- * loader report it.
+ * missing name shows on screen instead of vanishing. The content checker
+ * doesn't look at tokens.
  */
 export function fillTokens(text: string, state: GameState, game: Game): string {
   return text
@@ -68,6 +68,7 @@ export function proseStore(
       return state ? fillTokens(text, state, game) : text
     },
     variants: (name) => keys[name] ?? [],
+    keys: () => Object.keys(lines),
     weight: (name, key) => weights[name]?.[key] ?? 1,
   }
 }

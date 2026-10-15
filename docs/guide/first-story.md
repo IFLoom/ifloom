@@ -98,7 +98,7 @@ prose: {
 
 A choice's label is the prose under `scene#choice`, so `ch1.stop#share` labels the `share` choice. A scene with no choices left is an ending, so the player sees the second chapter and nothing more for now.
 
-If you misspell a scene id or forget a label, `npm run check -w my-story` says which scene and which key. The full list is under [the checks](/reference/loader#the-checks).
+If you misspell a scene id or forget a label, `npm run check -w my-story` says which scene and which key. The full list is under [the checks](/reference/checks).
 
 ## 3. A stat
 

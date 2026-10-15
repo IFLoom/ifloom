@@ -1,8 +1,7 @@
 @import "@ifloom/react/styles.css";
+@import "@ifloom/react/themes/studio.css";
 
-/* The same warm accent and soft corners as Small Town. */
+/* Studio, in the café's green. */
 :root {
-  --primary: oklch(0.45 0.09 40);
-  --primary-foreground: oklch(0.98 0.01 80);
-  --radius: 0.75rem;
+  --primary: oklch(0.52 0.12 160);
 }

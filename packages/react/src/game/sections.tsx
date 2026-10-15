@@ -1,6 +1,7 @@
-import { Button } from '../components/ui/button.tsx'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceList } from './choices.tsx'
-import { useGame, type PluginSectionComponent } from './context.tsx'
+import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 import { Picture } from './picture.tsx'
 
@@ -30,38 +31,45 @@ type FeedData = {
   }[]
 }
 
-/**
- * A messages channel in an app: its threads, newest first, each with its
- * messages, the reply sent, and the replies on offer, with a button to mark
- * the channel read.
- */
-export const MessagesSection: PluginSectionComponent = ({ data, with: options }) => {
+type SectionProps = { data: unknown; with: Record<string, unknown> }
+
+function MessagesSectionImpl({ data, with: options }: SectionProps) {
   const { send } = useGame()
   const words = useWords()
+  const box = usePart('channel', 'flex flex-col gap-4')
+  const readAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const threadBox = usePart('thread', 'flex flex-col gap-2')
+  const title = usePart('thread-title', 'flex items-center gap-2 font-medium')
+  const portrait = usePart('thread-portrait', 'size-6 rounded-full object-cover')
+  const message = usePart('message', 'flex flex-col gap-1')
+  const theirs = usePart('bubble', 'max-w-[85%] rounded-2xl rounded-tl-sm bg-secondary px-3 py-2 text-sm')
+  const mine = usePart('bubble', 'max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground')
   const channel = (data as MessagesData | undefined)?.channels.find((entry) => entry.id === options.channel)
   if (!channel) return null
   return (
-    <div className="flex flex-col gap-4" data-channel={channel.id}>
+    <div {...box} data-channel={channel.id}>
       {channel.unread ? (
-        <Button size="sm" variant="ghost" onClick={() => send({ type: 'custom', name: 'messages/read', with: { channel: channel.id } })}>
+        <button type="button" {...readAll} onClick={() => send({ type: 'custom', name: 'messages/read', with: { channel: channel.id } })}>
           {words('allRead')}
-        </Button>
+        </button>
       ) : null}
       {channel.threads.map((thread) => (
-        <section key={thread.id} className="flex flex-col gap-2" data-thread={thread.id}>
-          <h4 className="flex items-center gap-2 font-medium">
-            {thread.portrait ? <Picture src={thread.portrait} alt="" className="size-6 rounded-full object-cover" /> : null}
+        <section key={thread.id} {...threadBox} data-thread={thread.id}>
+          <h4 {...title}>
+            {thread.portrait ? <Picture {...portrait} src={thread.portrait} alt="" /> : null}
             {thread.name}
           </h4>
-          {thread.messages.map((message) => (
-            <div key={message.id} className="flex flex-col gap-1">
-              <p className="max-w-[85%] rounded-2xl rounded-tl-sm bg-secondary px-3 py-2 text-sm">{message.text}</p>
-              {message.replied ? (
-                <p className="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground">{message.replied}</p>
+          {thread.messages.map((entry) => (
+            <div key={entry.id} {...message}>
+              <p {...theirs} data-from="them">
+                {entry.text}
+              </p>
+              {entry.replied ? (
+                <p {...mine} data-from="player">
+                  {entry.replied}
+                </p>
               ) : (
-                <ChoiceList
-                  choices={message.replies.map((reply) => ({ id: reply.id, label: reply.label, command: reply.command }))}
-                />
+                <ChoiceList choices={entry.replies.map((reply) => ({ id: reply.id, label: reply.label, command: reply.command }))} />
               )}
             </div>
           ))}
@@ -71,31 +79,48 @@ export const MessagesSection: PluginSectionComponent = ({ data, with: options })
   )
 }
 
-/** A feed in an app: posts newest first, with likes and comments, and a button to mark the feed seen. */
-export const FeedSection: PluginSectionComponent = ({ data, with: options }) => {
+/**
+ * A messages channel in an app: its threads, newest first, each with its
+ * messages, the reply sent, and the replies on offer, with a button to mark
+ * the channel read. Each bubble is a `'bubble'` part, `data-from="them"` or
+ * `data-from="player"`.
+ */
+export const MessagesSection = overridable('MessagesSection', MessagesSectionImpl)
+
+function FeedSectionImpl({ data, with: options }: SectionProps) {
   const { send } = useGame()
   const words = useWords()
+  const box = usePart('feed', 'flex flex-col gap-3')
+  const seenAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const card = usePart('post', 'flex flex-col gap-2 rounded-lg border p-3')
+  const author = usePart('post-author', 'flex items-center gap-2 text-sm font-medium')
+  const portrait = usePart('post-portrait', 'size-6 rounded-full object-cover')
+  const image = usePart('post-image', 'w-full rounded')
+  const text = usePart('post-text', 'text-sm')
+  const meta = usePart('post-meta', 'text-xs text-muted-foreground')
+  const comment = usePart('post-comment', 'text-xs')
+  const commenter = usePart('post-comment-name', 'font-medium')
   const feed = (data as FeedData | undefined)?.feeds.find((entry) => entry.id === options.feed)
   if (!feed) return null
   return (
-    <div className="flex flex-col gap-3" data-feed={feed.id}>
+    <div {...box} data-feed={feed.id}>
       {feed.unseen ? (
-        <Button size="sm" variant="ghost" onClick={() => send({ type: 'custom', name: 'feed/seen', with: { feed: feed.id } })}>
+        <button type="button" {...seenAll} onClick={() => send({ type: 'custom', name: 'feed/seen', with: { feed: feed.id } })}>
           {words('allSeen')}
-        </Button>
+        </button>
       ) : null}
       {feed.posts.map((post) => (
-        <article key={post.id} className="flex flex-col gap-2 rounded-lg border p-3" data-post={post.id}>
-          <p className="flex items-center gap-2 text-sm font-medium">
-            {post.portrait ? <Picture src={post.portrait} alt="" className="size-6 rounded-full object-cover" /> : null}
+        <article key={post.id} {...card} data-post={post.id}>
+          <p {...author}>
+            {post.portrait ? <Picture {...portrait} src={post.portrait} alt="" /> : null}
             {post.name}
           </p>
-          {post.image ? <Picture src={post.image} alt="" className="w-full rounded" /> : null}
-          {post.text ? <p className="text-sm">{post.text}</p> : null}
-          <p className="text-xs text-muted-foreground">{words('likes', { n: post.likes })}</p>
-          {post.comments.map((comment, index) => (
-            <p key={index} className="text-xs">
-              <span className="font-medium">{comment.name}</span> {comment.text}
+          {post.image ? <Picture {...image} src={post.image} alt="" /> : null}
+          {post.text ? <p {...text}>{post.text}</p> : null}
+          <p {...meta}>{words('likes', { n: post.likes })}</p>
+          {post.comments.map((entry, index) => (
+            <p key={index} {...comment}>
+              <span {...commenter}>{entry.name}</span> {entry.text}
             </p>
           ))}
         </article>
@@ -103,3 +128,6 @@ export const FeedSection: PluginSectionComponent = ({ data, with: options }) => 
     </div>
   )
 }
+
+/** A feed in an app: posts newest first, with likes and comments, and a button to mark the feed seen. */
+export const FeedSection = overridable('FeedSection', FeedSectionImpl)

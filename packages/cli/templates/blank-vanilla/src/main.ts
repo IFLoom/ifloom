@@ -3,18 +3,15 @@
  * runner for the view, draw it, send a command when a button is pressed, and
  * draw again when the state changes. Any framework can do the same.
  */
-import { createRunner, localStorageDriver, saves, startingState, type View } from '@ifloom/engine'
+import { browserRunner, type View } from '@ifloom/engine'
 import loaded from './game.ts'
 import './styles.css'
 
 const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
-const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  history: { depth: 50 },
-  saves: saves(game, localStorageDriver(window.localStorage)),
-  autosave: { every: 'turn' },
-})
+// A new game with a random seed, undo, saves in localStorage and an autosave each turn.
+const runner = browserRunner(game)
 
 const root = document.querySelector<HTMLElement>('#root')!
 

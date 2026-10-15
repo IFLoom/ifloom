@@ -1,0 +1,130 @@
+/*
+ * Paper: a printed book. A serif page in one centred column, chapter titles in
+ * small caps, choices as underlined lines of text rather than buttons, and the
+ * stats as a quiet line at the foot.
+ *
+ *   @import "@ifloom/react/styles.css";
+ *   @import "@ifloom/react/themes/paper.css";
+ */
+:root {
+  --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-heading: var(--font-body);
+  --text-title: 0.85rem;
+  --text-scene-title: 1.9rem;
+  --leading-prose: 1.8;
+  --width-reading: 36rem;
+  --width-page: 60rem;
+  --gap-page: 2.25rem;
+  --gap-beats: 1.1rem;
+  --radius: 0;
+  --shadow-card: none;
+  --background: oklch(0.97 0.012 85);
+  --foreground: oklch(0.24 0.02 60);
+  --card: oklch(0.985 0.01 85);
+  --muted-foreground: oklch(0.5 0.02 60);
+  --primary: oklch(0.42 0.09 30);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --secondary: transparent;
+  --border: oklch(0.85 0.02 70);
+  --speech: oklch(0.32 0.05 40);
+  --player-speech: oklch(0.42 0.09 30);
+}
+
+[data-part="page"] {
+  padding-top: 4rem;
+}
+
+[data-part="title"] {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+[data-part="scene-header"] {
+  justify-content: center;
+}
+
+[data-part="scene-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+[data-part="beat"][data-beat="text"] {
+  text-indent: 1.5em;
+}
+
+[data-part="beat"][data-beat="text"]:first-child {
+  text-indent: 0;
+}
+
+[data-part="beat"][data-beat="text"]:first-child::first-letter {
+  float: left;
+  font-size: 3.2em;
+  line-height: 0.85;
+  padding: 0.05em 0.08em 0 0;
+}
+
+[data-part="beat"][data-beat="say"] {
+  font-style: italic;
+}
+
+[data-part="choices"],
+[data-part="actions"] {
+  margin-top: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  gap: 0.6rem;
+}
+
+[data-part="choice"] {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--primary);
+}
+
+[data-part="choice"] [data-part="choice-label"]::before {
+  content: "❧";
+  margin-right: 0.6em;
+  color: var(--muted-foreground);
+}
+
+[data-part="choice"]:hover:not(:disabled) [data-part="choice-label"] {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+[data-part="choice"]:disabled {
+  cursor: default;
+  color: var(--muted-foreground);
+}
+
+[data-part="choice-reason"],
+[data-part="choice-price"] {
+  padding-left: 1.6em;
+  font-style: italic;
+}
+
+[data-part="stats"] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 1.5rem;
+  font-variant: small-caps;
+}
+
+[data-part="notice"] {
+  border-width: 0 0 0 3px;
+  border-color: var(--primary);
+}
+
+[data-part="choice"]:focus-visible {
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: 2px;
+}

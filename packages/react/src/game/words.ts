@@ -31,6 +31,15 @@ export const UI_STRINGS = {
   noneOn: 'None.',
   nothingGreyed: 'Nothing.',
   closeScene: 'Close the scene',
+  // debug
+  debugStat: 'Stat',
+  debugVariable: 'Variable',
+  debugItem: 'Item',
+  debugStatOf: 'Stat of',
+  debugGo: 'Go',
+  debugScene: 'Scene',
+  debugTime: 'Time',
+  debugTurn: 'Turn',
   wardrobe: 'Wearing',
   inventory: 'Carrying',
   takeOff: 'Take off',
@@ -56,6 +65,11 @@ export const UI_STRINGS = {
   modOn: 'On',
   modOff: 'Off',
   applyMods: 'Restart with these mods',
+  close: 'Close',
+  priceSeparator: ' · ',
+  itemCount: '×{n}',
+  wearItem: 'Wear {item}',
+  mailHeader: '{key}: {value}',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

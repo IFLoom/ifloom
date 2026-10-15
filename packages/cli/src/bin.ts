@@ -3,7 +3,8 @@
  * ifloom — the command line.
  *
  *   ifloom new <name> [--template blank]
- *                            a new game in games/<name>, from blank, vanilla, novel, cafe or town
+ *                            a new game in games/<name>, from blank, vanilla, novel, cafe or town;
+ *                            --theme paper|terminal|studio|storybook picks the React UI's preset
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art, checked to open from disk;
@@ -28,7 +29,7 @@ import { buildFiles, checkBuild, inlineAssets } from './build.ts'
 import { checkGame, gameFrom } from './check.ts'
 import { explorer, metricsText, playtest, type Policy } from './playtest.ts'
 import { snapshot, type Probe } from './snapshot.ts'
-import { TEMPLATES, newGame, type TemplateName } from './new.ts'
+import { TEMPLATES, THEMES, newGame, type TemplateName, type ThemeName } from './new.ts'
 
 const [command = 'help', ...rest] = process.argv.slice(2)
 /** The first argument that is neither a flag nor a flag's value. */
@@ -123,14 +124,15 @@ async function snap(entry?: string): Promise<number> {
 }
 
 /** A new game in games/<name>, and what to type next. */
-function create(name: string | undefined, template: string | undefined): number {
+function create(name: string | undefined, template: string | undefined, theme: string | undefined): number {
   if (!name) {
     console.error(`Give the new game a name: ifloom new my-story [--template ${TEMPLATES.join('|')}]`)
     return 1
   }
   try {
-    const { dir } = newGame({ name, template: template as TemplateName | undefined })
-    console.log(`Made ${name} in ${relative(process.cwd(), dir) || '.'} from the ${template ?? 'blank'} template. Next:\n`)
+    const made = newGame({ name, template: template as TemplateName | undefined, theme: theme as ThemeName | undefined })
+    const look = made.theme ? `, with the ${made.theme} theme` : ''
+    console.log(`Made ${name} in ${relative(process.cwd(), made.dir) || '.'} from the ${template ?? 'blank'} template${look}. Next:\n`)
     console.log('  npm install')
     console.log(`  npm run dev -w ${name}`)
     return 0
@@ -167,9 +169,9 @@ async function main(): Promise<number> {
     case 'snapshot':
       return snap(positional())
     case 'new':
-      return create(positional(), flag('template'))
+      return create(positional(), flag('template'), flag('theme'))
     default:
-      console.log('ifloom new <name> [--template blank|vanilla|novel|cafe|town] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]')
+      console.log(`ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]`)
       return command === 'help' ? 0 : 1
   }
 }

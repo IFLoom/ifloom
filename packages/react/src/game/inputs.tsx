@@ -1,14 +1,21 @@
 import type { FlagValue, InputView } from '@ifloom/engine'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Button } from '../components/ui/button.tsx'
-import { cn } from '../lib/utils.ts'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-/** One input: a text box, a number box, or the options to pick from. Shows the engine's refusal if the value won't do. */
-export function InputField({ input }: { input: InputView }) {
+function InputFieldImpl({ input }: { input: InputView }) {
   const { send } = useGame()
   const words = useWords()
+  const box = usePart('input', 'flex flex-col gap-1.5')
+  const label = usePart('input-label', 'text-sm font-medium')
+  const options = usePart('input-options', 'flex flex-wrap gap-2')
+  const picked = usePart('button', buttonVariants({ size: 'sm', variant: 'default' }))
+  const unpicked = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const field = usePart('input-field', 'h-9 flex-1 rounded-md border bg-background px-3 text-sm')
+  const submitButton = usePart('input-submit', buttonVariants())
+  const error = usePart('input-error', 'text-sm text-destructive')
   const [text, setText] = useState(input.value === null ? '' : String(input.value))
   // Follow the value when something else changes it: an undo, a load.
   useEffect(() => setText(input.value === null ? '' : String(input.value)), [input.value])
@@ -22,26 +29,27 @@ export function InputField({ input }: { input: InputView }) {
     enter(input.kind === 'number' ? (text.trim() === '' ? undefined : Number(text)) : text)
   }
   return (
-    <div className="flex flex-col gap-1.5" data-input={input.id}>
-      <label className="text-sm font-medium" htmlFor={`input-${input.id}`}>
+    <div {...box} data-input={input.id}>
+      <label {...label} htmlFor={`input-${input.id}`}>
         {input.label}
       </label>
       {input.kind === 'choice' ? (
-        <div className="flex flex-wrap gap-2">
+        <div {...options}>
           {input.options.map((option) => (
-            <Button
+            <button
               key={String(option.value)}
-              size="sm"
-              variant={input.value === option.value ? 'default' : 'outline'}
+              type="button"
+              {...(input.value === option.value ? picked : unpicked)}
               onClick={() => enter(option.value)}
             >
               {option.label}
-            </Button>
+            </button>
           ))}
         </div>
       ) : (
         <form onSubmit={submit} className="flex gap-2">
           <input
+            {...field}
             id={`input-${input.id}`}
             type={input.kind === 'number' ? 'number' : 'text'}
             value={text}
@@ -49,26 +57,33 @@ export function InputField({ input }: { input: InputView }) {
             max={input.max ?? undefined}
             maxLength={input.maxLength ?? undefined}
             onChange={(event) => setText(event.target.value)}
-            className="h-9 flex-1 rounded-md border bg-background px-3 text-sm"
           />
-          <Button type="submit">{words('enter')}</Button>
+          <button {...submitButton} type="submit">
+            {words('enter')}
+          </button>
         </form>
       )}
-      {said ? <p className="text-sm text-destructive">{said}</p> : null}
+      {said ? <p {...error}>{said}</p> : null}
     </div>
   )
 }
 
-/** Every input on offer now (`view.inputs`). Draws nothing when there are none. */
-export function InputFields({ className }: { className?: string }) {
+/** One input: a text box, a number box, or the options to pick from. Shows the engine's refusal if the value won't do. */
+export const InputField = overridable('InputField', InputFieldImpl)
+
+function InputFieldsImpl({ className }: { className?: string }) {
   const { view } = useGame()
+  const list = usePart('inputs', 'flex flex-col gap-3', className)
   const inputs = Object.values(view.inputs)
   if (!inputs.length) return null
   return (
-    <section className={cn('flex flex-col gap-3', className)}>
+    <section {...list}>
       {inputs.map((input) => (
         <InputField key={input.id} input={input} />
       ))}
     </section>
   )
 }
+
+/** Every input on offer now (`view.inputs`). Draws nothing when there are none. */
+export const InputFields = overridable('InputFields', InputFieldsImpl)

@@ -1,7 +1,8 @@
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
-import { apply, type Applied } from './reduce.ts'
-import type { LoadedSave, SaveMeta, Saves } from './save.ts'
+import { localStorageDriver } from './drivers.ts'
+import { apply, startingState, type Applied } from './reduce.ts'
+import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, GameState } from './types.ts'
 import { view, type View } from './view.ts'
@@ -300,3 +301,20 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
 }
 
 export type Runner = ReturnType<typeof createRunner>
+
+/**
+ * A runner with what most games in a browser want: a new game with a random
+ * seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn.
+ * Pass a `start` to begin elsewhere, and runner options to change any default;
+ * they are merged over these. Any UI can use it: the React UI's `mountGame`
+ * does, and so does the vanilla template.
+ */
+export function browserRunner(game: Game, options: RunnerOptions & { start?: GameState } = {}): Runner {
+  const { start, ...runnerOptions } = options
+  return createRunner(game, start ?? startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
+    history: { depth: 50 },
+    saves: saves(game, localStorageDriver()),
+    autosave: { every: 'turn' },
+    ...runnerOptions,
+  })
+}

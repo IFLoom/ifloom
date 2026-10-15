@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { TEMPLATES, newGame } from '../src/index.ts'
+import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
 
@@ -21,6 +21,21 @@ describe('ifloom new', () => {
     const { dir } = newGame({ name: 'the-door', into: fresh() })
     expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
     expect(readFileSync(join(dir, 'index.html'), 'utf8')).toContain('<title>The Door</title>')
+  })
+
+  it('starts a game with the theme asked for, a random one for a blank game, and an example with its own', () => {
+    for (const theme of THEMES) {
+      const { dir, theme: got } = newGame({ name: 'styled', theme, into: fresh() })
+      expect(got).toBe(theme)
+      const css = readFileSync(join(dir, 'src/styles.css'), 'utf8')
+      expect(css.match(/@ifloom\/react\/themes\//g)).toHaveLength(1)
+      expect(css).toContain(`@import "@ifloom/react/themes/${theme}.css";`)
+    }
+    expect(THEMES).toContain(newGame({ name: 'any', into: fresh() }).theme)
+    expect(newGame({ name: 'letter', template: 'novel', into: fresh() }).theme).toBe('paper')
+    expect(newGame({ name: 'letter', template: 'novel', theme: 'terminal', into: fresh() }).theme).toBe('terminal')
+    expect(newGame({ name: 'plain', template: 'vanilla', theme: 'paper', into: fresh() }).theme).toBeNull()
+    expect(() => newGame({ name: 'odd', theme: 'neon' as never, into: fresh() })).toThrow(/no theme "neon"/)
   })
 
   it('uses no React in the vanilla template', () => {

@@ -1,17 +1,7 @@
-import { StrictMode } from 'react'
+import { StrictMode, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import {
-  createRunner,
-  describeProblem,
-  localStorageDriver,
-  saves,
-  startingState,
-  type Game,
-  type GameState,
-  type Problem,
-  type Runner,
-  type RunnerOptions,
-} from '@ifloom/engine'
+import { browserRunner, describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
+import { GameProvider } from './context.tsx'
 import { GameShell, type GameShellProps } from './shell.tsx'
 
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
@@ -21,6 +11,11 @@ export type MountOptions = Omit<GameShellProps, 'runner'> & {
   start?: GameState
   /** Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. */
   runner?: RunnerOptions
+  /**
+   * Your own root component, drawn instead of `GameShell`. It sits inside the
+   * game's provider, so `useGame()` and every built-in component work in it.
+   */
+  app?: ComponentType
 }
 
 /** A loader problem in the loader's own words; anything else as a string. */
@@ -30,12 +25,12 @@ function problemText(problem: unknown): string {
 
 /**
  * Start a game in the page: a runner with undo, saves and autosave, and the
- * whole React UI drawn into `#root`. Takes a game, or what `loadGame` returns,
- * whose problems are logged as warnings. Returns the runner, for anything the
- * game wants to drive itself.
+ * whole React UI drawn into `#root`, or your own `app`. Takes a game, or what
+ * `loadGame` returns, whose problems are logged as warnings. Returns the runner,
+ * for anything the game wants to drive itself.
  */
 export function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options: MountOptions = {}): Runner {
-  const { root = '#root', start, runner: runnerOptions, ...shell } = options
+  const { root = '#root', start, runner: runnerOptions, app: App, ...shell } = options
   const game = 'game' in loaded && typeof loaded.game === 'object' ? loaded.game : (loaded as Game)
   const problems = 'game' in loaded && typeof loaded.game === 'object' ? (loaded.problems ?? []) : []
   if (problems.length) console.warn(problems.map(problemText).join('\n'))
@@ -43,15 +38,17 @@ export function mountGame(loaded: Game | { game: Game; problems?: readonly unkno
   const element = typeof root === 'string' ? document.querySelector(root) : root
   if (!element) throw new Error(`mountGame: nothing in the page matches ${String(root)}.`)
 
-  const runner = createRunner(game, start ?? startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-    history: { depth: 50 },
-    saves: saves(game, localStorageDriver(window.localStorage)),
-    autosave: { every: 'turn' },
-    ...runnerOptions,
-  })
+  const runner = browserRunner(game, { start, ...runnerOptions })
+  const { layout: _layout, className: _className, ...provider } = shell
   createRoot(element).render(
     <StrictMode>
-      <GameShell runner={runner} {...shell} />
+      {App ? (
+        <GameProvider runner={runner} {...provider}>
+          <App />
+        </GameProvider>
+      ) : (
+        <GameShell runner={runner} {...shell} />
+      )}
     </StrictMode>,
   )
   return runner

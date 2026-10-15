@@ -1,52 +1,65 @@
 import type { Price, RenderedChoice } from '@ifloom/engine'
-import { TriangleAlertIcon } from 'lucide-react'
-import { Button } from '../components/ui/button.tsx'
-import { cn } from '../lib/utils.ts'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
+import { Icon } from './icon.tsx'
+import { overridable, usePart } from './overrides.tsx'
+import { useWords } from './words.ts'
 
-/** What a button costs, as the engine wrote it: stats, then plugins' notes ("until evening"). */
-export function PriceTag({ price, className }: { price: Price; className?: string }) {
+function PriceTagImpl({ price, className }: { price: Price; className?: string }) {
+  const words = useWords()
+  const attrs = usePart('choice-price', 'text-xs font-normal text-price', className)
   const parts = [...(price.stats ?? []).map((stat) => stat.text), ...(price.notes ?? [])]
   if (!parts.length) return null
-  return <span className={cn('text-xs font-normal text-price', className)}>{parts.join(' · ')}</span>
+  return <span {...attrs}>{parts.join(words('priceSeparator'))}</span>
 }
 
-/**
- * A choice or an action as a button: its label, its price, and — when it is
- * greyed out — the reason, on the button itself so the player never has to
- * hover to learn why. A warning — pressable, but the game would refuse it, as
- * running past dawn — is marked and written under it.
- */
-export function ChoiceButton({ choice, className }: { choice: RenderedChoice; className?: string }) {
+/** What a button costs, as the engine wrote it: stats, then plugins' notes ("until evening"). */
+export const PriceTag = overridable('PriceTag', PriceTagImpl)
+
+function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; className?: string }) {
   const { send } = useGame()
+  const button = usePart(
+    'choice',
+    `${buttonVariants({ variant: choice.disabled ? 'outline' : 'secondary' })} h-auto w-full flex-col items-start gap-0.5 py-2 text-left whitespace-normal`,
+    className,
+  )
+  const label = usePart('choice-label', 'flex w-full items-center gap-2')
+  const warning = usePart('choice-warning', 'text-xs font-normal text-muted-foreground')
+  const irreversible = usePart('choice-irreversible', 'text-xs font-normal text-destructive')
+  const reason = usePart('choice-reason', 'text-xs font-normal text-muted-foreground')
   return (
-    <Button
-      variant={choice.disabled ? 'outline' : 'secondary'}
-      className={cn('h-auto w-full flex-col items-start gap-0.5 py-2 text-left whitespace-normal', className)}
-      disabled={Boolean(choice.disabled)}
-      onClick={() => send(choice.command)}
-      data-choice={choice.id}
-    >
-      <span className="flex w-full items-center gap-2">
+    <button {...button} disabled={Boolean(choice.disabled)} onClick={() => send(choice.command)} data-choice={choice.id}>
+      <span {...label}>
         <span className="flex-1">{choice.label}</span>
-        {choice.warning ? <TriangleAlertIcon aria-label={choice.warning} /> : null}
+        {choice.warning ? <Icon name="warning" label={choice.warning} /> : null}
       </span>
       {choice.price ? <PriceTag price={choice.price} /> : null}
-      {choice.irreversible ? <span className="text-xs font-normal text-destructive">{choice.irreversible}</span> : null}
-      {choice.disabled ? <span className="text-xs font-normal text-muted-foreground">{choice.disabled}</span> : null}
-      {!choice.disabled && choice.warning ? <span className="text-xs font-normal text-muted-foreground">{choice.warning}</span> : null}
-    </Button>
+      {choice.irreversible ? <span {...irreversible}>{choice.irreversible}</span> : null}
+      {choice.disabled ? <span {...reason}>{choice.disabled}</span> : null}
+      {!choice.disabled && choice.warning ? <span {...warning}>{choice.warning}</span> : null}
+    </button>
   )
 }
 
-/** A list of choices or actions, one per row. */
-export function ChoiceList({ choices, className }: { choices: RenderedChoice[]; className?: string }) {
+/**
+ * A choice or an action as a button: its label, its price, and (when it is
+ * greyed out) the reason, on the button itself so the player never has to
+ * hover to learn why. A warning (pressable, but the game would refuse it, as
+ * running past dawn) is marked and written under it.
+ */
+export const ChoiceButton = overridable('ChoiceButton', ChoiceButtonImpl)
+
+function ChoiceListImpl({ choices, className, part = 'choices' }: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }) {
+  const attrs = usePart(part, 'flex flex-col gap-2', className)
   if (!choices.length) return null
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div {...attrs}>
       {choices.map((choice) => (
         <ChoiceButton key={choice.id} choice={choice} />
       ))}
     </div>
   )
 }
+
+/** A list of choices or actions, one per row. `part` names it for styling: `'choices'`, or `'actions'` for the room's buttons. */
+export const ChoiceList = overridable('ChoiceList', ChoiceListImpl)

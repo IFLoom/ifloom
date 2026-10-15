@@ -1,10 +1,10 @@
 import type { Command } from '@ifloom/engine'
 import { useState, type FormEvent } from 'react'
-import { Button } from '../components/ui/button.tsx'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { ScrollArea } from '../components/ui/scroll-area.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.tsx'
-import { cn } from '../lib/utils.ts'
 import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
 /** The debug plugin's view, as the UI reads it. */
@@ -15,6 +15,11 @@ function CommandForm({ label, fields, build }: { label: string; fields: string[]
   const { send } = useGame()
   const words = useWords()
   const [values, setValues] = useState(fields.map(() => ''))
+  const form = usePart('debug-form', 'flex flex-wrap items-center gap-2 text-sm')
+  const name = usePart('debug-label', 'w-20 font-medium')
+  const input = usePart('debug-field', 'h-8 w-28 rounded-md border bg-background px-2')
+  const button = usePart('button', buttonVariants({ size: 'sm' }))
+  const error = usePart('debug-error', 'text-destructive')
   const [said, setSaid] = useState<string | null>(null)
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -22,22 +27,22 @@ function CommandForm({ label, fields, build }: { label: string; fields: string[]
     setSaid(out.ok ? null : (out.refused ?? null))
   }
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="w-20 font-medium">{label}</span>
+    <form {...form} onSubmit={submit}>
+      <span {...name}>{label}</span>
       {fields.map((field, index) => (
         <input
+          {...input}
           key={field}
           aria-label={`${label} ${field}`}
           placeholder={field}
           value={values[index]}
           onChange={(event) => setValues(values.map((value, at) => (at === index ? event.target.value : value)))}
-          className="h-8 w-28 rounded-md border bg-background px-2"
         />
       ))}
-      <Button size="sm" type="submit">
+      <button {...button} type="submit">
         {words('set')}
-      </Button>
-      {said ? <span className="text-destructive">{said}</span> : null}
+      </button>
+      {said ? <span {...error}>{said}</span> : null}
     </form>
   )
 }
@@ -53,15 +58,22 @@ function parse(value: string): string | number | boolean {
   return value.trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : value
 }
 
-/**
- * The debug panel, for a game built with `@ifloom/plugin-debug`: set things by
- * hand, see the locks that are on and every greyed-out button's reason, read
- * the state and the command log, step back and forward. Draws nothing in a
- * game built without the plugin.
- */
-export function DebugPanel({ className }: { className?: string }) {
+function DebugPanelImpl({ className }: { className?: string }) {
   const { runner, view, send } = useGame()
   const words = useWords()
+  const panel = usePart('debug', 'flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)
+  const header = usePart('debug-header', 'flex items-center gap-2')
+  const title = usePart('debug-title', 'font-heading font-semibold')
+  const seed = usePart('debug-seed', 'text-xs text-muted-foreground')
+  const step = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const closeScene = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const setSection = usePart('debug-section', 'flex flex-col gap-2')
+  const section = usePart('debug-section', '')
+  const heading = usePart('debug-heading', 'font-medium')
+  const locks = usePart('debug-list', 'mb-2 list-disc pl-5')
+  const list = usePart('debug-list', 'list-disc pl-5')
+  const state = usePart('debug-state', 'text-xs')
+  const log = usePart('debug-log', 'list-decimal pl-5 font-mono text-xs')
   const data = view.plugins.debug as DebugData | undefined
   if (!data) return null
   const debug = (name: string, args: Record<string, unknown>): Command => ({ type: 'custom', name: `debug/${name}`, with: args })
@@ -71,17 +83,17 @@ export function DebugPanel({ className }: { className?: string }) {
     ...((view.plugins.cast as { present?: { actions: typeof view.actions }[] } | undefined)?.present ?? []).flatMap((person) => person.actions),
   ].filter((choice) => choice.disabled)
   return (
-    <section className={cn('flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)} data-debug>
-      <div className="flex items-center gap-2">
-        <h3 className="font-semibold">{words('debug')}</h3>
-        <span className="text-xs text-muted-foreground">{words('seed', { seed: data.seed })}</span>
+    <section {...panel} data-debug>
+      <div {...header}>
+        <h3 {...title}>{words('debug')}</h3>
+        <span {...seed}>{words('seed', { seed: data.seed })}</span>
         <div className="ml-auto flex gap-1">
-          <Button size="sm" variant="outline" disabled={!runner.canUndo} onClick={() => runner.undo()}>
+          <button type="button" {...step} disabled={!runner.canUndo} onClick={() => runner.undo()}>
             {words('undo')}
-          </Button>
-          <Button size="sm" variant="outline" disabled={!runner.canRedo} onClick={() => runner.redo()}>
+          </button>
+          <button type="button" {...step} disabled={!runner.canRedo} onClick={() => runner.redo()}>
             {words('redo')}
-          </Button>
+          </button>
         </div>
       </div>
       <Tabs defaultValue="set">
@@ -91,47 +103,47 @@ export function DebugPanel({ className }: { className?: string }) {
           <TabsTrigger value="state">{words('debugState')}</TabsTrigger>
           <TabsTrigger value="log">{words('debugLog')}</TabsTrigger>
         </TabsList>
-        <TabsContent value="set" className="flex flex-col gap-2">
-          <CommandForm label="Stat" fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
-          <CommandForm label="Variable" fields={['key', 'value']} build={([key, value]) => debug('variable', { key, value: parse(value) })} />
-          <CommandForm label="Item" fields={['item', 'count']} build={([item, count]) => debug('item', { item, count: num(count) })} />
+        <TabsContent value="set" {...setSection}>
+          <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
+          <CommandForm label={words('debugVariable')} fields={['key', 'value']} build={([key, value]) => debug('variable', { key, value: parse(value) })} />
+          <CommandForm label={words('debugItem')} fields={['item', 'count']} build={([item, count]) => debug('item', { item, count: num(count) })} />
           <CommandForm
-            label="Stat of"
+            label={words('debugStatOf')}
             fields={['stat', 'of', 'value']}
             build={([stat, of, to]) => debug('stat', { stat, of, to: num(to) })}
           />
-          {view.plugins.places ? <CommandForm label="Go" fields={['location']} build={([location]) => debug('go', { location })} /> : null}
-          <CommandForm label="Scene" fields={['scene']} build={([scene]) => debug('scene', { scene: scene || undefined })} />
+          {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug('go', { location })} /> : null}
+          <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug('scene', { scene: scene || undefined })} />
           {view.plugins.calendar ? (
             <CommandForm
-              label="Time"
+              label={words('debugTime')}
               fields={['day', 'period']}
               build={([day, period]) => debug('time', { day: day === '' ? undefined : num(day), period: period || undefined })}
             />
           ) : null}
-          <CommandForm label="Turn" fields={['turn']} build={([turn]) => debug('turn', { turn: num(turn) })} />
-          <Button size="sm" variant="ghost" onClick={() => send(debug('scene', {}))}>
+          <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug('turn', { turn: num(turn) })} />
+          <button type="button" {...closeScene} onClick={() => send(debug('scene', {}))}>
             {words('closeScene')}
-          </Button>
+          </button>
         </TabsContent>
-        <TabsContent value="why">
-          <h4 className="font-medium">{words('locksOn')}</h4>
-          <ul className="mb-2 list-disc pl-5">
+        <TabsContent value="why" {...section}>
+          <h4 {...heading}>{words('locksOn')}</h4>
+          <ul {...locks}>
             {data.locks.length ? data.locks.map((lock, index) => <li key={index}>{lock.reason} ({lock.deny.join(', ')})</li>) : <li>{words('noneOn')}</li>}
           </ul>
-          <h4 className="font-medium">{words('greyedOut')}</h4>
-          <ul className="list-disc pl-5">
+          <h4 {...heading}>{words('greyedOut')}</h4>
+          <ul {...list}>
             {greyed.length ? greyed.map((choice) => <li key={choice.id}>{choice.label}: {choice.disabled}</li>) : <li>{words('nothingGreyed')}</li>}
           </ul>
         </TabsContent>
-        <TabsContent value="state">
+        <TabsContent value="state" {...section}>
           <ScrollArea className="h-64">
-            <pre className="text-xs">{JSON.stringify(runner.state, null, 2)}</pre>
+            <pre {...state}>{JSON.stringify(runner.state, null, 2)}</pre>
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="log">
+        <TabsContent value="log" {...section}>
           <ScrollArea className="h-64">
-            <ol className="list-decimal pl-5 font-mono text-xs">
+            <ol {...log}>
               {runner.log().commands.map((command, index) => (
                 <li key={index}>{JSON.stringify(command)}</li>
               ))}
@@ -142,3 +154,11 @@ export function DebugPanel({ className }: { className?: string }) {
     </section>
   )
 }
+
+/**
+ * The debug panel, for a game built with `@ifloom/plugin-debug`: set things by
+ * hand, see the locks that are on and every greyed-out button's reason, read
+ * the state and the command log, step back and forward. Draws nothing in a
+ * game built without the plugin.
+ */
+export const DebugPanel = overridable('DebugPanel', DebugPanelImpl)

@@ -1,8 +1,7 @@
 @import "@ifloom/react/styles.css";
+@import "@ifloom/react/themes/storybook.css";
 
-/* Small Town's own look: a warmer accent, softer corners. */
+/* Small Town's own touch on Storybook: a sea-blue accent. */
 :root {
-  --primary: oklch(0.45 0.09 40);
-  --primary-foreground: oklch(0.98 0.01 80);
-  --radius: 0.75rem;
+  --primary: oklch(0.55 0.12 230);
 }

@@ -159,7 +159,7 @@ export type {
   Runner,
   RunnerOptions,
 } from './runner.ts'
-export { createRunner, replay } from './runner.ts'
+export { browserRunner, createRunner, replay } from './runner.ts'
 
 // The view a UI draws
 export type {

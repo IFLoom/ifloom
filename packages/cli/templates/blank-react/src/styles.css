@@ -1,7 +1,12 @@
 @import "@ifloom/react/styles.css";
+@import "@ifloom/react/themes/paper.css";
 
-/* Change the look here. The React UI reads these theme variables. */
-:root {
-  --primary: oklch(0.45 0.09 40);
-  --radius: 0.75rem;
-}
+/*
+ * Make it yours. Set any colour or token here, or style any part of the page
+ * by its data-part attribute, for example:
+ *
+ *   :root { --font-body: Georgia, serif; --primary: oklch(0.5 0.15 30); }
+ *   [data-part="choice"] { border-radius: 0; }
+ *
+ * See "Make it your own" in the React UI docs.
+ */

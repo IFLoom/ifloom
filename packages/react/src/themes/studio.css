@@ -1,0 +1,97 @@
+/*
+ * Studio: a clean, modern app. Cards on a soft grey page, the side column on
+ * the right, generous spacing, bold headings and choices as raised cards.
+ *
+ *   @import "@ifloom/react/styles.css";
+ *   @import "@ifloom/react/themes/studio.css";
+ */
+:root {
+  --font-body: "Inter", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-body);
+  --text-title: 1.25rem;
+  --text-scene-title: 2rem;
+  --leading-prose: 1.7;
+  --width-page: 76rem;
+  --width-reading: 44rem;
+  --width-sidebar: 19rem;
+  --gap-page: 2rem;
+  --gap-beats: 1rem;
+  --radius: 0.9rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px -8px rgb(15 23 42 / 0.18);
+  --background: oklch(0.965 0.005 260);
+  --foreground: oklch(0.22 0.02 265);
+  --card: oklch(1 0 0);
+  --muted-foreground: oklch(0.52 0.02 265);
+  --primary: oklch(0.55 0.2 275);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(1 0 0);
+  --secondary-foreground: oklch(0.22 0.02 265);
+  --border: oklch(0.91 0.01 265);
+  --speech: oklch(0.42 0.12 275);
+  --player-speech: oklch(0.5 0.13 175);
+}
+
+/* The side column on the right. */
+@media (min-width: 48rem) {
+  [data-part="page"][data-has-sidebar] {
+    grid-template-columns: 1fr var(--width-sidebar);
+  }
+
+  [data-part="page"] > [data-part="sidebar"] {
+    order: 2;
+  }
+}
+
+[data-part="page"] {
+  padding-top: 2.5rem;
+}
+
+[data-part="sidebar"] {
+  align-self: start;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="scene"] {
+  padding: 2rem 2.25rem;
+  border-radius: calc(var(--radius) + 0.25rem);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="scene-title"] {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+[data-part="choices"],
+[data-part="actions"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+[data-part="choice"] {
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+[data-part="choice"]:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+[data-part="stat"] {
+  padding: 0.15rem 0;
+}
+
+[data-part="notice"] {
+  border: none;
+}

@@ -1,5 +1,4 @@
 import { Fragment, type ReactNode } from 'react'
-import { cn } from '../lib/utils.ts'
 import { Separator } from '../components/ui/separator.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -9,6 +8,8 @@ import { EntityTable } from './entities.tsx'
 import { InputFields } from './inputs.tsx'
 import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
+import { Notices } from './notices.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { SceneStage } from './scene.tsx'
 import { Clock, LocationPanel, PeoplePanel, StatList } from './sidebar.tsx'
@@ -35,41 +36,52 @@ export type PartName =
   | 'inputs'
   | 'quests'
   | 'debug'
+  | 'notices'
 
 /** A part of a layout: a built-in one by name, or anything of the game's own. */
 export type Part = PartName | ReactNode
 
-/** Where the parts go: a column at the side, and the stage. No side column, and the stage is all there is. */
-export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[] }
+/**
+ * Where the parts go: a column at the side, the stage, and the overlay that
+ * floats over the page (notices, by default). No side column, and the stage is
+ * all there is; an empty overlay draws nothing over the page.
+ */
+export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
 
 /** The React UI's own layout: everything at the side, the scene on the stage. */
 export const DEFAULT_LAYOUT = {
   sidebar: ['title', 'stats', 'entities', 'menu', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
   stage: ['scene', 'inputs', 'quests', 'debug'],
+  overlay: ['notices'],
 } as const satisfies Required<Layout>
 
 /** A page to read, as a novel is: the scene, then what to type and the buttons, under the title. */
 export const READING_LAYOUT = {
   sidebar: [],
   stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'menu'],
+  overlay: ['notices'],
 } as const satisfies Required<Layout>
 
-/** The game's title, and where it is in time if a plugin says. */
-export function Title() {
+function TitleImpl() {
   const { view } = useGame()
   return (
     <div>
-      <h1 className="text-lg font-semibold">{view.title}</h1>
+      <h1 {...usePart('title', 'font-heading text-title font-semibold')}>{view.title}</h1>
       <Clock />
     </div>
   )
 }
 
-/** The buttons offered while no scene is open: the game's own and its plugins'. */
-export function Actions() {
+/** The game's title, and where it is in time if a plugin says. */
+export const Title = overridable('Title', TitleImpl)
+
+function ActionsImpl() {
   const { view } = useGame()
-  return <ChoiceList choices={view.actions} />
+  return <ChoiceList choices={view.actions} part="actions" />
 }
+
+/** The buttons offered while no scene is open: the game's own and its plugins'. */
+export const Actions = overridable('Actions', ActionsImpl)
 
 const PARTS: Record<PartName, () => ReactNode> = {
   title: () => <Title />,
@@ -87,6 +99,7 @@ const PARTS: Record<PartName, () => ReactNode> = {
   inputs: () => <InputFields />,
   quests: () => <QuestLog />,
   debug: () => <DebugPanel />,
+  notices: () => <Notices />,
 }
 
 function isPartName(part: Part): part is PartName {
@@ -110,11 +123,13 @@ export type SidebarProps = {
   parts?: readonly Part[]
 }
 
-/** The side column on its own: its parts, the React UI's if none are given. */
-export function Sidebar({ className, parts = DEFAULT_LAYOUT.sidebar }: SidebarProps) {
+function SidebarImpl({ className, parts = DEFAULT_LAYOUT.sidebar }: SidebarProps) {
   return (
-    <aside className={cn('flex flex-col gap-4', className)} data-sidebar>
+    <aside {...usePart('sidebar', 'flex flex-col gap-4', className)} data-sidebar>
       <Parts parts={parts} />
     </aside>
   )
 }
+
+/** The side column on its own: its parts, the React UI's if none are given. */
+export const Sidebar = overridable('Sidebar', SidebarImpl)

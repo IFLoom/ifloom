@@ -10,6 +10,10 @@ import { fileURLToPath } from 'node:url'
 export const TEMPLATES = ['blank', 'vanilla', 'novel', 'cafe', 'town'] as const
 export type TemplateName = (typeof TEMPLATES)[number]
 
+/** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
+export const THEMES = ['paper', 'terminal', 'studio', 'storybook'] as const
+export type ThemeName = (typeof THEMES)[number]
+
 export type NewGameOptions = {
   /** The game's package name, which is also its folder's: `my-story`. */
   name: string
@@ -17,6 +21,12 @@ export type NewGameOptions = {
   template?: TemplateName
   /** Where to put it. `games/<name>` in the IFLoom checkout if left out. */
   into?: string
+  /**
+   * The React UI preset to start from. Left out, a blank game gets one at
+   * random, so two new games don't start out looking alike, and a copied
+   * example keeps its own. The vanilla template has no React UI and ignores it.
+   */
+  theme?: ThemeName
 }
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
@@ -52,13 +62,16 @@ function filesUnder(dir: string, base = dir): string[] {
 }
 
 /** Make a new game. Returns its folder and the files written there. Installs nothing. */
-export function newGame(options: NewGameOptions): { dir: string; files: string[] } {
+export function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null } {
   const { name, template = 'blank' } = options
   if (!VALID_NAME.test(name) || name.length > 214) {
     throw new Error(`"${name}" can't be a package name: use lower-case letters, digits and dashes, like my-story.`)
   }
   const source = SOURCES[template]
   if (!source) throw new Error(`There is no template "${template}". Pick one of: ${TEMPLATES.join(', ')}.`)
+  if (options.theme && !THEMES.includes(options.theme)) {
+    throw new Error(`There is no theme "${options.theme}". Pick one of: ${THEMES.join(', ')}.`)
+  }
   const dir = options.into ?? here(`../../../games/${name}`)
   if (existsSync(dir) && readdirSync(dir).length > 0) throw new Error(`${dir} already exists and isn't empty.`)
 
@@ -83,5 +96,23 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   delete pkg.description
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
-  return { dir, files }
+  // The preset: the one asked for, a random one for a blank game, or the example's own.
+  const styles = join(dir, 'src/styles.css')
+  let theme: ThemeName | null = null
+  if (template !== 'vanilla' && existsSync(styles)) {
+    const chosen = options.theme ?? (template === 'blank' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
+    const css = readFileSync(styles, 'utf8')
+    if (chosen) {
+      const line = `@import "@ifloom/react/themes/${chosen}.css";`
+      const withTheme = /@import "@ifloom\/react\/themes\/[\w-]+\.css";/.test(css)
+        ? css.replace(/@import "@ifloom\/react\/themes\/[\w-]+\.css";/, line)
+        : css.replace('@import "@ifloom/react/styles.css";', `@import "@ifloom/react/styles.css";\n${line}`)
+      writeFileSync(styles, withTheme)
+      theme = chosen
+    } else {
+      theme = (css.match(/@ifloom\/react\/themes\/([\w-]+)\.css/)?.[1] as ThemeName | undefined) ?? null
+    }
+  }
+
+  return { dir, files, theme }
 }

@@ -1,80 +1,145 @@
 import type { InstalledMod } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
-import { Button } from '../components/ui/button.tsx'
-import { cn } from '../lib/utils.ts'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
+
+/** What `useMods` gives a mod manager. */
+export type ModsState = {
+  /** False when the provider was given no `mods`. */
+  available: boolean
+  /** The mods the player has added. */
+  list: InstalledMod[]
+  /** Add a mod from a file. True if it was added; otherwise `message` says why. */
+  add: (file: File) => Promise<boolean>
+  /** Turn a mod on or off. */
+  toggle: (id: string) => Promise<void>
+  /** Remove a mod. */
+  remove: (id: string) => Promise<void>
+  /** Whether anything changed since the game was built, so a restart would differ. */
+  changed: boolean
+  /** Build the game again with the mods as they are now: the provider's `onChange`. Undefined if it gave none. */
+  restart: (() => void) | undefined
+  /** The problems the loader found in one mod. */
+  problemsFor: (id: string) => string[]
+  /** Why the last file could not be added, or null. */
+  message: string | null
+}
+
+/** The mod manager without the look: the list, adding, toggling and removing, and restarting. Needs `mods` on the provider. */
+export function useMods(): ModsState {
+  const { mods } = useGame()
+  const [list, setList] = useState<InstalledMod[]>([])
+  const [message, setMessage] = useState<string | null>(null)
+  const [changed, setChanged] = useState(false)
+  const refresh = useCallback(async () => setList(mods ? await mods.store.list() : []), [mods])
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+  const after = async () => {
+    await refresh()
+    setChanged(true)
+  }
+  return {
+    available: Boolean(mods),
+    list,
+    async add(file) {
+      if (!mods) return false
+      const added = await mods.store.add(await file.text())
+      setMessage(typeof added === 'string' ? added : null)
+      if (typeof added === 'string') return false
+      await after()
+      return true
+    },
+    async toggle(id) {
+      const mod = list.find((each) => each.id === id)
+      if (!mods || !mod) return
+      await mods.store.setEnabled(id, !mod.enabled)
+      await after()
+    },
+    async remove(id) {
+      if (!mods) return
+      await mods.store.remove(id)
+      await after()
+    },
+    changed,
+    restart: mods?.onChange,
+    problemsFor: (id) => (mods?.problems ?? []).filter((problem) => problem.startsWith(`mod:${id} `)),
+    message,
+  }
+}
+
+function ModManagerImpl({ className }: { className?: string }) {
+  const words = useWords()
+  const mods = useMods()
+  const section = usePart('mods', 'flex flex-col gap-3 text-sm', className)
+  const fileButton = usePart('file-button', 'inline-flex w-fit cursor-pointer items-center rounded-md border px-3 py-1.5 text-xs')
+  const said = usePart('mods-message', 'text-destructive')
+  const row = usePart('mod', 'flex flex-col gap-1 rounded-lg border p-2')
+  const name = usePart('mod-name', 'flex-1 font-medium')
+  const version = usePart('mod-version', 'text-muted-foreground')
+  const onButton = usePart('mod-state', buttonVariants({ size: 'sm', variant: 'default' }))
+  const offButton = usePart('mod-state', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const removeButton = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const text = usePart('mod-text', 'text-muted-foreground')
+  const problem = usePart('mod-problem', 'text-xs text-destructive')
+  const empty = usePart('mods-empty', 'text-muted-foreground')
+  const restart = usePart('button', buttonVariants({ size: 'sm' }))
+  if (!mods.available) return null
+  const add = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) await mods.add(file)
+  }
+  return (
+    <section {...section} data-mods>
+      <label {...fileButton}>
+        {words('addMod')}
+        <input type="file" accept="application/json,.json" className="sr-only" onChange={add} />
+      </label>
+      {mods.message ? <p {...said}>{mods.message}</p> : null}
+      {mods.list.length ? (
+        <ul className="flex flex-col gap-2">
+          {mods.list.map((mod) => (
+            <li key={mod.id} {...row} data-mod={mod.id}>
+              <div className="flex flex-wrap items-center gap-2">
+                <p {...name}>
+                  {mod.name}
+                  {mod.version ? <span {...version}> {mod.version}</span> : null}
+                </p>
+                <button {...(mod.enabled ? onButton : offButton)} onClick={() => void mods.toggle(mod.id)}>
+                  {mod.enabled ? words('modOn') : words('modOff')}
+                </button>
+                <button {...removeButton} onClick={() => void mods.remove(mod.id)}>
+                  {words('remove')}
+                </button>
+              </div>
+              {mod.description ? <p {...text}>{mod.description}</p> : null}
+              {mods.problemsFor(mod.id).map((each) => (
+                <p key={each} {...problem}>
+                  {each}
+                </p>
+              ))}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p {...empty}>{words('noMods')}</p>
+      )}
+      {mods.changed && mods.restart ? (
+        <button {...restart} onClick={mods.restart}>
+          {words('applyMods')}
+        </button>
+      ) : null}
+    </section>
+  )
+}
 
 /**
  * The mod manager: the mods the player has added, each on or off or removed,
  * and adding one from a file. Mods change the game itself, so a change takes
  * effect when the game is built again — `onChange` is where the game does that,
  * usually by reloading the page. Problems the loader found in a mod are listed
- * under it. Needs `mods` on the provider.
+ * under it. Needs `mods` on the provider. `useMods` is the same without the look.
  */
-export function ModManager({ className }: { className?: string }) {
-  const { mods } = useGame()
-  const words = useWords()
-  const [list, setList] = useState<InstalledMod[]>([])
-  const [said, setSaid] = useState<string | null>(null)
-  const [changed, setChanged] = useState(false)
-  const refresh = useCallback(async () => setList(mods ? await mods.store.list() : []), [mods])
-  useEffect(() => {
-    void refresh()
-  }, [refresh])
-  if (!mods) return null
-  const after = async () => {
-    await refresh()
-    setChanged(true)
-  }
-  const add = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    const added = await mods.store.add(await file.text())
-    setSaid(typeof added === 'string' ? added : null)
-    if (typeof added !== 'string') await after()
-  }
-  return (
-    <section className={cn('flex flex-col gap-3 text-sm', className)} data-mods>
-      <label className="inline-flex w-fit cursor-pointer items-center rounded-md border px-3 py-1.5 text-xs">
-        {words('addMod')}
-        <input type="file" accept="application/json,.json" className="sr-only" onChange={add} />
-      </label>
-      {said ? <p className="text-destructive">{said}</p> : null}
-      {list.length ? (
-        <ul className="flex flex-col gap-2">
-          {list.map((mod) => {
-            const problems = (mods.problems ?? []).filter((problem) => problem.startsWith(`mod:${mod.id} `))
-            return (
-              <li key={mod.id} className="flex flex-col gap-1 rounded-lg border p-2" data-mod={mod.id}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="flex-1 font-medium">
-                    {mod.name}
-                    {mod.version ? <span className="text-muted-foreground"> {mod.version}</span> : null}
-                  </p>
-                  <Button size="sm" variant={mod.enabled ? 'default' : 'outline'} onClick={async () => { await mods.store.setEnabled(mod.id, !mod.enabled); await after() }}>
-                    {mod.enabled ? words('modOn') : words('modOff')}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={async () => { await mods.store.remove(mod.id); await after() }}>
-                    {words('remove')}
-                  </Button>
-                </div>
-                {mod.description ? <p className="text-muted-foreground">{mod.description}</p> : null}
-                {problems.map((problem) => (
-                  <p key={problem} className="text-xs text-destructive">{problem}</p>
-                ))}
-              </li>
-            )
-          })}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground">{words('noMods')}</p>
-      )}
-      {changed && mods.onChange ? (
-        <Button size="sm" onClick={mods.onChange}>
-          {words('applyMods')}
-        </Button>
-      ) : null}
-    </section>
-  )
-}
+export const ModManager = overridable('ModManager', ModManagerImpl)

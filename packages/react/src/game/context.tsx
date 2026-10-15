@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
 import type { Applied, Command, Mods, Runner, View } from '@ifloom/engine'
+import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
 
 /** A game's own component for a scene panel or an app's panel section: it gets the data the game's custom panel returned. */
@@ -29,7 +30,7 @@ export type GameContextValue = {
 
 const GameContext = createContext<GameContextValue | null>(null)
 
-export type GameProviderProps = {
+export type GameProviderProps = UiOptions & {
   runner: Runner
   /** The game's own panels, by the name its scenes and apps give. */
   panels?: Record<string, PanelComponent>
@@ -47,7 +48,7 @@ export type GameProviderProps = {
  */
 const NONE = {}
 
-export function GameProvider({ runner, panels = NONE, sections = NONE, mods, children }: GameProviderProps) {
+export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, children }: GameProviderProps) {
   const state = useSyncExternalStore(
     (listener) => runner.subscribe(() => listener()),
     () => runner.state,
@@ -59,7 +60,13 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, chi
     () => ({ runner, view, send, panels, mods, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
     [runner, view, send, panels, sections, mods],
   )
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>
+  return (
+    <GameContext.Provider value={value}>
+      <UiProvider components={components} classes={classes} unstyled={unstyled}>
+        {children}
+      </UiProvider>
+    </GameContext.Provider>
+  )
 }
 
 /** The runner, the current view and `send`. Only inside a `GameProvider`. */

@@ -1,0 +1,143 @@
+/*
+ * Terminal: a green-screen text adventure. Monospace throughout, light text on
+ * black, no rounded corners, choices as a numbered prompt list, and notices
+ * as a status line across the top.
+ *
+ *   @import "@ifloom/react/styles.css";
+ *   @import "@ifloom/react/themes/terminal.css";
+ */
+:root {
+  --font-body: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-heading: var(--font-body);
+  --text-title: 0.875rem;
+  --text-scene-title: 1rem;
+  --leading-prose: 1.6;
+  --width-reading: 46rem;
+  --width-page: 70rem;
+  --width-sidebar: 16rem;
+  --width-notice: 46rem;
+  --gap-page: 1.25rem;
+  --gap-beats: 0.9rem;
+  --radius: 0;
+  --shadow-card: none;
+  --background: oklch(0.16 0.01 150);
+  --foreground: oklch(0.86 0.13 150);
+  --card: oklch(0.19 0.012 150);
+  --card-foreground: oklch(0.86 0.13 150);
+  --popover: oklch(0.19 0.012 150);
+  --popover-foreground: oklch(0.86 0.13 150);
+  --primary: oklch(0.86 0.13 150);
+  --primary-foreground: oklch(0.16 0.01 150);
+  --secondary: transparent;
+  --secondary-foreground: oklch(0.86 0.13 150);
+  --muted: oklch(0.22 0.015 150);
+  --muted-foreground: oklch(0.62 0.08 150);
+  --accent: oklch(0.25 0.03 150);
+  --accent-foreground: oklch(0.92 0.12 150);
+  --border: oklch(0.4 0.06 150);
+  --input: oklch(0.4 0.06 150);
+  --ring: oklch(0.86 0.13 150);
+  --speech: oklch(0.9 0.1 95);
+  --player-speech: oklch(0.8 0.1 200);
+  --price: oklch(0.8 0.12 80);
+  --destructive: oklch(0.7 0.18 25);
+}
+
+body {
+  text-shadow: 0 0 6px color-mix(in oklch, var(--foreground) 35%, transparent);
+}
+
+[data-part="title"]::before {
+  content: "## ";
+}
+
+[data-part="scene-title"] {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+[data-part="scene-title"]::before {
+  content: "> ";
+  color: var(--muted-foreground);
+}
+
+[data-part="beat"][data-beat="say"]::before {
+  content: "“";
+}
+
+[data-part="beat"][data-beat="say"]::after {
+  content: "”";
+}
+
+[data-part="choices"],
+[data-part="actions"] {
+  counter-reset: choice;
+  gap: 0.25rem;
+}
+
+[data-part="choice"] {
+  all: unset;
+  counter-increment: choice;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  font-family: var(--font-body);
+}
+
+[data-part="choice"] [data-part="choice-label"]::before {
+  content: counter(choice) ". ";
+  color: var(--muted-foreground);
+}
+
+[data-part="choice"]:hover:not(:disabled),
+[data-part="choice"]:focus-visible {
+  background: var(--foreground);
+  color: var(--background);
+  text-shadow: none;
+}
+
+[data-part="choice"]:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+[data-part="choice-reason"]::before {
+  content: "  ! ";
+}
+
+[data-part="overlay"] {
+  top: 0;
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+[data-part="notice"] {
+  border-width: 0 0 1px;
+}
+
+[data-part="sidebar"],
+[data-part="stats"] {
+  font-size: 0.8rem;
+}
+
+[data-part="button"],
+[data-part="menu-button"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}
+
+[data-part="menu-button"]::before {
+  content: "[";
+}
+
+[data-part="menu-button"]::after {
+  content: "]";
+}
+
+[data-part="choice"]:focus-visible {
+  outline: 2px solid var(--ring, currentColor);
+  outline-offset: 2px;
+}

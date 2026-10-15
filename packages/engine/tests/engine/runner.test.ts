@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
 import { proseStore } from '../../src/prose.ts'
-import { createRunner, replay } from '../../src/runner.ts'
+import { browserRunner, createRunner, replay } from '../../src/runner.ts'
 import { saves } from '../../src/save.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -148,5 +148,17 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     runner.restore(imported)
     expect(runner.state.flags.at).toBe('shop')
     expect(runner.played()).toBe(9000)
+  })
+
+  it('starts a browser game with undo, saves and an autosave each turn, any of which a game can change', async () => {
+    const game = fixture()
+    const store = saves(game, memoryDriver())
+    const runner = browserRunner(game, { saves: store })
+    expect(runner.offers.undo).toBe(true)
+    expect(runner.saves).toBe(store)
+    expect(typeof runner.state.seed).toBe('number')
+    const plain = browserRunner(game, { history: false, saves: store, start: { ...runner.state, seed: 7 } })
+    expect(plain.offers.undo).toBe(false)
+    expect(plain.state.seed).toBe(7)
   })
 })

@@ -1,98 +1,195 @@
-import type { SaveMeta } from '@ifloom/engine'
+import type { LoadedSave, SaveMeta } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
-import { Button } from '../components/ui/button.tsx'
-import { cn } from '../lib/utils.ts'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
+
+/** What `useSaves` gives a save menu. */
+export type SavesState = {
+  /** False when the runner was made without `saves`: there is nothing to list. */
+  available: boolean
+  /** Every slot, as the store lists them. */
+  slots: SaveMeta[]
+  /** Read the slots again. */
+  refresh: () => Promise<void>
+  /** Save in a new slot (the next free number), with the player's `name` for it if given. */
+  save: (name?: string) => Promise<void>
+  /** Save over an existing slot. */
+  overwrite: (slot: string) => Promise<void>
+  /** Load a slot. True if it loaded. */
+  load: (slot: string) => Promise<boolean>
+  /** Delete a slot. */
+  remove: (slot: string) => Promise<void>
+  /** Download a slot as a `.json` file the player can keep. */
+  exportFile: (slot: string) => Promise<void>
+  /** Load a save from a file the player kept. True if it loaded. */
+  importFile: (file: File) => Promise<boolean>
+  /** Why the last load or import failed, or null. */
+  message: string | null
+  /** Packs the last loaded save was made with that this game doesn't have. */
+  missingPacks: string[]
+  /** Plugins the last loaded save was made with that this game doesn't have. */
+  missingPlugins: string[]
+}
+
+/**
+ * The save menu without the menu: the slots, and saving, loading, deleting,
+ * exporting and importing them. Needs the runner made with `saves`.
+ */
+export function useSaves(): SavesState {
+  const { runner, view } = useGame()
+  const store = runner.saves
+  const [slots, setSlots] = useState<SaveMeta[]>([])
+  const [message, setMessage] = useState<string | null>(null)
+  const [missing, setMissing] = useState<{ packs: string[]; plugins: string[] }>({ packs: [], plugins: [] })
+  const refresh = useCallback(async () => setSlots(store ? await store.list() : []), [store])
+  useEffect(() => {
+    void refresh()
+  }, [refresh, view])
+
+  const loaded = (save: LoadedSave) => {
+    setMessage(null)
+    setMissing({ packs: save.missingPacks, plugins: save.missingPlugins })
+  }
+  const failed = (why: string) => {
+    setMessage(why)
+    setMissing({ packs: [], plugins: [] })
+  }
+  const next = String(slots.filter((meta) => /^\d+$/.test(meta.slot)).reduce((most, meta) => Math.max(most, Number(meta.slot)), 0) + 1)
+
+  return {
+    available: Boolean(store),
+    slots,
+    refresh,
+    async save(name) {
+      await runner.save(next, name)
+      await refresh()
+    },
+    async overwrite(slot) {
+      await runner.save(slot)
+      await refresh()
+    },
+    async load(slot) {
+      const result = await runner.load(slot)
+      if (typeof result === 'string') {
+        failed(result)
+        return false
+      }
+      if (!result) return false
+      loaded(result)
+      return true
+    },
+    async remove(slot) {
+      if (!store) return
+      await store.remove(slot)
+      await refresh()
+    },
+    async exportFile(slot) {
+      if (!store) return
+      const text = await store.exportSlot(slot)
+      if (text === null) return
+      const game = slots.find((meta) => meta.slot === slot)?.game ?? runner.game.id
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
+      link.download = `${game}-${slot}.json`
+      link.click()
+      // Let the download start before the link goes.
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+    },
+    async importFile(file) {
+      if (!store) return false
+      const result = store.importText(await file.text())
+      if (typeof result === 'string') {
+        failed(result)
+        return false
+      }
+      runner.restore(result)
+      loaded(result)
+      return true
+    },
+    message,
+    missingPacks: missing.packs,
+    missingPlugins: missing.plugins,
+  }
+}
+
+function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?: () => void }) {
+  const words = useWords()
+  const saves = useSaves()
+  const section = usePart('saves', 'flex flex-col gap-3 text-sm', className)
+  const actions = usePart('saves-actions', 'flex flex-wrap gap-2')
+  const newButton = usePart('button', buttonVariants({ size: 'sm' }))
+  const fileButton = usePart('file-button', 'inline-flex cursor-pointer items-center rounded-md border px-3 text-xs')
+  const said = usePart('saves-message', 'text-destructive')
+  const slot = usePart('save-slot', 'flex flex-wrap items-center gap-2 rounded-lg border p-2')
+  const name = usePart('save-name', 'font-medium')
+  const details = usePart('save-details', 'text-xs text-muted-foreground')
+  const loadButton = usePart('button', buttonVariants({ size: 'sm' }))
+  const outlineButton = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const ghostButton = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const empty = usePart('saves-empty', 'text-muted-foreground')
+  if (!saves.available) return null
+
+  const load = async (slotId: string) => {
+    if (await saves.load(slotId)) onLoaded?.()
+  }
+  const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && (await saves.importFile(file))) onLoaded?.()
+  }
+  const notes = [
+    ...(saves.message ? [saves.message] : []),
+    ...(saves.missingPacks.length ? [words('missingPacks', { packs: saves.missingPacks.join(', ') })] : []),
+    ...(saves.missingPlugins.length ? [words('missingPlugins', { plugins: saves.missingPlugins.join(', ') })] : []),
+  ]
+
+  return (
+    <section {...section} data-saves>
+      <div {...actions}>
+        <button {...newButton} onClick={() => void saves.save()}>
+          {words('saveNew')}
+        </button>
+        <label {...fileButton}>
+          {words('importSave')}
+          <input type="file" accept="application/json,.json" className="sr-only" onChange={importFile} />
+        </label>
+      </div>
+      {notes.length ? <p {...said}>{notes.join(' ')}</p> : null}
+      {saves.slots.length ? (
+        <ul className="flex flex-col gap-2">
+          {saves.slots.map((meta) => (
+            <li key={meta.slot} {...slot} data-save-slot={meta.slot}>
+              <div className="flex-1">
+                <p {...name}>{meta.name}</p>
+                <p {...details}>{new Date(meta.savedAt).toLocaleString()}</p>
+              </div>
+              <button {...loadButton} onClick={() => void load(meta.slot)}>
+                {words('load')}
+              </button>
+              <button {...outlineButton} onClick={() => void saves.overwrite(meta.slot)}>
+                {words('save')}
+              </button>
+              <button {...outlineButton} onClick={() => void saves.exportFile(meta.slot)}>
+                {words('exportSave')}
+              </button>
+              <button {...ghostButton} onClick={() => void saves.remove(meta.slot)}>
+                {words('remove')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p {...empty}>{words('noSaves')}</p>
+      )}
+    </section>
+  )
+}
 
 /**
  * The save and load menu: every slot newest first, to load, overwrite, delete
  * or export as a file; a new slot; and importing a file a player kept. Needs
  * the runner made with `saves`. Says plainly when a save was made with packs or
- * plugins this game doesn't have.
+ * plugins this game doesn't have. `useSaves` is the same without the look.
  */
-export function SavesMenu({ className, onLoaded }: { className?: string; onLoaded?: () => void }) {
-  const { runner, view } = useGame()
-  const words = useWords()
-  const store = runner.saves
-  const [slots, setSlots] = useState<SaveMeta[]>([])
-  const [said, setSaid] = useState<string | null>(null)
-  const refresh = useCallback(async () => setSlots(store ? await store.list() : []), [store])
-  useEffect(() => {
-    void refresh()
-  }, [refresh, view])
-  if (!store) return null
-
-  const warn = (loaded: { missingPacks: string[]; missingPlugins: string[] }) => {
-    const notes = [
-      ...(loaded.missingPacks.length ? [words('missingPacks', { packs: loaded.missingPacks.join(', ') })] : []),
-      ...(loaded.missingPlugins.length ? [words('missingPlugins', { plugins: loaded.missingPlugins.join(', ') })] : []),
-    ]
-    setSaid(notes.join(' ') || null)
-  }
-  const load = async (slot: string) => {
-    const loaded = await runner.load(slot)
-    if (typeof loaded === 'string') return setSaid(loaded)
-    if (loaded) {
-      warn(loaded)
-      onLoaded?.()
-    }
-  }
-  const exportSlot = async (meta: SaveMeta) => {
-    const text = await store.exportSlot(meta.slot)
-    if (text === null) return
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
-    link.download = `${meta.game}-${meta.slot}.json`
-    link.click()
-    // Let the download start before the link goes.
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
-  }
-  const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    const loaded = store.importText(await file.text())
-    if (typeof loaded === 'string') return setSaid(loaded)
-    runner.restore(loaded)
-    warn(loaded)
-    onLoaded?.()
-  }
-  const next = String(slots.filter((meta) => /^\d+$/.test(meta.slot)).reduce((most, meta) => Math.max(most, Number(meta.slot)), 0) + 1)
-
-  return (
-    <section className={cn('flex flex-col gap-3 text-sm', className)} data-saves>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={async () => { await runner.save(next); await refresh() }}>
-          {words('saveNew')}
-        </Button>
-        <label className="inline-flex cursor-pointer items-center rounded-md border px-3 text-xs">
-          {words('importSave')}
-          <input type="file" accept="application/json,.json" className="sr-only" onChange={importFile} />
-        </label>
-      </div>
-      {said ? <p className="text-destructive">{said}</p> : null}
-      {slots.length ? (
-        <ul className="flex flex-col gap-2">
-          {slots.map((meta) => (
-            <li key={meta.slot} className="flex flex-wrap items-center gap-2 rounded-lg border p-2" data-save-slot={meta.slot}>
-              <div className="flex-1">
-                <p className="font-medium">{meta.name}</p>
-                <p className="text-xs text-muted-foreground">{new Date(meta.savedAt).toLocaleString()}</p>
-              </div>
-              <Button size="sm" onClick={() => void load(meta.slot)}>{words('load')}</Button>
-              <Button size="sm" variant="outline" onClick={async () => { await runner.save(meta.slot); await refresh() }}>
-                {words('save')}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => void exportSlot(meta)}>{words('exportSave')}</Button>
-              <Button size="sm" variant="ghost" onClick={async () => { await store.remove(meta.slot); await refresh() }}>
-                {words('remove')}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground">{words('noSaves')}</p>
-      )}
-    </section>
-  )
-}
+export const SavesMenu = overridable('SavesMenu', SavesMenuImpl)

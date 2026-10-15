@@ -1,55 +1,71 @@
 import { useState } from 'react'
-import { Button } from '../components/ui/button.tsx'
+import { buttonVariants } from '../components/ui/button.tsx'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog.tsx'
-import { cn } from '../lib/utils.ts'
 import { Backlog } from './backlog.tsx'
 import { useGame } from './context.tsx'
+import { Icon } from './icon.tsx'
 import { ModManager } from './mods.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { SavesMenu } from './saves.tsx'
 import { useWords } from './words.ts'
 
-/**
- * The player's menu: saves, the backlog, undo and redo — each only if the game
- * turned it on when it made the runner.
- */
-export function GameMenu({ className }: { className?: string }) {
+function GameMenuImpl({ className }: { className?: string }) {
   const { runner, mods } = useGame()
   const words = useWords()
   const [open, setOpen] = useState<'saves' | 'backlog' | 'mods' | null>(null)
+  const menu = usePart('menu', 'flex flex-wrap gap-2', className)
+  const opener = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const step = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  const dialog = usePart(
+    'dialog',
+    'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg',
+  )
+  const overlay = usePart('dialog-overlay', 'fixed inset-0 z-50 bg-black/50')
+  const title = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
+  const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
   const { undo, backlog } = runner.offers
   if (!runner.saves && !undo && !backlog && !mods) return null
-  const title = open === 'saves' ? words('saves') : open === 'mods' ? words('mods') : words('backlog')
+  const heading = open === 'saves' ? words('saves') : open === 'mods' ? words('mods') : words('backlog')
   return (
-    <div className={cn('flex flex-wrap gap-2', className)} data-menu>
+    <div {...menu} data-menu>
       {runner.saves ? (
-        <Button size="sm" variant="outline" onClick={() => setOpen('saves')}>
+        <button {...opener} onClick={() => setOpen('saves')}>
           {words('saves')}
-        </Button>
+        </button>
       ) : null}
       {backlog ? (
-        <Button size="sm" variant="outline" onClick={() => setOpen('backlog')}>
+        <button {...opener} onClick={() => setOpen('backlog')}>
           {words('backlog')}
-        </Button>
+        </button>
       ) : null}
       {mods ? (
-        <Button size="sm" variant="outline" onClick={() => setOpen('mods')}>
+        <button {...opener} onClick={() => setOpen('mods')}>
           {words('mods')}
-        </Button>
+        </button>
       ) : null}
       {undo ? (
         <>
-          <Button size="sm" variant="ghost" disabled={!runner.canUndo} onClick={() => runner.undo()}>
+          <button {...step} disabled={!runner.canUndo} onClick={() => runner.undo()}>
             {words('undo')}
-          </Button>
-          <Button size="sm" variant="ghost" disabled={!runner.canRedo} onClick={() => runner.redo()}>
+          </button>
+          <button {...step} disabled={!runner.canRedo} onClick={() => runner.redo()}>
             {words('redo')}
-          </Button>
+          </button>
         </>
       ) : null}
       <Dialog open={open !== null} onOpenChange={(next) => (next ? undefined : setOpen(null))}>
-        <DialogContent>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="sr-only">{title}</DialogDescription>
+        <DialogContent
+          bare
+          {...dialog}
+          overlayProps={overlay}
+          closeProps={close}
+          closeIcon={<Icon name="close" />}
+          closeLabel={words('close')}
+        >
+          <DialogTitle bare {...title}>
+            {heading}
+          </DialogTitle>
+          <DialogDescription className="sr-only">{heading}</DialogDescription>
           {open === 'saves' ? <SavesMenu onLoaded={() => setOpen(null)} /> : null}
           {open === 'backlog' ? <Backlog /> : null}
           {open === 'mods' ? <ModManager /> : null}
@@ -58,3 +74,9 @@ export function GameMenu({ className }: { className?: string }) {
     </div>
   )
 }
+
+/**
+ * The player's menu: saves, the backlog, undo and redo — each only if the game
+ * turned it on when it made the runner.
+ */
+export const GameMenu = overridable('GameMenu', GameMenuImpl)

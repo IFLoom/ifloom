@@ -2,41 +2,43 @@ import type { SceneBeat } from '@ifloom/engine'
 import { cn } from '../lib/utils.ts'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
+import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
+import { useWords } from './words.ts'
 
-/** One beat of a scene's body: narration, a spoken line, a picture, a letter, a sign. */
-export function Beat({ beat }: { beat: SceneBeat }) {
+function BeatImpl({ beat }: { beat: SceneBeat }) {
+  const words = useWords()
+  const text = usePart('beat', 'leading-prose')
+  const mono = usePart('beat', 'font-mono text-sm leading-prose')
+  const say = usePart('beat', beat.kind === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
+  const image = usePart('beat', cn('rounded-lg', beat.kind === 'image' && beat.size === 'inline' ? 'max-w-sm' : 'w-full', beat.kind === 'image' && beat.rotate && 'rotate-1'))
+  const mail = usePart('beat', 'rounded-lg border bg-card p-4 text-sm')
+  const header = usePart('mail-header', 'text-muted-foreground')
+  const body = usePart('mail-body', 'mt-2 whitespace-pre-wrap')
+  const prop = usePart('beat', 'rounded-lg border-2 border-dashed p-4 text-center font-medium')
   switch (beat.kind) {
     case 'text':
-      return <p className="leading-relaxed">{beat.text}</p>
+      return <p {...text} data-beat="text">{beat.text}</p>
     case 'mono':
-      return <p className="font-mono text-sm leading-relaxed">{beat.text}</p>
+      return <p {...mono} data-beat="mono">{beat.text}</p>
     case 'say':
-      return (
-        <p className={cn('leading-relaxed', beat.who === 'player' ? 'pl-6 text-player-speech' : 'text-speech')}>{beat.text}</p>
-      )
+      return <p {...say} data-beat="say" data-who={beat.who}>{beat.text}</p>
     case 'image':
-      return (
-        <Picture
-          src={beat.src}
-          alt={beat.alt ?? ''}
-          className={cn('rounded-lg', beat.size === 'inline' ? 'max-w-sm' : 'w-full', beat.rotate && 'rotate-1')}
-        />
-      )
+      return <Picture {...image} data-beat="image" src={beat.src} alt={beat.alt ?? ''} />
     case 'mail':
       return (
-        <div className="rounded-lg border bg-card p-4 text-sm">
-          {beat.headers.map((header) => (
-            <p key={header.key} className="text-muted-foreground">
-              {header.key}: {header.value}
+        <div {...mail} data-beat="mail">
+          {beat.headers.map((line) => (
+            <p key={line.key} {...header}>
+              {words('mailHeader', { key: line.key, value: line.value })}
             </p>
           ))}
-          <p className="mt-2 whitespace-pre-wrap">{beat.body}</p>
+          <p {...body}>{beat.body}</p>
         </div>
       )
     case 'prop':
       return (
-        <div data-face={beat.face} className="rounded-lg border-2 border-dashed p-4 text-center font-medium">
+        <div {...prop} data-beat="prop" data-face={beat.face}>
           {beat.text}
         </div>
       )
@@ -44,23 +46,30 @@ export function Beat({ beat }: { beat: SceneBeat }) {
 }
 
 /**
- * The main panel: the scene on screen, or the room when none is. Its body, then
- * either the game's own panel for it or its choices.
+ * One beat of a scene's body: narration, a spoken line, a picture, a letter, a
+ * sign. Each carries `data-part="beat"` and `data-beat` with its kind. Replace
+ * it in `components` to draw some kinds your own way and hand the rest to `Default`.
  */
-export function SceneStage({ className }: { className?: string }) {
+export const Beat = overridable('Beat', BeatImpl)
+
+function SceneStageImpl({ className }: { className?: string }) {
   const { view, panels } = useGame()
   const scene = view.scene
   const Panel = scene.panel ? panels[scene.panel] : undefined
+  const article = usePart('scene', 'flex flex-col gap-4', className)
+  const header = usePart('scene-header', 'flex items-center gap-3')
+  const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
+  const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
+  const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
+  const beats = usePart('beats', 'flex flex-col gap-(--gap-beats)')
   return (
-    <article className={cn('flex flex-col gap-4', className)} data-scene={scene.id ?? 'stage'}>
-      <header className="flex items-center gap-3">
-        {scene.speaker?.portrait ? (
-          <Picture src={scene.speaker.portrait} alt="" className="size-12 rounded-full object-cover" />
-        ) : null}
-        <h2 className="text-2xl font-semibold">{scene.title}</h2>
+    <article {...article} data-scene={scene.id ?? 'stage'}>
+      <header {...header}>
+        {scene.speaker?.portrait ? <Picture {...portrait} src={scene.speaker.portrait} alt="" /> : null}
+        <h2 {...title}>{scene.title}</h2>
       </header>
-      {scene.stageImage ? <Picture src={scene.stageImage} alt="" className="mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain" /> : null}
-      <div className="flex flex-col gap-3">
+      {scene.stageImage ? <Picture {...image} src={scene.stageImage} alt="" /> : null}
+      <div {...beats}>
         {scene.beats.map((beat, index) => (
           <Beat key={index} beat={beat} />
         ))}
@@ -69,3 +78,9 @@ export function SceneStage({ className }: { className?: string }) {
     </article>
   )
 }
+
+/**
+ * The main panel: the scene on screen, or the room when none is. Its body, then
+ * either the game's own panel for it or its choices.
+ */
+export const SceneStage = overridable('SceneStage', SceneStageImpl)

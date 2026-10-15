@@ -1,0 +1,56 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it } from 'vitest'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { SCHEMA, createRunner, loadGame, startingState } from '@ifloom/engine'
+import { GameShell } from '../src/index.ts'
+
+afterEach(cleanup)
+
+/** A café with no places: two members of staff, each with their own numbers, and a way to hire a third. */
+function cafe() {
+  const { game, problems } = loadGame(
+    [
+      {
+        id: 'cafe',
+        schema: SCHEMA,
+        kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }],
+        stats: [
+          { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
+          { id: 'wage', label: 'Wage', of: 'staff', start: 10, format: '£{n}' },
+        ],
+        entities: [
+          { id: 'ana', of: 'staff', name: 'Ana', stats: { wage: 12 } },
+          { id: 'ben', of: 'staff', name: 'Ben' },
+        ],
+        activities: [{ id: 'hire', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { morale: 90 } } }] }],
+      },
+    ],
+    { id: 'cafe', title: 'The Café', actions: [{ id: 'hire', label: 'Hire someone', command: { type: 'activity', id: 'hire' } }] },
+  )
+  expect(problems).toEqual([])
+  return game
+}
+
+describe('EntityTable', () => {
+  it('draws a table per kind, a row each, and a row for one hired in play', () => {
+    const game = cafe()
+    const runner = createRunner(game, startingState(game))
+    render(<GameShell runner={runner} />)
+    const staff = document.querySelector('[data-kind="staff"]') as HTMLElement
+    expect(within(staff).getByText('Staff')).toBeTruthy()
+    const rows = () => [...staff.querySelectorAll('tbody tr')].map((row) => [...row.querySelectorAll('td')].map((cell) => cell.textContent))
+    expect(rows()).toEqual([
+      ['Ana', '60', '£12'],
+      ['Ben', '60', '£10'],
+    ])
+    act(() => void runner.apply({ type: 'activity', id: 'hire' }))
+    expect(rows()).toEqual([
+      ['Ana', '60', '£12'],
+      ['Ben', '60', '£10'],
+      ['Cleo', '90', '£10'],
+    ])
+    expect(staff.querySelector('[data-entity="staff:#1"]')).toBeTruthy()
+    // No places: no location panel.
+    expect(screen.queryByText('The Café', { selector: 'h3' })).toBeNull()
+  })
+})

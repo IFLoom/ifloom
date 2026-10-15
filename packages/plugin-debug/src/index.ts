@@ -1,0 +1,174 @@
+/**
+ * @ifloom/plugin-debug — commands for testing a game while it runs: set a stat
+ * (an entity's too) or a variable, give an item, jump to a scene, set the
+ * clock, go anywhere.
+ *
+ * Every command here ignores locks, needs no exit and pays no cost: it is a
+ * hand on the state, not a move in the story. A release build leaves the plugin
+ * out of `game.plugins`, and none of it is there.
+ *
+ * Its view lists what a debugger wants on screen: the locks that are on, the
+ * triggers that have fired, and the seed.
+ */
+import {
+  clampStat,
+  entityOf,
+  parseRef,
+  writeEntity,
+  definePlugin,
+  holds,
+  itemById,
+  sceneById,
+  say,
+  statDef,
+  type Command,
+  type FlagValue,
+  type Game,
+  type PluginCommand,
+} from '@ifloom/engine'
+
+export type DebugView = {
+  /** Every lock whose `when` holds now, with what it stops and why. */
+  locks: { reason: string; deny: string[] }[]
+  /** Triggers that have fired, with the turn each last did. */
+  fired: Record<string, number>
+  seed: number
+}
+
+const free = (command: Omit<PluginCommand<null>, 'ignoresLocks'>): PluginCommand<null> => ({ ...command, ignoresLocks: true })
+
+/** A real number: not text that looks like one, not NaN or Infinity. */
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isFlagValue(value: unknown): value is FlagValue {
+  return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string'
+}
+
+/** The plugin. Add it to `game.plugins` in development builds only. */
+export function debug() {
+  return definePlugin<null>({
+    id: 'debug',
+    version: 1,
+    // The clock is the calendar's and the map is the places plugin's: debug/time and debug/go set them when the game has them.
+    cooperates: ['calendar', 'places'],
+    strings: {
+      noSuchStat: 'There is no stat called {id}.',
+      noSuchEntity: 'There is nobody and nothing called {id}.',
+      notTheirs: 'That is not whose {id} it is.',
+      noSuchItem: 'There is no item called {id}.',
+      noSuchPlace: 'There is no location called {id}.',
+      noPlaces: 'This game has no places.',
+      noSuchScene: 'There is no scene called {id}.',
+      badValue: 'A variable holds true, false, a number or a word.',
+      notANumber: 'That needs a number.',
+      badTime: 'A day is a whole number from 0, and a period one of {periods}.',
+      noCalendar: 'This game has no calendar.',
+      notATurn: 'A turn is a whole number from 0.',
+    },
+    commands: {
+      /** `{ name: 'debug/stat', with: { stat, to, of? } }`: put a stat at a value, held to its range; with `of`, an entity's. */
+      stat: free({
+        whyNot: (state, args, { game }) => {
+          const def = statDef(game, String(args.stat))
+          if (!def) return sayDebug(game, 'noSuchStat', String(args.stat))
+          if (args.of !== undefined && !entityOf(state, String(args.of))) return sayDebug(game, 'noSuchEntity', String(args.of))
+          // The stat must be the owner's: the player's with no `of`, its kind's with one.
+          const kind = args.of === undefined ? undefined : parseRef(String(args.of))?.kind
+          if (def.of !== kind) return sayDebug(game, 'notTheirs', String(args.stat))
+          return isNumber(args.to) ? undefined : sayDebug(game, 'notANumber')
+        },
+        // A hand on the state: held to the stat's range, but no game rule (`onStat`) is asked.
+        run: (state, args, { game }) => {
+          const key = String(args.stat)
+          const to = clampStat(state, game, key, Number(args.to))
+          if (args.of === undefined) return { ...state, stats: { ...state.stats, [key]: to } }
+          const ref = String(args.of)
+          const entity = entityOf(state, ref)!
+          return writeEntity(state, ref, { ...entity, stats: { ...entity.stats, [key]: to } })
+        },
+      }),
+      /** `{ name: 'debug/variable', with: { key, value } }`: set a variable. */
+      variable: free({
+        whyNot: (_state, args, { game }) => (isFlagValue(args.value) ? undefined : sayDebug(game, 'badValue')),
+        run: (state, args) => ({ ...state, flags: { ...state.flags, [String(args.key)]: args.value as FlagValue } }),
+      }),
+      /** `{ name: 'debug/item', with: { item, count } }`: set how many of an item the player has. */
+      item: free({
+        whyNot: (_state, args, { game }) =>
+          !itemById(game, String(args.item))
+            ? sayDebug(game, 'noSuchItem', String(args.item))
+            : isNumber(args.count) ? undefined : sayDebug(game, 'notANumber'),
+        run: (state, args) => ({ ...state, items: { ...state.items, [String(args.item)]: Math.max(0, Number(args.count)) } }),
+      }),
+      /** `{ name: 'debug/scene', with: { scene } }`: put a scene on screen; leave `scene` out to close it. */
+      scene: free({
+        whyNot: (_state, args, { game }) =>
+          args.scene === undefined || sceneById(game, String(args.scene)) ? undefined : sayDebug(game, 'noSuchScene', String(args.scene)),
+        run: (state, args) => ({ ...state, sceneId: args.scene === undefined ? null : String(args.scene) }),
+      }),
+      /**
+       * `{ name: 'debug/time', with: { day?, period? } }`: set the calendar's clock, when the
+       * game has the calendar. No turn ends, and nothing that happens overnight runs.
+       */
+      time: free({
+        whyNot: (_state, args, { game, query }) => {
+          const periods = query<string[]>('calendar/periods')
+          if (!periods) return sayDebug(game, 'noCalendar')
+          const ok =
+            (args.day === undefined || (isNumber(args.day) && Number.isInteger(args.day) && args.day >= 0)) &&
+            (args.period === undefined || periods.includes(String(args.period)))
+          return ok ? undefined : sayDebug(game, 'badTime', undefined, periods.join(', '))
+        },
+        run: (_state, args, { apply }) =>
+          apply([{ custom: 'calendar/set', with: { ...(args.day === undefined ? {} : { day: Number(args.day) }), ...(args.period === undefined ? {} : { period: String(args.period) }) } }]),
+      }),
+      /** `{ name: 'debug/turn', with: { turn } }`: set how many turns have passed. No turn's rules run. */
+      turn: free({
+        whyNot: (_state, args, { game }) =>
+          isNumber(args.turn) && Number.isInteger(args.turn) && args.turn >= 0 ? undefined : sayDebug(game, 'notATurn'),
+        run: (state, args) => ({ ...state, turn: Number(args.turn) }),
+      }),
+      /**
+       * `{ name: 'debug/go', with: { location } }`: be somewhere, when the game has places:
+       * no exit needed, and nothing on arrival.
+       */
+      go: free({
+        whyNot: (_state, args, { game, query }) => {
+          const known = query<boolean>('places/known', { value: String(args.location) })
+          if (known === undefined) return sayDebug(game, 'noPlaces')
+          return known ? undefined : sayDebug(game, 'noSuchPlace', String(args.location))
+        },
+        run: (_state, args, { apply }) => apply([{ custom: 'places/move', with: { value: String(args.location) } }]),
+      }),
+    },
+    view: (state, { game }): DebugView => ({
+      locks: (game.rules?.locks ?? [])
+        .filter((lock) => holds(state, lock.when, game))
+        .map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
+      fired: { ...state.fired },
+      seed: state.seed,
+    }),
+  })
+}
+
+
+function sayDebug(game: Game, key: string, id?: string, periods?: string): string {
+  return say(game, `debug/${key}`, { ...(id === undefined ? {} : { id }), ...(periods === undefined ? {} : { periods }) })
+}
+
+/** A command: put a stat at a value. */
+export const setStat = (stat: string, to: number, of?: string): Command => ({ type: 'custom', name: 'debug/stat', with: { stat, to, ...(of === undefined ? {} : { of }) } })
+/** A command: set a variable. */
+export const setVariable = (key: string, value: FlagValue): Command => ({ type: 'custom', name: 'debug/variable', with: { key, value } })
+/** A command: set how many of an item the player has. */
+export const setItem = (item: string, count: number): Command => ({ type: 'custom', name: 'debug/item', with: { item, count } })
+/** A command: put a scene on screen, or close it. */
+export const jumpTo = (scene?: string): Command => ({ type: 'custom', name: 'debug/scene', with: { scene } })
+/** A command: set the clock. */
+export const setTime = (time: { day?: number; period?: string }): Command => ({ type: 'custom', name: 'debug/time', with: time })
+/** A command: set how many turns have passed. */
+export const setTurn = (turn: number): Command => ({ type: 'custom', name: 'debug/turn', with: { turn } })
+/** A command: be somewhere. */
+export const goTo = (location: string): Command => ({ type: 'custom', name: 'debug/go', with: { location } })

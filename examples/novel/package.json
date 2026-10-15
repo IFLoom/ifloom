@@ -1,0 +1,14 @@
+{
+  "name": "@ifloom/example-novel",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "A short linear novel on IFLoom: chapters, choices remembered, a counter and one stat. No plugins, no places, no clock.",
+  "type": "module",
+  "scripts": {
+    "dev": "ifloom dev",
+    "build": "ifloom build",
+    "check": "ifloom check",
+    "playtest": "ifloom playtest --turns 3 --out playtest/read.txt"
+  }
+}

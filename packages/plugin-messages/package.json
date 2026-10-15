@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-messages",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Messages for IFLoom: threads of messages that arrive when the story allows, and replies that are choices.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@ifloom/phone",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "A smartphone for IFLoom in one line: devices, messages and feeds wired together, with messages, social, contacts and a gallery.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-devices": "0.0.0",
+    "@ifloom/plugin-feed": "0.0.0",
+    "@ifloom/plugin-messages": "0.0.0"
+  }
+}

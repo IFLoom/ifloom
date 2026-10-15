@@ -1,0 +1,15 @@
+{
+  "name": "@ifloom/engine",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "The IFLoom engine: state, commands, scenes, conditions and effects. No DOM, no genre.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "files": [
+    "src"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-places",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Places for IFLoom: locations with exits and things to do, travel between them, and where the player is.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

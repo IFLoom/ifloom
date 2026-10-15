@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-debug",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Debug commands for IFLoom: set a stat or variable, jump to a scene, set the time, go anywhere. Leave it out of release builds.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

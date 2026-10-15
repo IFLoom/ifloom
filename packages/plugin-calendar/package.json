@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-calendar",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "A calendar for IFLoom: the periods of a day, the days of a week, sleep and a curfew, and what a turn is.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

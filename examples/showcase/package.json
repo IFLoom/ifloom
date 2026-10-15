@@ -1,0 +1,16 @@
+{
+  "name": "@ifloom/showcase",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "The IFLoom showcase: a small town that uses every feature the engine has. Its source is what the docs point at.",
+  "type": "module",
+  "scripts": {
+    "dev": "ifloom dev",
+    "build": "ifloom build",
+    "check": "ifloom check",
+    "playtest": "ifloom playtest --turns 7 --out playtest/week.txt",
+    "snapshot": "ifloom snapshot",
+    "build:one-file": "ifloom build --inline-assets --out dist-one"
+  }
+}

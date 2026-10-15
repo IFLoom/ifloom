@@ -1,0 +1,65 @@
+import { SCHEMA, loadGame, type Loaded, type Pack } from '../../src/loader.ts'
+import { fixture, townProse } from './town.ts'
+
+/**
+ * A café counter as data: a scene with prose, a line drawn from variants, a
+ * choice that only lands once a day, and one custom condition — everything a
+ * data scene needs, loaded the way a game loads, with no runtime written by
+ * hand.
+ */
+export const cafe: Pack = {
+  id: 'cafe',
+  schema: SCHEMA,
+  scenes: [
+    {
+      id: 'cafe.counter',
+      title: 'The counter',
+      body: [
+        { text: 'cafe.counter' },
+        { variants: 'cafe.weather' },
+        { text: 'cafe.counter/regular', when: { custom: 'isRegular' } },
+      ],
+      choices: [
+        {
+          id: 'chat',
+          once: { per: 'turn', reason: 'She has heard enough from you today.' },
+          effects: [{ kind: 'stat', key: 'luck', by: 1 }],
+        },
+        { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+      ],
+    },
+  ],
+  prose: {
+    'cafe.counter': 'Rosa wipes the counter. "Morning, {{playerFirst}}."',
+    'cafe.counter/regular': 'She has your cup out before you ask.',
+    'cafe.counter#chat': 'Talk about the weather',
+    'cafe.counter#leave': 'Leave',
+    'cafe.weather/rain': 'Rain on the window.',
+    'cafe.weather/sun': 'Sun on the tables.',
+    'cafe.weather/fog': 'Fog in the street.',
+  },
+  variants: {
+    'cafe.weather': ['cafe.weather/rain', 'cafe.weather/sun', 'cafe.weather/fog'],
+  },
+  custom: {
+    conditions: { isRegular: (state) => (state.seen['cafe.counter'] ?? 0) >= 3 },
+  },
+}
+
+/** The town with the café loaded over it. */
+export function withCafe(): Loaded {
+  const town = fixture()
+  const { scenes, items, storylines, activities, stats, custom, ...base } = town
+  const townPack: Pack = {
+    id: 'town',
+    schema: SCHEMA,
+    scenes,
+    items,
+    storylines,
+    activities,
+    stats,
+    custom,
+    prose: townProse,
+  }
+  return loadGame([townPack, cafe], base)
+}

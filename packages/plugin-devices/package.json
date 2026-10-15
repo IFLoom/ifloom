@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-devices",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Devices for IFLoom: a phone, a laptop or a desk drawer, with apps the game declares, badges, and opening one without leaving the room.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

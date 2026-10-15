@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-quests",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Quests for IFLoom: what the player is doing, how far they have got, and the hint for what comes next.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

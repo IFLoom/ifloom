@@ -1,0 +1,19 @@
+{
+  "ifloomMod": 1,
+  "id": "fog-season",
+  "name": "Fog season",
+  "version": "1.0",
+  "game": "small-town",
+  "description": "Autumn comes early: fog on the high street, and the park goes quiet.",
+  "pack": {
+    "id": "fog-season",
+    "schema": 4,
+    "prose": {
+      "street.weather/fog": "Fog down the high street; the bakery's lights are the only colour in it.",
+      "place.park": "The river has gone grey under the fog, and even the ducks are keeping their opinions to themselves."
+    },
+    "variants": {
+      "street.weather": ["street.weather/fog"]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+@import "@ifloom/ui/styles.css";
+
+/* The same warm accent and soft corners as Small Town. */
+:root {
+  --primary: oklch(0.45 0.09 40);
+  --primary-foreground: oklch(0.98 0.01 80);
+  --radius: 0.75rem;
+}

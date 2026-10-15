@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-wardrobe",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "A wardrobe for IFLoom: slots the game declares, clothes that go in them, and what the player has on.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

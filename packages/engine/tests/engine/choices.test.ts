@@ -1,0 +1,190 @@
+import { describe, expect, it } from 'vitest'
+import { holds } from '../../src/condition.ts'
+import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { apply, applyEffects, startingState } from '../../src/reduce.ts'
+import { deserialize, migrate, serialize } from '../../src/save.ts'
+import { SAVE_VERSION } from '../../src/types.ts'
+import { explain } from '../../src/explain.ts'
+import { proseStore } from '../../src/prose.ts'
+import { view } from '../../src/view.ts'
+import { withCafe } from '../fixtures/cafe.ts'
+import { begin, fixture } from '../fixtures/town.ts'
+
+describe('choices the player made', () => {
+  it('are remembered by scene and choice, and `{ chose }` reads them', () => {
+    const { game } = withCafe()
+    const at = { ...begin(game), sceneId: 'cafe.counter' }
+    expect(holds(at, { chose: 'cafe.counter/chat' }, game)).toBe(false)
+    const after = apply(at, game, { type: 'choose', id: 'chat' }).state
+    expect(after.chosen).toEqual({ 'cafe.counter/chat': 1 })
+    expect(holds(after, { chose: 'cafe.counter/chat' }, game)).toBe(true)
+    expect(holds(after, { chose: 'cafe.counter/chat', gte: 2 }, game)).toBe(false)
+    expect(holds(after, { chose: 'cafe.counter/leave' }, game)).toBe(false)
+    expect(explain(after, { chose: 'cafe.counter/chat', gt: 1 }, game).why).toBe('choice cafe.counter/chat picked 1 times; wants more than 1')
+  })
+
+  it('a choice that names a scene or choice the game does not have is reported', () => {
+    const { id, title, introScene } = fixture()
+    const { problems } = loadGame(
+      [
+        {
+          id: 'chapter',
+          schema: SCHEMA,
+          scenes: [
+            {
+              id: 'ch1.door',
+              body: [{ text: 'ch1.door' }],
+              choices: [
+                { id: 'knock', effects: [] },
+                { id: 'thanks', when: { chose: 'ch1.door/kick' }, effects: [] },
+                { id: 'later', when: { chose: 'ch9.end/leave' }, effects: [] },
+              ],
+            },
+          ],
+          prose: { 'ch1.door': 'A door.', 'ch1.door#knock': 'Knock', 'ch1.door#thanks': 'Thanks', 'ch1.door#later': 'Later' },
+        },
+      ],
+      { id, title, introScene },
+    )
+    expect(problems.map((problem) => problem.what)).toEqual([
+      'gated on unknown choice "ch1.door/kick"',
+      'gated on a choice in unknown scene "ch9.end/leave"',
+    ])
+  })
+})
+
+describe('variables as counters', () => {
+  it('add, starting from nothing, and range-test', () => {
+    const game = fixture()
+    let state = applyEffects(begin(game), game, [{ kind: 'flag', key: 'lies', add: 1 }])
+    state = applyEffects(state, game, [{ kind: 'flag', key: 'lies', add: 2 }])
+    expect(state.flags.lies).toBe(3)
+    expect(holds(state, { flag: 'lies', gte: 3 }, game)).toBe(true)
+    expect(holds(state, { flag: 'lies', gt: 3 }, game)).toBe(false)
+    expect(holds(state, { flag: 'lies', lte: 3 }, game)).toBe(true)
+    expect(holds(state, { flag: 'lies', lt: 3 }, game)).toBe(false)
+    expect(explain(state, { flag: 'lies', gte: 1, lte: 2 }, game).why).toBe('flag lies is 3; wants 1 or more and 2 or less')
+    // A variable that is not a number counts as 0 in a range.
+    const named = applyEffects(state, game, [{ kind: 'flag', key: 'pet', value: 'Biscuit' }])
+    expect(holds(named, { flag: 'pet', lte: 0 }, game)).toBe(true)
+    expect(holds(named, { flag: 'pet' }, game)).toBe(true)
+  })
+})
+
+describe('a new game', () => {
+  it('has no name unless the game gives one, and its words read variables', () => {
+    const game = fixture()
+    const state = startingState(game)
+    expect(state.flags).toEqual({})
+    expect(startingState(game, { flags: { playerName: 'Robin' } }).flags.playerName).toBe('Robin')
+    const words = proseStore(game, { hello: 'Hello, {{playerName}}. Day {{visits}}.' })
+    expect(words.line('hello', { ...state, flags: { playerName: 'Robin', visits: 3 } })).toBe('Hello, Robin. Day 3.')
+    // A variable the save does not have shows as written, so the gap is visible.
+    expect(words.line('hello', state)).toBe('Hello, {{playerName}}. Day {{visits}}.')
+  })
+
+  it('takes its seed from the start command, or from the game when none is given', () => {
+    const game = fixture()
+    expect(apply(null, game, { type: 'start', seed: 42 }).state.seed).toBe(42)
+    expect(startingState(game).seed).toBe(startingState(game).seed)
+    expect(startingState(game, { seed: 7 }).seed).toBe(7)
+  })
+
+  it('shows a typed value as typed, never reading it as a token', () => {
+    const game = fixture()
+    const words = proseStore(game, { hello: 'Hello, {{playerName}}.' })
+    expect(words.line('hello', { ...startingState(game), flags: { playerName: '{{v:nothing}}' } })).toBe('Hello, {{v:nothing}}.')
+  })
+
+  it('carries a version-1 save’s name into variables', () => {
+    const game = fixture()
+    const { chosen: _chosen, ...now } = startingState(game)
+    const old = { ...now, version: 1, playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', flags: { tidy: true } }
+    expect(migrate(old)).toMatchObject({
+      version: SAVE_VERSION,
+      chosen: {},
+      flags: { playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', tidy: true },
+    })
+    expect(migrate(old)).not.toHaveProperty('playerName')
+  })
+
+  it('carries a version-2 save onto turns: the day is the turn, and day stamps become turn stamps', () => {
+    const game = fixture()
+    const { turn: _turn, ...now } = startingState(game)
+    const old = {
+      ...now,
+      version: 2,
+      time: { day: 4, period: 'evening' },
+      flags: { 'day:cafe.counter.chat': 4, tidy: true },
+      storylines: { rosa: { standing: 5, rapport: 0, closedUntilDay: 6, flags: {} } },
+      collections: { gallery: [{ id: 'house', day: 2 }] },
+      notices: [{ id: 'n', title: 'Rent', day: 3, seen: false }],
+    }
+    expect(migrate(old)).toMatchObject({
+      version: SAVE_VERSION,
+      turn: 4,
+      flags: { 'turn:cafe.counter.chat': 4, tidy: true },
+      storylines: { rosa: { closedUntil: 6, flags: {} } },
+      collections: { gallery: [{ id: 'house', turn: 2 }] },
+      notices: [{ id: 'n', title: 'Rent', turn: 3, seen: false }],
+    })
+  })
+
+  it('carries a version-4 save’s clock to the calendar, the small hours called late', () => {
+    const game = fixture()
+    const now = startingState(game)
+    const old = { ...now, version: 4, time: { day: 3, period: 'sleep' } }
+    const moved = migrate(old)!
+    expect(moved).not.toHaveProperty('time')
+    expect(moved.plugins.calendar).toEqual({ version: 1, state: { day: 3, period: 'late' } })
+    expect(migrate({ ...now, version: 4, time: { day: 1, period: 'morning' } })!.plugins.calendar).toEqual({ version: 1, state: { day: 1, period: 'morning' } })
+  })
+
+  it('carries a version-5 save’s place to the places plugin', () => {
+    const game = fixture()
+    const now = startingState(game)
+    const moved = migrate({ ...now, version: 5, locationId: 'shop' })!
+    expect(moved).not.toHaveProperty('locationId')
+    expect(moved.plugins.places).toEqual({ version: 1, state: { at: 'shop' } })
+    expect(migrate({ ...now, version: 5, locationId: null })!.plugins.places).toBeUndefined()
+  })
+
+  it('carries a version-7 save’s storylines on without standing or rapport', () => {
+    const game = fixture()
+    const now = startingState(game)
+    const moved = migrate({ ...now, version: 7, storylines: { rosa: { standing: 40, rapport: 3, closedUntil: null, flags: { met: true } } } })!
+    expect(moved.storylines).toEqual({ rosa: { closedUntil: null, flags: { met: true } } })
+  })
+
+  it('saves and loads without a player name', () => {
+    const game = fixture()
+    const state = startingState(game)
+    expect(deserialize(serialize(state))).toEqual(state)
+  })
+})
+
+describe('who is speaking', () => {
+  it('is never guessed from a scene id', () => {
+    const game = fixture()
+    // Begins with a character's id, but names no speaker.
+    game.scenes = [...game.scenes, { id: 'rosa.aside', render: () => ({ body: 'The shop is quiet.', choices: [] }) }]
+    const shown = view({ ...begin(game), sceneId: 'rosa.aside' }, game).scene
+    expect(shown.speaker).toBeNull()
+    expect(shown.frame).toBe('stage')
+    expect(shown.tags).toEqual([])
+  })
+})
+
+describe('storylines', () => {
+  it('are open, or closed until a turn, and `{ storyline }` asks which', () => {
+    const game = fixture()
+    const state = begin(game)
+    expect(holds(state, { storyline: 'rosa' }, game)).toBe(true)
+    expect(holds(state, { storyline: 'rosa', open: false }, game)).toBe(false)
+    const closed = applyEffects(state, game, [{ kind: 'closeStoryline', id: 'rosa', turns: 3 }])
+    expect(holds(closed, { storyline: 'rosa' }, game)).toBe(false)
+    expect(holds(closed, { storyline: 'rosa', open: false }, game)).toBe(true)
+    expect(holds({ ...closed, turn: closed.turn + 3 }, { storyline: 'rosa' }, game)).toBe(true)
+    expect(explain(closed, { storyline: 'rosa' }, game).why).toBe('storyline rosa is closed; wants it open')
+  })
+})

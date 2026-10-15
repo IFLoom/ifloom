@@ -9,7 +9,7 @@ import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { PluginSlice } from './plugin.ts'
 
-export const SAVE_VERSION = 8 as const
+export const SAVE_VERSION = 9 as const
 
 export type FlagValue = boolean | number | string
 
@@ -87,6 +87,8 @@ export type GameState = {
   fired: Record<string, number>
   /** Each plugin's own state, by plugin id. */
   plugins: Record<string, PluginSlice>
+  /** The value of each `play` setting the game declares, by id. */
+  settings: Record<string, FlagValue>
 }
 
 export type Command =
@@ -106,6 +108,8 @@ export type Command =
   | { type: 'dismiss'; id?: string }
   /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
   | { type: 'input'; id: string; value?: FlagValue }
+  /** Change a `play` setting. Ignores locks, like a menu would. */
+  | { type: 'setting'; id: string; value: FlagValue }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 

@@ -186,6 +186,9 @@ type Plugin<S = any> = {
   kinds?: readonly KindDef[]
   entities?: (game: Game) => readonly EntityDef[]
   view?: (state: GameState, context: PluginContext<S>) => unknown
+  profile?: {
+    onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
+  }
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 }
@@ -216,6 +219,7 @@ type Plugin<S = any> = {
 | `kinds` | [Kinds](/reference/entities#kinddef) of entity the plugin brings. See [Kinds and entities](#kinds-and-entities). |
 | `entities` | [Entities](/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/reference/view#plugins). See [The view](#the-view). |
+| `profile` | What the plugin keeps in the player's [profile](/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
 | `check` | Checks the plugin's content when the game is loaded. See [Content and checks](#content-and-checks). |
 | `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, checked when the game is loaded. See [Checking calls](#checking-calls). |
 
@@ -507,6 +511,36 @@ export const diary = definePlugin<Diary>({
 **Gotchas.**
 - `after` only runs through [`apply`](/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/plugins/quests) does, rather than rely on `after` having run.
 - Return the state you were given when nothing changes. Calling `set` with an equal slice still makes a new state object.
+
+## The profile
+
+Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares `profile.onCommand`, and the [runner](/reference/runner#finished) calls it after every command that takes:
+
+```ts
+import { definePlugin } from '@ifloom/engine'
+
+// Remembers every ending the player has reached, across every game they play.
+export const endings = definePlugin({
+  id: 'endings',
+  version: 1,
+  profile: {
+    onCommand: (state, previous, stored) => {
+      const reached = (stored as string[] | undefined) ?? []
+      const scene = state.sceneId
+      if (!scene?.startsWith('ending.') || scene === previous.sceneId || reached.includes(scene)) return undefined
+      return [...reached, scene]
+    },
+  },
+})
+```
+
+It's called with the state after the command, the state before it, what the plugin's namespace holds now (`undefined` if nothing), and the plugin's context. Return the new value to store, or `undefined` to leave it as it is. The runner writes each answer in order, so each call sees the value the one before it stored.
+
+A UI reads the namespace from the runner, as in `await runner.profile?.get('endings')`.
+
+**Gotchas.**
+- Only a runner with a `profile` calls `onCommand`. [`apply`](/reference/commands#apply), `dispatch` and [`replay`](/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
+- The profile isn't in the context, so a plugin's conditions, effects and view can't read it. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
 
 ## Guards, prices and labels
 

@@ -24,6 +24,7 @@ type Pack = {
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
+  settings?: SettingDef[]
   strings?: Record<string, string>
   prose?: Record<string, string>
   variants?: Record<string, string[]>
@@ -37,7 +38,7 @@ type Pack = {
 |---|---|
 | `id` | Names the pack in problems, such as `'town'` or `'mod:sunday-market'`. |
 | `schema` | Must equal [`SCHEMA`](#schema), or the whole pack is skipped with a problem. |
-| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers` and `inputs` on `loadGame`'s `base` come before every pack's. |
+| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `settings` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers`, `inputs` and `settings` on `loadGame`'s `base` come before every pack's. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/reference/entities). |
 | `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/reference/strings#overriding). |
 | `prose` | By key. A later pack wins. |
@@ -174,6 +175,9 @@ Every condition the loader looks at is walked, including inside `all`, `any`, `n
 | `no custom condition named "…"` | A custom condition that neither the game nor any plugin declares, as `{ custom }` or a [short plugin call](/reference/custom#plugincall). |
 | A stat owner problem | See [Stat owners](#stat-owners). |
 | Whatever the plugin says | The plugin's [`argProblems`](/reference/plugins#checking-calls), for a call to a plugin's condition. |
+| `unknown setting "…"` | A `setting` that the game doesn't declare. |
+| `setting "…" is a ui setting; conditions read only play settings` | A `ui` [setting](/reference/settings), which isn't in the state. |
+| `<value> for setting "…" is not …` | An `is` the setting can't take: not `true` or `false` for a toggle, not one of a choice's options, or out of a range's bounds or steps. |
 
 ### In an effect list
 
@@ -224,6 +228,9 @@ A stat is either the player's or belongs to a [kind](/reference/entities). Where
 | `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. |
 | `trigger <id>` | Its `when`, and its `effects` as an effect list. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
+| `setting <id>` | `two settings share this id` (twice in one pack's list, or the base's; a later pack redeclaring one is fine), `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
+| `finished` | The game's [`finished`](/reference/state#new-game) condition. Reported against `base`. |
+| `carryOver` | `unknown stat "…"` and `unknown item "…"` in the game's [`carryOver`](/reference/state#new-game), and `stat "…" belongs to <kind>, not the player` for a kind's stat. Reported against `base`. |
 | `stat <id>` | `belongs to unknown kind "…"`: its `of` names a kind nobody declares. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, and `an entity id must not be a whole number` (see [Ids](/reference/entities#ids)). |
 | `action <id>` | The game's own [`actions`](/reference/game#game): each one's `when` and `blocked` conditions, and its `command`. They come with `base`, so the pack is reported as `base`. |
@@ -244,6 +251,7 @@ town · scene ava.hi · gated on unknown scene "ava.hello"
 mod:night-market · activity browse · unknown stat "stamina"
 mod:night-market · trigger parcel · unknown collection "drawer"
 mod:night-market · input stall · a choice with no options
+town · setting difficulty · default "normal" is not one of the options
 mod:night-market · locations yard · no prose for "place.yard"
 mod:new-menu · entity dish:7 · an entity id must not be a whole number
 mod:new-menu · entity dish:pie · no dish stat named "coins"
@@ -258,7 +266,10 @@ mod:new-menu · entity dish:pie · no dish stat named "coins"
 - the effects of every item's `use` and every activity: the scene, item and storyline each one names, that a `stat` or `setStat` effect's stat is declared and named on the right owner, collections and `text` prose, the plain effects inside an `each`, and that a long-form `{ kind: 'custom' }` effect names a plugin effect;
 - that every stat an activity's `cost` spends is declared;
 - the commands of the game's own `actions`: a `scene` or `use` target, and that a `custom` command names a plugin command;
-- that a stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares.
+- that a stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares;
+- the [settings](/reference/settings): duplicate ids, and each one's declaration as the loader checks it;
+- every `{ setting }` condition in `finished`, triggers, inputs, the game's actions, activities' requirements and data scenes, as the loader checks it;
+- the stats and items in `carryOver`.
 
 With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids and the effects of the choices it rendered.
 

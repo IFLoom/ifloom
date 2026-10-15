@@ -147,6 +147,14 @@ if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 |---|---|---|
 | `inputs` | `Record<string, `[`InputView`](#inputview)`>` | The [inputs](/reference/inputs) on offer now (those whose `when` holds), by id, each with the value its variable holds. |
 
+### settings
+
+| Field | Type | Meaning |
+|---|---|---|
+| `settings` | [`SettingView`](#settingview)`[]` | Every [setting](/reference/settings) the game declares, in order, `play` and `ui` alike. Empty when it declares none. |
+
+That's enough to draw a whole settings screen from the view. See [`SettingView`](#settingview) for where each value comes from.
+
 ### plugins
 
 | Field | Type | Meaning |
@@ -336,6 +344,37 @@ type InputView = {
 ```
 
 An [input](/reference/inputs) as the UI draws a field for it. `maxLength` is only set for text inputs, and is 40 if the input doesn't say. `min` and `max` are `null` when not declared. `options` is `[]` for anything but a choice. `value` is what the variable holds now, or `null` if it holds nothing yet. Send what the player enters as `{ type: 'input', id, value }`.
+
+## SettingView
+
+```ts
+type SettingView = {
+  id: string
+  label: string
+  kind: 'toggle' | 'choice' | 'range'
+  affects: 'play' | 'ui'
+  options?: { value: string; label: string }[]
+  min?: number
+  max?: number
+  step?: number
+  default: FlagValue
+  value: FlagValue | null
+}
+```
+
+A [setting](/reference/settings) as a settings screen draws it. `options` is only there for a choice, and `min`, `max` and `step` only for a range (`step` only if declared). `affects` is `'play'` when the declaration leaves it out.
+
+`value` is the setting's value in this game for a `play` setting, from [`state.settings`](/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. Read it from the [profile](/reference/profile) instead, falling back to `default`:
+
+```ts
+const stored = (await runner.profile?.get<Record<string, FlagValue>>('settings')) ?? {}
+for (const setting of runner.view().settings) {
+  const value = setting.value ?? stored[setting.id] ?? setting.default
+  drawSetting(setting, value)
+}
+```
+
+Send a change to a `play` setting as the [`setting`](/reference/commands#setting) command, and a change to a `ui` setting through [`runner.setUiSetting`](/reference/runner#setuisetting).
 
 ## SpeakerView
 

@@ -29,6 +29,7 @@ type GameState = {
   notices: Notice[]
   fired: Record<string, number>
   plugins: Record<string, PluginSlice>
+  settings: Record<string, FlagValue>
 }
 ```
 
@@ -194,12 +195,61 @@ Each [plugin](/reference/plugins)'s own state, by plugin id, with the version of
 
 Read and write it through the plugin, not by hand. Inside the plugin, use its context's `slice` and `set`. Outside it, use [`definePlugin`](/reference/plugins#defineplugin)'s `read` and `write`. An older save's entry is carried forward by [`migratePlugins`](/reference/plugins#migrateplugins), and the entry of a plugin the game no longer has is kept untouched.
 
+### settings
+
+```ts
+settings: Record<string, FlagValue>
+```
+
+The value of each `play` [setting](/reference/settings) the game declares, by id, such as `{ hints: true, difficulty: 'usual' }`. A `ui` setting is never here. A new game takes the values passed to [`startingState`](/reference/commands#startingstate) as `settings`, and each setting given none starts at its default. The [`setting`](/reference/commands#setting) command changes one, and [`{ setting }`](/reference/conditions#setting) reads it. A save from before version 9 loads with each declared play setting at its default.
+
+## New Game+
+
+When a player finishes your game, you can let them start again with some of what they had. List what carries over in `game.carryOver`, and say when the game counts as finished with `game.finished`:
+
+```ts
+const { game } = loadGame([town], {
+  id: 'small-town',
+  title: 'Small Town',
+  // Finished once the letter is read and the bakery's last scene has been seen.
+  finished: { all: [{ flag: 'readTheLetter' }, { seen: 'bakery.ending' }] },
+  carryOver: { stats: ['coins'], flags: ['readTheLetter'], items: ['umbrella'] },
+})
+```
+
+The [runner](/reference/runner#finished) watches `finished`. After each command that takes, if the condition holds and the [profile](/reference/profile) has no `finished` yet, it records `{ at }`, the time in milliseconds. A title screen checks it to decide whether to offer New Game+:
+
+```ts
+const done = await runner.profile?.get<{ at: number }>('finished')
+if (done) await runner.newGame({ carry: runner.state })
+```
+
+```ts
+type CarryOver = {
+  stats?: string[]
+  flags?: string[]
+  items?: string[] | 'all'
+}
+```
+
+`startingState(game, { carry })` builds the new game as usual, then copies from `carry`:
+
+- each player stat in `carryOver.stats`, held to its range
+- each [variable](#flags) in `carryOver.flags` that is set
+- each item in `carryOver.items`, or every declared item with `items: 'all'`
+
+Nothing else comes across. The turn, scenes seen, storylines, entities and plugin states all start fresh. Variables passed in `flags` are written after the carried ones, so they win. A game with no `carryOver` carries nothing.
+
+**Gotcha.** Carry from the state the player finished on. If you start the New Game+ from a title screen after a reload, load the save first, or keep that state yourself. The profile records only when the game was finished, not the state.
+
+The [loader](/reference/loader#the-checks) reports a stat or item in `carryOver` that the game doesn't declare, and a stat that belongs to a kind rather than the player.
+
 ## Constants
 
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 8
+const SAVE_VERSION = 9
 ```
 
 The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carries older shapes forward:
@@ -213,3 +263,4 @@ The shape of `GameState` this engine writes. [`migrate`](/reference/saves) carri
 | 6 | Moved `locationId` into the [places plugin](/plugins/places#placesstate)'s state, as `{ at }`. |
 | 7 | Added [`removed`](#removed). |
 | 8 | Took `standing` and `rapport` off each [storyline](#storylines). |
+| 9 | Added [`settings`](#settings). |

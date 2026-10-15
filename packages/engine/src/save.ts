@@ -80,6 +80,8 @@ const MIGRATIONS: Record<number, (state: Saved) => Saved> = {
       ),
     ),
   }),
+  // 8 → 9: play settings join the state. Each one the game declares takes its default when the save loads.
+  8: (state) => ({ ...state, settings: {} }),
 }
 
 /** Carry a save forward to the current version, or give up on it. */

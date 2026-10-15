@@ -53,6 +53,7 @@ type Lock = {
 - A lock that denies `'*'` counts for [`lockedOut`](#lockedout) even when it has an `effect`, so the room shows no exits, people or actions while it's on.
 - Locks are checked before [`rules.commands`](/reference/rules#commands), so they also stop commands your game handles itself. They never stop `start`.
 - A plugin command that sets [`ignoresLocks`](/reference/plugins#commands-outside-the-story) is never stopped by a lock, even under `'*'`, and `hide` never leaves its button off. Only tools outside the story set it, such as the [debug plugin](/plugins/debug)'s commands. [`lockOn`](#lockon) and [`lockedBy`](#lockedby) still report the lock that matches it. It's [`whyNot`](/reference/actions#whynot) that skips it.
+- The [`setting`](/reference/commands#setting) command is never stopped by a lock either, because changing a setting is the menu's business.
 - `hide` goes by the first lock that stops the command. If a lock without `hide` stops a button first, the button stays on screen greyed out, even if a later lock would hide it.
 - `when` is tested against the state before the command runs. A choice that changes the phase is judged by the phase it was picked in.
 

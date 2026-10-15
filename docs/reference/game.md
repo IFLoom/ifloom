@@ -16,6 +16,9 @@ The core has no places and no characters. Locations, exits, walking and where th
 type Game = {
   id: string
   title: string
+  settings?: SettingDef[]
+  carryOver?: CarryOver
+  finished?: Condition
   startPhase?: string
   stats?: StatDef[]
   kinds?: KindDef[]
@@ -43,6 +46,9 @@ type Game = {
 |---|---|
 | `id` | The game's id. [Saves](/reference/saves#keys) are kept under it and refuse another game's, so pick one unique to your game and never change it. |
 | `title` | The game's name. The view passes it through as `view().title`. |
+| `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/reference/settings). |
+| `carryOver` | What a New Game+ takes from the game before: `{ stats?, flags?, items? }`, each a list of ids, and `items` can be `'all'`. See [New Game+](/reference/state#new-game). |
+| `finished` | A [condition](/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/reference/profile), so a title screen can offer New Game+. See [New Game+](/reference/state#new-game). |
 | `startPhase` | The stage a new game opens in. Default `''`. See [`phase`](/reference/state#phase). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/reference/stats). |
@@ -223,6 +229,8 @@ It always checks:
 - that every stat an activity's `cost` spends is declared
 - the commands of the game's own `actions`: a scene that doesn't exist, an item that doesn't exist, or a `{ type: 'custom' }` command that names no [plugin command](/reference/plugins#plugincommand) the game has (`no plugin command named …`)
 - that every stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares
+- [settings](/reference/settings): duplicate ids, each declaration, and every `{ setting }` condition the game declares as data
+- that the stats and items in `carryOver` are declared
 
 In those effect lists, it reports:
 

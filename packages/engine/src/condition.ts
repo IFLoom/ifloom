@@ -33,6 +33,12 @@ export type Condition =
    */
   | ({ flag: string; is?: FlagValue; of?: string } & Range)
   /**
+   * A `play` setting, read as a variable is: bare, whether it is truthy
+   * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
+   * whether its number is in it.
+   */
+  | ({ setting: string; is?: FlagValue } & Range)
+  /**
    * How many times a choice has been picked, by `scene/choice`. Bare, at least
    * once: `{ chose: 'bakery.counter/buy-bread' }`.
    */
@@ -135,6 +141,12 @@ export function holds(
     if (bounded(condition)) return inRange(counted(value), condition)
     return Boolean(value)
   }
+  if ('setting' in condition) {
+    const value = state.settings?.[condition.setting]
+    if (condition.is !== undefined) return value === condition.is
+    if (bounded(condition)) return inRange(counted(value), condition)
+    return Boolean(value)
+  }
   if ('chose' in condition) return inRange(state.chosen?.[condition.chose] ?? 0, condition)
   if ('seen' in condition) return inRange(state.seen?.[condition.seen] ?? 0, condition)
   if ('since' in condition) {
@@ -200,8 +212,10 @@ export function referenced(condition: Condition | undefined): {
   owned: { stat: string; of?: string }[]
   /** Every call to a custom or plugin condition, with what it asks. */
   calls: { custom: string; with?: Record<string, unknown> }[]
+  /** Every setting a `{ setting }` reads, with the value it compares to. */
+  settings: { setting: string; is?: FlagValue }[]
 } {
-  const out = { storylines: [] as string[], items: [] as string[], custom: [] as string[], scenes: [] as string[], stats: [] as string[], collections: [] as string[], choices: [] as string[], kinds: [] as string[], owned: [] as { stat: string; of?: string }[], calls: [] as { custom: string; with?: Record<string, unknown> }[] }
+  const out = { storylines: [] as string[], items: [] as string[], custom: [] as string[], scenes: [] as string[], stats: [] as string[], collections: [] as string[], choices: [] as string[], kinds: [] as string[], owned: [] as { stat: string; of?: string }[], calls: [] as { custom: string; with?: Record<string, unknown> }[], settings: [] as { setting: string; is?: FlagValue }[] }
   // The kind in an `of`; `'$'` names none of its own.
   const kindOf = (ref: string | undefined) => {
     const parts = ref === undefined ? undefined : parseRef(ref)
@@ -218,7 +232,8 @@ export function referenced(condition: Condition | undefined): {
       out.calls.push(call)
       return
     }
-    if ('storylineFlag' in entry) out.storylines.push(entry.storylineFlag.storyline)
+    if ('setting' in entry) out.settings.push({ setting: entry.setting, is: entry.is })
+    else if ('storylineFlag' in entry) out.storylines.push(entry.storylineFlag.storyline)
     else if ('counter' in entry) out.storylines.push(entry.counter.storyline)
     else if ('storyline' in entry) out.storylines.push(entry.storyline)
     else if ('collection' in entry) out.collections.push(entry.collection)

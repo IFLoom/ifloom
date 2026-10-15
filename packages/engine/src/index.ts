@@ -17,6 +17,8 @@ export type {
   SceneCtx,
   SceneMedia,
   SceneView,
+  CarryOver,
+  SettingDef,
   StorylineDef,
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
@@ -85,7 +87,7 @@ export type { StringKey, Strings } from './strings.ts'
 export { STRINGS, say } from './strings.ts'
 
 // Running the game
-export type { Applied } from './reduce.ts'
+export type { Applied, StartOptions } from './reduce.ts'
 export { apply, applyEffects, dispatch, hydrate, startingState } from './reduce.ts'
 
 // Conditions, and why they hold
@@ -148,6 +150,8 @@ export type { IndexedDbLike, SaveDriver, StorageLike } from './drivers.ts'
 export { indexedDbDriver, localStorageDriver, memoryDriver } from './drivers.ts'
 export type { InstalledMod, ModFile, Mods } from './mods.ts'
 export { mods, readMod } from './mods.ts'
+export type { Profile } from './profile.ts'
+export { profile } from './profile.ts'
 
 // The runner a UI drives
 export type {
@@ -173,5 +177,6 @@ export type {
   InputView,
   NoticeView,
   NoticesView,
+  SettingView,
 } from './view.ts'
 export { renderAction, view } from './view.ts'

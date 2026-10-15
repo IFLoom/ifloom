@@ -78,6 +78,18 @@ Why a value can't be entered. See [inputs](/reference/inputs).
 | `atMost` | `At most {max}.` | `{max}` |
 | `notAnOption` | `That is not one of the options.` | |
 
+### Settings
+
+Why a [setting](/reference/settings) can't be changed to a value. A setting also uses `enterNumber`, `between` and `notAnOption` from the table above.
+
+| Key | English | Placeholders |
+|---|---|---|
+| `noSuchSetting` | `There is no such setting.` | |
+| `notAGameSetting` | `That setting does not change the game.` | |
+| `notAUiSetting` | `That setting changes the game, so it is set with a command.` | |
+| `onOrOff` | `Choose on or off.` | |
+| `inSteps` | `In steps of {step}.` | `{step}` is the range's `step` |
+
 ### Buttons and labels
 
 | Key | English | Where |

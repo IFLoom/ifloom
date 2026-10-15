@@ -298,7 +298,7 @@ Carries a parsed state forward to `SAVE_VERSION`, one version at a time, or give
 
 The steps live in an internal table keyed by the version each step upgrades from, so entry `1` turns a version-1 save into version 2. If any step on the way is missing, the save is dropped rather than loaded into a shape the engine would misread. A save whose version is higher than `SAVE_VERSION` is dropped too.
 
-There are seven steps so far.
+There are eight steps so far.
 
 - **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/reference/state#flags) of the same names, so <code v-pre>{{playerName}}</code> still fills in, and adds an empty [`chosen`](/reference/state#chosen).
 - **2 → 3** brings in the [turn](/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/reference/state#storylines), and each [collection](/reference/collections) entry's and [notice](/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
@@ -307,6 +307,7 @@ There are seven steps so far.
 - **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/plugins/places#placesoptions), because [`migratePlugins`](/reference/plugins#migrateplugins) gives any plugin missing from a save its starting state. A game without the places plugin keeps the entry unused.
 - **6 → 7** adds an empty [`removed`](/reference/state#removed), the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and [`hydrate`](/reference/commands#hydrate) puts it back at its start.
 - **7 → 8** takes `standing` and `rapport` off every [storyline](/reference/state#storylines), keeping its `closedUntil` and `flags` (a missing `closedUntil` becomes `null`, missing `flags` `{}`). They're dropped, not carried anywhere. A relationship is now a [stat](/reference/stats#entity-stats) the game declares on the [cast](/plugins/cast)'s `character` kind, and the engine can't know which stat a game meant.
+- **8 → 9** adds an empty [`settings`](/reference/state#settings). When the save next loads, [`hydrate`](/reference/commands#hydrate) gives each `play` [setting](/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
 
 A save from version 0 doesn't load.
 
@@ -315,7 +316,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 8
+const SAVE_VERSION: 9
 ```
 
 The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes, and the bump ships with its migration step. A bump without one would make every player's existing saves unreadable.

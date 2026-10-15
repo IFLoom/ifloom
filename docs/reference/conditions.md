@@ -57,6 +57,7 @@ type Condition =
   | { any: Condition[] }
   | { not: Condition }
   | ({ flag: string; is?: FlagValue; of?: string } & Range)
+  | ({ setting: string; is?: FlagValue } & Range)
   | ({ chose: string } & Range)
   | ({ seen: string } & Range)
   | ({ since: string } & Range)
@@ -108,6 +109,23 @@ To count something, use the [`flag`](/reference/effects#flag) effect's `add` for
 With `of`, it tests an [entity](/reference/entities)'s variable, as in `{ flag: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
 
 **Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ flag: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something is *not* set on an entity that may have gone, write `{ not: { flag: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
+
+### setting
+
+```ts
+{ setting: 'hints' }                    // a toggle that is on
+{ setting: 'difficulty', is: 'hard' }   // exactly this option
+{ setting: 'patience', gte: 6 }         // a range, 6 or more
+```
+
+Tests a `play` [setting](/reference/settings), the value in [`state.settings`](/reference/state#settings). It reads the same way as [`flag`](#flag): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
+
+```ts
+// A hint only for players who keep hints on.
+{ id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
+```
+
+**Gotcha.** Conditions can only read `play` settings. A `ui` setting isn't in the state, so the [loader](/reference/loader#in-a-condition) reports a condition that names one, along with an unknown setting and an `is` the setting can't take.
 
 ### chose
 
@@ -471,6 +489,7 @@ function referenced(condition: Condition | undefined): {
   collections: string[]; choices: string[]; kinds: string[]
   owned: { stat: string; of?: string }[]
   calls: { custom: string; with?: Record<string, unknown> }[]
+  settings: { setting: string; is?: FlagValue }[]
 }
 ```
 
@@ -478,6 +497,7 @@ Lists every id a condition names, by kind, so you can check them against a game.
 
 - `kinds` holds the [kinds](/reference/entities) from `{ count }`, from `{ entity }` and from every `of` (the part before the colon, since `'$'` names none). It looks inside a `count`'s `where` too.
 - `owned` is every stat a `{ stat }` names, with whose it is (`of`), for checking it belongs there.
+- `settings` is every setting a `{ setting }` reads, with the `is` it compares to, if any.
 - `custom` is every custom or plugin condition by name, a [short call](#plugin-shorthand) included.
 - `calls` is every such call with what it passes in `with`. A short call's value that isn't an object comes back as `{ value }`, for a plugin's [`argProblems`](/reference/plugins#checking-calls) to check.
 

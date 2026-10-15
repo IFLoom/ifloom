@@ -19,6 +19,7 @@ import { collect, discard } from './collections.ts'
 import { dismiss, notify } from './notices.ts'
 import { fireTriggers } from './triggers.ts'
 import { inputById, inputValue } from './inputs.ts'
+import { settingAffects, startingSettings } from './settings.ts'
 import { migratePlugins, pluginCommand, pluginEffect, runAfter, runHooks, startingPlugins, useApplier } from './plugin.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -30,6 +31,37 @@ export type StartOptions = {
   seed?: number
   /** Variables to write before the first scene: a name from a title screen, a difficulty. */
   flags?: Record<string, FlagValue>
+  /**
+   * The player's stored values for the game's `play` settings, usually the
+   * profile's `settings`. A setting given no value, or one it doesn't take,
+   * starts at its default; ids the game doesn't declare are ignored.
+   */
+  settings?: Record<string, unknown>
+  /**
+   * The state a finished game ended on, for a New Game+: the stats, variables
+   * and items the game's `carryOver` lists are copied from it.
+   */
+  carry?: GameState
+}
+
+/** What `carryOver` takes from the game before, laid over a fresh state. */
+function carried(state: GameState, game: Game, from: GameState): GameState {
+  const listed = game.carryOver
+  if (!listed) return state
+  const stats = { ...state.stats }
+  for (const id of listed.stats ?? []) {
+    if (typeof from.stats?.[id] === 'number') stats[id] = clampStat(state, game, id, from.stats[id])
+  }
+  const flags = { ...state.flags }
+  for (const key of listed.flags ?? []) {
+    if (from.flags?.[key] !== undefined) flags[key] = from.flags[key]
+  }
+  const items = { ...state.items }
+  const itemIds = listed.items === 'all' ? Object.keys(items) : (listed.items ?? [])
+  for (const id of itemIds) {
+    if (id in items && typeof from.items?.[id] === 'number') items[id] = from.items[id]
+  }
+  return { ...state, stats, flags, items }
 }
 
 export function startingState(game: Game, options: StartOptions = {}): GameState {
@@ -41,7 +73,7 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
   for (const item of game.items) {
     items[item.id] = item.start ?? (item.kind === 'gear' ? 1 : 0)
   }
-  return {
+  const fresh: GameState = {
     version: SAVE_VERSION,
     seed: options.seed ?? hash(game.id),
     phase: game.startPhase ?? '',
@@ -63,7 +95,12 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
     seen: game.introScene ? { [game.introScene]: 1 } : {},
     seenOn: game.introScene ? { [game.introScene]: 0 } : {},
     chosen: {},
+    settings: startingSettings(game, options.settings),
   }
+  if (!options.carry) return fresh
+  // Carried over first, so variables the caller gives still win.
+  const plus = carried(fresh, game, options.carry)
+  return { ...plus, flags: { ...plus.flags, ...options.flags } }
 }
 
 export function hydrate(state: GameState, game: Game): GameState {
@@ -90,6 +127,11 @@ export function hydrate(state: GameState, game: Game): GameState {
   if (!next.entities) next = { ...next, entities: {} }
   if (!next.created) next = { ...next, created: {} }
   if (!next.removed) next = { ...next, removed: [] }
+  // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
+  const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
+  if (lacking.length || !next.settings) {
+    next = { ...next, settings: { ...next.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
+  }
   // A declared entity the save does not have — a mod's, a new version's — joins it, unless it was removed in play.
   const missing = (game.entities ?? []).filter(
     (entity) => !next.entities[entity.of]?.[entity.id] && !next.removed.includes(`${entity.of}:${entity.id}`),
@@ -209,6 +251,8 @@ function run(
       return pluginCommand(game, command.name)!.run(current, command.with ?? {})
     case 'dismiss':
       return dismiss(current, command.id)
+    case 'setting':
+      return { ...current, settings: { ...current.settings, [command.id]: command.value } }
     case 'input': {
       const input = inputById(game, command.id)!
       const key = input.variable ?? input.id

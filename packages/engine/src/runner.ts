@@ -1,10 +1,13 @@
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import { localStorageDriver } from './drivers.ts'
-import { apply, startingState, type Applied } from './reduce.ts'
+import { apply, startingState, type Applied, type StartOptions } from './reduce.ts'
+import { pluginContext } from './plugin.ts'
+import { profile as makeProfile, type Profile } from './profile.ts'
+import { settingRefusal } from './settings.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
-import type { Command, GameState } from './types.ts'
+import type { Command, FlagValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
 
 /**
@@ -45,10 +48,15 @@ export type RunnerOptions = {
   /** The clock for time played. `Date.now` if left out; tests pass their own. */
   now?: () => number
   /**
-   * Told when an autosave or `save` fails to write. Later saves still run;
-   * without this, a failure is dropped.
+   * Told when an autosave, `save` or profile write fails. Later writes still
+   * run; without this, a failure is dropped.
    */
   onSaveError?: (error: unknown) => void
+  /**
+   * What outlives a save: settings, `finished`, plugins' namespaces. Without
+   * one, nothing is written there and `setUiSetting` throws.
+   */
+  profile?: Profile
 }
 
 /** One scene as the player saw it. */
@@ -103,6 +111,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   let playedBefore = 0
   let since = now()
   let saving: Promise<SaveMeta | null> = Promise.resolve(null)
+  let remembering: Promise<unknown> = Promise.resolve()
+  // Once `finished` is known to be recorded, it isn't looked at again.
+  let finishedRecorded = false
   const listeners = new Set<(state: GameState) => void>()
 
   const notify = () => {
@@ -143,17 +154,48 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     notify()
   }
 
-  /** Put a loaded save in play: fresh history, backlog and log, and its time played. */
-  function restore(loaded: LoadedSave): void {
+  /** Queue a profile write. A failure is reported and does not stop the ones after it. */
+  function remember(write: (profile: Profile) => Promise<unknown>): void {
+    const profile = options.profile
+    if (!profile) return
+    remembering = remembering.then(() => write(profile)).catch((error: unknown) => options.onSaveError?.(error))
+  }
+
+  /** After a command took: what it changes in the profile. */
+  function recordInProfile(before: GameState, after: GameState, command: Command): void {
+    if (!options.profile) return
+    if (command.type === 'setting') {
+      const { id, value } = command
+      remember((profile) => profile.update<Record<string, FlagValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+    }
+    if (game.finished && !finishedRecorded && holds(after, game.finished, game)) {
+      finishedRecorded = true
+      const at = now()
+      remember((profile) => profile.update('finished', (stored) => stored ?? { at }))
+    }
+    for (const plugin of game.plugins ?? []) {
+      const onCommand = plugin.profile?.onCommand
+      if (!onCommand) continue
+      remember((profile) => profile.update(plugin.id, (stored) => onCommand(after, before, stored, pluginContext(plugin, after, game))))
+    }
+  }
+
+  /** Put a state in play from scratch: fresh history, backlog and log, and this much time already played. */
+  function begin(next: GameState, playedAlready: number): void {
     const before = state
-    state = loaded.state
+    state = next
     log = { game: game.id, start: state, commands: [] }
     backlog = []
     undoStack = []
     redoStack = []
-    playedBefore = loaded.meta.played
+    playedBefore = playedAlready
     since = now()
     changed(before)
+  }
+
+  /** Put a loaded save in play: fresh history, backlog and log, and its time played. */
+  function restore(loaded: LoadedSave): void {
+    begin(loaded.state, loaded.meta.played)
   }
 
   function autosaveDue(before: GameState, after: GameState): boolean {
@@ -216,6 +258,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
         else undoStack = [...undoStack, prior].slice(-depth)
         redoStack = []
       }
+      recordInProfile(before, state, command)
       changed(before)
       return result
     },
@@ -288,9 +331,35 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       restore(loaded)
       return loaded
     },
-    /** Settles when every autosave so far has been written. */
-    settled(): Promise<SaveMeta | null> {
+    /** Settles when every autosave and profile write so far has been written. */
+    async settled(): Promise<SaveMeta | null> {
+      await remembering
       return saving
+    },
+    /** The profile this runner writes settings and `finished` to. Undefined without `profile`. */
+    profile: options.profile,
+    /**
+     * Change a `ui` setting: checked against its declaration, then written to
+     * the profile, never to the state. Returns why it was refused, or
+     * undefined. A `play` setting is changed with the `setting` command.
+     */
+    setUiSetting(id: string, value: FlagValue): string | undefined {
+      if (!options.profile) throw new Error('This runner was given no profile to write settings to.')
+      const refused = settingRefusal(game, id, value, 'ui')
+      if (refused) return refused
+      remember((profile) => profile.update<Record<string, FlagValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+      return undefined
+    },
+    /**
+     * Start a new game in place: fresh history, backlog and log, no time
+     * played. Settings not given come from the profile's `settings`; the seed
+     * is random unless given. For New Game+, pass `carry: runner.state`.
+     */
+    async newGame(start: StartOptions = {}): Promise<GameState> {
+      const settings = start.settings ?? (await options.profile?.get<Record<string, unknown>>('settings'))
+      const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
+      begin(fresh, 0)
+      return fresh
     },
     /** Hear about every change of state. Returns the way to stop. */
     subscribe(listener: (state: GameState) => void): () => void {
@@ -302,18 +371,28 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
 
 export type Runner = ReturnType<typeof createRunner>
 
+function randomSeed(): number {
+  return Math.floor(Math.random() * 2 ** 31)
+}
+
 /**
  * A runner with what most games in a browser want: a new game with a random
- * seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn.
- * Pass a `start` to begin elsewhere, and runner options to change any default;
- * they are merged over these. Any UI can use it: the React UI's `mountGame`
- * does, and so does the vanilla template.
+ * seed, undo 50 steps deep, saves and a profile in `localStorage`, and an
+ * autosave each turn. Pass a `start` to begin elsewhere, `settings` for the
+ * new game's play settings (the profile's, read beforehand), and runner
+ * options to change any default; they are merged over these. Any UI can use
+ * it: the React UI's `mountGame` does, and so does the vanilla template.
  */
-export function browserRunner(game: Game, options: RunnerOptions & { start?: GameState } = {}): Runner {
-  const { start, ...runnerOptions } = options
-  return createRunner(game, start ?? startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
+export function browserRunner(
+  game: Game,
+  options: RunnerOptions & { start?: GameState; settings?: Record<string, unknown> } = {},
+): Runner {
+  const { start, settings, ...runnerOptions } = options
+  const driver = localStorageDriver()
+  return createRunner(game, start ?? startingState(game, { seed: randomSeed(), settings }), {
     history: { depth: 50 },
-    saves: saves(game, localStorageDriver()),
+    saves: saves(game, driver),
+    profile: makeProfile(game, driver),
     autosave: { every: 'turn' },
     ...runnerOptions,
   })

@@ -235,7 +235,7 @@ It checks in this order:
 3. The game's own handler in [`rules.commands`](/reference/rules#commands), if it has one for this command type. A string it returns is the refusal, and the built-in checks below don't run.
 4. What the command itself needs. The lines for each command are under [Commands](/reference/commands#command).
 
-A plugin command that sets [`ignoresLocks`](/reference/plugins#commands-outside-the-story) skips the first two. The engine's own lines come from the [strings table](/reference/strings), so a game can reword them.
+A plugin command that sets [`ignoresLocks`](/reference/plugins#commands-outside-the-story) skips the first two, and so does the [`setting`](/reference/commands#setting) command. The engine's own lines come from the [strings table](/reference/strings), so a game can reword them.
 
 ```ts
 import { whyNot } from '@ifloom/engine'
@@ -254,7 +254,7 @@ whyNot(state, game, talk('ava'))
 function warningOf(state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined
 ```
 
-A warning on a command that can still be pressed, or `undefined`. It's the `reason` of the first soft refusal a plugin's [guard](/reference/plugins#guards) gives, with the plugins asked in the order `game.plugins` lists them. The engine has no warnings of its own. It isn't asked for a plugin command that sets [`ignoresLocks`](/reference/plugins#commands-outside-the-story), or in a game where no plugin has a `guard` or a `price`.
+A warning on a command that can still be pressed, or `undefined`. It's the `reason` of the first soft refusal a plugin's [guard](/reference/plugins#guards) gives, with the plugins asked in the order `game.plugins` lists them. The engine has no warnings of its own. It isn't asked for a plugin command that sets [`ignoresLocks`](/reference/plugins#commands-outside-the-story), for the [`setting`](/reference/commands#setting) command, or in a game where no plugin has a `guard` or a `price`.
 
 It's kept apart from `whyNot` because it isn't a reason the thing can't be done. A UI shows the line and offers something else, as when the [calendar](/plugins/calendar#the-guard) warns `That would run past dawn.` and the player goes to bed instead.
 

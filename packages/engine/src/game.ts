@@ -155,9 +155,44 @@ export type GameRules = {
   onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
 }
 
+/**
+ * Something the player can change from a settings screen, declared by the
+ * game. A `play` setting (the default) is part of the game state and saved
+ * with it; a `ui` setting never enters the state and lives in the profile.
+ */
+export type SettingDef = {
+  id: string
+  /** What the settings screen calls it. */
+  label: string
+  /** `'play'` if left out: in the state, readable by conditions. `'ui'`: for the UI only. */
+  affects?: 'play' | 'ui'
+} & (
+  | { kind: 'toggle'; default: boolean }
+  | { kind: 'choice'; options: { value: string; label: string }[]; default: string }
+  | { kind: 'range'; min: number; max: number; step?: number; default: number }
+)
+
+/** What a New Game+ takes from the game before: player stats, variables and items, by id. */
+export type CarryOver = {
+  stats?: string[]
+  /** Variables, by name. */
+  flags?: string[]
+  /** Items by id, or `'all'` for every item the player has. */
+  items?: string[] | 'all'
+}
+
 export type Game = {
   id: string
   title: string
+  /** What the player can change from a settings screen. None if left out. */
+  settings?: SettingDef[]
+  /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
+  carryOver?: CarryOver
+  /**
+   * When the game counts as finished. The runner records the first time it
+   * holds in the profile's `finished`, so a title screen can offer New Game+.
+   */
+  finished?: Condition
   /** The stretch a new game opens in. */
   startPhase?: string
   /** Every stat the game keeps. The engine has none of its own. */

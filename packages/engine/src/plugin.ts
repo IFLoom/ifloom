@@ -151,6 +151,16 @@ export type Plugin<S = any> = {
   /** What the UI needs from this plugin, at `view.plugins[id]`. */
   view?: (state: GameState, context: PluginContext<S>) => unknown
   /**
+   * What the plugin keeps in the player's profile, which outlives saves and
+   * new games: earned achievements, a gallery of endings. The runner calls
+   * `onCommand` after every command that took, with what the plugin's profile
+   * namespace (its id) holds now. Return a new value to store, or undefined to
+   * leave it. Only a runner with a `profile` calls it; `apply` never does.
+   */
+  profile?: {
+    onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
+  }
+  /**
    * Check this plugin's content when the game is loaded. `conditionProblems` lists what
    * a condition names that the game does not have, as the loader words it.
    */

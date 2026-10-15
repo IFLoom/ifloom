@@ -9,6 +9,9 @@ import {
   type Game,
 } from './game.ts'
 import { sceneContext } from './context.ts'
+import { referenced, type Condition } from './condition.ts'
+import { isDataScene } from './scene.ts'
+import { settingConditionProblems, settingProblems } from './settings.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
 /**
@@ -67,6 +70,24 @@ export function validatePack(
     if (typeof stat.max === 'object' && !customValue(game, stat.max.value)) {
       say(`stat ${stat.id}`, `max names value ${stat.max.value}, which the game does not declare`)
     }
+  }
+
+  duplicates((game.settings ?? []).map((entry) => entry.id)).forEach((id) =>
+    say('settings', `duplicate id ${id}`),
+  )
+  for (const setting of game.settings ?? []) {
+    for (const what of settingProblems(setting)) say(`setting ${setting.id}`, what)
+  }
+  for (const { where, condition } of conditionsOf(game)) {
+    for (const { setting, is } of referenced(condition).settings) {
+      for (const what of settingConditionProblems(game, setting, is)) say(where, what)
+    }
+  }
+  for (const id of game.carryOver?.stats ?? []) {
+    if (!statDef(game, id)) say('carryOver', `stat ${id} is not declared`)
+  }
+  if (Array.isArray(game.carryOver?.items)) {
+    for (const id of game.carryOver.items) if (!itemById(game, id)) say('carryOver', `item ${id} does not exist`)
   }
 
   for (const state of probes) {
@@ -186,6 +207,33 @@ function checkEffect(
     default:
       return
   }
+}
+
+/** Every condition the game declares as data, with where it is, for checks that walk them all. */
+function conditionsOf(game: Game): { where: string; condition: Condition | undefined }[] {
+  const out: { where: string; condition: Condition | undefined }[] = [{ where: 'finished', condition: game.finished }]
+  for (const trigger of game.triggers ?? []) out.push({ where: `trigger ${trigger.id}`, condition: trigger.when })
+  for (const input of game.inputs ?? []) out.push({ where: `input ${input.id}`, condition: input.when })
+  for (const action of game.actions ?? []) {
+    out.push({ where: `game action ${action.id}`, condition: action.when })
+    for (const entry of action.blocked ?? []) out.push({ where: `game action ${action.id}`, condition: entry.when })
+  }
+  for (const activity of game.activities) {
+    for (const entry of activity.requires ?? []) out.push({ where: `activity ${activity.id}`, condition: entry.when })
+  }
+  for (const scene of game.scenes) {
+    if (!isDataScene(scene)) continue
+    const where = `scene ${scene.id}`
+    for (const block of scene.body) {
+      out.push({ where, condition: block.when })
+      if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ where, condition: gate })
+    }
+    for (const choice of scene.choices) {
+      out.push({ where, condition: choice.when })
+      for (const entry of [...(choice.blocked ?? []), ...(choice.labels ?? [])]) out.push({ where, condition: entry.when })
+    }
+  }
+  return out
 }
 
 function duplicates(ids: readonly string[]): string[] {

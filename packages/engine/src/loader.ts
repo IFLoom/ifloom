@@ -12,8 +12,10 @@ import type {
   Game,
   ItemDef,
   Scene,
+  SettingDef,
   StorylineDef,
 } from './game.ts'
+import { settingConditionProblems, settingProblems } from './settings.ts'
 import type { Condition } from './condition.ts'
 import { customCall, customCondition, customEffectsUsed, hasCustomEffect, type Custom } from './custom.ts'
 import { proseStore } from './prose.ts'
@@ -50,6 +52,8 @@ export type Pack = {
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
+  /** What the player can change from a settings screen. A later pack can redeclare one by id. */
+  settings?: SettingDef[]
   /** Player-facing words by key, over the engine's and plugins' own. Later packs override earlier ones. */
   strings?: Record<string, string>
   /** Prose by key. Later packs override earlier ones. */
@@ -108,6 +112,16 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   const collections = new Map<string, { value: CollectionDef; from: string }>()
   const triggers = new Map<string, { value: TriggerDef; from: string }>()
   const inputs = new Map<string, { value: InputDef; from: string }>()
+  const settings = new Map<string, { value: SettingDef; from: string }>()
+  // A later pack redeclares a setting by id; the same id twice in one list is a mistake.
+  const addSettings = (list: SettingDef[] | undefined, from: string) => {
+    const here = new Set<string>()
+    for (const setting of list ?? []) {
+      if (here.has(setting.id)) problems.push({ pack: from, where: `setting ${setting.id}`, what: 'two settings share this id' })
+      here.add(setting.id)
+      settings.set(setting.id, { value: setting, from })
+    }
+  }
   const kinds = new Map<string, { value: KindDef; from: string }>()
   // Keyed `kind:id`: two kinds may each have an entity called the same.
   const entities = new Map<string, { value: EntityDef; from: string }>()
@@ -122,6 +136,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   byId(collections, base.collections, 'base')
   byId(triggers, base.triggers, 'base')
   byId(inputs, base.inputs, 'base')
+  addSettings(base.settings, 'base')
   const prose: Record<string, string> = {}
   const strings: Record<string, string> = { ...base.strings }
   const variants: Record<string, string[]> = {}
@@ -180,6 +195,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     byId(collections, pack.collections, pack.id)
     byId(triggers, pack.triggers, pack.id)
     byId(inputs, pack.inputs, pack.id)
+    addSettings(pack.settings, pack.id)
     Object.assign(prose, pack.prose ?? {})
     Object.assign(strings, pack.strings ?? {})
     for (const [name, members] of Object.entries(pack.variants ?? {})) {
@@ -231,6 +247,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     collections: [...collections.values()].map((entry) => entry.value),
     triggers: [...triggers.values()].map((entry) => entry.value),
     inputs: [...inputs.values()].map((entry) => entry.value),
+    settings: [...settings.values()].map((entry) => entry.value),
     custom,
     packs: packs.map((pack) => pack.id),
     strings,
@@ -291,6 +308,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       if (!customCondition(game, name) && !absentPartner(game, name)) out.push(`no custom condition named "${name}"`)
     }
     for (const call of used.calls) out.push(...pluginArgProblems(game, 'conditions', call.custom, call.with ?? {}))
+    for (const { setting, is } of used.settings) out.push(...settingConditionProblems(game, setting, is))
     return out
   }
 
@@ -424,6 +442,20 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   for (const { value, from } of triggers.values()) {
     checkConditions([value.when], from, `trigger ${value.id}`)
     for (const what of effectProblems(value.effects)) problems.push({ pack: from, where: `trigger ${value.id}`, what })
+  }
+  for (const { value, from } of settings.values()) {
+    for (const what of settingProblems(value)) problems.push({ pack: from, where: `setting ${value.id}`, what })
+  }
+  checkConditions([game.finished], 'base', 'finished')
+  for (const id of game.carryOver?.stats ?? []) {
+    const def = stats.get(id)?.value
+    if (!def) problems.push({ pack: 'base', where: 'carryOver', what: `unknown stat "${id}"` })
+    else if (def.of !== undefined) problems.push({ pack: 'base', where: 'carryOver', what: `stat "${id}" belongs to ${def.of}, not the player` })
+  }
+  if (Array.isArray(game.carryOver?.items)) {
+    for (const id of game.carryOver.items) {
+      if (!itemIds.has(id)) problems.push({ pack: 'base', where: 'carryOver', what: `unknown item "${id}"` })
+    }
   }
   for (const { value, from } of inputs.values()) {
     const where = `input ${value.id}`

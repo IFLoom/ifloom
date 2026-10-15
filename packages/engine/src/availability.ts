@@ -6,6 +6,7 @@ import { lockedBy } from './locks.ts'
 import { pluginCommand, pluginGuards, pluginsWatch } from './plugin.ts'
 import { buildEffects } from './custom.ts'
 import { inputRefusal } from './inputs.ts'
+import { settingRefusal } from './settings.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
 /**
@@ -20,7 +21,7 @@ import type { Command, Effect, GameState } from './types.ts'
  * the game handles itself, then what the command needs.
  */
 export function whyNot(state: GameState, game: Game, command: Command): string | undefined {
-  const exempt = command.type === 'custom' && pluginCommand(game, command.name)?.ignoresLocks
+  const exempt = ignoresLocks(game, command)
   const locked = exempt ? undefined : lockedBy(state, game, command)
   if (locked) return locked
   if (!exempt && pluginsWatch(game)) {
@@ -35,6 +36,8 @@ export function whyNot(state: GameState, game: Game, command: Command): string |
   switch (command.type) {
     case 'dismiss':
       return undefined
+    case 'setting':
+      return settingRefusal(game, command.id, command.value)
     case 'input':
       return inputRefusal(state, game, command.id, command.value)
     case 'custom': {
@@ -72,6 +75,16 @@ export function whyNot(state: GameState, game: Game, command: Command): string |
     default:
       return say(game, 'notSupported')
   }
+}
+
+/**
+ * Commands no lock or plugin guard stops: a setting, which is a menu's
+ * business rather than the story's, and a plugin command that says it ignores
+ * locks.
+ */
+function ignoresLocks(game: Game, command: Command): boolean {
+  if (command.type === 'setting') return true
+  return command.type === 'custom' && Boolean(pluginCommand(game, command.name)?.ignoresLocks)
 }
 
 /**
@@ -113,7 +126,7 @@ export function effectsOf(state: GameState, game: Game, command: Command): Effec
  */
 export function warningOf(state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined {
   if (!pluginsWatch(game)) return undefined
-  if (command.type === 'custom' && pluginCommand(game, command.name)?.ignoresLocks) return undefined
+  if (ignoresLocks(game, command)) return undefined
   const soft = pluginGuards(game, state, { command, effects: effects ?? effectsOf(state, game, command) }).find(
     (entry) => typeof entry !== 'string',
   )

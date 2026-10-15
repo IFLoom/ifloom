@@ -45,6 +45,11 @@ function leaf(state: GameState, condition: Condition, game: Game | undefined): s
     const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : ranged(c) ? wanted(c) : 'set'
     return `${condition.of === undefined ? '' : `${condition.of} `}flag ${condition.flag} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
   }
+  if ('setting' in condition) {
+    const value = state.settings?.[condition.setting]
+    const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : ranged(c) ? wanted(c) : 'on'
+    return `setting ${condition.setting} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
+  }
   if ('chose' in condition) return `choice ${condition.chose} picked ${state.chosen?.[condition.chose] ?? 0} times; wants ${wanted(c)}`
   if ('seen' in condition) return `scene ${condition.seen} seen ${state.seen?.[condition.seen] ?? 0} times; wants ${wanted(c)}`
   if ('since' in condition) {

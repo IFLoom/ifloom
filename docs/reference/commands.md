@@ -38,7 +38,7 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run.
 2. **Can the state be read?** If a [plugin](/reference/plugins)'s state in it is newer than the plugin, or has no [migration](/reference/plugins#migrateplugins) route forward, the command is refused with that reason and nothing runs.
 3. **Fill in the state.** A storyline the save lacks gets an empty one, missing fields from an older shape get defaults, and each plugin's state is brought up to date. See [`hydrate`](#hydrate).
-4. **Can it be done?** [`whyNot`](/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/reference/locks) first, then a plugin's [guard](/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks. The view greys buttons out with the same function, so a button and its refusal always read the same.
+4. **Can it be done?** [`whyNot`](/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/reference/locks) first, then a plugin's [guard](/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
 5. **A warning?** If [`warningOf`](/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
 6. **Run it.** If [`rules.commands`](/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
 7. **Triggers.** Each [trigger](/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/reference/triggers#when-triggers-fire).
@@ -58,10 +58,14 @@ Returns `apply(...).state`. Use it where a refusal needs no handling, such as re
 ## startingState
 
 ```ts
-function startingState(
-  game: Game,
-  options?: { seed?: number; flags?: Record<string, FlagValue> },
-): GameState
+function startingState(game: Game, options?: StartOptions): GameState
+
+type StartOptions = {
+  seed?: number
+  flags?: Record<string, FlagValue>
+  settings?: Record<string, unknown>
+  carry?: GameState
+}
 ```
 
 Returns a new game at turn 0, with `introScene` open and counted as seen. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/reference/view#the-idle-screen).
@@ -71,13 +75,16 @@ Returns a new game at turn 0, with `introScene` open and counted as seen. A game
 - Every declared storyline is empty.
 - Each `gear` item is held once and each `stuff` item not at all, unless the item's `start` says otherwise.
 - Each declared [stat](/reference/stats) is at its `start`. The engine adds no stats of its own.
+- Each `play` [setting](/reference/settings) is at the value given in `settings`, or its default.
 
 See [Game state](/reference/state) for the other starting values. The options object is optional, and so is each field in it:
 
 | Option | What it does | Default |
 |---|---|---|
 | `seed` | The save's [seed](/reference/state#seed), which fixes every random draw it makes. | A hash of `game.id`, so every new game deals the same way. |
-| `flags` | [Variables](/reference/state#flags) written before the first scene, such as a name asked for on a title screen, or a difficulty. | None. |
+| `flags` | [Variables](/reference/state#flags) written before the first scene, such as a name asked for on a title screen. | None. |
+| `settings` | The player's stored values for the game's `play` [settings](/reference/settings), usually the [profile](/reference/profile)'s `settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
+| `carry` | The state a finished game ended on, for a [New Game+](/reference/state#new-game). What `game.carryOver` lists is copied from it. | Nothing carried. |
 
 ```ts
 import { startingState } from '@ifloom/engine'
@@ -105,6 +112,7 @@ Fills in what an older state lacks for this game:
 
 - an empty storyline for each declared storyline the save has never heard of
 - empty defaults for fields added since the save was written (`seen`, `seenOn`, `chosen`, `collections`, `notices`, `fired`, `entities`, `created`, [`removed`](/reference/state#removed)), and `turn` 0 if the state has none
+- the default of every `play` [setting](/reference/settings) the game declares that the save has no value for, such as one added in an update, or all of them in a save from before version 9
 - every [entity](/reference/entities) the game declares that the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. That covers one a mod or a new version of the game declares, or one a plugin's [`entities`](/reference/plugins#kinds-and-entities) make.
 
 It then runs [`migratePlugins`](/reference/plugins#migrateplugins), so a plugin added since the save starts fresh and an older plugin state is carried forward. It returns the same object when nothing was missing.
@@ -131,6 +139,7 @@ type Command =
   | { type: 'use'; itemId: string }
   | { type: 'dismiss'; id?: string }
   | { type: 'input'; id: string; value?: FlagValue }
+  | { type: 'setting'; id: string; value: FlagValue }
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 ```
 
@@ -193,6 +202,22 @@ Marks one [notice](/reference/notices), or every notice, as seen. It has no refu
 Writes what the player typed or picked to the [input](/reference/inputs)'s variable (its `variable`, or the input's id), with text trimmed. A button can carry the command without `value` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
 
 After a lock, it's refused with the line from [`inputRefusal`](/reference/inputs#inputrefusal): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
+
+### setting
+
+```ts
+{ type: 'setting', id: 'difficulty', value: 'hard' }
+```
+
+Changes a `play` [setting](/reference/settings) in the state. A settings screen sends it when the player changes one mid-game. It's a command like any other, so it goes in the runner's [log](/reference/runner#commandlog) and [`replay`](/reference/runner#replay) gives the same game. A runner with a [profile](/reference/profile) also stores the new value there, so the next new game starts with it.
+
+No lock or plugin guard stops it, because changing a setting is the menu's business, not the story's. It's refused with:
+
+- `There is no such setting.` for an id the game doesn't declare
+- `That setting does not change the game.` for a `ui` setting, which never enters the state (use [`runner.setUiSetting`](/reference/runner#setuisetting))
+- `Choose on or off.` for a toggle given anything but `true` or `false`
+- `That is not one of the options.` for a choice given a value it doesn't list
+- `Enter a number.`, `Between <min> and <max>.` or `In steps of <step>.` for a range
 
 ### custom
 

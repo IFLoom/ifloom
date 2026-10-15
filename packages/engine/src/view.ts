@@ -8,6 +8,7 @@ import { holds } from './condition.ts'
 import { lockOn, lockedOut } from './locks.ts'
 import { sceneById, type Game, type ActionDef } from './game.ts'
 import { activityById } from './activity.ts'
+import { settingAffects } from './settings.ts'
 import {
   artSrc,
   parseBeats,
@@ -98,6 +99,25 @@ export type View = {
   inputs: Record<string, InputView>
   /** What each plugin gives the UI, by plugin id. */
   plugins: Record<string, unknown>
+  /** Every setting the game declares, in order, for a settings screen. */
+  settings: SettingView[]
+}
+
+/** A setting as a settings screen draws it. */
+export type SettingView = {
+  id: string
+  label: string
+  kind: 'toggle' | 'choice' | 'range'
+  affects: 'play' | 'ui'
+  /** A choice's options. */
+  options?: { value: string; label: string }[]
+  /** A range's bounds and step. */
+  min?: number
+  max?: number
+  step?: number
+  default: FlagValue
+  /** A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. */
+  value: FlagValue | null
 }
 
 export type CollectionView = {
@@ -187,7 +207,24 @@ export function view(state: GameState, game: Game): View {
     notices: noticesOf(state, game),
     inputs: inputsOf(state, game),
     plugins: pluginViews(state, game),
+    settings: settingsOf(state, game),
   }
+}
+
+function settingsOf(state: GameState, game: Game): SettingView[] {
+  return (game.settings ?? []).map((setting) => {
+    const affects = settingAffects(setting)
+    return {
+      id: setting.id,
+      label: setting.label,
+      kind: setting.kind,
+      affects,
+      ...(setting.kind === 'choice' ? { options: setting.options } : {}),
+      ...(setting.kind === 'range' ? { min: setting.min, max: setting.max, ...(setting.step !== undefined ? { step: setting.step } : {}) } : {}),
+      default: setting.default,
+      value: affects === 'play' ? (state.settings?.[setting.id] ?? setting.default) : null,
+    }
+  })
 }
 
 /** A prose key's words for this state; empty when there is no key or no prose. */

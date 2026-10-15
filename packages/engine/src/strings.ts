@@ -33,6 +33,12 @@ export const STRINGS = {
   atLeast: 'At least {min}.',
   atMost: 'At most {max}.',
   notAnOption: 'That is not one of the options.',
+  // Settings.
+  noSuchSetting: 'There is no such setting.',
+  notAGameSetting: 'That setting does not change the game.',
+  notAUiSetting: 'That setting changes the game, so it is set with a command.',
+  onOrOff: 'Choose on or off.',
+  inSteps: 'In steps of {step}.',
   // Buttons and labels.
   lookAround: 'Look around',
   momentPassed: 'The moment has passed.',

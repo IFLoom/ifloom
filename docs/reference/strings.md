@@ -1,18 +1,25 @@
 # Strings
 
-Every word the engine says to the player on its own — a refusal, a button label, a save's name — comes from one table, by key. The table is in English. A game replaces any line with its own, a pack can replace them too, and so a translation can ship as a [mod](/reference/loader).
+Everything the engine says to the player in its own words, such as a refusal, a button label or a save's name, comes from one table, by key. The table is in English. Your game can replace any line with its own, and so can a pack, which means a translation can ship as a [mod](/reference/loader).
 
 ```ts
 import { STRINGS, say, type StringKey, type Strings } from '@ifloom/engine'
 ```
 
-Lines the game wrote itself are not in the table: a [lock](/reference/locks)'s `reason`, an [activity requirement](/reference/actions#requirement)'s `reason`, a cost's `reasons`, a stat's [`lacking`](/reference/stats#lackingline), a [place](/plugins/places#locationdef)'s `locked` `reason`, a [cast](/plugins/cast#calls) character's `call.busy`, a [talk option](/plugins/cast#talkoption)'s `label`. Those are already the game's words, and the engine prints them as written.
+Lines your game writes itself aren't in the table, because they're already your words and the engine prints them as written. These include:
+
+- a [lock](/reference/locks)'s `reason`
+- an [activity requirement](/reference/actions#requirement)'s `reason` and a cost's `reasons`
+- a stat's [`lacking`](/reference/stats#lackingline)
+- a [place](/plugins/places#locationdef)'s `locked` `reason`
+- a [cast](/plugins/cast#calls) character's `call.busy` and a [talk option](/plugins/cast#talkoption)'s `label`
 
 ## A worked example
 
-The café's owner wants the town to sound like her:
+Say you want the town to sound a little friendlier:
 
 ```ts
+import { apply, whyNot, type Game } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 import { talk } from '@ifloom/plugin-cast'
 
@@ -25,17 +32,18 @@ const game: Game = {
   },
 }
 
+// `busy` is a state with a scene open
 whyNot(busy, game, { type: 'activity', id: 'coffee' })   // 'Not yet, love.'
-apply(busy, game, go('high-street')).refused              // 'Not yet, love.': the places plugin says it too
-whyNot(busy, game, talk('rosa'))                          // 'Not yet, love.': and the cast
-whyNot(state, game, talk('rosa'))                         // 'Rosa has popped out.' when Rosa is elsewhere
+apply(busy, game, go('high-street')).refused              // 'Not yet, love.' (the places plugin says it too)
+whyNot(busy, game, talk('ava'))                           // 'Not yet, love.' (and so does the cast)
+whyNot(state, game, talk('ava'))                          // 'Ava has popped out.' when Ava is elsewhere
 ```
 
-The refusal, the greyed-out button and the view all read the same line, because they all go through [`say`](#say).
+The refusal, the greyed-out button and the view all show the same line, because they all go through [`say`](#say).
 
 ## The table
 
-`{name}` and its like are filled in when the line is said. A line may leave a placeholder out; it may not add one the engine does not give, since that one stays as written.
+Placeholders such as `{name}` are filled in when the line is said. Your line can leave a placeholder out. It can't add one the engine doesn't give, because that one would be printed as written.
 
 ### Refusals
 
@@ -46,12 +54,12 @@ Why a [command](/reference/commands) can't be done.
 | `finishFirst` | `Finish this first.` | |
 | `notSupported` | `This game does not do that.` | |
 | `noSuchAction` | `There is no such thing to do.` | |
-| `notEnough` | `Not enough {stat}.` | `{stat}`: the stat's label, lower case; `{n}`: the amount it costs |
+| `notEnough` | `Not enough {stat}.` | `{stat}` is the stat's label in lower case, and `{n}` the amount it costs. [`lackingLine`](/reference/stats#lackingline) says it, in the game's words when you pass the game. |
 | `noSuchScene` | `There is no such scene.` | |
 | `nothingToChoose` | `There is nothing to choose.` | |
 | `notOnOffer` | `That is not on offer.` | |
 | `noSuchThing` | `There is no such thing.` | |
-| `doesNothing` | `The {item} does not do anything.` | `{item}`: the item's name |
+| `doesNothing` | `The {item} does not do anything.` | `{item}` is the item's name |
 | `haveNone` | `You have no {item}.` | `{item}` |
 
 ### Input
@@ -64,7 +72,7 @@ Why a value can't be entered. See [inputs](/reference/inputs).
 | `notNow` | `Not now.` | |
 | `enterSomething` | `Enter something first.` | |
 | `enterNumber` | `Enter a number.` | |
-| `tooLong` | `Keep it to {n} characters.` | `{n}`: the input's `maxLength` |
+| `tooLong` | `Keep it to {n} characters.` | `{n}` is the input's `maxLength` |
 | `between` | `Between {min} and {max}.` | `{min}`, `{max}` |
 | `atLeast` | `At least {min}.` | `{min}` |
 | `atMost` | `At most {max}.` | `{max}` |
@@ -84,17 +92,17 @@ See [saves](/reference/saves).
 | Key | English | Placeholders |
 |---|---|---|
 | `notASave` | `That is not a save file.` | |
-| `otherGame` | `That save belongs to another game ({game}).` | `{game}`: the save's game id |
+| `otherGame` | `That save belongs to another game ({game}).` | `{game}` is the save's game id |
 | `saveTooOld` | `That save is from a version this game cannot read.` | |
-| `pluginNewer` | `That save was made with a newer version of {plugin}.` | `{plugin}`: the plugin's id |
+| `pluginNewer` | `That save was made with a newer version of {plugin}.` | `{plugin}` is the plugin's id |
 | `pluginUnreadable` | `That save's {plugin} is from a version this game cannot read.` | `{plugin}` |
-| `turnLabel` | `Turn {turn}` | `{turn}`: the [turn](/reference/state#turn), counted from 1. A save's [default name](/reference/saves#savemeta) when no plugin says when or where it is. |
+| `turnLabel` | `Turn {turn}` | `{turn}` is the [turn](/reference/state#turn), counted from 1. It's a save's [default name](/reference/saves#savemeta) when no plugin says when or where the save is. |
 
-The engine has no words for time of day: it keeps none. The [calendar plugin](/plugins/calendar)'s periods, weekdays, `Too early.` and `That would run past dawn.` are its own strings, `calendar/...`; see [its strings](/plugins/calendar#strings).
+The engine keeps no time of day, places or people, so it has no words for them. The plugins that keep them have their own strings:
 
-Nor has it words for places: it keeps none. `There is no such place.`, `You are already here.` and `You cannot get there from here.` are the [places plugin](/plugins/places)'s, `places/...`; see [its strings](/plugins/places#strings).
-
-Nor for people. **Talk**, `Rosa is not here.`, `You cannot reach Rosa from here.` and the rest are the [cast](/plugins/cast)'s, `cast/...`; see [its strings](/plugins/cast#strings).
+- The [calendar plugin](/plugins/calendar#strings) has its periods, weekdays, `Too early.` and `That would run past dawn.`, under `calendar/...`.
+- The [places plugin](/plugins/places#strings) has `There is no such place.`, `You are already here.` and `You cannot get there from here.`, under `places/...`.
+- The [cast](/plugins/cast#strings) has `Talk`, `Ava is not here.`, `You cannot reach Ava from here.` and the rest, under `cast/...`.
 
 ## Overriding
 
@@ -113,15 +121,19 @@ Give only the lines you want to change. Every other key keeps its English.
 A [`Pack`](/reference/loader#pack) can carry `strings` too. [`loadGame`](/reference/loader#loadgame) starts from the base's `strings`, then lays each pack's over them in order, so a later pack's line wins:
 
 ```ts
+import { loadGame, SCHEMA, type Pack } from '@ifloom/engine'
+
 const core: Pack = { id: 'core', schema: SCHEMA, data: { places: { locations }, cast: { characters } }, /* ... */ }
-const { game } = loadGame([core], { ...base, strings: { finishFirst: 'Not yet — finish this.' } })
+const { game } = loadGame([core], { ...base, strings: { finishFirst: 'Not yet. Finish this first.' } })
 ```
 
 ### As a translation mod
 
-A translation is a pack with nothing in it but `strings` (and, for the story itself, [`prose`](/reference/prose)). Put it after the game's packs:
+A translation is a pack with nothing in it but `strings`, plus [`prose`](/reference/prose) for the story itself. Put it after the game's packs:
 
 ```ts
+import { loadGame, say, SCHEMA, type Pack } from '@ifloom/engine'
+
 const dutch: Pack = {
   id: 'nl',
   schema: SCHEMA,
@@ -137,10 +149,10 @@ const fixes: Pack = { id: 'nl-fixes', schema: SCHEMA, strings: { 'calendar/tooEa
 
 const { game } = loadGame([core, dutch, fixes], base)
 say(game, 'finishFirst') // 'Eerst dit afmaken.'
-say(game, 'calendar/tooEarly')  // 'Nog te vroeg.' — the later pack wins over the earlier one and the base
+say(game, 'calendar/tooEarly')  // 'Nog te vroeg.' (the later pack wins over the earlier one and the base)
 ```
 
-A plugin's lines are overridden the same way, by the plugin's id, a `/`, and the line's name: `'quests/notDoing'`. Each [first-party plugin](/plugins/) lists its keys under **Strings** on its page.
+You override a plugin's lines the same way, by the plugin's id, a `/` and the line's name, as in `'quests/notDoing'`. Each [first-party plugin](/plugins/) lists its keys under Strings on its page.
 
 ## STRINGS
 
@@ -148,9 +160,11 @@ A plugin's lines are overridden the same way, by the plugin's id, a `/`, and the
 const STRINGS: { readonly finishFirst: 'Finish this first.'; /* ... */ }
 ```
 
-The engine's English, every key in [the table](#the-table). Read it to list the keys a translation must cover:
+The engine's English, with every key in [the table](#the-table). Read it to list the keys a translation must cover:
 
 ```ts
+import { STRINGS } from '@ifloom/engine'
+
 const missing = Object.keys(STRINGS).filter((key) => !(key in dutch.strings!))
 ```
 
@@ -161,47 +175,53 @@ type StringKey = keyof typeof STRINGS
 type Strings = Partial<Record<StringKey, string>> & Record<string, string>
 ```
 
-`StringKey` is a key of the engine's own table. `Strings` is what a game, pack or plugin gives: any engine key, plus any `plugin/name` key. Type a translation with it so your editor offers the engine's keys:
+`StringKey` is a key of the engine's own table. `Strings` is what a game, pack or plugin gives, which is any engine key plus any `plugin/name` key. Type a translation with it so your editor offers the engine's keys:
 
 ```ts
+import type { Strings } from '@ifloom/engine'
+
 const dutch: Strings = { finishFirst: 'Eerst dit afmaken.' }
 ```
 
-**Gotcha:** `Strings` takes any string key, so a misspelt key is not a type error, and the loader does not check keys either. A misspelt override does nothing, and the English shows.
+**Gotcha.** `Strings` takes any string key, so a misspelt key isn't a type error, and the loader doesn't check keys either. A misspelt override does nothing, and the English shows.
 
 ## say
 
 ```ts
-function say(game: Game | undefined, key: StringKey | string, vars?: Record<string, string | number>): string
+function say(game: Game | undefined, key: StringKey | (string & {}), vars?: Record<string, string | number>): string
 ```
 
-The words for a key, in this order:
+Returns the words for a key. It looks in this order and takes the first it finds:
 
-1. the game's `strings[key]`, from the base and its packs;
-2. for a `plugin/name` key, the plugin's own default, its `strings[name]`;
-3. the engine's `STRINGS`;
-4. the key itself.
+1. the game's `strings[key]`, from the base and its packs
+2. for a `plugin/name` key, the plugin's own default, its `strings[name]`
+3. the engine's `STRINGS`
+4. the key itself
 
 Each `{name}` in the line is then replaced from `vars`.
 
 ```ts
+import { say } from '@ifloom/engine'
+
 say(game, 'notEnough', { stat: 'coins' })  // 'Not enough coins.'
 say(game, 'tooLong', { n: 12 })           // 'Keep it to 12 characters.'
-say(undefined, 'finishFirst')             // 'Finish this first.' — no game, the engine's English
+say(undefined, 'finishFirst')             // 'Finish this first.' (no game, so the engine's English)
 ```
 
-Use it in your own UI for the words it shares with the engine, and in a plugin for the plugin's own lines.
+Use it in your own UI for the words it shares with the engine, and in a plugin for the plugin's own lines. Engine functions that print a refusal, such as [`lackingLine`](/reference/stats#lackingline), take an optional game for the same reason. Without it they use the engine's English.
 
 **Gotchas.**
-- **A missing key shows itself.** A key nobody wrote comes back as the key, `'kites/noWind'`, so it is easy to spot on screen rather than blank.
+- **A missing key shows itself.** A key nobody wrote comes back as the key, such as `'kites/noWind'`, so it's easy to spot on screen.
 - **A placeholder with no value stays as written.** `say(game, 'notEnough')` gives `'Not enough {stat}.'`. A translation that uses a placeholder the engine doesn't give for that key prints it as written too.
-- **Plain substitution only.** There are no plurals and no way to move a word a line builds into a different spot: the calendar's `{period}` is always one word from its `calendar/period.*` keys, and `calendar/tomorrow` puts "tomorrow" next to it. Full translation into languages that need more is not covered yet; see [API status](/guide/status).
+- **Plain substitution only.** There are no plurals, and no way to move a word that a line builds into a different spot. For example, the calendar's `{period}` is always one word from its `calendar/period.*` keys, and `calendar/tomorrow` puts "tomorrow" next to it. Full translation into languages that need more isn't covered yet. See [API status](/guide/status).
 
 ## Plugins' strings
 
-A [plugin](/reference/plugins) declares its English in `strings`, keyed **without** its prefix, and says them with `say` and the full `id/name` key:
+A [plugin](/reference/plugins) declares its English in `strings`, keyed without its prefix. It says them with `say` and the full `id/name` key:
 
 ```ts
+import { definePlugin, say } from '@ifloom/engine'
+
 const kites = definePlugin({
   id: 'kites',
   version: 1,
@@ -218,14 +238,6 @@ const kites = definePlugin({
 say(game, 'kites/noWind', { kite: 'the red one' }) // 'There is no wind for the red one.'
 ```
 
-A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game or a pack. A plugin may also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and are overridden with them.
+A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game or a pack. A plugin can also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and a game's override covers both.
 
-**Gotcha:** the plugin's defaults are only found when the game has the plugin. Without it, `say(game, 'kites/noWind')` returns `'kites/noWind'`.
-
-## The functions that take a game
-
-These print refusals, and speak the game's words when given the game. Without it they speak the engine's English.
-
-| Function | Reference |
-|---|---|
-| `lackingLine(def, id, amount, game?)` | [Stats](/reference/stats#lackingline) |
+**Gotcha.** The plugin's defaults are only found when the game has the plugin. Without it, `say(game, 'kites/noWind')` returns `'kites/noWind'`.

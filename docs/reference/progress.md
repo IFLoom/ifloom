@@ -1,17 +1,17 @@
 # Progress and limits
 
-Two small toolkits for the shape of a storyline over time:
+These are two small toolkits for shaping a storyline over time:
 
-- **Progress**: counters kept on a storyline, ladders a count climbs, and **stages** that must happen in order and can wait turns between them.
-- **Limits** (`oncePerTurn`, `usedBlock`, `usedThisTurn`, `markUsed`): a payout that can be had once a [turn](/reference/state#turn) — once a day, in a game whose turn is a day.
+- **Progress** covers counters kept on a storyline, ladders a count climbs, and stages that must happen in order and can wait a number of turns between them.
+- **Limits** (`oncePerTurn`, `usedBlock`, `usedThisTurn` and `markUsed`) let a choice pay out once a [turn](/reference/state#turn), which is once a day in a game whose turn is a day.
 
-The running example is a friendship with Rosa, the baker, that grows over a few weeks.
+The running example is a friendship with Ava, who runs the café, growing over a few weeks.
 
 ## Why limits
 
-Talking usually costs no time. So a choice that pays something — a friendship, a stat, money — and can be picked again is an **infinite farm**: a player can click it twenty times in a row and skip the story. Any repeatable choice that pays must be limited. A once-a-turn limit keeps the line on screen and the prose readable; it caps only the payout, and it never takes anything back — come back next turn (tomorrow, in a game whose turn is a day) and it pays again.
+Talking usually costs no time. So a choice that pays something, such as friendship, a stat or money, and can be picked again is an endless farm. A player can click it twenty times in a row and skip the story, so any repeatable choice that pays needs a limit. A once-a-turn limit keeps the line on screen and the prose readable. It only caps the payout and never takes anything back, so the choice pays again next turn.
 
-In a [`DataScene`](/reference/scenes#choice), `once: { per: 'turn' }` does this for you. Outside one — a hand-written scene, an activity's effects — use the functions below.
+In a [`DataScene`](/reference/scenes#choice), `once: { per: 'turn' }` does this for you. Outside one, such as in a hand-written scene or an activity's effects, use the functions below.
 
 ## oncePerTurn
 
@@ -21,20 +21,23 @@ import { oncePerTurn } from '@ifloom/engine'
 function oncePerTurn(state: GameState, id: string, effects: readonly Effect[]): Effect[]
 ```
 
-`effects` plus a flag recording that they were paid this [turn](/reference/state#turn) — or an empty list if `id` has already paid this turn. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day.
+Returns `effects` plus a flag recording that they were paid this [turn](/reference/state#turn), or an empty list if `id` has already paid this turn. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day.
 
 ```ts
+import { oncePerTurn } from '@ifloom/engine'
+import { person } from '@ifloom/plugin-cast'
+
 {
   id: 'chat',
-  label: 'Ask how the ovens are',
+  label: 'Ask how the coffee machine is behaving',
   effects: [
-    ...oncePerTurn(state, 'baker.chat', [{ kind: 'stat', key: 'friendship', by: 2, of: person('baker') }]),
-    { kind: 'scene', id: 'baker.chat.ovens' },
+    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }]),
+    { kind: 'scene', id: 'ava.chat.machine' },
   ],
 }
 ```
 
-**Gotcha:** keep non-paying effects (like moving to the next scene) outside `oncePerTurn`, or the choice stops working, not just stops paying.
+**Gotcha:** keep effects that don't pay (like moving to the next scene) outside `oncePerTurn`. Otherwise the choice stops working, rather than just stopping paying.
 
 ## usedBlock
 
@@ -44,10 +47,10 @@ import { usedBlock } from '@ifloom/engine'
 function usedBlock(state: GameState, id: string, reason: string): string | undefined
 ```
 
-`reason` if `id` has already paid this turn, otherwise `undefined`. Pair it with `oncePerTurn` as the choice's `disabled`, so a spent line explains itself instead of quietly paying nothing.
+Returns `reason` if `id` has already paid this turn, and `undefined` otherwise. Pair it with `oncePerTurn` as the choice's `disabled`, so a spent line explains itself instead of quietly paying nothing.
 
 ```ts
-disabled: usedBlock(state, 'baker.chat', 'She is busy with the second batch.'),
+disabled: usedBlock(state, 'ava.chat', 'She has a queue.'),
 ```
 
 ## usedThisTurn and markUsed
@@ -59,9 +62,9 @@ function usedThisTurn(state: GameState, id: string): boolean
 function markUsed(state: GameState, id: string): Effect
 ```
 
-The two halves `oncePerTurn` is built from. `markUsed` is a `flag` effect setting `turn:<id>` to the current turn number; `usedThisTurn` checks it equals the current turn. Nothing needs resetting at the end of a turn — the next turn's number simply no longer matches.
+The two halves `oncePerTurn` is built from. `markUsed` is a `flag` effect that sets `turn:<id>` to the current turn number, and `usedThisTurn` checks that it equals the current turn. Nothing needs resetting at the end of a turn, because the next turn's number no longer matches.
 
-**Gotcha:** that flag lives in `state.flags` under `turn:<id>`. Don't reuse that prefix for your own variables. A save from before version 3 had these under `day:<id>`; [`migrate`](/reference/saves#migrate) renames them.
+**Gotcha:** the flag lives in `state.flags` under `turn:<id>`, so don't use that prefix for your own variables.
 
 ## Counters
 
@@ -73,12 +76,12 @@ function counted(storylineId: string, key: string, value: number): Effect
 function bumped(state: GameState, storylineId: string, key: string, by?: number): Effect
 ```
 
-A number kept as a storyline variable. `count` reads it (`0` if unset or not a number). `counted` is an effect that sets it. `bumped` is an effect that adds `by` (default `1`) to its current value.
+A counter is a number kept as a storyline variable. `count` reads it, giving `0` if it's unset or not a number. `counted` is an effect that sets it. `bumped` is an effect that adds `by` (default `1`) to its current value.
 
 ```ts
-effects: [bumped(state, 'baker', 'loavesBought')]
+effects: [bumped(state, 'ava', 'coffeesBought')]
 // later
-if (count(state, 'baker', 'loavesBought') >= 10) { /* she knows your order */ }
+if (count(state, 'ava', 'coffeesBought') >= 10) { /* she knows your order */ }
 ```
 
 In data, the same counter is the `{ counter: { storyline, key }, gte }` [condition](/reference/conditions).
@@ -94,13 +97,13 @@ function stageAt<R>(stages: readonly R[], reached: number): R
 function stageNext<R>(stages: readonly R[], reached: number): R
 ```
 
-A ladder is an array; a count says how far up it the player is. `stageAt` is the stage for a one-based count (anything below 1 is the first stage); `stageNext` is the one after. Both stop at the top.
+A ladder is an array, and a count says how far up it the player is. `stageAt` is the stage for a one-based count, where anything below 1 is the first stage. `stageNext` is the one after. Both stop at the top.
 
 ```ts
-const GREETINGS = ['baker.nod', 'baker.hello', 'baker.usual', 'baker.friend']
-const visits = count(state, 'baker', 'visits')
-stageAt(GREETINGS, visits)   // visits 0 or 1 → 'baker.nod', 3 → 'baker.usual', 9 → 'baker.friend'
-stageNext(GREETINGS, visits) // visits 1 → 'baker.hello', 3 or more → 'baker.friend'
+const GREETINGS = ['ava.nod', 'ava.hello', 'ava.usual', 'ava.friend']
+const visits = count(state, 'ava', 'visits')
+stageAt(GREETINGS, visits)   // visits 0 or 1 → 'ava.nod', 3 → 'ava.usual', 9 → 'ava.friend'
+stageNext(GREETINGS, visits) // visits 1 → 'ava.hello', 3 or more → 'ava.friend'
 ```
 
 ## Stages
@@ -123,18 +126,20 @@ type Stage = {
 }
 ```
 
-An ordered run of stages on one storyline. Each stage names the variable that records it happened, and what it asks for **on top of the stage before it**. A stage can't be reached by skipping one, however good the player's numbers are.
+An ordered run of stages on one storyline. Each stage names the variable that records it happened, and what it asks for on top of the stage before it. The player can't reach a stage by skipping one, however good their numbers are.
 
-`after` is the pace half: the stage waits that many whole [turns](/reference/state#turn) after the *previous* stage's scene was first entered — days, in a game whose turn is a day. A stat alone is a poor clock — it can come in faster than you measured — so a floor of turns keeps a friendship from collapsing into an afternoon.
+`after` sets the pace. The stage waits that many whole [turns](/reference/state#turn) after the previous stage's scene was first entered, which is days in a game whose turn is a day. A stat alone is a poor clock, because it can rise faster than you planned, so a minimum number of turns keeps a friendship from happening in an afternoon.
 
 ```ts
-const ROSA: Stages = {
-  storylineId: 'baker',
+import type { Stages } from '@ifloom/engine'
+
+const AVA: Stages = {
+  storylineId: 'ava',
   stages: [
-    { id: 'name', flag: 'knowsName', scene: 'baker.name' },
-    { id: 'recipe', flag: 'sharedRecipe', scene: 'baker.recipe', after: 3,
-      needs: { counter: { storyline: 'baker', key: 'visits' }, gte: 5 } },
-    { id: 'kitchen', flag: 'bakerTrusts', scene: 'baker.kitchen', after: 7 },
+    { id: 'name', flag: 'knowsName', scene: 'ava.name' },
+    { id: 'recipe', flag: 'sharedRecipe', scene: 'ava.recipe', after: 3,
+      needs: { counter: { storyline: 'ava', key: 'visits' }, gte: 5 } },
+    { id: 'river', flag: 'avaTrusts', scene: 'ava.river', after: 7 },
   ],
 }
 ```
@@ -145,12 +150,14 @@ const ROSA: Stages = {
 function stageOpen(state: GameState, stages: Stages, id: string, game?: Game): boolean
 ```
 
-Can this stage happen now? `needs` is a [condition](/reference/conditions); pass `game` when one of them uses `{ custom }` or a plugin's condition, such as the [cast](/plugins/cast#conditions)'s `here`, which find nothing without it. Walks the stages from the start: every stage up to and including this one must have its `needs` hold and its `after` satisfied, and every stage before it must be done. `false` for an unknown id.
+Whether this stage can happen now. It walks the stages from the start. Every stage up to and including this one must have its `needs` hold and its `after` satisfied, and every stage before it must be done. It's `false` for an unknown id.
+
+`needs` is a [condition](/reference/conditions). Pass `game` when one of them uses `{ custom }` or a plugin's condition, such as the [cast](/plugins/cast#conditions)'s `here`, because those find nothing without it.
 
 **Gotchas:**
-- Earlier stages' `needs` must *still* hold, not just have held once.
-- A stage with `after` whose previous stage has no `scene` **throws** — there is nothing to measure from.
-- `stageOpen` is still `true` once the stage is done. Test `stageDone` too if it should not repeat.
+- Earlier stages' `needs` must still hold, not just have held once.
+- A stage with `after` whose previous stage has no `scene` throws, because there's nothing to measure from.
+- `stageOpen` is still `true` once the stage is done. Test `stageDone` too if it shouldn't repeat.
 
 ### stageDone and stagesDone
 
@@ -159,7 +166,7 @@ function stageDone(state: GameState, stages: Stages, id: string): boolean
 function stagesDone(state: GameState, stages: Stages): number
 ```
 
-`stageDone`: is this stage's flag set? `stagesDone`: how many stages are done, counting from the first and stopping at the first that is not.
+`stageDone` says whether this stage's flag is set. `stagesDone` counts how many stages are done, starting from the first and stopping at the first that isn't.
 
 ### turnsSince
 
@@ -170,7 +177,7 @@ function turnsSince(state: GameState, sceneId: string): number | null
 Whole [turns](/reference/state#turn) since a scene was first entered, or `null` if it never has been. The engine records the first turn for every scene in [`state.seenOn`](/reference/state#seenon).
 
 ```ts
-turnsSince(state, 'baker.name') // 4: four turns (four days, in a game whose turn is a day) after you learned her name
+turnsSince(state, 'ava.name') // 4: four turns since you learned her name
 ```
 
-In data, the same tests are the `{ seen }` and `{ since }` [conditions](/reference/conditions): name the stage below with `{ seen: 'baker.name' }`, and wait with `{ since: 'baker.name', gte: 3 }`.
+In data, the same tests are the `{ seen }` and `{ since }` [conditions](/reference/conditions). Gate the next stage on `{ seen: 'ava.name' }`, and wait with `{ since: 'ava.name', gte: 3 }`.

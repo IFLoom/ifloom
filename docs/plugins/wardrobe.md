@@ -1,8 +1,10 @@
 # Wardrobe
 
-`@ifloom/plugin-wardrobe` keeps track of what the player has on. The game says which slots there are, such as a coat and boots, armour and a ring, or a uniform and a cap. Content says which item goes in which slot.
+`@ifloom/plugin-wardrobe` keeps track of what the player has on. Your game says which slots there are, such as a coat and a scarf, armour and a ring, or a uniform and a cap. Content says which item goes in which slot.
 
-Clothes are ordinary [items](/reference/game#itemdef). Wearing one does not change how many the player has: the wardrobe only marks what is on. Putting something on takes off whatever was in its slot, and something the player no longer has comes off by itself.
+You'd want it when what the player wears matters to the story: a dress code at the office, a raincoat that people notice, armour that opens a door. If clothes are only flavour, ordinary [items](/reference/game#itemdef) are enough.
+
+Clothes are ordinary items. Wearing one doesn't change how many the player has, because the wardrobe only marks what's on. Putting something on takes off whatever was in its slot, and something the player no longer has comes off by itself.
 
 ```ts
 import {
@@ -13,16 +15,18 @@ import {
 
 ## Install
 
-Add the package beside the engine, and add `wardrobe(...)` to the game's `plugins`. See [Adding one](/plugins/#adding-one).
+List the package in your game's `package.json`, beside the engine:
 
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "file:../ifloom/packages/engine",
-    "@ifloom/plugin-wardrobe": "file:../ifloom/packages/plugin-wardrobe"
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-wardrobe": "0.0.0"
   }
 }
 ```
+
+Then add `wardrobe(...)` to the game's `plugins`, with the slots your game has. [Adding one](/plugins/#adding-one) has the details.
 
 ## wardrobe
 
@@ -30,23 +34,17 @@ Add the package beside the engine, and add `wardrobe(...)` to the game's `plugin
 function wardrobe(options: WardrobeOptions): DefinedPlugin<WardrobeState>
 ```
 
-The plugin, with the id `wardrobe`. Call it once, when the game is built, with the slots the game has.
+Builds the plugin, with the id `wardrobe`. Call it once, when you build the game, with the slots the game has. This is the [showcase](/guide/showcase)'s wardrobe, where the player starts in a raincoat:
 
 ```ts
-const { game } = loadGame(packs, {
-  id: 'small-town',
-  title: 'Small Town',
-  introScene: 'intro.wake',
-  plugins: [
-    places({ start: 'house' }),
-    wardrobe({
-      slots: [
-        { id: 'coat', label: 'Coat' },
-        { id: 'feet', label: 'Feet' },
-      ],
-      start: { feet: 'trainers' },
-    }),
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+
+const clothing = wardrobe({
+  slots: [
+    { id: 'coat', label: 'Coat' },
+    { id: 'neck', label: 'Neck' },
   ],
+  start: { coat: 'raincoat' },
 })
 ```
 
@@ -62,7 +60,7 @@ type WardrobeOptions = {
 | Field | What it is |
 |---|---|
 | `slots` | Every slot, in the order the UI lists them. |
-| `start` | What the player has on in a new game: an item id by slot id. A slot left out starts empty. The player must start owning each of these items; see [Checks](#checks). |
+| `start` | What the player has on in a new game, as an item id by slot id. A slot left out starts empty. The player must start owning each of these items (see [Checks](#checks)). |
 
 ### WardrobeSlot
 
@@ -75,11 +73,11 @@ type WardrobeSlot = { id: string; label: string }
 | `id` | What content and commands name the slot by. Unique among the slots. |
 | `label` | What the player reads. |
 
-The slots are code, not content: a mod cannot add one.
+The slots are code, not content, so a mod can't add one.
 
 ## Writing clothes
 
-Clothes are content. List them in a pack's [`data`](/reference/loader#pack) under `wardrobe.clothes`. They are merged by id as scenes are, so a mod can add clothing or move a piece to another slot.
+Clothes are content. List them in a pack's [`data`](/reference/loader#pack) under `wardrobe.clothes`. They're merged by id as scenes are, so a mod can add clothing or move a piece to another slot.
 
 ### ClothingDef
 
@@ -89,101 +87,126 @@ type ClothingDef = { id: string; slot: string }
 
 | Field | What it is |
 |---|---|
-| `id` | An [item](/reference/game#itemdef) id. The item is declared as usual, in `items`. |
-| `slot` | The slot it goes in. One slot per piece of clothing. |
+| `id` | An [item](/reference/game#itemdef) id. You declare the item as usual, in `items`. |
+| `slot` | The slot it goes in. Each piece of clothing has one slot. |
+
+The showcase's clothes are a raincoat and a scarf:
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
   items: [
-    { id: 'trainers', name: 'trainers', desc: 'Comfortable, not waterproof.', kind: 'stuff', start: 1 },
-    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, with a hood.', kind: 'gear' },
+    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', kind: 'gear' },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
   ],
   data: {
-    places: {
-      locations: [
-        // house ...
-        {
-          id: 'market', name: 'Market', tag: 'Market', kind: 'street', exits: ['house'], art: '',
-          body: [{ text: 'market/rain' }, { text: 'market/dry', when: wearing('raincoat') }],
-        },
-      ],
-    },
     wardrobe: {
       clothes: [
         { id: 'raincoat', slot: 'coat' },
-        { id: 'trainers', slot: 'feet' },
+        { id: 'scarf', slot: 'neck' },
       ],
     },
   },
 }
 ```
+
+The raincoat is `kind: 'gear'`, so the player starts with one, which `start: { coat: 'raincoat' }` needs.
 
 ## A worked example
 
-A wet day in a small town. The player starts in trainers with a raincoat on the hook. The towpath past the market is only open to someone in wellies, and the market reads differently with the hood up.
+A cut-down Small Town. The player starts in the raincoat, which people in the café notice. A scarf is for sale on the high street, and the bench by the river is too cold without one. The map comes from the [places](/plugins/places) plugin, and there's no calendar, so the café never closes.
 
 ```ts
 import { SCHEMA, need, type Pack } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
+import { onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { wearing } from '@ifloom/plugin-wardrobe'
+
+const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
+const place = (id: string, name: string, exits: string[]): LocationDef =>
+  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  // stats (coins, fitness) ...
+  stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
   items: [
-    { id: 'trainers', name: 'trainers', desc: 'Comfortable, not waterproof.', kind: 'stuff', start: 1 },
-    { id: 'wellies', name: 'wellies', desc: 'Green, and a size too big.', kind: 'stuff' },
-    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, with a hood.', kind: 'gear' },
+    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', kind: 'gear' },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
+    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.', kind: 'stuff', start: 1 },
   ],
   activities: [
-    { id: 'buyWellies', requires: [onlyAt(['market'])], cost: { stats: { coins: 8 } }, effects: [{ kind: 'item', id: 'wellies', by: 1 }] },
-    {
-      id: 'walkTowpath',
-      requires: [onlyAt(['market']), need('The towpath is ankle-deep in mud.', wearing('wellies'))],
-      effects: [{ kind: 'stat', key: 'fitness', by: 1 }],
-    },
+    { id: 'buyScarf', cost: { stats: { coins: 8 } }, requires: [onlyAt(['high-street'])], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
+    { id: 'bench', requires: [onlyAt(['park']), need('Too cold without a scarf.', wearing('scarf'))], effects: [] },
   ],
-  prose: { 'market/rain': 'Rain drums on the awnings.', 'market/dry': 'You are dry under the hood.' /* ... */ },
+  prose: {
+    'place.high-street': 'A bakery, a launderette, a bus stop.',
+    'place.cafe': 'Six tables, one of them wobbly.',
+    'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
+    'place.park': 'The river is slow and brown.',
+  },
   data: {
+    places: {
+      locations: [
+        { ...place('high-street', 'High Street', ['cafe', 'park']), actions: [act('buyScarf', 'Buy a scarf at the market')] },
+        {
+          ...place('cafe', 'The Corner Café', ['high-street']),
+          body: [{ text: 'place.cafe' }, { text: 'place.cafe/raincoat', when: wearing('raincoat') }],
+        },
+        { ...place('park', 'Riverside Park', ['high-street']), actions: [act('bench', 'Sit on the bench by the river')] },
+      ],
+    },
     wardrobe: {
       clothes: [
         { id: 'raincoat', slot: 'coat' },
-        { id: 'trainers', slot: 'feet' },
-        { id: 'wellies', slot: 'feet' },
+        { id: 'scarf', slot: 'neck' },
       ],
     },
   },
 }
 ```
 
-With the plugin added as under [`wardrobe`](#wardrobe), it plays like this:
+Build the game and play it. `town` is the pack above:
 
 ```ts
+import { apply, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
+import { go, places } from '@ifloom/plugin-places'
+import { slotFilled, takeOff, wardrobe, wear, type WardrobeView } from '@ifloom/plugin-wardrobe'
+
+const { game } = loadGame([town], {
+  id: 'small-town',
+  title: 'Small Town',
+  plugins: [
+    places({ start: 'high-street' }),
+    wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
+  ],
+})
+
 const closet = (state: GameState) => view(state, game).plugins.wardrobe as WardrobeView
+let state = startingState(game)
 
-closet(state).slots   // [{ id: 'coat', label: 'Coat', item: null, name: null },
-                      //  { id: 'feet', label: 'Feet', item: 'trainers', name: 'trainers' }]
-closet(state).spare   // [{ id: 'raincoat', name: 'raincoat', slot: 'coat' }]
+closet(state).slots   // [{ id: 'coat', label: 'Coat', item: 'raincoat', name: 'raincoat' }, { id: 'neck', label: 'Neck', item: null, name: null }]
+closet(state).spare   // []
 
-state = apply(state, game, wear('raincoat')).state
-holds(state, wearing('raincoat'), game)    // true
-state.items.raincoat                       // 1: wearing it does not use it up
+const cafe = apply(state, game, go('cafe')).state
+view(cafe, game).scene.body   // 'Six tables, one of them wobbly.\n\nSomeone points at your raincoat and grins. It is very yellow.'
 
-state = apply(state, game, go('market')).state   // go, from @ifloom/plugin-places
-view(state, game).scene.body               // 'Rain drums on the awnings.\n\nYou are dry under the hood.'
-whyNot(state, game, { type: 'activity', id: 'walkTowpath' })   // 'The towpath is ankle-deep in mud.'
-
-state = apply(state, game, { type: 'activity', id: 'buyWellies' }).state
-state = apply(state, game, wear('wellies')).state                // the trainers come off
-closet(state).spare   // [{ id: 'trainers', name: 'trainers', slot: 'feet' }]
-whyNot(state, game, { type: 'activity', id: 'walkTowpath' })   // undefined
-
-apply(state, game, wear('wellies')).refused   // 'You are already wearing the wellies.'
 state = apply(state, game, takeOff('coat')).state
-holds(state, slotFilled('coat'), game)        // false
+closet(state).spare                        // [{ id: 'raincoat', name: 'raincoat', slot: 'coat' }]
+state.items.raincoat                       // 1: taking it off doesn't lose it
+apply(state, game, takeOff('coat')).refused   // 'There is nothing to take off.'
+
+whyNot(state, game, wear('scarf'))         // 'You have no scarf.'
+whyNot(state, game, wear('sandwich'))      // 'The sandwich is not something you wear.'
+state = apply(state, game, { type: 'activity', id: 'buyScarf' }).state
+state = apply(state, game, wear('scarf')).state
+holds(state, slotFilled('neck'), game)     // true
+apply(state, game, wear('scarf')).refused  // 'You are already wearing the scarf.'
+
+state = apply(state, game, go('park')).state
+whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf is on
 ```
 
 ## Condition
@@ -194,7 +217,7 @@ holds(state, slotFilled('coat'), game)        // false
 | `{ custom: 'wardrobe/wearing', with: { item, slot } }` | `wearing(item, slot)` | That item is on in that slot. |
 | `{ custom: 'wardrobe/wearing', with: { slot } }` | `slotFilled(slot)` | Something is in that slot. |
 
-Use it anywhere a [condition](/reference/conditions) goes: a block's `when`, a choice, a requirement, a lock. Short, with the full name as the only key, `{ 'wardrobe/wearing': { item: 'wellies' } }` is the same as the first row (see [plugin calls](/reference/custom)). With neither `item` nor `slot`, it is false. An unknown item or slot is false.
+You can use it anywhere a [condition](/reference/conditions) goes: a block's `when`, a choice, a requirement or a lock. In the short form, with the full name as the only key, `{ 'wardrobe/wearing': { item: 'scarf' } }` is the same as the first row (see [plugin calls](/reference/custom#plugincall)). With neither `item` nor `slot`, it's false. An unknown item, or a slot the save has nothing in, is false.
 
 To ask whether the player has an item at all, worn or not, use the engine's [`{ has }`](/reference/conditions#has).
 
@@ -207,20 +230,20 @@ To ask whether the player has an item at all, worn or not, use the engine's [`{ 
 
 `wardrobe/wear` is refused, in this order, with:
 
-- `There is no such thing.` when no item has that id;
-- `The <name> is not something you wear.` when the item is not among the clothes;
-- `You are already wearing the <name>.`;
+- `There is no such thing.` when no item has that id.
+- `The <name> is not something you wear.` when the item isn't among the clothes.
+- `You are already wearing the <name>.`
 - `You have no <name>.`
 
-`wardrobe/takeOff` is refused with `There is nothing to take off.` when the slot is empty or there is no such slot.
+`wardrobe/takeOff` is refused with `There is nothing to take off.` when the save has nothing in that slot, which includes a slot the game never had.
 
-Each line can be reworded; see [Strings](#strings).
+You can reword each line (see [Strings](#strings)).
 
-Both go through [locks](/reference/locks) like any command. A lock names them `wardrobe/wear` and `wardrobe/takeOff`, or both at once as `wardrobe/*`.
+Both commands go through [locks](/reference/locks) like any other. A lock names them `wardrobe/wear` and `wardrobe/takeOff`, or both at once as `wardrobe/*`.
 
 ## Strings
 
-The plugin's lines in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key. `{item}` is the item's name.
+The plugin's lines go in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key. `{item}` is the item's name.
 
 | Key | English |
 |---|---|
@@ -228,10 +251,21 @@ The plugin's lines in the [strings table](/reference/strings#plugins-strings). A
 | `wardrobe/alreadyWearing` | `You are already wearing the {item}.` |
 | `wardrobe/nothingToTakeOff` | `There is nothing to take off.` |
 
-`wardrobe/wear` also says two of the engine's own lines, so they read the same as everywhere else and are reworded with them: [`noSuchThing`](/reference/strings#refusals) (`There is no such thing.`) and [`haveNone`](/reference/strings#refusals) (`You have no {item}.`).
+`wardrobe/wear` also uses two of the engine's own lines, so they read the same as everywhere else and you reword them along with the engine's: [`noSuchThing`](/reference/strings#refusals) (`There is no such thing.`) and [`haveNone`](/reference/strings#refusals) (`You have no {item}.`).
+
+To reword one in your game, put it in the base's `strings`:
 
 ```ts
-strings: { 'wardrobe/alreadyWearing': 'The {item} is already on.' }
+import { loadGame } from '@ifloom/engine'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { town } from './town.ts'
+
+const { game } = loadGame([town], {
+  id: 'small-town',
+  title: 'Small Town',
+  plugins: [wardrobe({ slots: [{ id: 'coat', label: 'Coat' }] })],
+  strings: { 'wardrobe/alreadyWearing': 'The {item} is already on.' },
+})
 ```
 
 ## The view
@@ -249,10 +283,10 @@ type WardrobeView = {
 
 | Field | What it is |
 |---|---|
-| `slots` | Every slot, in the order the game declared them. `item` is the id of what is in it and `name` is that item's name, or both are `null`. |
-| `spare` | Clothes the player has and is not wearing, in the order they are listed in `wardrobe.clothes`. `slot` is where each would go. |
+| `slots` | Every slot, in the order the game declared them. `item` is the id of what's in it and `name` is that item's name. Both are `null` for an empty slot. |
+| `spare` | Clothes the player has and isn't wearing, in the order `wardrobe.clothes` lists them. `slot` is where each would go. |
 
-What the player wears is also in the engine's [`view().pack`](/reference/view#the-player-s-numbers-and-things), since they still have it. A UI that wants the bag without the clothes on leaves out the ids in `slots`.
+What the player wears is also in the engine's [`view().pack`](/reference/view#the-player-s-numbers-and-things), since they still have it. A UI that wants the bag without the clothes leaves out the ids in `slots`.
 
 ## The state
 
@@ -289,24 +323,24 @@ The game's clothes, merged from its packs: `game.data.wardrobe.clothes`.
 
 When the game loads, the plugin reports:
 
-- clothing whose id is not an item (`clothes <id>`, `no item has this id`);
-- clothing for a slot the game does not have (`clothes <id>`, `no slot called "…"`);
-- a `start` slot the game does not have (`start <slot>`, `no slot by this name`);
-- a `start` item that is not clothing for that slot (`start <slot>`, `"…" is not clothing for this slot`);
-- a `start` item the player does not start with (`start <slot>`, `the player does not start with "…"`).
+- Clothing whose id isn't an item (`clothes <id>`, `no item has this id`).
+- Clothing for a slot the game doesn't have (`clothes <id>`, `no slot called "…"`).
+- A `start` slot the game doesn't have (`start <slot>`, `no slot by this name`).
+- A `start` item that isn't clothing for that slot (`start <slot>`, `"…" is not clothing for this slot`).
+- A `start` item the player doesn't start with (`start <slot>`, `the player does not start with "…"`).
 
 Clothing problems are pinned on the pack that brought the entry. `start` problems are pinned on `base`.
 
 ```text
-mod:winter · clothes scarf · no slot called "neck"
-base · start feet · the player does not start with "trainers"
+mod:winter · clothes gloves · no slot called "hands"
+base · start coat · the player does not start with "raincoat"
 ```
 
 ## Gotchas
 
 - **The player has to start owning what they start wearing.** An item in `start` needs a `start` count above 0, or `kind: 'gear'`, which starts at 1. Otherwise the load reports it.
-- **Losing an item takes it off after the command.** Sold, used up or taken by an effect: once the player has none, the plugin's `after` [hook](/reference/plugins#hooks) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
-- **`{ has }` counts worn items.** Worn clothes are still owned, so `{ has: 'raincoat' }` and `{ item: 'raincoat' }` hold while it is on. To ask whether it is on, use `wearing`.
-- **Wearing does not check where the player is or what is on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock: `{ when: at('cafe'), deny: ['wardrobe/*'], reason: 'Not in the middle of the café.' }`.
-- **One of each in a slot.** The wardrobe marks an item id as on, not a count. A player with two raincoats wears one; selling one leaves it on.
-- **A slot taken out of the game is ignored, not cleared.** A save made while the game had a `hat` slot keeps whatever was in it, but `wardrobe/wearing` and the view only look at the slots the game declares now. Put the slot back and the item is on again.
+- **Losing an item takes it off after the command.** Whether it's sold, used up or taken by an effect, once the player has none, the plugin's `after` [hook](/reference/plugins#hooks) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
+- **`{ has }` counts worn items.** Worn clothes are still owned, so `{ has: 'raincoat' }` and `{ item: 'raincoat' }` hold while it's on. To ask whether it's on, use `wearing`.
+- **Wearing doesn't check where the player is or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
+- **One of each in a slot.** The wardrobe marks an item id as on, not a count. A player with two scarves wears one, and selling one leaves it on.
+- **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wearing(item)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `slotFilled('hat')` and `wearing('cap', 'hat')` still hold, and `takeOff('hat')` isn't refused and empties it. Put the slot back and the item is on again everywhere.

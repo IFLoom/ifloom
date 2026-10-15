@@ -1,8 +1,10 @@
 # Quests
 
-`@ifloom/plugin-quests` keeps track of what the player is doing, how far they have got, and the hint for what comes next.
+`@ifloom/plugin-quests` keeps track of what the player is doing, how far they've got, and a hint for what comes next.
 
-A quest is a list of **stages**, and each stage is done by a [condition](/reference/conditions) on the game state. These are the same conditions that gate the content, so a quest cannot drift from the story it describes. Progress is kept once it is made: a stage that was done stays done.
+You'd want it when the player has goals to work towards and might lose track of them, such as errands in a life sim or the week's jobs in a management game. A linear novel usually doesn't need it, because the story only goes one way.
+
+A quest is a list of stages, and each stage is done by a [condition](/reference/conditions) on the game state. These are the same conditions that gate the content, so a quest can't drift from the story it describes. Progress is kept once it's made, so a stage that was done stays done.
 
 ```ts
 import {
@@ -12,15 +14,33 @@ import {
 } from '@ifloom/plugin-quests'
 ```
 
-The engine calls them *quests*. What the player sees them called, such as a journal, a diary or a to-do list, is the game's choice. The plugin's own lines, such as `You are not doing that.`, come from the [strings table](/reference/strings), so a game can reword them too; see [Strings](#strings).
+The engine calls them quests, but what the player sees them called, such as a journal, a diary or a to-do list, is up to you. The showcase calls its list "To do". The plugin's own line, `You are not doing that.`, comes from the [strings table](/reference/strings), so you can reword that too (see [Strings](#strings)).
 
 ## Install
 
-Add the package beside the engine, and add `quests()` to the game's `plugins`. See [Adding one](/plugins/#adding-one).
+List the package in your game's `package.json`, beside the engine:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-quests": "0.0.0"
+  }
+}
+```
+
+Then add `quests()` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details.
 
 ```ts
-const { game } = loadGame(packs, { /* ... */ plugins: [quests()] })
+import { loadGame, type Pack } from '@ifloom/engine'
+import { quests } from '@ifloom/plugin-quests'
+
+declare const town: Pack
+
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [quests()] })
 ```
+
+The plugin works on its own. Its stages often use other plugins' conditions, such as the places plugin's `at('high-street')`, and those need their plugin in the game too.
 
 ## quests
 
@@ -28,18 +48,22 @@ const { game } = loadGame(packs, { /* ... */ plugins: [quests()] })
 function quests(): DefinedPlugin<QuestsState>
 ```
 
-The plugin, with the id `quests`. Its state starts empty. Call it once, when the game is built.
+Builds the plugin, with the id `quests`. Its state starts empty. Call it once, when you build the game.
 
 ## Writing quests
 
 Quests are content. They go in a pack's [`data`](/reference/loader#pack) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { type QuestDef } from '@ifloom/plugin-quests'
+
+declare const settle: QuestDef
+
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  // items, activities, prose ...
-  data: { places: { locations: [/* ... */] }, quests: { quests: [bread, letter] } },
+  data: { quests: { quests: [settle] } },
 }
 ```
 
@@ -62,10 +86,10 @@ type QuestDef = {
 | `id` | Unique among quests. Content names the quest by it. |
 | `title` | Its name in the quest list. |
 | `summary` | A line or two about it. |
-| `storyline` | The [storyline](/reference/game#storylinedef) it belongs to, for a UI that groups quests by person. Checked when the game loads. |
+| `storyline` | The [storyline](/reference/storylines) it belongs to, for a UI that groups quests by person. Checked when the game loads. |
 | `starts` | The quest starts the first time this holds. Leave it out to start the quest only with the [`quests/start`](#effects) effect. |
 | `secret` | Not counted in `toFind` until it starts. |
-| `stages` | In order. The quest is done when the last one is. |
+| `stages` | The stages, in order. The quest is done when the last one is. |
 
 ### QuestStage
 
@@ -76,92 +100,131 @@ type QuestStage = { id: string; hint: string; done: Condition }
 | Field | What it is |
 |---|---|
 | `id` | Unique within the quest. [`quests/reached`](#conditions) names it. |
-| `hint` | What the player reads while this is the stage they are on. |
+| `hint` | What the player reads while this is the stage they're on. |
 | `done` | The stage is done the first time this holds, once the stages before it are done. |
 
 ## A worked example
 
-Two quests in a small town. One starts when the player finds the cupboard bare. The other starts only when a scene or an activity says so. The game lists `plugins: [places({ start: 'house' }), quests()]`, so the town's map is the [places](/plugins/places) plugin's.
+Two quests from a cut-down Small Town, the [showcase](/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the game's phase moves from `arrival` to `open`). "Something warm" starts only when an activity says so. The town's map comes from the [places](/plugins/places) plugin.
 
 ```ts
-import { at, go, onlyAt } from '@ifloom/plugin-places'
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { startQuest, type QuestDef } from '@ifloom/plugin-quests'
 
-const bread: QuestDef = {
-  id: 'bread',
-  title: 'Bread for breakfast',
-  summary: 'There is nothing in the house.',
-  starts: { flag: 'hungry' },
+const settle: QuestDef = {
+  id: 'settle',
+  title: 'Settle in',
+  summary: 'New town, new flat. Find your feet.',
+  starts: { phase: ['open'] },
   stages: [
-    { id: 'out', hint: 'Go out to the high street.', done: at('high-street') },
-    { id: 'buy', hint: 'Buy a loaf at the bakery.', done: { item: 'loaf', gte: 1 } },
+    { id: 'out', hint: 'Step out onto the high street.', done: at('high-street') },
+    { id: 'coffee', hint: 'Buy a coffee at the café.', done: { flag: 'hadCoffee' } },
   ],
 }
 
-const letter: QuestDef = {
-  id: 'letter',
-  title: 'A letter for Rosa',
-  stages: [{ id: 'post', hint: 'Post it on the high street.', done: { flag: 'posted' } }],
+const scarf: QuestDef = {
+  id: 'scarf',
+  title: 'Something warm',
+  stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { has: 'scarf' } }],
 }
+
+const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
+const place = (id: string, name: string, exits: string[]): LocationDef =>
+  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  items: [{ id: 'loaf', name: 'Loaf', desc: 'Still warm.', kind: 'stuff' }],
+  items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' }],
   activities: [
-    { id: 'lookInCupboard', requires: [onlyAt(['house'])], effects: [{ kind: 'flag', key: 'hungry', value: true }] },
-    { id: 'buyLoaf', requires: [onlyAt(['bakery'])], effects: [{ kind: 'item', id: 'loaf', by: 1 }] },
-    { id: 'findLetter', requires: [onlyAt(['house'])], effects: [startQuest('letter')] },
-    { id: 'post', requires: [onlyAt(['high-street'])], effects: [{ kind: 'flag', key: 'posted', value: true }] },
+    { id: 'unpack', requires: [onlyAt(['flat'])], effects: [{ kind: 'phase', value: 'open' }] },
+    { id: 'collar', requires: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },
+    { id: 'buyScarf', requires: [onlyAt(['high-street'])], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
+    { id: 'coffee', requires: [onlyAt(['cafe'])], effects: [{ kind: 'flag', key: 'hadCoffee', value: true }] },
   ],
-  prose: { /* ... */ 'ui.journal': 'Journal ({{v:quests/updates}})' },
+  prose: {
+    'place.flat': 'Boxes, mostly.',
+    'place.high-street': 'A bakery, a launderette, a bus stop.',
+    'place.cafe': 'Six tables, one of them wobbly.',
+    todo: 'To do ({{v:quests/updates}})',
+  },
   data: {
-    places: { locations: [/* house, high-street, bakery */] },
-    quests: { quests: [bread, letter] },
+    places: {
+      locations: [
+        { ...place('flat', 'Your flat', ['high-street']), actions: [act('unpack', 'Unpack')] },
+        { ...place('high-street', 'High Street', ['flat', 'cafe']), actions: [act('collar', 'Turn up your collar'), act('buyScarf', 'Buy a scarf at the market')] },
+        { ...place('cafe', 'The Corner Café', ['high-street']), actions: [act('coffee', 'Buy a coffee')] },
+      ],
+    },
+    quests: { quests: [settle, scarf] },
   },
 }
 ```
 
-How it plays:
+The game starts in the `arrival` phase. `run` presses an activity's button:
 
 ```ts
+import { apply, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
+import { go, places } from '@ifloom/plugin-places'
+import { questDone, quests, seeQuests, trackQuest, type QuestsView } from '@ifloom/plugin-quests'
+
+const { game } = loadGame([town], {
+  id: 'small-town',
+  title: 'Small Town',
+  startPhase: 'arrival',
+  plugins: [places({ start: 'flat' }), quests()],
+})
 const journal = (state: GameState) => view(state, game).plugins.quests as QuestsView
-
-journal(state)          // { active: [], done: [], toFind: 2, updates: 0 }
-
-state = apply(state, game, { type: 'activity', id: 'lookInCupboard' }).state
-journal(state).active   // [{ id: 'bread', hint: 'Go out to the high street.', stage: 0, stages: 2, updated: true, ... }]
-// 'ui.journal' reads "Journal (1)"
-
-state = apply(state, game, seeQuests()).state          // the player opened the journal: updates is 0
-state = apply(state, game, go('high-street')).state
-journal(state).active   // [{ id: 'bread', hint: 'Buy a loaf at the bakery.', stage: 1, updated: true, ... }]
-
-// ...to the bakery, and buy a loaf
-holds(state, questDone('bread'), game)                // true
-journal(state).done     // [{ id: 'bread', hint: '', doneOn: 0, ... }]
-journal(state).toFind   // 1: the letter
-
-whyNot(state, game, trackQuest('letter'))             // 'You are not doing that.'
-// ...back home, and findLetter
-state = apply(state, game, trackQuest('letter')).state
-journal(state).active   // [{ id: 'letter', tracked: true, ... }]
+const run = (state: GameState, id: string) => apply(state, game, { type: 'activity', id }).state
 ```
 
-See them in the showcase: [Small Town](/guide/showcase#quests) has a quest that starts off another and a stage done by the feed's condition.
+Here's how it plays:
+
+```ts
+let state = startingState(game)
+journal(state)                   // { active: [], done: [], toFind: 2, updates: 0 }
+
+state = run(state, 'unpack')
+journal(state).active            // [{ id: 'settle', hint: 'Step out onto the high street.', stage: 0, stages: 2, updated: true, ... }]
+game.prose!.line('todo', state)  // 'To do (1)'
+
+state = apply(state, game, seeQuests()).state   // the player opened the list
+journal(state).updates           // 0
+state = apply(state, game, go('high-street')).state
+journal(state).active[0].hint    // 'Buy a coffee at the café.'
+
+whyNot(state, game, trackQuest('scarf'))         // 'You are not doing that.'
+state = run(state, 'collar')
+state = apply(state, game, trackQuest('scarf')).state
+journal(state).active.map((q) => q.id)           // ['scarf', 'settle']: the tracked one first
+
+state = run(state, 'buyScarf')
+journal(state).done.map((q) => [q.id, q.doneOn]) // [['scarf', 0]]
+journal(state).toFind                            // 0
+
+state = apply(state, game, go('cafe')).state
+state = run(state, 'coffee')
+holds(state, questDone('settle'), game)          // true
+```
+
+The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small Town](/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
 
 ## Conditions
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'quests/active', with: { quest } }` | `questActive(quest)` | The quest has started and is not finished. |
+| `{ custom: 'quests/active', with: { quest } }` | `questActive(quest)` | The quest has started and isn't finished. |
 | `{ custom: 'quests/done', with: { quest } }` | `questDone(quest)` | The quest is finished. |
 | `{ custom: 'quests/reached', with: { quest, stage } }` | `questReached(quest, stage)` | That stage of the quest is done. |
 
-Use them anywhere a condition goes: a block's `when`, a choice, a lock, another quest's `starts`. Each can also be written short, with the full name as the only key: `{ 'quests/done': { quest: 'bakery' } }` is `{ custom: 'quests/done', with: { quest: 'bakery' } }` (see [plugin calls](/reference/custom)).
+You can use them anywhere a condition goes: a block's `when`, a choice, a lock or another quest's `starts`. Each can also be written short, with the full name as the only key, so `{ 'quests/done': { quest: 'settle' } }` is `{ custom: 'quests/done', with: { quest: 'settle' } }` (see [plugin calls](/reference/custom#plugincall)).
 
 ```ts
-{ text: 'bakery/rosa-thanks', when: questDone('bread') }
+import { type Block } from '@ifloom/engine'
+import { questDone } from '@ifloom/plugin-quests'
+
+const block: Block = { text: 'place.cafe/regular', when: questDone('settle') }
 ```
 
 An unknown quest or stage is false.
@@ -170,35 +233,35 @@ An unknown quest or stage is false.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'quests/start', with: { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it has not started, and moves it through any stages already done. |
+| `{ custom: 'quests/start', with: { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
 
-It works in a data scene choice's effects and an activity's `effects`. The short form, `{ 'quests/start': { quest: 'bread' } }`, works in the same places. In a plain-effect list (an item's use, what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that does not exist, does nothing.
+It works in a data scene choice's effects and an activity's `effects`. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'quests/track', with: { quest } }` | `trackQuest(quest)` | Pins the quest, so it comes first in `active`. One at a time. `trackQuest()`, with no quest, unpins. |
+| `{ type: 'custom', name: 'quests/track', with: { quest } }` | `trackQuest(quest)` | Pins the quest, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
 | `{ type: 'custom', name: 'quests/seen', with: { quest } }` | `seeQuests(quest)` | Marks the quest as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
 
-`quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that has not started or is finished. `quests/seen` is never refused apart from [locks](/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
+`quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that hasn't started or is finished. `quests/seen` is never refused, except by [locks](/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
 
 ## Value
 
 | Prose writes | Prints |
 |---|---|
-| <code v-pre>{{v:quests/updates}}</code> | How many quests have news the player has not looked at, for a badge: <code v-pre>Journal ({{v:quests/updates}})</code>. |
+| <code v-pre>{{v:quests/updates}}</code> | How many quests have news the player hasn't looked at, for a badge such as <code v-pre>To do ({{v:quests/updates}})</code>. |
 
 ## Strings
 
-The one line the plugin says to the player, in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key.
+The one line the plugin says to the player goes in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key.
 
 | Key | English |
 |---|---|
 | `quests/notDoing` | `You are not doing that.` |
 
 ```ts
-strings: { 'quests/notDoing': 'That one is not on your list.' }
+const strings = { 'quests/notDoing': 'That one is not on your list.' }
 ```
 
 ## The view
@@ -218,10 +281,10 @@ type QuestsView = {
 
 | Field | What it is |
 |---|---|
-| `active` | Started and not finished: the tracked one first, then newest first. |
+| `active` | Started and not finished. The tracked one comes first, then the newest first. |
 | `done` | Finished, most recent first. |
 | `toFind` | Quests not started yet, not counting secret ones. |
-| `updates` | How many quests have news the player has not looked at. |
+| `updates` | How many quests have news the player hasn't looked at. |
 
 ### QuestEntry
 
@@ -246,8 +309,8 @@ type QuestEntry = {
 | `summary` | `''` if the quest has none. |
 | `storyline` | `null` if the quest has none. |
 | `hint` | The hint for the stage the player is on, or `''` once the quest is done. |
-| `stage`, `stages` | Stages done, and how many there are. |
-| `startedOn`, `doneOn` | The [turn](/reference/state) it started, and the turn it finished or `null`. |
+| `stage`, `stages` | How many stages are done, and how many there are. |
+| `startedOn`, `doneOn` | The [turn](/reference/state#turn) it started, and the turn it finished, or `null`. |
 | `tracked` | Pinned with `quests/track`. |
 | `updated` | Started or moved on since the player last looked. |
 
@@ -265,11 +328,11 @@ type QuestsState = {
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.quests`: the turn each quest started and finished, how many stages of each are done, the tracked quest, and how far each quest had got when the player last looked. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.quests`. It holds the turn each quest started and finished, how many stages of each are done, the tracked quest, and how far each quest had got when the player last looked. A UI reads the view, not this.
 
 ## For code
 
-The helpers above write the content objects for you, typed: `questActive`, `questDone`, `questReached` and `startQuest` return a `Condition` or an `EffectRef`, while `trackQuest` and `seeQuests` return a `Command`. These are for code that works with quests directly, such as tests, tools or a custom UI.
+The helpers above write the content objects for you, typed. `questActive`, `questDone` and `questReached` return a `Condition`, `startQuest` returns an `EffectRef`, and `trackQuest` and `seeQuests` return a `Command`. The functions below are for code that works with quests directly, such as tests, tools or a custom UI.
 
 ### Helpers
 
@@ -296,7 +359,7 @@ The game's quests, merged from its packs: `game.data.quests.quests`.
 function advance(record: QuestsState, state: GameState, game: Game): QuestsState
 ```
 
-Brings a record up to date with the game state. It starts what should start, moves each quest through every stage that is done, in order, and marks the finished ones. Nothing is ever taken back. It returns the same object when nothing moved. The plugin runs it after every command, and before answering a condition or building the view.
+Brings a record up to date with the game state. It starts what should start, moves each quest through every stage that's done, in order, and marks the finished ones. Nothing is ever taken back. It returns the same object when nothing moved. The plugin runs it after every command, and before answering a condition or building the view.
 
 ### questsView
 
@@ -308,13 +371,13 @@ The `QuestsView` for a record. The plugin's view is `questsView(advance(record, 
 
 ## Checks
 
-When the game loads, the plugin reports, against the pack each quest came from, with `where` as `quests <id>`:
+When the game loads, the plugin reports these problems against the pack each quest came from, with `where` as `quests <id>`:
 
-- a quest with no stages (`has no stages`);
-- an unknown `storyline` (`unknown storyline "…"`);
-- two stages with the same id (`two stages are called "…"`);
-- anything a stage's `done` names that the game does not have (`stage <id>: unknown location "…"`);
-- the same for `starts` (`starts: no custom condition named "…"`).
+- A quest with no stages (`has no stages`).
+- An unknown `storyline` (`unknown storyline "…"`).
+- Two stages with the same id (`two stages are called "…"`).
+- Anything a stage's `done` names that the game doesn't have (`stage <id>: unknown location "…"`).
+- The same for `starts` (`starts: no custom condition named "…"`).
 
 ```text
 mod:sunday-market · quests stall · stage haggle: unknown character "trader"
@@ -322,9 +385,9 @@ mod:sunday-market · quests stall · stage haggle: unknown character "trader"
 
 ## Gotchas
 
-- **Stages are done in order.** A later stage whose condition holds early does not count until every stage before it is done. It counts then only if it still holds. In the example, buying a loaf before going out leaves the quest on "Go out to the high street.". On reaching the high street with the loaf still in the bag, both stages are done at once. If the loaf was eaten first, the player has to buy another.
-- **A quest with no `starts` starts only by effect.** Nothing in the state starts it: put [`startQuest`](#effects) on the choice or activity that begins it.
-- **Progress latches.** Once a stage is done, it stays done even if its condition stops holding, and a finished quest stays finished. Write `done` for the moment something happens (`at('high-street')`), not for something that has to stay true.
-- **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/reference/plugins#hooks), at the end of every command that took. The conditions and the view work it out fresh, so they are right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
+- **Stages are done in order.** A later stage whose condition holds early doesn't count until every stage before it is done, and it only counts then if it still holds. In the example, if `hadCoffee` were somehow set before the player stepped out, the quest would still say "Step out onto the high street." Reaching the high street would then finish both stages at once.
+- **A quest with no `starts` only starts by effect.** Nothing in the state starts it, so put [`startQuest`](#effects) on the choice or activity that begins it.
+- **Progress latches.** Once a stage is done, it stays done even if its condition stops holding, and a finished quest stays finished. Write `done` for the moment something happens, such as `at('high-street')`, not for something that has to stay true.
+- **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/reference/plugins#hooks), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
 - **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
 - **Finishing the tracked quest unpins it.**

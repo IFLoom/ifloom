@@ -1,16 +1,18 @@
 # Calendar
 
-`@ifloom/plugin-calendar` gives a game a calendar: the periods of a day, the days of a week, a bed to go to and a curfew to keep. It also says what a **turn** is in this game: one period, one day or one week.
+`@ifloom/plugin-calendar` gives a game days and times of day. It splits a day into periods (morning, afternoon and so on), counts days into weeks, adds a bed to go to and an optional curfew, and decides what a [turn](/reference/state#turn) is in your game: one period, one day or one week.
 
-The engine's only clock is the [turn](/reference/state#turn), `state.turn`. Everything the engine dates, it dates in turns. Days, periods, weekdays, bed and the curfew are this plugin's alone: the core has none of them. The calendar keeps a day and a period of its own, moves them on whenever a turn ends, and ends turns itself when content passes time with `calendar/pass`.
+You'd want it when time matters to the story: shops with opening hours, people who keep a schedule, a job you go to on weekdays, a day that ends when the player goes to bed. A linear novel usually doesn't need it, since the engine's turn counter is enough to date things.
 
-So everything time-shaped in a game is written with it:
+The engine's only clock is the turn, `state.turn`, and it dates everything in turns. It has no days, periods or weekdays of its own. The calendar keeps a day and a period of its own, moves them on whenever a turn ends, and ends turns itself when content passes time with `calendar/pass`.
 
-- **time passing** is the [`calendar/pass`](#effects) effect, on an activity or a choice;
-- **bed** is its [`sleep()`](#commands) command, on a room action;
-- **opening hours** are a [place](/plugins/places)'s [`locked`](/plugins/places#locationdef) entries with its [conditions](#conditions): `locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }]`;
-- **schedules** are a [cast](/plugins/cast) character's [`schedule`](/plugins/cast#where-people-are) entries with its conditions as `when`: `{ location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } }`;
-- **the header** is its [label](#the-label), at `view.when`.
+Here's where each time-related part of a game comes from:
+
+- **Time passing** is the [`calendar/pass`](#effects) effect, on an activity or a choice.
+- **Bed** is the [`sleep()`](#commands) command, usually on a room's action.
+- **Opening hours** are a [place](/plugins/places)'s [`locked`](/plugins/places#locationdef) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+- **Schedules** are a [cast](/plugins/cast) character's [`schedule`](/plugins/cast#where-people-are) entries, with the calendar's conditions as their `when`, such as `{ location: 'cafe', when: period('morning', 'afternoon') }`.
+- **The header** is the calendar's [label](#the-label), at `view.when`.
 
 ```ts
 import {
@@ -21,21 +23,27 @@ import {
 
 ## Install
 
-Add the package beside the engine, and add `calendar(...)` to the game's `plugins`. See [Adding one](/plugins/#adding-one).
+List the package in your game's `package.json`, beside the engine:
 
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "file:../ifloom/packages/engine",
-    "@ifloom/plugin-calendar": "file:../ifloom/packages/plugin-calendar"
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-calendar": "0.0.0"
   }
 }
 ```
 
-**List the calendar first in `plugins`.** At the end of a turn, plugins' `turn` hooks run in the order `game.plugins` lists them. The calendar's hook is what moves the clock on, so plugins listed after it see the new day, and plugins listed before it see the old one.
+Then add `calendar(...)` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details.
+
+List the calendar first. At the end of a turn, plugins' `turn` hooks run in the order `game.plugins` lists them. The calendar's hook is what moves the clock on, so plugins listed after it see the new day and plugins listed before it see the old one. The showcase's list starts like this:
 
 ```ts
-plugins: [calendar(), places({ start: 'house' }), quests(), wardrobe({ /* ... */ })]
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { quests } from '@ifloom/plugin-quests'
+
+const plugins = [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), quests()]
 ```
 
 ## calendar
@@ -44,21 +52,21 @@ plugins: [calendar(), places({ start: 'house' }), quests(), wardrobe({ /* ... */
 function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState>
 ```
 
-The plugin, with the id `calendar`. Call it once, when the game is built. With no options, a day has five periods, a week has seven days, a turn is a day, and the game starts on Monday morning.
+Builds the plugin, with the id `calendar`. Call it once, when you build the game. With no options, a day has five periods, a week has seven days, a turn is a day, and the game starts on Monday morning.
 
 ```ts
-const clock = calendar()
+import { loadGame, startingState, type Pack } from '@ifloom/engine'
+import { calendar } from '@ifloom/plugin-calendar'
 
-const { game } = loadGame(packs, {
-  id: 'small-town',
-  title: 'Small Town',
-  plugins: [clock],
-})
+declare const town: Pack
+
+const clock = calendar()
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [clock] })
 
 clock.read(startingState(game), game)   // { day: 0, period: 'morning' }
 ```
 
-`read` and `write` come from [`definePlugin`](/reference/plugins#defineplugin). They are for tests and tools: `clock.write(state, { day: 2, period: 'evening' })` puts the clock somewhere without ending a turn.
+`read` and `write` come from [`definePlugin`](/reference/plugins#defineplugin) and are meant for tests and tools. `clock.write(state, { day: 2, period: 'evening' })` puts the clock somewhere without ending a turn.
 
 ### CalendarOptions
 
@@ -79,12 +87,12 @@ type CalendarOptions = {
 | `periods` | The periods of a day, in order. Each is an id, or a [`PeriodDef`](#perioddef) with the word the player reads. | `morning`, `afternoon`, `evening`, `night`, `late` |
 | `week` | Days in a week. | `7` |
 | `weekend` | Which days of the week are the weekend, counting from `0`. | The last two: `[5, 6]` in a seven-day week, Saturday and Sunday |
-| `turn` | What a turn is: one `'period'`, one `'day'` or one `'week'`. `false`: the clock and the turn go their own ways. See [What a turn is](#what-a-turn-is). | `'day'` |
+| `turn` | What a turn is: one `'period'`, one `'day'` or one `'week'`. With `false`, the clock and the turn go their own ways. See [What a turn is](#what-a-turn-is). | `'day'` |
 | `start` | Where a new game starts: a day, from `0`, and a period. | Day `0`, the first period |
-| `sleep` | The [`sleep`](#commands) command: `from`, the periods it can be used in, and `wake`, the period it wakes in the next day. `false`: the command is always refused. | `from`: the last three periods (`evening`, `night`, `late`); `wake`: the first (`morning`) |
-| `curfew` | While this [condition](/reference/conditions) holds, passing time over the end of the day is warned against and refused. See [The guard](#the-guard). `false`: never. | Always binds |
+| `sleep` | The [`sleep`](#commands) command. `from` lists the periods it can be used in, and `wake` is the period it wakes in the next day. With `false`, the calendar has no sleep command at all. | `from`: the last three periods (`evening`, `night`, `late`). `wake`: the first (`morning`). |
+| `curfew` | While this [condition](/reference/conditions) holds, passing time over the end of the day is warned against and refused. See [The guard](#the-guard). With `false`, it never is. | Always binds |
 
-The options are code, not content: a mod cannot change them.
+The options are code, not content, so a mod can't change them.
 
 ### PeriodDef
 
@@ -94,20 +102,24 @@ type PeriodDef = { id: string; label?: string }
 
 | Field | What it is |
 |---|---|
-| `id` | What content names the period by: `period('evening')`, `start: { period: 'evening' }`. Unique among the periods. |
+| `id` | What content names the period by, as in `period('evening')` or `start: { period: 'evening' }`. Unique among the periods. |
 | `label` | What the player reads. The id if left out. |
 
 ```ts
+import { calendar } from '@ifloom/plugin-calendar'
+
 calendar({ periods: ['dawn', 'day', { id: 'dusk', label: 'after dark' }] })
 ```
 
-The label is the default for the string `calendar/period.<id>`, so a game or a translation can still reword it; see [Strings](#strings).
+The label is the default for the string `calendar/period.<id>`, so a game or a translation can still reword it. See [Strings](#strings).
 
 ## What a turn is
 
-`turn` decides how the calendar and the turn keep step. Whatever it is, two things move the clock.
+The `turn` option decides how the calendar and the turn keep step. Whatever you set it to, two things move the clock.
 
-**Passing time ends a turn at each boundary it crosses.** [`calendar/pass`](#effects) counts the turn units between where the clock is and where it is going. It ends that many turns, through the context's [`apply`](/reference/plugins#applying-effects), as a [`turn`](/reference/effects#turn) effect with `by`. Then it puts the clock exactly where it was sent. With the default `turn: 'day'`:
+### Passing time
+
+Passing time ends a turn at each boundary it crosses. [`calendar/pass`](#effects) counts the turn units between where the clock is and where it's going. It ends that many turns, through the context's [`apply`](/reference/plugins#applying-effects), as a [`turn`](/reference/effects#turn) effect with `by`. Then it puts the clock exactly where it was sent. With the default `turn: 'day'`:
 
 | From | Passes | Lands on | Turns ended |
 |---|---|---|---|
@@ -115,73 +127,82 @@ The label is the default for the string `calendar/period.<id>`, so a game or a t
 | day 0, night | 4 | day 1, evening | 1 |
 | day 1, evening | 11 | day 3, night | 2 |
 
-With `turn: 'period'`, every period passed ends a turn: `pass(3)` ends three. With `turn: 'week'`, a turn ends each time the clock enters a new seven-day block, counted from `start.day`. Five periods a day, so `pass(30)` from day 0 morning lands on day 6 morning with no turn ended, and `pass(5)` more ends one. With `turn: false`, passing time never ends a turn.
+With `turn: 'period'`, every period passed ends a turn, so `pass(3)` ends three. With `turn: 'week'`, a turn ends each time the clock enters a new seven-day block, counted from `start.day`. With five periods a day, `pass(30)` from day 0 morning lands on day 6 morning with no turn ended, and `pass(5)` more ends one. With `turn: false`, passing time never ends a turn.
 
-**A turn ended any other way moves the clock to the start of the next unit.** A [`{ kind: 'turn' }`](/reference/effects#turn) effect on a choice or an activity runs the calendar's `turn` hook, which moves the clock:
+### Ending a turn another way
+
+A turn ended any other way moves the clock to the start of the next unit. A [`{ kind: 'turn' }`](/reference/effects#turn) effect on a choice or an activity runs the calendar's `turn` hook, which moves the clock:
 
 | `turn` | The clock goes to |
 |---|---|
 | `'period'` | The next period. |
 | `'day'` | The first period of the next day. |
 | `'week'` | The first period of the first day of the next week, counted from `start.day`. |
-| `false` | Nowhere: it stays put. |
+| `false` | Nowhere. It stays put. |
 
-So a café game whose turn is a week can close the week with a button:
+So a management game whose turn is a week can close the week with a button:
 
 ```ts
-calendar({ turn: 'week' })
+import { type ActivityDef } from '@ifloom/engine'
+import { calendar } from '@ifloom/plugin-calendar'
 
-activities: [
-  { id: 'closeTheWeek', effects: [{ kind: 'turn' }] },
-],
+const clock = calendar({ turn: 'week' })
+const activities: ActivityDef[] = [{ id: 'closeTheWeek', effects: [{ kind: 'turn' }] }]
 ```
 
-From day 0 at any period, **Close the week** ends turn 0 and the clock reads day 7, morning. Pressed again, day 14, morning.
+From day 0 at any period, the `closeTheWeek` activity ends turn 0 and the clock reads day 7, morning. Run it again and it reads day 14, morning.
 
-**`rules.turn` and `onTurn` see the clock as the turn ended.** At the end of a turn, [`rules.turn`](/reference/rules#turn) is asked first, then [`rules.onTurn`](/reference/rules#onturn) runs, then each plugin's `turn` hook. So the game's own rules see the clock before the calendar moves it. Going to bed at night, `rules.turn` is asked with the clock at day 0, night, not day 1, morning. Plugins listed after the calendar see the new day.
+### What the game's turn rules see
 
-When one pass ends several turns, the first is asked with the clock where the pass began. Each later one is asked with the clock where the turn before it left it: the start of the day (or period, or week) that turn ends.
+`rules.turn` and `onTurn` see the clock as the turn ended. At the end of a turn, the engine asks [`rules.turn`](/reference/rules#turn) first, then runs [`rules.onTurn`](/reference/rules#onturn), then each plugin's `turn` hook. So the game's own rules see the clock before the calendar moves it. If the player goes to bed at night, `rules.turn` sees the clock at day 0, night, not day 1, morning. Plugins listed after the calendar see the new day.
+
+When one pass ends several turns, the first turn's rules see the clock where the pass began. Each later turn's rules see the clock where the turn before left it, which is the start of the day (or period, or week) that turn ends.
 
 ## A worked example
 
-A weekday at the café. The player can start a shift on a weekday, have a coffee, walk out along the river, and go to bed. On weekends, the market is open.
+A Monday in Small Town, the [showcase](/guide/showcase)'s world. The player does a shift at the office, finds the café shut by the evening, goes jogging by the river until late, and goes to bed. The office is shut at weekends, and the café only opens in the morning and afternoon.
 
 ```ts
-import { SCHEMA, need, type Pack } from '@ifloom/engine'
-import { calendar, pass, period, sleep, weekday, weekend } from '@ifloom/plugin-calendar'
-import { onlyAt, places } from '@ifloom/plugin-places'
+import { SCHEMA, apply, loadGame, startingState, view, whyNot, type GameState, type Pack } from '@ifloom/engine'
+import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
+import { go, onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
 
 const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
+const place = (id: string, name: string, exits: string[]): LocationDef =>
+  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  // stats (coins) ...
+  stats: [{ id: 'coins', label: 'Coins', start: 12 }],
   data: {
     places: {
       locations: [
-        // house, high-street, market ...
+        { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
+        place('high-street', 'High Street', ['flat', 'cafe', 'park', 'office']),
         {
-          id: 'cafe', name: 'Café', tag: 'Café', kind: 'venue', exits: ['high-street'], art: '',
-          body: [{ text: 'cafe/open' }, { text: 'cafe/closing', when: period('evening', 'night', 'late') }],
-          actions: [act('shift', 'Work a shift'), act('coffee', 'Have a coffee'), act('river', 'Walk by the river')],
+          ...place('cafe', 'The Corner Café', ['high-street']),
+          locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+        },
+        { ...place('park', 'Riverside Park', ['high-street']), actions: [act('jog', 'Go for a jog')] },
+        {
+          ...place('office', 'The Office', ['high-street']),
+          locked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
+          actions: [act('work', 'Do a shift')],
         },
       ],
     },
   },
   activities: [
-    {
-      id: 'shift',
-      requires: [onlyAt(['cafe']), need('The café is shut at the weekend.', weekday(0, 1, 2, 3, 4))],
-      effects: [pass(2), { kind: 'stat', key: 'coins', by: 12 }],
-    },
-    { id: 'coffee', requires: [onlyAt(['cafe'])], effects: [pass(1)] },
-    { id: 'river', requires: [onlyAt(['cafe'])], effects: [pass(3)] },
-    { id: 'stall', requires: [onlyAt(['market']), need('The market is on at the weekend.', weekend())], effects: [pass(1)] },
+    { id: 'work', requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
+    { id: 'jog', requires: [onlyAt(['park'])], effects: [pass(1)] },
   ],
   prose: {
-    'cafe/open': 'The espresso machine hisses.',
-    'cafe/closing': 'Chairs are going up on the tables.',
+    'place.flat': 'Boxes everywhere.',
+    'place.high-street': 'Shops and puddles.',
+    'place.cafe': 'The espresso machine hisses.',
+    'place.park': 'The river runs brown and quick.',
+    'place.office': 'Strip lights and a kettle.',
     diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.',
   },
 }
@@ -189,31 +210,41 @@ const town: Pack = {
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [calendar(), places({ start: 'cafe' })],
-  actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }],
+  plugins: [calendar(), places({ start: 'flat' })],
 })
 ```
 
-How it plays:
+Here's how it plays. `button` finds an idle-screen button by id, and `walk` takes several exits in turn:
 
 ```ts
-const button = (state: GameState, id: string) => view(state, game).actions.find((a) => a.id === id)!
+let state: GameState = startingState(game)
+const button = (id: string) => view(state, game).actions.find((action) => action.id === id)!
+const walk = (...to: string[]) => { for (const id of to) state = apply(state, game, go(id)).state }
 
-view(state, game).when            // 'Day 1 · Monday morning · Café'
+view(state, game).when            // 'Day 1 · Monday morning · Your flat'
 game.prose!.line('diary', state)  // 'Day 1, a Monday morning.'
-button(state, 'shift').price      // { notes: ['until evening'] }
 whyNot(state, game, sleep())      // 'Too early.'
 
-state = apply(state, game, { type: 'activity', id: 'shift' }).state   // morning → evening
-state = apply(state, game, { type: 'activity', id: 'coffee' }).state  // evening → night
+walk('high-street', 'office')
+button('work').price              // { notes: ['until evening'] }
+state = apply(state, game, { type: 'activity', id: 'work' }).state
+view(state, game).when            // 'Day 1 · Monday evening · The Office'
+
+walk('high-street')
+whyNot(state, game, go('cafe'))   // 'Closed. Opens tomorrow morning.'
+
+walk('park')
+state = apply(state, game, { type: 'activity', id: 'jog' }).state   // evening → night
+state = apply(state, game, { type: 'activity', id: 'jog' }).state   // night → late
 state.turn                        // 0: still Monday
 
-button(state, 'river').warning    // 'That would run past dawn.'
-apply(state, game, { type: 'activity', id: 'river' }).refused   // 'That would run past dawn.'
-button(state, 'bed').price        // { notes: ['until tomorrow morning'] }
+button('jog').warning             // 'That would run past dawn.'
+apply(state, game, { type: 'activity', id: 'jog' }).refused   // 'That would run past dawn.'
 
+walk('high-street', 'flat')
+button('bed').price               // { notes: ['until tomorrow morning'] }
 state = apply(state, game, sleep()).state
-view(state, game).when            // 'Day 2 · Tuesday morning · Café'
+view(state, game).when            // 'Day 2 · Tuesday morning · Your flat'
 state.turn                        // 1
 ```
 
@@ -223,39 +254,39 @@ A UI reads the calendar at [`view.plugins.calendar`](#the-view) and the label at
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'calendar/period': ['evening', 'night'] }` | `period('evening', 'night')` | It is one of these periods. |
-| `{ 'calendar/weekday': [0, 1, 2, 3, 4] }` | `weekday(0, 1, 2, 3, 4)` | It is one of these days of the week, from `0`. In a seven-day week, `0` is Monday. |
-| `{ 'calendar/weekend': true }` | `weekend()` | It is one of the [`weekend`](#calendaroptions) days. |
+| `{ 'calendar/period': ['evening', 'night'] }` | `period('evening', 'night')` | It's one of these periods. |
+| `{ 'calendar/weekday': [0, 1, 2, 3, 4] }` | `weekday(0, 1, 2, 3, 4)` | It's one of these days of the week, from `0`. In a seven-day week, `0` is Monday. |
+| `{ 'calendar/weekend': true }` | `weekend()` | It's one of the [`weekend`](#calendaroptions) days. |
 | `{ 'calendar/day': { gte: 6 } }` | `day({ gte: 6 })` | The day, from `0`, is in this [range](/reference/conditions#range). |
 | `{ 'calendar/curfew': true }` | none | The [curfew](#calendaroptions) binds right now. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/reference/custom#plugincall)). A list becomes `with: { value: [...] }`, so the long form of the first row is `{ custom: 'calendar/period', with: { value: ['evening', 'night'] } }`. A single period or weekday works too: `{ 'calendar/period': 'evening' }`.
+These are the short forms, with the full name as the only key (see [plugin calls](/reference/custom#plugincall)). A list becomes `with: { value: [...] }`, so the long form of the first row is `{ custom: 'calendar/period', with: { value: ['evening', 'night'] } }`. A single period or weekday works too, as in `{ 'calendar/period': 'evening' }`.
 
-Use them anywhere a [condition](/reference/conditions) goes: a block's `when`, a choice, a requirement, a lock, a schedule.
+You can use them anywhere a [condition](/reference/conditions) goes: a block's `when`, a choice, a requirement, a lock or a schedule.
 
-**Gotcha.** `calendar/day` counts from `0`, as the state does. The player reads the day from `1`: `day({ gte: 6 })` holds from what the header calls Day 7.
+`calendar/day` counts from `0`, as the state does, but the player reads the day from `1`. So `day({ gte: 6 })` holds from what the header calls Day 7.
 
 ## Effects
 
 | Content writes | Helper | Does |
 |---|---|---|
 | `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { periods: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
-| `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. Either field left out stays as it is. Ends no turn. |
+| `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
-They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, a plugin's [`effectsOf`](/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { periods: 2 } }`.
+They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { periods: 2 } }`.
 
-A count that is not a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar does not have: the period stays as it was.
+A count that isn't a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar doesn't have, and leaves the period as it was.
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'calendar/sleep' }` | `sleep()` | Goes to bed: passes time to the [`wake`](#calendaroptions) period of the next day, ending a turn as [`calendar/pass`](#effects) does. |
+| `{ type: 'custom', name: 'calendar/sleep' }` | `sleep()` | Goes to bed. It passes time to the [`wake`](#calendaroptions) period of the next day, ending a turn as [`calendar/pass`](#effects) does. |
 
-A calendar built with `sleep: false` has no `calendar/sleep` command at all: sending it is refused as any unknown command is. Otherwise `calendar/sleep` is refused, in this order, with:
+A calendar built with `sleep: false` has no `calendar/sleep` command at all. The engine treats it as any unknown command and refuses it with `There is no such thing to do.` ([`noSuchAction`](/reference/strings#refusals)). With a sleep command, `calendar/sleep` is refused, in this order, with:
 
-- `Finish this first.` (the engine's [`finishFirst`](/reference/strings#refusals)) while a scene is open;
-- `Too early.` ([`calendar/tooEarly`](#strings)) in a period not in `sleep.from`.
+- `Finish this first.` (the engine's [`finishFirst`](/reference/strings#refusals)) while a scene is open.
+- `Too early.` ([`calendar/tooEarly`](#strings)) in a period that isn't in `sleep.from`.
 
 Its [`effectsOf`](/reference/plugins#saying-what-a-command-does) is the pass it makes: `[{ kind: 'custom', name: 'calendar/pass', with: { periods: n } }]`. So a bed button carries a [price](#price-notes) (`until tomorrow morning`), and a lock on `calendar/pass` stops it.
 
@@ -263,28 +294,43 @@ A lock names it `calendar/sleep`, or `calendar/*`.
 
 ### Locks by effect
 
-A [lock with `effect`](/reference/locks#lock) stops every command that would pass time, whatever it is: an activity, a choice, bed.
+A [lock with `effect`](/reference/locks#lock) stops every command that would pass time, whether it's an activity, a choice or bed.
 
 ```ts
-locks: [{ when: { flag: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
+import { type Lock } from '@ifloom/engine'
+
+const locks: Lock[] = [{ when: { flag: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
 ```
 
-While `ill` is set, **Have a coffee** and **Go to bed** are both greyed out with `You feel too ill.` An activity whose only effect is `{ kind: 'turn' }` is not stopped by it, since it passes no time in its own list. In the same way, `effect: 'turn'` does not stop `calendar/pass`: the turns it ends are applied inside it, not listed.
+While `ill` is set, the jog button and the bed button are both greyed out with `You feel too ill.` The lock doesn't stop an activity whose only effect is `{ kind: 'turn' }`, since that activity passes no time in its own list. In the same way, `effect: 'turn'` doesn't stop `calendar/pass`, because the turns it ends are applied inside it rather than listed.
 
 ## Queries
 
-Answers for other plugins' code, through the context's [`query`](/reference/plugins#queries). Content cannot ask them.
+These answer other plugins' code, through the context's [`query`](/reference/plugins#queries). Content can't ask them.
 
 | Query | Answers |
 |---|---|
 | `calendar/now` | The clock: a copy of [`CalendarState`](#calendarstate), `{ day, period }`. |
 | `calendar/periods` | The period ids, in order. |
-| `calendar/bedtime` | `true` in a period [`sleep`](#commands) can be used from. `false` with `sleep: false`. |
+| `calendar/bedtime` | `true` in a period [`sleep`](#commands) can be used from. Always `false` with `sleep: false`. |
+
+For example, a market stall plugin that shuts at night, when the game has a calendar, can ask the time in its own condition:
 
 ```ts
-// A shop plugin that shuts at night, if the game has a calendar.
-const now = query<{ day: number; period: string }>('calendar/now')
-const open = now ? now.period !== 'night' && now.period !== 'late' : true
+import { definePlugin } from '@ifloom/engine'
+
+const stall = definePlugin<{ stock: number }>({
+  id: 'stall',
+  version: 1,
+  start: () => ({ stock: 5 }),
+  conditions: {
+    // { 'stall/open': true }: open unless it's night. In a game without a calendar, always open.
+    open: (_state, _args, { query }) => {
+      const now = query<{ day: number; period: string }>('calendar/now')
+      return now ? now.period !== 'night' && now.period !== 'late' : true
+    },
+  },
+})
 ```
 
 ## Values
@@ -292,12 +338,12 @@ const open = now ? now.period !== 'night' && now.period !== 'late' : true
 | Prose writes | Prints |
 |---|---|
 | <code v-pre>{{v:calendar/day}}</code> | The day as the player counts it, from `1`. |
-| <code v-pre>{{v:calendar/weekday}}</code> | The weekday's name: `Monday`. |
-| <code v-pre>{{v:calendar/period}}</code> | The period's word: `morning`, or its [`label`](#perioddef). |
+| <code v-pre>{{v:calendar/weekday}}</code> | The weekday's name, such as `Monday`. |
+| <code v-pre>{{v:calendar/period}}</code> | The period's word, such as `morning`, or its [`label`](#perioddef). |
 
 ```ts
-prose: { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' }
-// 'Day 1, a Monday morning.'
+const prose = { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' }
+// On a new game: 'Day 1, a Monday morning.'
 ```
 
 ## The turn hook, the guard, prices and the label
@@ -306,23 +352,25 @@ The calendar watches every command, not only its own, through the plugin fields 
 
 ### The turn hook
 
-Its [`turn` hook](/reference/plugins#hooks) moves the clock to the start of the next unit, as in [What a turn is](#what-a-turn-is). It runs on every turn, however the turn ended. When `calendar/pass` ended the turn, the pass then puts the clock exactly where it was sent.
+Its [`turn` hook](/reference/plugins#hooks) moves the clock to the start of the next unit, as described in [What a turn is](#what-a-turn-is). It runs on every turn, however the turn ended. When `calendar/pass` ended the turn, the pass then puts the clock exactly where it was sent.
 
 ### The guard
 
-While the curfew binds, a command whose effects would pass time over the end of the day gets a **soft** refusal: `That would run past dawn.` ([`calendar/pastDawn`](#strings)). The button can still be pressed and carries the line as its `warning`, and the command is refused with it all the same, so the UI can offer bed instead.
+While the curfew binds, a command whose effects would pass time over the end of the day gets a soft refusal, `That would run past dawn.` ([`calendar/pastDawn`](#strings)). The button can still be pressed and carries the line as its `warning`, but the command is refused with it all the same, so the UI can offer bed instead.
 
-The guard adds up every `calendar/pass` in the command's effects (from [`effectsOf`](/reference/actions#effectsof)) and warns when the current period plus that many reaches past the last period. At `night`, `pass(1)` is fine (night to late) and `pass(3)` is not. It never warns against [`sleep`](#commands): bed is the way past dawn.
+The guard adds up every `calendar/pass` in the command's effects (from [`effectsOf`](/reference/actions#effectsof)). It warns when the current period plus that many reaches past the last period. At `night`, `pass(1)` is fine (night to late) and `pass(3)` isn't. It never warns against [`sleep`](#commands), because bed is the way past dawn.
 
-To let the player stay up, give a curfew that stops holding:
+To let the player stay up, give a curfew that can stop holding:
 
 ```ts
+import { calendar } from '@ifloom/plugin-calendar'
+
 calendar({ curfew: { flag: 'nightOwl', is: false } })
 ```
 
 ### Price notes
 
-Every button whose effects pass time gets a note saying where the clock will be, in its [`price.notes`](/reference/view#price):
+Every button whose effects pass time gets a note in its [`price.notes`](/reference/view#price) saying where the clock will be:
 
 | Where the pass lands | Note |
 |---|---|
@@ -332,11 +380,11 @@ Every button whose effects pass time gets a note saying where the clock will be,
 
 ### The label
 
-`Day 1 · Monday morning` ([`calendar/label`](#strings)), which the view shows as [`view.when`](/reference/view#the-clock-and-the-player), ahead of any later plugin's label: with the [places](/plugins/places) plugin listed after it, `Day 1 · Monday morning · High Street`. The day is counted from `1`.
+The calendar's label is `Day 1 · Monday morning` ([`calendar/label`](#strings)). The view shows it as [`view.when`](/reference/view#the-clock-and-the-player), ahead of any later plugin's label. With the [places](/plugins/places) plugin listed after it, it reads `Day 1 · Monday morning · High Street`. The day is counted from `1`.
 
 ## Strings
 
-The plugin's lines, in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `calendar/...`.
+The plugin's lines go in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `calendar/...`.
 
 | Key | English |
 |---|---|
@@ -346,19 +394,19 @@ The plugin's lines, in the [strings table](/reference/strings#plugins-strings). 
 | `calendar/tomorrow` | `until tomorrow {period}` |
 | `calendar/later` | `until {weekday} {period}` |
 | `calendar/label` | `Day {day} · {weekday} {period}` |
-| `calendar/period.<id>` | The period's `label`, or its id: `calendar/period.morning` is `morning`. |
+| `calendar/period.<id>` | The period's `label`, or its id. `calendar/period.morning` is `morning`. |
 | `calendar/weekday.<n>` | `Monday` to `Sunday` for `0` to `6` in a seven-day week. In a week of any other length, `Day <n + 1> of the week`. |
 
-`{day}` is from `1`, `{weekday}` and `{period}` are the player's words.
+`{day}` counts from `1`, and `{weekday}` and `{period}` are the player's words.
 
 ```ts
-strings: {
+const strings = {
   'calendar/label': '{weekday}, {period}',
   'calendar/period.late': 'the small hours',
 }
 ```
 
-`calendar/sleep` also says the engine's own [`finishFirst`](/reference/strings#refusals) (`Finish this first.`), reworded with it.
+`calendar/sleep` also uses the engine's own [`finishFirst`](/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
 
 ## The view
 
@@ -385,8 +433,8 @@ type CalendarView = {
 | `weekdayIndex` | The day of the week, from `0`. |
 | `period` | The period's id. |
 | `periodLabel` | The period's word. |
-| `label` | The whole of it, as the header shows it: `Day 3 · Wednesday morning`. |
-| `curfew` | `true` in the last period, with no scene open, while the curfew binds: time for bed. |
+| `label` | All of it, as the header shows it: `Day 3 · Wednesday morning`. |
+| `curfew` | `true` in the last period, with no scene open, while the curfew binds. It's the UI's cue that it's time for bed. |
 
 On a new game with the defaults:
 
@@ -404,9 +452,9 @@ type CalendarState = { day: number; period: string }
 
 What the plugin keeps in a save, at `state.plugins.calendar`: the day, from `0`, and the period's id. A UI reads the view, not this.
 
-**A save from before the calendar.** The engine once kept a clock of its own, at `state.time`. A save made then (save version 4 or older) is carried forward by [`migrate`](/reference/saves#migrate): its `time` moves to `plugins.calendar` as `{ version: 1, state: { day, period } }`, with the same day and period, except the old last period, `'sleep'`, which becomes `'late'`. A save that already has a `calendar` entry keeps it. In a game without the calendar, the entry is simply never read.
+The engine once kept a clock of its own, at `state.time`. [`migrate`](/reference/saves#migrate) carries a save from then (save version 4 or older) forward. Its `time` moves to `plugins.calendar` as `{ version: 1, state: { day, period } }`, with the same day and period, except that the old last period, `'sleep'`, becomes `'late'`. A save that already has a `calendar` entry keeps it. In a game without the calendar, the entry is never read.
 
-**Setting it by hand.** The [debug plugin](/plugins/debug)'s `debug/time` command sets this clock, through [`calendar/set`](#effects); it is refused in a game with no calendar.
+To set the clock by hand while testing, use the [debug plugin](/plugins/debug)'s `debug/time` command. It goes through [`calendar/set`](#effects). It's refused in a game with no calendar.
 
 ## For code
 
@@ -425,14 +473,14 @@ const day: (range: Range) => Condition
 
 ## Checks
 
-When the game loads, the calendar reports problems with its options, pinned on `base`, with `where` as `options <option>`:
+When the game loads, the calendar reports problems with its options. Each is pinned on `base`, with `where` as `options <option>`:
 
-- no periods (`options periods`, `a calendar needs at least one period`);
-- two periods with the same id (`options periods`, `two periods share an id`);
-- a `start.period` the calendar does not have (`options start`, `no period called "…"`);
-- a `sleep.wake` or `sleep.from` period it does not have (`options sleep`, `no period called "…"`);
-- a weekend day outside the week (`options weekend`, `no day 9 in a week of 7`);
-- anything the `curfew` condition names that the game does not have (`options curfew`, `unknown kind "pet"`).
+- No periods (`options periods`, `a calendar needs at least one period`).
+- Two periods with the same id (`options periods`, `two periods share an id`).
+- A `start.period` the calendar doesn't have (`options start`, `no period called "…"`).
+- A `sleep.wake` or `sleep.from` period it doesn't have (`options sleep`, `no period called "…"`).
+- A weekend day outside the week (`options weekend`, `no day 9 in a week of 7`).
+- Anything the `curfew` condition names that the game doesn't have (`options curfew`, `unknown kind "pet"`).
 
 ```text
 base · options periods · two periods share an id
@@ -443,9 +491,9 @@ base · options weekend · no day 9 in a week of 7
 
 ## Gotchas
 
-- **List the calendar first.** Other plugins' `turn` hooks then see the new day. Listed after them, it moves the clock after they have run.
-- **The game's own turn rules see the old clock.** `rules.turn` and `onTurn` run before the calendar's `turn` hook. To act on the day just begun, do it in a plugin listed after the calendar, or read the clock in the next command.
-- **A pass inside a turn's end ends no turn.** In what `rules.turn` returns, or from another plugin's `turn` hook, `calendar/pass` still moves the clock, but the turns it would end do nothing, as any [`turn` effect](/reference/effects#turn) there does.
-- **`calendar/set` and `write` end no turn.** They put the clock somewhere; `state.turn` stays where it was.
-- **The weekday counts from day 0; a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs Thursday to Wednesday.
-- **A long pass shows its turn rules the start of each day it crosses.** Only the first `rules.turn` of a pass that ends several turns sees the clock where the pass began; each later one sees the clock at the start of the unit the turn before moved it to.
+- **List the calendar first.** Other plugins' `turn` hooks then see the new day. If you list it after them, it moves the clock after they've run.
+- **The game's own turn rules see the old clock.** `rules.turn` and `onTurn` run before the calendar's `turn` hook. To act on the day that's just begun, do it in a plugin listed after the calendar, or read the clock in the next command.
+- **A pass inside a turn's end ends no turn.** In what `rules.turn` returns, or from another plugin's `turn` hook, `calendar/pass` still moves the clock. The turns it would end do nothing, as any [`turn` effect](/reference/effects#turn) there does.
+- **`calendar/set` and `write` end no turn.** They put the clock somewhere, and `state.turn` stays where it was.
+- **The weekday counts from day 0, but a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs from Thursday to Wednesday.
+- **A long pass shows its turn rules the start of each day it crosses.** Only the first `rules.turn` of a pass that ends several turns sees the clock where the pass began. Each later one sees the clock at the start of the unit the turn before moved it to.

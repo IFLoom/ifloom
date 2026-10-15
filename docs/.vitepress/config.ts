@@ -1,17 +1,19 @@
 import { defineConfig } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 export default defineConfig({
   title: 'IFLoom',
-  description:
-    'An interactive fiction engine where storylines are woven through a living world.',
+  description: 'An interactive fiction engine for TypeScript: linear novels, management games and life sims on one core.',
+  base: '/ifloom/',
   cleanUrls: true,
+  vite: { plugins: [llmstxt()] },
   lastUpdated: true,
   themeConfig: {
     nav: [
       { text: 'Guide', link: '/guide/introduction' },
       { text: 'Reference', link: '/reference/game' },
       { text: 'Plugins', link: '/plugins/' },
-      { text: 'UI', link: '/ui/' },
+      { text: 'React UI', link: '/react/' },
       { text: 'CLI', link: '/cli/' },
     ],
     sidebar: {
@@ -21,11 +23,14 @@ export default defineConfig({
           items: [
             { text: 'Introduction', link: '/guide/introduction' },
             { text: 'Installation', link: '/guide/installation' },
-            { text: 'Your first game', link: '/guide/first-game' },
-            { text: 'Core concepts', link: '/guide/concepts' },
+            { text: 'Your first story', link: '/guide/first-story' },
             { text: 'Shapes of game', link: '/guide/shapes' },
+            { text: 'Using another framework', link: '/guide/frameworks' },
+            { text: 'A game with a world', link: '/guide/first-game' },
+            { text: 'Core concepts', link: '/guide/concepts' },
             { text: 'Shipping a game', link: '/guide/shipping' },
             { text: 'The showcase', link: '/guide/showcase' },
+            { text: 'Using IFLoom with an AI agent', link: '/guide/agents' },
             { text: 'API status', link: '/guide/status' },
           ],
         },
@@ -50,32 +55,32 @@ export default defineConfig({
             { text: 'Effects', link: '/reference/effects' },
             { text: 'Conditions', link: '/reference/conditions' },
             { text: 'Custom functions', link: '/reference/custom' },
-            { text: 'Actions', link: '/reference/actions' },
+            { text: 'Activities and buttons', link: '/reference/actions' },
             { text: 'Locks', link: '/reference/locks' },
             { text: 'Rules and hooks', link: '/reference/rules' },
-            { text: 'Plugins', link: '/reference/plugins' },
+            { text: 'Writing a plugin', link: '/reference/plugins' },
           ],
         },
         {
           text: 'Running a game',
           items: [
             { text: 'The runner', link: '/reference/runner' },
+            { text: 'The view', link: '/reference/view' },
             { text: 'Saves', link: '/reference/saves' },
+            { text: 'Packs and loading', link: '/reference/loader' },
             { text: 'Mods', link: '/reference/mods' },
           ],
         },
         {
           text: 'Systems',
           items: [
-            { text: 'Storylines', link: '/reference/world' },
+            { text: 'Storylines', link: '/reference/storylines' },
             { text: 'Collections', link: '/reference/collections' },
             { text: 'Notices', link: '/reference/notices' },
             { text: 'Triggers', link: '/reference/triggers' },
             { text: 'Inputs', link: '/reference/inputs' },
             { text: 'Progress and limits', link: '/reference/progress' },
             { text: 'Randomness', link: '/reference/random' },
-            { text: 'The view', link: '/reference/view' },
-            { text: 'Loading and mods', link: '/reference/loader' },
           ],
         },
       ],
@@ -97,13 +102,13 @@ export default defineConfig({
           ],
         },
       ],
-      '/ui/': [
+      '/react/': [
         {
-          text: 'The base UI',
+          text: 'The React UI',
           items: [
-            { text: 'Overview', link: '/ui/' },
-            { text: 'Components', link: '/ui/components' },
-            { text: 'Extending', link: '/ui/extending' },
+            { text: 'Overview', link: '/react/' },
+            { text: 'Components', link: '/react/components' },
+            { text: 'Extending', link: '/react/extending' },
           ],
         },
       ],
@@ -112,9 +117,12 @@ export default defineConfig({
           text: 'The CLI',
           items: [
             { text: 'Overview', link: '/cli/' },
+            { text: 'ifloom new', link: '/cli/#ifloom-new' },
             { text: 'ifloom dev', link: '/cli/#ifloom-dev' },
             { text: 'ifloom build', link: '/cli/#ifloom-build' },
             { text: 'ifloom check', link: '/cli/#ifloom-check' },
+            { text: 'ifloom playtest', link: '/cli/#ifloom-playtest' },
+            { text: 'ifloom snapshot', link: '/cli/#ifloom-snapshot' },
             { text: 'The Vite preset', link: '/cli/#the-vite-preset' },
             { text: 'For scripts', link: '/cli/#for-scripts' },
           ],
@@ -122,5 +130,7 @@ export default defineConfig({
       ],
     },
     search: { provider: 'local' },
+    socialLinks: [{ icon: 'github', link: 'https://github.com/IFLoom/ifloom' }],
+    editLink: { pattern: 'https://github.com/IFLoom/ifloom/edit/main/docs/:path' },
   },
 })

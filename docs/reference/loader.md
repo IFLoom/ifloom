@@ -1,12 +1,12 @@
-# Loading and mods
+# Packs and loading
 
-A game's content can arrive as several **packs** — the game's own, then any mods — merged in order into one game. The game's content is just the first pack; nothing about it is special. The loader also checks the result and reports every broken reference with the pack that introduced it.
+`loadGame` takes your content as a list of packs, merges them in order into one game, and checks the result. Every broken reference comes back as a problem that names the pack it came from.
 
 ```ts
 import { loadGame, describeProblem, SCHEMA, type Pack, type Patch, type Problem, type Loaded } from '@ifloom/engine'
 ```
 
-Packs can be bundled into the game when it is built, or come from mod files the player adds to a built game, which the game loads over its own pack at start-up. See [Mods](/reference/mods) for the file, the store that keeps it, and how a game loads it.
+Your game's own content is simply the first pack. Any later pack, such as a mod, is laid over it by id. This page covers the merge and the checks. [Mods](/reference/mods) covers the other half: the packs a player installs into a built game, the file they come in, the store that keeps them and how the game loads them at start-up.
 
 ## Pack
 
@@ -35,22 +35,24 @@ type Pack = {
 
 | Field | Merged how |
 |---|---|
-| `id` | Names the pack in problems: `'core'`, `'mod:longer-market-days'`. |
-| `schema` | Must equal `SCHEMA`, or the whole pack is skipped with a problem. |
-| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs` | By `id`. A later pack's entry **replaces** an earlier one with the same id, whole — fields are not merged. Order is first appearance. `kinds`, `collections`, `triggers` and `inputs` given on `loadGame`'s `base` come before every pack's. |
-| `entities` | By kind and id, `'staff:ana'`: two kinds may each have an entity with the same id. A later pack's entity **replaces** an earlier one with the same kind and id, whole. Order is first appearance, and the base's come first. See [Entities](/reference/entities). |
-| `strings` | By key; later wins, over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/reference/strings#overriding). |
-| `prose` | By key; later wins. |
-| `variants` | By variants name; later packs **append** members. |
-| `custom` | [Custom functions](/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`), by name: a later pack's entry **replaces** an earlier one's of the same kind and name; the rest are kept. |
-| `patches` | Applied right away, in order — see [Patches](#patches). |
-| `data` | Content for the game's [plugins](/reference/plugins#content-and-checks), by plugin id and then list name: `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do: a later pack's entry **replaces** an earlier one with the same id, whole. The result is at `game.data.quests.quests`. A game's locations and people are content of this kind: `data.places.locations` for the [places plugin](/plugins/places#in-a-pack), `data.cast.characters` for the [cast](/plugins/cast#in-a-pack). |
+| `id` | Names the pack in problems, such as `'town'` or `'mod:sunday-market'`. |
+| `schema` | Must equal [`SCHEMA`](#schema), or the whole pack is skipped with a problem. |
+| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers` and `inputs` on `loadGame`'s `base` come before every pack's. |
+| `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/reference/entities). |
+| `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/reference/strings#overriding). |
+| `prose` | By key. A later pack wins. |
+| `variants` | By variants name. A later pack appends members to the list. |
+| `custom` | [Custom functions](/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`) and then by name. A later pack's function replaces an earlier one's of the same kind and name, and the rest are kept. |
+| `patches` | Applied straight away, in order. See [Patches](#patches). |
+| `data` | Content for the game's [plugins](/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/plugins/places#in-a-pack) and `data.cast.characters` for the [cast](/plugins/cast#in-a-pack). |
 
 ### How packs merge
 
-Everything a pack declares is keyed — by id, by prose key, by variants name, by custom function name — and a later pack wins on a key it repeats. So a mod that wants to change one custom condition ships just that one:
+Everything a pack declares is keyed, whether by id, prose key, variants name or custom function name, and a later pack wins on any key it repeats. So a mod that changes one custom condition ships just that one:
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
 const longerMarket: Pack = {
   id: 'mod:longer-market-days',
   schema: SCHEMA,
@@ -58,7 +60,7 @@ const longerMarket: Pack = {
 }
 ```
 
-The game's other custom conditions, and its effects, values and panels, are untouched.
+The game's other custom conditions, and its effects, values and panels, are left alone.
 
 ## SCHEMA
 
@@ -66,13 +68,7 @@ The game's other custom conditions, and its effects, values and panels, are unto
 const SCHEMA = 4
 ```
 
-The content format this engine reads. A pack written for any other number is refused rather than half-loaded: [`loadGame`](#loadgame) skips it with the problem `written for schema 3, this engine reads 4`, and a [mod](/reference/mods) is refused when it is added.
-
-Schema 2 is the content without the engine's clock: no `hours` on a location, no `days` or `periods` in a schedule block, no `steps` in an activity's cost, no `time` effect or `{ type: 'sleep' }` command, and no `period`, `weekday` or `day` condition. Their places are taken by `locked`, a schedule block's `when`, and the [calendar plugin](/plugins/calendar)'s conditions, effects and commands. A pack or mod written for schema 1 has to be rewritten that way.
-
-Schema 3 is the content without the engine's places: no `locations` in a pack, no `startLocation`, no `{ at }` condition, no `at` on an activity, no `{ type: 'travel' }` command and no `move` effect. Their places are taken by the [places plugin](/plugins/places): locations go in `data.places.locations`, the start in `places({ start })`, and content writes its [`places/at`](/plugins/places#conditions) condition, [`onlyAt`](/plugins/places#helpers) requirement, [`places/go`](/plugins/places#commands) command and [`places/move`](/plugins/places#effects) effect. A pack or mod written for schema 2 is refused; rewrite it that way and raise its `schema` to 3.
-
-Schema 4 is the content without the engine's characters: no `characters` in a pack, no `{ type: 'talk' }` or `{ type: 'call' }` command, no `{ kind: 'storyline', standing, rapport }` effect, no `{ characterHere }` or `{ characterAt }` condition, and no `standing` or `rapport` in a `{ storyline }` condition, which now asks only whether the storyline is [open](/reference/conditions#storyline). Their places are taken by the [cast plugin](/plugins/cast): characters go in `data.cast.characters`, with `talk` and `call` on each, content writes its [`cast/talk`](/plugins/cast#commands) and `cast/call` commands and [`cast/here`](/plugins/cast#conditions) and `cast/at` conditions, and a relationship is a [stat](/reference/stats#entity-stats) declared `of: 'character'`, changed with `{ kind: 'stat', key: 'friendship', by: 5, of: person('rosa') }`. A pack or mod written for schema 3 is refused; rewrite it that way and raise its `schema` to 4.
+The content format this engine reads. A pack written for any other number is refused rather than half-loaded. [`loadGame`](#loadgame) skips it with the problem `written for schema 3, this engine reads 4`, and a [mod](/reference/mods) with the wrong number is refused when the player adds it. Write `schema: SCHEMA` in your own packs so they always match.
 
 ## loadGame
 
@@ -90,33 +86,43 @@ type Loaded = {
 }
 ```
 
-Merges `packs` in order, lays the result over `base` (the game's `id`, `title`, `introScene`, `plugins`, `rules` and so on), builds `game.prose` from the packs' prose and variants, and checks it. The game it returns is ready to run: data scenes render through the engine's [default runtime](/reference/scenes#defaultruntime) with no further wiring.
+Merges `packs` in order, lays the result over `base`, builds `game.prose` from the packs' prose and variants, and runs [the checks](#the-checks). `base` carries everything that isn't content: the game's `id`, `title`, `introScene`, `plugins`, `rules`, `actions` and so on. The game that comes back is ready to run. Data scenes render through the engine's [default runtime](/reference/scenes#defaultruntime) with no further wiring.
 
-`base` needs only `id` and `title`. Leave out `introScene` for a game that opens on its idle screen (with the [places plugin](/plugins/places), the room it starts in); a linear story passes `{ id, title, introScene }`. See [Shapes of game](/guide/shapes).
+`base` needs only `id` and `title`. Leave out `introScene` for a game that opens on its idle screen (with the [places plugin](/plugins/places), the room it starts in). A linear story passes `{ id, title, introScene }`. See [Shapes of game](/guide/shapes).
+
+This is how the showcase builds Small Town, trimmed to the parts that matter here:
 
 ```ts
+import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
+import { custom } from './content/custom.ts'
+import { town } from './content/town.ts'
 
-const { game, problems } = loadGame(
-  [
-    { id: 'core', schema: SCHEMA, storylines, activities, items, scenes, prose: WORDS, variants: VARIANTS, data: { places: { locations }, cast: { characters } } },
-    { id: 'mod:sunday-market', schema: SCHEMA, data: { cast: { characters: [marketTrader] } }, prose: { 'market.stall': 'Sunday, and the stalls run the length of the square.' } },
-  ],
-  { id: 'small-town', title: 'Small Town', introScene: 'intro.wake', plugins: [calendar(), places({ start: 'house' }), cast()], rules },
-)
-for (const problem of problems) console.warn(describeProblem(problem))
+export function smallTown({ mods = [] as Pack[] } = {}) {
+  const { game, problems } = loadGame([town, ...mods], {
+    id: 'small-town',
+    title: 'Small Town',
+    introScene: 'intro',
+    custom,
+    plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), cast()],
+    actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
+  })
+  return { game, problems: problems.map(describeProblem) }
+}
 ```
 
+The real file is `examples/showcase/src/game.ts`. It also adds the phone, quests, wardrobe and debug plugins, a start phase, strings and rules. Its `main.tsx` logs the problems as warnings and starts the game anyway.
+
 **Gotchas:**
-- `game.scenes` holds `DataScene`s exactly as declared, beside any hand-written `Scene`s. The engine bakes a data scene into a `Scene` the first time [`sceneById`](/reference/game#scenebyid) asks for it; you do not wrap them yourself.
-- `game.prose` is a [`proseStore`](/reference/prose#prosestore-1) over the merged prose and variants, replacing any `prose` on `base`. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
-- `game.packs` lists the packs' ids in order. [Saves](/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed or turned off names that mod. A [mod file](/reference/mods)'s pack is always `mod:<id>`.
-- Custom functions can sit on `base` or in packs. The base game's come first, and each pack lays its own over them by name, kind by kind.
-- [Plugins](/reference/plugins) go on `base`, as `plugins`, and only there: a pack cannot add one. Plugin content can sit in `base.data` and in packs' `data`; the base's comes first.
-- `kinds`, `entities`, `collections`, `triggers` and `inputs` can sit on `base` as well as in packs. The base's come first, reported as from `base`, and each pack lays its own over them by id (entities by kind and id).
-- `loadGame` never throws on bad content. It returns problems; deciding whether to refuse to start is up to you.
+- `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.
+- `game.scenes` holds `DataScene`s exactly as declared, beside any hand-written `Scene`s. The engine turns a data scene into a `Scene` the first time [`sceneById`](/reference/game#scenebyid) asks for it, so you don't wrap them yourself.
+- `game.prose` is a [`proseStore`](/reference/prose#prosestore-1) over the merged prose and variants. It replaces any `prose` on `base`. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
+- `game.packs` lists the packs' ids in order. [Saves](/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed names that mod. A [mod file](/reference/mods)'s pack is always `mod:<id>`.
+- Custom functions can sit on `base` or in packs. The base's come first, and each pack lays its own over them by name, kind by kind.
+- [Plugins](/reference/plugins) go on `base`, as `plugins`, and only there. A pack can't add one. Plugin content can sit in `base.data` and in packs' `data`, and the base's comes first.
+- `kinds`, `entities`, `collections`, `triggers` and `inputs` can sit on `base` as well as in packs. The base's come first, are reported as from `base`, and each pack lays its own over them by id (entities by kind and id). A plugin's own `kinds` come before the base's, so the game can redeclare them, and the entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
 
 ## Patches
 
@@ -127,86 +133,136 @@ type Patch =
   | { scene: string; replaceChoice: Choice }
 ```
 
-A small change to a scene an earlier pack declared, without replacing the whole scene: add a choice (at the end, or before the choice with id `before`), drop one by id, or replace the one with the same id.
+A patch makes a small change to a scene an earlier pack declared, so you don't have to replace the whole scene. You can add a choice (at the end, or before the choice whose id is `before`), drop one by id, or replace the one with the same id.
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
 const mod: Pack = {
-  id: 'mod:sunday-market',
+  id: 'mod:compliments',
   schema: SCHEMA,
-  prose: { 'market.stall#haggle': 'Try to haggle' },
+  prose: { 'ava.hi#coffee': 'Ask what she recommends' },
   patches: [
-    { scene: 'market.stall', addChoice: { id: 'haggle', effects: [{ kind: 'stat', key: 'coins', by: 1 }] }, before: 'leave' },
+    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ kind: 'stat', key: 'energy', by: 5 }] }, before: 'bye' },
   ],
 }
 ```
 
 **Gotchas:**
-- Only a [`DataScene`](/reference/scenes#datascene) can be patched. A hand-written `Scene` is a function and gives a problem.
-- A patch applies to the scene as it stands when its pack is read. A later pack that redeclares that scene replaces it, patch and all.
-- `before` naming a choice that is not there adds at the end, silently. `replaceChoice` with no matching id is a problem.
+- Only a [`DataScene`](/reference/scenes#datascene) can be patched. Patching a hand-written `Scene` is a problem.
+- A patch applies to the scene as it stands when its pack is read. A later pack that redeclares the scene replaces it, patch and all.
+- A `before` that names a choice that isn't there adds the choice at the end, without a problem. A `replaceChoice` with no matching id is a problem.
 
 ## The checks
 
-After merging, every `DataScene` is checked. A problem is recorded, against the pack that last declared or patched the scene, with `where` as `scene <id>`, when it:
+This is the complete list of what `loadGame` checks. Each problem is reported against the pack that last declared (or patched) the content, with a `where` that says what it is in. Conditions, effects and commands get the same checks wherever they appear, so those come first.
 
-- names prose that is not written — its `text` blocks, each choice's label key (explicit or the default `scene#choice`), and every `labels` key;
-- draws from a set of variants with no members — `variants` blocks and the variants their `art` names;
-- names a custom effect the game does not declare (`no custom effect named "…"`), as `{ custom }` or as a [short plugin call](/reference/custom#plugincall);
-- has a choice effect with any other problem an effect list can have, as for a trigger: an undeclared collection (`unknown collection "…"`), a `notify` or `collect` whose `text` has no prose, an unknown kind or a stat named on the wrong owner, and whatever a plugin's [`argProblems`](/reference/plugins#checking-calls) finds in a call to its effect;
-- has a `scene` effect going to a scene that does not exist;
-- has a condition — on a block, a `variants` block's `gate`, a choice's `when`, `blocked` or `labels` — naming an unknown storyline, item, stat (`stat` / `tier`), collection (`collection`), kind (`unknown kind "…"`, from a `count`, an `entity` or an `of`; a `count`'s `where` is looked inside) or scene (`seen` / `since` / `scene`), a `chose` key whose scene does not exist (`gated on a choice in unknown scene "…"`) or whose data scene has no such choice (`gated on unknown choice "…"`), or a custom condition the game does not declare (`no custom condition named "…"`), as `{ custom }` or in short.
+### In a condition
 
-Activities, triggers, inputs and the game's own actions are data too, and are checked the same way, against the pack that last declared them:
+Every condition the loader looks at is walked, including inside `all`, `any`, `not` and a `count`'s `where`. It reports:
 
-| Where | Checked |
+| Problem | When the condition names |
 |---|---|
-| `activity <id>` | Each requirement's `when` in `requires`; every custom effect in `effects` has to be declared (`no custom effect named "…"`); and every other problem in its `effects`, as for a trigger. |
-| `trigger <id>` | Its `when`, and its `effects`: a [kind](/reference/entities) the game does not declare (`unknown kind "…"`) — a `create`'s or an `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `flag` or `remove` effect (`'$'` names none) — an `each`'s `where` and `effects`, checked as any other condition and effects, a `collect` or `discard` into a collection the game does not declare (`unknown collection "…"`), a `notify` or `collect` whose `text` has no prose (`no prose for "…"`), a `scene` effect going to a scene that does not exist (`goes to unknown scene "…"`), and a custom effect nobody declares (`no custom effect named "…"`). |
-| `stat <id>` | `belongs to unknown kind "…"`: its `of` names a kind the game does not declare. |
-| `entity <kind>:<id>` | `unknown kind "…"`: its `of` names a kind the game does not declare. `no <kind> stat named "…"`: its `stats` sets a stat that is not declared `of` its kind (the player's included). `an entity id must not be a whole number`: see [Ids](/reference/entities#ids). |
-| `input <id>` | Its `when`; `a choice with no options`; `min is above max`. |
-| `action <id>` | The game's own [`actions`](/reference/game#game), offered everywhere: each one's `when` and `blocked`, and its `command`: a scene that does not exist (`opens unknown scene "…"`), an unknown activity or item, a `{ type: 'custom' }` command no plugin has (`no plugin command named "…"`), and whatever the plugin's `argProblems` finds in it. They come with `base`, so the pack is reported as `base`. |
+| `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineFlag` or `counter`. |
+| `unknown item "…"` | An item nobody declares. |
+| `unknown stat "…"` | A stat nobody declares, in `stat` or `tier`. |
+| `unknown collection "…"` | A collection nobody declares. |
+| `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat` or `flag`. `'$'` names no kind and isn't checked. |
+| `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
+| `gated on a choice in unknown scene "…"` | A `chose` key whose scene doesn't exist. |
+| `gated on unknown choice "…"` | A `chose` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance, so they aren't checked. |
+| `no custom condition named "…"` | A custom condition that neither the game nor any plugin declares, as `{ custom }` or a [short plugin call](/reference/custom#plugincall). |
+| A stat owner problem | See [Stat owners](#stat-owners). |
+| Whatever the plugin says | The plugin's [`argProblems`](/reference/plugins#checking-calls), for a call to a plugin's condition. |
 
-A condition there is held to the same rules as in a scene: every storyline, item, stat, collection, kind, scene and choice it names has to exist, and every custom condition has to be declared, by the game or by one of its plugins. A custom effect counts as declared when the game or a plugin has it.
+### In an effect list
 
-**Absent partners.** A condition or effect named after a plugin the game was not built with is not reported when one of the game's plugins lists that plugin in its [`cooperates`](/reference/plugins#cooperates): it is simply not there, so the condition is false and the effect does nothing. [`validatePack`](/reference/game#validatepack) lets the long-form `{ kind: 'custom' }` effect through on the same terms. A plugin nobody cooperates with is still reported.
+Effect lists are checked on triggers, data scene choices and activities. The loader reports:
 
-### Plugins and their content
-
-| Where | Problem |
+| Problem | When |
 |---|---|
-| `plugin <id>` | `a plugin id is letters, digits and "-" only`; `two plugins share this id`. Reported against `base`. |
-| `data <plugin>` | `the game has no plugin named "<plugin>"`: a pack carries content for a plugin the game was not built with. That content is skipped. |
-| `<list> <id>` | Whatever the plugin's own [`check`](/reference/plugins#content-and-checks) finds in its content, such as `quests bread · stage buy: unknown item "loaf"`. Reported against the pack that entry came from. |
+| `no custom effect named "…"` | A `{ custom }` or short-form effect that neither the game nor any plugin declares. |
+| Whatever the plugin says | The plugin's `argProblems`, for a call to a plugin's effect. |
+| `unknown kind "…"` | A `create`'s or `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `flag` or `remove` effect, names a kind nobody declares. |
+| A stat owner problem | A `stat` or `setStat` effect names a declared stat on the wrong owner. See [Stat owners](#stat-owners). |
+| `unknown collection "…"` | A `collect` or `discard` names a collection nobody declares. |
+| `no prose for "…"` | A `notify`'s `text`, or a `collect` entry's `text`, names prose that isn't written. |
+| `goes to unknown scene "…"` | A `scene` effect goes to a scene that doesn't exist. |
 
-A plugin's `check` is lent the loader's own checks as [`CheckTools`](/reference/plugins#checktools) — `conditionProblems`, `blockProblems` and `commandProblems` — so its problems read like the loader's.
+Inside an `each`, its `where` is checked as a condition and its `effects` as an effect list, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
 
-**Calls a plugin checks.** A plugin with [`argProblems`](/reference/plugins#checking-calls) is asked about what content passes to its conditions, effects and commands, and its answers are reported as the call's own problems, where the call is: every condition checked above (and in a plugin's `check`), every effect list it checks (data scene choices, activities, triggers, and inside an `each`), the game's own `actions`' commands, and every command a plugin's `check` passes to `commandProblems`.
+The loader doesn't check whether a `stat` or `setStat` effect's stat is declared, an `item` effect's item, a `storylineFlag` or `closeStoryline` effect's storyline, or the name of a long-form `{ kind: 'custom' }` effect. [`validatePack`](#what-validatepack-adds) checks those in item uses, activities, and the choices of scenes it renders against probe states.
 
-```ts
-// town · activity ask · nobody sells "fish"
-```
+### In a command
 
-```ts
-// mod:night-market · locations yard · no prose for "yard/stalls"
-// mod:night-market · characters trader · unknown storyline "trader"   (the cast's check)
-// mod:night-market · activity browse · unknown stat "stamina"
-// mod:night-market · trigger parcel · unknown collection "drawer"
-// mod:night-market · input stall · a choice with no options
-// mod:new-menu · entity dish:7 · an entity id must not be a whole number
-// mod:new-menu · entity dish:pie · no dish stat named "coins"
-```
+Commands are checked on the game's own `actions`, and wherever a plugin's `check` passes one to `commandProblems`. Only four command types are looked at:
 
-Kinds and stat owners are checked wherever content names them — triggers, data scene choices, activities, and conditions everywhere — and inside an `each`'s `where` and `effects`, where `'$'` stands for one of its kind and the problem starts `in each <kind>: `:
+| Command | Problem |
+|---|---|
+| `scene` | `opens unknown scene "…"` |
+| `activity` | `unknown activity "…"` |
+| `use` | `unknown item "…"` |
+| `custom` | `no plugin command named "…"`, then whatever the plugin's `argProblems` finds in it. |
+
+### Stat owners
+
+A stat is either the player's or belongs to a [kind](/reference/entities). Wherever a stat is named with or without an `of`, in conditions and in `stat` and `setStat` effects, the loader checks it's named on the right owner:
 
 | Problem | Means |
 |---|---|
-| `unknown kind "…"` | A `create`, `each`, `remove`, `count`, `entity` or `of` names a kind the game does not declare. |
 | `stat "…" belongs to <kind>: say whose with "of"` | A kind's stat, named with no `of`, as if it were the player's. |
 | `stat "…" is the player's, not <ref>'s` | The player's stat, named with an `of`. |
 | `stat "…" belongs to <kind>, not <other>` | A stat named on an entity of another kind. |
 
-Not checked here: hand-written `Scene`s, variants members' own prose, `panelData` names, and <code v-pre>{{v:…}}</code> values. For ids the rest of the game points at — item uses, the game's own actions — use [`validatePack`](/reference/game#validatepack); a character's home, schedule and talk scenes are checked by the [cast](/plugins/cast#checks). A place's exits, body and actions are checked by the [places plugin](/plugins/places#checks), and a place a condition, effect or command names by its `argProblems`, as `unknown location "…"`.
+### Where each check runs
+
+| `where` | Checked |
+|---|---|
+| `pack` | `written for schema …, this engine reads …`: the pack's `schema` isn't [`SCHEMA`](#schema). The whole pack is skipped. |
+| `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
+| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. |
+| `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. |
+| `trigger <id>` | Its `when`, and its `effects` as an effect list. |
+| `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
+| `stat <id>` | `belongs to unknown kind "…"`: its `of` names a kind nobody declares. |
+| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, and `an entity id must not be a whole number` (see [Ids](/reference/entities#ids)). |
+| `action <id>` | The game's own [`actions`](/reference/game#game): each one's `when` and `blocked` conditions, and its `command`. They come with `base`, so the pack is reported as `base`. |
+| `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. Reported against `base`. |
+| `data <plugin>` | `the game has no plugin named "<plugin>"`: a pack carries content for a plugin the game wasn't built with. That content is skipped. |
+| `<list> <id>` | Whatever the plugin's own [`check`](/reference/plugins#content-and-checks) finds in its content, reported against the pack the entry came from. |
+
+A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems` and `commandProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body and actions, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
+
+**Absent partners.** A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/reference/plugins#cooperates). In play it simply isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
+
+**Not checked by the loader:** hand-written `Scene`s, the prose of variants members, `panelData` names, <code v-pre>{{v:…}}</code> values, item uses, an activity's `cost`, a stat's `max` value, and commands of any type other than the four above. The game's own actions are checked, as the `action <id>` row says.
+
+Some problems as `describeProblem` prints them:
+
+```text
+town · scene ava.hi · gated on unknown scene "ava.hello"
+mod:night-market · activity browse · unknown stat "stamina"
+mod:night-market · trigger parcel · unknown collection "drawer"
+mod:night-market · input stall · a choice with no options
+mod:night-market · locations yard · no prose for "place.yard"
+mod:new-menu · entity dish:7 · an entity id must not be a whole number
+mod:new-menu · entity dish:pie · no dish stat named "coins"
+```
+
+### What validatePack adds
+
+[`validatePack`](/reference/game#validatepack) runs on the finished `Game` rather than the packs, so its problems don't name a pack. Run it from a test alongside the loader. It checks what the loader doesn't:
+
+- duplicate ids among items, scenes, storylines and activities, which only a game built without `loadGame` can have;
+- that `introScene` exists, when the game gives one;
+- the effects of every item's `use` and every activity: the scene, item and storyline each one names, that a `stat` or `setStat` effect's stat is declared and named on the right owner, collections and `text` prose, the plain effects inside an `each`, and that a long-form `{ kind: 'custom' }` effect names a plugin effect;
+- that every stat an activity's `cost` spends is declared;
+- the commands of the game's own `actions`: a `scene` or `use` target, and that a `custom` command names a plugin command;
+- that a stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares.
+
+With probe states, it also renders every scene, hand-written ones included, and reports a render that throws, duplicate choice ids and the effects of the choices it rendered.
+
+Its treatment of [absent partners](#the-checks) differs from the loader's in one place. It excuses a long-form custom effect of a cooperating plugin the game lacks, but not a custom command, so a game action whose command belongs to a missing partner is reported.
 
 ## Problem and describeProblem
 
@@ -216,7 +272,7 @@ type Problem = { pack: string; where: string; what: string }
 function describeProblem(problem: Problem): string
 ```
 
-`describeProblem` joins the three with ` · `, so a mod author reads one line, not a stack trace:
+`describeProblem` joins the three parts with ` · `, so a mod author reads one line rather than a stack trace:
 
 ```text
 mod:sunday-market · scene market.stall · goes to unknown scene "market.closing"

@@ -1,10 +1,6 @@
 # Stats
 
-A stat is a number the game keeps for the player: charisma, coins, energy, a
-reputation — whatever your game is about. **The engine has no stats of its
-own** — not even money or energy. You declare every stat on the
-[game](/reference/game#game), and a game with no stats declares none: no stat
-panel, no stat conditions, no prices, nothing breaks.
+A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 
 ```ts
 import type { StatDef } from '@ifloom/engine'
@@ -18,9 +14,9 @@ const stats: StatDef[] = [
 const game = { /* … */, stats }
 ```
 
-A player's stat lives in `state.stats[id]`. A [`stat` effect](/reference/effects#stat) moves it, a [`setStat` effect](/reference/effects#setstat) puts it at a value, a [`{ stat }` condition](/reference/conditions#stat) tests it, and an activity [cost](/reference/actions#activitycost) spends it.
+A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/reference/effects#stat), which adds to it, or a [`setStat` effect](/reference/effects#setstat), which sets it. A [`{ stat }` condition](/reference/conditions#stat) tests it, and an activity's [cost](/reference/actions#activitycost) spends it.
 
-A stat declared with `of` belongs to a [kind of entity](/reference/entities) instead: every member of staff has a `morale`, every dish a `price`. Its value lives on each entity, at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it with an `of` naming the entity. See [Entity stats](#entity-stats).
+A stat declared with `of` is kept on each [entity](/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. The value lives at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
 
 ## StatDef
 
@@ -43,29 +39,31 @@ type StatDef = {
 
 | Field | Default | What it does |
 |---|---|---|
-| `id` | — | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', key: id }`. |
-| `of` | the player's | The [kind](/reference/entities#kinddef) of entity it belongs to: `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
-| `label` | — | What the player reads, in the view's stat list and in the default `lacking` line. |
+| `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', key: id }`. |
+| `of` | the player's | The [kind](/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
+| `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
 | `min` | `0` | The lowest any effect or cost can take it. |
-| `max` | `100` | The highest any effect or payment can take it. A number, or `{ value: name }` — a [custom value](/reference/custom#values) from `game.custom.values`, worked out against the state each time, for a ceiling that moves. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
-| `visible` | always | A [condition](/reference/conditions): the stat appears in [`view().stats`](/reference/view) only while it holds. Use it for a stat the player has not discovered yet. |
-| `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way — a purse in the corner, an energy gauge. It is still in [`view().statsById`](/reference/view#statview). |
-| `spendable` | `false` | The stat is spent on things. A scene choice's [price](/reference/actions#price) counts its negative `stat` effects on spendable stats only. |
+| `max` | `100` | The highest any effect or payment can take it. Either a number, or `{ value: name }` for a ceiling that moves. The name is a [custom value](/reference/custom#values) from `game.custom.values`, worked out against the state each time. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `visible` | always | A [condition](/reference/conditions). The stat appears in [`view().stats`](/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
+| `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/reference/view#statview). |
+| `spendable` | `false` | The stat is spent on things. A scene choice's [price](/reference/view#price) only counts its negative `stat` effects on spendable stats. |
 | `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. See [`lackingLine`](#lackingline). |
-| `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/reference/conditions#tier). The numbers are never shown. |
-| `format` | the number | How the value is written, with `{n}` for the number: `'{n}c'`, `'£{n}'`, `'{n} energy'`. Used for the view's `text` and for prices. |
+| `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/reference/conditions#tier). The player never sees the numbers. |
+| `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
 
 **Gotchas.**
-- A stat must be declared to be used. [`validatePack`](/reference/game#validatepack) reports a `stat` or `setStat` effect or an activity cost naming an undeclared stat, and a `max: { value }` naming a custom value the game does not declare. The [loader](/reference/loader) reports a `{ stat }` or `{ tier }` condition that names one.
-- Keep money in whole minor units — pence, cents — and let `format` place the decimal point in your UI. Draws and saves stay exact, and the same save always gives the same result.
-- Declaration order is display order: `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
-- `spendable` is about what is shown, not what is allowed. Any stat can be in an activity's `cost`, and its price lists it either way.
-- The id is unique across the whole game, the player's stats and every kind's together: one `skill` cannot be both the player's and the staff's.
+- You have to declare a stat before you use it. [`validatePack`](/reference/game#validatepack) and the [loader](/reference/loader#the-checks) report content that names an undeclared stat, or names a stat on the wrong owner.
+- Keep money in whole minor units, such as pence or cents, and let your UI place the decimal point. Sums and saves stay exact that way.
+- Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
+- `spendable` changes what's shown, not what's allowed. Any stat can be in an activity's `cost`, and the activity's price lists it either way.
+- An id is unique across the whole game, counting the player's stats and every kind's together. One `skill` can't be both the player's and the staff's.
 
 ### Entity stats
 
 ```ts
+import type { StatDef } from '@ifloom/engine'
+
 const stats: StatDef[] = [
   { id: 'coins', label: 'Coins', start: 120, max: 99999, format: '£{n}', spendable: true },
   { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
@@ -74,22 +72,22 @@ const stats: StatDef[] = [
 ]
 ```
 
-A stat with `of` is kept on every [entity](/reference/entities) of that kind, starting at `start` unless the entity's declaration or its [`create`](/reference/effects#create) effect gives another. It is not one of the player's: [`startingStats`](#startingstats) leaves it out, and so do [`view().stats`](/reference/view#the-player-s-numbers-and-things) and `view().statsById`. Each entity's stats are in [`view().entities`](/reference/view#entities) instead.
+A stat with `of` is kept on every [entity](/reference/entities) of that kind. It starts at `start` unless the entity's declaration or its [`create`](/reference/effects#create) effect gives another value. It isn't one of the player's stats, so [`startingStats`](#startingstats), [`view().stats`](/reference/view#the-player-s-numbers-and-things) and `view().statsById` all leave it out. Each entity's stats are in [`view().entities`](/reference/view#entities) instead.
 
-Everything else works as for the player's:
+The other fields work much as they do for the player's stats:
 
 | Field | On an entity stat |
 |---|---|
-| `start`, `min`, `max` | The same range, held by every effect: `{ kind: 'stat', key: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
+| `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', key: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
 | `format` | How the value is written in the entity's [`StatView`](/reference/view#statview). |
-| `visible` | Tested with `'$'` bound to the entity, so a stat can show on one and not another: `visible: { flag: 'tasted', of: '$' }` shows a dish's quality only once it has been tasted. |
+| `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { flag: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
-| `spendable` | Has no use: a `stat` effect with `of` is never part of a button's [price](/reference/actions#price), and an activity's `cost` spends the player's stats only. |
-| `bands` | Not read. [`{ tier }`](/reference/conditions#tier) and [`statBand`](#statband) read the player's value. |
+| `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/reference/view#price), and an activity's `cost` only spends the player's stats. |
+| `bands` | Ignored. [`{ tier }`](/reference/conditions#tier) and [`statBand`](#statband) only read the player's value. |
 
 ### A purse and an energy gauge
 
-Two stats a town game is likely to want. Coins are spent and shown in a purse of the UI's own; energy has a ceiling that grows with fitness and fills back up overnight.
+Here are two stats a town game is likely to want. Coins are spent, and the UI shows them in a purse of its own. Energy has a ceiling that grows with fitness, and fills back up overnight.
 
 ```ts
 import type { Custom, GameRules, StatDef } from '@ifloom/engine'
@@ -128,7 +126,7 @@ const rules: GameRules = {
 }
 ```
 
-The `setStat` asks for more than any ceiling and is held to `energyCeiling` as it stands that morning. A button that costs `{ stats: { coins: 3, energy: 10 } }` shows `3c` and `10`, and a player with 2 coins reads *Not enough on you.*
+The `setStat` asks for more than any ceiling, so it's held to `energyCeiling` as it stands that morning. A button that costs `{ stats: { coins: 3, energy: 10 } }` shows `3c` and `10`, and a player with 2 coins reads *Not enough on you.*
 
 ## statDef
 
@@ -144,7 +142,7 @@ The declaration for a stat, or `undefined` if the game declares none by that id.
 function startingStats(game: Game): Stats
 ```
 
-Every one of the player's stats — those declared without `of` — at its `start` value. [`startingState`](/reference/commands#startingstate) uses it for a new game.
+Every one of the player's stats (those declared without `of`) at its `start` value. [`startingState`](/reference/commands#startingstate) uses it for a new game.
 
 ## statMax
 
@@ -152,14 +150,16 @@ Every one of the player's stats — those declared without `of` — at its `star
 function statMax(state: GameState, game: Game, id: string): number
 ```
 
-The highest the stat can go right now. Its `max` if that is a number; if it is `{ value: name }`, the custom value of that name worked out against `state` (and turned into a number); `100` if it declares no `max` or is not declared.
+The highest the stat can go right now. If its `max` is a number, that's the answer. If it's `{ value: name }`, it's the custom value of that name worked out against `state` and turned into a number. If the stat declares no `max`, or isn't declared at all, it's `100`.
 
 ```ts
+import { statMax } from '@ifloom/engine'
+
 // max: { value: 'energyCeiling' }, declared in game.custom.values as 80 + fitness
 statMax(state, game, 'energy') // fitness 12 → 92
 ```
 
-**Gotcha:** a `{ value }` name the game does not declare in [`custom.values`](/reference/custom#values) quietly gives `100`. A value that returns text which is not a number gives `NaN`, and every effect on the stat then gives `NaN` too.
+**Gotcha.** A `{ value }` name the game doesn't declare in [`custom.values`](/reference/custom#values) quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
 
 ## clampStat
 
@@ -167,9 +167,9 @@ statMax(state, game, 'energy') // fitness 12 → 92
 function clampStat(state: GameState, game: Game, id: string, value: number): number
 ```
 
-`value` held to the stat's declared `min` and its [`statMax`](#statmax) against `state` (0 and 100 if it declares neither, or is not declared). Effects and costs both go through it.
+Returns `value` held between the stat's declared `min` and its [`statMax`](#statmax) against `state`. Those are 0 and 100 if the stat declares neither, or isn't declared. Effects and costs both go through it.
 
-**Gotcha:** a ceiling that moves does not pull a stat down when it drops. The value is only held to the new ceiling the next time something changes it.
+**Gotcha.** A moving ceiling doesn't pull a stat down when it drops. The value is only held to the new ceiling the next time something changes it.
 
 ## lackingLine
 
@@ -177,9 +177,13 @@ function clampStat(state: GameState, game: Game, id: string, value: number): num
 function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string
 ```
 
-The refusal for a cost of `amount` the player cannot cover: the declaration's `lacking` with `{n}` replaced by `amount`, or the [`notEnough`](/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (the id if there is no declaration). Pass the game to get its own wording of `notEnough`; without it, the engine's English. A stat's `lacking` always wins over `notEnough`. [`activityBlocked`](/reference/actions#activityblocked) uses it unless the activity's `cost.reasons` has a line for that stat.
+The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
+
+Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`activityBlocked`](/reference/actions#activityblocked) uses this unless the activity's `cost.reasons` has a line for that stat.
 
 ```ts
+import { lackingLine, statDef } from '@ifloom/engine'
+
 lackingLine(statDef(game, 'energy'), 'energy', 10) // 'Need 10 energy.'
 lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
 ```
@@ -192,9 +196,11 @@ lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
 function statBand(state: GameState, game: Game, id: string): number
 ```
 
-How many of the stat's `bands` its current value has reached — the number a [`{ tier: id, gte }`](/reference/conditions#tier) condition compares against. 0 if the stat declares no bands.
+How many of the stat's `bands` its current value has reached. A [`{ tier: id, gte }`](/reference/conditions#tier) condition compares against this number. It's 0 if the stat declares no bands.
 
 ```ts
+import { statBand } from '@ifloom/engine'
+
 // bands: [10, 20, 30]
 statBand(state, game, 'charm') // charm 4 → 0, 12 → 1, 31 → 3
 ```
@@ -205,8 +211,10 @@ statBand(state, game, 'charm') // charm 4 → 0, 12 → 1, 31 → 3
 function formatStat(def: StatDef | undefined, value: number): string
 ```
 
-A value as the player reads it, through the declaration's `format`. With no format, or no declaration, just the number.
+A value as the player reads it, through the declaration's `format`. With no format, or no declaration, it's just the number.
 
 ```ts
+import { formatStat, statDef } from '@ifloom/engine'
+
 formatStat(statDef(game, 'coins'), 12) // '12c'
 ```

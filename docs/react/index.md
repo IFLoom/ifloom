@@ -1,115 +1,92 @@
-# The base UI
+# The React UI
 
-`@ifloom/ui` draws an IFLoom game in the browser: the scene and its choices, the clock and the stats, where the player is and who is there, what they carry and wear, inputs, notices, quests, devices, saves, a backlog, undo, the player's mods and a debug panel. It is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4), for you to use as it is, restyle, or take apart.
+`@ifloom/react` draws an IFLoom game in the browser with React. It's the ready-made UI, but not the only way: the engine has no framework of its own, and [Using another framework](/guide/frameworks) shows a game drawn with plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
 
-```tsx
-import { GameShell } from '@ifloom/ui'
+```ts
+import { mountGame } from '@ifloom/react'
+import game from './game.ts'
 
-<GameShell runner={runner} />
+mountGame(game)
 ```
 
-`GameShell` is the whole UI in one component. Everything it is made of is exported too, as are the shadcn/ui primitives it is built from, so a game can:
+[`mountGame`](#mountgame) starts the game and draws it into the page. Underneath, [`GameShell`](#gameshell) is the whole UI in one component. Every part it's made of is exported too, as are the shadcn/ui primitives it's built from, so you can:
 
-- **use it as it is**, with its own words and colours (this page);
-- **add its own screens** to it: a scene's bespoke panel, an app's screen, a plugin's view ([Extending](/ui/extending));
-- **lay it out its own way**, by naming the parts for the side column and the stage ([Layouts](#layouts)), or build another page entirely from the same parts ([Extending](/ui/extending#your-own-layout)).
+- **Use it as it is**, with your own words and colours. That's this page.
+- **Add your own screens**, such as a scene's bespoke panel, an app's screen or a plugin's view. See [Extending](/react/extending).
+- **Lay it out your own way**, by naming the parts for the side column and the stage ([Layouts](#layouts)), or build a different page from the same parts ([Your own layout](/react/extending#your-own-layout)).
 
-Every component is listed, with its props, under [Components](/ui/components).
+Every component is listed, with its props, under [Components](/react/components).
 
-The engine does not need it. The UI only reads the [view](/reference/view) and sends [commands](/reference/commands) through a [runner](/reference/runner), the same as a UI of your own would, so a game that wants Svelte or a terminal leaves this package out.
+The engine doesn't need this package. The UI only reads the [view](/reference/view) and sends [commands](/reference/commands) through a [runner](/reference/runner), as a UI of your own would. A game that wants Vue, Svelte or a terminal leaves it out (see [Using another framework](/guide/frameworks)).
 
 ## What it shows
 
-- **The stage**: the scene on screen, or, when none is open, the room (a plugin's [stage](/reference/plugins#stage), such as the [places](/plugins/places) plugin's), with its pictures, its spoken lines and its choices.
-- **The sidebar**: the game's title and the clock (when a plugin such as the [calendar](/plugins/calendar) says when it is), the stats, the player's menu (saves, the backlog, mods, undo and redo, whichever the game turned on), the device buttons, where the player is and the exits (when the game has the [places](/plugins/places) plugin), who is here with what can be done with them, the room's and game's actions, what the player carries, and what they are wearing.
+- **The stage.** The scene on screen, or the room when no scene is open (a plugin's [stage](/reference/plugins#stage), such as the [places](/plugins/places) plugin's). It draws the pictures, the spoken lines and the choices.
+- **The sidebar.** The game's title and the clock, when a plugin such as the [calendar](/plugins/calendar) says what time it is. Then the stats, the player's menu, the device buttons, where the player is and the exits (with the [places](/plugins/places) plugin), who is here and what you can do with them, the room's and the game's actions, what the player carries, and what they're wearing.
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
 - **Notices**, in the corner, each with a button to dismiss it.
-- **Saves, the backlog and mods**, each in a dialog from the player's menu: every save slot to load, overwrite, export or delete, a new slot, a file to import; every scene shown so far with the choice made in it; and the player's [mods](/reference/mods), each on, off or removed, a mod file to add, and a button to restart with the change.
+- **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/reference/mods), each on, off or removed, with a button to restart the game with the change.
 - **Quests**, under the stage, when the game has the [quests plugin](/plugins/quests).
-- **Devices**, in a dialog, when the game has the [devices plugin](/plugins/devices) or the [phone](/plugins/phone): the home screen, and each app's sections, including [messages](/plugins/messages) and [feeds](/plugins/feed).
+- **Devices**, in a dialog, when the game has the [devices plugin](/plugins/devices) or the [phone](/plugins/phone). This covers the home screen and each app's sections, including [messages](/plugins/messages) and [feeds](/plugins/feed).
 - **A debug panel**, under the stage, when the game has the [debug plugin](/plugins/debug).
 - **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/plugins/wardrobe).
 
-That is where [`DEFAULT_LAYOUT`](#layouts) puts each; a game moves any of them, or leaves the side column out, with a [layout](#layouts).
+That's where [`DEFAULT_LAYOUT`](#layouts) puts each one. A [layout](#layouts) of your own can move any of them, or drop the side column.
 
-A greyed-out choice or action shows **why** on the button itself, under its label, so the player never has to hover to find out. Its price is on the button too.
+When a choice or action is greyed out, the button shows the reason under its label, so the player doesn't have to hover to find out. Its price is on the button too.
 
-The UI reads each plugin's view by its shape and imports no plugin package. A game without a plugin simply has no panel for it.
+The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no panel for it.
 
 ## Install
 
-The UI is pre-release, like the engine; point at a local checkout as in [Installation](/guide/installation). It needs React 19, and Tailwind CSS v4 with its Vite plugin.
+[Installation](/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/react` the same way you add the engine.
 
-```json
-{
-  "dependencies": {
-    "@ifloom/engine": "file:../ifloom/packages/engine",
-    "@ifloom/ui": "file:../ifloom/packages/ui",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@ifloom/cli": "file:../ifloom/packages/cli",
-    "@tailwindcss/vite": "^4.0.0",
-    "@vitejs/plugin-react": "^6.0.0",
-    "tailwindcss": "^4.0.0",
-    "vite": "^8.0.0",
-    "vite-plugin-singlefile": "^2.0.0"
-  }
-}
-```
+On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin. The [CLI's Vite preset](/cli/#the-vite-preset) wires up React and Tailwind for you. Like the engine, the UI ships TypeScript and TSX source with no build step, which Vite handles out of the box. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/plugins/#adding-one)).
 
-Add the plugins your game uses beside it, such as `@ifloom/plugin-quests`; see [Adding one](/plugins/#adding-one). Like the engine, the UI ships TypeScript and TSX source with no build step, which Vite handles out of the box.
-
-Your `tsconfig.json` needs the [engine's settings](/guide/installation#requirements), plus JSX and the DOM:
+Your `tsconfig.json` needs the engine's settings from [Installation](/guide/installation), plus JSX, the DOM and Vite's client types:
 
 ```json
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["@ifloom/cli/client"]
   }
 }
 ```
 
+`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types come with `@ifloom/react`. [Installation](/guide/installation) shows the full file.
+
 ## Set it up
 
-Three files: the Vite config, a stylesheet, and the entry that renders the shell.
+The quickest start is `ifloom new`, which writes all of this for you (see [Installation](/guide/installation)). By hand, you need four files: the Vite config, a stylesheet, the entry and an `index.html`.
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite'
 import { ifloom } from '@ifloom/cli/vite'
 
-export default defineConfig(ifloom())
+export default ifloom()
 ```
 
-The [CLI's preset](/cli/#the-vite-preset) brings React and Tailwind, and builds one HTML file that opens from disk; run the game with `ifloom dev` and build it with `ifloom build`. Without the CLI, use `react()` and `tailwindcss()` as your plugins, and see [Shipping a game](/guide/shipping#without-the-cli) for the rest.
+The [CLI's preset](/cli/#the-vite-preset) adds React and Tailwind when your game depends on `@ifloom/react`, and builds one HTML file that opens from disk. Run the game with `ifloom dev` and build it with `ifloom build`. Without the CLI, use `react()` and `tailwindcss()` as your Vite plugins, and see [Shipping a game](/guide/shipping#without-the-cli) for the rest.
 
 ```css
 /* src/styles.css */
-@import "@ifloom/ui/styles.css";
+@import "@ifloom/react/styles.css";
 ```
 
-The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so this one line is enough; do not `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components.
+The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so this one line is enough. Don't `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components.
 
-```tsx
-// src/main.tsx
-import { createRoot } from 'react-dom/client'
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
-import { GameShell } from '@ifloom/ui'
-import { game } from './game.ts'
+```ts
+// src/main.ts
+import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import game from './game.ts'
 import './styles.css'
 
-// A fresh seed per new game, so each playthrough deals its own variants.
-const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  saves: saves(game, localStorageDriver()),
-  history: { stopAtNewTurn: true },
-  autosave: { every: 'scene' },
-})
-
-createRoot(document.getElementById('app')!).render(<GameShell runner={runner} />)
+mountGame(game, { layout: READING_LAYOUT })
 ```
+
+Here `src/game.ts` exports what [`loadGame`](/reference/loader#loadgame) returned, `{ game, problems }`. `mountGame` logs any problems as warnings.
 
 ```html
 <!-- index.html -->
@@ -117,18 +94,70 @@ createRoot(document.getElementById('app')!).render(<GameShell runner={runner} />
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Small Town</title>
+    <title>My Game</title>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root"></div>
+    <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
 ```
 
-The shell redraws whenever the runner's state changes, so undo, loading a save and a command sent from anywhere else all show at once. What the runner does (undo, saves, autosave) is set up on the runner; see [The runner](/reference/runner).
+## mountGame
 
-See it in the showcase: [Small Town](/guide/showcase#the-files)'s `src/main.tsx` and `src/styles.css` are these files, with undo and a warmer accent.
+```ts
+function mountGame(game: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Runner
+
+type MountOptions = Omit<GameShellProps, 'runner'> & {
+  root?: string | Element
+  start?: GameState
+  runner?: RunnerOptions
+}
+```
+
+`mountGame` makes a [runner](/reference/runner) for the game and draws [`GameShell`](#gameshell) into the page, inside React's `StrictMode`. It returns the runner, so your own code can still send commands or read the state.
+
+It sets up what most games want:
+
+| Option | Default |
+|---|---|
+| `root` | `'#root'`. An element, or a selector for one. It throws if nothing matches. |
+| `start` | A new game, `startingState(game, { seed })`, with a random seed so each playthrough draws its own variants. |
+| `runner` | `{ history: { depth: 50 }, saves: saves(game, localStorageDriver(window.localStorage)), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
+
+Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`.
+
+```ts
+import { mountGame } from '@ifloom/react'
+import game from './game.ts'
+
+const runner = mountGame(game, {
+  runner: { backlog: { limit: 200 } },
+  layout: { sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'entities', 'actions'] },
+})
+```
+
+When you need more control, build the runner yourself and render `GameShell` with React. [The Corner Café](/guide/shapes) uses `mountGame`; [Small Town](/guide/showcase#the-files)'s `src/main.tsx` does it by hand, because it loads the player's mods from IndexedDB before it makes the game:
+
+```tsx
+// src/main.tsx
+import { createRoot } from 'react-dom/client'
+import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { GameShell } from '@ifloom/react'
+import loaded from './game.ts'
+import './styles.css'
+
+const { game } = loaded
+const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
+  saves: saves(game, localStorageDriver()),
+  history: { depth: 50 },
+  autosave: { every: 'turn' },
+})
+
+createRoot(document.getElementById('root')!).render(<GameShell runner={runner} />)
+```
+
+The shell redraws whenever the runner's state changes, so undo, loading a save and a command sent from anywhere else all show at once.
 
 ## GameShell
 
@@ -148,13 +177,13 @@ type GameShellProps = {
 | Prop | What it is |
 |---|---|
 | `runner` | The game's [runner](/reference/runner). |
-| `panels` | The game's own panels, by name: a scene's bespoke panel, an app's panel section. See [Panels](/ui/extending#panels). |
-| `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/ui/extending#plugin-sections). |
-| `mods` | The player's [mods](/reference/mods): the store, the loader's problems, and how to restart. Turns on **Mods** in the player's menu. See [`ModsOption`](/ui/components#modsoption). |
+| `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/react/extending#panels). |
+| `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/react/extending#plugin-sections). |
+| `mods` | The player's [mods](/reference/mods): the store, the loader's problems, and how to restart. It turns on **Mods** in the player's menu. See [`ModsOption`](/react/components#modsoption). |
 | `className` | Classes on the outer grid, merged over its own. |
-| `layout` | Which parts go in the side column and which on the stage, in order. Left out, [`DEFAULT_LAYOUT`](/ui/components#default-layout). See [Layouts](#layouts). |
+| `layout` | Which parts go in the side column and which on the stage, in order. If you leave it out, you get [`DEFAULT_LAYOUT`](/react/components#default-layout). See [Layouts](#layouts). |
 
-With a side column, the page is a two-column grid on wide screens, the column on the left and the stage on the right, that stacks on narrow ones. With none, it is a single narrow column (`max-w-2xl`), the stage alone. Notices sit fixed in the bottom-right corner either way.
+With a side column, the page is a two-column grid on wide screens, with the column on the left and the stage on the right. It stacks on narrow screens. Without a side column, the page is a single narrow column (`max-w-2xl`) holding the stage. Notices sit fixed in the bottom-right corner either way.
 
 ### Layouts
 
@@ -170,23 +199,23 @@ type PartName =
 
 | Part | What it draws |
 |---|---|
-| `'title'` | The game's title and the [`Clock`](/ui/components#clock): [`Title`](/ui/components#title). |
-| `'stats'` | [`StatList`](/ui/components#statlist). |
-| `'entities'` | [`EntityTable`](/ui/components#entitytable), every kind. |
-| `'menu'` | The player's menu, [`GameMenu`](/ui/components#gamemenu). |
-| `'devices'` | [`DeviceButtons`](/ui/components#devicebuttons). |
-| `'separator'` | A [`Separator`](/ui/components#separator) line. |
-| `'location'` | [`LocationPanel`](/ui/components#locationpanel): where the player is and the exits. |
-| `'people'` | [`PeoplePanel`](/ui/components#peoplepanel). |
-| `'actions'` | The room's and the game's buttons, [`Actions`](/ui/components#actions). |
-| `'inventory'` | [`Inventory`](/ui/components#inventory). |
-| `'wardrobe'` | [`WardrobePanel`](/ui/components#wardrobepanel). |
-| `'scene'` | [`SceneStage`](/ui/components#scenestage). |
-| `'inputs'` | [`InputFields`](/ui/components#inputfields). |
-| `'quests'` | [`QuestLog`](/ui/components#questlog). |
-| `'debug'` | [`DebugPanel`](/ui/components#debugpanel). |
+| `'title'` | The game's title and the [`Clock`](/react/components#clock): [`Title`](/react/components#title). |
+| `'stats'` | [`StatList`](/react/components#statlist). |
+| `'entities'` | [`EntityTable`](/react/components#entitytable), every kind. |
+| `'menu'` | The player's menu, [`GameMenu`](/react/components#gamemenu). |
+| `'devices'` | [`DeviceButtons`](/react/components#devicebuttons). |
+| `'separator'` | A [`Separator`](/react/components#separator) line. |
+| `'location'` | [`LocationPanel`](/react/components#locationpanel): where the player is and the exits. |
+| `'people'` | [`PeoplePanel`](/react/components#peoplepanel). |
+| `'actions'` | The room's and the game's buttons, [`Actions`](/react/components#actions). |
+| `'inventory'` | [`Inventory`](/react/components#inventory). |
+| `'wardrobe'` | [`WardrobePanel`](/react/components#wardrobepanel). |
+| `'scene'` | [`SceneStage`](/react/components#scenestage). |
+| `'inputs'` | [`InputFields`](/react/components#inputfields). |
+| `'quests'` | [`QuestLog`](/react/components#questlog). |
+| `'debug'` | [`DebugPanel`](/react/components#debugpanel). |
 
-Each built-in part draws nothing when the game has nothing for it — no calendar, no clock; no cast, no people; no kinds, no tables — so a layout can list parts a game does not use. Two layouts are exported:
+Each built-in part draws nothing when the game has nothing for it. A game without a calendar shows no clock, and one without the cast shows no people. So a layout can safely list parts a game doesn't use. Two layouts are exported:
 
 ```ts
 const DEFAULT_LAYOUT = {
@@ -200,10 +229,12 @@ const READING_LAYOUT = {
 }
 ```
 
-`DEFAULT_LAYOUT` is what a `GameShell` with no `layout` draws: everything at the side, the scene on the stage, for a game with a map and people. `READING_LAYOUT` is a page to read, for a novel: no side column, the title over the scene, the buttons and the stats under it. A management game puts what it manages on the stage, where the eye goes. The Corner Café's tables of staff and dishes sit under the scene, over the week's buttons:
+`DEFAULT_LAYOUT` is what a `GameShell` with no `layout` draws. Everything goes at the side and the scene goes on the stage, which suits a game with a map and people. `READING_LAYOUT` is a page to read, for a novel. It has no side column, puts the title over the scene, and puts the buttons and the stats under it.
+
+A management game puts what it manages on the stage, where the eye goes. The Corner Café puts its tables of staff and dishes under the scene, above the week's buttons:
 
 ```tsx
-import { GameShell, READING_LAYOUT } from '@ifloom/ui'
+import { GameShell, READING_LAYOUT } from '@ifloom/react'
 
 <GameShell runner={runner} layout={READING_LAYOUT} />
 
@@ -214,10 +245,10 @@ See each shape's layout in [Shapes of game](/guide/shapes).
 
 #### Parts of your own
 
-Anything that is not a part's name is drawn as it is, in its place in the list, so a game's own components go in among the built-in ones. They are inside the shell's [`GameProvider`](/ui/components#gameprovider), so a component in a layout can read the view and send commands with [`useGame`](/ui/components#usegame). To keep the base UI's layout with something added, spread `DEFAULT_LAYOUT` and change one list:
+Anything in the list that isn't a part's name is drawn as it is, in its place, so your own components can sit among the built-in ones. They're inside the shell's [`GameProvider`](/react/components#gameprovider), so they can read the view and send commands with [`useGame`](/react/components#usegame). To keep the default layout and add something, spread `DEFAULT_LAYOUT` and change one list:
 
 ```tsx
-import { Button, DEFAULT_LAYOUT, GameShell, useGame } from '@ifloom/ui'
+import { Button, DEFAULT_LAYOUT, GameShell, useGame } from '@ifloom/react'
 
 function SaveButton() {
   const { runner } = useGame()
@@ -236,16 +267,16 @@ const [title, ...rest] = DEFAULT_LAYOUT.sidebar
 
 **Gotchas.**
 
-- **A layout replaces the default whole, per list.** `stage` left out of a layout is the default stage; `sidebar` left out is no side column at all, not the default one. <code v-pre>layout={{ stage: ['scene'] }}</code> is a single column with the scene and nothing else. Spread `DEFAULT_LAYOUT` to keep its side column.
-- **Give your own nodes a `key`.** They are drawn from a list, so React asks for one, as in any list.
-- **Leave out `'inputs'` only if the game has no [inputs](/reference/inputs).** Nothing else sends `input`, so without it the player has no way to give the value. The same goes for `'actions'` in a game whose buttons are its only way forward, as the café's are.
+- **A layout replaces each list whole.** If your layout leaves out `stage`, you get the default stage. If it leaves out `sidebar`, you get no side column at all, not the default one. So <code v-pre>layout={{ stage: ['scene'] }}</code> is a single column with the scene and nothing else. Spread `DEFAULT_LAYOUT` to keep its side column.
+- **Give your own nodes a `key`.** They're drawn from a list, so React asks for one.
+- **Leave out `'inputs'` only if the game has no [inputs](/reference/inputs).** Nothing else sends `input`, so without it the player can't give the value. The same goes for `'actions'` in a game whose buttons are its only way forward, as the café's are.
 
 ## Theming
 
-The look comes from CSS variables, the ones every shadcn/ui component uses, plus three of the UI's own. To restyle the game, override the variables in your stylesheet after the import. No component needs editing.
+The look comes from CSS variables: the ones every shadcn/ui component uses, plus three of the UI's own. To restyle the game, override the variables in your stylesheet after the import. You don't need to edit any component.
 
 ```css
-@import "@ifloom/ui/styles.css";
+@import "@ifloom/react/styles.css";
 
 :root {
   --primary: oklch(0.45 0.12 30);
@@ -269,35 +300,38 @@ The look comes from CSS variables, the ones every shadcn/ui component uses, plus
 | `--accent`, `--accent-foreground` | Hovered buttons and app icons. |
 | `--destructive`, `--destructive-foreground` | App badges, errors, and a choice's `irreversible` line. |
 | `--border`, `--input`, `--ring` | Borders, inputs, the focus ring. |
-| `--radius` | Corner rounding; the smaller and larger radii are worked out from it. |
+| `--radius` | Corner rounding. The smaller and larger radii are worked out from it. |
 | `--speech` | A character's spoken line. |
 | `--player-speech` | The player's spoken line. |
 | `--price` | A price on a button. |
 
 Each is also a Tailwind colour, so `text-speech`, `bg-primary` and `border-border` work in your own components.
 
-**Dark mode.** The stylesheet has a light and a dark set. The dark one applies inside an element with the class `dark`, as shadcn/ui does: put `class="dark"` on `<html>` to turn it on, and toggle it from a settings screen if you offer both.
+**Dark mode.** The stylesheet has a light set and a dark set. The dark one applies inside an element with the class `dark`, as in shadcn/ui. Put `class="dark"` on `<html>` to turn it on, and toggle it from a settings screen if you offer both.
 
 **Fonts.** Set them as usual, on `body` or with Tailwind's `--font-sans` in an `@theme` block of your own.
 
-**Devices** carry `data-frame` with the device's frame (`phone`, `laptop`, or a name of the game's own) and each app icon carries `data-icon`, for a stylesheet to draw a phone's bezel or map an icon name to a picture.
+**Devices.** Each device dialog carries `data-frame` with the device's frame (`phone`, `laptop`, or a name of the game's own), and each app icon carries `data-icon`. Your stylesheet can use them to draw a phone's bezel or map an icon name to a picture.
 
 ## Words
 
-The UI's own words, such as **Quests**, **Track** and **Mark all seen**, come from the same [strings table](/reference/strings) as the engine's, under keys that start with `ui.`. A game rewords any of them in `game.strings`:
+The UI's own words, such as **Quests**, **Track** and **Mark all seen**, come from the same [strings table](/reference/strings) as the engine's, under keys that start with `ui.`. To reword any of them, set it in `game.strings`:
 
 ```ts
-const { game } = loadGame(packs, {
+import { loadGame } from '@ifloom/engine'
+import { town } from './content/town.ts'
+
+const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro.wake',
+  introScene: 'intro',
   strings: {
-    'ui.quests': 'Journal',
+    'ui.quests': 'To do',
   },
 })
 ```
 
-The clock in the sidebar is not the UI's: it prints [`view.when`](/reference/view), which a plugin writes. In a game with the [calendar](/plugins/calendar), reword it with the calendar's own string, `'calendar/label': '{weekday} {period}, day {day}'`; see the calendar's [strings](/plugins/calendar#strings).
+The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/reference/view#the-clock-and-the-player), which a plugin writes. In a game with the [calendar](/plugins/calendar), reword it with the calendar's own string, such as `'calendar/label': '{weekday} {period}, day {day}'`. See the calendar's [strings](/plugins/calendar#strings).
 
 | Key | English | Fills |
 |---|---|---|
@@ -351,17 +385,24 @@ The clock in the sidebar is not the UI's: it prints [`view.when`](/reference/vie
 | `ui.modOff` | `Off` | |
 | `ui.applyMods` | `Restart with these mods` | |
 
-The keys from `ui.debug` to `ui.closeScene` are the [debug panel](/ui/components#debugpanel)'s, except `ui.undo` and `ui.redo`, which the [game menu](/ui/components#gamemenu) uses too: `ui.set` is the button on each of its forms, `ui.debugSet` the tab they are on, and `ui.noneOn` and `ui.nothingGreyed` what its **Why not** tab says when no lock is on or nothing is greyed out.
+Which component uses which keys:
 
-The rest belong to the [wardrobe panel](/ui/components#wardrobepanel) (`ui.wardrobe` to `ui.nothingOn`; a wear button reads `Wear` and the item's name), the [inventory](/ui/components#inventory) (`ui.inventory`), the [saves menu](/ui/components#savesmenu) (`ui.saves` to `ui.missingPlugins`), the [backlog](/ui/components#backlog) (`ui.backlog` to `ui.chose`), the [input fields](/ui/components#inputfield) (`ui.enter`) and the [mod manager](/ui/components#modmanager) (`ui.mods` to `ui.applyMods`, and `ui.remove` from the saves menu for its **Delete**).
+- **[Debug panel](/react/components#debugpanel)**: `ui.debug` to `ui.closeScene`. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
+- **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog` and `ui.mods`.
+- **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe` to `ui.nothingOn`. A wear button reads `Wear` followed by the item's name.
+- **[Inventory](/react/components#inventory)**: `ui.inventory`.
+- **[Saves menu](/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
+- **[Backlog](/react/components#backlog)**: `ui.backlog` to `ui.chose`.
+- **[Input fields](/react/components#inputfield)**: `ui.enter`.
+- **[Mod manager](/react/components#modmanager)**: `ui.mods` to `ui.applyMods`, plus `ui.remove` from the saves menu for its **Delete** button.
 
-Everything else on screen is already the game's: titles, prose, labels, the reasons on greyed-out buttons, the warnings, the price notes and the clock all come from the view, worded by the game, the engine's own [strings](/reference/strings) and its plugins'.
+Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/reference/strings) and its plugins' strings.
 
-In code, [`UI_STRINGS`](/ui/components#ui-strings) is this table in English, [`uiSay`](/ui/components#uisay) reads a word for a game, and [`useWords`](/ui/components#usewords) does the same inside a component.
+In code, [`UI_STRINGS`](/react/components#ui-strings) is this table in English, [`uiSay`](/react/components#uisay) reads a word for a game, and [`useWords`](/react/components#usewords) does the same inside a component.
 
-**Gotcha.** The debug panel's form rows (**Stat**, **Variable** and the rest) and their placeholders are still English and not in the table. It is a tool for the person building the game, not for the player.
+**Gotcha.** The debug panel's form rows (**Stat**, **Variable** and the rest) and their placeholders are always in English and aren't in the table. The panel is a tool for the person building the game, not for the player.
 
 ## Next
 
-- [Components](/ui/components): every export, with its props.
-- [Extending](/ui/extending): the game's own panels, plugin sections, your own layout, and more shadcn/ui components.
+- [Components](/react/components): every export, with its props.
+- [Extending](/react/extending): your own panels, plugin sections, your own layout, and more shadcn/ui components.

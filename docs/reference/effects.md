@@ -51,6 +51,7 @@ type Effect =
   | { kind: 'remove'; of: string }
   | { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
   | { kind: 'scene'; id: string | null }
+  | { kind: 'scene'; from: string; otherwise?: string }
   | { kind: 'item'; id: string; by: number }
   | { kind: 'phase'; value: Phase }
   | { kind: 'closeStoryline'; id: string; turns: number }
@@ -69,6 +70,8 @@ type Effect =
 ```
 
 Adds `by` to a stat, held to the stat's declared `min` and [`max`](/reference/stats#statmax) (0 to 100 unless it says otherwise). Spending and earning both use this effect, because coins, energy and every other number are [declared stats](/reference/stats). Afterwards [`rules.onStat`](/reference/rules#onstat) sees the before and after, and can veto or add to the change. `key` must be a [declared stat](/reference/stats).
+
+A [derived stat](/reference/stats#derived-stats) is never written, so a `stat` effect on one does nothing, and the loader reports it. The effect adds to the value the save keeps, which is 0 for a stat the save doesn't have yet, such as one added in an update. See [Filling new content](/reference/saves#filling-new-content).
 
 **Gotcha.** A `stat` effect never refuses. Spending 4 coins the player doesn't have leaves them at the stat's `min` rather than stopping the choice. Check `{ stat: 'coins', gte: 4 }` first, or use an activity [cost](/reference/actions#activitycost), which refuses.
 
@@ -95,6 +98,8 @@ Sets a stat to `to`, held to its declared range. Use it for energy back to full 
 // In rules.turn: wake up with a full tank, whatever the ceiling is today.
 effects: [{ kind: 'setStat', key: 'energy', to: 9999 }]
 ```
+
+Like `stat`, it does nothing on a [derived stat](/reference/stats#derived-stats), and the loader reports it.
 
 With `of`, it sets an [entity](/reference/entities)'s stat, as for [`stat`](#an-entity-s-stat): `{ kind: 'setStat', key: 'morale', to: 80, of: 'staff:ana' }`. If the entity isn't there it does nothing, and `rules.onStat` isn't called.
 
@@ -142,6 +147,17 @@ With `of`, both forms set a variable on an [entity](/reference/entities) instead
 ```
 
 Puts a scene on screen, or closes it with `null`. The id isn't checked when the effect runs, but `validatePack` and the loader check it. Only the scene left on screen at the end of the command counts as [seen](/reference/state#seen).
+
+#### Drawing a storylet
+
+```ts
+{ kind: 'scene', from: 'cafe' }
+{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
+```
+
+With `from` instead of `id`, it draws a [storylet](/reference/storylets): one of the scenes whose `drawnFrom` names `from` and whose `when` holds, picked by their `weight`, and puts it on screen. If none can be drawn, it puts `otherwise` on screen, and with no `otherwise` it leaves the screen as it was.
+
+The draw is seeded by the save, the turn and a count of draws from that set, kept in the variable `storylet:<from>`, so the same save always draws the same scene and [`replay`](/reference/runner#replay) draws it again. See [Storylets](/reference/storylets) for the details and the checks.
 
 The engine has no effect that moves the player. The [places plugin](/plugins/places) keeps track of places, and its [`places/move`](/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { value: 'park' } }`.
 

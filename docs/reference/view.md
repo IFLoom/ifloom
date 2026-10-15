@@ -279,10 +279,26 @@ type StatView = {
   value: number
   max: number
   text: string
+  level?: { level: number; next: number | null; progress: number }
 }
 ```
 
-One stat as the UI shows it. `max` is [`statMax`](/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/reference/stats#formatstat), such as `'12 coins'`.
+One stat as the UI shows it. `value` is [`statValue`](/reference/stats#statvalue), so a [derived stat](/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/reference/stats#formatstat), such as `'12 coins'`.
+
+`level` is only there for a stat that declares [`levels`](/reference/stats#levels). It's what [`statLevel`](/reference/stats#statlevel) gives:
+
+| Field | What it is |
+|---|---|
+| `level` | The level the stat is at, from 0. |
+| `next` | The value the next level starts at, or `null` at the top level. |
+| `progress` | How far the value is from this level's start to `next`, from 0 to 1. It's 1 at the top level. Level 0 starts at the stat's `min`. |
+
+```ts
+// levels: { at: [10, 30, 60] }, cooking at 20
+view(state, game).statsById.cooking.level // { level: 1, next: 30, progress: 0.5 }
+```
+
+An entity's stats in [`entities`](#entities) get `level` the same way, worked out for that entity.
 
 ```ts
 const { energy } = view(state, game).statsById

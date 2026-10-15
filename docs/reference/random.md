@@ -3,7 +3,7 @@
 To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/reference/state#turn) and what the draw is for. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
 
 ```ts
-import { hash, roll, pick, chance } from '@ifloom/engine'
+import { hash, roll, pick, chance, weighted } from '@ifloom/engine'
 ```
 
 ## Why deterministic
@@ -126,17 +126,38 @@ function weighted<T>(
 ): T | undefined
 ```
 
-One item from the list, drawn by weight. An item of weight 3 comes up three times as often as one of weight 1. A weight of `undefined` counts as 1, and a weight of 0 or less (or one that isn't a number) is never drawn. It returns `undefined` when nothing can be drawn.
+One item from the list, drawn by weight from the parts you name. `weightOf` says how much each item weighs, and an item of weight 3 comes up three times as often as one of weight 1.
 
 ```ts
-const loaf = weighted(
-  [{ id: 'rye', weight: 1 }, { id: 'sourdough', weight: 3 }],
-  (loaf) => loaf.weight,
-  state.seed, state.turn, 'bakery.loaf',
-)
+import { weighted } from '@ifloom/engine'
+
+const cakes = [
+  { id: 'lemon', weight: 3 },
+  { id: 'carrot' },              // no weight: 1
+  { id: 'walnut', weight: 0 },   // never drawn
+]
+
+const cake = weighted(cakes, (cake) => cake.weight, state.seed, state.turn, 'cafe.cake')
+// lemon three times in four, carrot once in four
 ```
 
-The engine draws with it wherever content has weights: [storylets](/reference/effects#scene), [variants](/reference/prose#variantmember), [pool files](/reference/media) and shuffled [playlists](/reference/audio).
+The rules for a weight:
 
-**Gotcha:** when every weight is a whole number the draw is `hash % total`, so a list where every weight is 1 draws exactly what [`pick`](#pick) would from the same parts.
+- A weight that's left out (`undefined`) counts as 1.
+- A weight of 0 or less is never drawn. So is one that isn't a finite number, such as `NaN`.
+- Weights don't have to be whole numbers. `0.5` is half as likely as 1.
 
+It returns `undefined` when nothing can be drawn: an empty list, or one where every weight is 0 or less. Check for that before you use the result.
+
+When every weight is a whole number, the draw is `hash(parts) % total`, walking the list in order. So a list where every weight is 1 draws exactly what [`pick`](#pick) would draw from the same parts, and you can add weights to a list later without changing the draws of a list that has none. With a weight that isn't whole, the hash is scaled to the total instead.
+
+The engine draws with it wherever content has weights:
+
+- [storylets](/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws;
+- [variants](/reference/prose#variantmember) with a weight on any member;
+- [pool files](/reference/media#poolfile), when a pool request picks a file;
+- shuffled [playlists](/reference/audio#playlistdef), drawn without replacement.
+
+**Gotchas.**
+- The order of `items` matters. The same parts and the same weights in another order can draw a different item.
+- Like every draw here, the same parts give the same item. Put a count in the parts if you draw more than once in a turn, as the engine does for storylets and variants.

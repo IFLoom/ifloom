@@ -13,7 +13,7 @@ A prose key is a plain string. The engine only gives meaning to the label patter
 | `ava.hi#chat` | The label for choice `chat` in scene `ava.hi`. It's the default when a choice gives no `label`. |
 | `ava.smalltalk/rain#chat` | A label written for one drawn variant. If that member was drawn, it beats the scene's own label. |
 
-Variants are named lists of keys, and one of them is drawn each time. The [loader](/reference/loader) and [`proseStore`](#prosestore-1) take them as explicit lists (`Pack.variants`). A store you build by hand can find them however it likes, for example by key prefix.
+Variants are named lists of keys, and one of them is drawn each time. The [loader](/reference/loader) and [`proseStore`](#prosestore-1) take them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
 
 ## ProseStore
 
@@ -23,10 +23,11 @@ import type { ProseStore } from '@ifloom/engine'
 type ProseStore = {
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
+  weight?: (name: string, key: string) => number
 }
 ```
 
-The game's `prose` field, where data scenes read their words. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order.
+The game's `prose` field, where data scenes read their words. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
 
 You rarely write one by hand. [`loadGame`](/reference/loader#loadgame) sets `game.prose` from its packs' prose and variants, and [`proseStore`](#prosestore-1) builds one from two plain records.
 
@@ -38,11 +39,11 @@ You rarely write one by hand. [`loadGame`](/reference/loader#loadgame) sets `gam
 function proseStore(
   game: Game,
   lines: Record<string, string>,
-  variants?: Record<string, string[]>,
+  variants?: Record<string, readonly VariantMember[]>,
 ): ProseStore
 ```
 
-Builds a prose store from lines by key and variants by name. `line(key, state)` fills in the [tokens](#tokens) for that save with [`fillTokens`](#filltokens), and without a state it returns the line as written. `variants(name)` returns the list as given, or `[]`. The `variants` argument defaults to `{}`.
+Builds a prose store from lines by key and variants by name. `line(key, state)` fills in the [tokens](#tokens) for that save with [`fillTokens`](#filltokens), and without a state it returns the line as written. `variants(name)` returns the member keys as given, or `[]`, and `weight(name, key)` returns the weight a member was given, or 1. The `variants` argument defaults to `{}`.
 
 ```ts
 import { proseStore, type Game } from '@ifloom/engine'
@@ -65,15 +66,23 @@ import type { VariantMember } from '@ifloom/engine'
 type VariantMember = string | { text: string; weight?: number }
 ```
 
-One member of a variants list, in a [pack](/reference/loader#pack)'s `variants` or `proseStore`'s: a prose key, or a key with a weight. A plain key weighs 1.
+One member of a variants list, in a [pack](/reference/loader#pack)'s `variants` or `proseStore`'s: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
 
 ```ts
 variants: {
-  'street.weather': [{ text: 'street.weather/sun', weight: 3 }, 'street.weather/drizzle'],
+  // Sun three times as often as drizzle or wind.
+  'street.weather': [{ text: 'street.weather/sun', weight: 3 }, 'street.weather/drizzle', 'street.weather/wind'],
 }
 ```
 
-A list where every member weighs 1 rotates, as [`drawVariant`](/reference/scenes#drawvariant) describes. Give any member another weight and each draw becomes a [weighted](/reference/random#weighted) pick instead, seeded by the save, the turn and the count of draws, so the same line can come up twice running. The loader reports a weight of 0 or less.
+How a list draws depends on its weights:
+
+- **Every member weighs 1.** The list rotates, as [`drawVariant`](/reference/scenes#drawvariant) describes. It starts somewhere different each turn and walks one step per draw, so a line doesn't come up twice running until the list has gone round.
+- **Any member weighs something else.** Each draw is a [weighted](/reference/random#weighted) pick from the whole list, seeded by the save, the turn and the count of draws so far. Heavier members come up more often, and the same line can come up twice running.
+
+The members counted are the ones left after a [`variants` block](/reference/scenes#block)'s `gate`, so if every member with a weight is gated out, the rest rotate.
+
+A pack that adds to another pack's list adds its members with their weights. The [loader](/reference/loader#the-checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
 
 **Gotcha.** The store needs the game, because <code v-pre>{{v:name}}</code> reads `game.custom.values` and the game's plugins. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 

@@ -98,10 +98,26 @@ The game's `media` field. A pool is a named list of files content can pick from.
 ## PoolFile
 
 ```ts
-type PoolFile = { src: string; tags?: string[] }
+type PoolFile = { src: string; tags?: string[]; weight?: number }
 ```
 
 One file in a pool. `src` is a path, as any picture's, through [`artSrc`](/reference/prose#artsrc). A `.mp4` or `.webm` file is drawn as a video. `tags` are whatever words your game sorts its files by: a colour, the time of day, who's in it.
+
+`weight` is how often the file is picked against the other files that fit a request, 1 if left out. A file of weight 3 is picked three times as often as one of weight 1:
+
+```ts
+media: {
+  pools: {
+    // The usual blue door most days, the red one now and then.
+    door: [
+      { src: 'door/blue-day.jpg', tags: ['blue', 'day'], weight: 4 },
+      { src: 'door/red-day.jpg', tags: ['red', 'day'] },
+    ],
+  },
+}
+```
+
+A weight only matters among the files that fit. It doesn't make a file fit a request whose tags it lacks. The loader reports a weight of 0 or less.
 
 ## Pools
 
@@ -115,7 +131,7 @@ The engine picks a file in three steps.
 
 1. It looks for the files that have every tag you asked for.
 2. If there are none, it drops the last tag and looks again, down to no tags at all, which is any file in the pool. So put the tag that matters most first.
-3. Among the files that fit, it draws one from the save's seed and the pick's key, with the engine's [seeded random](/reference/random).
+3. Among the files that fit, it draws one by their [weights](#poolfile) from the save's seed and the pick's key, with [`weighted`](/reference/random#weighted). A pool with no weights draws exactly as an unweighted pick would, so adding weights to some files later only changes picks that haven't been made yet.
 
 A request for `['blue', 'red']` from the pool above finds no door that's both, drops `red`, and draws from the two blue doors.
 

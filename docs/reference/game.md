@@ -16,6 +16,8 @@ The core has no places and no characters. Locations, exits, walking and where th
 type Game = {
   id: string
   title: string
+  version?: number
+  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   settings?: SettingDef[]
   carryOver?: CarryOver
   finished?: Condition
@@ -48,6 +50,8 @@ type Game = {
 |---|---|
 | `id` | The game's id. [Saves](/reference/saves#keys) are kept under it and refuse another game's, so pick one unique to your game and never change it. |
 | `title` | The game's name. The view passes it through as `view().title`. |
+| `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with `migrations`. Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings and entities into old saves by itself. See [The game's own migrations](/reference/saves#the-game-s-own-migrations). |
+| `migrations` | Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from: step 1 takes a version-1 save to version 2. Each is `(state, tools) => GameState`, and `tools.fill()` fills in content the save lacks. They run when an older save loads. See [The game's own migrations](/reference/saves#the-game-s-own-migrations). |
 | `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/reference/settings). |
 | `carryOver` | What a New Game+ takes from the game before: `{ stats?, flags?, items? }`, each a list of ids, and `items` can be `'all'`. See [New Game+](/reference/state#new-game). |
 | `finished` | A [condition](/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/reference/profile), so a title screen can offer New Game+. See [New Game+](/reference/state#new-game). |
@@ -144,11 +148,14 @@ type Scene = {
   frame?: 'talk'
   tags?: string[]
   panel?: string
+  drawnFrom?: string[]
+  weight?: number
+  when?: Condition
   render: (state: GameState, ctx: SceneCtx) => SceneView
 }
 ```
 
-A scene is anything with an id and a `render` function. If you write it as data, a [`DataScene`](/reference/scenes#datascene), the engine builds `render` for you. See [Scenes](/reference/scenes) for `Scene`, `SceneView`, `SceneChoice` and `SceneCtx`.
+A scene is anything with an id and a `render` function. If you write it as data, a [`DataScene`](/reference/scenes#datascene), the engine builds `render` for you. `drawnFrom`, `weight` and `when` make it a [storylet](/reference/storylets), a scene drawn at random from a named set. See [Scenes](/reference/scenes) for `Scene`, `SceneView`, `SceneChoice` and `SceneCtx`.
 
 ## StorylineDef
 
@@ -173,10 +180,11 @@ The view draws no storylines of its own. A game or a plugin shows them, as the [
 type ProseStore = {
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
+  weight?: (name: string, key: string) => number
 }
 ```
 
-The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. Data scenes read it through the [default runtime](/reference/scenes#defaultruntime). See [Prose and markup](/reference/prose).
+The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. Data scenes read it through the [default runtime](/reference/scenes#defaultruntime). See [Prose and markup](/reference/prose).
 
 **Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/reference/loader#loadgame) sets it. A game built by hand sets it with [`proseStore`](/reference/prose#prosestore-1).
 
@@ -233,6 +241,7 @@ It always checks:
 - that every stat an activity's `cost` spends is declared
 - the commands of the game's own `actions`: a scene that doesn't exist, an item that doesn't exist, or a `{ type: 'custom' }` command that names no [plugin command](/reference/plugins#plugincommand) the game has (`no plugin command named …`)
 - that every stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares
+- [derived stats](/reference/stats#derived-stats) and [levels](/reference/stats#levels): a formula naming an unknown stat or another owner's, a cycle, a derived stat that's `spendable` or has a `start`, and `levels.at` that's empty, out of order or outside the stat's range
 - [settings](/reference/settings): duplicate ids, each declaration, and every `{ setting }` condition the game declares as data
 - that the stats and items in `carryOver` are declared
 - [audio](/reference/audio): `game.audio` itself, each data scene's `audio`, the `[[sound:id]]` and `[[voice:id]]` in its prose, and the `audio` and `sound` effects on its choices, with the same [checks](/reference/loader#audio) as the loader
@@ -241,8 +250,9 @@ It always checks:
 In those effect lists, it reports:
 
 - a `scene` effect to a scene that doesn't exist, or an `item` effect on an item that doesn't exist
+- a [storylet](/reference/storylets) draw, `{ kind: 'scene', from }`, from a set no scene is drawn from (`no scene is drawn from …`), or with an `otherwise` that doesn't exist
 - a `storylineFlag` or `closeStoryline` effect on an undeclared storyline
-- a `stat` or `setStat` effect on a stat that isn't [declared](/reference/stats), or on the wrong owner (a player's stat given an `of`, or an entity's stat without one or with another kind's)
+- a `stat` or `setStat` effect on a stat that isn't [declared](/reference/stats), on a [derived stat](/reference/stats#derived-stats) (`stat … is derived and never written`), or on the wrong owner (a player's stat given an `of`, or an entity's stat without one or with another kind's)
 - a `collect` or `discard` effect on an undeclared [collection](/reference/collections) (`collection … is not declared`)
 - a `collect` entry's or a `notify` effect's `text` that names a prose key the game doesn't have (`no prose for …`)
 - a long-form `{ kind: 'custom', name }` effect that names no plugin effect the game has (`no plugin effect named …`), unless it's an [absent partner](/reference/loader#the-checks) a plugin cooperates with

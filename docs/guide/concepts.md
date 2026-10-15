@@ -43,6 +43,7 @@ See [Effects](/reference/effects) and [Conditions](/reference/conditions).
 The game is your content. It can hold:
 
 - scenes, their prose and the variants of a line
+- storylets, which are scenes an effect draws at random from a named set
 - the scene it opens on (`introScene`) and the phase it starts in (`startPhase`)
 - stats
 - kinds of entity, and the entities that exist at the start
@@ -80,6 +81,8 @@ See [Shapes of game](/guide/shapes) and [Game state: turn](/reference/state#turn
 ## Stats
 
 A [stat](/reference/stats) is a number the game keeps, such as coins or courage. You declare each one, with where it starts and the range it keeps to. A stat with no `of` belongs to the player and lives in `state.stats`.
+
+A stat can also be [derived](/reference/stats#derived-stats), worked out from other stats by a formula written as data, such as `{ sum: ['baking', 'patience'] }`. It's read like any other stat and never written. Any stat can have [levels](/reference/stats#levels), thresholds it passes as it grows, which a `{ level }` condition and the view can read.
 
 See [Stats](/reference/stats).
 
@@ -138,7 +141,9 @@ The engine has no DOM and no framework. It hands out a view and takes commands, 
 
 Each save has a seed, and every random draw is worked out from the seed, a name for the draw and what it's keyed on, such as the turn. Which variant of a line shows, or whether something happens today, comes out the same for the same save every time.
 
-That's what makes undo honest, since stepping back and trying again doesn't re-roll. It also lets a scripted playtest or a snapshot test give the same result every run. Draw your own values the same way, with `roll`, `pick` and `chance`, one named draw per value.
+That's what makes undo honest, since stepping back and trying again doesn't re-roll. It also lets a scripted playtest or a snapshot test give the same result every run. Draw your own values the same way, with `roll`, `pick`, `chance` and `weighted`, one named draw per value.
+
+Content can carry weights where the engine picks for it: a line among its variants, a file in a pool, a track in a shuffled playlist. A [storylet](/reference/storylets) is the same idea for whole scenes. You mark scenes as drawn from a named set, such as `'cafe'`, each with a weight and its own `when`, and the effect `{ kind: 'scene', from: 'cafe' }` opens one of them.
 
 See [Randomness](/reference/random).
 
@@ -157,6 +162,8 @@ A save is a snapshot of the state, with details for a load screen: the turn, the
 The driver says where saves are kept: `localStorage`, IndexedDB, memory for tests, or one you write for a desktop wrapper. The engine has no default, so the game chooses.
 
 Each save carries a version. The format is at version 11 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
+
+Your game can do the same for its own content. Give it a `version`, and when an update renames a variable or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/reference/saves#the-game-s-own-migrations).
 
 See [Saves](/reference/saves).
 

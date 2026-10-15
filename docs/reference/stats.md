@@ -16,6 +16,8 @@ const game = { /* … */, stats }
 
 A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/reference/effects#stat), which adds to it, or a [`setStat` effect](/reference/effects#setstat), which sets it. A [`{ stat }` condition](/reference/conditions#stat) tests it, and an activity's [cost](/reference/actions#activitycost) spends it.
 
+A stat can also be [derived](#derived-stats), worked out from other stats by a formula instead of kept, and any stat can have [levels](#levels) that it passes as it grows.
+
 A stat declared with `of` is kept on each [entity](/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. The value lives at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
 
 ## StatDef
@@ -146,7 +148,7 @@ The declaration for a stat, or `undefined` if the game declares none by that id.
 function startingStats(game: Game): Stats
 ```
 
-Every one of the player's stats (those declared without `of`) at its `start` value. [`startingState`](/reference/commands#startingstate) uses it for a new game.
+Every one of the player's stats (those declared without `of`) at its `start` value. A [derived stat](#derived-stats) isn't in it, because it's never kept. [`startingState`](/reference/commands#startingstate) uses it for a new game.
 
 ## statMax
 
@@ -225,21 +227,27 @@ formatStat(statDef(game, 'coins'), 12) // '12c'
 
 ## Derived stats
 
-A derived stat is worked out from other stats every time it's read, and never kept in the save:
+To show a number that's worked out from other stats, such as a service score made from baking and patience, declare a stat with `derive` instead of keeping it:
 
 ```ts
-stats: [
+import type { StatDef } from '@ifloom/engine'
+
+const stats: StatDef[] = [
   { id: 'baking', label: 'Baking', start: 4 },
   { id: 'patience', label: 'Patience', start: 6 },
   { id: 'service', label: 'Service', derive: { sum: ['baking', 'patience'] } },
 ]
 ```
 
-Conditions, prices and the view read it like any other stat. A derived stat on an [entity](#entity-stats) kind reads the same entity's stats. Its value is held to its own range, so give it a `max` if it can pass 100.
+The engine works a derived stat out from its [`Formula`](#formula) every time something reads it, and never keeps it in the save. With baking at 4 and patience at 6, `service` reads 10. Raise either one and `service` follows on the next read.
 
-**Gotchas.**
-- It can't be written. A `stat` or `setStat` effect on it does nothing, and the [loader](/reference/loader#the-checks) reports one, along with a cost that spends it, `spendable`, a `start`, a formula naming an unknown stat or another owner's, and a cycle.
-- Formulas don't round. `{ scale: 'patience', by: 0.5 }` can give 2.5.
+Everything that reads stats reads a derived one the same way, through [`statValue`](#statvalue):
+
+- a [`{ stat }`](/reference/conditions#stat) condition, a [`{ tier }`](/reference/conditions#tier) condition and a [`{ level }`](/reference/conditions#level) condition;
+- an activity's [cost](/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though);
+- the [view](/reference/view#statview), in `stats`, `statsById` and each entity's stats.
+
+A derived stat isn't in `state.stats`, so a hand-written scene or a custom function that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
 
 ### Formula
 
@@ -257,7 +265,93 @@ type Formula =
   | { clamp: Formula; min?: number; max?: number }
 ```
 
-## StatLevels
+A formula is data, so the loader can check it and a mod can change it. Formulas nest, and each part can be any formula.
+
+| Formula | Gives | Example |
+|---|---|---|
+| a number | That number. | `5` |
+| a string | That stat's value, as `statValue` reads it. It can be another derived stat. | `'baking'` |
+| `{ sum }` | The parts added together. An empty list gives 0. | `{ sum: ['baking', 'patience'] }` |
+| `{ product }` | The parts multiplied together. An empty list gives 1. | `{ product: ['wage', 'hours'] }` |
+| `{ min }` | The smallest part. An empty list gives 0. | `{ min: ['baking', 'patience'] }`, as good as your weaker skill |
+| `{ max }` | The largest part. An empty list gives 0. | `{ max: ['charm', 'friendship'] }` |
+| `{ scale, by }` | The formula times `by`. Use a fraction to divide. | `{ scale: 'patience', by: 0.5 }` |
+| `{ clamp, min?, max? }` | The formula held between `min` and `max`. Leave either out for no bound on that side. | `{ clamp: { sum: ['baking', -2] }, min: 0, max: 10 }` |
+
+A bigger one, an average of two skills plus a bonus for patience above 5:
+
+```ts
+{
+  id: 'service',
+  label: 'Service',
+  derive: {
+    sum: [
+      { scale: { sum: ['baking', 'manners'] }, by: 0.5 },
+      { clamp: { sum: ['patience', -5] }, min: 0 },
+    ],
+  },
+}
+```
+
+Formulas don't round. `{ scale: 'patience', by: 0.5 }` with patience at 5 gives 2.5, and the view shows `2.5`. Use `format` if you want it written another way, or keep the numbers whole.
+
+### On an entity
+
+A derived stat with `of` is worked out for each [entity](/reference/entities) of that kind, from the same entity's stats:
+
+```ts
+const stats: StatDef[] = [
+  { id: 'skill', label: 'Skill', of: 'staff', start: 30 },
+  { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
+  { id: 'output', label: 'Output', of: 'staff', derive: { min: ['skill', 'morale'] } },
+]
+```
+
+`{ stat: 'output', of: 'staff:ana', gte: 40 }` reads Ana's skill and Ana's morale. Each entity's [`StatView`](/reference/view#statview) shows its own `output`. A new entity keeps no value for a derived stat, because there's nothing to keep.
+
+A formula can only read stats with the same owner. A stat of the player's reads the player's stats, and a staff stat reads staff stats. The loader reports a formula that reads another owner's stat.
+
+### Its range
+
+A derived stat is held to its own range like any other stat, after the formula is worked out. That's `min` 0 and `max` 100 unless the stat says otherwise. So a formula that comes out at 140 reads 100, and one that comes out negative reads 0. Give the stat a `max` (or a `min`) when it can go past those:
+
+```ts
+{ id: 'worth', label: 'Worth', max: 99999, format: '£{n}', derive: { sum: ['coins', { product: ['stock', 3] }] } }
+```
+
+A derived stat that another formula reads is held to its range before the other formula sees it.
+
+### What it can't do
+
+A derived stat is never written. A `stat` or `setStat` effect on one does nothing, a [cost](/reference/actions#activitycost) doesn't spend it, and a [`create`](/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
+
+The [loader](/reference/loader#the-checks) reports each of these:
+
+- a `stat` or `setStat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
+- an activity whose `cost` spends one (`spends stat "…", which is derived and never written`);
+- a derived stat with `spendable` or a `start`;
+- a formula that names a stat the game doesn't declare, or one with another owner;
+- a cycle, such as `service` reading `mood` while `mood` reads `service`. It's reported as `derive goes round in a cycle: service → mood → service`. If you run the game anyway, a formula that goes round reads 0 once it's 64 steps deep.
+
+[`validatePack`](/reference/game#validatepack) reports the same formula, `spendable`, `start` and cycle problems, and a `stat` or `setStat` effect on a derived stat in item uses and activities.
+
+## Levels
+
+To give a stat levels, such as cooking that goes up a level at 10, 30 and 60, declare `levels` on it:
+
+```ts
+import type { StatDef } from '@ifloom/engine'
+
+const stats: StatDef[] = [
+  { id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60], notice: '{label} is now level {level}.' } },
+]
+```
+
+The stat itself doesn't change. You still raise it with `stat` effects and test it with `{ stat }`. The levels are a reading of its value: below 10 it's level 0, from 10 it's level 1, from 30 level 2, and from 60 level 3, the top.
+
+Levels are optional, stat by stat. A stat without `levels` has none, and the view shows it as a plain number. A derived stat can have levels too, and an [entity stat](#entity-stats) can, read per entity.
+
+### StatLevels
 
 ```ts
 import type { StatLevels } from '@ifloom/engine'
@@ -268,15 +362,43 @@ type StatLevels = {
 }
 ```
 
-Levels on a stat, declared as `levels` on its [`StatDef`](#statdef). `at` is the value each level starts at, lowest first. Below the first is level 0. A [`{ level }`](/reference/conditions) condition reads the level, and the view's [`StatView`](/reference/view#statview) gets a `level` field.
+| Field | Default | What it does |
+|---|---|---|
+| `at` | | The value each level starts at, lowest first. Below the first is level 0. A value equal to a threshold is at that level. |
+| `notice` | none | A line to tell the player when a command takes the stat up a level, with `{label}` for the stat's label and `{level}` for the new level. No notice if left out. |
+
+### What reads the level
+
+- **Conditions.** [`{ level: 'cooking', gte: 2 }`](/reference/conditions#level) holds from level 2 up. With `of`, it reads an entity's level.
+- **The view.** The stat's [`StatView`](/reference/view#statview) gets a `level` field, `{ level, next, progress }`: the level, the value the next level starts at (`null` at the top), and how far the value is from this level's start to the next, 0 to 1. See [`statLevel`](#statlevel).
+- **Code.** [`statLevel`](#statlevel) gives the same thing from a state.
+
+### The notice
+
+When a command takes one of the player's stats up one or more levels, and the stat's `levels` has a `notice`, the engine raises a [notice](/reference/notices) after the command. With the cooking stat above, a command that takes cooking from 28 to 31 raises:
 
 ```ts
-{ id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60], notice: '{label} is now level {level}.' } }
+{ id: 'level.cooking', title: 'Cooking is now level 2.', tag: 'level' }
 ```
 
-When a command takes one of the player's stats up a level and `notice` is set, the engine raises a [notice](/reference/notices) tagged `level`, with `{label}` and `{level}` filled in. Its id is `level.<stat>`, so a second level-up replaces the first while it's unseen. Without `notice` there's no notice.
+- The notice's id is `level.<stat>`, so a second level-up of the same stat replaces the first while it's unseen.
+- Its `tag` is `level`, so a UI can show it its own way.
+- `{level}` is the level the stat ends the command at. A command that jumps two levels raises one notice, for the higher.
+- Only the player's stats raise notices. An entity stat's levels show in the view and in conditions, but a staff member going up a level says nothing. Write a [trigger](/reference/triggers) on a `{ level, of }` condition if you want one.
+- Going down a level raises nothing.
+- It's raised when a command runs through [`apply`](/reference/commands#apply) or `dispatch`. [`applyEffects`](/reference/effects#applyeffects) on its own doesn't raise it.
 
-**Gotcha:** the loader reports thresholds that don't go up, or that fall outside the stat's `min` and `max`.
+### In the React UI
+
+The React UI's [`StatList`](/react/components#statlist) shows a levelled stat's level after its label, as "Level 2" (the word `ui.statLevel`), and a bar under the row towards the next level, labelled for screen readers with `ui.statProgress`. At the top level there's no bar. The parts are `stat-level` and `stat-progress`. See [the data-part reference](/react/customising#stats).
+
+### The checks
+
+The loader and [`validatePack`](/reference/game#validatepack) report, against `stat <id>`:
+
+- `levels.at needs at least one threshold`, for an empty or missing `at`;
+- `levels.at must go up, each threshold above the last`, for thresholds out of order or repeated;
+- `levels.at … outside the stat's range (… to …)`, for a threshold below the stat's `min` or above its `max`. A stat whose `max` is a `{ value }` has no upper bound for this check.
 
 ## statValue
 
@@ -284,7 +406,7 @@ When a command takes one of the player's stats up a level and `notice` is set, t
 function statValue(state: GameState, game: Game, id: string, of?: string): number
 ```
 
-A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0.
+A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0.
 
 ```ts
 import { statValue } from '@ifloom/engine'

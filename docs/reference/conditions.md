@@ -65,6 +65,7 @@ type Condition =
   | ({ stat: StatKey; of?: string } & Range)
   | ({ count: string; where?: Condition } & Range)
   | { entity: string }
+  | ({ level: StatKey; of?: string } & Range)
   | { tier: StatKey; gte: number }
   | { storyline: string; open?: boolean }
   | ({ counter: { storyline: string; key: string } } & Range)
@@ -181,6 +182,8 @@ Works like [`flag`](#flag) without a range, on a [storyline](/reference/storylin
 
 Tests a [stat](/reference/state#stats) against a range. Coins, energy and every other number the player has are [declared stats](/reference/stats), so this is the condition for all of them.
 
+It reads the stat with [`statValue`](/reference/stats#statvalue), so a [derived stat](/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`. [`holds`](#holds) called without a game can't do either, and reads `state.stats` as it is, with a missing stat as 0.
+
 With `of`, it tests an [entity](/reference/entities)'s stat. `of` is an [entity reference](/reference/entities#entityref), or `'$'` inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`.
 
 ```ts
@@ -215,6 +218,30 @@ The [loader](/reference/loader#the-checks) checks the kind and the `where`. [`ex
 The [entity](/reference/entities) is in the game, which means it was declared or created and hasn't been removed. [`explain`](#explain) says `staff:ana is in the game` or `staff:ana is not in the game`.
 
 **Gotcha.** Inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
+
+### level
+
+```ts
+{ level: 'cooking' }                        // level 1 or more
+{ level: 'cooking', gte: 2 }                // level 2 or more
+{ level: 'cooking', lt: 3 }                 // not yet level 3
+{ level: 'skill', of: 'staff:ana', gte: 2 } // an entity's level
+```
+
+Tests the level a stat with [`levels`](/reference/stats#levels) is at, against a [range](#range). The level is how many of the stat's `levels.at` thresholds its value has reached, as [`statLevel`](/reference/stats#statlevel) works it out. A bare `{ level }` means level 1 or more.
+
+With `of`, it reads an [entity](/reference/entities)'s level, as [`{ stat }`](#stat) does. An entity that isn't there fails every range, `lt` included.
+
+```ts
+// declared with the stat:
+{ id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60] } }
+```
+
+**Gotchas.**
+- A stat with no `levels` is always at level 0, so `{ level: 'charm' }` on it never holds and `lt` always does. The loader checks that the stat is declared and named on the right owner, but not that it has levels.
+- It needs the game to find the levels. [`holds`](#holds) without a game reads every level as 0.
+
+[`explain`](#explain) says `stat cooking is at level 1; wants 2 or more`, or `staff:ana stat skill is at level 2; wants 2 or more` with an `of`.
 
 ### tier
 
@@ -496,7 +523,8 @@ function referenced(condition: Condition | undefined): {
 Lists every id a condition names, by kind, so you can check them against a game. The [loader](/reference/loader#the-checks) uses it, and hands plugins its `conditionProblems` to check their own content with.
 
 - `kinds` holds the [kinds](/reference/entities) from `{ count }`, from `{ entity }` and from every `of` (the part before the colon, since `'$'` names none). It looks inside a `count`'s `where` too.
-- `owned` is every stat a `{ stat }` names, with whose it is (`of`), for checking it belongs there.
+- `stats` and `owned` include the stat a `{ level }` names, as well as `{ stat }`'s and `{ tier }`'s.
+- `owned` is every stat a `{ stat }` or `{ level }` names, with whose it is (`of`), for checking it belongs there.
 - `settings` is every setting a `{ setting }` reads, with the `is` it compares to, if any.
 - `custom` is every custom or plugin condition by name, a [short call](#plugin-shorthand) included.
 - `calls` is every such call with what it passes in `with`. A short call's value that isn't an object comes back as `{ value }`, for a plugin's [`argProblems`](/reference/plugins#checking-calls) to check.

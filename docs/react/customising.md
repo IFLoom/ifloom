@@ -457,7 +457,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `stat-label` | A stat's label. |
 | `stat-value` | A stat's value, as the game formats it. |
 | `stat-level` | A levelled stat's level (`ui.statLevel`, "Level 2"), inside its label. Carries `data-level`. |
-| `stat-progress` | A levelled stat's bar towards its next level, a `progressbar` holding one `<span>` as wide as the progress. Not drawn at the top level. |
+| `stat-progress` | A levelled stat's bar towards its next level, a `progressbar` holding one `<span>` as wide as the progress, labelled with `ui.statProgress`. Not drawn at the top level. The `paper` preset hides it, so a stat there shows only its level. |
 
 ### Where you are, and who's there
 

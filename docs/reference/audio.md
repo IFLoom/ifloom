@@ -126,7 +126,10 @@ Give music and ambience a `channel`. A track with none is a sound effect, and th
 ## PlaylistDef
 
 ```ts
-type PlaylistDef = { playlist: string[]; order?: 'inOrder' | 'loop' | 'shuffle' }
+type PlaylistDef = {
+  playlist: (string | { track: string; weight?: number })[]
+  order?: 'inOrder' | 'loop' | 'shuffle'
+}
 ```
 
 Several background tracks played one after another. Name it anywhere you'd name a background track.
@@ -138,6 +141,24 @@ Several background tracks played one after another. Name it anywhere you'd name 
 | `'shuffle'` | The list plays over and over in an order drawn from the save's seed. |
 
 A shuffled order is drawn from the seed, the channel, the playlist's id and the turn it started playing (kept in [`state.audio.started`](#audiostate)). It stays the same for as long as the playlist plays, and a [replay](/reference/runner#replay) of the same commands draws the same order.
+
+### Weights in a shuffle
+
+In a shuffled playlist, an entry can be `{ track, weight }` instead of a plain id, to make a track more likely to come early in the order:
+
+```ts
+tracks: {
+  calm: { src: 'music/calm.ogg', channel: 'music' },
+  evening: { src: 'music/evening.ogg', channel: 'music', volume: 0.8 },
+  bandstand: { src: 'music/bandstand.ogg', channel: 'music' },
+  // calm comes first more often than not, then the other two in either order.
+  radio: { playlist: [{ track: 'calm', weight: 3 }, 'evening', 'bandstand'], order: 'shuffle' },
+}
+```
+
+A plain id weighs 1. The order is drawn without replacement: the first track by weight from all of them, the next by weight from the ones left, and so on. Every track still plays once in each pass, and weight only changes how early it tends to come.
+
+A playlist whose entries all weigh 1 shuffles exactly as it would with plain ids. Weights only mean something in a `'shuffle'` playlist. The loader reports a weight on a playlist that doesn't shuffle, and a weight of 0 or less.
 
 ## ChannelDef
 

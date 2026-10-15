@@ -27,7 +27,7 @@ type Pack = {
   settings?: SettingDef[]
   strings?: Record<string, string>
   prose?: Record<string, string>
-  variants?: Record<string, string[]>
+  variants?: Record<string, VariantMember[]>
   custom?: Custom
   patches?: Patch[]
   data?: Record<string, Record<string, readonly PluginEntry[]>>
@@ -44,7 +44,7 @@ type Pack = {
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/reference/entities). |
 | `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/reference/strings#overriding). |
 | `prose` | By key. A later pack wins. |
-| `variants` | By variants name. A later pack appends members to the list. |
+| `variants` | By variants name. A later pack appends members to the list. A member is a prose key, or `{ text, weight }` to give it a [weight](/reference/prose#variantmember). |
 | `custom` | [Custom functions](/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`) and then by name. A later pack's function replaces an earlier one's of the same kind and name, and the rest are kept. |
 | `patches` | Applied straight away, in order. See [Patches](#patches). |
 | `data` | Content for the game's [plugins](/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/plugins/places#in-a-pack) and `data.cast.characters` for the [cast](/plugins/cast#in-a-pack). |
@@ -170,7 +170,7 @@ Every condition the loader looks at is walked, including inside `all`, `any`, `n
 |---|---|
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineFlag` or `counter`. |
 | `unknown item "…"` | An item nobody declares. |
-| `unknown stat "…"` | A stat nobody declares, in `stat` or `tier`. |
+| `unknown stat "…"` | A stat nobody declares, in `stat`, `level` or `tier`. |
 | `unknown collection "…"` | A collection nobody declares. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat` or `flag`. `'$'` names no kind and isn't checked. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
@@ -193,9 +193,11 @@ Effect lists are checked on triggers, data scene choices and activities. The loa
 | Whatever the plugin says | The plugin's `argProblems`, for a call to a plugin's effect. |
 | `unknown kind "…"` | A `create`'s or `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `flag` or `remove` effect, names a kind nobody declares. |
 | A stat owner problem | A `stat` or `setStat` effect names a declared stat on the wrong owner. See [Stat owners](#stat-owners). |
+| `stat "…" is derived: it is worked out, never written` | A `stat` or `setStat` effect names a [derived stat](/reference/stats#derived-stats), or a `create` effect gives one a value in its `stats`. |
 | `unknown collection "…"` | A `collect` or `discard` names a collection nobody declares. |
 | `no prose for "…"` | A `notify`'s `text`, or a `collect` entry's `text`, names prose that isn't written. |
-| `goes to unknown scene "…"` | A `scene` effect goes to a scene that doesn't exist. |
+| `goes to unknown scene "…"` | A `scene` effect goes to a scene that doesn't exist, or a [storylet](/reference/storylets) draw's `otherwise` names one. |
+| `draws from "…", but no scene is drawn from it` | A storylet draw, `{ kind: 'scene', from }`, names a set that no scene's `drawnFrom` includes. |
 | An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
 
 Inside an `each`, its `where` is checked as a condition and its `effects` as an effect list, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
@@ -215,7 +217,7 @@ Commands are checked on the game's own `actions`, and wherever a plugin's `check
 
 ### Stat owners
 
-A stat is either the player's or belongs to a [kind](/reference/entities). Wherever a stat is named with or without an `of`, in conditions and in `stat` and `setStat` effects, the loader checks it's named on the right owner:
+A stat is either the player's or belongs to a [kind](/reference/entities). Wherever a stat is named with or without an `of`, in `stat` and `level` conditions and in `stat` and `setStat` effects, the loader checks it's named on the right owner:
 
 | Problem | Means |
 |---|---|
@@ -239,6 +241,8 @@ Wherever content names [audio](/reference/audio), the loader checks it against `
 | `volume is not between 0 and 1` | A track's `volume`. |
 | `a playlist with no tracks` | A playlist's list is empty. |
 | `"…" is a playlist; a playlist holds tracks` | A playlist names another playlist. |
+| `"…" has a weight of …; a weight must be above 0` | A playlist entry's `weight` is 0 or less. |
+| `"…" has a weight, but only a shuffled playlist uses weights` | A playlist entry has a `weight`, but the playlist's `order` isn't `'shuffle'`. |
 | `unknown setting "…"` | A channel's `volume`, or `game.audio.mute`, names a setting the game doesn't declare. |
 | `setting "…" is not a ui range setting` | A channel's `volume` names a setting that isn't a `ui` range. |
 | `setting "…" is not a ui toggle setting` | `game.audio.mute` names a setting that isn't a `ui` toggle. |
@@ -256,6 +260,7 @@ Wherever content asks for a picture or a video, the loader checks it against `ga
 | `no file in pool "…" is tagged "…"` | A request asks for a tag no file in the pool has. The pick would still fall back to other files, but a tag nothing has is usually a typo. |
 | `a pool with no files` | A pool is empty. Reported as `pool <id>`. |
 | `file <n> has no src` | A file in a pool has no `src`. Reported as `pool <id>`. |
+| `file <n> has a weight of …; a weight must be above 0` | A file's `weight` is 0 or less. Reported as `pool <id>`. |
 | `unknown flag "…" in …` | Markup has a `name=value` part whose name isn't a flag, such as `speed=2`. |
 | `"…" and "…" can't all be alt text in …; is one a misspelt flag?` | Markup has more than one part that isn't a flag. |
 | `video flag "…" on a picture` | `controls`, `once`, `sound` or `poster` on a picture: `[[img:]]` markup, a `{ media }` block or a stage layer whose file isn't a video. A pool with a video in it may take them. |
@@ -280,15 +285,15 @@ A hotspot's `command` and `when`, and a layer's `when`, are checked as any [comm
 |---|---|
 | `pack` | `written for schema …, this engine reads …`: the pack's `schema` isn't [`SCHEMA`](#schema). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
-| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. Its `audio`, as a placement (see [Audio](#audio)). Its `{ media }` blocks and its `stage` (see [Media](#media)). |
-| `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. |
+| `scene <id>` | Every [data scene](/reference/scenes#datascene). `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects` as an effect list. Its `audio`, as a placement (see [Audio](#audio)). Its `{ media }` blocks and its `stage` (see [Media](#media)). For every scene, data or hand-written, its [storylet](/reference/storylets) fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when` as a condition. |
+| `activity <id>` | Each requirement's `when` in `requires`, and its `effects` as an effect list. `spends stat "…", which is derived and never written` for a [derived stat](/reference/stats#derived-stats) in its `cost`. |
 | `trigger <id>` | Its `when`, and its `effects` as an effect list. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
 | `setting <id>` | `two settings share this id` (twice in one pack's list, or the base's; a later pack redeclaring one is fine), `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
 | `finished` | The game's [`finished`](/reference/state#new-game) condition. Reported against `base`. |
 | `carryOver` | `unknown stat "…"` and `unknown item "…"` in the game's [`carryOver`](/reference/state#new-game), and `stat "…" belongs to <kind>, not the player` for a kind's stat. Reported against `base`. |
-| `stat <id>` | `belongs to unknown kind "…"`: its `of` names a kind nobody declares. |
-| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, and `an entity id must not be a whole number` (see [Ids](/reference/entities#ids)). |
+| `stat <id>` | `belongs to unknown kind "…"`: its `of` names a kind nobody declares. For a [derived stat](/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
+| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written` for a derived stat in its `stats`, and `an entity id must not be a whole number` (see [Ids](/reference/entities#ids)). |
 | `action <id>` | The game's own [`actions`](/reference/game#game): each one's `when` and `blocked` conditions, and its `command`. They come with `base`, so the pack is reported as `base`. |
 | `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. Reported against `base`. |
 | `data <plugin>` | `the game has no plugin named "<plugin>"`: a pack carries content for a plugin the game wasn't built with. That content is skipped. |
@@ -298,13 +303,16 @@ A hotspot's `command` and `when`, and a layer's `when`, are checked as any [comm
 | `audio` | `game.audio.mute`. Reported against the last pack that set it, or `base`. |
 | `audio default` | The tracks in `game.audio.default`, as placements. |
 | `pool <id>` | An empty pool, or a file with no `src`. See [Media](#media). |
+| `variants <name>` | `"…" has a weight of …; a weight must be above 0`, for a [variants member](/reference/prose#variantmember) with a weight of 0 or less. |
+| `version` | `version must be a whole number, 1 or more`, for the game's [`version`](/reference/saves#the-game-s-own-migrations). Reported against `base`. |
+| `migration <n>` | `a step is keyed by the version it upgrades from, 1 to …`, for a step in `migrations` keyed outside 1 to `version - 1`. A game with no `version` has no room for steps, so any step is reported. Reported against `base`. |
 | `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]`, and the pools and flags in picture and video markup, in every prose entry, variants members included, reported against the pack that wrote it. |
 
 A plugin's `check` is lent the loader's own `conditionProblems`, `blockProblems`, `commandProblems`, `audioProblems` and `stageProblems` as [`CheckTools`](/reference/plugins#checktools), so its problems read like the loader's. That's how the [places plugin](/plugins/places#checks) checks a location's exits, body, actions, audio and stage, and the [cast](/plugins/cast#checks) a character's home, schedule and talk scenes.
 
 **Absent partners.** A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/reference/plugins#cooperates). In play it simply isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
 
-**Not checked by the loader:** hand-written `Scene`s, the prose of variants members, `panelData` names, <code v-pre>{{v:…}}</code> values, item uses, an activity's `cost`, a stat's `max` value, and commands of any type other than the four above. The game's own actions are checked, as the `action <id>` row says.
+**Not checked by the loader:** hand-written `Scene`s (apart from their storylet fields), the prose of variants members, `panelData` names, <code v-pre>{{v:…}}</code> values, item uses, an activity's `cost` (apart from a derived stat it spends), a stat's `max` value, whether a `{ level }` condition's stat has levels, and commands of any type other than the four above. The game's own actions are checked, as the `action <id>` row says.
 
 Some problems as `describeProblem` prints them:
 
@@ -317,6 +325,8 @@ town · setting difficulty · default "normal" is not one of the options
 mod:night-market · locations yard · no prose for "place.yard"
 mod:new-menu · entity dish:7 · an entity id must not be a whole number
 mod:new-menu · entity dish:pie · no dish stat named "coins"
+town · scene cafe.quiet · has a when but no drawnFrom; when only gates draws
+town · stat service · derive goes round in a cycle: service → mood → service
 ```
 
 ### What validatePack adds
@@ -329,6 +339,8 @@ mod:new-menu · entity dish:pie · no dish stat named "coins"
 - that every stat an activity's `cost` spends is declared;
 - the commands of the game's own `actions`: a `scene` or `use` target, and that a `custom` command names a plugin command;
 - that a stat's `max: { value }` names a [custom value](/reference/custom#values) the game declares;
+- [derived stats](/reference/stats#derived-stats) and [levels](/reference/stats#levels), as the loader checks them, and a `stat` or `setStat` effect on a derived stat in item uses and activities;
+- a [storylet](/reference/storylets) draw's set and `otherwise` in item uses and activities;
 - the [settings](/reference/settings): duplicate ids, and each one's declaration as the loader checks it;
 - every `{ setting }` condition in `finished`, triggers, inputs, the game's actions, activities' requirements and data scenes, as the loader checks it;
 - the stats and items in `carryOver`;

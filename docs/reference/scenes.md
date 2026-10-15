@@ -5,6 +5,8 @@ A scene is one screen of story: some prose, and the choices under it. The engine
 - **Declare it as data**, as a [`DataScene`](#datascene). Its prose lives in [prose keys](/reference/prose), its conditions and effects are data, and the [loader](/reference/loader#the-checks) can check every id it names. The engine renders it for you (see [Running data scenes](#running-data-scenes)). Most scenes should be data scenes.
 - **Write it by hand**, as a [`Scene`](#scene). You get full control in plain TypeScript, for a screen that doesn't fit blocks and choices.
 
+Either kind can also be a [storylet](/reference/storylets), a scene an effect draws at random from a named set. See [`StoryletFields`](#storyletfields).
+
 For a walkthrough, see [Your first story](/guide/first-story). For what happens after the player picks a choice, see [Commands](/reference/commands#choose) and [Effects](/reference/effects).
 
 ## Scene
@@ -19,13 +21,16 @@ type Scene = {
   frame?: 'talk'
   tags?: string[]
   panel?: string
+  drawnFrom?: string[]
+  weight?: number
+  when?: Condition
   render: (state: GameState, ctx: SceneCtx) => SceneView
 }
 ```
 
 This is what sits in `game.scenes`. The engine calls `render` whenever it builds the view and again when the player chooses, so it must be a pure function of `state` (and of `ctx`, which comes from the state). If you need anything random, draw it with [`roll` or `pick`](/reference/random), never `Math.random`.
 
-The top-level `title`, `speaker`, `frame`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins.
+The top-level `title`, `speaker`, `frame`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)).
 
 ```ts
 import type { Scene } from '@ifloom/engine'
@@ -223,6 +228,9 @@ type DataScene = {
   panelData?: string      // the name of a custom panel on the game
   audio?: Record<string, string | null>   // background audio by channel while it's open
   stage?: MediaStage      // a layered picture with hotspots
+  drawnFrom?: string[]    // the storylet sets it can be drawn from
+  weight?: number         // how often a draw picks it, 1 if left out
+  when?: Condition        // only drawn while this holds
   body: Block[]
   choices: Choice[]
 }
@@ -382,6 +390,46 @@ const custom: Custom = {
 
 **Gotcha.** An unknown name gives `panelData: undefined`, not an error, and the loader doesn't check panel names.
 
+## StoryletFields
+
+```ts
+import type { StoryletFields } from '@ifloom/engine'
+
+type StoryletFields = {
+  drawnFrom?: string[]
+  weight?: number
+  when?: Condition
+}
+```
+
+The fields that make a scene a [storylet](/reference/storylets), a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/reference/effects#scene). Both `Scene` and `DataScene` have them.
+
+| Field | Default | What it does |
+|---|---|---|
+| `drawnFrom` | none | The sets the scene can be drawn from, such as `['cafe']`. It's separate from `tags`, which only style a scene. |
+| `weight` | `1` | How likely a draw is to pick it against the other eligible scenes. |
+| `when` | always | A [condition](/reference/conditions) that must hold for the scene to be drawn. |
+
+```ts
+import type { DataScene } from '@ifloom/engine'
+import { here, person } from '@ifloom/plugin-cast'
+
+const avasBreak: DataScene = {
+  id: 'cafe.break',
+  title: 'Ava’s break',
+  speaker: 'ava',
+  drawnFrom: ['cafe'],
+  weight: 2,
+  when: here('ava'),
+  body: [{ text: 'cafe.break' }],
+  choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', id: null }] }],
+}
+```
+
+**Gotchas.**
+- `when` gates draws only. A `scene` command or a `{ kind: 'scene', id }` effect naming the scene opens it whether `when` holds or not.
+- The loader reports a `weight` or a `when` on a scene with no `drawnFrom`, and a weight of 0 or less. See [the checks](/reference/storylets#the-checks).
+
 ## Running data scenes
 
 A game lists data scenes in `game.scenes` and the engine runs them. The reducer and the view get every scene through [`sceneById`](/reference/game#scenebyid). The first time it's asked for a `DataScene`, it bakes it into a `Scene` that renders with [`defaultRuntime`](#defaultruntime), and keeps the result. You don't have to write a runtime, wrap your scenes or give them a `render`.
@@ -389,7 +437,7 @@ A game lists data scenes in `game.scenes` and the engine runs them. The reducer 
 The default runtime reads:
 
 - **words** from `game.prose` (set by [`loadGame`](/reference/loader#loadgame), or by you with [`proseStore`](/reference/prose#prosestore-1)), with tokens filled in for the save
-- **variants** drawn by [`drawVariant`](#drawvariant), which rotates and starts somewhere different each turn
+- **variants** drawn by [`drawVariant`](#drawvariant), which rotates and starts somewhere different each turn, or draws by weight when a member has a [weight](/reference/prose#variantmember)
 - **`once: { per: 'turn' }`** through [`usedThisTurn` and `markUsed`](/reference/progress#usedthisturn-and-markused)
 - **conditions, custom effects and panels** from the game
 
@@ -401,7 +449,7 @@ Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#rendersce
 function bakeScene(game: Game, scene: DataScene): Scene
 ```
 
-The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `frame`, `tags` and `panel`, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
+The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `frame`, `tags` and `panel`, its `drawnFrom`, `weight` and `when` when it has them, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
 
 The cache is per game, so the same scene object listed in two games runs with each game's own prose and custom functions.
 
@@ -423,33 +471,20 @@ const runtime: SceneRuntime = {
 }
 ```
 
-## StoryletFields
-
-```ts
-import type { StoryletFields } from '@ifloom/engine'
-
-type StoryletFields = {
-  drawnFrom?: string[]
-  weight?: number
-  when?: Condition
-}
-```
-
-Fields any scene, hand-built or data, can carry to be a storylet: a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/reference/effects#scene). `drawnFrom` names the sets it's in, such as `['cafe']`. It's separate from `tags`, which only style a scene. `weight` is how likely a draw is to pick it against the others (1 if left out), and `when` is a [condition](/reference/conditions) that must hold for it to be drawn.
-
-```ts
-{ id: 'cafe.break', drawnFrom: ['cafe'], weight: 2, when: here('ava'), body: [{ text: 'cafe.break' }], choices: [/* ... */] }
-```
-
-**Gotcha:** `when` gates draws only. A `scene` command or effect naming the scene opens it whether `when` holds or not. The loader reports a `weight` or `when` on a scene with no `drawnFrom`, and a weight of 0 or less.
-
 ### drawVariant
 
 ```ts
-function drawVariant(state: GameState, name: string, members: string[]): { id: string; remember: Effect }
+function drawVariant(
+  state: GameState,
+  name: string,
+  members: string[],
+  weightOf?: (key: string) => number | undefined,
+): { id: string; remember: Effect }
 ```
 
 Returns the member of a set of variants this state gets, and the effect that records the draw. The [turn](/reference/state#turn) picks a starting offset through its own [hash](/reference/random), mixed with the save's seed, as `roll(members.length, name, seed, turn)`. The count of draws so far, kept in the variable `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines.
+
+With `weightOf`, and any member weighing something other than 1, it draws by weight instead, with [`weighted`](/reference/random#weighted) seeded by the name, the save's seed, the turn and the count. A weight `weightOf` leaves out counts as 1. The count still goes up, so the next draw is a fresh one. The [default runtime](#defaultruntime) passes the weights from `game.prose`.
 
 ```ts
 import { drawVariant } from '@ifloom/engine'

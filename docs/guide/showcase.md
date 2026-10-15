@@ -170,6 +170,24 @@ Her small talk comes straight after that line, so each of the three lines is a n
 
 `town.ts`, the `high-street` place. Its body is the street's line, then `{ variants: 'street.weather' }`, which is one of three lines about the weather from the pack's `variants`, like Ava's small talk. A room has no choices to record a draw, so the line is picked from the save's seed and the turn alone. It's dealt afresh each turn (each day, here), and it's the same every time the player looks in that day. Two days running can deal the same line. See the [`variants` block](/reference/scenes#block).
 
+### Sit a while at the café
+
+`town.ts`, the `sit` activity and the four `cafe.*` scenes after the rest, with their words in `prose.ts`. The café has a "Sit a while" button, a room action that runs the activity `sit`. Its one effect draws a [storylet](/reference/storylets):
+
+```ts
+{ id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] }
+```
+
+Three scenes name `'cafe'` in their `drawnFrom`, each with a weight and a `when`:
+
+- `cafe.window`, the window seat, weight 3, until it's been seen twice (`{ not: { seen: 'cafe.window', gte: 2 } }`)
+- `cafe.break`, Ava's five minutes off, weight 2, only while she's there (`here('ava')`), which adds 2 to her friendship
+- `cafe.crossword`, the man doing the crossword, weight 1, once (`{ not: { seen: 'cafe.crossword' } }`), which adds 1 charm
+
+Each time the player sits down, one of the scenes whose `when` holds is drawn by weight, from the save's seed, the turn and how many times they've sat down before. Once the window has been seen twice, the crossword done and Ava isn't on shift, there's nothing left to draw, and the button opens `cafe.quiet`, "A quiet table", instead. No list of the café's storylets exists anywhere, so a mod adds one by declaring a scene with `drawnFrom: ['cafe']`.
+
+The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` sits down with twenty seeds, checks that more than one scene comes up, and then plays a Sunday afternoon with everything seen.
+
 ### Quests
 
 `town.ts`, `data.quests`, and the [quests plugin](/plugins/quests) in `src/game.ts`. `settle` starts when the phase is `open` and has three stages. The last is done by the feed plugin's condition `{ custom: 'feed/posted', with: { gte: 1 } }`.
@@ -240,7 +258,7 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 - `friendship`, which each character keeps (see above)
 - `coins` and `energy`, which are `spendable`, with a `format` and a `lacking` line, and pay for activities through `cost`
-- `charm`, which goes up with a jog or a post, and opens the `compliment` choice
+- `charm`, which goes up with a jog, a post or the café's crossword, and opens the `compliment` choice
 
 ### Strings
 

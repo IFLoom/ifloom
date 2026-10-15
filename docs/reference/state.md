@@ -32,6 +32,7 @@ type GameState = {
   settings: Record<string, FlagValue>
   audio: AudioState
   media: MediaState
+  gameVersion?: number
 }
 ```
 
@@ -44,6 +45,10 @@ import type { FlagValue, StorylineState } from '@ifloom/engine'
 ### version
 
 Always `SAVE_VERSION`. Older saves are carried forward when they load. See [Saves](/reference/saves).
+
+### gameVersion
+
+The game's own [version](/reference/saves#the-game-s-own-migrations) the state is at. It's only there in a game that declares `version`. A state without it is version 1. The game's migration steps carry it forward when an older save loads.
 
 ### seed
 
@@ -98,7 +103,7 @@ type Stats = Record<StatKey, number>
 
 One number per stat the game [declares](/reference/stats), by id. Every effect, cost and payment that changes a stat keeps it within the stat's declared range. Every number the player has lives here. The engine has no `money` or `energy` of its own, so a game that wants coins or energy declares them as stats. A new game starts each at its `start`, and a game that declares no stats has `{}`.
 
-A stat declared `of` a [kind](/reference/entities) isn't here. Each entity keeps its own, in [`entities`](#entities).
+A stat declared `of` a [kind](/reference/entities) isn't here. Each entity keeps its own, in [`entities`](#entities). A [derived stat](/reference/stats#derived-stats) isn't here either, because it's worked out each time it's read. Read stats with [`statValue`](/reference/stats#statvalue) rather than from here when a stat might be derived.
 
 ### entities
 
@@ -158,6 +163,7 @@ The engine writes two kinds of key here itself, so don't use these prefixes for 
 
 - `turn:` keys, used by [`oncePerTurn()`](/reference/progress#onceperturn) and a data-scene choice's `once`
 - `variants:<name>` keys, which count how often a set of [variants](/reference/prose) has been drawn
+- `storylet:<name>` keys, which count how often a set of [storylets](/reference/storylets) has been drawn from
 
 ### items
 

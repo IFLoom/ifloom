@@ -46,6 +46,7 @@ export default defineConfig({
             { text: 'Settings', link: '/reference/settings' },
             { text: 'Entities', link: '/reference/entities' },
             { text: 'Scenes', link: '/reference/scenes' },
+            { text: 'Storylets', link: '/reference/storylets' },
             { text: 'Prose and markup', link: '/reference/prose' },
             { text: 'Strings', link: '/reference/strings' },
           ],

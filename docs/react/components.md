@@ -2,34 +2,41 @@
 
 This page lists everything `@ifloom/react` exports, from the whole shell down to a single button. Each game component reads the [view](/reference/view) through [`useGame`](#usegame), so it has to sit inside a [`GameProvider`](#gameprovider). [`GameShell`](#gameshell) is one. The [shadcn/ui primitives](#shadcn-ui-primitives) at the end don't need a provider.
 
+Every game component on this page can be replaced by its name in [`components`](#components), everywhere the UI draws it, and each entry lists the main [`data-part`](/react/customising#the-data-part-reference)s it draws. [Make it your own](/react/customising) shows how to use both.
+
 ```ts
 import {
   // the game
-  GameShell, GameProvider, useGame,
+  GameShell, GameProvider, useGame, Frame, Icon,
   DEFAULT_LAYOUT, READING_LAYOUT, Parts, Title, Actions,
   SceneStage, Beat, Picture, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Sidebar, Clock, StatList, EntityTable, LocationPanel, PeoplePanel, Inventory, WardrobePanel,
   InputField, InputFields,
-  GameMenu, SavesMenu, Backlog, ModManager,
+  GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
   Notices, QuestLog,
-  DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices,
+  DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
   MessagesSection, FeedSection, DebugPanel,
   UI_STRINGS, uiSay, useWords,
+  PART_KEYS, UiProvider, usePart, overridable,
   type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption,
-  type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey,
+  type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey, type FrameProps, type IconName,
+  type SavesState, type ModsState, type DevicesState, type DeviceState,
+  type Classes, type Components, type Override, type PartKey, type UiOptions,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
   Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose,
   ScrollArea, Separator, Tabs, TabsList, TabsTrigger, TabsContent,
   Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, cn,
-  type ButtonProps, type BadgeProps,
+  type ButtonProps, type BadgeProps, type DialogContentProps,
 } from '@ifloom/react'
 ```
 
 Every component that takes `className` merges it over its own classes with [`cn`](#cn), so a later Tailwind class wins: `<SceneStage className="gap-8" />`.
 
-Many elements carry a `data-` attribute naming what they show. You can style them from your stylesheet or find them in a test.
+### Identity attributes
+
+Every element the UI draws carries a `data-part` naming what kind of thing it is, such as `choice` or `stat-value`. They're all listed in [the data-part reference](/react/customising#the-data-part-reference). Many elements also carry a `data-` attribute saying which one it is, usually holding an id. You can style them from your stylesheet or find them in a test.
 
 | Attribute | On |
 |---|---|
@@ -43,6 +50,9 @@ Many elements carry a `data-` attribute naming what they show. You can style the
 | `data-notice`, `data-quest` | Each notice and each active quest. |
 | `data-device`, `data-open-app`, `data-app`, `data-entry` | Each device button, each app icon, an open app, and each entry in an app's list. |
 | `data-frame`, `data-icon`, `data-face` | A device's frame, an app's icon name, and a `prop` beat's face, for a stylesheet to dress. |
+| `data-beat`, `data-who` | Each beat's kind, and on a spoken line, `character` or `player`. |
+| `data-from` | Each message bubble: `them` or `player`. |
+| `data-has-sidebar` | The page, when the layout has a side column. |
 | `data-channel`, `data-thread`, `data-post`, `data-feed` | Messages and feeds. |
 | `data-save-slot`, `data-backlog`, `data-mod` | Each save slot, backlog entry and mod. |
 | `data-inventory`, `data-wardrobe`, `data-menu`, `data-saves`, `data-mods`, `data-quests`, `data-debug` | Whole panels. |
@@ -55,7 +65,9 @@ Many elements carry a `data-` attribute naming what they show. You can style the
 function GameShell(props: GameShellProps): JSX.Element
 ```
 
-The whole UI. It's a [`GameProvider`](#gameprovider) and a [`TooltipProvider`](#tooltip) around a side column and a stage, with [`Notices`](#notices) fixed in the corner. The side column is a [`Sidebar`](#sidebar), and the stage is a `<main>` drawn with [`Parts`](#parts). Both come from `layout`, or from [`DEFAULT_LAYOUT`](#default-layout) if you leave it out. There's no side column when the layout has no `sidebar` or an empty one. The props, `GameShellProps`, and the layouts are described on [The base UI](/react/#gameshell).
+The whole UI. It's a [`GameProvider`](#gameprovider) around a [`Frame`](#frame), which places a side column, a stage and an overlay. The side column is a [`Sidebar`](#sidebar), and the stage and the overlay are drawn with [`Parts`](#parts). All three come from `layout`, or from [`DEFAULT_LAYOUT`](#default-layout) if you leave it out. There's no side column when the layout has no `sidebar` or an empty one, and nothing over the page when the overlay is empty. The props, `GameShellProps`, and the layouts are described on [The React UI](/react/#gameshell).
+
+It takes [`components`](#components), [`classes`](#classes) and `unstyled` like the provider, and passes them on.
 
 ```tsx
 import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
@@ -66,16 +78,16 @@ import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
 ### Layout
 
 ```ts
-type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[] }
+type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
 type Part = PartName | ReactNode
 type PartName =
   | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
-  | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug'
+  | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
 ```
 
-What [`GameShell`](#gameshell)'s `layout` takes: the parts of the side column and of the stage, in order. A `PartName` is a built-in part, and each draws nothing when the game has nothing for it. Anything else is drawn as it is. The table of which component each name draws is on [The base UI](/react/#layouts).
+What [`GameShell`](#gameshell)'s `layout` takes: the parts of the side column, the stage and the overlay, in order. A `PartName` is a built-in part, and each draws nothing when the game has nothing for it. Anything else is drawn as it is. The table of which component each name draws is on [The React UI](/react/#layouts).
 
-When you give a layout, a missing `stage` means `DEFAULT_LAYOUT.stage`, but a missing `sidebar` means no side column.
+When you give a layout, a missing `stage` or `overlay` means `DEFAULT_LAYOUT`'s, but a missing `sidebar` means no side column.
 
 ### DEFAULT_LAYOUT
 
@@ -83,10 +95,11 @@ When you give a layout, a missing `stage` means `DEFAULT_LAYOUT.stage`, but a mi
 const DEFAULT_LAYOUT: {
   sidebar: readonly ['title', 'stats', 'entities', 'menu', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe']
   stage: readonly ['scene', 'inputs', 'quests', 'debug']
+  overlay: readonly ['notices']
 }
 ```
 
-The base UI's own layout, which a `GameShell` with no `layout` draws. Everything goes at the side and the scene goes on the stage. Spread it to change one list and keep the other:
+The React UI's own layout, which a `GameShell` with no `layout` draws. Everything goes at the side and the scene goes on the stage. Spread it to change one list and keep the other:
 
 ```tsx
 import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
@@ -100,6 +113,7 @@ import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
 const READING_LAYOUT: {
   sidebar: readonly []
   stage: readonly ['title', 'scene', 'inputs', 'actions', 'stats', 'menu']
+  overlay: readonly ['notices']
 }
 ```
 
@@ -111,7 +125,7 @@ A page to read, for a novel. With no side column, the page is a single narrow co
 function Parts(props: { parts: readonly Part[] }): JSX.Element
 ```
 
-Draws `parts` in order. Each [`PartName`](#layout) becomes its built-in component, and anything else is drawn as it is. `GameShell` and [`Sidebar`](#sidebar) draw their lists with it. It doesn't wrap anything around them, so you can use it inside an element of your own:
+Draws `parts` in order. Each [`PartName`](#layout) becomes its built-in component, and anything else is drawn as it is. `GameShell` draws its stage and overlay with it, and [`Sidebar`](#sidebar) its column. It doesn't wrap anything around them, so you can use it inside an element of your own:
 
 ```tsx
 import { Parts } from '@ifloom/react'
@@ -131,17 +145,20 @@ type GameProviderProps = {
   panels?: Record<string, PanelComponent>
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
+  components?: Components
+  classes?: Classes
+  unstyled?: boolean
   children: ReactNode
 }
 ```
 
 Connects everything under it to a [runner](/reference/runner). It subscribes to the runner, works out the view again only when the state changes, and hands both down through [`useGame`](#usegame).
 
-`panels` and `sections` are the same as on [`GameShell`](/react/#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption).
+`panels` and `sections` are the same as on [`GameShell`](/react/#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes` and `unstyled` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it.
 
 Use it on its own to build [your own layout](/react/extending#your-own-layout).
 
-**Gotcha.** Define `panels`, `sections` and `mods` once, outside your component. Don't write them inline, as in <code v-pre>panels={{ StallPanel }}</code>, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
+**Gotcha.** Define `panels`, `sections`, `mods`, `components` and `classes` once, outside your component. Don't write them inline, as in <code v-pre>panels={{ StallPanel }}</code>, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
 
 ### useGame
 
@@ -229,6 +246,154 @@ type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string
 
 Draws a plugin's view inside an app. `data` is that plugin's slice of the view, at [`view.plugins[id]`](/reference/view#plugins), and `with` is the section's `with`. See [Plugin sections](/react/extending#plugin-sections).
 
+## Customising
+
+How a game makes the UI look its own, below the theme's variables. [Make it your own](/react/customising) walks through all of it, with examples.
+
+### UiOptions
+
+```ts
+type UiOptions = {
+  components?: Components
+  classes?: Classes
+  unstyled?: boolean
+}
+```
+
+What [`mountGame`](/react/#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do.
+
+### Components
+
+```ts
+type Components = Partial<{
+  Frame: Override<FrameProps>
+  Beat: Override<{ beat: SceneBeat }>
+  // … one for each name below
+}>
+```
+
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture` and `Icon`.
+
+```tsx
+import type { Components } from '@ifloom/react'
+
+const components: Components = {
+  Clock: ({ Default }) => (
+    <div className="flex items-center gap-1 text-sm">
+      <span aria-hidden>◷</span>
+      <Default />
+    </div>
+  ),
+}
+```
+
+**Gotcha.** Inside a replacement, draw the built-in one through `Default`. Importing it by name from `@ifloom/react` gives you your replacement again.
+
+### Override
+
+```ts
+type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
+```
+
+The type of one replacement in [`Components`](#components): a component that takes the built-in one's props `P`, and `Default`.
+
+### Classes
+
+```ts
+type Classes = Partial<Record<PartKey, string | ((defaults: string) => string)>>
+```
+
+Tailwind classes for parts, by `data-part` name. A string is merged with the built-in classes by [tailwind-merge](https://github.com/dcastil/tailwind-merge), as [`cn`](#cn) does, so yours win where they clash. A function gets the built-in classes and returns the ones to use, so `() => 'font-serif'` replaces them outright.
+
+```ts
+import type { Classes } from '@ifloom/react'
+
+const classes: Classes = {
+  choice: 'rounded-none',
+  'scene-title': (defaults) => `${defaults} uppercase tracking-widest`,
+}
+```
+
+### PART_KEYS
+
+```ts
+const PART_KEYS: readonly PartKey[]
+type PartKey = 'page' | 'sidebar' | 'stage' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'debug-log'
+```
+
+Every `data-part` the UI draws, which is also every key [`Classes`](#classes) takes. `PartKey` is one of them. [The data-part reference](/react/customising#the-data-part-reference) says what each one is.
+
+### UiProvider
+
+```tsx
+function UiProvider(props: UiOptions & { children: ReactNode }): JSX.Element
+```
+
+Gives the components under it a game's `components`, `classes` and `unstyled`. [`GameProvider`](#gameprovider) has one inside it, so you only need your own to change one corner of the page. A nested provider adds to the outer one: its `components` and `classes` are merged over the outer ones, and `unstyled` stays on once either turns it on.
+
+```tsx
+import { QuestLog, UiProvider } from '@ifloom/react'
+
+<UiProvider classes={{ quest: 'border-dashed' }}>
+  <QuestLog title="To do" />
+</UiProvider>
+```
+
+### usePart
+
+```ts
+function usePart(name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; className: string }
+```
+
+The attributes for one part: its `data-part`, and its classes worked out from `defaults` (the built-in classes), the game's [`classes`](#classes) for `name`, and `unstyled`. `extra` is a `className` your caller passed, added last. Spread the result onto the element. Use it in a replacement component, so a game's CSS and `classes` still reach it, or in your own components, so they take part too.
+
+```tsx
+import { usePart, useGame } from '@ifloom/react'
+
+function Purse() {
+  const { view } = useGame()
+  const attrs = usePart('stat-value', 'font-medium tabular-nums')
+  return <p {...attrs}>{view.statsById.coins.text}</p>
+}
+```
+
+### overridable
+
+```ts
+function overridable<P extends object>(name: keyof Components, Default: ComponentType<P>): ComponentType<P>
+```
+
+Wraps a component so a game can replace it by `name` in [`components`](#components). Every built-in component is made with it. `name` has to be one of the [`Components`](#components) keys. See [Your own components in the system](/react/extending#your-own-components-in-the-system).
+
+### Frame
+
+```tsx
+function Frame(props: FrameProps): JSX.Element
+
+type FrameProps = {
+  sidebar: ReactNode
+  stage: ReactNode
+  overlay: ReactNode
+  className?: string
+}
+```
+
+The page's skeleton: where the side column, the stage and the overlay go. [`GameShell`](#gameshell) draws each region from the layout and hands them to `Frame` already drawn. `sidebar` is `null` when the layout has no side column, and `overlay` is `null` when the overlay is empty. `className` is `GameShell`'s.
+
+The built-in frame is a grid: the side column on the left of the stage on wide screens, stacked on narrow ones, with the overlay fixed in the bottom-right corner. Replace it in `components` for a top bar, a column on the right, a full-screen stage or any other shape of page. See [Replace the frame](/react/customising#_7-replace-the-frame).
+
+Parts: `page` (with `data-has-sidebar` when there's a side column), `stage` and `overlay`.
+
+### Icon
+
+```tsx
+function Icon(props: { name: IconName; label?: string }): JSX.Element
+
+type IconName = 'close' | 'back' | 'warning'
+```
+
+One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, and `warning` on a choice with a warning. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
+
 ## The stage
 
 ### SceneStage
@@ -251,6 +416,8 @@ The `<article>` carries `data-scene` with the scene's id, or `stage` when no sce
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
+Replaceable as `SceneStage` in [`components`](#components). Parts: `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image` and `beats`.
+
 ### Beat
 
 ```tsx
@@ -265,7 +432,7 @@ One beat of a scene's body, drawn by kind:
 | `mono` | A paragraph in a monospace font. |
 | `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. |
 | `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. |
-| `mail` | A card with its headers, then the body. |
+| `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
 | `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
 
 ```tsx
@@ -273,6 +440,10 @@ import { Beat } from '@ifloom/react'
 
 <Beat beat={{ kind: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
 ```
+
+The [`Backlog`](#backlog) draws its beats with `Beat` too, so a replacement `Beat` changes both.
+
+Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header` and `mail-body`.
 
 ### Picture
 
@@ -292,6 +463,8 @@ A `Picture` remembers which `src` failed. When the same element gets a new `src`
 
 Its `src` goes through [`assetUrl`](#asseturl), so it finds a picture that `ifloom build --inline-assets` put inside the page.
 
+Replaceable as `Picture` in [`components`](#components). Parts: none of its own. It carries the `data-part` of the place it's drawn, such as `scene-portrait` or `notice-image`.
+
 ### assetUrl
 
 ```ts
@@ -307,7 +480,7 @@ assetUrl('art/place/cafe.jpg')   // 'data:image/jpeg;base64,…' in a one-file b
 assetUrl('./art/place/cafe.jpg') // the same
 ```
 
-[`Picture`](#picture) calls it, and so does [`DeviceScreen`](#devicescreen) for a device's wallpaper, so everything the base UI draws is covered.
+[`Picture`](#picture) calls it, and so does [`DeviceScreen`](#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
 
 **Gotcha.** A component of your own that draws a picture from a path, with an `<img>` or a CSS `background-image`, must call `assetUrl` too or use a `Picture`. In a one-file build the `art/` folder is gone, so the bare path points at nothing.
 
@@ -336,13 +509,15 @@ Draws a [`RenderedChoice`](/reference/view#renderedchoice) as a full-width butto
 
 The button carries `data-choice` with the choice's id. A choice's `tags` aren't drawn. To style by them, write a component of your own.
 
+Replaceable as `ChoiceButton` in [`components`](#components). Parts: `choice` (with `data-choice`), `choice-label`, `choice-price`, `choice-warning`, `choice-irreversible` and `choice-reason`.
+
 ### ChoiceList
 
 ```tsx
-function ChoiceList(props: { choices: RenderedChoice[]; className?: string }): JSX.Element | null
+function ChoiceList(props: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }): JSX.Element | null
 ```
 
-A column of [`ChoiceButton`](#choicebutton)s. It draws nothing for an empty list.
+A column of [`ChoiceButton`](#choicebutton)s. It draws nothing for an empty list. `part` names the list for styling: `'choices'` (the default), or `'actions'` for the room's buttons, as [`Actions`](#actions) passes.
 
 ```tsx
 import { ChoiceList, useGame } from '@ifloom/react'
@@ -353,13 +528,17 @@ function RoomButtons() {
 }
 ```
 
+Replaceable as `ChoiceList` in [`components`](#components). Parts: `choices`, or `actions` when `part` says so.
+
 ### PriceTag
 
 ```tsx
 function PriceTag(props: { price: Price; className?: string }): JSX.Element | null
 ```
 
-A [`Price`](/reference/view#price) as the engine wrote it, in `--price`. It shows each stat's `text`, then each of the plugins' `notes` (such as the calendar's `until afternoon`), joined with ` · `. It draws nothing for a price with neither.
+A [`Price`](/reference/view#price) as the engine wrote it, in `--price`. It shows each stat's `text`, then each of the plugins' `notes` (such as the calendar's `until afternoon`), joined with `ui.priceSeparator` (` · `). It draws nothing for a price with neither.
+
+Replaceable as `PriceTag` in [`components`](#components). Parts: `choice-price`.
 
 ## The sidebar
 
@@ -371,7 +550,7 @@ function Sidebar(props: SidebarProps): JSX.Element
 type SidebarProps = { className?: string; parts?: readonly Part[] }
 ```
 
-The side column: an `<aside>` carrying `data-sidebar`, with its `parts` drawn by [`Parts`](#parts). [`GameShell`](#gameshell) draws its side column with it, passing the layout's `sidebar` list. Use it on its own in a page of your own.
+The side column: an `<aside>` carrying `data-part="sidebar"` and `data-sidebar`, with its `parts` drawn by [`Parts`](#parts). [`GameShell`](#gameshell) draws its side column with it, passing the layout's `sidebar` list. Use it on its own in a page of your own.
 
 If you leave out `parts`, you get [`DEFAULT_LAYOUT`](#default-layout)`.sidebar`: [`Title`](#title), [`StatList`](#statlist), [`EntityTable`](#entitytable), [`GameMenu`](#gamemenu), [`DeviceButtons`](#devicebuttons), a [`Separator`](#separator), [`LocationPanel`](#locationpanel), [`PeoplePanel`](#peoplepanel), [`Actions`](#actions), [`Inventory`](#inventory) and [`WardrobePanel`](#wardrobepanel).
 
@@ -381,6 +560,8 @@ import { Sidebar } from '@ifloom/react'
 <Sidebar className="order-last" parts={['title', 'stats', 'menu']} />
 ```
 
+Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`.
+
 ### Title
 
 ```tsx
@@ -388,6 +569,8 @@ function Title(): JSX.Element
 ```
 
 The game's title, `view.title`, as a heading, with the [`Clock`](#clock) under it. This is the `'title'` part.
+
+Replaceable as `Title` in [`components`](#components). Parts: `title`.
 
 ### Actions
 
@@ -397,6 +580,8 @@ function Actions(): JSX.Element
 
 The buttons offered while no scene is open, `view.actions`, as a [`ChoiceList`](#choicelist). They include the room's buttons, the game's own and its plugins'. This is the `'actions'` part.
 
+Replaceable as `Actions` in [`components`](#components). Parts: `actions`.
+
 ### Clock
 
 ```tsx
@@ -405,6 +590,8 @@ function Clock(): JSX.Element | null
 
 Where the game is in time: [`view.when`](/reference/view#the-clock-and-the-player), as its plugins wrote it, such as the [calendar](/plugins/calendar#the-label)'s `Day 3 · Wednesday afternoon`. It draws nothing when no plugin says what time it is, as in a game without a calendar. To reword it, change the calendar's `calendar/label` string.
 
+Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
+
 ### StatList
 
 ```tsx
@@ -412,6 +599,8 @@ function StatList(): JSX.Element | null
 ```
 
 The stats the view lists, each label beside its value written the way the game [formats](/reference/stats) it (`12 coins`). A stat the game doesn't list, or whose `visible` doesn't hold, isn't in the view, so it isn't here either. It draws nothing when there are no stats. Each row carries `data-stat`.
+
+Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat` (with `data-stat`), `stat-label` and `stat-value`.
 
 ### EntityTable
 
@@ -432,6 +621,8 @@ import { EntityTable } from '@ifloom/react'
 <EntityTable kinds={['dish']} className="border-t pt-4" />
 ```
 
+Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name` and `entity-value`.
+
 ### LocationPanel
 
 ```tsx
@@ -444,6 +635,8 @@ It draws nothing in a game without the places plugin, or while the plugin's `loc
 
 **Gotcha.** An exit's reason, or its warning, is in the button's `title` and shows on hover. It isn't printed on the button as a choice's is. An exit that a lock hides isn't in the view at all.
 
+Replaceable as `LocationPanel` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `exits` and `exit` (with `data-exit`).
+
 ### PeoplePanel
 
 ```tsx
@@ -452,13 +645,15 @@ function PeoplePanel(): JSX.Element | null
 
 Who is here, read by its shape from the [cast plugin](/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and role (when they have them) and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
 
+Replaceable as `PeoplePanel` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
+
 ### Inventory
 
 ```tsx
 function Inventory(props: { className?: string }): JSX.Element | null
 ```
 
-What the player carries, from [`view.pack`](/reference/view#the-player-s-numbers-and-things). Each item shows its name, `×n` when there's more than one, and its description. An item with a [`use`](/reference/game#itemdef) gets a [`ChoiceButton`](#choicebutton) labelled with its `useLabel` that sends [`use`](/reference/commands#use). When [`whyNot`](/reference/actions#whynot) says it can't be used now, the button is greyed out with that reason on it.
+What the player carries, from [`view.pack`](/reference/view#the-player-s-numbers-and-things). Each item shows its name, `×n` (`ui.itemCount`) when there's more than one, and its description. An item with a [`use`](/reference/game#itemdef) gets a [`ChoiceButton`](#choicebutton) labelled with its `useLabel` that sends [`use`](/reference/commands#use). When [`whyNot`](/reference/actions#whynot) says it can't be used now, the button is greyed out with that reason on it.
 
 The heading is `ui.inventory`, and each item carries `data-item`. It draws nothing when the player carries nothing.
 
@@ -469,17 +664,21 @@ import { Inventory } from '@ifloom/react'
 <Inventory className="border-t pt-4" />
 ```
 
+Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `item` (with `data-item`), `item-name`, `item-count` and `item-text`.
+
 ### WardrobePanel
 
 ```tsx
 function WardrobePanel(props: { className?: string }): JSX.Element | null
 ```
 
-The [wardrobe plugin](/plugins/wardrobe)'s view. Each slot (`data-slot-id`) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare piece of clothing for that slot gets a **Wear …** button (`ui.wear` and the item's name). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
+The [wardrobe plugin](/plugins/wardrobe)'s view. Each slot (`data-slot-id`) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare piece of clothing for that slot gets a **Wear …** button (`ui.wearItem`, with the item's name as `item`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
 
 A button that can't be used now is greyed out, with [`whyNot`](/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`. It draws nothing in a game without the plugin.
 
 **Gotcha.** As with an exit, the reason is in the `title` and shows on hover. It isn't printed on the button.
+
+Replaceable as `WardrobePanel` in [`components`](#components). Parts: `wardrobe`, `wardrobe-title`, `wardrobe-slot` (with `data-slot-id`), `wardrobe-slot-name`, `wardrobe-worn` and `button`.
 
 ## Inputs
 
@@ -498,6 +697,8 @@ If the engine refuses the value, its reason shows under the field (`Keep it to 8
 
 **Gotcha.** An empty number box sends no value at all, not `0`, so the engine refuses it with `enterSomething` (`Enter something first.`).
 
+Replaceable as `InputField` in [`components`](#components). Parts: `input` (with `data-input`), `input-label`, `input-field`, `input-options`, `input-submit`, `input-error` and `button` for each option.
+
 ### InputFields
 
 ```tsx
@@ -512,6 +713,8 @@ inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, w
 ```
 
 **Gotcha.** A [lock](/reference/locks) that denies `'*'` denies `input` too. If a scene asks for a value while the rest of the game is locked, put `input` in the lock's `except`.
+
+Replaceable as `InputFields` in [`components`](#components). Parts: `inputs`.
 
 ## The player's menu
 
@@ -528,7 +731,7 @@ A row of buttons for what the runner offers:
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
 
-Saves, Backlog and Mods each open a [`Dialog`](#dialog) holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
+Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
 
 So you choose what the player sees when you make the runner:
 
@@ -541,6 +744,8 @@ const runner = createRunner(game, startingState(game), {
   saves: saves(game, localStorageDriver()),  // Saves
 })
 ```
+
+Replaceable as `GameMenu` in [`components`](#components). Parts: `menu`, `menu-button`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
 ### SavesMenu
 
@@ -575,6 +780,55 @@ function SavesDialog() {
 
 **Gotcha.** Saving over a slot replaces its name with the default one. That's [`meta.when`](/reference/saves#savemeta) (the day, period and place in the plugins' words), or `Turn N` when no plugin says.
 
+Replaceable as `SavesMenu` in [`components`](#components). Parts: `saves`, `saves-actions`, `save-slot` (with `data-save-slot`), `save-name`, `save-details`, `saves-message`, `saves-empty`, `file-button` and `button`.
+
+### useSaves
+
+```ts
+function useSaves(): SavesState
+
+type SavesState = {
+  available: boolean
+  slots: SaveMeta[]
+  refresh: () => Promise<void>
+  save: (name?: string) => Promise<void>
+  overwrite: (slot: string) => Promise<void>
+  load: (slot: string) => Promise<boolean>
+  remove: (slot: string) => Promise<void>
+  exportFile: (slot: string) => Promise<void>
+  importFile: (file: File) => Promise<boolean>
+  message: string | null
+  missingPacks: string[]
+  missingPlugins: string[]
+}
+```
+
+The [`SavesMenu`](#savesmenu) without its look: the slots, and everything the menu does with them. Use it for a save screen of your own.
+
+| Field | What it is |
+|---|---|
+| `available` | `false` when the runner was made without `saves`. Everything else then does nothing. |
+| `slots` | Every slot, as the store lists them, as [`SaveMeta`](/reference/saves#savemeta). Read again whenever the view changes. |
+| `refresh` | Reads the slots again. |
+| `save` | Saves in a new slot, the next free number, with `name` if you give one. |
+| `overwrite` | Saves over a slot, with the default name. |
+| `load` | Loads a slot. `true` if it loaded. |
+| `remove` | Deletes a slot. |
+| `exportFile` | Downloads a slot as `<game>-<slot>.json`. |
+| `importFile` | Loads a save from a file the player kept. `true` if it loaded. |
+| `message` | Why the last load or import failed, or `null`. |
+| `missingPacks`, `missingPlugins` | What the last loaded save was made with that this game doesn't have. |
+
+```tsx
+import { useSaves } from '@ifloom/react'
+
+function QuickSave() {
+  const saves = useSaves()
+  if (!saves.available) return null
+  return <button onClick={() => void saves.save('Before the park')}>Quick save</button>
+}
+```
+
 ### Backlog
 
 ```tsx
@@ -584,6 +838,25 @@ function Backlog(props: { className?: string }): JSX.Element
 [`runner.backlog()`](/reference/runner#backlogentry), oldest first, in a [`ScrollArea`](#scrollarea). Each entry shows its title and its beats, drawn as [`Beat`](#beat)s. When the player made a choice in it, a line **You chose: …** (`ui.chose`) follows. Each entry carries `data-backlog` with its scene id. With nothing in it, it shows `ui.backlogEmpty`. It follows the view, so it stays current while open.
 
 **Gotcha.** The runner has to be made with `backlog`. Without it, the list is always empty.
+
+Replaceable as `Backlog` in [`components`](#components). Parts: `backlog`, `backlog-entry` (with `data-backlog`), `backlog-title`, `backlog-choice` and `backlog-empty`, with each beat a `beat`.
+
+### useBacklog
+
+```ts
+function useBacklog(): BacklogEntry[]
+```
+
+The backlog's [entries](/reference/runner#backlogentry), oldest first, read again whenever the view changes. It's the [`Backlog`](#backlog) without its look. It's empty unless the runner was made with `backlog`.
+
+```tsx
+import { useBacklog } from '@ifloom/react'
+
+function LastChoice() {
+  const last = useBacklog().findLast((entry) => entry.chose)
+  return last ? <p className="text-sm">Last time: {last.chose}</p> : null
+}
+```
 
 ### ModManager
 
@@ -612,6 +885,40 @@ import { GameProvider, ModManager } from '@ifloom/react'
 - **Nothing changes until the restart.** A mod is part of the game, so turning one on or off changes the store, not the game that's running. The player keeps playing the game as it was loaded until `onChange` builds it again.
 - **The problems are the ones from start-up.** A mod added since then shows no problems until the game is built again with it.
 
+Replaceable as `ModManager` in [`components`](#components). Parts: `mods`, `mod` (with `data-mod`), `mod-name`, `mod-version`, `mod-state`, `mod-text`, `mod-problem`, `mods-message`, `mods-empty`, `file-button` and `button`.
+
+### useMods
+
+```ts
+function useMods(): ModsState
+
+type ModsState = {
+  available: boolean
+  list: InstalledMod[]
+  add: (file: File) => Promise<boolean>
+  toggle: (id: string) => Promise<void>
+  remove: (id: string) => Promise<void>
+  changed: boolean
+  restart: (() => void) | undefined
+  problemsFor: (id: string) => string[]
+  message: string | null
+}
+```
+
+The [`ModManager`](#modmanager) without its look. It needs [`mods`](#modsoption) on the provider.
+
+| Field | What it is |
+|---|---|
+| `available` | `false` when the provider was given no `mods`. |
+| `list` | The mods the player has added, as [`InstalledMod`](/reference/mods#installedmod)s. |
+| `add` | Adds a mod from a file. `true` if it was added. Otherwise `message` says why. |
+| `toggle` | Turns a mod on or off. |
+| `remove` | Removes a mod. |
+| `changed` | Whether anything changed since the game was built, so a restart would differ. |
+| `restart` | The provider's `onChange`, which builds the game again. `undefined` if it gave none. |
+| `problemsFor` | The loader's problems for one mod. |
+| `message` | Why the last file couldn't be added, or `null`. |
+
 ## Around the stage
 
 ### Notices
@@ -620,13 +927,35 @@ import { GameProvider, ModManager } from '@ifloom/react'
 function Notices(props: { className?: string; limit?: number }): JSX.Element | null
 ```
 
-The first `limit` (default 3) of the view's unseen [notices](/reference/notices). Each shows its picture, title and text, and a button labelled `ui.dismiss` that sends [`dismiss`](/reference/commands#dismiss). Each notice carries `data-notice`. The list has `role="status"`, so a screen reader announces a new one. `GameShell` fixes it in the bottom-right corner. On its own it sits wherever you put it.
+The first `limit` (default 3) of the view's unseen [notices](/reference/notices), each drawn as a [`Notice`](#notice). The list has `role="status"`, so a screen reader announces a new one. It's the `'notices'` part, which the default layouts put in the overlay, fixed in the bottom-right corner. On its own it sits wherever you put it.
 
 ```tsx
 import { Notices } from '@ifloom/react'
 
 <Notices limit={1} className="fixed top-4 left-1/2 w-96 -translate-x-1/2" />
 ```
+
+Replaceable as `Notices` in [`components`](#components). Parts: `notices`.
+
+### Notice
+
+```tsx
+Notice: (props: { notice: NoticeView }) => JSX.Element
+```
+
+One [notice](/reference/notices): its picture, title and text, and a button with the close [`Icon`](#icon), labelled `ui.dismiss`, that sends [`dismiss`](/reference/commands#dismiss). It carries `data-notice` with the notice's id. [`Notices`](#notices) draws one for each.
+
+You can draw it yourself, or replace it through [`components`](#components) to draw each notice your own way and keep the list:
+
+```tsx
+import type { Components } from '@ifloom/react'
+
+const components: Components = {
+  Notice: ({ notice, Default }) => (notice.image ? <Default notice={notice} /> : <p className="text-sm italic">{notice.title}</p>),
+}
+```
+
+Replaceable as `Notice` in [`components`](#components). Parts: `notice` (with `data-notice`), `notice-image`, `notice-title`, `notice-text` and `notice-dismiss`.
 
 ### QuestLog
 
@@ -637,6 +966,8 @@ function QuestLog(props: { className?: string; title?: string }): JSX.Element | 
 The [quests plugin](/plugins/quests)'s view. Each active quest (`data-quest`) shows its summary, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
 
 `title` replaces the heading, `ui.quests`, for this one list. It draws nothing in a game without the plugin.
+
+Replaceable as `QuestLog` in [`components`](#components). Parts: `quests`, `quests-title`, `quest` (with `data-quest`), `quest-title`, `quest-summary`, `quest-hint`, `quest-stage`, `quests-done`, `quest-done`, `badge` and `button`.
 
 ### DebugPanel
 
@@ -655,12 +986,14 @@ A panel for the person testing the game, when the game has the [debug plugin](/p
 
 The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
 
-The heading, buttons, tabs and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The base UI](/react/#words).
+The heading, buttons, tabs, form rows (**Stat**, **Variable**, **Item**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/react/#words).
 
 **Gotchas.**
 
-- **The form rows are in English.** Each row's label (**Stat**, **Variable**, **Item**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and its placeholders aren't in the strings table.
+- **The placeholders are in English.** Each form's placeholders (`stat`, `value`, `key` and the rest) aren't in the strings table.
 - **A number box needs a number.** An empty box, or words that aren't a number, are refused with `debug/notANumber` rather than set to 0.
+
+Replaceable as `DebugPanel` in [`components`](#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
 
 ## Devices
 
@@ -673,6 +1006,8 @@ function DeviceButtons(): JSX.Element | null
 ```
 
 A button for each device offered from the sidebar (`sidebar: true`), with its badge. Each button opens the device in a [`DeviceDialog`](#devicedialog) and carries `data-device`. Opening the dialog sends no command and costs nothing.
+
+Replaceable as `DeviceButtons` in [`components`](#components). Parts: `devices`, `device-button` (with `data-device`) and `device-badge`.
 
 ### DeviceDialog
 
@@ -697,6 +1032,8 @@ function LaptopButton() {
 }
 ```
 
+Replaceable as `DeviceDialog` in [`components`](#components). Parts: `dialog` (with `data-frame`), `dialog-overlay`, `dialog-title` and `dialog-close`.
+
 ### DeviceScreen
 
 ```tsx
@@ -708,6 +1045,8 @@ A device, open. With no app open, it shows the home screen: the wallpaper (throu
 With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending `devices/close`), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
 
 `device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/plugins/devices#deviceview).
+
+Replaceable as `DeviceScreen` in [`components`](#components). Parts: `device-screen`, `app` (with `data-app`), `app-header`, `app-back`, `app-title`, `app-launcher`, `app-button` (with `data-open-app`), `app-icon` (with `data-icon`) and `app-badge`.
 
 ### AppSection
 
@@ -725,10 +1064,14 @@ One [`SectionView`](/plugins/devices#sectionview) of an open app, drawn by kind:
 | `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |
 | `panel` | The component in `panels` with the panel's name, given its data. Nothing if there's no component. |
 
+Replaceable as `AppSection` in [`components`](#components). Parts: `app-prose`, `app-entries`, `app-entry` (with `data-entry`), `app-entry-image`, `app-entry-title` and `app-entry-text`.
+
 ### useDevices
 
 ```ts
-function useDevices(): DeviceView[]
+function useDevices(): DevicesState
+
+type DevicesState = DeviceView[]
 ```
 
 The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
@@ -740,6 +1083,35 @@ function PhoneBadge() {
   const phone = useDevices().find((device) => device.id === 'phone')
   if (!phone) return null
   return <Badge>{phone.badge}</Badge>
+}
+```
+
+### useDevice
+
+```ts
+function useDevice(): DeviceState
+
+type DeviceState = {
+  openId: string | null
+  device: DeviceView | null
+  open: (id: string) => void
+  close: () => void
+}
+```
+
+Which device is open in a dialog, and how to open and close one. `device` is the open device as the view has it, or `null`, also when `openId` no longer names one. Each call keeps its own state, so call it once and share it between your buttons and the dialog. [`DeviceButtons`](#devicebuttons) uses it.
+
+```tsx
+import { DeviceDialog, useDevice } from '@ifloom/react'
+
+function PhoneButton() {
+  const { openId, open, close } = useDevice()
+  return (
+    <>
+      <button onClick={() => open('phone')}>Phone</button>
+      <DeviceDialog deviceId={openId} onClose={close} />
+    </>
+  )
 }
 ```
 
@@ -757,6 +1129,8 @@ A [messages](/plugins/messages) channel, the one named by the section's `with.ch
 
 Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, a **Mark all read** button (`ui.allRead`) sends `messages/read` for the channel. It draws nothing if the channel isn't in the view.
 
+Replaceable as `MessagesSection` in [`components`](#components). Parts: `channel`, `thread`, `thread-title`, `thread-portrait`, `message`, `bubble` (with `data-from`) and `button`.
+
 ### FeedSection
 
 ```tsx
@@ -767,6 +1141,8 @@ A [feed](/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (
 
 Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
 
+Replaceable as `FeedSection` in [`components`](#components). Parts: `feed`, `post`, `post-author`, `post-portrait`, `post-image`, `post-text`, `post-meta`, `post-comment`, `post-comment-name` and `button`.
+
 ## Words
 
 ### UI_STRINGS
@@ -776,7 +1152,9 @@ const UI_STRINGS: { quests: string; questNew: string; /* ... */ }
 type UiStringKey = keyof typeof UI_STRINGS
 ```
 
-The UI's own words in English, by key without the `ui.` prefix. The full table is on [The base UI](/react/#words). `UiStringKey` is one of its keys.
+The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/react/#words). `UiStringKey` is one of its keys.
+
+Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `itemCount` (`×{n}` after an item), `wearItem` (`Wear {item}`), `mailHeader` (`{key}: {value}` for a letter's headers), and the debug panel's form rows, `debugStat` to `debugTurn`.
 
 ### uiSay
 
@@ -812,7 +1190,9 @@ function JournalHeading() {
 
 ## shadcn/ui primitives
 
-These are the building blocks the components above are made from, exported so your own screens match. They're [shadcn/ui](https://ui.shadcn.com)'s components, styled by the same [theme variables](/react/#theming), and shadcn/ui's documentation for each applies. To add one this package doesn't have, see [More shadcn/ui components](/react/extending#more-shadcn-ui-components).
+These are the building blocks the components above are made from, exported so your own screens match. They're [shadcn/ui](https://ui.shadcn.com)'s components, styled by the same [theme variables](/react/customising#_2-set-tokens-and-colours), and shadcn/ui's documentation for each applies. To add one this package doesn't have, see [More shadcn/ui components](/react/extending#more-shadcn-ui-components).
+
+The game components don't use `Button` and `Badge` themselves. They draw plain `<button>` and `<span>` elements with [`buttonVariants`](#button) and [`badgeVariants`](#badge) classes, run through [`usePart`](#usepart), so `classes` and `unstyled` reach every one.
 
 ### Button
 
@@ -882,6 +1262,26 @@ Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescripti
 
 A modal, built on Radix's Dialog. `Dialog` takes `open` and `onOpenChange`, or opens from a `DialogTrigger`. `DialogContent` is the box, with an overlay and a close button. Give it a `DialogTitle` for screen readers.
 
+```ts
+type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
+  bare?: boolean
+  closeLabel?: string
+  closeIcon?: ReactNode
+  overlayProps?: ComponentProps<typeof DialogPrimitive.Overlay>
+  closeProps?: ComponentProps<typeof DialogPrimitive.Close>
+}
+```
+
+| Prop | What it does |
+|---|---|
+| `bare` | Skips the built-in classes on the box, the overlay and the close button, so you style all three. `DialogTitle` takes `bare` too. |
+| `closeLabel` | The close button's screen-reader text. `'Close'` by default. |
+| `closeIcon` | The close button's icon. Lucide's X by default. |
+| `overlayProps` | Attributes for the overlay behind the box, such as a `className` or a `data-part`. |
+| `closeProps` | Attributes for the close button. |
+
+The [`GameMenu`](#gamemenu) and [`DeviceDialog`](#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
+
 ```tsx
 import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react'
 
@@ -946,7 +1346,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ifloom/react'
 Tooltip, TooltipProvider, TooltipTrigger, TooltipContent
 ```
 
-A hint on hover or focus, built on Radix's Tooltip. Every tooltip needs a `TooltipProvider` above it. [`GameShell`](#gameshell) has one. In [your own layout](/react/extending#your-own-layout), add it yourself.
+A hint on hover or focus, built on Radix's Tooltip. Every tooltip needs a `TooltipProvider` above it. The game components don't use tooltips, so [`GameShell`](#gameshell) doesn't add one. Wrap your page in a `TooltipProvider` when your own components use them.
 
 ```tsx
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@ifloom/react'

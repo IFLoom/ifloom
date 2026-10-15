@@ -4,7 +4,7 @@ The runner is the one object your UI drives. It wraps [`apply`](/reference/comma
 
 ```ts
 import {
-  createRunner, replay,
+  createRunner, browserRunner, replay,
   type Runner, type RunnerOptions, type HistoryOptions, type BacklogOptions,
   type AutosaveOptions, type BacklogEntry, type CommandLog,
 } from '@ifloom/engine'
@@ -12,7 +12,7 @@ import {
 
 Everything but the command log is off unless you turn it on, so a runner with no options is `apply` plus a subscription. For a walk-through, see [A game with a world](/guide/first-game#_10-drive-it-with-a-runner).
 
-If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/react/#mountgame) builds a runner with undo 50 deep, saves in `localStorage`, an autosave each turn and a random seed, draws the game into the page, and returns the runner. Its `runner` option is merged over those defaults. Build the runner by hand, as below, when you want something different or you aren't using React.
+If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/react/#mountgame) makes the runner with [`browserRunner`](#browserrunner), which sets up undo 50 deep, saves in `localStorage`, an autosave each turn and a random seed. It draws the game into the page and returns the runner. Its `runner` option is merged over those defaults. In a browser without React, call `browserRunner` yourself. Build the runner with `createRunner`, as below, when you want something different.
 
 ## createRunner
 
@@ -36,6 +36,34 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 runner.subscribe(() => render(runner.view()))
 runner.apply(go('high-street'))
 ```
+
+## browserRunner
+
+```ts
+function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Runner
+```
+
+A runner with what most games in a browser want. It's `createRunner` with these defaults:
+
+| | Default |
+|---|---|
+| `start` | A new game, `startingState(game, { seed })`, with a random seed so each playthrough draws its own variants. |
+| `history` | `{ depth: 50 }`, so undo goes 50 steps back. |
+| `saves` | `saves(game, localStorageDriver())`, saves in the browser's `localStorage` under keys that start with the game's id. |
+| `autosave` | `{ every: 'turn' }`, to the `auto` slot. |
+
+Pass `start` to begin from another state, and any [`RunnerOptions`](#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/react/#mountgame) uses it, and so does the `vanilla` template:
+
+```ts
+import { browserRunner } from '@ifloom/engine'
+
+const runner = browserRunner(game, { backlog: { limit: 200 } })
+
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
+```
+
+**Gotcha.** Its saves go to `localStorage`, which a test or a script in Node doesn't have. The runner still starts there, but every save and autosave fails with `localStorage is not available here`. Pass your own store, such as `{ saves: saves(game, memoryDriver()) }` with [`memoryDriver`](/reference/saves#memorydriver), or use `createRunner`.
 
 ## RunnerOptions
 

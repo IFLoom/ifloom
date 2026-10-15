@@ -107,6 +107,7 @@ export default defineConfig({
           text: 'The React UI',
           items: [
             { text: 'Overview', link: '/react/' },
+            { text: 'Make it your own', link: '/react/customising' },
             { text: 'Components', link: '/react/components' },
             { text: 'Extending', link: '/react/extending' },
           ],

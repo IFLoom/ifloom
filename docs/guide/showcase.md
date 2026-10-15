@@ -34,7 +34,7 @@ These are the [CLI](/cli/)'s commands, `ifloom dev`, `build`, `check`, `playtest
 | `src/content/custom.ts` | The only code in the content: an effect worked out from the state, and a value the prose prints. |
 | `src/game.ts` | The game put together: the pack, the plugins, the phone, the rules, the locks and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
 | `src/main.tsx` | The page. It loads the player's mods over the town, makes a [runner](/reference/runner) with undo, a backlog, saves and autosave, and draws it with the [React UI](/react/)'s `GameShell` and its mod manager. |
-| `src/styles.css` | The React UI's stylesheet, with a warmer accent and softer corners. |
+| `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/react/customising#_1-pick-a-theme-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/reference/mods) for a player to add. It isn't part of the game. |
 | `vite.config.ts` | The CLI's [Vite preset](/cli/#the-vite-preset), and nothing else. |

@@ -57,6 +57,8 @@ The default template is a small game drawn with the [React UI](/react/). Pick an
 npm run new -- my-cafe --template cafe
 ```
 
+A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, or change it later in `src/styles.css` (see [Make it your own](/react/customising)).
+
 [`ifloom new`](/cli/#ifloom-new) has the details.
 
 ### What's in the new game
@@ -74,7 +76,7 @@ games/my-game/
 └── src/
     ├── game.ts       the game: scenes, choices, a stat and the words
     ├── main.ts       starts the game in the page with mountGame
-    └── styles.css    imports the React UI's styles, and sets the theme colours
+    └── styles.css    imports the React UI's styles and a theme preset
 ```
 
 You'll spend most of your time in `src/game.ts`. [Your first story](/guide/first-story) starts from this file and grows it into a short novel. `src/main.ts` is three lines that hand the game to [`mountGame`](/react/#mountgame), which starts it with undo, saves and an autosave each chapter.

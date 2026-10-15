@@ -21,9 +21,9 @@ It's the same two-scene game as the `blank` template. Its `package.json` depends
 A UI talks to the engine through a [runner](/reference/runner). You need four things from it:
 
 ```ts
-import { createRunner, startingState, type Command, type View } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/engine'
 
-const runner = createRunner(game, startingState(game), options)
+const runner = browserRunner(game)
 
 runner.view()              // View: what to draw right now
 runner.apply(command)      // run a command, such as a choice the player pressed
@@ -38,31 +38,30 @@ The loop is always the same:
 
 `subscribe` hears about every change, not only your own commands. Undo, redo and loading a save all call it too, so you don't need to redraw after each of those yourself.
 
+[`browserRunner`](/reference/runner#browserrunner) makes a runner with what most games in a browser want. Use [`createRunner`](/reference/runner#createrunner) when you want to choose everything yourself.
+
 `runner.view()` builds a fresh object each time you call it. Call it once per change and keep the result, rather than calling it from every component.
 
 ## The vanilla template, step by step
 
 Here's the template's `src/main.ts` in three parts.
 
-First it starts the game. This is what [`mountGame`](/react/#mountgame) does for the React UI, written out:
+First it starts the game, with the same runner [`mountGame`](/react/#mountgame) makes for the React UI:
 
 ```ts
 // src/main.ts
-import { createRunner, localStorageDriver, saves, startingState, type View } from '@ifloom/engine'
+import { browserRunner, type View } from '@ifloom/engine'
 import loaded from './game.ts'
 import './styles.css'
 
 const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
-const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  history: { depth: 50 },
-  saves: saves(game, localStorageDriver(window.localStorage)),
-  autosave: { every: 'turn' },
-})
+// A new game with a random seed, undo, saves in localStorage and an autosave each turn.
+const runner = browserRunner(game)
 ```
 
-`loadGame` returns the game and a list of problems, which `npm run check` also prints. The runner gets a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. See [`RunnerOptions`](/reference/runner#runneroptions) for the rest.
+`loadGame` returns the game and a list of problems, which `npm run check` also prints. [`browserRunner`](/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`.
 
 Then a function draws one view into `#root`:
 
@@ -170,16 +169,10 @@ Keep the runner and the current view in one module. A `shallowRef` suits the vie
 ```ts
 // src/runner.ts
 import { shallowRef } from 'vue'
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/engine'
 import loaded from './game.ts'
 
-const { game } = loaded
-
-export const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  history: { depth: 50 },
-  saves: saves(game, localStorageDriver(window.localStorage)),
-  autosave: { every: 'turn' },
-})
+export const runner = browserRunner(loaded.game)
 
 export const view = shallowRef(runner.view())
 runner.subscribe(() => {
@@ -244,16 +237,10 @@ A `readable` store fits the runner closely. Its start function subscribes to the
 ```ts
 // src/runner.ts
 import { readable } from 'svelte/store'
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/engine'
 import loaded from './game.ts'
 
-const { game } = loaded
-
-export const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
-  history: { depth: 50 },
-  saves: saves(game, localStorageDriver(window.localStorage)),
-  autosave: { every: 'turn' },
-})
+export const runner = browserRunner(loaded.game)
 
 export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
 ```

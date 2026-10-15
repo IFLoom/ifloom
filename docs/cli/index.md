@@ -4,7 +4,7 @@
 
 | Command | Does |
 |---|---|
-| `ifloom new <name> [--template t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run. |
+| `ifloom new <name> [--template t] [--theme t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run. |
 | `ifloom dev` | Serves the game in a browser, reloading as you edit. |
 | `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures beside it (or inside it), then checks the folder opens from disk. |
 | `ifloom check [module]` | Loads the game and lists every problem the [loader](/reference/loader#the-checks) and [`validatePack`](/reference/game#validatepack) find. |
@@ -47,6 +47,7 @@ The `ifloom` command is a TypeScript file that Node runs directly, so you need a
 ```sh
 npm run new -- my-story                    # from the root of the checkout
 npm run new -- my-cafe --template cafe
+npm run new -- my-tale --theme storybook
 ```
 
 Makes a new game in `games/<name>` from a template and tells you what to run next: `npm install` at the root, then `npm run dev -w <name>`. The `games/` folder is an npm workspace that git ignores, so your game installs alongside the engine and stays out of the engine's history.
@@ -58,6 +59,8 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 | `novel` | A copy of The Letter, `examples/novel`. |
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |
 | `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
+
+`--theme` picks the [React UI's preset](/react/customising#_1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. The `vanilla` template has no React UI and ignores it. The command says which theme it used.
 
 Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends only on `@ifloom/*` packages, and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
 
@@ -336,31 +339,38 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line.
 
 ```ts
-import { TEMPLATES, buildFiles, checkBuild, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
-import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, TurnMetrics } from '@ifloom/cli'
+import { TEMPLATES, THEMES, buildFiles, checkBuild, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
+import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
 ```
 
 ### newGame
 
 ```ts
-function newGame(options: NewGameOptions): { dir: string; files: string[] }
+function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null }
 
 type NewGameOptions = {
   name: string
   template?: TemplateName
   into?: string
+  theme?: ThemeName
 }
 
 type TemplateName = 'blank' | 'vanilla' | 'novel' | 'cafe' | 'town'
 const TEMPLATES: readonly TemplateName[]
+
+type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
+const THEMES: readonly ThemeName[]
 ```
 
-What `ifloom new` runs. It copies a template into `into` (`games/<name>` in the checkout if left out), sets the package name, fills in the title, and returns the folder and the files it wrote. It installs nothing. It throws on a name npm wouldn't accept, a template that doesn't exist, or a folder that isn't empty.
+What `ifloom new` runs. It copies a template into `into` (`games/<name>` in the checkout if left out), sets the package name, fills in the title, and returns the folder and the files it wrote. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
+
+`theme` is the React UI's preset, written into `src/styles.css`. Left out, a `blank` game gets one from `THEMES` at random and a copied example keeps its own. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla` template (which ignores `theme`) and for a game whose stylesheet imports no preset.
 
 ```ts
 import { newGame } from '@ifloom/cli'
 
 const { dir } = newGame({ name: 'rainy-day', template: 'vanilla', into: '/tmp/rainy-day' })
+const { theme } = newGame({ name: 'market-day', theme: 'paper', into: '/tmp/market-day' }) // 'paper'
 ```
 
 ### checkBuild

@@ -135,7 +135,7 @@ import './styles.css'
 mountGame(theLetter(), { layout: READING_LAYOUT })
 ```
 
-[`READING_LAYOUT`](/react/#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
+[`READING_LAYOUT`](/react/#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/react/customising#_1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
 
 ## A management game: The Corner Café
 
@@ -287,7 +287,7 @@ mountGame(cornerCafe(), {
 })
 ```
 
-`'entities'` is the [`EntityTable`](/react/components#entitytable), with a table for the staff and one for the menu. `'actions'` is the game's own buttons, from Count the till and end the week to Put a card in the window. A layout lists only the parts the game uses, and any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
+`'entities'` is the [`EntityTable`](/react/components#entitytable), with a table for the staff and one for the menu. `'actions'` is the game's own buttons, from Count the till and end the week to Put a card in the window. A layout lists only the parts the game uses, and any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar. Its stylesheet imports the `studio` [preset](/react/customising#_1-pick-a-theme-preset) in the café's green. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
 
 ### A calendar, if the game wants one
 

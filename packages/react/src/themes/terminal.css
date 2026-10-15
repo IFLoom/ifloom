@@ -123,6 +123,20 @@ body {
   font-size: 0.8rem;
 }
 
+/* A levelled stat: "lv 2", and a flat one-line bar. */
+[data-part="stat-level"] {
+  text-transform: lowercase;
+}
+
+[data-part="stat-progress"] {
+  height: 2px;
+  border-radius: 0;
+}
+
+[data-part="stat-progress"] > span {
+  background: currentColor;
+}
+
 [data-part="button"],
 [data-part="menu-button"] {
   border-radius: 0;

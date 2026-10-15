@@ -40,7 +40,7 @@ export const PART_KEYS = [
   'page', 'sidebar', 'stage', 'overlay',
   'title', 'clock',
   // Stats
-  'stats', 'stat', 'stat-label', 'stat-value',
+  'stats', 'stat', 'stat-label', 'stat-value', 'stat-level', 'stat-progress',
   // Where you are, and who's there
   'location', 'location-name', 'location-text', 'exits', 'exit',
   'people', 'people-title', 'person', 'person-portrait', 'person-name', 'person-role', 'person-actions',

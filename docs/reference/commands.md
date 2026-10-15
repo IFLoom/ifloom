@@ -115,6 +115,8 @@ Fills in what an older state lacks for this game:
 - the default of every `play` [setting](/reference/settings) the game declares that the save has no value for, such as one added in an update, or all of them in a save from before version 9
 - every [entity](/reference/entities) the game declares that the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. That covers one a mod or a new version of the game declares, or one a plugin's [`entities`](/reference/plugins#kinds-and-entities) make.
 
+The last two only happen in a game that declares no [`version`](/reference/saves#the-game-s-own-migrations). A game that declares one fills new settings and entities in its migration steps, with `tools.fill()`, and `hydrate` only makes sure `settings` is an object.
+
 It then runs [`migratePlugins`](/reference/plugins#migrateplugins), so a plugin added since the save starts fresh and an older plugin state is carried forward. It returns the same object when nothing was missing.
 
 [`apply`](#apply) runs it on every command, so you rarely need it. Call it when you read a loaded save directly before any command has run on it, for example to draw the first [`view`](/reference/view).

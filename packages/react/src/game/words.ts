@@ -8,6 +8,8 @@ import { useGame } from './context.tsx'
  */
 export const UI_STRINGS = {
   quests: 'Quests',
+  statLevel: 'Level {level}',
+  statProgress: '{label}: {percent}% of the way to level {next}',
   questNew: 'New',
   questStage: '{stage} of {stages}',
   track: 'Track',

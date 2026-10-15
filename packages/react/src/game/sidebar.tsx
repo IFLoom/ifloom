@@ -5,6 +5,7 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
+import { useWords } from './words.ts'
 
 function ClockImpl() {
   const { view } = useGame()
@@ -18,24 +19,49 @@ export const Clock = overridable('Clock', ClockImpl)
 
 function StatListImpl() {
   const { view } = useGame()
+  const words = useWords()
   const list = usePart('stats', 'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm')
   const row = usePart('stat', 'contents')
   const label = usePart('stat-label', 'text-muted-foreground')
   const value = usePart('stat-value', 'text-right font-medium tabular-nums')
+  const levelPart = usePart('stat-level', 'ml-1.5 text-xs text-muted-foreground')
+  const progressPart = usePart('stat-progress', 'col-span-2 h-1 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
   if (!view.stats.length) return null
   return (
     <dl {...list}>
-      {view.stats.map((stat) => (
-        <div key={stat.key} {...row} data-stat={stat.key}>
-          <dt {...label}>{stat.label}</dt>
-          <dd {...value}>{stat.text}</dd>
-        </div>
-      ))}
+      {view.stats.map((stat) => {
+        const level = stat.level
+        const percent = level ? Math.round(level.progress * 100) : 0
+        return (
+          <div key={stat.key} {...row} data-stat={stat.key}>
+            <dt {...label}>
+              {stat.label}
+              {level ? <span {...levelPart} data-level={level.level}>{words('statLevel', { level: level.level })}</span> : null}
+            </dt>
+            <dd {...value}>{stat.text}</dd>
+            {level && level.next !== null ? (
+              <dd
+                {...progressPart}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                aria-label={words('statProgress', { label: stat.label, percent, next: level.level + 1 })}
+              >
+                <span style={{ width: `${percent}%` }} />
+              </dd>
+            ) : null}
+          </div>
+        )
+      })}
     </dl>
   )
 }
 
-/** The stats the game lists, with their values written as the game formats them. */
+/**
+ * The stats the game lists, with their values written as the game formats them.
+ * A stat with levels also shows its level and a bar towards the next one.
+ */
 export const StatList = overridable('StatList', StatListImpl)
 
 /** The places plugin's view, read by its shape: the UI depends on no plugin. */

@@ -4,7 +4,7 @@ import type { InputDef } from './inputs.ts'
 import type { TriggerDef } from './triggers.ts'
 import type { Command, Effect } from './types.ts'
 import type { EffectRef } from './custom.ts'
-import type { StatDef } from './stats.ts'
+import { statProblems, type StatDef } from './stats.ts'
 import { anyOf, bindCurrent, parseRef, statOwnerProblem, type EntityDef, type KindDef } from './entities.ts'
 import type { ActivityDef } from './activity.ts'
 import { referenced } from './condition.ts'
@@ -18,7 +18,7 @@ import type {
 import { settingConditionProblems, settingProblems } from './settings.ts'
 import type { Condition } from './condition.ts'
 import { customCall, customCondition, customEffectsUsed, hasCustomEffect, type Custom } from './custom.ts'
-import { proseStore } from './prose.ts'
+import { memberKey, proseStore, type VariantMember } from './prose.ts'
 import { sceneReferences, type Block, type DataScene } from './scene.ts'
 import { mediaMarkupProblems, poolManifestProblems, sceneMediaProblems, stageProblems, type GameMedia, type MediaStage, type PoolFile } from './media.ts'
 import { cueProblems, manifestProblems, markupProblems, placementProblems, type ChannelDef, type GameAudio, type PlaylistDef, type TrackDef } from './audio.ts'
@@ -60,8 +60,12 @@ export type Pack = {
   strings?: Record<string, string>
   /** Prose by key. Later packs override earlier ones. */
   prose?: Record<string, string>
-  /** Variants membership by variants name, in draw order. Later packs append. */
-  variants?: Record<string, string[]>
+  /**
+   * Variants membership by variants name, in draw order. Later packs append.
+   * A member is a prose key, or `{ text: key, weight }` to be drawn more or
+   * less often than the rest.
+   */
+  variants?: Record<string, VariantMember[]>
   /** Named functions content calls. A later pack's replaces an earlier one's by name. */
   custom?: Custom
   /** Surgical changes to content an earlier pack declared. */
@@ -175,6 +179,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   addMedia('base', base.media)
   const strings: Record<string, string> = { ...base.strings }
   const variants: Record<string, string[]> = {}
+  /** The same, with each member's weight where it has one. */
+  const weightedVariants: Record<string, VariantMember[]> = {}
   // The base game's own functions come first; packs lay theirs over by name.
   const custom: Custom = {
     conditions: { ...base.custom?.conditions },
@@ -237,7 +243,13 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     addMedia(pack.id, pack.media)
     Object.assign(strings, pack.strings ?? {})
     for (const [name, members] of Object.entries(pack.variants ?? {})) {
-      variants[name] = [...(variants[name] ?? []), ...members]
+      variants[name] = [...(variants[name] ?? []), ...members.map(memberKey)]
+      weightedVariants[name] = [...(weightedVariants[name] ?? []), ...members]
+      for (const member of members) {
+        if (typeof member !== 'string' && member.weight !== undefined && !(member.weight > 0)) {
+          problems.push({ pack: pack.id, where: `variants ${name}`, what: `"${member.text}" has a weight of ${member.weight}; a weight must be above 0` })
+        }
+      }
     }
     addData(pack.id, pack.data)
     for (const kind of ['conditions', 'effects', 'values', 'panels'] as const) {
@@ -313,7 +325,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   }
   game.entities = [...entities.values()].map((entry) => entry.value)
   // Scenes read their words from here; the store fills tokens for the save.
-  game.prose = proseStore(game, prose, variants)
+  game.prose = proseStore(game, prose, weightedVariants)
 
   // Everything a declarative scene points at has to exist.
   const sceneIds = new Set(game.scenes.map((scene) => scene.id))
@@ -322,6 +334,8 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   const statIds = new Set(stats.keys())
   const kindIds = new Set(kinds.keys())
   const collectionIds = new Set(collections.keys())
+  /** Every name a scene is drawn from, for `{ kind: 'scene', from }`. */
+  const drawnFrom = new Set(game.scenes.flatMap((scene) => scene.drawnFrom ?? []))
 
   /** Everything a condition names that the game does not have, as a problem's `what`. */
   function conditionProblems(condition: Condition | undefined): string[] {
@@ -485,6 +499,12 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
         const def = stats.get(effect.key)?.value
         const problem = def && statOwnerProblem(def.of, effect.key, effect.of)
         if (problem) out.push(problem)
+        if (def?.derive !== undefined) out.push(`stat "${effect.key}" is derived: it is worked out, never written`)
+      }
+      if (effect.kind === 'create') {
+        for (const key of Object.keys(effect.entity.stats ?? {})) {
+          if (stats.get(key)?.value.derive !== undefined) out.push(`stat "${key}" is derived: it is worked out, never written`)
+        }
       }
       if (effect.kind === 'each') {
         // Inside, `'$'` is one of the kind it runs over.
@@ -502,8 +522,11 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       if (effect.kind === 'collect' && effect.entry.text !== undefined && prose[effect.entry.text] === undefined) {
         out.push(`no prose for "${effect.entry.text}"`)
       }
-      if (effect.kind === 'scene' && effect.id !== null && !sceneIds.has(effect.id)) {
-        out.push(`goes to unknown scene "${effect.id}"`)
+      if (effect.kind === 'scene') {
+        if ('from' in effect) {
+          if (!drawnFrom.has(effect.from)) out.push(`draws from "${effect.from}", but no scene is drawn from it`)
+          if (effect.otherwise !== undefined && !sceneIds.has(effect.otherwise)) out.push(`goes to unknown scene "${effect.otherwise}"`)
+        } else if (effect.id !== null && !sceneIds.has(effect.id)) out.push(`goes to unknown scene "${effect.id}"`)
       }
       if (effect.kind === 'audio') out.push(...placementProblems(game, { [effect.channel]: effect.track }))
       if (effect.kind === 'sound') out.push(...cueProblems(game, effect.track))
@@ -514,6 +537,29 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   for (const { value, from } of stats.values()) {
     if (value.of !== undefined && !kindIds.has(value.of)) problems.push({ pack: from, where: `stat ${value.id}`, what: `belongs to unknown kind "${value.of}"` })
   }
+  // Derived stats and levels: formulas, cycles, thresholds.
+  for (const { where, what } of statProblems(game)) {
+    problems.push({ pack: stats.get(where.slice('stat '.length))?.from ?? 'base', where, what })
+  }
+  // Storylets: a weight needs a draw to weigh in, and must be above 0.
+  for (const { value, from } of scenes.values()) {
+    const where = `scene ${value.id}`
+    const drawn = Boolean(value.drawnFrom?.length)
+    if (value.weight !== undefined && !(value.weight > 0)) problems.push({ pack: from, where, what: 'weight must be above 0' })
+    if (value.weight !== undefined && !drawn) problems.push({ pack: from, where, what: 'has a weight but no drawnFrom, so it is never drawn' })
+    if (value.when !== undefined && !drawn) problems.push({ pack: from, where, what: 'has a when but no drawnFrom; when only gates draws' })
+    checkConditions([value.when], from, where)
+  }
+  // The game's own migrations: one step per version below the game's.
+  if (game.version !== undefined && !(Number.isInteger(game.version) && game.version >= 1)) {
+    problems.push({ pack: 'base', where: 'version', what: 'version must be a whole number, 1 or more' })
+  }
+  for (const key of Object.keys(game.migrations ?? {})) {
+    const n = Number(key)
+    if (!Number.isInteger(n) || n < 1 || n >= (game.version ?? 1)) {
+      problems.push({ pack: 'base', where: `migration ${key}`, what: `a step is keyed by the version it upgrades from, 1 to ${(game.version ?? 1) - 1}` })
+    }
+  }
   for (const { value, from } of entities.values()) {
     const where = `entity ${value.of}:${value.id}`
     if (!kindIds.has(value.of)) problems.push({ pack: from, where, what: `unknown kind "${value.of}"` })
@@ -521,6 +567,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     if (/^\d+$/.test(value.id)) problems.push({ pack: from, where, what: 'an entity id must not be a whole number' })
     for (const key of Object.keys(value.stats ?? {})) {
       if (stats.get(key)?.value.of !== value.of) problems.push({ pack: from, where, what: `no ${value.of} stat named "${key}"` })
+      else if (stats.get(key)?.value.derive !== undefined) problems.push({ pack: from, where, what: `stat "${key}" is derived: it is worked out, never written` })
     }
   }
   for (const { value, from } of triggers.values()) {
@@ -566,6 +613,9 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       problems.push({ pack: from, where: `activity ${value.id}`, what })
     }
     checkConditions((value.requires ?? []).map((entry) => entry.when), from, `activity ${value.id}`)
+    for (const id of Object.keys(value.cost?.stats ?? {})) {
+      if (stats.get(id)?.value.derive !== undefined) problems.push({ pack: from, where: `activity ${value.id}`, what: `spends stat "${id}", which is derived and never written` })
+    }
     for (const name of customEffectsUsed(value.effects ?? [])) {
       if (!hasCustomEffect(game, name) && !absentPartner(game, name)) {
         problems.push({ pack: from, where: `activity ${value.id}`, what: `no custom effect named "${name}"` })

@@ -34,6 +34,8 @@ type StatDef = {
   lacking?: string
   bands?: readonly number[]
   format?: string
+  derive?: Formula
+  levels?: StatLevels
 }
 ```
 
@@ -51,6 +53,8 @@ type StatDef = {
 | `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. See [`lackingLine`](#lackingline). |
 | `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/reference/conditions#tier). The player never sees the numbers. |
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
+| `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
+| `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
 
 **Gotchas.**
 - You have to declare a stat before you use it. [`validatePack`](/reference/game#validatepack) and the [loader](/reference/loader#the-checks) report content that names an undeclared stat, or names a stat on the wrong owner.
@@ -218,3 +222,93 @@ import { formatStat, statDef } from '@ifloom/engine'
 
 formatStat(statDef(game, 'coins'), 12) // '12c'
 ```
+
+## Derived stats
+
+A derived stat is worked out from other stats every time it's read, and never kept in the save:
+
+```ts
+stats: [
+  { id: 'baking', label: 'Baking', start: 4 },
+  { id: 'patience', label: 'Patience', start: 6 },
+  { id: 'service', label: 'Service', derive: { sum: ['baking', 'patience'] } },
+]
+```
+
+Conditions, prices and the view read it like any other stat. A derived stat on an [entity](#entity-stats) kind reads the same entity's stats. Its value is held to its own range, so give it a `max` if it can pass 100.
+
+**Gotchas.**
+- It can't be written. A `stat` or `setStat` effect on it does nothing, and the [loader](/reference/loader#the-checks) reports one, along with a cost that spends it, `spendable`, a `start`, a formula naming an unknown stat or another owner's, and a cycle.
+- Formulas don't round. `{ scale: 'patience', by: 0.5 }` can give 2.5.
+
+### Formula
+
+```ts
+import type { Formula } from '@ifloom/engine'
+
+type Formula =
+  | number
+  | string                                  // another stat's id
+  | { sum: Formula[] }
+  | { product: Formula[] }
+  | { min: Formula[] }
+  | { max: Formula[] }
+  | { scale: Formula; by: number }          // the formula times `by`
+  | { clamp: Formula; min?: number; max?: number }
+```
+
+## StatLevels
+
+```ts
+import type { StatLevels } from '@ifloom/engine'
+
+type StatLevels = {
+  at: number[]
+  notice?: string
+}
+```
+
+Levels on a stat, declared as `levels` on its [`StatDef`](#statdef). `at` is the value each level starts at, lowest first. Below the first is level 0. A [`{ level }`](/reference/conditions) condition reads the level, and the view's [`StatView`](/reference/view#statview) gets a `level` field.
+
+```ts
+{ id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60], notice: '{label} is now level {level}.' } }
+```
+
+When a command takes one of the player's stats up a level and `notice` is set, the engine raises a [notice](/reference/notices) tagged `level`, with `{label}` and `{level}` filled in. Its id is `level.<stat>`, so a second level-up replaces the first while it's unseen. Without `notice` there's no notice.
+
+**Gotcha:** the loader reports thresholds that don't go up, or that fall outside the stat's `min` and `max`.
+
+## statValue
+
+```ts
+function statValue(state: GameState, game: Game, id: string, of?: string): number
+```
+
+A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0.
+
+```ts
+import { statValue } from '@ifloom/engine'
+
+statValue(state, game, 'service', 'staff:ana')
+```
+
+## statLevel
+
+```ts
+function statLevel(
+  state: GameState,
+  game: Game,
+  id: string,
+  of?: string,
+): { level: number; next: number | null; progress: number } | undefined
+```
+
+Where a stat with [`levels`](#statlevels) stands: its level, the value the next level starts at (`null` at the top) and how far it is from this level's start to the next, from 0 to 1 (1 at the top). Level 0 counts from the stat's `min`. It's `undefined` for a stat with no levels.
+
+```ts
+import { statLevel } from '@ifloom/engine'
+
+// levels: { at: [10, 30, 60] }, cooking at 20
+statLevel(state, game, 'cooking') // { level: 1, next: 30, progress: 0.5 }
+```
+

@@ -3,7 +3,7 @@ import { holds, type Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
 import { lockedBy } from './locks.ts'
-import { clampStat, lackingLine, statDef } from './stats.ts'
+import { clampStat, lackingLine, statDef, statValue } from './stats.ts'
 import type { GameState } from './types.ts'
 
 /**
@@ -65,7 +65,7 @@ export function activityBlocked(
   }
   const cost = activity.cost ?? {}
   for (const [id, amount] of Object.entries(cost.stats ?? {})) {
-    if (amount > 0 && (state.stats[id] ?? 0) < amount) {
+    if (amount > 0 && statValue(state, game, id) < amount) {
       return cost.reasons?.[id] ?? lackingLine(statDef(game, id), id, amount, game)
     }
   }
@@ -79,7 +79,8 @@ export function payCost(
 ): GameState {
   let next = state
   for (const [id, amount] of Object.entries(cost.stats ?? {})) {
-    if (!amount) continue
+    // A derived stat is never written; the loader reports one spent.
+    if (!amount || statDef(game, id)?.derive !== undefined) continue
     const value = clampStat(next, game, id, (next.stats[id] ?? 0) - amount)
     next = { ...next, stats: { ...next.stats, [id]: value } }
   }

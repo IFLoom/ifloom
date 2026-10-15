@@ -32,6 +32,18 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
 }
 
 /**
+ * One member of a variants list: a prose key, or a prose key with a weight.
+ * `{ text: 'cafe.order/late', weight: 3 }` is drawn three times as often as a
+ * member of weight 1. A plain key has weight 1.
+ */
+export type VariantMember = string | { text: string; weight?: number }
+
+/** A variants member's prose key. */
+export function memberKey(member: VariantMember): string {
+  return typeof member === 'string' ? member : member.text
+}
+
+/**
  * A prose store from lines by key and variants by name: what data scenes read
  * their words from. `line(key, state)` fills the tokens for that save;
  * without a state it returns the line as written.
@@ -39,14 +51,23 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
 export function proseStore(
   game: Game,
   lines: Record<string, string>,
-  variants: Record<string, string[]> = {},
+  variants: Record<string, readonly VariantMember[]> = {},
 ): ProseStore {
+  const keys: Record<string, string[]> = {}
+  const weights: Record<string, Record<string, number>> = {}
+  for (const [name, members] of Object.entries(variants)) {
+    keys[name] = members.map(memberKey)
+    for (const member of members) {
+      if (typeof member !== 'string' && member.weight !== undefined) (weights[name] ??= {})[member.text] = member.weight
+    }
+  }
   return {
     line: (key, state) => {
       const text = lines[key]
       if (text === undefined) return undefined
       return state ? fillTokens(text, state, game) : text
     },
-    variants: (name) => variants[name] ?? [],
+    variants: (name) => keys[name] ?? [],
+    weight: (name, key) => weights[name]?.[key] ?? 1,
   }
 }

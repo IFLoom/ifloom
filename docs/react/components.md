@@ -706,7 +706,9 @@ function StatList(): JSX.Element | null
 
 The stats the view lists, each label beside its value written the way the game [formats](/reference/stats) it (`12 coins`). A stat the game doesn't list, or whose `visible` doesn't hold, isn't in the view, so it isn't here either. It draws nothing when there are no stats. Each row carries `data-stat`.
 
-Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat` (with `data-stat`), `stat-label` and `stat-value`.
+A stat that declares [`levels`](/reference/stats) also shows its level after its label (`ui.statLevel`, "Level 2") and, below the row, a bar towards the next level from [`StatView.level`](/reference/view). Its `aria-label` is `ui.statProgress`. At the top level there's no bar.
+
+Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat` (with `data-stat`), `stat-label`, `stat-value`, `stat-level` (with `data-level`) and `stat-progress`.
 
 ### EntityTable
 

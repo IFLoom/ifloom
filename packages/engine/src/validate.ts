@@ -2,7 +2,7 @@ import { collectionById } from './collections.ts'
 import { absentPartner, pluginCommand, pluginEffect } from './plugin.ts'
 import { customCall, customValue } from './custom.ts'
 import { anyOf, bindCurrent, statOwnerProblem } from './entities.ts'
-import { statDef } from './stats.ts'
+import { statDef, statProblems } from './stats.ts'
 import {
   itemById,
   sceneById,
@@ -73,6 +73,8 @@ export function validatePack(
       say(`stat ${stat.id}`, `max names value ${stat.max.value}, which the game does not declare`)
     }
   }
+
+  for (const { where, what } of statProblems(game)) say(where, what)
 
   duplicates((game.settings ?? []).map((entry) => entry.id)).forEach((id) =>
     say('settings', `duplicate id ${id}`),
@@ -219,7 +221,10 @@ function checkEffect(
       if (!collectionById(game, effect.from)) say(where, `collection ${effect.from} is not declared`)
       break
     case 'scene':
-      if (effect.id !== null && !sceneById(game, effect.id)) {
+      if ('from' in effect) {
+        if (!game.scenes.some((scene) => scene.drawnFrom?.includes(effect.from))) say(where, `no scene is drawn from ${effect.from}`)
+        if (effect.otherwise !== undefined && !sceneById(game, effect.otherwise)) say(where, `scene ${effect.otherwise} does not exist`)
+      } else if (effect.id !== null && !sceneById(game, effect.id)) {
         say(where, `scene ${effect.id} does not exist`)
       }
       return
@@ -238,6 +243,7 @@ function checkEffect(
     case 'setStat': {
       const def = statDef(game, effect.key)
       if (!def) say(where, `stat ${effect.key} is not declared`)
+      else if (def.derive !== undefined) say(where, `stat ${effect.key} is derived and never written`)
       else {
         const problem = statOwnerProblem(def.of, effect.key, effect.of)
         if (problem) say(where, problem)

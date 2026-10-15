@@ -11,10 +11,10 @@ import { sceneContext } from './context.ts'
 import { emptyStoryline, storylineOf } from './storylines.ts'
 import type { Command, Effect, FlagValue, GameState, StorylineState } from './types.ts'
 import { SAVE_VERSION } from './types.ts'
-import { clampStat, startingStats } from './stats.ts'
+import { clampStat, startingStats, statDef, statLevel } from './stats.ts'
 import { bindCurrent, entitiesOf, entityOf, newEntity, removeEntity, startingEntities, writeEntity } from './entities.ts'
 import { holds } from './condition.ts'
-import { hash } from './random.ts'
+import { hash, weighted } from './random.ts'
 import { collect, discard } from './collections.ts'
 import { dismiss, notify } from './notices.ts'
 import { fireTriggers } from './triggers.ts'
@@ -102,6 +102,8 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
     // The opening scene is the first showing.
     audio: { ...emptyAudio(), shown: game.introScene ? 1 : 0 },
     media: emptyMedia(),
+    // Only a game that declares a version stamps its saves with one.
+    ...(game.version !== undefined ? { gameVersion: game.version } : {}),
   }
   if (!options.carry) return noteStarted(fresh, game)
   // Carried over first, so variables the caller gives still win.
@@ -109,6 +111,72 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
   return noteStarted({ ...plus, flags: { ...plus.flags, ...options.flags } }, game)
 }
 
+/**
+ * What `MigrationTools.fill` can fill: the player's stats and each entity's
+ * (start values), items (start counts), variables the game resets each turn
+ * (`rules.resets`), play settings (defaults) and declared entities.
+ */
+export type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
+
+const FILL_KINDS: readonly FillKind[] = ['stats', 'items', 'variables', 'settings', 'entities']
+
+/**
+ * A state with what the game declares and the save lacks filled in: only the
+ * kinds asked for, every kind if left out. Nothing the save already has is
+ * changed, and an entity removed in play is not brought back.
+ */
+export function fillDeclared(state: GameState, game: Game, kinds: readonly FillKind[] = FILL_KINDS): GameState {
+  let next = state
+  if (kinds.includes('stats')) {
+    const kept = (game.stats ?? []).filter((stat) => stat.derive === undefined)
+    const lacking = kept.filter((stat) => !stat.of && next.stats?.[stat.id] === undefined)
+    if (lacking.length) next = { ...next, stats: { ...next.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } }
+    for (const [kind, entities] of Object.entries(next.entities ?? {})) {
+      const owned = kept.filter((stat) => stat.of === kind)
+      for (const [id, entity] of Object.entries(entities)) {
+        const missing = owned.filter((stat) => entity.stats?.[stat.id] === undefined)
+        if (!missing.length) continue
+        const stats = { ...entity.stats, ...Object.fromEntries(missing.map((stat) => [stat.id, stat.start ?? 0])) }
+        next = writeEntity(next, `${kind}:${id}`, { ...entity, stats })
+      }
+    }
+  }
+  if (kinds.includes('items')) {
+    const lacking = game.items.filter((item) => next.items?.[item.id] === undefined)
+    if (lacking.length) {
+      next = { ...next, items: { ...next.items, ...Object.fromEntries(lacking.map((item) => [item.id, item.start ?? (item.kind === 'gear' ? 1 : 0)])) } }
+    }
+  }
+  if (kinds.includes('variables')) {
+    const lacking = Object.entries(game.rules?.resets ?? {}).filter(([key]) => next.flags?.[key] === undefined)
+    if (lacking.length) next = { ...next, flags: { ...next.flags, ...Object.fromEntries(lacking) } }
+  }
+  if (kinds.includes('settings')) {
+    // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
+    const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
+    if (lacking.length || !next.settings) {
+      next = { ...next, settings: { ...next.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
+    }
+  }
+  if (kinds.includes('entities')) {
+    // A declared entity the save does not have (a mod's, a new version's) joins it, unless it was removed in play.
+    const missing = (game.entities ?? []).filter(
+      (entity) => !next.entities?.[entity.of]?.[entity.id] && !(next.removed ?? []).includes(`${entity.of}:${entity.id}`),
+    )
+    for (const entity of missing) next = writeEntity(next, `${entity.of}:${entity.id}`, newEntity(game, entity.of, entity))
+  }
+  return next
+}
+
+/**
+ * A state brought into the shape this engine and game expect: the parts of
+ * the state every save needs (lists, records, audio, media, a settings
+ * object), and each plugin's state brought up to date.
+ *
+ * A game that declares no `version` also gets its declared play settings and
+ * entities filled in here, as it always has. A game that declares one fills
+ * them itself, in its migration steps, with `tools.fill()`.
+ */
 export function hydrate(state: GameState, game: Game): GameState {
   let next = state
   let storylines = state.storylines
@@ -135,16 +203,8 @@ export function hydrate(state: GameState, game: Game): GameState {
   if (!next.removed) next = { ...next, removed: [] }
   if (!next.audio) next = { ...next, audio: emptyAudio() }
   if (!next.media) next = { ...next, media: emptyMedia() }
-  // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
-  const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
-  if (lacking.length || !next.settings) {
-    next = { ...next, settings: { ...next.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
-  }
-  // A declared entity the save does not have — a mod's, a new version's — joins it, unless it was removed in play.
-  const missing = (game.entities ?? []).filter(
-    (entity) => !next.entities[entity.of]?.[entity.id] && !next.removed.includes(`${entity.of}:${entity.id}`),
-  )
-  for (const entity of missing) next = writeEntity(next, `${entity.of}:${entity.id}`, newEntity(game, entity.of, entity))
+  if (game.version === undefined) next = fillDeclared(next, game, ['settings', 'entities'])
+  else if (!next.settings) next = { ...next, settings: {} }
   // A save that cannot be carried forward was refused when it was read; here
   // the plugins' states are only brought up to date.
   const upgraded = migratePlugins(next, game)
@@ -208,6 +268,39 @@ function notePicks(state: GameState, game: Game): GameState {
 }
 
 /**
+ * A notice for each of the player's stats a command took up a level, when the
+ * stat's `levels` has a `notice`. Tagged `level`, one per stat: a second
+ * level-up replaces the first while it is unseen.
+ */
+function levelUps(before: GameState, after: GameState, game: Game): GameState {
+  let next = after
+  for (const stat of game.stats ?? []) {
+    if (stat.of || !stat.levels?.notice) continue
+    const was = statLevel(before, game, stat.id)?.level ?? 0
+    const now = statLevel(after, game, stat.id)?.level ?? 0
+    if (now <= was) continue
+    const title = stat.levels.notice.replaceAll('{label}', stat.label).replaceAll('{level}', String(now))
+    next = notify(next, { id: `level.${stat.id}`, title, tag: 'level' })
+  }
+  return next
+}
+
+/**
+ * Open a scene drawn from a named set: one whose `drawnFrom` names it and
+ * whose `when` holds, by weight. The draw is seeded by the save, the turn and
+ * how many draws the set has had, which a variable `storylet:<name>` counts.
+ */
+function drawStorylet(state: GameState, game: Game, from: string, otherwise: string | undefined): GameState {
+  const key = `storylet:${from}`
+  const used = typeof state.flags[key] === 'number' ? (state.flags[key] as number) : 0
+  const eligible = game.scenes.filter((scene) => scene.drawnFrom?.includes(from) && holds(state, scene.when, game))
+  const drawn = weighted(eligible, (scene) => scene.weight, 'storylet', from, state.seed, state.turn, used)
+  const counted = { ...state, flags: { ...state.flags, [key]: used + 1 } }
+  if (drawn) return { ...counted, sceneId: drawn.id }
+  return otherwise ? { ...counted, sceneId: otherwise } : counted
+}
+
+/**
  * Run a command and say whether it took. Prefer this over `dispatch` anywhere
  * the answer matters — a refusal and a no-op look identical in the state alone.
  */
@@ -232,7 +325,7 @@ export function apply(
   try {
     const ran = run(current, game, command)
     const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))
-    return { state: notePicks(noteStarted(runAfter(game, current, next), game), game), ok: true }
+    return { state: notePicks(noteStarted(levelUps(current, runAfter(game, current, next), game), game), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, refused: error.detail }
@@ -394,6 +487,8 @@ function applyEffect(
       return notify(state, notice)
     }
     case 'stat': {
+      // A derived stat is worked out, never written: the loader reports the effect.
+      if (statDef(game, effect.key)?.derive !== undefined) return state
       if (effect.of !== undefined) {
         const entity = entityOf(state, effect.of)
         if (!entity) return state
@@ -408,6 +503,7 @@ function applyEffect(
       return game.rules?.onStat?.(state, after, effect.key, effect.by) ?? after
     }
     case 'setStat': {
+      if (statDef(game, effect.key)?.derive !== undefined) return state
       if (effect.of !== undefined) {
         const entity = entityOf(state, effect.of)
         if (!entity) return state
@@ -480,6 +576,7 @@ function applyEffect(
       return next
     }
     case 'scene':
+      if ('from' in effect) return drawStorylet(state, game, effect.from, effect.otherwise)
       return { ...state, sceneId: effect.id }
     case 'item': {
       const count = Math.max(0, (state.items[effect.id] ?? 0) + effect.by)

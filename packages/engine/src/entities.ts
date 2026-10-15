@@ -76,7 +76,8 @@ export function newEntity(
   given: { name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> },
 ): EntityState {
   const stats: Stats = {}
-  for (const stat of game.stats ?? []) if (stat.of === kind) stats[stat.id] = stat.start ?? 0
+  // A derived stat is worked out when it is read, so an entity keeps none.
+  for (const stat of game.stats ?? []) if (stat.of === kind && stat.derive === undefined) stats[stat.id] = stat.start ?? 0
   return { name: given.name, stats: { ...stats, ...given.stats }, flags: { ...given.flags } }
 }
 

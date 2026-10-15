@@ -119,6 +119,15 @@
   font-variant: small-caps;
 }
 
+/* The stats are one quiet line, so a levelled stat shows its level and leaves out the bar. */
+[data-part="stat-level"] {
+  font-style: italic;
+}
+
+[data-part="stat-progress"] {
+  display: none;
+}
+
 [data-part="notice"] {
   border-width: 0 0 0 3px;
   border-color: var(--primary);

@@ -11,11 +11,14 @@ import type { Command } from './types.ts'
 import type { Condition } from './condition.ts'
 import type { Game, SceneMedia } from './game.ts'
 import type { GameState } from './types.ts'
-import { pick } from './random.ts'
+import { weighted } from './random.ts'
 import { MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from './sceneBody.ts'
 
-/** One file in a pool: its path, as any picture's, and the tags it answers to. */
-export type PoolFile = { src: string; tags?: string[] }
+/**
+ * One file in a pool: its path, as any picture's, the tags it answers to, and
+ * how often it is picked against the other files that fit (1 if left out).
+ */
+export type PoolFile = { src: string; tags?: string[]; weight?: number }
 
 /** The game's media: pools of files, by id. */
 export type GameMedia = {
@@ -156,7 +159,8 @@ export function poolPick(state: GameState, game: Game, request: PoolRequest): st
   if (kept !== undefined && files.some((file) => file.src === kept)) src = kept
   else {
     const candidates = poolCandidates(game, request.pool, request.tags)
-    src = candidates.length ? pick(candidates, 'media', key, state.seed).src : null
+    // Weights all 1 draw exactly what an unweighted pick would.
+    src = weighted(candidates, (file) => file.weight, 'media', key, state.seed)?.src ?? null
   }
   if (noting && src !== null && src !== kept) noting[key] = src
   return src
@@ -344,6 +348,7 @@ export function poolManifestProblems(game: Game): { where: string; what: string 
     }
     files.forEach((file, index) => {
       if (typeof file?.src !== 'string' || !file.src) out.push({ where, what: `file ${index} has no src` })
+      if (file?.weight !== undefined && !(file.weight > 0)) out.push({ where, what: `file ${index} has a weight of ${file.weight}; a weight must be above 0` })
     })
   }
   return out

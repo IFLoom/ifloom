@@ -106,6 +106,7 @@ See [saves](/reference/saves).
 | `notASave` | `That is not a save file.` | |
 | `otherGame` | `That save belongs to another game ({game}).` | `{game}` is the save's game id |
 | `saveTooOld` | `That save is from a version this game cannot read.` | |
+| `gameNewer` | `That save was made with a newer version of this game.` | |
 | `pluginNewer` | `That save was made with a newer version of {plugin}.` | `{plugin}` is the plugin's id |
 | `pluginUnreadable` | `That save's {plugin} is from a version this game cannot read.` | `{plugin}` |
 | `turnLabel` | `Turn {turn}` | `{turn}` is the [turn](/reference/state#turn), counted from 1. It's a save's [default name](/reference/saves#savemeta) when no plugin says when or where the save is. |

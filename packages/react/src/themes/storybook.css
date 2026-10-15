@@ -87,6 +87,21 @@
   box-shadow: var(--shadow-card);
 }
 
+/* A levelled stat: its level in the accent colour, and a chunky rounded bar. */
+[data-part="stat-level"] {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+[data-part="stat-progress"] {
+  height: 0.45rem;
+  background: var(--secondary);
+}
+
+[data-part="stat-progress"] > span {
+  border-radius: 999px;
+}
+
 [data-part="notice"] {
   border-width: 3px;
   border-color: var(--secondary);

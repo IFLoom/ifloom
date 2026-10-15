@@ -38,6 +38,8 @@ const locations: LocationDef[] = [
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
       { id: 'sandwich', label: 'Buy a sandwich for later', command: { type: 'activity', id: 'buySandwich' } },
+      // Something small happens while you sit: one of the café's storylets, drawn at random.
+      { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
     ],
     // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
     stage: {
@@ -153,6 +155,7 @@ export const town: Pack = {
         { kind: 'flag', key: 'hadCoffee', value: true },
       ],
     },
+    { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
     { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },
@@ -214,6 +217,41 @@ export const town: Pack = {
       speaker: 'ava',
       body: [{ text: 'ava.river' }],
       choices: [{ id: 'stay', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }, { kind: 'scene', id: null }] }],
+    },
+    // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
+    {
+      id: 'cafe.window',
+      title: 'The window seat',
+      drawnFrom: ['cafe'],
+      weight: 3,
+      when: { not: { seen: 'cafe.window', gte: 2 } },
+      body: [{ text: 'cafe.window' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+    },
+    {
+      id: 'cafe.crossword',
+      title: 'Seven down',
+      drawnFrom: ['cafe'],
+      when: { not: { seen: 'cafe.crossword' } },
+      body: [{ text: 'cafe.crossword' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'charm', by: 1 }, { kind: 'scene', id: null }] }],
+    },
+    {
+      id: 'cafe.break',
+      title: 'Ava’s break',
+      speaker: 'ava',
+      drawnFrom: ['cafe'],
+      weight: 2,
+      when: here('ava'),
+      body: [{ text: 'cafe.break' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', id: null }] }],
+    },
+    // When none of them can happen.
+    {
+      id: 'cafe.quiet',
+      title: 'A quiet table',
+      body: [{ text: 'cafe.quiet' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
     },
     {
       id: 'sam.hi',

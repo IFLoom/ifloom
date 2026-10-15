@@ -95,6 +95,11 @@ export type GameState = {
   audio: AudioState
   /** The file each pool request was given, so a revisit and a reload show the same one. */
   media: MediaState
+  /**
+   * The game's own version (`game.version`) the save was made with. Only
+   * there when the game declares a version; a save without it is version 1.
+   */
+  gameVersion?: number
 }
 
 export type Command =
@@ -146,6 +151,12 @@ export type Effect =
    */
   | { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
   | { kind: 'scene'; id: string | null }
+  /**
+   * Open one scene drawn at random from the scenes whose `drawnFrom` names
+   * `from` and whose `when` holds, by their `weight`. With none to draw, open
+   * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
+   */
+  | { kind: 'scene'; from: string; otherwise?: string }
   | { kind: 'item'; id: string; by: number }
   | { kind: 'phase'; value: Phase }
   | { kind: 'closeStoryline'; id: string; turns: number }

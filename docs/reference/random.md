@@ -113,3 +113,30 @@ chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
 ```
 
 **Gotcha:** the same parts give the same answer every time. If you want a chance to come up fresh on each visit, put something in its parts that changes per visit, such as a count of visits.
+
+## weighted
+
+```ts
+import { weighted } from '@ifloom/engine'
+
+function weighted<T>(
+  items: readonly T[],
+  weightOf: (item: T) => number | undefined,
+  ...parts: (string | number)[]
+): T | undefined
+```
+
+One item from the list, drawn by weight. An item of weight 3 comes up three times as often as one of weight 1. A weight of `undefined` counts as 1, and a weight of 0 or less (or one that isn't a number) is never drawn. It returns `undefined` when nothing can be drawn.
+
+```ts
+const loaf = weighted(
+  [{ id: 'rye', weight: 1 }, { id: 'sourdough', weight: 3 }],
+  (loaf) => loaf.weight,
+  state.seed, state.turn, 'bakery.loaf',
+)
+```
+
+The engine draws with it wherever content has weights: [storylets](/reference/effects#scene), [variants](/reference/prose#variantmember), [pool files](/reference/media) and shuffled [playlists](/reference/audio).
+
+**Gotcha:** when every weight is a whole number the draw is `hash % total`, so a list where every weight is 1 draws exactly what [`pick`](#pick) would from the same parts.
+

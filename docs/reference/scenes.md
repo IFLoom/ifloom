@@ -423,6 +423,26 @@ const runtime: SceneRuntime = {
 }
 ```
 
+## StoryletFields
+
+```ts
+import type { StoryletFields } from '@ifloom/engine'
+
+type StoryletFields = {
+  drawnFrom?: string[]
+  weight?: number
+  when?: Condition
+}
+```
+
+Fields any scene, hand-built or data, can carry to be a storylet: a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/reference/effects#scene). `drawnFrom` names the sets it's in, such as `['cafe']`. It's separate from `tags`, which only style a scene. `weight` is how likely a draw is to pick it against the others (1 if left out), and `when` is a [condition](/reference/conditions) that must hold for it to be drawn.
+
+```ts
+{ id: 'cafe.break', drawnFrom: ['cafe'], weight: 2, when: here('ava'), body: [{ text: 'cafe.break' }], choices: [/* ... */] }
+```
+
+**Gotcha:** `when` gates draws only. A `scene` command or effect naming the scene opens it whether `when` holds or not. The loader reports a `weight` or `when` on a scene with no `drawnFrom`, and a weight of 0 or less.
+
 ### drawVariant
 
 ```ts

@@ -92,6 +92,25 @@
   padding: 0.15rem 0;
 }
 
+/* A levelled stat: its level as a small pill, and a slim bar under the row. */
+[data-part="stat-level"] {
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-weight: 600;
+}
+
+[data-part="stat-progress"] {
+  height: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+[data-part="stat-progress"] > span {
+  border-radius: 999px;
+  transition: width 300ms ease;
+}
+
 [data-part="notice"] {
   border: none;
 }

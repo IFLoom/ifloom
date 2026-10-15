@@ -1,6 +1,6 @@
 /** The Letter, read through: the novel shape needs nothing but the core. */
 import { describe, expect, it } from 'vitest'
-import { apply, holds, startingState, view, type Command, type GameState } from '@ifloom/engine'
+import { SAVE_VERSION, apply, holds, memoryDriver, saves, startingState, view, type Command, type GameState } from '@ifloom/engine'
 import { theLetter } from '../src/game.ts'
 
 const { game, problems } = theLetter()
@@ -45,10 +45,10 @@ describe('The Letter', () => {
     expect(view(shelved, game).scene.choices.map((choice) => choice.id)).toEqual(['truth', 'deny'])
   })
 
-  it('counts lies and reads the count back as a range, with a chapter as a turn', () => {
+  it('counts fibs and reads the count back as a range, with a chapter as a turn', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
     const tangled = read(named, choose('open'), choose('blame'))
-    expect(tangled.flags.lies).toBe(2)
+    expect(tangled.flags.fibs).toBe(2)
     expect(tangled.turn).toBe(2)
     expect(view(tangled, game).scene.body).toContain('she has clearly been talking')
     const honest = read(named, choose('open'), choose('truth'))
@@ -73,7 +73,35 @@ describe('The Letter', () => {
     expect(view(named, game).scene.body).not.toContain('stood here before')
     const again = startingState(game, { carry: ended })
     expect(again.flags.readBefore).toBe(true)
-    expect(again.flags.lies).toBeUndefined()
+    expect(again.flags.fibs).toBeUndefined()
     expect(view(again, game).scene.body).toContain('stood here before')
+  })
+
+  it('reads a save from version 1, when the count was called lies', () => {
+    // A version-1 save of a reader at the door after two lies, as that build wrote it: no game version
+    // in it at all, or, for a save that recorded one, version 1.
+    const state = {
+      ...startingState(game),
+      turn: 2,
+      sceneId: 'ch3.door',
+      flags: { playerName: 'Robin', lies: 2 },
+      chosen: { 'ch1.mat/open': 1, 'ch2.stairs/blame': 1 },
+    } as Partial<GameState>
+    delete state.gameVersion
+    const file = (saved: object) =>
+      JSON.stringify({
+        ifloom: 1,
+        meta: { game: game.id, slot: '1', name: 'Chapter three', savedAt: 1, played: 0, turn: 2, when: null, player: 'Robin', packs: ['letter'], plugins: {}, version: SAVE_VERSION },
+        state: saved,
+      })
+    const store = saves(game, memoryDriver())
+    for (const saved of [state, { ...state, gameVersion: 1 }]) {
+      const loaded = store.importText(file(saved))
+      if (typeof loaded === 'string') throw new Error(loaded)
+      expect(loaded.meta.gameVersion).toBe(1)
+      expect(loaded.state.gameVersion).toBe(2)
+      expect(loaded.state.flags).toEqual({ playerName: 'Robin', fibs: 2 })
+      expect(view(loaded.state, game).scene.body).toContain('she has clearly been talking')
+    }
   })
 })

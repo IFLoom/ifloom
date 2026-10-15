@@ -12,6 +12,7 @@ import type { GameAudio } from './audio.ts'
 import type { GameMedia, MediaStage } from './media.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene, type DataScene } from './scene.ts'
+import type { MigrationTools } from './save.ts'
 import type {
   Command,
   Effect,
@@ -116,7 +117,24 @@ export type SceneCtx = {
   storylineFlag: (storylineId: string, key: string) => FlagValue | undefined
 }
 
-export type Scene = {
+/**
+ * What makes a scene a storylet: the named draws it can be drawn from, how
+ * often, and when. See the `{ kind: 'scene', from }` effect.
+ */
+export type StoryletFields = {
+  /**
+   * The draws this scene can come up in, by name: `['cafe']`. A
+   * `{ kind: 'scene', from: 'cafe' }` effect draws one of the scenes that name
+   * `'cafe'` here. Separate from `tags`, which only style the scene.
+   */
+  drawnFrom?: string[]
+  /** How likely a draw is to pick it, against the others it could pick. 1 if left out. Needs `drawnFrom`. */
+  weight?: number
+  /** Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. */
+  when?: Condition
+}
+
+export type Scene = StoryletFields & {
   id: string
   title?: string
   speaker?: string
@@ -133,6 +151,8 @@ export type ProseStore = {
   /** The words for a key, with `{{playerName}}` and friends filled in. */
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
+  /** A member's weight in a variants list, 1 if it has none. Left out, every member weighs 1. */
+  weight?: (name: string, key: string) => number
 }
 
 /** A thread of the story, followed by its stages and flags, and closed for a while if need be. */
@@ -205,6 +225,20 @@ export type CarryOver = {
 export type Game = {
   id: string
   title: string
+  /**
+   * The game's own version, a whole number from 1. Saves record it, and
+   * `migrations` carry an older save forward. Declaring it also stops the
+   * engine filling new stats, settings and entities into old saves by itself:
+   * your migration steps fill them with `tools.fill()`. 1 if left out.
+   */
+  version?: number
+  /**
+   * Steps that carry a save from one version of the game to the next, keyed by
+   * the version they upgrade from: step 1 takes a version-1 save to version 2.
+   * They run when an older save loads, after the engine's and plugins' own
+   * migrations. A version with no step is carried forward unchanged.
+   */
+  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   /** What the player can change from a settings screen. None if left out. */
   settings?: SettingDef[]
   /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */

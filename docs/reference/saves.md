@@ -223,6 +223,7 @@ type SaveMeta = {
   packs: string[]
   plugins: Record<string, number>
   version: number
+  gameVersion: number
 }
 ```
 
@@ -241,6 +242,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `packs` | The ids of the packs the game was loaded from ([`game.packs`](/reference/game)). |
 | `plugins` | Each [plugin](/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
+| `gameVersion` | The game's own [version](#the-game-s-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
 
 ## LoadedSave
 
@@ -322,3 +324,67 @@ const SAVE_VERSION: 11
 ```
 
 The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes, and the bump ships with its migration step. A bump without one would make every player's existing saves unreadable.
+
+## The game's own migrations
+
+When your game's content changes shape between releases, such as a variable renamed, give the game a `version` and a step that carries old saves forward:
+
+```ts
+const game: Game = {
+  // ...
+  version: 2,
+  migrations: {
+    // 1 → 2: the count of lies is called fibs now.
+    1: (state, tools) => {
+      // Fill in the stats added since version 1, then rename the variable.
+      const filled = tools.fill(['stats'])
+      const { lies, ...flags } = filled.flags
+      return lies === undefined ? filled : { ...filled, flags: { ...flags, fibs: lies } }
+    },
+  },
+}
+```
+
+A step is keyed by the version it upgrades from, so step 1 takes a version-1 save to version 2. The steps run when a save loads, after the engine's [`migrate`](#migrate) and the plugins' [`migratePlugins`](/reference/plugins#migrateplugins). A version with no step is carried forward unchanged. A new game and every save record the version in `state.gameVersion` and [`SaveMeta.gameVersion`](#savemeta). A save with no `gameVersion` is version 1.
+
+**Gotchas.**
+- Declaring `version` changes what [`hydrate`](/reference/commands#hydrate) does. Without one, the engine fills new play settings and declared entities into old saves by itself, as it always has. With one, it doesn't, and your steps fill what they need with `tools.fill()`. A stat the save lacks still reads as its `start`, so nothing breaks before you fill it.
+- A save from a newer version of the game is refused with the [`gameNewer`](/reference/strings#saves) string.
+- The loader reports a step keyed outside 1 to `version - 1`.
+
+### MigrationTools
+
+```ts
+import type { MigrationTools } from '@ifloom/engine'
+
+type MigrationTools = {
+  fill: (kinds?: FillKind[]) => GameState
+}
+```
+
+What a step gets besides the state. `fill` returns the state the step was given, with what the game declares and the save lacks filled in. Nothing is filled unless a step calls it, and nothing the save already has is changed.
+
+### FillKind
+
+```ts
+type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
+```
+
+What `fill` fills, every kind if left out:
+
+| Kind | What it fills |
+|---|---|
+| `stats` | The player's stats and each entity's, at their `start`. Not derived stats. |
+| `items` | Items, at their start count. |
+| `variables` | Variables the game resets each turn (`rules.resets`), at their reset value. |
+| `settings` | `play` settings, at their default. |
+| `entities` | Declared entities, unless removed in play. |
+
+### migrateGame
+
+```ts
+function migrateGame(state: GameState, game: Game): GameState | string
+```
+
+Runs the game's own steps on a state, from its `gameVersion` up to `game.version`, and stamps the new version. It returns the refusal, a string, for a save from a newer version. The save store calls it for every save it reads, so you only need it for states you load yourself.
+

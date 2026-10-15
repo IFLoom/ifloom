@@ -47,6 +47,7 @@ export const STRINGS = {
   otherGame: 'That save belongs to another game ({game}).',
   saveTooOld: 'That save is from a version this game cannot read.',
   pluginNewer: 'That save was made with a newer version of {plugin}.',
+  gameNewer: 'That save was made with a newer version of this game.',
   pluginUnreadable: "That save's {plugin} is from a version this game cannot read.",
   /** A save's name when no plugin says when it is. */
   turnLabel: 'Turn {turn}',

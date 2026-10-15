@@ -4,7 +4,8 @@
  * No plugins, no places, no characters, no clock. What it uses is what a
  * novel with light tracking needs: a name the player types, one stat, choices
  * the engine remembers on its own (`{ chose }`), a variable counted up
- * (`{ kind: 'flag', add }`), and a chapter as a turn.
+ * (`{ kind: 'flag', add }`), a chapter as a turn, and a migration step for
+ * saves from the game's first version.
  */
 import { SCHEMA, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
 
@@ -40,12 +41,12 @@ export const letter: Pack = {
       ],
       choices: [
         { id: 'truth', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
-        { id: 'deny', effects: [{ kind: 'flag', key: 'lies', add: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
+        { id: 'deny', effects: [{ kind: 'flag', key: 'fibs', add: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
         // A lie to cover a letter you opened is a second lie.
         {
           id: 'blame',
           when: { chose: 'ch1.mat/open' },
-          effects: [{ kind: 'flag', key: 'lies', add: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }],
+          effects: [{ kind: 'flag', key: 'fibs', add: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }],
         },
       ],
     },
@@ -54,9 +55,9 @@ export const letter: Pack = {
       title: 'Chapter three: the door',
       body: [
         { text: 'ch3.door' },
-        { text: 'ch3.door/honest', when: { flag: 'lies', lt: 1 } },
-        { text: 'ch3.door/fib', when: { flag: 'lies', is: 1 } },
-        { text: 'ch3.door/tangle', when: { flag: 'lies', gte: 2 } },
+        { text: 'ch3.door/honest', when: { flag: 'fibs', lt: 1 } },
+        { text: 'ch3.door/fib', when: { flag: 'fibs', is: 1 } },
+        { text: 'ch3.door/tangle', when: { flag: 'fibs', gte: 2 } },
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
@@ -96,6 +97,15 @@ export function theLetter(): { game: Game; problems: string[] } {
   const { game, problems } = loadGame([letter], {
     id: 'the-letter',
     title: 'The Letter',
+    // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried
+    // forward by the step below when it loads, so a reader mid-story keeps their count.
+    version: 2,
+    migrations: {
+      1: (state) => {
+        const { lies, ...flags } = state.flags
+        return lies === undefined ? state : { ...state, flags: { ...flags, fibs: lies } }
+      },
+    },
     introScene: 'ch1.mat',
     // Reaching either ending finishes the game, and the title screen then offers New Game+.
     finished: { scene: ['end.kept', 'end.posted'] },

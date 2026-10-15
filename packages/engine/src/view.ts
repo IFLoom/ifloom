@@ -3,7 +3,7 @@ import { pluginButtons, pluginCommand, pluginSpeaker, type SpeakerView, pluginLa
 import type { InputDef } from './inputs.ts'
 import { defaultRuntime, renderScene } from './scene.ts'
 import { effectsOf, warningOf, whyNot } from './availability.ts'
-import { formatStat, statDef, statMax, type StatDef } from './stats.ts'
+import { formatStat, statDef, statLevel, statMax, statValue, type StatDef } from './stats.ts'
 import { holds } from './condition.ts'
 import { lockOn, lockedOut } from './locks.ts'
 import { sceneById, type Game, type ActionDef } from './game.ts'
@@ -20,7 +20,7 @@ import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotVie
 import type { SceneMedia } from './game.ts'
 import { sceneContext } from './context.ts'
 import { audioView, type AudioView } from './audio.ts'
-import type { FlagValue, Command, Effect, GameState, StatKey, Stats } from './types.ts'
+import type { FlagValue, Command, Effect, GameState, StatKey } from './types.ts'
 import { bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
 
 /**
@@ -42,6 +42,12 @@ export type StatView = {
   value: number
   max: number
   text: string
+  /**
+   * Where a stat with `levels` stands: its level, the value the next level
+   * starts at (null at the top), and how far it is towards it, 0 to 1. Left
+   * out for a stat with no levels.
+   */
+  level?: { level: number; next: number | null; progress: number }
 }
 
 export type RenderedChoice = {
@@ -395,14 +401,16 @@ export function stageView(
   return { aspect: stage.aspect ?? null, layers, hotspots }
 }
 
-function statView(state: GameState, game: Game, stat: StatDef, stats: Stats = state.stats): StatView {
-  const value = stats[stat.id] ?? 0
+function statView(state: GameState, game: Game, stat: StatDef, of?: string): StatView {
+  const value = statValue(state, game, stat.id, of)
+  const level = statLevel(state, game, stat.id, of)
   return {
     key: stat.id,
     label: stat.label,
     value,
     max: statMax(state, game, stat.id),
     text: formatStat(stat, value),
+    ...(level ? { level } : {}),
   }
 }
 
@@ -432,7 +440,7 @@ function entitiesView(state: GameState, game: Game): View['entities'] {
           name: entity.name,
           stats: stats
             .filter((stat) => holds(state, bindCurrent(stat.visible, ref), game))
-            .map((stat) => statView(state, game, stat, entity.stats)),
+            .map((stat) => statView(state, game, stat, ref)),
           flags: entity.flags,
         }
       })

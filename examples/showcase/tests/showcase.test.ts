@@ -117,6 +117,22 @@ describe('Small Town', () => {
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
   })
 
+  it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {
+    const sitDown = (seed: number) => {
+      let state = run(startingState(game, { seed }), { type: 'choose', id: 'unpack' })
+      state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('sit'))
+      return state
+    }
+    const drawn = new Set(Array.from({ length: 20 }, (_, seed) => sitDown(seed).sceneId))
+    expect(drawn.size).toBeGreaterThan(1)
+    for (const id of drawn) expect(['cafe.window', 'cafe.crossword', 'cafe.break']).toContain(id)
+    // Every storylet's when has run out: the window seen twice, the crossword done, and Ava off on a Sunday.
+    const state = sitDown(1)
+    const spent = { ...on(state, 6, 'afternoon'), sceneId: null, seen: { ...state.seen, 'cafe.window': 2, 'cafe.crossword': 1 } }
+    const after = run(spent, act('sit'))
+    expect(view(after, game).scene.title).toBe('A quiet table')
+  })
+
   it('keeps the phone in the pocket at work', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('office'))

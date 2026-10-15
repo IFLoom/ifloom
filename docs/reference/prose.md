@@ -57,6 +57,24 @@ town.prose = proseStore(town, {
 })
 ```
 
+### VariantMember
+
+```ts
+import type { VariantMember } from '@ifloom/engine'
+
+type VariantMember = string | { text: string; weight?: number }
+```
+
+One member of a variants list, in a [pack](/reference/loader#pack)'s `variants` or `proseStore`'s: a prose key, or a key with a weight. A plain key weighs 1.
+
+```ts
+variants: {
+  'street.weather': [{ text: 'street.weather/sun', weight: 3 }, 'street.weather/drizzle'],
+}
+```
+
+A list where every member weighs 1 rotates, as [`drawVariant`](/reference/scenes#drawvariant) describes. Give any member another weight and each draw becomes a [weighted](/reference/random#weighted) pick instead, seeded by the save, the turn and the count of draws, so the same line can come up twice running. The loader reports a weight of 0 or less.
+
 **Gotcha.** The store needs the game, because <code v-pre>{{v:name}}</code> reads `game.custom.values` and the game's plugins. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 
 ## Tokens

@@ -8,7 +8,7 @@ import { sceneContext } from './context.ts'
 import type { Game } from './game.ts'
 import { sceneById } from './game.ts'
 import { pluginAudio } from './plugin.ts'
-import { roll } from './random.ts'
+import { roll, weighted } from './random.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import { settingAffects, settingById } from './settings.ts'
 import type { GameState } from './types.ts'
@@ -31,11 +31,17 @@ export type TrackDef = {
 
 /** Several background tracks played one after another, by id in `game.audio.tracks`. */
 export type PlaylistDef = {
-  /** Track ids, each on a background channel. */
-  playlist: string[]
+  /**
+   * Track ids, each on a background channel. In a shuffled playlist a track
+   * can carry a weight, `{ track: 'rain', weight: 3 }`, and is then more
+   * likely to come early in the order. A plain id has weight 1.
+   */
+  playlist: (string | { track: string; weight?: number })[]
   /**
    * `'inOrder'` plays the list once, `'loop'` plays it over and over, and
    * `'shuffle'` plays it over and over in an order drawn from the save's seed.
+   * With weights, the shuffle draws the first track by weight, then the next
+   * from those left, and so on, so a heavier track tends to play sooner.
    * `'loop'` if left out.
    */
   order?: 'inOrder' | 'loop' | 'shuffle'
@@ -239,6 +245,31 @@ export function noteStarted(state: GameState, game: Game): GameState {
   return started === audio.started ? state : { ...state, audio: { ...audio, started } }
 }
 
+/** A playlist entry's track id. */
+function entryTrack(entry: PlaylistDef['playlist'][number]): string {
+  return typeof entry === 'string' ? entry : entry.track
+}
+
+/** A playlist entry's weight; 1 for a plain id. */
+function entryWeight(entry: PlaylistDef['playlist'][number]): number {
+  return typeof entry === 'string' ? 1 : (entry.weight ?? 1)
+}
+
+/**
+ * A weighted shuffle drawn from these parts: the first by weight from all of
+ * them, the next by weight from the rest, and so on.
+ */
+function weightedOrder<T>(items: readonly T[], weightOf: (item: T) => number, ...parts: (string | number)[]): T[] {
+  const left = [...items]
+  const out: T[] = []
+  while (left.length) {
+    const next = weighted(left, weightOf, ...parts, out.length) ?? left[0]
+    out.push(next)
+    left.splice(left.indexOf(next), 1)
+  }
+  return out
+}
+
 /** A shuffle drawn from these parts: the same parts, the same order. */
 function shuffled<T>(items: readonly T[], ...parts: (string | number)[]): T[] {
   const out = [...items]
@@ -267,15 +298,18 @@ function channelView(state: GameState, game: Game, id: string, def: ChannelDef, 
     return { ...base, track: wanted, src: audioSrc(entry.src), loop: entry.loop ?? true, volume: entry.volume ?? 1 }
   }
   const order = entry.order ?? 'loop'
-  let tracks = entry.playlist.filter((member) => {
-    const def = trackOf(game, member)
+  let entries = entry.playlist.filter((member) => {
+    const def = trackOf(game, entryTrack(member))
     return def && !isPlaylist(def)
   })
   if (order === 'shuffle') {
     const began = state.audio?.started?.[id]
     const turn = began?.track === wanted ? began.turn : state.turn
-    tracks = shuffled(tracks, 'playlist', id, wanted, state.seed, turn)
+    entries = entries.some((member) => entryWeight(member) !== 1)
+      ? weightedOrder(entries, entryWeight, 'playlist', id, wanted, state.seed, turn)
+      : shuffled(entries, 'playlist', id, wanted, state.seed, turn)
   }
+  const tracks = entries.map(entryTrack)
   const defs = tracks.map((member) => trackOf(game, member) as TrackDef)
   const srcs = defs.map((member) => audioSrc(member.src))
   const volumes = defs.map((member) => member.volume ?? 1)
@@ -374,7 +408,12 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
     const where = `track ${id}`
     if (isPlaylist(entry)) {
       if (!entry.playlist.length) out.push({ where, what: 'a playlist with no tracks' })
-      for (const member of entry.playlist) {
+      for (const listed of entry.playlist) {
+        const member = entryTrack(listed)
+        if (typeof listed !== 'string' && listed.weight !== undefined) {
+          if (!(listed.weight > 0)) out.push({ where, what: `"${member}" has a weight of ${listed.weight}; a weight must be above 0` })
+          else if ((entry.order ?? 'loop') !== 'shuffle') out.push({ where, what: `"${member}" has a weight, but only a shuffled playlist uses weights` })
+        }
         const def = trackOf(game, member)
         if (!def) out.push({ where, what: `unknown track "${member}"` })
         else if (isPlaylist(def)) out.push({ where, what: `"${member}" is a playlist; a playlist holds tracks` })

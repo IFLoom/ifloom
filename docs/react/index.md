@@ -406,6 +406,8 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/re
 | Key | English | Fills |
 |---|---|---|
 | `ui.quests` | `Quests` | |
+| `ui.statLevel` | `Level {level}` | `level` |
+| `ui.statProgress` | `{label}: {percent}% of the way to level {next}` | `label`, `percent`, `next` |
 | `ui.questNew` | `New` | |
 | `ui.questStage` | `{stage} of {stages}` | `stage`, `stages` |
 | `ui.track` | `Track` | |
@@ -483,6 +485,7 @@ Which component uses which keys:
 - **[Debug panel](/react/components#debugpanel)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
 - **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titleScreen`. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
 - **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
+- **[Stat list](/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
 - **[Inventory](/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
 - **[Price tag](/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
 - **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.

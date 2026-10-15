@@ -1,8 +1,8 @@
 import type { Condition } from './condition.ts'
 import { holds } from './condition.ts'
-import type { Game, Scene, SceneChoice, SceneMedia, SceneView } from './game.ts'
+import type { Game, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
 import { markUsed, usedThisTurn } from './once.ts'
-import { roll } from './random.ts'
+import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './media.ts'
 import {
   buildEffects,
@@ -76,7 +76,7 @@ export type Choice = {
   effects: EffectRef[]
 }
 
-export type DataScene = {
+export type DataScene = StoryletFields & {
   id: string
   title?: string
   speaker?: string
@@ -306,8 +306,10 @@ export function sceneReferences(scene: DataScene): {
     for (const entry of choice.labels ?? []) prose.push(entry.key)
     custom.push(...customEffectsUsed(choice.effects))
     for (const effect of choice.effects) {
-      if ('kind' in effect && effect.kind === 'scene' && effect.id) {
-        scenes.push(effect.id)
+      if ('kind' in effect && effect.kind === 'scene') {
+        if ('from' in effect) {
+          if (effect.otherwise) scenes.push(effect.otherwise)
+        } else if (effect.id) scenes.push(effect.id)
       }
     }
   }
@@ -315,7 +317,10 @@ export function sceneReferences(scene: DataScene): {
 }
 
 /**
- * Which member of a variants list this state gets: rotating on every use, so
+ * Which member of a variants list this state gets. Give `weightOf` and any
+ * member weighs other than 1, and each draw is a weighted pick, seeded by the
+ * save, the turn and how many draws the list has had. Otherwise it rotates
+ * on every use, so
  * a scene does not repeat itself, and starting somewhere different each turn,
  * so two playthroughs do not deal the same lines.
  *
@@ -329,10 +334,16 @@ export function drawVariant(
   state: GameState,
   name: string,
   members: string[],
+  weightOf?: (key: string) => number | undefined,
 ): { id: string; remember: Effect } {
   if (members.length === 0) throw new Error(`variants "${name}" has no members`)
   const key = `variants:${name}`
   const used = Number(state.flags[key] ?? 0)
+  // Weighted members are drawn at random by weight, each draw seeded by the save, the turn and the count.
+  if (weightOf && members.some((member) => (weightOf(member) ?? 1) !== 1)) {
+    const id = weighted(members, weightOf, 'variants', name, state.seed, state.turn, used) ?? members[0]
+    return { id, remember: { kind: 'flag', key, value: used + 1 } }
+  }
   const offset = roll(members.length, name, state.seed, state.turn)
   const index = (((offset + used) % members.length) + members.length) % members.length
   return { id: members[index], remember: { kind: 'flag', key, value: used + 1 } }
@@ -349,7 +360,7 @@ export function defaultRuntime(game: Game): SceneRuntime {
     prose: {
       line: (key, state) => game.prose?.line(key, state),
       variants: (name) => game.prose?.variants(name) ?? [],
-      draw: drawVariant,
+      draw: (state, name, members) => drawVariant(state, name, members, (key) => game.prose?.weight?.(name, key)),
     },
     spent: (state, scene, choice) => usedThisTurn(state, id(scene, choice)),
     spend: (state, scene, choice) => [markUsed(state, id(scene, choice))],
@@ -376,6 +387,9 @@ export function bakeScene(game: Game, scene: DataScene): Scene {
     frame: scene.frame,
     tags: scene.tags,
     panel: scene.panel,
+    ...(scene.drawnFrom ? { drawnFrom: scene.drawnFrom } : {}),
+    ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
+    ...(scene.when ? { when: scene.when } : {}),
     render: (state) => renderScene(scene, state, runtime),
   }
   forGame.set(scene, done)

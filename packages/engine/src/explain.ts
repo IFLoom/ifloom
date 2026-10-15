@@ -4,7 +4,7 @@ import { customCall, customCondition } from './custom.ts'
 import type { Game } from './game.ts'
 import { turnsSince } from './progress.ts'
 import { bindCurrent, entitiesOf, entityOf } from './entities.ts'
-import { statBand } from './stats.ts'
+import { statBand, statLevel, statValue } from './stats.ts'
 import type { GameState } from './types.ts'
 
 /**
@@ -65,10 +65,16 @@ function leaf(state: GameState, condition: Condition, game: Game | undefined): s
     return `storyline ${storyline} flag ${key} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
   }
   if ('stat' in condition) {
-    if (condition.of === undefined) return `stat ${condition.stat} is ${state.stats[condition.stat] ?? 0}; wants ${wanted(c)}`
+    const read = (of?: string) => (game ? statValue(state, game, condition.stat, of) : (state.stats[condition.stat] ?? 0))
+    if (condition.of === undefined) return `stat ${condition.stat} is ${read()}; wants ${wanted(c)}`
     const entity = entityOf(state, condition.of)
     if (!entity) return `${condition.of} is not in the game`
-    return `${condition.of} stat ${condition.stat} is ${entity.stats[condition.stat] ?? 0}; wants ${wanted(c)}`
+    return `${condition.of} stat ${condition.stat} is ${read(condition.of)}; wants ${wanted(c)}`
+  }
+  if ('level' in condition) {
+    if (condition.of !== undefined && !entityOf(state, condition.of)) return `${condition.of} is not in the game`
+    const level = game ? (statLevel(state, game, condition.level, condition.of)?.level ?? 0) : 0
+    return `${condition.of === undefined ? '' : `${condition.of} `}stat ${condition.level} is at level ${level}; wants ${wanted(c)}`
   }
   if ('count' in condition) {
     const refs = entitiesOf(state, condition.count)

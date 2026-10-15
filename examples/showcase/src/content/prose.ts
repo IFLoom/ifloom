@@ -32,6 +32,15 @@ export const prose: Record<string, string> = {
   'street.weather/drizzle': 'A fine drizzle that never quite becomes rain.',
   'street.weather/sun': 'Sun on the shopfronts; someone has put a chair out on the pavement.',
   'street.weather/wind': 'Wind down the street, rattling the bakery sign.',
+  'cafe.window': 'You take the stool by the window. A bus goes by, then a man with a ladder, then the same bus the other way.',
+  'cafe.window#leave': 'Finish your cup',
+  'cafe.crossword':
+    'The man at the next table taps his paper with a pencil.\n\n"Seven down. Somewhere to sit and wait, four letters." He looks at you over his glasses.\n\nYou try "café". He counts the squares, and writes it in.',
+  'cafe.crossword#leave': 'Leave him to it',
+  'cafe.break': 'Ava drops into the chair opposite with a mug of her own.\n\n"Five minutes. Don’t tell anyone I sat down."',
+  'cafe.break#leave': 'Keep her secret',
+  'cafe.quiet': 'Nothing much happens. The coffee machine sighs, and you let it.',
+  'cafe.quiet#leave': 'Get up',
   'sam.hi': 'Sam is walking a dog that is clearly not theirs. "Dog-sitting," they say. "He’s in charge."',
   'sam.hi#bye': 'Pat the dog and go',
 

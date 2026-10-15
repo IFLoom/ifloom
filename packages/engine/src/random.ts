@@ -45,3 +45,36 @@ export function chance(
 ): boolean {
   return roll(outOf, ...parts) < numerator
 }
+
+/**
+ * One of these, drawn from these parts with each one's weight: an item of
+ * weight 3 comes up three times as often as one of weight 1. A weight left
+ * out (`undefined`) counts as 1; a weight of 0 or less, or one that isn't a
+ * number, is never drawn. Undefined when nothing can be drawn.
+ *
+ * With every weight a whole number the draw is `hash % total`, so a list where
+ * every weight is 1 draws exactly what `pick` would from the same parts.
+ */
+export function weighted<T>(
+  items: readonly T[],
+  weightOf: (item: T) => number | undefined,
+  ...parts: (string | number)[]
+): T | undefined {
+  const weights = items.map((item) => {
+    const weight = weightOf(item) ?? 1
+    return Number.isFinite(weight) && weight > 0 ? weight : 0
+  })
+  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  if (!(total > 0)) return undefined
+  const h = hash(parts.join(':'))
+  let left = weights.every(Number.isInteger) ? h % total : (h / 4294967296) * total
+  let last: T | undefined
+  for (let i = 0; i < items.length; i += 1) {
+    if (weights[i] <= 0) continue
+    if (left < weights[i]) return items[i]
+    left -= weights[i]
+    last = items[i]
+  }
+  // Only reached through floating-point rounding at the very top of the range.
+  return last
+}

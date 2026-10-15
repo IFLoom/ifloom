@@ -1,7 +1,7 @@
 import type { Game } from './game.ts'
 import { storylineOf, storylineOpen } from './storylines.ts'
 import { customCall, customCondition, type PluginCall } from './custom.ts'
-import { statBand } from './stats.ts'
+import { statBand, statLevel, statValue } from './stats.ts'
 import { turnsSince } from './progress.ts'
 import { anyOf, bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
 import type {
@@ -68,6 +68,12 @@ export type Condition =
   /** An entity is in the game: `{ entity: 'staff:ana' }`. */
   | { entity: string }
   | { tier: StatKey; gte: number }
+  /**
+   * The level a stat with `levels` is at: the player's, or with `of`, an
+   * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat
+   * with no levels is always level 0.
+   */
+  | ({ level: StatKey; of?: string } & Range)
   /**
    * A storyline is open (`open: true`, the default): not closed, or closed
    * until a turn that has come. With `open: false`, that it is closed for now.
@@ -159,9 +165,10 @@ export function holds(
     return is === undefined ? Boolean(value) : value === is
   }
   if ('stat' in condition) {
-    const stats = condition.of === undefined ? state.stats : entityOf(state, condition.of)?.stats
     // An entity that is not there fails every range, `lt` included.
-    return stats !== undefined && inRange(stats[condition.stat] ?? 0, condition)
+    if (condition.of !== undefined && !entityOf(state, condition.of)) return false
+    if (!game) return inRange(state.stats[condition.stat] ?? 0, condition)
+    return inRange(statValue(state, game, condition.stat, condition.of), condition)
   }
   if ('count' in condition) {
     const refs = entitiesOf(state, condition.count)
@@ -169,6 +176,10 @@ export function holds(
     return inRange(n, condition)
   }
   if ('entity' in condition) return entityOf(state, condition.entity) !== undefined
+  if ('level' in condition) {
+    if (condition.of !== undefined && !entityOf(state, condition.of)) return false
+    return inRange(game ? (statLevel(state, game, condition.level, condition.of)?.level ?? 0) : 0, condition)
+  }
   if ('tier' in condition) {
     if (!game) return false
     return statBand(state, game, condition.tier) >= condition.gte
@@ -242,6 +253,10 @@ export function referenced(condition: Condition | undefined): {
     else if ('stat' in entry) {
       out.stats.push(entry.stat)
       out.owned.push({ stat: entry.stat, of: entry.of })
+      kindOf(entry.of)
+    } else if ('level' in entry) {
+      out.stats.push(entry.level)
+      out.owned.push({ stat: entry.level, of: entry.of })
       kindOf(entry.of)
     } else if ('count' in entry) {
       out.kinds.push(entry.count)

@@ -20,9 +20,10 @@ export type {
   CarryOver,
   SettingDef,
   StorylineDef,
+  StoryletFields,
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
-export type { StatDef } from './stats.ts'
+export type { Formula, StatDef, StatLevels } from './stats.ts'
 export {
   clampStat,
   formatStat,
@@ -30,7 +31,9 @@ export {
   startingStats,
   statBand,
   statDef,
+  statLevel,
   statMax,
+  statValue,
 } from './stats.ts'
 export type {
   Custom,
@@ -64,6 +67,7 @@ export { definePlugin, migratePlugins, pluginById, pluginQuery, pluginSpeaker } 
 // Scenes and prose
 export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
 export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from './scene.ts'
+export type { VariantMember } from './prose.ts'
 export { fillTokens, proseStore } from './prose.ts'
 export type { SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, mediaKind, parseBeats } from './sceneBody.ts'
@@ -94,7 +98,7 @@ export type { StringKey, Strings } from './strings.ts'
 export { STRINGS, say } from './strings.ts'
 
 // Running the game
-export type { Applied, StartOptions } from './reduce.ts'
+export type { Applied, FillKind, StartOptions } from './reduce.ts'
 export { apply, applyEffects, dispatch, hydrate, startingState } from './reduce.ts'
 
 // Conditions, and why they hold
@@ -144,15 +148,15 @@ export {
   stagesDone,
 } from './progress.ts'
 export { markUsed, oncePerTurn, usedBlock, usedThisTurn } from './once.ts'
-export { chance, hash, pick, roll } from './random.ts'
+export { chance, hash, pick, roll, weighted } from './random.ts'
 export { tier } from './tier.ts'
 
 // Loading, checking and saving
 export type { Loaded, Pack, Patch, Problem } from './loader.ts'
 export { SCHEMA, describeProblem, loadGame } from './loader.ts'
 export { validatePack } from './validate.ts'
-export type { LoadedSave, SaveFile, SaveMeta, Saves } from './save.ts'
-export { deserialize, migrate, saves, serialize } from './save.ts'
+export type { LoadedSave, MigrationTools, SaveFile, SaveMeta, Saves } from './save.ts'
+export { deserialize, migrate, migrateGame, saves, serialize } from './save.ts'
 export type { IndexedDbLike, SaveDriver, StorageLike } from './drivers.ts'
 export { indexedDbDriver, localStorageDriver, memoryDriver } from './drivers.ts'
 export type { InstalledMod, ModFile, Mods } from './mods.ts'

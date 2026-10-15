@@ -3,7 +3,40 @@ import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
 import { migratePlugins, pluginById, pluginLabel } from './plugin.ts'
 import { SAVE_VERSION, type GameState } from './types.ts'
-import { hydrate } from './reduce.ts'
+import { fillDeclared, hydrate, type FillKind } from './reduce.ts'
+
+/** What a step of `game.migrations` is given besides the state. */
+export type MigrationTools = {
+  /**
+   * The state this step was given, with what the game declares and the save
+   * lacks filled in: the kinds asked for, or every kind if left out. Nothing
+   * is filled unless a step calls this. See `FillKind`.
+   */
+  fill: (kinds?: FillKind[]) => GameState
+}
+
+/**
+ * Carry a save forward through the game's own `migrations`, from the version
+ * it records (1 if none) to `game.version`. Run after the engine's and
+ * plugins' migrations. Returns the reason, through `say`, when the save is
+ * from a newer version of the game.
+ */
+export function migrateGame(state: GameState, game: Game): GameState | string {
+  const target = game.version ?? 1
+  let version = state.gameVersion ?? 1
+  if (version > target) return say(game, 'gameNewer')
+  let next = state
+  while (version < target) {
+    const step = game.migrations?.[version]
+    if (step) {
+      const given = next
+      next = step(given, { fill: (kinds) => fillDeclared(given, game, kinds) })
+    }
+    version += 1
+  }
+  if (game.version === undefined) return next
+  return next.gameVersion === game.version ? next : { ...next, gameVersion: game.version }
+}
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state)
@@ -137,7 +170,10 @@ export type SaveMeta = {
   packs: string[]
   /** The plugins the game was built with, and the version of each one's state. */
   plugins: Record<string, number>
+  /** The engine's save format version, `SAVE_VERSION`. */
   version: number
+  /** The game's own version (`game.version`) the save was made with; 1 for a game that declares none. */
+  gameVersion: number
 }
 
 /** A save as it is written: the state, and what it says about itself. */
@@ -185,6 +221,7 @@ export function saves(game: Game, driver: SaveDriver) {
       packs: game.packs ?? [],
       plugins: Object.fromEntries((game.plugins ?? []).map((plugin) => [plugin.id, plugin.version])),
       version: state.version,
+      gameVersion: state.gameVersion ?? game.version ?? 1,
     }
   }
 
@@ -200,12 +237,16 @@ export function saves(game: Game, driver: SaveDriver) {
     if (data.meta.game !== game.id) return say(game, 'otherGame', { game: data.meta.game })
     const carried = migrate(data.state)
     if (!carried) return say(game, 'saveTooOld')
-    const state = migratePlugins(carried, game)
+    const plugged = migratePlugins(carried, game)
+    if (typeof plugged === 'string') return plugged
+    const state = migrateGame(plugged, game)
     if (typeof state === 'string') return state
     const missingPacks = (data.meta.packs ?? []).filter((id) => !(game.packs ?? []).includes(id))
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
     // Brought up to date with the game as it is now: a declared entity the save lacks joins it.
-    return { meta: data.meta, state: hydrate(state, game), missingPacks, missingPlugins }
+    // A save from before game versions says nothing of one: it was version 1.
+    const meta = { ...data.meta, gameVersion: data.meta.gameVersion ?? carried.gameVersion ?? 1 }
+    return { meta, state: hydrate(state, game), missingPacks, missingPlugins }
   }
 
   return {

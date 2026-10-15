@@ -1,19 +1,19 @@
 import { readdirSync, readFileSync, rmdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
-import type { Game } from '@ifloom/engine'
+import { mediaKind, type FileRef } from '@ifloom/engine'
 import { checkFiles } from './check.ts'
 
 /**
  * Check a built folder is a game that opens from disk: an `index.html`, and
- * nothing it loads from anywhere but beside it. Given the game, also every
- * sound, picture and video file it names that isn't in the folder (or, for
- * art, in the page, after `--inline-assets`). Returns what is wrong.
+ * nothing it loads from anywhere but beside it. Given the files the game names
+ * (`checkGame(game).files`), also each one that isn't in the folder (or, for a
+ * picture, in the page, after `--inline-assets`). Returns what is wrong.
  *
  * That code never fetches at runtime is held by the engine's and UI's own
  * contract tests, on their source: a bundled library mentions `fetch` without
  * ever calling it here, so the built file can't be searched for it.
  */
-export function checkBuild(dir: string, game?: Game): string[] {
+export function checkBuild(dir: string, files?: readonly FileRef[]): string[] {
   const problems: string[] = []
   let html: string
   try {
@@ -34,7 +34,7 @@ export function checkBuild(dir: string, game?: Game): string[] {
     // A browser refuses a module script from a file beside a page opened from disk.
     else if (module) problems.push(`index.html loads the module script ${url}, which won't load from disk; build as one file`)
   }
-  if (game) problems.push(...checkFiles(game, dir, inlinedAssets(html)))
+  if (files) problems.push(...checkFiles(files, dir, inlinedAssets(html)))
   return problems
 }
 
@@ -58,6 +58,7 @@ export function buildFiles(dir: string, at = ''): { file: string; bytes: number 
   }).sort((a, b) => b.bytes - a.bytes)
 }
 
+/** The pictures' types, for their data URLs. Only pictures go in the page. */
 const TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -66,20 +67,7 @@ const TYPES: Record<string, string> = {
   '.webp': 'image/webp',
   '.avif': 'image/avif',
   '.svg': 'image/svg+xml',
-  '.mp3': 'audio/mpeg',
-  '.ogg': 'audio/ogg',
-  '.oga': 'audio/ogg',
-  '.opus': 'audio/ogg',
-  '.wav': 'audio/wav',
-  '.m4a': 'audio/mp4',
-  '.aac': 'audio/aac',
-  '.flac': 'audio/flac',
-  '.webm': 'video/webm',
-  '.mp4': 'video/mp4',
 }
-
-/** Files too big to put in the page: videos stay beside it, as sound does. */
-const LEFT_BESIDE = /\.(mp4|webm)$/i
 
 /** Remove a folder's empty folders, and the folder itself if that leaves it empty. */
 function pruneEmpty(dir: string): void {
@@ -97,6 +85,7 @@ function pruneEmpty(dir: string): void {
  * for a small game; a large one is better left as a folder. Sound in `audio/`
  * and videos (`.mp4`, `.webm`) are never put in: they are too big, and are
  * played from beside the page, so `art/` stays with only the videos in it.
+ * Which files are videos is the engine's `mediaKind`.
  * Returns how many files went in, how big the page is now, and how many videos
  * were left beside it.
  */
@@ -107,7 +96,8 @@ export function inlineAssets(dir: string, folder = 'art'): { files: number; byte
   } catch {
     all = []
   }
-  const files = all.filter((entry) => !LEFT_BESIDE.test(entry.file))
+  // Videos are too big to put in the page: they stay beside it, as sound does. The engine says which files are videos.
+  const files = all.filter((entry) => mediaKind(entry.file) !== 'video')
   const videos = all.length - files.length
   const page = join(dir, 'index.html')
   // Nothing to put in — no art, or a folder already inlined: leave the page as it is.

@@ -90,7 +90,7 @@ The list covers:
 
 A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. A place's `art` isn't listed, because no UI draws it.
 
-The same file named in two places is listed once for each place. [`ifloom check`](/cli/#ifloom-check) looks for each one in `public/`.
+The same file named in two places is listed once for each place. The CLI uses this list and nothing else to find a game's files. [`ifloom check`](/cli/#ifloom-check) looks for each one in `public/`, and [`ifloom build`](/cli/#ifloom-build) looks in the built folder, both with [`checkFiles`](/cli/#checkfiles).
 
 ## What content names
 

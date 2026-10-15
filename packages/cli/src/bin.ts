@@ -23,7 +23,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { dirname, relative, resolve } from 'node:path'
-import { startingState, type Game, type GameState } from '@ifloom/engine'
+import { startingState, type FileRef, type Game, type GameState } from '@ifloom/engine'
 import { build, createServer } from 'vite'
 import { buildFiles, checkBuild, inlineAssets } from './build.ts'
 import { checkGame, gameFrom } from './check.ts'
@@ -64,11 +64,11 @@ function renders(text: string): string[] {
   return text.split(/\n(?==== )/).map((block) => block.trimEnd())
 }
 
-/** The game in src/game.ts, to check its sound files are in the build; undefined if there's none or it won't load. */
-async function builtGame(): Promise<Game | undefined> {
+/** The files src/game.ts names, to check they are in the build; undefined if there's no game or it won't load. */
+async function builtFiles(): Promise<FileRef[] | undefined> {
   if (!existsSync(resolve('src/game.ts'))) return undefined
   try {
-    return await withModule(undefined, (module) => gameFrom(module).game)
+    return await withModule(undefined, (module) => gameFrom(module).files)
   } catch {
     return undefined
   }
@@ -169,7 +169,7 @@ async function main(): Promise<number> {
         if (inlined.videos) console.log(`Left ${inlined.videos} video${inlined.videos === 1 ? '' : 's'} in art/ beside it: video is too big to put in the page.`)
         if (existsSync(resolve(out, 'audio'))) console.log('Left audio/ beside it: sound is too big to put in the page.')
       }
-      const problems = checkBuild(out, await builtGame())
+      const problems = checkBuild(out, await builtFiles())
       for (const file of buildFiles(out).slice(0, 5)) console.log(`${file.file}  ${(file.bytes / 1024).toFixed(1)} kB`)
       for (const problem of problems) console.error(problem)
       return problems.length ? 1 : 0

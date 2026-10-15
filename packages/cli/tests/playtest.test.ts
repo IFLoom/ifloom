@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, startingState, type Game } from '@ifloom/engine'
+import { SCHEMA, applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
 import { calendar, pass, sleep } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { explorer, metricsText, playtest, snapshot } from '../src/index.ts'
@@ -67,5 +67,19 @@ describe('snapshot', () => {
     const text = snapshot(g, [{ name: 'start', state: startingState(g) }])
     expect(text).toContain('=== wake @ start\nYou wake.\n  [>] Get up')
     expect(text).toContain('=== place:garden @ start\nSoil.')
+  })
+
+  it('reads as the engine\'s view does: a choice a lock refuses is greyed out with its reason', () => {
+    const plain = game()
+    const start = startingState(plain)
+    const g: Game = { ...plain, rules: { ...plain.rules, locks: [{ when: { phase: [start.phase] }, deny: ['choose'], reason: 'Too sleepy.' }] } }
+    const text = snapshot(g, [{ name: 'start', state: start }])
+    expect(text).toContain('=== wake @ start\nYou wake.\n  [ ] Get up — Too sleepy.')
+    // The same words and choices the player's screen gets, scene and room.
+    const scene = view({ ...start, sceneId: 'wake' }, g).scene
+    expect(scene.choices.map((choice) => choice.disabled)).toEqual(['Too sleepy.'])
+    const room = view(applyEffects({ ...start, sceneId: null }, g, [{ kind: 'custom', name: 'places/move', with: { value: 'hall' } }]), g).scene
+    expect(text).toContain(`=== place:hall @ start\n${room.body}`)
+    expect(room.body).toBe('A hall.')
   })
 })

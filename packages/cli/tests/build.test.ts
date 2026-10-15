@@ -80,16 +80,18 @@ describe('checkGame', () => {
   })
 })
 
-import { checkAudio } from '../src/index.ts'
+import { feed } from '@ifloom/plugin-feed'
+import { checkGame as checkContent } from '@ifloom/engine'
+import { checkFiles } from '../src/index.ts'
 
-describe('the sound files', () => {
+describe('the files a game names', () => {
+  // One of every kind: sound, a picture, a video, a poster, a pool's file, markup and plugin data.
   const game = () =>
     loadGame(
       [
         {
-          id: 'cafe',
+          id: 'town',
           schema: SCHEMA,
-          scenes: [{ id: 'door', body: [], choices: [] }],
           audio: {
             tracks: {
               calm: { src: 'music/calm.ogg', channel: 'music' },
@@ -98,47 +100,6 @@ describe('the sound files', () => {
               radio: { playlist: ['calm'] },
             },
           },
-        },
-      ],
-      { id: 'cafe', title: 'The Café', introScene: 'door' },
-    )
-
-  it('reports each track whose file is missing from the public folder, where the page looks for it', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
-    mkdirSync(join(dir, 'audio', 'music'), { recursive: true })
-    writeFileSync(join(dir, 'audio', 'music', 'calm.ogg'), '')
-    writeFileSync(join(dir, 'audio', 'knock.mp3'), '')
-    expect(checkAudio(game().game, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
-    expect(checkGame({ default: game() }, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
-    // Without a folder to look in, check reads only the game.
-    expect(checkGame({ default: game() })).toEqual([])
-  })
-
-  it('reports them missing from a build too', () => {
-    const dir = built('<html><script type="module">go()</script></html>')
-    expect(checkBuild(dir, game().game)).toHaveLength(3)
-    expect(checkBuild(dir)).toEqual([])
-  })
-
-  it('leaves sound out of the page with --inline-assets', () => {
-    const dir = built('<html><head></head></html>')
-    mkdirSync(join(dir, 'audio'), { recursive: true })
-    writeFileSync(join(dir, 'audio', 'bell.ogg'), 'x')
-    expect(inlineAssets(dir).files).toBe(0)
-    expect(existsSync(join(dir, 'audio', 'bell.ogg'))).toBe(true)
-  })
-})
-
-import { feed } from '@ifloom/plugin-feed'
-import { checkMedia } from '../src/index.ts'
-
-describe('the picture and video files', () => {
-  const game = () =>
-    loadGame(
-      [
-        {
-          id: 'town',
-          schema: SCHEMA,
           media: { pools: { door: [{ src: 'door/blue.jpg', tags: ['blue'] }, { src: 'door/red.jpg', tags: ['red'] }] } },
           scenes: [
             {
@@ -163,50 +124,81 @@ describe('the picture and video files', () => {
       ],
       { id: 'town', title: 'Town', introScene: 'knock', plugins: [feed({ feeds: [{ id: 'town', name: 'Town' }] })] },
     )
+  const files = () => checkContent(game().game).files
 
-  const touch = (dir: string, ...files: string[]) => {
-    for (const file of files) {
+  const ALL = [
+    'audio/music/calm.ogg',
+    'audio/knock.mp3',
+    'audio/bell.ogg',
+    'art/door/blue.jpg',
+    'art/door/red.jpg',
+    'art/flat/hall.jpg',
+    'art/flat/rain.mp4',
+    'art/flat/rain-still.jpg',
+    'art/flat/letter.png',
+    'art/flat/cup.svg',
+    'art/flat/kettle.mp4',
+    'art/flat/kettle.jpg',
+    'art/cafe/cakes.jpg',
+    'art/cafe/steam.mp4',
+  ]
+
+  const touch = (dir: string, ...names: string[]) => {
+    for (const file of names) {
       mkdirSync(join(dir, file, '..'), { recursive: true })
       writeFileSync(join(dir, file), '')
     }
   }
-
-  it('reports each one missing from the public folder: pools, stage layers, media blocks, markup and plugin data', () => {
+  /** A public folder with every file but these. */
+  const without = (...gone: string[]) => {
     const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
-    touch(dir, 'art/door/blue.jpg', 'art/flat/hall.jpg', 'art/flat/cup.svg', 'art/cafe/cakes.jpg')
-    const missing = (file: string) => `: no file ${join(dir, file)}`
-    const found = checkMedia(game().game, dir)
-    expect(found).toEqual(
-      expect.arrayContaining([
-        `pool door${missing('art/door/red.jpg')}`,
-        expect.stringMatching(/^scenes\[knock\]\.stage\.layers\[1\]: no file .*art\/flat\/rain\.mp4$/),
-        expect.stringMatching(/^scenes\[knock\]\.stage\.layers\[1\]: no file .*art\/flat\/rain-still\.jpg$/),
-        expect.stringMatching(/^scenes\[knock\]\.body\[1\]\.media: no file .*art\/flat\/letter\.png$/),
-        `prose knock${missing('art/flat/kettle.mp4')}`,
-        `prose knock${missing('art/flat/kettle.jpg')}`,
-        expect.stringMatching(/\.video: no file .*art\/cafe\/steam\.mp4$/),
-      ]),
-    )
-    expect(found).toHaveLength(7)
-    // checkGame reads them too, beside the sound.
-    expect(checkGame({ default: game() }, dir)).toEqual(found)
-  })
+    touch(dir, ...ALL.filter((file) => !gone.includes(file)))
+    return dir
+  }
 
   it('finds nothing missing when every file is there', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'ifloom-public-'))
-    touch(dir, 'art/door/blue.jpg', 'art/door/red.jpg', 'art/flat/hall.jpg', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/flat/letter.png')
-    touch(dir, 'art/flat/cup.svg', 'art/flat/kettle.mp4', 'art/flat/kettle.jpg', 'art/cafe/cakes.jpg', 'art/cafe/steam.mp4')
-    expect(checkMedia(game().game, dir)).toEqual([])
+    expect(checkFiles(files(), without())).toEqual([])
   })
 
-  it('leaves videos beside the page with --inline-assets, and counts the pictures in the page as there', () => {
+  it('reports a missing sound, picture, video, poster and pool file, each where it is named', () => {
+    const dir = without('audio/bell.ogg', 'art/flat/letter.png', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/door/red.jpg', 'art/cafe/steam.mp4', 'art/flat/kettle.jpg')
+    expect(checkFiles(files(), dir)).toEqual([
+      `scene knock: no file ${join(dir, 'art/flat/letter.png')}`,
+      `scene knock: no file ${join(dir, 'art/flat/rain.mp4')}`,
+      `scene knock: no file ${join(dir, 'art/flat/rain-still.jpg')}`,
+      `track bell: no file ${join(dir, 'audio/bell.ogg')}`,
+      `pool door: no file ${join(dir, 'art/door/red.jpg')}`,
+      `posts post.cafe: no file ${join(dir, 'art/cafe/steam.mp4')}`,
+      `prose knock: no file ${join(dir, 'art/flat/kettle.jpg')}`,
+    ])
+  })
+
+  it('is what ifloom check adds, given the public folder', () => {
+    const dir = without('audio/bell.ogg')
+    expect(checkGame({ default: game() }, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
+    // Without a folder to look in, check reads only the game.
+    expect(checkGame({ default: game() })).toEqual([])
+  })
+
+  it('reports them missing from a build too', () => {
+    const dir = built('<html><script type="module">go()</script></html>')
+    expect(checkBuild(dir, files())).toHaveLength(ALL.length)
+    expect(checkBuild(dir)).toEqual([])
+  })
+
+  it('leaves videos and sound beside the page with --inline-assets, and counts the pictures in the page as there', () => {
     const dir = built('<html><head></head></html>')
-    touch(dir, 'art/door/blue.jpg', 'art/door/red.jpg', 'art/flat/hall.jpg', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/flat/letter.png')
-    touch(dir, 'art/flat/cup.svg', 'art/flat/kettle.mp4', 'art/flat/kettle.jpg', 'art/cafe/cakes.jpg', 'art/cafe/steam.mp4')
+    touch(dir, ...ALL)
     expect(inlineAssets(dir)).toMatchObject({ files: 8, videos: 3 })
     expect(existsSync(join(dir, 'art', 'flat', 'rain.mp4'))).toBe(true)
+    expect(existsSync(join(dir, 'audio', 'bell.ogg'))).toBe(true)
     expect(existsSync(join(dir, 'art', 'flat', 'hall.jpg'))).toBe(false)
     expect(existsSync(join(dir, 'art', 'door'))).toBe(false)
-    expect(checkBuild(dir, game().game)).toEqual([])
+    expect(checkBuild(dir, files())).toEqual([])
+  })
+
+  it('counts an inlined picture as there, but not one left out of the page', () => {
+    const dir = without('art/flat/cup.svg', 'art/flat/hall.jpg')
+    expect(checkFiles(files(), dir, new Set(['art/flat/cup.svg']))).toEqual([`scene knock: no file ${join(dir, 'art/flat/hall.jpg')}`])
   })
 })

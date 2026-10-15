@@ -39,7 +39,7 @@ It builds with `base: './'` and puts the script and the stylesheet inside `index
 ifloom build
 ```
 
-The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, and every script and stylesheet it loads is beside it. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/cli/#ifloom-check) beside it to catch content problems before you build.
+The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/cli/#ifloom-check) beside it to catch content problems before you build.
 
 Leave the [debug plugin](/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
 

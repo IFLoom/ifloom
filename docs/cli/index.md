@@ -88,7 +88,7 @@ ifloom build --inline-assets --out dist-one   # the pictures inside index.html t
 
 Runs `vite build` with the game's config into `--out` (default `dist`), emptying the folder first. With `--inline-assets`, it then puts every picture in the folder's `art/` into `index.html` with [`inlineAssets`](#inlineassets), and says how many went in and how many videos it left beside the page.
 
-Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. When the game's `src/game.ts` loads, it also checks that every sound, picture and video the game names has its file in the folder, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). A picture `--inline-assets` put in the page counts as there. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
+Then it prints the five largest files in the folder with their sizes, and checks the folder with [`checkBuild`](#checkbuild). The check makes sure there's an `index.html` and that every script and stylesheet it loads sits beside it. When the game's `src/game.ts` loads, it also checks that every sound, picture and video the game names has its file in the folder. The list of files comes from the [content checker](/reference/checks#fileref), and [`checkFiles`](#checkfiles) looks for each one. A picture `--inline-assets` put in the page counts as there. Each problem is printed, and the command exits with `1` if there are any, so CI fails on a build that wouldn't open from disk.
 
 ```
 index.html  424.5 kB
@@ -130,10 +130,10 @@ No problems.
 
 It exits with `1` if there are any problems. Run it in CI beside your tests.
 
-It also looks for every file the game names in its `public/` folder, where Vite copies them from into the build.
+It also looks for every file the game names in its `public/` folder, where Vite copies them from into the build. The content checker lists those files as it walks the game (see [The files a game names](/reference/checks#fileref)), so the CLI doesn't guess where a game keeps them.
 
 - **Sound.** A track's `src` goes through [`audioSrc`](/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`.
-- **Pictures and video.** The files in [pools](/reference/media#pools), stage layers, `{ media }` blocks, picture and video markup in prose, and plugin data such as a post's `video`. These go through [`artSrc`](/reference/prose#artsrc), so `[[video:cafe/steam]]` must be at `public/art/cafe/steam.mp4`. [`checkMedia`](#checkmedia) lists exactly what it looks at.
+- **Pictures and video.** The files in [pools](/reference/media#pools), stage layers, `{ media }` blocks and their posters, picture and video markup in prose, and the files plugins' content names, such as a post's `video` or a character's portrait. These go through [`artSrc`](/reference/prose#artsrc), so `[[video:cafe/steam]]` must be at `public/art/cafe/steam.mp4`.
 
 A missing file is reported with where it's named:
 
@@ -141,7 +141,7 @@ A missing file is reported with where it's named:
 track calm: no file public/audio/music/calm.ogg
 pool door: no file public/art/door/red-night.jpg
 prose flat.knock: no file public/art/flat/kettle.mp4
-data.places.locations[cafe].stage.layers[0]: no file public/art/cafe/room.jpg
+locations cafe: no file public/art/cafe/room.jpg
 ```
 
 ### What the module exports
@@ -249,7 +249,7 @@ ifloom snapshot --update           # write it again, after a change you meant
 ifloom snapshot --out other.txt
 ```
 
-Loads the module as `check` does and uses [`snapshot`](#snapshot) to render every scene, and every place's body, in every probe state. Then:
+Loads the module as `check` does and uses [`snapshot`](#snapshot) to render every scene, and every place's body, in every probe state. Each render comes from the engine's [`view`](/reference/view), so it reads as the player's screen does. Then:
 
 - **The first time**, when `--out` (default `snapshots/scenes.txt`) doesn't exist, it writes the file.
 - **After that**, it compares with the file, render by render. Each render is matched by its `===` header, so a scene whose body runs to several paragraphs is reported once, by its name. If nothing differs, it prints `Every scene reads as it did.` If something does, it prints `changed: <scene> @ <probe>` for each render that's new or reads differently. It prints `changed: <scene> @ <probe> (gone)` for each render that's in the file but no longer produced, because a scene was removed or renamed or a probe was dropped. Then it exits with `1`.
@@ -356,7 +356,7 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line.
 
 ```ts
-import { TEMPLATES, THEMES, buildFiles, checkAudio, checkBuild, checkGame, checkMedia, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
+import { TEMPLATES, THEMES, buildFiles, checkBuild, checkFiles, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
 import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
 ```
 
@@ -393,14 +393,14 @@ const { theme } = newGame({ name: 'market-day', theme: 'paper', into: '/tmp/mark
 ### checkBuild
 
 ```ts
-function checkBuild(dir: string, game?: Game): string[]
+function checkBuild(dir: string, files?: readonly FileRef[]): string[]
 ```
 
 Returns what's wrong with a built folder as a game that opens from disk, or an empty list when nothing is. It reads `dir/index.html` and reports:
 
 - each `<script src>` and each stylesheet `<link>` that's a full address (`https://…`, `//…`) or starts with `/`;
 - each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`);
-- given the `game`, each sound file that isn't in the folder, as [`checkAudio`](#checkaudio) reports it, and each picture and video, as [`checkMedia`](#checkmedia) reports it. A picture already in the page from `--inline-assets` counts as there.
+- given the `files` the game names, from [`checkGame(game).files`](/reference/checks#fileref) or [`gameFrom`](#gamefrom), each one that isn't in the folder, as [`checkFiles`](#checkfiles) reports it. A picture already in the page from `--inline-assets` counts as there.
 
 With no `index.html`, the one problem is `no index.html in <dir>`.
 
@@ -409,6 +409,7 @@ import { checkBuild } from '@ifloom/cli'
 
 checkBuild('dist') // []
 checkBuild('dist') // ['index.html loads /assets/index.js, which is not beside it']
+checkBuild('dist', checkGame(game).files) // ['track bell: no file dist/audio/bell.ogg']
 ```
 
 Only stylesheets count among the `<link>`s. An icon at `/favicon.ico` isn't reported, though it won't show from disk either.
@@ -433,9 +434,9 @@ buildFiles('dist') // [{ file: 'index.html', bytes: 434640 }, { file: 'art/place
 function inlineAssets(dir: string, folder?: string): { files: number; bytes: number; videos: number }
 ```
 
-What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
+What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`, as the engine's `mediaKind` decides). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
 
-The type in each URL comes from the file's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif`, `.svg`, `.mp3`, `.ogg`, `.oga`, `.opus`, `.wav`, `.m4a`, `.aac`, `.flac`, `.webm` or `.mp4`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/react/components#asseturl) reads it.
+The type in each URL comes from the picture's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif` or `.svg`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/react/components#asseturl) reads it.
 
 ```ts
 import { checkBuild, inlineAssets } from '@ifloom/cli'
@@ -457,7 +458,7 @@ checkBuild('dist')   // []
 function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
-Everything wrong with the game a module exports: the problems it came with from `loadGame`, or for a game built by hand, what [`checkGame`](/reference/checks#checkgame) finds in it. Given `publicDir`, it also adds every sound, picture and video file missing from it, with [`checkAudio`](#checkaudio) and [`checkMedia`](#checkmedia). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
+Everything wrong with the game a module exports: the problems it came with from `loadGame`, or for a game built by hand, what [`checkGame`](/reference/checks#checkgame) finds in it. Given `publicDir`, it also adds every sound, picture and video file the game names that's missing from it, with [`checkFiles`](#checkfiles). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
 
 ```ts
 import { expect, it } from 'vitest'
@@ -471,64 +472,43 @@ it('has no problems', () => {
 
 In a test, this is `ifloom check` without the command line. Small Town's own build test does this.
 
-### checkAudio
+### checkFiles
 
 ```ts
-function checkAudio(game: Game, dir: string): string[]
+function checkFiles(files: readonly FileRef[], dir: string, inlined?: ReadonlySet<string>): string[]
 ```
 
-Every track in [`game.audio`](/reference/audio) whose file isn't in `dir`. Each track's `src` goes through [`audioSrc`](/reference/audio#audiosrc), so pass the folder the page sits in: `public` before a build, or the built folder after one. Playlists only name other tracks, so they aren't looked for.
+Every file in `files` that isn't in `dir`. The files are the ones the [content checker](/reference/checks#fileref) lists in `checkGame(game).files`, each with its path as the page asks for it. Pass the folder the page sits in: `public` before a build, or the built folder after one. Each problem says where the file is named, then `no file` and the path it looked for.
 
 ```ts
-import { checkAudio } from '@ifloom/cli'
+import { checkGame } from '@ifloom/engine'
+import { checkFiles } from '@ifloom/cli'
 
-checkAudio(game, 'public') // ['track knock: no file public/audio/knock.ogg']
-checkAudio(game, 'dist')   // []
-```
-
-### checkMedia
-
-```ts
-function checkMedia(game: Game, dir: string, inlined?: ReadonlySet<string>): string[]
-```
-
-Every picture and video the game names whose file isn't in `dir`. Pass the folder the page sits in: `public` before a build, or the built folder after one. It looks at:
-
-- every file in [`game.media`](/reference/media#gamemedia)'s pools;
-- `{ media }` blocks and stage layers, in data scenes and in plugin data such as a place's [stage](/plugins/places#the-picture-stage), with their posters;
-- `image` and `video` fields, such as a post's or a notice's, as page paths;
-- picture and video markup (`[[img:…]]`, `[[wide:…]]`, `[[video:…]]`, `[[widevideo:…]]`) in the prose that scenes, places, messages and posts name, and their `poster=` flags.
-
-Media blocks, layers and markup go through [`artSrc`](/reference/prose#artsrc), as the page would. Each problem says where the file is named, then `no file` and the path it looked for.
-
-```ts
-import { checkMedia } from '@ifloom/cli'
-
-checkMedia(game, 'public') // ['prose flat.knock: no file public/art/flat/kettle.mp4']
-checkMedia(game, 'dist')   // []
+const { files } = checkGame(game)
+checkFiles(files, 'public') // ['prose flat.knock: no file public/art/flat/kettle.mp4']
+checkFiles(files, 'dist')   // []
 ```
 
 `inlined` lists paths that are in the page itself after `--inline-assets`, which count as there. [`checkBuild`](#checkbuild) passes them.
 
 **Gotchas.**
 
-- **A pool request isn't looked for on its own.** `[[img:@door|night]]` and `{ pool: 'door' }` are covered by the pool's files, and the loader reports an unknown pool.
-- **Prose is found through what names it.** A prose key that no scene, place, message or post uses isn't read, because the game never shows it.
-- **A place's `art` and a character's portrait aren't looked for.** The places plugin asks every place for `art`, but no UI draws it, so many games have none. A [`Picture`](/react/components#picture) with a missing file draws nothing, so a missing portrait shows as no portrait.
-- **A hand-built scene's media isn't seen.** Its body and `media` come from a function, so only a [data scene](/reference/scenes)'s are checked.
+- **It looks only at the list it's given.** What's in the list, and what isn't, is the content checker's. [FileRef](/reference/checks#fileref) says what it covers. A place's `art` isn't listed, because no UI draws it.
+- **A pool request isn't looked for on its own.** `[[img:@door|night]]` and `{ pool: 'door' }` are covered by the pool's files.
+- **A hand-built scene's media isn't seen.** Its body and `media` come from a function, so only a [data scene](/reference/scenes)'s files are listed.
 
 ### gameFrom
 
 ```ts
-function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[] }
+function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[]; files: FileRef[] }
 ```
 
-The game a module exports, and its problems as text. A module that exports what `loadGame` returns comes with its problems: [`Problem`](/reference/checks#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. A game exported without problems, such as one built by hand, is checked with [`checkGame`](/reference/checks#checkgame) here. It throws when the module has neither a `default` nor a `game` export.
+The game a module exports, and its problems as text. A module that exports what `loadGame` returns comes with its problems: [`Problem`](/reference/checks#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. A game exported without problems, such as one built by hand, is checked with [`checkGame`](/reference/checks#checkgame) here. `files` is the checker's list of the files the game names, for [`checkFiles`](#checkfiles) or [`checkBuild`](#checkbuild). It throws when the module has neither a `default` nor a `game` export.
 
 ```ts
 import { gameFrom } from '@ifloom/cli'
 
-const { game, problems } = gameFrom(await import('./src/game.ts'))
+const { game, problems, files } = gameFrom(await import('./src/game.ts'))
 ```
 
 ### playtest
@@ -733,9 +713,9 @@ Six tables, one of them wobbly. The coffee machine sighs like it has been workin
 Ava is behind the counter, flour to the elbows, and nods you in.
 ```
 
-A scene's block is its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. Data scenes and hand-written ones both render, through [`sceneById`](/reference/game#scenebyid), with the probe's state and `sceneId` set to the scene. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
+Every block comes from the engine's [`view`](/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/reference/locks) or a plugin's guard would refuse it with, just as on screen. Data scenes and hand-written ones both render. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
 
-The places are the ones the [places](/plugins/places) plugin's `places/all` [query](/plugins/places#queries) returns, asked by name with [`pluginQuery`](/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>` and holds its body, rendered with `sceneId` cleared and the player moved there by the plugin's own [`places/move`](/plugins/places#effects) effect.
+The places are the ones the [places](/plugins/places) plugin's `places/all` [query](/plugins/places#queries) returns, asked by name with [`pluginQuery`](/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>`. The player is moved there by the plugin's own [`places/move`](/plugins/places#effects) effect, with `sceneId` cleared, and the block holds the room's body as `view(...).scene` draws it when no scene is open.
 
 Draws come from the save's seed, so the same game and the same probes give the same text every time. Compare it in a test, as Small Town does:
 

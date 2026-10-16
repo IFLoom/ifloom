@@ -4,6 +4,12 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
 
+/** The packages each framework template adds, in the order its package.json lists them. */
+const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
+  vue: ['vue', '@vitejs/plugin-vue', 'vue-tsc'],
+  svelte: ['svelte', '@sveltejs/vite-plugin-svelte', 'svelte-check'],
+}
+
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
 
 describe('ifloom new', () => {
@@ -11,7 +17,9 @@ describe('ifloom new', () => {
     const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.name).toBe('my-story')
-    expect(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).every((dep) => dep.startsWith('@ifloom/'))).toBe(true)
+    // A game lists only IFLoom's packages, and the framework it draws with when that isn't React.
+    const own = FRAMEWORK_DEPS[template] ?? []
+    expect(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((dep) => !dep.startsWith('@ifloom/'))).toEqual(own)
     expect(files).toEqual(expect.arrayContaining(['src/game.ts', 'index.html', 'AGENTS.md', '.gitignore', 'vite.config.ts', 'tsconfig.json']))
     expect(files.some((file) => file.startsWith('tests/') || file.startsWith('dist/') || file.startsWith('node_modules/'))).toBe(false)
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
@@ -38,10 +46,26 @@ describe('ifloom new', () => {
     expect(() => newGame({ name: 'odd', theme: 'neon' as never, into: fresh() })).toThrow(/no theme "neon"/)
   })
 
-  it('uses no React in the vanilla template', () => {
-    const { dir } = newGame({ name: 'plain', template: 'vanilla', into: fresh() })
-    expect(readFileSync(join(dir, 'package.json'), 'utf8')).not.toContain('@ifloom/react')
-    expect(readFileSync(join(dir, 'src/main.ts'), 'utf8')).not.toContain('react')
+  it.each(['vanilla', 'vue', 'svelte'] as const)('uses no React in the %s template, and draws the plain blank game', (template) => {
+    const { dir, files, theme } = newGame({ name: 'the-door', template, into: fresh() })
+    expect(theme).toBeNull()
+    const pkg = readFileSync(join(dir, 'package.json'), 'utf8')
+    expect(pkg).not.toMatch(/react/)
+    expect(pkg).toContain('@ifloom/audio')
+    expect(files).toEqual(expect.arrayContaining(['src/main.ts', 'src/game.ts', 'src/minigame.ts', 'src/styles.css']))
+    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
+    // Each starts the audio player and the minigame clock beside its runner.
+    const runner = readFileSync(join(dir, template === 'vanilla' ? 'src/main.ts' : 'src/runner.ts'), 'utf8')
+    for (const call of ['browserRunner(game)', 'startAudio(runner)', 'startClock(runner)', 'startKeys(runner)', 'runner.subscribe(']) expect(runner).toContain(call)
+  })
+
+  it.each([
+    ['vue', 'vue()', ['src/App.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue']],
+    ['svelte', 'svelte()', ['src/App.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte']],
+  ] as const)('gives the %s template its framework\'s Vite plugin and components', (template, plugin, components) => {
+    const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
+    expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}] } })`)
+    expect(files).toEqual(expect.arrayContaining([...components]))
   })
 
   it('refuses a bad name, an unknown template, and a folder already in use', () => {

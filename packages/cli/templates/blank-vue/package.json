@@ -1,0 +1,23 @@
+{
+  "name": "{{name}}",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ifloom dev",
+    "build": "ifloom build",
+    "check": "ifloom check",
+    "typecheck": "vue-tsc --noEmit",
+    "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
+  },
+  "dependencies": {
+    "@ifloom/audio": "0.0.0",
+    "@ifloom/engine": "0.0.0",
+    "vue": "3.5.44"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "0.0.0",
+    "@vitejs/plugin-vue": "6.0.10",
+    "vue-tsc": "3.3.13"
+  }
+}

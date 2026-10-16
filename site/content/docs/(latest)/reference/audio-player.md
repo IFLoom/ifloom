@@ -10,7 +10,7 @@ import { startAudio } from '@ifloom/audio'
 const player = startAudio(runner)
 ```
 
-That's all most games need. The [React UI](/docs/react#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner (see [Using another framework](/docs/guide/frameworks#sound)).
+That's all most games need. The [React UI](/docs/react#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner. The `vanilla`, `vue` and `svelte` templates already do (see [Using another framework](/docs/guide/frameworks#sound)).
 
 ```ts
 import { startAudio, type AudioLike, type AudioOptions, type AudioPlayer } from '@ifloom/audio'
@@ -132,6 +132,66 @@ type AudioPlayer = {
 import { audioSrc } from '@ifloom/engine'
 
 player.play(audioSrc('voice/ava-hello.ogg'), 'voice')
+```
+
+### A button to hear a line again
+
+The React UI puts a button on each spoken line that has a voice. In the [`vue` and `svelte` templates](/docs/guide/frameworks), `src/runner.ts` exports the player as `player`, so a component can do the same:
+
+```vue tab="Vue"
+<!-- src/VoiceReplay.vue -->
+<script setup lang="ts">
+import { audioSrc } from '@ifloom/engine'
+import { player, runner } from './runner.ts'
+
+// Plays a spoken line's voice again.
+const props = defineProps<{ voice: string }>()
+
+function replay() {
+  const track = runner.game.audio?.tracks[props.voice]
+  if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
+}
+</script>
+
+<template>
+  <button type="button" aria-label="Hear it again" @click="replay">▶</button>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/VoiceReplay.svelte -->
+<script lang="ts">
+  import { audioSrc } from '@ifloom/engine'
+  import { player, runner } from './runner.ts'
+
+  // Plays a spoken line's voice again.
+  let { voice }: { voice: string } = $props()
+
+  function replay() {
+    const track = runner.game.audio?.tracks[voice]
+    if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
+  }
+</script>
+
+<button type="button" aria-label="Hear it again" onclick={replay}>▶</button>
+```
+
+Draw it inside the spoken line in `Beat.vue` or `Beat.svelte`, when the beat has a voice:
+
+```vue tab="Vue"
+<!-- src/Beat.vue -->
+<p v-else-if="beat.kind === 'say'" class="beat-say" :data-who="beat.who">
+  {{ beat.text }}
+  <VoiceReplay v-if="beat.voice" :voice="beat.voice" />
+</p>
+```
+
+```svelte tab="Svelte"
+<!-- src/Beat.svelte -->
+<p class="beat-say" data-who={beat.who}>
+  {beat.text}
+  {#if beat.voice}<VoiceReplay voice={beat.voice} />{/if}
+</p>
 ```
 
 ## AudioLike

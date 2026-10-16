@@ -1,6 +1,6 @@
 ---
 title: "Building your own HUD"
-description: "Build your own HUD in the React UI from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest."
+description: "Build your own HUD from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest, in the React UI, with the stat bar in Vue and Svelte too."
 ---
 The React UI's stat list, [`NoticeStrip`](/docs/react/components#noticestrip) and quest log are basic on purpose. Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
 
@@ -8,7 +8,7 @@ The React UI's stat list, [`NoticeStrip`](/docs/react/components#noticestrip) an
 - a strip of unread counts for notices and texts;
 - an objective line from the quest the player is tracking.
 
-Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame). The examples use Small Town's stats and plugins, but the pattern is the same for any game.
+Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame). The examples use Small Town's stats and plugins, but the pattern is the same for any game. [In Vue or Svelte](#in-vue-or-svelte) builds the stat bar in those.
 
 ## A stat bar
 
@@ -133,3 +133,63 @@ Build the element once, outside any component, as here. The layout is only read 
 To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/guide/plugin-ui).
 
 For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
+
+## In Vue or Svelte
+
+The view is the same whatever draws it, so a HUD in the [`vue` or `svelte` template](/docs/guide/frameworks) reads the same fields. Here is the stat bar as a component of each, reading the view from the template's `src/runner.ts`. It takes the stat's key, so one component draws a bar for any stat:
+
+```vue tab="Vue"
+<!-- src/StatBar.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import { view } from './runner.ts'
+
+// A bar for one of the game's stats, by its key: <StatBar stat="energy" />.
+const props = defineProps<{ stat: string }>()
+const stat = computed(() => view.value.stats.find((entry) => entry.key === props.stat))
+const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (stat.value.value - stat.value.min) / (stat.value.max - stat.value.min) : 0))
+</script>
+
+<template>
+  <div
+    v-if="stat"
+    role="meter"
+    :aria-label="stat.label"
+    :aria-valuemin="stat.min"
+    :aria-valuemax="stat.max"
+    :aria-valuenow="stat.value"
+    :aria-valuetext="stat.text"
+    class="meter"
+  >
+    <div :style="{ width: `${share * 100}%`, background: share < 0.25 ? 'crimson' : 'seagreen' }" />
+  </div>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/StatBar.svelte -->
+<script lang="ts">
+  import { view } from './runner.ts'
+
+  // A bar for one of the game's stats, by its key: <StatBar stat="energy" />.
+  let { stat: key }: { stat: string } = $props()
+  const stat = $derived($view.stats.find((entry) => entry.key === key))
+  const share = $derived(stat && stat.max > stat.min ? (stat.value - stat.min) / (stat.max - stat.min) : 0)
+</script>
+
+{#if stat}
+  <div
+    role="meter"
+    aria-label={stat.label}
+    aria-valuemin={stat.min}
+    aria-valuemax={stat.max}
+    aria-valuenow={stat.value}
+    aria-valuetext={stat.text}
+    class="meter"
+  >
+    <div style:width={`${share * 100}%`} style:background={share < 0.25 ? 'crimson' : 'seagreen'}></div>
+  </div>
+{/if}
+```
+
+Put it in `App.vue` or `App.svelte` wherever the bar should go, as `<StatBar stat="energy" />`. The unread counts and the objective line read `view.notices.unseen`, `view.plugins.messages` and `view.plugins.quests` the same way, and a button sends a command with `runner.apply`.

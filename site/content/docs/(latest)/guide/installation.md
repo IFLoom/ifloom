@@ -46,7 +46,9 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 | Template | What you get |
 |---|---|
 | `blank` | Two scenes and a stat, drawn with the React UI. The default. |
-| `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte or anything else. |
+| `vanilla` | The same game drawn with plain DOM and no framework. |
+| `vue` | The same game drawn with Vue 3. |
+| `svelte` | The same game drawn with Svelte 5. |
 | `novel` | A copy of The Letter. |
 | `cafe` | A copy of The Corner Café. |
 | `town` | A copy of Small Town, with every plugin. |
@@ -54,6 +56,8 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 ```sh
 npm run new -- my-cafe --template cafe
 ```
+
+The `vanilla`, `vue` and `svelte` templates draw the scene, choices, inputs, stats and minigames themselves and play the game's sound, with no React. [Using another framework](/docs/guide/frameworks) walks through their code, and is the place to start for any other framework.
 
 A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
 

@@ -1,6 +1,6 @@
 ---
 title: "Building UI for plugins"
-description: "Draw the achievements, shop and jobs plugins in the React UI: an achievements page, a shop counter and a job board, each read from the view with useGame()."
+description: "Draw the achievements, shop and jobs plugins in the React UI: an achievements page, a shop counter and a job board, each read from the view with useGame(). The shop counter is in Vue and Svelte too."
 ---
 The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [jobs](/docs/plugins/jobs) plugins ship no UI. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks. This page builds three pieces in the React UI:
 
@@ -8,7 +8,7 @@ The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [
 - a shop counter beside the room, with prices, discounts and greyed-out buttons;
 - a job board with each job's rank, pay and next shift.
 
-Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame) and sends commands with its `send`. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game. If you don't use React, the same view is there for any framework (see [Using another framework](/docs/guide/frameworks)).
+Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame) and sends commands with its `send`. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game. If you don't use React, the same view is there for any framework. [In Vue or Svelte](#in-vue-or-svelte) builds the shop counter in each.
 
 ## An achievements page
 
@@ -193,6 +193,88 @@ mountGame(game, {
   layout: { ...DEFAULT_LAYOUT, sidebar: [...DEFAULT_LAYOUT.sidebar, <JobBoard key="jobs" />] },
 })
 ```
+
+## In Vue or Svelte
+
+A plugin's slice of the view is plain data, so the same counter works in any framework. Here it is in the [`vue` and `svelte` templates](/docs/guide/frameworks), reading the view from the template's `src/runner.ts` and sending the good's command with `runner.apply`. Add `@ifloom/plugin-shop` to the game's `package.json` for its types:
+
+```vue tab="Vue"
+<!-- src/Counter.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { Price } from '@ifloom/engine'
+import type { ShopView } from '@ifloom/plugin-shop'
+import { runner, view } from './runner.ts'
+
+const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
+</script>
+
+<template>
+  <p v-if="vendor && !vendor.open">{{ vendor.name }}: {{ vendor.closed }}</p>
+  <section v-else-if="vendor">
+    <h2>{{ vendor.name }}</h2>
+    <ul>
+      <li v-for="good in vendor.goods" :key="good.item">
+        {{ good.name }}
+        <small v-if="good.stock !== null">· {{ good.stock }} left</small>
+        <s v-if="good.fullPrice">{{ priceText(good.fullPrice) }}</s>
+        <button :disabled="Boolean(good.buy.disabled)" :title="good.buy.disabled" @click="runner.apply(good.buy.command)">
+          Buy · {{ priceText(good.buy.price) }}
+        </button>
+        <button
+          v-if="good.sell && good.owned > 0"
+          :disabled="Boolean(good.sell.disabled)"
+          :title="good.sell.disabled"
+          @click="runner.apply(good.sell.command)"
+        >
+          Sell · {{ priceText(good.sellFor) }}
+        </button>
+      </li>
+    </ul>
+  </section>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/Counter.svelte -->
+<script lang="ts">
+  import type { Price } from '@ifloom/engine'
+  import type { ShopView } from '@ifloom/plugin-shop'
+  import { runner, view } from './runner.ts'
+
+  const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+  const vendor = $derived(($view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
+</script>
+
+{#if vendor && !vendor.open}
+  <p>{vendor.name}: {vendor.closed}</p>
+{:else if vendor}
+  <section>
+    <h2>{vendor.name}</h2>
+    <ul>
+      {#each vendor.goods as good (good.item)}
+        <li>
+          {good.name}
+          {#if good.stock !== null}<small>· {good.stock} left</small>{/if}
+          {#if good.fullPrice}<s>{priceText(good.fullPrice)}</s>{/if}
+          <button disabled={Boolean(good.buy.disabled)} title={good.buy.disabled} onclick={() => runner.apply(good.buy.command)}>
+            Buy · {priceText(good.buy.price)}
+          </button>
+          {#if good.sell && good.owned > 0}
+            {@const sell = good.sell}
+            <button disabled={Boolean(sell.disabled)} title={sell.disabled} onclick={() => runner.apply(sell.command)}>
+              Sell · {priceText(good.sellFor)}
+            </button>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/if}
+```
+
+Put `<Counter />` in `App.vue` or `App.svelte` where the counter should go. The job board and the achievements page carry over the same way: read the slice, draw each [`RenderedChoice`](/docs/reference/view#renderedchoice) as a button with its `disabled` reason, and send its `command`.
 
 ## The same for any plugin
 

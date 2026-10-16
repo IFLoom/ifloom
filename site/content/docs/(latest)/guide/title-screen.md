@@ -2,7 +2,7 @@
 title: "The title screen and settings"
 description: Open your game on a title screen, give the player settings, and offer New Game+ once they've finished.
 ---
-This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/docs/react). A game drawn some other way can build the same pages from the engine's [settings](/docs/reference/settings) and [profile](/docs/reference/profile).
+This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/docs/react). A game drawn some other way can build the same pages from the runner and the engine's [settings](/docs/reference/settings) and [profile](/docs/reference/profile), and [Without the React UI](#without-the-react-ui) builds a title screen in Vue and Svelte.
 
 ## Turn on the title screen
 
@@ -216,6 +216,110 @@ mountGame(game, {
 ```
 
 The component is drawn as the whole page, with no props. Use [`usePage`](/docs/react/components#usepage) to move between pages and [`useProfile`](/docs/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`.
+
+## Without the React UI
+
+The title screen, the settings page and the rest are part of the React UI. A game drawn with the [`vue` or `svelte` template](/docs/guide/frameworks) builds its own from the runner. This one offers New game, and Continue once there's a save to go on from:
+
+```vue tab="Vue"
+<!-- src/TitleScreen.vue -->
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { runner, view } from './runner.ts'
+
+// New game, and Continue from the newest save once there is one (the autosave counts).
+const emit = defineEmits<{ start: [] }>()
+const newest = ref<string | null>(null)
+onMounted(async () => {
+  newest.value = (await runner.saves?.list())?.[0]?.slot ?? null
+})
+
+async function newGame() {
+  await runner.newGame()
+  emit('start')
+}
+
+async function carryOn(slot: string) {
+  const loaded = await runner.load(slot)
+  if (loaded && typeof loaded !== 'string') emit('start')
+}
+</script>
+
+<template>
+  <h1>{{ view.title }}</h1>
+  <div class="choices">
+    <button @click="newGame">New game</button>
+    <button v-if="newest" @click="carryOn(newest)">Continue</button>
+  </div>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/TitleScreen.svelte -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+
+  // New game, and Continue from the newest save once there is one (the autosave counts).
+  let { onstart }: { onstart: () => void } = $props()
+  const newest = runner.saves?.list().then((saves) => saves[0]?.slot ?? null)
+
+  async function newGame() {
+    await runner.newGame()
+    onstart()
+  }
+
+  async function carryOn(slot: string) {
+    const loaded = await runner.load(slot)
+    if (loaded && typeof loaded !== 'string') onstart()
+  }
+</script>
+
+<h1>{$view.title}</h1>
+<div class="choices">
+  <button onclick={newGame}>New game</button>
+  {#await newest then slot}
+    {#if slot}<button onclick={() => carryOn(slot)}>Continue</button>{/if}
+  {/await}
+</div>
+```
+
+Show it until the player starts, then the game:
+
+```vue tab="Vue"
+<!-- src/App.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import TitleScreen from './TitleScreen.vue'
+
+const started = ref(false)
+</script>
+
+<template>
+  <TitleScreen v-if="!started" @start="started = true" />
+  <template v-else>
+    <!-- the game, as the template draws it -->
+  </template>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/App.svelte -->
+<script lang="ts">
+  import TitleScreen from './TitleScreen.svelte'
+
+  let started = $state(false)
+</script>
+
+{#if !started}
+  <TitleScreen onstart={() => (started = true)} />
+{:else}
+  <!-- the game, as the template draws it -->
+{/if}
+```
+
+[`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them. [`runner.newGame()`](/docs/reference/runner#newgame) starts afresh with the player's stored settings, and [`runner.load`](/docs/reference/runner#the-runners-members) returns a string when a save can't be read, which is worth showing.
+
+For a settings page, draw `view.settings`. Each [`SettingView`](/docs/reference/view#settingview) has its value and what kind of control it wants. Send a `play` setting as a [`setting`](/docs/reference/commands#setting) command, and change a `ui` setting with [`runner.setUiSetting`](/docs/reference/runner#setuisetting).
 
 ## Make it look like your game
 

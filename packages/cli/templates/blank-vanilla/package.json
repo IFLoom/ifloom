@@ -10,6 +10,7 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
+    "@ifloom/audio": "0.0.0",
     "@ifloom/engine": "0.0.0"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 ---
 title: "The React UI"
 ---
-`@ifloom/react` draws an IFLoom game in the browser with React. It's the ready-made UI, but not the only way: the engine has no framework of its own, and [Using another framework](/docs/guide/frameworks) shows a game drawn with plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
+`@ifloom/react` draws an IFLoom game in the browser with React. It's the ready-made UI, but not the only way: the engine has no framework of its own, and [Using another framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
 
 ```ts
 import { mountGame } from '@ifloom/react'

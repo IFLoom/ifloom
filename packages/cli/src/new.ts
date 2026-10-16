@@ -7,7 +7,7 @@ import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'no
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const TEMPLATES = ['blank', 'vanilla', 'novel', 'cafe', 'town'] as const
+export const TEMPLATES = ['blank', 'vanilla', 'vue', 'svelte', 'novel', 'cafe', 'town'] as const
 export type TemplateName = (typeof TEMPLATES)[number]
 
 /** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
@@ -24,17 +24,25 @@ export type NewGameOptions = {
   /**
    * The React UI preset to start from. Left out, a blank game gets one at
    * random, so two new games don't start out looking alike, and a copied
-   * example keeps its own. The vanilla template has no React UI and ignores it.
+   * example keeps its own. The vanilla, vue and svelte templates have no React UI and ignore it.
    */
   theme?: ThemeName
 }
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
+/** The files every blank template takes from `templates/shared/`. */
+const BLANK = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
+/** What the templates without React share: the plain game, the minigame clock and keys, and the stylesheet. */
+const PLAIN = [...BLANK, 'src/game.ts', 'src/minigame.ts', 'src/styles.css']
+
 /** Where each template's files come from. The blank ones add the shared files; the examples bring their own. */
 const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
-  blank: { dir: here('../templates/blank-react'), shared: ['AGENTS.md', 'gitignore', 'tsconfig.json', 'vite.config.ts', 'index.html'] },
-  vanilla: { dir: here('../templates/blank-vanilla'), shared: ['AGENTS.md', 'gitignore', 'tsconfig.json', 'vite.config.ts', 'index.html'] },
+  blank: { dir: here('../templates/blank-react'), shared: [...BLANK, 'vite.config.ts'] },
+  vanilla: { dir: here('../templates/blank-vanilla'), shared: [...PLAIN, 'vite.config.ts'] },
+  // Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
+  vue: { dir: here('../templates/blank-vue'), shared: PLAIN },
+  svelte: { dir: here('../templates/blank-svelte'), shared: PLAIN },
   novel: { dir: here('../../../examples/novel'), shared: ['AGENTS.md', 'gitignore'] },
   cafe: { dir: here('../../../examples/cafe'), shared: ['AGENTS.md', 'gitignore'] },
   town: { dir: here('../../../examples/showcase'), shared: ['AGENTS.md', 'gitignore'] },
@@ -42,6 +50,9 @@ const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
 
 /** What an example has that a new game should not: its build, its tests, its recorded runs. */
 const LEFT_OUT = new Set(['node_modules', 'dist', 'dist-one', 'tests', 'snapshots', 'playtest', 'mods'])
+
+/** The templates that draw the game without the React UI, and so take no theme. */
+const NO_REACT = new Set<TemplateName>(['vanilla', 'vue', 'svelte'])
 
 const VALID_NAME = /^[a-z0-9][a-z0-9._~-]*$/
 
@@ -99,7 +110,7 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   // The preset: the one asked for, a random one for a blank game, or the example's own.
   const styles = join(dir, 'src/styles.css')
   let theme: ThemeName | null = null
-  if (template !== 'vanilla' && existsSync(styles)) {
+  if (!NO_REACT.has(template) && existsSync(styles)) {
     const chosen = options.theme ?? (template === 'blank' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
     const css = readFileSync(styles, 'utf8')
     if (chosen) {

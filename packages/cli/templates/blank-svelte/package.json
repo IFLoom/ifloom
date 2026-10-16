@@ -1,0 +1,23 @@
+{
+  "name": "{{name}}",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ifloom dev",
+    "build": "ifloom build",
+    "check": "ifloom check",
+    "typecheck": "svelte-check",
+    "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
+  },
+  "dependencies": {
+    "@ifloom/audio": "0.0.0",
+    "@ifloom/engine": "0.0.0",
+    "svelte": "5.57.2"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "0.0.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "svelte-check": "4.7.7"
+  }
+}

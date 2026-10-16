@@ -417,7 +417,7 @@ Your own components can also join the override system, so the next game that use
 
 ## 9. Use another framework
 
-If React isn't what you want, leave this package out. The engine has no framework of its own. [Using another framework](/docs/guide/frameworks) walks through the plain-DOM template and sketches Vue and Svelte.
+If React isn't what you want, leave this package out. The engine has no framework of its own. [Using another framework](/docs/guide/frameworks) walks through the Vue, Svelte and plain-DOM templates.
 
 ## Not looking like every other IFLoom game
 

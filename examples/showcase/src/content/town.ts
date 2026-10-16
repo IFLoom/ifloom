@@ -9,6 +9,7 @@ import { questActive } from '@ifloom/plugin-quests'
 import { applyEffect, effectActive } from '@ifloom/plugin-effects'
 import { buy } from '@ifloom/plugin-shop'
 import { applyFor, work } from '@ifloom/plugin-jobs'
+import { generate } from '@ifloom/plugin-generators'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
@@ -64,6 +65,8 @@ const locations: LocationDef[] = [
   },
   {
     ...place({ id: 'park', name: 'Riverside Park', kind: 'street', exits: ['high-street'] }),
+    // The river, then a line while the day's visitors are about.
+    body: [{ text: 'place.park' }, { text: 'place.park/visitors', when: { count: 'visitor', gte: 1 } }],
     actions: [
       { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
       { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
@@ -341,7 +344,16 @@ export const town: Pack = {
   collections: [{ id: 'notes', name: 'Notes' }],
   // On moving day the cat needs a name; the prose says it from then on.
   inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }],
+  // People out in the park, made fresh each day by the generators plugin.
+  kinds: [{ id: 'visitor', label: 'Visitor', plural: 'Visitors' }],
   triggers: [
+    // The first time each day the player is in the park: yesterday's visitors go home and two new ones come.
+    {
+      id: 'visitors',
+      once: 'turn',
+      when: at('park'),
+      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', of: '$' }] }, generate('visitor', 2)],
+    },
     // A note under the door the first time the player steps out.
     {
       id: 'welcome',
@@ -420,6 +432,14 @@ export const town: Pack = {
           fire: { missed: 2 },
         },
       ],
+    },
+    generators: {
+      pools: [
+        { id: 'first-names', values: ['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit'] },
+        // Most come alone; plenty bring a dog; now and then, a pushchair.
+        { id: 'company', values: [{ value: 'alone', weight: 5 }, { value: 'a dog', weight: 4 }, { value: 'a pushchair', weight: 1 }] },
+      ],
+      templates: [{ id: 'visitor', of: 'visitor', name: { pool: 'first-names' }, flags: { with: { pool: 'company' }, laps: { between: [1, 3] } } }],
     },
     shop: {
       vendors: [

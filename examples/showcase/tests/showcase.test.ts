@@ -3,7 +3,7 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, checkGame, entitiesOf, entityOf, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { EffectsView } from '@ifloom/plugin-effects'
@@ -221,6 +221,23 @@ describe('Small Town', () => {
     expect(state.stats).toMatchObject({ coins: coins + 12, energy: 75 })
     expect(clock.read(state, game)).toEqual({ day: 5, period: 'afternoon' })
     expect(job()).toMatchObject({ shifts: 1, nextShift: { day: 12, inDays: 7 } })
+  })
+
+  it('fills the park with two new visitors each day, drawn from the town’s pools', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
+    const visitors = () => entitiesOf(state, 'visitor').map((ref) => entityOf(state, ref)!)
+    expect(visitors()).toHaveLength(2)
+    for (const visitor of visitors()) {
+      expect(['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit']).toContain(visitor.name)
+      expect(['alone', 'a dog', 'a pushchair']).toContain(visitor.flags.with)
+    }
+    expect(view(state, game).scene.body).toContain('A few people are out along the path')
+    const first = visitors()
+    // Back the next day: yesterday's have gone home, and two more are out.
+    state = run(on(state, 2, 'morning'), go('high-street'), go('park'))
+    expect(entitiesOf(state, 'visitor')).toEqual(['visitor:#3', 'visitor:#4'])
+    expect(visitors()).not.toEqual(first)
   })
 
   it('keeps the phone in the pocket at work', () => {

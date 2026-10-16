@@ -228,6 +228,10 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 `town.ts`, `data.jobs`, the café's actions, and `jobs()` in `src/game.ts`. Once Ava's friendship is 10 or more, "Ask Ava about weekend work" sends `applyFor('weekend')` and the player is taken on as weekend help, a [job](/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
 
+### Visitors in the park
+
+`town.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` variable from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
+
 ### Achievements
 
 `town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.

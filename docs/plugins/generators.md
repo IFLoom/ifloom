@@ -1,0 +1,181 @@
+# Generators
+
+`@ifloom/plugin-generators` makes new [entities](/reference/entities) from templates: visitors in a park, customers in a shop, applicants for a job. You give it named pools of values to pick from, and a template that says where each of an entity's fields comes from. An effect then makes as many as you ask for.
+
+The plugin knows nothing about people or anything else. A pool is any list of values, and a template can fill any kind of entity your game declares. Every draw is seeded by the save, so a replay makes the same entities and a reload can't re-roll them.
+
+```ts
+import {
+  generators, generate, drawEntity, poolDefs, templateDefs,
+  type PoolDef, type PoolEntry, type TemplateDef, type FieldDef, type GeneratedEntity,
+} from '@ifloom/plugin-generators'
+```
+
+## Install
+
+List the package in your game's `package.json`, beside the engine:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-generators": "0.0.0"
+  }
+}
+```
+
+Then add `generators()` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details. The plugin works on its own, cooperates with no other, and keeps no state of its own: what it makes are ordinary entities in the game state.
+
+## generators
+
+```ts
+function generators(): DefinedPlugin<unknown>
+```
+
+Builds the plugin, with the id `generators`.
+
+## Writing pools and templates
+
+Pools and templates are content. They go in a pack's [`data`](/reference/loader#pack) under `generators.pools` and `generators.templates`, and are merged by id, so a mod can add names to a pool by replacing it, or add a template.
+
+These are the showcase's park visitors. Each day the player first comes to the park, yesterday's go home and two new ones arrive:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { at } from '@ifloom/plugin-places'
+import { generate, type PoolDef, type TemplateDef } from '@ifloom/plugin-generators'
+
+const pools: PoolDef[] = [
+  { id: 'first-names', values: ['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit'] },
+  { id: 'company', values: [{ value: 'alone', weight: 5 }, { value: 'a dog', weight: 4 }, { value: 'a pushchair', weight: 1 }] },
+]
+
+const visitor: TemplateDef = {
+  id: 'visitor',
+  of: 'visitor',
+  name: { pool: 'first-names' },
+  flags: { with: { pool: 'company' }, laps: { between: [1, 3] } },
+}
+
+const town: Pack = {
+  id: 'town',
+  schema: SCHEMA,
+  kinds: [{ id: 'visitor', label: 'Visitor', plural: 'Visitors' }],
+  triggers: [
+    {
+      id: 'visitors',
+      once: 'turn',
+      when: at('park'),
+      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', of: '$' }] }, generate('visitor', 2)],
+    },
+  ],
+  data: { generators: { pools, templates: [visitor] } },
+}
+```
+
+### PoolDef
+
+```ts
+type PoolDef = { id: string; values: PoolEntry[] }
+type PoolEntry = FlagValue | { value: FlagValue; weight?: number }
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among pools. A template names the pool by it. |
+| `values` | What to pick from: strings, numbers or `true`/`false`. Write a value as it is, or as `{ value, weight }` to make it more or less likely. A value of weight 4 comes up four times as often as one of weight 1, the weight when it's left out. A weight of 0 is never picked. |
+
+The draw is the engine's [`weighted`](/reference/random#weighted).
+
+### TemplateDef
+
+```ts
+type TemplateDef = {
+  id: string
+  of: string
+  name: FieldDef
+  stats?: Record<string, FieldDef>
+  flags?: Record<string, FieldDef>
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among templates. The `generators/generate` effect names it. |
+| `of` | The [kind](/reference/entities#kinddef) of entity it makes. |
+| `name` | Where the entity's name comes from. |
+| `stats` | Where its stats come from, by id. Each must be a stat the game declares for the kind (`of`). A stat left out starts at its `start`, as a `create` effect's does. |
+| `flags` | Where its variables come from, by name. |
+
+### FieldDef
+
+```ts
+type FieldDef = FlagValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
+```
+
+| Written | Gives |
+|---|---|
+| `'visitor'`, `3`, `true` | That value, as written. |
+| `{ pool: 'first-names' }` | One value picked from the pool, by weight. |
+| `{ between: [1, 3] }` | A whole number from the first to the second, both included. |
+| `{ join: [{ pool: 'first-names' }, { pool: 'surnames' }], with: ' ' }` | Each part drawn, then joined into one string. `with` is a space if left out. |
+
+## Effects
+
+| Content writes | Helper | Does |
+|---|---|---|
+| `{ custom: 'generators/generate', with: { template, count? } }` | `generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
+
+Each is made with the engine's [`create`](/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on) and starts with the kind's stats. In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'generators/generate', with: { template, count } }`.
+
+A template the game doesn't have makes nothing.
+
+## Seeded draws
+
+Every field is drawn from the save's [seed](/reference/state#seed), the template's id, the number the new entity will get, and the field's name. So:
+
+- The same save makes the same entities every time, and a replay of its commands makes them again exactly.
+- Each new entity is drawn differently, because its number is new. Making three at once gives the same three as making one three times.
+- A different save, with a different seed, gets different ones.
+
+## For code
+
+### Helpers
+
+```ts
+const generate: (template: string, count?: number) => EffectRef
+```
+
+### drawEntity
+
+```ts
+function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity
+type GeneratedEntity = { name: string; stats: Record<string, number>; flags: Record<string, FlagValue> }
+```
+
+What the template draws for the `n`th entity of its kind made in play, without making it. The effect passes the number the next one will get. Use it to preview a template, or in a test.
+
+### poolDefs and templateDefs
+
+```ts
+function poolDefs(game: Game): PoolDef[]
+function templateDefs(game: Game): TemplateDef[]
+```
+
+The game's pools and templates, merged from its packs.
+
+## Checks
+
+When the game loads, the plugin reports these problems against the pack each pool or template came from:
+
+- A template whose kind the game doesn't have (`templates visitor: unknown kind "…"`), or a stat the kind doesn't have (`no visitor stat named "…"`).
+- A template naming a pool the game doesn't have (`unknown pool "…"`).
+- A `between` whose first number is bigger than its second (`stat mood: between [5, 1] runs backwards`).
+- A pool with nothing to pick (`pools <id>: has nothing to pick: no values, or every weight is 0`).
+
+A call that names a template the game doesn't have gives `unknown template "…"` where it's written, and a `count` that isn't a whole number of 1 or more gives `count must be a whole number, 1 or more`.
+
+## Gotchas
+
+- **Entities are kept until something removes them.** A trigger that makes visitors every day fills the save with them. Remove the old ones with an [`each`](/reference/effects#each) and [`remove`](/reference/effects#remove), as the showcase does.
+- **Pools hold plain values.** A pool can't hold another pool; use `join` to put several draws together.

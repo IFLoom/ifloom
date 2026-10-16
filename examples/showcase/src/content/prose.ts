@@ -12,6 +12,7 @@ export const prose: Record<string, string> = {
   'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
   'place.cafe/caffeinated': 'Your knee won’t stop jiggling under the table. The coffee is working.',
   'place.park': 'The river is slow and brown and full of ducks with opinions.',
+  'place.park/visitors': 'A few people are out along the path today, walking off their lunch.',
   'place.office': 'Strip lights, a kettle, a stack of forms that never gets shorter.',
 
   // A paragraph in quotes is a spoken line, so narration goes in its own paragraph.

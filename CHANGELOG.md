@@ -41,6 +41,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `@ifloom/plugin-shop`: vendors that sell items for prices in any spendable stat, with limited stock that restocks each turn or day, selling back at a fraction of the price, and a few goods marked down each day, drawn from the save's seed. A vendor keeps the calendar's hours and stands at a place on the map when the game has those plugins. Its `buy` command works on any button, with the price shown.
 - `spends` on a plugin's command: the stats it spends, so a button that sends it shows its price as an activity's does.
 - `@ifloom/plugin-jobs`: jobs with hiring requirements, shifts that cost stats and time and pay a wage in a spendable stat, promotion ladders with better pay, and getting fired for missed shifts or a condition such as a low performance stat. Shifts fall on the calendar's weekdays and periods and are worked at a place on the map when the game has those plugins.
+- `@ifloom/plugin-generators`: make new entities from templates, with each field picked from a named pool of values (with optional weights), drawn from a number range, or fixed. Draws are seeded by the save, so a replay makes the same ones.
 - These docs, with `llms.txt` and `llms-full.txt` for AI agents, and an `AGENTS.md` in every new game.
 
 ### Changed

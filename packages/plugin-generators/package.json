@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-generators",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Generators for IFLoom: named pools of values and templates that make new entities from them, seeded and replay-exact.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

@@ -51,6 +51,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - The editor at `/editor` on the website: write scenes, choices, stats, variables, items and storylets from forms in your browser, play them in the React UI as you go with any theme preset, see what `checkGame` finds, and export the pack as TypeScript or JSON to drop into a game. `/editor/snippets` builds a condition, effects, a stat, an item, a setting or prose markup for you to copy.
 - Every reference and plugin page in the docs ends with "See it in an example": the file and the part of Small Town, The Letter or The Corner Café that uses it, with a link to the source.
 - The Corner Café example's reputation has levels, with a notice when word gets round.
+- Diagrams in the docs, drawn with Mermaid: how the engine, your game and your UI fit together, what happens in a command, how a save loads, how plugins join the core, the runner's loop and the quick feet minigame. Each keeps its Mermaid source in the page's Markdown and in `llms-full.txt`.
 
 ### Changed
 

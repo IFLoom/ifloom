@@ -293,6 +293,17 @@ It does these in order:
 4. The game's own [migrations](#the-games-own-migrations), if the game declares a `version`.
 5. What the game declares and the save lacks is added: a storyline, and in a game with no `version`, its `play` settings and declared entities. See [Filling new content](#filling-new-content).
 
+Each step can refuse the state, with the [string](/docs/reference/strings#saves) named in its box:
+
+```mermaid
+flowchart TD
+  raw(["raw, from a save or anywhere"]) --> engine["1–2. The engine's steps up to<br/>SAVE_VERSION, then each missing<br/>field's load default.<br/>Refused: notASave, saveTooOld"]
+  engine --> plugins["3. Each plugin's state: a new<br/>plugin starts fresh, an older<br/>one runs its migrations.<br/>Refused: pluginNewer,<br/>pluginUnreadable"]
+  plugins --> game["4. The game's migrations,<br/>with tools.fill.<br/>Refused: gameNewer"]
+  game --> fill["5. What the game declares<br/>and the save lacks."]
+  fill --> state(["a GameState ready for apply"])
+```
+
 The [save store](#saves)'s `read` and `importText`, and [`replay`](/docs/reference/runner#replay), all load through it. A state that comes back from it, or from [`startingState`](/docs/reference/commands#startingstate), is ready for [`apply`](/docs/reference/commands#apply), which doesn't check the shape again.
 
 A state already in today's shape comes back equal to what went in, apart from anything the game has declared since.

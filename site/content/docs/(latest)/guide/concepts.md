@@ -129,6 +129,25 @@ A plugin adds a system to the engine, such as a calendar, a map, people or quest
 
 First-party plugins don't import each other. One plugin asks another for an answer by name through a query, as the cast asks the places plugin where the player is. A plugin can also list the plugins it `cooperates` with. Content may then name their conditions and effects in a game that leaves them out: the condition is false and the effect does nothing.
 
+The core is the same in every game. It's made of built-in parts, such as scenes, stats, items, entities and triggers, and each part keeps its own piece of the state and its own conditions, effects and commands. Plugins are the parts a game chooses. They plug into the core through the plugin API, and reach each other only by name:
+
+```mermaid
+flowchart TD
+  game["your game<br/>packs, mods, the plugins it lists"]
+  subgraph core["the core: apply, view, loadState, checkGame"]
+    parts["built-in parts<br/>scenes, stats, items, entities,<br/>triggers, audio, minigames…"]
+  end
+  subgraph chosen["plugins the game lists"]
+    places["places"]
+    cast["cast"]
+    calendar["calendar"]
+  end
+  game --> core
+  game --> chosen
+  chosen -- plugin API --> core
+  cast -. "query by name:<br/>where is the player?" .-> places
+```
+
 See [Plugins](/docs/plugins) for the first-party ones, and [Writing a plugin](/docs/reference/plugins).
 
 ## The UI is separate

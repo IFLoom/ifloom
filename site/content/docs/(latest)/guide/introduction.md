@@ -31,22 +31,19 @@ Ren'Py and other visual-novel engines give you a complete presentation layer (sp
 
 ## The architecture in one picture
 
-```
-  your content                 the engine                    your UI
-┌──────────────┐  command   ┌─────────────────┐   view   ┌──────────────┐
-│     game     │ ─────────▶ │  apply(state,   │ ───────▶ │ draws what   │
-│ scenes,      │            │   game, cmd)    │          │ view() says, │
-│ stats,       │            │      ↓          │          │ sends a      │
-│ rules,       │            │  new state      │          │ command when │
-│ content for  │            │      ↓          │          │ a button is  │
-│ plugins      │            │  view(state,    │ ◀─────── │ pressed      │
-│              │            │       game)     │ command  │              │
-└──────────────┘            └────────┬────────┘          └──────────────┘
-                                     │ plugin API
-                     ┌───────────────┴───────────────┐
-                     │ plugins: calendar, places,    │
-                     │ cast (people), quests, phone… │
-                     └───────────────────────────────┘
+```mermaid
+flowchart TD
+  game["<b>Your content</b><br/>scenes, stats, rules, content for plugins"]
+  plugins["<b>Plugins</b><br/>calendar, places, cast, quests, phone…"]
+  subgraph engine["The engine"]
+    direction LR
+    apply["apply(state, game, command)"] --> state["new state"] --> view["view(state, game)"]
+  end
+  ui["<b>Your UI</b><br/>draws the view, and sends a command when a button is pressed"]
+  game -- read by --> engine
+  plugins <-- plugin API --> engine
+  engine -- view --> ui
+  ui -- command --> engine
 ```
 
 1. The **game** is your content: scenes, activities, stats, the rules that are yours rather than the engine's, and the plugins you pick, with the content they read. A game with a map lists the [places plugin](/docs/plugins/places) and gives it locations, for example.

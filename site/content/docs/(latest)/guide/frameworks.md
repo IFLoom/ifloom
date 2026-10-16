@@ -44,6 +44,25 @@ The loop is the same in every framework:
 2. When the player presses something, send its `command` with `runner.apply`.
 3. When the runner calls your listener, draw `runner.view()` again.
 
+```mermaid
+sequenceDiagram
+  participant UI as Your UI
+  participant R as runner
+  UI->>R: subscribe(listener)
+  UI->>R: view()
+  R-->>UI: View
+  Note over UI: draw it
+  UI->>R: apply(command)
+  alt the command took
+    R->>UI: listener(state)
+    UI->>R: view()
+    R-->>UI: the next View
+    Note over UI: draw it again
+  else it was refused
+    R-->>UI: ok false, and the reason
+  end
+```
+
 `subscribe` hears about every change, not only your own commands. Undo, redo and loading a save all call it too, so you don't need to redraw after each of those yourself.
 
 `runner.view()` returns the same object until the state changes (see [the view cache](/docs/reference/runner#the-view-cache)). So you can call it as often as you like, and a framework that compares values to decide what to redraw sees a new view exactly when there's something new to draw.

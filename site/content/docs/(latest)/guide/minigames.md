@@ -93,6 +93,24 @@ Reading it from the top:
 - **`tally`** checks the score and goes to `won` or `lost`.
 - **`won`** and **`lost`** are final. Entering one ends the minigame and runs its effects. Here that's five coins and a scene, or just a scene.
 
+Drawn out, with `up`, `down`, `left` and `right` in one box, the states and the ways between them look like this:
+
+```mermaid
+stateDiagram-v2
+  state "up, down, left or right" as arrow
+  [*] --> round
+  round --> pick: under 5 rounds,<br/>round + 1 and draw an arrow
+  pick --> arrow: the arrow drawn
+  arrow --> round: an input, or 1.5 s
+  round --> tally: 5 rounds played
+  tally --> won: score 3 or more
+  tally --> lost: otherwise
+  won --> [*]: 5 coins, park.arrows-won
+  lost --> [*]: park.arrows-lost
+```
+
+Only the input that matches the arrow on screen adds 1 to `score`.
+
 The random draw comes from the save's seed, so the same save always gets the same arrows, and undo can't re-roll them.
 
 ## Starting it

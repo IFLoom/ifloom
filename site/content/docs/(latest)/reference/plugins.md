@@ -480,8 +480,12 @@ Within one command, the order is:
 
 1. the command runs, including the end of any turn it causes (the game's `onTurn`, then each plugin's `turn`);
 2. the game's [triggers](/docs/reference/triggers) fire;
-3. the scene left on screen is counted as [seen](/docs/reference/state#seen);
-4. each plugin's `after` runs, last. Triggers don't see what it changes until the next command.
+3. the scene left on screen is counted as [seen](/docs/reference/state#seen), its [minigame](/docs/reference/minigames) starts if it has one, and its sounds get [keys of their own](/docs/reference/audio#sounds-and-voices);
+4. each plugin's `after` runs. Triggers don't see what it changes until the next command;
+5. a stat that went up a level raises its [notice](/docs/reference/stats#the-notice), so a level a hook's reward reached is noticed too;
+6. the engine records the [pool picks](/docs/reference/media#remembered-picks) and background audio the new screen shows.
+
+The full list, with the checks before a command runs, is in [What happens, in order](/docs/reference/commands#what-happens-in-order).
 
 A plugin that keeps a diary of the player's days might use both:
 

@@ -11,11 +11,11 @@ The docs site publishes two files written for language models:
 - [`llms.txt`](https://ifloom.github.io/ifloom/llms.txt) is an index. It lists every page with a link and a one-line description.
 - [`llms-full.txt`](https://ifloom.github.io/ifloom/llms-full.txt) is every page in one file.
 
-Every page is also published as plain Markdown, at its own address with `.md` on the end, such as `https://ifloom.github.io/ifloom/docs/guide/introduction.md`. Those are the links `llms.txt` lists.
+Every page is also published as plain Markdown, such as `https://ifloom.github.io/ifloom/llms.mdx/docs/guide/introduction/content.md` for the introduction. The button at the top of each page copies it for you.
 
 `llms-full.txt` is the simplest thing to hand an agent. For an agent with a small context, give it `llms.txt` instead and let it fetch the pages it needs.
 
-The same docs are in the `docs/` folder of your IFLoom checkout, as Markdown. An agent working in a game inside the checkout can read them there without going online. This matters while the docs site isn't public yet.
+The same docs are in the `site/content/docs/` folder of your IFLoom checkout, as Markdown. An agent working in a game inside the checkout can read them there without going online. This matters while the docs site isn't public yet.
 
 ## The AGENTS.md in every new game
 
@@ -30,7 +30,7 @@ for coding agents working on the game.
 ## Learn the engine
 
 - The docs, in one file: https://ifloom.github.io/ifloom/llms-full.txt
-  (until the docs are public, read `docs/` in the IFLoom checkout this game sits in).
+  (until the docs are public, read `site/content/docs/` in the IFLoom checkout this game sits in).
 - Working games to copy patterns from: `examples/novel`, `examples/cafe` and
   `examples/showcase` in the checkout.
 

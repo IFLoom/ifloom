@@ -47,7 +47,7 @@ Author-facing words, used in docs and new API: scene, choice, action, location, 
 
 Decisions a future review must not re-open are in `adr/`.
 
-Every user-visible change adds a line to `CHANGELOG.md`, under `[Unreleased]` in Added, Changed, Removed or Fixed. Write it for someone making a game, not as a commit message. The docs show it at `/changelog`.
+Every user-visible change adds a line to `CHANGELOG.md`, under `[Unreleased]` in Added, Changed, Removed or Fixed. Write it for someone making a game, not as a commit message. The docs show it at `/docs/changelog`.
 
 ## Adding to the core
 
@@ -61,15 +61,17 @@ A core kind of condition, effect or command, or a field of the state, belongs to
 
 ## Docs
 
-Anything the engine exports is documented in `docs/` (VitePress, published at https://ifloom.github.io/ifloom/). A change to the exports ships with its docs: load the `ifloom-docs` skill.
+Anything the engine exports is documented in `site/content/docs/`, the docs part of the website in `site/` (Next.js with Fumadocs, a static export published at https://ifloom.github.io/ifloom/, with the docs under `/ifloom/docs/`). A change to the exports ships with its docs: load the `ifloom-docs` skill. The homepage is React, in `site/components/home/`. Decision records in `adr/` aren't on the site.
 
-The docs are versioned. The pages under `docs/` are the latest docs, which the version switcher in the nav calls "Latest (pre-release)". Each folder in `docs/versions/` is a released version, served at `/ifloom/<version>/` with its own sidebar and listed in the switcher (`docs/.vitepress/config.ts` finds them). A release keeps a copy of the docs as they were:
+The pages are plain Markdown (`.md`) with a `title` and a `description` in front matter, and links between pages are absolute: `[Scenes](/docs/reference/scenes#scene)`. Each folder's `meta.json` gives the sidebar's order, and each section is a tab. `npm run docs:links` fails on a link to a page or heading that isn't there.
 
-1. Run `node scripts/snapshot-docs.ts <version>` (for example `0.1.0`). It copies the docs into `docs/versions/<version>/`, points their links at the copy, and writes the sidebar to `docs/.vitepress/sidebars/versioned/<version>.json`.
-2. After the first release, change `latest` in `docs/.vitepress/config.ts` from `'Latest (pre-release)'` to `'Latest'`.
+The docs are versioned. `site/content/docs/(latest)/` holds the latest docs, which the version dropdown calls "Latest (pre-release)" (its `meta.json` makes it a version root). Each other folder in `site/content/docs/` is a released version, served at `/ifloom/docs/<version>/` and listed in the dropdown. A release keeps a copy of the docs as they were:
+
+1. Run `node scripts/snapshot-docs.ts <version>` (for example `0.1.0`). It copies the latest docs, without the changelog, into `site/content/docs/<version>/`, titles its `meta.json` with the version, and points its links at the copy.
+2. After the first release, change the title in `site/content/docs/(latest)/meta.json` and `latestTitle` in `site/lib/shared.ts` from `Latest (pre-release)` to `Latest`.
 3. Run `npm run docs:build` and commit the snapshot with the release.
 
-Don't edit a snapshot afterwards, except to fix something that was wrong in that release's docs. `llms.txt` covers the latest docs only.
+Don't edit a snapshot afterwards, except to fix something that was wrong in that release's docs. `llms.txt` and `llms-full.txt` cover the latest docs only, and search looks only in the version being read.
 
 ## Verify
 
@@ -77,7 +79,7 @@ Don't edit a snapshot afterwards, except to fix something that was wrong in that
 npm test             # engine tests, boundary rules, docs coverage
 npm run typecheck    # strict
 npm run lint
-npm run docs:build   # fails on dead links
+npm run docs:build   # checks the links, then builds the site to site/out
 ```
 
 `ROADMAP.md` is the order of work and the list of known problems; read it

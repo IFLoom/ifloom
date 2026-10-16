@@ -1,6 +1,7 @@
 import { createGetUrl } from 'fumadocs-core/source'
 
 export const appName = 'IFLoom'
+export const description = 'An interactive fiction engine for TypeScript: linear novels, management games and life sims on one core.'
 // Next adds this to links and assets by itself, but not to text we write out,
 // such as llms.txt or the search index's address.
 export const basePath = '/ifloom'

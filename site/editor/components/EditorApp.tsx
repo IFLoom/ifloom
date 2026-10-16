@@ -231,13 +231,13 @@ export function EditorApp() {
           The editor needs a wider screen. On a phone you can play the preview.
         </p>
         <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[13rem_minmax(0,1fr)_minmax(18rem,40%)] lg:grid-cols-[14rem_minmax(0,1fr)_minmax(22rem,38%)]">
-          <Pane className="hidden border-e md:flex">
+          <Pane className="hidden border-e p-3 md:flex">
             <Outline />
           </Pane>
-          <Pane className="hidden border-e md:flex" label="Form">
+          <Pane className="hidden border-e p-3 md:flex" label="Form">
             <SelectedForm />
           </Pane>
-          <Pane className="flex p-0">
+          <Pane className="flex">
             <RightPane playing={playing} />
           </Pane>
         </div>
@@ -248,7 +248,7 @@ export function EditorApp() {
 
 function Pane({ className, children, label }: { className?: string; children: ReactNode; label?: string }) {
   return (
-    <div aria-label={label} className={cx('min-h-0 flex-col overflow-y-auto border-fd-border p-3', className)}>
+    <div aria-label={label} className={cx('min-h-0 flex-col overflow-y-auto border-fd-border', className)}>
       {children}
     </div>
   )

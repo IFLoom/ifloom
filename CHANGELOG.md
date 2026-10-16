@@ -54,6 +54,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `ifloom check` and `ifloom build` now look for exactly the files the content checker lists.
 - `ifloom snapshot` now shows why a choice is refused, as the game does on screen.
 - Calendars, places and characters moved out of the core into the calendar, places and cast plugins.
+- Small Town turns on the keyboard shortcuts and puts the notice strip over the stage, so you can see both in play. Its layout is in `src/layout.ts`.
 
 ### Removed
 

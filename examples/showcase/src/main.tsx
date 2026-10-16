@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createRunner, indexedDbDriver, localStorageDriver, mods, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell, type PagesOptions } from '@ifloom/react'
 import { smallTown } from './game.ts'
+import { layout } from './layout.ts'
 import './styles.css'
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
@@ -43,6 +44,7 @@ const pages: PagesOptions = {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <GameShell runner={runner} pages={pages} mods={{ store: modStore, problems, onChange: () => location.reload() }} />
+    {/* `keys`: 1 to 9 pick the choices on screen, each showing its number, and Escape opens the menu. */}
+    <GameShell runner={runner} pages={pages} layout={layout} keys mods={{ store: modStore, problems, onChange: () => location.reload() }} />
   </StrictMode>,
 )

@@ -9,8 +9,9 @@ import type { Problem } from '@ifloom/engine'
 import type { Names } from '../lib/builders'
 import type { Project } from '../lib/model'
 import type { ProblemTarget, Thing } from '../lib/references'
+import type { Selection } from '../lib/selection'
 
-export type Selection = { thing: 'project'; field?: string } | { thing: Thing; id: string; choice?: string; field?: string }
+export type { Selection } from '../lib/selection'
 
 export type EditorContextValue = {
   project: Project

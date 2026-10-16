@@ -9,12 +9,13 @@ import { fileName, fromJson, toJson, toTypeScript } from '../lib/exporters'
 import { problemsOf } from '../lib/game'
 import { duplicateProject, newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model'
 import { problemTarget, type Thing } from '../lib/references'
+import { hashOf, selectionFromHash } from '../lib/selection'
 import { projectStore, type ProjectStore } from '../lib/store'
 import { EditorContext, namesOf, type EditorContextValue, type Selection } from './context'
 import { Outline } from './Outline'
 import { SelectedForm } from './forms/SelectedForm'
 import { RightPane } from './RightPane'
-import { Button, cx, inputClass } from './ui'
+import { Button, cx, inputBase } from './ui'
 
 const CURRENT = 'ifloom.editor.current'
 
@@ -73,7 +74,7 @@ export function EditorApp() {
         const wanted = remembered()
         setStore(opened)
         setProjects(all)
-        open(all.find((p) => p.id === wanted) ?? all[0])
+        open(all.find((p) => p.id === wanted) ?? all[0], true)
       })
       .catch(() => {
         // Private windows can refuse IndexedDB: the editor still works, without keeping drafts.
@@ -82,11 +83,19 @@ export function EditorApp() {
       })
   }, [])
 
-  function open(next: Project) {
+  function open(next: Project, first = false) {
     setProject(next)
-    setSelection(next.intro ? { thing: 'scene', id: next.intro } : { thing: 'project' })
+    // The address can name what to open first: /editor#scene/market/buy.
+    const linked = first ? selectionFromHash(location.hash) : null
+    setSelection(linked ?? (next.intro ? { thing: 'scene', id: next.intro } : { thing: 'project' }))
     remember(next.id)
   }
+
+  // The address follows the selection, so a link or a reload opens the same place.
+  useEffect(() => {
+    if (!project) return
+    history.replaceState(null, '', hashOf(selection) || location.pathname)
+  }, [project === null, selection])
 
   // Keep the draft: a moment after the last change, it goes into IndexedDB.
   const saving = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -181,7 +190,7 @@ export function EditorApp() {
       <div className="flex h-[calc(100dvh-3.5rem)] min-h-[32rem] flex-col">
         <header className="flex flex-wrap items-center gap-2 border-b border-fd-border px-4 py-2">
           <select
-            className={cx(inputClass, 'w-auto max-w-56 font-medium')}
+            className={cx(inputBase, 'max-w-56 font-medium')}
             aria-label="Project"
             value={project.id}
             onChange={(event) => {

@@ -10,8 +10,15 @@ export function cx(...names: (string | false | null | undefined)[]) {
   return names.filter(Boolean).join(' ')
 }
 
-export const inputClass =
-  'w-full min-w-0 rounded-md border border-fd-border bg-fd-background px-2 py-1 text-sm text-fd-foreground placeholder:text-fd-muted-foreground focus:outline-none focus:ring-2 focus:ring-fd-ring/60'
+/** A field's look without a width. */
+export const inputBase =
+  'min-w-0 rounded-md border border-fd-border bg-fd-background px-2 py-1 text-sm text-fd-foreground placeholder:text-fd-muted-foreground focus:outline-none focus:ring-2 focus:ring-fd-ring/60'
+
+/** A field's look, full width. */
+export const inputClass = `${inputBase} w-full`
+
+/** The look with the width the class asks for, or full width when it asks for none. */
+const sized = (className?: string) => (className && /(^|\s)(w-|max-w-|flex-1)/.test(className) ? inputBase : inputClass)
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'xs' }
 
@@ -55,7 +62,7 @@ export function TextInput({
 }: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { value: string | undefined; onChange: (value: string | undefined) => void; optional?: boolean; mono?: boolean }) {
   return (
     <input
-      className={cx(inputClass, mono && 'font-mono', className)}
+      className={cx(sized(className), mono && 'font-mono', className)}
       value={value ?? ''}
       onChange={(event) => onChange(optional && event.target.value === '' ? undefined : event.target.value)}
       {...rest}
@@ -72,7 +79,7 @@ export function NumberInput({ value, onChange, placeholder, className, ...rest }
   }, [value])
   return (
     <input
-      className={cx(inputClass, 'w-24', className)}
+      className={cx(inputBase, className ?? 'w-24')}
       inputMode="decimal"
       value={text}
       placeholder={placeholder}
@@ -89,7 +96,7 @@ export function NumberInput({ value, onChange, placeholder, className, ...rest }
 
 export function Select<T extends string>({ value, options, onChange, className, ...rest }: { value: T; options: readonly (T | { value: T; label: string })[]; onChange: (value: T) => void; className?: string; 'aria-label'?: string }) {
   return (
-    <select className={cx(inputClass, 'w-auto', className)} value={value} onChange={(event) => onChange(event.target.value as T)} {...rest}>
+    <select className={cx(inputBase, 'max-w-full', className)} value={value} onChange={(event) => onChange(event.target.value as T)} {...rest}>
       {options.map((option) => {
         const { value: v, label } = typeof option === 'string' ? { value: option, label: option } : option
         return (
@@ -223,7 +230,7 @@ export function IdPicker({
   const missing = current !== '' && !options.includes(current)
   return (
     <select
-      className={cx(inputClass, 'w-auto max-w-full font-mono', className)}
+      className={cx(inputBase, 'max-w-full font-mono', className)}
       value={current}
       onChange={(event) => {
         if (event.target.value === ADD) setAdding(true)

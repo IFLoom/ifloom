@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { problemsOf } from '../lib/game.ts'
 import { sampleProject } from '../lib/model.ts'
 import { problemTarget, rename, renameChoice, variablesUsed } from '../lib/references.ts'
+import { hashOf, selectionFromHash } from '../lib/selection.ts'
 
 describe('rename', () => {
   it('moves a scene, its prose keys and everything that names it', () => {
@@ -74,5 +75,14 @@ describe('problemTarget', () => {
     expect(problemTarget(project.pack, { pack: 'x', where: 'stat coins', what: 'bad' })).toEqual({ thing: 'stat', id: 'coins' })
     expect(problemTarget(project.pack, { pack: 'base', where: 'introScene', what: 'unknown scene "x"' })).toEqual({ thing: 'project', id: '', field: 'intro' })
     expect(problemTarget(project.pack, { pack: 'x', where: 'scene home', what: 'unknown item "bun"' })).toEqual({ thing: 'scene', id: 'home', field: 'body' })
+  })
+})
+
+describe('the address', () => {
+  it('names a selection and reads it back', () => {
+    const cases = [{ thing: 'project' as const }, { thing: 'scene' as const, id: 'market' }, { thing: 'scene' as const, id: 'market.busker', choice: 'listen' }, { thing: 'stat' as const, id: 'coins' }]
+    for (const selection of cases) expect(selectionFromHash(hashOf(selection))).toEqual(selection)
+    expect(selectionFromHash('#nothing')).toBeNull()
+    expect(selectionFromHash('')).toBeNull()
   })
 })

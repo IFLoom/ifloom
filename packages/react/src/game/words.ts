@@ -90,6 +90,8 @@ export const UI_STRINGS = {
   minigameRight: 'Right',
   minigameSpace: 'Space',
   notices: 'Notices',
+  noticesMore: '+{n} more',
+  noticesFewer: 'Show fewer',
   unread: 'Unread',
 } as const
 

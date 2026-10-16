@@ -59,11 +59,18 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `ifloom check` and `ifloom build` now look for exactly the files the content checker lists.
 - `ifloom snapshot` now shows why a choice is refused, as the game does on screen.
 - Calendars, places and characters moved out of the core into the calendar, places and cast plugins.
+- Notices in the React UI no longer cover the end of the page. The overlay sits after the content and sticks to the bottom of the window, so it floats while you scroll and moves out of the way at the end. On a phone only the newest notice shows, with a `+N more` button (`ui.noticesMore`, `ui.noticesFewer`) for the rest.
+- Small Town turns on the keyboard shortcuts and puts the notice strip over the stage, so you can see both in play. Its layout is in `src/layout.ts`.
 
 ### Removed
 
 - `validatePack` and `referenced`. Use `checkGame` to check a game's content.
 - `migrate`, `migratePlugins`, `migrateGame`, `deserialize`, `serialize` and `hydrate`. Use `loadState` to load a save or any other state from outside.
 - The built-in "Wait a while" action. A game declares the actions it offers everywhere in `Game.actions`.
+
+### Fixed
+
+- On a phone, the React UI no longer leaves a gap between the side column and the scene. The page's rows now start at the top instead of stretching to fill the window.
+- The terminal preset's status line of notices no longer covers the top of the page. It's now the first row of the page and pushes everything else down, so the scene title, the notice strip and a minigame stay in view. On wide screens it sticks to the top as you scroll.
 
 [Unreleased]: https://github.com/IFLoom/ifloom/commits/main

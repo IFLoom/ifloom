@@ -3,9 +3,10 @@ import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
 
 /**
- * The save format's version. A change to the shape of `GameState` bumps it.
- * A new field declares its defaults in `FIELDS` (intake.ts) or in its
- * feature's `state`; a field whose shape changes also gets a step in `STEPS`.
+ * The save format's version. Only a change to the shape of something saves
+ * already have bumps it, with a step in `STEPS` (intake.ts) that reshapes it.
+ * An added field doesn't: it declares a load default in `FIELDS` or in its
+ * feature's `state`, and older saves get that default when they load.
  */
 export const SAVE_VERSION = 11 as const
 

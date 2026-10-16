@@ -26,7 +26,7 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 - **The stage.** The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's). It draws the pictures, the spoken lines and the choices.
 - **The sidebar.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is. Then the stats, the player's menu, the device buttons, where the player is and the exits (with the [places](/docs/plugins/places) plugin), who is here and what you can do with them, the room's and the game's actions, what the player carries, and what they're wearing.
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
-- **Notices**, in the corner (the layout's overlay), each with a button to dismiss it.
+- **Notices**, in the bottom corner (the layout's overlay), each with a button to dismiss it. On a phone only the newest shows, with a button for the rest.
 - **A title screen**, if you turn on [`pages`](#pages): the title, New game, Continue, Load, Settings and Credits, before the game itself.
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/docs/reference/mods), each on, off or removed, with a button to restart the game with the change.
 - **Quests**, under the stage, when the game has the [quests plugin](/docs/plugins/quests).
@@ -208,11 +208,11 @@ type GameShellProps = {
 | `layout` | Which parts go in the side column, on the stage and in the overlay, in order. If you leave it out, you get [`DEFAULT_LAYOUT`](/docs/react/components#default_layout). See [Layouts](#layouts). |
 | `pages` | The title screen and the pages around the game. Off if you leave it out. See [Pages](#pages). |
 
-The page is drawn by a [`Frame`](/docs/react/components#frame). With a side column, it's a two-column grid on wide screens, with the column on the left (`--width-sidebar` wide) and the stage on the right, up to `--width-page` in all. It stacks on narrow screens. Without a side column, the page is a single column, up to `--width-reading` wide, holding the stage. The overlay, with the notices, is fixed in the bottom-right corner either way.
+The page is drawn by a [`Frame`](/docs/react/components#frame). With a side column, it's a two-column grid on wide screens, with the column on the left (`--width-sidebar` wide) and the stage on the right, up to `--width-page` in all. It stacks on narrow screens. Without a side column, the page is a single column, up to `--width-reading` wide, holding the stage. The overlay, with the notices, comes after everything else and sticks to the bottom right of the window (across its width on a phone). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it.
 
 ### Layouts
 
-A layout names the parts of the screen, in order, for the side column, the stage and the overlay that floats over the page:
+A layout names the parts of the screen, in order, for the side column, the stage and the overlay that floats at the bottom of the window:
 
 ```ts
 type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
@@ -297,7 +297,7 @@ const [title, ...rest] = DEFAULT_LAYOUT.sidebar
 
 **Gotchas.**
 
-- **A layout replaces each list whole.** If your layout leaves out `stage` or `overlay`, you get the default one. If it leaves out `sidebar`, you get no side column at all, not the default one. So `layout={{ stage: ['scene'] }}` is a single column with the scene, and the notices in the corner. Spread `DEFAULT_LAYOUT` to keep its side column.
+- **A layout replaces each list whole.** If your layout leaves out `stage` or `overlay`, you get the default one. If it leaves out `sidebar`, you get no side column at all, not the default one. So `layout={{ stage: ['scene'] }}` is a single column with the scene, and the notices in the bottom corner. Spread `DEFAULT_LAYOUT` to keep its side column.
 - **Move the notices, don't copy them.** To put `'notices'` on the stage, also set `overlay: []`, or they're drawn in both places. An empty overlay draws nothing over the page.
 - **Give your own nodes a `key`.** They're drawn from a list, so React asks for one.
 - **Leave out `'inputs'` only if the game has no [inputs](/docs/reference/inputs).** Nothing else sends `input`, so without it the player can't give the value. The same goes for `'actions'` in a game whose buttons are its only way forward, as the café's are.
@@ -495,6 +495,8 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.minigameRight` | `Right` | |
 | `ui.minigameSpace` | `Space` | |
 | `ui.notices` | `Notices` | |
+| `ui.noticesMore` | `+{n} more` | `n`: the notices hidden on a phone |
+| `ui.noticesFewer` | `Show fewer` | |
 | `ui.unread` | `Unread` | |
 
 Which component uses which keys:
@@ -507,7 +509,7 @@ Which component uses which keys:
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
 - **[Beat](/docs/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
-- **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button.
+- **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
 - **[Minigame panel](/docs/react/components#minigamepanel)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
 - **[Devices](/docs/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.

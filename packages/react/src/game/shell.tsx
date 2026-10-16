@@ -25,7 +25,7 @@ export type FrameProps = {
   sidebar: ReactNode
   /** The stage's parts, already drawn. */
   stage: ReactNode
-  /** What floats over the page: notices, by default. */
+  /** What floats over the page as it scrolls, and sits after it at the end: notices, by default. */
   overlay: ReactNode
   className?: string
 }
@@ -34,12 +34,15 @@ function FrameImpl({ sidebar, stage, overlay, className }: FrameProps) {
   const page = usePart(
     'page',
     sidebar
-      ? 'mx-auto grid min-h-screen max-w-(--width-page) gap-(--gap-page) p-4 font-body md:grid-cols-[var(--width-sidebar)_1fr]'
-      : 'mx-auto grid min-h-screen max-w-(--width-reading) gap-(--gap-page) p-4 font-body',
+      ? 'mx-auto grid min-h-screen content-start max-w-(--width-page) gap-(--gap-page) p-4 font-body md:grid-cols-[var(--width-sidebar)_1fr]'
+      : 'mx-auto grid min-h-screen content-start max-w-(--width-reading) gap-(--gap-page) p-4 font-body',
     className,
   )
   const main = usePart('stage', 'flex flex-col gap-(--gap-page)')
-  const over = usePart('overlay', 'fixed right-4 bottom-4 z-40 w-(--width-notice) max-w-[calc(100vw-2rem)]')
+  // The overlay comes after the stage, across the page, and sticks to the bottom
+  // of the window: it floats over the page while you scroll, and sits after
+  // the content at the end, so nothing is left under it.
+  const over = usePart('overlay', 'sticky bottom-4 z-40 order-last col-span-full self-end justify-self-end w-full max-w-full md:w-(--width-notice) empty:hidden')
   return (
     <div {...page} data-has-sidebar={sidebar ? '' : undefined}>
       {sidebar}

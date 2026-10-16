@@ -56,7 +56,7 @@ export const PART_KEYS = [
   'actions', 'choices', 'choice', 'choice-key', 'choice-label', 'choice-warning', 'choice-price', 'choice-irreversible', 'choice-reason',
   'button', 'badge',
   // Notices
-  'notices', 'notice', 'notice-image', 'notice-title', 'notice-text', 'notice-dismiss',
+  'notices', 'notices-more', 'notice', 'notice-image', 'notice-title', 'notice-text', 'notice-dismiss',
   'notice-strip', 'notice-strip-item',
   // Minigames
   'minigame', 'minigame-title', 'minigame-state', 'minigame-timer', 'minigame-inputs', 'minigame-input',

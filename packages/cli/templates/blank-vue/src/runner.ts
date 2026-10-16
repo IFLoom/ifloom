@@ -22,7 +22,8 @@ runner.subscribe(() => {
 })
 
 // Plays what the game's `audio` asks for, from the first click or key press.
-startAudio(runner)
+// Its `play` plays a file on demand, such as a voice line again.
+export const player = startAudio(runner)
 // Ticks a minigame's timers and maps the keyboard to its inputs.
 startClock(runner)
 startKeys(runner)

@@ -80,6 +80,12 @@ npm run lint
 npm run docs:build   # fails on dead links
 ```
 
+`scripts/verify.sh` runs these and the examples' check, build and snapshot.
+
+## Skills
+
+In `.claude/skills/`: `ifloom-verify` (finishing and committing any change), `ifloom-core-feature` (a kind, state field or feature in the engine core), `ifloom-plugin` (a new first-party plugin, with `scripts/new-plugin.ts`), `ifloom-docs` (anything exported, or a docs page), `ifloom-ui-check` (screenshots, for React UI and site changes only).
+
 `ROADMAP.md` is the order of work and the list of known problems; read it
 before starting a step, and update it when one lands.
 

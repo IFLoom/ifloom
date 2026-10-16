@@ -286,7 +286,9 @@ The [content checker](/docs/reference/checks) reports a stat or item in `carryOv
 const SAVE_VERSION = 11
 ```
 
-The shape of `GameState` this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older shapes forward:
+The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
+
+The versions so far:
 
 | Version | Change |
 |---|---|
@@ -300,3 +302,5 @@ The shape of `GameState` this engine writes. [`loadState`](/docs/reference/saves
 | 9 | Added [`settings`](#settings). |
 | 10 | Added [`audio`](#audio). |
 | 11 | Added [`media`](#media). |
+
+The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.

@@ -322,7 +322,13 @@ A save from version 0 doesn't load.
 const SAVE_VERSION: 11
 ```
 
-The current save format. Every new state carries it in `state.version`. It goes up when the shape of `GameState` changes. A new field only needs its load default, which the engine declares next to the field's new-game value. A field that changes shape needs a step that reshapes the old one, shipped with the bump.
+The current save format. Every new state carries it in `state.version`.
+
+It only goes up when something an existing save already has changes shape, such as a field that's renamed, moved or holds a different kind of value. That bump ships with a step that reshapes the old field, which [`loadState`](#loadstate) runs on older saves.
+
+A field added to `GameState` doesn't bump it. The engine declares the new field's load default next to its new-game value, and a save that lacks the field gets the default when it loads, whatever its version. [`minigame`](/docs/reference/state#minigame) was added this way, so a save from before minigames loads with `null` and the version stayed at 11.
+
+Versions 4, 7, 9, 10 and 11 only added fields. They're from before this rule and have no step of their own, so loading an older save gives those fields their defaults too.
 
 ## The game's own migrations
 

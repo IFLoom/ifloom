@@ -122,6 +122,14 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   // Once `finished` is known to be recorded, it isn't looked at again.
   let finishedRecorded = false
   const listeners = new Set<(state: GameState) => void>()
+  // The last view built, and the state it was built for: the same state object gives the same view.
+  let cached: { state: GameState; view: View } | null = null
+
+  /** The view of a state, built once per state object and kept for the latest one. */
+  function viewOf(of: GameState): View {
+    if (cached?.state !== of) cached = { state: of, view: view(of, game) }
+    return cached.view
+  }
 
   const notify = () => {
     for (const listener of listeners) listener(state)
@@ -129,10 +137,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   const played = () => playedBefore + (now() - since)
   const snapshot = (): Step => ({ state, backlog, commands: log.commands })
 
-  function barrier(before: GameState, after: GameState, command: Command, shown: View): boolean {
+  function barrier(before: GameState, after: GameState, command: Command, shown: () => View): boolean {
     if (!history) return false
     if (history.stopAtIrreversible !== false && command.type === 'choose') {
-      const choice = shown.scene.choices.find((entry) => entry.id === command.id)
+      const choice = shown().scene.choices.find((entry) => entry.id === command.id)
       if (choice?.irreversible) return true
     }
     if (history.stopAtNewTurn && after.turn !== before.turn) return true
@@ -220,14 +228,20 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     get state(): GameState {
       return state
     },
-    /** What a UI draws for the current state. */
+    /**
+     * What a UI draws for the current state. Built once per state: asked again
+     * for the same state, it hands back the same object, so a UI, the audio
+     * player and the backlog can all read it without building it again.
+     */
     view(): View {
-      return view(state, game)
+      return viewOf(state)
     },
     /** Run a command; returns whether it took, and why not if it did not. */
     apply(command: Command): Applied {
       const before = state
-      const shown = view(before, game)
+      // The view the command was sent from: usually built already, for the UI that sent it.
+      let from: View | undefined
+      const fromView = () => (from ??= viewOf(before))
       const result = apply(before, game, command)
       if (!result.ok) return result
       const prior = snapshot()
@@ -246,6 +260,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
           title: screen.scene.title,
           beats: screen.scene.beats,
         })
+        const shown = fromView()
         let next = backlog
         if (shown.scene.id) {
           const last = next.at(-1)
@@ -256,12 +271,12 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
             if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
           }
         }
-        const after = view(state, game)
+        const after = viewOf(state)
         if (after.scene.id && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
         backlog = next.slice(-backlogLimit)
       }
       if (history) {
-        if (barrier(before, state, command, shown)) undoStack = []
+        if (barrier(before, state, command, fromView)) undoStack = []
         else undoStack = [...undoStack, prior].slice(-depth)
         redoStack = []
       }

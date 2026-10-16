@@ -7,13 +7,13 @@ import { Icon } from './icon.tsx'
 import { ModManager } from './mods.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { SavesMenu } from './saves.tsx'
-import { useScreen } from './screens.tsx'
+import { usePage } from './pages.tsx'
 import { useWords } from './words.ts'
 
 function GameMenuImpl({ className }: { className?: string }) {
   const { runner, mods, view } = useGame()
   const words = useWords()
-  const screens = useScreen()
+  const pages = usePage()
   const [open, setOpen] = useState<'saves' | 'backlog' | 'mods' | null>(null)
   const menu = usePart('menu', 'flex flex-wrap gap-2', className)
   const opener = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'outline' }))
@@ -26,7 +26,7 @@ function GameMenuImpl({ className }: { className?: string }) {
   const title = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
   const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
   const { undo, backlog } = runner.offers
-  if (!runner.saves && !undo && !backlog && !mods && !screens.enabled) return null
+  if (!runner.saves && !undo && !backlog && !mods && !pages.enabled) return null
   const heading = open === 'saves' ? words('saves') : open === 'mods' ? words('mods') : words('backlog')
   return (
     <div {...menu} data-menu>
@@ -45,14 +45,14 @@ function GameMenuImpl({ className }: { className?: string }) {
           {words('mods')}
         </button>
       ) : null}
-      {screens.enabled && view.settings.length ? (
-        <button {...opener} onClick={() => screens.go('settings')}>
+      {pages.enabled && view.settings.length ? (
+        <button {...opener} onClick={() => pages.go('settings')}>
           {words('settings')}
         </button>
       ) : null}
-      {screens.enabled ? (
-        <button {...opener} onClick={() => screens.go('title')}>
-          {words('titleScreen')}
+      {pages.enabled ? (
+        <button {...opener} onClick={() => pages.go('title')}>
+          {words('titlePage')}
         </button>
       ) : null}
       {undo ? (
@@ -89,7 +89,7 @@ function GameMenuImpl({ className }: { className?: string }) {
 
 /**
  * The player's menu: saves, the backlog, undo and redo — each only if the game
- * turned it on when it made the runner. With screens on, it also has Settings
- * (if the game has any) and Title screen, which switch to those screens.
+ * turned it on when it made the runner. With pages on, it also has Settings
+ * (if the game has any) and Title screen, which switch to those pages.
  */
 export const GameMenu = overridable('GameMenu', GameMenuImpl)

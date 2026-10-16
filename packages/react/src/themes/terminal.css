@@ -157,8 +157,8 @@ body {
 }
 
 /* The title screen: a boot prompt. */
-[data-part="title-screen"],
-[data-part="gate-screen"] {
+[data-part="title-page"],
+[data-part="gate-page"] {
   justify-content: center;
 }
 
@@ -216,20 +216,20 @@ body {
   text-shadow: none;
 }
 
-[data-part="screen-heading"]::before,
+[data-part="page-heading"]::before,
 [data-part="gate-title"]::before {
   content: "> ";
   color: var(--muted-foreground);
 }
 
-[data-part="screen-heading"],
+[data-part="page-heading"],
 [data-part="gate-title"] {
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
-[data-part="screen-back"],
+[data-part="page-back"],
 [data-part="gate-confirm"],
 [data-part="gate-decline"] {
   border-radius: 0;

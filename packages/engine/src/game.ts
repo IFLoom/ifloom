@@ -115,6 +115,12 @@ export type SceneView = {
 export type SceneCtx = {
   flag: (key: string) => FlagValue | undefined
   storylineFlag: (storylineId: string, key: string) => FlagValue | undefined
+  /**
+   * Where the render's new pool picks go, when the engine is drawing a screen
+   * and wants them recorded. Pass it to `renderScene` when a hand-built scene
+   * wraps a data scene. Undefined otherwise.
+   */
+  picks?: Record<string, string>
 }
 
 /**

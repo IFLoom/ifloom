@@ -78,7 +78,7 @@ export const UI_STRINGS = {
   settings: 'Settings',
   noSettings: 'There are no settings.',
   credits: 'Credits',
-  titleScreen: 'Title screen',
+  titlePage: 'Title screen',
   replayVoice: 'Hear it again',
   zoom: 'Enlarge',
   closeViewer: 'Close',

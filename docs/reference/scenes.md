@@ -145,10 +145,11 @@ import type { SceneCtx } from '@ifloom/engine'
 type SceneCtx = {
   flag: (key: string) => FlagValue | undefined
   storylineFlag: (storylineId: string, key: string) => FlagValue | undefined
+  picks?: Record<string, string>
 }
 ```
 
-The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `flag(key)` is the player's [variable](/reference/state#flags), and `storylineFlag(id, key)` is a [storyline](/reference/storylines)'s. Both are `undefined` when unset.
+The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `flag(key)` is the player's [variable](/reference/state#flags), and `storylineFlag(id, key)` is a [storyline](/reference/storylines)'s. Both are `undefined` when unset. `picks` is set when the engine draws a [`screen`](/reference/view#screen) and wants the render's new [pool picks](/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
 
 ```ts
 render: (state, ctx) => {
@@ -508,17 +509,17 @@ True for a data scene (it has a `body` list) and false for a hand-written one. U
 ## renderScene
 
 ```ts
-function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime): SceneView
+function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): SceneView
 ```
 
-Turns a `DataScene` and a state into a `SceneView` with the runtime you give it. The engine calls it for you through [`bakeScene`](#bakescene). To render a data scene with a runtime of your own, list a hand-written `Scene` that wraps it:
+Turns a `DataScene` and a state into a `SceneView` with the runtime you give it. A pool pick the save doesn't hold yet is written into `picks`, when you pass it. The engine calls it for you through [`bakeScene`](#bakescene). To render a data scene with a runtime of your own, list a hand-written `Scene` that wraps it, and pass on the context's `picks` so its pictures are remembered:
 
 ```ts
 import { renderScene, type Scene } from '@ifloom/engine'
 
 const counter: Scene = {
   id: 'cafe.counter',
-  render: (state) => renderScene(counterData, state, runtime),
+  render: (state, ctx) => renderScene(counterData, state, runtime, ctx.picks),
 }
 ```
 

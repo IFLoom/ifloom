@@ -3,7 +3,7 @@ import type { SettingView } from '@ifloom/engine'
 import { assetUrl } from './assets.ts'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
-import { useSetting } from './screens.tsx'
+import { useSetting } from './pages.tsx'
 
 export type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
   src: string

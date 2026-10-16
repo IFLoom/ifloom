@@ -659,33 +659,33 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `debug-state` | The game state as JSON. |
 | `debug-log` | The command log. |
 
-### The screens
+### The pages
 
-These are drawn only when `screens` is on. See [Screens](/react/components#screens).
+These are drawn only when `pages` is on. See [Pages](/react/components#pages).
 
 | Part | What it is |
 |---|---|
-| `title-screen` | The title screen. Carries `data-screen="title"`. |
+| `title-page` | The title screen. Carries `data-page="title"`. |
 | `title-art` | Its picture, when `art` is given. |
 | `title-name` | The game's title. |
 | `title-subtitle` | The line under it, when `subtitle` is given. |
 | `title-buttons` | The column of buttons. |
-| `title-button` | Each button in it. Carries `data-title-button` with what it does: `continue`, `new`, `new-game-plus`, `load`, `settings`, `credits`, or the id of a screen of your own. |
-| `screen-heading` | The heading of the settings, load and credits screens. |
-| `screen-back` | Their Back button. |
-| `settings-screen` | The settings screen. |
+| `title-button` | Each button in it. Carries `data-title-button` with what it does: `continue`, `new`, `new-game-plus`, `load`, `settings`, `credits`, or the id of a page of your own. |
+| `page-heading` | The heading of the settings, load and credits pages. |
+| `page-back` | Their Back button. |
+| `settings-page` | The settings page. |
 | `settings` | Its list of settings. |
 | `setting` | One setting. Carries `data-setting` with its id and `data-affects` with `play` or `ui`. |
 | `setting-label` | The setting's label. |
 | `setting-control` | Its checkbox, radio buttons or slider. |
 | `setting-value` | A slider's value, beside it. |
 | `settings-empty` | The line shown when the game has no settings. |
-| `load-screen` | The load screen. Its slots use the saves menu's parts, `save-slot` and the rest. |
-| `credits-screen` | The credits screen. |
+| `load-page` | The load page. Its slots use the saves menu's parts, `save-slot` and the rest. |
+| `credits-page` | The credits page. |
 | `credits` | Its list. |
 | `credit` | One line of it. |
 | `credit-link` | A line that is a link. |
-| `gate-screen` | The gate, before the title screen. |
+| `gate-page` | The gate, before the title screen. |
 | `gate-title` | Its title. |
 | `gate-text` | Its paragraphs. |
 | `gate-buttons` | The row with its buttons. |

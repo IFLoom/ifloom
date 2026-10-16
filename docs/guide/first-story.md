@@ -222,9 +222,9 @@ import { READING_LAYOUT, mountGame } from '@ifloom/react'
 import game from './game.ts'
 import './styles.css'
 
-// `screens` opens on a title screen with New game, Continue, Load and
+// `pages` opens on a title screen with New game, Continue, Load and
 // Settings. Leave it out to start straight in the story.
-mountGame(game, { layout: READING_LAYOUT, screens: true })
+mountGame(game, { layout: READING_LAYOUT, pages: true })
 ```
 
 [`mountGame`](/react/#mountgame) takes what `loadGame` returns and logs any problems as warnings in the browser's console. Then it starts the game:
@@ -233,7 +233,7 @@ mountGame(game, { layout: READING_LAYOUT, screens: true })
 - It builds a [runner](/reference/runner), which keeps the state and adds undo, 50 steps back.
 - It keeps saves in the browser's `localStorage`, under keys that start with the game's id, and autosaves to the `auto` slot each turn. In this story that's the start of each chapter.
 - It draws [`GameShell`](/react/#gameshell), the whole UI, into the element with the id `root` in `index.html`.
-- With `screens: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/guide/title-screen) shows what else it can do.
+- With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/guide/title-screen) shows what else it can do.
 
 [`READING_LAYOUT`](/react/#layouts) is a single column to read. It puts the title over the scene, then the name input, the game's actions, the stats and the menu under it. Without it you'd get the default layout, which has a side column for a game with a clock and a map.
 

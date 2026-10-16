@@ -116,8 +116,8 @@
 }
 
 /* The title screen: a launch card. */
-[data-part="title-screen"],
-[data-part="gate-screen"] {
+[data-part="title-page"],
+[data-part="gate-page"] {
   align-items: center;
   text-align: center;
 }
@@ -146,7 +146,7 @@
   font-weight: 600;
 }
 
-[data-part="screen-heading"],
+[data-part="page-heading"],
 [data-part="gate-title"] {
   font-weight: 800;
   letter-spacing: -0.02em;

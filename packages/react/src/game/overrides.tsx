@@ -32,7 +32,7 @@ import type { GameMenu } from './menu.tsx'
 import type { ModManager } from './mods.tsx'
 import type { Frame } from './shell.tsx'
 import type { Icon } from './icon.tsx'
-import type { CreditsScreen, GateScreen, LoadScreen, SettingsScreen, TitleScreen } from './screens.tsx'
+import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
 
 /** Every `data-part` the React UI draws, which is also every key `classes` takes. */
 export const PART_KEYS = [
@@ -73,12 +73,12 @@ export const PART_KEYS = [
   // The debug panel
   'debug', 'debug-header', 'debug-title', 'debug-seed', 'debug-form', 'debug-label', 'debug-field', 'debug-error',
   'debug-section', 'debug-heading', 'debug-list', 'debug-state', 'debug-log',
-  // The screens around the game
-  'title-screen', 'title-art', 'title-name', 'title-subtitle', 'title-buttons', 'title-button',
-  'screen-heading', 'screen-back',
-  'settings-screen', 'settings', 'setting', 'setting-label', 'setting-control', 'setting-value', 'settings-empty',
-  'load-screen', 'credits-screen', 'credits', 'credit', 'credit-link',
-  'gate-screen', 'gate-title', 'gate-text', 'gate-buttons', 'gate-confirm', 'gate-decline',
+  // The pages around the game
+  'title-page', 'title-art', 'title-name', 'title-subtitle', 'title-buttons', 'title-button',
+  'page-heading', 'page-back',
+  'settings-page', 'settings', 'setting', 'setting-label', 'setting-control', 'setting-value', 'settings-empty',
+  'load-page', 'credits-page', 'credits', 'credit', 'credit-link',
+  'gate-page', 'gate-title', 'gate-text', 'gate-buttons', 'gate-confirm', 'gate-decline',
 ] as const
 
 export type PartKey = (typeof PART_KEYS)[number]
@@ -135,11 +135,11 @@ export type Components = Partial<{
   Hotspot: Override<PropsOf<typeof Hotspot>>
   MediaViewer: Override<PropsOf<typeof MediaViewer>>
   Icon: Override<PropsOf<typeof Icon>>
-  TitleScreen: Override<PropsOf<typeof TitleScreen>>
-  SettingsScreen: Override<PropsOf<typeof SettingsScreen>>
-  LoadScreen: Override<PropsOf<typeof LoadScreen>>
-  CreditsScreen: Override<PropsOf<typeof CreditsScreen>>
-  GateScreen: Override<PropsOf<typeof GateScreen>>
+  TitlePage: Override<PropsOf<typeof TitlePage>>
+  SettingsPage: Override<PropsOf<typeof SettingsPage>>
+  LoadPage: Override<PropsOf<typeof LoadPage>>
+  CreditsPage: Override<PropsOf<typeof CreditsPage>>
+  GatePage: Override<PropsOf<typeof GatePage>>
 }>
 
 /** What a game passes to make the UI its own. `GameProvider`, `GameShell` and `mountGame` all take these. */

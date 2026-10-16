@@ -235,7 +235,7 @@ export function feed(options: FeedOptions) {
         return appeared === slice.appeared ? after : set({ ...slice, appeared })
       },
     },
-    view: (state, { slice, game }): FeedsView => {
+    view: (state, { slice, game, picks }): FeedsView => {
       const runtime = defaultRuntime(game)
       const words = (key: string | undefined) => (key ? (game.prose?.line(key, state) ?? '') : '')
       const comments = (list: Comment[]) => list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
@@ -247,7 +247,7 @@ export function feed(options: FeedOptions) {
             from: post.from,
             name: personOf(game, state, post.from).name,
             portrait: personOf(game, state, post.from).portrait,
-            text: renderScene({ id: post.id, body: post.body, choices: [] }, state, runtime).body ?? '',
+            text: renderScene({ id: post.id, body: post.body, choices: [] }, state, runtime, picks).body ?? '',
             beats: [],
             image: post.image ?? null,
             video: post.video ?? null,

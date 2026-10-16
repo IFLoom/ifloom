@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRunner, indexedDbDriver, localStorageDriver, mods, profile, saves, startingState } from '@ifloom/engine'
-import { GameShell, type ScreensOptions } from '@ifloom/react'
+import { GameShell, type PagesOptions } from '@ifloom/react'
 import { smallTown } from './game.ts'
 import './styles.css'
 
@@ -26,7 +26,7 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 
 // `textSize` is a ui setting: it lives in the profile, never in the game. Put
 // it on <html> as `data-text-size`, now and whenever it changes, and
-// styles.css does the rest. It applies on every screen, the title included.
+// styles.css does the rest. It applies on every page, the title included.
 function showTextSize(settings: unknown) {
   const size = (settings as Record<string, unknown> | undefined)?.textSize
   document.documentElement.dataset.textSize = size === 'large' ? 'large' : 'normal'
@@ -36,13 +36,13 @@ stored.subscribe((namespace, value) => {
   if (namespace === 'settings') showTextSize(value)
 })
 
-const screens: ScreensOptions = {
+const pages: PagesOptions = {
   subtitle: 'A new flat, a new town, and a cat with no name.',
   credits: ['Small Town is the IFLoom showcase.', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <GameShell runner={runner} screens={screens} mods={{ store: modStore, problems, onChange: () => location.reload() }} />
+    <GameShell runner={runner} pages={pages} mods={{ store: modStore, problems, onChange: () => location.reload() }} />
   </StrictMode>,
 )

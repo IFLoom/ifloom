@@ -143,15 +143,14 @@ export function poolCandidates(game: Game, pool: string, tags: readonly string[]
   return []
 }
 
-/** Picks being noted while the reducer records them, or null. See `notingPicks`. */
-let noting: Record<string, string> | null = null
-
 /**
  * The file a pool request gets, or null when the pool has none. A pick the
  * save already holds wins while the pool still has that file; otherwise it is
- * drawn from the seed and the key, which is what the reducer then records.
+ * drawn from the seed and the key. Pass `picks` to have a new pick written
+ * into it, under its key: how `screen` collects the picks a state implies,
+ * which the reducer then records.
  */
-export function poolPick(state: GameState, game: Game, request: PoolRequest): string | null {
+export function poolPick(state: GameState, game: Game, request: PoolRequest, picks?: Record<string, string>): string | null {
   const key = pickKey(request)
   const kept = state.media?.picks?.[key]
   const files = poolOf(game, request.pool) ?? []
@@ -162,20 +161,8 @@ export function poolPick(state: GameState, game: Game, request: PoolRequest): st
     // Weights all 1 draw exactly what an unweighted pick would.
     src = weighted(candidates, (file) => file.weight, 'media', key, state.seed)?.src ?? null
   }
-  if (noting && src !== null && src !== kept) noting[key] = src
+  if (picks && src !== null && src !== kept) picks[key] = src
   return src
-}
-
-/** Run `fn` and return the picks it made that the save does not hold yet. How the reducer records them. */
-export function notingPicks(fn: () => unknown): Record<string, string> {
-  const before = noting
-  noting = {}
-  try {
-    fn()
-    return noting
-  } finally {
-    noting = before
-  }
 }
 
 /** Does the game have any pools? Without, nothing is ever picked. */
@@ -190,22 +177,22 @@ const POOL_MARKUP = /\[\[(img|wide|video|widevideo):\s*@([^\]|]+)((?:\|[^\]|]*)*
  * file it gets. Markup whose pool has nothing to give is taken out. The nth
  * request in the text is at slot `<slot>.<n>`.
  */
-export function resolvePoolMarkup(text: string, state: GameState, game: Game, owner: string, slot: string): string {
+export function resolvePoolMarkup(text: string, state: GameState, game: Game, owner: string, slot: string, picks?: Record<string, string>): string {
   if (!text.includes('@')) return text
   let n = 0
   return text.replace(POOL_MARKUP, (_whole, tag: string, pool: string, rest: string) => {
     const parts = rest.split('|').slice(1)
     const tags = (parts[0] ?? '').split(',').map((part) => part.trim()).filter(Boolean)
-    const src = poolPick(state, game, { pool: pool.trim(), tags, owner, slot: `${slot}.${n++}` })
+    const src = poolPick(state, game, { pool: pool.trim(), tags, owner, slot: `${slot}.${n++}` }, picks)
     if (src === null) return ''
     return `[[${tag}:${[src, ...parts.slice(1)].join('|')}]]`
   })
 }
 
 /** A data block's media with its pool resolved to a file, or null when it has none to show. */
-export function resolveMedia(media: SceneMedia, state: GameState, game: Game, owner: string, slot: string): SceneMedia | null {
+export function resolveMedia(media: SceneMedia, state: GameState, game: Game, owner: string, slot: string, picks?: Record<string, string>): SceneMedia | null {
   if (media.pool === undefined) return media.src ? media : null
-  const src = poolPick(state, game, { pool: media.pool, tags: media.tags, owner, slot })
+  const src = poolPick(state, game, { pool: media.pool, tags: media.tags, owner, slot }, picks)
   if (src === null) return null
   const { pool: _pool, tags: _tags, ...rest } = media
   return { ...rest, src }

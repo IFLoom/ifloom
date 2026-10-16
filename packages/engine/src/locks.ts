@@ -1,7 +1,7 @@
 import { effectsOf } from './availability.ts'
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
-import type { Command, GameState } from './types.ts'
+import type { Command, Effect, GameState } from './types.ts'
 
 /**
  * Something the player cannot do for now, and why.
@@ -58,12 +58,25 @@ export function lockOn(
   game: Game,
   command: Command,
 ): Lock | undefined {
+  return lockIn(state, game, command, () => effectsOf(state, game, command))
+}
+
+/**
+ * `lockOn`, with the command's effects from `effects`, asked only when a lock
+ * names an effect: how `whyNot` shares one rendering of the open scene.
+ */
+export function lockIn(
+  state: GameState,
+  game: Game,
+  command: Command,
+  effects: () => readonly Effect[],
+): Lock | undefined {
   for (const lock of game.rules?.locks ?? []) {
     if (!covers(lock, command)) continue
     if (!holds(state, lock.when, game)) continue
     if (lock.effect !== undefined) {
       const effect = lock.effect
-      const applies = effectsOf(state, game, command).some((entry) =>
+      const applies = effects().some((entry) =>
         entry.kind === 'custom' ? entry.name === effect : entry.kind === effect,
       )
       if (!applies) continue

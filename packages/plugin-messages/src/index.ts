@@ -235,7 +235,7 @@ export function messages(options: MessagesOptions) {
         return arrived === slice.arrived ? after : set({ ...slice, arrived }, next)
       },
     },
-    view: (state, { slice, game }): MessagesView => {
+    view: (state, { slice, game, picks }): MessagesView => {
       const runtime = defaultRuntime(game)
       const channels = options.channels.map((channel): ChannelView => {
         const threads = new Map<string, MessageView[]>()
@@ -247,7 +247,7 @@ export function messages(options: MessagesOptions) {
             const thread = threadOf(message)
             const sent = slice.replied[message.id]
             const label = (reply: string) => game.prose?.line(`${message.id}#${reply}`, state) ?? reply
-            const text = renderScene({ id: message.id, body: message.body, choices: [] }, state, runtime).body ?? ''
+            const text = renderScene({ id: message.id, body: message.body, choices: [] }, state, runtime, picks).body ?? ''
             const shown: MessageView = {
               id: message.id,
               from: message.from,

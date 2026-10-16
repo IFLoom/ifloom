@@ -113,8 +113,8 @@
 }
 
 /* The title screen: a storybook cover. */
-[data-part="title-screen"],
-[data-part="gate-screen"] {
+[data-part="title-page"],
+[data-part="gate-page"] {
   align-items: center;
   text-align: center;
 }
@@ -137,7 +137,7 @@
 }
 
 [data-part="title-button"],
-[data-part="screen-back"],
+[data-part="page-back"],
 [data-part="gate-confirm"],
 [data-part="gate-decline"] {
   height: auto;
@@ -148,7 +148,7 @@
   box-shadow: var(--shadow-card);
 }
 
-[data-part="screen-heading"],
+[data-part="page-heading"],
 [data-part="gate-title"] {
   font-weight: 800;
 }

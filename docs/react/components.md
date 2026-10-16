@@ -13,7 +13,7 @@ import {
   Sidebar, Clock, StatList, EntityTable, LocationPanel, PeoplePanel, Inventory, WardrobePanel,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
-  TitleScreen, SettingsScreen, LoadScreen, CreditsScreen, GateScreen, useScreen, useSetting, useProfile,
+  TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, usePage, useSetting, useProfile,
   Notices, QuestLog,
   DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
   MessagesSection, FeedSection, DebugPanel,
@@ -23,7 +23,7 @@ import {
   type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption,
   type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey, type FrameProps, type IconName,
   type SavesState, type ModsState, type DevicesState, type DeviceState,
-  type ScreensOptions, type Screen, type ScreenDef, type ScreenState, type Credit, type GateOptions,
+  type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
   type Classes, type Components, type Override, type PartKey, type UiOptions,
   type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
@@ -277,7 +277,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitleScreen`, `SettingsScreen`, `LoadScreen`, `CreditsScreen` and `GateScreen`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -508,7 +508,7 @@ It loads nothing until it scrolls into view. Until then it has `preload="none"`.
 - its volume is the volume setting of the game's `video` channel, if the game declares one, or else of its `sfx` channel, scaled from the setting's `min` to its `max`;
 - with neither setting, it plays at full volume.
 
-The values are read with [`useSetting`](#usesetting), so a change on the settings screen applies at once.
+The values are read with [`useSetting`](#usesetting), so a change on the settings page applies at once.
 
 **Gotcha.** Browsers often refuse to start a clip with sound by itself. Give a clip with sound `controls` (the `|controls` flag), so the player presses play.
 
@@ -846,9 +846,9 @@ A row of buttons for what the runner offers:
 - **Backlog** (`ui.backlog`) when [`runner.offers`](/reference/runner#the-runner-s-members)`.backlog` is on;
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
-- **Settings** (`ui.settings`) and **Title screen** (`ui.titleScreen`) when the game was drawn with [`screens`](#screens) on. Settings shows only if the game declares a [setting](/reference/settings).
+- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/reference/settings).
 
-Settings and Title screen switch to those [screens](#screens). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
+Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
 
 So you choose what the player sees when you make the runner:
 
@@ -1036,49 +1036,49 @@ The [`ModManager`](#modmanager) without its look. It needs [`mods`](#modsoption)
 | `problemsFor` | The loader's problems for one mod. |
 | `message` | Why the last file couldn't be added, or `null`. |
 
-## Screens
+## Pages
 
-With `screens` on (see [mountGame](/react/#mountgame)), the game opens on a title screen instead of going straight into the story. The in-game shell is one screen among several:
+With `pages` on (see [mountGame](/react/#mountgame)), the game opens on a title screen instead of going straight into the story. The in-game shell is one page among several:
 
 - `gate`, a notice the player confirms once, if you give one;
 - `title`, the title screen;
 - `game`, the shell with the story;
 - `load`, `settings` and `credits`;
-- any screen you add in `ScreensOptions.screens`, by its id.
+- any page you add in `PagesOptions.pages`, by its id.
 
-The title screen leads to every other screen, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/guide/title-screen) walks through setting it up.
+The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/guide/title-screen) walks through setting it up.
 
-### ScreensOptions
+### PagesOptions
 
 ```ts
-type ScreensOptions = {
+type PagesOptions = {
   subtitle?: string
   art?: string
   credits?: Credit[]
   gate?: GateOptions
-  screens?: Record<string, ScreenDef>
+  pages?: Record<string, PageDef>
 }
 
 type Credit = string | { label: string; href: string }
 type GateOptions = { title: string; text: string; confirm: string; decline?: { label: string; href?: string } }
-type ScreenDef = { label: string; component: ComponentType; showOnTitle?: boolean }
+type PageDef = { label: string; component: ComponentType; showOnTitle?: boolean }
 ```
 
-What `screens` takes on [`mountGame`](/react/#mountgame) and [`GameShell`](/react/#gameshell). `screens: true` is the same as `{}`.
+What `pages` takes on [`mountGame`](/react/#mountgame) and [`GameShell`](/react/#gameshell). `pages: true` is the same as `{}`.
 
 | Field | What it is |
 |---|---|
 | `subtitle` | A line under the title. |
 | `art` | A picture for the title screen, by path. It's drawn with [`Picture`](#picture), so a missing file takes no space. |
-| `credits` | The credits screen's lines. A string is a line, and `{ label, href }` is a link that opens in a new tab. Without credits there's no Credits button. |
-| `gate` | A notice shown before the title screen. See [`GateScreen`](#gatescreen). |
-| `screens` | Screens of your own, by id. Each gets a button on the title screen labelled `label`, unless `showOnTitle` is `false`. Its `component` is drawn with no props as the whole page, and leaves with `useScreen().back()`. |
+| `credits` | The credits page's lines. A string is a line, and `{ label, href }` is a link that opens in a new tab. Without credits there's no Credits button. |
+| `gate` | A notice shown before the title screen. See [`GatePage`](#gatepage). |
+| `pages` | Pages of your own, by id. Each gets a button on the title screen labelled `label`, unless `showOnTitle` is `false`. Its `component` is drawn with no props as the whole page, and leaves with `usePage().back()`. |
 
 ```tsx
-import { mountGame, useScreen } from '@ifloom/react'
+import { mountGame, usePage } from '@ifloom/react'
 
 function Postcards() {
-  const { back } = useScreen()
+  const { back } = usePage()
   return (
     <section>
       <h1>Postcards from the seaside</h1>
@@ -1088,48 +1088,48 @@ function Postcards() {
 }
 
 mountGame(game, {
-  screens: {
+  pages: {
     subtitle: 'A new flat, a new town',
     credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
-    screens: { postcards: { label: 'Postcards', component: Postcards } },
+    pages: { postcards: { label: 'Postcards', component: Postcards } },
   },
 })
 ```
 
-### useScreen
+### usePage
 
 ```ts
-function useScreen(): ScreenState
+function usePage(): PageState
 
-type Screen = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
+type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
-type ScreenState = {
+type PageState = {
   enabled: boolean
-  screen: Screen
-  from: Screen | null
-  go: (screen: Screen) => void
+  page: Page
+  from: Page | null
+  go: (page: Page) => void
   back: () => void
-  options: ScreensOptions
+  options: PagesOptions
 }
 ```
 
-Where the player is among the screens, and how to move between them.
+Where the player is among the pages, and how to move between them.
 
 | Field | What it is |
 |---|---|
-| `enabled` | `false` when the game was drawn without `screens`. Then `screen` is always `'game'` and `go` and `back` do nothing. |
-| `screen` | The screen showing. |
-| `from` | The screen under this one, which `back` returns to. `null` on the title screen, the gate and the game. |
-| `go(screen)` | Shows a screen. `title`, `game` and `gate` start afresh, and any other screen goes on top of the one showing. |
-| `back()` | Returns to the screen under this one, or to the title screen if there's none. |
-| `options` | The `ScreensOptions` the screens were set up with. |
+| `enabled` | `false` when the game was drawn without `pages`. Then `page` is always `'game'` and `go` and `back` do nothing. |
+| `page` | The page showing. |
+| `from` | The page under this one, which `back` returns to. `null` on the title screen, the gate and the game. |
+| `go(page)` | Shows a page. `title`, `game` and `gate` start afresh, and any other page goes on top of the one showing. |
+| `back()` | Returns to the page under this one, or to the title screen if there's none. |
+| `options` | The `PagesOptions` the pages were set up with. |
 
-`go('game')` only switches screen. To start a game, call [`runner.newGame`](/reference/runner#newgame) or load a save first, as the title screen does.
+`go('game')` only switches page. To start a game, call [`runner.newGame`](/reference/runner#newgame) or load a save first, as the title screen does.
 
-### TitleScreen
+### TitlePage
 
 ```tsx
-function TitleScreen(props: { className?: string }): JSX.Element
+function TitlePage(props: { className?: string }): JSX.Element
 ```
 
 The game's title (`view.title`), the `subtitle` and `art` if given, and a column of buttons, each carrying `data-title-button`:
@@ -1139,22 +1139,22 @@ The game's title (`view.title`), the `subtitle` and `art` if given, and a column
 - **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/reference/state#new-game) and the profile's `finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
 - **Load** (`ui.load`, `load`) when the runner has `saves`.
 - **Settings** (`ui.settings`, `settings`) when the game declares any setting.
-- A button for each of your own screens, by its id.
+- A button for each of your own pages, by its id.
 - **Credits** (`ui.credits`, `credits`) when `credits` are given.
 
-The first button is drawn as the main one: Continue when there's a save, otherwise New game. The section carries `data-screen="title"`.
+The first button is drawn as the main one: Continue when there's a save, otherwise New game. The section carries `data-page="title"`.
 
-Replaceable as `TitleScreen` in [`components`](#components). Parts: `title-screen`, `title-art`, `title-name`, `title-subtitle`, `title-buttons` and `title-button`.
+Replaceable as `TitlePage` in [`components`](#components). Parts: `title-page`, `title-art`, `title-name`, `title-subtitle`, `title-buttons` and `title-button`.
 
-### SettingsScreen
+### SettingsPage
 
 ```tsx
-function SettingsScreen(props: { className?: string }): JSX.Element
+function SettingsPage(props: { className?: string }): JSX.Element
 ```
 
 The settings, drawn from [`view.settings`](/reference/view#settings): a checkbox for a toggle, radio buttons for a choice, and a slider with its value beside it for a range. It says `ui.noSettings` when the game declares none, and has a Back button (`ui.back`).
 
-Where a change goes depends on the setting and on where the screen was opened from:
+Where a change goes depends on the setting and on where the page was opened from:
 
 - **A ui setting** goes through [`runner.setUiSetting`](/reference/runner#setuisetting), which writes the profile.
 - **A play setting, opened from the game,** is sent as a [`setting`](/reference/commands#setting) command, so it changes the game in play. The runner also writes it to the profile.
@@ -1162,39 +1162,39 @@ Where a change goes depends on the setting and on where the screen was opened fr
 
 Without a profile, a play setting is always sent as a command, and New game keeps the settings in play.
 
-Replaceable as `SettingsScreen` in [`components`](#components). Parts: `settings-screen`, `screen-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty` and `screen-back`.
+Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty` and `page-back`.
 
-### LoadScreen
+### LoadPage
 
 ```tsx
-function LoadScreen(props: { className?: string }): JSX.Element
+function LoadPage(props: { className?: string }): JSX.Element
 ```
 
 Every save, newest first, each with a Load button, and a button to import a save file. Loading or importing goes to the game. It's built on [`useSaves`](#usesaves), and unlike [`SavesMenu`](#savesmenu) it can't save, since there may be no game in play to save.
 
-Replaceable as `LoadScreen` in [`components`](#components). Parts: `load-screen`, `screen-heading`, `saves`, `save-slot`, `save-name`, `save-details`, `saves-message`, `saves-empty`, `file-button`, `button` and `screen-back`.
+Replaceable as `LoadPage` in [`components`](#components). Parts: `load-page`, `page-heading`, `saves`, `save-slot`, `save-name`, `save-details`, `saves-message`, `saves-empty`, `file-button`, `button` and `page-back`.
 
-### CreditsScreen
-
-```tsx
-function CreditsScreen(props: { className?: string }): JSX.Element
-```
-
-The `credits` from `ScreensOptions`, one per line, with a Back button. Links open in a new tab.
-
-Replaceable as `CreditsScreen` in [`components`](#components). Parts: `credits-screen`, `screen-heading`, `credits`, `credit`, `credit-link` and `screen-back`.
-
-### GateScreen
+### CreditsPage
 
 ```tsx
-function GateScreen(props: { className?: string }): JSX.Element | null
+function CreditsPage(props: { className?: string }): JSX.Element
 ```
 
-A notice the player has to confirm before they reach the title screen, from `ScreensOptions.gate`. Use it for a content note or an age check. Every word on it is yours: `title`, the `text` split into paragraphs on blank lines, and the `confirm` and `decline` labels.
+The `credits` from `PagesOptions`, one per line, with a Back button. Links open in a new tab.
+
+Replaceable as `CreditsPage` in [`components`](#components). Parts: `credits-page`, `page-heading`, `credits`, `credit`, `credit-link` and `page-back`.
+
+### GatePage
+
+```tsx
+function GatePage(props: { className?: string }): JSX.Element | null
+```
+
+A notice the player has to confirm before they reach the title screen, from `PagesOptions.gate`. Use it for a content note or an age check. Every word on it is yours: `title`, the `text` split into paragraphs on blank lines, and the `confirm` and `decline` labels.
 
 ```ts
 mountGame(game, {
-  screens: {
+  pages: {
     gate: {
       title: 'Before you start',
       text: 'This story mentions a house fire.\n\nIt happens off the page.',
@@ -1209,7 +1209,7 @@ Confirming stores `{ confirmedAt }` in the profile's `gate` namespace and goes t
 
 **Gotcha.** Without a profile, nothing is remembered, so the gate shows every time. [`mountGame`](/react/#mountgame) always has one.
 
-Replaceable as `GateScreen` in [`components`](#components). Parts: `gate-screen`, `gate-title`, `gate-text`, `gate-buttons`, `gate-confirm` and `gate-decline`.
+Replaceable as `GatePage` in [`components`](#components). Parts: `gate-page`, `gate-title`, `gate-text`, `gate-buttons`, `gate-confirm` and `gate-decline`.
 
 ### useSetting
 

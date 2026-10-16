@@ -335,6 +335,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   /** Follow the view: the background channels, then any cue not heard yet. */
   function sync(): void {
     if (stopped) return
+    // The runner keeps one view per state, so this is the view the UI drew, not a new one.
     const full = runner.view()
     audio = full.audio
     const commandLog = runner.log()

@@ -1,6 +1,8 @@
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
-import type { EffectRef } from './custom.ts'
+import { buildEffects, type EffectRef } from './custom.ts'
+// A cycle, and a needed one: applying effects runs plugins' effects and hooks, which apply effects.
+import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef } from './entities.ts'
@@ -35,7 +37,20 @@ export type PluginContext<S> = {
    * a plugin effect ends a turn: `apply([{ kind: 'turn' }])`.
    */
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  /**
+   * Only in `view`: where the pool picks the view makes are written, for the
+   * reducer to record. Pass it to `stageView` and `renderScene` so a stage's
+   * or a body's pick stays the same on every visit. Undefined elsewhere.
+   */
+  picks?: Record<string, string>
 }
+
+/**
+ * What a context is made for, besides the state: `picks` to collect a view's
+ * pool picks, and `ending` while a turn is ending, so a `turn` effect applied
+ * through `apply` does nothing, as one in the turn's own rules does.
+ */
+export type ContextOptions = { picks?: Record<string, string>; ending?: boolean }
 
 /**
  * Why a plugin will not let a command through. A string is a refusal, as a
@@ -282,25 +297,16 @@ function writeSlice<S>(plugin: Plugin<S>, state: GameState, next: S): GameState 
 }
 
 /** The context a plugin's functions get, for this game state. */
-export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game): PluginContext<S> {
-  return {
+export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game, options: ContextOptions = {}): PluginContext<S> {
+  const context: PluginContext<S> = {
     game,
     slice: readSlice(plugin, state, game),
     set: (next, on = state) => writeSlice(plugin, on, next),
     query: <T,>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
-    apply: (effects, on = state) => applier!(on, game, effects),
+    apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), options.ending ?? false),
   }
-}
-
-/**
- * How `apply` runs effects. Set by the reducer when it loads, so this module
- * need not import it: the reducer imports this one.
- */
-let applier: ((state: GameState, game: Game, effects: readonly EffectRef[]) => GameState) | null = null
-
-/** The reducer hands over how it applies effects. Called once, by reduce.ts. */
-export function useApplier(fn: (state: GameState, game: Game, effects: readonly EffectRef[]) => GameState): void {
-  applier = fn
+  if (options.picks) context.picks = options.picks
+  return context
 }
 
 /** A plugin's query by full name, ready to ask. Undefined when the game does not have it. */
@@ -364,11 +370,11 @@ export function pluginCondition(game: Game | undefined, name: string) {
   return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game))
 }
 
-/** A plugin's effect by full name, ready to apply. */
-export function pluginEffect(game: Game | undefined, name: string) {
+/** A plugin's effect by full name, ready to apply. `ending` while a turn is ending. */
+export function pluginEffect(game: Game | undefined, name: string, ending = false) {
   const found = member(game, name, 'effects')
   if (!found || !game) return undefined
-  return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game))
+  return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game, { ending }))
 }
 
 /** A plugin's command by full name: why not, and run. */
@@ -391,16 +397,17 @@ export function pluginValue(game: Game | undefined, name: string) {
   return (state: GameState) => found.fn(state, pluginContext(found.plugin, state, game))
 }
 
-/** Run one hook on every plugin that has it, in the order the game lists them. */
+/** Run one hook on every plugin that has it, in the order the game lists them. `ending` while a turn is ending. */
 export function runHooks(
   game: Game,
   hook: 'turn',
   state: GameState,
+  ending = false,
 ): GameState {
   let next = state
   for (const plugin of game.plugins ?? []) {
     const fn = plugin.hooks?.[hook]
-    if (fn) next = fn(next, pluginContext(plugin, next, game))
+    if (fn) next = fn(next, pluginContext(plugin, next, game, { ending }))
   }
   return next
 }
@@ -483,11 +490,11 @@ export function pluginAudio(game: Game, state: GameState): Record<string, string
   return out
 }
 
-/** Every plugin's view, by id. */
-export function pluginViews(state: GameState, game: Game): Record<string, unknown> {
+/** Every plugin's view, by id. The pool picks they make are written into `picks`. */
+export function pluginViews(state: GameState, game: Game, picks: Record<string, string> = {}): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const plugin of game.plugins ?? []) {
-    if (plugin.view) out[plugin.id] = plugin.view(state, pluginContext(plugin, state, game))
+    if (plugin.view) out[plugin.id] = plugin.view(state, pluginContext(plugin, state, game, { picks }))
   }
   return out
 }

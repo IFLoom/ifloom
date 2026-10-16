@@ -1,8 +1,8 @@
 /**
- * The screens around the game: an optional gate, the title screen, settings,
- * loading, credits and any screen a game or plugin adds. A small state
+ * The pages around the game: an optional gate, the title screen, settings,
+ * loading, credits and any page a game or plugin adds. A small state
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
- * screen, and the in-game menu leads back to `title`.
+ * page, and the in-game menu leads back to `title`.
  */
 import { settingValue, type FlagValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
@@ -13,14 +13,14 @@ import { Picture } from './picture.tsx'
 import { useSaves } from './saves.tsx'
 import { useWords } from './words.ts'
 
-/** A screen by name: a built-in one, or the id of one in `ScreensOptions.screens`. */
-export type Screen = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
+/** A page by name: a built-in one, or the id of one in `PagesOptions.pages`. */
+export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
-/** A screen a game or plugin adds, with the title screen's button for it. */
-export type ScreenDef = {
+/** A page a game or plugin adds, with the title screen's button for it. */
+export type PageDef = {
   /** The title screen's button for it. */
   label: string
-  /** What it draws. `useScreen().back()` leaves it. */
+  /** What it draws. `usePage().back()` leaves it. */
   component: ComponentType
   /** Whether the title screen offers it. On unless set false. */
   showOnTitle?: boolean
@@ -40,44 +40,44 @@ export type GateOptions = {
   decline?: { label: string; href?: string }
 }
 
-/** What the title screen and the screens around it show. */
-export type ScreensOptions = {
+/** What the title screen and the pages around it show. */
+export type PagesOptions = {
   /** A line under the title. */
   subtitle?: string
   /** A picture for the title screen, by its path. */
   art?: string
-  /** Lines and links for the credits screen. No Credits button without them. */
+  /** Lines and links for the credits page. No Credits button without them. */
   credits?: Credit[]
   /** A notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
-  /** Screens a game or plugin adds, by id. */
-  screens?: Record<string, ScreenDef>
+  /** Pages a game or plugin adds, by id. */
+  pages?: Record<string, PageDef>
 }
 
-/** Where the player is among the screens, and how to move. */
-export type ScreenState = {
-  /** False when the game was mounted without `screens`: the game is all there is. */
+/** Where the player is among the pages, and how to move. */
+export type PageState = {
+  /** False when the game was mounted without `pages`: the game is all there is. */
   enabled: boolean
-  /** The screen showing. */
-  screen: Screen
-  /** The screen under this one, which `back` returns to; null at the title, the gate or the game. */
-  from: Screen | null
-  /** Show a screen. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. */
-  go: (screen: Screen) => void
-  /** Return to the screen under this one, or the title screen if there is none. */
+  /** The page showing. */
+  page: Page
+  /** The page under this one, which `back` returns to; null at the title, the gate or the game. */
+  from: Page | null
+  /** Show a page. `title`, `game` and `gate` start afresh; any other goes on top of the one showing. */
+  go: (page: Page) => void
+  /** Return to the page under this one, or the title screen if there is none. */
   back: () => void
-  /** The options the screens were set up with. */
-  options: ScreensOptions
+  /** The options the pages were set up with. */
+  options: PagesOptions
 }
 
-const ROOTS: readonly Screen[] = ['title', 'game', 'gate']
-const NONE: ScreensOptions = {}
-const ScreensContext = createContext<ScreenState | null>(null)
-const OFF: ScreenState = { enabled: false, screen: 'game', from: null, go: () => {}, back: () => {}, options: NONE }
+const ROOTS: readonly Page[] = ['title', 'game', 'gate']
+const NONE: PagesOptions = {}
+const PagesContext = createContext<PageState | null>(null)
+const OFF: PageState = { enabled: false, page: 'game', from: null, go: () => {}, back: () => {}, options: NONE }
 
-/** Where the player is among the screens. Outside screens (`screens` off), `enabled` is false and the screen is always `game`. */
-export function useScreen(): ScreenState {
-  return useContext(ScreensContext) ?? OFF
+/** Where the player is among the pages. Outside pages (`pages` off), `enabled` is false and the page is always `game`. */
+export function usePage(): PageState {
+  return useContext(PagesContext) ?? OFF
 }
 
 /** What the profile holds in a namespace, kept up to date as it changes. Undefined without a profile or before the first read. */
@@ -116,11 +116,11 @@ export function useSetting(id: string): FlagValue | undefined {
   return settingValue(runner.game, stored, id)
 }
 
-/** Gives the screens below it a place among the screens. `GameShell` uses it when `screens` is on. */
-export function ScreensProvider({ options = NONE, children }: { options?: ScreensOptions; children: ReactNode }) {
+/** Gives the pages below it a place among the pages. `GameShell` uses it when `pages` is on. */
+export function PagesProvider({ options = NONE, children }: { options?: PagesOptions; children: ReactNode }) {
   const { runner } = useGame()
   // Null until we know whether the gate was confirmed before.
-  const [stack, setStack] = useState<Screen[] | null>(options.gate ? null : ['title'])
+  const [stack, setStack] = useState<Page[] | null>(options.gate ? null : ['title'])
   const gated = Boolean(options.gate)
   useEffect(() => {
     if (!gated) return
@@ -134,40 +134,40 @@ export function ScreensProvider({ options = NONE, children }: { options?: Screen
       live = false
     }
   }, [gated, runner])
-  const go = useCallback((screen: Screen) => {
+  const go = useCallback((page: Page) => {
     setStack((now) => {
-      if (ROOTS.includes(screen) || !now) return [screen]
-      return now.at(-1) === screen ? now : [...now, screen]
+      if (ROOTS.includes(page) || !now) return [page]
+      return now.at(-1) === page ? now : [...now, page]
     })
   }, [])
   const back = useCallback(() => setStack((now) => (now && now.length > 1 ? now.slice(0, -1) : ['title'])), [])
-  const value = useMemo<ScreenState | null>(
-    () => (stack ? { enabled: true, screen: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, options } : null),
+  const value = useMemo<PageState | null>(
+    () => (stack ? { enabled: true, page: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, options } : null),
     [stack, go, back, options],
   )
   if (!value) return null
-  return <ScreensContext.Provider value={value}>{children}</ScreensContext.Provider>
+  return <PagesContext.Provider value={value}>{children}</PagesContext.Provider>
 }
 
-/** The screen showing: `game` draws what it's given, every other screen its own component. */
-export function Screens({ game }: { game: ReactNode }) {
-  const { screen, options } = useScreen()
-  switch (screen) {
+/** The page showing: `game` draws what it's given, every other page its own component. */
+export function Pages({ game }: { game: ReactNode }) {
+  const { page, options } = usePage()
+  switch (page) {
     case 'game':
       return <>{game}</>
     case 'gate':
-      return <GateScreen />
+      return <GatePage />
     case 'title':
-      return <TitleScreen />
+      return <TitlePage />
     case 'load':
-      return <LoadScreen />
+      return <LoadPage />
     case 'settings':
-      return <SettingsScreen />
+      return <SettingsPage />
     case 'credits':
-      return <CreditsScreen />
+      return <CreditsPage />
     default: {
-      const Added = options.screens?.[screen]?.component
-      return Added ? <Added /> : <TitleScreen />
+      const Added = options.pages?.[page]?.component
+      return Added ? <Added /> : <TitlePage />
     }
   }
 }
@@ -177,14 +177,14 @@ function newest(slots: SaveMeta[]): SaveMeta | undefined {
   return slots.reduce<SaveMeta | undefined>((best, meta) => (!best || meta.savedAt > best.savedAt ? meta : best), undefined)
 }
 
-function useScreenParts(className?: string, part: 'title-screen' | 'gate-screen' | 'settings-screen' | 'load-screen' | 'credits-screen' = 'title-screen') {
+function usePageParts(className?: string, part: 'title-page' | 'gate-page' | 'settings-page' | 'load-page' | 'credits-page' = 'title-page') {
   return usePart(part, 'mx-auto flex min-h-screen w-full max-w-(--width-reading) flex-col justify-center gap-6 p-6 font-body', className)
 }
 
 function BackButton() {
   const words = useWords()
-  const { back } = useScreen()
-  const button = usePart('screen-back', buttonVariants({ variant: 'outline' }))
+  const { back } = usePage()
+  const button = usePart('page-back', buttonVariants({ variant: 'outline' }))
   return (
     <button {...button} onClick={back}>
       {words('back')}
@@ -193,16 +193,16 @@ function BackButton() {
 }
 
 function Heading({ children }: { children: ReactNode }) {
-  return <h1 {...usePart('screen-heading', 'font-heading text-scene-title font-semibold')}>{children}</h1>
+  return <h1 {...usePart('page-heading', 'font-heading text-scene-title font-semibold')}>{children}</h1>
 }
 
-function TitleScreenImpl({ className }: { className?: string }) {
+function TitlePageImpl({ className }: { className?: string }) {
   const { runner, view } = useGame()
   const words = useWords()
-  const { go, options } = useScreen()
+  const { go, options } = usePage()
   const saves = useSaves()
   const finished = useProfile('finished')
-  const section = useScreenParts(className)
+  const section = usePageParts(className)
   const art = usePart('title-art', 'mx-auto max-h-80 w-full rounded-lg object-cover')
   const name = usePart('title-name', 'text-center font-heading text-5xl font-semibold tracking-tight')
   const subtitle = usePart('title-subtitle', 'text-center text-lg text-muted-foreground')
@@ -222,10 +222,10 @@ function TitleScreenImpl({ className }: { className?: string }) {
     const carry: GameState = save && typeof save !== 'string' ? save.state : runner.state
     return runner.newGame({ carry })
   }
-  const added = Object.entries(options.screens ?? {}).filter(([, screen]) => screen.showOnTitle !== false)
+  const added = Object.entries(options.pages ?? {}).filter(([, page]) => page.showOnTitle !== false)
 
   return (
-    <section {...section} data-screen="title">
+    <section {...section} data-page="title">
       {options.art ? <Picture src={options.art} alt="" {...art} /> : null}
       <div className="flex flex-col gap-2">
         <h1 {...name}>{view.title}</h1>
@@ -255,9 +255,9 @@ function TitleScreenImpl({ className }: { className?: string }) {
             {words('settings')}
           </button>
         ) : null}
-        {added.map(([id, screen]) => (
+        {added.map(([id, page]) => (
           <button key={id} {...button} data-title-button={id} onClick={() => go(id)}>
-            {screen.label}
+            {page.label}
           </button>
         ))}
         {options.credits?.length ? (
@@ -274,9 +274,9 @@ function TitleScreenImpl({ className }: { className?: string }) {
  * The title screen: the game's title, the subtitle and art if given, and the
  * buttons Continue (the newest save), New game, New Game+ (once the game has
  * been finished, if it carries anything over), Load, Settings (if the game has
- * any), the screens a game or plugin adds, and Credits (if given).
+ * any), the pages a game or plugin adds, and Credits (if given).
  */
-export const TitleScreen = overridable('TitleScreen', TitleScreenImpl)
+export const TitlePage = overridable('TitlePage', TitlePageImpl)
 
 function SettingControl({ setting, value, change }: { setting: SettingView; value: FlagValue; change: (value: FlagValue) => void }) {
   const control = usePart('setting-control', 'flex flex-wrap items-center gap-3')
@@ -319,12 +319,12 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
   )
 }
 
-function SettingsScreenImpl({ className }: { className?: string }) {
+function SettingsPageImpl({ className }: { className?: string }) {
   const { runner, view, send } = useGame()
   const words = useWords()
-  const { from } = useScreen()
+  const { from } = usePage()
   const stored = useProfile<Record<string, unknown>>('settings')
-  const section = useScreenParts(className, 'settings-screen')
+  const section = usePageParts(className, 'settings-page')
   const list = usePart('settings', 'flex flex-col gap-4')
   const row = usePart('setting', 'flex flex-col gap-2 rounded-lg border p-3')
   const label = usePart('setting-label', 'font-medium')
@@ -354,7 +354,7 @@ function SettingsScreenImpl({ className }: { className?: string }) {
   }
 
   return (
-    <section {...section} data-screen="settings">
+    <section {...section} data-page="settings">
       <Heading>{words('settings')}</Heading>
       {view.settings.length ? (
         <ul {...list}>
@@ -378,19 +378,19 @@ function SettingsScreenImpl({ className }: { className?: string }) {
 }
 
 /**
- * The settings screen, drawn from `view.settings`: a checkbox for a toggle,
+ * The settings page, drawn from `view.settings`: a checkbox for a toggle,
  * radio buttons for a choice, a slider for a range. A ui setting is written to
- * the profile. A play setting changes the game in play when the screen was
+ * the profile. A play setting changes the game in play when the page was
  * opened from the game; from the title screen it's written to the profile, so
  * the next new game starts with it.
  */
-export const SettingsScreen = overridable('SettingsScreen', SettingsScreenImpl)
+export const SettingsPage = overridable('SettingsPage', SettingsPageImpl)
 
-function LoadScreenImpl({ className }: { className?: string }) {
+function LoadPageImpl({ className }: { className?: string }) {
   const words = useWords()
   const saves = useSaves()
-  const { go } = useScreen()
-  const section = useScreenParts(className, 'load-screen')
+  const { go } = usePage()
+  const section = usePageParts(className, 'load-page')
   const list = usePart('saves', 'flex flex-col gap-2 text-sm')
   const slot = usePart('save-slot', 'flex flex-wrap items-center gap-2 rounded-lg border p-2')
   const name = usePart('save-name', 'font-medium')
@@ -410,7 +410,7 @@ function LoadScreenImpl({ className }: { className?: string }) {
   }
 
   return (
-    <section {...section} data-screen="load">
+    <section {...section} data-page="load">
       <Heading>{words('load')}</Heading>
       {saves.message ? <p {...said}>{saves.message}</p> : null}
       {sorted.length ? (
@@ -441,18 +441,18 @@ function LoadScreenImpl({ className }: { className?: string }) {
   )
 }
 
-/** The load screen: every save, newest first, to load; and importing a save file. Needs the runner made with `saves`. */
-export const LoadScreen = overridable('LoadScreen', LoadScreenImpl)
+/** The load page: every save, newest first, to load; and importing a save file. Needs the runner made with `saves`. */
+export const LoadPage = overridable('LoadPage', LoadPageImpl)
 
-function CreditsScreenImpl({ className }: { className?: string }) {
+function CreditsPageImpl({ className }: { className?: string }) {
   const words = useWords()
-  const { options } = useScreen()
-  const section = useScreenParts(className, 'credits-screen')
+  const { options } = usePage()
+  const section = usePageParts(className, 'credits-page')
   const list = usePart('credits', 'flex flex-col gap-2')
   const line = usePart('credit', '')
   const link = usePart('credit-link', 'text-primary underline underline-offset-4')
   return (
-    <section {...section} data-screen="credits">
+    <section {...section} data-page="credits">
       <Heading>{words('credits')}</Heading>
       <ul {...list}>
         {(options.credits ?? []).map((credit, index) => (
@@ -474,13 +474,13 @@ function CreditsScreenImpl({ className }: { className?: string }) {
   )
 }
 
-/** The credits screen: `ScreensOptions.credits`, a line each, links opening in a new tab. */
-export const CreditsScreen = overridable('CreditsScreen', CreditsScreenImpl)
+/** The credits page: `PagesOptions.credits`, a line each, links opening in a new tab. */
+export const CreditsPage = overridable('CreditsPage', CreditsPageImpl)
 
-function GateScreenImpl({ className }: { className?: string }) {
+function GatePageImpl({ className }: { className?: string }) {
   const { runner } = useGame()
-  const { go, options } = useScreen()
-  const section = useScreenParts(className, 'gate-screen')
+  const { go, options } = usePage()
+  const section = usePageParts(className, 'gate-page')
   const heading = usePart('gate-title', 'font-heading text-scene-title font-semibold')
   const text = usePart('gate-text', 'flex flex-col gap-3 leading-prose')
   const buttons = usePart('gate-buttons', 'flex flex-wrap gap-2')
@@ -494,7 +494,7 @@ function GateScreenImpl({ className }: { className?: string }) {
     go('title')
   }
   return (
-    <section {...section} data-screen="gate">
+    <section {...section} data-page="gate">
       <h1 {...heading}>{gate.title}</h1>
       <div {...text}>
         {paragraphs.map((paragraph, index) => (
@@ -523,8 +523,8 @@ function GateScreenImpl({ className }: { className?: string }) {
 
 /**
  * A notice the player confirms before the title screen, from
- * `ScreensOptions.gate`. Confirming is remembered in the profile's `gate`
+ * `PagesOptions.gate`. Confirming is remembered in the profile's `gate`
  * namespace, so it shows once per device. Declining goes to its `href`, or
  * stays.
  */
-export const GateScreen = overridable('GateScreen', GateScreenImpl)
+export const GatePage = overridable('GatePage', GatePageImpl)

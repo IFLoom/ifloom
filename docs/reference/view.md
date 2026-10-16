@@ -2,8 +2,8 @@
 
 The engine has no UI of its own. It hands your UI one object, a `View`, that says everything there is to draw, and takes back [commands](/reference/commands). A UI's loop is:
 
-1. `const screen = view(state, game)`
-2. Draw `screen`.
+1. `const shown = view(state, game)`
+2. Draw `shown`.
 3. When the player presses something, send the `command` on it: `state = apply(state, game, command).state`.
 4. Go to 1.
 
@@ -12,7 +12,7 @@ Every button in a `View` already carries its command and its price. If it can't 
 Any framework can draw from the view, or none at all. [The React UI](/react/), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Using another framework](/guide/frameworks). Read on if you want to write your own UI.
 
 ```ts
-import { renderAction, view, type View } from '@ifloom/engine'
+import { renderAction, screen, view, type View } from '@ifloom/engine'
 ```
 
 ## view
@@ -21,15 +21,81 @@ import { renderAction, view, type View } from '@ifloom/engine'
 function view(state: GameState, game: Game): View
 ```
 
-Builds the whole `View` from the state in one pass. It's pure, and cheap enough to call after every command.
+Builds the whole `View` from the state in one pass. It's pure, and cheap enough to call after every command. It's built from [`screen`](#screen), so the open scene is rendered once per call, however many choices it has.
 
 ```ts
 import { view } from '@ifloom/engine'
 
-const screen = view(state, game)
-header.textContent = screen.when ?? screen.title   // 'Day 1 · Monday morning · High Street' with the calendar and places
-for (const action of screen.actions) addButton(action.label, action.disabled, action.command)
+const shown = view(state, game)
+header.textContent = shown.when ?? shown.title   // 'Day 1 · Monday morning · High Street' with the calendar and places
+for (const action of shown.actions) addButton(action.label, action.disabled, action.command)
 ```
+
+## screen
+
+```ts
+function screen(state: GameState, game: Game): Screen
+```
+
+What one state shows, before it's formatted as a `View`. `view` is built from it, and the reducer reads it after each command to record pool picks and what each audio channel started playing. It renders the open scene once and answers every choice's availability, effects and price from that one render.
+
+Use `view` to draw a game. Reach for `screen` when you need something the view leaves out:
+
+- **What each choice would apply.** A UI that previews a choice's outcome, or a tool that maps where choices lead, reads `choices[i].effects`.
+- **The picks and tracks.** A plugin or a tool that wants to know which pool files a state shows, or which track each channel resolves to, reads `picks` and `audio.tracks`.
+
+```ts
+import { screen } from '@ifloom/engine'
+
+const shown = screen(state, game)
+for (const choice of shown.choices) {
+  const spends = choice.effects.filter((effect) => effect.kind === 'stat' && effect.by < 0)
+  console.log(choice.label, choice.disabled ?? 'open', spends.length ? 'costs something' : '')
+}
+```
+
+It's pure, like `view`. It builds the plugins' views too, so it costs about as much as `view` does.
+
+### Screen
+
+```ts
+type Screen = {
+  scene: ScreenScene
+  choices: ScreenChoice[]
+  actions: ScreenChoice[]
+  stage: StageView | null
+  plugins: Record<string, unknown>
+  picks: Record<string, string>
+  audio: AudioView & { tracks: Record<string, string | null> }
+}
+
+type ScreenChoice = RenderedChoice & { effects: Effect[] }
+
+type ScreenScene = {
+  id: string | null
+  title: string
+  body: string
+  beats: SceneBeat[]
+  frame: 'stage' | 'talk'
+  tags: string[]
+  panel: string | null
+  panelData: unknown
+  speaker: SpeakerView | null
+  stageImage: string | null
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `stage` and `choices`. |
+| `choices` | The open scene's visible choices. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room. |
+| `actions` | The room's buttons while no scene is open, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/reference/actions#effectsof)). |
+| `stage` | The open scene's stage, resolved as [`stageView`](#stageview) does. `null` for the room. |
+| `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
+| `picks` | The [pool picks](/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
+| `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
+
+`view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether. Everything else it takes as it is.
 
 ## View
 
@@ -65,7 +131,7 @@ The engine keeps no places, so the view has no location or exits of its own. Wit
 ```ts
 import type { PlacesView } from '@ifloom/plugin-places'
 
-const room = screen.plugins.places as PlacesView | undefined
+const room = shown.plugins.places as PlacesView | undefined
 for (const exit of room?.exits ?? []) addButton(exit.name, exit.disabled, exit.command)
 ```
 
@@ -74,7 +140,7 @@ The engine keeps no characters either, so the view has no people of its own. Wit
 ```ts
 import type { CastView } from '@ifloom/plugin-cast'
 
-const people = (screen.plugins.cast as CastView | undefined)?.present ?? []
+const people = (shown.plugins.cast as CastView | undefined)?.present ?? []
 for (const person of people) for (const talk of person.actions) addButton(`${person.name}: ${talk.label}`, talk.disabled, talk.command)
 ```
 
@@ -106,7 +172,7 @@ If `state.sceneId` names a scene the game doesn't have, the scene reads "The mom
 | Field | Type | Meaning |
 |---|---|---|
 | `stats` | [`StatView[]`](#statview) | The player's [declared stats](/reference/stats) that are `listed` and whose `visible` condition holds, in declaration order. A stat declared `of` a kind belongs to an entity, and is in [`entities`](#entities) instead. |
-| `statsById` | `Record<string, `[`StatView`](#statview)`>` | Every one of the player's declared stats, by id, listed or not and visible or not. Read a purse or a gauge your UI draws its own way from here, such as `screen.statsById.coins.text`. |
+| `statsById` | `Record<string, `[`StatView`](#statview)`>` | Every one of the player's declared stats, by id, listed or not and visible or not. Read a purse or a gauge your UI draws its own way from here, such as `shown.statsById.coins.text`. |
 | `pack` | `{ id, name, desc, count, useLabel? }[]` | Items the player is carrying (count above 0), in the order the game declares them. A `useLabel` means the item can be used with the `use` command. |
 
 `View.pack` is the player's inventory. It shares a name with the loader's [`Pack`](/reference/loader#pack) type, a bundle of content, but the two are unrelated.
@@ -137,7 +203,7 @@ staff.entries[0].stats.map((stat) => stat.text) // ['5', '60', '£12']
 | `notices` | [`NoticesView`](#noticesview-and-noticeview) | The [notices](/reference/notices) not yet dismissed, newest first, and how many each tag has, for badges. |
 
 ```ts
-const { unseen, byTag } = screen.notices
+const { unseen, byTag } = shown.notices
 postBadge.textContent = String(byTag.post ?? 0)
 if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 ```
@@ -165,7 +231,7 @@ That's enough to draw a whole settings screen from the view. See [`SettingView`]
 Each background channel has already been chosen by priority: the open scene, then an effect, then a plugin such as the place, then the game's default. Each cue has a key that stays the same across view calls and reloads, so a player plays it once:
 
 ```ts
-const { channels, cues, muteSetting } = screen.audio
+const { channels, cues, muteSetting } = shown.audio
 channels.ambience.src      // 'audio/cafe-murmur.ogg' at the café
 channels.music.volumeSetting  // 'musicVolume': read its value from the profile
 cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
@@ -184,7 +250,7 @@ The engine doesn't look inside a slice, so give it its type where you read it. A
 ```ts
 import type { QuestsView } from '@ifloom/plugin-quests'
 
-const journal = screen.plugins.quests as QuestsView
+const journal = shown.plugins.quests as QuestsView
 badge.textContent = String(journal.updates)
 ```
 
@@ -248,6 +314,7 @@ function stageView(
   stage: MediaStage | undefined,
   owner: string,
   choices?: readonly RenderedChoice[] | null,
+  picks?: Record<string, string>,
 ): StageView | null
 ```
 
@@ -263,12 +330,12 @@ It returns `null` when `stage` is undefined.
 ```ts
 import { stageView } from '@ifloom/engine'
 
-// The café's stage, as the places plugin draws it:
-const stage = stageView(state, game, cafe.stage, 'cafe')
+// The café's stage, as the places plugin draws it in its view:
+const stage = stageView(state, game, cafe.stage, 'cafe', null, context.picks)
 stage?.hotspots.find((hotspot) => hotspot.id === 'door')?.disabled  // 'Staff only.'
 ```
 
-**Gotcha.** It only reads picks. The reducer records them after each command (see [Media](/reference/media#pools)), so calling it is pure.
+**Gotcha.** It never writes the state. A new pick is written into `picks` when you pass it, and the reducer records what's there after each command (see [Media](/reference/media#remembered-picks)). In a plugin's [`view`](/reference/plugins#the-view), pass your context's `picks`, or the stage's pool picks won't be kept.
 
 ## StatView
 

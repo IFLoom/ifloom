@@ -4,11 +4,11 @@ description: Open your game on a title screen, give the player settings, and off
 
 # The title screen and settings
 
-This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/react/). A game drawn some other way can build the same screens from the engine's [settings](/reference/settings) and [profile](/reference/profile).
+This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/react/). A game drawn some other way can build the same pages from the engine's [settings](/reference/settings) and [profile](/reference/profile).
 
 ## Turn on the title screen
 
-Pass `screens` to [`mountGame`](/react/#mountgame):
+Pass `pages` to [`mountGame`](/react/#mountgame):
 
 ```ts
 // src/main.ts
@@ -16,7 +16,7 @@ import { READING_LAYOUT, mountGame } from '@ifloom/react'
 import game from './game.ts'
 import './styles.css'
 
-mountGame(game, { layout: READING_LAYOUT, screens: true })
+mountGame(game, { layout: READING_LAYOUT, pages: true })
 ```
 
 The page now opens on a title screen with the game's title and a New game button. New game starts the story with [`runner.newGame`](/reference/runner#newgame). The player's menu gains a **Title screen** button that goes back.
@@ -34,7 +34,7 @@ Instead of `true`, give it options for a subtitle, a picture and credits:
 ```ts
 mountGame(game, {
   layout: READING_LAYOUT,
-  screens: {
+  pages: {
     subtitle: 'A new flat, a new town, and a cat with no name.',
     art: 'art/title.jpg',
     credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
@@ -44,7 +44,7 @@ mountGame(game, {
 
 A credit is a line of text, or a link with a `label` and an `href`. A missing `art` file takes no space, so you can add the picture later.
 
-If you build your runner by hand and draw [`GameShell`](/react/#gameshell) yourself, pass the same `screens` prop to it, and give the runner a profile so settings are kept between games:
+If you build your runner by hand and draw [`GameShell`](/react/#gameshell) yourself, pass the same `pages` prop to it, and give the runner a profile so settings are kept between games:
 
 ```tsx
 import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
@@ -54,7 +54,7 @@ const runner = createRunner(game, startingState(game), {
   profile: profile(game, localStorageDriver()),
 })
 
-<GameShell runner={runner} screens={{ subtitle: 'A new flat, a new town' }} />
+<GameShell runner={runner} pages={{ subtitle: 'A new flat, a new town' }} />
 ```
 
 `mountGame` makes the profile for you.
@@ -85,7 +85,7 @@ const town: Pack = {
 }
 ```
 
-The settings screen draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game.
+The settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game.
 
 A setting is either part of the game or only part of how it looks. [Settings](/reference/settings) has the details, and the next two sections show each kind in use.
 
@@ -122,7 +122,7 @@ function Story({ children }: { children: React.ReactNode }) {
 }
 ```
 
-To apply it to every screen, including the title screen, put it on the page instead. The showcase copies it from the profile to an attribute on `<html>`:
+To apply it to every page, including the title screen, put it on the page instead. The showcase copies it from the profile to an attribute on `<html>`:
 
 ```ts
 // src/main.tsx
@@ -176,11 +176,11 @@ body: [
 
 ## A notice before the title screen
 
-Some games need the player to read something first, such as a content note. Give `screens` a `gate`:
+Some games need the player to read something first, such as a content note. Give `pages` a `gate`:
 
 ```ts
 mountGame(game, {
-  screens: {
+  pages: {
     gate: {
       title: 'Before you start',
       text: 'This story mentions a house fire.\n\nIt happens off the page.',
@@ -193,15 +193,15 @@ mountGame(game, {
 
 The player sees it before the title screen. Blank lines in `text` split it into paragraphs. Confirming moves on to the title screen and is remembered in the profile, so the notice doesn't show again on that device. Declining follows `href`. Without an `href`, the decline button does nothing and the player stays on the notice. Every word on it is yours, and IFLoom adds nothing.
 
-## Screens of your own
+## Pages of your own
 
-A game or a plugin package can add a screen and a button for it on the title screen, such as a gallery or a list of endings found. Give `screens.screens` a component for each, by id:
+A game or a plugin package can add a page and a button for it on the title screen, such as a gallery or a list of endings found. Give `pages.pages` a component for each, by id:
 
 ```tsx
-import { mountGame, useProfile, useScreen } from '@ifloom/react'
+import { mountGame, useProfile, usePage } from '@ifloom/react'
 
 function Endings() {
-  const { back } = useScreen()
+  const { back } = usePage()
   const finished = useProfile<{ at: number }>('finished')
   return (
     <section>
@@ -213,12 +213,12 @@ function Endings() {
 }
 
 mountGame(game, {
-  screens: { screens: { endings: { label: 'Endings', component: Endings } } },
+  pages: { pages: { endings: { label: 'Endings', component: Endings } } },
 })
 ```
 
-The component is drawn as the whole page, with no props. Use [`useScreen`](/react/components#usescreen) to move between screens and [`useProfile`](/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `useScreen().go('endings')`.
+The component is drawn as the whole page, with no props. Use [`usePage`](/react/components#usepage) to move between pages and [`useProfile`](/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`.
 
 ## Make it look like your game
 
-Each of the four [presets](/react/customising#_1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The screens](/react/customising#the-screens) lists them all. To replace a screen entirely, pass your own `TitleScreen`, `SettingsScreen`, `LoadScreen`, `CreditsScreen` or `GateScreen` in [`components`](/react/customising#_6-replace-a-component).
+Each of the four [presets](/react/customising#_1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The pages](/react/customising#the-pages) lists them all. To replace a page entirely, pass your own `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` or `GatePage` in [`components`](/react/customising#_6-replace-a-component).

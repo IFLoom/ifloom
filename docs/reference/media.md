@@ -137,7 +137,7 @@ A request for `['blue', 'red']` from the pool above finds no door that's both, d
 
 ### Remembered picks
 
-After every command, the reducer records each pick that's on screen in [`state.media.picks`](/reference/state#media), under its key. The view reads it back, so the same request in the same place shows the same file on every visit, after a reload, and after an update that adds files to the pool. If the recorded file has gone from the pool, a new one is drawn.
+After every command, the reducer records each pick that's on screen in [`state.media.picks`](/reference/state#media), under its key. It reads them from [`screen`](/reference/view#screen) of the new state, which collects the picks from the scene, the room and every plugin's view. The view reads it back, so the same request in the same place shows the same file on every visit, after a reload, and after an update that adds files to the pool. If the recorded file has gone from the pool, a new one is drawn.
 
 The view never writes the state. Before the first command (a new game's first frame), nothing is recorded yet, and the view draws the pick from the seed and the key, which gives the same file the reducer will then record. [`replay`](/reference/runner#replay) records the same picks in the same order, so a replayed game shows the same files.
 

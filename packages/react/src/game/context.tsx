@@ -53,7 +53,8 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
     (listener) => runner.subscribe(() => listener()),
     () => runner.state,
   )
-  // The view follows the state; recomputed only when the state object changes.
+  // The view follows the state. The runner builds it once per state and hands the same
+  // object to everything that reads it (the backlog, the audio player), so this builds nothing new.
   const view = useMemo(() => runner.view(), [runner, state])
   const send = useCallback((command: Command) => runner.apply(command), [runner])
   const value = useMemo(

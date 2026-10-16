@@ -139,8 +139,8 @@
 }
 
 /* The title screen: a title page. */
-[data-part="title-screen"],
-[data-part="gate-screen"] {
+[data-part="title-page"],
+[data-part="gate-page"] {
   text-align: center;
   align-items: center;
 }
@@ -171,7 +171,7 @@
 [data-part="title-button"],
 [data-part="gate-confirm"],
 [data-part="gate-decline"],
-[data-part="screen-back"] {
+[data-part="page-back"] {
   all: unset;
   cursor: pointer;
   font-family: var(--font-body);
@@ -183,7 +183,7 @@
 [data-part="title-button"]:hover,
 [data-part="gate-confirm"]:hover,
 [data-part="gate-decline"]:hover,
-[data-part="screen-back"]:hover {
+[data-part="page-back"]:hover {
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
@@ -191,12 +191,12 @@
 [data-part="title-button"]:focus-visible,
 [data-part="gate-confirm"]:focus-visible,
 [data-part="gate-decline"]:focus-visible,
-[data-part="screen-back"]:focus-visible {
+[data-part="page-back"]:focus-visible {
   outline: 2px solid var(--ring, currentColor);
   outline-offset: 2px;
 }
 
-[data-part="screen-heading"],
+[data-part="page-heading"],
 [data-part="gate-title"] {
   font-variant: small-caps;
   font-weight: 400;

@@ -4,7 +4,7 @@ import type { AudioOptions } from '@ifloom/audio'
 import { browserRunner, describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
 import { hasAudio, startPlayer } from './audio.ts'
 import { GameProvider } from './context.tsx'
-import { GameShell, WithScreens, type GameShellProps } from './shell.tsx'
+import { GameShell, WithPages, type GameShellProps } from './shell.tsx'
 
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
   /** Where to draw it: an element, or a selector for one. `'#root'` if left out. */
@@ -16,7 +16,7 @@ export type MountOptions = Omit<GameShellProps, 'runner'> & {
   /**
    * Your own root component, drawn instead of `GameShell`. It sits inside the
    * game's provider, so `useGame()` and every built-in component work in it.
-   * With `screens` on, it's drawn on the `game` screen.
+   * With `pages` on, it's drawn on the `game` page.
    */
   app?: ComponentType
   /**
@@ -50,14 +50,14 @@ export function mountGame(loaded: Game | { game: Game; problems?: readonly unkno
 
   const runner = browserRunner(game, { start, ...runnerOptions })
   if (audio !== false && hasAudio(game)) startPlayer(runner, audio)
-  const { layout: _layout, className: _className, screens, ...provider } = shell
+  const { layout: _layout, className: _className, pages, ...provider } = shell
   createRoot(element).render(
     <StrictMode>
       {App ? (
         <GameProvider runner={runner} {...provider}>
-          <WithScreens screens={screens}>
+          <WithPages pages={pages}>
             <App />
-          </WithScreens>
+          </WithPages>
         </GameProvider>
       ) : (
         <GameShell runner={runner} {...shell} />

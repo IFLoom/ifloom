@@ -237,6 +237,7 @@ type PluginContext<S> = {
   set: (next: S, on?: GameState) => GameState
   query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  picks?: Record<string, string>
 }
 ```
 
@@ -247,6 +248,7 @@ Every plugin function gets this alongside the game state:
 - `set(next, on?)` returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed.
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
 - `apply(effects, on?)` applies a list of [effects](/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
+- `picks` is only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. See [The view](#the-view).
 
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/reference/effects#applyeffects):
 
@@ -703,6 +705,15 @@ wash: (_state, _args, { set, apply }) => apply([{ kind: 'turn' }], set({ dirty: 
 import { view } from '@ifloom/engine'
 
 const card = view(state, game).plugins.loyalty as { stamps: number; free: number } | undefined
+```
+
+If your view draws pictures from a [pool](/reference/media#pools), pass the context's `picks` to [`stageView`](/reference/view#stageview) or [`renderScene`](/reference/scenes#renderscene). Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
+
+```ts
+view: (state, { game, slice, picks }) => {
+  const place = locationById(game, slice.at)
+  return { stage: place ? stageView(state, game, place.stage, place.id, null, picks) : null }
+},
 ```
 
 ## Stage

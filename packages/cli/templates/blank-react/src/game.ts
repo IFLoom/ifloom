@@ -10,7 +10,7 @@ const story: Pack = {
   id: 'story',
   schema: SCHEMA,
   stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
-  // What the player can change on the settings screen. A condition reads a
+  // What the player can change on the settings page. A condition reads a
   // setting like a variable: `when: { setting: 'hints' }`.
   // settings: [{ id: 'hints', label: 'Show hints', kind: 'toggle', default: true }],
   scenes: [

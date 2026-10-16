@@ -187,12 +187,14 @@ function blockText(
 
 /**
  * Turn a scene and a state into what the player sees. Blocks that do not
- * apply are dropped; the rest are joined in declaration order.
+ * apply are dropped; the rest are joined in declaration order. New pool
+ * picks are written into `picks` when it is given.
  */
 export function renderScene(
   scene: DataScene,
   state: GameState,
   runtime: SceneRuntime,
+  picks?: Record<string, string>,
 ): SceneView {
   const parts: string[] = []
   const media: SceneMedia[] = []
@@ -204,13 +206,13 @@ export function renderScene(
     if (!holds(state, block.when, runtime.game)) return
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
-    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index))
+    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), picks)
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
       else parts.push(mediaMarkup(shown))
     }
-    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index)))
+    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), picks))
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)
@@ -356,7 +358,8 @@ export function bakeScene(game: Game, scene: DataScene): Scene {
     ...(scene.drawnFrom ? { drawnFrom: scene.drawnFrom } : {}),
     ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
     ...(scene.when ? { when: scene.when } : {}),
-    render: (state) => renderScene(scene, state, runtime),
+    // `screen` passes a context with `picks`, to collect the pool picks the render makes.
+    render: (state, ctx) => renderScene(scene, state, runtime, ctx?.picks),
   }
   forGame.set(scene, done)
   return done

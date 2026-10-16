@@ -1,13 +1,12 @@
 import { say } from './strings.ts'
 import { buildEffects } from './custom.ts'
-import { warningOf, whyNot } from './availability.ts'
+import { rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
 import {
   itemById,
   sceneById,
   type Game,
 } from './game.ts'
 import { activityById, payCost } from './activity.ts'
-import { sceneContext } from './context.ts'
 import { storylineOf } from './storylines.ts'
 import type { Command, Effect, FlagValue, GameState } from './types.ts'
 import { clampStat, statDef, statLevel } from './stats.ts'
@@ -19,9 +18,9 @@ import { dismiss, notify } from './notices.ts'
 import { fireTriggers } from './triggers.ts'
 import { inputById, inputValue } from './inputs.ts'
 import { noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
-import { emptyMedia, hasPools, notingPicks } from './media.ts'
-import { view } from './view.ts'
-import { pluginCommand, pluginEffect, runAfter, runHooks, useApplier } from './plugin.ts'
+import { emptyMedia, hasPools } from './media.ts'
+import { screen } from './screen.ts'
+import { pluginCommand, pluginEffect, runAfter, runHooks } from './plugin.ts'
 import { startingState } from './intake.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -71,17 +70,19 @@ function witnessed(before: GameState, after: GameState): GameState {
 }
 
 /**
- * Record the pool picks the screen now shows that the save doesn't hold yet:
- * the open scene's, the place's, anything a plugin's view draws. The view only
- * reads `state.media.picks`, so it stays pure; this is where they are written.
- * Only a game with pools pays for it.
+ * Record what the screen now shows that the save doesn't hold yet: the pool
+ * picks (the open scene's, the place's, anything a plugin's view draws) and
+ * what each background channel has started playing. Both come from one
+ * `screen` of the state, so the view stays pure and the scene is rendered
+ * once here. Only a game with pools or audio pays for it.
  */
-function notePicks(state: GameState, game: Game): GameState {
-  if (!hasPools(game)) return state
-  const picks = notingPicks(() => view(state, game))
-  if (!Object.keys(picks).length) return state
-  const media = state.media ?? emptyMedia()
-  return { ...state, media: { ...media, picks: { ...media.picks, ...picks } } }
+function noteShown(state: GameState, game: Game): GameState {
+  if (!hasPools(game) && !game.audio) return state
+  const shown = screen(state, game)
+  const next = noteStarted(state, game, shown.audio.tracks)
+  if (!Object.keys(shown.picks).length) return next
+  const media = next.media ?? emptyMedia()
+  return { ...next, media: { ...media, picks: { ...media.picks, ...shown.picks } } }
 }
 
 /**
@@ -139,7 +140,7 @@ export function apply(
   try {
     const ran = run(current, game, command)
     const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))
-    return { state: notePicks(noteStarted(levelUps(current, runAfter(game, current, next), game), game), game), ok: true }
+    return { state: noteShown(levelUps(current, runAfter(game, current, next), game), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, refused: error.detail }
@@ -161,9 +162,11 @@ function run(
   game: Game,
   command: Command,
 ): GameState {
-  const why = whyNot(current, game, command)
+  // The open scene, rendered once for the refusal, the warning and the choice.
+  const rendered = rendering(current, game)
+  const why = whyNotIn(rendered, current, game, command)
   if (why) refuse(why)
-  const warning = warningOf(current, game, command)
+  const warning = warningIn(rendered, current, game, command)
   if (warning) refuse(warning)
   const custom = game.rules?.commands?.[command.type]
   if (custom) return custom(current, command) as GameState
@@ -173,7 +176,7 @@ function run(
     case 'scene':
       return enterScene(current, game, command.id)
     case 'choose':
-      return choose(current, game, command.id)
+      return choose(current, game, command.id, rendered)
     case 'leave':
       return { ...current, sceneId: null }
     case 'use':
@@ -213,27 +216,21 @@ function runActivity(
  * The end of a turn: the counter moves on, `resets` are put back, `rules.turn`'s
  * effects apply, then the game's `onTurn` and every plugin's `turn` hook run.
  * `before` is the state the turn ended on, which `rules.turn` is asked about.
+ * What runs here runs with `ending` set, so a `turn` effect among it (in the
+ * rules, or applied by a plugin through its context) does nothing: a turn
+ * ending inside a turn's end would ask `rules.turn` again, and again.
  */
 function endTurn(state: GameState, game: Game, before: GameState = state): GameState {
-  // A turn ending inside a turn's end would ask `rules.turn` again, and again: it does nothing.
-  if (ending) return state
-  ending = true
-  try {
-    const next = state.turn + 1
-    const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
-    const begun = applyEffects(
-      { ...state, turn: next, flags: { ...state.flags, ...game.rules?.resets } },
-      game,
-      rule.effects,
-    )
-    return runHooks(game, 'turn', game.rules?.onTurn?.(begun) ?? begun)
-  } finally {
-    ending = false
-  }
+  const next = state.turn + 1
+  const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
+  const begun = runEffects(
+    { ...state, turn: next, flags: { ...state.flags, ...game.rules?.resets } },
+    game,
+    rule.effects,
+    true,
+  )
+  return runHooks(game, 'turn', game.rules?.onTurn?.(begun) ?? begun, true)
 }
-
-/** True while a turn is ending, so a `turn` effect run by the turn's own rules is ignored. */
-let ending = false
 
 function enterScene(
   state: GameState,
@@ -247,11 +244,11 @@ function choose(
   state: GameState,
   game: Game,
   choiceId: string,
+  rendered: Rendering,
 ): GameState {
   const scene = sceneById(game, state.sceneId!)
   if (!scene) return { ...state, sceneId: null }
-  const view = scene.render(state, sceneContext(state, game))
-  const choice = view.choices.find((entry) => entry.id === choiceId)!
+  const choice = rendered.scene()!.choices.find((entry) => entry.id === choiceId)!
   const key = `${scene.id}/${choice.id}`
   const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
   return applyEffects(marked, game, choice.effects)
@@ -274,9 +271,22 @@ export function applyEffects(
   game: Game,
   effects: Effect[],
 ): GameState {
+  return runEffects(state, game, effects, false)
+}
+
+/**
+ * `applyEffects`, told whether a turn is ending: while one is, a `turn` effect
+ * does nothing. How a plugin's context applies effects, passing on what it was told.
+ */
+export function runEffects(
+  state: GameState,
+  game: Game,
+  effects: readonly Effect[],
+  ending: boolean,
+): GameState {
   let next = state
   for (const effect of effects) {
-    next = applyEffect(next, game, effect)
+    next = applyEffect(next, game, effect, ending)
   }
   return next
 }
@@ -285,11 +295,12 @@ function applyEffect(
   state: GameState,
   game: Game,
   effect: Effect,
+  ending: boolean,
 ): GameState {
   switch (effect.kind) {
     case 'custom': {
       // A plugin the game no longer has does nothing, as an unknown custom effect does.
-      const fn = pluginEffect(game, effect.name)
+      const fn = pluginEffect(game, effect.name, ending)
       return fn ? fn(state, effect.with ?? {}) : state
     }
     case 'collect':
@@ -385,7 +396,7 @@ function applyEffect(
       for (const ref of entitiesOf(state, effect.of)) {
         if (!entityOf(next, ref)) continue
         if (effect.where && !holds(next, bindCurrent(effect.where, ref), game)) continue
-        next = applyEffects(next, game, buildEffects(next, game, bindCurrent(effect.effects, ref)))
+        next = runEffects(next, game, buildEffects(next, game, bindCurrent(effect.effects, ref)), ending)
       }
       return next
     }
@@ -416,6 +427,7 @@ function applyEffect(
     case 'sound':
       return soundCue(state, effect.track)
     case 'turn': {
+      if (ending) return state
       let next = state
       for (let n = 0; n < (effect.by ?? 1); n += 1) next = endTurn(next, game)
       return next
@@ -424,6 +436,3 @@ function applyEffect(
       return state
   }
 }
-
-// Plugins apply effects through their context; this is how.
-useApplier((state, game, effects) => applyEffects(state, game, buildEffects(state, game, effects)))

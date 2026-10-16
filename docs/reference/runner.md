@@ -208,7 +208,7 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 |---|---|
 | `game` | The game it plays. |
 | `state` | The current [`GameState`](/reference/state). It's read-only, so change it through `apply`. |
-| `view()` | [`view(state, game)`](/reference/view) for the current state. |
+| `view()` | [`view(state, game)`](/reference/view) for the current state, built once per state. See [The view cache](#the-view-cache). |
 | `apply(command)` | Runs a command and returns [`Applied`](/reference/commands#apply): `ok`, the next `state`, and `refused` when it didn't take. A refused command changes nothing. It adds no history or log entry and calls no listeners. |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `canUndo` / `canRedo` | Whether there's anything to undo or redo, for greying out the buttons. Always `false` with history off. |
@@ -244,6 +244,19 @@ else if (loaded?.missingPacks.length) showMessage(`Made with mods you don't have
 ```
 
 **Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or simply `log()`, whose `start` is that state.
+
+### The view cache
+
+`runner.view()` keeps the view it built and the state it built it for. Asked again while the state is the same object, it returns the same view without building it again. After a command, an undo or a load, the state is a new object, so the next call builds a new view.
+
+This means everything that reads the view can call `runner.view()` freely. In a browser, the backlog, the [React UI](/react/) and the [audio player](/reference/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
+
+```ts
+runner.apply({ type: 'choose', id: 'open' })
+runner.view() === runner.view()  // true: one view for the new state
+```
+
+**Gotcha.** Only the latest state's view is kept. Calling [`view`](/reference/view#view) yourself always builds a new one, so in a UI driven by a runner, read `runner.view()`.
 
 ### setUiSetting
 

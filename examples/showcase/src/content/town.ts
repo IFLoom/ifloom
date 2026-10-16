@@ -105,7 +105,7 @@ const characters: CharacterDef[] = [
 export const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  // What the player can change on the settings screen. `hints` is part of the
+  // What the player can change on the settings page. `hints` is part of the
   // game (the high street reads it); `textSize` only changes how the page looks,
   // and main.tsx puts it on the page root for styles.css.
   settings: [

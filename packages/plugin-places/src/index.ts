@@ -206,7 +206,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     },
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
     audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
-    view: (state, { slice, game }): PlacesView => {
+    view: (state, { slice, game, picks }): PlacesView => {
       const place = locationById(game, slice.at)
       const idle = !state.sceneId && !lockedOut(state, game)
       const exits: ExitView[] = []
@@ -223,7 +223,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         if (warning) exit.warning = warning
         exits.push(exit)
       }
-      const stage = place ? stageView(state, game, place.stage, place.id) : null
+      const stage = place ? stageView(state, game, place.stage, place.id, null, picks) : null
       return {
         location: place
           ? { id: place.id, name: place.name, tag: place.tag, kind: place.kind, art: place.art, stage: stage && !idle ? { ...stage, hotspots: [] } : stage }

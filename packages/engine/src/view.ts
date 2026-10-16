@@ -1,39 +1,16 @@
-import { say } from './strings.ts'
-import { pluginButtons, pluginCommand, pluginSpeaker, type SpeakerView, pluginLabel, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
+import { pluginLabel } from './plugin.ts'
 import type { InputDef } from './inputs.ts'
-import { defaultRuntime, renderScene } from './scene.ts'
-import { effectsOf, warningOf, whyNot } from './availability.ts'
-import { formatStat, statDef, statLevel, statMax, statValue, type StatDef } from './stats.ts'
+import { formatStat, statLevel, statMax, statValue, type StatDef } from './stats.ts'
 import { holds } from './condition.ts'
-import { lockOn, lockedOut } from './locks.ts'
-import { sceneById, type Game, type ActionDef } from './game.ts'
-import { activityById } from './activity.ts'
+import type { Game } from './game.ts'
 import { settingAffects } from './settings.ts'
-import {
-  artSrc,
-  mediaKind,
-  parseBeats,
-  videoView,
-  type SceneBeat,
-} from './sceneBody.ts'
-import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './media.ts'
-import type { SceneMedia } from './game.ts'
-import { sceneContext } from './context.ts'
-import { audioView, type AudioView } from './audio.ts'
-import type { FlagValue, Command, Effect, GameState, StatKey } from './types.ts'
+import type { StageView } from './media.ts'
+import type { AudioView } from './audio.ts'
+import type { SpeakerView } from './plugin.ts'
+import type { SceneBeat } from './sceneBody.ts'
+import type { FlagValue, GameState, StatKey } from './types.ts'
 import { bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
-
-/**
- * What pressing a button will spend, shown on it before it is pressed. Only
- * costs: what a choice *pays* stays off the label, because a payout printed on
- * a line tells the player which line is the right one.
- */
-export type Price = {
-  /** Stats it spends, in the order the button lists them, written for the player. */
-  stats?: { id: string; amount: number; text: string }[]
-  /** What plugins say it costs, in their words: "until evening". */
-  notes?: string[]
-}
+import { screen, type RenderedChoice, type Screen, type ScreenChoice } from './screen.ts'
 
 /** A stat as the UI shows it: its value, its ceiling, and the value written out. */
 export type StatView = {
@@ -48,22 +25,6 @@ export type StatView = {
    * out for a stat with no levels.
    */
   level?: { level: number; next: number | null; progress: number }
-}
-
-export type RenderedChoice = {
-  id: string
-  label: string
-  price?: Price
-  disabled?: string
-  tags?: string[]
-  irreversible?: string
-  /**
-   * Pressable, but the game would rather you didn't, and says why: a plugin
-   * guard's soft refusal: running past dawn, say. The reducer refuses it all the
-   * same, so a UI shows the warning and offers something else.
-   */
-  warning?: string
-  command: Command
 }
 
 export type View = {
@@ -199,21 +160,25 @@ export type InputView = {
 /**
  * Everything the UI draws, assembled from the state in one pass.
  *
- * Each panel is its own function below, so a panel can be built (and later
- * memoised) on its own — the shape of `View` is an assembly of slices, not a
- * hundred-line literal.
+ * The scene, its choices, the room's buttons, the plugins' views and the audio
+ * come from `screen`, which renders the open scene once; the rest is read from
+ * the state here. `view` only formats: what each choice would apply and the
+ * picks stay on the screen.
  */
 export function view(state: GameState, game: Game): View {
-  const idle = !lockedOut(state, game) && !state.sceneId
-  const dialogue = renderDialogue(state, game)
+  return viewOf(screen(state, game), state, game)
+}
 
+/** A screen as the view a UI draws. */
+function viewOf(shown: Screen, state: GameState, game: Game): View {
+  const { tracks: _tracks, ...audio } = shown.audio
   return {
     title: game.title,
     phase: state.phase,
     turn: state.turn,
     when: pluginLabel(game, state),
-    scene: dialogue?.scene ?? standing(state, game),
-    actions: idle ? idleActions(state, game) : [],
+    scene: { ...shown.scene, stage: shown.stage, choices: shown.choices.map(rendered) },
+    actions: shown.actions.map(rendered),
     stats: statsOf(state, game),
     statsById: statsById(state, game),
     pack: packOf(state, game),
@@ -222,10 +187,15 @@ export function view(state: GameState, game: Game): View {
     entities: entitiesView(state, game),
     notices: noticesOf(state, game),
     inputs: inputsOf(state, game),
-    plugins: pluginViews(state, game),
+    plugins: shown.plugins,
     settings: settingsOf(state, game),
-    audio: audioView(state, game, dialogue ? { audio: dialogue.audio, beats: dialogue.scene.beats } : null),
+    audio,
   }
+}
+
+/** A screen's choice as the view shows it: without its effects. */
+function rendered({ effects: _effects, ...choice }: ScreenChoice): RenderedChoice {
+  return choice
 }
 
 function settingsOf(state: GameState, game: Game): SettingView[] {
@@ -305,102 +275,6 @@ function inputsOf(state: GameState, game: Game): View['inputs'] {
   )
 }
 
-/** The room itself, when no scene is playing over it. */
-function standing(state: GameState, game: Game): View['scene'] {
-  // A plugin's stage; with none, there is nothing to read but the buttons.
-  const stage = pluginStage(game, state)
-  const rendered = stage?.body
-    ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game))
-    : { body: '' }
-  const body = rendered.body ?? ''
-  return {
-    id: null,
-    title: stage?.title ?? game.title,
-    body,
-    beats: beatsOf(state, game, stage?.id ?? '', body, 'media' in rendered ? rendered.media : undefined),
-    frame: 'stage',
-    tags: [],
-    panel: null,
-    panelData: null,
-    speaker: null,
-    stageImage: null,
-    stage: null,
-    choices: [],
-  }
-}
-
-/**
- * A body's beats, with media that opens or closes it around them. Media with no
- * `at` in a hand-built scene's list goes at the end, as it always has; a data
- * scene's `{ media }` blocks are already in the body, in place.
- */
-function beatsOf(state: GameState, game: Game, owner: string, body: string, media: readonly SceneMedia[] | undefined): SceneBeat[] {
-  const placed = (media ?? []).flatMap((item, index) => {
-    const shown = resolveMedia(item, state, game, owner, `media.${index}`)
-    return shown ? [{ at: shown.at ?? 'end', beats: parseBeats(mediaMarkup(shown)) }] : []
-  })
-  return [
-    ...placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats),
-    ...parseBeats(body),
-    ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats),
-  ]
-}
-
-/**
- * A stage as the UI draws it: the layers whose `when` holds, each with its
- * file (a pool's pick, kept per owner and layer as `stage:<index>`), and the
- * hotspots on them. A hotspot tied to a layer that isn't shown is left out. A
- * `choice` hotspot takes that choice's command and availability from
- * `choices`, the scene's rendered choices, and is left out when the choice is
- * not on offer; a `command` hotspot is worked out as any action's button is.
- * Exported for plugins that draw a stage of their own: a place's.
- */
-export function stageView(
-  state: GameState,
-  game: Game,
-  stage: MediaStage | undefined,
-  owner: string,
-  choices: readonly RenderedChoice[] | null = null,
-): StageView | null {
-  if (!stage) return null
-  const layers: StageLayerView[] = []
-  stage.layers.forEach((layer, index) => {
-    if (!holds(state, layer.when, game)) return
-    const src = layer.pool !== undefined
-      ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` })
-      : (layer.src ?? null)
-    if (!src) return
-    const video = Boolean(layer.video) || mediaKind(src) === 'video'
-    layers.push({
-      id: layer.id ?? null,
-      src: artSrc(src, video ? 'video' : 'image'),
-      ...(video ? { video: videoView(layer) } : {}),
-    })
-  })
-  const shown = new Set(layers.map((layer) => layer.id))
-  const hotspots: HotspotView[] = []
-  for (const hotspot of stage.hotspots ?? []) {
-    if (!holds(state, hotspot.when, game)) continue
-    if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
-    let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
-    if (hotspot.choice !== undefined) button = choices?.find((choice) => choice.id === hotspot.choice)
-    else if (hotspot.command && !hiddenByLock(state, game, hotspot.command)) {
-      button = renderAction(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command })
-    }
-    if (!button) continue
-    hotspots.push({
-      id: hotspot.id,
-      rect: hotspot.rect,
-      label: hotspot.label,
-      command: button.command,
-      ...(button.disabled !== undefined ? { disabled: button.disabled } : {}),
-      ...(button.warning !== undefined ? { warning: button.warning } : {}),
-      ...(hotspot.layer !== undefined ? { layer: hotspot.layer } : {}),
-    })
-  }
-  return { aspect: stage.aspect ?? null, layers, hotspots }
-}
-
 function statView(state: GameState, game: Game, stat: StatDef, of?: string): StatView {
   const value = statValue(state, game, stat.id, of)
   const level = statLevel(state, game, stat.id, of)
@@ -461,155 +335,3 @@ function packOf(state: GameState, game: Game): View['pack'] {
     .filter((item) => item.count > 0)
 }
 
-/** Is this button left off the screen by a lock that hides? Never one that ignores locks. */
-function hiddenByLock(state: GameState, game: Game, command: Command): boolean {
-  if (command.type === 'custom' && pluginCommand(game, command.name)?.ignoresLocks) return false
-  return Boolean(lockOn(state, game, command)?.hide)
-}
-
-/**
- * The buttons offered while no scene is open: plugins' first, then the
- * game's. One a hiding lock stops is left off the screen.
- */
-function idleActions(state: GameState, game: Game): RenderedChoice[] {
-  return [...pluginButtons(game, state), ...(game.actions ?? [])]
-    .filter((action) => holds(state, action.when, game) && !hiddenByLock(state, game, action.command))
-    .map((action) => renderAction(state, game, action))
-}
-
-/**
- * An action as a button: its label, its price, and why it is greyed out, if it
- * is. Availability comes from `whyNot`, so the button and the reducer always
- * agree. What a room's buttons are made with, for plugins that show actions
- * somewhere else — an app on a device.
- */
-export function renderAction(
-  state: GameState,
-  game: Game,
-  action: ActionDef,
-): RenderedChoice {
-  const activity =
-    action.command.type === 'activity'
-      ? activityById(game, action.command.id)
-      : undefined
-  // Only worked out when a plugin will look at them.
-  const effects = pluginsWatch(game) ? effectsOf(state, game, action.command) : []
-  const choice: RenderedChoice = {
-    id: action.id,
-    label: action.label,
-    price: priced(state, game, activity?.cost ?? {}, effects),
-    disabled:
-      action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ??
-      whyNot(state, game, action.command),
-    command: action.command,
-  }
-  const warning = warningOf(state, game, action.command, effects)
-  if (warning) choice.warning = warning
-  return choice
-}
-
-function priced(
-  state: GameState,
-  game: Game,
-  cost: { stats?: Record<string, number> },
-  effects: readonly Effect[] = [],
-): Price | undefined {
-  const out: Price = {}
-  const spent = Object.entries(cost.stats ?? {})
-    .filter(([, amount]) => amount > 0)
-    .map(([id, amount]) => ({ id, amount, text: formatStat(statDef(game, id), amount) }))
-  if (spent.length) out.stats = spent
-  const notes = effects.length ? pluginPrices(game, state, effects) : []
-  if (notes.length) out.notes = notes
-  return Object.keys(out).length ? out : undefined
-}
-
-/**
- * A scene choice spends through its effects: any spendable
- * stat down. Listed in the order the game declared its stats.
- */
-function priceOfEffects(
-  state: GameState,
-  game: Game,
-  effects: readonly Effect[],
-): Price | undefined {
-  const spent: Record<string, number> = {}
-  for (const effect of effects) {
-    if (effect.kind === 'stat' && effect.of === undefined && effect.by < 0 && statDef(game, effect.key)?.spendable) {
-      spent[effect.key] = (spent[effect.key] ?? 0) - effect.by
-    }
-  }
-  const stats: Record<string, number> = {}
-  for (const stat of game.stats ?? []) {
-    if (spent[stat.id]) stats[stat.id] = spent[stat.id]
-  }
-  return priced(state, game, { stats }, effects)
-}
-
-/** The open scene as the screen draws it, and what it puts on the audio channels. */
-function renderDialogue(
-  state: GameState,
-  game: Game,
-): { scene: View['scene']; audio?: Record<string, string | null> } | null {
-  if (!state.sceneId) return null
-  const scene = sceneById(game, state.sceneId)
-  if (!scene) {
-    return { scene: {
-      id: state.sceneId,
-      title: pluginStage(game, state)?.title ?? game.title,
-      body: say(game, 'momentPassed'),
-      beats: parseBeats(say(game, 'momentPassed')),
-      frame: 'stage',
-      tags: [],
-      panel: null,
-      panelData: null,
-      speaker: null,
-      stageImage: null,
-      stage: null,
-      choices: [
-        { id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' } },
-      ],
-    } }
-  }
-  // Markdown is laid over legacy scenes by `bake` in the content pack. Doing it
-  // again here would overwrite a declarative scene's composed body with
-  // whatever single block happens to share the scene's id.
-  const rendered = scene.render(state, sceneContext(state, game))
-  // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
-  const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body')
-  const beats = beatsOf(state, game, state.sceneId, body, rendered.media)
-  const choices: RenderedChoice[] = rendered.choices
-    .filter((choice) => choice.visible !== false)
-    .map((choice) => ({
-      id: choice.id,
-      label: choice.label,
-      price: priceOfEffects(state, game, choice.effects),
-      // The choice's own reason first; then a lock or a plugin's guard, as the reducer will ask.
-      disabled: choice.disabled ?? whyNot(state, game, { type: 'choose', id: choice.id }),
-      tags: choice.tags,
-      irreversible: choice.irreversible,
-      warning: warningOf(state, game, { type: 'choose', id: choice.id }, choice.effects),
-      command: { type: 'choose', id: choice.id } as const,
-    }))
-  const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
-  const frame = rendered.frame ?? scene.frame ?? (speaker ? 'talk' : 'stage')
-  return { audio: rendered.audio, scene: {
-    id: state.sceneId,
-    title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
-    body,
-    beats,
-    frame,
-    tags: rendered.tags ?? scene.tags ?? [],
-    panel: rendered.panel ?? scene.panel ?? null,
-    panelData: rendered.panelData ?? null,
-    speaker,
-    stageImage: rendered.portrait ?? speaker?.portrait ?? null,
-    stage: stageView(state, game, rendered.stage, state.sceneId, choices),
-    choices,
-  } }
-}
-
-/** Who is speaking: the id the scene names, as a plugin knows them. Never guessed from the scene's id. */
-function speakerOf(id: string | undefined, game: Game, state: GameState): SpeakerView | null {
-  return id ? (pluginSpeaker(game, state, id) ?? null) : null
-}

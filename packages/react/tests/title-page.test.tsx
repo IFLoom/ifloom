@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, memoryDriver, profile, saves, startingState, type Game } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT, useScreen, useSetting, type ScreensOptions } from '../src/index.ts'
+import { GameShell, READING_LAYOUT, usePage, useSetting, type PagesOptions } from '../src/index.ts'
 
 afterEach(cleanup)
 
@@ -44,19 +44,19 @@ function letter(): Game {
   ).game
 }
 
-function play(screens: boolean | ScreensOptions = true, driver = memoryDriver()) {
+function play(pages: boolean | PagesOptions = true, driver = memoryDriver()) {
   const game = letter()
   const runner = createRunner(game, startingState(game), {
     saves: saves(game, driver),
     profile: profile(game, driver),
   })
-  const view = render(<GameShell runner={runner} layout={READING_LAYOUT} screens={screens} />)
+  const view = render(<GameShell runner={runner} layout={READING_LAYOUT} pages={pages} />)
   return { runner, driver, view }
 }
 
 const titleButton = (name: string) => document.querySelector(`[data-title-button="${name}"]`) as HTMLElement | null
 
-describe('the screens', () => {
+describe('the pages', () => {
   it('goes from the gate to the title, into the game, and back through the menu', async () => {
     play({
       subtitle: 'A short story',
@@ -73,7 +73,7 @@ describe('the screens', () => {
     await act(async () => fireEvent.click(titleButton('new')!))
     expect(await screen.findByText('A letter on the mat.')).toBeTruthy()
     fireEvent.click(screen.getByText('Title screen'))
-    expect(document.querySelector('[data-screen="title"]')).not.toBeNull()
+    expect(document.querySelector('[data-page="title"]')).not.toBeNull()
   })
 
   it('remembers that the gate was confirmed', async () => {
@@ -83,7 +83,7 @@ describe('the screens', () => {
     await act(async () => fireEvent.click(confirm))
     view.unmount()
     play({ gate }, driver)
-    await waitFor(() => expect(document.querySelector('[data-screen="title"]')).not.toBeNull())
+    await waitFor(() => expect(document.querySelector('[data-page="title"]')).not.toBeNull())
     expect(screen.queryByText('Before you start')).toBeNull()
   })
 
@@ -102,7 +102,7 @@ describe('the screens', () => {
     const next = play(true, driver).runner
     await waitFor(() => expect(titleButton('continue')).not.toBeNull())
     await act(async () => fireEvent.click(titleButton('continue')!))
-    await waitFor(() => expect(document.querySelector('[data-screen="title"]')).toBeNull())
+    await waitFor(() => expect(document.querySelector('[data-page="title"]')).toBeNull())
     // Slot 2 is the newer, saved after leaving the scene.
     expect(next.state.sceneId).toBeNull()
     expect(next.state.flags.readBefore).toBe(true)
@@ -142,14 +142,14 @@ describe('the screens', () => {
     const runner = createRunner(game, startingState(game), { profile: profile(game, driver) })
     function Size() {
       const size = useSetting('textSize')
-      const { go } = useScreen()
+      const { go } = usePage()
       return (
         <p data-size={String(size)} onClick={() => go('settings')}>
           size
         </p>
       )
     }
-    render(<GameShell runner={runner} layout={{ stage: [<Size key="size" />] }} screens />)
+    render(<GameShell runner={runner} layout={{ stage: [<Size key="size" />] }} pages />)
     await act(async () => fireEvent.click(titleButton('new')!))
     expect(document.querySelector('[data-size]')?.getAttribute('data-size')).toBe('normal')
     fireEvent.click(screen.getByText('size'))
@@ -175,12 +175,12 @@ describe('the screens', () => {
     expect(runner.state.flags.readBefore).toBe(true)
   })
 
-  it('puts the screens a game adds on the title screen', async () => {
+  it('puts the pages a game adds on the title screen', async () => {
     function Gallery() {
-      const { back } = useScreen()
+      const { back } = usePage()
       return <button onClick={back}>Gallery here</button>
     }
-    play({ screens: { gallery: { label: 'Gallery', component: Gallery }, hidden: { label: 'Hidden', component: Gallery, showOnTitle: false } }, credits: ['Written by a friend', { label: 'Site', href: 'https://example.com/' }] })
+    play({ pages: { gallery: { label: 'Gallery', component: Gallery }, hidden: { label: 'Hidden', component: Gallery, showOnTitle: false } }, credits: ['Written by a friend', { label: 'Site', href: 'https://example.com/' }] })
     fireEvent.click(await screen.findByText('Gallery'))
     expect(screen.queryByText('Hidden')).toBeNull()
     fireEvent.click(screen.getByText('Gallery here'))
@@ -189,9 +189,9 @@ describe('the screens', () => {
     expect(screen.getByText('Site').getAttribute('href')).toBe('https://example.com/')
   })
 
-  it('starts straight in the game when screens are off', () => {
+  it('starts straight in the game when pages are off', () => {
     play(false)
     expect(screen.getByText('A letter on the mat.')).toBeTruthy()
-    expect(document.querySelector('[data-screen]')).toBeNull()
+    expect(document.querySelector('[data-page]')).toBeNull()
   })
 })

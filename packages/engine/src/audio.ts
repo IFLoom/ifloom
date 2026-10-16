@@ -193,7 +193,7 @@ export function sceneShown(state: GameState): GameState {
   return { ...state, audio: { ...audio, shown: audio.shown + 1 } }
 }
 
-/** What the open scene puts on its channels, if a scene is open and says. */
+/** What the open scene puts on its channels, if a scene is open and says. Renders it: for a caller with no `screen`. */
 function sceneAudio(state: GameState, game: Game): Record<string, string | null> | undefined {
   if (!state.sceneId) return undefined
   return sceneById(game, state.sceneId)?.render(state, sceneContext(state, game)).audio
@@ -223,14 +223,24 @@ function resolve(state: GameState, game: Game, scene: Record<string, string | nu
 }
 
 /**
- * Record what each background channel has started playing, and when. Called
- * after every command, so a shuffled playlist draws its order from the turn it
- * started, and replays exactly.
+ * The track each background channel should play, worked out from the state:
+ * `scene` is what the open scene puts on its channels, when the caller has
+ * rendered it. Empty when the game has no audio.
  */
-export function noteStarted(state: GameState, game: Game): GameState {
+export function audioTracks(state: GameState, game: Game, scene: Record<string, string | null> | undefined): Record<string, string | null> {
+  return game.audio ? resolve(state, game, scene) : {}
+}
+
+/**
+ * Record what each background channel has started playing, and when. Called
+ * after every command with what `screen` resolved (`screen.audio.tracks`), so
+ * a shuffled playlist draws its order from the turn it started, and replays
+ * exactly. Without `tracks`, the open scene is rendered to work them out.
+ */
+export function noteStarted(state: GameState, game: Game, tracks?: Record<string, string | null>): GameState {
   if (!game.audio) return state
   const audio = state.audio ?? emptyAudio()
-  const now = resolve(state, game, sceneAudio(state, game))
+  const now = tracks ?? resolve(state, game, sceneAudio(state, game))
   let started = audio.started
   for (const [channel, track] of Object.entries(now)) {
     if (track === null) {
@@ -324,20 +334,20 @@ function channelView(state: GameState, game: Game, id: string, def: ChannelDef, 
 }
 
 /**
- * `view.audio`: every channel resolved, and the sounds that are due. `scene`
- * is what the open scene rendered, when the caller has it; `beats` the open
- * scene's beats, whose sound and voice beats become cues.
+ * `view.audio`: every channel resolved, and the sounds that are due. `tracks`
+ * is what `audioTracks` resolved; `beats` the open scene's beats, whose sound
+ * and voice beats become cues, or null when no scene is open.
  */
 export function audioView(
   state: GameState,
   game: Game,
-  scene: { audio?: Record<string, string | null>; beats: readonly SceneBeat[] } | null,
+  tracks: Record<string, string | null>,
+  beats: readonly SceneBeat[] | null,
 ): AudioView {
   if (!game.audio) return { channels: {}, cues: [], muteSetting: null }
-  const wanted = resolve(state, game, scene ? scene.audio : sceneAudio(state, game))
   const channels: Record<string, AudioChannelView> = {}
   for (const [id, def] of Object.entries(audioChannels(game))) {
-    channels[id] = channelView(state, game, id, def, wanted[id] ?? null)
+    channels[id] = channelView(state, game, id, def, tracks[id] ?? null)
   }
   const audio = state.audio ?? emptyAudio()
   const cues: AudioCue[] = []
@@ -347,8 +357,8 @@ export function audioView(
     cues.push({ key, channel: channel ?? channelOf(def), track, src: audioSrc(def.src), volume: def.volume ?? 1 })
   }
   for (const entry of audio.cues) cue(`cue:${state.seed}:${entry.seq}`, entry.track)
-  if (scene && state.sceneId) {
-    scene.beats.forEach((beat, index) => {
+  if (beats && state.sceneId) {
+    beats.forEach((beat, index) => {
       const key = `scene:${state.seed}:${audio.shown}:${index}`
       if (beat.kind === 'sound') cue(`${key}:${beat.track}`, beat.track)
       if (beat.kind === 'say' && beat.voice) cue(`${key}:${beat.voice}`, beat.voice, 'voice')

@@ -110,6 +110,10 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   json: 'Other (JSON)',
 }
 
+/** The effect builder's menu, in order. Every form is in it. */
+export const EFFECT_MENU = ['stat', 'setStat', 'flag', 'flagAdd', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
+export const effectMenuComplete: Missing<EffectForm, (typeof EFFECT_MENU)[number]> = true
+
 /** The comparisons a range offers. `is` is only for variables and settings. */
 export const RANGE_OPS = ['gte', 'gt', 'lte', 'lt'] as const
 export type RangeOp = (typeof RANGE_OPS)[number]

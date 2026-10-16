@@ -4,7 +4,7 @@
  * docs' colours (Fumadocs' `fd-` tokens), so the editor follows its light and
  * dark themes.
  */
-import { useEffect, useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 
 export function cx(...names: (string | false | null | undefined)[]) {
   return names.filter(Boolean).join(' ')
@@ -45,12 +45,18 @@ export function Field({ label, hint, children, className }: { label: ReactNode; 
 }
 
 /** A text input that commits as you type. An empty field gives `undefined` when `optional` is set. */
-export function TextInput({ value, onChange, placeholder, optional, className, mono, ...rest }: { value: string | undefined; onChange: (value: string | undefined) => void; placeholder?: string; optional?: boolean; className?: string; mono?: boolean; 'aria-label'?: string }) {
+export function TextInput({
+  value,
+  onChange,
+  optional,
+  className,
+  mono,
+  ...rest
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { value: string | undefined; onChange: (value: string | undefined) => void; optional?: boolean; mono?: boolean }) {
   return (
     <input
       className={cx(inputClass, mono && 'font-mono', className)}
       value={value ?? ''}
-      placeholder={placeholder}
       onChange={(event) => onChange(optional && event.target.value === '' ? undefined : event.target.value)}
       {...rest}
     />

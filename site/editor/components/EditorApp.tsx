@@ -230,7 +230,7 @@ export function EditorApp() {
         <p className="border-b border-fd-border px-4 py-2 text-sm text-fd-muted-foreground md:hidden">
           The editor needs a wider screen. On a phone you can play the preview.
         </p>
-        <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[13rem_minmax(0,1fr)_minmax(18rem,40%)] lg:grid-cols-[15rem_minmax(0,1fr)_minmax(22rem,42%)]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[13rem_minmax(0,1fr)_minmax(18rem,40%)] lg:grid-cols-[14rem_minmax(0,1fr)_minmax(22rem,38%)]">
           <Pane className="hidden border-e md:flex">
             <Outline />
           </Pane>

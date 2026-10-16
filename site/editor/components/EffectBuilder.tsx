@@ -1,0 +1,168 @@
+'use client'
+/**
+ * The effect builder: a list of effects, each a kind from a menu and the
+ * fields it needs, with JSON for plugin calls and the rarer kinds.
+ */
+import { useState } from 'react'
+import type { EffectRef } from '@ifloom/engine'
+import { effectForm, newEffect, NO_NAMES } from '../lib/builders'
+import { EFFECT_LABELS, EFFECT_MENU, type EffectForm } from '../lib/kinds'
+import type { Thing } from '../lib/references'
+import { parseFlag, type BuilderProps } from './ConditionBuilder'
+import { Button, IdPicker, JsonField, NumberInput, RowTools, Select, TextInput, move } from './ui'
+
+const FORMS: { value: EffectForm; label: string }[] = EFFECT_MENU.map((value) => ({ value, label: EFFECT_LABELS[value] }))
+
+export function EffectList({ value, onChange, names = NO_NAMES, onCreate, add = 'Add an effect' }: BuilderProps & { value: EffectRef[]; onChange: (value: EffectRef[]) => void; add?: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {value.map((effect, i) => (
+        <EffectBuilder
+          key={i}
+          value={effect}
+          names={names}
+          onCreate={onCreate}
+          onChange={(next) => onChange(value.map((e, j) => (j === i ? next : e)))}
+          tools={
+            <RowTools
+              label={`effect ${i + 1}`}
+              onUp={i > 0 ? () => onChange(move(value, i, -1)) : undefined}
+              onDown={i < value.length - 1 ? () => onChange(move(value, i, 1)) : undefined}
+              onRemove={() => onChange(value.filter((_, j) => j !== i))}
+            />
+          }
+        />
+      ))}
+      <div>
+        <Button size="xs" onClick={() => onChange([...value, newEffect('scene', names)])}>
+          + {add}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, tools }: BuilderProps & { value: EffectRef; onChange: (value: EffectRef) => void; tools?: React.ReactNode }) {
+  const [raw, setRaw] = useState(false)
+  const form = raw ? 'json' : effectForm(value)
+  const e = value as Record<string, any>
+  const set = (patch: Record<string, unknown>) => onChange({ ...e, ...patch } as EffectRef)
+  const create = (thing: Thing) => (id: string) => onCreate?.(thing, id)
+
+  let fields: React.ReactNode = null
+  switch (form) {
+    case 'stat':
+      fields = (
+        <>
+          <IdPicker noun="stat" aria-label="Stat" value={e.key} options={names.stats} onChange={(key) => set({ key })} onCreate={create('stat')} />
+          <span className="text-xs text-fd-muted-foreground">by</span>
+          <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
+        </>
+      )
+      break
+    case 'setStat':
+      fields = (
+        <>
+          <IdPicker noun="stat" aria-label="Stat" value={e.key} options={names.stats} onChange={(key) => set({ key })} onCreate={create('stat')} />
+          <span className="text-xs text-fd-muted-foreground">to</span>
+          <NumberInput aria-label="To" value={e.to} onChange={(to) => set({ to: to ?? 0 })} />
+        </>
+      )
+      break
+    case 'flag':
+      fields = (
+        <>
+          <IdPicker noun="variable" aria-label="Variable" value={e.key} options={names.variables} onChange={(key) => set({ key })} onCreate={create('variable')} />
+          <span className="text-xs text-fd-muted-foreground">to</span>
+          <TextInput aria-label="Value" className="w-28" value={String(e.value)} onChange={(text) => set({ value: parseFlag(text ?? '') })} />
+        </>
+      )
+      break
+    case 'flagAdd':
+      fields = (
+        <>
+          <IdPicker noun="variable" aria-label="Variable" value={e.key} options={names.variables} onChange={(key) => set({ key })} onCreate={create('variable')} />
+          <span className="text-xs text-fd-muted-foreground">add</span>
+          <NumberInput aria-label="Add" value={e.add} onChange={(add) => set({ add: add ?? 0 })} />
+        </>
+      )
+      break
+    case 'item':
+      fields = (
+        <>
+          <IdPicker noun="item" aria-label="Item" value={e.id} options={names.items} onChange={(id) => set({ id })} onCreate={create('item')} />
+          <span className="text-xs text-fd-muted-foreground">by</span>
+          <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
+        </>
+      )
+      break
+    case 'scene':
+      fields = <IdPicker noun="scene" aria-label="Scene" empty="Close the scene" value={e.id ?? ''} options={names.scenes} onChange={(id) => set({ id: id || null })} onCreate={create('scene')} />
+      break
+    case 'draw':
+      fields = (
+        <>
+          <span className="text-xs text-fd-muted-foreground">from the set</span>
+          <IdPicker noun="set" aria-label="Storylet set" value={e.from} options={names.sets} onChange={(from) => set({ from })} />
+          <span className="text-xs text-fd-muted-foreground">or else</span>
+          <IdPicker noun="scene" aria-label="Otherwise" empty="Nothing" value={e.otherwise ?? ''} options={names.scenes} onChange={(id) => set({ otherwise: id || undefined })} onCreate={create('scene')} />
+        </>
+      )
+      break
+    case 'notify':
+      fields = (
+        <>
+          <TextInput aria-label="Title" className="min-w-40 flex-1" value={e.title} placeholder="Title" onChange={(title) => set({ title: title ?? '' })} />
+          <TextInput aria-label="Text (a prose key)" className="w-40" mono optional value={e.text} placeholder="prose key (optional)" onChange={(text) => set({ text })} />
+        </>
+      )
+      break
+    case 'turn':
+      fields = (
+        <>
+          <span className="text-xs text-fd-muted-foreground">times</span>
+          <NumberInput aria-label="How many turns" value={e.by} placeholder="1" onChange={(by) => set({ by })} />
+        </>
+      )
+      break
+    case 'sound':
+      fields = <TextInput aria-label="Track" className="w-40" mono value={e.track} placeholder="track id" onChange={(track) => set({ track: track ?? '' })} />
+      break
+    case 'audio':
+      fields = (
+        <>
+          <TextInput aria-label="Channel" className="w-28" mono value={e.channel} placeholder="channel" onChange={(channel) => set({ channel: channel ?? '' })} />
+          <TextInput aria-label="Track" className="w-32" mono value={e.track ?? ''} placeholder={e.track === null ? 'silent' : 'track id'} onChange={(track) => set({ track: track || undefined })} />
+          <Button size="xs" variant="ghost" onClick={() => set({ track: null })} title="Silence the channel">
+            Silence
+          </Button>
+        </>
+      )
+      break
+    case 'plugin':
+    case 'json':
+      fields = (
+        <div className="w-full">
+          <JsonField label="Effect as JSON" value={value} rows={3} onChange={(next) => next && typeof next === 'object' && onChange(next)} />
+          {form === 'plugin' ? <p className="mt-1 text-xs text-fd-muted-foreground">A plugin's effect by its full name, such as <code>{'{ "quests/start": { "quest": "errand" } }'}</code>.</p> : null}
+        </div>
+      )
+      break
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-fd-border bg-fd-background p-2">
+      <Select
+        aria-label="Kind of effect"
+        value={form}
+        options={FORMS}
+        onChange={(next) => {
+          setRaw(next === 'json')
+          if (next !== 'json') onChange(newEffect(next, names))
+        }}
+      />
+      {fields}
+      {tools ? <span className="ms-auto">{tools}</span> : null}
+    </div>
+  )
+}

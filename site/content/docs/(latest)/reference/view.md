@@ -19,10 +19,12 @@ import { renderAction, screen, view, type View } from '@ifloom/engine'
 ## view
 
 ```ts
-function view(state: GameState, game: Game): View
+function view(state: GameState, game: Game, options?: ViewOptions): View
 ```
 
 Builds the whole `View` from the state in one pass. It's pure, and cheap enough to call after every command. It's built from [`screen`](#screen), so the open scene is rendered once per call, however many choices it has.
+
+`options` is a [`ViewOptions`](#viewoptions). You rarely pass it yourself: the [runner](/docs/reference/runner#the-view-cache) does, so that plugins' views can show what the player's profile holds. Called with just the state and the game, no plugin's view sees the profile.
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -35,7 +37,7 @@ for (const action of shown.actions) addButton(action.label, action.disabled, act
 ## screen
 
 ```ts
-function screen(state: GameState, game: Game): Screen
+function screen(state: GameState, game: Game, options?: ViewOptions): Screen
 ```
 
 What one state shows, before it's formatted as a `View`. `view` is built from it, and the reducer reads it after each command to record pool picks and what each audio channel started playing. It renders the open scene once and answers every choice's availability, effects and price from that one render.
@@ -55,7 +57,24 @@ for (const choice of shown.choices) {
 }
 ```
 
-It's pure, like `view`. It builds the plugins' views too, so it costs about as much as `view` does.
+It's pure, like `view`. It builds the plugins' views too, so it costs about as much as `view` does. `options` is the same as `view`'s. The reducer never passes it, so what it records never depends on the profile.
+
+### ViewOptions
+
+```ts
+type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
+```
+
+What a view or a screen is drawn with besides the state. `profile` is what the player's [profile](/docs/reference/profile) holds, by namespace. Each plugin's view is handed only its own namespace, as [`context.profile`](/docs/reference/plugins#plugincontext). A runner with a profile passes it for you.
+
+```ts
+import { view } from '@ifloom/engine'
+
+// What a runner does: the plugins' views see what's stored under their ids.
+const shown = view(state, game, { profile: { achievements: { earned: ['regular'] } } })
+```
+
+**Gotcha.** A pool pick a plugin's view makes must not depend on the profile. The reducer records picks from a screen built without it, so a pick that only the profile chose would change on the next visit.
 
 ### Screen
 

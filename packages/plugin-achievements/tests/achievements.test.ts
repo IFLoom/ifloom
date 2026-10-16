@@ -20,7 +20,6 @@ import {
   achievements,
   grantAchievement,
   progressValue,
-  withProfile,
   type AchievementDef,
   type AchievementsView,
 } from '../src/index.ts'
@@ -129,15 +128,42 @@ describe('achievements', () => {
     runner.apply({ type: 'activity', id: 'kindness' })
     runner.apply({ type: 'activity', id: 'dusk' })
     await runner.settled()
-    const stored = await runner.profile!.get('achievements')
-    expect(stored).toEqual({ earned: ['river', 'kind'] })
-    // A new game has earned nothing, but the profile remembers.
-    const newGame = fresh(g)
-    expect(shown(newGame, g).earned).toBe(0)
-    const merged = withProfile(shown(newGame, g), stored, newGame, g)
-    expect(merged.earned).toBe(2)
-    expect(merged.achievements[2]).toMatchObject({ title: 'Dusk by the river', earned: true, earnedOn: null })
-    expect(withProfile(shown(newGame, g), undefined, newGame, g)).toEqual(shown(newGame, g))
+    expect(await runner.profile!.get('achievements')).toEqual({ earned: ['river', 'kind'] })
+    // A new game has earned nothing in its save, but the runner's view shows what the profile remembers.
+    await runner.newGame()
+    await runner.settled()
+    expect(holds(runner.state, achievementEarned('river'), g)).toBe(false)
+    const ever = runner.view().plugins.achievements as AchievementsView
+    expect(ever.earned).toBe(2)
+    expect(ever.achievements[2]).toMatchObject({ title: 'Dusk by the river', earned: true, earnedOn: null })
+    // A view built without a runner has no profile: only this save's achievements.
+    expect(shown(runner.state, g).earned).toBe(0)
+    // A second runner on the same profile sees it once it has read it.
+    const later = createRunner(g, fresh(g), { profile: profile(g, driver) })
+    await later.settled()
+    expect((later.view().plugins.achievements as AchievementsView).earned).toBe(2)
+  })
+
+  it('follow the profile as it changes, with a new view of the same state', async () => {
+    const g = game()
+    const stored = profile(g, memoryDriver())
+    const runner = createRunner(g, fresh(g), { profile: stored })
+    await runner.settled()
+    const before = runner.view()
+    const heard: GameState[] = []
+    runner.subscribe((state) => heard.push(state))
+    // Earned in another save: written to the profile by something else.
+    await stored.set('achievements', { earned: ['kind'] })
+    expect(heard).toEqual([runner.state])
+    const after = runner.view()
+    expect(after).not.toBe(before)
+    expect(runner.view()).toBe(after)
+    expect((after.plugins.achievements as AchievementsView).achievements[3]).toMatchObject({ earned: true, earnedOn: null })
+    expect(after.scene).toBe(before.scene)
+    // Writing what it already shows changes nothing.
+    await stored.set('achievements', { earned: ['kind'] })
+    expect(heard).toHaveLength(1)
+    expect(runner.view()).toBe(after)
   })
 
   it('replay exactly, and an old save with no state for the plugin loads', () => {

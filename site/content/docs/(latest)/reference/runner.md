@@ -214,7 +214,7 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 |---|---|
 | `game` | The game it plays. |
 | `state` | The current [`GameState`](/docs/reference/state). It's read-only, so change it through `apply`. |
-| `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state. See [The view cache](#the-view-cache). |
+| `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state, with the plugins' views shown the profile. See [The view cache](#the-view-cache). |
 | `apply(command)` | Runs a command and returns [`Applied`](/docs/reference/commands#apply): `ok`, the next `state`, and `refused` when it didn't take. A refused command changes nothing. It adds no history or log entry and calls no listeners. |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `canUndo` / `canRedo` | Whether there's anything to undo or redo, for greying out the buttons. Always `false` with history off. |
@@ -226,11 +226,11 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 | `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where (see [`SaveMeta`](/docs/reference/saves#savemeta)). |
 | `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to the [`LoadedSave`](/docs/reference/saves#loadedsave), to `null` for an empty slot, or to a string saying why the save couldn't be read. On `null` or a string, the runner is unchanged. |
 | `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/docs/reference/saves), exactly as `load` would. The [`LoadedSave`](/docs/reference/saves#loadedsave) has already been through `loadState`. |
-| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported. |
+| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, and the profile has been read for the plugins' views. |
 | `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`. |
 | `setUiSetting(id, value)` | Changes a `ui` setting in the profile. See [below](#setuisetting). |
 | `newGame(options?)` | Starts a new game in place. See [below](#newgame). |
-| `subscribe(listener)` | Calls `listener(state)` after every change of state: a command, an undo, a redo, a load or a new game. Returns a function that stops it. |
+| `subscribe(listener)` | Calls `listener(state)` after every change of state: a command, an undo, a redo, a load or a new game. It's also called, with the same state, when what the plugins' views show of the profile changes. Returns a function that stops it. |
 
 `save` and `load` are async, and their promises can reject. Both reject if the runner was given no `saves`. They also reject if the save store's driver throws while writing or reading, because `onSaveError` only hears about autosaves. Catch the error where you call them:
 
@@ -262,7 +262,16 @@ runner.apply({ type: 'choose', id: 'open' })
 runner.view() === runner.view()  // true: one view for the new state
 ```
 
-**Gotcha.** Only the latest state's view is kept. Calling [`view`](/docs/reference/view#view) yourself always builds a new one, so in a UI driven by a runner, read `runner.view()`.
+With a `profile`, the runner also shows each plugin's view what that plugin's namespace holds, as [`context.profile`](/docs/reference/plugins#the-profile). It reads those namespaces when it's made and follows every write to the profile after that, from itself or anything else. When a namespace a view can see changes, the cached view is replaced by a new object with only that plugin's view built again. The scene isn't drawn again, and the state is the same object. Then the runner's listeners are called, so a UI that reads `runner.view()` in its listener redraws.
+
+```ts
+await runner.profile?.set('achievements', { earned: ['regular'] })
+runner.view() === runner.view()  // still true: the new view is kept
+```
+
+A UI that redraws only when `runner.state` changes misses these. Compare `runner.view()` instead, as the React UI does.
+
+**Gotcha.** Only the latest state's view is kept. Calling [`view`](/docs/reference/view#view) yourself always builds a new one, and one built without the runner has no profile, so in a UI driven by a runner, read `runner.view()`.
 
 ### setUiSetting
 

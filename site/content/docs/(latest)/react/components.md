@@ -160,7 +160,7 @@ type GameProviderProps = {
 }
 ```
 
-Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, works out the view again only when the state changes, and hands both down through [`useGame`](#usegame).
+Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, reads `runner.view()` again only when the state changes or what the plugins' views show of the profile does, and hands both down through [`useGame`](#usegame).
 
 `panels` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 

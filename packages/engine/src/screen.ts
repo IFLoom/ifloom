@@ -96,6 +96,14 @@ export type Screen = {
   audio: AudioView & { tracks: Record<string, string | null> }
 }
 
+/**
+ * What a screen or a view is drawn with besides the state. `profile` is what
+ * the player's profile holds, by namespace: each plugin's view is handed its
+ * own as `context.profile`. The runner passes it; without it, no view sees
+ * the profile.
+ */
+export type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
+
 /** What one screen shares while it is drawn: the open scene, rendered once, and the picks made. */
 type Drawing = { rendered: Rendering; picks: Record<string, string> }
 
@@ -108,7 +116,7 @@ type Drawing = { rendered: Rendering; picks: Record<string, string> }
  * `view` formats a screen for a UI. Use `screen` when you need what `view`
  * leaves out: what each choice would apply, or the picks and tracks.
  */
-export function screen(state: GameState, game: Game): Screen {
+export function screen(state: GameState, game: Game, options: ViewOptions = {}): Screen {
   const picks: Record<string, string> = {}
   const drawing: Drawing = { rendered: rendering(state, game, picks), picks }
   const idle = !lockedOut(state, game) && !state.sceneId && !state.minigame
@@ -117,7 +125,7 @@ export function screen(state: GameState, game: Game): Screen {
   const actions = idle ? idleActions(state, game, drawing) : []
   // A minigame being played is shown over the scene or the room, with no choices or buttons of theirs.
   const playing = playingScene(state, game, dialogue?.scene ?? room!, drawing)
-  const plugins = pluginViews(state, game, picks)
+  const plugins = pluginViews(state, game, picks, options.profile)
   const cx = featureContext()
   const tracks = audioTracks(state, game, dialogue?.audio, cx)
   const beats = dialogue ? dialogue.scene.beats : null

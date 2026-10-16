@@ -3,7 +3,7 @@ import type { Game } from './game.ts'
 import { localStorageDriver } from './drivers.ts'
 import { apply, type Applied } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
-import { pluginContext } from './plugin.ts'
+import { pluginContext, pluginView } from './plugin.ts'
 import { profile as makeProfile, type Profile } from './profile.ts'
 import { settingRefusal } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
@@ -125,11 +125,34 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   const listeners = new Set<(state: GameState) => void>()
   // The last view built, and the state it was built for: the same state object gives the same view.
   let cached: { state: GameState; view: View } | null = null
+  // What the plugins' views are shown of the profile, by plugin id: each namespace as last read or
+  // written, frozen. Only plugins with a view, and only with a profile.
+  const viewers = new Map((options.profile ? (game.plugins ?? []) : []).filter((plugin) => plugin.view).map((plugin) => [plugin.id, plugin]))
+  let shownProfile: Readonly<Record<string, unknown>> = {}
 
   /** The view of a state, built once per state object and kept for the latest one. */
   function viewOf(of: GameState): View {
-    if (cached?.state !== of) cached = { state: of, view: view(of, game) }
+    if (cached?.state !== of) cached = { state: of, view: view(of, game, { profile: shownProfile }) }
     return cached.view
+  }
+
+  /**
+   * A plugin's profile namespace was read or written. If its views would see
+   * something new, the cached view gets that plugin's view built again (the
+   * scene is not drawn again) as a new object, and listeners are told.
+   */
+  function profileSeen(namespace: string, value: unknown): void {
+    const plugin = viewers.get(namespace)
+    if (!plugin) return
+    const before = shownProfile[namespace]
+    if (JSON.stringify(before) === JSON.stringify(value)) return
+    shownProfile = { ...shownProfile, [namespace]: frozenCopy(value) }
+    if (cached) {
+      const shown = cached.view
+      const plugins = { ...shown.plugins, [namespace]: pluginView(plugin, cached.state, game, {}, shownProfile[namespace]) }
+      cached = { state: cached.state, view: { ...shown, plugins } }
+    }
+    notify()
   }
 
   const notify = () => {
@@ -175,6 +198,12 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     const profile = options.profile
     if (!profile) return
     remembering = remembering.then(() => write(profile)).catch((error: unknown) => options.onSaveError?.(error))
+  }
+
+  // The plugins' views see their profile namespaces: read each now, and follow every write after.
+  if (options.profile && viewers.size) {
+    options.profile.subscribe(profileSeen)
+    for (const id of viewers.keys()) remember(async (profile) => profileSeen(id, await profile.get(id)))
   }
 
   /** After a command took: what it changes in the profile. */
@@ -232,6 +261,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
      * What a UI draws for the current state. Built once per state: asked again
      * for the same state, it hands back the same object, so a UI, the audio
      * player and the backlog can all read it without building it again.
+     * Each plugin's view is shown its own profile namespace. When one of
+     * those changes, the view becomes a new object with that plugin's view
+     * built again, and listeners are told, though the state is the same.
      */
     view(): View {
       return viewOf(state)
@@ -367,7 +399,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       restore(loaded)
       return loaded
     },
-    /** Settles when every autosave and profile write so far has been written. */
+    /** Settles when every autosave and profile write so far has been written, and the profile first read for the plugins' views. */
     async settled(): Promise<SaveMeta | null> {
       await remembering
       return saving
@@ -399,7 +431,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       begin(fresh, 0)
       return fresh
     },
-    /** Hear about every change of state. Returns the way to stop. */
+    /**
+     * Hear about every change of state, and every change to what the view
+     * shows of the profile, which leaves the state as it was. Returns the way to stop.
+     */
     subscribe(listener: (state: GameState) => void): () => void {
       listeners.add(listener)
       return () => listeners.delete(listener)
@@ -408,6 +443,19 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
 }
 
 export type Runner = ReturnType<typeof createRunner>
+
+/** A deep, frozen copy of a JSON value from the profile, so a view can read it and never change what is stored. */
+function frozenCopy(value: unknown): unknown {
+  if (value === undefined) return undefined
+  const freeze = (entry: unknown): unknown => {
+    if (entry && typeof entry === 'object') {
+      for (const inner of Object.values(entry)) freeze(inner)
+      Object.freeze(entry)
+    }
+    return entry
+  }
+  return freeze(JSON.parse(JSON.stringify(value)))
+}
 
 function randomSeed(): number {
   return Math.floor(Math.random() * 2 ** 31)

@@ -4,12 +4,12 @@ description: "Achievements earned by a condition or an effect, secret ones, prog
 ---
 `@ifloom/plugin-achievements` marks things the player has done: finishing a storyline, saving up 100 coins, finding a secret. Each achievement is earned the first time its condition holds, or by an effect. Secret ones show as `???` until they're earned, and one with a target shows how close the player is, such as 4 of 10.
 
-What a save has earned is kept in the save. Everything earned in any save is also kept in the player's [profile](/docs/reference/profile), which outlives saves and new games, so a UI can show what the player has ever earned.
+What a save has earned is kept in the save. Everything earned in any save is also kept in the player's [profile](/docs/reference/profile), which outlives saves and new games. The view, built by a runner with a profile, shows both, so a UI can show everything the player has ever earned.
 
 ```ts
 import {
   achievements, achievementEarned, grantAchievement,
-  achievementDefs, achievementsView, withProfile, progressValue,
+  achievementDefs, achievementsView, progressValue,
   type AchievementDef, type ProgressDef, type ProgressValue,
   type AchievementsState, type AchievementsProfile,
   type AchievementsView, type AchievementEntry,
@@ -141,7 +141,9 @@ type AchievementsProfile = { earned: string[] }
 
 Every achievement earned in any save, in the order it was first earned. Read it with `await runner.profile?.get('achievements')`.
 
-A plugin's view can't read the profile, because the profile is read asynchronously and the view is built from the state alone. So the view shows what this save has earned, and [`withProfile`](#withprofile) adds what the profile holds.
+The plugin's view reads it as [`context.profile`](/docs/reference/plugins#the-profile), so [`runner.view()`](/docs/reference/runner#the-view-cache) shows every achievement earned in any save as earned. When an achievement is written to the profile, the runner builds a new view and tells its listeners, so the UI updates without reading the profile itself.
+
+`view(state, game)` called without a runner has no profile, so its slice holds only what this save has earned.
 
 ## Conditions
 
@@ -174,7 +176,7 @@ In a plain-effect list (an item's use, or what `rules.turn` returns), write the 
 
 ## The view
 
-`view(state, game).plugins.achievements` is an `AchievementsView`.
+`runner.view().plugins.achievements` is an `AchievementsView`. With a runner that has a profile, an achievement counts as earned if this save earned it or any save did. Without one, as in `view(state, game)`, only this save's count.
 
 ### AchievementsView
 
@@ -189,7 +191,7 @@ type AchievementsView = {
 | Field | What it is |
 |---|---|
 | `achievements` | Every achievement, earned or not, in the order the game declares them. |
-| `earned` | How many are earned. |
+| `earned` | How many are earned, in this save or, through the runner's profile, in any. |
 | `total` | How many there are, secret ones included. |
 
 ### AchievementEntry
@@ -212,6 +214,7 @@ type AchievementEntry = {
 | `title` | Its title, or `???` while it's secret and not earned. |
 | `description` | Its description, or `''` if it has none or is a secret not yet earned. |
 | `image` | Its picture as written, or `null`. Always `null` for a secret not yet earned. |
+| `earned` | Whether this save earned it, or any save did, as the profile records. |
 | `earnedOn` | The turn this save earned it, or `null`. Also `null` for one earned only in another save. |
 | `progress` | How far towards it, or `null` if it has no progress or is a secret not yet earned. |
 
@@ -245,29 +248,25 @@ The game's achievements, merged from its packs: `game.data.achievements.achievem
 ### achievementsView
 
 ```ts
-function achievementsView(record: AchievementsState, state: GameState, game: Game): AchievementsView
+function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView
 ```
 
-The `AchievementsView` for a record. The plugin's view is `achievementsView(slice, state, game)`. It needs the state to read progress.
-
-### withProfile
+The `AchievementsView` for a record. It needs the state to read progress. `stored` is what the profile's `achievements` namespace holds, an [`AchievementsProfile`](#achievementsprofile); each achievement in it shows as earned, with `earnedOn` `null` unless this save earned it too. The plugin's view is `achievementsView(slice, state, game, context.profile)`.
 
 ```ts
-function withProfile(view: AchievementsView, stored: unknown, state: GameState, game: Game): AchievementsView
-```
-
-The view with every achievement the profile holds shown as earned, with its title, description and progress. Pass what `runner.profile.get('achievements')` gives. With nothing stored, it returns the view as it is.
-
-```ts
-import { type Game, type Runner } from '@ifloom/engine'
-import { withProfile, type AchievementsView } from '@ifloom/plugin-achievements'
+import type { Game, GameState, Runner } from '@ifloom/engine'
+import { achievements, achievementsView } from '@ifloom/plugin-achievements'
 
 declare const runner: Runner
 declare const game: Game
+declare const state: GameState
 
+const plugin = achievements()
 const stored = await runner.profile?.get('achievements')
-const ever = withProfile(runner.view().plugins.achievements as AchievementsView, stored, runner.state, game)
+const ever = achievementsView(plugin.read(state, game), state, game, stored)
 ```
+
+You need it only for a state the runner isn't playing, such as a save's preview. For the current game, read `runner.view()`.
 
 ### progressValue
 
@@ -293,4 +292,4 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 - **Earned after the command, not during it.** A trigger that asks `achievementEarned` on the same command sees it on the next one.
 - **Earned stays earned.** Nothing takes an achievement back, even if its condition stops holding.
 - **`seen` counts a scene as soon as it's on screen.** An achievement with `when: { seen: 'ava.river' }` is earned when the scene opens, not when the player leaves it.
-- **A new game starts with nothing earned in its save.** The profile still has everything, which is what `withProfile` is for.
+- **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievementEarned` and `{{v:achievements/earned}}` read this save only.

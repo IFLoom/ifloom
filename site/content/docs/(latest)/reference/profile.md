@@ -61,4 +61,4 @@ Your own UI code can use any other name for its own things, such as the volume a
 
 **Gotchas.**
 - The profile is shared by every save of the game on that device. Clearing the browser's storage clears it with the saves.
-- Nothing in the game state reads the profile. Conditions, effects and views can't see it, so a replay always gives the same game. A new game copies the stored play settings into its state when it starts, through [`startingState`](/docs/reference/commands#startingstate)'s `settings`.
+- Nothing in the game state reads the profile. Conditions and effects can't see it, so a replay always gives the same game. A plugin's view can read its own namespace when a runner builds it (see [the plugin's profile](/docs/reference/plugins#the-profile)), which changes what's drawn but never the state. A new game copies the stored play settings into its state when it starts, through [`startingState`](/docs/reference/commands#startingstate)'s `settings`.

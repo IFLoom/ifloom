@@ -45,18 +45,18 @@ export type GameProviderProps = UiOptions & {
 /**
  * Connects the UI to a runner: every component under it reads the view and
  * sends commands through `useGame`. The view is recomputed when the runner's
- * state changes, and only then.
+ * state changes, or what the plugins' views show of the profile does, and only then.
  */
 const NONE = {}
 
 export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, keys, children }: GameProviderProps) {
-  const state = useSyncExternalStore(
+  // The view follows the runner. It builds one per state, and a new one when what the plugins'
+  // views show of the profile changes, and hands the same object to everything that reads it
+  // (the backlog, the audio player), so this builds nothing new.
+  const view = useSyncExternalStore(
     (listener) => runner.subscribe(() => listener()),
-    () => runner.state,
+    () => runner.view(),
   )
-  // The view follows the state. The runner builds it once per state and hands the same
-  // object to everything that reads it (the backlog, the audio player), so this builds nothing new.
-  const view = useMemo(() => runner.view(), [runner, state])
   const send = useCallback((command: Command) => runner.apply(command), [runner])
   const value = useMemo(
     () => ({ runner, view, send, panels, mods, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),

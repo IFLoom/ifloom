@@ -241,6 +241,7 @@ type PluginContext<S> = {
   query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   picks?: Record<string, string>
+  profile?: unknown
 }
 ```
 
@@ -252,6 +253,7 @@ Every plugin function gets this alongside the game state:
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
 - `apply(effects, on?)` applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
 - `picks` is only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. See [The view](#the-view).
+- `profile` is only there in `view`, and only when a [runner](/docs/reference/runner#the-view-cache) with a profile builds it. It's what the plugin's own namespace in the [profile](/docs/reference/profile) holds, frozen so you can't change it, or `undefined` while nothing is stored. See [The profile](#the-profile).
 
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
 
@@ -532,11 +534,19 @@ export const endings = definePlugin({
 
 It's called with the state after the command, the state before it, what the plugin's namespace holds now (`undefined` if nothing), and the plugin's context. Return the new value to store, or `undefined` to leave it as it is. The runner writes each answer in order, so each call sees the value the one before it stored.
 
-A UI reads the namespace from the runner, as in `await runner.profile?.get('endings')`.
+The plugin's view can read its namespace as `context.profile`, so a UI gets everything from the view:
+
+```ts
+view: (state, { profile }) => ({ reached: (profile as string[] | undefined) ?? [] }),
+```
+
+Only the view sees it, and only when a runner with a profile builds the view. The runner reads each plugin's namespace when it starts and follows every write after that, so `context.profile` is the value last read or written. When it changes, the runner's view becomes a new object, with that plugin's view built again, and the runner's listeners are told. See [The view cache](/docs/reference/runner#the-view-cache). Outside the runner, `view(state, game)` has no profile, and `context.profile` is `undefined`.
 
 **Gotchas.**
 - Only a runner with a `profile` calls `onCommand`. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
-- The profile isn't in the context, so a plugin's conditions, effects and view can't read it. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
+- Conditions, effects, commands, hooks and `onCommand`'s own context never see `context.profile`. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
+- `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway; return a new value from `onCommand` instead.
+- Right after a runner starts, before the profile has been read, the view has no profile yet. `await runner.settled()` waits for the first read.
 
 ## Stat modifiers
 

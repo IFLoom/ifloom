@@ -3,6 +3,8 @@ import type { Game, Scene } from '../../src/game.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply } from '../../src/reduce.ts'
 import { createRunner } from '../../src/runner.ts'
+import { memoryDriver } from '../../src/drivers.ts'
+import { profile } from '../../src/profile.ts'
 import { screen, stageView } from '../../src/screen.ts'
 import type { GameState } from '../../src/types.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -21,7 +23,7 @@ const tide = definePlugin<{ height: number }>({
   effects: { rise: (_state, _args, { slice, set }) => set({ height: slice.height + 1 }) },
   guard: (_state, { effects }) => (effects.length > 3 ? 'Too much at once.' : undefined),
   price: (_state, effects) => (effects.some((effect) => effect.kind === 'custom') ? ['the tide rises'] : undefined),
-  view: (state, { game, picks }) => ({ stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks) }),
+  view: (state, { game, picks, profile }) => ({ stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks), remembered: profile ?? null }),
 })
 
 function counted(): { game: Game; renders: Map<GameState, number> } {
@@ -129,5 +131,20 @@ describe('one render per state', () => {
     expect(runner.view()).toBe(after)
     runner.undo()
     expect(runner.view()).toEqual(shown)
+  })
+
+  it('a profile change rebuilds the plugin’s view only, never the scene', async () => {
+    const { game, renders } = counted()
+    const stored = profile(game, memoryDriver())
+    const runner = createRunner(game, begin(game, { sceneId: 'porch' }), { profile: stored })
+    await runner.settled()
+    const before = runner.view()
+    renders.clear()
+    await stored.set('tide', { highest: 3 })
+    const after = runner.view()
+    expect(after).not.toBe(before)
+    expect((after.plugins.tide as { remembered: unknown }).remembered).toEqual({ highest: 3 })
+    expect(after.scene).toBe(before.scene)
+    expect(renders.size).toBe(0)
   })
 })

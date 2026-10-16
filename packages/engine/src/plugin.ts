@@ -43,14 +43,24 @@ export type PluginContext<S> = {
    * or a body's pick stays the same on every visit. Undefined elsewhere.
    */
   picks?: Record<string, string>
+  /**
+   * Only in `view`, and only when a runner with a profile builds it: what the
+   * plugin's own profile namespace (its id) held when the runner last read or
+   * wrote it. Frozen, so read it and never change it. Undefined elsewhere, in
+   * a view built by `view(state, game)` alone, and while nothing is stored.
+   * Conditions, effects, commands and hooks never see it, so a replay always
+   * plays the same.
+   */
+  profile?: unknown
 }
 
 /**
  * What a context is made for, besides the state: `picks` to collect a view's
- * pool picks, and `ending` while a turn is ending, so a `turn` effect applied
- * through `apply` does nothing, as one in the turn's own rules does.
+ * pool picks, `ending` while a turn is ending, so a `turn` effect applied
+ * through `apply` does nothing, as one in the turn's own rules does, and
+ * `profile`, what a view is shown of the plugin's profile namespace.
  */
-export type ContextOptions = { picks?: Record<string, string>; ending?: boolean }
+export type ContextOptions = { picks?: Record<string, string>; ending?: boolean; profile?: unknown }
 
 /**
  * Why a plugin will not let a command through. A string is a refusal, as a
@@ -333,6 +343,7 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
     apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), options.ending ?? false),
   }
   if (options.picks) context.picks = options.picks
+  if (options.profile !== undefined) context.profile = options.profile
   return context
 }
 
@@ -527,11 +538,25 @@ export function pluginAudio(game: Game, state: GameState): Record<string, string
   return out
 }
 
-/** Every plugin's view, by id. The pool picks they make are written into `picks`. */
-export function pluginViews(state: GameState, game: Game, picks: Record<string, string> = {}): Record<string, unknown> {
+/**
+ * Every plugin's view, by id. The pool picks they make are written into
+ * `picks`. `profile` is what the runner holds of the profile, by namespace;
+ * each view sees only its own.
+ */
+export function pluginViews(
+  state: GameState,
+  game: Game,
+  picks: Record<string, string> = {},
+  profile?: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const plugin of game.plugins ?? []) {
-    if (plugin.view) out[plugin.id] = plugin.view(state, pluginContext(plugin, state, game, { picks }))
+    if (plugin.view) out[plugin.id] = pluginView(plugin, state, game, picks, profile?.[plugin.id])
   }
   return out
+}
+
+/** One plugin's view, with what its profile namespace holds. Undefined for a plugin with no view. */
+export function pluginView(plugin: Plugin, state: GameState, game: Game, picks: Record<string, string>, stored: unknown): unknown {
+  return plugin.view?.(state, pluginContext(plugin, state, game, { picks, profile: stored }))
 }

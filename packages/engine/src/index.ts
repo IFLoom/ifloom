@@ -197,7 +197,7 @@ export type {
 export { browserRunner, createRunner, replay } from './runner.ts'
 
 // The view a UI draws, and the screen it is built from
-export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene } from './screen.ts'
+export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
 export { renderAction, screen, stageView } from './screen.ts'
 export type {
   StatView,

@@ -12,20 +12,18 @@ Each is a small React component that reads the view with [`useGame`](/docs/react
 
 ## An achievements page
 
-The plugin's view lists every achievement with what this save has earned. What the player has earned in any save is in their [profile](/docs/reference/profile), under `achievements`. Read it with [`useProfile`](/docs/react/components#useprofile), which keeps it up to date, and add it to the view with [`withProfile`](/docs/plugins/achievements#withprofile):
+The plugin's view lists every achievement, and shows as earned each one the player has earned in any save. It reads that from the player's [profile](/docs/reference/profile), which the runner hands it, so the page only reads the view:
 
 ```tsx
 // src/pages/Achievements.tsx
-import { useGame, usePage, useProfile } from '@ifloom/react'
-import { withProfile, type AchievementsView } from '@ifloom/plugin-achievements'
+import { useGame, usePage } from '@ifloom/react'
+import type { AchievementsView } from '@ifloom/plugin-achievements'
 
 export function Achievements() {
-  const { runner, view } = useGame()
+  const { view } = useGame()
   const { back } = usePage()
-  const stored = useProfile('achievements')
-  const shown = view.plugins.achievements as AchievementsView | undefined
-  if (!shown) return null
-  const all = withProfile(shown, stored, runner.state, runner.game)
+  const all = view.plugins.achievements as AchievementsView | undefined
+  if (!all) return null
   return (
     <section className="mx-auto max-w-xl space-y-4 p-6">
       <h1 className="text-2xl font-semibold">
@@ -50,7 +48,7 @@ export function Achievements() {
 }
 ```
 
-A secret achievement the player hasn't earned already reads `???`, with no description or progress, so the page doesn't need to hide anything itself. Once it's earned in any save, `withProfile` shows it in full.
+A secret achievement the player hasn't earned already reads `???`, with no description or progress, so the page doesn't need to hide anything itself. Once it's earned in any save, the view shows it in full. When the runner writes a newly earned one to the profile, it builds a new view and `useGame` redraws the page. A view you build yourself with `view(state, game)` has no profile and shows only the current save's achievements.
 
 Add it to the [pages](/docs/guide/title-screen#pages-of-your-own), and the title screen gets an Achievements button:
 

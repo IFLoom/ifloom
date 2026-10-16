@@ -4,7 +4,7 @@ import type { StageView } from './features/media.ts'
 import type { SpeakerView } from './plugin.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Flat, GameState } from './types.ts'
-import { screen, type RenderedChoice, type Screen, type ScreenChoice } from './screen.ts'
+import { screen, type RenderedChoice, type Screen, type ScreenChoice, type ViewOptions } from './screen.ts'
 import { featureContext } from './core.ts'
 import { viewPieces, type FeatureView } from './features/registry.ts'
 
@@ -57,9 +57,12 @@ export type View = Flat<ViewBase & FeatureView>
  * come from `screen`, which renders the open scene once; the rest is read from
  * the state here. `view` only formats: what each choice would apply and the
  * picks stay on the screen.
+ *
+ * `options.profile` hands each plugin's view its profile namespace; the
+ * runner passes it, and without it no view sees the profile.
  */
-export function view(state: GameState, game: Game): View {
-  return viewOf(screen(state, game), state, game)
+export function view(state: GameState, game: Game, options: ViewOptions = {}): View {
+  return viewOf(screen(state, game, options), state, game)
 }
 
 /** A screen as the view a UI draws. */

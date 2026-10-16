@@ -6,7 +6,8 @@
  *
  * What a save has earned is in the plugin's state. Everything earned in any
  * save is also kept in the player's profile, which outlives saves, through
- * `profile.onCommand`.
+ * `profile.onCommand`, and the view, built by a runner with a profile, shows
+ * both.
  */
 import {
   customValue,
@@ -160,28 +161,18 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
   }
 }
 
-/** Everything the UI needs to draw the list of achievements, from this save's record. */
-export function achievementsView(record: AchievementsState, state: GameState, game: Game): AchievementsView {
+/**
+ * Everything the UI needs to draw the list of achievements: what this save's
+ * record has earned, and what the profile has earned in any save, when it's
+ * given (`stored`, what the profile's `achievements` namespace holds).
+ */
+export function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView {
+  const ever = new Set(profileIds(stored))
   const achievements = achievementDefs(game).map((def) => {
     const on = record.earned[def.id]
-    return entry(def, on ?? null, on !== undefined, state, game)
+    return entry(def, on ?? null, on !== undefined || ever.has(def.id), state, game)
   })
   return { achievements, earned: achievements.filter((item) => item.earned).length, total: achievements.length }
-}
-
-/**
- * The view with what the player's profile holds added: achievements earned in
- * any save show as earned. Pass what `runner.profile.get('achievements')` gives.
- */
-export function withProfile(view: AchievementsView, stored: unknown, state: GameState, game: Game): AchievementsView {
-  const ids = new Set(profileIds(stored))
-  if (!ids.size) return view
-  const byId = new Map(achievementDefs(game).map((def) => [def.id, def]))
-  const achievements = view.achievements.map((item) => {
-    const def = byId.get(item.id)
-    return item.earned || !ids.has(item.id) || !def ? item : entry(def, null, true, state, game)
-  })
-  return { ...view, achievements, earned: achievements.filter((item) => item.earned).length }
 }
 
 function profileIds(stored: unknown): string[] {
@@ -232,7 +223,7 @@ export function achievements() {
         return added.length ? ({ earned: [...known, ...added] } satisfies AchievementsProfile) : undefined
       },
     },
-    view: (state, { slice, game }) => achievementsView(slice, state, game),
+    view: (state, { slice, game, profile }) => achievementsView(slice, state, game, profile),
     references: {
       calls: (_kind, _name, args) => (args.id === undefined ? [] : [{ entry: String(args.id), plugin: ID, list: 'achievements', noun: 'achievement' }]),
       content: (game) =>

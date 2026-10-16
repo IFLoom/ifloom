@@ -5,6 +5,8 @@ import { definePlugin } from '../../src/plugin.ts'
 import { profile } from '../../src/profile.ts'
 import { startingState } from '../../src/intake.ts'
 import { createRunner } from '../../src/runner.ts'
+import { holds } from '../../src/condition.ts'
+import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
 const SETTINGS: SettingDef[] = [
@@ -153,6 +155,44 @@ describe('the runner and the profile', () => {
     runner.apply({ type: 'activity', id: 'nowhere' })
     await runner.settled()
     expect(await prof.get('reading')).toEqual(['old', 'turn2', 'turn3'])
+  })
+
+  it('shows a plugin’s view its own namespace, read-only, and nothing else of the profile', async () => {
+    const seen: Record<string, unknown> = {}
+    const shelf = definePlugin({
+      id: 'shelf',
+      version: 1,
+      conditions: { remembers: (_state, _args, context) => ((seen.condition = context.profile), false) },
+      view: (_state, context) => ({ books: context.profile ?? null }),
+    })
+    const g = game({ plugins: [shelf] })
+    const prof = profile(g, memoryDriver())
+    await prof.set('shelf', ['atlas'])
+    await prof.set('settings', { hints: false })
+    const runner = createRunner(g, begin(g), { profile: prof })
+    // Read when the runner starts: the view built before then has none.
+    expect(runner.view().plugins.shelf).toEqual({ books: null })
+    await runner.settled()
+    const books = (runner.view().plugins.shelf as { books: string[] }).books
+    expect(books).toEqual(['atlas'])
+    expect(Object.isFrozen(books)).toBe(true)
+    expect(() => books.push('novel')).toThrow()
+    expect(await prof.get('shelf')).toEqual(['atlas'])
+    // Conditions never see it, and nor does a view built without the runner.
+    holds(runner.state, { custom: 'shelf/remembers' }, g)
+    expect(seen.condition).toBeUndefined()
+    expect(view(runner.state, g).plugins.shelf).toEqual({ books: null })
+    // A write is followed: a new view of the same state, and listeners told.
+    let told = 0
+    runner.subscribe(() => told++)
+    const before = runner.view()
+    await prof.set('shelf', ['atlas', 'novel'])
+    expect(told).toBe(1)
+    expect(runner.view()).not.toBe(before)
+    expect(runner.view().plugins.shelf).toEqual({ books: ['atlas', 'novel'] })
+    // Another namespace changing tells nobody.
+    await prof.set('settings', { hints: true })
+    expect(told).toBe(1)
   })
 
   it('reports a profile that fails to write, and carries on', async () => {

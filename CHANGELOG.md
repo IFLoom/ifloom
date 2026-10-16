@@ -61,4 +61,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `migrate`, `migratePlugins`, `migrateGame`, `deserialize`, `serialize` and `hydrate`. Use `loadState` to load a save or any other state from outside.
 - The built-in "Wait a while" action. A game declares the actions it offers everywhere in `Game.actions`.
 
+### Fixed
+
+- The terminal preset's status line of notices no longer covers the top of the page. It's now the first row of the page and pushes everything else down, so the scene title, the notice strip and a minigame stay in view. On wide screens it sticks to the top as you scroll.
+
 [Unreleased]: https://github.com/IFLoom/ifloom/commits/main

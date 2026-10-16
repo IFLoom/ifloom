@@ -1,7 +1,7 @@
 /*
  * Terminal: a green-screen text adventure. Monospace throughout, light text on
  * black, no rounded corners, choices as a numbered prompt list, and notices
- * as a status line across the top.
+ * as a status line across the top of the page.
  *
  *   @import "@ifloom/react/styles.css";
  *   @import "@ifloom/react/themes/terminal.css";
@@ -106,16 +106,50 @@ body {
   content: "  ! ";
 }
 
+/*
+ * The status line is part of the page, not over it: the first row of the
+ * grid, across every column, so it pushes the stage down instead of covering
+ * the scene title, the notice strip or a minigame. On wide screens it sticks
+ * to the top as the page scrolls. With nothing unseen it takes no room.
+ */
+[data-part="page"]:has(> [data-part="overlay"]) {
+  align-content: start;
+}
+
 [data-part="overlay"] {
-  top: 0;
-  bottom: auto;
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+  position: static;
+  inset: auto;
+  order: -1;
+  grid-column: 1 / -1;
+  width: auto;
+  max-width: none;
+  background: var(--background);
+}
+
+[data-part="overlay"]:empty {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  [data-part="overlay"] {
+    position: sticky;
+    top: 0;
+  }
+}
+
+[data-part="overlay"] [data-part="notices"] {
+  gap: 0;
 }
 
 [data-part="notice"] {
   border-width: 0 0 1px;
+  align-items: center;
+  padding-block: 0.35rem;
+}
+
+[data-part="notice-dismiss"] {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 [data-part="sidebar"],

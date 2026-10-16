@@ -3,16 +3,16 @@ title: "Extending the UI"
 ---
 The base UI draws everything the engine and the first-party plugins put in the view. It can't know about screens that are specific to your game, such as a scene with a screen of its own, an app's custom screen, or your own plugin's view. For those, you hand it components. And when you want a different arrangement altogether, you can build your own layout from the same parts.
 
-This page is about adding screens. To change how the built-in ones look, or to replace one, see [Make it your own](/react/customising).
+This page is about adding screens. To change how the built-in ones look, or to replace one, see [Make it your own](/docs/react/customising).
 
 ## Panels
 
 A panel is a screen your game draws itself, in place of the usual one. There are two places a panel can go:
 
-- **A scene's panel** is drawn instead of the scene's choices. Think of a market stall with prices, a card game or a map. The scene names it with [`panel`](/reference/scenes#sceneview).
-- **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/plugins/devices#section).
+- **A scene's panel** is drawn instead of the scene's choices. Think of a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/scenes#sceneview).
+- **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
 
-In both cases the component is a [`PanelComponent`](/react/components#panelcomponent). It gets `data`, which is what the game's [custom panel](/reference/custom#panels) returned, and it can read anything else it needs with [`useGame`](/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
+In both cases the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the game's [custom panel](/docs/reference/custom#panels) returned, and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
 
 ### A scene's panel
 
@@ -84,15 +84,15 @@ const panels = { StallPanel, inbox: Inbox }
 - **A panel with no component is quietly left out.** A scene falls back to its choices, and an app section draws nothing.
 - **The data is whatever the custom panel returned**, typed `unknown`. Cast it to the shape you wrote it with.
 - **A panel's local state isn't saved.** A component can keep local state with React's `useState`, such as what's in the basket or which card is face up. That state isn't in the save, so finish with a command that is.
-- **Define `panels` once**, outside any component. See [`GameProvider`](/react/components#gameprovider).
+- **Define `panels` once**, outside any component. See [`GameProvider`](/docs/react/components#gameprovider).
 
 ## Plugin sections
 
-An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The UI has built-in renderers for the [messages](/plugins/messages) and [feed](/plugins/feed) plugins. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id.
+An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The UI has built-in renderers for the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id.
 
-The component is a [`PluginSectionComponent`](/react/components#pluginsectioncomponent). It gets `data`, the plugin's whole view at [`view.plugins[id]`](/reference/view#plugins), and `with`, the section's `with`, which says which part to show.
+The component is a [`PluginSectionComponent`](/docs/react/components#pluginsectioncomponent). It gets `data`, the plugin's whole view at [`view.plugins[id]`](/docs/reference/view#plugins), and `with`, the section's `with`, which says which part to show.
 
-Here's the [loyalty card plugin](/reference/plugins#a-worked-example) as an app on the laptop:
+Here's the [loyalty card plugin](/docs/reference/plugins#a-worked-example) as an app on the laptop:
 
 ```ts
 import { devices } from '@ifloom/plugin-devices'
@@ -123,7 +123,7 @@ To draw messages or a feed your own way, register a renderer under `messages` or
 
 ## A plugin's view anywhere
 
-Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/react/#layouts):
+Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/docs/react#layouts):
 
 ```tsx
 import { Badge, DEFAULT_LAYOUT, GameShell, useGame } from '@ifloom/react'
@@ -143,7 +143,7 @@ The UI reads the first-party plugins the same way: by the shape of their views, 
 
 ## Your own layout
 
-Most arrangements don't need any code of your own. [`GameShell`](/react/#gameshell)'s `layout` names the parts for the side column and the stage, in order, and your own components can go among them (see [Layouts](/react/#layouts)). For example, this puts the stats above the scene and drops the quest list:
+Most arrangements don't need any code of your own. [`GameShell`](/docs/react#gameshell)'s `layout` names the parts for the side column and the stage, in order, and your own components can go among them (see [Layouts](/docs/react#layouts)). For example, this puts the stats above the scene and drops the quest list:
 
 ```tsx
 import { GameShell } from '@ifloom/react'
@@ -151,7 +151,7 @@ import { GameShell } from '@ifloom/react'
 <GameShell runner={runner} layout={{ sidebar: ['title', 'menu', 'location', 'people', 'actions'], stage: ['stats', 'scene', 'inputs'] }} />
 ```
 
-When you want a page `GameShell` can't draw, such as two columns of parts or a header bar, you have three ways to go. The side column on the right is only CSS (see [Rearrange the parts](/react/customising#_5-rearrange-the-parts)). A different shape of page is a replacement [`Frame`](/react/customising#_7-replace-the-frame). And a page that isn't a column and a stage at all is your own root, passed to `mountGame` as [`app`](/react/customising#_8-write-your-own-root), or written as your own shell from the exported parts, like this. Wrap it in a [`GameProvider`](/react/components#gameprovider), and add a [`TooltipProvider`](/react/components#tooltip) if anything in it uses tooltips. [`Parts`](/react/components#parts) draws a list of parts by name, as `GameShell` does, and [`Sidebar`](/react/components#sidebar) is the side column on its own:
+When you want a page `GameShell` can't draw, such as two columns of parts or a header bar, you have three ways to go. The side column on the right is only CSS (see [Rearrange the parts](/docs/react/customising#5-rearrange-the-parts)). A different shape of page is a replacement [`Frame`](/docs/react/customising#7-replace-the-frame). And a page that isn't a column and a stage at all is your own root, passed to `mountGame` as [`app`](/docs/react/customising#8-write-your-own-root), or written as your own shell from the exported parts, like this. Wrap it in a [`GameProvider`](/docs/react/components#gameprovider), and add a [`TooltipProvider`](/docs/react/components#tooltip) if anything in it uses tooltips. [`Parts`](/docs/react/components#parts) draws a list of parts by name, as `GameShell` does, and [`Sidebar`](/docs/react/components#sidebar) is the side column on its own:
 
 ```tsx
 import { createRoot } from 'react-dom/client'
@@ -178,19 +178,19 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-Every part is also a component, such as [`SceneStage`](/react/components#scenestage), [`StatList`](/react/components#statlist), [`Title`](/react/components#title) and [`Actions`](/react/components#actions). Use the component when a part needs props, like the quest list's `title` above, or when you don't want a list at all.
+Every part is also a component, such as [`SceneStage`](/docs/react/components#scenestage), [`StatList`](/docs/react/components#statlist), [`Title`](/docs/react/components#title) and [`Actions`](/docs/react/components#actions). Use the component when a part needs props, like the quest list's `title` above, or when you don't want a list at all.
 
 Each part reads the view itself, so you can leave any part out or use one twice. A part that belongs to a plugin draws nothing without that plugin. A part with nothing to show also draws nothing. For example, `InputFields` draws nothing when no input is on offer, `Inventory` when the player carries nothing, and `GameMenu` when the runner has no saves, undo or backlog and the provider has no `mods`.
 
-**Gotcha.** Leave out `InputFields` only if the game has no [inputs](/reference/inputs). Nothing else in the UI sends `input`, so without it the player can't give the value.
+**Gotcha.** Leave out `InputFields` only if the game has no [inputs](/docs/reference/inputs). Nothing else in the UI sends `input`, so without it the player can't give the value.
 
-To replace one part, write your own in its place, or replace the built-in one everywhere with [`components`](/react/customising#_6-replace-a-component). A component that draws a list of buttons from the view only needs [`useGame`](/react/components#usegame), a [`ChoiceButton`](/react/components#choicebutton) for each button, and [`useWords`](/react/components#usewords) for any of the UI's words. When a component sends commands, it should send what the view's buttons carry (`choice.command`) rather than commands it builds itself. That way a greyed-out button and a refusal never disagree.
+To replace one part, write your own in its place, or replace the built-in one everywhere with [`components`](/docs/react/customising#6-replace-a-component). A component that draws a list of buttons from the view only needs [`useGame`](/docs/react/components#usegame), a [`ChoiceButton`](/docs/react/components#choicebutton) for each button, and [`useWords`](/docs/react/components#usewords) for any of the UI's words. When a component sends commands, it should send what the view's buttons carry (`choice.command`) rather than commands it builds itself. That way a greyed-out button and a refusal never disagree.
 
 ## Your own components in the system
 
 A game's own components can take part in the same styling as the built-in ones, so a game that uses them (yours, or someone else's using your parts) can restyle them the same way.
 
-[`usePart`](/react/components#usepart) gives an element its `data-part` and its classes. Your built-in classes are the defaults, and the game's [`classes`](/react/customising#_4-change-the-built-in-classes) and `unstyled` apply over them:
+[`usePart`](/docs/react/components#usepart) gives an element its `data-part` and its classes. Your built-in classes are the defaults, and the game's [`classes`](/docs/react/customising#4-change-the-built-in-classes) and `unstyled` apply over them:
 
 ```tsx
 import { usePart, useGame } from '@ifloom/react'
@@ -207,9 +207,9 @@ function Purse() {
 }
 ```
 
-The name has to be one of [`PART_KEYS`](/react/components#part-keys), so pick the built-in part your element is most like. Here the purse is styled like any other stat. For a kind of element the UI doesn't have, set `data-part` yourself (`<div data-part="weather">`) and style it with CSS.
+The name has to be one of [`PART_KEYS`](/docs/react/components#part_keys), so pick the built-in part your element is most like. Here the purse is styled like any other stat. For a kind of element the UI doesn't have, set `data-part` yourself (`<div data-part="weather">`) and style it with CSS.
 
-[`overridable`](/react/components#overridable) makes a component replaceable by name in [`components`](/react/components#components). It takes one of the built-in names, so it's for a component that stands in for a built-in one. Say you share a one-line stats bar between your games:
+[`overridable`](/docs/react/components#overridable) makes a component replaceable by name in [`components`](/docs/react/components#components). It takes one of the built-in names, so it's for a component that stands in for a built-in one. Say you share a one-line stats bar between your games:
 
 ```tsx
 import { overridable, useGame, usePart } from '@ifloom/react'
@@ -236,9 +236,9 @@ A game that sets `components.StatList` gets its own component wherever `StatsBar
 
 ## More shadcn/ui components
 
-The UI exports the primitives it uses: [`Button`](/react/components#button), [`Badge`](/react/components#badge), [`Card`](/react/components#card), [`Dialog`](/react/components#dialog), [`ScrollArea`](/react/components#scrollarea), [`Separator`](/react/components#separator), [`Tabs`](/react/components#tabs) and [`Tooltip`](/react/components#tooltip). For anything else shadcn/ui has, such as a slider, a select or a sheet, add it to your own project the shadcn/ui way, with its CLI or by copying the component in.
+The UI exports the primitives it uses: [`Button`](/docs/react/components#button), [`Badge`](/docs/react/components#badge), [`Card`](/docs/react/components#card), [`Dialog`](/docs/react/components#dialog), [`ScrollArea`](/docs/react/components#scrollarea), [`Separator`](/docs/react/components#separator), [`Tabs`](/docs/react/components#tabs) and [`Tooltip`](/docs/react/components#tooltip). For anything else shadcn/ui has, such as a slider, a select or a sheet, add it to your own project the shadcn/ui way, with its CLI or by copying the component in.
 
-It'll match the UI without extra work. shadcn/ui components are styled by the same CSS variables, and [`@ifloom/react/styles.css`](/react/customising#_2-set-tokens-and-colours) already defines them all and maps them to Tailwind colours.
+It'll match the UI without extra work. shadcn/ui components are styled by the same CSS variables, and [`@ifloom/react/styles.css`](/docs/react/customising#2-set-tokens-and-colours) already defines them all and maps them to Tailwind colours.
 
 Set up the shadcn/ui CLI as its [Vite guide](https://ui.shadcn.com/docs/installation/vite) says, with the `@/` path alias, and point it at your stylesheet. Then run:
 
@@ -251,5 +251,5 @@ This writes `src/components/ui/slider.tsx` and installs the Radix package it nee
 **Gotchas.**
 
 - **Keep your stylesheet's variables.** `shadcn init` writes its own `:root` and `.dark` variables and an `@theme` block into the stylesheet you point it at. `@ifloom/react/styles.css` already has them, so delete the ones it wrote, or keep only those you mean to override, after the import.
-- **Either `cn` will do.** The CLI writes its own `lib/utils.ts` with `cn`. It's the same function as the UI's [`cn`](/react/components#cn), so use either.
-- **Import Tailwind once.** If the CLI adds `@import "tailwindcss"` to your stylesheet, remove it. The UI's stylesheet already imports it. If you'd rather keep your own import, use `@ifloom/react/theme.css` in place of `styles.css` (see [Bringing your own Tailwind](/react/customising#bringing-your-own-tailwind)).
+- **Either `cn` will do.** The CLI writes its own `lib/utils.ts` with `cn`. It's the same function as the UI's [`cn`](/docs/react/components#cn), so use either.
+- **Import Tailwind once.** If the CLI adds `@import "tailwindcss"` to your stylesheet, remove it. The UI's stylesheet already imports it. If you'd rather keep your own import, use `@ifloom/react/theme.css` in place of `styles.css` (see [Bringing your own Tailwind](/docs/react/customising#bringing-your-own-tailwind)).

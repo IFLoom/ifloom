@@ -2,7 +2,7 @@
 title: "Using another framework"
 description: Draw an IFLoom game with Vue, Svelte, plain DOM or anything else, using the runner's view, apply and subscribe. Walks through the vanilla template and sketches Vue and Svelte bindings.
 ---
-The engine has no DOM and no framework. The [React UI](/react/) is the ready-made way to draw a game, but you can draw one with Vue, Svelte, plain DOM or anything else that can show text and buttons. This page shows how.
+The engine has no DOM and no framework. The [React UI](/docs/react) is the ready-made way to draw a game, but you can draw one with Vue, Svelte, plain DOM or anything else that can show text and buttons. This page shows how.
 
 To start, make a game from the `vanilla` template, which draws the game with plain DOM:
 
@@ -16,7 +16,7 @@ It's the same two-scene game as the `blank` template. Its `package.json` depends
 
 ## What the engine gives a UI
 
-A UI talks to the engine through a [runner](/reference/runner). You need four things from it:
+A UI talks to the engine through a [runner](/docs/reference/runner). You need four things from it:
 
 ```ts
 import { browserRunner } from '@ifloom/engine'
@@ -36,7 +36,7 @@ The loop is always the same:
 
 `subscribe` hears about every change, not only your own commands. Undo, redo and loading a save all call it too, so you don't need to redraw after each of those yourself.
 
-[`browserRunner`](/reference/runner#browserrunner) makes a runner with what most games in a browser want. Use [`createRunner`](/reference/runner#createrunner) when you want to choose everything yourself.
+[`browserRunner`](/docs/reference/runner#browserrunner) makes a runner with what most games in a browser want. Use [`createRunner`](/docs/reference/runner#createrunner) when you want to choose everything yourself.
 
 `runner.view()` builds a fresh object each time you call it. Call it once per change and keep the result, rather than calling it from every component.
 
@@ -44,7 +44,7 @@ The loop is always the same:
 
 Here's the template's `src/main.ts` in three parts.
 
-First it starts the game, with the same runner [`mountGame`](/react/#mountgame) makes for the React UI:
+First it starts the game, with the same runner [`mountGame`](/docs/react#mountgame) makes for the React UI:
 
 ```ts
 // src/main.ts
@@ -59,7 +59,7 @@ if (problems.length) console.warn(problems)
 const runner = browserRunner(game)
 ```
 
-`loadGame` returns the game and a list of problems, which `npm run check` also prints. [`browserRunner`](/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`.
+`loadGame` returns the game and a list of problems, which `npm run check` also prints. [`browserRunner`](/docs/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`.
 
 Then a function draws one view into `#root`:
 
@@ -93,7 +93,7 @@ function draw(view: View): void {
 }
 ```
 
-Every button the player can press is a [`RenderedChoice`](/reference/view#renderedchoice). It carries its `label`, its `command`, and `disabled` with the reason when it can't be pressed. The button sends the command as it is, so your UI never builds a command for a choice itself.
+Every button the player can press is a [`RenderedChoice`](/docs/reference/view#renderedchoice). It carries its `label`, its `command`, and `disabled` with the reason when it can't be pressed. The button sends the command as it is, so your UI never builds a command for a choice itself.
 
 Last, it draws once and redraws on every change:
 
@@ -106,7 +106,7 @@ That's the whole UI. It clears and redraws the page each time, which is fine for
 
 ### Adding an input
 
-The template draws scenes, buttons and stats, and nothing else. A game that asks for a value, such as the name in [Your first story](/guide/first-story), needs its [inputs](/reference/inputs) drawn too. Each one is an [`InputView`](/reference/view#inputview), and you send what the player enters as an `input` command. Add this to `draw`:
+The template draws scenes, buttons and stats, and nothing else. A game that asks for a value, such as the name in [Your first story](/docs/guide/first-story), needs its [inputs](/docs/reference/inputs) drawn too. Each one is an [`InputView`](/docs/reference/view#inputview), and you send what the player enters as an `input` command. Add this to `draw`:
 
 ```ts
 for (const input of Object.values(view.inputs)) {
@@ -127,10 +127,10 @@ An input of kind `choice` has its `options` instead, each with a `value` and a `
 
 ## What to draw
 
-The [view reference](/reference/view) lists every field. These are the ones most games need, roughly in order:
+The [view reference](/docs/reference/view) lists every field. These are the ones most games need, roughly in order:
 
 - `title`, the game's title, and `when`, where the game is in time and place when a plugin says.
-- `scene.title`, and `scene.beats` for the prose. Each [beat](/reference/prose#scenebeat) is a paragraph, a spoken line, a picture or a prop. The template draws `scene.body`, the raw prose, which is fine for plain paragraphs.
+- `scene.title`, and `scene.beats` for the prose. Each [beat](/docs/reference/prose#scenebeat) is a paragraph, a spoken line, a picture or a prop. The template draws `scene.body`, the raw prose, which is fine for plain paragraphs.
 - `scene.choices` while a scene is open, and `actions` while none is.
 - `stats`, the player's stats to show.
 - `inputs`, any value the game is asking for.
@@ -144,7 +144,7 @@ The [view reference](/reference/view) lists every field. These are the ones most
 
 The two sketches below bind the same runner to Vue and Svelte. They're sketches, not templates: they haven't been run as games, and you'll want to check them against each framework's own docs.
 
-Both frameworks need their Vite plugin. Add it through the [Vite preset](/cli/#the-vite-preset)'s `vite` option. The preset adds React and Tailwind only when the game depends on `@ifloom/react` (or on `react` or `tailwindcss`), so a game made from the vanilla template gets neither, and your framework's plugin is the only one.
+Both frameworks need their Vite plugin. Add it through the [Vite preset](/docs/cli#the-vite-preset)'s `vite` option. The preset adds React and Tailwind only when the game depends on `@ifloom/react` (or on `react` or `tailwindcss`), so a game made from the vanilla template gets neither, and your framework's plugin is the only one.
 
 ### Vue
 
@@ -267,7 +267,7 @@ mount(App, { target: document.querySelector('#root')! })
 
 ## Sound
 
-If your game lists tracks in [`game.audio`](/reference/audio), add [`@ifloom/audio`](/reference/audio-player) to its `package.json` and start the player once, next to the runner. It works the same whatever draws the page, because it reads the runner, not your components. The vanilla template has the line ready in `src/main.ts`, commented out:
+If your game lists tracks in [`game.audio`](/docs/reference/audio), add [`@ifloom/audio`](/docs/reference/audio-player) to its `package.json` and start the player once, next to the runner. It works the same whatever draws the page, because it reads the runner, not your components. The vanilla template has the line ready in `src/main.ts`, commented out:
 
 ```ts
 import { startAudio } from '@ifloom/audio'
@@ -278,7 +278,7 @@ startAudio(runner)
 
 In the Vue and Svelte sketches above, the line goes in `src/runner.ts`, after `browserRunner`. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
 
-A spoken line with a voice is a `say` [beat](/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/reference/audio-player#audioplayer) with the track's file:
+A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/reference/audio-player#audioplayer) with the track's file:
 
 ```ts
 import { audioSrc } from '@ifloom/engine'
@@ -290,6 +290,6 @@ if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.vol
 
 ## Next
 
-- [The runner](/reference/runner) lists everything else a runner does, such as undo, saves and the backlog.
-- [The view](/reference/view) describes every field you can draw.
-- [Commands](/reference/commands) lists the commands you can send.
+- [The runner](/docs/reference/runner) lists everything else a runner does, such as undo, saves and the backlog.
+- [The view](/docs/reference/view) describes every field you can draw.
+- [Commands](/docs/reference/commands) lists the commands you can send.

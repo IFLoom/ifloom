@@ -1,7 +1,7 @@
 ---
 title: "Conditions"
 ---
-A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/reference/checks) can check every id in it.
+A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/docs/reference/checks) can check every id in it.
 
 ```ts
 import type { Condition } from '@ifloom/engine'
@@ -25,12 +25,12 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 
 ## Where conditions are used
 
-- [Data scenes](/reference/scenes#datascene): a block's `when`, a choice's `when`, `blocked` and `labels`, and a `variants` block's `gate`.
-- The game's own [actions](/reference/actions#actiondef): `when` and `blocked`.
-- An [activity](/reference/actions#requirement)'s `requires`.
-- [Stages](/reference/progress#stages): `needs`.
-- [Locks](/reference/locks), [triggers](/reference/triggers) and [inputs](/reference/inputs): `when`.
-- A plugin's content. The [places plugin](/plugins/places#locationdef) uses them for a room's `locked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/plugins/cast#characterdef) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
+- [Data scenes](/docs/reference/scenes#datascene): a block's `when`, a choice's `when`, `blocked` and `labels`, and a `variants` block's `gate`.
+- The game's own [actions](/docs/reference/actions#actiondef): `when` and `blocked`.
+- An [activity](/docs/reference/actions#requirement)'s `requires`.
+- [Stages](/docs/reference/progress#stages): `needs`.
+- [Locks](/docs/reference/locks), [triggers](/docs/reference/triggers) and [inputs](/docs/reference/inputs): `when`.
+- A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `locked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#characterdef) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
 
 ## Range
 
@@ -81,7 +81,7 @@ type Condition =
   | PluginCall
 ```
 
-**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ flag: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
+**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ flag: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
 
 ### all, any, not
 
@@ -101,15 +101,15 @@ type Condition =
 { flag: 'coffeesBought', gte: 3 }  // a number, 3 or more
 ```
 
-Tests a game [variable](/reference/state#flags). What it tests depends on what you give:
+Tests a game [variable](/docs/reference/state#flags). What it tests depends on what you give:
 
 - **`is`** tests strict equality, so `1` and `'1'` differ. Any range bound beside it is ignored.
 - **A [range](#range) bound** (`gte`, `gt`, `lte` or `lt`) tests whether the variable's number is in the range. A variable that isn't a number (unset, text or `true`) counts as 0.
 - **Neither** tests whether the variable is truthy. `0`, `''` and `false` aren't.
 
-To count something, use the [`flag`](/reference/effects#flag) effect's `add` form, and test the count with a range.
+To count something, use the [`flag`](/docs/reference/effects#flag) effect's `add` form, and test the count with a range.
 
-With `of`, it tests an [entity](/reference/entities)'s variable, as in `{ flag: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
+With `of`, it tests an [entity](/docs/reference/entities)'s variable, as in `{ flag: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
 
 **Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ flag: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something is *not* set on an entity that may have gone, write `{ not: { flag: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
 
@@ -121,14 +121,14 @@ With `of`, it tests an [entity](/reference/entities)'s variable, as in `{ flag: 
 { setting: 'patience', gte: 6 }         // a range, 6 or more
 ```
 
-Tests a `play` [setting](/reference/settings), the value in [`state.settings`](/reference/state#settings). It reads the same way as [`flag`](#flag): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
+Tests a `play` [setting](/docs/reference/settings), the value in [`state.settings`](/docs/reference/state#settings). It reads the same way as [`flag`](#flag): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
 
 ```ts
 // A hint only for players who keep hints on.
 { id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
 ```
 
-**Gotcha.** Conditions can only read `play` settings. A `ui` setting isn't in the state, so the [loader](/reference/checks#in-a-condition) reports a condition that names one, along with an unknown setting and an `is` the setting can't take.
+**Gotcha.** Conditions can only read `play` settings. A `ui` setting isn't in the state, so the [loader](/docs/reference/checks#in-a-condition) reports a condition that names one, along with an unknown setting and an `is` the setting can't take.
 
 ### chose
 
@@ -138,9 +138,9 @@ Tests a `play` [setting](/reference/settings), the value in [`state.settings`](/
 { chose: 'ava.hi/compliment', lt: 1 }   // never
 ```
 
-How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a variable.
+How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a variable.
 
-**Gotcha.** The [content checker](/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
 
 ### seen
 
@@ -150,7 +150,7 @@ How many times the player has picked a choice. The key is the scene's id, a slas
 { seen: 'ava.river', lt: 1 }   // never
 ```
 
-How many times the player has entered a scene (see [`seen`](/reference/state#seen)). Use it to gate on order: it says the step before has happened. A stat threshold alone tells you how good the player is, not how far they've got.
+How many times the player has entered a scene (see [`seen`](/docs/reference/state#seen)). Use it to gate on order: it says the step before has happened. A stat threshold alone tells you how good the player is, not how far they've got.
 
 ### since
 
@@ -159,7 +159,7 @@ How many times the player has entered a scene (see [`seen`](/reference/state#see
 { since: 'ava.river', lt: 2 }    // within two turns of it
 ```
 
-Whole [turns](/reference/state#turn) since a scene was first entered (see [`seenOn`](/reference/state#seenon)). With the [calendar](/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
+Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [`seenOn`](/docs/reference/state#seenon)). With the [calendar](/docs/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
 
 **Gotchas.**
 - A scene the player hasn't seen yet fails every range, `lt` included.
@@ -172,7 +172,7 @@ Whole [turns](/reference/state#turn) since a scene was first entered (see [`seen
 { storylineFlag: { storyline: 'ava', key: 'favourite', is: 'poetry' } }
 ```
 
-Works like [`flag`](#flag) without a range, on a [storyline](/reference/storylines)'s variables. Bare, it asks whether the variable is truthy. With `is`, it tests strict equality.
+Works like [`flag`](#flag) without a range, on a [storyline](/docs/reference/storylines)'s variables. Bare, it asks whether the variable is truthy. With `is`, it tests strict equality.
 
 ### stat
 
@@ -182,11 +182,11 @@ Works like [`flag`](#flag) without a range, on a [storyline](/reference/storylin
 { stat: 'energy', lt: 20 }    // flagging
 ```
 
-Tests a [stat](/reference/state#stats) against a range. Coins, energy and every other number the player has are [declared stats](/reference/stats), so this is the condition for all of them.
+Tests a [stat](/docs/reference/state#stats) against a range. Coins, energy and every other number the player has are [declared stats](/docs/reference/stats), so this is the condition for all of them.
 
-It reads the stat with [`statValue`](/reference/stats#statvalue), so a [derived stat](/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`. [`holds`](#holds) called without a game can't do either, and reads `state.stats` as it is, with a missing stat as 0.
+It reads the stat with [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`. [`holds`](#holds) called without a game can't do either, and reads `state.stats` as it is, with a missing stat as 0.
 
-With `of`, it tests an [entity](/reference/entities)'s stat. `of` is an [entity reference](/reference/entities#entityref), or `'$'` inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`.
+With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [entity reference](/docs/reference/entities#entityref), or `'$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`.
 
 ```ts
 { stat: 'quality', of: 'dish:soup', lt: 5 }    // the soup could still be better
@@ -205,11 +205,11 @@ With `of`, it tests an [entity](/reference/entities)'s stat. `of` is an [entity 
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }   // two happy people
 ```
 
-How many [entities](/reference/entities) of a kind there are, against a [range](#range). A bare `{ count }` means at least one. With `where`, it counts the ones `where` holds for, testing it once for each with `'$'` as that one. A kind with none, or one the game doesn't declare, has 0.
+How many [entities](/docs/reference/entities) of a kind there are, against a [range](#range). A bare `{ count }` means at least one. With `where`, it counts the ones `where` holds for, testing it once for each with `'$'` as that one. A kind with none, or one the game doesn't declare, has 0.
 
-A `count` binds its own `'$'`. Inside an [`each`](/reference/effects#each)'s `where`, the `'$'` in a `count`'s `where` is the one being counted, not the one the `each` is on.
+A `count` binds its own `'$'`. Inside an [`each`](/docs/reference/effects#each)'s `where`, the `'$'` in a `count`'s `where` is the one being counted, not the one the `each` is on.
 
-The [content checker](/reference/checks) checks the kind and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, or `1 staff where it holds; wants more than 0` with a `where`. It doesn't break down what `where` read for each one.
+The [content checker](/docs/reference/checks) checks the kind and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, or `1 staff where it holds; wants more than 0` with a `where`. It doesn't break down what `where` read for each one.
 
 ### entity
 
@@ -217,9 +217,9 @@ The [content checker](/reference/checks) checks the kind and the `where`. [`expl
 { entity: 'staff:ana' }
 ```
 
-The [entity](/reference/entities) is in the game, which means it was declared or created and hasn't been removed. [`explain`](#explain) says `staff:ana is in the game` or `staff:ana is not in the game`.
+The [entity](/docs/reference/entities) is in the game, which means it was declared or created and hasn't been removed. [`explain`](#explain) says `staff:ana is in the game` or `staff:ana is not in the game`.
 
-**Gotcha.** Inside an [`each`](/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
+**Gotcha.** Inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
 
 ### level
 
@@ -230,9 +230,9 @@ The [entity](/reference/entities) is in the game, which means it was declared or
 { level: 'skill', of: 'staff:ana', gte: 2 } // an entity's level
 ```
 
-Tests the level a stat with [`levels`](/reference/stats#levels) is at, against a [range](#range). The level is how many of the stat's `levels.at` thresholds its value has reached, as [`statLevel`](/reference/stats#statlevel) works it out. A bare `{ level }` means level 1 or more.
+Tests the level a stat with [`levels`](/docs/reference/stats#levels) is at, against a [range](#range). The level is how many of the stat's `levels.at` thresholds its value has reached, as [`statLevel`](/docs/reference/stats#statlevel) works it out. A bare `{ level }` means level 1 or more.
 
-With `of`, it reads an [entity](/reference/entities)'s level, as [`{ stat }`](#stat) does. An entity that isn't there fails every range, `lt` included.
+With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }`](#stat) does. An entity that isn't there fails every range, `lt` included.
 
 ```ts
 // declared with the stat:
@@ -251,11 +251,11 @@ With `of`, it reads an [entity](/reference/entities)'s level, as [`{ stat }`](#s
 { tier: 'charm', gte: 2 }
 ```
 
-True when the stat has reached at least `gte` of its declared [`bands`](/reference/stats#statdef), the hidden thresholds you declare with the stat. Bands keep thresholds in one place and off the screen. A stat with no bands is always in band 0, so only `gte: 0` passes. There's no `lt`, so use `not`.
+True when the stat has reached at least `gte` of its declared [`bands`](/docs/reference/stats#statdef), the hidden thresholds you declare with the stat. Bands keep thresholds in one place and off the screen. A stat with no bands is always in band 0, so only `gte: 0` passes. There's no `lt`, so use `not`.
 
 **Gotcha.** `tier` needs the game to find the bands. [`holds`](#holds) without a game returns false for it, whatever `gte` is.
 
-The band comes from [`statBand`](/reference/stats#statband), which uses the `tier()` helper. It's exported for your own use:
+The band comes from [`statBand`](/docs/reference/stats#statband), which uses the `tier()` helper. It's exported for your own use:
 
 ```ts
 function tier(value: number, thresholds: readonly number[]): number
@@ -280,11 +280,11 @@ tier(12, [5, 10, 20])  // 2
 { storyline: 'ava', open: false }   // closed for now
 ```
 
-Whether a [storyline](/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/reference/storylines#storylineof-and-storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [content checker](/reference/checks) reports one the game doesn't declare.
+Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/docs/reference/storylines#storylineof-and-storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [content checker](/docs/reference/checks) reports one the game doesn't declare.
 
 [`explain`](#explain) says `storyline ava is closed; wants it open`.
 
-**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: person('ava'), gte: 20 }`.
+**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: person('ava'), gte: 20 }`.
 
 ### counter
 
@@ -301,9 +301,9 @@ Tests a storyline variable's number against a range. A variable that's missing o
 { minigameVar: 'arrow', gte: 2, lte: 2 }   // exactly 2
 ```
 
-Tests a variable of the [minigame](/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
+Tests a variable of the [minigame](/docs/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
 
-The [content checker](/reference/checks) reports a variable that no minigame declares.
+The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
 
 ### item
 
@@ -312,7 +312,7 @@ The [content checker](/reference/checks) reports a variable that no minigame dec
 { item: 'sandwich', gte: 3 }
 ```
 
-How many of an item the player has. Something the [wardrobe plugin](/plugins/wardrobe) has them wearing still counts.
+How many of an item the player has. Something the [wardrobe plugin](/docs/plugins/wardrobe) has them wearing still counts.
 
 ### collection
 
@@ -323,9 +323,9 @@ How many of an item the player has. Something the [wardrobe plugin](/plugins/war
 { collection: 'notes', lt: 1 }           // none at all
 ```
 
-What's in a [collection](/reference/collections). With `id`, it's true when an entry with that id is there, and any range is ignored. Without `id`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
+What's in a [collection](/docs/reference/collections). With `id`, it's true when an entry with that id is there, and any range is ignored. Without `id`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
 
-The [content checker](/reference/checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
+The [content checker](/docs/reference/checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
 
 ### has
 
@@ -333,7 +333,7 @@ The [content checker](/reference/checks) reports a collection the game doesn't d
 { has: 'raincoat' }
 ```
 
-The player has at least one. It's the same as a bare `{ item: 'raincoat' }`. With the [wardrobe plugin](/plugins/wardrobe), a worn raincoat counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
+The player has at least one. It's the same as a bare `{ item: 'raincoat' }`. With the [wardrobe plugin](/docs/plugins/wardrobe), a worn raincoat counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
 
 ### scene
 
@@ -350,9 +350,9 @@ The scene on screen is one of these. It's false when no scene is open.
 { turn: true, lt: 1 }    // still the first turn
 ```
 
-How many [turns](/reference/state#turn) have passed, counting from 0. A bare `{ turn: true }` is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/reference/effects#turn) effect.
+How many [turns](/docs/reference/state#turn) have passed, counting from 0. A bare `{ turn: true }` is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/docs/reference/effects#turn) effect.
 
-The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/plugins/calendar#conditions) as [plugin calls](#plugin-shorthand): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
+The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#plugin-shorthand): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
 
 ### phase
 
@@ -360,13 +360,13 @@ The engine keeps no clock but the turn, so there's no core condition for the tim
 { phase: ['arrival', 'first-day'] }
 ```
 
-The game's current [stage](/reference/state#phase) is one of these.
+The game's current [stage](/docs/reference/state#phase) is one of these.
 
 ### Where the player is
 
-The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/plugins/places#conditions), write `at('cafe', 'park')` (short for `{ 'places/at': ['cafe', 'park'] }`) for "in one of these places", and `within('cafe')` for "in the café or a room inside it".
+The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/docs/plugins/places#conditions), write `at('cafe', 'park')` (short for `{ 'places/at': ['cafe', 'park'] }`) for "in one of these places", and `within('cafe')` for "in the café or a room inside it".
 
-It doesn't keep characters either. With the [cast](/plugins/cast#conditions), write `here('ava')` (short for `{ 'cast/here': ['ava'] }`) for "Ava is in the room with the player", and `isAt('ava', 'park')` for "Ava is in the park, wherever the player is".
+It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions), write `here('ava')` (short for `{ 'cast/here': ['ava'] }`) for "Ava is in the room with the player", and `isAt('ava', 'park')` for "Ava is in the park, wherever the player is".
 
 **Gotcha.** An object whose key the engine doesn't know, such as `{ at: ['cafe'] }`, never holds, and the loader doesn't report it.
 
@@ -378,7 +378,7 @@ It doesn't keep characters either. With the [cast](/plugins/cast#conditions), wr
 { custom: 'quests/done', with: { quest: 'bread' } }
 ```
 
-Calls a [custom condition](/reference/custom#conditions) the game declares in `game.custom.conditions`, or a [plugin](/reference/plugins#naming)'s condition, named with the plugin's id in front. Use it for a test worked out from several values rather than read from one. The content stays data, and a mod can use it without shipping code.
+Calls a [custom condition](/docs/reference/custom#conditions) the game declares in `game.custom.conditions`, or a [plugin](/docs/reference/plugins#naming)'s condition, named with the plugin's id in front. Use it for a test worked out from several values rather than read from one. The content stays data, and a mod can use it without shipping code.
 
 `with` is passed to the function as its arguments, or `{}` when you leave it out. A name with a `/` is looked up among the game's plugins first.
 
@@ -396,7 +396,7 @@ const town: Game = {
 ```
 
 **Gotchas.**
-- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/reference/checks) reports it.
+- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
 - Without a `game`, every `{ custom }` is false.
 
 ### Plugin shorthand
@@ -406,7 +406,7 @@ const town: Game = {
 { 'wardrobe/wearing': { item: 'raincoat' } }
 ```
 
-A plugin's condition with its full name as the only key. See [`PluginCall`](/reference/custom#plugincall) for how the value becomes `with`. It holds, fails and is checked exactly like the `{ custom }` it stands for.
+A plugin's condition with its full name as the only key. See [`PluginCall`](/docs/reference/custom#plugincall) for how the value becomes `with`. It holds, fails and is checked exactly like the `{ custom }` it stands for.
 
 ## holds
 
@@ -434,7 +434,7 @@ holds(state, here('ava'), town)               // so does the cast's
 function inRange(value: number, range: Range): boolean
 ```
 
-Whether a number is in a [`Range`](#range), tested the way every built-in condition tests one. Every bound given must hold, and a range with no bounds at all asks whether the number is above 0. Use it in a [plugin](/reference/plugins)'s condition that takes a range in its `with`, so it reads the way the built-in ones do.
+Whether a number is in a [`Range`](#range), tested the way every built-in condition tests one. Every bound given must hold, and a range with no bounds at all asks whether the number is above 0. Use it in a [plugin](/docs/reference/plugins)'s condition that takes a range in its `with`, so it reads the way the built-in ones do.
 
 ```ts
 import { inRange, type Range } from '@ifloom/engine'

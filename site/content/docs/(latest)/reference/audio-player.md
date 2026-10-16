@@ -2,7 +2,7 @@
 title: "The audio player"
 description: Play a game's sound in the browser with @ifloom/audio. startAudio follows view.audio, crossfades music, plays each sound once, reads volumes from the profile and waits for the player's first click.
 ---
-The engine works out what should be playing, in [`view.audio`](/reference/audio#audioview), but plays nothing itself. `@ifloom/audio` does the playing in the browser. It follows a runner, and it doesn't need React or any other framework.
+The engine works out what should be playing, in [`view.audio`](/docs/reference/audio#audioview), but plays nothing itself. `@ifloom/audio` does the playing in the browser. It follows a runner, and it doesn't need React or any other framework.
 
 ```ts
 import { startAudio } from '@ifloom/audio'
@@ -10,7 +10,7 @@ import { startAudio } from '@ifloom/audio'
 const player = startAudio(runner)
 ```
 
-That's all most games need. The [React UI](/react/#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner (see [Using another framework](/guide/frameworks#sound)).
+That's all most games need. The [React UI](/docs/react#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner (see [Using another framework](/docs/guide/frameworks#sound)).
 
 ```ts
 import { startAudio, type AudioLike, type AudioOptions, type AudioPlayer } from '@ifloom/audio'
@@ -18,9 +18,9 @@ import { startAudio, type AudioLike, type AudioOptions, type AudioPlayer } from 
 
 ## Install
 
-Add `@ifloom/audio` beside the engine, the same way you added the engine (see [Installation](/guide/installation)). `@ifloom/react` already depends on it. It plays files with the browser's own `HTMLAudioElement`, so it needs no build step or extra library, and it works from a page opened from disk.
+Add `@ifloom/audio` beside the engine, the same way you added the engine (see [Installation](/docs/guide/installation)). `@ifloom/react` already depends on it. It plays files with the browser's own `HTMLAudioElement`, so it needs no build step or extra library, and it works from a page opened from disk.
 
-Put your sound files in the game's `public/audio/` folder. A track's `src` is read through [`audioSrc`](/reference/audio#audiosrc), so `{ src: 'music/calm.ogg' }` is `public/audio/music/calm.ogg`. [`ifloom check`](/cli/#ifloom-check) reports any that are missing.
+Put your sound files in the game's `public/audio/` folder. A track's `src` is read through [`audioSrc`](/docs/reference/audio#audiosrc), so `{ src: 'music/calm.ogg' }` is `public/audio/music/calm.ogg`. [`ifloom check`](/docs/cli#ifloom-check) reports any that are missing.
 
 ## startAudio
 
@@ -34,9 +34,9 @@ What it does with each part of the view:
 
 - **Background channels**, such as `music` and `ambience`, play one file each. When the file changes, the old one fades out while the new one fades in, over the channel's `crossfade` in milliseconds. A choice that leaves the file as it is doesn't restart it. A track loops if its `loop` says so.
 - **Playlists** play their files in the order the view gives. When one ends, the next starts. A `loop` or `shuffle` playlist goes back to the start after the last one, and an `inOrder` playlist stops there.
-- **Cues**, the one-shot sounds, play once per [`key`](/reference/audio#sounds-and-voices). Sounds on the same channel overlap, except on the `voice` channel, where each line waits for the one before it to finish.
+- **Cues**, the one-shot sounds, play once per [`key`](/docs/reference/audio#sounds-and-voices). Sounds on the same channel overlap, except on the `voice` channel, where each line waits for the one before it to finish.
 - **Volume** is the track's own `volume`, times the channel's volume setting, times 0 while the game is muted. See [Volume and mute](#volume-and-mute).
-- **Ducking** quietens a channel while another plays, but only on a channel whose `duck` you declared. See [`ChannelDef`](/reference/audio#channeldef).
+- **Ducking** quietens a channel while another plays, but only on a channel whose `duck` you declared. See [`ChannelDef`](/docs/reference/audio#channeldef).
 
 ```ts
 import { browserRunner } from '@ifloom/engine'
@@ -63,7 +63,7 @@ While it runs, it tells play going on apart from a jump. One more command is pla
 
 ### Volume and mute
 
-Volume comes from the `ui` [settings](/reference/settings) the game names in `game.audio`:
+Volume comes from the `ui` [settings](/docs/reference/settings) the game names in `game.audio`:
 
 ```ts
 settings: [
@@ -77,7 +77,7 @@ audio: {
 }
 ```
 
-A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the stored values from [`runner.profile`](/reference/profile) and listens for changes, so moving a slider on the settings screen changes the volume at once. It reads each value with [`settingValue`](/reference/settings#settingvalue), so until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, it uses the setting's `default`.
+A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the stored values from [`runner.profile`](/docs/reference/profile) and listens for changes, so moving a slider on the settings screen changes the volume at once. It reads each value with [`settingValue`](/docs/reference/settings#settingvalue), so until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, it uses the setting's `default`.
 
 ## AudioOptions
 
@@ -126,7 +126,7 @@ type AudioPlayer = {
 | `unlock()` | Allows sound now, as the first click or key press would, and starts whatever is due. |
 | `play(src, channel?, volume?)` | Plays a file once on a channel, at a volume from 0 to 1. `'sfx'` and `1` if left out. On `'voice'` it waits its turn like any voice line. It unlocks sound first. |
 
-`play` is for sounds the view doesn't ask for, such as the React UI's button that plays a spoken line again. Its `src` is a path from the page, as [`audioSrc`](/reference/audio#audiosrc) returns:
+`play` is for sounds the view doesn't ask for, such as the React UI's button that plays a spoken line again. Its `src` is a path from the page, as [`audioSrc`](/docs/reference/audio#audiosrc) returns:
 
 ```ts
 import { audioSrc } from '@ifloom/engine'
@@ -172,6 +172,6 @@ Fades and ducking move in steps on `setTimeout`, so a test with fake timers can 
 ## Gotchas
 
 - **The opening scene's sounds don't play.** They're in the view when the player starts, so they count as heard. Start a scene's sound from a choice, or put music on its channel, which plays as soon as sound is unlocked.
-- **Sound files stay beside the page.** [`ifloom build --inline-assets`](/cli/#one-file-pictures-and-all) puts pictures into `index.html` but never sound, which would make the page too big to load quickly. Ship the `audio/` folder with it.
+- **Sound files stay beside the page.** [`ifloom build --inline-assets`](/docs/cli#one-file-pictures-and-all) puts pictures into `index.html` but never sound, which would make the page too big to load quickly. Ship the `audio/` folder with it.
 - **One player per runner.** Two players on the same runner play everything twice. The React UI starts one in `mountGame`, so don't also call `startAudio` or `useAudio` there.
 - **Ducking follows what's playing, not the view.** A channel ducks while a sound under it is actually playing, and comes back up when that sound ends, over 300 ms.

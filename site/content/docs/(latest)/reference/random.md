@@ -1,7 +1,7 @@
 ---
 title: "Randomness"
 ---
-To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/reference/state#turn) and what the draw is for. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
+To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
 
 ```ts
 import { hash, roll, pick, chance, weighted } from '@ifloom/engine'
@@ -17,7 +17,7 @@ Don't call `Math.random` in content.
 
 ## The seed
 
-`state.seed` is a number fixed for the life of a save. A new game takes the `seed` passed to [`startingState`](/reference/commands#startingstate) or the [`start`](/reference/commands#start) command. If you leave it out, it's `hash(game.id)`. Put the seed in your draws when a draw should differ between saves.
+`state.seed` is a number fixed for the life of a save. A new game takes the `seed` passed to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command. If you leave it out, it's `hash(game.id)`. Put the seed in your draws when a draw should differ between saves.
 
 ```ts
 import { startingState } from '@ifloom/engine'
@@ -29,7 +29,7 @@ const state = startingState(town, { seed: Math.floor(Math.random() * 2 ** 31) })
 const fixed = startingState(town)
 ```
 
-That one `Math.random` is outside the game. It picks the seed once, and the save fixes every draw after it. [`mountGame`](/react/#mountgame) in the React UI does this for you.
+That one `Math.random` is outside the game. It picks the seed once, and the save fixes every draw after it. [`mountGame`](/docs/react#mountgame) in the React UI does this for you.
 
 **Gotcha.** A UI that leaves the seed out deals every new game the same cards, because they all share the game's id.
 
@@ -154,10 +154,10 @@ When every weight is a whole number, the draw is `hash(parts) % total`, walking 
 
 The engine draws with it wherever content has weights:
 
-- [storylets](/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws;
-- [variants](/reference/prose#variantmember) with a weight on any member;
-- [pool files](/reference/media#poolfile), when a pool request picks a file;
-- shuffled [playlists](/reference/audio#playlistdef), drawn without replacement.
+- [storylets](/docs/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws;
+- [variants](/docs/reference/prose#variantmember) with a weight on any member;
+- [pool files](/docs/reference/media#poolfile), when a pool request picks a file;
+- shuffled [playlists](/docs/reference/audio#playlistdef), drawn without replacement.
 
 **Gotchas.**
 - The order of `items` matters. The same parts and the same weights in another order can draw a different item.

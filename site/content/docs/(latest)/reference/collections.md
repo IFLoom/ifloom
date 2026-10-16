@@ -1,7 +1,7 @@
 ---
 title: "Collections"
 ---
-A collection is a named list the game keeps entries in, such as notes found, photos taken or a ledger of wages. You declare each one. Effects add entries with [`collect`](/reference/effects#collect) and take them out with [`discard`](/reference/effects#discard), and the [`{ collection }`](/reference/conditions#collection) condition asks what's in one. The [view](/reference/view#collections) hands every declared collection to the UI with its words filled in.
+A collection is a named list the game keeps entries in, such as notes found, photos taken or a ledger of wages. You declare each one. Effects add entries with [`collect`](/docs/reference/effects#collect) and take them out with [`discard`](/docs/reference/effects#discard), and the [`{ collection }`](/docs/reference/conditions#collection) condition asks what's in one. The [view](/docs/reference/view#collections) hands every declared collection to the UI with its words filled in.
 
 ```ts
 import { collect, collected, collectionById, discard, type CollectionDef, type CollectionItem, type CollectionEntry } from '@ifloom/engine'
@@ -32,7 +32,7 @@ const town: Pack = {
 }
 ```
 
-After `read-note` in turn 2, the state holds the entry as written, with the [turn](/reference/state#turn) it was collected in:
+After `read-note` in turn 2, the state holds the entry as written, with the [turn](/docs/reference/state#turn) it was collected in:
 
 ```ts
 import { holds, view } from '@ifloom/engine'
@@ -62,7 +62,7 @@ type CollectionDef = {
 | `name` | What the player sees it called. Passed through to the view. |
 | `max` | Keep at most this many entries. When one more is collected, the oldest go first. No limit if left out. |
 
-Declare collections in [`Game.collections`](/reference/game#game), either on the base you give [`loadGame`](/reference/loader#loadgame) or in a [pack](/reference/loader#pack)'s `collections`, or both. They merge by id with the base's first, so a later pack's collection replaces an earlier one with the same id.
+Declare collections in [`Game.collections`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `collections`, or both. They merge by id with the base's first, so a later pack's collection replaces an earlier one with the same id.
 
 ## CollectionItem
 
@@ -92,11 +92,11 @@ An entry as content writes it, in a `collect` effect.
 type CollectionEntry = CollectionItem & { turn: number }
 ```
 
-An entry as the state keeps it in [`state.collections`](/reference/state#collections). It's what was collected, plus the [turn](/reference/state#turn) it was collected in. Entries are kept oldest first.
+An entry as the state keeps it in [`state.collections`](/docs/reference/state#collections). It's what was collected, plus the [turn](/docs/reference/state#turn) it was collected in. Entries are kept oldest first.
 
 ## Functions
 
-The effects call these. A [plugin](/reference/plugins) or a custom command can call them directly.
+The effects call these. A [plugin](/docs/reference/plugins) or a custom command can call them directly.
 
 ### collect
 
@@ -148,7 +148,7 @@ The declaration with that id, or `undefined`.
 
 ## Gotchas
 
-- **Collecting an id that's already there does nothing.** That stops a note being found twice, but it also means a ledger with one fixed id records only the first wage. Give each entry its own id. A [custom effect](/reference/effects#computed-effects) can build one from the turn:
+- **Collecting an id that's already there does nothing.** That stops a note being found twice, but it also means a ledger with one fixed id records only the first wage. Give each entry its own id. A [custom effect](/docs/reference/effects#computed-effects) can build one from the turn:
 
   ```ts
   custom: {
@@ -162,7 +162,7 @@ The declaration with that id, or `undefined`.
   // in an activity: effects: [{ custom: 'logWage' }]
   ```
 
-- **`text` is a prose key.** Write the words in the pack's `prose` and name the key. The [content checker](/reference/checks) reports a key with no prose as `no prose for "…"`.
-- **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The [content checker](/reference/checks) reports `unknown collection "…"` wherever the effect is.
+- **`text` is a prose key.** Write the words in the pack's `prose` and name the key. The [content checker](/docs/reference/checks) reports a key with no prose as `no prose for "…"`.
+- **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The [content checker](/docs/reference/checks) reports `unknown collection "…"` wherever the effect is.
 - **`max` drops the oldest without telling anyone.** That includes entries a condition may be waiting for. Only ask for an entry by id in a collection without a `max`, or one large enough that it can't have rolled off.
 - **`discard` takes one entry by id.** There's no effect that empties a collection.

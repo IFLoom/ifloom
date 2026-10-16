@@ -1,7 +1,7 @@
 ---
 title: "Saves"
 ---
-To save a game, you write its whole [`GameState`](/reference/state) to a slot, along with a few details for a load screen. Nothing else needs storing, because the same state in the same game gives the same draws (see [Randomness](/reference/random)).
+To save a game, you write its whole [`GameState`](/docs/reference/state) to a slot, along with a few details for a load screen. Nothing else needs storing, because the same state in the same game gives the same draws (see [Randomness](/docs/reference/random)).
 
 Saving has two parts:
 
@@ -20,7 +20,7 @@ const store = saves(game, indexedDbDriver())
 await store.write('quick', state)
 ```
 
-Most games never call the store directly. They hand it to the [runner](/reference/runner), which saves, loads and autosaves through it and counts the time played.
+Most games never call the store directly. They hand it to the [runner](/docs/reference/runner), which saves, loads and autosaves through it and counts the time played.
 
 ## Drivers
 
@@ -178,12 +178,12 @@ else await store.write('1', loaded.state, { name: loaded.meta.name, played: load
 |---|---|
 | `'That is not a save file.'` | Not JSON, or JSON that isn't an IFLoom save. |
 | `'That save belongs to another game (<id>).'` | The save's `meta.game` isn't this game's id. |
-| `'That save is from a version this game cannot read.'` | The save's format [version](#save-version) is one the engine can't carry forward. |
-| `'That save was made with a newer version of <plugin>.'` | A [plugin](/reference/plugins)'s state in the save is newer than the game's plugin. |
-| `'That save's <plugin> is from a version this game cannot read.'` | A plugin's state has no [migration](/reference/plugins#when-a-save-loads) route to its current version. |
-| `'That save was made with a newer version of this game.'` | The save's [game version](#the-game-s-own-migrations) is higher than `game.version`. |
+| `'That save is from a version this game cannot read.'` | The save's format [version](#save_version) is one the engine can't carry forward. |
+| `'That save was made with a newer version of <plugin>.'` | A [plugin](/docs/reference/plugins)'s state in the save is newer than the game's plugin. |
+| `'That save's <plugin> is from a version this game cannot read.'` | A plugin's state has no [migration](/docs/reference/plugins#when-a-save-loads) route to its current version. |
+| `'That save was made with a newer version of this game.'` | The save's [game version](#the-games-own-migrations) is higher than `game.version`. |
 
-These are the engine's English. A game rewords them in the [strings table](/reference/strings#saves) as `notASave`, `otherGame`, `saveTooOld`, `pluginNewer`, `pluginUnreadable` and `gameNewer`.
+These are the engine's English. A game rewords them in the [strings table](/docs/reference/strings#saves) as `notASave`, `otherGame`, `saveTooOld`, `pluginNewer`, `pluginUnreadable` and `gameNewer`.
 
 The state inside the file is loaded with [`loadState`](#loadstate), which carries it forward or refuses it with one of these reasons.
 
@@ -234,16 +234,16 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 |---|---|
 | `game` | The game's id. Another game's save is refused. |
 | `slot` | The slot it was written to. |
-| `name` | The player's name for it, or one made from `when`, else `Turn <n>` (the [`turnLabel`](/reference/strings#saves) string, with the turn counted from 1). With the [calendar](/plugins/calendar#the-label) and the [places plugin](/plugins/places#the-label): `'Day 5 · Friday evening · The Corner Café'`. With no plugin that has a label, `'Turn 3'`. |
+| `name` | The player's name for it, or one made from `when`, else `Turn <n>` (the [`turnLabel`](/docs/reference/strings#saves) string, with the turn counted from 1). With the [calendar](/docs/plugins/calendar#the-label) and the [places plugin](/docs/plugins/places#the-label): `'Day 5 · Friday evening · The Corner Café'`. With no plugin that has a label, `'Turn 3'`. |
 | `savedAt` | When it was written, epoch milliseconds. Default `Date.now()`. |
-| `played` | Time played, in milliseconds, as the [runner](/reference/runner) counted it. |
-| `turn` | How many turns had passed: [`state.turn`](/reference/state#turn), from 0. |
-| `when` | When and where the game was, in its plugins' [labels](/reference/plugins#labels), as the view shows it in [`view.when`](/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
-| `player` | The game's `playerName` [variable](/reference/state#flags) when it's a string, else `null`. The engine keeps no name of its own, so a game that stores the player's name under that variable gets it on its load screen. |
-| `packs` | The ids of the packs the game was loaded from ([`game.packs`](/reference/game)). |
-| `plugins` | Each [plugin](/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
+| `played` | Time played, in milliseconds, as the [runner](/docs/reference/runner) counted it. |
+| `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
+| `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
+| `player` | The game's `playerName` [variable](/docs/reference/state#flags) when it's a string, else `null`. The engine keeps no name of its own, so a game that stores the player's name under that variable gets it on its load screen. |
+| `packs` | The ids of the packs the game was loaded from ([`game.packs`](/docs/reference/game)). |
+| `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
-| `gameVersion` | The game's own [version](#the-game-s-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
+| `gameVersion` | The game's own [version](#the-games-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
 
 ## LoadedSave
 
@@ -260,7 +260,7 @@ A save read back: its details, and the state carried forward to the current vers
 
 `missingPacks` names packs the save was made with that this game wasn't loaded from, such as a mod the player has since removed. The save still loads, and your game decides whether to warn, refuse or carry on. A state that refers to scenes, items or storylines from a missing pack may not play as it did.
 
-`missingPlugins` names [plugins](/reference/plugins) the save was made with that this game doesn't have. The save still loads, and the plugin's state is kept in `state.plugins`, unused, so it comes back if a later build adds the plugin again.
+`missingPlugins` names [plugins](/docs/reference/plugins) the save was made with that this game doesn't have. The save still loads, and the plugin's state is kept in `state.plugins`, unused, so it comes back if a later build adds the plugin again.
 
 ```ts
 const loaded = await store.read('1')
@@ -275,7 +275,7 @@ if (loaded && typeof loaded !== 'string' && loaded.missingPacks.length) {
 function loadState(raw: unknown, game: Game): GameState | string
 ```
 
-Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/reference/runner#commandlog), or a state you parsed yourself. It returns the state, or the reason it can't, as one of the [refusals](#saves) above.
+Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns the state, or the reason it can't, as one of the [refusals](#saves) above.
 
 ```ts
 import { createRunner, loadState } from '@ifloom/engine'
@@ -289,11 +289,11 @@ It does these in order:
 
 1. The engine's own steps, from the state's `version` up to `SAVE_VERSION`. A state with no `version`, or one higher than `SAVE_VERSION`, is refused.
 2. Each field the state lacks gets its load default, such as `[]` for `removed` or empty audio for `audio`. A field an older format didn't have needs no step of its own.
-3. Each [plugin's state](/reference/plugins#when-a-save-loads) is carried forward, and a plugin added since starts fresh.
-4. The game's own [migrations](#the-game-s-own-migrations), if the game declares a `version`.
+3. Each [plugin's state](/docs/reference/plugins#when-a-save-loads) is carried forward, and a plugin added since starts fresh.
+4. The game's own [migrations](#the-games-own-migrations), if the game declares a `version`.
 5. What the game declares and the save lacks is added: a storyline, and in a game with no `version`, its `play` settings and declared entities. See [Filling new content](#filling-new-content).
 
-The [save store](#saves)'s `read` and `importText`, and [`replay`](/reference/runner#replay), all load through it. A state that comes back from it, or from [`startingState`](/reference/commands#startingstate), is ready for [`apply`](/reference/commands#apply), which doesn't check the shape again.
+The [save store](#saves)'s `read` and `importText`, and [`replay`](/docs/reference/runner#replay), all load through it. A state that comes back from it, or from [`startingState`](/docs/reference/commands#startingstate), is ready for [`apply`](/docs/reference/commands#apply), which doesn't check the shape again.
 
 A state already in today's shape comes back equal to what went in, apart from anything the game has declared since.
 
@@ -301,16 +301,16 @@ A state already in today's shape comes back equal to what went in, apart from an
 
 These are the changes to the save format so far, with what loading a save from before each one does:
 
-- **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/reference/state#flags) of the same names, so `{{playerName}}` still fills in, and adds an empty [`chosen`](/reference/state#chosen).
-- **2 → 3** brings in the [turn](/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/reference/state#storylines), and each [collection](/reference/collections) entry's and [notice](/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
-- **3 → 4** brings in [entities](/reference/entities): the save gets an empty [`entities`](/reference/state#entities) and an empty [`created`](/reference/state#created), The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
-- **4 → 5** takes the clock out of the engine. The save's `time: { day, period }` moves into the [calendar plugin](/plugins/calendar#calendarstate)'s state, `plugins.calendar = { version: 1, state: { day, period } }`, with the old last period `'sleep'` renamed `'late'`, the calendar's word for it. A save that already has a `plugins.calendar` keeps it. A game without the calendar keeps the entry unused, as it keeps the state of any plugin it doesn't have.
-- **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/plugins/places#placesoptions), because a plugin missing from a save gets its starting state when it loads. A game without the places plugin keeps the entry unused.
-- **6 → 7** brings in [`removed`](/reference/state#removed), empty on an older save, the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and loading puts it back at its start.
-- **7 → 8** takes `standing` and `rapport` off every [storyline](/reference/state#storylines), keeping its `closedUntil` and `flags` (a missing `closedUntil` becomes `null`, missing `flags` `{}`). They're dropped, not carried anywhere. A relationship is now a [stat](/reference/stats#entity-stats) the game declares on the [cast](/plugins/cast)'s `character` kind, and the engine can't know which stat a game meant.
-- **8 → 9** brings in [`settings`](/reference/state#settings), empty on an older save. Step 5 then gives each `play` [setting](/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
-- **9 → 10** adds [`audio`](/reference/audio#audiostate): `{ channels: {}, cues: [], seq: 0, shown: 0, started: {} }`. No `audio` effect had run, so every channel plays the place's audio or the game's default, and the count of scenes entered starts again from 0.
-- **10 → 11** adds [`media`](/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
+- **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/docs/reference/state#flags) of the same names, so `{{playerName}}` still fills in, and adds an empty [`chosen`](/docs/reference/state#chosen).
+- **2 → 3** brings in the [turn](/docs/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/docs/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/docs/reference/state#storylines), and each [collection](/docs/reference/collections) entry's and [notice](/docs/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
+- **3 → 4** brings in [entities](/docs/reference/entities): the save gets an empty [`entities`](/docs/reference/state#entities) and an empty [`created`](/docs/reference/state#created), The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
+- **4 → 5** takes the clock out of the engine. The save's `time: { day, period }` moves into the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, `plugins.calendar = { version: 1, state: { day, period } }`, with the old last period `'sleep'` renamed `'late'`, the calendar's word for it. A save that already has a `plugins.calendar` keeps it. A game without the calendar keeps the entry unused, as it keeps the state of any plugin it doesn't have.
+- **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/docs/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/docs/plugins/places#placesoptions), because a plugin missing from a save gets its starting state when it loads. A game without the places plugin keeps the entry unused.
+- **6 → 7** brings in [`removed`](/docs/reference/state#removed), empty on an older save, the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and loading puts it back at its start.
+- **7 → 8** takes `standing` and `rapport` off every [storyline](/docs/reference/state#storylines), keeping its `closedUntil` and `flags` (a missing `closedUntil` becomes `null`, missing `flags` `{}`). They're dropped, not carried anywhere. A relationship is now a [stat](/docs/reference/stats#entity-stats) the game declares on the [cast](/docs/plugins/cast)'s `character` kind, and the engine can't know which stat a game meant.
+- **8 → 9** brings in [`settings`](/docs/reference/state#settings), empty on an older save. Step 5 then gives each `play` [setting](/docs/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
+- **9 → 10** adds [`audio`](/docs/reference/audio#audiostate): `{ channels: {}, cues: [], seq: 0, shown: 0, started: {} }`. No `audio` effect had run, so every channel plays the place's audio or the game's default, and the count of scenes entered starts again from 0.
+- **10 → 11** adds [`media`](/docs/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
 
 A save from version 0 doesn't load.
 
@@ -367,7 +367,7 @@ When a save loads, [`LoadedSave`](#loadedsave)'s `meta.gameVersion` is the versi
 
 ### A newer save
 
-A save made with a newer version of the game than the one loading it is refused with `That save was made with a newer version of this game.` (the [`gameNewer`](/reference/strings#saves) string). This happens when a player goes back to an older build.
+A save made with a newer version of the game than the one loading it is refused with `That save was made with a newer version of this game.` (the [`gameNewer`](/docs/reference/strings#saves) string). This happens when a player goes back to an older build.
 
 ### Filling new content
 
@@ -429,12 +429,12 @@ type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
 
 | Kind | What `fill` adds |
 |---|---|
-| `stats` | Each of the player's stats the save lacks, at its `start`, and each entity stat an entity in the save lacks, at its `start`. Not [derived stats](/reference/stats#derived-stats), which are never kept. |
+| `stats` | Each of the player's stats the save lacks, at its `start`, and each entity stat an entity in the save lacks, at its `start`. Not [derived stats](/docs/reference/stats#derived-stats), which are never kept. |
 | `items` | Each item the save lacks, at its `start`, or 1 for gear and 0 for anything else if it gives none. |
-| `variables` | Each variable in [`rules.resets`](/reference/rules#resets) the save lacks, at its reset value. Other variables have no declared value, so set them in the step yourself. |
-| `settings` | Each `play` [setting](/reference/settings) the save lacks, at its default. |
-| `entities` | Each declared [entity](/reference/entities) the save doesn't have, at its start, unless [`state.removed`](/reference/state#removed) says it was removed in play. |
+| `variables` | Each variable in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other variables have no declared value, so set them in the step yourself. |
+| `settings` | Each `play` [setting](/docs/reference/settings) the save lacks, at its default. |
+| `entities` | Each declared [entity](/docs/reference/entities) the save doesn't have, at its start, unless [`state.removed`](/docs/reference/state#removed) says it was removed in play. |
 
 ### Checks
 
-The [content checker](/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.
+The [content checker](/docs/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.

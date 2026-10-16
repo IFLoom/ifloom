@@ -2,9 +2,9 @@
 title: "Minigames"
 description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in the React UI.
 ---
-This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one.
+This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one.
 
-A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the React UI draws it and keeps its clock. Every field is in the [minigames reference](/reference/minigames).
+A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the React UI draws it and keeps its clock. Every field is in the [minigames reference](/docs/reference/minigames).
 
 ## The rules
 
@@ -42,7 +42,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
 'arrows.right': 'She points at the swings. Right!',
 ```
 
-`after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`minigameVar`](/reference/effects#minigamevar) effect.
+`after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`minigameVar`](/docs/reference/effects#minigamevar) effect.
 
 The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told.
 
@@ -97,7 +97,7 @@ The random draw comes from the save's seed, so the same save always gets the sam
 
 ## Starting it
 
-Add the minigame to your pack, with the two closing scenes and something that starts it. In the park, that's an activity with the [`minigame`](/reference/effects#minigame) effect, offered as one of the park's buttons:
+Add the minigame to your pack, with the two closing scenes and something that starts it. In the park, that's an activity with the [`minigame`](/docs/reference/effects#minigame) effect, offered as one of the park's buttons:
 
 ```ts
 export const town: Pack = {
@@ -113,19 +113,19 @@ export const town: Pack = {
 }
 ```
 
-A scene can also start one as it opens, with a `minigame` field. See [`MinigameSceneFields`](/reference/minigames#minigamescenefields).
+A scene can also start one as it opens, with a `minigame` field. See [`MinigameSceneFields`](/docs/reference/minigames#minigamescenefields).
 
 ## Playing it
 
-That's all the React UI needs. While the minigame runs, [`SceneStage`](/react/components#scenestage) draws [`MinigamePanel`](/react/components#minigamepanel) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
+That's all the React UI needs. While the minigame runs, [`SceneStage`](/docs/react/components#scenestage) draws [`MinigamePanel`](/docs/react/components#minigamepanel) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
 
-The engine has no clock of its own. The panel sends a [`tick`](/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
+The engine has no clock of its own. The panel sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
 
 While it runs, the player can't do anything else. Every other command is refused with `Finish this first.` until it ends.
 
 ## Your own panel
 
-The built-in panel is plain on purpose. To draw quick feet your own way, write a component that reads the minigame with [`useMinigame`](/react/components#useminigame), and give it to `panels` under the minigame's id:
+The built-in panel is plain on purpose. To draw quick feet your own way, write a component that reads the minigame with [`useMinigame`](/docs/react/components#useminigame), and give it to `panels` under the minigame's id:
 
 ```tsx
 // src/QuickFeet.tsx
@@ -173,13 +173,13 @@ mountGame(game, { panels: { arrows: QuickFeet } })
 
 What it uses:
 
-- **`minigame`** is [`view.minigame`](/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
+- **`minigame`** is [`view.minigame`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
 - **`send(input)`** presses an input.
 - **`keys: true`** maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys.
 
 You don't have to run the clock. `SceneStage` runs it while a minigame is on screen, and `useMinigame` would run it too. There's only ever one clock per game, however many components ask.
 
-To change every minigame's panel at once rather than one by id, replace `MinigamePanel` in [`components`](/react/customising#_6-replace-a-component). A panel by id wins over it.
+To change every minigame's panel at once rather than one by id, replace `MinigamePanel` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
 
 ## Testing it
 

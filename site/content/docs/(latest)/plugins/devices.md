@@ -3,7 +3,7 @@ title: "Devices"
 ---
 `@ifloom/plugin-devices` gives the player devices, such as a phone, a laptop or a radio, with apps on them that the game declares as data. Each app can show a badge, and opening one doesn't take the player out of the room.
 
-You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery already wired up, use the [phone bundle](/plugins/phone) instead, which is built on this plugin.
+You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery already wired up, use the [phone bundle](/docs/plugins/phone) instead, which is built on this plugin.
 
 To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices({ devices, apps })` to the game's `plugins`. [Install](#install) has the details.
 
@@ -15,19 +15,19 @@ import {
 } from '@ifloom/plugin-devices'
 ```
 
-An app isn't a place. Opening it doesn't move the player or pass time, and whatever the player does inside it costs what that action says. [Locks](/reference/locks) still apply, so "no phone at work" is a lock on `devices/*`.
+An app isn't a place. Opening it doesn't move the player or pass time, and whatever the player does inside it costs what that action says. [Locks](/docs/reference/locks) still apply, so "no phone at work" is a lock on `devices/*`.
 
 You build an app from sections, and each section is something the engine already has:
 
 - prose
 - actions, the same buttons a room has, with prices and reasons
-- a list, either a [collection](/reference/collections) or the people the player can call
-- another plugin's view, such as a [messages](/plugins/messages) channel or a [feed](/plugins/feed)
+- a list, either a [collection](/docs/reference/collections) or the people the player can call
+- another plugin's view, such as a [messages](/docs/plugins/messages) channel or a [feed](/docs/plugins/feed)
 - a panel the game draws itself
 
 ## Install
 
-Add the package beside the engine, then add `devices(...)` to the game's `plugins`. See [Adding one](/plugins/#adding-one).
+Add the package beside the engine, then add `devices(...)` to the game's `plugins`. See [Adding one](/docs/plugins#adding-one).
 
 ```json
 {
@@ -46,7 +46,7 @@ function devices(options: DevicesOptions): DefinedPlugin<DevicesState>
 
 Builds the plugin, with the id `devices`. Call it once, when you build the game, with the devices the game has and the apps on them.
 
-It lists `cooperates: ['cast']` (see [`cooperates`](/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
+It lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/docs/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
 
 ```ts
 import { loadGame, type Pack } from '@ifloom/engine'
@@ -110,7 +110,7 @@ Devices are code, not content, so a mod can't add one.
 
 ## Writing apps
 
-Apps come from two places. The ones you pass to `devices({ apps })` are built into the game. A pack's [`data`](/reference/loader#pack) can add more under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. An app in a pack with the same id as a built-in one replaces it.
+Apps come from two places. The ones you pass to `devices({ apps })` are built into the game. A pack's [`data`](/docs/reference/loader#pack) can add more under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. An app in a pack with the same id as a built-in one replaces it.
 
 ### AppDef
 
@@ -137,8 +137,8 @@ type AppDef = {
 | `icon` | A name the UI maps to a picture. |
 | `on` | The [device](#devicedef) it's on. |
 | `when` | When the app is installed. It stays off the home screen until this holds. If you leave it out, it's always installed. |
-| `locked` | The app shows on the home screen but is greyed out while one of these holds, with the first one's `reason`. A [lock](/reference/locks) on `devices/open` greys it out too. |
-| `badge` | `{ count: name }` shows the number a [value](/reference/custom) gives, such as `messages/unread-texts`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
+| `locked` | The app shows on the home screen but is greyed out while one of these holds, with the first one's `reason`. A [lock](/docs/reference/locks) on `devices/open` greys it out too. |
+| `badge` | `{ count: name }` shows the number a [value](/docs/reference/custom) gives, such as `messages/unread-texts`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
 | `sections` | What fills the app, top to bottom. |
 
 An icon's states come from fields you already have. A locked icon comes from `locked`, a new one from a badge, and a waiting one from an action's reason.
@@ -159,12 +159,12 @@ type Section =
 
 | Section | What it shows |
 |---|---|
-| `{ prose }` | Words, as [prose blocks](/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [custom value](/reference/custom) in a token can print a balance or the weather. |
-| `{ actions }` | Buttons, the same [`ActionDef`](/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/reference/view#renderaction), so each has an activity's price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. |
-| `{ collection }` | A declared [collection](/reference/collections)'s entries, newest first, such as a gallery or notes. |
-| `{ contacts: true }` | The [cast](/plugins/cast)'s people the player can call and has met, each with a **Call** button that sends the cast's [`call`](/plugins/cast#commands) command. See [Contacts](#contacts). |
-| `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/plugins/messages) or `{ feed: 'social' }` for a [feed](/plugins/feed). |
-| `{ panel }` | A screen the game draws itself, with the data the game's [custom panel](/reference/custom) of that name returns. |
+| `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [custom value](/docs/reference/custom) in a token can print a balance or the weather. |
+| `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has an activity's price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. |
+| `{ collection }` | A declared [collection](/docs/reference/collections)'s entries, newest first, such as a gallery or notes. |
+| `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a **Call** button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
+| `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/plugins/feed). |
+| `{ panel }` | A screen the game draws itself, with the data the game's [custom panel](/docs/reference/custom) of that name returns. |
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
@@ -185,12 +185,12 @@ const mail: AppDef = {
 
 ### Contacts
 
-A `{ contacts: true }` section lists the [cast](/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/plugins/cast#queries) query. That's everyone the player has [met](/plugins/cast#meeting-people) who has a [`call`](/plugins/cast#calls). Each entry has:
+A `{ contacts: true }` section lists the [cast](/docs/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/docs/plugins/cast#queries) query. That's everyone the player has [met](/docs/plugins/cast#meeting-people) who has a [`call`](/docs/plugins/cast#calls). Each entry has:
 
 - their `name` as its title
 - their `role` as its text, or `''` when they have none
 - their portrait as its image
-- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`call(id)`](/plugins/cast#commands)
+- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`call(id)`](/docs/plugins/cast#commands)
 
 The button is greyed out with the call's own refusal, such as the character's `busy` line.
 
@@ -198,7 +198,7 @@ In a game without the cast, the section is an empty list.
 
 ## A worked example
 
-Here's a laptop in the player's flat, in a town like the [showcase](/guide/showcase)'s. It has four apps:
+Here's a laptop in the player's flat, in a town like the [showcase](/docs/guide/showcase)'s. It has four apps:
 
 - Notes, over a `notes` collection
 - a café app that delivers, with a button that only shows while the player has no scarf
@@ -347,7 +347,7 @@ const body: Block[] = [
 ]
 ```
 
-In the short form, with the full name as the only key, it's `{ 'devices/open': { device: 'phone' } }` (see [plugin calls](/reference/custom)).
+In the short form, with the full name as the only key, it's `{ 'devices/open': { device: 'phone' } }` (see [plugin calls](/docs/reference/custom)).
 
 ## Commands
 
@@ -356,11 +356,11 @@ In the short form, with the full name as the only key, it's `{ 'devices/open': {
 | `{ type: 'custom', name: 'devices/open', with: { app } }` | `openApp(app)` | Opens the app on its device. Any app already open on that device closes. |
 | `{ type: 'custom', name: 'devices/close', with: { device } }` | `closeApp(device)` | Goes back to the device's home screen. |
 
-Both are free, so no time passes and the player doesn't move. [Locks](/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
+Both are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
 
 `devices/open` is refused with the first of these that applies:
 
-1. a [lock](/reference/locks)'s `reason`
+1. a [lock](/docs/reference/locks)'s `reason`
 2. `There is no such app.`
 3. `That is not installed.`, while the app's `when` doesn't hold
 4. the `reason` of the first `locked` entry that holds
@@ -373,7 +373,7 @@ You can reword the plugin's own lines (see [Strings](#strings)).
 
 ## Strings
 
-These are the plugin's lines in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key.
+These are the plugin's lines in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key.
 
 | Key | English |
 |---|---|
@@ -448,7 +448,7 @@ type AppView = {
 | Field | What it is |
 |---|---|
 | `badge` | A count, a dot (`true`, or `false` when the dot's condition doesn't hold), or `0` for an app with no badge. |
-| `disabled` | Why it can't be opened now. It's [`whyNot`](/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `locked` reason that holds. It's left out if the app can be opened. |
+| `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `locked` reason that holds. It's left out if the app can be opened. |
 | `command` | The command that opens it, `openApp(id)`. |
 | `sections` | Only filled in for the open app. In `apps`, every app's `sections` is `[]`, so read them from `open`. |
 
@@ -468,7 +468,7 @@ type SectionView =
 | Kind | From | What it holds |
 |---|---|---|
 | `prose` | `{ prose }` | The blocks rendered for the current state. |
-| `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/reference/view#renderedchoice)s. |
+| `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
 | `list` | `{ collection }`, `{ contacts }` | One entry per collection entry (title, words filled in, image, no actions) or per contact (name, role, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel }` | What the game's custom panel returned, or `null` if it has none. |
@@ -508,7 +508,7 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
 - a panel the game has no custom panel for (`no custom panel named "…"`)
 - a prose block with no prose (`no prose for "…"`), and anything its `when` names
-- anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, checked as the game's own [actions](/reference/actions#actiondef) are
+- anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, checked as the game's own [actions](/docs/reference/actions#actiondef) are
 
 The action check catches an unknown scene, activity or item, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
@@ -524,9 +524,9 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **Opening an app is free and doesn't leave the room.** No time passes and the player stays where they are, so what the room shows, who's there and the actions on offer don't change. What the player does inside the app costs what each action says.
 - **Section data is filled in for the open app only.** `apps[i].sections` is always `[]`. Draw the home screen from `apps`, and the screen of an app from `open`.
 - **A `plugin` section only names the slice.** It carries the plugin's id and `with`, not the plugin's data. The UI draws `view.plugins[section.plugin]` with that plugin's renderer, picking out the part `with` names, such as one channel or one feed.
-- **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
-- **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `locked` entries or a [lock](/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
+- **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
+- **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `locked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
 - **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
-- **A count badge reads a value by name.** Values from the [messages](/plugins/messages) and [feed](/plugins/feed) plugins are named after the channels and feeds you configure, such as `messages/unread-texts`. A value that isn't a number counts as `0`.
+- **A count badge reads a value by name.** Values from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins are named after the channels and feeds you configure, such as `messages/unread-texts`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.

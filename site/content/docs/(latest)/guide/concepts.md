@@ -10,7 +10,7 @@ Everything about a game in progress lives in one `GameState`. It holds the turn,
 
 The engine never changes a state in place. Every command returns a new one, so keeping the previous state is all an undo needs. The [runner](#the-runner-drives-the-game) keeps them for you.
 
-See [Game state](/reference/state).
+See [Game state](/docs/reference/state).
 
 ## Commands go through `apply`
 
@@ -18,7 +18,7 @@ The player changes the game only through commands. The core has a few, such as `
 
 `dispatch` is the same call, returning only the state. Use `apply` wherever the answer matters, because a refusal and a command that changed nothing leave identical states behind.
 
-See [Commands](/reference/commands).
+See [Commands](/docs/reference/commands).
 
 ## Effects and conditions are data
 
@@ -32,9 +32,9 @@ What a choice does is a list of effects. When something applies is a condition. 
 { all: [{ 'places/at': ['cafe'] }, { 'cast/here': ['ava'] }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
 ```
 
-Because they're data rather than functions, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/reference/custom) the game declares.
+Because they're data rather than functions, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/docs/reference/custom) the game declares.
 
-See [Effects](/reference/effects) and [Conditions](/reference/conditions).
+See [Effects](/docs/reference/effects) and [Conditions](/docs/reference/conditions).
 
 ## The game and its rules
 
@@ -56,7 +56,7 @@ The engine knows none of these by name. It reads them from the game.
 
 Some of a game is logic rather than content, such as what happens at the end of a turn, or what the player can't do yet. Those are rules, on `game.rules`. Most are optional hooks that the engine calls at fixed moments, and leaving one out means the engine does the plain thing. The game's locks are kept there too.
 
-See [The game](/reference/game) and [Rules and hooks](/reference/rules).
+See [The game](/docs/reference/game) and [Rules and hooks](/docs/reference/rules).
 
 ## The view is what a UI draws
 
@@ -64,7 +64,7 @@ See [The game](/reference/game) and [Rules and hooks](/reference/rules).
 
 An activity's requirements and a lock's reason are each written once, and both `apply` and `view` read them, so the greyed-out button and the refusal say the same thing. Your UI draws the view and sends commands. It never needs to read the state directly.
 
-See [The view](/reference/view).
+See [The view](/docs/reference/view).
 
 ## The turn
 
@@ -72,25 +72,25 @@ The engine has one clock, the turn. `state.turn` is 0 in a new game. Your game d
 
 At the end of a turn the counter goes up by one, the variables the game lists in `resets` are put back, and the game's turn rules and each plugin's turn hook run. That's where a game that has energy fills it back up.
 
-The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
+The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
 
-See [Shapes of game](/guide/shapes) and [Game state: turn](/reference/state#turn).
+See [Shapes of game](/docs/guide/shapes) and [Game state: turn](/docs/reference/state#turn).
 
 ## Stats
 
-A [stat](/reference/stats) is a number the game keeps, such as coins or courage. You declare each one, with where it starts and the range it keeps to. A stat with no `of` belongs to the player and lives in `state.stats`.
+A [stat](/docs/reference/stats) is a number the game keeps, such as coins or courage. You declare each one, with where it starts and the range it keeps to. A stat with no `of` belongs to the player and lives in `state.stats`.
 
-A stat can also be [derived](/reference/stats#derived-stats), worked out from other stats by a formula written as data, such as `{ sum: ['baking', 'patience'] }`. It's read like any other stat and never written. Any stat can have [levels](/reference/stats#levels), thresholds it passes as it grows, which a `{ level }` condition and the view can read.
+A stat can also be [derived](/docs/reference/stats#derived-stats), worked out from other stats by a formula written as data, such as `{ sum: ['baking', 'patience'] }`. It's read like any other stat and never written. Any stat can have [levels](/docs/reference/stats#levels), thresholds it passes as it grows, which a `{ level }` condition and the view can read.
 
-See [Stats](/reference/stats).
+See [Stats](/docs/reference/stats).
 
 ## Entities and kinds
 
-An [entity](/reference/entities) is one of several things of the same kind, such as a member of staff or a dish. The game declares the kinds in `kinds` and the entities there are at the start in `entities`. A stat declared with `of: 'staff'` is kept on every member of staff rather than on the player, and content names one of them as `'staff:ana'`.
+An [entity](/docs/reference/entities) is one of several things of the same kind, such as a member of staff or a dish. The game declares the kinds in `kinds` and the entities there are at the start in `entities`. A stat declared with `of: 'staff'` is kept on every member of staff rather than on the player, and content names one of them as `'staff:ana'`.
 
 The `create` and `remove` effects add and take away entities in play, and `each` runs a list of effects over every entity of a kind, or the ones that match a condition. The cast plugin's characters are entities of the kind `character`, so a friendship is a stat the game declares on that kind.
 
-See [Entities](/reference/entities).
+See [Entities](/docs/reference/entities).
 
 ## Variables
 
@@ -98,7 +98,7 @@ A variable is a named value the game keeps: a name the player typed, a count of 
 
 The engine also remembers which choices the player has taken, so `{ chose: 'ch1.mat/open' }` asks about an earlier choice without a variable.
 
-See [Game state: flags](/reference/state#flags) and [Conditions](/reference/conditions).
+See [Game state: flags](/docs/reference/state#flags) and [Conditions](/docs/reference/conditions).
 
 ## Storylines
 
@@ -106,22 +106,22 @@ A storyline is one thread of the story, such as a friendship with Ava. It has it
 
 The engine records which scenes the player has seen, and on which turn. That lets a storyline's stages come in order ("not until the scene before this one") and at a pace ("not until three turns after it").
 
-See [Storylines](/reference/storylines) and [Progress and limits](/reference/progress).
+See [Storylines](/docs/reference/storylines) and [Progress and limits](/docs/reference/progress).
 
 ## Collections, notices, triggers and inputs
 
 These are the parts a phone, a notice board or a journal is built from:
 
-- A [collection](/reference/collections) is a named list the game keeps entries in, such as photos taken or letters found.
-- A [notice](/reference/notices) is something the game tells the player outside a scene, shown as a toast or counted on a badge.
-- A [trigger](/reference/triggers) is a list of effects that runs by itself the first time its condition holds, such as a note under the door the morning after the player first visits the café. It can also be set to fire at most once a turn.
-- An [input](/reference/inputs) is something the player types or picks, written to a variable, such as their name.
+- A [collection](/docs/reference/collections) is a named list the game keeps entries in, such as photos taken or letters found.
+- A [notice](/docs/reference/notices) is something the game tells the player outside a scene, shown as a toast or counted on a badge.
+- A [trigger](/docs/reference/triggers) is a list of effects that runs by itself the first time its condition holds, such as a note under the door the morning after the player first visits the café. It can also be set to fire at most once a turn.
+- An [input](/docs/reference/inputs) is something the player types or picks, written to a variable, such as their name.
 
 ## Locks
 
 A lock says what the player can't do for now, and why. While its condition holds, the commands it names are refused with its line. An intro that keeps the player in one room is a lock rather than special code. `apply` refuses on the first lock that matches, and the view greys the button out with the same line.
 
-See [Locks](/reference/locks).
+See [Locks](/docs/reference/locks).
 
 ## Plugins
 
@@ -129,11 +129,11 @@ A plugin adds a system to the engine, such as a calendar, a map, people or quest
 
 First-party plugins don't import each other. One plugin asks another for an answer by name through a query, as the cast asks the places plugin where the player is. A plugin can also list the plugins it `cooperates` with. Content may then name their conditions and effects in a game that leaves them out: the condition is false and the effect does nothing.
 
-See [Plugins](/plugins/) for the first-party ones, and [Writing a plugin](/reference/plugins).
+See [Plugins](/docs/plugins) for the first-party ones, and [Writing a plugin](/docs/reference/plugins).
 
 ## The UI is separate
 
-The engine has no DOM and no framework. It hands out a view and takes commands, so any UI can draw a game. [`@ifloom/react`](/react/) is a ready-made one in React, and `mountGame` from it starts a game in a page with one call. To use Vue, Svelte, plain DOM or anything else, see [Using another framework](/guide/frameworks).
+The engine has no DOM and no framework. It hands out a view and takes commands, so any UI can draw a game. [`@ifloom/react`](/docs/react) is a ready-made one in React, and `mountGame` from it starts a game in a page with one call. To use Vue, Svelte, plain DOM or anything else, see [Using another framework](/docs/guide/frameworks).
 
 ## Randomness is seeded
 
@@ -141,9 +141,9 @@ Each save has a seed, and every random draw is worked out from the seed, a name 
 
 That's what makes undo honest, since stepping back and trying again doesn't re-roll. It also lets a scripted playtest or a snapshot test give the same result every run. Draw your own values the same way, with `roll`, `pick`, `chance` and `weighted`, one named draw per value.
 
-Content can carry weights where the engine picks for it: a line among its variants, a file in a pool, a track in a shuffled playlist. A [storylet](/reference/storylets) is the same idea for whole scenes. You mark scenes as drawn from a named set, such as `'cafe'`, each with a weight and its own `when`, and the effect `{ kind: 'scene', from: 'cafe' }` opens one of them.
+Content can carry weights where the engine picks for it: a line among its variants, a file in a pool, a track in a shuffled playlist. A [storylet](/docs/reference/storylets) is the same idea for whole scenes. You mark scenes as drawn from a named set, such as `'cafe'`, each with a weight and its own `when`, and the effect `{ kind: 'scene', from: 'cafe' }` opens one of them.
 
-See [Randomness](/reference/random).
+See [Randomness](/docs/reference/random).
 
 ## The runner drives the game
 
@@ -151,7 +151,7 @@ See [Randomness](/reference/random).
 
 Undo, the backlog and autosave are off until the game turns them on. Undo never goes back past a barrier the game sets, such as a new turn. The command log is always kept, and because the engine is deterministic, the start state and the commands replay to the same state every time.
 
-See [The runner](/reference/runner).
+See [The runner](/docs/reference/runner).
 
 ## Saves and migrations
 
@@ -161,9 +161,9 @@ The driver says where saves are kept: `localStorage`, IndexedDB, memory for test
 
 Each save carries a version. The format is at version 11 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
 
-Your game can do the same for its own content. Give it a `version`, and when an update renames a variable or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/reference/saves#the-game-s-own-migrations).
+Your game can do the same for its own content. Give it a `version`, and when an update renames a variable or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 
-See [Saves](/reference/saves).
+See [Saves](/docs/reference/saves).
 
 ## Packs and mods
 
@@ -171,4 +171,4 @@ Content arrives as ordered packs that `loadGame` merges into one game, with any 
 
 A player can add a mod to a built game as a file. The game keeps it and loads it over its own content at start-up.
 
-See [Packs and loading](/reference/loader) and [Mods](/reference/mods).
+See [Packs and loading](/docs/reference/loader) and [Mods](/docs/reference/mods).

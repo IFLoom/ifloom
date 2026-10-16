@@ -2,11 +2,11 @@
 title: "The title screen and settings"
 description: Open your game on a title screen, give the player settings, and offer New Game+ once they've finished.
 ---
-This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/react/). A game drawn some other way can build the same pages from the engine's [settings](/reference/settings) and [profile](/reference/profile).
+This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. It uses the [React UI](/docs/react). A game drawn some other way can build the same pages from the engine's [settings](/docs/reference/settings) and [profile](/docs/reference/profile).
 
 ## Turn on the title screen
 
-Pass `pages` to [`mountGame`](/react/#mountgame):
+Pass `pages` to [`mountGame`](/docs/react#mountgame):
 
 ```ts
 // src/main.ts
@@ -17,7 +17,7 @@ import './styles.css'
 mountGame(game, { layout: READING_LAYOUT, pages: true })
 ```
 
-The page now opens on a title screen with the game's title and a New game button. New game starts the story with [`runner.newGame`](/reference/runner#newgame). The player's menu gains a **Title screen** button that goes back.
+The page now opens on a title screen with the game's title and a New game button. New game starts the story with [`runner.newGame`](/docs/reference/runner#newgame). The player's menu gains a **Title screen** button that goes back.
 
 Other buttons appear once there's something behind them:
 
@@ -42,7 +42,7 @@ mountGame(game, {
 
 A credit is a line of text, or a link with a `label` and an `href`. A missing `art` file takes no space, so you can add the picture later.
 
-If you build your runner by hand and draw [`GameShell`](/react/#gameshell) yourself, pass the same `pages` prop to it, and give the runner a profile so settings are kept between games:
+If you build your runner by hand and draw [`GameShell`](/docs/react#gameshell) yourself, pass the same `pages` prop to it, and give the runner a profile so settings are kept between games:
 
 ```tsx
 import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
@@ -59,7 +59,7 @@ const runner = createRunner(game, startingState(game), {
 
 ## Add settings
 
-Declare settings in your pack's `settings`. Here's one of each kind the [showcase](/guide/showcase) uses:
+Declare settings in your pack's `settings`. Here's one of each kind the [showcase](/docs/guide/showcase) uses:
 
 ```ts
 const town: Pack = {
@@ -85,7 +85,7 @@ const town: Pack = {
 
 The settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game.
 
-A setting is either part of the game or only part of how it looks. [Settings](/reference/settings) has the details, and the next two sections show each kind in use.
+A setting is either part of the game or only part of how it looks. [Settings](/docs/reference/settings) has the details, and the next two sections show each kind in use.
 
 ### A setting the story reads
 
@@ -101,15 +101,15 @@ body: [
 Where the player changes it matters:
 
 - **From the title screen**, before a game, the new value is stored in the profile. The game in play doesn't change, and the next new game starts with it.
-- **During a game**, from the menu, the UI sends a [`setting`](/reference/commands#setting) command. The change applies at once, it's logged with the other commands, and it's stored in the profile for later games too.
+- **During a game**, from the menu, the UI sends a [`setting`](/docs/reference/commands#setting) command. The change applies at once, it's logged with the other commands, and it's stored in the profile for later games too.
 
 A save keeps the settings it was made with, so loading an old save brings its own values back.
 
 ### A setting only the page reads
 
-`textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/reference/profile), and your own code applies it.
+`textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/docs/reference/profile), and your own code applies it.
 
-In a component, read it with [`useSetting`](/react/components#usesetting). It redraws when the player changes it:
+In a component, read it with [`useSetting`](/docs/react/components#usesetting). It redraws when the player changes it:
 
 ```tsx
 import { useSetting } from '@ifloom/react'
@@ -147,7 +147,7 @@ Here `stored` is the profile given to the runner. With `mountGame`, it's `runner
 
 ## Offer New Game+
 
-New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in the base you pass to [`loadGame`](/reference/loader#loadgame):
+New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in the base you pass to [`loadGame`](/docs/reference/loader#loadgame):
 
 ```ts
 loadGame([letter], {
@@ -159,7 +159,7 @@ loadGame([letter], {
 })
 ```
 
-The first time `finished` holds, the runner records it in the profile. From then on the title screen shows **New Game+**. It starts a new game carrying over from the newest save, or from the game in play if there's no save. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/reference/state#new-game) for exactly what's copied.
+The first time `finished` holds, the runner records it in the profile. From then on the title screen shows **New Game+**. It starts a new game carrying over from the newest save, or from the game in play if there's no save. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
@@ -215,8 +215,8 @@ mountGame(game, {
 })
 ```
 
-The component is drawn as the whole page, with no props. Use [`usePage`](/react/components#usepage) to move between pages and [`useProfile`](/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`.
+The component is drawn as the whole page, with no props. Use [`usePage`](/docs/react/components#usepage) to move between pages and [`useProfile`](/docs/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`.
 
 ## Make it look like your game
 
-Each of the four [presets](/react/customising#_1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The pages](/react/customising#the-pages) lists them all. To replace a page entirely, pass your own `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` or `GatePage` in [`components`](/react/customising#_6-replace-a-component).
+Each of the four [presets](/docs/react/customising#1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The pages](/docs/react/customising#the-pages) lists them all. To replace a page entirely, pass your own `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` or `GatePage` in [`components`](/docs/react/customising#6-replace-a-component).

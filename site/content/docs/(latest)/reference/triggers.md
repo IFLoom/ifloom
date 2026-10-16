@@ -9,7 +9,7 @@ import { fireTriggers, type TriggerDef } from '@ifloom/engine'
 
 ## A worked example
 
-These are the showcase's two triggers. The first time the player steps onto the high street, Sam's welcome note turns up: a [notice](/reference/notices) says so, and the note goes into the player's [notes](/reference/collections). Every Sunday from the first week on, the rent goes out.
+These are the showcase's two triggers. The first time the player steps onto the high street, Sam's welcome note turns up: a [notice](/docs/reference/notices) says so, and the note goes into the player's [notes](/docs/reference/collections). Every Sunday from the first week on, the rent goes out.
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -62,20 +62,20 @@ type TriggerDef = {
 
 | Field | What it does |
 |---|---|
-| `id` | Names it in [`state.fired`](/reference/state#fired) and in the loader's problems. |
-| `when` | A [condition](/reference/conditions). The trigger fires when this holds and it hasn't already fired. |
-| `effects` | What happens: plain [effects](/reference/effects), `{ custom }` references and [short plugin calls](/reference/custom#plugincall), as in a data scene choice. |
-| `once` | `'game'` (the default) fires once in the whole game. `'turn'` fires at most once a [turn](/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. |
+| `id` | Names it in [`state.fired`](/docs/reference/state#fired) and in the loader's problems. |
+| `when` | A [condition](/docs/reference/conditions). The trigger fires when this holds and it hasn't already fired. |
+| `effects` | What happens: plain [effects](/docs/reference/effects), `{ custom }` references and [short plugin calls](/docs/reference/custom#plugincall), as in a data scene choice. |
+| `once` | `'game'` (the default) fires once in the whole game. `'turn'` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. |
 
-Declare triggers in [`Game.triggers`](/reference/game#game), either on the base you give [`loadGame`](/reference/loader#loadgame) or in a [pack](/reference/loader#pack)'s `triggers`, or both. They merge by id with the base's first, so a later pack's trigger replaces an earlier one with the same id.
+Declare triggers in [`Game.triggers`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `triggers`, or both. They merge by id with the base's first, so a later pack's trigger replaces an earlier one with the same id.
 
 ## When triggers fire
 
-After every command that took, inside [`apply`](/reference/commands#what-happens-in-order):
+After every command that took, inside [`apply`](/docs/reference/commands#what-happens-in-order):
 
 1. The command runs.
 2. The triggers are tested in the order the game lists them, each against the state the one before it left. A trigger that holds and is due records the current turn in `state.fired`, then its effects apply.
-3. The scene left on screen is counted as [seen](/reference/state#seen), so a scene a trigger opens counts.
+3. The scene left on screen is counted as [seen](/docs/reference/state#seen), so a scene a trigger opens counts.
 4. Plugins' `after` hooks run, and see what the triggers did.
 
 There's one pass per command. A trigger that an earlier trigger makes true fires in the same pass, because it's tested later. One that a later trigger makes true waits for the next command.
@@ -90,7 +90,7 @@ function fireTriggers(
 ): GameState
 ```
 
-Runs the pass described above on `state` and returns the result. `apply` applies a trigger's effects once its `{ custom }` references are flattened with [`buildEffects`](/reference/custom#buildeffects). [`applyEffects`](/reference/effects#applyeffects) is the usual choice. The reducer calls `fireTriggers` for you. Only call it yourself from a tool, a test, or a plugin command that has moved the state in a way triggers should see before the command ends.
+Runs the pass described above on `state` and returns the result. `apply` applies a trigger's effects once its `{ custom }` references are flattened with [`buildEffects`](/docs/reference/custom#buildeffects). [`applyEffects`](/docs/reference/effects#applyeffects) is the usual choice. The reducer calls `fireTriggers` for you. Only call it yourself from a tool, a test, or a plugin command that has moved the state in a way triggers should see before the command ends.
 
 ```ts
 import { applyEffects, fireTriggers } from '@ifloom/engine'
@@ -101,8 +101,8 @@ const next = fireTriggers(state, game, (state, effects) => applyEffects(state, g
 ## Gotchas
 
 - **Triggers don't fire on `start`.** A new game is built, not run, so a trigger whose condition already holds on the first frame fires after the player's first command. To open the game with something, put it in the intro scene.
-- **They don't fire on a refused command.** Nor do they fire under [`applyEffects`](/reference/effects#applyeffects), or when a game sets the state by hand.
+- **They don't fire on a refused command.** Nor do they fire under [`applyEffects`](/docs/reference/effects#applyeffects), or when a game sets the state by hand.
 - **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or activity that does X.
-- **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
+- **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
 - **A scene effect cuts in.** A trigger with `{ kind: 'scene', id }` puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
-- **`text` in a `notify` or `collect` effect is a prose key.** The [content checker](/reference/checks) reports one with no prose.
+- **`text` in a `notify` or `collect` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.

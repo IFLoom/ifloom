@@ -5,7 +5,7 @@ title: "Quests"
 
 You'd want it when the player has goals to work towards and might lose track of them, such as errands in a life sim or the week's jobs in a management game. A linear novel usually doesn't need it, because the story only goes one way.
 
-A quest is a list of stages, and each stage is done by a [condition](/reference/conditions) on the game state. These are the same conditions that gate the content, so a quest can't drift from the story it describes. Progress is kept once it's made, so a stage that was done stays done.
+A quest is a list of stages, and each stage is done by a [condition](/docs/reference/conditions) on the game state. These are the same conditions that gate the content, so a quest can't drift from the story it describes. Progress is kept once it's made, so a stage that was done stays done.
 
 ```ts
 import {
@@ -15,7 +15,7 @@ import {
 } from '@ifloom/plugin-quests'
 ```
 
-The engine calls them quests, but what the player sees them called, such as a journal, a diary or a to-do list, is up to you. The showcase calls its list "To do". The plugin's own line, `You are not doing that.`, comes from the [strings table](/reference/strings), so you can reword that too (see [Strings](#strings)).
+The engine calls them quests, but what the player sees them called, such as a journal, a diary or a to-do list, is up to you. The showcase calls its list "To do". The plugin's own line, `You are not doing that.`, comes from the [strings table](/docs/reference/strings), so you can reword that too (see [Strings](#strings)).
 
 ## Install
 
@@ -30,7 +30,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `quests()` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details.
+Then add `quests()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
 ```ts
 import { loadGame, type Pack } from '@ifloom/engine'
@@ -53,7 +53,7 @@ Builds the plugin, with the id `quests`. Its state starts empty. Call it once, w
 
 ## Writing quests
 
-Quests are content. They go in a pack's [`data`](/reference/loader#pack) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
+Quests are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -87,7 +87,7 @@ type QuestDef = {
 | `id` | Unique among quests. Content names the quest by it. |
 | `title` | Its name in the quest list. |
 | `summary` | A line or two about it. |
-| `storyline` | The [storyline](/reference/storylines) it belongs to, for a UI that groups quests by person. Checked when the game loads. |
+| `storyline` | The [storyline](/docs/reference/storylines) it belongs to, for a UI that groups quests by person. Checked when the game loads. |
 | `starts` | The quest starts the first time this holds. Leave it out to start the quest only with the [`quests/start`](#effects) effect. |
 | `secret` | Not counted in `toFind` until it starts. |
 | `stages` | The stages, in order. The quest is done when the last one is. |
@@ -106,7 +106,7 @@ type QuestStage = { id: string; hint: string; done: Condition }
 
 ## A worked example
 
-Two quests from a cut-down Small Town, the [showcase](/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the game's phase moves from `arrival` to `open`). "Something warm" starts only when an activity says so. The town's map comes from the [places](/plugins/places) plugin.
+Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the game's phase moves from `arrival` to `open`). "Something warm" starts only when an activity says so. The town's map comes from the [places](/docs/plugins/places) plugin.
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -209,7 +209,7 @@ state = run(state, 'coffee')
 holds(state, questDone('settle'), game)          // true
 ```
 
-The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small Town](/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
+The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small Town](/docs/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
 
 ## Conditions
 
@@ -219,7 +219,7 @@ The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small
 | `{ custom: 'quests/done', with: { quest } }` | `questDone(quest)` | The quest is finished. |
 | `{ custom: 'quests/reached', with: { quest, stage } }` | `questReached(quest, stage)` | That stage of the quest is done. |
 
-You can use them anywhere a condition goes: a block's `when`, a choice, a lock or another quest's `starts`. Each can also be written short, with the full name as the only key, so `{ 'quests/done': { quest: 'settle' } }` is `{ custom: 'quests/done', with: { quest: 'settle' } }` (see [plugin calls](/reference/custom#plugincall)).
+You can use them anywhere a condition goes: a block's `when`, a choice, a lock or another quest's `starts`. Each can also be written short, with the full name as the only key, so `{ 'quests/done': { quest: 'settle' } }` is `{ custom: 'quests/done', with: { quest: 'settle' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ```ts
 import { type Block } from '@ifloom/engine'
@@ -245,7 +245,7 @@ It works in a data scene choice's effects and an activity's `effects`. The short
 | `{ type: 'custom', name: 'quests/track', with: { quest } }` | `trackQuest(quest)` | Pins the quest, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
 | `{ type: 'custom', name: 'quests/seen', with: { quest } }` | `seeQuests(quest)` | Marks the quest as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
 
-`quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that hasn't started or is finished. `quests/seen` is never refused, except by [locks](/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
+`quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that hasn't started or is finished. `quests/seen` is never refused, except by [locks](/docs/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
 
 ## Value
 
@@ -255,7 +255,7 @@ It works in a data scene choice's effects and an activity's `effects`. The short
 
 ## Strings
 
-The one line the plugin says to the player goes in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key.
+The one line the plugin says to the player goes in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key.
 
 | Key | English |
 |---|---|
@@ -311,7 +311,7 @@ type QuestEntry = {
 | `storyline` | `null` if the quest has none. |
 | `hint` | The hint for the stage the player is on, or `''` once the quest is done. |
 | `stage`, `stages` | How many stages are done, and how many there are. |
-| `startedOn`, `doneOn` | The [turn](/reference/state#turn) it started, and the turn it finished, or `null`. |
+| `startedOn`, `doneOn` | The [turn](/docs/reference/state#turn) it started, and the turn it finished, or `null`. |
 | `tracked` | Pinned with `quests/track`. |
 | `updated` | Started or moved on since the player last looked. |
 
@@ -391,6 +391,6 @@ A quest condition, effect or command that names a quest the game doesn't have gi
 - **Stages are done in order.** A later stage whose condition holds early doesn't count until every stage before it is done, and it only counts then if it still holds. In the example, if `hadCoffee` were somehow set before the player stepped out, the quest would still say "Step out onto the high street." Reaching the high street would then finish both stages at once.
 - **A quest with no `starts` only starts by effect.** Nothing in the state starts it, so put [`startQuest`](#effects) on the choice or activity that begins it.
 - **Progress latches.** Once a stage is done, it stays done even if its condition stops holding, and a finished quest stays finished. Write `done` for the moment something happens, such as `at('high-street')`, not for something that has to stay true.
-- **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/reference/plugins#hooks), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
-- **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
+- **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/docs/reference/plugins#hooks), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
+- **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
 - **Finishing the tracked quest unpins it.**

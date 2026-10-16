@@ -2,17 +2,17 @@
 title: "Building your own HUD"
 description: "Build your own HUD in the React UI from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest."
 ---
-The React UI's stat list, [`NoticeStrip`](/react/components#noticestrip) and quest log are basic on purpose. Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/reference/view):
+The React UI's stat list, [`NoticeStrip`](/docs/react/components#noticestrip) and quest log are basic on purpose. Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
 
 - an energy bar that turns red as it runs low;
 - a strip of unread counts for notices and texts;
 - an objective line from the quest the player is tracking.
 
-Each is a small React component that reads the view with [`useGame`](/react/components#usegame). The examples use Small Town's stats and plugins, but the pattern is the same for any game.
+Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame). The examples use Small Town's stats and plugins, but the pattern is the same for any game.
 
 ## A stat bar
 
-Every stat the game lists is in `view.stats` as a [`StatView`](/reference/view#statview), with its `value`, its `min` and `max`, and its `text` as the game formats it:
+Every stat the game lists is in `view.stats` as a [`StatView`](/docs/reference/view#statview), with its `value`, its `min` and `max`, and its `text` as the game formats it:
 
 ```tsx
 // src/hud/EnergyBar.tsx
@@ -42,11 +42,11 @@ export function EnergyBar() {
 
 `max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
 
-If a plain bar is all you need, you don't have to write one. Set [`display: 'bar'`](/reference/stats#statdef) or `'pips'` on the stat, and the built-in [`StatList`](/react/components#statlist) draws it.
+If a plain bar is all you need, you don't have to write one. Set [`display: 'bar'`](/docs/reference/stats#statdef) or `'pips'` on the stat, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
 
 ## A strip of unread counts
 
-Unseen notices are in `view.notices.unseen`. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/plugins/messages) plugin keeps an `unread` count:
+Unseen notices are in `view.notices.unseen`. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/plugins/messages) plugin keeps an `unread` count:
 
 ```tsx
 // src/hud/Unread.tsx
@@ -71,11 +71,11 @@ export function Unread() {
 }
 ```
 
-Each count opens where the unread thing is. The texts button opens the phone with [`useDevice`](/react/components#usedevice) and a [`DeviceDialog`](/react/components#devicedialog), the same pair the built-in device buttons use. A count of 0 draws nothing.
+Each count opens where the unread thing is. The texts button opens the phone with [`useDevice`](/docs/react/components#usedevice) and a [`DeviceDialog`](/docs/react/components#devicedialog), the same pair the built-in device buttons use. A count of 0 draws nothing.
 
 ## An objective line
 
-The [quests](/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
+The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
 
 ```tsx
 // src/hud/Objective.tsx
@@ -99,7 +99,7 @@ The player picks which quest to track in the quest log, which sends `quests/trac
 
 ## Putting it on screen
 
-Your components can go in any list of the [layout](/react/#layouts), among the built-in parts. Here they make a bar across the top of the stage, and take the place of the stat list at the side:
+Your components can go in any list of the [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the stage, and take the place of the stat list at the side:
 
 ```tsx
 // src/main.tsx
@@ -130,4 +130,4 @@ mountGame(game, {
 
 Build the element once, outside any component, as here. The layout is only read when the page is drawn, and the components inside it redraw themselves as the view changes.
 
-For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/react/customising#_7-replace-the-frame) or [write your own root](/react/customising#_8-write-your-own-root). The components above work anywhere inside the game's provider.
+For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.

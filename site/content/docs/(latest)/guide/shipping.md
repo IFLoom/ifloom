@@ -25,7 +25,7 @@ Pictures are different. An `<img>` or `<video>` may load from a neighbouring fol
 
 ## Build it with `ifloom build`
 
-The [CLI](/cli/) keeps these rules for you. A game made with [`npm run new`](/cli/#ifloom-new) already has the [Vite preset](/cli/#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
+The [CLI](/docs/cli) keeps these rules for you. A game made with [`npm run new`](/docs/cli#ifloom-new) already has the [Vite preset](/docs/cli#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
 
 ```ts
 // vite.config.ts
@@ -34,21 +34,21 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. When your game depends on the [React UI](/react/), `@ifloom/react`, it also adds the React and Tailwind CSS plugins. A game drawn with another framework adds that framework's plugin through the preset's `vite` option (see [Using another framework](/guide/frameworks)). Then build:
+It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. When your game depends on the [React UI](/docs/react), `@ifloom/react`, it also adds the React and Tailwind CSS plugins. A game drawn with another framework adds that framework's plugin through the preset's `vite` option (see [Using another framework](/docs/guide/frameworks)). Then build:
 
 ```sh
 ifloom build
 ```
 
-The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/cli/#ifloom-check) beside it to catch content problems before you build.
+The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/docs/cli#ifloom-check) beside it to catch content problems before you build.
 
-Leave the [debug plugin](/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
+Leave the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
 
 Put pictures in `public/art/`. Vite copies `public/` into the build as it is, so they land in `dist/art/` beside the page.
 
-Sound files go in `public/audio/` the same way, and land in `dist/audio/`. A browser plays them from beside a page opened from disk. `ifloom check` reports any track whose file is missing (see [The audio player](/reference/audio-player)).
+Sound files go in `public/audio/` the same way, and land in `dist/audio/`. A browser plays them from beside a page opened from disk. `ifloom check` reports any track whose file is missing (see [The audio player](/docs/reference/audio-player)).
 
-A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. Sound stays in `audio/` beside it, so a game with sound is always a folder. See [One file, pictures and all](/cli/#one-file-pictures-and-all) for what it costs.
+A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. Sound stays in `audio/` beside it, so a game with sound is always a folder. See [One file, pictures and all](/docs/cli#one-file-pictures-and-all) for what it costs.
 
 Then open `dist/index.html` straight from disk to check it. Testing only through `vite preview` hides the problem, because a local server is not `file://`.
 
@@ -71,11 +71,11 @@ export default defineConfig({
 })
 ```
 
-Build with `vite build`. Nothing then checks the folder for you, but [`checkBuild`](/cli/#checkbuild) from `@ifloom/cli` runs the same check from a script of your own.
+Build with `vite build`. Nothing then checks the folder for you, but [`checkBuild`](/docs/cli#checkbuild) from `@ifloom/cli` runs the same check from a script of your own.
 
 ## Saves
 
-A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`mountGame`](/react/#mountgame) from the React UI picks `localStorage` unless you pass another:
+A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`mountGame`](/docs/react#mountgame) from the React UI picks `localStorage` unless you pass another:
 
 | Shipped as | Driver |
 |---|---|
@@ -112,4 +112,4 @@ So `saves` keys every save with your game's id, `game.id`, as in `corner-cafe.sa
 
 ### Let players keep their saves
 
-Browser storage is cleared with the browser's site data, and a game opened from a different folder may not see the old one's. Offer an export and an import: `exportSlot` gives the save as text to download, and `importText` reads a file back, refusing one that is not a save or belongs to another game. See [Saves](/reference/saves#saves).
+Browser storage is cleared with the browser's site data, and a game opened from a different folder may not see the old one's. Offer an export and an import: `exportSlot` gives the save as text to download, and `importText` reads a file back, refusing one that is not a save or belongs to another game. See [Saves](/docs/reference/saves#saves).

@@ -20,17 +20,17 @@ const windowSeat: DataScene = {
 const sit: Effect = { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
 ```
 
-A storylet is an ordinary scene in `game.scenes`. It renders, records [seen](/reference/state#seen) and counts as the scene on screen like any other. The only difference is that an effect can pick it by chance.
+A storylet is an ordinary scene in `game.scenes`. It renders, records [seen](/docs/reference/state#seen) and counts as the scene on screen like any other. The only difference is that an effect can pick it by chance.
 
 ## Marking a scene
 
-Any scene can be a storylet, a [data scene](/reference/scenes#datascene) or a hand-written [`Scene`](/reference/scenes#scene). These three fields make it one (they're the [`StoryletFields`](/reference/scenes#storyletfields) type):
+Any scene can be a storylet, a [data scene](/docs/reference/scenes#datascene) or a hand-written [`Scene`](/docs/reference/scenes#scene). These three fields make it one (they're the [`StoryletFields`](/docs/reference/scenes#storyletfields) type):
 
 | Field | Default | What it does |
 |---|---|---|
 | `drawnFrom` | none | The sets the scene can be drawn from, by name, such as `['cafe']`. A scene can be in more than one. |
 | `weight` | `1` | How likely a draw is to pick it, against the other eligible scenes. A scene of weight 3 comes up three times as often as one of weight 1. |
-| `when` | always | A [condition](/reference/conditions). The scene is only eligible while it holds. |
+| `when` | always | A [condition](/docs/reference/conditions). The scene is only eligible while it holds. |
 
 `drawnFrom` is separate from `tags`. Tags style a scene in the UI and have nothing to do with draws.
 
@@ -43,10 +43,10 @@ Any scene can be a storylet, a [data scene](/reference/scenes#datascene) or a ha
 { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
 ```
 
-This is the [`scene` effect](/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or an item's use. When it runs, it:
+This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or an item's use. When it runs, it:
 
 1. finds the eligible scenes, which are the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds;
-2. draws one of them by weight, with [`weighted`](/reference/random#weighted);
+2. draws one of them by weight, with [`weighted`](/docs/reference/random#weighted);
 3. opens the scene it drew.
 
 If no scene is eligible, it opens `otherwise`. If you gave no `otherwise`, the effect leaves the scene on screen as it was. `otherwise` can be any scene, and doesn't need a `drawnFrom` of its own.
@@ -55,19 +55,19 @@ If no scene is eligible, it opens `otherwise`. If you gave no `otherwise`, the e
 
 ## How the draw is seeded
 
-A draw is worked out from the save's [seed](/reference/random#the-seed), the [turn](/reference/state#turn), the name of the set, and how many draws the set has had so far. That count is kept in the variable `storylet:<name>`, such as `storylet:cafe`, and goes up by one on every draw, including one that found nothing to draw.
+A draw is worked out from the save's [seed](/docs/reference/random#the-seed), the [turn](/docs/reference/state#turn), the name of the set, and how many draws the set has had so far. That count is kept in the variable `storylet:<name>`, such as `storylet:cafe`, and goes up by one on every draw, including one that found nothing to draw.
 
 So:
 
 - the same save draws the same scene, and reloading doesn't re-roll it;
 - a second draw from the same set in the same turn is a fresh draw, because the count has moved on;
 - two saves with different seeds draw differently;
-- [`replay`](/reference/runner#replay) runs the same commands on the same start and draws the same scenes, because the draw is part of the command.
+- [`replay`](/docs/reference/runner#replay) runs the same commands on the same start and draws the same scenes, because the draw is part of the command.
 
 **Gotchas.**
 - The draw walks the eligible scenes in the order they sit in `game.scenes`. A pack or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
 - The count is per set, not per place. Two activities that both draw from `'cafe'` share one count.
-- The engine writes `storylet:` variables itself, so don't use that prefix for your own. See [flags](/reference/state#flags).
+- The engine writes `storylet:` variables itself, so don't use that prefix for your own. See [flags](/docs/reference/state#flags).
 
 ## Once, at most, and only while
 
@@ -80,11 +80,11 @@ when: here('ava')                                  // only while Ava is in the c
 when: { stat: 'friendship', of: person('ava'), gte: 25 }  // only once you know her
 ```
 
-For once a turn, set a variable in the storylet's choice, list that variable in [`rules.resets`](/reference/rules#resets) so it goes back each turn, and test it in `when`.
+For once a turn, set a variable in the storylet's choice, list that variable in [`rules.resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
 
 ## Adding to a set
 
-A set has no list of members. Every scene that names it in `drawnFrom` is a member, so a [pack](/reference/loader#pack) or a [mod](/reference/mods) adds one just by declaring a scene:
+A set has no list of members. Every scene that names it in `drawnFrom` is a member, so a [pack](/docs/reference/loader#pack) or a [mod](/docs/reference/mods) adds one just by declaring a scene:
 
 ```ts
 import type { Pack } from '@ifloom/engine'
@@ -110,7 +110,7 @@ export const rainyDays: Pack = {
 
 ## The showcase café
 
-The [showcase](/guide/showcase#sit-a-while-at-the-cafe) has a "Sit a while" button in the café. It's a room action on the `cafe` location that runs the activity `sit`:
+The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while" button in the café. It's a room action on the `cafe` location that runs the activity `sit`:
 
 ```ts
 // the cafe location's actions
@@ -160,13 +160,13 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
 },
 ```
 
-While Ava is on shift and nothing has been seen, the window seat has weight 3, Ava's break 2 and the crossword 1, so out of six draws you'd expect three window seats, two breaks and one crossword. The window seat drops out once it's been seen twice, and the crossword once it's been seen at all. Ava's break only comes up while she's [in the room](/plugins/cast#conditions), so on a Sunday, when she isn't working, it's out of the draw too. With all three out, sitting down opens `cafe.quiet`.
+While Ava is on shift and nothing has been seen, the window seat has weight 3, Ava's break 2 and the crossword 1, so out of six draws you'd expect three window seats, two breaks and one crossword. The window seat drops out once it's been seen twice, and the crossword once it's been seen at all. Ava's break only comes up while she's [in the room](/docs/plugins/cast#conditions), so on a Sunday, when she isn't working, it's out of the draw too. With all three out, sitting down opens `cafe.quiet`.
 
-`here` and `person` are the [cast plugin](/plugins/cast#helpers)'s helpers, and `onlyAt` is the [places plugin](/plugins/places#helpers)'s. The showcase's test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` sits down with twenty seeds and checks both.
+`here` and `person` are the [cast plugin](/docs/plugins/cast#helpers)'s helpers, and `onlyAt` is the [places plugin](/docs/plugins/places#helpers)'s. The showcase's test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` sits down with twenty seeds and checks both.
 
 ## The checks
 
-The [content checker](/reference/checks) reports:
+The [content checker](/docs/reference/checks) reports:
 
 | Problem | Where | When |
 |---|---|---|
@@ -176,6 +176,6 @@ The [content checker](/reference/checks) reports:
 | `has a weight but no drawnFrom, so it is never drawn` | `scene <id>` | A `weight` on a scene that isn't in any set. |
 | `has a when but no drawnFrom; when only gates draws` | `scene <id>` | A `when` on a scene that isn't in any set. |
 
-A storylet's `when` is checked like [any other condition](/reference/checks#in-a-condition), for unknown stats, scenes and so on.
+A storylet's `when` is checked like [any other condition](/docs/reference/checks#in-a-condition), for unknown stats, scenes and so on.
 
 The effect is checked wherever it is, in item uses and activities too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.

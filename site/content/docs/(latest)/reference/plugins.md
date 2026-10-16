@@ -1,9 +1,9 @@
 ---
 title: "Writing a plugin"
 ---
-A plugin adds a whole system to the engine, such as a loyalty card, a quest list or a phone. It keeps its own state in the save, and brings the conditions, effects, commands, prose values, hooks and view that work on that state. Content calls these by name, the same way it calls the game's [custom functions](/reference/custom), so packs and mods can use a plugin without shipping any code.
+A plugin adds a whole system to the engine, such as a loyalty card, a quest list or a phone. It keeps its own state in the save, and brings the conditions, effects, commands, prose values, hooks and view that work on that state. Content calls these by name, the same way it calls the game's [custom functions](/docs/reference/custom), so packs and mods can use a plugin without shipping any code.
 
-You choose a game's plugins when you build it, in [`game.plugins`](/reference/game#game). Nothing is loaded while the game runs. The first-party plugins are separate packages, listed under [First-party plugins](/plugins/).
+You choose a game's plugins when you build it, in [`game.plugins`](/docs/reference/game#game). Nothing is loaded while the game runs. The first-party plugins are separate packages, listed under [First-party plugins](/docs/plugins).
 
 Do you need a plugin or a custom function? A custom function gives one computed answer, such as whether it's market day or what a sandwich costs. Write a plugin when the system needs a memory of its own: state that has to be saved, carried forward when its shape changes, and shown to the player.
 
@@ -80,7 +80,7 @@ const { game } = loadGame([cafe], {
 
 After five coffees, `loyalty.read(state, game)` is `{ stamps: 5 }`, the counter says `Your card has 5 stamps.`, and Claim a free coffee is on offer.
 
-That's a working plugin. The engine saves its state with the game, and the [content checker](/reference/checks) reports a call to a name the plugin doesn't have, such as `cafe · activity coffee · no custom effect named "loyalty/stomp"`. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
+That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `cafe · activity coffee · no custom effect named "loyalty/stomp"`. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
 
 ## A worked example
 
@@ -150,7 +150,7 @@ const out = apply(state, game, { type: 'custom', name: 'loyalty/redeem' })
 view(out.state, game).plugins.loyalty                           // { stamps: 0, free: 0 }
 ```
 
-On a new game the same command is refused with `Your card is not full yet.`, and the view greys out its button with the same line. A game that wants different wording gives `strings: { 'loyalty/notFull': 'Five stamps first.' }`. See [Strings](/reference/strings#plugins-strings).
+On a new game the same command is refused with `Your card is not full yet.`, and the view greys out its button with the same line. A game that wants different wording gives `strings: { 'loyalty/notFull': 'Five stamps first.' }`. See [Strings](/docs/reference/strings#plugins-strings).
 
 ## Plugin
 
@@ -202,30 +202,30 @@ type Plugin<S = any> = {
 
 | Field | What it is |
 |---|---|
-| `id` | Its name, and the prefix on everything it adds: `loyalty` gives `loyalty/stamp`. Letters, digits and `-` only. The [content checker](/reference/checks) reports any other id, and two plugins with the same one. |
+| `id` | Its name, and the prefix on everything it adds: `loyalty` gives `loyalty/stamp`. Letters, digits and `-` only. The [content checker](/docs/reference/checks) reports any other id, and two plugins with the same one. |
 | `version` | The version of its state's shape. Bump it when the shape changes, and add a step to `migrations`. Saves record it. |
 | `start` | Its state in a new game. A plugin with no state leaves this out. |
 | `migrations` | One step per version, keyed by the version it upgrades from. See [State and migrations](#state-and-migrations). |
-| `conditions` | Tests that content can use anywhere a [condition](/reference/conditions#custom) goes, by name without the prefix. |
+| `conditions` | Tests that content can use anywhere a [condition](/docs/reference/conditions#custom) goes, by name without the prefix. |
 | `effects` | Changes that content can make in a choice's, an activity's or a trigger's effects. Each takes the game state and returns the next one. |
 | `commands` | Commands a button can send. See [`PluginCommand`](#plugincommand). |
-| `strings` | The plugin's player-facing lines in English, by name without the prefix, such as `{ notFull: 'Your card is not full yet.' }`. The plugin says one with [`say(game, 'loyalty/notFull')`](/reference/strings#say), and a game rewords it as `strings: { 'loyalty/notFull': '…' }`. See [Plugins' strings](/reference/strings#plugins-strings). |
+| `strings` | The plugin's player-facing lines in English, by name without the prefix, such as `{ notFull: 'Your card is not full yet.' }`. The plugin says one with [`say(game, 'loyalty/notFull')`](/docs/reference/strings#say), and a game rewords it as `strings: { 'loyalty/notFull': '…' }`. See [Plugins' strings](/docs/reference/strings#plugins-strings). |
 | `queries` | Answers other plugins can ask for by name, with their context's `query`. See [Queries](#queries). |
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
 | `values` | Words and numbers that prose prints with `{{v:loyalty/stamps}}`. |
 | `hooks` | Code that runs at the end of each turn and after every command. See [Hooks](#hooks). |
 | `guard` | Whether a command may go ahead, given the effects it would apply. Returns a refusal, a warning or `undefined`. See [Guards](#guards). |
 | `price` | What a button costs that the engine can't say, in the plugin's words. See [Prices](#prices). |
-| `label` | Where the game is, in a few words, for [`view.when`](/reference/view#the-clock-and-the-player). See [Labels](#labels). |
+| `label` | Where the game is, in a few words, for [`view.when`](/docs/reference/view#the-clock-and-the-player). See [Labels](#labels). |
 | `stage` | What the screen shows while no scene is open: a title and prose blocks. See [Stage](#stage). |
 | `buttons` | Buttons offered while no scene is open, before the game's own `actions`. See [Buttons](#buttons). |
 | `speaker` | Who a scene's `speaker` id is: a name, a colour and a picture. See [Speakers](#speakers). |
-| `kinds` | [Kinds](/reference/entities#kinddef) of entity the plugin brings. See [Kinds and entities](#kinds-and-entities). |
-| `entities` | [Entities](/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
+| `kinds` | [Kinds](/docs/reference/entities#kinddef) of entity the plugin brings. See [Kinds and entities](#kinds-and-entities). |
+| `entities` | [Entities](/docs/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
-| `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/reference/view#plugins). See [The view](#the-view). |
-| `profile` | What the plugin keeps in the player's [profile](/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
-| `references` | What its calls and content name, for the [content checker](/reference/checks) to resolve. See [References](#references). |
+| `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
+| `profile` | What the plugin keeps in the player's [profile](/docs/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
+| `references` | What its calls and content name, for the [content checker](/docs/reference/checks) to resolve. See [References](#references). |
 | `check` | Rules of its own about its content, checked with the rest of the game. See [check](#check). |
 | `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, by a rule of its own. See [Checking calls](#checking-calls). |
 
@@ -248,10 +248,10 @@ Every plugin function gets this alongside the game state:
 - `slice` is the plugin's own state, typed. If the save has none yet, it's `start(game)`, or `undefined` for a plugin with no `start`.
 - `set(next, on?)` returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed.
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
-- `apply(effects, on?)` applies a list of [effects](/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
+- `apply(effects, on?)` applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
 - `picks` is only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. See [The view](#the-view).
 
-**Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/reference/effects#applyeffects):
+**Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
 
 ```ts
 // Wrong: the flag is lost, because set builds on `state`.
@@ -288,31 +288,31 @@ A command a button can send as `{ type: 'custom', name: 'loyalty/redeem', with: 
 
 | Field | What it is |
 |---|---|
-| `ignoresLocks` | Run even while a [lock](/reference/locks) would stop it. Off by default. See [Commands outside the story](#commands-outside-the-story). |
+| `ignoresLocks` | Run even while a [lock](/docs/reference/locks) would stop it. Off by default. See [Commands outside the story](#commands-outside-the-story). |
 | `whyNot` | Why it can't be done right now, written for the player, or `undefined` if it can. |
 | `run` | Returns the next state. It's only called once nothing has refused. |
-| `effectsOf` | The effects running it would apply, worked out before it runs, for [guards](#guards), [prices](#prices) and [locks by effect](/reference/locks#lock) to see. None if left out. See [Saying what a command does](#saying-what-a-command-does). |
+| `effectsOf` | The effects running it would apply, worked out before it runs, for [guards](#guards), [prices](#prices) and [locks by effect](/docs/reference/locks#lock) to see. None if left out. See [Saying what a command does](#saying-what-a-command-does). |
 
-The engine's [`whyNot`](/reference/actions#whynot) asks these in order, and the first answer wins:
+The engine's [`whyNot`](/docs/reference/actions#whynot) asks these in order, and the first answer wins:
 
-1. the [locks](/reference/locks), as for every command, unless the command sets `ignoresLocks`;
+1. the [locks](/docs/reference/locks), as for every command, unless the command sets `ignoresLocks`;
 2. every plugin's [guard](#guards), unless the command sets `ignoresLocks`;
-3. the game's own [`rules.commands.custom`](/reference/rules#commands), if it has one. If it does, its answer is final and the next two steps never run;
-4. `There is no such thing to do.` (the [`noSuchAction`](/reference/strings#refusals) string) if no plugin has a command by that name;
+3. the game's own [`rules.commands.custom`](/docs/reference/rules#commands), if it has one. If it does, its answer is final and the next two steps never run;
+4. `There is no such thing to do.` (the [`noSuchAction`](/docs/reference/strings#refusals) string) if no plugin has a command by that name;
 5. the plugin's `whyNot`.
 
-The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/reference/strings#plugins-strings) and return `say(game, 'loyalty/notFull')`, so a game can reword it.
+The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/docs/reference/strings#plugins-strings) and return `say(game, 'loyalty/notFull')`, so a game can reword it.
 
 **Gotchas.**
 - A command without `whyNot` can always be done, apart from locks and guards.
-- A [lock](/reference/locks) can stop one plugin command by its full name (`deny: ['loyalty/redeem']`), all of a plugin's commands (`deny: ['loyalty/*']`), or every plugin's (`deny: ['custom']`). `'*'` stops them too, like everything else.
+- A [lock](/docs/reference/locks) can stop one plugin command by its full name (`deny: ['loyalty/redeem']`), all of a plugin's commands (`deny: ['loyalty/*']`), or every plugin's (`deny: ['custom']`). `'*'` stops them too, like everything else.
 - A `custom` entry in `rules.commands` takes over every plugin command, so leave it out.
 
 ### Commands outside the story
 
-`ignoresLocks: true` takes a command out of the [locks](/reference/locks). No lock stops it, whatever its `deny` says, and the view never greys out its button for one. No plugin's [guard](#guards) is asked about it either. Everything else still applies: the game's `rules.commands.custom` is still asked, the command's own `whyNot` still refuses, and `run` goes through [`apply`](/reference/commands#apply) as usual, with triggers and every plugin's `after` hook.
+`ignoresLocks: true` takes a command out of the [locks](/docs/reference/locks). No lock stops it, whatever its `deny` says, and the view never greys out its button for one. No plugin's [guard](#guards) is asked about it either. Everything else still applies: the game's `rules.commands.custom` is still asked, the command's own `whyNot` still refuses, and `run` goes through [`apply`](/docs/reference/commands#apply) as usual, with triggers and every plugin's `after` hook.
 
-It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the game's stages.
+It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/docs/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the game's stages.
 
 ```ts
 commands: {
@@ -324,7 +324,7 @@ commands: {
 }
 ```
 
-[`lockOn`](/reference/locks#lockon) and [`lockedBy`](/reference/locks#lockedby) don't look at `ignoresLocks`, so they still say which lock matches the command. Only `whyNot`, and so the reducer and the view, lets it through.
+[`lockOn`](/docs/reference/locks#lockon) and [`lockedBy`](/docs/reference/locks#lockedby) don't look at `ignoresLocks`, so they still say which lock matches the command. Only `whyNot`, and so the reducer and the view, lets it through.
 
 ## Naming
 
@@ -334,18 +334,18 @@ Content calls a plugin by its full name: the plugin's id, a `/`, and the name in
 |---|---|
 | condition | `{ custom: 'loyalty/stamps', with: { atLeast: 3 } }`, or in short `{ 'loyalty/stamps': { atLeast: 3 } }` |
 | effect | `{ custom: 'loyalty/stamp' }`, or in short `{ 'loyalty/stamp': true }`, in a data scene choice's, an activity's or a trigger's effects |
-| command | `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/reference/actions#actiondef): a place's action, a game action or a plugin's [button](#buttons) |
+| command | `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef): a place's action, a game action or a plugin's [button](#buttons) |
 | value | `{{v:loyalty/stamps}}` in prose |
 
-The short form has the plugin's full name as its only key, and what it asks as the value. See [`PluginCall`](/reference/custom#plugincall) for how a value that isn't an object is passed.
+The short form has the plugin's full name as its only key, and what it asks as the value. See [`PluginCall`](/docs/reference/custom#plugincall) for how a value that isn't an object is passed.
 
-A name with a `/` belongs to a plugin. The engine looks it up among the plugins first, and only then among the game's [custom functions](/reference/custom), so keep `/` out of the game's own names.
+A name with a `/` belongs to a plugin. The engine looks it up among the plugins first, and only then among the game's [custom functions](/docs/reference/custom), so keep `/` out of the game's own names.
 
-A plugin usually exports small typed helpers that write these objects for authors who work in code, such as the quests plugin's [`questDone`](/plugins/quests#helpers).
+A plugin usually exports small typed helpers that write these objects for authors who work in code, such as the quests plugin's [`questDone`](/docs/plugins/quests#helpers).
 
 **Gotchas.**
 - A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{v:loyalty/stamps-left}}` prints. Anything else isn't a token and is left on screen as written.
-- A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/reference/checks) reports most of them when the game loads.
+- A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/docs/reference/checks) reports most of them when the game loads.
 
 ## Queries
 
@@ -379,7 +379,7 @@ import { pluginQuery } from '@ifloom/engine'
 function pluginQuery(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => unknown) | undefined
 ```
 
-A plugin's query by its full name, for code outside any plugin, such as a tool, a test or the [CLI](/cli/). It returns a function to ask it with, which runs with the owning plugin's own context for that state. It returns `undefined` when the game lacks the plugin or the query. `args` is `{}` if left out. A plugin's own code uses its context's `query` instead.
+A plugin's query by its full name, for code outside any plugin, such as a tool, a test or the [CLI](/docs/cli). It returns a function to ask it with, which runs with the owning plugin's own context for that state. It returns `undefined` when the game lacks the plugin or the query. `args` is `{}` if left out. A plugin's own code uses its context's `query` instead.
 
 ```ts
 // Is it late enough for bed? Only a game with the calendar can say.
@@ -394,7 +394,7 @@ const bedtime = pluginQuery(game, 'calendar/bedtime')?.(state) ?? false
 cooperates?: string[]
 ```
 
-The ids of plugins this one works with when the game has them. Content written for this plugin may then name those plugins' conditions, effects and commands, in full or [in short](/reference/custom#plugincall), even in a game without them. The [content checker](/reference/checks#absent-partners) doesn't report them, and in play the condition is false, the effect does nothing and the command is refused.
+The ids of plugins this one works with when the game has them. Content written for this plugin may then name those plugins' conditions, effects and commands, in full or [in short](/docs/reference/custom#plugincall), even in a game without them. The [content checker](/docs/reference/checks#absent-partners) doesn't report them, and in play the condition is false, the effect does nothing and the command is refused.
 
 ```ts
 export const loyalty = definePlugin<Card>({
@@ -409,12 +409,12 @@ export const loyalty = definePlugin<Card>({
 **Gotchas.**
 - It only covers plugins the game doesn't have. In a game that has the partner, a name the partner doesn't declare is reported as usual.
 - A plugin nobody lists in `cooperates` is still reported, as `no custom condition named "calendar/weekend"`.
-- It covers every form: a condition, an effect in either form, and a command. See [Absent partners](/reference/checks#absent-partners).
+- It covers every form: a condition, an effect in either form, and a command. See [Absent partners](/docs/reference/checks#absent-partners).
 - A value in prose from an absent partner is left on screen.
 
 ## Effects run in order
 
-A plugin's effect is a real step in its list. [`buildEffects`](/reference/custom#buildeffects) turns `{ custom: 'loyalty/stamp', with }` into an [`Effect`](/reference/effects#custom), `{ kind: 'custom', name: 'loyalty/stamp', with }`. When the list applies, each plugin effect runs on the state the effects before it left, so two stamps in one list give two stamps.
+A plugin's effect is a real step in its list. [`buildEffects`](/docs/reference/custom#buildeffects) turns `{ custom: 'loyalty/stamp', with }` into an [`Effect`](/docs/reference/effects#custom), `{ kind: 'custom', name: 'loyalty/stamp', with }`. When the list applies, each plugin effect runs on the state the effects before it left, so two stamps in one list give two stamps.
 
 A game's own custom effect works differently. It's worked out up front, when the list is built, from the state before any of the list applies, and returns plain effects that take its place.
 
@@ -433,9 +433,9 @@ Inside an activity, the effects are worked out before the cost is paid, but a pl
 type PluginSlice = { version: number; state: unknown }
 ```
 
-Each plugin's state lives in [`state.plugins`](/reference/state#plugins), keyed by plugin id, along with the version of its shape. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. [`startingState`](/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/reference/state), it must be plain JSON.
+Each plugin's state lives in [`state.plugins`](/docs/reference/state#plugins), keyed by plugin id, along with the version of its shape. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/docs/reference/state), it must be plain JSON.
 
-When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/reference/saves#loadstate) follow the same rule.
+When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/docs/reference/saves#loadstate) follow the same rule.
 
 ```ts
 version: 2,
@@ -446,7 +446,7 @@ migrations: {
 
 ### When a save loads
 
-[`loadState`](/reference/saves#loadstate) brings every plugin's state up to the version the game has. It runs after the engine's own steps and before the game's [migrations](/reference/saves#the-game-s-own-migrations):
+[`loadState`](/docs/reference/saves#loadstate) brings every plugin's state up to the version the game has. It runs after the engine's own steps and before the game's [migrations](/docs/reference/saves#the-games-own-migrations):
 
 - a plugin added since the save was made starts fresh from `start`;
 - an older state is carried forward one step at a time;
@@ -459,13 +459,13 @@ A save it can't carry forward is refused with one of these reasons:
 | `That save was made with a newer version of <id>.` | The saved version is higher than the plugin's. |
 | `That save's <id> is from a version this game cannot read.` | A step on the way is missing. |
 
-Both are the engine's [`pluginNewer` and `pluginUnreadable`](/reference/strings#saves) strings, so a game can reword them. The [save store](/reference/saves#saves), the runner and [`replay`](/reference/runner#replay) all load through `loadState`, so a plugin never sees a state it couldn't read.
+Both are the engine's [`pluginNewer` and `pluginUnreadable`](/docs/reference/strings#saves) strings, so a game can reword them. The [save store](/docs/reference/saves#saves), the runner and [`replay`](/docs/reference/runner#replay) all load through `loadState`, so a plugin never sees a state it couldn't read.
 
 ## Hooks
 
 | Hook | When |
 |---|---|
-| `turn(state, context)` | At the end of each turn, after [`rules.turn`](/reference/rules#turn)'s effects and the game's own [`rules.onTurn`](/reference/rules#onturn). A turn ends on each [`turn`](/reference/effects#turn) effect, including those the [calendar](/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/reference/rules#the-end-of-a-turn). |
+| `turn(state, context)` | At the end of each turn, after [`rules.turn`](/docs/reference/rules#turn)'s effects and the game's own [`rules.onTurn`](/docs/reference/rules#onturn). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
 | `after(before, after, context)` | After every command that took. `before` is the state the command started from, and the context belongs to `after`. |
 
 Those are the only two. Plugins' hooks run in the order `game.plugins` lists them, and each gets the state the one before it left. To notice the player moving, use `after` and ask `places/here`, as the example below does.
@@ -473,8 +473,8 @@ Those are the only two. Plugins' hooks run in the order `game.plugins` lists the
 Within one command, the order is:
 
 1. the command runs, including the end of any turn it causes (the game's `onTurn`, then each plugin's `turn`);
-2. the game's [triggers](/reference/triggers) fire;
-3. the scene left on screen is counted as [seen](/reference/state#seen);
+2. the game's [triggers](/docs/reference/triggers) fire;
+3. the scene left on screen is counted as [seen](/docs/reference/state#seen);
 4. each plugin's `after` runs, last. Triggers don't see what it changes until the next command.
 
 A plugin that keeps a diary of the player's days might use both:
@@ -501,12 +501,12 @@ export const diary = definePlugin<Diary>({
 ```
 
 **Gotchas.**
-- `after` only runs through [`apply`](/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/plugins/quests) does, rather than rely on `after` having run.
+- `after` only runs through [`apply`](/docs/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/docs/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/docs/plugins/quests) does, rather than rely on `after` having run.
 - Return the state you were given when nothing changes. Calling `set` with an equal slice still makes a new state object.
 
 ## The profile
 
-Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares `profile.onCommand`, and the [runner](/reference/runner#finished) calls it after every command that takes:
+Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/docs/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares `profile.onCommand`, and the [runner](/docs/reference/runner#finished) calls it after every command that takes:
 
 ```ts
 import { definePlugin } from '@ifloom/engine'
@@ -531,12 +531,12 @@ It's called with the state after the command, the state before it, what the plug
 A UI reads the namespace from the runner, as in `await runner.profile?.get('endings')`.
 
 **Gotchas.**
-- Only a runner with a `profile` calls `onCommand`. [`apply`](/reference/commands#apply), `dispatch` and [`replay`](/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
+- Only a runner with a `profile` calls `onCommand`. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
 - The profile isn't in the context, so a plugin's conditions, effects and view can't read it. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
 
 ## Guards, prices and labels
 
-Three more fields let a plugin watch every command, not just its own. A guard says whether a command may go ahead, a price adds to what a button says it costs, and a label says where the game is. A guard and a price are both handed the effects the command would apply, worked out before it runs by [`effectsOf`](/reference/actions#effectsof).
+Three more fields let a plugin watch every command, not just its own. A guard says whether a command may go ahead, a price adds to what a button says it costs, and a label says where the game is. A guard and a price are both handed the effects the command would apply, worked out before it runs by [`effectsOf`](/docs/reference/actions#effectsof).
 
 As an example, take a sink of dirty dishes in the flat. Cooking and baking add to it, and washing up takes the rest of the turn.
 
@@ -581,7 +581,7 @@ export const dishes = definePlugin<Sink>({
 })
 ```
 
-The flat offers the buttons, as a location of the [places plugin](/plugins/places#locationdef):
+The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#locationdef):
 
 ```ts
 import { onlyAt } from '@ifloom/plugin-places'
@@ -624,17 +624,17 @@ type Asked = { command: Command; effects: readonly Effect[] }
 type Refusal = string | { reason: string; soft: true }
 ```
 
-Whether a command may go ahead. `asked.command` is the [command](/reference/commands#command), and `asked.effects` is what it would apply, from [`effectsOf`](/reference/actions#effectsof). `state` and the context are the state before the command. Return one of these:
+Whether a command may go ahead. `asked.command` is the [command](/docs/reference/commands#command), and `asked.effects` is what it would apply, from [`effectsOf`](/docs/reference/actions#effectsof). `state` and the context are the state before the command. Return one of these:
 
 - `undefined` to let it through.
-- A string to refuse it, as a [lock](/reference/locks) does. [`whyNot`](/reference/actions#whynot) returns the line, so the view greys the button out with it and the reducer refuses with it.
-- `{ reason, soft: true }` for a warning. The button can still be pressed and carries `reason` as its [`warning`](/reference/view#renderedchoice), but the reducer refuses the command with `reason` all the same. The [calendar](/plugins/calendar#the-guard)'s past-dawn warning works this way: the UI shows the warning and offers something else, here washing up.
+- A string to refuse it, as a [lock](/docs/reference/locks) does. [`whyNot`](/docs/reference/actions#whynot) returns the line, so the view greys the button out with it and the reducer refuses with it.
+- `{ reason, soft: true }` for a warning. The button can still be pressed and carries `reason` as its [`warning`](/docs/reference/view#renderedchoice), but the reducer refuses the command with `reason` all the same. The [calendar](/docs/plugins/calendar#the-guard)'s past-dawn warning works this way: the UI shows the warning and offers something else, here washing up.
 
-Every plugin's guard is asked about every command, in the order `game.plugins` lists them, except a plugin command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before the game's own [`rules.commands`](/reference/rules#commands) and what the command itself needs, such as an activity's `requires` and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/reference/actions#warningof).
+Every plugin's guard is asked about every command, in the order `game.plugins` lists them, except a plugin command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before the game's own [`rules.commands`](/docs/reference/rules#commands) and what the command itself needs, such as an activity's `requires` and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/docs/reference/actions#warningof).
 
 **Gotchas.**
 - `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.
-- Every button shows a guard's refusal and its warning. That includes the game's and plugins' buttons, scene choices (after the choice's own `disabled`), the [cast](/plugins/cast)'s Talk buttons and the [places plugin](/plugins/places#exitview)'s exits.
+- Every button shows a guard's refusal and its warning. That includes the game's and plugins' buttons, scene choices (after the choice's own `disabled`), the [cast](/docs/plugins/cast)'s Talk buttons and the [places plugin](/docs/plugins/places#exitview)'s exits.
 - An effect applied inside another effect isn't in the list. The turn `dishes/wash` ends isn't there, only `dishes/wash` itself.
 
 ### Prices
@@ -643,7 +643,7 @@ Every plugin's guard is asked about every command, in the order `game.plugins` l
 price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
 ```
 
-What a button costs that the engine can't say, in the plugin's words, such as `['2 dishes to wash']`. Every plugin's notes go in the button's [`price.notes`](/reference/view#price), in the order `game.plugins` lists them. The engine asks with the effects of each button's command, from [`effectsOf`](/reference/actions#effectsof), and of each scene choice. A button whose effects are empty isn't asked about. A button with notes but no cost gets a price of only `{ notes }`.
+What a button costs that the engine can't say, in the plugin's words, such as `['2 dishes to wash']`. Every plugin's notes go in the button's [`price.notes`](/docs/reference/view#price), in the order `game.plugins` lists them. The engine asks with the effects of each button's command, from [`effectsOf`](/docs/reference/actions#effectsof), and of each scene choice. A button whose effects are empty isn't asked about. A button with notes but no cost gets a price of only `{ notes }`.
 
 **Gotcha.** An activity's effects begin with its cost, as a negative `stat` effect for each stat it spends. The engine already shows those in `stats`, so a price shouldn't repeat them.
 
@@ -653,11 +653,11 @@ What a button costs that the engine can't say, in the plugin's words, such as `[
 label?: (state: GameState, context: PluginContext<S>) => string | undefined
 ```
 
-Where the game is, in a few words for a header or a save, such as `'Day 3 · Wednesday morning'`. Every plugin's label, in the order `game.plugins` lists them and joined with ` · `, makes [`view.when`](/reference/view#the-clock-and-the-player). It's `null` when no plugin gives one. Return `undefined` to say nothing.
+Where the game is, in a few words for a header or a save, such as `'Day 3 · Wednesday morning'`. Every plugin's label, in the order `game.plugins` lists them and joined with ` · `, makes [`view.when`](/docs/reference/view#the-clock-and-the-player). It's `null` when no plugin gives one. Return `undefined` to say nothing.
 
 ### Performance
 
-The engine only works out a command's effects for guards and prices when some plugin in the game has a `guard` or a `price`. A game without one pays nothing for them, apart from a [lock with `effect`](/reference/locks#lock).
+The engine only works out a command's effects for guards and prices when some plugin in the game has a `guard` or a `price`. A game without one pays nothing for them, apart from a [lock with `effect`](/docs/reference/locks#lock).
 
 ## Saying what a command does
 
@@ -665,7 +665,7 @@ The engine only works out a command's effects for guards and prices when some pl
 effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
 ```
 
-The engine can't see inside a [`PluginCommand`](#plugincommand)'s `run`, so the command says what it would apply. Guards, prices and [locks with `effect`](/reference/locks#lock) read this list. Without `effectsOf`, the command applies nothing they can see.
+The engine can't see inside a [`PluginCommand`](#plugincommand)'s `run`, so the command says what it would apply. Guards, prices and [locks with `effect`](/docs/reference/locks#lock) read this list. Without `effectsOf`, the command applies nothing they can see.
 
 ```ts
 wash: {
@@ -675,7 +675,7 @@ wash: {
 ```
 
 **Gotchas.**
-- The list is plain [`Effect`](/reference/effects)s, so write a plugin's effect in the long form, `{ kind: 'custom', name, with }`, not the short form.
+- The list is plain [`Effect`](/docs/reference/effects)s, so write a plugin's effect in the long form, `{ kind: 'custom', name, with }`, not the short form.
 - Keep it in step with `run`. Nothing checks that the two agree.
 
 ## Applying effects
@@ -684,9 +684,9 @@ wash: {
 apply: (effects: readonly EffectRef[], on?: GameState) => GameState
 ```
 
-On the [context](#plugincontext), `apply` applies a list of effects as content would and returns the next state. Anything content can write goes in the list: built-in effects, the game's [custom effects](/reference/custom#effects) and plugins' effects (this plugin's own included), in the long form or [in short](/reference/custom#plugincall). They apply in order, each on the state the one before it left. The list is built from `on`, which defaults to the state the function was handed.
+On the [context](#plugincontext), `apply` applies a list of effects as content would and returns the next state. Anything content can write goes in the list: built-in effects, the game's [custom effects](/docs/reference/custom#effects) and plugins' effects (this plugin's own included), in the long form or [in short](/docs/reference/custom#plugincall). They apply in order, each on the state the one before it left. The list is built from `on`, which defaults to the state the function was handed.
 
-This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/reference/rules#the-end-of-a-turn), with `rules.turn`, `onTurn` and every plugin's `turn` hook.
+This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with `rules.turn`, `onTurn` and every plugin's `turn` hook.
 
 ```ts
 // Empty the sink first, so the turn's hooks see it empty.
@@ -700,7 +700,7 @@ wash: (_state, _args, { set, apply }) => apply([{ kind: 'turn' }], set({ dirty: 
 
 ## The view
 
-`view(state, context)` returns whatever the plugin's UI needs. The engine's [`view()`](/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it, so type it where you read it:
+`view(state, context)` returns whatever the plugin's UI needs. The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it, so type it where you read it:
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -708,7 +708,7 @@ import { view } from '@ifloom/engine'
 const card = view(state, game).plugins.loyalty as { stamps: number; free: number } | undefined
 ```
 
-If your view draws pictures from a [pool](/reference/media#pools), pass the context's `picks` to [`stageView`](/reference/view#stageview) or [`renderScene`](/reference/scenes#renderscene). Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
+If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`stageView`](/docs/reference/view#stageview) or [`renderScene`](/docs/reference/scenes#renderscene). Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
 
 ```ts
 view: (state, { game, slice, picks }) => {
@@ -729,15 +729,15 @@ type StageDef = {
 }
 ```
 
-What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (prose keys, variants, conditions and the game's prose), with `id: null`, `frame: 'stage'` and no choices. Return `undefined` to let the next plugin answer.
+What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (prose keys, variants, conditions and the game's prose), with `id: null`, `frame: 'stage'` and no choices. Return `undefined` to let the next plugin answer.
 
 | Field | What it is |
 |---|---|
 | `title` | The heading, such as a room's name. |
-| `body` | What's written there, as [blocks](/reference/scenes#block). Left out, the body is empty. |
-| `id` | The id its blocks are drawn under. A [`variants`](/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. |
+| `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
+| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. |
 
-With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/plugins/places#the-stage)'s stage is the room the player is in, with its name and its `body`.
+With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name and its `body`.
 
 A market stall on the high street fills the screen while it's open:
 
@@ -772,7 +772,7 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 **Gotchas.**
 - The first answer wins, so a plugin listed earlier in `game.plugins` hides a later one's stage. Only answer when the stage is yours. The stall's is `undefined` once it's packed up.
 - A scene with no title of its own takes the stage's title, then the game's. The stall's scenes are headed The market stall while it's open.
-- Only `view.scene` changes. In a game with the [places plugin](/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
+- Only `view.scene` changes. In a game with the [places plugin](/docs/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
 - The content checker doesn't see a stage's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
 
 ## Buttons
@@ -781,7 +781,7 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
 ```
 
-Buttons the plugin offers while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/reference/actions#actiondef), the same shape as the game's own actions. The view puts every plugin's buttons first, in the order `game.plugins` lists them, then the game's own [`actions`](/reference/game#game). The [places plugin](/plugins/places#the-buttons)'s buttons are the current location's `actions`. All of them are drawn alike with [`renderAction`](/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/reference/actions#whynot)'s reason.
+Buttons the plugin offers while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/docs/reference/actions#actiondef), the same shape as the game's own actions. The view puts every plugin's buttons first, in the order `game.plugins` lists them, then the game's own [`actions`](/docs/reference/game#game). The [places plugin](/docs/plugins/places#the-buttons)'s buttons are the current location's `actions`. All of them are drawn alike with [`renderAction`](/docs/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/docs/reference/actions#whynot)'s reason.
 
 ```ts
 // The stall above, with a game action to buy bread:
@@ -789,8 +789,8 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 ```
 
 **Gotchas.**
-- A button whose `when` doesn't hold is left out, and so is one whose command is stopped by a [lock](/reference/locks) with `hide: true`. Any other lock greys it out with its line, like any button.
-- Like the game's own actions, they aren't offered while a scene is open or while a lock that stops everything is on ([`lockedOut`](/reference/locks#lockedout)).
+- A button whose `when` doesn't hold is left out, and so is one whose command is stopped by a [lock](/docs/reference/locks) with `hide: true`. Any other lock greys it out with its line, like any button.
+- Like the game's own actions, they aren't offered while a scene is open or while a lock that stops everything is on ([`lockedOut`](/docs/reference/locks#lockedout)).
 - The content checker doesn't see them. Say what their commands name in [`references`](#references), as `{ command }`.
 
 ## Audio
@@ -799,17 +799,17 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
 ```
 
-What the plugin puts on background [audio channels](/reference/audio#channels), by channel, such as `{ ambience: 'cafe.murmur' }`. Return `undefined` or `{}` to leave every channel alone. The [places plugin](/plugins/places#audio) uses it to play the location's `audio` while the player is there.
+What the plugin puts on background [audio channels](/docs/reference/audio#channels), by channel, such as `{ ambience: 'cafe.murmur' }`. Return `undefined` or `{}` to leave every channel alone. The [places plugin](/docs/plugins/places#audio) uses it to play the location's `audio` while the player is there.
 
 ```ts
 // The stall rings its bell while the market is on.
 audio: (state) => (state.flags.marketOpen ? { ambience: 'market.bell' } : undefined),
 ```
 
-It comes third of [four levels](/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/reference/effects#audio) both win over it, and it wins over the game's default. When several plugins name the same channel, the first in `game.plugins` wins. `null` silences a channel, and a channel you leave out goes to the next plugin, then the default.
+It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. When several plugins name the same channel, the first in `game.plugins` wins. `null` silences a channel, and a channel you leave out goes to the next plugin, then the default.
 
 **Gotchas.**
-- The engine asks it on every [`view`](/reference/view) and after every command, so keep it cheap.
+- The engine asks it on every [`view`](/docs/reference/view) and after every command, so keep it cheap.
 - The content checker doesn't see the tracks it names. Say them in [`references`](#references), as `{ channel, track }`.
 
 ## Speakers
@@ -825,7 +825,7 @@ type SpeakerView = {
 }
 ```
 
-Who a scene's [`speaker`](/reference/scenes#sceneview) id is, for the screen. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a [`SpeakerView`](/reference/view#speakerview) becomes [`view.scene.speaker`](/reference/view#the-scene). Return `undefined` for an id that isn't yours, so the next plugin can answer.
+Who a scene's [`speaker`](/docs/reference/scenes#sceneview) id is, for the screen. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a [`SpeakerView`](/docs/reference/view#speakerview) becomes [`view.scene.speaker`](/docs/reference/view#the-scene). Return `undefined` for an id that isn't yours, so the next plugin can answer.
 
 | Field | What it is |
 |---|---|
@@ -834,7 +834,7 @@ Who a scene's [`speaker`](/reference/scenes#sceneview) id is, for the screen. Th
 | `hue` | A colour for their lines, as a hue from 0 to 360. `null` leaves it to the UI. |
 | `portrait` | Their picture, as a path or URL. `null` for none. |
 
-With no plugin answering, the scene has no speaker. The [cast](/plugins/cast#speakers) answers for its characters, such as Ava in the showcase. The id is never guessed from the scene's id.
+With no plugin answering, the scene has no speaker. The [cast](/docs/plugins/cast#speakers) answers for its characters, such as Ava in the showcase. The id is never guessed from the scene's id.
 
 A plugin that keeps the café's regulars says who's talking from its own content:
 
@@ -887,10 +887,10 @@ kinds?: readonly KindDef[]
 entities?: (game: Game) => readonly EntityDef[]
 ```
 
-A plugin can bring the [kinds](/reference/entities#kinddef) of thing it keeps, and the [entities](/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and variables that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
+A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and variables that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
-- **`kinds`** are merged by the [loader](/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in a pack, replaces the plugin's. That's how a game renames one.
-- **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/reference/game#game) and are [checked](/reference/checks) like any declared entity, against the plugin's id.
+- **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in a pack, replaces the plugin's. That's how a game renames one.
+- **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
 
 The regulars above, each also an entity with a stat of their own:
 
@@ -919,9 +919,9 @@ startingState(game).entities.regular
 The pack's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.
 
 **Gotchas.**
-- **Only through `loadGame`.** A game built by hand, without the [loader](/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
+- **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
 - **`entities` runs before the prose is ready.** `game.prose` isn't set yet when it's called, so read only `game.data` and the other content lists.
-- **A save carries them in.** A declared entity a save doesn't have, such as one a new entry in the plugin's content makes, joins the save when it loads, unless it was removed in play. See [Entities in old saves](/reference/entities#entities-in-old-saves).
+- **A save carries them in.** A declared entity a save doesn't have, such as one a new entry in the plugin's content makes, joins the save when it loads, unless it was removed in play. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
 
 ## Content and checks
 
@@ -937,7 +937,7 @@ const town: Pack = {
 }
 ```
 
-The [loader](/reference/loader#pack) merges `data` as it merges scenes: a later pack's entry replaces an earlier one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of every pack.
+The [loader](/docs/reference/loader#pack) merges `data` as it merges scenes: a later pack's entry replaces an earlier one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of every pack.
 
 ### PluginEntry
 
@@ -960,12 +960,12 @@ type PluginReferences = {
 type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
 ```
 
-What the plugin's calls and content name, so the [content checker](/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
+What the plugin's calls and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
 
-- **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, and a [short call](/reference/custom#plugincall)'s value that isn't an object arrives as `{ value }`. The checker asks it about every call it finds, wherever the call is.
+- **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, and a [short call](/docs/reference/custom#plugincall)'s value that isn't an object arrives as `{ value }`. The checker asks it about every call it finds, wherever the call is.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the pack that entry came from.
 
-Each returns a list of [`Reference`](/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/reference/checks#plugin-references) lists them all.
+Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
 
 The loyalty plugin's cards each have a condition, and its `stamp` effect names a card:
 
@@ -980,10 +980,10 @@ references: {
 // town · activity buy · unknown card "bakery"
 ```
 
-A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the problems inside, so a list of buttons reads as the places plugin's do: `locations yard · action dig · unknown location "moon"`. A file a reference names, such as a post's picture, goes into the checker's [`files`](/reference/checks#fileref).
+A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the problems inside, so a list of buttons reads as the places plugin's do: `locations yard · action dig · unknown location "moon"`. A file a reference names, such as a post's picture, goes into the checker's [`files`](/docs/reference/checks#fileref).
 
 **Gotchas.**
-- A call to a plugin the game doesn't have isn't asked about. The name is reported or let through as [Absent partners](/reference/checks#absent-partners) says.
+- A call to a plugin the game doesn't have isn't asked about. The name is reported or let through as [Absent partners](/docs/reference/checks#absent-partners) says.
 - An `{ entry }` reference to a plugin the game doesn't have isn't checked. That's how the cast can name the places plugin's locations without needing it.
 
 ### check
@@ -1050,7 +1050,7 @@ The checker asks it about every call it finds and reports each problem as the ca
 type PluginProblem = { list: string; id: string; what: string }
 ```
 
-Which list, which entry, and what's wrong. The content checker turns it into a [`Problem`](/reference/checks#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the pack that entry came from, or on `base` if it came from no pack:
+Which list, which entry, and what's wrong. The content checker turns it into a [`Problem`](/docs/reference/checks#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the pack that entry came from, or on `base` if it came from no pack:
 
 ```text
 mod:sunday-market · cards market · unknown storyline "sam"
@@ -1058,7 +1058,7 @@ mod:sunday-market · cards market · unknown storyline "sam"
 
 ## Saves
 
-A save records each plugin's version in [`meta.plugins`](/reference/saves#savemeta). A save made with a plugin the game no longer has still loads, keeps that plugin's state untouched, and names the plugin in [`missingPlugins`](/reference/saves#loadedsave). A save whose plugin state can't be carried forward is refused with one of the reasons in [When a save loads](#when-a-save-loads).
+A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#savemeta). A save made with a plugin the game no longer has still loads, keeps that plugin's state untouched, and names the plugin in [`missingPlugins`](/docs/reference/saves#loadedsave). A save whose plugin state can't be carried forward is refused with one of the reasons in [When a save loads](#when-a-save-loads).
 
 ## definePlugin
 
@@ -1082,7 +1082,7 @@ loyalty.read(state, game).stamps
 const full = loyalty.write(state, { stamps: 0, free: 1 }) // a test that starts with a free coffee
 ```
 
-A plugin is a plain object, so `definePlugin` is optional, but it types `S` throughout and gives you `read` and `write`. A plugin package usually exports a factory that returns one, such as [`quests()`](/plugins/quests#quests).
+A plugin is a plain object, so `definePlugin` is optional, but it types `S` throughout and gives you `read` and `write`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
 
 ## pluginById
 
@@ -1100,8 +1100,8 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 
 ## Gotchas
 
-- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
+- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, put a requirement on the activity, or have a [guard](#guards) refuse any command that would apply the effect.
-- **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/reference/rules#turn) take plain [effects](/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/reference/checks) reports a name no plugin has.
+- **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/docs/reference/rules#turn) take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.

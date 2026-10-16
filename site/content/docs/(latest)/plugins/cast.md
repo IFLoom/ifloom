@@ -9,7 +9,7 @@ The engine's core has no people of its own: no character list, no talk or call c
 
 ## What a character is
 
-A character is a [`CharacterDef`](#characterdef): content in a pack's `data.cast.characters`, so a mod can add someone or change them. Each character is also an [entity](/reference/entities) of the kind `character`, which the plugin declares for you. That means anything your game keeps about a person, such as a friendship, trust or a debt, is a stat you declare with `of: 'character'`, and every character keeps their own:
+A character is a [`CharacterDef`](#characterdef): content in a pack's `data.cast.characters`, so a mod can add someone or change them. Each character is also an [entity](/docs/reference/entities) of the kind `character`, which the plugin declares for you. That means anything your game keeps about a person, such as a friendship, trust or a debt, is a stat you declare with `of: 'character'`, and every character keeps their own:
 
 ```ts
 import { type StatDef } from '@ifloom/engine'
@@ -32,8 +32,8 @@ The plugin keeps no state of its own. Where people are is worked out from their 
 Here's where each people-related part of a game comes from:
 
 - **The people** are a list of [`CharacterDef`](#characterdef)s.
-- **Their hours** are each one's `schedule`, written with the [calendar](/plugins/calendar)'s conditions, such as `schedule: [{ location: 'high-street', when: period('morning') }]`.
-- **Who's in the room** is worked out from those schedules and where the [places](/plugins/places) plugin says the player is. It's shown at [`view.plugins.cast`](#the-view).
+- **Their hours** are each one's `schedule`, written with the [calendar](/docs/plugins/calendar)'s conditions, such as `schedule: [{ location: 'high-street', when: period('morning') }]`.
+- **Who's in the room** is worked out from those schedules and where the [places](/docs/plugins/places) plugin says the player is. It's shown at [`view.plugins.cast`](#the-view).
 - **Talking** is the [`talk()`](#commands) command, which the view hands the UI as each person's **Talk** button.
 - **A phone call** is the [`call()`](#commands) command, which works from anywhere.
 - **A relationship** is a stat declared `of: 'character'`, as above.
@@ -59,7 +59,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `cast()` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details.
+Then add `cast()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
@@ -69,9 +69,9 @@ import { cast } from '@ifloom/plugin-cast'
 const plugins = [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-The plugin [cooperates](/reference/plugins#cooperates) with `places` and `calendar`. It asks the places plugin where the player is, and schedules are usually written with the calendar's conditions. Neither is required. Without places, nobody is ever in the room, but calls still work. Without the calendar, a schedule that names `calendar/...` conditions still loads, and those conditions never hold.
+The plugin [cooperates](/docs/reference/plugins#cooperates) with `places` and `calendar`. It asks the places plugin where the player is, and schedules are usually written with the calendar's conditions. Neither is required. Without places, nobody is ever in the room, but calls still work. Without the calendar, a schedule that names `calendar/...` conditions still loads, and those conditions never hold.
 
-Where the player is comes from a [query](/reference/plugins#queries) asked by name, so the order of `plugins` doesn't change who's here. The order only matters when two plugins both know a [speaker](#speakers) id, and then the one listed first answers.
+Where the player is comes from a [query](/docs/reference/plugins#queries) asked by name, so the order of `plugins` doesn't change who's here. The order only matters when two plugins both know a [speaker](#speakers) id, and then the one listed first answers.
 
 ## cast
 
@@ -93,7 +93,7 @@ type CastOptions = {
 
 | Field | What it is | If left out |
 |---|---|---|
-| `kind` | The id of the [kind](/reference/entities#kinddef) each character is an entity of. Stats for characters are declared `of` it, and content names one as `<kind>:<id>`. | `character` |
+| `kind` | The id of the [kind](/docs/reference/entities#kinddef) each character is an entity of. Stats for characters are declared `of` it, and content names one as `<kind>:<id>`. | `character` |
 | `label` | What one of them is called, used as the kind's `label`. | `Person` |
 | `plural` | What more than one are called, used as the kind's `plural`. | `People` |
 
@@ -103,7 +103,7 @@ import { cast } from '@ifloom/plugin-cast'
 cast({ kind: 'neighbour', label: 'Neighbour', plural: 'Neighbours' })
 ```
 
-A kind that the game declares itself with the same id replaces the plugin's (see [Kinds and entities](/reference/plugins#kinds-and-entities)), so that's another way to rename it. The options are code, not content, so a mod can't change them.
+A kind that the game declares itself with the same id replaces the plugin's (see [Kinds and entities](/docs/reference/plugins#kinds-and-entities)), so that's another way to rename it. The options are code, not content, so a mod can't change them.
 
 ## Characters
 
@@ -138,18 +138,18 @@ type CharacterDef = {
 | `role` | A word or two about them, such as `Runs the café`. | `null` in the view. |
 | `pronouns` | For prose that needs them, such as `{ they: 'she', them: 'her' }`. The plugin gives them no meaning and doesn't pass them to the view. | None. |
 | `hue` | A colour for their lines, as a hue from 0 to 360. | `null`, which leaves it to the UI. |
-| `portrait` | Their picture, through [`artSrc`](/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` |
+| `portrait` | Their picture, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` |
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
-| `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/plugins/places#locations). | [`OFFSTAGE`](#offstage), meaning nowhere. |
+| `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/docs/plugins/places#locations). | [`OFFSTAGE`](#offstage), meaning nowhere. |
 | `schedule` | Where they are while each `when` holds. See [Where people are](#where-people-are). | Always at `home`. |
 | `talk` | The scene that talking to them opens, or a list of [`TalkOption`](#talkoption)s, of which the first whose `when` holds is used. | They can't be talked to, and have no **Talk** button. |
 | `call` | Whether they can be reached from anywhere. See [Calls](#calls). | They can't be called. |
-| `storyline` | The id of their [storyline](/reference/storylines). While it's closed, they won't talk or pick up. | Never closed. |
-| `met` | Whether the player has met them, as a [condition](/reference/conditions). | Having seen one of their `talk` or `call` scenes. |
-| `stats` | Their [entity](/reference/entities#entitydef)'s stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
+| `storyline` | The id of their [storyline](/docs/reference/storylines). While it's closed, they won't talk or pick up. | Never closed. |
+| `met` | Whether the player has met them, as a [condition](/docs/reference/conditions). | Having seen one of their `talk` or `call` scenes. |
+| `stats` | Their [entity](/docs/reference/entities#entitydef)'s stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
 | `flags` | Their entity's variables at the start. | `{}` |
 
-Inside a character's own conditions, `'$'` stands for them. Every `when` in `schedule`, `talk` and `call`, and `met` itself, is run with `'$'` bound to the character's entity (by [`bindCurrent`](/reference/entities#bindcurrent)). So `{ stat: 'friendship', of: '$', gte: 25 }` in Ava's `talk` is Ava's friendship. Anywhere else, name them in full with `of: person('ava')`.
+Inside a character's own conditions, `'$'` stands for them. Every `when` in `schedule`, `talk` and `call`, and `met` itself, is run with `'$'` bound to the character's entity (by [`bindCurrent`](/docs/reference/entities#bindcurrent)). So `{ stat: 'friendship', of: '$', gte: 25 }` in Ava's `talk` is Ava's friendship. Anywhere else, name them in full with `of: person('ava')`.
 
 ### TalkOption
 
@@ -173,7 +173,7 @@ const talk: TalkOption[] = [
 
 ### In a pack
 
-Characters go in a [pack](/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/guide/showcase) (`examples/showcase/src/content/town.ts`), in a cut-down town with just enough places and scenes for the [worked example](#a-worked-example):
+Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/content/town.ts`), in a cut-down town with just enough places and scenes for the [worked example](#a-worked-example):
 
 ```ts
 import { SCHEMA, type DataScene, type Pack } from '@ifloom/engine'
@@ -247,11 +247,11 @@ const town: Pack = {
 }
 ```
 
-The [loader](/reference/loader#pack) merges characters by id, as it merges scenes. A later pack's character with the same id replaces the earlier one whole, so a mod can add someone or rewrite them. The game's characters, merged, are [`charactersOf(game)`](#helpers).
+The [loader](/docs/reference/loader#pack) merges characters by id, as it merges scenes. A later pack's character with the same id replaces the earlier one whole, so a mod can add someone or rewrite them. The game's characters, merged, are [`charactersOf(game)`](#helpers).
 
 ### Each one is an entity
 
-The plugin declares the kind (through its [`kinds`](/reference/plugins#kinds-and-entities)) and one entity of it per character (through `entities`). Each entity is named by the character's `name` and starts with their `stats` and `flags`. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/reference/stats#entity-stats):
+The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kinds-and-entities)) and one entity of it per character (through `entities`). Each entity is named by the character's `name` and starts with their `stats` and `flags`. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
 
 ```ts
 import { startingState, type Condition, type Effect, type Game } from '@ifloom/engine'
@@ -269,7 +269,7 @@ const warmer: Effect = { kind: 'stat', key: 'friendship', by: 10, of: person('av
 const drift: Effect = { kind: 'each', of: 'character', effects: [{ kind: 'stat', key: 'friendship', by: -1, of: '$' }] }
 ```
 
-The entities are made when the game loads, from the merged content, so a mod's character gets their stats too. If the game declares an entity itself with the same kind and id, the game's wins whole. A save made before a character was added gains them when it loads (see [Entities in old saves](/reference/entities#entities-in-old-saves)).
+The entities are made when the game loads, from the merged content, so a mod's character gets their stats too. If the game declares an entity itself with the same kind and id, the game's wins whole. A save made before a character was added gains them when it loads (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
 
 ## Where people are
 
@@ -279,7 +279,7 @@ A character is somewhere at every moment, worked out fresh from the state:
 2. Otherwise, their `home`.
 3. Otherwise, [`OFFSTAGE`](#offstage).
 
-A character is here when that place is the one the places plugin's [`places/here`](/plugins/places#queries) query says the player is in. With the player nowhere, or with no places plugin, nobody is ever here.
+A character is here when that place is the one the places plugin's [`places/here`](/docs/plugins/places#queries) query says the player is in. With the player nowhere, or with no places plugin, nobody is ever here.
 
 With the [pack above](#in-a-pack), on a Monday morning Sam is on the high street and Ava is in the café. In the evening, both are in the park.
 
@@ -308,7 +308,7 @@ A character with a `call` can be reached from anywhere with [`cast/call`](#comma
 | Field | What it is | If left out |
 |---|---|---|
 | `scene` | The scene a call opens. | Their talk scene: the first `talk` option whose `when` holds, or else their first `talk` option. |
-| `when` | They pick up while this [condition](/reference/conditions) holds. `'$'` is them. | Always. |
+| `when` | They pick up while this [condition](/docs/reference/conditions) holds. `'$'` is them. | Always. |
 | `busy` | What the player reads while `when` doesn't hold. It's plain text, not a string a game can override. | `<name> does not pick up.` ([`cast/notPickingUp`](#strings)) |
 
 `call: {}` makes someone callable at any time, into their talk scene. Ava, above, only picks up in the evening and at night:
@@ -328,11 +328,11 @@ whyNot(morning, game, call('sam'))                 // 'You cannot reach Sam from
 apply(evening, game, call('ava')).state.sceneId    // 'ava.call'
 ```
 
-The view adds no call button of its own. A UI lists the people it can call from the [`cast/contacts`](#queries) query, or a game puts a call on a button as a [game action](/reference/actions#actiondef) with `command: call('ava')`, greyed out with the refusals below.
+The view adds no call button of its own. A UI lists the people it can call from the [`cast/contacts`](#queries) query, or a game puts a call on a button as a [game action](/docs/reference/actions#actiondef) with `command: call('ava')`, greyed out with the refusals below.
 
 ## Meeting people
 
-A character is met while their `met` condition holds, with `'$'` as them. With no `met`, they're met once the player has [seen](/reference/state#seen) any of their `talk` scenes or their `call.scene`. A scene counts as seen as soon as it's on screen.
+A character is met while their `met` condition holds, with `'$'` as them. With no `met`, they're met once the player has [seen](/docs/reference/state#seen) any of their `talk` scenes or their `call.scene`. A scene counts as seen as soon as it's on screen.
 
 ```ts
 import { type CharacterDef } from '@ifloom/plugin-cast'
@@ -399,7 +399,7 @@ apply(friends, game, talk('ava')).state.sceneId                           // 'av
 
 `cast/talk` is refused, in this order, with:
 
-1. `Finish this first.` (the engine's [`finishFirst`](/reference/strings#refusals)) while a scene is open.
+1. `Finish this first.` (the engine's [`finishFirst`](/docs/reference/strings#refusals)) while a scene is open.
 2. `There is no such person.` ([`cast/noSuchPerson`](#strings)) when the game has no character with that id.
 3. `Ava is not here.` ([`cast/notHere`](#strings)) when they aren't [here](#where-people-are).
 4. `Ava is not taking this right now.` ([`cast/notTaking`](#strings)) while their storyline is closed.
@@ -413,7 +413,7 @@ apply(friends, game, talk('ava')).state.sceneId                           // 'av
 4. `Ava is not taking this right now.` ([`cast/notTaking`](#strings)) while their storyline is closed.
 5. Their `call.busy`, or `Ava does not pick up.` ([`cast/notPickingUp`](#strings)), while `call.when` doesn't hold.
 
-A [lock](/reference/locks#lock) names them `cast/talk` and `cast/call`, or `cast/*` for both. Neither lists any effects, so a lock with `effect` doesn't see them, and no plugin puts a price on them.
+A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or `cast/*` for both. Neither lists any effects, so a lock with `effect` doesn't see them, and no plugin puts a price on them.
 
 ## Conditions
 
@@ -423,13 +423,13 @@ A [lock](/reference/locks#lock) names them `cast/talk` and `cast/call`, or `cast
 | `{ 'cast/at': { who: 'ava', at: ['park'] } }` | `isAt('ava', 'park')` | They're in one of these places, wherever the player is. |
 | `{ 'cast/met': ['ava'] }` | `hasMet('ava')` | The player has [met](#meeting-people) any of them. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { value: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': 'ava' }`. A character the game doesn't have never holds.
+These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { value: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': 'ava' }`. A character the game doesn't have never holds.
 
 `cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `isAt('ava', OFFSTAGE)` holds while she's out of town.
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/reference/plugins#queries). Content can't ask them. The character is given as `{ value }`, `{ who }` or `{ id }`.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ value }`, `{ who }` or `{ id }`.
 
 | Query | Answers |
 |---|---|
@@ -452,11 +452,11 @@ const contacts = definePlugin<null>({
 })
 ```
 
-`cast/contacts`'s `disabled` is [`whyNot`](/reference/actions#whynot) of the call, so it covers a lock, a guard or the plugin's own refusal.
+`cast/contacts`'s `disabled` is [`whyNot`](/docs/reference/actions#whynot) of the call, so it covers a lock, a guard or the plugin's own refusal.
 
 ## Speakers
 
-A scene whose [`speaker`](/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [speaker hook](/reference/plugins#speakers) answers with their `name`, `hue` and portrait (`art/character/<id>.jpg` if they have none), which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
+A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [speaker hook](/docs/reference/plugins#speakers) answers with their `name`, `hue` and portrait (`art/character/<id>.jpg` if they have none), which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -481,7 +481,7 @@ type CastView = {
 
 | Field | What it is |
 |---|---|
-| `present` | Who's in the room, in the game's order. Empty while a scene is open, or while a lock stops everything ([`lockedOut`](/reference/locks#lockedout)). |
+| `present` | Who's in the room, in the game's order. Empty while a scene is open, or while a lock stops everything ([`lockedOut`](/docs/reference/locks#lockedout)). |
 | `people` | Everyone the player has [met](#meeting-people), wherever they are, in the game's order. It's filled even during a scene. |
 
 ### PersonView
@@ -512,7 +512,7 @@ type PersonView = {
 | `here` | They're in the room with the player. |
 | `closed` | Their storyline is closed for now. |
 | `met` | The player has [met](#meeting-people) them. |
-| `actions` | The **Talk** button, as a [`RenderedChoice`](/reference/view#renderedchoice) that sends `talk(id)`. Its label comes from the talk option that would open (its `label`, or else the [`cast/talk`](#strings) string), and it's greyed out with its [refusal](#commands). Empty for someone with no `talk`. |
+| `actions` | The **Talk** button, as a [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `talk(id)`. Its label comes from the talk option that would open (its `label`, or else the [`cast/talk`](#strings) string), and it's greyed out with its [refusal](#commands). Empty for someone with no `talk`. |
 
 In the café on Monday morning, Ava's card is:
 
@@ -528,7 +528,7 @@ A met person who's elsewhere is in `people` with their button greyed out: `Ava i
 
 ## Strings
 
-The plugin's lines go in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `cast/...`. `{name}` is the character's `name`.
+The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key, `cast/...`. `{name}` is the character's `name`.
 
 | Key | English |
 |---|---|
@@ -540,7 +540,7 @@ The plugin's lines go in the [strings table](/reference/strings#plugins-strings)
 | `cast/cannotCall` | `You cannot reach {name} from here.` |
 | `cast/notPickingUp` | `{name} does not pick up.` |
 
-Both commands also use the engine's own [`finishFirst`](/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too. A character's `call.busy` and a talk option's `label` are plain text written into the content.
+Both commands also use the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too. A character's `call.busy` and a talk option's `label` are plain text written into the content.
 
 ## For code
 
@@ -570,7 +570,7 @@ const person: (who: string, kind?: string) => string
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `who`) or `cast/met` is looked up wherever the [content checker](/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
+**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `who`) or `cast/met` is looked up wherever the [content checker](/docs/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
 
 ```text
 town · activity wave · unknown character "ghost"
@@ -583,7 +583,7 @@ town · activity wave · unknown character "ghost"
 - A `call` with no `call.scene` and no `talk`, so a call would open nothing (`can be called, but a call opens no scene: give call a scene, or them a talk`).
 - A `storyline` the game doesn't have (`unknown storyline "…"`).
 - Anything a `schedule`, `talk` or `call` `when`, or `met`, names that the game doesn't have. `'$'` stands for any character here, so `{ stat: 'trust', of: '$' }` is checked against the stats declared `of: 'character'`.
-- With the places plugin, a `home` or schedule `location` it doesn't know (asked through [`places/known`](/plugins/places#queries)). `OFFSTAGE` is accepted. Without places, these aren't checked.
+- With the places plugin, a `home` or schedule `location` it doesn't know (asked through [`places/known`](/docs/plugins/places#queries)). `OFFSTAGE` is accepted. Without places, these aren't checked.
 
 ```text
 town · characters mole · talk: opens unknown scene "mole.hi"
@@ -592,7 +592,7 @@ town · characters mole · unknown location "burrow"
 town · characters vole · can be called, but a call opens no scene: give call a scene, or them a talk
 ```
 
-The places in `cast/at` aren't checked. A `portrait` the game gives is listed in the checker's [`files`](/reference/checks#fileref), so `ifloom check` looks for it. The default one, `art/character/<id>.jpg`, isn't.
+The places in `cast/at` aren't checked. A `portrait` the game gives is listed in the checker's [`files`](/docs/reference/checks#fileref), so `ifloom check` looks for it. The default one, `art/character/<id>.jpg`, isn't.
 
 ## Gotchas
 

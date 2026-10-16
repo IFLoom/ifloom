@@ -27,7 +27,7 @@ npm run dev -w @ifloom/example-cafe    # The Corner Café, a management game
 npm run dev -w @ifloom/showcase        # Small Town, which uses every feature
 ```
 
-See [Shapes of game](/guide/shapes) for what each one shows.
+See [Shapes of game](/docs/guide/shapes) for what each one shows.
 
 ## Start your own game
 
@@ -41,7 +41,7 @@ npm run dev -w my-game
 
 `npm run new` makes a new game in `games/my-game`. The `games/` folder is an npm workspace, which is why you run `npm install` again: it links the new game to the engine and its tools. Git ignores `games/`, so your game stays out of the engine's history and pulling a newer IFLoom leaves it alone.
 
-The default template is a small game drawn with the [React UI](/react/). Pick another with `--template`:
+The default template is a small game drawn with the [React UI](/docs/react). Pick another with `--template`:
 
 | Template | What you get |
 |---|---|
@@ -55,9 +55,9 @@ The default template is a small game drawn with the [React UI](/react/). Pick an
 npm run new -- my-cafe --template cafe
 ```
 
-A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, or change it later in `src/styles.css` (see [Make it your own](/react/customising)).
+A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
 
-[`ifloom new`](/cli/#ifloom-new) has the details.
+[`ifloom new`](/docs/cli#ifloom-new) has the details.
 
 ### What's in the new game
 
@@ -77,9 +77,9 @@ games/my-game/
     └── styles.css    imports the React UI's styles and a theme preset
 ```
 
-You'll spend most of your time in `src/game.ts`. [Your first story](/guide/first-story) starts from this file and grows it into a short novel. `src/main.ts` is three lines that hand the game to [`mountGame`](/react/#mountgame), which starts it with undo, saves and an autosave each chapter.
+You'll spend most of your time in `src/game.ts`. [Your first story](/docs/guide/first-story) starts from this file and grows it into a short novel. `src/main.ts` is three lines that hand the game to [`mountGame`](/docs/react#mountgame), which starts it with undo, saves and an autosave each chapter.
 
-The `package.json` lists only IFLoom's own packages: `@ifloom/engine`, `@ifloom/react` and, as a dev dependency, `@ifloom/cli`. The CLI brings Vite and its plugins, and the React UI brings React. Its scripts run the [CLI](/cli/):
+The `package.json` lists only IFLoom's own packages: `@ifloom/engine`, `@ifloom/react` and, as a dev dependency, `@ifloom/cli`. The CLI brings Vite and its plugins, and the React UI brings React. Its scripts run the [CLI](/docs/cli):
 
 ```sh
 npm run dev -w my-game        # play it in a browser, reloading as you edit
@@ -96,7 +96,7 @@ npm run check -w my-game
 
 It prints `No problems.` when the game loads cleanly. If it lists problems, each one names the scene or key it's about.
 
-Next, write [your first story](/guide/first-story).
+Next, write [your first story](/docs/guide/first-story).
 
 ## A game beside the checkout
 
@@ -120,7 +120,7 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
    mv games/my-game ../my-game
    ```
 
-   That gives you every file from [What's in the new game](#what-s-in-the-new-game) with your game's name filled in. Two of them need changing, because they assume the game lives in the checkout.
+   That gives you every file from [What's in the new game](#whats-in-the-new-game) with your game's name filled in. Two of them need changing, because they assume the game lives in the checkout.
 
 3. In `my-game/package.json`, point the dependencies at the checkout:
 
@@ -175,13 +175,13 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
    npm run dev
    ```
 
-The `ifloom` command works through a `file:` link, because Node sees the CLI's real path in the checkout. React, Vite and the rest resolve from the checkout too, so your game folder needs nothing but the three links. The [Vite preset](/cli/#the-vite-preset) dedupes React, so the page bundles one copy.
+The `ifloom` command works through a `file:` link, because Node sees the CLI's real path in the checkout. React, Vite and the rest resolve from the checkout too, so your game folder needs nothing but the three links. The [Vite preset](/docs/cli#the-vite-preset) dedupes React, so the page bundles one copy.
 
 `"types": ["@ifloom/cli/client"]` gives TypeScript Vite's browser types (for `import './styles.css'` and `import.meta.env`) from the CLI's own Vite. To type-check with `tsc`, add `typescript` to your dev dependencies and run `npx tsc --noEmit`.
 
 ### Plugins
 
-A calendar, places, characters, quests, a wardrobe and a phone each come as a plugin, a package of its own. Inside the checkout they're already there. Beside it, add a `file:` link for each one your game uses. [A game with a world](/guide/first-game) uses the calendar, places and cast:
+A calendar, places, characters, quests, a wardrobe and a phone each come as a plugin, a package of its own. Inside the checkout they're already there. Beside it, add a `file:` link for each one your game uses. [A game with a world](/docs/guide/first-game) uses the calendar, places and cast:
 
 ```json
 {
@@ -193,4 +193,4 @@ A calendar, places, characters, quests, a wardrobe and a phone each come as a pl
 }
 ```
 
-[Plugins](/plugins/) lists them all.
+[Plugins](/docs/plugins) lists them all.

@@ -35,8 +35,8 @@ const settings: SettingDef[] = [
 
 Each setting either changes the game or only changes how it looks:
 
-- **A `play` setting** (the default) is part of the game. Its value is in [`state.settings`](/reference/state#settings), it's saved with the game, and conditions can read it. `hints` and `difficulty` above are play settings.
-- **A `ui` setting** never enters the state. It lives in the player's [profile](/reference/profile), and only your UI reads it. `textSize` is one, and so is a volume.
+- **A `play` setting** (the default) is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), it's saved with the game, and conditions can read it. `hints` and `difficulty` above are play settings.
+- **A `ui` setting** never enters the state. It lives in the player's [profile](/docs/reference/profile), and only your UI reads it. `textSize` is one, and so is a volume.
 
 Whichever kind it is, the player's last choice is stored in the profile's `settings`, so it carries over to their next game.
 
@@ -64,7 +64,7 @@ type SettingDef = {
 
 ## Reading a setting
 
-Content reads a play setting with the [`{ setting }`](/reference/conditions#setting) condition, which works like `{ flag }`:
+Content reads a play setting with the [`{ setting }`](/docs/reference/conditions#setting) condition, which works like `{ flag }`:
 
 ```ts
 // Rosa offers a hint only to players who keep hints on.
@@ -74,7 +74,7 @@ Content reads a play setting with the [`{ setting }`](/reference/conditions#sett
 { when: { setting: 'difficulty', is: 'hard' }, text: 'bakery.queue-long' }
 ```
 
-A UI reads every setting, play and ui alike, from [`view.settings`](/reference/view#settings). That's enough to draw the whole settings screen. A `ui` setting's `value` there is `null`, so read it from the profile.
+A UI reads every setting, play and ui alike, from [`view.settings`](/docs/reference/view#settings). That's enough to draw the whole settings screen. A `ui` setting's `value` there is `null`, so read it from the profile.
 
 ### settingValue
 
@@ -89,17 +89,17 @@ const stored = await runner.profile?.get<Record<string, unknown>>('settings')
 const size = settingValue(runner.game, stored, 'textSize')
 ```
 
-Use it for `ui` settings, and for play settings before a game starts. During a game, a play setting's value is in the state, and `view.settings` has it. React's [`useSetting`](/react/components#usesetting) and the [audio player](/reference/audio-player#volume-and-mute) both read settings this way.
+Use it for `ui` settings, and for play settings before a game starts. During a game, a play setting's value is in the state, and `view.settings` has it. React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/reference/audio-player#volume-and-mute) both read settings this way.
 
 ## Changing a setting
 
-A play setting changes through the [`setting`](/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it.
+A play setting changes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it.
 
 ```ts
 runner.apply({ type: 'setting', id: 'difficulty', value: 'hard' })
 ```
 
-A ui setting changes through [`runner.setUiSetting`](/reference/runner#setuisetting), which writes the profile and leaves the state alone:
+A ui setting changes through [`runner.setUiSetting`](/docs/reference/runner#setuisetting), which writes the profile and leaves the state alone:
 
 ```ts
 runner.setUiSetting('textSize', 'large')
@@ -109,13 +109,13 @@ Both check the value against the declaration, and refuse an unknown id, the wron
 
 ## A new game
 
-A new game takes the player's stored values for play settings. Pass them to [`startingState`](/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/reference/runner#newgame) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
+A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
 
 A save keeps the play settings it was made with. Loading it doesn't apply the player's newer choices. A save from before settings existed, or one made before you added a setting, gets each missing setting's default when it loads.
 
 ## Checks
 
-The [content checker](/reference/checks) and [`loadGame`](/reference/loader#what-the-loader-adds) report:
+The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/loader#what-the-loader-adds) report:
 
 - two settings with the same id in one list
 - a `default` the setting can't take

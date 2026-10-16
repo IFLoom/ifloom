@@ -1,7 +1,7 @@
 ---
 title: "Audio"
 ---
-You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/reference/effects#audio) and [`sound`](/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/reference/view#audio). The [audio player](/reference/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/react/#sound) starts it for you.
+You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/docs/reference/effects#audio) and [`sound`](/docs/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/docs/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/docs/reference/view#audio). The [audio player](/docs/reference/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/docs/react#sound) starts it for you.
 
 ```ts
 import {
@@ -52,7 +52,7 @@ const game: Game = {
 }
 ```
 
-The café names its ambience in its [location](/plugins/places#locationdef):
+The café names its ambience in its [location](/docs/plugins/places#locationdef):
 
 ```ts
 { id: 'cafe', name: 'The Corner Café', /* ... */ audio: { ambience: 'cafe.murmur' } }
@@ -102,10 +102,10 @@ type GameAudio = {
 |---|---|
 | `tracks` | Every track and playlist, by id. Content names them by these ids. |
 | `channels` | Your channels, merged over the [defaults](#channels) field by field. |
-| `mute` | A `ui` [setting](/reference/settings) of kind `toggle` that mutes everything while it's on. |
+| `mute` | A `ui` [setting](/docs/reference/settings) of kind `toggle` that mutes everything while it's on. |
 | `default` | What each background channel plays when nothing else says, by channel. |
 
-A [pack](/reference/loader#pack) can carry `audio` too. A later pack's track or channel replaces an earlier one's by id (a channel is merged field by field), and its `mute` and `default` entries win.
+A [pack](/docs/reference/loader#pack) can carry `audio` too. A later pack's track or channel replaces an earlier one's by id (a channel is merged field by field), and its `mute` and `default` entries win.
 
 ## TrackDef
 
@@ -117,7 +117,7 @@ One sound file.
 
 | Field | What it does | Default |
 |---|---|---|
-| `src` | The file, relative to the game's `public/audio/` folder. It goes through [`audioSrc`](#audiosrc). [`ifloom check`](/cli/#ifloom-check) reports a file that isn't there. | |
+| `src` | The file, relative to the game's `public/audio/` folder. It goes through [`audioSrc`](#audiosrc). [`ifloom check`](/docs/cli#ifloom-check) reports a file that isn't there. | |
 | `channel` | The channel it belongs to. A `sound` effect and `[[sound:id]]` play it there. A background channel only takes tracks whose channel is a background one. | `'sfx'` |
 | `loop` | Whether it repeats while it's on a background channel. | `true` |
 | `volume` | Its own volume, from 0 to 1. | `1` |
@@ -141,7 +141,7 @@ Several background tracks played one after another. Name it anywhere you'd name 
 | `'loop'` (the default) | The list plays over and over. |
 | `'shuffle'` | The list plays over and over in an order drawn from the save's seed. |
 
-A shuffled order is drawn from the seed, the channel, the playlist's id and the turn it started playing (kept in [`state.audio.started`](#audiostate)). It stays the same for as long as the playlist plays, and a [replay](/reference/runner#replay) of the same commands draws the same order.
+A shuffled order is drawn from the seed, the channel, the playlist's id and the turn it started playing (kept in [`state.audio.started`](#audiostate)). It stays the same for as long as the playlist plays, and a [replay](/docs/reference/runner#replay) of the same commands draws the same order.
 
 ### Weights in a shuffle
 
@@ -203,9 +203,9 @@ channels: {
 
 Each background channel plays the first of these that names it:
 
-1. the open scene's [`audio`](/reference/scenes#datascene);
-2. an [`audio` effect](/reference/effects#audio), kept in the save;
-3. a plugin's [`audio` hook](/reference/plugins#audio), such as the place the player is at;
+1. the open scene's [`audio`](/docs/reference/scenes#datascene);
+2. an [`audio` effect](/docs/reference/effects#audio), kept in the save;
+3. a plugin's [`audio` hook](/docs/reference/plugins#audio), such as the place the player is at;
 4. the game's `default`.
 
 `null` at any of these levels is silence, and nothing below it is asked. A scene that sets `{ music: null }` stops the music while it's open, and the music comes back when it closes. A level that doesn't name a channel passes it down.
@@ -214,7 +214,7 @@ Each background channel plays the first of these that names it:
 
 A one-shot sound is a cue. Cues come from two places:
 
-- **A [`sound` effect](/reference/effects#sound).** The state keeps the last 20 in `state.audio.cues`, each with its number in a running count.
+- **A [`sound` effect](/docs/reference/effects#sound).** The state keeps the last 20 in `state.audio.cues`, each with its number in a running count.
 - **The open scene's `[[sound:id]]` and `[[voice:id]]` beats.** They're due while the scene is open. A voice always goes to the `voice` channel.
 
 Each cue has a `key`, and a player plays each key once. The keys are worked out from the state, so they're the same across view calls, after a choice that keeps the scene open, and after a save is loaded:
@@ -236,7 +236,7 @@ type AudioView = {
 }
 ```
 
-[`view.audio`](/reference/view#audio). `channels` has every channel, background and cue, and `cues` has every effect cue kept, oldest first, then the open scene's beats in order. `muteSetting` is `game.audio.mute`. The engine never reads the [profile](/reference/profile), so the player reads the setting's value there itself.
+[`view.audio`](/docs/reference/view#audio). `channels` has every channel, background and cue, and `cues` has every effect cue kept, oldest first, then the open scene's beats in order. `muteSetting` is `game.audio.mute`. The engine never reads the [profile](/docs/reference/profile), so the player reads the setting's value there itself.
 
 ### AudioChannelView
 
@@ -301,7 +301,7 @@ type AudioState = {
 function audioSrc(path: string): string
 ```
 
-Where a sound file is, relative to the page. Works like [`artSrc`](/reference/prose#artsrc): the path goes under `audio/`, a leading `/` or `audio/` is dropped, and a name with no extension is an `.ogg`.
+Where a sound file is, relative to the page. Works like [`artSrc`](/docs/reference/prose#artsrc): the path goes under `audio/`, a leading `/` or `audio/` is dropped, and a name with no extension is an `.ogg`.
 
 ```ts
 audioSrc('cafe-murmur.ogg')   // 'audio/cafe-murmur.ogg'
@@ -323,12 +323,12 @@ audioChannels(game).music  // { mode: 'background', crossfade: 1000, volume: 'mu
 
 ## Checks
 
-The [content checker](/reference/checks) checks everything audio names. The list is under [Audio](/reference/checks#audio). It also lists every track's file in [`files`](/reference/checks#fileref).
+The [content checker](/docs/reference/checks) checks everything audio names. The list is under [Audio](/docs/reference/checks#audio). It also lists every track's file in [`files`](/docs/reference/checks#fileref).
 
 ## Gotchas
 
-- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/reference/audio-player), `view.audio` is only data.
+- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/docs/reference/audio-player), `view.audio` is only data.
 - **A sound effect is kept, a scene's sound isn't.** A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out, so a player that has just started marks every key it can see as already heard. Otherwise loading a save would replay old sounds.
-- **A stage's prose doesn't cue.** `[[sound:id]]` in a [place's](/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
+- **A stage's prose doesn't cue.** `[[sound:id]]` in a [place's](/docs/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
 - **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.
-- **`volume` and `mute` name `ui` settings.** They live in the [profile](/reference/profile), never in the state, so they don't change the game.
+- **`volume` and `mute` name `ui` settings.** They live in the [profile](/docs/reference/profile), never in the state, so they don't change the game.

@@ -1,27 +1,27 @@
 ---
 title: "Phone"
 ---
-`@ifloom/phone` puts a smartphone in a game in one call. It wires together the [devices](/plugins/devices), [messages](/plugins/messages) and [feed](/plugins/feed) plugins and puts the usual apps on the phone:
+`@ifloom/phone` puts a smartphone in a game in one call. It wires together the [devices](/docs/plugins/devices), [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins and puts the usual apps on the phone:
 
 - one app for each message channel, with an unread badge
 - one app for each feed, with an unseen badge
-- Contacts, for the people the player can call, from the [cast](/plugins/cast)
+- Contacts, for the people the player can call, from the [cast](/docs/plugins/cast)
 - a Gallery, over a `gallery` collection it declares
 - any apps of the game's own
 
-You'd want it in a game set in the present day, where the player gets texts, scrolls a feed and calls people, as in the [showcase](/guide/showcase). If your game needs a device that isn't a phone, or a phone without messages or a feed, use the [devices](/plugins/devices) plugin on its own.
+You'd want it in a game set in the present day, where the player gets texts, scrolls a feed and calls people, as in the [showcase](/docs/guide/showcase). If your game needs a device that isn't a phone, or a phone without messages or a feed, use the [devices](/docs/plugins/devices) plugin on its own.
 
-To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and spread both its `plugins` and its `collections` into the game, as [phone](#phone-1) shows.
+To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and spread both its `plugins` and its `collections` into the game, as [phone](#phone) shows.
 
 ```ts
 import { phone, type PhoneOptions, type PhoneKit } from '@ifloom/phone'
 ```
 
-It's a bundle, not a plugin. `phone()` returns the three plugins and the collection, ready to spread into the game. Everything else is content. Messages, posts and the game's own apps are data, built from the same [sections](/plugins/devices#section) as any app.
+It's a bundle, not a plugin. `phone()` returns the three plugins and the collection, ready to spread into the game. Everything else is content. Messages, posts and the game's own apps are data, built from the same [sections](/docs/plugins/devices#section) as any app.
 
 ## Install
 
-The bundle needs the three plugins it wires together, beside the engine. See [Adding one](/plugins/#adding-one).
+The bundle needs the three plugins it wires together, beside the engine. See [Adding one](/docs/plugins#adding-one).
 
 ```json
 {
@@ -91,11 +91,11 @@ type PhoneOptions = {
 | `name` | `'Phone'` | What the player reads. |
 | `sidebar` | `true` | Whether to offer it from the sidebar. |
 | `wallpaper` | none | A picture behind the home screen. |
-| `channels` | `[{ id: 'texts', name: 'Messages' }]` | The [message channels](/plugins/messages#channel). Each one is an app. |
-| `feeds` | `[{ id: 'social', name: 'Social' }]` | The [feeds](/plugins/feed#feeddef). Each one is an app. Pass `[]` for none, and the feed plugin is left out too. |
-| `contacts` | `true` | A Contacts app, listing the [cast](/plugins/cast)'s people the player has met and can call. It's empty in a game without the cast. |
+| `channels` | `[{ id: 'texts', name: 'Messages' }]` | The [message channels](/docs/plugins/messages#channel). Each one is an app. |
+| `feeds` | `[{ id: 'social', name: 'Social' }]` | The [feeds](/docs/plugins/feed#feeddef). Each one is an app. Pass `[]` for none, and the feed plugin is left out too. |
+| `contacts` | `true` | A Contacts app, listing the [cast](/docs/plugins/cast)'s people the player has met and can call. It's empty in a game without the cast. |
 | `gallery` | `true` | A Gallery app over a `gallery` collection, which the kit declares. |
-| `apps` | none | The game's own apps, after the stock ones. They're [`AppDef`](/plugins/devices#appdef)s without `on`, because the kit puts them on the phone. |
+| `apps` | none | The game's own apps, after the stock ones. They're [`AppDef`](/docs/plugins/devices#appdef)s without `on`, because the kit puts them on the phone. |
 
 The device's `frame` is always `'phone'`.
 
@@ -112,8 +112,8 @@ type PhoneKit = {
 
 | Field | What it is |
 |---|---|
-| `plugins` | The devices, messages and feed plugins, in that order, for [`game.plugins`](/reference/game#game). There's no feed plugin when `feeds` is `[]`. |
-| `collections` | The `gallery` [collection](/reference/collections), named `Photos`, for `game.collections`. It's empty when `gallery` is `false`. |
+| `plugins` | The devices, messages and feed plugins, in that order, for [`game.plugins`](/docs/reference/game#game). There's no feed plugin when `feeds` is `[]`. |
+| `collections` | The `gallery` [collection](/docs/reference/collections), named `Photos`, for `game.collections`. It's empty when `gallery` is `false`. |
 
 ### The stock apps
 
@@ -124,11 +124,11 @@ type PhoneKit = {
 | `contacts` | Contacts | `contacts` | none | `{ contacts: true }` |
 | `gallery` | Gallery | `gallery` | none | `{ collection: 'gallery' }` |
 
-The home screen lists them in that order, then the game's own `apps`. A pack can add more apps to the phone in `data.devices.apps` with `on: 'phone'`. See [Writing apps](/plugins/devices#writing-apps).
+The home screen lists them in that order, then the game's own `apps`. A pack can add more apps to the phone in `data.devices.apps` with `on: 'phone'`. See [Writing apps](/docs/plugins/devices#writing-apps).
 
 ## A worked example
 
-This is the [showcase](/guide/showcase#the-phone-kit-with-its-own-apps)'s phone. It sits on the sidebar with the stock apps, plus a Camera and a Notes app of the game's own. The camera can photograph Ava or Sam when they're in the room, and post the latest photo once a day. The player meets Ava at the café and she texts the next day. They can call her in the evening. The phone stays in the player's pocket at work.
+This is the [showcase](/docs/guide/showcase#the-phone-kit-with-its-own-apps)'s phone. It sits on the sidebar with the stock apps, plus a Camera and a Notes app of the game's own. The camera can photograph Ava or Sam when they're in the room, and post the latest photo once a day. The player meets Ava at the café and she texts the next day. They can call her in the evening. The phone stays in the player's pocket at work.
 
 The phone itself is one `phone()` call and one lock:
 
@@ -312,7 +312,7 @@ state.sceneId           // 'ava.call'
 
 ### A text, with a notice and a badge
 
-The player goes to bed with the calendar's [`sleep()`](/plugins/calendar#commands). That command ends the day, which is a turn in the showcase, so `{ since: 'ava.hi', gte: 1 }` holds once it has run. Ava's text arrives at the end of the `sleep` command itself, with a notice tagged with the channel:
+The player goes to bed with the calendar's [`sleep()`](/docs/plugins/calendar#commands). That command ends the day, which is a turn in the showcase, so `{ since: 'ava.hi', gte: 1 }` holds once it has run. Ava's text arrives at the end of the `sleep` command itself, with a notice tagged with the channel:
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
@@ -363,10 +363,10 @@ apply(state, game, openApp('texts')).refused     // 'Not at work.'
 - **Don't add the plugins a second time.** The kit already has devices, messages and feed. Adding `messages(...)` again gives two plugins with one id, which the loader reports. For more channels or feeds, pass `channels` and `feeds` to `phone()`.
 - **Channels, feeds and apps share one list of ids.** Each one becomes an app with its own id, so a channel and a feed with the same id, or an app of yours called `contacts`, replace one another. Give each its own id.
 - **Badges are named after the channels and feeds.** The texts app counts `messages/unread-texts`, and the Social app counts `feed/unseen-social`. Renaming a channel renames its value.
-- **Messages and posts arrive only after a command.** They arrive at the end of the first command after which their `when` holds, so a text whose `when` holds on a new game arrives after the player's first command. See [Messages](/plugins/messages#gotchas).
+- **Messages and posts arrive only after a command.** They arrive at the end of the first command after which their `when` holds, so a text whose `when` holds on a new game arrives after the player's first command. See [Messages](/docs/plugins/messages#gotchas).
 - **Opening an app is free and doesn't leave the room.** The camera at the café photographs whoever is at the café. Opening the phone takes no time and moves nobody.
 - **A `plugin` section only names the slice.** The Messages and Social apps carry `{ kind: 'plugin', plugin, with }`. The UI draws `view.plugins.messages` or `view.plugins.feed`, picking the channel or feed in `with`.
-- **Contacts come from the cast.** The app lists the [cast](/plugins/cast)'s [`cast/contacts`](/plugins/cast#queries), which is the people with a `call` whom the player has [met](/plugins/cast#meeting-people). On a new game Contacts is empty until someone is met, and in a game without the cast it's always empty.
-- **A lock on `devices/*` shuts the whole phone.** Every app is greyed out with the lock's reason, and an app left open closes after the command that makes the lock hold. A lock on `'*'`, such as the showcase's moving day, does the same unless its `except` lists `devices/open`. See [Devices](/plugins/devices#gotchas).
+- **Contacts come from the cast.** The app lists the [cast](/docs/plugins/cast)'s [`cast/contacts`](/docs/plugins/cast#queries), which is the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people). On a new game Contacts is empty until someone is met, and in a game without the cast it's always empty.
+- **A lock on `devices/*` shuts the whole phone.** Every app is greyed out with the lock's reason, and an app left open closes after the command that makes the lock hold. A lock on `'*'`, such as the showcase's moving day, does the same unless its `except` lists `devices/open`. See [Devices](/docs/plugins/devices#gotchas).
 - **Stock app names aren't in the strings table.** They're names, not lines the plugins say, so you set them through `phone()`. `Messages` and `Social` come from the default `channels` and `feeds`, so pass your own with the names you want. `Contacts`, `Gallery` and the `Photos` collection have no option of their own. To rename one, turn the stock app off and add your own with the same sections, such as `{ id: 'people', name: 'People', icon: 'contacts', sections: [{ contacts: true }] }`.
-- **The Call button's label is a string.** It's [`devices/call`](/plugins/devices#strings), and the devices, messages and feed plugins' refusals are strings too. See each plugin's Strings section and the [strings table](/reference/strings).
+- **The Call button's label is a string.** It's [`devices/call`](/docs/plugins/devices#strings), and the devices, messages and feed plugins' refusals are strings too. See each plugin's Strings section and the [strings table](/docs/reference/strings).

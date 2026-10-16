@@ -5,7 +5,7 @@ title: "Messages"
 
 You'd want it when people get in touch with the player rather than the player going to them. In the showcase, Ava texts you the day after you meet her. If everything the player reads happens where they're standing, scenes are enough.
 
-A message is like a scene that arrives instead of one the player walks into. It has [prose blocks](/reference/scenes#block) for its words, a sender, and replies that carry [effects](/reference/effects). It arrives the first time its condition holds at the end of a command, and it raises a [notice](/reference/notices) tagged with its channel, so the UI can show a toast or a badge.
+A message is like a scene that arrives instead of one the player walks into. It has [prose blocks](/docs/reference/scenes#block) for its words, a sender, and replies that carry [effects](/docs/reference/effects). It arrives the first time its condition holds at the end of a command, and it raises a [notice](/docs/reference/notices) tagged with its channel, so the UI can show a toast or a badge.
 
 ```ts
 import {
@@ -15,7 +15,7 @@ import {
 } from '@ifloom/plugin-messages'
 ```
 
-The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/plugins/devices) a channel can be an app instead, and the [phone bundle](/plugins/phone) sets that up for you.
+The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/plugins/devices) a channel can be an app instead, and the [phone bundle](/docs/plugins/phone) sets that up for you.
 
 ## Install
 
@@ -30,7 +30,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `messages(...)` to the game's `plugins`. [Adding one](/plugins/#adding-one) has the details.
+Then add `messages(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
 ## messages
 
@@ -67,7 +67,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/reference/plugins#cooperates)). When the game has the [cast](/plugins/cast), a sender who is one of its characters is shown with their name and portrait, which the plugin gets from the cast's [`cast/person`](/plugins/cast#queries) query. Without the cast, every sender is shown as written.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a sender who is one of its characters is shown with their name and portrait, which the plugin gets from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every sender is shown as written.
 
 ### MessagesOptions
 
@@ -94,7 +94,7 @@ The channels are code, not content, so a mod can't add one.
 
 ## Writing messages
 
-Messages are content. List them in a pack's [`data`](/reference/loader#pack) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
+Messages are content. List them in a pack's [`data`](/docs/reference/loader#pack) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
 
 ### MessageDef
 
@@ -114,10 +114,10 @@ type MessageDef = {
 |---|---|
 | `id` | Unique among messages. Its replies' labels are prose keys built from it. |
 | `channel` | The [channel](#channel) it arrives in. |
-| `from` | Who sent it. Either a [cast](/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). A character's name and portrait are looked up, and anything else is shown as written. |
+| `from` | Who sent it. Either a [cast](/docs/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). A character's name and portrait are looked up, and anything else is shown as written. |
 | `thread` | The thread it goes in. If you leave it out, the thread is the sender, so every message from `ava` in a channel goes in one thread. |
-| `when` | It arrives the first time this [condition](/reference/conditions) holds at the end of a command. |
-| `body` | Its words, as [prose blocks](/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
+| `when` | It arrives the first time this [condition](/docs/reference/conditions) holds at the end of a command. |
+| `body` | Its words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/docs/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
 | `replies` | What the player can send back. The player sends one, once. Leave it out for a message with no replies. |
 
 ### ReplyDef
@@ -132,9 +132,9 @@ type ReplyDef = {
 
 | Field | What it is |
 |---|---|
-| `id` | Unique within the message. The reply's label is the prose key `<message id>#<reply id>`, as a [data scene choice](/reference/scenes#choice)'s is. |
+| `id` | Unique within the message. The reply's label is the prose key `<message id>#<reply id>`, as a [data scene choice](/docs/reference/scenes#choice)'s is. |
 | `when` | The reply is only on offer while this holds. |
-| `effects` | What sending it does, in order. These can be plain effects, a game's [custom effect](/reference/custom) or a plugin's. |
+| `effects` | What sending it does, in order. These can be plain effects, a game's [custom effect](/docs/reference/custom) or a plugin's. |
 
 This is the showcase's text from Ava. It arrives once a day has passed since the player first talked to her:
 
@@ -160,7 +160,7 @@ const text: MessageDef = {
 
 A cut-down Small Town. The player meets Ava at the café, and she texts the next morning. Saying yes brings a second text. A letter from the town council lands on the mat on the second afternoon. There's no phone here. The texts and the letters are just two channels, and the flat has a button to pick up the post.
 
-The time of day comes from the [calendar](/plugins/calendar), the map from [places](/plugins/places) and Ava from the [cast](/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
+The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
 
 ```ts
 import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
@@ -320,7 +320,7 @@ inbox(state).unread     // 0
 | `{ custom: 'messages/replied', with: { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message. With `reply`, they sent that reply. |
 | `{ custom: 'messages/read', with: { message } }` | | The player has read the message. |
 
-You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each can also be written short, with the full name as the only key. `{ 'messages/arrived': { message: 'ava.text' } }` is the same as `{ custom: 'messages/arrived', with: { message: 'ava.text' } }` (see [plugin calls](/reference/custom#plugincall)).
+You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each can also be written short, with the full name as the only key. `{ 'messages/arrived': { message: 'ava.text' } }` is the same as `{ custom: 'messages/arrived', with: { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ```ts
 import { messageReplied } from '@ifloom/plugin-messages'
@@ -345,7 +345,7 @@ An unknown message is false.
 
 You can reword each line (see [Strings](#strings)).
 
-Only a [lock](/reference/locks) can refuse `messages/read`. A UI usually sends `readThread(thread)` when the player opens a thread. `readThread` only takes a thread, so to mark a whole channel read you write the long form with `channel`, as the flat's button does above.
+Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `readThread(thread)` when the player opens a thread. `readThread` only takes a thread, so to mark a whole channel read you write the long form with `channel`, as the flat's button does above.
 
 Both are commands like any other, so triggers run after them, and so does every plugin's `after` hook. If a reply's effects make another message's `when` true, that message arrives in the same command.
 
@@ -356,11 +356,11 @@ Both are commands like any other, so triggers run after them, and so does every 
 | `{{v:messages/unread}}` | Unread messages in every channel. |
 | `{{v:messages/unread-<channel>}}` | Unread messages in that channel, one value for each channel you configure: `{{v:messages/unread-texts}}`, `{{v:messages/unread-letters}}`. |
 
-The per-channel values also work as badges, such as a devices app's `badge: { count: 'messages/unread-texts' }`, and code can read them with [`customValue`](/reference/custom). A value name may contain `-`, so they print in prose like any other.
+The per-channel values also work as badges, such as a devices app's `badge: { count: 'messages/unread-texts' }`, and code can read them with [`customValue`](/docs/reference/custom). A value name may contain `-`, so they print in prose like any other.
 
 ## Strings
 
-The plugin's lines go in the [strings table](/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key.
+The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key.
 
 | Key | English |
 |---|---|
@@ -429,7 +429,7 @@ type ThreadView = {
 | Field | What it is |
 |---|---|
 | `id` | The messages' `thread`, or their sender. |
-| `name` | The [cast](/plugins/cast) character's name if `id` is one, or `id` as written. |
+| `name` | The [cast](/docs/plugins/cast) character's name if `id` is one, or `id` as written. |
 | `portrait` | The cast character's portrait (their `portrait`, or `art/character/<id>.jpg`). It's `null` if `id` isn't a character or the game has no cast. |
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
@@ -453,10 +453,10 @@ type MessageView = {
 | Field | What it is |
 |---|---|
 | `from` | The sender, as written. |
-| `name` | The sender's name if they're a [cast](/plugins/cast) character, or `from` as written. |
+| `name` | The sender's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. |
 | `text` | The body, rendered for the current state. It has the blocks whose `when` holds, with tokens filled in. Any picture or video is in it as markup. |
-| `beats` | `text` parsed into [beats](/reference/prose#scenebeat), as a scene's body is. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
-| `turn` | The [turn](/reference/state#turn) it arrived on. With the [calendar](/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
+| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
+| `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
 | `replies` | The replies on offer now, each with its label and the command that sends it. Empty once one is sent. |
 | `replied` | The label of the reply sent, or `null`. |
@@ -468,7 +468,7 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 { id: 'ava.ducks', channel: 'texts', from: 'ava', when: { flag: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
 ```
 
-The React UI's [`MessagesSection`](/react/components#messagessection) draws each message's beats with [`Beat`](/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
+The React UI's [`MessagesSection`](/docs/react/components#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
 
 ## The state
 
@@ -524,12 +524,12 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 
 ## Gotchas
 
-- **Messages arrive only after a command.** The plugin delivers them in its `after` [hook](/reference/plugins#hooks), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
-- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a flag, a day (`day({ gte: 2 })`) or a scene seen.
+- **Messages arrive only after a command.** The plugin delivers them in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
+- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a flag, a day (`day({ gte: 2 })`) or a scene seen.
 - **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time.
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
-- **`messages/unread-<channel>` names come from your channels.** A channel called `texts` gives `messages/unread-texts`. If you rename the channel, every badge that names the old value stops counting. A [devices](/plugins/devices) app badge that names a value nobody has is reported when the game loads.
-- **The notice is the engine's.** Each arrival raises a [notice](/reference/notices) with the id `messages.<message id>`, the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
-- **The sender is matched by id.** A `from` that's a [cast](/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
-- **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/plugins/devices) plugin is one way to show a channel, not a requirement.
+- **`messages/unread-<channel>` names come from your channels.** A channel called `texts` gives `messages/unread-texts`. If you rename the channel, every badge that names the old value stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
+- **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<message id>`, the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
+- **The sender is matched by id.** A `from` that's a [cast](/docs/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
+- **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.

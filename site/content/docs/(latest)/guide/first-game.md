@@ -2,16 +2,16 @@
 title: "A game with a world"
 description: The second tutorial. Builds a small town game with a calendar, places to walk between and a character on a schedule, using the calendar, places and cast plugins, then drives it with apply, view and a runner.
 ---
-This is the second tutorial. [Your first story](/guide/first-story) built a novel with no plugins. This one is for games with a calendar, places and people, and it builds a small one from nothing: a house, a high street, and a café that keeps hours. Ruth, the baker, works the café counter on weekdays. You can talk to her, and you can buy a coffee.
+This is the second tutorial. [Your first story](/docs/guide/first-story) built a novel with no plugins. This one is for games with a calendar, places and people, and it builds a small one from nothing: a house, a high street, and a café that keeps hours. Ruth, the baker, works the café counter on weekdays. You can talk to her, and you can buy a coffee.
 
 The player carries a few coins and some energy, and the coffee spends one to buy the other. By the end you'll have a game, a starting state, a few commands played through `apply`, `dispatch` and `view`, and a runner driving it all with undo and autosave. The complete file is at the [bottom of the page](#the-whole-thing).
 
 :::tip[Before you start]
-Follow [Installation](/guide/installation) first. The game uses the engine, `@ifloom/engine`, and three plugins:
+Follow [Installation](/docs/guide/installation) first. The game uses the engine, `@ifloom/engine`, and three plugins:
 
-- [`@ifloom/plugin-calendar`](/plugins/calendar) keeps the days and the time of day.
-- [`@ifloom/plugin-places`](/plugins/places) keeps the map and where the player is.
-- [`@ifloom/plugin-cast`](/plugins/cast) keeps the people.
+- [`@ifloom/plugin-calendar`](/docs/plugins/calendar) keeps the days and the time of day.
+- [`@ifloom/plugin-places`](/docs/plugins/places) keeps the map and where the player is.
+- [`@ifloom/plugin-cast`](/docs/plugins/cast) keeps the people.
 
 To build it as you read, start a blank game from the root of the checkout:
 
@@ -27,7 +27,7 @@ Then add the three plugins to `games/my-town/package.json`, next to `@ifloom/eng
 "@ifloom/plugin-cast": "0.0.0"
 ```
 
-In a game beside the checkout, add them as `file:` links instead, as [Installation](/guide/installation#plugins) shows. If you'd rather see a finished game of this shape first, `npm run new -- my-town --template town` copies [Small Town](/guide/showcase). See [`ifloom new`](/cli/#ifloom-new).
+In a game beside the checkout, add them as `file:` links instead, as [Installation](/docs/guide/installation#plugins) shows. If you'd rather see a finished game of this shape first, `npm run new -- my-town --template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/cli#ifloom-new).
 :::
 
 ## 1. Places
@@ -82,11 +82,11 @@ const locations: LocationDef[] = [
 
 `exits` are one-way, so the street lists the café and the café lists the street.
 
-A block with a `when` only shows while its [condition](/reference/conditions) holds. The cast's [`here('ruth')`](/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
+A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`here('ruth')`](/docs/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
 
 `actions` is the list of buttons the room offers. Here it offers the `coffee` activity you'll declare in step 3. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
-The locations are content. In step 5 they go into the game's pack, under `data.places.locations`. There's more in [Places](/plugins/places#locationdef) and the calendar's [conditions](/plugins/calendar#conditions).
+The locations are content. In step 5 they go into the game's pack, under `data.places.locations`. There's more in [Places](/docs/plugins/places#locationdef) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 
@@ -111,11 +111,11 @@ const ruth: CharacterDef = {
 }
 ```
 
-A `when` is any [condition](/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
+A `when` is any [condition](/docs/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
 
-Like the locations, Ruth is content. In step 5 she goes into the game's pack, under `data.cast.characters`. Every field is in [`CharacterDef`](/plugins/cast#characterdef), and [Where people are](/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
+Like the locations, Ruth is content. In step 5 she goes into the game's pack, under `data.cast.characters`. Every field is in [`CharacterDef`](/docs/plugins/cast#characterdef), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
 
-Each character is also an [entity](/reference/entities) of the kind `character`, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
+Each character is also an [entity](/docs/reference/entities) of the kind `character`, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
 
 ## 3. Stats, and something to spend them on
 
@@ -141,7 +141,7 @@ const stats: StatDef[] = [
 
 `format` is how the number is written for the player. `spendable` says the stat is spent on things, so it shows in prices. `lacking` is the line the player reads when a cost needs more than they have.
 
-`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: person('ruth')`. There's more in [Stats](/reference/stats) and the cast's [entities](/plugins/cast#each-one-is-an-entity).
+`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: person('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
 
 An activity is something the player can do. It has a cost the engine charges before the effects apply, and requirements. Each requirement is a condition with the reason the player reads while it doesn't hold. The engine refuses the activity, with that reason, when a requirement fails or the player can't pay.
 
@@ -161,11 +161,11 @@ const activities: ActivityDef[] = [
 ]
 ```
 
-`onlyAt` is the places plugin's requirement. The coffee can only be bought in the café, and anywhere else it's refused with `There is no coffee here.` `cost.stats` is what it spends, by stat id. `pass(1)` is the calendar's effect for one period of time going by. `wait` does nothing but pass a period, and in step 5 the game offers it as a button in every room. See [Activities and buttons](/reference/actions), the places plugin's [helpers](/plugins/places#helpers) and the calendar's [effects](/plugins/calendar#effects).
+`onlyAt` is the places plugin's requirement. The coffee can only be bought in the café, and anywhere else it's refused with `There is no coffee here.` `cost.stats` is what it spends, by stat id. `pass(1)` is the calendar's effect for one period of time going by. `wait` does nothing but pass a period, and in step 5 the game offers it as a button in every room. See [Activities and buttons](/docs/reference/actions), the places plugin's [helpers](/docs/plugins/places#helpers) and the calendar's [effects](/docs/plugins/calendar#effects).
 
 ## 4. Scenes
 
-A scene is one screen of story, with some text and the choices under it. Write it as data, a `DataScene`, and the engine renders it for you. Its body is a list of blocks, each naming a prose key and each with an optional [condition](/reference/conditions). Its choices carry their [effects](/reference/effects) as plain data.
+A scene is one screen of story, with some text and the choices under it. Write it as data, a `DataScene`, and the engine renders it for you. Its body is a list of blocks, each naming a prose key and each with an optional [condition](/docs/reference/conditions). Its choices carry their [effects](/docs/reference/effects) as plain data.
 
 The game opens on its intro scene, so start with that:
 
@@ -230,17 +230,17 @@ const prose: Record<string, string> = {
 }
 ```
 
-The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the game's `playerName` variable when the line is shown. The name is a variable like any other, and step 6 sets it. The only special thing about `playerName` is that a save's [`SaveMeta`](/reference/saves#savemeta) reads it into its `player` field, for a load screen. [Prose and markup](/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
+The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the game's `playerName` variable when the line is shown. The name is a variable like any other, and step 6 sets it. The only special thing about `playerName` is that a save's [`SaveMeta`](/docs/reference/saves#savemeta) reads it into its `player` field, for a load screen. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
 
-That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/reference/scenes).
+That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/docs/reference/scenes).
 
 :::tip[Scenes by hand]
-For the odd screen that doesn't fit blocks and choices, a scene can also be a plain object with a `render(state, ctx)` function, listed in the same `scenes` array. See [`Scene`](/reference/scenes#scene).
+For the odd screen that doesn't fit blocks and choices, a scene can also be a plain object with a `render(state, ctx)` function, listed in the same `scenes` array. See [`Scene`](/docs/reference/scenes#scene).
 :::
 
 ## 5. The game
 
-The game gathers everything. Content arrives as packs, which [`loadGame`](/reference/loader) merges into one game. Your game is the first pack, and a mod would be another. The locations and Ruth are plugins' content, so they go in the pack's `data`, under the plugin's id and the list's name: `data.places.locations` and `data.cast.characters`.
+The game gathers everything. Content arrives as packs, which [`loadGame`](/docs/reference/loader) merges into one game. Your game is the first pack, and a mod would be another. The locations and Ruth are plugins' content, so they go in the pack's `data`, under the plugin's id and the list's name: `data.places.locations` and `data.cast.characters`.
 
 The second argument holds everything that isn't content, and only `id` and `title` are required. `introScene` is on screen from the first frame. `actions` are buttons offered in every room after the room's own, here the `wait` activity from step 3 and a bed to go to. A story that opens on its room leaves out `introScene`.
 
@@ -285,11 +285,11 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 ```
 
-The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem comes with the pack it came from, and `problems` is empty here. The full list is on [Checking content](/reference/checks).
+The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem comes with the pack it came from, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
 
-Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/reference/checks#checkgame) in the same way.
+Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/docs/reference/checks#checkgame) in the same way.
 
-List the calendar first in `plugins`. It moves the clock on when a turn ends, and plugins listed after it see the new day. The places come after it, so the header reads the day first and then the place. The cast can go anywhere in the list, because it asks the places plugin where the player is by name. See [Calendar](/plugins/calendar#install), [Places](/plugins/places#install) and [Cast](/plugins/cast#install).
+List the calendar first in `plugins`. It moves the clock on when a turn ends, and plugins listed after it see the new day. The places come after it, so the header reads the day first and then the place. The cast can go anywhere in the list, because it asks the places plugin where the player is by name. See [Calendar](/docs/plugins/calendar#install), [Places](/docs/plugins/places#install) and [Cast](/docs/plugins/cast#install).
 
 ## 6. Start a game
 
@@ -301,13 +301,13 @@ import { startingState } from '@ifloom/engine'
 let state = startingState(game, { flags: { playerName: 'Sam' } })
 ```
 
-`flags` are [variables](/reference/state#flags) written before the first scene, so the intro already reads "The last box is in. Sam, you could sleep for a week." A real game would ask the player for a name instead, with an [input](/reference/inputs) that writes `playerName`, as [Your first story](/guide/first-story#_6-a-name-the-player-types) does.
+`flags` are [variables](/docs/reference/state#flags) written before the first scene, so the intro already reads "The last box is in. Sam, you could sleep for a week." A real game would ask the player for a name instead, with an [input](/docs/reference/inputs) that writes `playerName`, as [Your first story](/docs/guide/first-story#6-a-name-the-player-types) does.
 
-The new game starts on turn 0, in the house (the places plugin's `start`). The calendar starts on day 0, a Monday, at night. The intro scene is open, and each stat is at its `start`, so `state.stats` is `{ coins: 5, energy: 50 }`. Random draws come from a [seed](/reference/state#seed) made from the game's id, so a test plays the same way every time. A UI starting a new game passes a fresh `seed` of its own. See [Game state](/reference/state).
+The new game starts on turn 0, in the house (the places plugin's `start`). The calendar starts on day 0, a Monday, at night. The intro scene is open, and each stat is at its `start`, so `state.stats` is `{ coins: 5, energy: 50 }`. Random draws come from a [seed](/docs/reference/state#seed) made from the game's id, so a test plays the same way every time. A UI starting a new game passes a fresh `seed` of its own. See [Game state](/docs/reference/state).
 
 ## 7. Play commands
 
-Everything the player does is a [command](/reference/commands). `apply` runs one and tells you whether it took:
+Everything the player does is a [command](/docs/reference/commands). `apply` runs one and tells you whether it took:
 
 ```ts
 import { apply } from '@ifloom/engine'
@@ -317,7 +317,7 @@ tried.ok      // false: the intro scene is still open
 tried.refused // 'Finish this first.'
 ```
 
-A refused command leaves the state untouched, so `apply` is how you tell a refusal from a command that did nothing. `refused` is diagnostic text, because the button for that command in the view already carries the player-facing reason. `Finish this first.` is the engine's own line. A game can reword it, and every other line the engine says, in the [strings table](/reference/strings).
+A refused command leaves the state untouched, so `apply` is how you tell a refusal from a command that did nothing. `refused` is diagnostic text, because the button for that command in the view already carries the player-facing reason. `Finish this first.` is the engine's own line. A game can reword it, and every other line the engine says, in the [strings table](/docs/reference/strings).
 
 When you don't need to know, `dispatch` returns just the next state:
 
@@ -336,7 +336,7 @@ state = dispatch(state, game, { type: 'choose', id: 'chat' })
 state.entities.character.ruth.stats.friendship // 5
 ```
 
-`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `talk(id)` is the cast's [command](/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
+`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
 
 Try the same choice twice in one day and it is refused:
 
@@ -381,7 +381,7 @@ function press(choice: { command: Command }) {
 }
 ```
 
-The body arrives already split into `beats` (narration, spoken lines and pictures), so the UI doesn't parse text. A paragraph wrapped in quotes is a spoken line. `when` is the header, joined from the plugins' labels in the order the game lists them: the calendar's day and time, then the places plugin's room. What a plugin hands the UI is under `plugins`, by its id. The room and its exits are at `plugins.places`, and who is in it at `plugins.cast`. See [The view](/reference/view), the places plugin's [view](/plugins/places#the-view) and the cast's [view](/plugins/cast#the-view).
+The body arrives already split into `beats` (narration, spoken lines and pictures), so the UI doesn't parse text. A paragraph wrapped in quotes is a spoken line. `when` is the header, joined from the plugins' labels in the order the game lists them: the calendar's day and time, then the places plugin's room. What a plugin hands the UI is under `plugins`, by its id. The room and its exits are at `plugins.places`, and who is in it at `plugins.cast`. See [The view](/docs/reference/view), the places plugin's [view](/docs/plugins/places#the-view) and the cast's [view](/docs/plugins/cast#the-view).
 
 ## 9. Time moves
 
@@ -418,11 +418,11 @@ apply(state, game, go('cafe')).refused
 // 'Closed. Opens tomorrow morning.'
 ```
 
-Nobody wrote "Ruth goes home in the evening" as an event, or moved her. Her schedule, read against the calendar's clock, puts her somewhere else, and the café's lock shuts the door the same way. See the [calendar](/plugins/calendar), the [places](/plugins/places) and the [cast](/plugins/cast#where-people-are).
+Nobody wrote "Ruth goes home in the evening" as an event, or moved her. Her schedule, read against the calendar's clock, puts her somewhere else, and the café's lock shuts the door the same way. See the [calendar](/docs/plugins/calendar), the [places](/docs/plugins/places) and the [cast](/docs/plugins/cast#where-people-are).
 
 ## 10. Drive it with a runner
 
-Calling `apply` and `view` by hand is how the engine works, and it's enough for a test. A UI wants more around them, such as an undo button, saves and autosave. The [runner](/reference/runner) wraps all of that in one object. Undo and autosave are off until you turn them on.
+Calling `apply` and `view` by hand is how the engine works, and it's enough for a test. A UI wants more around them, such as an undo button, saves and autosave. The [runner](/docs/reference/runner) wraps all of that in one object. Undo and autosave are off until you turn them on.
 
 Saves need somewhere to live. A driver says where, and the engine has no default, so the game picks one. In a browser, `localStorageDriver()` is the simplest and `indexedDbDriver()` has more room. In a test, use `memoryDriver()`.
 
@@ -460,7 +460,7 @@ runner.redo()                                      // on the high street again
 
 Undo can't be used to re-roll anything. Every draw is seeded, so the same command from the same state gives the same result.
 
-To see it in a browser, use the [React UI](/react/), `@ifloom/react`. Its `mountGame` makes a runner like that one and draws the game into the page's `#root` element: the scene, the sidebar and every button, greyed out with its reason. In a game made with `npm run new`, put steps 1 to 5 in `src/game.ts` and change `src/main.ts` to this:
+To see it in a browser, use the [React UI](/docs/react), `@ifloom/react`. Its `mountGame` makes a runner like that one and draws the game into the page's `#root` element: the scene, the sidebar and every button, greyed out with its reason. In a game made with `npm run new`, put steps 1 to 5 in `src/game.ts` and change `src/main.ts` to this:
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -470,12 +470,12 @@ import './styles.css'
 mountGame({ game, problems })
 ```
 
-Then run `npm run dev -w my-town`. `mountGame` logs any of the loader's `problems` as warnings, and returns the runner. Its runner keeps 50 steps of undo, saves to `localStorage`, autosaves each turn and starts from a random seed. See [`mountGame`](/react/#mountgame) for the options.
+Then run `npm run dev -w my-town`. `mountGame` logs any of the loader's `problems` as warnings, and returns the runner. Its runner keeps 50 steps of undo, saves to `localStorage`, autosaves each turn and starts from a random seed. See [`mountGame`](/docs/react#mountgame) for the options.
 
 <details>
 <summary>The long way: a runner of your own and GameShell</summary>
 
-`mountGame` is a shortcut. When you want the runner exactly as you built it above, make it yourself and hand it to [`GameShell`](/react/#gameshell), the component `mountGame` draws:
+`mountGame` is a shortcut. When you want the runner exactly as you built it above, make it yourself and hand it to [`GameShell`](/docs/react#gameshell), the component `mountGame` draws:
 
 ```tsx
 import { createRoot } from 'react-dom/client'
@@ -500,7 +500,7 @@ const loaded = await runner.load('1')   // back on the high street, with a fresh
 if (typeof loaded === 'string') console.warn(loaded) // why it could not be read
 ```
 
-The saves are kept under keys that start with the game's id, `new-in-town`, so another game opened in the same browser never reads them. See [Saves](/reference/saves) and [Shipping a game](/guide/shipping#saves).
+The saves are kept under keys that start with the game's id, `new-in-town`, so another game opened in the same browser never reads them. See [Saves](/docs/reference/saves) and [Shipping a game](/docs/guide/shipping#saves).
 
 ## The whole thing
 
@@ -711,4 +711,4 @@ await runner.load('1')
 console.log(where(runner.state)) // 'high-street'
 ```
 
-Next, read the [core concepts](/guide/concepts) behind what you just used, or [Small Town](/guide/showcase), a bigger game in the same shape.
+Next, read the [core concepts](/docs/guide/concepts) behind what you just used, or [Small Town](/docs/guide/showcase), a bigger game in the same shape.

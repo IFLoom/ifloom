@@ -1,15 +1,15 @@
 ---
 title: "Entities"
 ---
-Use entities when your game keeps several of a thing, each with numbers of its own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`) and an entity is one of them (Ana, the soup). A [stat](/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
+Use entities when your game keeps several of a thing, each with numbers of its own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`) and an entity is one of them (Ana, the soup). A [stat](/docs/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
 
 The game declares its kinds and the entities that exist at the start. In play, you can:
 
-- [`create`](/reference/effects#create) more entities and [`remove`](/reference/effects#remove) them with effects
-- run the same effects over every entity of a kind with [`each`](/reference/effects#each)
-- ask how many there are, or whether one is there, with the [`{ count }`](/reference/conditions#count) and [`{ entity }`](/reference/conditions#entity) conditions
+- [`create`](/docs/reference/effects#create) more entities and [`remove`](/docs/reference/effects#remove) them with effects
+- run the same effects over every entity of a kind with [`each`](/docs/reference/effects#each)
+- ask how many there are, or whether one is there, with the [`{ count }`](/docs/reference/conditions#count) and [`{ entity }`](/docs/reference/conditions#entity) conditions
 
-The [view](/reference/view#entities) hands every kind to the UI, with the stats the player can see on each. For a whole game built on entities, see the management game in [Shapes of game](/guide/shapes#a-management-game-the-corner-cafe).
+The [view](/docs/reference/view#entities) hands every kind to the UI, with the stats the player can see on each. For a whole game built on entities, see the management game in [Shapes of game](/docs/guide/shapes#a-management-game-the-corner-café).
 
 ```ts
 import { anyOf, bindCurrent, entitiesOf, entityOf, kindById, parseRef, writeEntity, type EntityDef, type EntityRef, type EntityState, type KindDef } from '@ifloom/engine'
@@ -78,9 +78,9 @@ type KindDef = {
 |---|---|---|
 | `id` | | The name stats, entities, effects and conditions use for the kind, as in `of: 'staff'` or `{ count: 'staff' }`. |
 | `label` | | What the player reads for one, such as "Member of staff". |
-| `plural` | `label` | What the player reads for more than one, such as "Staff". The [React UI](/react/components#entitytable) heads each kind's table with it. |
+| `plural` | `label` | What the player reads for more than one, such as "Staff". The [React UI](/docs/react/components#entitytable) heads each kind's table with it. |
 
-Kinds go in [`Game.kinds`](/reference/game#game). You can declare them on the base you give [`loadGame`](/reference/loader#loadgame), in a [pack](/reference/loader#pack)'s `kinds`, or both, and a [plugin](/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id, so a game can redeclare a plugin's kind to reword it.
+Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in a [pack](/docs/reference/loader#pack)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id, so a game can redeclare a plugin's kind to reword it.
 
 ## EntityDef
 
@@ -102,11 +102,11 @@ One entity that exists from the start of the game.
 | `of` | Its kind's id. |
 | `name` | What the player reads, such as "Ana". |
 | `stats` | Starting values for any of its stats that differ from each stat's `start`. Only stats declared `of` its kind. |
-| `flags` | Its [variables](/reference/state#flags) at the start. Read them with `{ flag, of }` and set them with the `flag` effect's `of`. |
+| `flags` | Its [variables](/docs/reference/state#flags) at the start. Read them with `{ flag, of }` and set them with the `flag` effect's `of`. |
 
-Entities go in [`Game.entities`](/reference/game#game), on the base or in packs. They merge by kind and id (`'staff:ana'`), the base's first. A later pack's entity replaces an earlier one with the same kind and id, whole.
+Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in packs. They merge by kind and id (`'staff:ana'`), the base's first. A later pack's entity replaces an earlier one with the same kind and id, whole.
 
-A [plugin](/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
+A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
 
 ## EntityState
 
@@ -118,7 +118,7 @@ type EntityState = {
 }
 ```
 
-One entity as the state keeps it, at [`state.entities[kind][id]`](/reference/state#entities). `stats` has every stat declared `of` its kind, at that stat's `start` unless its declaration or its `create` effect gave another value. `flags` is `{}` when none were given.
+One entity as the state keeps it, at [`state.entities[kind][id]`](/docs/reference/state#entities). `stats` has every stat declared `of` its kind, at that stat's `start` unless its declaration or its `create` effect gave another value. `flags` is `{}` when none were given.
 
 ## EntityRef
 
@@ -128,7 +128,7 @@ type EntityRef = string
 
 Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'staff:#2'`.
 
-**`'$'` is the current one.** Inside an [`each`](/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for the `visible` of a stat declared `of` a kind, which the [view](/reference/view#entitiesview-and-entityview) tests for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
+**`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) tests for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 
 ```ts
 { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', of: '$' }] }
@@ -150,15 +150,15 @@ A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner on
 
 ## Ids
 
-An entity the game declares has the id you give it. One [created](/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/reference/state#created). A number is never given twice, even after the entity that had it is removed, so a reference saved in a variable never comes to mean someone else.
+An entity the game declares has the id you give it. One [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created). A number is never given twice, even after the entity that had it is removed, so a reference saved in a variable never comes to mean someone else.
 
 **Why the `#`.** Entities keep the order they arrived in, declared ones first and then created ones. They're kept in an object, and JavaScript always puts keys that look like whole numbers first, in numeric order. The `#` avoids that, and it's also why the loader reports `an entity id must not be a whole number` for a declared one.
 
 ## Entities in old saves
 
-A save made before the game declared an entity doesn't have it. That happens when an update writes Ben into the café, or when the player turns on a mod that adds staff. When the save loads, [`loadState`](/reference/saves#loadstate) adds every declared entity it lacks, set up as a new game would have it. A game that declares a [`version`](/reference/saves#filling-new-content) adds them in its own migration step instead, with `tools.fill()`.
+A save made before the game declared an entity doesn't have it. That happens when an update writes Ben into the café, or when the player turns on a mod that adds staff. When the save loads, [`loadState`](/docs/reference/saves#loadstate) adds every declared entity it lacks, set up as a new game would have it. A game that declares a [`version`](/docs/reference/saves#filling-new-content) adds them in its own migration step instead, with `tools.fill()`.
 
-The exception is an entity that left in play. A [`remove`](/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/reference/state#removed), and loading skips those. If Ben quit, he doesn't come back on the next load. An entity created in play isn't recorded, since nothing would bring it back.
+The exception is an entity that left in play. A [`remove`](/docs/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and loading skips those. If Ben quit, he doesn't come back on the next load. An entity created in play isn't recorded, since nothing would bring it back.
 
 ```ts
 import { applyEffects, loadState, type GameState } from '@ifloom/engine'
@@ -175,14 +175,14 @@ staff(left)     // ['ana']: he stays gone
 ```
 
 **Gotchas.**
-- **When it happens.** Only when a state loads. A save read back from the [store](/reference/saves) or the [runner](/reference/runner) loads through `loadState`. A state you parsed yourself gets the missing entities once you pass it to `loadState`. Commands don't add them.
+- **When it happens.** Only when a state loads. A save read back from the [store](/docs/reference/saves) or the [runner](/docs/reference/runner) loads through `loadState`. A state you parsed yourself gets the missing entities once you pass it to `loadState`. Commands don't add them.
 - **Taken on again.** A `create` that names a removed declared entity's id brings it back and takes it out of `removed`. Removing it again records it once.
-- **Saves from before version 7 recorded no removals.** Their `removed` starts empty, so a declared entity removed in such a save is put back at its start. See the [6 → 7 step](/reference/saves#the-engine-s-steps).
+- **Saves from before version 7 recorded no removals.** Their `removed` starts empty, so a declared entity removed in such a save is put back at its start. See the [6 → 7 step](/docs/reference/saves#the-engines-steps).
 - **A dropped declaration isn't taken out.** An entity the game no longer declares stays in a save that has it, until an effect removes it.
 
 ## Functions
 
-The effects, conditions and view use these. A [custom function](/reference/custom) or a [plugin](/reference/plugins) can call them directly.
+The effects, conditions and view use these. A [custom function](/docs/reference/custom) or a [plugin](/docs/reference/plugins) can call them directly.
 
 ### entitiesOf
 
@@ -263,7 +263,7 @@ const ana = entityOf(state, 'staff:ana')!
 writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 ```
 
-**Gotcha.** Nothing is checked, so a stat isn't held to its range. An entity added this way isn't counted in [`state.created`](/reference/state#created), and isn't recorded when it's later removed. It counts as one created in play unless the game declares it.
+**Gotcha.** Nothing is checked, so a stat isn't held to its range. An entity added this way isn't counted in [`state.created`](/docs/reference/state#created), and isn't recorded when it's later removed. It counts as one created in play unless the game declares it.
 
 ### anyOf
 
@@ -271,7 +271,7 @@ writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 function anyOf(kind: string): EntityRef
 ```
 
-Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/reference/plugins#references) do this for its own conditions written per entity:
+Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/docs/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/docs/reference/plugins#references) do this for its own conditions written per entity:
 
 ```ts
 import { anyOf, bindCurrent, type Condition } from '@ifloom/engine'
@@ -308,6 +308,6 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 ## Gotchas
 
 - **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and bands by id alone.
-- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/reference/checks) reports it, and a kind the game doesn't declare.
+- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.

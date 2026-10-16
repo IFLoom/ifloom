@@ -13,11 +13,11 @@ It's the smallest shape of game IFLoom makes. It uses no plugins, so there's no 
 - a name the player types
 - a turn for each chapter
 
-The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/guide/shapes#a-linear-novel-the-letter), in `examples/novel`, is a slightly longer story built the same way.
+The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter), in `examples/novel`, is a slightly longer story built the same way.
 
 ## Before you start
 
-Follow [Installation](/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the blank template:
+Follow [Installation](/docs/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the blank template:
 
 ```sh
 npm run new -- my-story
@@ -31,7 +31,7 @@ You'll replace `src/game.ts` as you go, and leave the other files as they are.
 
 ## 1. One scene
 
-A game is one or more packs of content that [`loadGame`](/reference/loader#loadgame) merges. Start with a pack holding one scene, and the words it shows. Replace everything in `src/game.ts` with this:
+A game is one or more packs of content that [`loadGame`](/docs/reference/loader#loadgame) merges. Start with a pack holding one scene, and the words it shows. Replace everything in `src/game.ts` with this:
 
 ```ts
 // src/game.ts
@@ -56,15 +56,15 @@ const story: Pack = {
 export default loadGame([story], { id: 'last-bus', title: 'The Last Bus', introScene: 'ch1.stop' })
 ```
 
-The scene is a [data scene](/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
+The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
 
 `loadGame` takes the packs and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts. `schema: SCHEMA` says which version of the pack format you wrote against.
 
-The default export is what the [CLI](/cli/) reads: `loadGame` returns `{ game, problems }`, and `npm run check -w my-story` prints each problem, or `No problems.` when there are none.
+The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check -w my-story` prints each problem, or `No problems.` when there are none.
 
 ## 2. Choices
 
-A scene moves on through its choices. Each choice has an `id` and a list of [effects](/reference/effects) that run when the player picks it. `{ kind: 'scene', id }` opens another scene.
+A scene moves on through its choices. Each choice has an `id` and a list of [effects](/docs/reference/effects) that run when the player picks it. `{ kind: 'scene', id }` opens another scene.
 
 Add a second chapter, and two ways to get there:
 
@@ -96,11 +96,11 @@ prose: {
 
 A choice's label is the prose under `scene#choice`, so `ch1.stop#share` labels the `share` choice. A scene with no choices left is an ending, so the player sees the second chapter and nothing more for now.
 
-If you misspell a scene id or forget a label, `npm run check -w my-story` says which scene and which key. The full list is under [the checks](/reference/checks).
+If you misspell a scene id or forget a label, `npm run check -w my-story` says which scene and which key. The full list is under [the checks](/docs/reference/checks).
 
 ## 3. A stat
 
-A [stat](/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one in the pack. This story keeps one, `warmth`, for how kind the player has been:
+A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one in the pack. This story keeps one, `warmth`, for how kind the player has been:
 
 ```ts
 stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
@@ -112,11 +112,11 @@ Sharing the umbrella raises it. Put the stat effect before the scene change:
 { id: 'share', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'scene', id: 'ch2.bus' }] },
 ```
 
-A stat stays between its `min` (0 unless you say) and its `max`. The [React UI](/react/) shows it under the story.
+A stat stays between its `min` (0 unless you say) and its `max`. The [React UI](/docs/react) shows it under the story.
 
 ## 4. A choice the story remembers
 
-The engine counts every choice the player takes, by `scene/choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/reference/conditions#chose) condition, so you don't need to set a variable for it.
+The engine counts every choice the player takes, by `scene/choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/docs/reference/conditions#chose) condition, so you don't need to set a variable for it.
 
 Give the second chapter a line for each choice at the stop. A block with a `when` only shows while its condition holds:
 
@@ -151,7 +151,7 @@ choices: [
 ],
 ```
 
-The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/reference/conditions#range) keys:
+The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/conditions#range) keys:
 
 ```ts
 {
@@ -176,7 +176,7 @@ A variable that was never set counts as 0, so the honest player's line needs not
 
 ## 6. A name the player types
 
-An [input](/reference/inputs) asks the player for a value and writes it to a variable. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
+An [input](/docs/reference/inputs) asks the player for a value and writes it to a variable. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
 
 ```ts
 inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { flag: 'playerName' } } }],
@@ -198,7 +198,7 @@ choices: [
 ],
 ```
 
-Saves use `playerName` too. A save's [`SaveMeta`](/reference/saves#savemeta) has a `player` field, read from that variable, for a load screen to show.
+Saves use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field, read from that variable, for a load screen to show.
 
 ## 7. A chapter is a turn
 
@@ -208,11 +208,11 @@ The engine dates things in turns. `state.turn` starts at 0, and the `turn` effec
 { id: 'keep', when: { flag: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
 ```
 
-Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/reference/conditions#since) a scene was seen, counts chapters. The saves menu names each save by its turn, and [`ifloom playtest`](/cli/#ifloom-playtest) writes its transcript a turn at a time.
+Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. The saves menu names each save by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
 
 ## 8. Draw it
 
-The engine has no UI of its own. The template's `src/main.ts` draws the game with the [React UI](/react/), and you don't need to change it:
+The engine has no UI of its own. The template's `src/main.ts` draws the game with the [React UI](/docs/react), and you don't need to change it:
 
 ```ts
 // src/main.ts
@@ -225,17 +225,17 @@ import './styles.css'
 mountGame(game, { layout: READING_LAYOUT, pages: true })
 ```
 
-[`mountGame`](/react/#mountgame) takes what `loadGame` returns and logs any problems as warnings in the browser's console. Then it starts the game:
+[`mountGame`](/docs/react#mountgame) takes what `loadGame` returns and logs any problems as warnings in the browser's console. Then it starts the game:
 
 - It makes a new game with a random seed, so each playthrough's random draws are different.
-- It builds a [runner](/reference/runner), which keeps the state and adds undo, 50 steps back.
+- It builds a [runner](/docs/reference/runner), which keeps the state and adds undo, 50 steps back.
 - It keeps saves in the browser's `localStorage`, under keys that start with the game's id, and autosaves to the `auto` slot each turn. In this story that's the start of each chapter.
-- It draws [`GameShell`](/react/#gameshell), the whole UI, into the element with the id `root` in `index.html`.
-- With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/guide/title-screen) shows what else it can do.
+- It draws [`GameShell`](/docs/react#gameshell), the whole UI, into the element with the id `root` in `index.html`.
+- With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/guide/title-screen) shows what else it can do.
 
-[`READING_LAYOUT`](/react/#layouts) is a single column to read. It puts the title over the scene, then the name input, the game's actions, the stats and the menu under it. Without it you'd get the default layout, which has a side column for a game with a clock and a map.
+[`READING_LAYOUT`](/docs/react#layouts) is a single column to read. It puts the title over the scene, then the name input, the game's actions, the stats and the menu under it. Without it you'd get the default layout, which has a side column for a game with a clock and a map.
 
-`src/styles.css` imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font. Change the preset there, or set your own fonts and colours under it. [Make it your own](/react/customising) has the presets and everything else you can change.
+`src/styles.css` imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font. Change the preset there, or set your own fonts and colours under it. [Make it your own](/docs/react/customising) has the presets and everything else you can change.
 
 ## 9. Check it and playtest it
 
@@ -259,9 +259,9 @@ Then run it:
 npm run playtest -w my-story
 ```
 
-The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `games/my-story/playtest/run.txt`. It has every screen the [explorer](/cli/#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
+The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `games/my-story/playtest/run.txt`. It has every screen the [explorer](/docs/cli#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
 
-When you're happy with it, `npm run build -w my-story` makes one HTML file in `games/my-story/dist/` that opens from disk. See [Shipping a game](/guide/shipping).
+When you're happy with it, `npm run build -w my-story` makes one HTML file in `games/my-story/dist/` that opens from disk. See [Shipping a game](/docs/guide/shipping).
 
 To test the story in code, see `examples/novel/tests/novel.test.ts`. It plays The Letter with `apply` and checks the state and the view.
 
@@ -355,7 +355,7 @@ export const start = (game: Game) => startingState(game, { flags: { playerName: 
 
 ## Where next
 
-- [Shapes of game](/guide/shapes) walks through The Letter, then a management game built on [entities](/reference/entities).
-- [A game with a world](/guide/first-game) is the second tutorial. It adds a calendar, places and a character with the first-party plugins.
-- [Core concepts](/guide/concepts) explains the ideas behind what you just used.
-- [Scenes](/reference/scenes), [Conditions](/reference/conditions) and [Effects](/reference/effects) list everything a scene can do.
+- [Shapes of game](/docs/guide/shapes) walks through The Letter, then a management game built on [entities](/docs/reference/entities).
+- [A game with a world](/docs/guide/first-game) is the second tutorial. It adds a calendar, places and a character with the first-party plugins.
+- [Core concepts](/docs/guide/concepts) explains the ideas behind what you just used.
+- [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

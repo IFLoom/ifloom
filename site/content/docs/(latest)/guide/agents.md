@@ -11,7 +11,7 @@ The docs site publishes two files written for language models:
 - [`llms.txt`](https://ifloom.github.io/ifloom/llms.txt) is an index. It lists every page with a link and a one-line description.
 - [`llms-full.txt`](https://ifloom.github.io/ifloom/llms-full.txt) is every page in one file.
 
-Every page is also published as plain Markdown, at its own address with `.md` on the end, such as `https://ifloom.github.io/ifloom/guide/introduction.md`. Those are the links `llms.txt` lists.
+Every page is also published as plain Markdown, at its own address with `.md` on the end, such as `https://ifloom.github.io/ifloom/docs/guide/introduction.md`. Those are the links `llms.txt` lists.
 
 `llms-full.txt` is the simplest thing to hand an agent. For an agent with a small context, give it `llms.txt` instead and let it fetch the pages it needs.
 
@@ -54,12 +54,12 @@ It's yours to edit. Add your game's own conventions to it, such as how you name 
 
 ## Tips
 
-- **Point it at an example.** The three examples are whole, working games. Ask the agent to follow `examples/novel` for a story in chapters, `examples/cafe` for a game built on [entities](/reference/entities), or `examples/showcase` for places, characters and a calendar.
+- **Point it at an example.** The three examples are whole, working games. Ask the agent to follow `examples/novel` for a story in chapters, `examples/cafe` for a game built on [entities](/docs/reference/entities), or `examples/showcase` for places, characters and a calendar.
 - **Have it run `npm run check`** after every change. It loads the game and lists every problem the loader finds, such as a scene, prose key or id that the content names but nothing declares. It prints `No problems.` when there are none, and exits with an error when there are some, so an agent can tell the difference. Inside the checkout, that's `npm run check -w my-game` from the root.
-- **Have it run `npm run playtest`** to see the game played. The [playtest](/cli/#ifloom-playtest) plays a few turns with no one at the keyboard and writes every screen and every command to a text file. An agent can read that file to find a scene that never shows up, a choice that's always greyed out, or a number that never moves.
+- **Have it run `npm run playtest`** to see the game played. The [playtest](/docs/cli#ifloom-playtest) plays a few turns with no one at the keyboard and writes every screen and every command to a text file. An agent can read that file to find a scene that never shows up, a choice that's always greyed out, or a number that never moves.
 - **Ask for content as data.** Scenes, conditions and effects are plain objects that `check` can read. A rule written as code is harder for the agent, and for `check`, to verify.
 
 ## Next
 
-- [Your first story](/guide/first-story) builds a short game step by step, which is also a good thing to hand an agent as an example of the format.
-- [The CLI](/cli/) documents `check`, `playtest` and the other commands in full.
+- [Your first story](/docs/guide/first-story) builds a short game step by step, which is also a good thing to hand an agent as an example of the format.
+- [The CLI](/docs/cli) documents `check`, `playtest` and the other commands in full.

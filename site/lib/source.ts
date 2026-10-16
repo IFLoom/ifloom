@@ -1,7 +1,7 @@
 import { llms, loader } from 'fumadocs-core/source'
 import { defineDocs } from 'fumadocs-mdx/macro'
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema'
-import { basePath, docsRoute } from './shared'
+import { basePath, docsRoute } from './shared.ts'
 
 const docs = defineDocs({
   dir: 'content/docs',

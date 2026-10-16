@@ -1,7 +1,7 @@
 ---
 title: "Stats"
 ---
-A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
+A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/docs/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 
 ```ts
 import type { StatDef } from '@ifloom/engine'
@@ -15,11 +15,11 @@ const stats: StatDef[] = [
 const game = { /* … */, stats }
 ```
 
-A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/reference/effects#stat), which adds to it, or a [`setStat` effect](/reference/effects#setstat), which sets it. A [`{ stat }` condition](/reference/conditions#stat) tests it, and an activity's [cost](/reference/actions#activitycost) spends it.
+A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which adds to it, or a [`setStat` effect](/docs/reference/effects#setstat), which sets it. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an activity's [cost](/docs/reference/actions#activitycost) spends it.
 
 A stat can also be [derived](#derived-stats), worked out from other stats by a formula instead of kept, and any stat can have [levels](#levels) that it passes as it grows.
 
-A stat declared with `of` is kept on each [entity](/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. The value lives at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
+A stat declared with `of` is kept on each [entity](/docs/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. The value lives at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
 
 ## StatDef
 
@@ -48,23 +48,23 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 | Field | Default | What it does |
 |---|---|---|
 | `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', key: id }`. |
-| `of` | the player's | The [kind](/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
+| `of` | the player's | The [kind](/docs/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
 | `min` | `0` | The lowest any effect or cost can take it. |
-| `max` | `100` | The highest any effect or payment can take it. Either a number, or `{ value: name }` for a ceiling that moves. The name is a [custom value](/reference/custom#values) from `game.custom.values`, worked out against the state each time. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
-| `visible` | always | A [condition](/reference/conditions). The stat appears in [`view().stats`](/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
-| `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/reference/view#statview). |
-| `spendable` | `false` | The stat is spent on things. A scene choice's [price](/reference/view#price) only counts its negative `stat` effects on spendable stats. |
+| `max` | `100` | The highest any effect or payment can take it. Either a number, or `{ value: name }` for a ceiling that moves. The name is a [custom value](/docs/reference/custom#values) from `game.custom.values`, worked out against the state each time. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
+| `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
+| `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
 | `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. See [`lackingLine`](#lackingline). |
-| `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/reference/conditions#tier). The player never sees the numbers. |
+| `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/docs/reference/conditions#tier). The player never sees the numbers. |
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
-| `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
+| `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/docs/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
 
 **Gotchas.**
-- You have to declare a stat before you use it. The [content checker](/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.
+- You have to declare a stat before you use it. The [content checker](/docs/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.
 - Keep money in whole minor units, such as pence or cents, and let your UI place the decimal point. Sums and saves stay exact that way.
 - Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
 - `spendable` changes what's shown, not what's allowed. Any stat can be in an activity's `cost`, and the activity's price lists it either way.
@@ -83,18 +83,18 @@ const stats: StatDef[] = [
 ]
 ```
 
-A stat with `of` is kept on every [entity](/reference/entities) of that kind. It starts at `start` unless the entity's declaration or its [`create`](/reference/effects#create) effect gives another value. It isn't one of the player's stats, so [`startingStats`](#startingstats), [`view().stats`](/reference/view#the-player-s-numbers-and-things) and `view().statsById` all leave it out. Each entity's stats are in [`view().entities`](/reference/view#entities) instead.
+A stat with `of` is kept on every [entity](/docs/reference/entities) of that kind. It starts at `start` unless the entity's declaration or its [`create`](/docs/reference/effects#create) effect gives another value. It isn't one of the player's stats, so [`startingStats`](#startingstats), [`view().stats`](/docs/reference/view#the-players-numbers-and-things) and `view().statsById` all leave it out. Each entity's stats are in [`view().entities`](/docs/reference/view#entities) instead.
 
 The other fields work much as they do for the player's stats:
 
 | Field | On an entity stat |
 |---|---|
 | `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', key: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
-| `format` | How the value is written in the entity's [`StatView`](/reference/view#statview). |
+| `format` | How the value is written in the entity's [`StatView`](/docs/reference/view#statview). |
 | `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { flag: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
-| `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/reference/view#price), and an activity's `cost` only spends the player's stats. |
-| `bands` | Ignored. [`{ tier }`](/reference/conditions#tier) and [`statBand`](#statband) only read the player's value. |
+| `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/docs/reference/view#price), and an activity's `cost` only spends the player's stats. |
+| `bands` | Ignored. [`{ tier }`](/docs/reference/conditions#tier) and [`statBand`](#statband) only read the player's value. |
 
 ### A purse and an energy gauge
 
@@ -153,7 +153,7 @@ The declaration for a stat, or `undefined` if the game declares none by that id.
 function startingStats(game: Game): Stats
 ```
 
-Every one of the player's stats (those declared without `of`) at its `start` value. A [derived stat](#derived-stats) isn't in it, because it's never kept. [`startingState`](/reference/commands#startingstate) uses it for a new game.
+Every one of the player's stats (those declared without `of`) at its `start` value. A [derived stat](#derived-stats) isn't in it, because it's never kept. [`startingState`](/docs/reference/commands#startingstate) uses it for a new game.
 
 ## statMax
 
@@ -170,7 +170,7 @@ import { statMax } from '@ifloom/engine'
 statMax(state, game, 'energy') // fitness 12 → 92
 ```
 
-**Gotcha.** A `{ value }` name the game doesn't declare in [`custom.values`](/reference/custom#values) quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
+**Gotcha.** A `{ value }` name the game doesn't declare in [`custom.values`](/docs/reference/custom#values) quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
 
 ## clampStat
 
@@ -188,9 +188,9 @@ Returns `value` held between the stat's declared `min` and its [`statMax`](#stat
 function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string
 ```
 
-The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
+The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/docs/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
 
-Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`activityBlocked`](/reference/actions#activityblocked) uses this unless the activity's `cost.reasons` has a line for that stat.
+Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`activityBlocked`](/docs/reference/actions#activityblocked) uses this unless the activity's `cost.reasons` has a line for that stat.
 
 ```ts
 import { lackingLine, statDef } from '@ifloom/engine'
@@ -207,7 +207,7 @@ lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
 function statBand(state: GameState, game: Game, id: string): number
 ```
 
-How many of the stat's `bands` its current value has reached. A [`{ tier: id, gte }`](/reference/conditions#tier) condition compares against this number. It's 0 if the stat declares no bands.
+How many of the stat's `bands` its current value has reached. A [`{ tier: id, gte }`](/docs/reference/conditions#tier) condition compares against this number. It's 0 if the stat declares no bands.
 
 ```ts
 import { statBand } from '@ifloom/engine'
@@ -248,9 +248,9 @@ The engine works a derived stat out from its [`Formula`](#formula) every time so
 
 Everything that reads stats reads a derived one the same way, through [`statValue`](#statvalue):
 
-- a [`{ stat }`](/reference/conditions#stat) condition, a [`{ tier }`](/reference/conditions#tier) condition and a [`{ level }`](/reference/conditions#level) condition;
-- an activity's [cost](/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though);
-- the [view](/reference/view#statview), in `stats`, `statsById` and each entity's stats.
+- a [`{ stat }`](/docs/reference/conditions#stat) condition, a [`{ tier }`](/docs/reference/conditions#tier) condition and a [`{ level }`](/docs/reference/conditions#level) condition;
+- an activity's [cost](/docs/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though);
+- the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats.
 
 A derived stat isn't in `state.stats`, so a hand-written scene or a custom function that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
 
@@ -302,7 +302,7 @@ Formulas don't round. `{ scale: 'patience', by: 0.5 }` with patience at 5 gives 
 
 ### On an entity
 
-A derived stat with `of` is worked out for each [entity](/reference/entities) of that kind, from the same entity's stats:
+A derived stat with `of` is worked out for each [entity](/docs/reference/entities) of that kind, from the same entity's stats:
 
 ```ts
 const stats: StatDef[] = [
@@ -312,7 +312,7 @@ const stats: StatDef[] = [
 ]
 ```
 
-`{ stat: 'output', of: 'staff:ana', gte: 40 }` reads Ana's skill and Ana's morale. Each entity's [`StatView`](/reference/view#statview) shows its own `output`. A new entity keeps no value for a derived stat, because there's nothing to keep.
+`{ stat: 'output', of: 'staff:ana', gte: 40 }` reads Ana's skill and Ana's morale. Each entity's [`StatView`](/docs/reference/view#statview) shows its own `output`. A new entity keeps no value for a derived stat, because there's nothing to keep.
 
 A formula can only read stats with the same owner. A stat of the player's reads the player's stats, and a staff stat reads staff stats. The loader reports a formula that reads another owner's stat.
 
@@ -328,9 +328,9 @@ A derived stat that another formula reads is held to its range before the other 
 
 ### What it can't do
 
-A derived stat is never written. A `stat` or `setStat` effect on one does nothing, a [cost](/reference/actions#activitycost) doesn't spend it, and a [`create`](/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
+A derived stat is never written. A `stat` or `setStat` effect on one does nothing, a [cost](/docs/reference/actions#activitycost) doesn't spend it, and a [`create`](/docs/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
 
-The [content checker](/reference/checks) reports each of these:
+The [content checker](/docs/reference/checks) reports each of these:
 
 - a `stat` or `setStat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
 - an activity whose `cost` spends one (`spends stat "…", which is derived and never written`);
@@ -338,7 +338,7 @@ The [content checker](/reference/checks) reports each of these:
 - a formula that names a stat the game doesn't declare, or one with another owner;
 - a cycle, such as `service` reading `mood` while `mood` reads `service`. It's reported as `derive goes round in a cycle: service → mood → service`. If you run the game anyway, a formula that goes round reads 0 once it's 64 steps deep.
 
-These come from the [content checker](/reference/checks), wherever the effect or the stat is.
+These come from the [content checker](/docs/reference/checks), wherever the effect or the stat is.
 
 ## Levels
 
@@ -374,13 +374,13 @@ type StatLevels = {
 
 ### What reads the level
 
-- **Conditions.** [`{ level: 'cooking', gte: 2 }`](/reference/conditions#level) holds from level 2 up. With `of`, it reads an entity's level.
-- **The view.** The stat's [`StatView`](/reference/view#statview) gets a `level` field, `{ level, next, progress }`: the level, the value the next level starts at (`null` at the top), and how far the value is from this level's start to the next, 0 to 1. See [`statLevel`](#statlevel).
+- **Conditions.** [`{ level: 'cooking', gte: 2 }`](/docs/reference/conditions#level) holds from level 2 up. With `of`, it reads an entity's level.
+- **The view.** The stat's [`StatView`](/docs/reference/view#statview) gets a `level` field, `{ level, next, progress }`: the level, the value the next level starts at (`null` at the top), and how far the value is from this level's start to the next, 0 to 1. See [`statLevel`](#statlevel).
 - **Code.** [`statLevel`](#statlevel) gives the same thing from a state.
 
 ### The notice
 
-When a command takes one of the player's stats up one or more levels, and the stat's `levels` has a `notice`, the engine raises a [notice](/reference/notices) after the command. With the cooking stat above, a command that takes cooking from 28 to 31 raises:
+When a command takes one of the player's stats up one or more levels, and the stat's `levels` has a `notice`, the engine raises a [notice](/docs/reference/notices) after the command. With the cooking stat above, a command that takes cooking from 28 to 31 raises:
 
 ```ts
 { id: 'level.cooking', title: 'Cooking is now level 2.', tag: 'level' }
@@ -389,17 +389,17 @@ When a command takes one of the player's stats up one or more levels, and the st
 - The notice's id is `level.<stat>`, so a second level-up of the same stat replaces the first while it's unseen.
 - Its `tag` is `level`, so a UI can show it its own way.
 - `{level}` is the level the stat ends the command at. A command that jumps two levels raises one notice, for the higher.
-- Only the player's stats raise notices. An entity stat's levels show in the view and in conditions, but a staff member going up a level says nothing. Write a [trigger](/reference/triggers) on a `{ level, of }` condition if you want one.
+- Only the player's stats raise notices. An entity stat's levels show in the view and in conditions, but a staff member going up a level says nothing. Write a [trigger](/docs/reference/triggers) on a `{ level, of }` condition if you want one.
 - Going down a level raises nothing.
-- It's raised when a command runs through [`apply`](/reference/commands#apply) or `dispatch`. [`applyEffects`](/reference/effects#applyeffects) on its own doesn't raise it.
+- It's raised when a command runs through [`apply`](/docs/reference/commands#apply) or `dispatch`. [`applyEffects`](/docs/reference/effects#applyeffects) on its own doesn't raise it.
 
 ### In the React UI
 
-The React UI's [`StatList`](/react/components#statlist) shows a levelled stat's level after its label, as "Level 2" (the word `ui.statLevel`), and a bar under the row towards the next level, labelled for screen readers with `ui.statProgress`. At the top level there's no bar. The parts are `stat-level` and `stat-progress`. See [the data-part reference](/react/customising#stats).
+The React UI's [`StatList`](/docs/react/components#statlist) shows a levelled stat's level after its label, as "Level 2" (the word `ui.statLevel`), and a bar under the row towards the next level, labelled for screen readers with `ui.statProgress`. At the top level there's no bar. The parts are `stat-level` and `stat-progress`. See [the data-part reference](/docs/react/customising#stats).
 
 ### The checks
 
-The [content checker](/reference/checks) reports, against `stat <id>`:
+The [content checker](/docs/reference/checks) reports, against `stat <id>`:
 
 - `levels.at needs at least one threshold`, for an empty or missing `at`;
 - `levels.at must go up, each threshold above the last`, for thresholds out of order or repeated;

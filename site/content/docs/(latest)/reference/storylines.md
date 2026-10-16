@@ -12,14 +12,14 @@ type StorylineState = {
 }
 ```
 
-`StorylineDef` is listed with the rest of the game on [The game](/reference/game#storylinedef). This page is about how storylines behave.
+`StorylineDef` is listed with the rest of the game on [The game](/docs/reference/game#storylinedef). This page is about how storylines behave.
 
-Declare your storylines in `game.storylines`, or in a [pack](/reference/loader#pack)'s `storylines`. A new game starts each one open and with no variables. Its live state is `state.storylines[id]`:
+Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loader#pack)'s `storylines`. A new game starts each one open and with no variables. Its live state is `state.storylines[id]`:
 
 | Field | Meaning |
 |---|---|
-| `closedUntil` | A [turn](/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', id, turns }`](/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
-| `flags` | The storyline's variables. Set them with [`{ kind: 'storylineFlag' }`](/reference/effects#storylineflag), read them with a [`{ storylineFlag }`](/reference/conditions#storylineflag) condition, count them with [progress counters](/reference/progress) and show them with the `{{n:storyline.key}}` token. |
+| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', id, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
+| `flags` | The storyline's variables. Set them with [`{ kind: 'storylineFlag' }`](/docs/reference/effects#storylineflag), read them with a [`{ storylineFlag }`](/docs/reference/conditions#storylineflag) condition, count them with [progress counters](/docs/reference/progress) and show them with the `{{n:storyline.key}}` token. |
 
 ```ts
 storylines: [{ id: 'ava', name: 'Ava' }]
@@ -33,9 +33,9 @@ storylines: [{ id: 'ava', name: 'Ava' }]
 { id: 'leave-a-note', when: { storyline: 'ava', open: false }, effects: [/* … */] }
 ```
 
-The game and its plugins decide what being closed means. The engine itself only answers the [`{ storyline }`](/reference/conditions#storyline) condition. The [cast](/plugins/cast) won't let the player talk to or call someone whose storyline is closed, and the [quests](/plugins/quests) plugin groups quests by storyline.
+The game and its plugins decide what being closed means. The engine itself only answers the [`{ storyline }`](/docs/reference/conditions#storyline) condition. The [cast](/docs/plugins/cast) won't let the player talk to or call someone whose storyline is closed, and the [quests](/docs/plugins/quests) plugin groups quests by storyline.
 
-The core has no characters. People, who's in the room, and talking and calling come from the [cast plugin](/plugins/cast), and a friendship is a [stat](/reference/stats#entity-stats) on a character rather than part of a storyline.
+The core has no characters. People, who's in the room, and talking and calling come from the [cast plugin](/docs/plugins/cast), and a friendship is a [stat](/docs/reference/stats#entity-stats) on a character rather than part of a storyline.
 
 ## storylineOf and storylineOpen
 
@@ -53,7 +53,7 @@ storylineOpen(state, 'ava')              // true on a new game
 storylineOf(state, 'ava').flags.met      // undefined until a storylineFlag sets it
 ```
 
-**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/reference/checks) reports a condition, a `storylineFlag` effect or a `closeStoryline` effect that names an unknown storyline.
+**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `storylineFlag` effect or a `closeStoryline` effect that names an unknown storyline.
 
 ## emptyStoryline
 
@@ -63,4 +63,4 @@ import { emptyStoryline } from '@ifloom/engine'
 function emptyStoryline(): StorylineState
 ```
 
-A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.
+A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/docs/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/docs/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.

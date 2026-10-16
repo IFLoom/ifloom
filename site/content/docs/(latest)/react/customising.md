@@ -4,17 +4,17 @@ description: Give an IFLoom game drawn with the React UI a look of its own, from
 ---
 You can change how the React UI looks at any depth, from swapping one colour to drawing every screen yourself. This page goes from the smallest change to the biggest. Start at the top and stop when the game looks the way you want.
 
-1. [Pick a theme preset](#_1-pick-a-theme-preset)
-2. [Set tokens and colours](#_2-set-tokens-and-colours)
-3. [Style parts with plain CSS](#_3-style-parts-with-plain-css)
-4. [Change the built-in classes](#_4-change-the-built-in-classes)
-5. [Rearrange the parts](#_5-rearrange-the-parts)
-6. [Replace a component](#_6-replace-a-component)
-7. [Replace the frame](#_7-replace-the-frame)
-8. [Write your own root](#_8-write-your-own-root)
-9. [Use another framework](#_9-use-another-framework)
+1. [Pick a theme preset](#1-pick-a-theme-preset)
+2. [Set tokens and colours](#2-set-tokens-and-colours)
+3. [Style parts with plain CSS](#3-style-parts-with-plain-css)
+4. [Change the built-in classes](#4-change-the-built-in-classes)
+5. [Rearrange the parts](#5-rearrange-the-parts)
+6. [Replace a component](#6-replace-a-component)
+7. [Replace the frame](#7-replace-the-frame)
+8. [Write your own root](#8-write-your-own-root)
+9. [Use another framework](#9-use-another-framework)
 
-The first three steps are CSS only. The rest are options you pass to [`mountGame`](/react/#mountgame) (or to [`GameShell`](/react/#gameshell) and [`GameProvider`](/react/components#gameprovider), which take the same ones).
+The first three steps are CSS only. The rest are options you pass to [`mountGame`](/docs/react#mountgame) (or to [`GameShell`](/docs/react#gameshell) and [`GameProvider`](/docs/react/components#gameprovider), which take the same ones).
 
 ## 1. Pick a theme preset
 
@@ -33,11 +33,11 @@ A preset is a stylesheet that changes the fonts, the sizes, the colours and the 
 | `studio` | A clean, modern app. Cards on a soft grey page, the side column on the right, generous spacing, bold headings and choices as raised cards. The Corner Café (`examples/cafe`) uses it. |
 | `storybook` | Soft and friendly. Rounded type, a warm tinted page, big pill buttons, and dialogue in speech bubbles. Small Town (`examples/showcase`) uses it. |
 
-[`ifloom new`](/cli/#ifloom-new) writes this import for you. Pass `--theme paper` (or any of the four) to choose one. Leave it out and a blank game gets one at random, so two new games don't start out looking the same.
+[`ifloom new`](/docs/cli#ifloom-new) writes this import for you. Pass `--theme paper` (or any of the four) to choose one. Leave it out and a blank game gets one at random, so two new games don't start out looking the same.
 
 Without a preset, you get the UI's plain default look: a system sans-serif, neutral colours and the side column on the left.
 
-Each preset is plain CSS that sets the [tokens](#_2-set-tokens-and-colours) and styles a few [parts](#_3-style-parts-with-plain-css). Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
+Each preset is plain CSS that sets the [tokens](#2-set-tokens-and-colours) and styles a few [parts](#3-style-parts-with-plain-css). Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
 
 ## 2. Set tokens and colours
 
@@ -167,7 +167,7 @@ Some parts carry a second attribute that says more:
 | `data-layer` | Every `stage-layer` | The layer's id, when it has one. |
 | `data-hotspot` | Every `hotspot` | The hotspot's id. |
 
-The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-item`, `data-quest` and the rest, each holding the id of what it shows. [Components](/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
+The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-item`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
 ### Why your CSS wins
 
@@ -195,7 +195,7 @@ const classes: Classes = {
 mountGame(game, { classes })
 ```
 
-A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
+A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
 
 Every part named in the [reference](#the-data-part-reference) takes classes. When several elements share a name, such as `button` or `beat`, the classes go on all of them.
 
@@ -264,11 +264,11 @@ mountGame(game, {
 })
 ```
 
-This puts the notices at the top of the stage instead of in the corner, and leaves the inventory and the wardrobe out. The parts and the default lists are on [The React UI](/react/#layouts). Your own components can go in any list too.
+This puts the notices at the top of the stage instead of in the corner, and leaves the inventory and the wardrobe out. The parts and the default lists are on [The React UI](/docs/react#layouts). Your own components can go in any list too.
 
 **Gotcha.** A list you leave out keeps its default, except `sidebar`, which becomes no side column. The default overlay is `['notices']`, so moving `'notices'` to the stage without `overlay: []` draws them twice.
 
-`layout` decides what goes where, not the shape of the page. To put the side column on the right, use CSS (`studio` does it with an `order` and a grid template on `[data-part="page"][data-has-sidebar]`). For a header bar or another shape entirely, [replace the frame](#_7-replace-the-frame).
+`layout` decides what goes where, not the shape of the page. To put the side column on the right, use CSS (`studio` does it with an `order` and a grid template on `[data-part="page"][data-has-sidebar]`). For a header bar or another shape entirely, [replace the frame](#7-replace-the-frame).
 
 ## 6. Replace a component
 
@@ -308,11 +308,11 @@ const components: Components = { Beat: TownBeat }
 mountGame(game, { components })
 ```
 
-The names you can replace are the keys of [`Components`](/react/components#components): `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture` and `Icon`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture` and `Icon`.
 
-A replacement applies wherever the UI draws that component, not just in one spot. The `Beat` above also draws the beats in the [backlog](/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's **Use** buttons.
+A replacement applies wherever the UI draws that component, not just in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's **Use** buttons.
 
-[`Icon`](/react/components#icon) is the smallest one to replace. It draws the close, back and warning icons, so one component swaps the UI's whole icon set:
+[`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws the close, back and warning icons, so one component swaps the UI's whole icon set:
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -326,13 +326,13 @@ const components: Components = {
 
 **Gotchas.**
 
-- **Keep the `data-part`.** Spread [`usePart`](/react/components#usepart)'s result onto your element, as above, so plain CSS, `classes` and `unstyled` still reach it. Add the second attributes (`data-beat`, `data-who`) yourself if your CSS uses them.
+- **Keep the `data-part`.** Spread [`usePart`](/docs/react/components#usepart)'s result onto your element, as above, so plain CSS, `classes` and `unstyled` still reach it. Add the second attributes (`data-beat`, `data-who`) yourself if your CSS uses them.
 - **Define `components` once**, outside any component, as with `panels`. A new object on every render redraws everything under the provider.
 - **Don't draw the built-in one by importing it.** Inside your `Beat`, importing `Beat` from `@ifloom/react` gives you your own replacement again, and it calls itself forever. Use `Default`.
 
 ## 7. Replace the frame
 
-The frame is the page's skeleton: where the side column, the stage and the overlay go. [`Frame`](/react/components#frame) gets each region already drawn, so a new frame only arranges them. This one is a header bar over a single reading column:
+The frame is the page's skeleton: where the side column, the stage and the overlay go. [`Frame`](/docs/react/components#frame) gets each region already drawn, so a new frame only arranges them. This one is a header bar over a single reading column:
 
 ```tsx
 import { mountGame, usePart, type Components, type FrameProps } from '@ifloom/react'
@@ -367,7 +367,7 @@ The `classes` turn the side column's own `<aside>` into a row, and the layout pu
 
 ## 8. Write your own root
 
-For a page that isn't a side column and a stage at all, give `mountGame` your own root component as `app`. It's drawn inside the game's provider, so [`useGame`](/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
+For a page that isn't a side column and a stage at all, give `mountGame` your own root component as `app`. It's drawn inside the game's provider, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
 
 ```tsx
 // src/main.tsx
@@ -406,18 +406,18 @@ The menus have hooks that give you their state and actions without their look, s
 
 | Hook | What it gives you |
 |---|---|
-| [`useSaves`](/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
-| [`useBacklog`](/react/components#usebacklog) | The backlog's entries, kept current. |
-| [`useMods`](/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
-| [`useDevices`](/react/components#usedevices) | The devices in the view. |
-| [`useDevice`](/react/components#usedevice) | Which device is open, and how to open and close one. |
-| [`useWords`](/react/components#usewords) | The UI's words in the game's language. |
+| [`useSaves`](/docs/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
+| [`useBacklog`](/docs/react/components#usebacklog) | The backlog's entries, kept current. |
+| [`useMods`](/docs/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
+| [`useDevices`](/docs/react/components#usedevices) | The devices in the view. |
+| [`useDevice`](/docs/react/components#usedevice) | Which device is open, and how to open and close one. |
+| [`useWords`](/docs/react/components#usewords) | The UI's words in the game's language. |
 
-Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/react/extending#your-own-components-in-the-system).
+Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/react/extending#your-own-components-in-the-system).
 
 ## 9. Use another framework
 
-If React isn't what you want, leave this package out. The engine has no framework of its own. [Using another framework](/guide/frameworks) walks through the plain-DOM template and sketches Vue and Svelte.
+If React isn't what you want, leave this package out. The engine has no framework of its own. [Using another framework](/docs/guide/frameworks) walks through the plain-DOM template and sketches Vue and Svelte.
 
 ## Not looking like every other IFLoom game
 
@@ -427,19 +427,19 @@ What makes a game look like itself is mostly shape and type:
 
 - **Pick a preset that fits the game**, or make your own from one. A preset is a short stylesheet, and copying one into your `src/styles.css` and changing it is a fine way to start.
 - **Change the fonts.** A serif, a rounded face or a monospace changes the feel more than any colour. Bundle a font file if no system font fits.
-- **Change the layout.** Move the side column, drop it, put the stats under the scene, or move the notices. A different [frame](#_7-replace-the-frame) changes the whole silhouette of the page.
+- **Change the layout.** Move the side column, drop it, put the stats under the scene, or move the notices. A different [frame](#7-replace-the-frame) changes the whole silhouette of the page.
 - **Change how choices look.** They're what the player looks at most. Lines of text, numbered prompts, cards and pills each make a different game.
 - **Replace one or two components** that matter to your story, such as `Beat` for the way people talk, or `Notice` for news.
 
 ## The data-part reference
 
-Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-change-the-built-in-classes). The list is exported as [`PART_KEYS`](/react/components#part-keys).
+Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-change-the-built-in-classes). The list is exported as [`PART_KEYS`](/docs/react/components#part_keys).
 
 ### The page
 
 | Part | What it is |
 |---|---|
-| `page` | The whole page, drawn by [`Frame`](/react/components#frame). Carries `data-has-sidebar` when there's a side column. |
+| `page` | The whole page, drawn by [`Frame`](/docs/react/components#frame). Carries `data-has-sidebar` when there's a side column. |
 | `sidebar` | The side column, an `<aside>`. |
 | `stage` | The `<main>` that holds the stage's parts. |
 | `overlay` | The box that floats over the page, holding the notices by default. |
@@ -496,13 +496,13 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 
 | Part | What it is |
 |---|---|
-| `video` | A video clip, drawn by [`Video`](/react/components#video). A video beat's carries `data-beat="video"`. |
-| `stage-picture` | A layered [`Stage`](/react/components#stage)'s box, with the stage's `aspect-ratio`. |
+| `video` | A video clip, drawn by [`Video`](/docs/react/components#video). A video beat's carries `data-beat="video"`. |
+| `stage-picture` | A layered [`Stage`](/docs/react/components#stage)'s box, with the stage's `aspect-ratio`. |
 | `stage-layer` | One layer in it, a picture or a video. Carries `data-layer` with the layer's id. |
 | `hotspot` | A hotspot button over the stage. Carries `data-hotspot`, and `aria-disabled` when it's greyed out. |
 | `hotspot-warning` | The warning icon in a hotspot's corner. |
 | `viewer-open` | The button around a picture or a clip in the story that opens the viewer. |
-| `viewer` | The [`MediaViewer`](/react/components#mediaviewer) dialog, holding the picture or the clip. |
+| `viewer` | The [`MediaViewer`](/docs/react/components#mediaviewer) dialog, holding the picture or the clip. |
 | `viewer-close` | The viewer's close button. |
 
 ### Choices and buttons
@@ -511,7 +511,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 |---|---|
 | `choices` | A scene's list of choices, or an app's. |
 | `actions` | The room's and the game's buttons, when no scene is open. |
-| `choice` | One choice or action button. Carries `data-choice`, and `data-choice-key` with its number when [keys](/react/components#keyoptions) are on. |
+| `choice` | One choice or action button. Carries `data-choice`, and `data-choice-key` with its number when [keys](/docs/react/components#keyoptions) are on. |
 | `choice-key` | The number key that picks a choice, a `<kbd>` at the start of its label. Only with keys on. |
 | `choice-label` | The button's label, with the warning icon. |
 | `choice-warning` | The warning written under a button that can be pressed but would be refused. |
@@ -531,14 +531,14 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `notice-title` | Its title. |
 | `notice-text` | Its text. |
 | `notice-dismiss` | Its dismiss button. |
-| `notice-strip` | The [`NoticeStrip`](/react/components#noticestrip), a `<nav>` of unread counts. |
+| `notice-strip` | The [`NoticeStrip`](/docs/react/components#noticestrip), a `<nav>` of unread counts. |
 | `notice-strip-item` | One count in it, a button. Carries `data-strip`: `notices`, or the device and app as `phone/texts`. |
 
 ### Minigames
 
 | Part | What it is |
 |---|---|
-| `minigame` | The [`MinigamePanel`](/react/components#minigamepanel), a `<section>`. Carries `data-minigame` and `data-state`. |
+| `minigame` | The [`MinigamePanel`](/docs/react/components#minigamepanel), a `<section>`. Carries `data-minigame` and `data-state`. |
 | `minigame-title` | The minigame's title. |
 | `minigame-state` | The running state's words. |
 | `minigame-timer` | The countdown bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Only while the state has a timer. |
@@ -676,7 +676,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 
 ### The pages
 
-These are drawn only when `pages` is on. See [Pages](/react/components#pages).
+These are drawn only when `pages` is on. See [Pages](/docs/react/components#pages).
 
 | Part | What it is |
 |---|---|

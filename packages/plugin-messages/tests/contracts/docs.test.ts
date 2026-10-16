@@ -11,7 +11,7 @@ const INDEX = import.meta.glob('../../src/index.ts', {
   eager: true,
 }) as Record<string, string>
 
-const PAGE = import.meta.glob('../../../../docs/plugins/messages.md', {
+const PAGE = import.meta.glob('../../../../site/content/docs/\\(latest\\)/plugins/messages.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,

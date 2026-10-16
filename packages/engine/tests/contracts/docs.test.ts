@@ -11,7 +11,7 @@ const INDEX = import.meta.glob('../../src/index.ts', {
   eager: true,
 }) as Record<string, string>
 
-const REFERENCE = import.meta.glob('../../../../docs/reference/*.md', {
+const REFERENCE = import.meta.glob('../../../../site/content/docs/\\(latest\\)/reference/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,

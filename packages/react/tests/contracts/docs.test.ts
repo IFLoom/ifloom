@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * Everything the React UI exports is in its docs section. A developer learns
- * the UI from the docs site alone, so an export no page under docs/react/ names
- * is a component nobody can find.
+ * the UI from the docs site alone, so an export no page of the React UI docs
+ * names is a component nobody can find.
  */
 const INDEX = import.meta.glob('../../src/index.ts', {
   query: '?raw',
@@ -11,7 +11,7 @@ const INDEX = import.meta.glob('../../src/index.ts', {
   eager: true,
 }) as Record<string, string>
 
-const PAGES = import.meta.glob('../../../../docs/react/*.md', {
+const PAGES = import.meta.glob('../../../../site/content/docs/\\(latest\\)/react/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -32,7 +32,7 @@ function exportedNames(source: string): string[] {
 }
 
 describe('the docs', () => {
-  it('name every export of @ifloom/react somewhere under docs/react/', () => {
+  it('name every export of @ifloom/react somewhere in the React UI docs', () => {
     const names = exportedNames(Object.values(INDEX)[0])
     expect(names.length).toBeGreaterThan(30)
     const pages = Object.values(PAGES).join('\n')

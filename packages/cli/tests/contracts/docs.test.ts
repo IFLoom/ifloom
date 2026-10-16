@@ -8,7 +8,13 @@ import { describe, expect, it } from 'vitest'
  */
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const SOURCES = ['../../src/index.ts', '../../src/vite.ts'].map(read)
-const PAGE = read('../../../../docs/cli/index.md')
+const PAGE = Object.values(
+  import.meta.glob('../../../../site/content/docs/\\(latest\\)/cli/index.{md,mdx}', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }) as Record<string, string>,
+).join('\n')
 
 function exportedNames(source: string): string[] {
   const names = new Set<string>()

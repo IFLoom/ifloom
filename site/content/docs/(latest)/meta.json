@@ -1,0 +1,12 @@
+{
+  "title": "Latest (pre-release)",
+  "root": "version",
+  "pages": [
+    "guide",
+    "reference",
+    "plugins",
+    "react",
+    "cli",
+    "changelog"
+  ]
+}

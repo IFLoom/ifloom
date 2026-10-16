@@ -9,16 +9,16 @@
   "workspaces": [
     "packages/*",
     "examples/*",
+    "site",
     "games/*"
   ],
   "scripts": {
     "new": "ifloom new",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p packages/engine && tsc --noEmit -p packages/plugin-calendar && tsc --noEmit -p packages/plugin-places && tsc --noEmit -p packages/plugin-cast && tsc --noEmit -p packages/plugin-quests && tsc --noEmit -p packages/plugin-wardrobe && tsc --noEmit -p packages/plugin-messages && tsc --noEmit -p packages/plugin-feed && tsc --noEmit -p packages/plugin-devices && tsc --noEmit -p packages/phone && tsc --noEmit -p packages/plugin-debug && tsc --noEmit -p packages/audio && tsc --noEmit -p packages/react && tsc --noEmit -p packages/cli && tsc --noEmit -p examples/showcase && tsc --noEmit -p examples/novel && tsc --noEmit -p examples/cafe",
+    "typecheck": "tsc --noEmit -p packages/engine && tsc --noEmit -p packages/plugin-calendar && tsc --noEmit -p packages/plugin-places && tsc --noEmit -p packages/plugin-cast && tsc --noEmit -p packages/plugin-quests && tsc --noEmit -p packages/plugin-wardrobe && tsc --noEmit -p packages/plugin-messages && tsc --noEmit -p packages/plugin-feed && tsc --noEmit -p packages/plugin-devices && tsc --noEmit -p packages/phone && tsc --noEmit -p packages/plugin-debug && tsc --noEmit -p packages/audio && tsc --noEmit -p packages/react && tsc --noEmit -p packages/cli && tsc --noEmit -p examples/showcase && tsc --noEmit -p examples/novel && tsc --noEmit -p examples/cafe && npm run typecheck -w @ifloom/site",
     "lint": "oxlint",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "npm run dev -w @ifloom/site",
+    "docs:build": "npm run build -w @ifloom/site"
   },
   "devDependencies": {
     "@fontsource-variable/geist": "5.3.0",

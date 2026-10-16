@@ -1,0 +1,18 @@
+{
+  "title": "Plugins",
+  "description": "The first-party plugins",
+  "root": true,
+  "pages": [
+    "index",
+    "calendar",
+    "places",
+    "cast",
+    "quests",
+    "wardrobe",
+    "messages",
+    "feed",
+    "devices",
+    "debug",
+    "phone"
+  ]
+}

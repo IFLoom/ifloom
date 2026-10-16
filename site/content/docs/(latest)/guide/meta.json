@@ -1,0 +1,21 @@
+{
+  "title": "Guide",
+  "description": "Learn IFLoom step by step",
+  "root": true,
+  "pages": [
+    "introduction",
+    "installation",
+    "first-story",
+    "shapes",
+    "title-screen",
+    "minigames",
+    "hud",
+    "frameworks",
+    "first-game",
+    "concepts",
+    "shipping",
+    "showcase",
+    "agents",
+    "status"
+  ]
+}

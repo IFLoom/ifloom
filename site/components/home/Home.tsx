@@ -92,7 +92,7 @@ export function Home() {
               Interactive fiction for <em>any shape</em> of game
             </h1>
             <p className={cx(s.p, s.lede)}>
-              Write a linear novel, a management game or a life sim. Scenes, choices and stats are data, and the engine works out what the player can do right now, and why not.
+              Everything you&apos;d build in Twine, written in TypeScript instead: typed content, saves that survive updates, a checker that catches mistakes before players do, and a UI that looks like your game, not the engine&apos;s.
             </p>
             <div className={s.ctas}>
               <Link className={s.cta} href="/docs/guide/introduction">

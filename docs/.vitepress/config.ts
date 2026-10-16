@@ -41,6 +41,11 @@ export default defineConfig({
   // llms.txt describes the latest docs only, not the snapshots.
   vite: { plugins: [llmstxt({ ignoreFiles: ['versions/**'] })] },
   lastUpdated: true,
+  head: [
+    // The homepage fades its sections in. This hides them before the first
+    // paint, so they don't flash; it does nothing on the docs pages.
+    ['script', {}, "if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('ifl-reveal')"],
+  ],
   // docs/versions/0.1.0/guide/x.md is served at /0.1.0/guide/x.
   rewrites: { 'versions/:rest*': ':rest*' },
   themeConfig: {

@@ -151,6 +151,32 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
   return next
 }
 
+/**
+ * The project with a choice renamed: its id, its default label key
+ * (`scene#choice`) and every `{ chose: 'scene/choice' }` that asks about it.
+ */
+export function renameChoice(project: Project, sceneId: string, from: string, to: string): Project {
+  if (from === to || !to) return project
+  const next = structuredClone(project)
+  const scene = next.pack.scenes.find((s) => s.id === sceneId)
+  const choice = scene?.choices.find((c) => c.id === from)
+  if (!scene || !choice) return project
+  choice.id = to
+  const oldKey = `${sceneId}#${from}`
+  const newKey = `${sceneId}#${to}`
+  if (choice.label === oldKey) choice.label = newKey
+  if (oldKey in next.pack.prose && !(newKey in next.pack.prose)) {
+    next.pack.prose = Object.fromEntries(Object.entries(next.pack.prose).map(([key, text]) => [key === oldKey ? newKey : key, text]))
+  }
+  walkPack(next.pack, {
+    condition: (c) => {
+      if (c.chose === `${sceneId}/${from}`) c.chose = `${sceneId}/${to}`
+    },
+  })
+  next.updated = Date.now()
+  return next
+}
+
 /** Where a problem points in the editor: the thing, and the choice or block in it when one can be found. */
 export type ProblemTarget = { thing: Thing | 'project'; id: string; choice?: string; field?: string }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { problemsOf } from '../lib/game.ts'
 import { sampleProject } from '../lib/model.ts'
-import { problemTarget, rename, variablesUsed } from '../lib/references.ts'
+import { problemTarget, rename, renameChoice, variablesUsed } from '../lib/references.ts'
 
 describe('rename', () => {
   it('moves a scene, its prose keys and everything that names it', () => {
@@ -42,6 +42,20 @@ describe('rename', () => {
     expect(vars.variables[0].name).toBe('heardFiddle')
     expect(variablesUsed(vars.pack)).toEqual(['heardFiddle'])
     expect(problemsOf(vars)).toEqual([])
+  })
+})
+
+describe('renameChoice', () => {
+  it('moves the choice, its label and what asks about it', () => {
+    const project = sampleProject()
+    project.pack.scenes[1].body.push({ text: 'home/fed', when: { chose: 'market/buy' } })
+    project.pack.prose['home/fed'] = 'Fed.'
+    const next = renameChoice(project, 'market', 'buy', 'treat')
+    expect(next.pack.scenes[0].choices[0].id).toBe('treat')
+    expect(next.pack.prose['market#treat']).toBe('Buy an iced bun')
+    expect(next.pack.prose['market#buy']).toBeUndefined()
+    expect(next.pack.scenes[1].body[2].when).toEqual({ chose: 'market/treat' })
+    expect(problemsOf(next)).toEqual([])
   })
 })
 

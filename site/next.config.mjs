@@ -8,6 +8,8 @@ const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'effect
 const config = {
   // Served by Vercel at https://ifloom.dev, with server routes for search and MCP.
   reactStrictMode: true,
+  // The repo has its own AGENTS.md; stop `next dev` writing another into site/.
+  agentRules: false,
   // Each page-rendering worker takes most of a gigabyte, so a machine with many
   // cores and little memory runs out with one per core. Four is plenty.
   experimental: { cpus: 4 },

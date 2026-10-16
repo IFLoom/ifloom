@@ -47,6 +47,8 @@ Author-facing words, used in docs and new API: scene, choice, action, location, 
 
 Decisions a future review must not re-open are in `docs/adr/`.
 
+Every user-visible change adds a line to `CHANGELOG.md`, under `[Unreleased]` in Added, Changed, Removed or Fixed. Write it for someone making a game, not as a commit message. The docs show it at `/changelog`.
+
 ## Docs
 
 Anything the engine exports is documented in `docs/` (VitePress, published at https://ifloom.github.io/ifloom/). A change to the exports ships with its docs: load the `ifloom-docs` skill.

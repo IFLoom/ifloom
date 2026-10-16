@@ -32,6 +32,7 @@ export default defineVersionedConfig({
       { text: 'Plugins', link: '/plugins/' },
       { text: 'React UI', link: '/react/' },
       { text: 'CLI', link: '/cli/' },
+      { text: 'Changelog', link: '/changelog' },
       { component: 'VersionSwitcher' },
     ],
     sidebar,

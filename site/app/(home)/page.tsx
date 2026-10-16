@@ -3,7 +3,7 @@ import { Home } from '@/components/home/Home'
 
 export const metadata: Metadata = {
   title: { absolute: 'IFLoom | An interactive fiction engine for any shape of game' },
-  description: 'Write a linear novel, a management game or a life sim in TypeScript, on one small core with plugins for the rest.',
+  description: 'Interactive fiction in TypeScript: typed content, saves that survive updates, a checker that catches mistakes before players do, and a UI that looks like your game.',
 }
 
 export default function HomePage() {

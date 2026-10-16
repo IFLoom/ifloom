@@ -235,15 +235,6 @@
   color: var(--ink-2);
 }
 
-.caption {
-  max-width: 44rem;
-  margin: 22px auto 0;
-  font-size: 14px;
-  line-height: 1.6;
-  text-align: center;
-  color: var(--ink-3);
-}
-
 /* Install */
 .install {
   max-width: 880px;
@@ -335,11 +326,91 @@
 }
 
 .checked {
-  grid-column: span 5;
+  grid-column: span 7;
 }
 
 .ship {
+  grid-column: span 5;
+}
+
+.media {
+  grid-column: span 5;
+}
+
+.agents {
   grid-column: span 7;
+}
+
+.editor {
+  grid-column: span 12;
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.group .chips {
+  margin: 0;
+}
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tool-list li {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-top: 1px solid var(--hair-2);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.tool-list .code {
+  justify-self: start;
+  color: var(--ember-2);
+}
+
+.editor-ctas {
+  margin-top: 8px;
+}
+
+.from {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 14px;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.5s var(--ease);
+}
+
+.from:hover {
+  color: var(--ink);
 }
 
 .shape .h3 {
@@ -404,12 +475,6 @@
   color: var(--ink-3);
 }
 
-.chips li.on {
-  border-color: rgba(255, 166, 87, 0.4);
-  background: rgba(255, 138, 61, 0.1);
-  color: var(--ember-2);
-}
-
 .term {
   display: flex;
   flex-direction: column;
@@ -432,28 +497,6 @@
   white-space: pre;
 }
 
-.term .ok {
-  color: #ffd29e;
-}
-
-.ticks {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 13px;
-  color: var(--ink-2);
-}
-
-.ticks li {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.ticks svg,
 .file svg {
   flex: none;
   width: 16px;
@@ -571,13 +614,21 @@
   .plugins,
   .look,
   .checked,
-  .ship {
+  .ship,
+  .media,
+  .agents {
     grid-column: span 6;
     grid-row: auto;
   }
 
-  .shape {
+  .shape,
+  .editor {
     grid-column: span 12;
+  }
+
+  .tool-list li {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 
@@ -614,18 +665,18 @@
   .plugins,
   .look,
   .checked,
-  .ship {
+  .ship,
+  .media,
+  .agents,
+  .editor {
     grid-column: auto;
   }
+
 
   .card .core {
     padding: 22px;
   }
 
-
-  .ticks {
-    grid-template-columns: 1fr;
-  }
 
   .closing {
     padding-bottom: 96px;

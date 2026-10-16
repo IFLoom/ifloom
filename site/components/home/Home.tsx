@@ -15,12 +15,22 @@ const shapes = [
   { name: 'Small Town', shape: 'A life sim', detail: 'Calendar, places, cast and a phone' },
 ]
 
-const plugins = ['calendar', 'places', 'cast', 'quests', 'wardrobe', 'messages', 'feed', 'devices', 'phone', 'debug']
-const inThisGame = new Set(['calendar', 'places', 'cast'])
+const pluginGroups = [
+  { name: 'World', plugins: ['calendar', 'places', 'cast', 'shop', 'wardrobe'] },
+  { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'effects'] },
+  { name: 'Phone', plugins: ['messages', 'feed', 'devices'] },
+  { name: 'Tools', plugins: ['debug', 'generators'] },
+]
 
 const frameworks = ['React', 'Vue', 'Svelte', 'plain DOM']
 
-const guarantees = ['Content is typed', 'Randomness is seeded from the save', 'Saves replay exactly', 'Old saves load into new versions']
+const tools = [
+  { name: 'ifloom dev', what: 'Reloads the game as you write.' },
+  { name: 'ifloom check', what: 'Finds broken links, missing pictures and sounds, and misspelt ids.' },
+  { name: 'ifloom playtest', what: 'Plays a week on its own and writes down every screen.' },
+  { name: 'ifloom snapshot', what: 'Renders every scene and shows what changed since the last run.' },
+  { name: 'debug plugin', what: 'Jumps to any state while you test, without playing up to it.' },
+]
 
 const cx = (...names: (string | false | undefined)[]) => names.filter(Boolean).join(' ')
 
@@ -107,9 +117,6 @@ export function Home() {
 
           <div className="reveal late">
             <HeroDemo />
-            <p className={cx(s.p, s.caption)}>
-              The cake&apos;s rule is written once, in the data. The engine greys the choice out and writes the reason on it, and it refuses the same choice if anything sends it anyway.
-            </p>
           </div>
         </section>
 
@@ -131,9 +138,9 @@ export function Home() {
           <div className={s.bento}>
             <Card kind="shape">
               <span className={s.tag}>01</span>
-              <h3 className={s.h3}>Any shape of game</h3>
+              <h3 className={s.h3}>Write the game you want</h3>
               <p className={s.p}>
-                A linear novel, a management game played a week at a time, or a life sim with a calendar, places and characters. All three run on one small core that keeps the turn, scenes, stats, entities and saves.
+                A short novel, a business you run week by week, a town full of people with their own days. Scenes, stats and characters are yours to shape, and the engine doesn&apos;t assume a genre.
               </p>
               <ul className={s.shapes}>
                 {shapes.map((shape) => (
@@ -152,15 +159,19 @@ export function Home() {
             <Card kind="plugins">
               <span className={s.tag}>02</span>
               <h3 className={s.h3}>Plugins</h3>
-              <p className={s.p}>Each plugin is a package of its own. Plugins work together when a game has both, but never require each other, so a game takes only what it needs.</p>
-              <ul className={s.chips}>
-                {plugins.map((plugin) => (
-                  <li key={plugin} className={inThisGame.has(plugin) ? s.on : undefined}>
-                    {plugin}
-                  </li>
+              <p className={s.p}>Add what your game needs and leave out the rest. Plugins work together when a game has both, but never depend on each other.</p>
+              <div className={s.groups}>
+                {pluginGroups.map((group) => (
+                  <div key={group.name} className={s.group}>
+                    <span className={s['group-name']}>{group.name}</span>
+                    <ul className={s.chips}>
+                      {group.plugins.map((plugin) => (
+                        <li key={plugin}>{plugin}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
-              <p className={cx(s.p, s.foot)}>Lit up: what a life sim might take.</p>
+              </div>
             </Card>
 
             <Card kind="look">
@@ -189,23 +200,13 @@ export function Home() {
 
             <Card kind="checked">
               <span className={s.tag}>04</span>
-              <h3 className={s.h3}>Checked before anyone plays</h3>
-              <p className={s.p}>
-                Conditions and effects are plain objects, so the engine can read every one of them. <code className={s.code}>ifloom check</code> reports what a scene names that isn&apos;t there, including missing pictures and sounds.
-              </p>
-              <div className={s.term}>
-                <span>
-                  <b>$</b> npm run check
-                </span>
-                <span className={s.ok}>No problems.</span>
-              </div>
-              <ul className={s.ticks}>
-                {guarantees.map((guarantee) => (
-                  <li key={guarantee}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="m6 12.5 4 4 8-9" />
-                    </svg>
-                    {guarantee}
+              <h3 className={s.h3}>Tools that catch it before players do</h3>
+              <p className={s.p}>Your content is typed, so your editor autocompletes ids and flags a typo as you make it. The rest is a command away.</p>
+              <ul className={s['tool-list']}>
+                {tools.map((tool) => (
+                  <li key={tool.name}>
+                    <code className={s.code}>{tool.name}</code>
+                    <span>{tool.what}</span>
                   </li>
                 ))}
               </ul>
@@ -213,10 +214,12 @@ export function Home() {
 
             <Card kind="ship">
               <span className={s.tag}>05</span>
-              <h3 className={s.h3}>Ship one file, with sound and video</h3>
+              <h3 className={s.h3}>Ship one file</h3>
               <p className={s.p}>
-                <code className={s.code}>ifloom build</code> makes one <code className={s.code}>index.html</code> that opens from disk. Music, ambience and voice lines play on their own channels. Video sits inline in the prose, and pictures can carry hotspots. The docs come as{' '}
-                <code className={s.code}>llms.txt</code> for your coding agent.
+                <code className={s.code}>ifloom build</code> makes one <code className={s.code}>index.html</code> that opens straight from disk, with your pictures, sounds and videos beside it. Put it on itch.io, your own site, or a USB stick.
+              </p>
+              <p className={s.p}>
+                Add <code className={s.code}>--inline-assets</code> and the pictures go inside the page too, so a game without video or sound is that one file and nothing else.
               </p>
               <div className={s.files}>
                 <span className={s.file}>
@@ -226,12 +229,51 @@ export function Home() {
                   </svg>
                   dist/index.html
                 </span>
+              </div>
+            </Card>
+
+            <Card kind="media">
+              <span className={s.tag}>06</span>
+              <h3 className={s.h3}>Sound, video and pictures you can click</h3>
+              <p className={s.p}>Music, ambience and voice lines play on their own channels and crossfade between scenes. Videos sit inline in the prose, and pictures can have hotspots the player clicks.</p>
+              <div className={s.files}>
                 <span className={s.mark}>[[video:]]</span>
                 <span className={s.mark}>[[sound:]]</span>
                 <span className={s.mark}>hotspots</span>
+              </div>
+            </Card>
+
+            <Card kind="agents">
+              <span className={s.tag}>07</span>
+              <h3 className={s.h3}>Works with your coding agent</h3>
+              <p className={s.p}>
+                Every new game comes with an <code className={s.code}>AGENTS.md</code> that tells an agent where the docs are and how to check its work. The docs are published as <code className={s.code}>llms.txt</code>, and an MCP server lets an agent search them.
+              </p>
+              <div className={s.files}>
                 <a className={cx(s.mark, s.link)} href="/llms.txt">
                   llms.txt
                 </a>
+                <span className={s.mark}>ifloom.dev/api/mcp</span>
+                <Link className={cx(s.mark, s.link)} href="/docs/guide/agents">
+                  Using an agent
+                </Link>
+              </div>
+            </Card>
+
+            <Card kind="editor">
+              <span className={s.tag}>08</span>
+              <h3 className={s.h3}>Write in your browser</h3>
+              <p className={s.p}>
+                Not a programmer? The editor lets you write scenes, choices and stats in forms, play them as you go, and export them as TypeScript or JSON for a project. Nothing to install.
+              </p>
+              <div className={cx(s.ctas, s['editor-ctas'])}>
+                <Link className={s.cta} href="/editor">
+                  Open the editor
+                  <Arrow />
+                </Link>
+                <Link className={s.ghost} href="/docs/guide/editor">
+                  How it works
+                </Link>
               </div>
             </Card>
           </div>
@@ -243,7 +285,7 @@ export function Home() {
               <h2 id="closing-title" className={s.h2}>
                 Start with the guide
               </h2>
-              <p className={s.p}>It takes you from a new project to a short novel of your own, then on to a game with a calendar, places and characters.</p>
+              <p className={s.p}>Go from an empty project to a finished short story in an afternoon, then build from there.</p>
               <div className={cx(s.ctas, s.center)}>
                 <Link className={s.cta} href="/docs/guide/introduction">
                   Read the docs
@@ -253,6 +295,9 @@ export function Home() {
                   Installation
                 </Link>
               </div>
+              <Link className={s.from} href="/docs/guide/coming-from-twine">
+                Coming from SugarCube or Harlowe?
+              </Link>
             </div>
           </div>
         </section>
@@ -262,6 +307,7 @@ export function Home() {
         <span>IFLoom is open source and MIT licensed.</span>
         <nav aria-label="Footer">
           <Link href="/docs/guide/introduction">Docs</Link>
+          <Link href="/editor">Editor</Link>
           <Link href="/docs/changelog">Changelog</Link>
           <a href="https://github.com/IFLoom/ifloom" rel="noreferrer">
             GitHub

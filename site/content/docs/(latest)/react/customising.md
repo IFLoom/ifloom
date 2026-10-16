@@ -68,7 +68,7 @@ These are the design tokens:
 | `--width-page` | How wide the page grows with a side column. | `72rem` |
 | `--width-reading` | How wide the page grows without one. | `42rem` |
 | `--width-sidebar` | The side column's width on a wide screen. | `18rem` |
-| `--width-notice` | The width of the notices in the corner. | `20rem` |
+| `--width-notice` | The width of the notices in the bottom corner. | `20rem` |
 | `--gap-page` | The space between the side column and the stage, and between parts on the stage. | `1.5rem` |
 | `--gap-beats` | The space between the paragraphs and lines of a scene. | `0.75rem` |
 
@@ -249,7 +249,7 @@ body {
 
 ## 5. Rearrange the parts
 
-The page has three regions: the side column, the stage and an overlay that floats over the page. `layout` says which parts go in each, in order:
+The page has three regions: the side column, the stage and an overlay that floats at the bottom of the window and sits after the content at the end of the page. `layout` says which parts go in each, in order:
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -264,7 +264,7 @@ mountGame(game, {
 })
 ```
 
-This puts the notices at the top of the stage instead of in the corner, and leaves the inventory and the wardrobe out. The parts and the default lists are on [The React UI](/docs/react#layouts). Your own components can go in any list too.
+This puts the notices at the top of the stage instead of in the bottom corner, and leaves the inventory and the wardrobe out. The parts and the default lists are on [The React UI](/docs/react#layouts). Your own components can go in any list too.
 
 **Gotcha.** A list you leave out keeps its default, except `sidebar`, which becomes no side column. The default overlay is `['notices']`, so moving `'notices'` to the stage without `overlay: []` draws them twice.
 
@@ -442,7 +442,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `page` | The whole page, drawn by [`Frame`](/docs/react/components#frame). Carries `data-has-sidebar` when there's a side column. |
 | `sidebar` | The side column, an `<aside>`. |
 | `stage` | The `<main>` that holds the stage's parts. |
-| `overlay` | The box that floats over the page, holding the notices by default. |
+| `overlay` | The box after the stage that sticks to the bottom of the window, holding the notices by default. It's hidden while it's empty. |
 | `title` | The game's title. |
 | `clock` | Where the game is in time, under the title. |
 
@@ -525,7 +525,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `notices` | The list of notices. |
+| `notices` | The list of notices. Carries `data-collapsed` while a phone shows only the newest. |
+| `notices-more` | The button under the notices on a phone that shows the rest, or hides them again. Carries `aria-expanded`. |
 | `notice` | One notice. Carries `data-notice`. |
 | `notice-image` | Its picture. |
 | `notice-title` | Its title. |

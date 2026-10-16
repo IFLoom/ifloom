@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
-import { act, cleanup, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState, type Game, type SceneBeat } from '@ifloom/engine'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { SCHEMA, createRunner, loadGame, notify, startingState, type Game, type SceneBeat } from '@ifloom/engine'
 import { GameShell, READING_LAYOUT, mountGame, useGame, type Components, type FrameProps } from '../src/index.ts'
 
 afterEach(() => {
@@ -72,6 +72,32 @@ describe('replacing components', () => {
     const runner = show()
     act(() => void runner.apply({ type: 'choose', id: 'shelf' }))
     expect(document.querySelector('[data-part="overlay"] [data-part="notice"]')?.textContent).toContain('Hello')
+  })
+
+  it('puts the overlay after the stage, sticky at the bottom rather than fixed, and empty with no notices', () => {
+    show()
+    const overlay = document.querySelector('[data-part="overlay"]')!
+    expect(overlay.previousElementSibling?.getAttribute('data-part')).toBe('stage')
+    expect(overlay.className).toMatch(/\bsticky\b/)
+    expect(overlay.className).not.toMatch(/\bfixed\b/)
+    expect(overlay.childElementCount).toBe(0)
+  })
+
+  it('collapses the notices to the newest on a phone, with a button for the rest', () => {
+    const game = letter()
+    let state = startingState(game)
+    state = notify(state, { title: 'A letter came' })
+    state = notify(state, { title: 'The café is open late' })
+    render(<GameShell runner={createRunner(game, state)} layout={READING_LAYOUT} />)
+    const list = document.querySelector('[data-part="notices"]')!
+    expect(list.hasAttribute('data-collapsed')).toBe(true)
+    const more = document.querySelector('[data-part="notices-more"]') as HTMLButtonElement
+    expect(more.textContent).toBe('+1 more')
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+    act(() => void fireEvent.click(more))
+    expect(list.hasAttribute('data-collapsed')).toBe(false)
+    expect(more.textContent).toBe('Show fewer')
+    expect(more.getAttribute('aria-expanded')).toBe('true')
   })
 })
 

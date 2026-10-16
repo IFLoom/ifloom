@@ -418,7 +418,7 @@ type FrameProps = {
 
 The page's skeleton: where the side column, the stage and the overlay go. [`GameShell`](#gameshell) draws each region from the layout and hands them to `Frame` already drawn. `sidebar` is `null` when the layout has no side column, and `overlay` is `null` when the overlay is empty. `className` is `GameShell`'s.
 
-The built-in frame is a grid: the side column on the left of the stage on wide screens, stacked on narrow ones, with the overlay fixed in the bottom-right corner. Replace it in `components` for a top bar, a column on the right, a full-screen stage or any other shape of page. See [Replace the frame](/docs/react/customising#7-replace-the-frame).
+The built-in frame is a grid: the side column on the left of the stage on wide screens, stacked on narrow ones, with the overlay last, across the page, sticking to the bottom right of the window. Replace it in `components` for a top bar, a column on the right, a full-screen stage or any other shape of page. See [Replace the frame](/docs/react/customising#7-replace-the-frame).
 
 Parts: `page` (with `data-has-sidebar` when there's a side column), `stage` and `overlay`.
 
@@ -1296,7 +1296,9 @@ const settings = useProfile<Record<string, unknown>>('settings')
 function Notices(props: { className?: string; limit?: number }): JSX.Element | null
 ```
 
-The first `limit` (default 3) of the view's unseen [notices](/docs/reference/notices), each drawn as a [`Notice`](#notice). The list has `role="status"`, so a screen reader announces a new one. It's the `'notices'` part, which the default layouts put in the overlay, fixed in the bottom-right corner. On its own it sits wherever you put it.
+The first `limit` (default 3) of the view's unseen [notices](/docs/reference/notices), each drawn as a [`Notice`](#notice). The list has `role="status"`, so a screen reader announces a new one. It's the `'notices'` part, which the default layouts put in the overlay, at the bottom right of the window. On its own it sits wherever you put it.
+
+On a narrow screen (under 48rem) it shows only the newest notice, with a `notices-more` button under it, `+1 more` (`ui.noticesMore`), that shows the rest. Pressed again, `Show fewer` (`ui.noticesFewer`) hides them. Wider screens show them all and no button.
 
 ```tsx
 import { Notices } from '@ifloom/react'

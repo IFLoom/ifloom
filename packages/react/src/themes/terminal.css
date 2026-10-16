@@ -112,15 +112,12 @@ body {
  * the scene title, the notice strip or a minigame. On wide screens it sticks
  * to the top as the page scrolls. With nothing unseen it takes no room.
  */
-[data-part="page"]:has(> [data-part="overlay"]) {
-  align-content: start;
-}
-
 [data-part="overlay"] {
   position: static;
   inset: auto;
   order: -1;
   grid-column: 1 / -1;
+  justify-self: stretch;
   width: auto;
   max-width: none;
   background: var(--background);

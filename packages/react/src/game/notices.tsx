@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
@@ -33,17 +34,31 @@ export const Notice = overridable('Notice', NoticeImpl)
 
 function NoticesImpl({ className, limit = 3 }: { className?: string; limit?: number }) {
   const { view } = useGame()
-  const list = usePart('notices', 'flex flex-col gap-2', className)
+  const words = useWords()
+  const [expanded, setExpanded] = useState(false)
+  // On a phone the stack collapses to the newest notice, and a button shows the rest.
+  const list = usePart('notices', 'flex flex-col gap-2 max-md:[&[data-collapsed]>[data-notice]~[data-notice]]:hidden', className)
+  const more = usePart('notices-more', `${buttonVariants({ variant: 'outline', size: 'sm' })} self-end md:hidden`)
   const unseen = view.notices.unseen.slice(0, limit)
   if (!unseen.length) return null
+  const hidden = unseen.length - 1
   return (
-    <div {...list} role="status">
+    <div {...list} role="status" data-collapsed={hidden && !expanded ? '' : undefined}>
       {unseen.map((notice) => (
         <Notice key={notice.id} notice={notice} />
       ))}
+      {hidden ? (
+        <button type="button" {...more} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+          {expanded ? words('noticesFewer') : words('noticesMore', { n: hidden })}
+        </button>
+      ) : null}
     </div>
   )
 }
 
-/** Unseen notices, newest first, up to `limit`. The `'notices'` part, in the layout's overlay by default. */
+/**
+ * Unseen notices, newest first, up to `limit`. The `'notices'` part, in the
+ * layout's overlay by default. On a narrow screen only the newest shows, with
+ * a `notices-more` button ("+2 more") that shows the rest.
+ */
 export const Notices = overridable('Notices', NoticesImpl)

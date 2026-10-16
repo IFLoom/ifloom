@@ -1,14 +1,11 @@
-import Link from 'next/link'
+import type { Metadata } from 'next'
+import { Home } from '@/components/home/Home'
+
+export const metadata: Metadata = {
+  title: { absolute: 'IFLoom | An interactive fiction engine for any shape of game' },
+  description: 'Write a linear novel, a management game or a life sim in TypeScript, on one small core with plugins for the rest.',
+}
 
 export default function HomePage() {
-  return (
-    <main className="flex flex-1 flex-col justify-center text-center">
-      <h1 className="mb-4 text-2xl font-bold">IFLoom</h1>
-      <p>
-        <Link href="/docs/guide/introduction" className="font-medium underline">
-          Read the docs
-        </Link>
-      </p>
-    </main>
-  )
+  return <Home />
 }

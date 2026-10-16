@@ -410,45 +410,6 @@
   color: var(--ember-2);
 }
 
-.presets {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 4px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.presets li {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.swatch {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  height: 64px;
-  padding: 8px 10px;
-  font-size: 18px;
-  line-height: 1;
-}
-
-.swatch i {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  left: 10px;
-  height: 10px;
-}
-
-.preset-name {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-
 .term {
   display: flex;
   flex-direction: column;
@@ -465,6 +426,10 @@
 .term b {
   font-weight: 400;
   color: var(--ember);
+}
+
+.snippet span {
+  white-space: pre;
 }
 
 .term .ok {
@@ -657,9 +622,6 @@
     padding: 22px;
   }
 
-  .presets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   .ticks {
     grid-template-columns: 1fr;

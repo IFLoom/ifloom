@@ -18,12 +18,7 @@ const shapes = [
 const plugins = ['calendar', 'places', 'cast', 'quests', 'wardrobe', 'messages', 'feed', 'devices', 'phone', 'debug']
 const inThisGame = new Set(['calendar', 'places', 'cast'])
 
-const presets = [
-  { name: 'paper', bg: 'oklch(0.97 0.012 85)', fg: 'oklch(0.24 0.02 60)', accent: 'oklch(0.42 0.09 30)', radius: '0', font: 'Georgia, serif' },
-  { name: 'terminal', bg: 'oklch(0.16 0.01 150)', fg: 'oklch(0.86 0.13 150)', accent: 'oklch(0.86 0.13 150)', radius: '0', font: 'var(--mono)' },
-  { name: 'studio', bg: 'oklch(0.965 0.005 260)', fg: 'oklch(0.22 0.02 265)', accent: 'oklch(0.55 0.2 275)', radius: '9px', font: 'var(--body)' },
-  { name: 'storybook', bg: 'oklch(0.95 0.035 75)', fg: 'oklch(0.3 0.05 45)', accent: 'oklch(0.62 0.16 35)', radius: '14px', font: 'ui-rounded, var(--body)' },
-]
+const frameworks = ['React', 'Vue', 'Svelte', 'plain DOM']
 
 const guarantees = ['Content is typed', 'Randomness is seeded from the save', 'Saves replay exactly', 'Old saves load into new versions']
 
@@ -171,18 +166,25 @@ export function Home() {
             <Card kind="look">
               <span className={s.tag}>03</span>
               <h3 className={s.h3}>Your look, your framework</h3>
-              <p className={s.p}>The React UI comes with four theme presets. You can change the classes on any part or replace any component. Or skip React and draw the view with Vue, Svelte or plain DOM.</p>
-              <ul className={s.presets}>
-                {presets.map((preset) => (
-                  <li key={preset.name}>
-                    <span className={s.swatch} style={{ background: preset.bg, color: preset.fg, borderRadius: preset.radius, fontFamily: preset.font }}>
-                      Aa
-                      <i style={{ background: preset.accent, borderRadius: preset.radius }} />
-                    </span>
-                    <span className={s['preset-name']}>{preset.name}</span>
-                  </li>
+              <p className={s.p}>
+                The engine gives your UI a view: what to show and what each button does. Draw it with React, Vue, Svelte or plain DOM. With the React UI, restyle any part with plain CSS, swap its classes, start unstyled, or replace any component, down to the page itself. Nothing gives away
+                which engine the game runs on.
+              </p>
+              <div className={cx(s.term, s.snippet)} aria-label="Restyling a part with plain CSS">
+                <span>
+                  <b>[data-part=&quot;choice&quot;]</b> {'{'}
+                </span>
+                <span>{'  '}border-radius: 0;</span>
+                <span>{'  '}font-family: &quot;Your Font&quot;;</span>
+                <span>{'}'}</span>
+              </div>
+              <div className={s.files}>
+                {frameworks.map((name) => (
+                  <span key={name} className={s.mark}>
+                    {name}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </Card>
 
             <Card kind="checked">

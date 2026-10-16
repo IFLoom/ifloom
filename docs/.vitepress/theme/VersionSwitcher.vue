@@ -1,8 +1,6 @@
 <script setup lang="ts">
-// The version switcher in the nav. vitepress-versioning-plugin passes in the
-// versions it found in docs/versions/. Its own switcher component checks the
-// path without the site's base (/ifloom/), so it never knows which version is
-// open; this one strips the base first and uses the default theme's own menus.
+// The version switcher in the nav. The config passes in the snapshots it found
+// in docs/versions/ and the name of the docs at the root.
 import { computed } from 'vue'
 import { useData, useRoute } from 'vitepress'
 import VPFlyout from 'vitepress/dist/client/theme-default/components/VPFlyout.vue'
@@ -10,7 +8,8 @@ import VPMenuLink from 'vitepress/dist/client/theme-default/components/VPMenuLin
 import VPNavScreenMenuGroup from 'vitepress/dist/client/theme-default/components/VPNavScreenMenuGroup.vue'
 
 const props = defineProps<{
-  versioningPlugin: { versions: string[]; latestVersion: string }
+  versions: string[]
+  latest: string
   screenMenu?: boolean
 }>()
 
@@ -18,15 +17,16 @@ const { site } = useData()
 const route = useRoute()
 
 const current = computed(() => {
+  // The route includes the base (/ifloom/), so strip it first.
   const path = route.path.slice(site.value.base.length - 1)
-  const found = props.versioningPlugin.versions.find((v) => path.startsWith(`/${v}/`))
-  return found ?? props.versioningPlugin.latestVersion
+  const found = props.versions.find((v) => path.startsWith(`/${v}/`))
+  return found ?? props.latest
 })
 
 // Newest release first, after the latest docs.
 const items = computed(() => [
-  { text: props.versioningPlugin.latestVersion, link: '/guide/introduction' },
-  ...[...props.versioningPlugin.versions]
+  { text: props.latest, link: '/guide/introduction' },
+  ...[...props.versions]
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
     .map((v) => ({ text: v, link: `/${v}/guide/introduction` })),
 ])

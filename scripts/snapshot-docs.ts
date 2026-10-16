@@ -1,6 +1,6 @@
 // Copies the docs as they are now into docs/versions/<version>/, for a release.
-// vitepress-versioning-plugin then serves them at /ifloom/<version>/ and lists
-// the version in the switcher.
+// The docs config then serves them at /ifloom/<version>/ and lists the version
+// in the switcher.
 //
 //   node scripts/snapshot-docs.ts 0.1.0
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -44,7 +44,7 @@ for (const file of walk(target)) {
   writeFileSync(file, moved)
 }
 
-// The plugin reads each version's sidebar from this file and adds the prefix.
+// The config reads each version's sidebar from this file and adds the prefix.
 const sidebars = join(docs, '.vitepress', 'sidebars', 'versioned')
 mkdirSync(sidebars, { recursive: true })
 writeFileSync(join(sidebars, `${version}.json`), JSON.stringify(sidebar, null, 2) + '\n')

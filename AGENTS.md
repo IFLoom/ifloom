@@ -53,10 +53,10 @@ Every user-visible change adds a line to `CHANGELOG.md`, under `[Unreleased]` in
 
 Anything the engine exports is documented in `docs/` (VitePress, published at https://ifloom.github.io/ifloom/). A change to the exports ships with its docs: load the `ifloom-docs` skill.
 
-The docs are versioned with `vitepress-versioning-plugin`. The pages under `docs/` are the latest docs, which the version switcher calls "Latest (pre-release)". A release keeps a copy of the docs as they were:
+The docs are versioned. The pages under `docs/` are the latest docs, which the version switcher in the nav calls "Latest (pre-release)". Each folder in `docs/versions/` is a released version, served at `/ifloom/<version>/` with its own sidebar and listed in the switcher (`docs/.vitepress/config.ts` finds them). A release keeps a copy of the docs as they were:
 
 1. Run `node scripts/snapshot-docs.ts <version>` (for example `0.1.0`). It copies the docs into `docs/versions/<version>/`, points their links at the copy, and writes the sidebar to `docs/.vitepress/sidebars/versioned/<version>.json`.
-2. After the first release, change `latestVersion` in `docs/.vitepress/config.ts` from `'Latest (pre-release)'` to `'Latest'`.
+2. After the first release, change `latest` in `docs/.vitepress/config.ts` from `'Latest (pre-release)'` to `'Latest'`.
 3. Run `npm run docs:build` and commit the snapshot with the release.
 
 Don't edit a snapshot afterwards, except to fix something that was wrong in that release's docs. `llms.txt` covers the latest docs only.

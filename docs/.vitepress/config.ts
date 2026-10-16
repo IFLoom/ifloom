@@ -1,12 +1,37 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { defineConfig, type DefaultTheme } from 'vitepress'
 import llmstxt from 'vitepress-plugin-llms'
-import defineVersionedConfig from 'vitepress-versioning-plugin'
 import { sidebar } from './sidebar'
 
-// Released docs are snapshots in docs/versions/<version>/ (see
-// scripts/snapshot-docs.ts). The plugin serves each at /<version>/ with its own
-// sidebar and fills the version switcher in the nav.
-export default defineVersionedConfig({
+// Released docs are snapshots in docs/versions/<version>/, each made by
+// scripts/snapshot-docs.ts with its sidebar in sidebars/versioned/<version>.json.
+// A snapshot is served at /<version>/ and listed in the version switcher.
+const docs = fileURLToPath(new URL('..', import.meta.url))
+const versions = existsSync(`${docs}/versions`)
+  ? readdirSync(`${docs}/versions`, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+  : []
+
+// What the switcher calls the docs at the root.
+const latest = 'Latest (pre-release)'
+
+function prefixed(items: DefaultTheme.SidebarItem[], version: string): DefaultTheme.SidebarItem[] {
+  return items.map((item) => ({
+    ...item,
+    ...(item.link?.startsWith('/') ? { link: `/${version}${item.link}` } : {}),
+    ...(item.items ? { items: prefixed(item.items, version) } : {}),
+  }))
+}
+
+const versionSidebars: DefaultTheme.SidebarMulti = {}
+for (const version of versions) {
+  const saved = JSON.parse(readFileSync(`${docs}/.vitepress/sidebars/versioned/${version}.json`, 'utf8')) as DefaultTheme.SidebarMulti
+  for (const [path, items] of Object.entries(saved)) {
+    versionSidebars[`/${version}${path}`] = prefixed(items as DefaultTheme.SidebarItem[], version)
+  }
+}
+
+export default defineConfig({
   title: 'IFLoom',
   description: 'An interactive fiction engine for TypeScript: linear novels, management games and life sims on one core.',
   base: '/ifloom/',
@@ -16,16 +41,9 @@ export default defineVersionedConfig({
   // llms.txt describes the latest docs only, not the snapshots.
   vite: { plugins: [llmstxt({ ignoreFiles: ['versions/**'] })] },
   lastUpdated: true,
-  // One locale, declared so the versioning plugin builds each snapshot's
-  // sidebar: it only does that per locale.
-  locales: { root: { label: 'English', lang: 'en-GB' } },
-  versioning: {
-    // The name the switcher gives the docs at the root. Set it to the
-    // release's version when you snapshot one.
-    latestVersion: 'Latest (pre-release)',
-  },
+  // docs/versions/0.1.0/guide/x.md is served at /0.1.0/guide/x.
+  rewrites: { 'versions/:rest*': ':rest*' },
   themeConfig: {
-    versionSwitcher: false,
     nav: [
       { text: 'Guide', link: '/guide/introduction' },
       { text: 'Reference', link: '/reference/game' },
@@ -33,11 +51,11 @@ export default defineVersionedConfig({
       { text: 'React UI', link: '/react/' },
       { text: 'CLI', link: '/cli/' },
       { text: 'Changelog', link: '/changelog' },
-      { component: 'VersionSwitcher' },
+      { component: 'VersionSwitcher', props: { versions, latest } },
     ],
-    sidebar,
+    sidebar: { ...sidebar, ...versionSidebars },
     search: { provider: 'local' },
     socialLinks: [{ icon: 'github', link: 'https://github.com/IFLoom/ifloom' }],
     editLink: { pattern: 'https://github.com/IFLoom/ifloom/edit/main/docs/:path' },
   },
-}, fileURLToPath(new URL('.', import.meta.url)))
+})

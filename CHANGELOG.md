@@ -46,6 +46,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `@ifloom/plugin-generators`: make new entities from templates, with each field picked from a named pool of values (with optional weights), drawn from a number range, or fixed. Draws are seeded by the save, so a replay makes the same ones.
 - A guide, "Building UI for plugins", that builds an achievements page, a shop counter and a job board in the React UI from the plugins' views.
 - These docs, with search, a version picker, `llms.txt` and `llms-full.txt` for AI agents, every page as Markdown, and an `AGENTS.md` in every new game.
+- Every reference and plugin page in the docs ends with "See it in an example": the file and the part of Small Town, The Letter or The Corner Café that uses it, with a link to the source.
+- The Corner Café example's reputation has levels, with a notice when word gets round.
 
 ### Changed
 

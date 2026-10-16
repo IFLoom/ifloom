@@ -225,3 +225,8 @@ itemById(game, 'sandwich')?.kind   // 'stuff'
 ## Checking a game
 
 [`checkGame`](/docs/reference/checks#checkgame) checks that everything the game names resolves, and lists the files it names. Run it from a test so a broken id fails at commit time instead of mid-game. [`loadGame`](/docs/reference/loader#loadgame) runs it for you. [Checking content](/docs/reference/checks) has the whole list.
+
+## See it in an example
+
+- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `introScene`, `startPhase`, `custom`, `plugins`, `actions`, `strings` and `rules` to `loadGame`. The `items` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are `ItemDef`s, and the sandwich and flapjack have a `use`. Its `storylines` are Ava's and Sam's.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) sets `version`, `migrations`, `finished` and `carryOver`.

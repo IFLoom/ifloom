@@ -162,3 +162,7 @@ The engine draws with it wherever content has weights:
 **Gotchas.**
 - The order of `items` matters. The same parts and the same weights in another order can draw a different item.
 - Like every draw here, the same parts give the same item. Put a count in the parts if you draw more than once in a turn, as the engine does for storylets and variants.
+
+## See it in an example
+
+Small Town: `postLatest` in [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) rolls a post's likes with `roll(10, state.seed, state.turn, 'likes')`.

@@ -376,3 +376,9 @@ You write a [plugin](/docs/reference/plugins)'s effect the same way, with the pl
 - Custom effects that return custom effects are worked out up to 10 deep, all against the same state. One that names itself, or a loop of them, adds nothing past that.
 - A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.
 - To flatten a list yourself, in a custom runtime for example, use [`buildEffects`](/docs/reference/custom#buildeffects).
+
+## See it in an example
+
+- The Corner Café: the `endWeek` activity in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) runs two custom effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ kind: 'turn' }`. The `hiring` scene's choices `create` new staff.
+- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ kind: 'flag', key: 'fibs', add: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
+- Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), the `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the `arrows` activity starts a minigame, and Ava's choices raise her friendship with `{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }`.

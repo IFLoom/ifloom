@@ -179,3 +179,7 @@ The [content checker](/docs/reference/checks) reports:
 A storylet's `when` is checked like [any other condition](/docs/reference/checks#in-a-condition), for unknown stats, scenes and so on.
 
 The effect is checked wherever it is, in item uses and activities too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
+
+## See it in an example
+
+Small Town: the `sit` activity and the `cafe.*` scenes in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.

@@ -184,3 +184,8 @@ mod:night-market · locations yard · no prose for "place.yard"
 mod:new-menu · entity dish:pie · no dish stat named "coins"
 town · stat service · derive goes round in a cycle: service → mood → service
 ```
+
+## See it in an example
+
+- All three examples build their game with `loadGame` over a pack with `schema: SCHEMA`. Small Town's [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) loads its `town` pack with the player's mods after it, `loadGame([town, ...mods], { ... })`.
+- [`examples/showcase/mods/fog-season.json`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/mods/fog-season.json) is a pack that adds to the high street's `street.weather` variants and replaces the park's prose, which shows how a later pack merges.

@@ -311,3 +311,8 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 - **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.
+
+## See it in an example
+
+- The Corner Café: [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) declares the kinds `staff` and `dish`, starts with Ana, cheese on toast and soup as entities, and adds up a stat over a kind with `entitiesOf` and `entityOf` in its `total` helper. The `improveSoup` activity names one entity as `'dish:soup'`.
+- Small Town: the park's visitors in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are entities of the kind `visitor`, made by the generators plugin and cleared each day with `each` and `remove`.

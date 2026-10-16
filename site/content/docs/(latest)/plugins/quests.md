@@ -394,3 +394,7 @@ A quest condition, effect or command that names a quest the game doesn't have gi
 - **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/docs/reference/plugins#hooks), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
 - **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
 - **Finishing the tracked quest unpins it.**
+
+## See it in an example
+
+Small Town: `data.quests` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `settle`, three stages to find your feet, and `friend`, which starts with `questActive('settle')` and is tied to Ava's storyline.

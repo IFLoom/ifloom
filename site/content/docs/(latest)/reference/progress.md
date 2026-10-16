@@ -182,3 +182,7 @@ turnsSince(state, 'ava.name') // 4: four turns since you learned her name
 ```
 
 In data, the same tests are the `{ seen }` and `{ since }` [conditions](/docs/reference/conditions). Gate the next stage on `{ seen: 'ava.name' }`, and wait with `{ since: 'ava.name', gte: 3 }`.
+
+## See it in an example
+
+Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), Ava's `chat` choice pays once a turn with `once: { per: 'turn', reason: 'She has a queue.' }`, and the `friend` quest's `river` stage waits with `{ since: 'ava.hi', gte: 3 }`. No example calls the functions on this page, or keeps counters or ladders.

@@ -300,3 +300,8 @@ The shape of `GameState` this engine writes. [`loadState`](/docs/reference/saves
 | 9 | Added [`settings`](#settings). |
 | 10 | Added [`audio`](#audio). |
 | 11 | Added [`media`](#media). |
+
+## See it in an example
+
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { flags: ['readBefore'] }` for New Game+, and the first chapter has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
+- Small Town: `probes` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds states by hand, with `flags`, `entities`, `stats` and `plugins` filled in.

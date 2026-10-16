@@ -572,3 +572,7 @@ Who's speaking in a scene, at `view.scene.speaker`. The id is the render's `spea
 | `portrait` | Their picture. `null` for none, and the UI draws no face. The cast always gives one: the character's `portrait`, or `art/character/<id>.jpg`. |
 
 Exported from `@ifloom/engine` alongside [`Plugin`](/docs/reference/plugins#plugin), which returns it from `speaker`.
+
+## See it in an example
+
+The tests read the view: [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) checks `view(state, game).scene` and `inputs`, and [`examples/cafe/tests/cafe.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/tests/cafe.test.ts) checks `stats`, `statsById`, `entities` and `actions`.

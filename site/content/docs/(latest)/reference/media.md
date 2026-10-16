@@ -305,3 +305,7 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/docs/ref
 ## Checks
 
 The [content checker](/docs/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a stage's hotspots and layers. The full list is under [Media](/docs/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/docs/reference/checks#fileref).
+
+## See it in an example
+
+Small Town: the café's `stage` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `talk('ava')`. No example uses picture pools or video yet.

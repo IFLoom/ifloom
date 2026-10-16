@@ -318,3 +318,7 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 - **A day is the calendar's, not a turn.** With the calendar's turn set to a period, several turns can pass in a day and still be one shift.
 - **Missed shifts count in all, not in a row.** Working a shift doesn't clear them. Use `fire.when` with a stat of your own for anything subtler, such as a performance stat that shifts raise and missed days lower.
 - **Promotion is checked after every command,** not only after a shift, so a rank whose `when` reads a stat can come from anywhere the stat goes up.
+
+## See it in an example
+
+Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. The café's buttons use `applyFor('weekend')` and `work('weekend')`.

@@ -438,3 +438,8 @@ type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
 ### Checks
 
 The [content checker](/docs/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.
+
+## See it in an example
+
+- Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) keeps saves with `saves(game, driver)` on `localStorageDriver(window.localStorage)`.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) is at `version: 2` and has a migration that renames the `lies` variable to `fibs`. The test `reads a save from version 1` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) imports an old save through `saves(game, memoryDriver())`.

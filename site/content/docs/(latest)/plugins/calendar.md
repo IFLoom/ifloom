@@ -498,3 +498,7 @@ base · options weekend · no day 9 in a week of 7
 - **`calendar/set` and `write` end no turn.** They put the clock somewhere, and `state.turn` stays where it was.
 - **The weekday counts from day 0, but a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs from Thursday to Wednesday.
 - **A long pass shows its turn rules the start of each day it crosses.** Only the first `rules.turn` of a pass that ends several turns sees the clock where the pass began. Each later one sees the clock at the start of the unit the turn before moved it to.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) makes the clock with `calendar({ start: { day: 0, period: 'night' } })` and lists it first. [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) passes time with `pass`, goes to bed with `sleep()`, and keeps hours with `period`, `weekday` and `day`.

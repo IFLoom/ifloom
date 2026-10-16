@@ -210,3 +210,7 @@ The game decides what to do about problems. Loading never throws, so a mod with 
 - **Turning a mod off can break the saves that used it**, as any [missing pack](/docs/reference/saves#loadedsave) does. The save loads, but a scene, item or storyline that only the mod had isn't there, and the game may not play as it did. Warn the player before loading such a save, or turn the mod back on.
 - **Mods load in name order.** When two mods replace the same prose key or the same scene, the one whose `name` sorts last wins. Their ids don't matter, and neither does the order they were added in.
 - **Adding a mod again turns it on.** `add` with a file whose `id` is already there replaces the kept mod with the new one, switched on, whatever it was before.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) keeps the player's mods with `mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))` and loads their packs before making the game. [`examples/showcase/mods/fog-season.json`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/mods/fog-season.json) is a mod file to try it with.

@@ -1159,3 +1159,7 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, put a requirement on the activity, or have a [guard](#guards) refuse any command that would apply the effect.
 - **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/docs/reference/rules#turn) take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.
+
+## See it in an example
+
+None of the examples writes a plugin of its own. Small Town's [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) uses the first-party ones, and its `plugins` list shows the order they need.

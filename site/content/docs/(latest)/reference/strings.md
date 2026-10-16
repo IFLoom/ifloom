@@ -266,3 +266,7 @@ say(game, 'kites/noWind', { kite: 'the red one' }) // 'There is no wind for the 
 A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game or a pack. A plugin can also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and a game's override covers both.
 
 **Gotcha.** The plugin's defaults are only found when the game has the plugin. Without it, `say(game, 'kites/noWind')` returns `'kites/noWind'`.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) rewords one string, `strings: { 'ui.quests': 'To do' }`.

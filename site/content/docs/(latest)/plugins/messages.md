@@ -533,3 +533,7 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<message id>`, the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
 - **The sender is matched by id.** A `from` that's a [cast](/docs/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
 - **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.
+
+## See it in an example
+
+Small Town: `ava.text` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) arrives the day after you meet Ava, with two replies. Their labels are in [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts).

@@ -64,3 +64,7 @@ function emptyStoryline(): StorylineState
 ```
 
 A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/docs/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/docs/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares a storyline each for Ava and Sam, names it on each character, and ties the `friend` quest to Ava's. No example uses storyline variables or closes a storyline yet.

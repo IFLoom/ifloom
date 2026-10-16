@@ -301,3 +301,8 @@ effectsOf(state, game, { type: 'activity', id: 'work' })
 **Gotchas.**
 - `scene` gives none. Look at the command itself for that. The places plugin's `places/go` and the cast's `cast/talk` give none either, though one moves the player and the other opens a scene. A plugin command such as the calendar's [`sleep`](/docs/plugins/calendar#commands) gives what its own `effectsOf` says.
 - It's only the list the command applies directly. What a plugin's effect applies in turn, through its context's [`apply`](/docs/reference/plugins#applying-effects), isn't in it.
+
+## See it in an example
+
+- Small Town: the café's `coffee` activity in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) costs 3 coins and has two requirements, the café and no coffee yet today, each with its own reason. The "Wait a while" button is an `ActionDef` in the game's `actions` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts).
+- The Corner Café: its four buttons are the game's `actions` in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts), and its `staffLunch` activity costs 25 coins and requires someone to feed.

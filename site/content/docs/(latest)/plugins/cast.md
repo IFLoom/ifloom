@@ -601,3 +601,7 @@ The places in `cast/at` aren't checked. A `portrait` the game gives is listed in
 - **The first entry wins.** A schedule entry or talk option with no `when` always holds, so nothing below it is reached.
 - **Met is by scene unless you say otherwise.** Without `met`, someone whose talk scene the player has never opened isn't met, even if they've spoken in another scene as its `speaker`. Give them a `met` condition if they should be.
 - **A call needs somewhere to go.** A character with a `call` but no `call.scene` and no `talk` is reported when the game loads.
+
+## See it in an example
+
+Small Town: Ava and Sam are the `characters` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), with schedules, `talk` options and, for Ava, a `call`. The café's body and stage use `here('ava')`.

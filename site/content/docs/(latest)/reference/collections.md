@@ -166,3 +166,7 @@ The declaration with that id, or `undefined`.
 - **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The [content checker](/docs/reference/checks) reports `unknown collection "…"` wherever the effect is.
 - **`max` drops the oldest without telling anyone.** That includes entries a condition may be waiting for. Only ask for an entry by id in a collection without a `max`, or one large enough that it can't have rolled off.
 - **`discard` takes one entry by id.** There's no effect that empties a collection.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares the `notes` collection, and the `welcome` trigger's `collect` effect files the note there. The camera's `photo-ava` and `photo-sam` activities collect into `gallery`, which the phone declares and [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes on as `kit.collections`. The `postLatest` effect in [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) reads the newest photo from it.

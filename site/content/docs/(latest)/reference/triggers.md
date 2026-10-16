@@ -106,3 +106,8 @@ const next = fireTriggers(state, game, (state, effects) => applyEffects(state, g
 - **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
 - **A scene effect cuts in.** A trigger with `{ kind: 'scene', id }` puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
 - **`text` in a `notify` or `collect` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.
+
+## See it in an example
+
+- Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has three triggers. `visitors` runs `once: 'turn'`, `welcome` runs once, and `rent` charges 30 coins on Sundays.
+- The Corner Café: [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) watches the till and the staff with `overdrawn`, `empty` and `review`.

@@ -345,3 +345,7 @@ base · start coat · the player does not start with "raincoat"
 - **Wearing doesn't check where the player is or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks an item id as on, not a count. A player with two scarves wears one, and selling one leaves it on.
 - **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wearing(item)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `slotFilled('hat')` and `wearing('cap', 'hat')` still hold, and `takeOff('hat')` isn't refused and empties it. Put the slot back and the item is on again everywhere.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe` with a coat and a neck slot and the raincoat on at the start. The clothes are in `data.wardrobe` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), and the café's body reads `wearing('raincoat')`.

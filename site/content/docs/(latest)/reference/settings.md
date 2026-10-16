@@ -124,3 +124,7 @@ The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/l
 - a `{ setting }` condition that names an unknown setting, a ui setting, or an `is` value the setting can't take
 
 **Gotcha.** Conditions can only read play settings. If the story needs to branch on something, make it a play setting, even if the player thinks of it as a preference.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares `hints`, a play setting the high street reads with `{ setting: 'hints' }`, and `textSize`, a ui setting that [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) copies onto the page.

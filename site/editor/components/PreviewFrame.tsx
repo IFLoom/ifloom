@@ -51,6 +51,8 @@ export function PreviewFrame() {
       if (event.origin !== location.origin || event.data?.type !== 'ifloom-preview') return
       const { project, restart, dark } = event.data
       document.documentElement.classList.toggle('dark', dark && project.preview.theme === 'default')
+      // The site's own dark colour scheme is for the docs, not the game.
+      document.documentElement.style.colorScheme = ''
       setTheme(project)
       const built = buildGame(project as Project)
       if ('error' in built) {

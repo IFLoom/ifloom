@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/vitepress.css';
 @import 'fumadocs-ui/css/preset.css';
+@import './theme.css';
+
+/* The site is dark only: `dark:` follows the class on <html>, not the system setting. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 html {
   scrollbar-gutter: stable;
@@ -9,4 +13,315 @@ html {
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+/*
+ * The docs and the editor in the homepage's palette. Fumadocs draws everything
+ * from its --color-fd-* colours, so these carry most of the look. They come
+ * after the preset, so they win over its light and .dark colours.
+ */
+:root,
+.dark {
+  --color-fd-background: #050505;
+  --color-fd-foreground: #f5efe7;
+  --color-fd-muted: #15110f;
+  --color-fd-muted-foreground: #aaa198;
+  --color-fd-popover: #0d0b09;
+  --color-fd-popover-foreground: #f5efe7;
+  --color-fd-card: #0d0b0a;
+  --color-fd-card-foreground: #f5efe7;
+  --color-fd-border: rgba(255, 255, 255, 0.1);
+  --color-fd-primary: #ff8a3d;
+  --color-fd-primary-foreground: #1c0f05;
+  --color-fd-secondary: #14110f;
+  --color-fd-secondary-foreground: #f5efe7;
+  --color-fd-accent: rgba(255, 255, 255, 0.07);
+  --color-fd-accent-foreground: #f5efe7;
+  --color-fd-ring: #ff8a3d;
+  --color-fd-overlay: rgba(5, 5, 5, 0.6);
+  --color-fd-info: #ffb46b;
+  --color-fd-warning: #f5c04a;
+  --color-fd-error: #ff6b5a;
+  --color-fd-success: #9fd08a;
+  --color-fd-idea: #ffb46b;
+}
+
+/*
+ * Type and surfaces for the pages with a Fumadocs layout: the docs and the
+ * editor. Scoped to those, so the homepage and the editor's game preview keep
+ * their own fonts. The search dialog and menus open in <body>, so the fonts
+ * are set there.
+ */
+body:has(#nd-docs-layout, #nd-home-layout) {
+  --font-sans: var(--body);
+  --font-mono: var(--mono);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, rgba(255, 128, 48, 0.07), transparent 70%) no-repeat fixed,
+    var(--bg);
+}
+
+html:has(#nd-docs-layout, #nd-home-layout) {
+  background: var(--bg);
+}
+
+body:has(#nd-docs-layout, #nd-home-layout) :where(code, kbd, pre, samp) {
+  font-family: var(--mono);
+}
+
+.ifl-mark {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+/* Headings in the homepage's display face, a little lighter so a long page stays calm. */
+#nd-page h1,
+#nd-page .prose :where(h2, h3) {
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+#nd-page h1 {
+  line-height: 1.2;
+}
+
+#nd-page .prose :where(h2) {
+  font-size: 1.4em;
+}
+
+#nd-page .prose :where(h3) {
+  font-size: 1.1em;
+}
+
+#nd-page .prose :where(h4, h5, h6) {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.prose {
+  --tw-prose-body: rgba(245, 239, 231, 0.84);
+  --tw-prose-headings: var(--ink);
+  --tw-prose-bold: var(--ink);
+  --tw-prose-links: var(--ember-2);
+  --tw-prose-code: #ffc78a;
+  --tw-prose-quotes: var(--ink-2);
+  --tw-prose-bullets: rgba(255, 138, 61, 0.6);
+  --tw-prose-counters: var(--ember-2);
+  --tw-prose-hr: var(--hair);
+  --tw-prose-th-borders: var(--hair);
+  --tw-prose-td-borders: var(--hair-2);
+}
+
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+  text-decoration-color: rgba(255, 180, 107, 0.4);
+  text-underline-offset: 3px;
+}
+
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)):hover {
+  text-decoration-color: var(--ember-2);
+}
+
+/* Inline code: a quiet chip rather than an orange block. */
+.prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *, pre *, figure *)) {
+  padding: 0.12em 0.4em;
+  border: 1px solid var(--hair-2);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  font-size: 0.86em;
+}
+
+/* Glass panels: code blocks, callouts, tables and the page's buttons. */
+@layer utilities {
+  figure.shiki {
+    border-color: var(--hair);
+    border-radius: 18px;
+    background: var(--glass-solid);
+    box-shadow: var(--glass-edge);
+  }
+
+  figure.shiki pre {
+    background: transparent;
+  }
+
+  /* Tabs and titles above a code block. */
+  figure.shiki > div:has(> figcaption, > [role='tablist']) {
+    border-color: var(--hair-2);
+  }
+
+  .ifl-callout {
+    border-color: var(--hair);
+    border-radius: 18px;
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--callout-color) 9%, transparent), transparent 60%),
+      var(--glass);
+    box-shadow: var(--glass-edge);
+  }
+
+  .ifl-action {
+    border: 1px solid var(--hair);
+    border-radius: 999px;
+    background: var(--glass);
+    box-shadow: var(--glass-edge);
+    padding-inline: 0.85rem;
+  }
+
+  .ifl-action:hover,
+  .ifl-action[data-state='open'] {
+    border-color: rgba(255, 166, 87, 0.3);
+    background: rgba(255, 138, 61, 0.08);
+  }
+}
+
+#nd-page .prose :where(table) {
+  overflow: hidden;
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  background: var(--glass);
+}
+
+#nd-page .prose :where(details) {
+  border-color: var(--hair);
+  border-radius: 14px;
+  background: var(--glass);
+}
+
+/* The sidebar: a glass column with pill links and pill controls. */
+.dark #nd-sidebar {
+  --color-fd-muted-foreground: #aaa198;
+  border-color: var(--hair-2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.008)),
+    rgba(8, 7, 6, 0.85);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.02);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+.dark #nd-sidebar[data-collapsed='true'] {
+  border-color: var(--hair);
+  border-radius: 24px;
+}
+
+#nd-sidebar :where(a, button)[data-active] {
+  border-radius: 999px;
+}
+
+#nd-sidebar a[data-active='true'] {
+  background: rgba(255, 138, 61, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 166, 87, 0.18);
+  color: var(--ember-2);
+}
+
+@layer utilities {
+  button[data-search-full] {
+    border-color: var(--hair);
+    border-radius: 999px;
+    background: var(--glass);
+    box-shadow: var(--glass-edge);
+    padding-inline: 0.85rem;
+  }
+
+  button[data-search-full] kbd {
+    border-color: var(--hair);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  /* The version and section dropdowns at the top of the sidebar. */
+  #nd-sidebar button[aria-haspopup='dialog'] {
+    border-color: var(--hair);
+    border-radius: 16px;
+    background: var(--glass);
+    box-shadow: var(--glass-edge);
+  }
+}
+
+/* The phone header: frosted, like the homepage's pill. */
+#nd-subnav[data-transparent='false'] {
+  border-color: var(--hair-2);
+  background: rgba(8, 7, 6, 0.7);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+/* On this page: a glass card, with the current heading in ember. */
+#nd-toc > div {
+  margin-top: 12px;
+  padding: 14px 12px 14px 6px;
+  border: 1px solid var(--hair-2);
+  border-radius: 22px;
+  background: var(--glass);
+  box-shadow: var(--glass-edge);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+#nd-toc a[data-active='true'] {
+  color: var(--ember-2);
+}
+
+/* The editor's top bar: the homepage's floating pill. */
+#nd-nav {
+  padding: 8px 16px 0;
+  height: auto;
+}
+
+#nd-nav > div {
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: rgba(14, 11, 9, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px -30px rgba(0, 0, 0, 0.9);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+#nd-nav nav {
+  height: 48px;
+  padding-inline: 20px 8px;
+}
+
+#nd-nav nav a[data-active] {
+  border-radius: 999px;
+}
+
+/* The search dialog: a glass panel over a blurred page. */
+.ifl-search-overlay {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.ifl-search {
+  border-color: var(--hair);
+  border-radius: 24px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(255, 128, 48, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012)),
+    rgba(12, 10, 8, 0.92);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+.ifl-search > * {
+  border-color: var(--hair-2);
+}
+
+.ifl-search [data-selected='true'],
+.ifl-search [aria-selected='true'] {
+  background: rgba(255, 138, 61, 0.1);
+  color: var(--ink);
+}
+
+/* Menus and popovers (the version list, "Open", the editor's menus). */
+body:has(#nd-docs-layout, #nd-home-layout) [data-radix-popper-content-wrapper] > * {
+  border-color: var(--hair);
+  border-radius: 18px;
+  background: var(--glass-solid);
+  box-shadow: var(--glass-shadow);
 }

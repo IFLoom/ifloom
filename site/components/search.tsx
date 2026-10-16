@@ -21,8 +21,8 @@ export default function DocsSearchDialog(props: SharedProps) {
 
   return (
     <SearchDialog {...search} {...props}>
-      <SearchDialogOverlay />
-      <SearchDialogContent>
+      <SearchDialogOverlay className="ifl-search-overlay" />
+      <SearchDialogContent className="ifl-search">
         <SearchDialogHeader>
           <SearchDialogIcon />
           <SearchDialogInput />

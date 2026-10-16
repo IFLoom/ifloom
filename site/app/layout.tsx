@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import '@fontsource-variable/unbounded'
+import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
 import './global.css'
 
 export const metadata: Metadata = {
@@ -13,7 +16,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-GB" suppressHydrationWarning>
+    // The site is dark only. The class is here from the first paint; the docs'
+    // provider forces the same theme, so it never changes.
+    <html lang="en-GB" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">{children}</body>
     </html>
   )

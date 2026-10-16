@@ -46,25 +46,10 @@ export function RightPane({ playing }: { playing: { scene: string; nonce: number
   )
 }
 
-/** Whether the docs are in dark mode, following the theme switch. */
-function useDark(): boolean {
-  const [dark, setDark] = useState(false)
-  useEffect(() => {
-    const root = document.documentElement
-    const read = () => setDark(root.classList.contains('dark'))
-    read()
-    const observer = new MutationObserver(read)
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
-    return () => observer.disconnect()
-  }, [])
-  return dark
-}
-
 function Preview({ playing }: { playing: { scene: string; nonce: number } | null }) {
   const { project, update, names } = useEditor()
   const frame = useRef<HTMLIFrameElement>(null)
   const [ready, setReady] = useState(false)
-  const dark = useDark()
   const restart = useRef(true)
 
   useEffect(() => {
@@ -82,12 +67,13 @@ function Preview({ playing }: { playing: { scene: string; nonce: number } | null
   useEffect(() => {
     if (!ready) return
     const timer = setTimeout(() => {
-      const message: PreviewMessage = { type: 'ifloom-preview', project, restart: restart.current, dark }
+      // The site is dark only, so the React UI's own look previews in dark.
+      const message: PreviewMessage = { type: 'ifloom-preview', project, restart: restart.current, dark: true }
       restart.current = false
       frame.current?.contentWindow?.postMessage(message, location.origin)
     }, 250)
     return () => clearTimeout(timer)
-  }, [ready, project, dark])
+  }, [ready, project])
 
   function startAgain(at?: string | null) {
     restart.current = true

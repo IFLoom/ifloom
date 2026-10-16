@@ -63,6 +63,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Calendars, places and characters moved out of the core into the calendar, places and cast plugins.
 - Notices in the React UI no longer cover the end of the page. The overlay sits after the content and sticks to the bottom of the window, so it floats while you scroll and moves out of the way at the end. On a phone only the newest notice shows, with a `+N more` button (`ui.noticesMore`, `ui.noticesFewer`) for the rest.
 - Small Town turns on the keyboard shortcuts and puts the notice strip over the stage, so you can see both in play. Its layout is in `src/layout.ts`.
+- The docs and the editor on the website now look like the homepage: dark only, with ember colours, the same fonts, glass panels and one dark code theme. The light and dark switch is gone, and the editor previews the React UI's own look in dark.
 
 ### Removed
 

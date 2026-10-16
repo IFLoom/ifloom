@@ -1,0 +1,28 @@
+/*
+ * The site's palette and type, shared by the homepage, the docs and the
+ * editor. The fonts are self-hosted with @fontsource and imported in
+ * app/layout.tsx. The homepage reads these through home.css and its CSS
+ * modules; the docs and the editor read them through the Fumadocs colours in
+ * global.css.
+ */
+:root {
+  --bg: #050505;
+  --ink: #f5efe7;
+  --ink-2: rgba(245, 239, 231, 0.7);
+  --ink-3: rgba(245, 239, 231, 0.48);
+  --hair: rgba(255, 255, 255, 0.1);
+  --hair-2: rgba(255, 255, 255, 0.06);
+  --ember: #ff8a3d;
+  --ember-2: #ffb46b;
+  --ember-grad: linear-gradient(135deg, #ffc27a 0%, #ff8a3d 55%, #f0642a 100%);
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --display: 'Unbounded Variable', ui-sans-serif, sans-serif;
+  --body: 'Geist Variable', ui-sans-serif, sans-serif;
+  --mono: 'Geist Mono Variable', ui-monospace, monospace;
+
+  /* A glass panel: a faint white gradient over the page, a hairline edge and a highlight along the top. */
+  --glass: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  --glass-solid: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012)), #0b0908;
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px -30px rgba(0, 0, 0, 0.9);
+}

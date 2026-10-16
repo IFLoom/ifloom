@@ -5,6 +5,7 @@ import { remarkDirectiveAdmonition, remarkMdxMermaid } from 'fumadocs-core/mdx-p
 import remarkDirective from 'remark-directive'
 import rehypeRaw from 'rehype-raw'
 import { remarkDropTitle, remarkPlainDirectives } from './lib/remark'
+import { emberTheme } from './lib/shiki-theme'
 
 export default defineConfig({
   mdxOptions: {
@@ -18,5 +19,8 @@ export default defineConfig({
       [rehypeRaw, { passThrough: ['mdxjsEsm', 'mdxFlowExpression', 'mdxJsxFlowElement', 'mdxJsxTextElement', 'mdxTextExpression'] }],
       ...plugins,
     ],
+    // One dark code theme, as the site is dark only. Fumadocs' CSS reads both
+    // colour variables, so both name the same theme.
+    rehypeCodeOptions: { themes: { light: emberTheme, dark: emberTheme }, defaultColor: false },
   },
 })

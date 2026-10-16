@@ -1,8 +1,8 @@
 'use client'
 /**
  * The editor's small parts: fields, buttons, sections and pickers, in the
- * docs' colours (Fumadocs' `fd-` tokens), so the editor follows its light and
- * dark themes.
+ * docs' colours (Fumadocs' `fd-` tokens), so the editor follows the site's
+ * dark ember theme (app/global.css).
  */
 import { useEffect, useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 

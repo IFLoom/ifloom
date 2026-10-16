@@ -1,7 +1,4 @@
 import type { ReactNode } from 'react'
-import '@fontsource-variable/unbounded'
-import '@fontsource-variable/geist'
-import '@fontsource-variable/geist-mono'
 import '@/components/home/home.css'
 
 // The homepage fades its sections in. This hides them before the first paint,

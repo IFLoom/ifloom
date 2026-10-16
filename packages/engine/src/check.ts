@@ -4,12 +4,12 @@
  * names. `loadGame` runs it on the game it merges; a hand-built game calls
  * `checkGame` itself.
  */
-import { audioSrc, cueProblems, manifestProblems, markupProblems, placementProblems } from './audio.ts'
+import { audioSrc, cueProblems, markupProblems, placementProblems } from './features/audio.ts'
 import { sceneContext } from './context.ts'
-import { customPanel, customValue, hasCustomEffect, customCondition } from './custom.ts'
+import { customCall, customPanel, customValue, hasCustomEffect, customCondition, type EffectRef } from './custom.ts'
 import { statOwnerProblem } from './entities.ts'
 import { sceneById, type Game, type SceneMedia } from './game.ts'
-import { mediaMarkupProblems, poolManifestProblems, poolProblems, sceneMediaProblems, stageProblems, type MediaStage } from './media.ts'
+import { mediaMarkupProblems, poolProblems, sceneMediaProblems, stageProblems, type MediaStage } from './features/media.ts'
 import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginEffect, pluginName, type Plugin } from './plugin.ts'
 import {
   blockReferences,
@@ -21,9 +21,11 @@ import {
 } from './references.ts'
 import { isDataScene } from './scene.ts'
 import { artSrc, MEDIA_MARKUP, mediaKind, mediaParts } from './sceneBody.ts'
-import { settingConditionProblems, settingProblems } from './settings.ts'
-import { statProblems } from './stats.ts'
-import type { GameState } from './types.ts'
+import { settingConditionProblems } from './features/settings.ts'
+import { featureChecks, type FeatureList } from './features/registry.ts'
+import type { FeatureCheckTools } from './features/feature.ts'
+import { COMMAND_KINDS, conditionKinds, EFFECT_KINDS } from './core.ts'
+import type { Condition, GameState } from './types.ts'
 
 /** Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what. */
 export type Problem = {
@@ -46,10 +48,13 @@ export type Checked = { problems: Problem[]; files: FileRef[] }
  * Undefined is the game itself: its actions, `finished`, `carryOver`.
  */
 export type Source =
-  | { list: 'scene' | 'item' | 'storyline' | 'activity' | 'stat' | 'kind' | 'entity' | 'collection' | 'trigger' | 'input' | 'setting' | 'track' | 'channel' | 'pool' | 'prose'; id: string }
-  | { list: 'audio' }
+  | { list: CoreList; id: string }
+  | { list: FeatureList; id?: string }
   | { plugin: string; list: string; id: string }
   | undefined
+
+/** The lists the core keeps itself. The features' lists are their own (`FeatureList`). */
+export type CoreList = 'scene' | 'item' | 'storyline' | 'activity' | 'kind' | 'entity' | 'collection' | 'trigger' | 'input' | 'prose'
 
 /** A problem as a line: `pack · where · what`. */
 export function describeProblem(problem: Problem): string {
@@ -64,6 +69,31 @@ export function describeProblem(problem: Problem): string {
  */
 export function checkGame(game: Game, options: { probes?: readonly Probe[] } = {}): Checked {
   return checkContent(game, options.probes ?? [], () => 'game')
+}
+
+/**
+ * What is wrong with a condition's shape: it needs exactly one kind key. One
+ * with none, or several, holds nowhere, since the engine wouldn't know which
+ * to ask.
+ */
+function shapeProblems(condition: Condition): string[] {
+  const kinds = conditionKinds(condition)
+  if (kinds.length === 1) return []
+  const keys = Object.keys(condition)
+  if (!kinds.length) return [`a condition needs one kind, such as flag or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`]
+  return [`a condition has one kind, but this one has ${kinds.length}: ${kinds.join(', ')}`]
+}
+
+/** What is wrong with an effect's kind: one the engine doesn't have does nothing. A custom call by name has none. */
+function kindProblem(effect: EffectRef): string[] {
+  if (customCall(effect)) return []
+  if (!('kind' in effect)) return ['an effect needs a kind, or a custom call by name']
+  return (EFFECT_KINDS as string[]).includes(effect.kind) ? [] : [`unknown effect kind "${String(effect.kind)}"`]
+}
+
+/** What is wrong with a command's type: one the engine doesn't have is refused. */
+function typeProblem(command: { type: string }): string[] {
+  return (COMMAND_KINDS as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
 }
 
 /** A page path as written (`art/photo/ava.svg`), or null for a URL or nothing. */
@@ -154,9 +184,9 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if ('within' in ref) {
       return resolve(ref.refs, where).map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
     }
-    if ('when' in ref) return resolve(conditionReferences(ref.when), where)
-    if ('effects' in ref) return resolve((ref.effects ?? []).flatMap(effectReferences), where)
-    if ('command' in ref) return ref.command ? resolve(commandReferences(ref.command), where) : []
+    if ('when' in ref) return ref.when ? [...shapeProblems(ref.when), ...resolve(conditionReferences(ref.when), where)] : []
+    if ('effects' in ref) return [...(ref.effects ?? []).flatMap(kindProblem), ...resolve((ref.effects ?? []).flatMap(effectReferences), where)]
+    if ('command' in ref) return ref.command ? [...typeProblem(ref.command), ...resolve(commandReferences(ref.command), where)] : []
     if ('blocks' in ref) return resolve(blockReferences(ref.blocks), where)
     if ('stage' in ref) return stage(ref.stage, ref.choices, where)
     if ('media' in ref) {
@@ -262,13 +292,13 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   }
 
   // Two of anything with one id. A loaded game can't have these: its packs are merged by id.
-  const twice = (list: Exclude<Source, undefined | { list: 'audio' } | { plugin: string }>['list'], plural: string, ids: readonly string[]) => {
+  const twice = (list: string, plural: string, ids: readonly string[]) => {
     const seen = new Set<string>()
     const reported = new Set<string>()
     for (const id of ids) {
       if (seen.has(id) && !reported.has(id)) {
         reported.add(id)
-        say({ list, id }, `${list} ${id}`, `two ${plural} share this id`)
+        say({ list, id } as Source, `${list} ${id}`, `two ${plural} share this id`)
       }
       seen.add(id)
     }
@@ -277,15 +307,13 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   twice('item', 'items', game.items.map((entry) => entry.id))
   twice('storyline', 'storylines', game.storylines.map((entry) => entry.id))
   twice('activity', 'activities', game.activities.map((entry) => entry.id))
-  twice('stat', 'stats', (game.stats ?? []).map((entry) => entry.id))
   twice('kind', 'kinds', (game.kinds ?? []).map((entry) => entry.id))
   twice('entity', 'entities', (game.entities ?? []).map((entry) => `${entry.of}:${entry.id}`))
   twice('collection', 'collections', (game.collections ?? []).map((entry) => entry.id))
   twice('trigger', 'triggers', (game.triggers ?? []).map((entry) => entry.id))
   twice('input', 'inputs', (game.inputs ?? []).map((entry) => entry.id))
-  twice('setting', 'settings', (game.settings ?? []).map((entry) => entry.id))
 
-  // Scenes: a data scene's content, and every scene's storylet fields.
+  // Scenes: a data scene's content. Every scene's storylet fields are the scenes feature's.
   for (const scene of game.scenes) {
     const source = { list: 'scene', id: scene.id } as const
     const where = `scene ${scene.id}`
@@ -297,11 +325,6 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
         ids.add(choice.id)
       }
     }
-    const drawn = Boolean(scene.drawnFrom?.length)
-    if (scene.weight !== undefined && !(scene.weight > 0)) say(source, where, 'weight must be above 0')
-    if (scene.weight !== undefined && !drawn) say(source, where, 'has a weight but no drawnFrom, so it is never drawn')
-    if (scene.when !== undefined && !drawn) say(source, where, 'has a when but no drawnFrom; when only gates draws')
-    check(source, where, [{ when: scene.when }])
   }
 
   for (const item of game.items) check({ list: 'item', id: item.id }, `item ${item.id}`, [{ effects: item.use?.effects }])
@@ -333,18 +356,9 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if (input.min !== undefined && input.max !== undefined && input.min > input.max) say(source, where, 'min is above max')
   }
 
-  for (const setting of game.settings ?? []) {
-    for (const what of settingProblems(setting)) say({ list: 'setting', id: setting.id }, `setting ${setting.id}`, what)
-  }
-
-  for (const stat of game.stats ?? []) {
-    const source = { list: 'stat', id: stat.id } as const
-    const where = `stat ${stat.id}`
-    if (stat.of !== undefined && !kindIds.has(stat.of)) say(source, where, `belongs to unknown kind "${stat.of}"`)
-    check(source, where, [...(typeof stat.max === 'object' ? [{ value: stat.max.value }] : []), { when: stat.visible }])
-  }
-  // Derived stats and levels: formulas, cycles, thresholds.
-  for (const { where, what } of statProblems(game)) say({ list: 'stat', id: where.slice('stat '.length) }, where, what)
+  // The features' own checks: settings, stats, storylets, the audio manifest, the media pools.
+  const tools: FeatureCheckTools = { problem: (source, where, what) => say(source as Source, where, what), check: (source, where, refs) => check(source as Source, where, refs), file, twice }
+  for (const featureCheck of featureChecks) featureCheck(game, tools)
 
   for (const entity of game.entities ?? []) {
     const source = { list: 'entity', id: `${entity.of}:${entity.id}` } as const
@@ -366,26 +380,6 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   }
 
   ;(game.rules?.locks ?? []).forEach((lock, index) => check(undefined, `lock ${index}`, [{ when: lock.when }]))
-
-  // Audio: the manifest and its files.
-  for (const { where, what } of manifestProblems(game)) {
-    const cut = where.indexOf(' ')
-    const [list, id] = [where.slice(0, cut), where.slice(cut + 1)]
-    say(list === 'track' ? { list: 'track', id } : list === 'channel' ? { list: 'channel', id } : { list: 'audio' }, where, what)
-  }
-  for (const [id, track] of Object.entries(game.audio?.tracks ?? {})) {
-    if (!('playlist' in track)) file(`track ${id}`, 'audio', audioSrc(track.src))
-  }
-
-  // Media: the pools and their files. What asks for a pool is checked where it is.
-  for (const { where, what } of poolManifestProblems(game)) say({ list: 'pool', id: where.slice('pool '.length) }, where, what)
-  for (const [pool, entries] of Object.entries(game.media?.pools ?? {})) {
-    for (const entry of Array.isArray(entries) ? entries : []) {
-      if (typeof entry?.src !== 'string' || !entry.src) continue
-      const video = mediaKind(entry.src) === 'video'
-      file(`pool ${pool}`, video ? 'video' : 'picture', artSrc(entry.src, video ? 'video' : 'image'))
-    }
-  }
 
   // Plugins: what their content names, then their own rules.
   for (const plugin of plugins) checkPlugin(plugin)

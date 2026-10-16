@@ -1,33 +1,23 @@
 import { pluginLabel } from './plugin.ts'
 import type { InputDef } from './inputs.ts'
-import { formatStat, statLevel, statMax, statValue, type StatDef } from './stats.ts'
+import { statView } from './features/stats.ts'
 import { holds } from './condition.ts'
 import type { Game } from './game.ts'
-import { settingAffects } from './settings.ts'
-import type { StageView } from './media.ts'
-import type { AudioView } from './audio.ts'
+import type { StageView } from './features/media.ts'
 import type { SpeakerView } from './plugin.ts'
 import type { SceneBeat } from './sceneBody.ts'
-import type { FlagValue, GameState, StatKey } from './types.ts'
+import type { Flat, FlagValue, GameState } from './types.ts'
 import { bindCurrent, entitiesOf, entityOf, parseRef } from './entities.ts'
 import { screen, type RenderedChoice, type Screen, type ScreenChoice } from './screen.ts'
+import { featureContext } from './core.ts'
+import { viewPieces, type FeatureView } from './features/registry.ts'
+import type { StatView } from './features/stats.ts'
 
-/** A stat as the UI shows it: its value, its ceiling, and the value written out. */
-export type StatView = {
-  key: StatKey
-  label: string
-  value: number
-  max: number
-  text: string
-  /**
-   * Where a stat with `levels` stands: its level, the value the next level
-   * starts at (null at the top), and how far it is towards it, 0 to 1. Left
-   * out for a stat with no levels.
-   */
-  level?: { level: number; next: number | null; progress: number }
-}
+export type { SettingView } from './features/settings.ts'
+export type { StatView } from './features/stats.ts'
 
-export type View = {
+/** The view's fields the core fills itself. The features' (stats, settings, audio) are in `features/`. */
+type ViewBase = {
   title: string
   phase: GameState['phase']
   /** How many turns have passed: 0 on the first. */
@@ -53,9 +43,6 @@ export type View = {
     choices: RenderedChoice[]
   }
   actions: RenderedChoice[]
-  stats: StatView[]
-  /** Every declared stat, by id, whether or not it is listed. */
-  statsById: Record<string, StatView>
   pack: {
     id: string
     name: string
@@ -73,28 +60,10 @@ export type View = {
   inputs: Record<string, InputView>
   /** What each plugin gives the UI, by plugin id. */
   plugins: Record<string, unknown>
-  /** Every setting the game declares, in order, for a settings screen. */
-  settings: SettingView[]
-  /** What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. */
-  audio: AudioView
 }
 
-/** A setting as a settings screen draws it. */
-export type SettingView = {
-  id: string
-  label: string
-  kind: 'toggle' | 'choice' | 'range'
-  affects: 'play' | 'ui'
-  /** A choice's options. */
-  options?: { value: string; label: string }[]
-  /** A range's bounds and step. */
-  min?: number
-  max?: number
-  step?: number
-  default: FlagValue
-  /** A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. */
-  value: FlagValue | null
-}
+/** Everything a UI draws for one state: the core's fields and each feature's. */
+export type View = Flat<ViewBase & FeatureView>
 
 export type CollectionView = {
   name: string
@@ -171,16 +140,14 @@ export function view(state: GameState, game: Game): View {
 
 /** A screen as the view a UI draws. */
 function viewOf(shown: Screen, state: GameState, game: Game): View {
-  const { tracks: _tracks, ...audio } = shown.audio
-  return {
+  const cx = featureContext()
+  const base: ViewBase = {
     title: game.title,
     phase: state.phase,
     turn: state.turn,
     when: pluginLabel(game, state),
     scene: { ...shown.scene, stage: shown.stage, choices: shown.choices.map(rendered) },
     actions: shown.actions.map(rendered),
-    stats: statsOf(state, game),
-    statsById: statsById(state, game),
     pack: packOf(state, game),
     inScene: Boolean(state.sceneId),
     collections: collectionsOf(state, game),
@@ -188,30 +155,14 @@ function viewOf(shown: Screen, state: GameState, game: Game): View {
     notices: noticesOf(state, game),
     inputs: inputsOf(state, game),
     plugins: shown.plugins,
-    settings: settingsOf(state, game),
-    audio,
   }
+  // Each feature's piece: the stats, the settings, the audio.
+  return Object.assign(base, ...viewPieces.map((piece) => piece(state, game, shown, cx))) as View
 }
 
 /** A screen's choice as the view shows it: without its effects. */
 function rendered({ effects: _effects, ...choice }: ScreenChoice): RenderedChoice {
   return choice
-}
-
-function settingsOf(state: GameState, game: Game): SettingView[] {
-  return (game.settings ?? []).map((setting) => {
-    const affects = settingAffects(setting)
-    return {
-      id: setting.id,
-      label: setting.label,
-      kind: setting.kind,
-      affects,
-      ...(setting.kind === 'choice' ? { options: setting.options } : {}),
-      ...(setting.kind === 'range' ? { min: setting.min, max: setting.max, ...(setting.step !== undefined ? { step: setting.step } : {}) } : {}),
-      default: setting.default,
-      value: affects === 'play' ? (state.settings?.[setting.id] ?? setting.default) : null,
-    }
-  })
 }
 
 /** A prose key's words for this state; empty when there is no key or no prose. */
@@ -275,32 +226,6 @@ function inputsOf(state: GameState, game: Game): View['inputs'] {
   )
 }
 
-function statView(state: GameState, game: Game, stat: StatDef, of?: string): StatView {
-  const value = statValue(state, game, stat.id, of)
-  const level = statLevel(state, game, stat.id, of)
-  return {
-    key: stat.id,
-    label: stat.label,
-    value,
-    max: statMax(state, game, stat.id),
-    text: formatStat(stat, value),
-    ...(level ? { level } : {}),
-  }
-}
-
-/** The listed stats the player can see right now, in the order the game declared them. */
-function statsOf(state: GameState, game: Game): View['stats'] {
-  return (game.stats ?? [])
-    .filter((stat) => !stat.of && stat.listed !== false && holds(state, stat.visible, game))
-    .map((stat) => statView(state, game, stat))
-}
-
-function statsById(state: GameState, game: Game): Record<string, StatView> {
-  return Object.fromEntries(
-    (game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, statView(state, game, stat)]),
-  )
-}
-
 /** Every kind's entities, with the stats the player can see on each. */
 function entitiesView(state: GameState, game: Game): View['entities'] {
   return Object.fromEntries(
@@ -314,7 +239,7 @@ function entitiesView(state: GameState, game: Game): View['entities'] {
           name: entity.name,
           stats: stats
             .filter((stat) => holds(state, bindCurrent(stat.visible, ref), game))
-            .map((stat) => statView(state, game, stat, ref)),
+            .map((stat) => statView(state, game, stat, ref, featureContext())),
           flags: entity.flags,
         }
       })

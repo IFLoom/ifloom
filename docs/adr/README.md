@@ -10,5 +10,6 @@ Decisions about IFLoom's design that a future review shouldn't re-open without a
 | [0004](0004-audio-and-media-are-data.md) | Audio and media are data in the engine, played by the UI | Accepted |
 | [0005](0005-random-events-are-storylets.md) | Random events are storylets | Accepted |
 | [0006](0006-one-render-per-state.md) | One render per state: `screen`, and no render work in the reducer | Implemented |
+| [0007](0007-core-features-register.md) | Core features are modules that register, not plugins | Step 1 implemented |
 
 To add one, copy the shape of an existing record: a title, Status, Context, Decision and Why. Number it one past the last.

@@ -1,13 +1,13 @@
 import { say } from './strings.ts'
-import { activityBlocked, activityById } from './activity.ts'
 import { sceneContext } from './context.ts'
-import { itemById, sceneById, type Game, type SceneView } from './game.ts'
+import { sceneById, type Game, type SceneView } from './game.ts'
 import { lockIn } from './locks.ts'
-import { pluginCommand, pluginGuards, pluginsWatch } from './plugin.ts'
-import { buildEffects } from './custom.ts'
-import { inputRefusal } from './inputs.ts'
-import { settingRefusal } from './settings.ts'
+import { pluginGuards, pluginsWatch } from './plugin.ts'
+import { commandContext, commandEntry } from './core.ts'
+import type { Rendering } from './features/feature.ts'
 import type { Command, Effect, GameState } from './types.ts'
+
+export type { Rendering } from './features/feature.ts'
 
 /**
  * Why the player cannot do this right now, or undefined if they can.
@@ -23,14 +23,6 @@ import type { Command, Effect, GameState } from './types.ts'
 export function whyNot(state: GameState, game: Game, command: Command): string | undefined {
   return whyNotIn(rendering(state, game), state, game, command)
 }
-
-/**
- * The open scene, rendered at most once however many questions are asked about
- * one state: `scene()` renders it the first time and hands back the same view
- * after. `screen` makes one and shares it between every choice, so a scene is
- * not rendered again for each choice's availability and effects.
- */
-export type Rendering = { scene: () => SceneView | undefined }
 
 /** A rendering of this state's open scene, done when first asked for. `picks` collects a data scene's new pool picks. */
 export function rendering(state: GameState, game: Game, picks?: Record<string, string>): Rendering {
@@ -67,55 +59,17 @@ export function whyNotIn(rendered: Rendering, state: GameState, game: Game, comm
     const out = custom(state, command)
     return typeof out === 'string' ? out : undefined
   }
-  switch (command.type) {
-    case 'dismiss':
-      return undefined
-    case 'setting':
-      return settingRefusal(game, command.id, command.value)
-    case 'input':
-      return inputRefusal(state, game, command.id, command.value)
-    case 'custom': {
-      const fn = pluginCommand(game, command.name)
-      if (!fn) return say(game, 'noSuchAction')
-      return fn.whyNot(state, command.with ?? {})
-    }
-    case 'activity': {
-      const activity = activityById(game, command.id)
-      if (!activity) return say(game, 'noSuchAction')
-      return activityBlocked(state, game, activity)
-    }
-    case 'scene':
-      if (state.sceneId) return say(game, 'finishFirst')
-      return sceneById(game, command.id) ? undefined : say(game, 'noSuchScene')
-    case 'choose': {
-      if (!state.sceneId) return say(game, 'nothingToChoose')
-      // A scene the game no longer has is let through: choosing closes it.
-      if (!sceneById(game, state.sceneId)) return undefined
-      const choice = rendered.scene()!.choices.find((entry) => entry.id === command.id)
-      if (!choice || choice.visible === false) return say(game, 'notOnOffer')
-      return choice.disabled
-    }
-    case 'leave':
-      return undefined
-    case 'use': {
-      const item = itemById(game, command.itemId)
-      if (!item) return say(game, 'noSuchThing')
-      if (!item.use) return say(game, 'doesNothing', { item: item.name })
-      return (state.items[command.itemId] ?? 0) > 0 ? undefined : say(game, 'haveNone', { item: item.name })
-    }
-    default:
-      return say(game, 'notSupported')
-  }
+  const entry = commandEntry(command)
+  return entry ? entry.whyNot(state, command, game, commandContext(rendered)) : say(game, 'notSupported')
 }
 
 /**
- * Commands no lock or plugin guard stops: a setting, which is a menu's
- * business rather than the story's, and a plugin command that says it ignores
- * locks.
+ * Commands no lock or plugin guard stops, as their type's entry says: a
+ * setting, which is a menu's business rather than the story's, and a plugin
+ * command that says it ignores locks.
  */
-function ignoresLocks(game: Game, command: Command): boolean {
-  if (command.type === 'setting') return true
-  return command.type === 'custom' && Boolean(pluginCommand(game, command.name)?.ignoresLocks)
+export function ignoresLocks(game: Game, command: Command): boolean {
+  return commandEntry(command)?.ignoresLocks?.(command, game) ?? false
 }
 
 /**
@@ -130,26 +84,7 @@ export function effectsOf(state: GameState, game: Game, command: Command): Effec
 
 /** `effectsOf`, asking `rendered` for the open scene instead of rendering it. */
 export function effectsIn(rendered: Rendering, state: GameState, game: Game, command: Command): Effect[] {
-  switch (command.type) {
-    case 'activity': {
-      const activity = activityById(game, command.id)
-      if (!activity) return []
-      const paid: Effect[] = Object.entries(activity.cost?.stats ?? {}).map(([key, amount]) => ({ kind: 'stat', key, by: -amount }))
-      return [...paid, ...buildEffects(state, game, activity.effects ?? [])]
-    }
-    case 'choose': {
-      const choice = rendered.scene()?.choices.find((entry) => entry.id === command.id)
-      return choice ? [...choice.effects] : []
-    }
-    case 'use': {
-      const item = itemById(game, command.itemId)
-      return item?.use ? [{ kind: 'item', id: command.itemId, by: -1 }, ...item.use.effects] : []
-    }
-    case 'custom':
-      return pluginCommand(game, command.name)?.effectsOf(state, command.with ?? {}) ?? []
-    default:
-      return []
-  }
+  return commandEntry(command)?.effectsOf?.(state, command, game, commandContext(rendered)) ?? []
 }
 
 /**

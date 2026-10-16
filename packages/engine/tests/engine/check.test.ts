@@ -38,6 +38,29 @@ describe('checkGame', () => {
     ])
   })
 
+  it('reports what the engine would quietly skip: a condition with no kind or two, an effect or command it does not have', () => {
+    const town = fixture()
+    const game = {
+      ...town,
+      // Each of these holds nowhere, does nothing or is refused at runtime, as it always has; now the checker says so.
+      finished: { flag: 'done', setting: 'hints' },
+      actions: [
+        ...(town.actions ?? []),
+        { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
+        { id: 'odd', label: 'Odd', command: { type: 'activity', id: 'wait' } },
+      ],
+      items: [...town.items, { id: 'kite', name: 'Kite', desc: '', kind: 'gear' as const, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
+    } as Game
+    expect(problemsOf(game)).toEqual([
+      'item kite: unknown effect kind "fly"',
+      'item kite: an effect needs a kind, or a custom call by name',
+      'action blank: a condition needs one kind, such as flag or stat; this one has nothing in it',
+      'action blank: unknown command type "dance"',
+      // Its parts aren't looked into: the engine wouldn't know which one it means.
+      'finished: a condition has one kind, but this one has 2: flag, setting',
+    ])
+  })
+
   it('checks an item’s use effects in a loaded game', () => {
     const pack: Pack = {
       id: 'town',

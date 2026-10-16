@@ -102,6 +102,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 
 | Problem | When the condition names |
 |---|---|
+| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ flag, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
+| `a condition needs one kind, such as flag or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineFlag` or `counter`. |
 | `unknown item "…"` | An item nobody declares, in `item` or `has`. |
 | `unknown stat "…"` | A stat nobody declares, in `stat`, `level` or `tier`. |
@@ -121,6 +123,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 
 | Problem | When |
 |---|---|
+| `unknown effect kind "…"` | A `kind` the engine doesn't have. The effect does nothing. |
+| `an effect needs a kind, or a custom call by name` | An effect with neither, such as `{}`. It does nothing. |
 | `no custom effect named "…"` | A `{ custom }` or short-form effect that neither the game nor a plugin declares. |
 | `no plugin effect named "…"` | A long-form `{ kind: 'custom', name }` effect that no plugin declares. Only a plugin can answer the long form. |
 | `unknown stat "…"` | A `stat` or `setStat` effect names a stat nobody declares. |
@@ -150,7 +154,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
 | `custom` | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
 
-`start`, `choose`, `leave` and `dismiss` name nothing to check.
+`start`, `choose`, `leave` and `dismiss` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
 ### Stat owners
 

@@ -2,16 +2,16 @@ import type { PluginEntry } from './plugin.ts'
 import type { CollectionDef } from './collections.ts'
 import type { InputDef } from './inputs.ts'
 import type { TriggerDef } from './triggers.ts'
-import type { StatDef } from './stats.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { ActivityDef } from './activity.ts'
-import type { Game, ItemDef, Scene, SettingDef, StorylineDef } from './game.ts'
+import type { Game, ItemDef, Scene, StorylineDef } from './game.ts'
 import type { Custom } from './custom.ts'
 import { memberKey, proseStore, type VariantMember } from './prose.ts'
 import type { DataScene } from './scene.ts'
-import type { GameMedia, PoolFile } from './media.ts'
-import type { ChannelDef, GameAudio, PlaylistDef, TrackDef } from './audio.ts'
-import { checkContent, type Problem, type Source } from './check.ts'
+import type { Flat } from './types.ts'
+import { checkContent, type CoreList, type Problem, type Source } from './check.ts'
+import { listOwners, packFeatures, type FeaturePack } from './features/registry.ts'
+import type { PackMerge } from './features/feature.ts'
 
 /**
  * Content arrives as ordered packs and is merged into one game.
@@ -27,7 +27,8 @@ export type Patch =
   | { scene: string; dropChoice: string }
   | { scene: string; replaceChoice: DataScene['choices'][number] }
 
-export type Pack = {
+/** The fields of a pack the core merges itself. The features' (settings, stats, audio, media) are in `features/`. */
+type PackBase = {
   id: string
   /** Schema this pack was written against. Refused if it is not ours. */
   schema: number
@@ -35,8 +36,6 @@ export type Pack = {
   items?: ItemDef[]
   storylines?: StorylineDef[]
   activities?: ActivityDef[]
-  /** Stats the game keeps. A later pack can redeclare one by id. */
-  stats?: StatDef[]
   /** Kinds of thing the game keeps several of. A later pack can redeclare one by id. */
   kinds?: KindDef[]
   /** Things of those kinds there at the start. A later pack can redeclare one by kind and id. */
@@ -44,8 +43,6 @@ export type Pack = {
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
-  /** What the player can change from a settings screen. A later pack can redeclare one by id. */
-  settings?: SettingDef[]
   /** Player-facing words by key, over the engine's and plugins' own. Later packs override earlier ones. */
   strings?: Record<string, string>
   /** Prose by key. Later packs override earlier ones. */
@@ -66,15 +63,10 @@ export type Pack = {
    * one's by id, as scenes do.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
-  /**
-   * Sounds, channels and defaults over the game's own. A later pack's track
-   * or channel replaces an earlier one's by id; its `mute` and `default`
-   * entries win too.
-   */
-  audio?: Partial<GameAudio>
-  /** Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. */
-  media?: GameMedia
 }
+
+/** A pack of content: what the core merges, and each feature's pack key. */
+export type Pack = Flat<PackBase & FeaturePack>
 
 export type Loaded = {
   game: Game
@@ -108,19 +100,13 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   const items = new Map<string, { value: ItemDef; from: string }>()
   const storylines = new Map<string, { value: StorylineDef; from: string }>()
   const activities = new Map<string, { value: ActivityDef; from: string }>()
-  const stats = new Map<string, { value: StatDef; from: string }>()
   const collections = new Map<string, { value: CollectionDef; from: string }>()
   const triggers = new Map<string, { value: TriggerDef; from: string }>()
   const inputs = new Map<string, { value: InputDef; from: string }>()
-  const settings = new Map<string, { value: SettingDef; from: string }>()
-  // A later pack redeclares a setting by id; the same id twice in one list is a mistake.
-  const addSettings = (list: SettingDef[] | undefined, from: string) => {
-    const here = new Set<string>()
-    for (const setting of list ?? []) {
-      if (here.has(setting.id)) problems.push({ pack: from, where: `setting ${setting.id}`, what: 'two settings share this id' })
-      here.add(setting.id)
-      settings.set(setting.id, { value: setting, from })
-    }
+  // Each feature merges its own pack key, in its own way: settings by id, audio field by field, a media pool whole.
+  const merges = new Map<string, PackMerge<object, object>>()
+  for (const feature of packFeatures) {
+    merges.set(feature.name, feature.pack!.merge((pack, where, what) => problems.push({ pack, where, what })) as PackMerge<object, object>)
   }
   const kinds = new Map<string, { value: KindDef; from: string }>()
   // Keyed `kind:id`: two kinds may each have an entity called the same.
@@ -136,33 +122,10 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   byId(collections, base.collections, 'base')
   byId(triggers, base.triggers, 'base')
   byId(inputs, base.inputs, 'base')
-  addSettings(base.settings, 'base')
+  for (const merge of merges.values()) merge.base(base)
   const prose: Record<string, string> = {}
   /** Which pack each prose key came from, for markup problems. */
   const proseFrom = new Map<string, string>()
-  // Audio, merged by id: tracks and channels, then the mute setting and each channel's default.
-  const tracks = new Map<string, { value: TrackDef | PlaylistDef; from: string }>()
-  const channels = new Map<string, { value: ChannelDef; from: string }>()
-  const defaults: Record<string, string> = {}
-  let mute: string | undefined
-  let audioFrom = 'base'
-  let hasAudio = false
-  const addAudio = (from: string, audio: Partial<GameAudio> | undefined) => {
-    if (!audio) return
-    hasAudio = true
-    for (const [id, value] of Object.entries(audio.tracks ?? {})) tracks.set(id, { value, from })
-    for (const [id, value] of Object.entries(audio.channels ?? {})) channels.set(id, { value: { ...channels.get(id)?.value, ...value }, from })
-    if (audio.mute !== undefined || audio.default !== undefined) audioFrom = from
-    if (audio.mute !== undefined) mute = audio.mute
-    Object.assign(defaults, audio.default ?? {})
-  }
-  addAudio('base', base.audio)
-  // Media pools, merged by id: a later pack's pool replaces an earlier one's whole.
-  const pools = new Map<string, { value: PoolFile[]; from: string }>()
-  const addMedia = (from: string, media: GameMedia | undefined) => {
-    for (const [id, files] of Object.entries(media?.pools ?? {})) pools.set(id, { value: files, from })
-  }
-  addMedia('base', base.media)
   const strings: Record<string, string> = { ...base.strings }
   const variants: Record<string, string[]> = {}
   /** The same, with each member's weight where it has one. */
@@ -205,17 +168,14 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     byId(items, pack.items, pack.id)
     byId(storylines, pack.storylines, pack.id)
     byId(activities, pack.activities, pack.id)
-    byId(stats, pack.stats, pack.id)
     byId(kinds, pack.kinds, pack.id)
     addEntities(pack.entities, pack.id)
     byId(collections, pack.collections, pack.id)
     byId(triggers, pack.triggers, pack.id)
     byId(inputs, pack.inputs, pack.id)
-    addSettings(pack.settings, pack.id)
+    for (const merge of merges.values()) merge.add(pack, pack.id)
     Object.assign(prose, pack.prose ?? {})
     for (const key of Object.keys(pack.prose ?? {})) proseFrom.set(key, pack.id)
-    addAudio(pack.id, pack.audio)
-    addMedia(pack.id, pack.media)
     Object.assign(strings, pack.strings ?? {})
     for (const [name, members] of Object.entries(pack.variants ?? {})) {
       variants[name] = [...(variants[name] ?? []), ...members.map(memberKey)]
@@ -266,13 +226,11 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     items: [...items.values()].map((entry) => entry.value),
     storylines: [...storylines.values()].map((entry) => entry.value),
     activities: [...activities.values()].map((entry) => entry.value),
-    stats: [...stats.values()].map((entry) => entry.value),
     kinds: [...kinds.values()].map((entry) => entry.value),
     entities: [...entities.values()].map((entry) => entry.value),
     collections: [...collections.values()].map((entry) => entry.value),
     triggers: [...triggers.values()].map((entry) => entry.value),
     inputs: [...inputs.values()].map((entry) => entry.value),
-    settings: [...settings.values()].map((entry) => entry.value),
     custom,
     packs: packs.map((pack) => pack.id),
     strings,
@@ -283,14 +241,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
       ]),
     ),
   }
-  if (hasAudio) {
-    const audio: GameAudio = { tracks: Object.fromEntries([...tracks].map(([id, entry]) => [id, entry.value])) }
-    if (channels.size) audio.channels = Object.fromEntries([...channels].map(([id, entry]) => [id, entry.value]))
-    if (mute !== undefined) audio.mute = mute
-    if (Object.keys(defaults).length) audio.default = defaults
-    game.audio = audio
-  } else delete game.audio
-  if (pools.size) game.media = { ...game.media, pools: Object.fromEntries([...pools].map(([id, entry]) => [id, entry.value])) }
+  for (const merge of merges.values()) merge.finish(game)
   // Plugins' entities, made from their content now it is merged; one the game declares itself wins.
   for (const plugin of base.plugins ?? []) {
     for (const entity of plugin.entities?.(game) ?? []) {
@@ -306,26 +257,25 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   const packOf = (source: Source): string => {
     if (source === undefined) return 'base'
     if ('plugin' in source) return data.get(source.plugin)?.get(source.list)?.get(source.id)?.from ?? 'base'
-    if (source.list === 'audio') return audioFrom
-    const from: Record<typeof source.list, Map<string, { from: string }> | undefined> = {
+    // A feature's list: the feature's merge knows.
+    const owner = Object.hasOwn(listOwners, source.list) ? listOwners[source.list as keyof typeof listOwners] : undefined
+    if (owner) return merges.get(owner.name)?.from(source.list, source.id) ?? 'base'
+    const list = source.list as CoreList
+    const id = source.id ?? ''
+    const from: Record<CoreList, Map<string, { from: string }> | undefined> = {
       scene: scenes,
       item: items,
       storyline: storylines,
       activity: activities,
-      stat: stats,
       kind: kinds,
       entity: entities,
       collection: collections,
       trigger: triggers,
       input: inputs,
-      setting: settings,
-      track: tracks,
-      channel: channels,
-      pool: pools,
       prose: undefined,
     }
-    if (source.list === 'prose') return proseFrom.get(source.id) ?? 'base'
-    return from[source.list]?.get(source.id)?.from ?? 'base'
+    if (list === 'prose') return proseFrom.get(id) ?? 'base'
+    return from[list]?.get(id)?.from ?? 'base'
   }
   problems.push(...checkContent(game, [], packOf).problems)
 

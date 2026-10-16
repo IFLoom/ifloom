@@ -22,6 +22,15 @@ describe('explain', () => {
     expect(answer.parts?.[1].parts?.map((part) => part.holds)).toEqual([false, true])
   })
 
+  it('holds nowhere for a condition with two kinds, rather than picking one, and says why', () => {
+    // Before core features registered, `flag` was asked first here and the condition held.
+    const two = { flag: 'metRosa', phase: ['open'] } as never
+    expect(holds(state, two, game)).toBe(false)
+    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (flag, phase); wants one' })
+    const both = { all: [{ flag: 'metRosa' }], not: { flag: 'metRosa' } } as never
+    expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (all, not); wants one' })
+  })
+
   it('says what each leaf read and what it wanted', () => {
     const [, either, notOpen] = explain(state, condition, game).parts ?? []
     expect(either.parts?.[0].why).toBe('stat coins is 3; wants 5 or more')

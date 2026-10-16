@@ -5,7 +5,8 @@ import { apply, type Applied } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
 import { pluginContext } from './plugin.ts'
 import { profile as makeProfile, type Profile } from './profile.ts'
-import { settingRefusal } from './settings.ts'
+import { settingRefusal } from './features/settings.ts'
+import { runnerHooks } from './features/registry.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, FlagValue, GameState } from './types.ts'
@@ -179,10 +180,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   /** After a command took: what it changes in the profile. */
   function recordInProfile(before: GameState, after: GameState, command: Command): void {
     if (!options.profile) return
-    if (command.type === 'setting') {
-      const { id, value } = command
-      remember((profile) => profile.update<Record<string, FlagValue>>('settings', (stored) => ({ ...stored, [id]: value })))
-    }
+    // The features' first: a play setting changed is written for the next game.
+    for (const hooks of runnerHooks) hooks.afterCommand?.(command, remember)
     if (game.finished && !finishedRecorded && holds(after, game.finished, game)) {
       finishedRecorded = true
       const at = now()
@@ -378,8 +377,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
      * is random unless given. For New Game+, pass `carry: runner.state`.
      */
     async newGame(start: StartOptions = {}): Promise<GameState> {
-      const settings = start.settings ?? (await options.profile?.get<Record<string, unknown>>('settings'))
-      const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
+      // What the features take from the profile: the play settings.
+      let given = start
+      for (const hooks of runnerHooks) if (hooks.newGame) given = await hooks.newGame(given, options.profile)
+      const fresh = startingState(game, { seed: randomSeed(), ...given })
       begin(fresh, 0)
       return fresh
     },

@@ -8,55 +8,30 @@
 import { say } from './strings.ts'
 import type { Game, ItemDef } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
-import { SAVE_VERSION, type FlagValue, type GameState, type StorylineState } from './types.ts'
-import { clampStat, startingStats } from './stats.ts'
+import { SAVE_VERSION, type GameState, type StartOptions, type StorylineState } from './types.ts'
+import { clampStat } from './stats.ts'
 import { newEntity, startingEntities, writeEntity } from './entities.ts'
-import { settingAffects, startingSettings } from './settings.ts'
+import { settingAffects } from './features/settings.ts'
 import { emptyStoryline } from './storylines.ts'
-import { emptyAudio, noteStarted } from './audio.ts'
-import { emptyMedia } from './media.ts'
 import { hash } from './random.ts'
+import { featureContext } from './core.ts'
+import type { StateField } from './features/feature.ts'
+import { featureFields, startSteps } from './features/registry.ts'
 
-export type StartOptions = {
-  /** Fixes the save's random draws. Left out, it is hashed from the game's id, so tests deal the same cards. */
-  seed?: number
-  /** Variables to write before the first scene: a name from a title screen, a difficulty. */
-  flags?: Record<string, FlagValue>
-  /**
-   * The player's stored values for the game's `play` settings, usually the
-   * profile's `settings`. A setting given no value, or one it doesn't take,
-   * starts at its default; ids the game doesn't declare are ignored.
-   */
-  settings?: Record<string, unknown>
-  /**
-   * The state a finished game ended on, for a New Game+: the stats, variables
-   * and items the game's `carryOver` lists are copied from it.
-   */
-  carry?: GameState
-}
+export type { StartOptions } from './types.ts'
 
 /** How many of an item a new game starts with: its `start`, else 1 of gear and 0 of stuff. */
 export function itemStart(item: ItemDef): number {
   return item.start ?? (item.kind === 'gear' ? 1 : 0)
 }
 
-/** One field of the state: what a new game has, and what a loaded state that lacks it gets. */
-type Field<K extends keyof GameState> = {
-  /** A new game's value. `undefined` leaves the field out. */
-  start: (game: Game, options: StartOptions) => GameState[K]
-  /**
-   * What a loaded state gets when the field is missing (or null), after the
-   * engine's own steps and before the plugins' and the game's. Left out, the
-   * field is never filled: a step or a fill rule below owns it.
-   */
-  load?: () => GameState[K]
-  /** Whether a loaded value can be kept. Default: it is there and not null. */
-  keeps?: (value: unknown) => boolean
-}
+/** One field of the state: what a new game has, and what a loaded state that lacks it gets. See `StateField`. */
+type Field<K extends keyof GameState> = StateField<GameState[K]>
 
 /**
- * Every field of `GameState`. A new field is declared here once: its new-game
- * value and, for a field an older save won't have, its load default. Old saves
+ * Every field of `GameState`: the core's, declared here, and each feature's,
+ * declared in its `state`. A new field is declared once: its new-game value
+ * and, for a field an older save won't have, its load default. Old saves
  * then load without a step in `STEPS`; a step is only needed to reshape what
  * a save already has.
  */
@@ -65,8 +40,6 @@ export const FIELDS: { [K in keyof GameState]-?: Field<K> } = {
   seed: { start: (game, options) => options.seed ?? hash(game.id) },
   phase: { start: (game) => game.startPhase ?? '' },
   turn: { start: () => 0, load: () => 0, keeps: (value) => typeof value === 'number' },
-  sceneId: { start: (game) => game.introScene ?? null },
-  stats: { start: (game) => startingStats(game) },
   entities: { start: (game) => startingEntities(game), load: () => ({}) },
   created: { start: () => ({}), load: () => ({}) },
   removed: { start: () => [], load: () => [] },
@@ -79,17 +52,9 @@ export const FIELDS: { [K in keyof GameState]-?: Field<K> } = {
   fired: { start: () => ({}), load: () => ({}) },
   // A plugin the save lacks starts fresh in `carryPlugins`.
   plugins: { start: (game) => startingPlugins(game) },
-  // The opening scene is on screen from the first frame, so it counts as seen
-  // without a command ever having been run.
-  seen: { start: (game) => (game.introScene ? { [game.introScene]: 1 } : {}), load: () => ({}) },
-  seenOn: { start: (game) => (game.introScene ? { [game.introScene]: 0 } : {}), load: () => ({}) },
-  chosen: { start: () => ({}), load: () => ({}) },
-  settings: { start: (game, options) => startingSettings(game, options.settings), load: () => ({}) },
-  // The opening scene is the first showing.
-  audio: { start: (game) => ({ ...emptyAudio(), shown: game.introScene ? 1 : 0 }), load: emptyAudio },
-  media: { start: () => emptyMedia(), load: emptyMedia },
   // Only a game that declares a version stamps its saves with one; `carryGame` carries it.
   gameVersion: { start: (game) => game.version },
+  ...featureFields,
 }
 
 function startingPlugins(game: Game): Record<string, PluginSlice> {
@@ -120,18 +85,24 @@ function carried(state: GameState, game: Game, from: GameState): GameState {
   return { ...state, stats, flags, items }
 }
 
-/** A new game: every field at its start value, with a New Game+'s carried values laid over. */
+/**
+ * A new game: every field at its start value, with a New Game+'s carried
+ * values laid over, then what features work out from the whole state (what
+ * the opening screen starts playing).
+ */
 export function startingState(game: Game, options: StartOptions = {}): GameState {
   const fresh: Record<string, unknown> = {}
   for (const [key, field] of Object.entries(FIELDS) as [string, Field<keyof GameState>][]) {
     const value = field.start(game, options)
     if (value !== undefined) fresh[key] = value
   }
-  const state = fresh as GameState
-  if (!options.carry) return noteStarted(state, game)
-  // Carried over first, so variables the caller gives still win.
-  const plus = carried(state, game, options.carry)
-  return noteStarted({ ...plus, flags: { ...plus.flags, ...options.flags } }, game)
+  let state = fresh as GameState
+  if (options.carry) {
+    // Carried over first, so variables the caller gives still win.
+    const plus = carried(state, game, options.carry)
+    state = { ...plus, flags: { ...plus.flags, ...options.flags } }
+  }
+  return startSteps.reduce((next, step) => step(next, game, featureContext()), state)
 }
 
 /** A save as it came off disk: some version of the shape, not necessarily this one. */

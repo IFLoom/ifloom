@@ -1,9 +1,9 @@
-import type { Condition } from './condition.ts'
-import { holds } from './condition.ts'
+import { holds, type Condition } from './condition.ts'
 import type { Game, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
 import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
-import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './media.ts'
+import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
+import { featureContext } from './core.ts'
 import {
   buildEffects,
   customPanel,
@@ -206,13 +206,13 @@ export function renderScene(
     if (!holds(state, block.when, runtime.game)) return
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
-    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), picks)
+    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), featureContext(), picks)
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
       else parts.push(mediaMarkup(shown))
     }
-    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), picks))
+    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), featureContext(), picks))
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)

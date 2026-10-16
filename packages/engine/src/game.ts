@@ -5,21 +5,25 @@ import type { TriggerDef } from './triggers.ts'
 import type { ActivityDef } from './activity.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
-import type { StatDef } from './stats.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { Custom } from './custom.ts'
-import type { GameAudio } from './audio.ts'
-import type { GameMedia, MediaStage } from './media.ts'
+import type { MediaStage } from './features/media.ts'
+import type { StoryletFields } from './features/scenes.ts'
+import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene, type DataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
 import type {
   Command,
   Effect,
+  Flat,
   FlagValue,
   GameState,
   StatKey,
 } from './types.ts'
+
+export type { SettingDef } from './features/settings.ts'
+export type { StoryletFields } from './features/scenes.ts'
 
 /** Something to do, as a button: a command, and when it is offered. The game's own, a plugin's, a place's. */
 export type ActionDef = {
@@ -123,23 +127,6 @@ export type SceneCtx = {
   picks?: Record<string, string>
 }
 
-/**
- * What makes a scene a storylet: the named draws it can be drawn from, how
- * often, and when. See the `{ kind: 'scene', from }` effect.
- */
-export type StoryletFields = {
-  /**
-   * The draws this scene can come up in, by name: `['cafe']`. A
-   * `{ kind: 'scene', from: 'cafe' }` effect draws one of the scenes that name
-   * `'cafe'` here. Separate from `tags`, which only style the scene.
-   */
-  drawnFrom?: string[]
-  /** How likely a draw is to pick it, against the others it could pick. 1 if left out. Needs `drawnFrom`. */
-  weight?: number
-  /** Only drawn while this holds. It gates draws only: a `scene` command or effect naming the scene opens it regardless. */
-  when?: Condition
-}
-
 export type Scene = StoryletFields & {
   id: string
   title?: string
@@ -207,23 +194,6 @@ export type GameRules = {
   onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
 }
 
-/**
- * Something the player can change from a settings screen, declared by the
- * game. A `play` setting (the default) is part of the game state and saved
- * with it; a `ui` setting never enters the state and lives in the profile.
- */
-export type SettingDef = {
-  id: string
-  /** What the settings screen calls it. */
-  label: string
-  /** `'play'` if left out: in the state, readable by conditions. `'ui'`: for the UI only. */
-  affects?: 'play' | 'ui'
-} & (
-  | { kind: 'toggle'; default: boolean }
-  | { kind: 'choice'; options: { value: string; label: string }[]; default: string }
-  | { kind: 'range'; min: number; max: number; step?: number; default: number }
-)
-
 /** What a New Game+ takes from the game before: player stats, variables and items, by id. */
 export type CarryOver = {
   stats?: string[]
@@ -233,7 +203,8 @@ export type CarryOver = {
   items?: string[] | 'all'
 }
 
-export type Game = {
+/** The fields of a game the core reads itself. The features' (settings, stats, audio, media) are in `features/`. */
+type GameBase = {
   id: string
   title: string
   /**
@@ -250,8 +221,6 @@ export type Game = {
    * migrations. A version with no step is carried forward unchanged.
    */
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
-  /** What the player can change from a settings screen. None if left out. */
-  settings?: SettingDef[]
   /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
   carryOver?: CarryOver
   /**
@@ -261,8 +230,6 @@ export type Game = {
   finished?: Condition
   /** The stretch a new game opens in. */
   startPhase?: string
-  /** Every stat the game keeps. The engine has none of its own. */
-  stats?: StatDef[]
   /** The kinds of thing the game keeps several of, each with its own stats. */
   kinds?: KindDef[]
   /** The things of those kinds there are at the start. More can be created in play. */
@@ -304,11 +271,10 @@ export type Game = {
    * Merged from packs by id, as scenes are.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
-  /** The game's sounds and channels. No audio if left out. */
-  audio?: GameAudio
-  /** The game's pools of pictures and videos. None if left out. */
-  media?: GameMedia
 }
+
+/** A game: what the core reads, and what each feature does. */
+export type Game = Flat<GameBase & FeatureGame>
 
 export function itemById(game: Game, id: string) {
   return game.items.find((item) => item.id === id)

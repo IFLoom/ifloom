@@ -1,18 +1,16 @@
 /**
  * Media: pools of pictures and videos, the picks made from them, and the
- * stage, a layered picture with hotspots on it.
+ * stage, a layered picture with hotspots on it (ADR 0004).
  *
  * A pool is a named list of files, each with tags. Content asks for a pool and
  * some tags, and gets one file that fits. The pick is drawn from the save's
  * seed and recorded in `state.media.picks`, so the same request in the same
  * place shows the same file on every visit and after a reload.
  */
-import type { Command } from './types.ts'
-import type { Condition } from './condition.ts'
-import type { Game, SceneMedia } from './game.ts'
-import type { GameState } from './types.ts'
-import { weighted } from './random.ts'
-import { MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from './sceneBody.ts'
+import type { Game, SceneMedia } from '../game.ts'
+import type { Command, Condition, GameState } from '../types.ts'
+import { artSrc, MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
+import { defineFeature, type FeatureContext } from './feature.ts'
 
 /**
  * One file in a pool: its path, as any picture's, the tags it answers to, and
@@ -99,6 +97,23 @@ export type StageView = {
   hotspots: HotspotView[]
 }
 
+/** What the media feature adds, as types. */
+export type MediaShape = {
+  state: {
+    /** The file each pool request was given, so a revisit and a reload show the same one. */
+    media: MediaState
+  }
+  game: {
+    /** The game's pools of pictures and videos. None if left out. */
+    media?: GameMedia
+  }
+  pack: {
+    /** Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. */
+    media?: GameMedia
+  }
+  lists: 'pool'
+}
+
 /** A save's media before anything has been picked. */
 export function emptyMedia(): MediaState {
   return { picks: {} }
@@ -150,7 +165,7 @@ export function poolCandidates(game: Game, pool: string, tags: readonly string[]
  * into it, under its key: how `screen` collects the picks a state implies,
  * which the reducer then records.
  */
-export function poolPick(state: GameState, game: Game, request: PoolRequest, picks?: Record<string, string>): string | null {
+export function poolPick(state: GameState, game: Game, request: PoolRequest, cx: FeatureContext, picks?: Record<string, string>): string | null {
   const key = pickKey(request)
   const kept = state.media?.picks?.[key]
   const files = poolOf(game, request.pool) ?? []
@@ -159,7 +174,7 @@ export function poolPick(state: GameState, game: Game, request: PoolRequest, pic
   else {
     const candidates = poolCandidates(game, request.pool, request.tags)
     // Weights all 1 draw exactly what an unweighted pick would.
-    src = weighted(candidates, (file) => file.weight, 'media', key, state.seed)?.src ?? null
+    src = cx.weighted(candidates, (file) => file.weight, 'media', key, state.seed)?.src ?? null
   }
   if (picks && src !== null && src !== kept) picks[key] = src
   return src
@@ -177,22 +192,22 @@ const POOL_MARKUP = /\[\[(img|wide|video|widevideo):\s*@([^\]|]+)((?:\|[^\]|]*)*
  * file it gets. Markup whose pool has nothing to give is taken out. The nth
  * request in the text is at slot `<slot>.<n>`.
  */
-export function resolvePoolMarkup(text: string, state: GameState, game: Game, owner: string, slot: string, picks?: Record<string, string>): string {
+export function resolvePoolMarkup(text: string, state: GameState, game: Game, owner: string, slot: string, cx: FeatureContext, picks?: Record<string, string>): string {
   if (!text.includes('@')) return text
   let n = 0
   return text.replace(POOL_MARKUP, (_whole, tag: string, pool: string, rest: string) => {
     const parts = rest.split('|').slice(1)
     const tags = (parts[0] ?? '').split(',').map((part) => part.trim()).filter(Boolean)
-    const src = poolPick(state, game, { pool: pool.trim(), tags, owner, slot: `${slot}.${n++}` }, picks)
+    const src = poolPick(state, game, { pool: pool.trim(), tags, owner, slot: `${slot}.${n++}` }, cx, picks)
     if (src === null) return ''
     return `[[${tag}:${[src, ...parts.slice(1)].join('|')}]]`
   })
 }
 
 /** A data block's media with its pool resolved to a file, or null when it has none to show. */
-export function resolveMedia(media: SceneMedia, state: GameState, game: Game, owner: string, slot: string, picks?: Record<string, string>): SceneMedia | null {
+export function resolveMedia(media: SceneMedia, state: GameState, game: Game, owner: string, slot: string, cx: FeatureContext, picks?: Record<string, string>): SceneMedia | null {
   if (media.pool === undefined) return media.src ? media : null
-  const src = poolPick(state, game, { pool: media.pool, tags: media.tags, owner, slot }, picks)
+  const src = poolPick(state, game, { pool: media.pool, tags: media.tags, owner, slot }, cx, picks)
   if (src === null) return null
   const { pool: _pool, tags: _tags, ...rest } = media
   return { ...rest, src }
@@ -340,3 +355,48 @@ export function poolManifestProblems(game: Game): { where: string; what: string 
   }
   return out
 }
+
+export const media = defineFeature<MediaShape>({
+  name: 'media',
+  state: {
+    media: { start: () => emptyMedia(), load: emptyMedia },
+  },
+  // A later pack's pool replaces an earlier one's whole, files and all.
+  pack: {
+    merge: () => {
+      const pools = new Map<string, { value: PoolFile[]; from: string }>()
+      const add = (from: string, media: GameMedia | undefined) => {
+        for (const [id, files] of Object.entries(media?.pools ?? {})) pools.set(id, { value: files, from })
+      }
+      return {
+        base: (game) => add('base', game.media),
+        add: (pack, from) => add(from, pack.media),
+        finish: (game) => {
+          if (pools.size) game.media = { ...game.media, pools: Object.fromEntries([...pools].map(([id, entry]) => [id, entry.value])) }
+        },
+        from: (_list, id) => (id === undefined ? undefined : pools.get(id)?.from),
+      }
+    },
+  },
+  lists: ['pool'],
+  // The pools and their files. What asks for a pool is checked where it is.
+  check: (game, tools) => {
+    for (const { where, what } of poolManifestProblems(game)) tools.problem({ list: 'pool', id: where.slice('pool '.length) }, where, what)
+    for (const [pool, entries] of Object.entries(game.media?.pools ?? {})) {
+      for (const entry of Array.isArray(entries) ? entries : []) {
+        if (typeof entry?.src !== 'string' || !entry.src) continue
+        const video = mediaKind(entry.src) === 'video'
+        tools.file(`pool ${pool}`, video ? 'video' : 'picture', artSrc(entry.src, video ? 'video' : 'image'))
+      }
+    }
+  },
+  // The picks the new state's screen made, so a revisit and a reload show the same files. Only a game with pools picks.
+  fromScreen: {
+    wants: hasPools,
+    record: (state, shown) => {
+      if (!Object.keys(shown.picks).length) return state
+      const media = state.media ?? emptyMedia()
+      return { ...state, media: { ...media, picks: { ...media.picks, ...shown.picks } } }
+    },
+  },
+})

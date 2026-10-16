@@ -1,27 +1,13 @@
 import { say } from './strings.ts'
-import { buildEffects } from './custom.ts'
-import { rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
-import {
-  itemById,
-  sceneById,
-  type Game,
-} from './game.ts'
-import { activityById, payCost } from './activity.ts'
-import { storylineOf } from './storylines.ts'
-import type { Command, Effect, FlagValue, GameState } from './types.ts'
-import { clampStat, statDef, statLevel } from './stats.ts'
-import { bindCurrent, entitiesOf, entityOf, newEntity, removeEntity, writeEntity } from './entities.ts'
-import { holds } from './condition.ts'
-import { weighted } from './random.ts'
-import { collect, discard } from './collections.ts'
-import { dismiss, notify } from './notices.ts'
+import { rendering, warningIn, whyNotIn } from './availability.ts'
+import type { Game } from './game.ts'
+import type { Command, Effect, GameState } from './types.ts'
 import { fireTriggers } from './triggers.ts'
-import { inputById, inputValue } from './inputs.ts'
-import { noteStarted, sceneShown, setChannel, soundCue } from './audio.ts'
-import { emptyMedia, hasPools } from './media.ts'
 import { screen } from './screen.ts'
-import { pluginCommand, pluginEffect, runAfter, runHooks } from './plugin.ts'
+import { runAfter, runHooks } from './plugin.ts'
 import { startingState } from './intake.ts'
+import { commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
+import { afterSteps, screenSteps } from './features/registry.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, n))
@@ -51,71 +37,32 @@ function refuse(detail: string): never {
 }
 
 /**
- * Record a scene the command landed the player in.
- *
- * One chokepoint rather than a bump at each of the ten places that assign
- * `sceneId` — a talk, a plugin command, the intro and an effect all open scenes, and
- * a counter that some of those routes forget is worse than none. A command's
- * effects can pass through several ids; only the one the player is left looking
- * at is a viewing, which is what comparing before to after gives us.
- */
-function witnessed(before: GameState, after: GameState): GameState {
-  const id = after.sceneId
-  if (!id || id === before.sceneId) return after
-  // A new showing: its sounds get keys of their own.
-  const shown = sceneShown(after)
-  const seen = { ...shown.seen, [id]: (shown.seen[id] ?? 0) + 1 }
-  if (shown.seenOn?.[id] !== undefined) return { ...shown, seen }
-  return { ...shown, seen, seenOn: { ...shown.seenOn, [id]: shown.turn } }
-}
-
-/**
- * Record what the screen now shows that the save doesn't hold yet: the pool
- * picks (the open scene's, the place's, anything a plugin's view draws) and
- * what each background channel has started playing. Both come from one
- * `screen` of the state, so the view stays pure and the scene is rendered
- * once here. Only a game with pools or audio pays for it.
+ * Record what the screen now shows that the save doesn't hold yet, such as the
+ * pool picks and what each background channel has started playing: each
+ * feature's `fromScreen`, from one `screen` of the state. So the view stays
+ * pure and the scene is rendered once here. Only a game a feature wants a
+ * screen for pays for it.
  */
 function noteShown(state: GameState, game: Game): GameState {
-  if (!hasPools(game) && !game.audio) return state
+  const steps = screenSteps.filter((step) => step.wants(game))
+  if (!steps.length) return state
   const shown = screen(state, game)
-  const next = noteStarted(state, game, shown.audio.tracks)
-  if (!Object.keys(shown.picks).length) return next
-  const media = next.media ?? emptyMedia()
-  return { ...next, media: { ...media, picks: { ...media.picks, ...shown.picks } } }
+  return steps.reduce((next, step) => step.record(next, shown, game, featureContext()), state)
 }
 
 /**
- * A notice for each of the player's stats a command took up a level, when the
- * stat's `levels` has a `notice`. Tagged `level`, one per stat: a second
- * level-up replaces the first while it is unseen.
+ * The steps after a command took, in order: the game's triggers, the
+ * features' steps that come straight after them (a new showing is seen), the
+ * plugins' `after` hooks, the features' steps after those (a level gained is
+ * noticed), then what the new state's screen shows.
  */
-function levelUps(before: GameState, after: GameState, game: Game): GameState {
-  let next = after
-  for (const stat of game.stats ?? []) {
-    if (stat.of || !stat.levels?.notice) continue
-    const was = statLevel(before, game, stat.id)?.level ?? 0
-    const now = statLevel(after, game, stat.id)?.level ?? 0
-    if (now <= was) continue
-    const title = stat.levels.notice.replaceAll('{label}', stat.label).replaceAll('{level}', String(now))
-    next = notify(next, { id: `level.${stat.id}`, title, tag: 'level' })
-  }
-  return next
-}
-
-/**
- * Open a scene drawn from a named set: one whose `drawnFrom` names it and
- * whose `when` holds, by weight. The draw is seeded by the save, the turn and
- * how many draws the set has had, which a variable `storylet:<name>` counts.
- */
-function drawStorylet(state: GameState, game: Game, from: string, otherwise: string | undefined): GameState {
-  const key = `storylet:${from}`
-  const used = typeof state.flags[key] === 'number' ? (state.flags[key] as number) : 0
-  const eligible = game.scenes.filter((scene) => scene.drawnFrom?.includes(from) && holds(state, scene.when, game))
-  const drawn = weighted(eligible, (scene) => scene.weight, 'storylet', from, state.seed, state.turn, used)
-  const counted = { ...state, flags: { ...state.flags, [key]: used + 1 } }
-  if (drawn) return { ...counted, sceneId: drawn.id }
-  return otherwise ? { ...counted, sceneId: otherwise } : counted
+function after(before: GameState, ran: GameState, game: Game): GameState {
+  const cx = featureContext()
+  let next = fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects))
+  for (const step of afterSteps.triggers) next = step(before, next, game, cx)
+  next = runAfter(game, before, next)
+  for (const step of afterSteps.hooks) next = step(before, next, game, cx)
+  return noteShown(next, game)
 }
 
 /**
@@ -138,9 +85,7 @@ export function apply(
   // already in this engine's and this game's shape.
   const current = state
   try {
-    const ran = run(current, game, command)
-    const next = witnessed(current, fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects)))
-    return { state: noteShown(levelUps(current, runAfter(game, current, next), game), game), ok: true }
+    return { state: after(current, run(current, game, command), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, refused: error.detail }
@@ -170,46 +115,9 @@ function run(
   if (warning) refuse(warning)
   const custom = game.rules?.commands?.[command.type]
   if (custom) return custom(current, command) as GameState
-  switch (command.type) {
-    case 'activity':
-      return runActivity(current, game, command.id)
-    case 'scene':
-      return enterScene(current, game, command.id)
-    case 'choose':
-      return choose(current, game, command.id, rendered)
-    case 'leave':
-      return { ...current, sceneId: null }
-    case 'use':
-      return consumeItem(current, game, command.itemId)
-    case 'custom':
-      return pluginCommand(game, command.name)!.run(current, command.with ?? {})
-    case 'dismiss':
-      return dismiss(current, command.id)
-    case 'setting':
-      return { ...current, settings: { ...current.settings, [command.id]: command.value } }
-    case 'input': {
-      const input = inputById(game, command.id)!
-      const key = input.variable ?? input.id
-      return { ...current, flags: { ...current.flags, [key]: inputValue(input, command.value!) } }
-    }
-    default:
-      return refuse(say(game, 'notSupported'))
-  }
-}
-
-/**
- * Activities are content. The engine only knows how to charge for one and
- * apply what falls out — the reasons it can be refused live in the pack.
- */
-function runActivity(
-  state: GameState,
-  game: Game,
-  id: string,
-): GameState {
-  const activity = activityById(game, id)!
-  const next = payCost(state, game, activity.cost ?? {})
-  // Computed effects read the state as it was before the cost was paid.
-  return applyEffects(next, game, buildEffects(state, game, activity.effects ?? []))
+  const entry = commandEntry(command)
+  if (!entry) return refuse(say(game, 'notSupported'))
+  return entry.run(current, command, game, commandContext(rendered))
 }
 
 /**
@@ -220,7 +128,7 @@ function runActivity(
  * rules, or applied by a plugin through its context) does nothing: a turn
  * ending inside a turn's end would ask `rules.turn` again, and again.
  */
-function endTurn(state: GameState, game: Game, before: GameState = state): GameState {
+export function endTurn(state: GameState, game: Game, before: GameState = state): GameState {
   const next = state.turn + 1
   const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
   const begun = runEffects(
@@ -230,40 +138,6 @@ function endTurn(state: GameState, game: Game, before: GameState = state): GameS
     true,
   )
   return runHooks(game, 'turn', game.rules?.onTurn?.(begun) ?? begun, true)
-}
-
-function enterScene(
-  state: GameState,
-  _game: Game,
-  id: string,
-): GameState {
-  return { ...state, sceneId: id }
-}
-
-function choose(
-  state: GameState,
-  game: Game,
-  choiceId: string,
-  rendered: Rendering,
-): GameState {
-  const scene = sceneById(game, state.sceneId!)
-  if (!scene) return { ...state, sceneId: null }
-  const choice = rendered.scene()!.choices.find((entry) => entry.id === choiceId)!
-  const key = `${scene.id}/${choice.id}`
-  const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
-  return applyEffects(marked, game, choice.effects)
-}
-
-function consumeItem(
-  state: GameState,
-  game: Game,
-  itemId: string,
-): GameState {
-  const item = itemById(game, itemId)!
-  return applyEffects(state, game, [
-    { kind: 'item', id: itemId, by: -1 },
-    ...item.use!.effects,
-  ])
 }
 
 export function applyEffects(
@@ -291,148 +165,13 @@ export function runEffects(
   return next
 }
 
+/** One effect, by its kind's entry. A kind the engine doesn't have does nothing; the content checker reports it. */
 function applyEffect(
   state: GameState,
   game: Game,
   effect: Effect,
   ending: boolean,
 ): GameState {
-  switch (effect.kind) {
-    case 'custom': {
-      // A plugin the game no longer has does nothing, as an unknown custom effect does.
-      const fn = pluginEffect(game, effect.name, ending)
-      return fn ? fn(state, effect.with ?? {}) : state
-    }
-    case 'collect':
-      return collect(state, game, effect.to, effect.entry)
-    case 'discard':
-      return discard(state, effect.from, effect.id)
-    case 'notify': {
-      const { kind: _kind, ...notice } = effect
-      return notify(state, notice)
-    }
-    case 'stat': {
-      // A derived stat is worked out, never written: the loader reports the effect.
-      if (statDef(game, effect.key)?.derive !== undefined) return state
-      if (effect.of !== undefined) {
-        const entity = entityOf(state, effect.of)
-        if (!entity) return state
-        const to = clampStat(state, game, effect.key, (entity.stats[effect.key] ?? 0) + effect.by)
-        return writeEntity(state, effect.of, { ...entity, stats: { ...entity.stats, [effect.key]: to } })
-      }
-      const stats = {
-        ...state.stats,
-        [effect.key]: clampStat(state, game, effect.key, (state.stats[effect.key] ?? 0) + effect.by),
-      }
-      const after = { ...state, stats }
-      return game.rules?.onStat?.(state, after, effect.key, effect.by) ?? after
-    }
-    case 'setStat': {
-      if (statDef(game, effect.key)?.derive !== undefined) return state
-      if (effect.of !== undefined) {
-        const entity = entityOf(state, effect.of)
-        if (!entity) return state
-        const to = clampStat(state, game, effect.key, effect.to)
-        return writeEntity(state, effect.of, { ...entity, stats: { ...entity.stats, [effect.key]: to } })
-      }
-      const before = state.stats[effect.key] ?? 0
-      const to = clampStat(state, game, effect.key, effect.to)
-      const after = { ...state, stats: { ...state.stats, [effect.key]: to } }
-      return game.rules?.onStat?.(state, after, effect.key, to - before) ?? after
-    }
-    case 'storylineFlag': {
-      const cur = storylineOf(state, effect.id)
-      return {
-        ...state,
-        storylines: {
-          ...state.storylines,
-          [effect.id]: {
-            ...cur,
-            flags: { ...cur.flags, [effect.key]: effect.value },
-          },
-        },
-      }
-    }
-    case 'flag': {
-      const entity = effect.of === undefined ? undefined : entityOf(state, effect.of)
-      if (effect.of !== undefined && !entity) return state
-      const flags = entity ? entity.flags : state.flags
-      let value: FlagValue
-      if ('add' in effect) {
-        const was = flags[effect.key]
-        value = (typeof was === 'number' ? was : 0) + effect.add
-      } else value = effect.value
-      if (entity) return writeEntity(state, effect.of!, { ...entity, flags: { ...flags, [effect.key]: value } })
-      return { ...state, flags: { ...state.flags, [effect.key]: value } }
-    }
-    case 'create': {
-      const kind = state.entities?.[effect.of] ?? {}
-      const made = (id: string) => writeEntity(state, `${effect.of}:${id}`, newEntity(game, effect.of, effect.entity))
-      // A given id is used as it is, unless it is taken, or a whole number that would sort first.
-      if (effect.entity.id !== undefined) {
-        if (kind[effect.entity.id] || /^\d+$/.test(effect.entity.id)) return state
-        // Back after being removed: no longer gone for good.
-        const back = made(effect.entity.id)
-        const ref = `${effect.of}:${effect.entity.id}`
-        return back.removed?.includes(ref) ? { ...back, removed: back.removed.filter((entry) => entry !== ref) } : back
-      }
-      // The next free number, `#1`, `#2`, never reused. Not a bare number: object keys
-      // that look like numbers sort before the rest, and entities keep the order they came.
-      let n = state.created?.[effect.of] ?? 0
-      do n += 1
-      while (kind[`#${n}`])
-      return { ...made(`#${n}`), created: { ...state.created, [effect.of]: n } }
-    }
-    case 'remove': {
-      if (!entityOf(state, effect.of)) return state
-      const gone = removeEntity(state, effect.of)
-      // A declared one stays gone when the save is next loaded.
-      const declared = (game.entities ?? []).some((entity) => `${entity.of}:${entity.id}` === effect.of)
-      return declared && !(gone.removed ?? []).includes(effect.of) ? { ...gone, removed: [...(gone.removed ?? []), effect.of] } : gone
-    }
-    case 'each': {
-      // Who it runs for is decided before it starts: one created on the way is not visited, one removed is skipped.
-      let next = state
-      for (const ref of entitiesOf(state, effect.of)) {
-        if (!entityOf(next, ref)) continue
-        if (effect.where && !holds(next, bindCurrent(effect.where, ref), game)) continue
-        next = runEffects(next, game, buildEffects(next, game, bindCurrent(effect.effects, ref)), ending)
-      }
-      return next
-    }
-    case 'scene':
-      if ('from' in effect) return drawStorylet(state, game, effect.from, effect.otherwise)
-      return { ...state, sceneId: effect.id }
-    case 'item': {
-      const count = Math.max(0, (state.items[effect.id] ?? 0) + effect.by)
-      return { ...state, items: { ...state.items, [effect.id]: count } }
-    }
-    case 'phase':
-      return { ...state, phase: effect.value }
-    case 'closeStoryline': {
-      const cur = storylineOf(state, effect.id)
-      return {
-        ...state,
-        storylines: {
-          ...state.storylines,
-          [effect.id]: {
-            ...cur,
-            closedUntil: state.turn + effect.turns,
-          },
-        },
-      }
-    }
-    case 'audio':
-      return setChannel(state, effect.channel, effect.track)
-    case 'sound':
-      return soundCue(state, effect.track)
-    case 'turn': {
-      if (ending) return state
-      let next = state
-      for (let n = 0; n < (effect.by ?? 1); n += 1) next = endTurn(next, game)
-      return next
-    }
-    default:
-      return state
-  }
+  const entry = effectEntry(effect)
+  return entry ? entry.apply(state, effect, game, effectContext(ending)) : state
 }

@@ -16,7 +16,7 @@ const effects: Effect[] = [
 
 Effects apply in order, each to the state the one before it left. An effect that can't apply does nothing and the rest still run, so an effect never refuses a command. The command around it can refuse first, though. For example, a plugin guard can refuse a choice before any of its effects run, as the [calendar](/plugins/calendar#the-guard) does for one that would pass time past dawn. See [`choose`](/reference/commands#choose).
 
-An effect with an unknown `kind` does nothing.
+An effect with an unknown `kind` does nothing, and the [content checker](/reference/checks#in-an-effect) reports it.
 
 ## applyEffects
 

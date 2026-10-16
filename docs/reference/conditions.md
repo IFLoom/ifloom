@@ -79,7 +79,7 @@ type Condition =
   | PluginCall
 ```
 
-**Gotcha.** Put one kind in each object. The engine looks for the keys in the order listed above and uses the first it finds, so `{ flag: 'x', has: 'scarf' }` only tests the flag. Combine them with `all`. The exception is a call. After `all`, `any` and `not`, a `{ custom }` or a [short call](#plugin-shorthand) is recognised before anything else.
+**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ flag: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
 
 ### all, any, not
 

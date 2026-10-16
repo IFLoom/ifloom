@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Game } from '../../src/game.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
-import { poolPick } from '../../src/media.ts'
+import { poolPick } from '../../src/features/media.ts'
+import { featureContext } from '../../src/core.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { pick, weighted } from '../../src/random.ts'
@@ -76,7 +77,7 @@ describe('weights in content', () => {
       ...fixture(),
       media: { pools: { door: [{ src: 'door/blue.jpg', weight: 9 }, { src: 'door/red.jpg' }] } },
     }
-    const counts = tally(seeds.map((seed) => poolPick(startingState(game, { seed }), game, { pool: 'door', owner: 'flat', slot: '0' })!))
+    const counts = tally(seeds.map((seed) => poolPick(startingState(game, { seed }), game, { pool: 'door', owner: 'flat', slot: '0' }, featureContext())!))
     expect(counts['door/blue.jpg']).toBeGreaterThan(320)
     expect(counts['door/red.jpg']).toBeGreaterThan(10)
     const zero: Game = { ...game, media: { pools: { door: [{ src: 'door/blue.jpg', weight: 0 }] } } }

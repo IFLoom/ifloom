@@ -11,14 +11,15 @@ import { say } from './strings.ts'
 import { pluginButtons, pluginCommand, pluginSpeaker, type SpeakerView, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene } from './scene.ts'
 import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
-import { formatStat, statDef } from './stats.ts'
+import { formatStat, statDef } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Game, type SceneMedia } from './game.ts'
 import { activityById } from './activity.ts'
 import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './sceneBody.ts'
-import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './media.ts'
-import { audioTracks, audioView, type AudioView } from './audio.ts'
+import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
+import { audioTracks, audioView, type AudioView } from './features/audio.ts'
+import { featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
 /**
@@ -115,7 +116,8 @@ export function screen(state: GameState, game: Game): Screen {
   const room = dialogue ? null : standing(state, game, drawing)
   const actions = idle ? idleActions(state, game, drawing) : []
   const plugins = pluginViews(state, game, picks)
-  const tracks = audioTracks(state, game, dialogue?.audio)
+  const cx = featureContext()
+  const tracks = audioTracks(state, game, dialogue?.audio, cx)
   const beats = dialogue ? dialogue.scene.beats : null
   return {
     scene: dialogue?.scene ?? room!,
@@ -124,7 +126,7 @@ export function screen(state: GameState, game: Game): Screen {
     stage: dialogue?.stage ?? null,
     plugins,
     picks,
-    audio: { ...audioView(state, game, tracks, beats), tracks },
+    audio: { ...audioView(state, game, tracks, beats, cx), tracks },
   }
 }
 
@@ -164,7 +166,7 @@ function beatsOf(
   picks: Record<string, string>,
 ): SceneBeat[] {
   const placed = (media ?? []).flatMap((item, index) => {
-    const shown = resolveMedia(item, state, game, owner, `media.${index}`, picks)
+    const shown = resolveMedia(item, state, game, owner, `media.${index}`, featureContext(), picks)
     return shown ? [{ at: shown.at ?? 'end', beats: parseBeats(mediaMarkup(shown)) }] : []
   })
   return [
@@ -208,7 +210,7 @@ function drawStage(
   stage.layers.forEach((layer, index) => {
     if (!holds(state, layer.when, game)) return
     const src = layer.pool !== undefined
-      ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, drawing.picks)
+      ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
       : (layer.src ?? null)
     if (!src) return
     const video = Boolean(layer.video) || mediaKind(src) === 'video'
@@ -378,7 +380,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   // whatever single block happens to share the scene's id.
   const rendered = drawing.rendered.scene()!
   // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
-  const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', drawing.picks)
+  const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
   const beats = beatsOf(state, game, state.sceneId, body, rendered.media, drawing.picks)
   const choices: ScreenChoice[] = rendered.choices
     .filter((choice) => choice.visible !== false)

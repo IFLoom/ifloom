@@ -23,7 +23,7 @@ export type {
   StoryletFields,
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
-export { settingValue } from './settings.ts'
+export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels } from './stats.ts'
 export {
   clampStat,
@@ -76,11 +76,11 @@ export type { SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, mediaKind, parseBeats } from './sceneBody.ts'
 
 // Media: pools, and the stage
-export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './media.ts'
+export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
 
 // Audio
-export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './audio.ts'
-export { audioChannels, audioSrc } from './audio.ts'
+export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'
+export { audioChannels, audioSrc } from './features/audio.ts'
 export { sceneContext } from './context.ts'
 
 // The state

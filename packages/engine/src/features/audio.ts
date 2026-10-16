@@ -2,16 +2,13 @@
  * Audio, as data. The engine never plays a sound: it says what should be
  * playing on each channel and which one-shot sounds are due, and a player
  * (`@ifloom/audio`) does the playing. Everything here is worked out from the
- * state, so the same save always asks for the same sounds.
+ * state, so the same save always asks for the same sounds (ADR 0004).
  */
-import { sceneContext } from './context.ts'
-import type { Game } from './game.ts'
-import { sceneById } from './game.ts'
-import { pluginAudio } from './plugin.ts'
-import { roll, weighted } from './random.ts'
-import type { SceneBeat } from './sceneBody.ts'
+import type { Game } from '../game.ts'
+import type { SceneBeat } from '../sceneBody.ts'
+import type { GameState } from '../types.ts'
+import { defineFeature, type FeatureContext } from './feature.ts'
 import { settingAffects, settingById } from './settings.ts'
-import type { GameState } from './types.ts'
 
 /** A sound file the game ships, by id in `game.audio.tracks`. */
 export type TrackDef = {
@@ -114,6 +111,40 @@ export type AudioCue = {
   volume: number
 }
 
+/** What the audio feature adds, as types. */
+export type AudioShape = {
+  state: {
+    /** What effects have put on the audio channels, the last few sounds, and the count of scenes entered. */
+    audio: AudioState
+  }
+  effects: {
+    /**
+     * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', track: 'calm' }`.
+     * `track: null` silences the channel; leaving `track` out hands it back to the place or the game's default.
+     */
+    audio: { kind: 'audio'; channel: string; track?: string | null }
+    /** Play a sound once, on its track's channel. */
+    sound: { kind: 'sound'; track: string }
+  }
+  game: {
+    /** The game's sounds and channels. No audio if left out. */
+    audio?: GameAudio
+  }
+  pack: {
+    /**
+     * Sounds, channels and defaults over the game's own. A later pack's track
+     * or channel replaces an earlier one's by id; its `mute` and `default`
+     * entries win too.
+     */
+    audio?: Partial<GameAudio>
+  }
+  view: {
+    /** What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. */
+    audio: AudioView
+  }
+  lists: 'track' | 'channel' | 'audio'
+}
+
 /** What `view.audio` holds. */
 export type AudioView = {
   /** Every channel, resolved: the open scene's choice, then an effect's, then a plugin's, then the game's default. */
@@ -187,25 +218,20 @@ export function setChannel(state: GameState, channel: string, track: string | nu
   return { ...state, audio: { ...audio, channels } }
 }
 
-/** One more scene entered. */
+/** One more scene entered: its sounds get keys of their own. */
 export function sceneShown(state: GameState): GameState {
   const audio = state.audio ?? emptyAudio()
   return { ...state, audio: { ...audio, shown: audio.shown + 1 } }
 }
 
-/** What the open scene puts on its channels, if a scene is open and says. Renders it: for a caller with no `screen`. */
-function sceneAudio(state: GameState, game: Game): Record<string, string | null> | undefined {
-  if (!state.sceneId) return undefined
-  return sceneById(game, state.sceneId)?.render(state, sceneContext(state, game)).audio
-}
 
 /**
  * The track on each background channel, highest first: the open scene's,
  * an effect's, a plugin's, the game's default. A null at any of these is
  * silence, and nothing below it is asked.
  */
-function resolve(state: GameState, game: Game, scene: Record<string, string | null> | undefined): Record<string, string | null> {
-  const layers = [scene, state.audio?.channels, pluginAudio(game, state), game.audio?.default]
+function resolve(state: GameState, game: Game, scene: Record<string, string | null> | undefined, cx: FeatureContext): Record<string, string | null> {
+  const layers = [scene, state.audio?.channels, cx.pluginAudio(game, state), game.audio?.default]
   const out: Record<string, string | null> = {}
   for (const [id, def] of Object.entries(audioChannels(game))) {
     if (def.mode !== 'background') continue
@@ -227,8 +253,8 @@ function resolve(state: GameState, game: Game, scene: Record<string, string | nu
  * `scene` is what the open scene puts on its channels, when the caller has
  * rendered it. Empty when the game has no audio.
  */
-export function audioTracks(state: GameState, game: Game, scene: Record<string, string | null> | undefined): Record<string, string | null> {
-  return game.audio ? resolve(state, game, scene) : {}
+export function audioTracks(state: GameState, game: Game, scene: Record<string, string | null> | undefined, cx: FeatureContext): Record<string, string | null> {
+  return game.audio ? resolve(state, game, scene, cx) : {}
 }
 
 /**
@@ -237,10 +263,10 @@ export function audioTracks(state: GameState, game: Game, scene: Record<string, 
  * a shuffled playlist draws its order from the turn it started, and replays
  * exactly. Without `tracks`, the open scene is rendered to work them out.
  */
-export function noteStarted(state: GameState, game: Game, tracks?: Record<string, string | null>): GameState {
+export function noteStarted(state: GameState, game: Game, tracks: Record<string, string | null> | undefined, cx: FeatureContext): GameState {
   if (!game.audio) return state
   const audio = state.audio ?? emptyAudio()
-  const now = tracks ?? resolve(state, game, sceneAudio(state, game))
+  const now = tracks ?? resolve(state, game, cx.sceneView(state, game)?.audio, cx)
   let started = audio.started
   for (const [channel, track] of Object.entries(now)) {
     if (track === null) {
@@ -269,11 +295,11 @@ function entryWeight(entry: PlaylistDef['playlist'][number]): number {
  * A weighted shuffle drawn from these parts: the first by weight from all of
  * them, the next by weight from the rest, and so on.
  */
-function weightedOrder<T>(items: readonly T[], weightOf: (item: T) => number, ...parts: (string | number)[]): T[] {
+function weightedOrder<T>(cx: FeatureContext, items: readonly T[], weightOf: (item: T) => number, ...parts: (string | number)[]): T[] {
   const left = [...items]
   const out: T[] = []
   while (left.length) {
-    const next = weighted(left, weightOf, ...parts, out.length) ?? left[0]
+    const next = cx.weighted(left, weightOf, ...parts, out.length) ?? left[0]
     out.push(next)
     left.splice(left.indexOf(next), 1)
   }
@@ -281,16 +307,16 @@ function weightedOrder<T>(items: readonly T[], weightOf: (item: T) => number, ..
 }
 
 /** A shuffle drawn from these parts: the same parts, the same order. */
-function shuffled<T>(items: readonly T[], ...parts: (string | number)[]): T[] {
+function shuffled<T>(cx: FeatureContext, items: readonly T[], ...parts: (string | number)[]): T[] {
   const out = [...items]
   for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = roll(i + 1, ...parts, i)
+    const j = cx.roll(i + 1, ...parts, i)
     ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out
 }
 
-function channelView(state: GameState, game: Game, id: string, def: ChannelDef, wanted: string | null): AudioChannelView {
+function channelView(state: GameState, game: Game, id: string, def: ChannelDef, wanted: string | null, cx: FeatureContext): AudioChannelView {
   const background = def.mode === 'background'
   const base: AudioChannelView = {
     mode: def.mode,
@@ -316,8 +342,8 @@ function channelView(state: GameState, game: Game, id: string, def: ChannelDef, 
     const began = state.audio?.started?.[id]
     const turn = began?.track === wanted ? began.turn : state.turn
     entries = entries.some((member) => entryWeight(member) !== 1)
-      ? weightedOrder(entries, entryWeight, 'playlist', id, wanted, state.seed, turn)
-      : shuffled(entries, 'playlist', id, wanted, state.seed, turn)
+      ? weightedOrder(cx, entries, entryWeight, 'playlist', id, wanted, state.seed, turn)
+      : shuffled(cx, entries, 'playlist', id, wanted, state.seed, turn)
   }
   const tracks = entries.map(entryTrack)
   const defs = tracks.map((member) => trackOf(game, member) as TrackDef)
@@ -343,11 +369,12 @@ export function audioView(
   game: Game,
   tracks: Record<string, string | null>,
   beats: readonly SceneBeat[] | null,
+  cx: FeatureContext,
 ): AudioView {
   if (!game.audio) return { channels: {}, cues: [], muteSetting: null }
   const channels: Record<string, AudioChannelView> = {}
   for (const [id, def] of Object.entries(audioChannels(game))) {
-    channels[id] = channelView(state, game, id, def, tracks[id] ?? null)
+    channels[id] = channelView(state, game, id, def, tracks[id] ?? null, cx)
   }
   const audio = state.audio ?? emptyAudio()
   const cues: AudioCue[] = []
@@ -449,3 +476,91 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
   for (const what of placementProblems(game, audio.default ?? {})) out.push({ where: 'audio default', what })
   return out
 }
+
+export const audio = defineFeature<AudioShape>({
+  name: 'audio',
+  // A channel's volume and the mute switch are ui settings.
+  requires: ['settings'],
+  state: {
+    // The opening scene is the first showing.
+    audio: { start: (game) => ({ ...emptyAudio(), shown: game.introScene ? 1 : 0 }), load: emptyAudio },
+  },
+  // What the opening screen starts playing, and when.
+  started: (state, game, cx) => noteStarted(state, game, undefined, cx),
+  effects: {
+    audio: {
+      apply: (state, effect) => setChannel(state, effect.channel, effect.track),
+      references: (effect) => [{ channel: effect.channel, track: effect.track }],
+    },
+    sound: {
+      apply: (state, effect) => soundCue(state, effect.track),
+      references: (effect) => [{ sound: effect.track }],
+    },
+  },
+  // Merged by id: tracks, and channels field by field; the last `mute` and each channel's last `default` win.
+  pack: {
+    merge: () => {
+      const tracks = new Map<string, { value: TrackDef | PlaylistDef; from: string }>()
+      const channels = new Map<string, { value: ChannelDef; from: string }>()
+      const defaults: Record<string, string> = {}
+      let mute: string | undefined
+      let audioFrom = 'base'
+      let hasAudio = false
+      const add = (from: string, audio: Partial<GameAudio> | undefined) => {
+        if (!audio) return
+        hasAudio = true
+        for (const [id, value] of Object.entries(audio.tracks ?? {})) tracks.set(id, { value, from })
+        for (const [id, value] of Object.entries(audio.channels ?? {})) channels.set(id, { value: { ...channels.get(id)?.value, ...value }, from })
+        if (audio.mute !== undefined || audio.default !== undefined) audioFrom = from
+        if (audio.mute !== undefined) mute = audio.mute
+        Object.assign(defaults, audio.default ?? {})
+      }
+      return {
+        base: (game) => add('base', game.audio),
+        add: (pack, from) => add(from, pack.audio),
+        finish: (game) => {
+          if (!hasAudio) {
+            delete game.audio
+            return
+          }
+          const audio: GameAudio = { tracks: Object.fromEntries([...tracks].map(([id, entry]) => [id, entry.value])) }
+          if (channels.size) audio.channels = Object.fromEntries([...channels].map(([id, entry]) => [id, entry.value]))
+          if (mute !== undefined) audio.mute = mute
+          if (Object.keys(defaults).length) audio.default = defaults
+          game.audio = audio
+        },
+        from: (list, id) => {
+          if (list === 'audio') return audioFrom
+          if (id === undefined) return undefined
+          return (list === 'track' ? tracks : channels).get(id)?.from
+        },
+      }
+    },
+  },
+  lists: ['track', 'channel', 'audio'],
+  // The manifest and its files.
+  check: (game, tools) => {
+    for (const { where, what } of manifestProblems(game)) {
+      const cut = where.indexOf(' ')
+      const [list, id] = [where.slice(0, cut), where.slice(cut + 1)]
+      tools.problem(list === 'track' || list === 'channel' ? { list, id } : { list: 'audio' }, where, what)
+    }
+    for (const [id, track] of Object.entries(game.audio?.tracks ?? {})) {
+      if (!('playlist' in track)) tools.file(`track ${id}`, 'audio', audioSrc(track.src))
+    }
+  },
+  view: (_state, _game, shown) => {
+    const { tracks: _tracks, ...audio } = shown.audio as AudioView & { tracks: unknown }
+    return { audio }
+  },
+  // A new showing: its sounds get keys of their own. Where `witnessed` counted it, straight after the triggers.
+  afterCommand: {
+    at: 'triggers',
+    run: (before, after) => (after.sceneId && after.sceneId !== before.sceneId ? sceneShown(after) : after),
+  },
+  // What each background channel started playing, from the new state's screen. Only a game with audio.
+  fromScreen: {
+    wants: (game) => Boolean(game.audio),
+    record: (state, shown, game, cx) => noteStarted(state, game, shown.audio.tracks, cx),
+  },
+})

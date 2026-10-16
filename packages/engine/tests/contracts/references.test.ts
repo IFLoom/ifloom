@@ -1,34 +1,29 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Command, Effect } from '../../src/types.ts'
-import {
-  COMMAND_KINDS,
-  CONDITION_KINDS,
-  EFFECT_KINDS,
-  commandKindsComplete,
-  commandTable,
-  conditionKindsComplete,
-  conditionTable,
-  effectKindsComplete,
-  effectTable,
-} from '../../src/references.ts'
+import type { Command, Condition, ConditionKind, Effect } from '../../src/types.ts'
+import { COMMAND_KINDS, CONDITION_KINDS, EFFECT_KINDS, KINDS } from '../../src/core.ts'
 
 /**
- * Every kind of condition, effect and command has an entry in the reference
- * table, so the content checker can't forget what a new one names. The lists
- * are held to the type unions when this compiles, and the tables to the lists
- * when it runs.
+ * Every kind of condition, effect and command has an entry that says what it
+ * names, so the content checker can't forget what a new one names. The
+ * entries are typed complete (core.ts, `KINDS`), so a gap fails to compile;
+ * this holds the lists to the type unions, and the entries to the lists.
  */
 describe('the reference table', () => {
   it('covers every condition, effect and command kind the types declare', () => {
-    // Each of these is typed `true` only while its list covers its union; a gap fails to compile.
-    expect([conditionKindsComplete, effectKindsComplete, commandKindsComplete]).toEqual([true, true, true])
     expectTypeOf<(typeof EFFECT_KINDS)[number]>().toEqualTypeOf<Effect['kind']>()
     expectTypeOf<(typeof COMMAND_KINDS)[number]>().toEqualTypeOf<Command['type']>()
+    expectTypeOf<(typeof CONDITION_KINDS)[number]>().toEqualTypeOf<ConditionKind>()
+    // Every condition but a plugin's short call has a key from the list.
+    type Uncovered<C> = C extends unknown ? (keyof C extends `${string}/${string}` ? never : Extract<keyof C, ConditionKind> extends never ? C : never) : never
+    expectTypeOf<Uncovered<Condition>>().toBeNever()
   })
 
-  it('has one entry for each kind, and no others', () => {
-    expect(Object.keys(conditionTable).sort()).toEqual([...CONDITION_KINDS].sort())
-    expect(Object.keys(effectTable).sort()).toEqual([...EFFECT_KINDS].sort())
-    expect(Object.keys(commandTable).sort()).toEqual([...COMMAND_KINDS].sort())
+  it('has one entry for each kind, each saying what it names', () => {
+    for (const table of [KINDS.conditions, KINDS.effects, KINDS.commands]) {
+      for (const entry of Object.values(table)) expect(typeof entry.references).toBe('function')
+    }
+    expect(Object.keys(KINDS.conditions).sort()).toEqual([...CONDITION_KINDS].sort())
+    expect(Object.keys(KINDS.effects).sort()).toEqual([...EFFECT_KINDS].sort())
+    expect(Object.keys(KINDS.commands).sort()).toEqual([...COMMAND_KINDS].sort())
   })
 })

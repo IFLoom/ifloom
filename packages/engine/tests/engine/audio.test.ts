@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { audioChannels, audioSrc, type GameAudio } from '../../src/audio.ts'
+import { audioChannels, audioSrc, type GameAudio } from '../../src/features/audio.ts'
 import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'

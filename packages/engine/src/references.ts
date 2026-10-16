@@ -3,19 +3,17 @@
  * ids and files it points at. The content checker (`check.ts`) resolves these
  * against the game; nothing here knows whether a name exists.
  *
- * The tables are built from one small table per feature, so a feature can
- * later own its entries in its own module. The merged tables are typed as
- * complete: a new condition key, effect kind or command type that has no entry
- * here fails to compile.
+ * What each kind names is its entry's `references`, in the core's table or
+ * its feature's (`KINDS` in core.ts), which are typed complete: a new
+ * condition key, effect kind or command type with no entry fails to compile.
  */
-import type { Condition } from './condition.ts'
 import { customCall, type EffectRef } from './custom.ts'
-import { anyOf, bindCurrent, parseRef } from './entities.ts'
 import type { SceneMedia } from './game.ts'
-import type { MediaStage } from './media.ts'
+import type { MediaStage } from './features/media.ts'
 import type { PluginArgs } from './plugin.ts'
 import type { Block, DataScene } from './scene.ts'
-import type { Command, Effect, FlagValue } from './types.ts'
+import type { Command, Condition, Effect, FlagValue } from './types.ts'
+import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 
 /**
  * One thing a piece of content names, for the content checker to resolve.
@@ -93,309 +91,11 @@ export type Reference =
   /** More references, whose problems are worded as `label: what`. */
   | { within: string; refs: readonly Reference[] }
 
-/** The keys that tell one kind of condition from another. A plugin's short call (`{ 'quests/done': … }`) is read as `custom`. */
-export const CONDITION_KINDS = [
-  'all',
-  'any',
-  'not',
-  'flag',
-  'setting',
-  'chose',
-  'seen',
-  'since',
-  'storylineFlag',
-  'stat',
-  'count',
-  'entity',
-  'tier',
-  'level',
-  'storyline',
-  'counter',
-  'item',
-  'has',
-  'collection',
-  'scene',
-  'turn',
-  'phase',
-  'custom',
-] as const
-
-export type ConditionKind = (typeof CONDITION_KINDS)[number]
-
-/** The condition a key stands for. */
-export type ConditionOf<K extends ConditionKind> = Extract<Condition, Record<K, unknown>>
-
-export const EFFECT_KINDS = [
-  'stat',
-  'custom',
-  'setStat',
-  'storylineFlag',
-  'flag',
-  'create',
-  'remove',
-  'each',
-  'scene',
-  'item',
-  'phase',
-  'closeStoryline',
-  'turn',
-  'collect',
-  'discard',
-  'notify',
-  'audio',
-  'sound',
-] as const satisfies readonly Effect['kind'][]
-
-export const COMMAND_KINDS = [
-  'start',
-  'activity',
-  'scene',
-  'choose',
-  'leave',
-  'use',
-  'dismiss',
-  'input',
-  'setting',
-  'custom',
-] as const satisfies readonly Command['type'][]
-
-export type ConditionTable = { [K in ConditionKind]: (condition: ConditionOf<K>) => Reference[] }
-export type EffectTable = { [K in Effect['kind']]: (effect: Extract<Effect, { kind: K }>) => Reference[] }
-export type CommandTable = { [K in Command['type']]: (command: Extract<Command, { type: K }>) => Reference[] }
-
-/** One feature's entries. */
-export type FeatureReferences = {
-  conditions?: Partial<ConditionTable>
-  effects?: Partial<EffectTable>
-  commands?: Partial<CommandTable>
-}
-
-// Compile-time completeness. Each line is `true` only while the lists cover the unions.
-
-/** Every condition but a plugin's short call has a key from the list. */
-type Uncovered<C> = C extends unknown ? (keyof C extends `${string}/${string}` ? never : Extract<keyof C, ConditionKind> extends never ? C : never) : never
-export const conditionKindsComplete: [Uncovered<Condition>] extends [never] ? true : false = true
-export const effectKindsComplete: [Exclude<Effect['kind'], (typeof EFFECT_KINDS)[number]>] extends [never] ? true : false = true
-export const commandKindsComplete: [Exclude<Command['type'], (typeof COMMAND_KINDS)[number]>] extends [never] ? true : false = true
-
-/** The kind an `of` names, when it names one rather than `'$'`. */
-function ofKind(ref: string | undefined): Reference[] {
-  const parts = ref === undefined ? undefined : parseRef(ref)
-  return parts ? [{ kind: parts.kind }] : []
-}
-
-const none = (): Reference[] => []
-
-// One table per feature.
-
-/** Combining conditions, the clock and the phase. */
-const flow = {
-  conditions: {
-    all: (condition) => condition.all.map((when) => ({ when })),
-    any: (condition) => condition.any.map((when) => ({ when })),
-    not: (condition) => [{ when: condition.not }],
-    turn: none,
-    phase: none,
-  },
-  effects: {
-    phase: none,
-    turn: none,
-  },
-  commands: {
-    start: none,
-    leave: none,
-    dismiss: none,
-  },
-} satisfies FeatureReferences
-
-/** Variables, the game's and entities'. */
-const variables = {
-  conditions: {
-    flag: (condition) => ofKind(condition.of),
-  },
-  effects: {
-    flag: (effect) => ofKind(effect.of),
-  },
-} satisfies FeatureReferences
-
-const scenes = {
-  conditions: {
-    chose: (condition) => [{ choice: condition.chose }],
-    seen: (condition) => [{ scene: condition.seen, as: 'gate' }],
-    since: (condition) => [{ scene: condition.since, as: 'gate' }],
-    scene: (condition) => condition.scene.map((scene) => ({ scene, as: 'gate' as const })),
-  },
-  effects: {
-    scene: (effect) => {
-      if ('from' in effect) return [{ drawnFrom: effect.from }, ...(effect.otherwise !== undefined ? [{ scene: effect.otherwise, as: 'go' as const }] : [])]
-      return effect.id === null ? [] : [{ scene: effect.id, as: 'go' }]
-    },
-  },
-  commands: {
-    scene: (command) => [{ scene: command.id, as: 'open' }],
-    choose: none,
-  },
-} satisfies FeatureReferences
-
-const stats = {
-  conditions: {
-    stat: (condition) => [{ stat: condition.stat, of: condition.of }, ...ofKind(condition.of)],
-    level: (condition) => [{ stat: condition.level, of: condition.of }, ...ofKind(condition.of)],
-    tier: (condition) => [{ stat: condition.tier }],
-  },
-  effects: {
-    stat: (effect) => [{ stat: effect.key, of: effect.of, writes: true }, ...ofKind(effect.of)],
-    setStat: (effect) => [{ stat: effect.key, of: effect.of, writes: true }, ...ofKind(effect.of)],
-  },
-} satisfies FeatureReferences
-
-const entities = {
-  conditions: {
-    count: (condition) => [{ kind: condition.count }, { when: bindCurrent(condition.where, anyOf(condition.count)) }],
-    entity: (condition) => ofKind(condition.entity),
-  },
-  effects: {
-    create: (effect) => [{ kind: effect.of }, ...Object.keys(effect.entity.stats ?? {}).map((stat) => ({ stat, starts: effect.of }))],
-    remove: (effect) => ofKind(effect.of),
-    each: (effect) => {
-      // Inside, `'$'` is one of the kind it runs over.
-      const one = anyOf(effect.of)
-      return [{ kind: effect.of }, { within: `in each ${effect.of}`, refs: [{ when: bindCurrent(effect.where, one) }, { effects: bindCurrent(effect.effects, one) }] }]
-    },
-  },
-} satisfies FeatureReferences
-
-const storylines = {
-  conditions: {
-    storylineFlag: (condition) => [{ storyline: condition.storylineFlag.storyline }],
-    counter: (condition) => [{ storyline: condition.counter.storyline }],
-    storyline: (condition) => [{ storyline: condition.storyline }],
-  },
-  effects: {
-    storylineFlag: (effect) => [{ storyline: effect.id }],
-    closeStoryline: (effect) => [{ storyline: effect.id }],
-  },
-} satisfies FeatureReferences
-
-const items = {
-  conditions: {
-    item: (condition) => [{ item: condition.item }],
-    has: (condition) => [{ item: condition.has }],
-  },
-  effects: {
-    item: (effect) => [{ item: effect.id }],
-  },
-  commands: {
-    use: (command) => [{ item: command.itemId }],
-  },
-} satisfies FeatureReferences
-
-const collections = {
-  conditions: {
-    collection: (condition) => [{ collection: condition.collection }],
-  },
-  effects: {
-    collect: (effect) => [
-      { collection: effect.to },
-      ...(effect.entry.text !== undefined ? [{ prose: effect.entry.text }] : []),
-      ...(effect.entry.image !== undefined ? [{ picture: effect.entry.image, asWritten: true }] : []),
-    ],
-    discard: (effect) => [{ collection: effect.from }],
-  },
-} satisfies FeatureReferences
-
-const notices = {
-  effects: {
-    notify: (effect) => [
-      ...(effect.text !== undefined ? [{ prose: effect.text }] : []),
-      ...(effect.image !== undefined ? [{ picture: effect.image, asWritten: true }] : []),
-    ],
-  },
-} satisfies FeatureReferences
-
-const audio = {
-  effects: {
-    audio: (effect) => [{ channel: effect.channel, track: effect.track }],
-    sound: (effect) => [{ sound: effect.track }],
-  },
-} satisfies FeatureReferences
-
-const settings = {
-  conditions: {
-    setting: (condition) => [{ setting: condition.setting, is: condition.is }],
-  },
-  commands: {
-    setting: (command) => [{ setting: command.id, is: command.value }],
-  },
-} satisfies FeatureReferences
-
-const actions = {
-  commands: {
-    activity: (command) => [{ activity: command.id }],
-    input: (command) => [{ input: command.id }],
-  },
-} satisfies FeatureReferences
-
-/** The game's named functions and plugins'. */
-const custom = {
-  conditions: {
-    custom: (condition) => [{ call: 'conditions', name: condition.custom, with: condition.with }],
-  },
-  effects: {
-    custom: (effect) => [{ call: 'effects', name: effect.name, with: effect.with, long: true }],
-  },
-  commands: {
-    custom: (command) => [{ call: 'commands', name: command.name, with: command.with }],
-  },
-} satisfies FeatureReferences
-
-/** What each kind of condition names, by the key that tells it apart. */
-export const conditionTable: ConditionTable = {
-  ...flow.conditions,
-  ...variables.conditions,
-  ...scenes.conditions,
-  ...stats.conditions,
-  ...entities.conditions,
-  ...storylines.conditions,
-  ...items.conditions,
-  ...collections.conditions,
-  ...settings.conditions,
-  ...custom.conditions,
-}
-
-/** What each kind of effect names. */
-export const effectTable: EffectTable = {
-  ...flow.effects,
-  ...variables.effects,
-  ...scenes.effects,
-  ...stats.effects,
-  ...entities.effects,
-  ...storylines.effects,
-  ...items.effects,
-  ...collections.effects,
-  ...notices.effects,
-  ...audio.effects,
-  ...custom.effects,
-}
-
-/** What each type of command names. */
-export const commandTable: CommandTable = {
-  ...flow.commands,
-  ...scenes.commands,
-  ...items.commands,
-  ...settings.commands,
-  ...actions.commands,
-  ...custom.commands,
-}
-
 /** What a condition names, one level down: nested conditions come back as `{ when }`. */
 export function conditionReferences(condition: Condition | undefined): Reference[] {
   if (!condition) return []
-  const call = customCall(condition)
-  if (call) return [{ call: 'conditions', name: call.custom, with: call.with }]
-  const key = Object.keys(condition).find((name): name is ConditionKind => Object.hasOwn(conditionTable, name))
-  if (!key) return []
-  return (conditionTable[key] as (entry: Condition) => Reference[])(condition)
+  // A condition with no kind key, or several, names nothing; the checker reports its shape.
+  return conditionEntry(condition)?.references(condition) ?? []
 }
 
 /** What one effect names, in either form. */
@@ -403,14 +103,12 @@ export function effectReferences(ref: EffectRef): Reference[] {
   const call = customCall(ref)
   if (call) return [{ call: 'effects', name: call.custom, with: call.with }]
   const effect = ref as Effect
-  const entry = Object.hasOwn(effectTable, effect.kind) ? effectTable[effect.kind] : undefined
-  return entry ? (entry as (effect: Effect) => Reference[])(effect) : []
+  return effectEntry(effect)?.references(effect) ?? []
 }
 
 /** What a command names. */
 export function commandReferences(command: Command): Reference[] {
-  const entry = Object.hasOwn(commandTable, command.type) ? commandTable[command.type] : undefined
-  return entry ? (entry as (command: Command) => Reference[])(command) : []
+  return commandEntry(command)?.references(command) ?? []
 }
 
 /** What prose blocks name: prose keys, variants and their art, conditions, media. */

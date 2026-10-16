@@ -9,7 +9,7 @@ import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import { problemsOf } from '../fixtures/checked.ts'
-import { settingValue } from '../../src/settings.ts'
+import { settingValue } from '../../src/features/settings.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 

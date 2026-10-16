@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { apply, checkGame, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
+import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { EffectsView } from '@ifloom/plugin-effects'
 import type { FeedsView } from '@ifloom/plugin-feed'
@@ -113,10 +114,18 @@ describe('Small Town', () => {
     state = run(state, go('high-street'), go('park'))
     expect(state.stats.coins).toBe(10)
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Rent paid: 30 coins')
+    // The secret achievement is ??? until the evening by the river.
+    const achievements = () => (view(state, game).plugins.achievements as AchievementsView).achievements
+    expect(achievements()).toEqual([
+      expect.objectContaining({ id: 'nest-egg', title: 'Nest egg', earned: false, progress: { value: 10, target: 100 } }),
+      expect.objectContaining({ id: 'river', title: '???', earned: false }),
+    ])
     state = run(state, talk('ava'))
     expect(view(state, game).scene.title).toBe('By the river')
     state = run(state, { type: 'choose', id: 'stay' })
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
+    expect(achievements()[1]).toMatchObject({ title: 'Dusk by the river', earned: true })
+    expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
   })
 
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {

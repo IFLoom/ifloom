@@ -3,6 +3,7 @@
  * game runs — where it starts, its rules, its plugins.
  */
 import { describeProblem, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
+import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -61,6 +62,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       ...kit.plugins,
       quests(),
       effects(),
+      achievements(),
       wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
       ...(withDebug ? [debug()] : []),
     ],

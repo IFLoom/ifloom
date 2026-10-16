@@ -91,6 +91,7 @@ export const sidebar: DefaultTheme.SidebarMulti = {
         { text: 'Cast', link: '/plugins/cast' },
         { text: 'Quests', link: '/plugins/quests' },
         { text: 'Effects', link: '/plugins/effects' },
+        { text: 'Achievements', link: '/plugins/achievements' },
         { text: 'Wardrobe', link: '/plugins/wardrobe' },
         { text: 'Messages', link: '/plugins/messages' },
         { text: 'Feed', link: '/plugins/feed' },

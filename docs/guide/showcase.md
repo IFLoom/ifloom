@@ -220,6 +220,10 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 `town.ts`, the `coffee` activity and `data.effects`, and `effects()` in `src/game.ts`. A coffee applies the [effects plugin](/plugins/effects)'s `caffeinated` with `applyEffect('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. While it lasts, the café has an extra line, `{ text: 'place.cafe/caffeinated', when: effectActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
 
+### Achievements
+
+`town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
+
 ### Triggers and notices
 
 `town.ts`, `triggers`. `welcome` [fires](/reference/triggers) the first time the player is on the high street. It raises a [notice](/reference/notices), a note under the door, and files the note in the `notes` collection.

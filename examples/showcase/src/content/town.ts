@@ -387,6 +387,14 @@ export const town: Pack = {
         },
       ],
     },
+    achievements: {
+      achievements: [
+        // A count to watch: coins on hand, out of 100.
+        { id: 'nest-egg', title: 'Nest egg', description: 'Have 100 coins at once.', progress: { value: 'coins', target: 100 } },
+        // Hidden until it happens.
+        { id: 'river', title: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
+      ],
+    },
     effects: {
       effects: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },

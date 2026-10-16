@@ -1,7 +1,7 @@
 import { llms, loader } from 'fumadocs-core/source'
 import { defineDocs } from 'fumadocs-mdx/macro'
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema'
-import { appName, basePath, description, docsRoute } from './shared.ts'
+import { appName, description, docsRoute, siteUrl } from './shared.ts'
 
 const docs = defineDocs({
   dir: 'content/docs',
@@ -32,11 +32,11 @@ export function versionOf(page: Page): string {
 
 export const latestPages = () => source.getPages().filter((page) => versionOf(page) === 'latest')
 
-/** Links in text we write out need the base path, which Next adds only to its own links. */
-export const withBase = (text: string) => text.replace(/\]\((\/docs[/#)])/g, `](${basePath}$1`)
+/** Links in text we write out for agents are absolute, so they still work once the text leaves the site. */
+export const absoluteLinks = (text: string) => text.replace(/\]\((\/docs[/#)])/g, `](${siteUrl}$1`)
 
 export const docsLlms = llms(source, {
-  renderPage: async (page) => withBase(`# ${page.data.title} (${basePath}${page.url})\n\n${await page.data.getText('processed')}`),
+  renderPage: async (page) => absoluteLinks(`# ${page.data.title} (${siteUrl}${page.url})\n\n${await page.data.getText('processed')}`),
 })
 
 /** llms.txt: every page of the latest docs, with a link and its description. Released versions are left out. */
@@ -44,7 +44,7 @@ export function llmsIndex(): string {
   const latest = source.getPageTree().children.find((node) => node.type === 'folder' && node.$ref?.folder === '(latest)')
   if (latest?.type !== 'folder') throw new Error('No content/docs/(latest) folder.')
   const sections = latest.children.map((node) => docsLlms.indexNode(node))
-  return withBase([`# ${appName}`, '', `> ${description}`, '', ...sections].join('\n'))
+  return absoluteLinks([`# ${appName}`, '', `> ${description}`, '', ...sections].join('\n'))
 }
 
 /** llms-full.txt: every page of the latest docs in one file. */

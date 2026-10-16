@@ -4,7 +4,7 @@ import { docsLlms, source } from '@/lib/source'
 
 export const revalidate = false
 
-// Each page as Markdown, at /ifloom/llms.mdx/docs/<slug>/content.md.
+// Each page as Markdown, at /llms.mdx/docs/<slug>/content.md.
 export async function GET(_req: Request, { params }: RouteContext<'/llms.mdx/docs/[[...slug]]'>) {
   const { slug } = await params
   // Drop the "content.md" on the end.

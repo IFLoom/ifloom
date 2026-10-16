@@ -3,7 +3,7 @@ import { createRelativeLink } from 'fumadocs-ui/mdx'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getMDXComponents } from '@/components/mdx'
-import { basePath, getPageMarkdownUrl, repoUrl } from '@/lib/shared'
+import { getPageMarkdownUrl, repoUrl, siteUrl } from '@/lib/shared'
 import { source } from '@/lib/source'
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
@@ -12,8 +12,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   if (!page) notFound()
 
   const MDX = page.data.body
-  // Fetched by the browser, so it needs the base path.
-  const markdownUrl = basePath + getPageMarkdownUrl(page).url
+  const markdownUrl = getPageMarkdownUrl(page).url
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
@@ -21,7 +20,8 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row items-center gap-2 border-b pb-6">
         <MarkdownCopyButton markdownUrl={markdownUrl} />
-        <ViewOptionsPopover markdownUrl={markdownUrl} githubUrl={`${repoUrl}/blob/main/site/content/docs/${page.path}`} />
+        {/* The AI links ask the assistant to read the page's Markdown, which reads better than its HTML. */}
+        <ViewOptionsPopover markdownUrl={markdownUrl} pageUrl={siteUrl + markdownUrl} githubUrl={`${repoUrl}/blob/main/site/content/docs/${page.path}`} />
       </div>
       <DocsBody>
         <MDX components={getMDXComponents({ a: createRelativeLink(source, page) })} />

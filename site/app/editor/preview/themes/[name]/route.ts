@@ -1,4 +1,4 @@
-// The React UI's theme presets as plain stylesheets, at /ifloom/editor/preview/themes/<name>.css.
+// The React UI's theme presets as plain stylesheets, at /editor/preview/themes/<name>.css.
 // The preview links the one the author picks, so only that one applies.
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'

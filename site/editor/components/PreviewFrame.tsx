@@ -11,7 +11,6 @@ import { GameShell, type Components } from '@ifloom/react'
 import { buildGame } from '../lib/game'
 import type { Project } from '../lib/model'
 import { PREVIEW_READY, type PreviewMessage } from '../lib/preview'
-import { basePath } from '@/lib/shared'
 
 /** Media are paths only: each picture or video is a labelled box with its path. */
 function Placeholder({ src, alt, kind }: { src?: unknown; alt?: string; kind: string }) {
@@ -105,6 +104,6 @@ function setTheme(project: Project) {
     link.rel = 'stylesheet'
     document.head.append(link)
   }
-  const href = `${basePath}/editor/preview/themes/${theme}.css`
+  const href = `/editor/preview/themes/${theme}.css`
   if (link.getAttribute('href') !== href) link.href = href
 }

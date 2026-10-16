@@ -6,14 +6,17 @@ const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'effect
 
 /** @type {import('next').NextConfig} */
 const config = {
-  // A static site for GitHub Pages, served from https://ifloom.github.io/ifloom/.
-  output: 'export',
-  basePath: '/ifloom',
-  trailingSlash: true,
+  // Served by Vercel at https://ifloom.dev, with server routes for search and MCP.
   reactStrictMode: true,
-  images: { unoptimized: true },
+  // Each page-rendering worker takes most of a gigabyte, so a machine with many
+  // cores and little memory runs out with one per core. Four is plenty.
+  experimental: { cpus: 4 },
   // The editor uses the engine, the React UI and the plugins straight from the workspace, as TypeScript.
   transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', ...PLUGINS.map((name) => `@ifloom/plugin-${name}`)],
+  // TODO(launch): remove, with app/robots.ts and metadata.robots in app/layout.tsx. See ROADMAP "Release readiness".
+  async headers() {
+    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
+  },
 }
 
 export default withMDX(config)

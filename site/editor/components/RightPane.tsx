@@ -9,7 +9,6 @@ import { THEMES } from '../lib/model'
 import { PREVIEW_READY, type PreviewMessage } from '../lib/preview'
 import { useEditor } from './context'
 import { Button, Select, cx } from './ui'
-import { basePath } from '@/lib/shared'
 
 type Tab = 'preview' | 'problems'
 
@@ -121,7 +120,7 @@ function Preview({ playing }: { playing: { scene: string; nonce: number } | null
           Restart
         </Button>
       </div>
-      <iframe ref={frame} title="Preview" src={`${basePath}/editor/preview/`} className="min-h-0 w-full flex-1" />
+      <iframe ref={frame} title="Preview" src="/editor/preview" className="min-h-0 w-full flex-1" />
     </div>
   )
 }

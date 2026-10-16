@@ -1,5 +1,5 @@
 'use client'
-// The homepage at /ifloom/. It's always dark, whatever the docs' theme says:
+// The homepage at /. It's always dark, whatever the docs' theme says:
 // every colour is set here rather than taken from Fumadocs.
 import Link from 'next/link'
 import { useEffect, useRef, type ReactNode } from 'react'
@@ -227,7 +227,7 @@ export function Home() {
                 <span className={s.mark}>[[video:]]</span>
                 <span className={s.mark}>[[sound:]]</span>
                 <span className={s.mark}>hotspots</span>
-                <a className={cx(s.mark, s.link)} href="https://ifloom.github.io/ifloom/llms.txt">
+                <a className={cx(s.mark, s.link)} href="/llms.txt">
                   llms.txt
                 </a>
               </div>

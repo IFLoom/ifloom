@@ -185,6 +185,21 @@ describe('Small Town', () => {
     expect(effects()).toEqual([])
   })
 
+  it('sells a sandwich at the café as a plain activity too, beside the counter', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    const labels = view(state, game).actions.map((action) => action.label)
+    expect(labels).toEqual(expect.arrayContaining(['Buy a sandwich', 'Buy a sandwich for later']))
+    const button = view(state, game).actions.find((action) => action.id === 'buy-sandwich')!
+    expect(button.price?.stats).toEqual([{ id: 'coins', amount: 4, text: '4 coins' }])
+    const coins = state.stats.coins
+    state = run(state, act('buySandwich'))
+    expect(state.stats.coins).toBe(coins - 4)
+    expect(state.items.sandwich).toBe(1)
+    // Only in the café.
+    expect(apply(run(state, go('high-street')), game, act('buySandwich')).refused).toBeDefined()
+  })
+
   it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))

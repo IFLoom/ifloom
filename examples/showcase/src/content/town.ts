@@ -41,6 +41,8 @@ const locations: LocationDef[] = [
     locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+      // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
+      { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
       // The counter is the shop plugin's vendor: its price, stock and today's offer show on the button.
       { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'sandwich') },
       { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'flapjack') },
@@ -221,6 +223,7 @@ export const town: Pack = {
         applyEffect('caffeinated'),
       ],
     },
+    { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
     { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },

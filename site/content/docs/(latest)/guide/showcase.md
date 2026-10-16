@@ -58,7 +58,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Items you use
 
-`town.ts`, the `sandwich` item and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`town.ts`, the `sandwich` item, the café's `buySandwich` activity and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
 
 ### Mods
 
@@ -98,7 +98,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` has `requires: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
+Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `requires: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
 
 `town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -220,7 +220,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### The café counter
 
-`town.ts`, `data.shop`, the café's actions, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins and flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`). Each day one of the two is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Buy a sandwich for later" and "Buy a flapjack" buttons send `buy('counter', 'sandwich')` and `buy('counter', 'flapjack')`, so they show today's price and grey out with `Sold out.` The test `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` plays it.
+`town.ts`, `data.shop`, the café's actions, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins and flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`). Each day one of the two is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café keeps its plain "Buy a sandwich" button too, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways side by side: the activity is always the same price and never sells out. The "Buy a sandwich for later" and "Buy a flapjack" buttons send `buy('counter', 'sandwich')` and `buy('counter', 'flapjack')`, so they show today's price and grey out with `Sold out.` The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them.
 
 ### A job at the café
 

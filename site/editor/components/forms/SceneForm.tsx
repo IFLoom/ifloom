@@ -362,7 +362,7 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           </Field>
 
           <details className="text-xs">
-            <summary className="cursor-pointer text-fd-muted-foreground">More: once a turn, a warning, tags</summary>
+            <summary className="cursor-pointer text-fd-muted-foreground">More: once a turn, a warning, tags, labels</summary>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <Field label="Once a turn: the reason shown after" hint="Left empty, it can be taken any number of times.">
                 <TextInput optional value={choice.once?.reason} onChange={(reason) => set({ once: reason ? { per: 'turn', reason } : undefined })} />
@@ -374,6 +374,9 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
                 <ListInput value={choice.tags} onChange={(tags) => set({ tags })} />
               </Field>
             </div>
+            <Field label="Labels that depend on state" hint={'As JSON, first match wins: [{ "when": { "seen": "home" }, "key": "market#buy-again" }].'}>
+              <JsonField label="Labels" rows={2} value={choice.labels ?? []} onChange={(labels) => set({ labels: Array.isArray(labels) && labels.length ? labels : undefined })} />
+            </Field>
           </details>
         </div>
       ) : null}

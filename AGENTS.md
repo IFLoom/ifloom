@@ -66,7 +66,7 @@ A core kind of condition, effect or command, or a field of the state, belongs to
 
 ## Docs
 
-Anything the engine exports is documented in `site/content/docs/`, the docs part of the website in `site/` (Next.js with Fumadocs, a static export published at https://ifloom.github.io/ifloom/, with the docs under `/ifloom/docs/`). A change to the exports ships with its docs: load the `ifloom-docs` skill. The homepage is React, in `site/components/home/`. Decision records in `adr/` aren't on the site.
+Anything the engine exports is documented in `site/content/docs/`, the docs part of the website in `site/` (Next.js with Fumadocs, a static export published at https://ifloom.github.io/ifloom/, with the docs under `/ifloom/docs/`). A change to the exports ships with its docs: load the `ifloom-docs` skill. The homepage is React, in `site/components/home/`. The editor at `/editor` is a client-only React app: its routes are in `site/app/editor/`, and its code in `site/editor/`, with the pure logic in `site/editor/lib/` tested by `npm test`. Decision records in `adr/` aren't on the site.
 
 The pages are plain Markdown (`.md`) with a `title` and a `description` in front matter, and links between pages are absolute: `[Scenes](/docs/reference/scenes#scene)`. Each folder's `meta.json` gives the sidebar's order, and each section is a tab. `npm run docs:links` fails on a link to a page or heading that isn't there.
 

@@ -7,6 +7,7 @@ import s from './HomeNav.module.css'
 const links = [
   { text: 'Guide', href: '/docs/guide/introduction' },
   { text: 'Reference', href: '/docs/reference/game' },
+  { text: 'Editor', href: '/editor' },
   { text: 'Changelog', href: '/docs/changelog' },
   { text: 'GitHub', href: 'https://github.com/IFLoom/ifloom', external: true },
 ]

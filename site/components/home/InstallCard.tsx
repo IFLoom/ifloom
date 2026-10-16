@@ -90,6 +90,9 @@ export function InstallCard() {
           This command arrives with the first release, when the packages go on npm. Until then you start from a checkout: <code>git clone</code> the repository, run{' '}
           <code>npm install</code>, then <code>npm run new -- my-game</code>. <Link href="/docs/guide/installation">Installation</Link> walks you through it.
         </p>
+        <p className={s.note}>
+          <Link href="/editor">Try the editor</Link> to write a story in your browser with nothing to install, and export it when you're ready.
+        </p>
       </div>
     </div>
   )

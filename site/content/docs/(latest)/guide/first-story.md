@@ -15,6 +15,8 @@ It's the smallest shape of game IFLoom makes. It uses no plugins, so there's no 
 
 The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter), in `examples/novel`, is a slightly longer story built the same way.
 
+To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a pack you can bring back to this page.
+
 ## Before you start
 
 Follow [Installation](/docs/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the blank template:
@@ -355,6 +357,7 @@ export const start = (game: Game) => startingState(game, { flags: { playerName: 
 
 ## Where next
 
+- [The editor](/docs/guide/editor) builds scenes like these from forms in the browser, with the game playing beside them.
 - [Shapes of game](/docs/guide/shapes) walks through The Letter, then a management game built on [entities](/docs/reference/entities).
 - [A game with a world](/docs/guide/first-game) is the second tutorial. It adds a calendar, places and a character with the first-party plugins.
 - [Core concepts](/docs/guide/concepts) explains the ideas behind what you just used.

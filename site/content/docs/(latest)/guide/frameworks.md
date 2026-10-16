@@ -1,22 +1,32 @@
 ---
 title: "Using another framework"
-description: Draw an IFLoom game with Vue, Svelte, plain DOM or anything else, using the runner's view, apply and subscribe. Walks through the vanilla template and sketches Vue and Svelte bindings.
+description: Draw an IFLoom game with Vue, Svelte, plain DOM or React by hand. The vue, svelte and vanilla templates each draw the scene, choices, inputs, stats and minigames and play sound; this page shows their code side by side.
 ---
-The engine has no DOM and no framework. The [React UI](/docs/react) is the ready-made way to draw a game, but you can draw one with Vue, Svelte, plain DOM or anything else that can show text and buttons. This page shows how.
+The engine has no DOM and no framework. The [React UI](/docs/react) is the ready-made way to draw a game, but you can draw one with Vue, Svelte, plain DOM or anything else that can show text and buttons. Three templates do it for you:
 
-To start, make a game from the `vanilla` template, which draws the game with plain DOM:
+| Template | Draws with | Type-check |
+|---|---|---|
+| `vue` | Vue 3 single-file components | `vue-tsc`, as `npm run typecheck` |
+| `svelte` | Svelte 5 components | `svelte-check`, as `npm run typecheck` |
+| `vanilla` | Plain DOM, no framework | `npx tsc --noEmit` |
 
 ```sh
-npm run new -- my-game --template vanilla
+npm run new -- my-game --template vue
 npm install
 npm run dev -w my-game
 ```
 
-It's the same two-scene game as the `blank` template. Its `package.json` depends on `@ifloom/engine` and `@ifloom/cli` only, with no React.
+Each plays the same two-scene game as the `blank` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). They share three files:
 
-## What the engine gives a UI
+- `src/game.ts`, the game.
+- `src/minigame.ts`, the clock and keys a minigame needs (see [Minigames](#minigames)).
+- `src/styles.css`, a plain stylesheet.
 
-A UI talks to the engine through a [runner](/docs/reference/runner). You need four things from it:
+The rest of this page goes through their code piece by piece, with a tab for each framework. The React tab shows React by hand, without the React UI, for when you want React but none of `@ifloom/react`.
+
+## The loop
+
+A UI talks to the engine through a [runner](/docs/reference/runner). You need three things from it:
 
 ```ts
 import { browserRunner } from '@ifloom/engine'
@@ -28,7 +38,7 @@ runner.apply(command)      // run a command, such as a choice the player pressed
 runner.subscribe(listener) // call listener after every change of state; returns a function that stops it
 ```
 
-The loop is always the same:
+The loop is the same in every framework:
 
 1. Draw `runner.view()`.
 2. When the player presses something, send its `command` with `runner.apply`.
@@ -36,20 +46,81 @@ The loop is always the same:
 
 `subscribe` hears about every change, not only your own commands. Undo, redo and loading a save all call it too, so you don't need to redraw after each of those yourself.
 
-[`browserRunner`](/docs/reference/runner#browserrunner) makes a runner with what most games in a browser want. Use [`createRunner`](/docs/reference/runner#createrunner) when you want to choose everything yourself.
+`runner.view()` returns the same object until the state changes (see [the view cache](/docs/reference/runner#the-view-cache)). So you can call it as often as you like, and a framework that compares values to decide what to redraw sees a new view exactly when there's something new to draw.
 
-`runner.view()` builds a fresh object each time you call it. Call it once per change and keep the result, rather than calling it from every component.
+## Start the runner
 
-## The vanilla template, step by step
+Each template makes the runner once, in a module of its own, and turns the view into the framework's kind of state. Components import `runner` and the view from there.
 
-Here's the template's `src/main.ts` in three parts.
-
-First it starts the game, with the same runner [`mountGame`](/docs/react#mountgame) makes for the React UI:
-
-```ts
-// src/main.ts
-import { browserRunner, type View } from '@ifloom/engine'
+```ts tab="Vue"
+// src/runner.ts
+/**
+ * The game's runner, and its view as Vue state. Components read `view` and
+ * send commands with `runner.apply`; nothing else talks to the engine.
+ */
+import { shallowRef } from 'vue'
+import { browserRunner } from '@ifloom/engine'
+import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
+import { startClock, startKeys } from './minigame.ts'
+
+const { game, problems } = loaded
+if (problems.length) console.warn(problems)
+
+// A new game with a random seed, undo, saves in localStorage and an autosave each turn.
+export const runner = browserRunner(game)
+
+// The view is replaced whole after every change, so a shallowRef is enough:
+// Vue only needs to know that it changed, not to look inside it.
+export const view = shallowRef(runner.view())
+runner.subscribe(() => {
+  view.value = runner.view()
+})
+
+// Plays what the game's `audio` asks for, from the first click or key press.
+// Its `play` plays a file on demand, such as a voice line again.
+export const player = startAudio(runner)
+// Ticks a minigame's timers and maps the keyboard to its inputs.
+startClock(runner)
+startKeys(runner)
+```
+
+```ts tab="Svelte"
+// src/runner.ts
+/**
+ * The game's runner, and its view as a Svelte store. Components read `$view`
+ * and send commands with `runner.apply`; nothing else talks to the engine.
+ */
+import { readable } from 'svelte/store'
+import { browserRunner } from '@ifloom/engine'
+import { startAudio } from '@ifloom/audio'
+import loaded from './game.ts'
+import { startClock, startKeys } from './minigame.ts'
+
+const { game, problems } = loaded
+if (problems.length) console.warn(problems)
+
+// A new game with a random seed, undo, saves in localStorage and an autosave each turn.
+export const runner = browserRunner(game)
+
+// A readable store fits the runner: it starts by subscribing, and stops with
+// the function `subscribe` returns.
+export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+
+// Plays what the game's `audio` asks for, from the first click or key press.
+// Its `play` plays a file on demand, such as a voice line again.
+export const player = startAudio(runner)
+// Ticks a minigame's timers and maps the keyboard to its inputs.
+startClock(runner)
+startKeys(runner)
+```
+
+```ts tab="Plain DOM"
+// src/main.ts
+import { browserRunner, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
+import { startAudio } from '@ifloom/audio'
+import loaded from './game.ts'
+import { startClock, startKeys } from './minigame.ts'
 import './styles.css'
 
 const { game, problems } = loaded
@@ -57,226 +128,591 @@ if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
 const runner = browserRunner(game)
-```
 
-`loadGame` returns the game and a list of problems, which `npm run check` also prints. [`browserRunner`](/docs/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`.
+// Plays what the game's `audio` asks for, from the first click or key press.
+startAudio(runner)
+// Ticks a minigame's timers and maps the keyboard to its inputs.
+startClock(runner)
+startKeys(runner)
 
-Then a function draws one view into `#root`:
+// ...
 
-```ts
-const root = document.querySelector<HTMLElement>('#root')!
-
-function draw(view: View): void {
-  root.replaceChildren()
-  const title = root.appendChild(document.createElement('h1'))
-  title.textContent = view.title
-
-  if (view.scene.title) root.appendChild(document.createElement('h2')).textContent = view.scene.title
-  for (const paragraph of view.scene.body.split('\n\n')) {
-    root.appendChild(document.createElement('p')).textContent = paragraph
-  }
-
-  const choices = root.appendChild(document.createElement('div'))
-  choices.className = 'choices'
-  // A scene's choices, or the game's own buttons when no scene is open.
-  for (const choice of [...view.scene.choices, ...view.actions]) {
-    const button = choices.appendChild(document.createElement('button'))
-    button.textContent = choice.label
-    button.disabled = Boolean(choice.disabled)
-    if (choice.disabled) button.title = choice.disabled
-    button.onclick = () => runner.apply(choice.command)
-  }
-
-  const stats = root.appendChild(document.createElement('p'))
-  stats.className = 'stats'
-  stats.textContent = view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')
-}
-```
-
-Every button the player can press is a [`RenderedChoice`](/docs/reference/view#renderedchoice). It carries its `label`, its `command`, and `disabled` with the reason when it can't be pressed. The button sends the command as it is, so your UI never builds a command for a choice itself.
-
-Last, it draws once and redraws on every change:
-
-```ts
 runner.subscribe(() => draw(runner.view()))
 draw(runner.view())
 ```
 
-That's the whole UI. It clears and redraws the page each time, which is fine for a page this small.
-
-### Adding an input
-
-The template draws scenes, buttons and stats, and nothing else. A game that asks for a value, such as the name in [Your first story](/docs/guide/first-story), needs its [inputs](/docs/reference/inputs) drawn too. Each one is an [`InputView`](/docs/reference/view#inputview), and you send what the player enters as an `input` command. Add this to `draw`:
-
-```ts
-for (const input of Object.values(view.inputs)) {
-  const form = root.appendChild(document.createElement('form'))
-  const field = form.appendChild(document.createElement('input'))
-  field.placeholder = input.label
-  if (input.kind === 'number') field.type = 'number'
-  if (input.maxLength) field.maxLength = input.maxLength
-  form.onsubmit = (event) => {
-    event.preventDefault()
-    const value = input.kind === 'number' ? Number(field.value) : field.value
-    runner.apply({ type: 'input', id: input.id, value })
-  }
-}
-```
-
-An input of kind `choice` has its `options` instead, each with a `value` and a `label`, for a list of buttons or a select.
-
-## What to draw
-
-The [view reference](/docs/reference/view) lists every field. These are the ones most games need, roughly in order:
-
-- `title`, the game's title, and `when`, where the game is in time and place when a plugin says.
-- `scene.title`, and `scene.beats` for the prose. Each [beat](/docs/reference/prose#scenebeat) is a paragraph, a spoken line, a picture or a prop. The template draws `scene.body`, the raw prose, which is fine for plain paragraphs.
-- `scene.choices` while a scene is open, and `actions` while none is.
-- `stats`, the player's stats to show.
-- `inputs`, any value the game is asking for.
-- `notices`, news the player hasn't dismissed.
-- `scene.speaker` and `scene.stageImage`, who is talking and the picture to show with them.
-- `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice.
-
-`entities`, `collections` and `pack` are there when your game has them.
-
-## Vue and Svelte
-
-The two sketches below bind the same runner to Vue and Svelte. They're sketches, not templates: they haven't been run as games, and you'll want to check them against each framework's own docs.
-
-Both frameworks need their Vite plugin. Add it through the [Vite preset](/docs/cli#the-vite-preset)'s `vite` option. The preset adds React and Tailwind only when the game depends on `@ifloom/react` (or on `react` or `tailwindcss`), so a game made from the vanilla template gets neither, and your framework's plugin is the only one.
-
-### Vue
-
-Install Vue and its Vite plugin into your game:
-
-```sh
-npm install vue @vitejs/plugin-vue -w my-game
-```
-
-```ts
-// vite.config.ts
-import vue from '@vitejs/plugin-vue'
-import { ifloom } from '@ifloom/cli/vite'
-
-export default ifloom({ vite: { plugins: [vue()] } })
-```
-
-Keep the runner and the current view in one module. A `shallowRef` suits the view, because it's replaced whole on every change and Vue doesn't need to look inside it:
-
-```ts
+```ts tab="React"
 // src/runner.ts
-import { shallowRef } from 'vue'
+import { useSyncExternalStore } from 'react'
 import { browserRunner } from '@ifloom/engine'
+import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
+import { startClock, startKeys } from './minigame.ts'
 
 export const runner = browserRunner(loaded.game)
+startAudio(runner)
+startClock(runner)
+startKeys(runner)
 
-export const view = shallowRef(runner.view())
-runner.subscribe(() => {
-  view.value = runner.view()
-})
+/** The view, drawn again after every change. `runner.view()` returns the same object until the state changes, as useSyncExternalStore needs. */
+export const useView = () => useSyncExternalStore(runner.subscribe, runner.view)
 ```
 
-Then any component can draw it:
+[`browserRunner`](/docs/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
 
+- **Vue** keeps the view in a `shallowRef`. The view is replaced whole after every change, so Vue doesn't need to look inside it.
+- **Svelte** wraps it in a `readable` store, which components read as `$view`. The store's start function subscribes to the runner and returns the runner's own stop function.
+- **Plain DOM** draws the whole page again in its listener, which is fine for a page this small.
+- **React** reads it with `useSyncExternalStore`, which needs exactly what `runner.subscribe` and `runner.view` are.
 
-```vue
-<!-- src/App.vue -->
-<script setup lang="ts">
-import { runner, view } from './runner.ts'
-</script>
+Then `main.ts` mounts the app on `#root` in `index.html`:
 
-<template>
-  <h1>{{ view.title }}</h1>
-  <h2 v-if="view.scene.title">{{ view.scene.title }}</h2>
-  <p v-for="(paragraph, at) in view.scene.body.split('\n\n')" :key="at">{{ paragraph }}</p>
-  <button
-    v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
-    :key="at"
-    :disabled="Boolean(choice.disabled)"
-    :title="choice.disabled"
-    @click="runner.apply(choice.command)"
-  >
-    {{ choice.label }}
-  </button>
-</template>
-```
-
-
-```ts
+```ts tab="Vue"
 // src/main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
+import './styles.css'
 
 createApp(App).mount('#root')
 ```
 
-### Svelte
-
-Install Svelte and its Vite plugin into your game:
-
-```sh
-npm install svelte @sveltejs/vite-plugin-svelte -w my-game
-```
-
-```ts
-// vite.config.ts
-import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { ifloom } from '@ifloom/cli/vite'
-
-export default ifloom({ vite: { plugins: [svelte()] } })
-```
-
-A `readable` store fits the runner closely. Its start function subscribes to the runner, and returns the runner's own stop function:
-
-```ts
-// src/runner.ts
-import { readable } from 'svelte/store'
-import { browserRunner } from '@ifloom/engine'
-import loaded from './game.ts'
-
-export const runner = browserRunner(loaded.game)
-
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
-```
-
-```svelte
-<!-- src/App.svelte -->
-<script lang="ts">
-  import { runner, view } from './runner.ts'
-</script>
-
-<h1>{$view.title}</h1>
-{#if $view.scene.title}<h2>{$view.scene.title}</h2>{/if}
-{#each $view.scene.body.split('\n\n') as paragraph}<p>{paragraph}</p>{/each}
-{#each [...$view.scene.choices, ...$view.actions] as choice}
-  <button disabled={Boolean(choice.disabled)} title={choice.disabled} onclick={() => runner.apply(choice.command)}>
-    {choice.label}
-  </button>
-{/each}
-```
-
-```ts
+```ts tab="Svelte"
 // src/main.ts
 import { mount } from 'svelte'
 import App from './App.svelte'
+import './styles.css'
 
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-## Sound
+```ts tab="React"
+// src/main.ts
+import { createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+import { App } from './App.tsx'
+import './styles.css'
 
-If your game lists tracks in [`game.audio`](/docs/reference/audio), add [`@ifloom/audio`](/docs/reference/audio-player) to its `package.json` and start the player once, next to the runner. It works the same whatever draws the page, because it reads the runner, not your components. The vanilla template has the line ready in `src/main.ts`, commented out:
-
-```ts
-import { startAudio } from '@ifloom/audio'
-
-const runner = browserRunner(game)
-startAudio(runner)
+createRoot(document.querySelector('#root')!).render(createElement(App))
 ```
 
-In the Vue and Svelte sketches above, the line goes in `src/runner.ts`, after `browserRunner`. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
+## Add the framework's Vite plugin
+
+Vue and Svelte each need their Vite plugin, which goes in the [Vite preset](/docs/cli#the-vite-preset)'s `vite.plugins`. The templates do this already:
+
+```ts tab="Vue"
+// vite.config.ts
+import vue from '@vitejs/plugin-vue'
+import { ifloom } from '@ifloom/cli/vite'
+
+// The preset adds React and Tailwind only for a game that uses them, so Vue's plugin is the only one.
+export default ifloom({ vite: { plugins: [vue()] } })
+```
+
+```ts tab="Svelte"
+// vite.config.ts
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { ifloom } from '@ifloom/cli/vite'
+
+// The preset adds React and Tailwind only for a game that uses them, so Svelte's plugin is the only one.
+export default ifloom({ vite: { plugins: [svelte()] } })
+```
+
+The preset adds React and Tailwind only when the game depends on `@ifloom/react`, `react` or `tailwindcss`, so in these templates the framework's plugin is the only one. React by hand needs no plugin of its own. Start from the `vanilla` template, which has `src/minigame.ts`, add `react` and `react-dom` to its `package.json`, and the preset adds React's plugin for you.
+
+## Draw the scene and its choices
+
+The app draws the title, the scene, its choices and the stats:
+
+```vue tab="Vue"
+<!-- src/App.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import { runner, view } from './runner.ts'
+import Beat from './Beat.vue'
+import InputField from './InputField.vue'
+import Minigame from './Minigame.vue'
+
+// A scene's choices, or the game's own buttons when no scene is open.
+const choices = computed(() => [...view.value.scene.choices, ...view.value.actions])
+</script>
+
+<template>
+  <h1>{{ view.title }}</h1>
+  <!-- While a minigame runs, the scene's title and beats are the minigame's. -->
+  <h2 v-if="view.scene.title">{{ view.scene.title }}</h2>
+  <Beat v-for="(beat, at) in view.scene.beats" :key="at" :beat="beat" />
+  <Minigame v-if="view.minigame" :minigame="view.minigame" />
+
+  <div class="inputs">
+    <InputField v-for="input in Object.values(view.inputs)" :key="input.id" :input="input" />
+  </div>
+
+  <div class="choices">
+    <template v-for="(choice, at) in choices" :key="at">
+      <button :disabled="Boolean(choice.disabled)" :title="choice.disabled" @click="runner.apply(choice.command)">
+        {{ choice.label }}
+      </button>
+      <!-- Why it can't be pressed, such as "You need 4 coins." -->
+      <p v-if="choice.disabled" class="reason">{{ choice.disabled }}</p>
+    </template>
+  </div>
+
+  <p class="stats">{{ view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ') }}</p>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/App.svelte -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+  import Beat from './Beat.svelte'
+  import InputField from './InputField.svelte'
+  import Minigame from './Minigame.svelte'
+
+  // A scene's choices, or the game's own buttons when no scene is open.
+  const choices = $derived([...$view.scene.choices, ...$view.actions])
+</script>
+
+<h1>{$view.title}</h1>
+<!-- While a minigame runs, the scene's title and beats are the minigame's. -->
+{#if $view.scene.title}<h2>{$view.scene.title}</h2>{/if}
+{#each $view.scene.beats as beat, at (at)}<Beat {beat} />{/each}
+{#if $view.minigame}<Minigame minigame={$view.minigame} />{/if}
+
+<div class="inputs">
+  {#each Object.values($view.inputs) as input (input.id)}<InputField {input} />{/each}
+</div>
+
+<div class="choices">
+  {#each choices as choice, at (at)}
+    <button disabled={Boolean(choice.disabled)} title={choice.disabled} onclick={() => runner.apply(choice.command)}>
+      {choice.label}
+    </button>
+    <!-- Why it can't be pressed, such as "You need 4 coins." -->
+    {#if choice.disabled}<p class="reason">{choice.disabled}</p>{/if}
+  {/each}
+</div>
+
+<p class="stats">{$view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
+```
+
+```ts tab="Plain DOM"
+// src/main.ts
+function draw(view: View): void {
+  root.replaceChildren()
+  add(root, 'h1', view.title)
+
+  // While a minigame runs, the scene's title and beats are the minigame's.
+  if (view.scene.title) add(root, 'h2', view.scene.title)
+  for (const beat of view.scene.beats) drawBeat(beat)
+  if (view.minigame) drawMinigame(view.minigame)
+
+  const inputs = add(root, 'div', '', 'inputs')
+  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
+
+  const choices = add(root, 'div', '', 'choices')
+  // A scene's choices, or the game's own buttons when no scene is open.
+  for (const choice of [...view.scene.choices, ...view.actions]) {
+    const button = add(choices, 'button', choice.label)
+    button.disabled = Boolean(choice.disabled)
+    if (choice.disabled) button.title = choice.disabled
+    button.onclick = () => runner.apply(choice.command)
+    // Why it can't be pressed, such as "You need 4 coins."
+    if (choice.disabled) add(choices, 'p', choice.disabled, 'reason')
+  }
+
+  add(root, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '), 'stats')
+}
+```
+
+```tsx tab="React"
+// src/App.tsx
+import { Fragment } from 'react'
+import { runner, useView } from './runner.ts'
+
+export function App() {
+  const view = useView()
+  return (
+    <>
+      <h1>{view.title}</h1>
+      {view.scene.title ? <h2>{view.scene.title}</h2> : null}
+      {view.scene.beats.map((beat, at) => ('text' in beat ? <p key={at}>{beat.text}</p> : null))}
+      <div className="choices">
+        {[...view.scene.choices, ...view.actions].map((choice, at) => (
+          <Fragment key={at}>
+            <button disabled={Boolean(choice.disabled)} title={choice.disabled} onClick={() => runner.apply(choice.command)}>
+              {choice.label}
+            </button>
+            {choice.disabled ? <p className="reason">{choice.disabled}</p> : null}
+          </Fragment>
+        ))}
+      </div>
+      <p className="stats">{view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
+    </>
+  )
+}
+```
+
+Every button the player can press is a [`RenderedChoice`](/docs/reference/view#renderedchoice). It carries its `label`, its `command`, and `disabled` with the reason when it can't be pressed. The templates grey the button out and print the reason under it. The button sends the command as it is, so your UI never builds a command for a choice itself.
+
+`view.scene.choices` are the open scene's choices. When no scene is open, the game's own buttons are in `view.actions` instead, so drawing both covers either case.
+
+## Beats
+
+A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture, a video, a letter or a prop such as a sticky note. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
+
+```vue tab="Vue"
+<!-- src/Beat.vue -->
+<script setup lang="ts">
+import type { SceneBeat } from '@ifloom/engine'
+
+// One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
+defineProps<{ beat: SceneBeat }>()
+</script>
+
+<template>
+  <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+  <p v-else-if="beat.kind === 'mono'" class="beat-mono">{{ beat.text }}</p>
+  <p v-else-if="beat.kind === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
+  <img v-else-if="beat.kind === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
+  <video
+    v-else-if="beat.kind === 'video'"
+    class="beat-image"
+    :src="beat.src"
+    :poster="beat.poster"
+    :autoplay="beat.autoplay"
+    :loop="beat.loop"
+    :muted="beat.muted"
+    :controls="beat.controls"
+    playsinline
+  />
+  <div v-else-if="beat.kind === 'mail'" class="beat-prop">
+    <p v-for="line in beat.headers" :key="line.key">{{ line.key }}: {{ line.value }}</p>
+    <p>{{ beat.body }}</p>
+  </div>
+  <div v-else-if="beat.kind === 'prop'" class="beat-prop">{{ beat.text }}</div>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/Beat.svelte -->
+<script lang="ts">
+  import type { SceneBeat } from '@ifloom/engine'
+
+  // One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
+  let { beat }: { beat: SceneBeat } = $props()
+</script>
+
+{#if beat.kind === 'text'}
+  <p>{beat.text}</p>
+{:else if beat.kind === 'mono'}
+  <p class="beat-mono">{beat.text}</p>
+{:else if beat.kind === 'say'}
+  <p class="beat-say" data-who={beat.who}>{beat.text}</p>
+{:else if beat.kind === 'image'}
+  <img class="beat-image" src={beat.src} alt={beat.alt ?? ''} />
+{:else if beat.kind === 'video'}
+  <video
+    class="beat-image"
+    src={beat.src}
+    poster={beat.poster}
+    autoplay={beat.autoplay}
+    loop={beat.loop}
+    muted={beat.muted}
+    controls={beat.controls}
+    playsinline
+  ></video>
+{:else if beat.kind === 'mail'}
+  <div class="beat-prop">
+    {#each beat.headers as line (line.key)}<p>{line.key}: {line.value}</p>{/each}
+    <p>{beat.body}</p>
+  </div>
+{:else if beat.kind === 'prop'}
+  <div class="beat-prop">{beat.text}</div>
+{/if}
+```
+
+```ts tab="Plain DOM"
+// src/main.ts
+/** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
+function drawBeat(beat: SceneBeat): void {
+  switch (beat.kind) {
+    case 'text':
+      add(root, 'p', beat.text)
+      break
+    case 'mono':
+      add(root, 'p', beat.text, 'beat-mono')
+      break
+    case 'say':
+      add(root, 'p', beat.text, 'beat-say').dataset.who = beat.who
+      break
+    case 'image':
+      Object.assign(add(root, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
+      break
+    case 'video':
+      Object.assign(add(root, 'video', '', 'beat-image'), {
+        src: beat.src,
+        poster: beat.poster ?? '',
+        autoplay: beat.autoplay,
+        loop: beat.loop,
+        muted: beat.muted,
+        controls: beat.controls,
+        playsInline: true,
+      })
+      break
+    case 'mail': {
+      const mail = add(root, 'div', '', 'beat-prop')
+      for (const line of beat.headers) add(mail, 'p', `${line.key}: ${line.value}`)
+      add(mail, 'p', beat.body)
+      break
+    }
+    case 'prop':
+      add(root, 'div', beat.text, 'beat-prop')
+      break
+  }
+}
+```
+
+A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses to set the player's lines apart. The speaker's name and picture are `view.scene.speaker` and `view.scene.stageImage`. A sound beat draws nothing, because the audio player plays it.
+
+## Inputs
+
+An [input](/docs/reference/inputs) is a value the game asks the player for, such as a name. Each is an [`InputView`](/docs/reference/view#inputview) in `view.inputs`, and you send what the player enters as an `input` command:
+
+```vue tab="Vue"
+<!-- src/InputField.vue -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import type { InputView } from '@ifloom/engine'
+import { runner } from './runner.ts'
+
+// A value the game asks for, such as the player's name. What they enter goes back as an `input` command.
+const props = defineProps<{ input: InputView }>()
+const value = ref(props.input.value === null ? '' : String(props.input.value))
+
+function submit() {
+  runner.apply({ type: 'input', id: props.input.id, value: props.input.kind === 'number' ? Number(value.value) : value.value })
+}
+</script>
+
+<template>
+  <div v-if="input.kind === 'choice'" class="inputs" role="group" :aria-label="input.label">
+    <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, value: option.value })">
+      {{ option.label }}
+    </button>
+  </div>
+  <form v-else @submit.prevent="submit">
+    <label>
+      {{ input.label }}
+      <input
+        v-model="value"
+        :type="input.kind === 'number' ? 'number' : 'text'"
+        :maxlength="input.maxLength ?? undefined"
+        :min="input.min ?? undefined"
+        :max="input.max ?? undefined"
+      />
+    </label>
+    <button type="submit">OK</button>
+  </form>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/InputField.svelte -->
+<script lang="ts">
+  import type { InputView } from '@ifloom/engine'
+  import { runner } from './runner.ts'
+
+  // A value the game asks for, such as the player's name. What they enter goes back as an `input` command.
+  let { input }: { input: InputView } = $props()
+  // svelte-ignore state_referenced_locally
+  let value = $state(input.value === null ? '' : String(input.value))
+
+  function submit(event: SubmitEvent) {
+    event.preventDefault()
+    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(value) : value })
+  }
+</script>
+
+{#if input.kind === 'choice'}
+  <div class="inputs" role="group" aria-label={input.label}>
+    {#each input.options as option (option.value)}
+      <button onclick={() => runner.apply({ type: 'input', id: input.id, value: option.value })}>{option.label}</button>
+    {/each}
+  </div>
+{:else}
+  <form onsubmit={submit}>
+    <label>
+      {input.label}
+      <input
+        bind:value
+        type={input.kind === 'number' ? 'number' : 'text'}
+        maxlength={input.maxLength ?? undefined}
+        min={input.min ?? undefined}
+        max={input.max ?? undefined}
+      />
+    </label>
+    <button type="submit">OK</button>
+  </form>
+{/if}
+```
+
+```ts tab="Plain DOM"
+// src/main.ts
+/** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
+function drawInput(parent: HTMLElement, input: InputView): void {
+  if (input.kind === 'choice') {
+    for (const option of input.options) {
+      add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, value: option.value })
+    }
+    return
+  }
+  const form = add(parent, 'form')
+  const label = add(form, 'label', input.label)
+  const field = add(label, 'input')
+  field.type = input.kind === 'number' ? 'number' : 'text'
+  field.value = input.value === null ? '' : String(input.value)
+  if (input.maxLength !== null) field.maxLength = input.maxLength
+  if (input.min !== null) field.min = String(input.min)
+  if (input.max !== null) field.max = String(input.max)
+  add(form, 'button', 'OK').type = 'submit'
+  form.onsubmit = (event) => {
+    event.preventDefault()
+    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(field.value) : field.value })
+  }
+}
+```
+
+An input of kind `choice` has its `options`, each with a `value` and a `label`, so the templates draw a button for each. The input stays in `view.inputs` while its `when` holds, which for a name is usually until the player has given one.
+
+## Minigames
+
+While a [minigame](/docs/reference/minigames) runs, `view.minigame` describes it, and the scene shows its words: `view.scene.title` is the minigame's label and `view.scene.beats` are the running state's words. The choices are empty. So the app draws the scene as usual, and adds a panel for the minigame's timer and inputs:
+
+```vue tab="Vue"
+<!-- src/Minigame.vue -->
+<script setup lang="ts">
+import type { MinigameView } from '@ifloom/engine'
+import { runner } from './runner.ts'
+
+// The minigame being played: a bar counting down its timer, and a button for each input that does something now.
+defineProps<{ minigame: MinigameView }>()
+</script>
+
+<template>
+  <section class="minigame" :data-state="minigame.state">
+    <div v-if="minigame.timeLeft !== null && minigame.timeTotal" class="timer" role="progressbar" aria-label="Time left">
+      <span :style="{ transform: `scaleX(${minigame.timeLeft / minigame.timeTotal})` }" />
+    </div>
+    <div class="choices">
+      <button v-for="input in minigame.inputs" :key="input" @click="runner.apply({ type: 'minigame', input })">{{ input }}</button>
+    </div>
+  </section>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/Minigame.svelte -->
+<script lang="ts">
+  import type { MinigameView } from '@ifloom/engine'
+  import { runner } from './runner.ts'
+
+  // The minigame being played: a bar counting down its timer, and a button for each input that does something now.
+  let { minigame }: { minigame: MinigameView } = $props()
+</script>
+
+<section class="minigame" data-state={minigame.state}>
+  {#if minigame.timeLeft !== null && minigame.timeTotal}
+    <div class="timer" role="progressbar" aria-label="Time left">
+      <span style:transform={`scaleX(${minigame.timeLeft / minigame.timeTotal})`}></span>
+    </div>
+  {/if}
+  <div class="choices">
+    {#each minigame.inputs as input (input)}
+      <button onclick={() => runner.apply({ type: 'minigame', input })}>{input}</button>
+    {/each}
+  </div>
+</section>
+```
+
+```ts tab="Plain DOM"
+// src/main.ts
+/** The minigame being played: a bar counting down its timer, and a button for each input that does something now. */
+function drawMinigame(minigame: MinigameView): void {
+  const section = add(root, 'section', '', 'minigame')
+  section.dataset.state = minigame.state
+  if (minigame.timeLeft !== null && minigame.timeTotal) {
+    const timer = add(section, 'div', '', 'timer')
+    timer.setAttribute('role', 'progressbar')
+    timer.setAttribute('aria-label', 'Time left')
+    add(timer, 'span').style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
+  }
+  const inputs = add(section, 'div', '', 'choices')
+  for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
+}
+```
+
+Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates do that, and map the keyboard to the inputs, in `src/minigame.ts`. It's plain DOM, so all three use the same file, and each starts both once beside the runner:
+
+```ts
+// src/minigame.ts
+/**
+ * What a minigame needs from the page that the engine can't do itself: a
+ * clock and the keyboard. Both are plain DOM, so any framework can use them.
+ * Start each once, beside the runner.
+ */
+import type { Runner } from '@ifloom/engine'
+
+/**
+ * The engine has no clock. This sends a `tick` with the time that passed,
+ * about ten times a second, while a minigame's timer runs and the page is
+ * visible. Time while the page is hidden is dropped, so the round waits.
+ */
+export function startClock(runner: Runner): () => void {
+  let last = performance.now()
+  const timer = setInterval(() => {
+    const ms = Math.floor(performance.now() - last)
+    last += ms
+    if (ms > 0 && !document.hidden && runner.view().minigame?.timeLeft != null) runner.apply({ type: 'tick', ms })
+  }, 100)
+  return () => clearInterval(timer)
+}
+
+/** The keys an input gets when the minigame gives it none. */
+const DEFAULT_KEYS: Record<string, string[]> = { up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'], space: [' '] }
+
+/** Presses a minigame's input when one of its keys goes down: the minigame's own `keys`, else the arrow keys and space. */
+export function startKeys(runner: Runner): () => void {
+  const onKey = (event: KeyboardEvent) => {
+    const minigame = runner.view().minigame
+    if (!minigame || event.repeat || (event.target as Element | null)?.closest?.('input, textarea, select')) return
+    const input = minigame.inputs.find((name) => (minigame.keys[name] ?? DEFAULT_KEYS[name] ?? []).includes(event.key))
+    if (input === undefined) return
+    event.preventDefault()
+    runner.apply({ type: 'minigame', input })
+  }
+  window.addEventListener('keydown', onKey)
+  return () => window.removeEventListener('keydown', onKey)
+}
+```
+
+The [Minigames guide](/docs/guide/minigames#your-own-panel) draws a panel for one minigame by its id, in each framework.
+
+## What else to draw
+
+The [view reference](/docs/reference/view) lists every field. Beyond what the templates draw, these are the ones games most often want:
+
+- `when`, where the game is in time and place, when a plugin says.
+- `notices`, news the player hasn't dismissed. Send `{ type: 'dismiss' }` to clear them.
+- `scene.speaker` and `scene.stageImage`, who is talking and the picture to show with them.
+- `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice, and [Building UI for plugins](/docs/guide/plugin-ui) draws some of them.
+- `settings`, for a settings page. See [The title screen and settings](/docs/guide/title-screen#without-the-react-ui).
+
+`entities`, `collections` and `pack` are there when your game has them.
+
+## Sound
+
+If your game lists tracks in [`game.audio`](/docs/reference/audio), the templates already play them. [`startAudio`](/docs/reference/audio-player#startaudio) follows the runner, not your components, so it works the same whatever draws the page. Start it once, next to the runner, as each template's runner module does. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
 
 A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/reference/audio-player#audioplayer) with the track's file:
 
@@ -293,3 +729,4 @@ if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.vol
 - [The runner](/docs/reference/runner) lists everything else a runner does, such as undo, saves and the backlog.
 - [The view](/docs/reference/view) describes every field you can draw.
 - [Commands](/docs/reference/commands) lists the commands you can send.
+- [Building your own HUD](/docs/guide/hud#in-vue-or-svelte), [Building UI for plugins](/docs/guide/plugin-ui#in-vue-or-svelte) and [The title screen](/docs/guide/title-screen#without-the-react-ui) each have Vue and Svelte versions of what they build.

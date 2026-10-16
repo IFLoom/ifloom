@@ -49,6 +49,7 @@ The `ifloom` command is a TypeScript file that Node runs directly, so you need a
 npm run new -- my-story                    # from the root of the checkout
 npm run new -- my-cafe --template cafe
 npm run new -- my-tale --theme storybook
+npm run new -- my-game --template vue
 ```
 
 Makes a new game in `games/<name>` from a template and tells you what to run next: `npm install` at the root, then `npm run dev -w <name>`. The `games/` folder is an npm workspace that git ignores, so your game installs alongside the engine and stays out of the engine's history.
@@ -56,14 +57,18 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 | Template | What you get |
 |---|---|
 | `blank` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/guide/title-screen). The default. |
-| `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte or anything else (see [Using another framework](/docs/guide/frameworks)). |
+| `vanilla` | The same game drawn with plain DOM and no framework. |
+| `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
+| `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
 | `novel` | A copy of The Letter, `examples/novel`. |
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |
 | `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
 
-`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. The `vanilla` template has no React UI and ignores it. The command says which theme it used.
+The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts`, `src/styles.css` and `src/minigame.ts`, which runs a minigame's clock and keys. [Using another framework](/docs/guide/frameworks) walks through them.
 
-Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends only on `@ifloom/*` packages, and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
+`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
+
+Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends only on `@ifloom/*` packages (and, for `vue` and `svelte`, the framework, its Vite plugin and its type checker), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
 
 The name has to work as an npm package name: lower-case letters, digits and dashes. `ifloom new` refuses a folder that already exists and isn't empty.
 
@@ -337,7 +342,7 @@ It sets up:
 | `singleFile` | Puts the script and stylesheet inside `index.html`. `false` leaves them as files beside it. | `true` |
 | `react` | Adds React's Vite plugin. | On if the game depends on `@ifloom/react` or `react` |
 | `tailwind` | Adds Tailwind's Vite plugin. | On if the game depends on `@ifloom/react` or `tailwindcss` |
-| `vite` | Any other Vite config, merged under the preset. Its `plugins` are added after the preset's, and its `resolve.dedupe` after `react` and `react-dom`. Another framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`. | `{}` |
+| `vite` | Any other Vite config, merged under the preset. Its `plugins` are added after the preset's, and its `resolve.dedupe` after `react` and `react-dom`. Another framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`, as the `vue` and `svelte` templates do. | `{}` |
 
 ```ts
 import { ifloom } from '@ifloom/cli/vite'

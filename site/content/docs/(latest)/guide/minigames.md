@@ -1,8 +1,8 @@
 ---
 title: "Minigames"
-description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in the React UI.
+description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in React, Vue or Svelte.
 ---
-This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one.
+This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one, in React, Vue or Svelte.
 
 A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the React UI draws it and keeps its clock. Every field is in the [minigames reference](/docs/reference/minigames).
 
@@ -180,6 +180,72 @@ What it uses:
 You don't have to run the clock. `SceneStage` runs it while a minigame is on screen, and `useMinigame` would run it too. There's only ever one clock per game, however many components ask.
 
 To change every minigame's panel at once rather than one by id, replace `MinigamePanel` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
+
+### In Vue or Svelte
+
+The [`vue` and `svelte` templates](/docs/guide/frameworks#minigames) draw any minigame with their `Minigame` component, and run the clock and the keys from `src/minigame.ts`. For a panel of your own, read `view.minigame` and send its inputs with `runner.apply`:
+
+```vue tab="Vue"
+<!-- src/QuickFeet.vue -->
+<script setup lang="ts">
+import { runner, view } from './runner.ts'
+
+const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', right: '→' }
+</script>
+
+<template>
+  <section v-if="view.minigame" class="quick-feet">
+    <p>Round {{ view.minigame.vars.round }} of 5 · {{ view.minigame.vars.score }} right</p>
+    <!-- The arrow states are named after their arrow, so the state says which to draw. -->
+    <p class="arrow" aria-live="polite" :aria-label="view.minigame.label ?? undefined">{{ GLYPHS[view.minigame.state] }}</p>
+    <div v-if="view.minigame.timeLeft !== null && view.minigame.timeTotal" class="timer">
+      <span :style="{ transform: `scaleX(${view.minigame.timeLeft / view.minigame.timeTotal})` }" />
+    </div>
+    <button v-for="input in view.minigame.inputs" :key="input" @click="runner.apply({ type: 'minigame', input })">
+      {{ GLYPHS[input] ?? input }}
+    </button>
+  </section>
+</template>
+```
+
+```svelte tab="Svelte"
+<!-- src/QuickFeet.svelte -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+
+  const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', right: '→' }
+</script>
+
+{#if $view.minigame}
+  {@const minigame = $view.minigame}
+  <section class="quick-feet">
+    <p>Round {minigame.vars.round} of 5 · {minigame.vars.score} right</p>
+    <!-- The arrow states are named after their arrow, so the state says which to draw. -->
+    <p class="arrow" aria-live="polite" aria-label={minigame.label ?? undefined}>{GLYPHS[minigame.state]}</p>
+    {#if minigame.timeLeft !== null && minigame.timeTotal}
+      <div class="timer"><span style:transform={`scaleX(${minigame.timeLeft / minigame.timeTotal})`}></span></div>
+    {/if}
+    {#each minigame.inputs as input (input)}
+      <button onclick={() => runner.apply({ type: 'minigame', input })}>{GLYPHS[input] ?? input}</button>
+    {/each}
+  </section>
+{/if}
+```
+
+Draw it in place of the template's panel when quick feet is running:
+
+```vue tab="Vue"
+<!-- src/App.vue -->
+<QuickFeet v-if="view.minigame?.id === 'arrows'" />
+<Minigame v-else-if="view.minigame" :minigame="view.minigame" />
+```
+
+```svelte tab="Svelte"
+<!-- src/App.svelte -->
+{#if $view.minigame?.id === 'arrows'}<QuickFeet />{:else if $view.minigame}<Minigame minigame={$view.minigame} />{/if}
+```
+
+The clock and the keys already run from the template's `src/runner.ts`, whatever panel draws the minigame.
 
 ## Testing it
 

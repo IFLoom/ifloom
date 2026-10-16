@@ -3,11 +3,15 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, holds, startingState, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, checkGame, entitiesOf, entityOf, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
+import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
+import type { EffectsView } from '@ifloom/plugin-effects'
+import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
+import { buy, type ShopView } from '@ifloom/plugin-shop'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
 import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
@@ -50,7 +54,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'input', id: 'catName', value: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
     expect(apply(state, game, { type: 'input', id: 'catName', value: 'Rex' }).refused).toBe('Not now.')
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('buySandwich'))
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'sandwich'))
     expect(view(state, game).pack.find((item) => item.id === 'sandwich')?.useLabel).toBe('Eat the sandwich')
     state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', itemId: 'sandwich' })
     expect(state.stats.energy).toBe(75)
@@ -112,10 +116,18 @@ describe('Small Town', () => {
     state = run(state, go('high-street'), go('park'))
     expect(state.stats.coins).toBe(10)
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Rent paid: 30 coins')
+    // The secret achievement is ??? until the evening by the river.
+    const achievements = () => (view(state, game).plugins.achievements as AchievementsView).achievements
+    expect(achievements()).toEqual([
+      expect.objectContaining({ id: 'nest-egg', title: 'Nest egg', earned: false, progress: { value: 10, target: 100 } }),
+      expect.objectContaining({ id: 'river', title: '???', earned: false }),
+    ])
     state = run(state, talk('ava'))
     expect(view(state, game).scene.title).toBe('By the river')
     state = run(state, { type: 'choose', id: 'stay' })
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
+    expect(achievements()[1]).toMatchObject({ title: 'Dusk by the river', earned: true })
+    expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
   })
 
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {
@@ -157,6 +169,75 @@ describe('Small Town', () => {
     expect(state.minigame).toBeNull()
     expect(state.sceneId).toBe('park.arrows-lost')
     expect(state.flags['minigame:arrows']).toBe(2)
+  })
+
+  it('leaves you caffeinated after a coffee, for the rest of the day and the next', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('coffee'), go('high-street'), go('office'), act('work'))
+    // 80 kept, plus 15 for the coffee, less 30 for the shift: 65, and 10 more on top while it lasts.
+    expect(state.stats.energy).toBe(65)
+    expect(statValue(state, game, 'energy')).toBe(75)
+    const effects = () => (view(state, game).plugins.effects as EffectsView).active
+    expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', label: 'Caffeinated', turnsLeft: 2 })])
+    state = run(on(state, 1, 'night'), sleep())
+    expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])
+    state = run(on(state, 2, 'night'), sleep())
+    expect(effects()).toEqual([])
+  })
+
+  it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    const counter = () => (view(state, game).plugins.shop as ShopView).vendors[0]
+    expect(counter()).toMatchObject({ id: 'counter', here: true, open: true })
+    expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
+    // The café's own button shows the counter's price, as the shop's view does.
+    const button = view(state, game).actions.find((action) => action.id === 'flapjack')!
+    expect(button.price?.stats?.[0].id).toBe('coins')
+    state = run(state, buy('counter', 'flapjack'), buy('counter', 'flapjack'))
+    expect(apply(state, game, buy('counter', 'flapjack')).refused).toBe('Sold out.')
+    expect(view(state, game).actions.find((action) => action.id === 'flapjack')!.disabled).toBe('Sold out.')
+    const coins = state.stats.coins
+    state = run(state, buy('counter', 'sandwich'), { type: 'custom', name: 'shop/sell', with: { vendor: 'counter', item: 'sandwich' } })
+    expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
+    // Closed in the evening, with the café.
+    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).refused).toBe('Closed.')
+  })
+
+  it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    expect(apply(state, game, applyFor('weekend')).refused).toBe('Ava doesn’t know you well enough yet.')
+    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    state = { ...state, entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } } }
+    state = run(state, applyFor('weekend'))
+    const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
+    expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
+    expect(apply(state, game, work('weekend')).refused).toBe('No shift today.')
+    // Saturday morning: a shift takes the morning and 25 energy, and pays 12 coins.
+    state = on({ ...state, stats: { ...state.stats, energy: 100 } }, 5, 'morning')
+    const coins = state.stats.coins
+    state = run(state, work('weekend'))
+    expect(state.stats).toMatchObject({ coins: coins + 12, energy: 75 })
+    expect(clock.read(state, game)).toEqual({ day: 5, period: 'afternoon' })
+    expect(job()).toMatchObject({ shifts: 1, nextShift: { day: 12, inDays: 7 } })
+  })
+
+  it('fills the park with two new visitors each day, drawn from the town’s pools', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
+    const visitors = () => entitiesOf(state, 'visitor').map((ref) => entityOf(state, ref)!)
+    expect(visitors()).toHaveLength(2)
+    for (const visitor of visitors()) {
+      expect(['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit']).toContain(visitor.name)
+      expect(['alone', 'a dog', 'a pushchair']).toContain(visitor.flags.with)
+    }
+    expect(view(state, game).scene.body).toContain('A few people are out along the path')
+    const first = visitors()
+    // Back the next day: yesterday's have gone home, and two more are out.
+    state = run(on(state, 2, 'morning'), go('high-street'), go('park'))
+    expect(entitiesOf(state, 'visitor')).toEqual(['visitor:#3', 'visitor:#4'])
+    expect(visitors()).not.toEqual(first)
   })
 
   it('keeps the phone in the pocket at work', () => {

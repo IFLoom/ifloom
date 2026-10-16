@@ -130,4 +130,6 @@ mountGame(game, {
 
 Build the element once, outside any component, as here. The layout is only read when the page is drawn, and the components inside it redraw themselves as the view changes.
 
+To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/guide/plugin-ui).
+
 For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.

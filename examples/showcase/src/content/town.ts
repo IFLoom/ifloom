@@ -6,6 +6,10 @@
  */
 import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
+import { applyEffect, effectActive } from '@ifloom/plugin-effects'
+import { buy } from '@ifloom/plugin-shop'
+import { applyFor, work } from '@ifloom/plugin-jobs'
+import { generate } from '@ifloom/plugin-generators'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
@@ -37,7 +41,12 @@ const locations: LocationDef[] = [
     locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
-      { id: 'sandwich', label: 'Buy a sandwich for later', command: { type: 'activity', id: 'buySandwich' } },
+      // The counter is the shop plugin's vendor: its price, stock and today's offer show on the button.
+      { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'sandwich') },
+      { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'flapjack') },
+      // Saturday mornings behind the counter, once Ava knows you: the jobs plugin's job.
+      { id: 'ask-work', label: 'Ask Ava about weekend work', command: applyFor('weekend') },
+      { id: 'shift', label: 'Work the Saturday shift', command: work('weekend') },
       // Something small happens while you sit: one of the café's storylets, drawn at random.
       { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
     ],
@@ -51,10 +60,13 @@ const locations: LocationDef[] = [
       { text: 'place.cafe' },
       { text: 'place.cafe/ava', when: here('ava') },
       { text: 'place.cafe/raincoat', when: wearing('raincoat') },
+      { text: 'place.cafe/caffeinated', when: effectActive('caffeinated') },
     ],
   },
   {
     ...place({ id: 'park', name: 'Riverside Park', kind: 'street', exits: ['high-street'] }),
+    // The river, then a line while the day's visitors are about.
+    body: [{ text: 'place.park' }, { text: 'place.park/visitors', when: { count: 'visitor', gte: 1 } }],
     actions: [
       { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
       { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
@@ -188,6 +200,13 @@ export const town: Pack = {
       kind: 'stuff',
       use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', key: 'energy', by: 25 }] },
     },
+    {
+      id: 'flapjack',
+      name: 'flapjack',
+      desc: 'Oats, syrup and a lot of butter.',
+      kind: 'stuff',
+      use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', key: 'energy', by: 10 }] },
+    },
   ],
   activities: [
     { id: 'wait', effects: [pass(1)] },
@@ -198,10 +217,11 @@ export const town: Pack = {
       effects: [
         { kind: 'stat', key: 'energy', by: 15 },
         { kind: 'flag', key: 'hadCoffee', value: true },
+        // And a lift that lasts till tomorrow is out: 10 more energy, never written.
+        applyEffect('caffeinated'),
       ],
     },
     { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
-    { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },
     { id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] },
@@ -324,7 +344,16 @@ export const town: Pack = {
   collections: [{ id: 'notes', name: 'Notes' }],
   // On moving day the cat needs a name; the prose says it from then on.
   inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }],
+  // People out in the park, made fresh each day by the generators plugin.
+  kinds: [{ id: 'visitor', label: 'Visitor', plural: 'Visitors' }],
   triggers: [
+    // The first time each day the player is in the park: yesterday's visitors go home and two new ones come.
+    {
+      id: 'visitors',
+      once: 'turn',
+      when: at('park'),
+      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', of: '$' }] }, generate('visitor', 2)],
+    },
     // A note under the door the first time the player steps out.
     {
       id: 'welcome',
@@ -382,6 +411,65 @@ export const town: Pack = {
           ],
         },
       ],
+    },
+    jobs: {
+      jobs: [
+        {
+          id: 'weekend',
+          title: 'Weekend help',
+          description: 'Saturday mornings behind the counter at the Corner Café.',
+          requires: [{ reason: 'Ava doesn’t know you well enough yet.', when: { stat: 'friendship', of: person('ava'), gte: 10 } }],
+          at: ['cafe'],
+          // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
+          days: [5],
+          hours: ['morning'],
+          shift: { cost: { energy: 25 }, passes: 1 },
+          ranks: [
+            { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
+            { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+          ],
+          // Miss two Saturdays and Ava finds someone else.
+          fire: { missed: 2 },
+        },
+      ],
+    },
+    generators: {
+      pools: [
+        { id: 'first-names', values: ['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit'] },
+        // Most come alone; plenty bring a dog; now and then, a pushchair.
+        { id: 'company', values: [{ value: 'alone', weight: 5 }, { value: 'a dog', weight: 4 }, { value: 'a pushchair', weight: 1 }] },
+      ],
+      templates: [{ id: 'visitor', of: 'visitor', name: { pool: 'first-names' }, flags: { with: { pool: 'company' }, laps: { between: [1, 3] } } }],
+    },
+    shop: {
+      vendors: [
+        {
+          id: 'counter',
+          name: 'The counter',
+          at: ['cafe'],
+          hours: ['morning', 'afternoon'],
+          // Ava will take an unopened sandwich back for half.
+          buysBack: 0.5,
+          // One thing on the board is half price each day.
+          discounts: { off: 0.5 },
+          goods: [
+            { item: 'sandwich', price: { coins: 4 } },
+            // Two a day, baked each morning.
+            { item: 'flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
+          ],
+        },
+      ],
+    },
+    achievements: {
+      achievements: [
+        // A count to watch: coins on hand, out of 100.
+        { id: 'nest-egg', title: 'Nest egg', description: 'Have 100 coins at once.', progress: { value: 'coins', target: 100 } },
+        // Hidden until it happens.
+        { id: 'river', title: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
+      ],
+    },
+    effects: {
+      effects: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },
     wardrobe: { clothes: [{ id: 'raincoat', slot: 'coat' }, { id: 'scarf', slot: 'neck' }] },
     messages: {

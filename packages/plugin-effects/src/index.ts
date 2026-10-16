@@ -1,0 +1,290 @@
+/**
+ * @ifloom/plugin-effects: timed effects. A coffee that perks the player up
+ * for a couple of turns, a cold that saps their energy for a week.
+ *
+ * An effect lasts a number of turns. While it lasts it can change what the
+ * player's stats read (through the engine's stat modifiers, so nothing is
+ * written) and run effects as it starts, at the end of each turn and as it
+ * ends. Applying one that is already active refreshes it or adds a stack, as
+ * the effect says.
+ */
+import {
+  definePlugin,
+  inRange,
+  say,
+  type Condition,
+  type EffectRef,
+  type Game,
+  type GameState,
+  type PluginArgs,
+  type PluginContext,
+  type PluginProblem,
+  type Range,
+  type StatModifier,
+} from '@ifloom/engine'
+
+/** What applying an effect that is already active does: start its turns again, or add another stack. */
+export type Reapply = 'refresh' | 'stack'
+
+/** A change an effect makes to what one of the player's stats reads, per stack. */
+export type EffectModifier = StatModifier
+
+/** A timed effect, as content declares it. */
+export type EffectDef = {
+  id: string
+  /** What the player reads: "Caffeinated". */
+  label: string
+  /** A line about it, for the UI. */
+  summary?: string
+  /** How many turns it lasts, counting the end of the turn it was applied in. */
+  turns: number
+  /** What it does to the player's stats while it lasts, per stack. Never written. */
+  modifiers?: EffectModifier[]
+  /** Applied when it starts, and each time a stack is added. */
+  onStart?: EffectRef[]
+  /** Applied at the end of each turn it is active, once per stack, before its turns go down. */
+  eachTurn?: EffectRef[]
+  /** Applied when it runs out, once per stack that ran out. */
+  onEnd?: EffectRef[]
+  /** What applying it again does while it is active. `'refresh'` if left out. */
+  reapply?: Reapply
+  /** With `reapply: 'stack'`, the most stacks it can have. No limit if left out. */
+  max?: number
+}
+
+/** One active effect as the save keeps it: its id, and the turns left on each stack, oldest first. */
+export type ActiveRecord = { id: string; left: number[] }
+
+/** What the plugin keeps in a save. */
+export type EffectsState = {
+  /** Active effects, in the order they were first applied. */
+  active: ActiveRecord[]
+}
+
+/** An active effect as the UI shows it. */
+export type ActiveEffect = {
+  id: string
+  label: string
+  summary: string
+  /** The turns left on its longest stack. */
+  turnsLeft: number
+  stacks: number
+  /** What it does to the stats right now, all its stacks together, one entry per stat. */
+  modifiers: StatModifier[]
+}
+
+export type EffectsView = {
+  /** Active effects, in the order they were first applied. */
+  active: ActiveEffect[]
+}
+
+const ID = 'effects'
+
+function emptyState(): EffectsState {
+  return { active: [] }
+}
+
+/** The game's timed effects: `data.effects.effects`, from its packs. */
+export function effectDefs(game: Game): EffectDef[] {
+  return (game.data?.[ID]?.effects ?? []) as EffectDef[]
+}
+
+function defOf(game: Game, id: string): EffectDef | undefined {
+  return effectDefs(game).find((def) => def.id === id)
+}
+
+/** The plugin's state in this game state, read without a context: after other effects have changed it. */
+function sliceOf(state: GameState): EffectsState {
+  return (state.plugins?.[ID]?.state as EffectsState | undefined) ?? emptyState()
+}
+
+/** The modifiers of every stack of these effects, summed per stat: adds added, multipliers multiplied. */
+function combined(game: Game, active: readonly ActiveRecord[]): StatModifier[] {
+  const byStat = new Map<string, { add: number; multiply: number }>()
+  for (const record of active) {
+    const def = defOf(game, record.id)
+    for (let n = 0; n < record.left.length; n += 1) {
+      for (const modifier of def?.modifiers ?? []) {
+        const sum = byStat.get(modifier.stat) ?? { add: 0, multiply: 1 }
+        sum.add += modifier.add ?? 0
+        sum.multiply *= modifier.multiply ?? 1
+        byStat.set(modifier.stat, sum)
+      }
+    }
+  }
+  return [...byStat].map(([stat, sum]) => ({
+    stat,
+    ...(sum.add !== 0 ? { add: sum.add } : {}),
+    ...(sum.multiply !== 1 ? { multiply: sum.multiply } : {}),
+  }))
+}
+
+/** Everything the UI needs to show what's active. */
+export function effectsView(record: EffectsState, game: Game): EffectsView {
+  const active: ActiveEffect[] = []
+  for (const entry of record.active) {
+    const def = defOf(game, entry.id)
+    if (!def || !entry.left.length) continue
+    active.push({
+      id: def.id,
+      label: def.label,
+      summary: def.summary ?? '',
+      turnsLeft: Math.max(...entry.left),
+      stacks: entry.left.length,
+      modifiers: combined(game, [entry]),
+    })
+  }
+  return { active }
+}
+
+/** The state with the effect applied: started, refreshed or stacked. Unknown effects do nothing. */
+function applyTo(state: GameState, id: string, context: PluginContext<EffectsState>): GameState {
+  const def = defOf(context.game, id)
+  if (!def) return state
+  const slice = sliceOf(state)
+  const turns = Math.max(1, Math.floor(def.turns))
+  const at = slice.active.findIndex((entry) => entry.id === id)
+  const current = at >= 0 ? slice.active[at] : undefined
+  let left: number[]
+  let started = true
+  if (!current) left = [turns]
+  else if ((def.reapply ?? 'refresh') === 'refresh') {
+    left = current.left.map(() => turns)
+    started = false
+  } else if (def.max !== undefined && current.left.length >= def.max) {
+    // At its most stacks: the oldest is taken off and a fresh one put on.
+    left = [...current.left.slice(1), turns]
+    started = false
+  } else left = [...current.left, turns]
+  const active = current ? slice.active.map((entry, n) => (n === at ? { id, left } : entry)) : [...slice.active, { id, left }]
+  const next = context.set({ active }, state)
+  return started && def.onStart?.length ? context.apply(def.onStart, next) : next
+}
+
+/** The state with every stack of the effect taken off, running `onEnd` once per stack if asked. */
+function removeFrom(state: GameState, id: string, runEnd: boolean, context: PluginContext<EffectsState>): GameState {
+  const slice = sliceOf(state)
+  const current = slice.active.find((entry) => entry.id === id)
+  if (!current) return state
+  let next = context.set({ active: slice.active.filter((entry) => entry !== current) }, state)
+  const onEnd = runEnd ? defOf(context.game, id)?.onEnd : undefined
+  if (onEnd?.length) for (let n = 0; n < current.left.length; n += 1) next = context.apply(onEnd, next)
+  return next
+}
+
+/** The end of a turn: each stack's `eachTurn`, a turn off every stack, then `onEnd` for each stack that ran out. */
+function endTurn(state: GameState, context: PluginContext<EffectsState>): GameState {
+  const { game } = context
+  let next = state
+  for (const record of sliceOf(state).active) {
+    const eachTurn = defOf(game, record.id)?.eachTurn
+    if (eachTurn?.length) for (let n = 0; n < record.left.length; n += 1) next = context.apply(eachTurn, next)
+  }
+  // `eachTurn` may have applied or removed effects: count down what is active now.
+  const ended: string[] = []
+  const active: ActiveRecord[] = []
+  for (const record of sliceOf(next).active) {
+    const left = record.left.map((turns) => turns - 1)
+    const kept = left.filter((turns) => turns > 0)
+    for (let n = kept.length; n < left.length; n += 1) ended.push(record.id)
+    if (kept.length) active.push({ id: record.id, left: kept })
+  }
+  next = context.set({ active }, next)
+  for (const id of ended) {
+    const onEnd = defOf(game, id)?.onEnd
+    if (onEnd?.length) next = context.apply(onEnd, next)
+  }
+  return next
+}
+
+function idOf(args: PluginArgs): string {
+  return String(args.id ?? '')
+}
+
+function stacksOf(args: PluginArgs): Range | undefined {
+  return args.stacks && typeof args.stacks === 'object' ? (args.stacks as Range) : undefined
+}
+
+/**
+ * The plugin. Add it to the game's `plugins`, and put effects in a pack's
+ * `data.effects.effects`.
+ */
+export function effects() {
+  return definePlugin<EffectsState>({
+    id: ID,
+    version: 1,
+    start: emptyState,
+    strings: { unknown: 'Nothing like that can happen.', notActive: 'That isn’t affecting you.' },
+    conditions: {
+      /** `{ custom: 'effects/active', with: { id, stacks? } }`: active, with that many stacks if asked. */
+      active: (_state, args, { slice }) => {
+        const record = slice.active.find((entry) => entry.id === idOf(args))
+        if (!record) return false
+        const stacks = stacksOf(args)
+        return stacks ? inRange(record.left.length, stacks) : true
+      },
+    },
+    effects: {
+      /** `{ custom: 'effects/apply', with: { id } }`: start it, refresh it or add a stack. */
+      apply: (state, args, context) => applyTo(state, idOf(args), context),
+      /** `{ custom: 'effects/remove', with: { id, runEnd? } }`: take every stack off, running `onEnd` only if asked. */
+      remove: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
+    },
+    commands: {
+      /** `{ type: 'custom', name: 'effects/apply', with: { id } }`. */
+      apply: {
+        whyNot: (_state, args, { game }) => (defOf(game, idOf(args)) ? undefined : say(game, 'effects/unknown')),
+        run: (state, args, context) => applyTo(state, idOf(args), context),
+        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/apply', with: { id: idOf(args) } }],
+      },
+      /** `{ type: 'custom', name: 'effects/remove', with: { id, runEnd? } }`. */
+      remove: {
+        whyNot: (_state, args, { slice, game }) =>
+          slice.active.some((entry) => entry.id === idOf(args)) ? undefined : say(game, 'effects/notActive'),
+        run: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
+        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/remove', with: { id: idOf(args), runEnd: args.runEnd === true } }],
+      },
+    },
+    statModifiers: (_state, { slice, game }) => (slice.active.length ? combined(game, slice.active) : undefined),
+    hooks: {
+      turn: (state, context) => (context.slice.active.length ? endTurn(state, context) : state),
+    },
+    view: (_state, { slice, game }) => effectsView(slice, game),
+    references: {
+      calls: (_kind, _name, args) => (args.id === undefined ? [] : [{ entry: String(args.id), plugin: ID, list: 'effects', noun: 'effect' }]),
+      content: (game) =>
+        effectDefs(game).map((def) => ({
+          list: 'effects',
+          id: def.id,
+          refs: [
+            ...(def.modifiers ?? []).map((modifier) => ({ stat: modifier.stat })),
+            { within: 'onStart', refs: [{ effects: def.onStart }] },
+            { within: 'eachTurn', refs: [{ effects: def.eachTurn }] },
+            { within: 'onEnd', refs: [{ effects: def.onEnd }] },
+          ],
+        })),
+    },
+    check: (game) => {
+      const problems: PluginProblem[] = []
+      for (const def of effectDefs(game)) {
+        const problem = (what: string) => problems.push({ list: 'effects', id: def.id, what })
+        if (!(def.turns >= 1)) problem('turns must be 1 or more')
+        if (def.max !== undefined && (def.reapply ?? 'refresh') !== 'stack') problem('max only applies with reapply: "stack"')
+        if (def.max !== undefined && !(def.max >= 1)) problem('max must be 1 or more')
+        for (const modifier of def.modifiers ?? []) {
+          if (game.stats?.find((stat) => stat.id === modifier.stat)?.of !== undefined) {
+            problem(`stat "${modifier.stat}" belongs to ${game.stats.find((stat) => stat.id === modifier.stat)?.of}, not the player`)
+          }
+        }
+      }
+      return problems
+    },
+  })
+}
+
+/** A condition: the effect is active, with a number of stacks in this range if given. */
+export const effectActive = (id: string, stacks?: Range): Condition => ({ custom: 'effects/active', with: stacks ? { id, stacks } : { id } })
+/** An effect: apply the timed effect, refreshing or stacking it if it's already active. */
+export const applyEffect = (id: string): EffectRef => ({ custom: 'effects/apply', with: { id } })
+/** An effect: take every stack of the timed effect off. `runEnd` runs its `onEnd` once per stack. */
+export const removeEffect = (id: string, runEnd = false): EffectRef => ({ custom: 'effects/remove', with: runEnd ? { id, runEnd } : { id } })

@@ -11,6 +11,11 @@ A linear novel might use none of them. A life sim like the [showcase](/docs/guid
 | [Places](/docs/plugins/places) | `@ifloom/plugin-places` | Locations with exits and things to do in each, walking between them, and where the player is. Locations are content, so a mod can add a room. |
 | [Cast](/docs/plugins/cast) | `@ifloom/plugin-cast` | The game's people. Characters keep their own hours, and you can see who is in the room, talk to them and call them. What the game keeps about each one, such as a friendship, is a stat on them. Characters are content, so a mod can add someone. |
 | [Quests](/docs/plugins/quests) | `@ifloom/plugin-quests` | What the player is doing, how far they've got, and a hint for what comes next. |
+| [Effects](/docs/plugins/effects) | `@ifloom/plugin-effects` | Timed effects: a boost or an ailment that lasts some turns, changes what the player's stats read while it lasts, and can run effects as it starts, each turn and as it ends. |
+| [Achievements](/docs/plugins/achievements) | `@ifloom/plugin-achievements` | Achievements earned by a condition or an effect, secret ones shown as `???` until earned, progress counts such as 4 of 10, and a record in the player's profile that outlives saves. |
+| [Shop](/docs/plugins/shop) | `@ifloom/plugin-shop` | Vendors with prices in any spendable stat, limited stock that restocks each turn or day, selling back, and seeded daily discounts. Works with the calendar for opening hours and with places for where a vendor stands. |
+| [Jobs](/docs/plugins/jobs) | `@ifloom/plugin-jobs` | Jobs with hiring requirements, shifts that cost energy or time and pay a wage, promotion ladders, and getting fired for missed shifts or a condition such as low performance. Works with the calendar for shift days and hours and with places for the workplace. |
+| [Generators](/docs/plugins/generators) | `@ifloom/plugin-generators` | New entities made from templates: named pools of values with weights, number ranges and fixed values for each field, seeded so a replay makes the same ones. |
 | [Wardrobe](/docs/plugins/wardrobe) | `@ifloom/plugin-wardrobe` | Slots the game declares, clothes that go in them, and what the player has on. |
 | [Messages](/docs/plugins/messages) | `@ifloom/plugin-messages` | Messages that arrive when the story allows, in channels and threads, with replies that work like choices. |
 | [Feed](/docs/plugins/feed) | `@ifloom/plugin-feed` | Timelines of other people's posts, the player's own posts, and the likes and comments they get. |
@@ -30,6 +35,8 @@ There's also one bundle:
 - **They only use the engine's public API.** A first-party plugin imports nothing but `@ifloom/engine`, the same API your own plugins use, so anything one of them does, a plugin of yours can do too.
 - **None requires another.** You can add any of them, in any combination. A plugin that works with others lists them in its `cooperates`, and uses them only when the game has them:
   - The cast cooperates with places and the calendar. It asks places where the player is, and its schedules usually use the calendar's conditions. Without places, nobody is ever in the room, but calls still work.
+  - The shop cooperates with the calendar and places. A vendor keeps the calendar's hours and stands at a place on the map.
+  - Jobs cooperate with the calendar and places. Shifts fall on the calendar's weekdays and periods, take its time, and are worked at a place on the map.
   - Debug cooperates with the calendar and places. `debug/time` sets the calendar's clock and `debug/go` moves the player on the places map.
   - Messages, the feed and devices cooperate with the cast. Messages and posts show the [cast](/docs/plugins/cast)'s names and faces, and a device's contacts section lists the people the player can call.
   - A device's app can show another plugin's view by name, such as a messages channel or a feed. Messages and feeds work without a device.

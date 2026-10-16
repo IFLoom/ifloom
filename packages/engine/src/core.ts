@@ -16,7 +16,7 @@ import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
-import { pluginAudio, pluginCommand, pluginEffect, runHooks } from './plugin.ts'
+import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runHooks } from './plugin.ts'
 import { runEffects } from './reduce.ts'
 import { effectsOf } from './availability.ts'
 import { roll, weighted } from './random.ts'
@@ -48,6 +48,7 @@ export function featureContext(): FeatureContext {
     roll,
     customValue,
     pluginAudio,
+    statModifiers: (state, game) => pluginStatModifiers(game, state),
     sceneById,
     sceneView: (state, game) => (state.sceneId ? sceneById(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
   })
@@ -136,6 +137,8 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
     },
     run: (state, command, game) => pluginCommand(game, command.name)!.run(state, command.with ?? {}),
     effectsOf: (state, command, game) => pluginCommand(game, command.name)?.effectsOf(state, command.with ?? {}) ?? [],
+    // What a plugin's command says it spends, for its button's price: a shop's price, say.
+    spends: (command, game, state) => pluginCommand(game, command.name)?.spends(state, command.with ?? {}),
     // A plugin command that says it ignores locks: a debugger's.
     ignoresLocks: (command, game) => Boolean(pluginCommand(game, command.name)?.ignoresLocks),
     references: (command) => [{ call: 'commands', name: command.name, with: command.with }],

@@ -18,6 +18,7 @@
  */
 import type { EffectRef } from '../custom.ts'
 import type { CarryOver, Game, Scene, SceneView } from '../game.ts'
+import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
 import type { Command, Condition, Effect, GameState, Range, StartOptions } from '../types.ts'
@@ -40,6 +41,8 @@ export type FeatureContext = {
   roll: (max: number, ...parts: (string | number)[]) => number
   /** A custom value by name, the game's or a plugin's. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState) => string | number) | undefined
+  /** What the plugins' `statModifiers` change about the player's stats right now. */
+  statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
   /** What the plugins put on background channels, by channel. */
   pluginAudio: (game: Game, state: GameState) => Record<string, string | null>
   /** A scene ready to render, by id, as `sceneById` gives it. */
@@ -100,7 +103,7 @@ export type CommandEntry<C> = {
   /** Whether no lock or plugin guard stops it. False if left out. */
   ignoresLocks?: (command: C, game: Game) => boolean
   /** The stats it spends, by id, for its button's price. None if left out. */
-  spends?: (command: C, game: Game) => Record<string, number> | undefined
+  spends?: (command: C, game: Game, state: GameState) => Record<string, number> | undefined
   references: (command: C) => Reference[]
 }
 

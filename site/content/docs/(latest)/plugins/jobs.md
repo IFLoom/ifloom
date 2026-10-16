@@ -1,0 +1,320 @@
+---
+title: "Jobs"
+description: "Jobs with hiring requirements, shifts that cost stats and time and pay a wage, promotion ladders, and getting fired."
+---
+`@ifloom/plugin-jobs` adds jobs the player applies for, works shifts at, gets promoted in and can be fired from. A shift costs stats such as energy, and time on the calendar, and pays a wage in a spendable stat. A job can have a ladder of ranks, each paying more. Missing shifts, or a condition such as a low performance stat, gets the player fired.
+
+```ts
+import {
+  jobs, applyFor, work, quit, hire, fire, hasJob, wasFired, shiftsWorked,
+  jobDefs, jobsView,
+  type JobDef, type ShiftDef, type RankDef, type FireDef,
+  type JobsState, type HeldJob, type JobsView, type JobView, type RankView,
+} from '@ifloom/plugin-jobs'
+```
+
+The plugin has no UI of its own. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/guide/plugin-ui#a-job-board) builds one.
+
+## Install
+
+List the package in your game's `package.json`, beside the engine:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/engine": "0.0.0",
+    "@ifloom/plugin-jobs": "0.0.0"
+  }
+}
+```
+
+Then add `jobs()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+
+The plugin works on its own. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
+
+- **Calendar.** A job's `days` are the calendar's weekdays and its `hours` are periods. A shift's `passes` moves the clock on, and "a day" for one shift a day and for missed shifts is the calendar's day.
+- **Places.** A job's `at` lists where shifts are worked.
+
+Without the calendar, every day has a shift, a day is a turn, and a shift takes no time. Without places, a shift can be worked anywhere.
+
+## jobs
+
+```ts
+function jobs(): DefinedPlugin<JobsState>
+```
+
+Builds the plugin, with the id `jobs`. The player holds no job in a new game.
+
+## Writing jobs
+
+Jobs are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `jobs.jobs`, and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { applyFor, work, type JobDef } from '@ifloom/plugin-jobs'
+
+const weekend: JobDef = {
+  id: 'weekend',
+  title: 'Weekend help',
+  description: 'Saturday mornings behind the counter at the Corner Café.',
+  requires: [{ reason: 'Ava doesn’t know you well enough yet.', when: { stat: 'friendship', of: 'character:ava', gte: 10 } }],
+  at: ['cafe'],
+  days: [5],
+  hours: ['morning'],
+  shift: { cost: { energy: 25 }, passes: 1 },
+  ranks: [
+    { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
+    { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+  ],
+  fire: { missed: 2 },
+}
+
+const town: Pack = {
+  id: 'town',
+  schema: SCHEMA,
+  data: { jobs: { jobs: [weekend] } },
+}
+
+// Buttons for the café's actions.
+const buttons = [
+  { id: 'ask-work', label: 'Ask Ava about weekend work', command: applyFor('weekend') },
+  { id: 'shift', label: 'Work the Saturday shift', command: work('weekend') },
+]
+```
+
+### JobDef
+
+```ts
+type JobDef = {
+  id: string
+  title: string
+  description?: string
+  requires?: Requirement[]
+  at?: string[]
+  days?: number[]
+  hours?: string[]
+  shift: ShiftDef
+  ranks: RankDef[]
+  fire?: FireDef
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among jobs. Commands name the job by it. |
+| `title` | Its name on the job board and in its notices. |
+| `description` | A line or two about it. |
+| `requires` | What it takes to be hired. Each is a [`Requirement`](/docs/reference/actions#requirement), `{ reason, when }`, as an activity's are. The first that doesn't hold refuses `jobs/apply` with its `reason`. |
+| `at` | The [places](/docs/plugins/places) locations shifts are worked at. Anywhere if left out. |
+| `days` | The calendar's weekdays it has shifts on, from 0 (with the default week, 0 is Monday and 5 is Saturday). Every day if left out. |
+| `hours` | The calendar's periods a shift can start in. Any if left out. |
+| `shift` | What a shift takes. See [ShiftDef](#shiftdef). |
+| `ranks` | The ladder, lowest first. The player is hired at the first. See [RankDef](#rankdef). |
+| `fire` | What gets the player fired. See [FireDef](#firedef). |
+
+### ShiftDef
+
+```ts
+type ShiftDef = { cost?: Record<string, number>; passes?: number; effects?: EffectRef[] }
+```
+
+| Field | What it is |
+|---|---|
+| `cost` | Stats a shift spends, such as `{ energy: 25 }`. Checked against what the stat reads, as an activity's cost is, and shown as the button's price. |
+| `passes` | How many of the calendar's periods it takes, applied as [`calendar/pass`](/docs/plugins/calendar#effects). The calendar's [price note](/docs/plugins/calendar#price-notes), such as `until afternoon`, shows on the button. |
+| `effects` | More effects, applied after the cost and the time and before the pay, such as a performance stat going up. |
+
+### RankDef
+
+```ts
+type RankDef = {
+  id: string
+  title: string
+  pay: Record<string, number>
+  requires?: { shifts?: number; when?: Condition }
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique within the job. [`hasJob(job, rank)`](#conditions) names it. |
+| `title` | What the player reads, such as "Barista". |
+| `pay` | What a shift pays at this rank, by stat, such as `{ coins: 16 }`. |
+| `requires` | What it takes to be promoted to it: shifts worked in all, a condition, or both. The first rank can't have one. |
+
+The player is promoted after any command once the next rank's `requires` are met, and can go up more than one rank at once. Each promotion raises a notice.
+
+### FireDef
+
+```ts
+type FireDef = { missed?: number; when?: Condition }
+```
+
+| Field | What it is |
+|---|---|
+| `missed` | Fired once the player has missed this many shifts in all. |
+| `when` | Fired as soon as this holds after a command, such as `{ stat: 'performance', lt: 20 }`. |
+
+## Shifts
+
+`jobs/work` works one shift. It's refused with the first of these that applies:
+
+1. `There’s no such job.`
+2. `You don’t work there.` when the player doesn't hold the job.
+3. `You aren’t at work.` when the game has places and the player isn't at one of the job's `at`.
+4. `No shift today.` when the game has the calendar and today isn't one of the job's `days`.
+5. `Not a time for a shift.` when the game has the calendar and it isn't one of the job's `hours`.
+6. `You’ve done today’s shift.` when the player has already worked one today.
+7. The stat's own [`lacking`](/docs/reference/stats#statdef) line, when the player has too little for the cost.
+
+A shift applies, in order: the cost, the time (`passes`), the shift's own `effects`, then the pay at the player's rank. Each is an ordinary effect, so the game's `rules.onStat` and the calendar see them. The shift is then counted.
+
+### Missed shifts
+
+After every command, the plugin looks at the days that ended during it. Each one that had a shift for a job the player holds, and that they didn't work, counts as a missed shift. The day the player was hired doesn't count. With the calendar, only the job's `days` have shifts. Without it, every turn is a day with a shift.
+
+Days that pass outside a command, such as a test moving the clock with [`write`](/docs/reference/plugins#defineplugin), aren't counted.
+
+### Firing
+
+After every command, the player is fired from a job whose `fire.missed` has been reached or whose `fire.when` holds. They lose the job, a notice is raised, and `jobs/apply` refuses them with `They won’t have you back.` The [`jobs/hire`](#commands-and-effects) effect can still take them on again.
+
+## Conditions
+
+| Content writes | Helper | Holds when |
+|---|---|---|
+| `{ custom: 'jobs/hired', with: { job, rank? } }` | `hasJob(job, rank?)` | The player holds the job, at that rank if given. |
+| `{ custom: 'jobs/fired', with: { job } }` | `wasFired(job)` | The player was fired from it and hasn't been hired again. |
+| `{ custom: 'jobs/shifts', with: { job, gte… } }` | `shiftsWorked(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
+
+## Commands and effects
+
+| Content writes | Helper | Does |
+|---|---|---|
+| `{ type: 'custom', name: 'jobs/apply', with: { job } }` | `applyFor(job)` | A command. Hires the player at the first rank, if the job's `requires` all hold. Refused with `You already work there.` when they do. |
+| `{ type: 'custom', name: 'jobs/work', with: { job } }` | `work(job)` | A command. Works a shift: see [Shifts](#shifts). |
+| `{ type: 'custom', name: 'jobs/quit', with: { job } }` | `quit(job)` | A command. Leaves the job. They can apply again. |
+| `{ custom: 'jobs/hire', with: { job } }` | `hire(job)` | An effect. Hires the player now without asking the requirements, even after they were fired. |
+| `{ custom: 'jobs/fire', with: { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
+
+## Strings
+
+| Key | English |
+|---|---|
+| `jobs/unknown` | `There’s no such job.` |
+| `jobs/alreadyHired` | `You already work there.` |
+| `jobs/wasFired` | `They won’t have you back.` |
+| `jobs/notHired` | `You don’t work there.` |
+| `jobs/notHere` | `You aren’t at work.` |
+| `jobs/noShiftToday` | `No shift today.` |
+| `jobs/notNow` | `Not a time for a shift.` |
+| `jobs/workedToday` | `You’ve done today’s shift.` |
+| `jobs/promoted` | `Promoted: {title}`, the notice's title, with the new rank's title. |
+| `jobs/firedNotice` | `You’ve lost your job: {title}`, with the job's title. |
+
+The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`.
+
+## The view
+
+`view(state, game).plugins.jobs` is a `JobsView`.
+
+### JobsView
+
+```ts
+type JobsView = { jobs: JobView[] }
+```
+
+Every job, in the order the game declares them.
+
+### JobView
+
+```ts
+type JobView = {
+  id: string
+  title: string
+  description: string
+  hired: boolean
+  firedOn: number | null
+  rank: RankView | null
+  next: (RankView & { shiftsToGo: number }) | null
+  pay: Price | null
+  shifts: number
+  missed: number
+  nextShift: { day: number; inDays: number } | null
+  apply: RenderedChoice | null
+  work: RenderedChoice | null
+}
+type RankView = { id: string; title: string; pay: Price | null }
+```
+
+| Field | What it is |
+|---|---|
+| `firedOn` | The day the player was fired, or `null`. |
+| `rank` | The rank held, or `null` when not hired. |
+| `next` | The next rank up and how many more shifts it needs, or `null` at the top or when not hired. `shiftsToGo` is 0 when the shifts are done and only its `when` is missing. |
+| `pay` | What a shift pays now, as a [`Price`](/docs/reference/view#price). For a job not held, the first rank's pay. |
+| `shifts`, `missed` | Shifts worked and missed in all. |
+| `nextShift` | The next day with a shift, the calendar's day or the turn, and how many days away (0 for today). `null` when not hired, or when there's none in the next two weeks. |
+| `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the first requirement that doesn't hold. |
+| `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
+
+## The state
+
+### JobsState
+
+```ts
+type JobsState = { held: Record<string, HeldJob>; fired: Record<string, number> }
+type HeldJob = { rank: number; shifts: number; missed: number; hiredOn: number; lastWorked: number | null }
+```
+
+What the plugin keeps in a save, at `state.plugins.jobs`: each job the player holds, with their rank (from 0), shifts worked and missed, the day they were hired and the day of their last shift, and each job they were fired from, with the day. A save from before the plugin was added loads with no jobs held.
+
+## For code
+
+### Helpers
+
+```ts
+const applyFor: (job: string) => Command
+const work: (job: string) => Command
+const quit: (job: string) => Command
+const hire: (job: string) => EffectRef
+const fire: (job: string) => EffectRef
+const hasJob: (job: string, rank?: string) => Condition
+const wasFired: (job: string) => Condition
+const shiftsWorked: (job: string, range: Range) => Condition
+```
+
+### jobDefs
+
+```ts
+function jobDefs(game: Game): JobDef[]
+```
+
+The game's jobs, merged from its packs: `game.data.jobs.jobs`.
+
+### jobsView
+
+```ts
+function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView
+```
+
+The `JobsView` for a state. The plugin's view is `jobsView(state, context)`.
+
+## Checks
+
+When the game loads, the plugin reports these problems against the pack each job came from, with `where` as `jobs <id>`:
+
+- No ranks (`has no ranks`), two ranks with one id, or `requires` on the first rank.
+- An unknown stat in the shift's cost or a rank's pay (`rank barista: unknown stat "gold"`).
+- Anything a requirement, the shift's effects, a rank's `when` or `fire.when` names that the game doesn't have.
+- A `days` entry that isn't a whole number from 0, a negative `passes`, or `fire.missed` below 1.
+- An unknown location in `at`, when the game has places.
+
+A command that names a job the game doesn't have gives `unknown job "…"` where it's written.
+
+## Gotchas
+
+- **One shift a day.** Even with several `hours`, a job has one shift a day.
+- **A day is the calendar's, not a turn.** With the calendar's turn set to a period, several turns can pass in a day and still be one shift.
+- **Missed shifts count in all, not in a row.** Working a shift doesn't clear them. Use `fire.when` with a stat of your own for anything subtler, such as a performance stat that shifts raise and missed days lower.
+- **Promotion is checked after every command,** not only after a shift, so a rank whose `when` reads a stat can come from anywhere the stat goes up.

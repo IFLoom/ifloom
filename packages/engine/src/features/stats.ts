@@ -9,6 +9,7 @@ import { tier } from '../tier.ts'
 import { entityOf, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
+import type { StatModifier } from '../plugin.ts'
 import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
 
 /**
@@ -210,13 +211,35 @@ function evaluate(formula: Formula, read: (id: string, depth: number) => number,
 export function statValue(state: GameState, game: Game, id: string, of: string | undefined, cx: FeatureContext): number {
   const stats = of === undefined ? state.stats : entityOf(state, of)?.stats
   if (!stats) return 0
+  // The plugins' modifiers change what the player's stats read, never what is kept.
+  const modifiers = of === undefined ? cx.statModifiers(state, game) : []
   const read = (key: string, depth: number): number => {
     const def = statDef(game, key)
-    if (def?.derive === undefined) return stats[key] ?? def?.start ?? 0
-    if (depth > DEPTH) return 0
-    return clampStat(state, game, key, evaluate(def.derive, read, depth), cx)
+    let value: number
+    if (def?.derive === undefined) value = stats[key] ?? def?.start ?? 0
+    else if (depth > DEPTH) return 0
+    else value = clampStat(state, game, key, evaluate(def.derive, read, depth), cx)
+    return modifiers.length ? modified(state, game, key, value, modifiers, cx) : value
   }
   return read(id, 0)
+}
+
+/**
+ * A value with the modifiers on this stat applied: the adds summed, then the
+ * total multiplied by every multiplier, held to the stat's range. A stat no
+ * modifier names reads as it is.
+ */
+function modified(state: GameState, game: Game, key: string, value: number, modifiers: readonly StatModifier[], cx: FeatureContext): number {
+  let add = 0
+  let multiply = 1
+  let named = false
+  for (const modifier of modifiers) {
+    if (modifier.stat !== key) continue
+    named = true
+    add += modifier.add ?? 0
+    multiply *= modifier.multiply ?? 1
+  }
+  return named ? clampStat(state, game, key, (value + add) * multiply, cx) : value
 }
 
 /** Which level a value is at: how many of the thresholds it has reached. */

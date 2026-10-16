@@ -411,7 +411,7 @@ The [content checker](/docs/reference/checks) reports, against `stat <id>`:
 function statValue(state: GameState, game: Game, id: string, of?: string): number
 ```
 
-A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0.
+A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0. A player's stat reads with any plugin's [stat modifiers](/docs/reference/plugins#stat-modifiers) applied, so it can differ from `state.stats`.
 
 ```ts
 import { statValue } from '@ifloom/engine'

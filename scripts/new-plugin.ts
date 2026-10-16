@@ -1,11 +1,12 @@
 // Scaffolds a first-party plugin, packages/plugin-<name>, modelled on
-// plugin-quests, and wires it into the root typecheck and the docs sidebar.
+// plugin-quests, and wires it into the root typecheck and the docs
+// navigation (the plugins folder's meta.json).
 // What needs words (the AGENTS.md row, the plugins index, the CHANGELOG, the
 // showcase) is left to you: `git grep "TODO(new-plugin)"` lists the stubs.
 //
 //   node scripts/new-plugin.ts <name>            make it
 //   node scripts/new-plugin.ts --remove <name>   undo it, for a throwaway
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -24,26 +25,12 @@ const title = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')
 const pkgDir = join(root, 'packages', `plugin-${name}`)
 const at = (path: string) => relative(root, path)
 
-/** Where the plugin docs live: the Fumadocs site once it exists, else VitePress. */
-function docsLayout(): { kind: 'fumadocs' | 'vitepress'; dir: string; nav: string } {
-  const site = join(root, 'site', 'content', 'docs')
-  if (existsSync(site)) {
-    const found = readdirSync(site, { withFileTypes: true })
-      .filter((e) => e.isDirectory() && existsSync(join(site, e.name, 'plugins', 'meta.json')))
-      .map((e) => e.name)
-    const latest = found.find((dir) => dir.includes('latest')) ?? (found.length === 1 ? found[0] : undefined)
-    if (!latest) throw new Error(`Can't tell which folder under ${at(site)} holds the latest plugins docs: ${found.join(', ') || 'none has plugins/meta.json'}.`)
-    const dir = join(site, latest, 'plugins')
-    return { kind: 'fumadocs', dir, nav: join(dir, 'meta.json') }
-  }
-  return { kind: 'vitepress', dir: join(root, 'docs', 'plugins'), nav: join(root, 'docs', '.vitepress', 'sidebar.ts') }
-}
-
-const docs = docsLayout()
-const page = join(docs.dir, `${name}.md`)
+/** The latest docs' plugins folder: the page goes here and its name in meta.json. */
+const docsDir = join(root, 'site', 'content', 'docs', '(latest)', 'plugins')
+const nav = join(docsDir, 'meta.json')
+const page = join(docsDir, `${name}.md`)
 const pkgJson = join(root, 'package.json')
 const typecheckEntry = ` && tsc --noEmit -p packages/plugin-${name}`
-const sidebarLine = `        { text: '${title}', link: '/plugins/${name}' },\n`
 
 function edit(path: string, change: (text: string) => string): void {
   const before = readFileSync(path, 'utf8')
@@ -55,24 +42,14 @@ function edit(path: string, change: (text: string) => string): void {
 }
 
 function editNav(): void {
-  if (docs.kind === 'fumadocs') {
-    edit(docs.nav, (text) => {
-      const meta = JSON.parse(text) as { pages: string[] }
-      meta.pages = meta.pages.filter((entry) => entry !== name)
-      if (!remove) {
-        const debug = meta.pages.indexOf('debug')
-        meta.pages.splice(debug >= 0 ? debug : meta.pages.length, 0, name)
-      }
-      return `${JSON.stringify(meta, null, 2)}\n`
-    })
-    return
-  }
-  edit(docs.nav, (text) => {
-    const without = text.replace(sidebarLine, '')
-    if (remove) return without
-    const debug = without.indexOf("        { text: 'Debug', link: '/plugins/debug' },")
-    if (debug < 0) throw new Error(`No Debug entry in ${at(docs.nav)} to put ${title} before.`)
-    return without.slice(0, debug) + sidebarLine + without.slice(debug)
+  edit(nav, (text) => {
+    const meta = JSON.parse(text) as { pages: string[] }
+    meta.pages = meta.pages.filter((entry) => entry !== name)
+    if (!remove) {
+      const debug = meta.pages.indexOf('debug')
+      meta.pages.splice(debug >= 0 ? debug : meta.pages.length, 0, name)
+    }
+    return `${JSON.stringify(meta, null, 2)}\n`
   })
 }
 
@@ -105,10 +82,7 @@ if (existsSync(pkgDir)) {
 }
 
 // The docs contract reads the page by a path relative to tests/contracts.
-const pageGlob =
-  docs.kind === 'fumadocs'
-    ? `${relative(join(pkgDir, 'tests', 'contracts'), docs.dir).replace(/[()[\]{}]/g, (c) => `\\\\${c}`)}/${name}.{md,mdx}`
-    : `../../../../docs/plugins/${name}.md`
+const pageGlob = `${relative(join(pkgDir, 'tests', 'contracts'), docsDir).replace(/[()[\]{}]/g, (c) => `\\\\${c}`)}/${name}.{md,mdx}`
 
 const files: Record<string, string> = {
   'package.json': `${JSON.stringify(
@@ -362,10 +336,9 @@ for (const [file, text] of Object.entries(files)) {
 }
 console.log(`Made ${at(pkgDir)}: ${Object.keys(files).join(', ')}`)
 
-const heading = docs.kind === 'fumadocs' ? `---\ntitle: "${title}"\n---\n` : `# ${title}\n\n`
 writeFileSync(
   page,
-  `${heading}<!-- TODO(new-plugin): write this page to the ifloom-docs skill. The docs contract fails on any export it doesn't name. -->
+  `---\ntitle: "${title}"\ndescription: "TODO(new-plugin): what the plugin adds, in one line."\n---\n<!-- TODO(new-plugin): write this page to the ifloom-docs skill. The docs contract fails on any export it doesn't name. -->
 
 \`@ifloom/plugin-${name}\` adds TODO(new-plugin).
 
@@ -375,7 +348,7 @@ import type { ${Pascal}Entry, ${Pascal}State, ${Pascal}View } from '@ifloom/plug
 \`\`\`
 `,
 )
-console.log(`Made ${at(page)} (${docs.kind})`)
+console.log(`Made ${at(page)}`)
 editNav()
 editTypecheck()
 

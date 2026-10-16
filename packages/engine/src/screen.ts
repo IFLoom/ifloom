@@ -309,7 +309,7 @@ function actionButton(
   const choice: RenderedChoice = {
     id: action.id,
     label: action.label,
-    price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game) }, watched ? effects : []),
+    price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state) }, watched ? effects : []),
     disabled:
       action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ??
       whyNotIn(rendered, state, game, action.command, effects),

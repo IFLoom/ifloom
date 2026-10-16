@@ -119,6 +119,14 @@ export type Plugin<S = any> = {
    * loader lets it pass, and the condition is false and the effect does nothing.
    */
   cooperates?: string[]
+  /**
+   * Changes to what the player's stats read right now, worked out from the
+   * plugin's state: a timed boost, say. Nothing is written into the state;
+   * every reading of the stat (conditions, derived stats, costs, the view)
+   * sees the changed value, and `stat` and `setStat` effects still write the
+   * kept value underneath. Must not read stats itself, or it reads itself.
+   */
+  statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
   /** Words and numbers prose can print with <code v-pre>{{v:id/name}}</code>. */
   values?: Record<string, (state: GameState, context: PluginContext<S>) => string | number>
   hooks?: {
@@ -201,6 +209,19 @@ export type Plugin<S = any> = {
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 }
 
+/**
+ * A change to what one of the player's stats reads, from a plugin's
+ * `statModifiers`. A stat's adds are summed and its multipliers multiplied
+ * together, and it reads `(value + adds) × multipliers`, held to its range.
+ */
+export type StatModifier = {
+  stat: string
+  /** Added to the value. 0 if left out. */
+  add?: number
+  /** What the value, with the adds, is multiplied by. 1 if left out. */
+  multiply?: number
+}
+
 /** Who is speaking in a scene, as the screen draws them. */
 export type SpeakerView = {
   id: string
@@ -270,6 +291,12 @@ export type PluginCommand<S = any> = {
   run: (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState
   /** The effects running it would apply, for guards, prices and locks to see. None if left out. */
   effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
+  /**
+   * The stats it spends, by id, for its button's price, as an activity's
+   * `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run`
+   * does the spending, and `whyNot` says when there isn't enough. None if left out.
+   */
+  spends?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Record<string, number> | undefined
 }
 
 /** A plugin's state as a save keeps it: the shape's version, and the state. */
@@ -386,6 +413,7 @@ export function pluginCommand(game: Game | undefined, name: string) {
     ignoresLocks: Boolean(fn.ignoresLocks),
     whyNot: (state: GameState, args: PluginArgs) => fn.whyNot?.(state, args, pluginContext(plugin, state, game)),
     effectsOf: (state: GameState, args: PluginArgs) => fn.effectsOf?.(state, args, pluginContext(plugin, state, game)) ?? [],
+    spends: (state: GameState, args: PluginArgs) => fn.spends?.(state, args, pluginContext(plugin, state, game)),
     run: (state: GameState, args: PluginArgs) => fn.run(state, args, pluginContext(plugin, state, game)),
   }
 }
@@ -428,6 +456,15 @@ export function pluginGuards(game: Game, state: GameState, asked: Asked): Refusa
   for (const plugin of game.plugins ?? []) {
     const refusal = plugin.guard?.(state, asked, pluginContext(plugin, state, game))
     if (refusal !== undefined) out.push(refusal)
+  }
+  return out
+}
+
+/** Every plugin's stat modifiers for this state, in plugin order. */
+export function pluginStatModifiers(game: Game, state: GameState): StatModifier[] {
+  const out: StatModifier[] = []
+  for (const plugin of game.plugins ?? []) {
+    if (plugin.statModifiers) out.push(...(plugin.statModifiers(state, pluginContext(plugin, state, game)) ?? []))
   }
   return out
 }

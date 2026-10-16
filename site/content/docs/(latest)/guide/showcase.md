@@ -58,7 +58,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Items you use
 
-`town.ts`, the `sandwich` item and the café's `buySandwich` activity. The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`town.ts`, the `sandwich` item and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
 
 ### Mods
 
@@ -98,7 +98,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `buySandwich` has `requires: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
+Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` has `requires: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
 
 `town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -213,6 +213,26 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 ### Wardrobe
 
 `src/game.ts` declares the [wardrobe](/docs/plugins/wardrobe)'s two slots, `coat` and `neck`, and starts the player in the raincoat. `town.ts` has the clothes in `data.wardrobe`, and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/docs/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
+
+### Timed effects
+
+`town.ts`, the `coffee` activity and `data.effects`, and `effects()` in `src/game.ts`. A coffee applies the [effects plugin](/docs/plugins/effects)'s `caffeinated` with `applyEffect('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. While it lasts, the café has an extra line, `{ text: 'place.cafe/caffeinated', when: effectActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+
+### The café counter
+
+`town.ts`, `data.shop`, the café's actions, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins and flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`). Each day one of the two is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Buy a sandwich for later" and "Buy a flapjack" buttons send `buy('counter', 'sandwich')` and `buy('counter', 'flapjack')`, so they show today's price and grey out with `Sold out.` The test `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` plays it.
+
+### A job at the café
+
+`town.ts`, `data.jobs`, the café's actions, and `jobs()` in `src/game.ts`. Once Ava's friendship is 10 or more, "Ask Ava about weekend work" sends `applyFor('weekend')` and the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
+
+### Visitors in the park
+
+`town.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/docs/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` variable from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
+
+### Achievements
+
+`town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
 
 ### Triggers and notices
 

@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-effects",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Timed effects for IFLoom: a boost or a cold that lasts some turns, changes what stats read, and runs effects as it starts, each turn and as it ends.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "0.0.0"
+  }
+}

@@ -314,7 +314,7 @@ mountGame(game, {
   layout: READING_LAYOUT,
   pages: {
     subtitle: 'A novel in three chapters',
-    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
+    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
   },
 })
 ```

@@ -1138,7 +1138,7 @@ function Postcards() {
 mountGame(game, {
   pages: {
     subtitle: 'A new flat, a new town',
-    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
+    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
     pages: { postcards: { label: 'Postcards', component: Postcards } },
   },
 })

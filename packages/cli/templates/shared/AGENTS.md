@@ -5,8 +5,9 @@ for coding agents working on the game.
 
 ## Learn the engine
 
-- The docs, in one file: https://ifloom.github.io/ifloom/llms-full.txt
-  (until the docs are public, read `site/content/docs/` in the IFLoom checkout this game sits in).
+- The docs, in one file: https://ifloom.dev/llms-full.txt
+  (offline, read `site/content/docs/` in the IFLoom checkout this game sits in).
+- The docs' MCP server, to search them and fetch single pages: https://ifloom.dev/api/mcp
 - Working games to copy patterns from: `examples/novel`, `examples/cafe` and
   `examples/showcase` in the checkout.
 

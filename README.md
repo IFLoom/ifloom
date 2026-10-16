@@ -12,9 +12,9 @@ it is.
 > npm. See the [roadmap](ROADMAP.md).
 
 **Docs:** in [`site/content/docs/`](site/content/docs); run `npm run docs:dev` to
-read them in a browser. They'll be published at https://ifloom.github.io/ifloom/docs/, with
-[llms.txt](https://ifloom.github.io/ifloom/llms.txt) and
-[llms-full.txt](https://ifloom.github.io/ifloom/llms-full.txt) for AI agents.
+read them in a browser. They're published at https://ifloom.dev/docs, with
+[llms.txt](https://ifloom.dev/llms.txt), [llms-full.txt](https://ifloom.dev/llms-full.txt)
+and an MCP server at `https://ifloom.dev/api/mcp` for AI agents.
 
 ## What a game looks like
 
@@ -150,7 +150,7 @@ covers keeping your game in its own folder outside the checkout.
 
 The docs are Markdown pages in [`site/content/docs/`](site/content/docs), and the
 website that shows them, with the homepage, is the Next.js app in [`site/`](site).
-Run `npm run docs:dev` to browse them locally at http://localhost:3000/ifloom/. A
+Run `npm run docs:dev` to browse them locally at http://localhost:3000/. A
 good order for a first read is the introduction, *Your first story*, then
 *Shapes of game*.
 

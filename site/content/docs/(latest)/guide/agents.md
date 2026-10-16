@@ -1,6 +1,6 @@
 ---
 title: "Using IFLoom with an AI agent"
-description: Work on an IFLoom game with a coding agent. Where the docs are as llms.txt and llms-full.txt, the AGENTS.md every new game comes with, and how to have the agent check its own work.
+description: Work on an IFLoom game with a coding agent. Where the docs are as llms.txt, llms-full.txt and an MCP server, the AGENTS.md every new game comes with, and how to have the agent check its own work.
 ---
 A coding agent can write and change an IFLoom game well, as long as it can read the docs and check what it did. This page covers where an agent finds the docs, what a new game tells it, and how to keep it honest.
 
@@ -8,14 +8,32 @@ A coding agent can write and change an IFLoom game well, as long as it can read 
 
 The docs site publishes two files written for language models:
 
-- [`llms.txt`](https://ifloom.github.io/ifloom/llms.txt) is an index. It lists every page with a link and a one-line description.
-- [`llms-full.txt`](https://ifloom.github.io/ifloom/llms-full.txt) is every page in one file.
+- [`llms.txt`](https://ifloom.dev/llms.txt) is an index. It lists every page with a link and a one-line description.
+- [`llms-full.txt`](https://ifloom.dev/llms-full.txt) is every page in one file.
 
-Every page is also published as plain Markdown, such as `https://ifloom.github.io/ifloom/llms.mdx/docs/guide/introduction/content.md` for the introduction. The button at the top of each page copies it for you.
+Every page is also published as plain Markdown, such as `https://ifloom.dev/llms.mdx/docs/guide/introduction/content.md` for the introduction. The Copy Markdown button at the top of each page copies it for you, and the Open menu beside it opens the page in ChatGPT, Claude or Cursor, or as Markdown.
 
 `llms-full.txt` is the simplest thing to hand an agent. For an agent with a small context, give it `llms.txt` instead and let it fetch the pages it needs.
 
-The same docs are in the `site/content/docs/` folder of your IFLoom checkout, as Markdown. An agent working in a game inside the checkout can read them there without going online. This matters while the docs site isn't public yet.
+The same docs are in the `site/content/docs/` folder of your IFLoom checkout, as Markdown. An agent working in a game inside the checkout can read them there without going online.
+
+## Connect it to the MCP server
+
+The docs site also runs an MCP server at `https://ifloom.dev/api/mcp`, over streamable HTTP. An agent that speaks MCP can search the docs and fetch the pages it needs instead of reading them all. Add it to your agent's MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "ifloom": { "url": "https://ifloom.dev/api/mcp" }
+  }
+}
+```
+
+The file and its name depend on the agent, such as `.mcp.json` for Claude Code or `.cursor/mcp.json` for Cursor. The server has three tools:
+
+- `search` finds pages and headings that match a query.
+- `list_pages` lists every page with its path and description.
+- `get_page` returns one page as Markdown, given a path such as `/docs/reference/scenes`.
 
 ## The AGENTS.md in every new game
 
@@ -29,8 +47,9 @@ for coding agents working on the game.
 
 ## Learn the engine
 
-- The docs, in one file: https://ifloom.github.io/ifloom/llms-full.txt
-  (until the docs are public, read `site/content/docs/` in the IFLoom checkout this game sits in).
+- The docs, in one file: https://ifloom.dev/llms-full.txt
+  (offline, read `site/content/docs/` in the IFLoom checkout this game sits in).
+- The docs' MCP server, to search them and fetch single pages: https://ifloom.dev/api/mcp
 - Working games to copy patterns from: `examples/novel`, `examples/cafe` and
   `examples/showcase` in the checkout.
 

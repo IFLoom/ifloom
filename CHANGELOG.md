@@ -52,6 +52,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Every reference and plugin page in the docs ends with "See it in an example": the file and the part of Small Town, The Letter or The Corner Café that uses it, with a link to the source.
 - The Corner Café example's reputation has levels, with a notice when word gets round.
 - Diagrams in the docs, drawn with Mermaid: how the engine, your game and your UI fit together, what happens in a command, how a save loads, how plugins join the core, the runner's loop and the quick feet minigame. Each keeps its Mermaid source in the page's Markdown and in `llms-full.txt`.
+- The docs are at https://ifloom.dev, with an MCP server at `https://ifloom.dev/api/mcp` that an agent can use to search them and read single pages, and an Open menu on each page that opens it in ChatGPT, Claude or Cursor, or as Markdown.
 
 ### Changed
 

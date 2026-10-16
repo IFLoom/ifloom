@@ -66,11 +66,11 @@ A core kind of condition, effect or command, or a field of the state, belongs to
 
 ## Docs
 
-Anything the engine exports is documented in `site/content/docs/`, the docs part of the website in `site/` (Next.js with Fumadocs, a static export published at https://ifloom.github.io/ifloom/, with the docs under `/ifloom/docs/`). A change to the exports ships with its docs: load the `ifloom-docs` skill. The homepage is React, in `site/components/home/`. The editor at `/editor` is a client-only React app: its routes are in `site/app/editor/`, and its code in `site/editor/`, with the pure logic in `site/editor/lib/` tested by `npm test`. Decision records in `adr/` aren't on the site.
+Anything the engine exports is documented in `site/content/docs/`, the docs part of the website in `site/` (Next.js with Fumadocs, hosted on Vercel at https://ifloom.dev, with the docs under `/docs/`). A change to the exports ships with its docs: load the `ifloom-docs` skill. The homepage is React, in `site/components/home/`. The editor at `/editor` is a client-only React app: its routes are in `site/app/editor/`, and its code in `site/editor/`, with the pure logic in `site/editor/lib/` tested by `npm test`. Decision records in `adr/` aren't on the site.
 
 The pages are plain Markdown (`.md`) with a `title` and a `description` in front matter, and links between pages are absolute: `[Scenes](/docs/reference/scenes#scene)`. Each folder's `meta.json` gives the sidebar's order, and each section is a tab. `npm run docs:links` fails on a link to a page or heading that isn't there.
 
-The docs are versioned. `site/content/docs/(latest)/` holds the latest docs, which the version dropdown calls "Latest (pre-release)" (its `meta.json` makes it a version root). Each other folder in `site/content/docs/` is a released version, served at `/ifloom/docs/<version>/` and listed in the dropdown. A release keeps a copy of the docs as they were:
+The docs are versioned. `site/content/docs/(latest)/` holds the latest docs, which the version dropdown calls "Latest (pre-release)" (its `meta.json` makes it a version root). Each other folder in `site/content/docs/` is a released version, served at `/docs/<version>/` and listed in the dropdown. A release keeps a copy of the docs as they were:
 
 1. Run `node scripts/snapshot-docs.ts <version>` (for example `0.1.0`). It copies the latest docs, without the changelog, into `site/content/docs/<version>/`, titles its `meta.json` with the version, and points its links at the copy.
 2. After the first release, change the title in `site/content/docs/(latest)/meta.json` and `latestTitle` in `site/lib/shared.ts` from `Latest (pre-release)` to `Latest`.
@@ -84,10 +84,22 @@ Don't edit a snapshot afterwards, except to fix something that was wrong in that
 npm test             # engine tests, boundary rules, docs coverage
 npm run typecheck    # strict
 npm run lint
-npm run docs:build   # checks the links, then builds the site to site/out
+npm run docs:build   # checks the links, then builds the site (next build)
 ```
 
 `scripts/verify.sh` runs these and the examples' check, build and snapshot.
+
+## Hosting
+
+The site runs on Vercel at https://ifloom.dev, which builds `main` on every push. Besides the pages it serves `/api/search` (the docs' search), `/api/mcp` (an MCP server for agents), `llms.txt`, `llms-full.txt` and every page as Markdown under `/llms.mdx/docs/`. The Vercel project is set up as:
+
+- Root directory: `site`, with "Include files outside the root directory in the Build Step" on, because the site imports the packages and reads the theme CSS from `packages/react`.
+- Framework preset: Next.js. There's no `vercel.json`.
+- Install command: `cd .. && npm ci`. The packages are npm workspaces, so the install runs at the repo root.
+- Build command: `npm run build` (`next build` in `site/`).
+- Node.js: 22.x, as in `.nvmrc` and `engines` in `site/package.json`.
+
+The site is public but not indexed until the engine is published: `site/app/robots.ts` disallows everything, the root layout sets `robots` to noindex, and `site/next.config.mjs` adds an `X-Robots-Tag` header. ROADMAP's release readiness step removes all three. CI is `.github/workflows/ci.yml`, which runs `scripts/verify.sh` by hand only while the repo is private.
 
 ## Skills
 

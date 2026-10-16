@@ -35,7 +35,7 @@ mountGame(game, {
   pages: {
     subtitle: 'A new flat, a new town, and a cat with no name.',
     art: 'art/title.jpg',
-    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.github.io/ifloom/' }],
+    credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
   },
 })
 ```

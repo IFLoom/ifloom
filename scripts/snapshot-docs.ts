@@ -2,9 +2,9 @@
 //
 //   node scripts/snapshot-docs.ts 0.1.0
 //
-// The latest docs are site/content/docs/(latest)/, served at /ifloom/docs/….
+// The latest docs are site/content/docs/(latest)/, served at /docs/….
 // The copy goes to site/content/docs/<version>/ and is served at
-// /ifloom/docs/<version>/…. Its meta.json makes it a version root titled
+// /docs/<version>/…. Its meta.json makes it a version root titled
 // <version>, so it shows in the docs' version dropdown next to the latest.
 import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'

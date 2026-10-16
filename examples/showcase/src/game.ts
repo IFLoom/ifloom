@@ -10,6 +10,7 @@ import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
 import { effects } from '@ifloom/plugin-effects'
 import { quests } from '@ifloom/plugin-quests'
+import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
@@ -63,6 +64,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       quests(),
       effects(),
       achievements(),
+      shop(),
       wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
       ...(withDebug ? [debug()] : []),
     ],

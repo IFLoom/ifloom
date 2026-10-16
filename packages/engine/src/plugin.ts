@@ -291,6 +291,12 @@ export type PluginCommand<S = any> = {
   run: (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState
   /** The effects running it would apply, for guards, prices and locks to see. None if left out. */
   effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
+  /**
+   * The stats it spends, by id, for its button's price, as an activity's
+   * `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run`
+   * does the spending, and `whyNot` says when there isn't enough. None if left out.
+   */
+  spends?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Record<string, number> | undefined
 }
 
 /** A plugin's state as a save keeps it: the shape's version, and the state. */
@@ -407,6 +413,7 @@ export function pluginCommand(game: Game | undefined, name: string) {
     ignoresLocks: Boolean(fn.ignoresLocks),
     whyNot: (state: GameState, args: PluginArgs) => fn.whyNot?.(state, args, pluginContext(plugin, state, game)),
     effectsOf: (state: GameState, args: PluginArgs) => fn.effectsOf?.(state, args, pluginContext(plugin, state, game)) ?? [],
+    spends: (state: GameState, args: PluginArgs) => fn.spends?.(state, args, pluginContext(plugin, state, game)),
     run: (state: GameState, args: PluginArgs) => fn.run(state, args, pluginContext(plugin, state, game)),
   }
 }

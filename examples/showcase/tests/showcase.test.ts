@@ -10,6 +10,7 @@ import type { EffectsView } from '@ifloom/plugin-effects'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
+import { buy, type ShopView } from '@ifloom/plugin-shop'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
 import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
@@ -52,7 +53,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'input', id: 'catName', value: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
     expect(apply(state, game, { type: 'input', id: 'catName', value: 'Rex' }).refused).toBe('Not now.')
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('buySandwich'))
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'sandwich'))
     expect(view(state, game).pack.find((item) => item.id === 'sandwich')?.useLabel).toBe('Eat the sandwich')
     state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', itemId: 'sandwich' })
     expect(state.stats.energy).toBe(75)
@@ -181,6 +182,25 @@ describe('Small Town', () => {
     expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])
     state = run(on(state, 2, 'night'), sleep())
     expect(effects()).toEqual([])
+  })
+
+  it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    const counter = () => (view(state, game).plugins.shop as ShopView).vendors[0]
+    expect(counter()).toMatchObject({ id: 'counter', here: true, open: true })
+    expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
+    // The café's own button shows the counter's price, as the shop's view does.
+    const button = view(state, game).actions.find((action) => action.id === 'flapjack')!
+    expect(button.price?.stats?.[0].id).toBe('coins')
+    state = run(state, buy('counter', 'flapjack'), buy('counter', 'flapjack'))
+    expect(apply(state, game, buy('counter', 'flapjack')).refused).toBe('Sold out.')
+    expect(view(state, game).actions.find((action) => action.id === 'flapjack')!.disabled).toBe('Sold out.')
+    const coins = state.stats.coins
+    state = run(state, buy('counter', 'sandwich'), { type: 'custom', name: 'shop/sell', with: { vendor: 'counter', item: 'sandwich' } })
+    expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
+    // Closed in the evening, with the café.
+    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).refused).toBe('Closed.')
   })
 
   it('keeps the phone in the pocket at work', () => {

@@ -91,6 +91,7 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-quests` | A quest log with progress and hints. |
 | `@ifloom/plugin-effects` | Timed effects that change stats for a few turns. |
 | `@ifloom/plugin-achievements` | Achievements, secret ones and progress counts, kept in the player's profile. |
+| `@ifloom/plugin-shop` | Vendors, stock, selling back and daily discounts. |
 | `@ifloom/plugin-wardrobe` | Clothing slots and what the player is wearing. |
 | `@ifloom/plugin-devices` | Phones, laptops and other in-game devices with their own apps. |
 | `@ifloom/plugin-messages` | Message threads whose replies are choices. |

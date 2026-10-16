@@ -282,6 +282,7 @@ type PluginCommand<S = any> = {
   whyNot?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | undefined
   run: (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState
   effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
+  spends?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Record<string, number> | undefined
 }
 ```
 
@@ -293,6 +294,7 @@ A command a button can send as `{ type: 'custom', name: 'loyalty/redeem', with: 
 | `whyNot` | Why it can't be done right now, written for the player, or `undefined` if it can. |
 | `run` | Returns the next state. It's only called once nothing has refused. |
 | `effectsOf` | The effects running it would apply, worked out before it runs, for [guards](#guards), [prices](#prices) and [locks by effect](/reference/locks#lock) to see. None if left out. See [Saying what a command does](#saying-what-a-command-does). |
+| `spends` | The stats it spends, by id, such as `{ coins: 4 }`, for its button's price. A button that sends it lists them in its [`price`](/reference/view#renderedchoice), written through each stat's `format`, as an activity's cost is. It only labels the button: `run` does the spending and `whyNot` refuses when there isn't enough. None if left out. |
 
 The engine's [`whyNot`](/reference/actions#whynot) asks these in order, and the first answer wins:
 

@@ -7,6 +7,7 @@
 import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { applyEffect, effectActive } from '@ifloom/plugin-effects'
+import { buy } from '@ifloom/plugin-shop'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
@@ -38,7 +39,9 @@ const locations: LocationDef[] = [
     locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
-      { id: 'sandwich', label: 'Buy a sandwich for later', command: { type: 'activity', id: 'buySandwich' } },
+      // The counter is the shop plugin's vendor: its price, stock and today's offer show on the button.
+      { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'sandwich') },
+      { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'flapjack') },
       // Something small happens while you sit: one of the café's storylets, drawn at random.
       { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
     ],
@@ -190,6 +193,13 @@ export const town: Pack = {
       kind: 'stuff',
       use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', key: 'energy', by: 25 }] },
     },
+    {
+      id: 'flapjack',
+      name: 'flapjack',
+      desc: 'Oats, syrup and a lot of butter.',
+      kind: 'stuff',
+      use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', key: 'energy', by: 10 }] },
+    },
   ],
   activities: [
     { id: 'wait', effects: [pass(1)] },
@@ -205,7 +215,6 @@ export const town: Pack = {
       ],
     },
     { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
-    { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },
     { id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] },
@@ -383,6 +392,25 @@ export const town: Pack = {
               hint: 'Find Ava by the river some evening.',
               done: { all: [{ since: 'ava.hi', gte: 3 }, { seen: 'ava.river' }] },
             },
+          ],
+        },
+      ],
+    },
+    shop: {
+      vendors: [
+        {
+          id: 'counter',
+          name: 'The counter',
+          at: ['cafe'],
+          hours: ['morning', 'afternoon'],
+          // Ava will take an unopened sandwich back for half.
+          buysBack: 0.5,
+          // One thing on the board is half price each day.
+          discounts: { off: 0.5 },
+          goods: [
+            { item: 'sandwich', price: { coins: 4 } },
+            // Two a day, baked each morning.
+            { item: 'flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
           ],
         },
       ],

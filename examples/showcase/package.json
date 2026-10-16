@@ -25,6 +25,7 @@
     "@ifloom/plugin-feed": "0.0.0",
     "@ifloom/plugin-places": "0.0.0",
     "@ifloom/plugin-quests": "0.0.0",
+    "@ifloom/plugin-shop": "0.0.0",
     "@ifloom/plugin-wardrobe": "0.0.0",
     "@ifloom/react": "0.0.0"
   },

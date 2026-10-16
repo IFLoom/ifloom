@@ -103,7 +103,7 @@ export type CommandEntry<C> = {
   /** Whether no lock or plugin guard stops it. False if left out. */
   ignoresLocks?: (command: C, game: Game) => boolean
   /** The stats it spends, by id, for its button's price. None if left out. */
-  spends?: (command: C, game: Game) => Record<string, number> | undefined
+  spends?: (command: C, game: Game, state: GameState) => Record<string, number> | undefined
   references: (command: C) => Reference[]
 }
 

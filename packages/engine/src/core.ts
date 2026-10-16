@@ -137,6 +137,8 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
     },
     run: (state, command, game) => pluginCommand(game, command.name)!.run(state, command.with ?? {}),
     effectsOf: (state, command, game) => pluginCommand(game, command.name)?.effectsOf(state, command.with ?? {}) ?? [],
+    // What a plugin's command says it spends, for its button's price: a shop's price, say.
+    spends: (command, game, state) => pluginCommand(game, command.name)?.spends(state, command.with ?? {}),
     // A plugin command that says it ignores locks: a debugger's.
     ignoresLocks: (command, game) => Boolean(pluginCommand(game, command.name)?.ignoresLocks),
     references: (command) => [{ call: 'commands', name: command.name, with: command.with }],

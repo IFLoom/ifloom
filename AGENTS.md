@@ -17,6 +17,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-quests` (`@ifloom/plugin-quests`) | Quests: stages done by conditions, progress that is never taken back, tracking and news. |
 | `packages/plugin-effects` (`@ifloom/plugin-effects`) | Timed effects that last some turns: stat modifiers read through the engine's `statModifiers`, never written, and effects as one starts, each turn and as it ends. Effects are content: `data.effects.effects`. |
 | `packages/plugin-achievements` (`@ifloom/plugin-achievements`) | Achievements earned by a condition after each command or by an effect, secret ones, progress counts, and a record in the profile through `profile.onCommand`. Achievements are content: `data.achievements.achievements`. |
+| `packages/plugin-shop` (`@ifloom/plugin-shop`) | Vendors with prices in spendable stats, limited stock and restocking, selling back and seeded daily discounts; opening hours with the calendar, a place with places. Vendors are content: `data.shop.vendors`. |
 | `packages/plugin-wardrobe` (`@ifloom/plugin-wardrobe`) | Slots the game declares, clothes that go in them, and what the player has on. |
 | `packages/plugin-messages` (`@ifloom/plugin-messages`) | Channels and threads of messages that arrive when the story allows; replies are choices. |
 | `packages/plugin-feed` (`@ifloom/plugin-feed`) | Feeds of posts that appear when the story allows, the player's own posts, likes and comments. |

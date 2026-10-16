@@ -24,7 +24,7 @@ export type {
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
-export type { Formula, StatDef, StatDisplay, StatLevels } from './stats.ts'
+export type { Formula, StatDef, StatDisplay, StatLevels, StatRound } from './stats.ts'
 export {
   clampStat,
   formatStat,

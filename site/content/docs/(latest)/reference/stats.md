@@ -40,9 +40,11 @@ type StatDef = {
   derive?: Formula
   levels?: StatLevels
   display?: StatDisplay
+  round?: StatRound
 }
 
 type StatDisplay = 'number' | 'bar' | 'pips'
+type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 ```
 
 | Field | Default | What it does |
@@ -62,6 +64,7 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
 | `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/docs/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
+| `round` | `'none'` | Round the value as it's read: `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'` to read it as it is. The kept value is never rounded. See [Rounding](#rounding). |
 
 **Gotchas.**
 - You have to declare a stat before you use it. The [content checker](/docs/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.
@@ -69,6 +72,27 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 - Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
 - `spendable` changes what's shown, not what's allowed. Any stat can be in an activity's `cost`, and the activity's price lists it either way.
 - An id is unique across the whole game, counting the player's stats and every kind's together. One `skill` can't be both the player's and the staff's.
+
+### Rounding
+
+A stat with `round` reads as a whole number everywhere it's read: conditions, costs, formulas, the view and its `text`. Use it when a [plugin's modifier](/docs/reference/plugins#stat-modifiers) or a formula can leave a fraction, such as energy at 65 with a 1.15 boost:
+
+```ts
+{ id: 'energy', label: 'Energy', start: 80, spendable: true, format: '{n}%', round: 'round' }
+```
+
+[`statValue`](#statvalue) works a stat out in this order:
+
+1. The kept value, or the [formula](#derived-stats) for a derived stat, held to its range.
+2. Any plugins' [stat modifiers](/docs/reference/plugins#stat-modifiers), held to the range again.
+3. `round`.
+4. The range once more, so a stat with a fractional `min` or `max` never reads past it.
+
+So with energy at 65 and a `multiply: 1.15` modifier, energy reads 75, not 74.75. `round: 'round'` is JavaScript's `Math.round`, which rounds a half up, so 2.5 reads 3 and -2.5 reads -2.
+
+**Gotchas.**
+- Only what's read is rounded. A `stat` effect adds to the kept value, so energy kept at 80.4 that's raised by 1 is kept at 81.4 and reads 81.
+- A formula reads its inputs as they read, rounded. A derived stat that reads a rounded stat sees the whole number, and rounds its own result only if it has a `round` of its own.
 
 ### Entity stats
 
@@ -411,7 +435,7 @@ The [content checker](/docs/reference/checks) reports, against `stat <id>`:
 function statValue(state: GameState, game: Game, id: string, of?: string): number
 ```
 
-A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0. A player's stat reads with any plugin's [stat modifiers](/docs/reference/plugins#stat-modifiers) applied, so it can differ from `state.stats`.
+A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0. A player's stat reads with any plugin's [stat modifiers](/docs/reference/plugins#stat-modifiers) applied, so it can differ from `state.stats`. Then the stat's [`round`](#rounding) is applied, and the value is held to its range once more.
 
 ```ts
 import { statValue } from '@ifloom/engine'

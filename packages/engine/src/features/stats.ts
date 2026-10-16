@@ -109,7 +109,17 @@ export type StatDef = {
    * checker reports pips on a stat whose range is more than 20.
    */
   display?: StatDisplay
+  /**
+   * How the value reads: `'floor'`, `'round'` or `'ceil'` to a whole number,
+   * or `'none'` to read it as it is. Applied to what is read, last, after
+   * `derive` and any plugin's modifiers, then held to the range; the kept
+   * value underneath is never rounded. `'none'` if left out.
+   */
+  round?: StatRound
 }
+
+/** How a stat's value is rounded when it is read: see `StatDef.round`. */
+export type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 /** How a UI draws a stat: see `StatDef.display`. */
 export type StatDisplay = 'number' | 'bar' | 'pips'
@@ -206,7 +216,8 @@ function evaluate(formula: Formula, read: (id: string, depth: number) => number,
  * A stat's value as everything reads it: the player's, or with `of`, an
  * entity's (`'staff:ana'`). A derived stat is worked out from its formula and
  * held to its range; a kept stat the save doesn't have yet reads as its
- * `start`. An entity that isn't there reads 0.
+ * `start`. Then the plugins' modifiers, then the stat's `round`, then its
+ * range again. An entity that isn't there reads 0.
  */
 export function statValue(state: GameState, game: Game, id: string, of: string | undefined, cx: FeatureContext): number {
   const stats = of === undefined ? state.stats : entityOf(state, of)?.stats
@@ -219,9 +230,21 @@ export function statValue(state: GameState, game: Game, id: string, of: string |
     if (def?.derive === undefined) value = stats[key] ?? def?.start ?? 0
     else if (depth > DEPTH) return 0
     else value = clampStat(state, game, key, evaluate(def.derive, read, depth), cx)
-    return modifiers.length ? modified(state, game, key, value, modifiers, cx) : value
+    if (modifiers.length) value = modified(state, game, key, value, modifiers, cx)
+    return rounded(state, game, key, def, value, cx)
   }
   return read(id, 0)
+}
+
+/**
+ * A value as the stat's `round` reads it: rounded, then held to the range,
+ * so a stat with a fractional `min` or `max` never reads past it. As it is
+ * for `'none'`.
+ */
+function rounded(state: GameState, game: Game, key: string, def: StatDef | undefined, value: number, cx: FeatureContext): number {
+  const how = def?.round ?? 'none'
+  if (how === 'none') return value
+  return clampStat(state, game, key, Math[how](value), cx)
 }
 
 /**

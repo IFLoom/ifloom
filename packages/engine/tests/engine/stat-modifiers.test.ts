@@ -119,3 +119,46 @@ describe('stat modifiers', () => {
     expect(statValue(loaded, g, 'intelligence')).toBe(5)
   })
 })
+
+describe('rounding a stat as it reads', () => {
+  /** The game with `round` on some stats, by id. */
+  const roundedGame = (modifiers: StatModifier[], round: Record<string, 'none' | 'floor' | 'round' | 'ceil'>, max?: number): Game => {
+    const g = game(modifiers)
+    return { ...g, stats: g.stats!.map((stat) => (round[stat.id] ? { ...stat, round: round[stat.id], ...(max !== undefined ? { max } : {}) } : stat)) }
+  }
+
+  it('reads as it is unless the stat says, and rounds each way it can', () => {
+    const half = [{ stat: 'intelligence', multiply: 1.5 }]
+    // 5 × 1.5 = 7.5.
+    expect(statValue(wearing(game(half)), game(half), 'intelligence')).toBe(7.5)
+    for (const [how, reads] of [['none', 7.5], ['floor', 7], ['round', 8], ['ceil', 8]] as const) {
+      const g = roundedGame(half, { intelligence: how })
+      const on = wearing(g)
+      expect(statValue(on, g, 'intelligence')).toBe(reads)
+      expect(view(on, g).statsById.intelligence).toMatchObject({ value: reads, text: String(reads) })
+    }
+  })
+
+  it('rounds after modifiers and derive, and never the kept value', () => {
+    const g = roundedGame([{ stat: 'intelligence', add: 0.4 }], { intelligence: 'round', wits: 'floor' })
+    const on = wearing(g)
+    // 5 + 0.4 reads 5; the kept value stays 5.
+    expect(statValue(on, g, 'intelligence')).toBe(5)
+    expect(on.stats.intelligence).toBe(5)
+    // A derived stat reads its inputs rounded: 5 × 2, not 5.4 × 2.
+    expect(statValue(on, g, 'wits')).toBe(10)
+    const study = apply(on, g, { type: 'activity', id: 'study' }).state
+    expect(study.stats.intelligence).toBe(6)
+    expect(statValue(study, g, 'intelligence')).toBe(6)
+    // A derived stat rounds its own result: 2.5 × 1.3 = 3.25 floors to 3.
+    const scaled = roundedGame([], { wits: 'floor' })
+    const derived = { ...scaled, stats: scaled.stats!.map((stat) => (stat.id === 'wits' ? { ...stat, derive: { scale: 'luck', by: 1.3 } } : stat)) }
+    expect(statValue(begin(derived, { stats: { intelligence: 5, coins: 3, luck: 2.5 } }), derived, 'wits')).toBe(3)
+  })
+
+  it('holds the rounded value to the range afterwards', () => {
+    // 5 × 1.99 = 9.95; held to 9.5 before rounding, ceil gives 10, and the range holds it at 9.5.
+    const g = roundedGame([{ stat: 'intelligence', multiply: 1.99 }], { intelligence: 'ceil' }, 9.5)
+    expect(statValue(wearing(g), g, 'intelligence')).toBe(9.5)
+  })
+})

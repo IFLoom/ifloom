@@ -33,6 +33,9 @@ import type { ModManager } from './mods.tsx'
 import type { Frame } from './shell.tsx'
 import type { Icon } from './icon.tsx'
 import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
+import type { MinigamePanel } from './minigame.tsx'
+import type { NoticeStrip } from './strip.tsx'
+import type { KeyOptions } from './keys.tsx'
 
 /** Every `data-part` the React UI draws, which is also every key `classes` takes. */
 export const PART_KEYS = [
@@ -40,7 +43,7 @@ export const PART_KEYS = [
   'page', 'sidebar', 'stage', 'overlay',
   'title', 'clock',
   // Stats
-  'stats', 'stat', 'stat-label', 'stat-value', 'stat-level', 'stat-progress',
+  'stats', 'stat', 'stat-label', 'stat-value', 'stat-level', 'stat-progress', 'stat-bar', 'stat-pips', 'stat-pip',
   // Where you are, and who's there
   'location', 'location-name', 'location-text', 'exits', 'exit',
   'people', 'people-title', 'person', 'person-portrait', 'person-name', 'person-role', 'person-actions',
@@ -50,10 +53,13 @@ export const PART_KEYS = [
   // Pictures, videos, the stage and the viewer
   'video', 'stage-picture', 'stage-layer', 'hotspot', 'hotspot-warning', 'viewer-open', 'viewer', 'viewer-close',
   // Choices and buttons
-  'actions', 'choices', 'choice', 'choice-label', 'choice-warning', 'choice-price', 'choice-irreversible', 'choice-reason',
+  'actions', 'choices', 'choice', 'choice-key', 'choice-label', 'choice-warning', 'choice-price', 'choice-irreversible', 'choice-reason',
   'button', 'badge',
   // Notices
   'notices', 'notice', 'notice-image', 'notice-title', 'notice-text', 'notice-dismiss',
+  'notice-strip', 'notice-strip-item',
+  // Minigames
+  'minigame', 'minigame-title', 'minigame-state', 'minigame-timer', 'minigame-inputs', 'minigame-input',
   // The menu and its dialogs
   'menu', 'menu-button', 'dialog', 'dialog-overlay', 'dialog-title', 'dialog-close',
   'saves', 'saves-actions', 'save-slot', 'save-name', 'save-details', 'saves-message', 'saves-empty', 'file-button',
@@ -112,6 +118,8 @@ export type Components = Partial<{
   PriceTag: Override<PropsOf<typeof PriceTag>>
   Notices: Override<PropsOf<typeof Notices>>
   Notice: Override<PropsOf<typeof Notice>>
+  NoticeStrip: Override<PropsOf<typeof NoticeStrip>>
+  MinigamePanel: Override<PropsOf<typeof MinigamePanel>>
   GameMenu: Override<PropsOf<typeof GameMenu>>
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>
@@ -152,13 +160,19 @@ export type UiOptions = {
   unstyled?: boolean
   /** Let the player click a picture or a video in the story to see it large. On if left out. */
   viewer?: boolean
+  /**
+   * Keyboard shortcuts: 1 to 9 for the choices or buttons on screen, Escape for
+   * the menu, and any keys of the game's own in `map`. Off if left out. A
+   * minigame's keys work either way.
+   */
+  keys?: boolean | KeyOptions
 }
 
 const NONE = {}
-const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true })
+const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true, keys: false })
 
-/** Gives the components below it a game's `components`, `classes`, `unstyled` and `viewer`. `GameProvider` uses it. */
-export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, children }: UiOptions & { children: ReactNode }) {
+/** Gives the components below it a game's `components`, `classes`, `unstyled`, `viewer` and `keys`. `GameProvider` uses it. */
+export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, keys, children }: UiOptions & { children: ReactNode }) {
   const parent = useContext(UiContext)
   // Nested providers add to the outer one, so a screen can restyle just its own corner.
   const value = {
@@ -166,6 +180,7 @@ export function UiProvider({ components = NONE, classes = NONE, unstyled = false
     classes: parent.classes === NONE ? classes : { ...parent.classes, ...classes },
     unstyled: unstyled || parent.unstyled,
     viewer: viewer ?? parent.viewer,
+    keys: keys ?? parent.keys,
   }
   return <UiContext.Provider value={value}>{children}</UiContext.Provider>
 }
@@ -185,6 +200,11 @@ export function usePart(name: PartKey, defaults: string, extra?: string): { 'dat
 /** Whether the media viewer is on: `viewer` in the UI options. */
 export function useViewerOn(): boolean {
   return useContext(UiContext).viewer
+}
+
+/** The `keys` option in effect: `false` when the game left it out. */
+export function useKeysOption(): boolean | KeyOptions {
+  return useContext(UiContext).keys
 }
 
 /** A built-in component that a game can replace by `name`. Used for every component the UI exports. */

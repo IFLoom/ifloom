@@ -295,3 +295,86 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Minigames: a prompt with a text-mode timer. */
+[data-part="minigame"] {
+  padding: 0.75rem;
+  border: 1px solid currentColor;
+}
+
+[data-part="minigame-title"] {
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+[data-part="minigame-title"]::before {
+  content: "## ";
+}
+
+[data-part="minigame-state"]::before {
+  content: "> ";
+}
+
+[data-part="minigame-timer"] {
+  height: 0.5rem;
+  border-radius: 0;
+  background: transparent;
+  outline: 1px solid currentColor;
+}
+
+[data-part="minigame-timer"] > span {
+  background: currentColor;
+}
+
+[data-part="minigame-input"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}
+
+[data-part="minigame-input"]::before {
+  content: "[";
+}
+
+[data-part="minigame-input"]::after {
+  content: "]";
+}
+
+/* Stats as bars and pips, in text mode. */
+[data-part="stat-bar"] {
+  height: 2px;
+  border-radius: 0;
+}
+
+[data-part="stat-bar"] > span {
+  background: currentColor;
+}
+
+[data-part="stat-pip"] {
+  border-radius: 0;
+  border-color: currentColor;
+}
+
+[data-part="stat-pip"][data-filled] {
+  background: currentColor;
+}
+
+/* With hotkeys on, the key is the number: no counter beside it. */
+[data-part="choice"][data-choice-key] [data-part="choice-label"]::before {
+  content: none;
+}
+
+[data-part="choice-key"] {
+  border: none;
+  padding: 0;
+  color: var(--muted-foreground);
+  font-size: inherit;
+}
+
+[data-part="choice-key"]::after {
+  content: ".";
+}
+
+[data-part="notice-strip-item"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}

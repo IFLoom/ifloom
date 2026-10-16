@@ -196,3 +196,80 @@
   color: var(--primary-foreground);
   box-shadow: var(--shadow-card);
 }
+
+/* Minigames: a big friendly card, chunky input buttons and a rounded timer. */
+[data-part="minigame"] {
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+[data-part="minigame-title"] {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+[data-part="minigame-state"] {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+[data-part="minigame-timer"] {
+  width: 100%;
+  height: 0.75rem;
+  background: var(--secondary);
+}
+
+[data-part="minigame-timer"] > span {
+  border-radius: 999px;
+}
+
+[data-part="minigame-inputs"] {
+  justify-content: center;
+}
+
+[data-part="minigame-input"] {
+  min-width: 5.5rem;
+  height: auto;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="minigame-input"]:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* Stats as bars and pips, and the strip of unread counts. */
+[data-part="stat-bar"] {
+  height: 0.6rem;
+  background: var(--secondary);
+}
+
+[data-part="stat-bar"] > span {
+  border-radius: 999px;
+}
+
+[data-part="stat-pip"] {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-width: 2px;
+}
+
+[data-part="choice-key"] {
+  border: none;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--primary);
+  font-family: var(--font-body);
+  font-weight: 800;
+}
+
+[data-part="notice-strip-item"] {
+  border-radius: 999px;
+}

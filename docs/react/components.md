@@ -14,7 +14,7 @@ import {
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
   TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, usePage, useSetting, useProfile,
-  Notices, QuestLog,
+  Notices, NoticeStrip, QuestLog, MinigamePanel, useMinigame,
   DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
   MessagesSection, FeedSection, DebugPanel,
   useAudio,
@@ -24,7 +24,7 @@ import {
   type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey, type FrameProps, type IconName,
   type SavesState, type ModsState, type DevicesState, type DeviceState,
   type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
-  type Classes, type Components, type Override, type PartKey, type UiOptions,
+  type Classes, type Components, type Override, type PartKey, type UiOptions, type KeyOptions, type MinigameControls,
   type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
@@ -87,6 +87,7 @@ type Part = PartName | ReactNode
 type PartName =
   | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
   | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
+  | 'notice-strip'
 ```
 
 What [`GameShell`](#gameshell)'s `layout` takes: the parts of the side column, the stage and the overlay, in order. A `PartName` is a built-in part, and each draws nothing when the game has nothing for it. Anything else is drawn as it is. The table of which component each name draws is on [The React UI](/react/#layouts).
@@ -152,13 +153,15 @@ type GameProviderProps = {
   components?: Components
   classes?: Classes
   unstyled?: boolean
+  viewer?: boolean
+  keys?: boolean | KeyOptions
   children: ReactNode
 }
 ```
 
 Connects everything under it to a [runner](/reference/runner). It subscribes to the runner, works out the view again only when the state changes, and hands both down through [`useGame`](#usegame).
 
-`panels` and `sections` are the same as on [`GameShell`](/react/#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes` and `unstyled` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it.
+`panels` and `sections` are the same as on [`GameShell`](/react/#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
 Use it on its own to build [your own layout](/react/extending#your-own-layout).
 
@@ -262,10 +265,39 @@ type UiOptions = {
   classes?: Classes
   unstyled?: boolean
   viewer?: boolean
+  keys?: boolean | KeyOptions
 }
 ```
 
-What [`mountGame`](/react/#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out.
+What [`mountGame`](/react/#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out.
+
+### KeyOptions
+
+```ts
+type KeyOptions = {
+  map?: Record<string, Command>
+}
+```
+
+Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an object to add your own:
+
+- **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`Actions`](#actions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing.
+- **Escape** opens the [`GameMenu`](#gamemenu)'s buttons in a dialog, if the menu is on screen.
+- **`map`** sends a [command](/reference/commands) for each key you list, by its [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) name. Your keys come first, so mapping `'1'` or `'Escape'` replaces what it does.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+
+mountGame(game, {
+  keys: { map: { w: { type: 'activity', id: 'wait' } } },  // 1 to 9, Escape, and W to wait
+})
+```
+
+The keys never fire while the player is typing in an input, a textarea or a select, while Ctrl, Alt, Meta or Shift is held, or while a dialog is open. A number key presses the button that's drawn with that number, so it works with any layout that draws the choices with [`ChoiceButton`](#choicebutton), and does nothing on the title page.
+
+While a [minigame](#minigamepanel) runs, its own keys come first, and they work whether `keys` is on or not.
+
+**Gotcha.** Like `panels`, define `keys` once outside your component. A new `map` object on each render re-registers the listener every time.
 
 ### Components
 
@@ -277,7 +309,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigamePanel`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -416,6 +448,8 @@ From top to bottom, it draws:
 - the scene's [`Stage`](#stage) when [`view.scene.stage`](/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape;
 - each [`Beat`](#beat) of the body;
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist).
+
+While a [minigame](/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigamePanel`](#minigamepanel). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
 The `<article>` carries `data-scene` with the scene's id, or `stage` when no scene is open.
 
@@ -613,9 +647,9 @@ Draws a [`RenderedChoice`](/reference/view#renderedchoice) as a full-width butto
 - the reason it's greyed out, when it is. The button is then disabled;
 - the warning text, when it isn't greyed out and carries a `warning`, so the player reads it before pressing.
 
-The button carries `data-choice` with the choice's id. A choice's `tags` aren't drawn. To style by them, write a component of your own.
+The button carries `data-choice` with the choice's id. With [`keys`](#keyoptions) on, a choice that a number key picks shows the number first, in a `<kbd>` hidden from screen readers, and the button carries `data-choice-key` and `aria-keyshortcuts` with it. A choice's `tags` aren't drawn. To style by them, write a component of your own.
 
-Replaceable as `ChoiceButton` in [`components`](#components). Parts: `choice` (with `data-choice`), `choice-label`, `choice-price`, `choice-warning`, `choice-irreversible` and `choice-reason`.
+Replaceable as `ChoiceButton` in [`components`](#components). Parts: `choice` (with `data-choice`, and `data-choice-key` when keys are on), `choice-key`, `choice-label`, `choice-price`, `choice-warning`, `choice-irreversible` and `choice-reason`.
 
 ### ChoiceList
 
@@ -708,13 +742,24 @@ The stats the view lists, each label beside its value written the way the game [
 
 A stat that declares [`levels`](/reference/stats#levels) also shows its level inside its label, as "Level 2" (the word `ui.statLevel`). Under the row is a bar towards the next level, drawn from [`StatView.level`](/reference/view#statview). The bar is a `progressbar` from 0 to 100, and its label for screen readers is the word `ui.statProgress`, such as "Cooking: 50% of the way to level 2". At the top level there's no bar, only the level. A stat without levels shows as before.
 
+A stat whose [`display`](/reference/stats#statdef) is `'bar'` gets a bar under its row, filled from its `min` to its `max`. One with `'pips'` gets a row of pips instead, one for each point between `min` and `max`, with as many filled as the value is above `min`. A stat with a range of more than 20 is drawn as a bar even if it asks for pips. Both are a `meter` for screen readers, labelled with the stat's label, with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and the formatted value as `aria-valuetext`. Each filled pip carries `data-filled`. The value is still written beside the label.
+
+```ts
+stats: [
+  { id: 'energy', label: 'Energy', start: 80, max: 100, display: 'bar' },
+  { id: 'hearts', label: 'Hearts', start: 3, max: 5, display: 'pips' },
+]
+```
+
+They're deliberately plain. For anything more, such as a bar that changes colour as it runs low, write your own: [Building your own HUD](/guide/hud) shows how.
+
 To reword them, set the words in the game's [`strings`](/react/#words):
 
 ```ts
 strings: { 'ui.statLevel': 'Lv {level}', 'ui.statProgress': '{label}: {percent}% to level {next}' }
 ```
 
-Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat` (with `data-stat`), `stat-label`, `stat-value`, `stat-level` (with `data-level`) and `stat-progress`.
+Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat` (with `data-stat`), `stat-label`, `stat-value`, `stat-level` (with `data-level`), `stat-progress`, `stat-bar`, `stat-pips` and `stat-pip` (with `data-filled` when it's filled).
 
 ### EntityTable
 
@@ -847,6 +892,8 @@ A row of buttons for what the runner offers:
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
 - **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/reference/settings).
+
+With [`keys`](#keyoptions) on, Escape opens the same buttons in a dialog headed **Menu** (`ui.menu`).
 
 Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
 
@@ -1277,6 +1324,105 @@ const components: Components = {
 ```
 
 Replaceable as `Notice` in [`components`](#components). Parts: `notice` (with `data-notice`), `notice-image`, `notice-title`, `notice-text` and `notice-dismiss`.
+
+### NoticeStrip
+
+```tsx
+function NoticeStrip(props: { className?: string }): JSX.Element | null
+```
+
+A row of counts for what's waiting for the player, each a button that opens where it is:
+
+- **Notices** (`ui.notices`) with the number of unseen [notices](/reference/notices). It opens them all in a dialog, each a [`Notice`](#notice), with a **Mark all seen** button (`ui.allSeen`) that sends [`dismiss`](/reference/commands#dismiss) with no id.
+- Each app with a badge on any of the game's [devices](/plugins/devices), such as the phone's Messages, with its count (or an empty badge for a badge that's only on or off). It opens the device in a [`DeviceDialog`](#devicedialog) and sends the app's command, so the device opens on that app. A greyed-out app isn't listed.
+
+It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread. It's the `'notice-strip'` part, which no built-in layout includes, so add it where you want it:
+
+```tsx
+import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
+
+<GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, stage: ['notice-strip', ...DEFAULT_LAYOUT.stage] }} />
+```
+
+Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/guide/hud) shows how to write your own from the view.
+
+Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-strip`, `notice-strip-item` (with `data-strip`) and `badge`, plus the dialog's parts.
+
+## Minigames
+
+### MinigamePanel
+
+```tsx
+function MinigamePanel(props: { className?: string }): JSX.Element | null
+```
+
+The [minigame](/reference/minigames) being played, from [`view.minigame`](/reference/minigames#minigameview). [`SceneStage`](#scenestage) draws it in place of the scene while one runs. From top to bottom, it shows:
+
+- the minigame's `title`, as a heading;
+- the running state's words (`label`), in a polite live region so a screen reader reads each new one;
+- a bar counting down the state's timer, when it has one. It's a `progressbar` labelled `ui.timeLeft`, from 0 to `timeTotal`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks;
+- a button for each live input, which sends [`{ type: 'minigame', input }`](/reference/commands#minigame). The inputs `up`, `down`, `left`, `right` and `space` are labelled with `ui.minigameUp` and the rest. Any other input is labelled with the game's `ui.minigame.<input>` string, or its own name with a capital.
+
+It runs the clock through [`useMinigame`](#useminigame), and maps the keyboard to the inputs. Each input takes the keys the minigame lists in its [`keys`](/reference/minigames#minigamedef). An input it doesn't list takes the arrow keys for `up`, `down`, `left` and `right`, the space bar for `space`, and its own letter for a one-letter input. A key held down doesn't repeat. These keys work whether the game's [`keys`](#keyoptions) are on or not, and they come before them. The keys follow the same rules as the hotkeys: nothing while typing, with a modifier held or with a dialog open.
+
+The `<section>` carries `data-minigame` with the minigame's id and `data-state` with its state, and each button `data-input`.
+
+There are two ways to draw a minigame your own way:
+
+- **One minigame.** Put a component in `panels` under the minigame's id. [`SceneStage`](#scenestage) draws it instead, given the [`MinigameView`](/reference/minigames#minigameview) as `data`, and runs the clock for it. Call `useMinigame()` in it for `send`.
+- **Every minigame.** Replace `MinigamePanel` in [`components`](#components).
+
+```tsx
+import { GameShell, type Components, type PanelComponent } from '@ifloom/react'
+
+const Coconuts: PanelComponent = () => <CoconutShy />   // just the coconut shy
+const components: Components = {
+  MinigamePanel: ({ Default }) => <div className="rounded-xl border-4 p-4"><Default /></div>,  // every other minigame
+}
+
+<GameShell runner={runner} panels={{ coconut: Coconuts }} components={components} />
+```
+
+The [Minigames guide](/guide/minigames#your-own-panel) builds a panel of your own.
+
+Replaceable as `MinigamePanel` in [`components`](#components). Parts: `minigame` (with `data-minigame` and `data-state`), `minigame-title`, `minigame-state`, `minigame-timer`, `minigame-inputs` and `minigame-input` (with `data-input`).
+
+### useMinigame
+
+```ts
+function useMinigame(options?: { keys?: boolean }): MinigameControls
+
+type MinigameControls = {
+  minigame: MinigameView | null
+  send: (input: string) => Applied
+}
+```
+
+The minigame being played, as [`view.minigame`](/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigamePanel`](#minigamepanel) does. Only inside a [`GameProvider`](#gameprovider).
+
+While any component that calls it is on screen, it runs the minigame's clock. Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`), it sends [`{ type: 'tick', ms }`](/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when the minigame ends or its state has no timer, and starts again when one does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
+
+There's one clock per runner however many components call it, so a panel and a HUD that both use it don't tick twice.
+
+**Time while the page is hidden is dropped.** When the player switches tab or minimises the window, the clock sends the time up to that moment and pauses, and when the page shows again it carries on from there. A minigame waits for a player who looked away, instead of running out its timers unseen.
+
+```tsx
+import { useMinigame } from '@ifloom/react'
+
+function ArrowPad() {
+  const { minigame, send } = useMinigame({ keys: true })
+  if (!minigame) return null
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {minigame.inputs.map((input) => (
+        <button key={input} onClick={() => send(input)}>{input}</button>
+      ))}
+    </div>
+  )
+}
+```
+
+**Gotcha.** Nothing ticks unless something calls it. [`SceneStage`](#scenestage) does while a minigame runs, so a game with its own root that leaves out `SceneStage` has to call `useMinigame()` somewhere, or the minigame's timers wait for ever.
 
 ### QuestLog
 

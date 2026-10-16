@@ -2,6 +2,7 @@ import type { Price, RenderedChoice } from '@ifloom/engine'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
+import { useChoiceKey } from './keys.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
@@ -27,9 +28,23 @@ function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; class
   const warning = usePart('choice-warning', 'text-xs font-normal text-muted-foreground')
   const irreversible = usePart('choice-irreversible', 'text-xs font-normal text-destructive')
   const reason = usePart('choice-reason', 'text-xs font-normal text-muted-foreground')
+  const keyHint = usePart('choice-key', 'rounded border px-1.5 font-mono text-xs font-normal text-muted-foreground')
+  const key = useChoiceKey(choice)
   return (
-    <button {...button} disabled={Boolean(choice.disabled)} onClick={() => send(choice.command)} data-choice={choice.id}>
+    <button
+      {...button}
+      disabled={Boolean(choice.disabled)}
+      onClick={() => send(choice.command)}
+      data-choice={choice.id}
+      data-choice-key={key ?? undefined}
+      aria-keyshortcuts={key ? String(key) : undefined}
+    >
       <span {...label}>
+        {key ? (
+          <kbd {...keyHint} aria-hidden>
+            {key}
+          </kbd>
+        ) : null}
         <span className="flex-1">{choice.label}</span>
         {choice.warning ? <Icon name="warning" label={choice.warning} /> : null}
       </span>
@@ -45,7 +60,8 @@ function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; class
  * A choice or an action as a button: its label, its price, and (when it is
  * greyed out) the reason, on the button itself so the player never has to
  * hover to learn why. A warning (pressable, but the game would refuse it, as
- * running past dawn) is marked and written under it.
+ * running past dawn) is marked and written under it. With `keys` on, a
+ * numbered choice shows its number key.
  */
 export const ChoiceButton = overridable('ChoiceButton', ChoiceButtonImpl)
 

@@ -31,8 +31,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `ifloom playtest`, which plays your game with no one at the keyboard and writes every screen to a transcript.
 - A `vanilla` template that draws a game with plain DOM, for Vue, Svelte or no framework at all.
 - Three example games: The Letter (a linear novel), The Corner Café (a management game) and Small Town (a life sim that uses every feature).
-- Minigames: small games inside the story, such as a quick-time event, declared as states with timers, inputs, their own variables and seeded random picks. Start one with the `minigame` effect or a scene's `minigame` field, and drive it with the `tick` and `minigame` commands. The view shows it as `view.minigame`. Undo, the backlog and autosave step over ticks, and a command log with ticks plays back exactly. A default React panel for minigames is coming in the same change.
-- `display: 'number' | 'bar' | 'pips'` on a stat, passed through the view with the stat's `min` and `max` so a UI can draw a bar or pips.
+- Minigames: small games inside the story, such as a quick-time event, declared as states with timers, inputs, their own variables and seeded random picks. Start one with the `minigame` effect or a scene's `minigame` field, and drive it with the `tick` and `minigame` commands. The view shows it as `view.minigame`. Undo, the backlog and autosave step over ticks, and a command log with ticks plays back exactly. The React UI draws it with `MinigamePanel`, which runs the clock and takes the arrow keys and space, and a game can swap in its own panel per minigame through `panels`. `useMinigame()` gives a panel of your own the minigame and its clock.
+- `display: 'number' | 'bar' | 'pips'` on a stat, passed through the view with the stat's `min` and `max` so a UI can draw a bar or pips. The React UI's stat list draws a basic bar or a row of pips for it.
+- Keyboard shortcuts in the React UI, off unless you pass `keys`: the number keys pick the choices on screen, each showing its number, Escape opens the menu, and `keys: { map }` adds keys of your own that send a command.
+- `NoticeStrip` in the React UI: a row of unread counts (unseen notices, and apps with a badge) that open where they are. Add it to a layout as `'notice-strip'`.
 - These docs, with `llms.txt` and `llms-full.txt` for AI agents, and an `AGENTS.md` in every new game.
 
 ### Changed

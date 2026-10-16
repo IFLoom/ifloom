@@ -10,6 +10,7 @@ import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
 import { Video } from './video.tsx'
 import { MediaViewer, type ViewerMedia } from './viewer.tsx'
+import { MinigamePanel, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
@@ -139,6 +140,15 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
  */
 export const Beat = overridable('Beat', BeatImpl)
 
+/** The minigame being played: the game's own panel for it if `panels` has one by its id, else `MinigamePanel`. Its clock runs while it's here. */
+function MinigameSlot() {
+  const { panels } = useGame()
+  const { minigame } = useMinigame()
+  if (!minigame) return null
+  const Panel = panels[minigame.id]
+  return Panel ? <Panel data={minigame} /> : <MinigamePanel />
+}
+
 function SceneStageImpl({ className }: { className?: string }) {
   const { view, panels } = useGame()
   const scene = view.scene
@@ -149,6 +159,13 @@ function SceneStageImpl({ className }: { className?: string }) {
   const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
   const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
   const beats = usePart('beats', 'flex flex-col gap-(--gap-beats)')
+  if (view.minigame) {
+    return (
+      <article {...article} data-scene={scene.id ?? 'stage'} data-minigame={view.minigame.id}>
+        <MinigameSlot />
+      </article>
+    )
+  }
   return (
     <article {...article} data-scene={scene.id ?? 'stage'}>
       <header {...header}>
@@ -169,6 +186,8 @@ function SceneStageImpl({ className }: { className?: string }) {
 /**
  * The main panel: the scene on screen, or the room when none is. Its stage (the
  * layered `Stage` when the scene has one, else its `stageImage`), its body, then
- * either the game's own panel for it or its choices.
+ * either the game's own panel for it or its choices. While a minigame runs, it
+ * draws that instead: the game's panel named by the minigame's id, else
+ * `MinigamePanel`.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

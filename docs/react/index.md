@@ -135,6 +135,7 @@ It sets up what most games want:
 | `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/react/customising#_4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
 | `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
+| `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
 | `audio` | On when the game lists any tracks in [`game.audio`](/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/reference/audio-player#startaudio) as its [options](/reference/audio-player#audiooptions). See [Sound](#sound). |
 
 Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` and `className` are ignored, and the rest go to the provider.
@@ -185,6 +186,8 @@ type GameShellProps = {
   components?: Components
   classes?: Classes
   unstyled?: boolean
+  viewer?: boolean
+  keys?: boolean | KeyOptions
   className?: string
   layout?: Layout
   pages?: boolean | PagesOptions
@@ -198,6 +201,8 @@ type GameShellProps = {
 | `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/react/extending#plugin-sections). |
 | `mods` | The player's [mods](/reference/mods): the store, the loader's problems, and how to restart. It turns on **Mods** in the player's menu. See [`ModsOption`](/react/components#modsoption). |
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/react/customising). |
+| `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
+| `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/react/components#keyoptions). |
 | `className` | Classes on the page, merged over its own. |
 | `layout` | Which parts go in the side column, on the stage and in the overlay, in order. If you leave it out, you get [`DEFAULT_LAYOUT`](/react/components#default-layout). See [Layouts](#layouts). |
 | `pages` | The title screen and the pages around the game. Off if you leave it out. See [Pages](#pages). |
@@ -214,6 +219,7 @@ type Part = PartName | ReactNode
 type PartName =
   | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
   | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
+  | 'notice-strip'
 ```
 
 | Part | What it draws |
@@ -234,6 +240,7 @@ type PartName =
 | `'quests'` | [`QuestLog`](/react/components#questlog). |
 | `'debug'` | [`DebugPanel`](/react/components#debugpanel). |
 | `'notices'` | [`Notices`](/react/components#notices), the unseen notices. |
+| `'notice-strip'` | [`NoticeStrip`](/react/components#noticestrip), a row of unread counts. No built-in layout includes it. |
 
 Each built-in part draws nothing when the game has nothing for it. A game without a calendar shows no clock, and one without the cast shows no people. So a layout can safely list parts a game doesn't use. Two layouts are exported:
 
@@ -479,11 +486,20 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/re
 | `ui.replayVoice` | `Hear it again` | |
 | `ui.zoom` | `Enlarge` | |
 | `ui.closeViewer` | `Close` | |
+| `ui.menu` | `Menu` | |
+| `ui.timeLeft` | `Time left` | |
+| `ui.minigameUp` | `Up` | |
+| `ui.minigameDown` | `Down` | |
+| `ui.minigameLeft` | `Left` | |
+| `ui.minigameRight` | `Right` | |
+| `ui.minigameSpace` | `Space` | |
+| `ui.notices` | `Notices` | |
+| `ui.unread` | `Unread` | |
 
 Which component uses which keys:
 
 - **[Debug panel](/react/components#debugpanel)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
-- **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
+- **[Game menu](/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
 - **[Wardrobe panel](/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Stat list](/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
 - **[Inventory](/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
@@ -491,6 +507,8 @@ Which component uses which keys:
 - **[Beat](/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
 - **[Notices](/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button.
+- **[Notice strip](/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
+- **[Minigame panel](/react/components#minigamepanel)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
 - **[Devices](/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/react/components#backlog)**: `ui.backlog` to `ui.chose`.

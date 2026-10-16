@@ -239,7 +239,7 @@ if (game) {
 }
 ```
 
-While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` isn't `null`. The React UI will draw it with a default panel; that panel is coming in the same change as minigames.
+While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` isn't `null`. The React UI draws it with [`MinigamePanel`](/react/components#minigamepanel) and runs the clock for you.
 
 ### audio
 

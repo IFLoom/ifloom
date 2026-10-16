@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, 
 import type { Applied, Command, Mods, Runner, View } from '@ifloom/engine'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
+import { KeysProvider } from './keys.tsx'
 
 /** A game's own component for a scene panel or an app's panel section: it gets the data the game's custom panel returned. */
 export type PanelComponent = ComponentType<{ data: unknown }>
@@ -48,7 +49,7 @@ export type GameProviderProps = UiOptions & {
  */
 const NONE = {}
 
-export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, children }: GameProviderProps) {
+export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, keys, children }: GameProviderProps) {
   const state = useSyncExternalStore(
     (listener) => runner.subscribe(() => listener()),
     () => runner.state,
@@ -63,8 +64,8 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
   )
   return (
     <GameContext.Provider value={value}>
-      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer}>
-        {children}
+      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer} keys={keys}>
+        <KeysProvider>{children}</KeysProvider>
       </UiProvider>
     </GameContext.Provider>
   )

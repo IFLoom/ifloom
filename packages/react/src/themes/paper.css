@@ -258,3 +258,81 @@
   background: var(--card);
   color: var(--primary);
 }
+
+/* Minigames: a passage set apart by rules, the timer a thin printed line. */
+[data-part="minigame"] {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+[data-part="minigame-title"] {
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+}
+
+[data-part="minigame-state"] {
+  font-style: italic;
+}
+
+[data-part="minigame-timer"] {
+  height: 1px;
+  border-radius: 0;
+  background: var(--border);
+}
+
+[data-part="minigame-timer"] > span {
+  background: var(--foreground);
+}
+
+[data-part="minigame-inputs"] {
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+[data-part="minigame-input"] {
+  all: unset;
+  cursor: pointer;
+  color: var(--primary);
+  font-family: var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Stats as bars and pips: ink lines and dots. */
+[data-part="stat-bar"] {
+  height: 2px;
+  border-radius: 0;
+  background: var(--border);
+}
+
+[data-part="stat-bar"] > span {
+  background: var(--foreground);
+}
+
+[data-part="stat-pip"] {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-color: var(--foreground);
+}
+
+[data-part="stat-pip"][data-filled] {
+  background: var(--foreground);
+}
+
+[data-part="choice-key"] {
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-variant: small-caps;
+}
+
+[data-part="choice-key"]::after {
+  content: ".";
+}
+
+[data-part="notice-strip-item"] {
+  border-radius: 0;
+  font-family: var(--font-body);
+}

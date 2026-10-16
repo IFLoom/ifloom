@@ -1,4 +1,4 @@
-import type { Command, RenderedChoice, StageView } from '@ifloom/engine'
+import type { Command, RenderedChoice, StageView, StatView } from '@ifloom/engine'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceButton } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -16,6 +16,42 @@ function ClockImpl() {
 
 /** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. */
 export const Clock = overridable('Clock', ClockImpl)
+
+/** The most pips drawn; a wider range is drawn as a bar. */
+const MAX_PIPS = 20
+
+/** A stat's value as a bar from its `min` to its `max`, or as pips, one per point. */
+function StatGauge({ stat }: { stat: StatView }) {
+  const bar = usePart('stat-bar', 'col-span-2 h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
+  const pips = usePart('stat-pips', 'col-span-2 flex flex-wrap gap-1')
+  const full = usePart('stat-pip', 'size-2.5 rounded-full border border-primary bg-primary')
+  const empty = usePart('stat-pip', 'size-2.5 rounded-full border border-primary')
+  const range = stat.max - stat.min
+  const meter = {
+    role: 'meter',
+    'aria-label': stat.label,
+    'aria-valuemin': stat.min,
+    'aria-valuemax': stat.max,
+    'aria-valuenow': stat.value,
+    'aria-valuetext': stat.text,
+  } as const
+  if (stat.display === 'pips' && range > 0 && range <= MAX_PIPS) {
+    const filled = Math.max(0, Math.min(range, Math.round(stat.value - stat.min)))
+    return (
+      <dd {...pips} {...meter}>
+        {Array.from({ length: range }, (_, index) => (
+          <span key={index} {...(index < filled ? full : empty)} data-filled={index < filled ? '' : undefined} />
+        ))}
+      </dd>
+    )
+  }
+  const share = range > 0 ? Math.max(0, Math.min(1, (stat.value - stat.min) / range)) : 0
+  return (
+    <dd {...bar} {...meter}>
+      <span style={{ width: `${Math.round(share * 1000) / 10}%` }} />
+    </dd>
+  )
+}
 
 function StatListImpl() {
   const { view } = useGame()
@@ -39,6 +75,7 @@ function StatListImpl() {
               {level ? <span {...levelPart} data-level={level.level}>{words('statLevel', { level: level.level })}</span> : null}
             </dt>
             <dd {...value}>{stat.text}</dd>
+            {stat.display === 'bar' || stat.display === 'pips' ? <StatGauge stat={stat} /> : null}
             {level && level.next !== null ? (
               <dd
                 {...progressPart}
@@ -60,7 +97,9 @@ function StatListImpl() {
 
 /**
  * The stats the game lists, with their values written as the game formats them.
- * A stat with levels also shows its level and a bar towards the next one.
+ * A stat with levels also shows its level and a bar towards the next one. A
+ * stat whose `display` is `'bar'` gets a bar from its `min` to its `max` under
+ * it, and one with `'pips'` a row of pips, one per point (a bar past 20).
  */
 export const StatList = overridable('StatList', StatListImpl)
 

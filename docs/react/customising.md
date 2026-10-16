@@ -458,6 +458,9 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `stat-value` | A stat's value, as the game formats it. |
 | `stat-level` | A levelled stat's level (`ui.statLevel`, "Level 2"), inside its label. Carries `data-level`. |
 | `stat-progress` | A levelled stat's bar towards its next level, a `progressbar` holding one `<span>` as wide as the progress, labelled with `ui.statProgress`. Not drawn at the top level. The `paper` preset hides it, so a stat there shows only its level. |
+| `stat-bar` | A stat with `display: 'bar'`: a `meter` holding one `<span>` as wide as the value is from `min` to `max`. |
+| `stat-pips` | A stat with `display: 'pips'`: a `meter` holding a pip for each point. |
+| `stat-pip` | One pip. Carries `data-filled` when it's filled. |
 
 ### Where you are, and who's there
 
@@ -480,7 +483,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 
 | Part | What it is |
 |---|---|
-| `scene` | The scene, an `<article>`. Carries `data-scene`. |
+| `scene` | The scene, an `<article>`. Carries `data-scene`, and `data-minigame` while a minigame runs. |
 | `scene-header` | The row with the speaker's portrait and the title. |
 | `scene-portrait` | The speaker's portrait. |
 | `scene-title` | The scene's title. |
@@ -510,14 +513,15 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 |---|---|
 | `choices` | A scene's list of choices, or an app's. |
 | `actions` | The room's and the game's buttons, when no scene is open. |
-| `choice` | One choice or action button. Carries `data-choice`. |
+| `choice` | One choice or action button. Carries `data-choice`, and `data-choice-key` with its number when [keys](/react/components#keyoptions) are on. |
+| `choice-key` | The number key that picks a choice, a `<kbd>` at the start of its label. Only with keys on. |
 | `choice-label` | The button's label, with the warning icon. |
 | `choice-warning` | The warning written under a button that can be pressed but would be refused. |
 | `choice-price` | What the choice costs. |
 | `choice-irreversible` | The line that says a choice can't be undone. |
 | `choice-reason` | Why a button is greyed out. |
 | `button` | Any other button: in the saves menu, the mod manager, the quest log, the wardrobe, inputs, message threads, feeds and the debug panel. |
-| `badge` | A count or a **New** badge in the quest log. |
+| `badge` | A count or a **New** badge in the quest log, or a count in the notice strip. |
 
 ### Notices
 
@@ -529,13 +533,26 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#_4-chan
 | `notice-title` | Its title. |
 | `notice-text` | Its text. |
 | `notice-dismiss` | Its dismiss button. |
+| `notice-strip` | The [`NoticeStrip`](/react/components#noticestrip), a `<nav>` of unread counts. |
+| `notice-strip-item` | One count in it, a button. Carries `data-strip`: `notices`, or the device and app as `phone/texts`. |
+
+### Minigames
+
+| Part | What it is |
+|---|---|
+| `minigame` | The [`MinigamePanel`](/react/components#minigamepanel), a `<section>`. Carries `data-minigame` and `data-state`. |
+| `minigame-title` | The minigame's title. |
+| `minigame-state` | The running state's words. |
+| `minigame-timer` | The countdown bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Only while the state has a timer. |
+| `minigame-inputs` | The row of input buttons. |
+| `minigame-input` | One input button. Carries `data-input`. |
 
 ### The menu and its dialogs
 
 | Part | What it is |
 |---|---|
 | `menu` | The player's menu, the row of buttons. |
-| `menu-button` | Each button in it: Saves, Backlog, Mods, Undo and Redo. |
+| `menu-button` | Each button in it: Saves, Backlog, Mods, Undo and Redo. With keys on, Escape opens the same buttons in a dialog. |
 | `dialog` | A dialog box: the menu's dialog, or a device's. A device's carries `data-frame`. |
 | `dialog-overlay` | The dimmed page behind a dialog. |
 | `dialog-title` | A dialog's title. |

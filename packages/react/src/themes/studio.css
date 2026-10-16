@@ -189,3 +189,61 @@
   border: 1px solid var(--border);
   background: var(--card);
 }
+
+/* Minigames: a card with a bold timer and square input keys. */
+[data-part="minigame"] {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="minigame-state"] {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+[data-part="minigame-timer"] {
+  height: 0.4rem;
+}
+
+[data-part="minigame-timer"] > span {
+  border-radius: 999px;
+}
+
+[data-part="minigame-input"] {
+  min-width: 4.5rem;
+  height: 3rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+[data-part="minigame-input"]:hover {
+  border-color: var(--primary);
+}
+
+/* Stats as bars and pips. */
+[data-part="stat-bar"] {
+  height: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+[data-part="stat-bar"] > span {
+  border-radius: 999px;
+  transition: width 300ms ease;
+}
+
+[data-part="stat-pips"] {
+  margin-bottom: 0.25rem;
+}
+
+[data-part="stat-pip"] {
+  border-radius: 0.2rem;
+}
+
+[data-part="choice-key"] {
+  border-color: var(--border);
+  background: var(--background);
+}

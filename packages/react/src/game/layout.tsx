@@ -9,6 +9,7 @@ import { InputFields } from './inputs.tsx'
 import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
 import { Notices } from './notices.tsx'
+import { NoticeStrip } from './strip.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { SceneStage } from './scene.tsx'
@@ -37,6 +38,7 @@ export type PartName =
   | 'quests'
   | 'debug'
   | 'notices'
+  | 'notice-strip'
 
 /** A part of a layout: a built-in one by name, or anything of the game's own. */
 export type Part = PartName | ReactNode
@@ -100,6 +102,7 @@ const PARTS: Record<PartName, () => ReactNode> = {
   quests: () => <QuestLog />,
   debug: () => <DebugPanel />,
   notices: () => <Notices />,
+  'notice-strip': () => <NoticeStrip />,
 }
 
 function isPartName(part: Part): part is PartName {

@@ -12,6 +12,8 @@ export const sidebar: DefaultTheme.SidebarMulti = {
         { text: 'Your first story', link: '/guide/first-story' },
         { text: 'Shapes of game', link: '/guide/shapes' },
         { text: 'The title screen and settings', link: '/guide/title-screen' },
+        { text: 'Minigames', link: '/guide/minigames' },
+        { text: 'Building your own HUD', link: '/guide/hud' },
         { text: 'Using another framework', link: '/guide/frameworks' },
         { text: 'A game with a world', link: '/guide/first-game' },
         { text: 'Core concepts', link: '/guide/concepts' },

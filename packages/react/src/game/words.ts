@@ -82,6 +82,15 @@ export const UI_STRINGS = {
   replayVoice: 'Hear it again',
   zoom: 'Enlarge',
   closeViewer: 'Close',
+  menu: 'Menu',
+  timeLeft: 'Time left',
+  minigameUp: 'Up',
+  minigameDown: 'Down',
+  minigameLeft: 'Left',
+  minigameRight: 'Right',
+  minigameSpace: 'Space',
+  notices: 'Notices',
+  unread: 'Unread',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

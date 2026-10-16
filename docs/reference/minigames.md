@@ -81,7 +81,7 @@ state = apply(state, game, { type: 'minigame', input: 'left' }).state // the pla
 
 The full example is in the showcase's `src/content/town.ts`, and its test plays it through with ticks and inputs.
 
-The React UI will draw a minigame with a default panel, and you'll be able to replace it with your own by minigame id. That panel is coming in the same change as this page. Until then, any UI can draw `view.minigame` itself.
+The React UI draws a minigame with [`MinigamePanel`](/react/components#minigamepanel), which sends the ticks and maps the keys, and you can replace it with your own panel by minigame id. The [Minigames guide](/guide/minigames) walks through both. Any other UI draws `view.minigame` itself.
 
 ## How a minigame runs
 

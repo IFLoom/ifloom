@@ -11,7 +11,7 @@ import {
 } from '@ifloom/plugin-jobs'
 ```
 
-The plugin has no UI of its own. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job.
+The plugin has no UI of its own. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/guide/plugin-ui#a-job-board) builds one.
 
 ## Install
 

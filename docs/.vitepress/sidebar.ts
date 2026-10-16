@@ -70,6 +70,7 @@ export const sidebar: DefaultTheme.SidebarMulti = {
         { text: 'Notices', link: '/reference/notices' },
         { text: 'Triggers', link: '/reference/triggers' },
         { text: 'Inputs', link: '/reference/inputs' },
+        { text: 'Minigames', link: '/reference/minigames' },
         { text: 'Progress and limits', link: '/reference/progress' },
         { text: 'Randomness', link: '/reference/random' },
         { text: 'Audio', link: '/reference/audio' },

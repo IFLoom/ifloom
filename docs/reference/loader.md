@@ -24,6 +24,7 @@ type Pack = {
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
+  minigames?: MinigameDef[]
   settings?: SettingDef[]
   strings?: Record<string, string>
   prose?: Record<string, string>
@@ -40,7 +41,7 @@ type Pack = {
 |---|---|
 | `id` | Names the pack in problems, such as `'town'` or `'mod:sunday-market'`. |
 | `schema` | Must equal [`SCHEMA`](#schema), or the whole pack is skipped with a problem. |
-| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `settings` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers`, `inputs` and `settings` on `loadGame`'s `base` come before every pack's. |
+| `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `minigames`, `settings` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers`, `inputs`, `minigames` and `settings` on `loadGame`'s `base` come before every pack's. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/reference/entities). |
 | `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/reference/strings#overriding). |
 | `prose` | By key. A later pack wins. |

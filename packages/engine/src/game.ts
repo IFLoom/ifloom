@@ -4,6 +4,7 @@ import type { Lock } from './locks.ts'
 import type { Custom } from './custom.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
+import type { MinigameSceneFields } from './features/minigames.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene } from './scene.ts'
@@ -19,6 +20,7 @@ import type {
 
 export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
+export type { MinigameSceneFields } from './features/minigames.ts'
 
 /** Something to do, as a button: a command, and when it is offered. The game's own, a plugin's, a place's. */
 export type ActionDef = {
@@ -122,7 +124,7 @@ export type SceneCtx = {
   picks?: Record<string, string>
 }
 
-export type Scene = StoryletFields & {
+export type Scene = StoryletFields & MinigameSceneFields & {
   id: string
   title?: string
   speaker?: string

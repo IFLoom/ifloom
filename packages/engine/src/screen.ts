@@ -18,6 +18,7 @@ import { sceneById, type ActionDef, type Game, type SceneMedia } from './game.ts
 import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './sceneBody.ts'
 import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
+import { minigameDef } from './features/minigames.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
@@ -75,9 +76,9 @@ export type ScreenScene = {
 
 /** One state's screen. See `screen`. */
 export type Screen = {
-  /** The open scene as rendered, or the room when none is open. */
+  /** The open scene as rendered, or the room when none is open. A minigame being played is drawn over either: see `view.minigame`. */
   scene: ScreenScene
-  /** The open scene's visible choices, each with its effects, availability and price. Empty for the room. */
+  /** The open scene's visible choices, each with its effects, availability and price. Empty for the room, and while a minigame is played. */
   choices: ScreenChoice[]
   /** The room's buttons while no scene is open and no lock stops everything: plugins' first, then the game's. */
   actions: ScreenChoice[]
@@ -110,19 +111,21 @@ type Drawing = { rendered: Rendering; picks: Record<string, string> }
 export function screen(state: GameState, game: Game): Screen {
   const picks: Record<string, string> = {}
   const drawing: Drawing = { rendered: rendering(state, game, picks), picks }
-  const idle = !lockedOut(state, game) && !state.sceneId
+  const idle = !lockedOut(state, game) && !state.sceneId && !state.minigame
   const dialogue = renderDialogue(state, game, drawing)
   const room = dialogue ? null : standing(state, game, drawing)
   const actions = idle ? idleActions(state, game, drawing) : []
+  // A minigame being played is shown over the scene or the room, with no choices or buttons of theirs.
+  const playing = playingScene(state, game, dialogue?.scene ?? room!, drawing)
   const plugins = pluginViews(state, game, picks)
   const cx = featureContext()
   const tracks = audioTracks(state, game, dialogue?.audio, cx)
   const beats = dialogue ? dialogue.scene.beats : null
   return {
-    scene: dialogue?.scene ?? room!,
-    choices: dialogue?.choices ?? [],
+    scene: playing ?? dialogue?.scene ?? room!,
+    choices: playing ? [] : (dialogue?.choices ?? []),
     actions,
-    stage: dialogue?.stage ?? null,
+    stage: playing ? null : (dialogue?.stage ?? null),
     plugins,
     picks,
     audio: { ...audioView(state, game, tracks, beats, cx), tracks },
@@ -149,6 +152,22 @@ function standing(state: GameState, game: Game, drawing: Drawing): ScreenScene {
     speaker: null,
     stageImage: null,
   }
+}
+
+/**
+ * The minigame being played, drawn over `under` (the open scene or the room):
+ * its label as the title, and the running state's words as the body. Null
+ * with none running.
+ */
+function playingScene(state: GameState, game: Game, under: ScreenScene, drawing: Drawing): ScreenScene | null {
+  const running = state.minigame
+  const def = running ? minigameDef(game, running.id) : undefined
+  if (!running || !def) return null
+  const owner = `minigame.${def.id}`
+  const label = def.states[running.state]?.label
+  const rendered = label !== undefined ? renderScene({ id: owner, body: [{ text: label }], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
+  const body = rendered.body ?? ''
+  return { ...under, title: def.label ?? under.title, body, beats: beatsOf(state, game, owner, body, undefined, drawing.picks), panel: null, panelData: null }
 }
 
 /**

@@ -41,7 +41,8 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 4. **Run it.** If [`rules.commands`](/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
 5. **Triggers.** Each [trigger](/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/reference/triggers#when-triggers-fire).
 6. **Seen.** If the player is now looking at a different scene than before, that scene's [`seen`](/reference/state#seen) count goes up by one, and [`seenOn`](/reference/state#seenon) records the current [turn](/reference/state#turn) if it's the first time. A scene a trigger opened counts.
-7. **After hooks.** Each plugin's [`after` hook](/reference/plugins#hooks) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
+7. **A scene's minigame.** If that new scene has a [`minigame`](/reference/minigames#minigamescenefields), it starts.
+8. **After hooks.** Each plugin's [`after` hook](/reference/plugins#hooks) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
 
 Locks are checked before the game's own handler, so a lock can stop a command the game handles itself.
 
@@ -113,12 +114,16 @@ type Command =
   | { type: 'dismiss'; id?: string }
   | { type: 'input'; id: string; value?: FlagValue }
   | { type: 'setting'; id: string; value: FlagValue }
+  | { type: 'tick'; ms: number }
+  | { type: 'minigame'; input: string }
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 ```
 
 The union is closed, so a game can't add a command type. Something new for the player to do is an [activity](/reference/actions), not a command. A [plugin](/reference/plugins) adds its commands under the one type `custom`, by name. For example, walking somewhere is the [places plugin](/plugins/places#commands)'s `places/go`, which you write as `go('cafe')`, and talking to someone is the [cast](/plugins/cast#commands)'s `cast/talk`, written `talk('ava')`.
 
 Each built-in handler below runs only if no lock or plugin [guard](/reference/plugins#guards) stopped the command and the game has no handler for its type. The refusals listed for each come after a lock's and a guard's, and before a [warning](/reference/actions#warningof).
+
+While a [minigame](/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss` and `setting` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
 
 ### start
 
@@ -191,6 +196,26 @@ No lock or plugin guard stops it, because changing a setting is the menu's busin
 - `Choose on or off.` for a toggle given anything but `true` or `false`
 - `That is not one of the options.` for a choice given a value it doesn't list
 - `Enter a number.`, `Between <min> and <max>.` or `In steps of <step>.` for a range
+
+### tick
+
+```ts
+{ type: 'tick', ms: 100 }
+```
+
+Time passing in the [minigame](/reference/minigames) being played. It adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, the timer's transition is taken, and whatever is left of `ms` carries on into the next state. So one long tick can run out several timers in a row, up to 1,000 transitions, and it stops when the minigame ends. A UI sends it at a steady rate (about every 100 ms) while [`view.minigame.timeLeft`](/reference/minigames#minigameview) isn't `null`.
+
+No lock or plugin guard stops it. It's refused with `Nothing is being played.` when no minigame runs, `Nothing is counting down.` when the running state has no timer, and `A tick is a number of milliseconds above 0.` for an `ms` that isn't.
+
+Ticks go in the runner's [log](/reference/runner#commandlog), so [`replay`](/reference/runner#replay) is exact. The runner's undo steps over them, the backlog ignores them, and they don't autosave as commands. See [In the runner](/reference/minigames#in-the-runner).
+
+### minigame
+
+```ts
+{ type: 'minigame', input: 'left' }
+```
+
+An input to the [minigame](/reference/minigames) being played. It takes the running state's first `on` entry for that input whose `when` holds: its effects, then where it goes. No lock or plugin guard stops it. It's refused with `Nothing is being played.` when no minigame runs, and `That does nothing now.` when the input isn't live. [`view.minigame.inputs`](/reference/minigames#minigameview) lists the live ones.
 
 ### custom
 

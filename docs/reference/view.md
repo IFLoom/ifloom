@@ -87,10 +87,10 @@ type ScreenScene = {
 
 | Field | Meaning |
 |---|---|
-| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `stage` and `choices`. |
-| `choices` | The open scene's visible choices. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room. |
-| `actions` | The room's buttons while no scene is open, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/reference/actions#effectsof)). |
-| `stage` | The open scene's stage, resolved as [`stageView`](#stageview) does. `null` for the room. |
+| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `stage` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
+| `choices` | The open scene's visible choices. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
+| `actions` | The room's buttons while no scene or minigame is open, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/reference/actions#effectsof)). |
+| `stage` | The open scene's stage, resolved as [`stageView`](#stageview) does. `null` for the room, and while a minigame runs. |
 | `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
 | `picks` | The [pool picks](/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
 | `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
@@ -122,7 +122,7 @@ While no scene is open, the screen is the idle screen. It shows the [stage](#the
 |---|---|---|
 | `actions` | [`RenderedChoice[]`](#renderedchoice) | What the player can do. |
 
-`actions` is empty while a scene is open, or while a [lock](/reference/locks) that stops everything is on. Then the player can only move through the scene.
+`actions` is empty while a scene or a [minigame](#minigame) is open, or while a [lock](/reference/locks) that stops everything is on. Then the player can only move through the scene.
 
 Otherwise `actions` is every plugin's [`buttons`](/reference/plugins#buttons), in the order `game.plugins` lists them, then the game's own [`actions`](/reference/game#game). A button is left out while its `when` doesn't hold, or while a [lock](/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in `game.actions`.
 
@@ -166,6 +166,8 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
 
 `inScene` (`boolean`) is `true` whenever a scene is open.
+
+While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the stage's title), its `body` and `beats` are the running state's `label` rendered as prose, and `panel` and `panelData` are `null`. Its `id` and the rest stay those of the scene or the stage underneath. `choices` is empty and `stage` is `null`.
 
 ### The player's numbers and things
 
@@ -221,6 +223,23 @@ if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 | `settings` | [`SettingView`](#settingview)`[]` | Every [setting](/reference/settings) the game declares, in order, `play` and `ui` alike. Empty when it declares none. |
 
 That's enough to draw a whole settings screen from the view. See [`SettingView`](#settingview) for where each value comes from.
+
+### minigame
+
+| Field | Type | Meaning |
+|---|---|---|
+| `minigame` | [`MinigameView`](/reference/minigames#minigameview) ` \| null` | The [minigame](/reference/minigames) being played, with its state, its words, the time left on its timer, the live inputs, its variables and its keys. `null` when none runs. |
+
+```ts
+const game = shown.minigame
+if (game) {
+  drawText(game.label ?? '')
+  if (game.timeTotal) drawCountdown(game.timeLeft! / game.timeTotal)
+  for (const input of game.inputs) addButton(input, () => send({ type: 'minigame', input }))
+}
+```
+
+While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` isn't `null`. The React UI will draw it with a default panel; that panel is coming in the same change as minigames.
 
 ### audio
 
@@ -344,13 +363,15 @@ type StatView = {
   key: StatKey
   label: string
   value: number
+  min: number
   max: number
   text: string
+  display: 'number' | 'bar' | 'pips'
   level?: { level: number; next: number | null; progress: number }
 }
 ```
 
-One stat as the UI shows it. `value` is [`statValue`](/reference/stats#statvalue), so a [derived stat](/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/reference/stats#formatstat), such as `'12 coins'`.
+One stat as the UI shows it. `min` is the stat's declared `min`, or 0. `display` is the stat's [`display`](/reference/stats#statdef), or `'number'`, so a UI can draw a bar from `min` to `max` or a row of pips. `value` is [`statValue`](/reference/stats#statvalue), so a [derived stat](/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/reference/stats#formatstat), such as `'12 coins'`.
 
 `level` is only there for a stat that declares [`levels`](/reference/stats#levels). It's what [`statLevel`](/reference/stats#statlevel) gives:
 

@@ -32,6 +32,7 @@ type GameState = {
   settings: Record<string, FlagValue>
   audio: AudioState
   media: MediaState
+  minigame: MinigameState | null
   gameVersion?: number
 }
 ```
@@ -226,6 +227,14 @@ media: MediaState   // { picks: Record<string, string> }
 ```
 
 The file each [pool](/reference/media#pools) request was given, by pick key, such as `{ 'door|red,night|flat.morning|0.0': 'door/red-night.jpg' }`. The reducer adds a pick after each command the first time something on screen asks for it, so a revisit and a reload show the same file. See [`MediaState`](/reference/media#mediastate). A save from before version 11 loads with none.
+
+### minigame
+
+```ts
+minigame: MinigameState | null   // { id, state, elapsed, vars, steps }
+```
+
+The [minigame](/reference/minigames) being played, or `null`. See [`MinigameState`](/reference/minigames#minigamestate). A save from before minigames loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
 
 ## New Game+
 

@@ -134,6 +134,31 @@ describe('Small Town', () => {
     expect(view(after, game).scene.title).toBe('A quiet table')
   })
 
+  it('plays quick feet at the park: inputs in time win coins, letting the clock run out loses', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('park'), act('arrows'))
+    expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500, inputs: ['up', 'down', 'left', 'right'] })
+    expect(apply(state, game, act('jog')).refused).toBe('Finish this first.')
+    const coins = state.stats.coins
+    // Three arrows pressed in time, after a moment's thought; the last two left to time out.
+    for (let round = 0; round < 3; round += 1) {
+      const arrow = state.minigame!.state
+      expect(view(state, game).scene.body).toContain(`${arrow[0].toUpperCase()}${arrow.slice(1)}!`)
+      state = run(state, { type: 'tick', ms: 400 }, { type: 'minigame', input: arrow })
+    }
+    state = run(state, { type: 'tick', ms: 1500 }, { type: 'tick', ms: 1500 })
+    expect(state.minigame).toBeNull()
+    expect(state.stats.coins).toBe(coins + 5)
+    expect(view(state, game).scene.title).toBe('Quick feet')
+    expect(view(state, game).scene.body).toContain('you win')
+
+    // Again, and this time every arrow times out in one long wait.
+    state = run(state, { type: 'choose', id: 'leave' }, act('arrows'), { type: 'tick', ms: 10_000 })
+    expect(state.minigame).toBeNull()
+    expect(state.sceneId).toBe('park.arrows-lost')
+    expect(state.flags['minigame:arrows']).toBe(2)
+  })
+
   it('keeps the phone in the pocket at work', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('office'))

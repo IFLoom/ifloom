@@ -1,5 +1,5 @@
 import { holds, type Condition } from './condition.ts'
-import type { Game, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
+import type { Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
 import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
@@ -75,7 +75,7 @@ export type Choice = {
   effects: EffectRef[]
 }
 
-export type DataScene = StoryletFields & {
+export type DataScene = StoryletFields & MinigameSceneFields & {
   id: string
   title?: string
   speaker?: string
@@ -358,6 +358,7 @@ export function bakeScene(game: Game, scene: DataScene): Scene {
     ...(scene.drawnFrom ? { drawnFrom: scene.drawnFrom } : {}),
     ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
     ...(scene.when ? { when: scene.when } : {}),
+    ...(scene.minigame !== undefined ? { minigame: scene.minigame } : {}),
     // `screen` passes a context with `picks`, to collect the pool picks the render makes.
     render: (state, ctx) => renderScene(scene, state, runtime, ctx?.picks),
   }

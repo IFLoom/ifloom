@@ -36,6 +36,7 @@ type Game = {
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
+  minigames?: MinigameDef[]
   custom?: Custom
   actions?: ActionDef[]
   packs?: string[]
@@ -69,6 +70,7 @@ type Game = {
 | `collections` | Named lists the game keeps entries in, such as letters, photos or a ledger. See [Collections](/reference/collections). |
 | `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/reference/triggers). |
 | `inputs` | What the player can type or pick, and the variable each one writes. See [Inputs](/reference/inputs). |
+| `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/reference/minigames). |
 | `custom` | The game's [custom functions](/reference/custom): conditions, effects, values and panels that content calls by name. |
 | `actions` | The game's own buttons, such as waiting or checking a map. Each is an [`ActionDef`](/reference/actions#actiondef). They're offered while no scene is open, after every [plugin's buttons](/reference/plugins#buttons) (the [places plugin](/plugins/places#the-buttons)'s room actions among them). They're also hidden while a [lock](/reference/locks) that denies `'*'` is on. The engine adds no button of its own, so a game with no `actions` has none. |
 | `packs` | The ids of the packs the game was loaded from, in order. [`loadGame`](/reference/loader#loadgame) sets it. A save records them, and a save made with a pack this game lacks names it in [`missingPacks`](/reference/saves#loadedsave). |

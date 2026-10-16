@@ -24,7 +24,7 @@ export type {
 } from './game.ts'
 export { itemById, sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
-export type { Formula, StatDef, StatLevels } from './stats.ts'
+export type { Formula, StatDef, StatDisplay, StatLevels } from './stats.ts'
 export {
   clampStat,
   formatStat,
@@ -134,6 +134,18 @@ export { NOTICES_KEPT, dismiss, notify } from './notices.ts'
 export type { TriggerDef } from './triggers.ts'
 export { fireTriggers } from './triggers.ts'
 export type { InputDef } from './inputs.ts'
+
+// Minigames
+export type {
+  MinigameDef,
+  MinigameSceneFields,
+  MinigameState,
+  MinigameStateDef,
+  MinigameTarget,
+  MinigameTransition,
+  MinigameView,
+} from './features/minigames.ts'
+export { minigameDef } from './features/minigames.ts'
 export { inputById, inputRefusal, inputValue } from './inputs.ts'
 
 // Storylines

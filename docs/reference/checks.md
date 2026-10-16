@@ -114,6 +114,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `gated on unknown choice "…"` | A `chose` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
 | `no custom condition named "…"` | A custom condition that neither the game nor a plugin declares, as `{ custom }` or a [short plugin call](/reference/custom#plugincall). |
 | A stat owner problem | See [Stat owners](#stat-owners). |
+| `minigame variable "…" is not in any minigame's vars` | A `minigameVar` no [minigame](/reference/minigames) declares. |
 | `unknown setting "…"` | A `setting` the game doesn't declare. |
 | `setting "…" is a ui setting; conditions read only play settings` | A `ui` [setting](/reference/settings), which isn't in the state. |
 | `<value> for setting "…" is not …` | An `is` the setting can't take: not `true` or `false` for a toggle, not one of a choice's options, or out of a range's bounds or steps. |
@@ -139,6 +140,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `goes to unknown scene "…"` | A `scene` effect, or a [storylet](/reference/storylets) draw's `otherwise`. |
 | `draws from "…", but no scene is drawn from it` | A storylet draw, `{ kind: 'scene', from }`, names a set no scene's `drawnFrom` includes. |
 | An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
+| `unknown minigame "…"` | A `minigame` effect. |
+| `minigame variable "…" is not in any minigame's vars` | A `minigameVar` effect. |
 | Whatever the plugin says | For a call to a plugin's effect, what its references name and its `argProblems`. |
 
 Inside an `each`, its `where` is checked as a condition and its `effects` as effects, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
@@ -154,7 +157,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
 | `custom` | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
 
-`start`, `choose`, `leave` and `dismiss` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
+`start`, `choose`, `leave`, `dismiss`, `tick` and `minigame` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
 ### Stat owners
 
@@ -174,14 +177,16 @@ A condition, effect or command named after a plugin the game wasn't built with i
 
 | `where` | Checked |
 |---|---|
-| `scene <id>` | For a [data scene](/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and `no custom panel named "…"` for its `panelData`. For every scene, data or hand-written, its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
+| `scene <id>` | For a [data scene](/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and `no custom panel named "…"` for its `panelData`. For every scene, data or hand-written, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `item <id>` | The effects of its `use`. |
 | `activity <id>` | Each requirement's `when`, and its `effects`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. |
 | `action <id>` | The game's own [`actions`](/reference/game#game): each one's `when` and `blocked`, and its `command`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
+| `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses variable "…", which is not in its vars` (one another minigame declares), and `copies variable "…", which is not in its vars`. See [Minigames](/reference/minigames#the-checks). |
+| `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
-| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, and its `visible` condition. For a [derived stat](/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
+| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition, and `display pips needs a range of 20 or less; this one is …` for [`display: 'pips'`](/reference/stats#statdef) on a wide range. For a [derived stat](/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/reference/entities#ids)). |
 | `finished` | The game's [`finished`](/reference/state#new-game) condition. |
 | `carryOver` | `unknown stat "…"` and `unknown item "…"` in [`carryOver`](/reference/state#new-game), and `stat "…" belongs to <kind>, not the player` for a kind's stat. |
@@ -195,7 +200,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]`, and the pools and flags in picture and video markup, in every line of prose. |
 | `version` | `version must be a whole number, 1 or more`, for the game's [`version`](/reference/saves#the-game-s-own-migrations). |
 | `migration <n>` | `a step is keyed by the version it upgrades from, 1 to …`, for a step keyed outside 1 to `version - 1`. A game with no `version` has no room for steps, so any step is reported. |
-| `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since packs merge by id. |
+| `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since packs merge by id. |
 
 `loadGame` adds a few of its own, about the packs themselves. See [What the loader adds](/reference/loader#what-the-loader-adds).
 

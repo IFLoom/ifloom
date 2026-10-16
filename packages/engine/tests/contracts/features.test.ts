@@ -64,6 +64,7 @@ describe('core features are leaves', () => {
       'features/items.ts',
       'features/locks.ts',
       'features/media.ts',
+      'features/minigames.ts',
       'features/notices.ts',
       'features/scenes.ts',
       'features/settings.ts',
@@ -114,6 +115,7 @@ describe('the registry', () => {
       notices: { conditions: [], effects: ['notify'], commands: ['dismiss'] },
       triggers: { conditions: [], effects: [], commands: [] },
       scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
+      minigames: { conditions: ['minigameVar'], effects: ['minigame', 'minigameVar'], commands: ['tick', 'minigame'] },
       items: { conditions: ['item', 'has'], effects: ['item'], commands: ['use'] },
       activities: { conditions: [], effects: [], commands: ['activity'] },
       inputs: { conditions: [], effects: [], commands: ['input'] },
@@ -138,7 +140,8 @@ describe('the registry', () => {
   it('runs the steps after a command in the order they always ran', () => {
     // The game's triggers fire first, so the showing a trigger opens is counted, and its sounds keyed, in the same command;
     // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'audio'], afterPlugins: ['stats'] })
+    // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

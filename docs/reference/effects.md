@@ -61,6 +61,10 @@ type Effect =
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
   | { kind: 'audio'; channel: string; track?: string | null }
   | { kind: 'sound'; track: string }
+  | { kind: 'minigame'; id: string }
+  | { kind: 'minigameVar'; key: string; value: number }
+  | { kind: 'minigameVar'; key: string; add: number }
+  | { kind: 'minigameVar'; key: string; random: [number, number] }
 ```
 
 ### stat
@@ -311,6 +315,28 @@ The loader reports an unknown track or channel, a cue channel such as `sfx`, and
 ```
 
 Plays a [track](/reference/audio#trackdef) once, on its own channel (`sfx` unless the track says otherwise). The state keeps the last 20 in `state.audio.cues`, each with a running count, and [`view.audio.cues`](/reference/audio#sounds-and-voices) gives each a key so a player plays it once. The loader reports an unknown track, a playlist, and a track on a background channel.
+
+### minigame
+
+```ts
+{ kind: 'minigame', id: 'arrows' }
+```
+
+Starts a [minigame](/reference/minigames) in its `start` state, with its variables at their starting values. A minigame already running is dropped. Until it ends, the view draws it over the scene or the room, and every command but its own (and `dismiss` and `setting`) is refused with `Finish this first.`
+
+It also adds 1 to the variable `minigame:<id>`, which counts how many times the minigame has started. The [content checker](/reference/checks) reports an unknown minigame.
+
+### minigameVar
+
+```ts
+{ kind: 'minigameVar', key: 'score', add: 1 }
+{ kind: 'minigameVar', key: 'round', value: 0 }
+{ kind: 'minigameVar', key: 'arrow', random: [1, 4] }
+```
+
+Changes a variable of the [minigame](/reference/minigames#its-variables) being played: sets it to `value`, adds `add` to it, or sets it to a whole number drawn from `random`, both ends included. The draw comes from the save's seed, so it's the same every time the same commands are played. With no minigame running, it does nothing.
+
+The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
 
 ## Computed effects
 

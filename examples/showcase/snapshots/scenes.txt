@@ -142,6 +142,30 @@ The van pulls away and leaves you on the pavement with three boxes, a key and a 
 Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.
   [>] Unpack
 
+=== park.arrows-lost @ moving-day
+"Too slow!" They are already picking a new grown-up to beat.
+  [>] Retire with dignity
+
+=== park.arrows-lost @ first-morning
+"Too slow!" They are already picking a new grown-up to beat.
+  [>] Retire with dignity
+
+=== park.arrows-lost @ a-week-in
+"Too slow!" They are already picking a new grown-up to beat.
+  [>] Retire with dignity
+
+=== park.arrows-won @ moving-day
+The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.
+  [>] Bow
+
+=== park.arrows-won @ first-morning
+The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.
+  [>] Bow
+
+=== park.arrows-won @ a-week-in
+The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.
+  [>] Bow
+
 === sam.hi @ moving-day
 Sam is walking a dog that is clearly not theirs. "Dog-sitting," they say. "He’s in charge."
   [>] Pat the dog and go

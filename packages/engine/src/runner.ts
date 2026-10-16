@@ -159,9 +159,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     return next
   }
 
-  /** After any change of state — a command, an undo, a load — save if the policy says so. */
-  function changed(before: GameState): void {
-    if (autosaveDue(before, state) && options.saves) {
+  /** After any change of state — a command, an undo, a load — save if the policy says so. `ticking` for a `tick`. */
+  function changed(before: GameState, ticking = false): void {
+    if (autosaveDue(before, state, ticking) && options.saves) {
       const slot = options.autosave?.slot ?? 'auto'
       const toSave = state
       const saves = options.saves
@@ -212,10 +212,11 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     begin(loaded.state, loaded.meta.played)
   }
 
-  function autosaveDue(before: GameState, after: GameState): boolean {
+  /** Whether the autosave policy wants a save now. A tick is not a command for `'command'`: a minigame sends ten a second. */
+  function autosaveDue(before: GameState, after: GameState, ticking: boolean): boolean {
     const every = options.autosave?.every
     if (!every || !options.saves) return false
-    if (every === 'command') return true
+    if (every === 'command') return !ticking
     if (every === 'scene') return before.sceneId !== after.sceneId
     return before.turn !== after.turn
   }
@@ -235,9 +236,15 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     view(): View {
       return viewOf(state)
     },
-    /** Run a command; returns whether it took, and why not if it did not. */
+    /**
+     * Run a command; returns whether it took, and why not if it did not. A
+     * `tick` is logged like any command, but undo steps over it, it adds
+     * nothing to the backlog, and it autosaves only when it changes the scene
+     * or the turn (for those policies).
+     */
     apply(command: Command): Applied {
       const before = state
+      const ticking = command.type === 'tick'
       // The view the command was sent from: usually built already, for the UI that sent it.
       let from: View | undefined
       const fromView = () => (from ??= viewOf(before))
@@ -246,7 +253,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       const prior = snapshot()
       state = result.state
       log = { ...log, commands: [...log.commands, command] }
-      if (backlogLimit) {
+      if (backlogLimit && !ticking) {
         // Each scene as it was shown, with the choice made in it: the scene on
         // screen before the command goes in first if it isn't there yet (the
         // opening scene, say), the choice is written on it, then whatever new
@@ -261,7 +268,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
         })
         const shown = fromView()
         let next = backlog
-        if (shown.scene.id) {
+        // A minigame drawn over a scene is not the scene: it goes in neither before nor after.
+        if (shown.scene.id && !shown.minigame) {
           const last = next.at(-1)
           const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
           if (!showing) next = [...next, entry(shown)]
@@ -271,16 +279,23 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
           }
         }
         const after = viewOf(state)
-        if (after.scene.id && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
+        if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
         backlog = next.slice(-backlogLimit)
       }
       if (history) {
-        if (barrier(before, state, command, fromView)) undoStack = []
-        else undoStack = [...undoStack, prior].slice(-depth)
-        redoStack = []
+        if (barrier(before, state, command, fromView)) {
+          undoStack = []
+          redoStack = []
+        }
+        // A tick is no step of its own: one undo goes back to before the last command that wasn't one.
+        else if (!ticking) {
+          undoStack = [...undoStack, prior].slice(-depth)
+          redoStack = []
+        }
       }
-      recordInProfile(before, state, command)
-      changed(before)
+      // A tick is written to the profile only when it ends the minigame, not ten times a second.
+      if (!ticking || (before.minigame && !state.minigame)) recordInProfile(before, state, command)
+      changed(before, ticking)
       return result
     },
     get canUndo(): boolean {

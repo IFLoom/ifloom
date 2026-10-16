@@ -232,6 +232,7 @@ type DataScene = {
   drawnFrom?: string[]    // the storylet sets it can be drawn from
   weight?: number         // how often a draw picks it, 1 if left out
   when?: Condition        // only drawn while this holds
+  minigame?: string       // a minigame that starts when it's entered
   body: Block[]
   choices: Choice[]
 }
@@ -403,7 +404,7 @@ type StoryletFields = {
 }
 ```
 
-The fields that make a scene a [storylet](/reference/storylets), a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/reference/effects#scene). Both `Scene` and `DataScene` have them.
+The fields that make a scene a [storylet](/reference/storylets), a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/reference/effects#scene). Both `Scene` and `DataScene` have them, and also `minigame`, a [minigame](/reference/minigames#minigamescenefields) that starts when the scene is entered.
 
 | Field | Default | What it does |
 |---|---|---|

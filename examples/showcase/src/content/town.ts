@@ -4,7 +4,7 @@
  * Everything here is data — conditions, effects, prose keys — so a mod could
  * ship any of it. The few things that are computed live in `custom.ts`.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
@@ -55,7 +55,10 @@ const locations: LocationDef[] = [
   },
   {
     ...place({ id: 'park', name: 'Riverside Park', kind: 'street', exits: ['high-street'] }),
-    actions: [{ id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } }],
+    actions: [
+      { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
+      { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
+    ],
   },
   {
     ...place({ id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'] }),
@@ -68,6 +71,48 @@ const locations: LocationDef[] = [
     actions: [{ id: 'work', label: 'Do a shift', command: { type: 'activity', id: 'work' } }],
   },
 ]
+
+/** The four arrows of quick feet, in the order the `arrow` variable numbers them from 1. */
+const ARROWS = ['up', 'down', 'left', 'right'] as const
+
+/** One arrow on screen: 1.5 seconds to press it. The right one scores; a wrong one or the time running out doesn't. */
+const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
+  label: `arrows.${arrow}`,
+  after: { ms: 1500, go: 'round' },
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', add: 1 }] } : {}) })),
+})
+
+/**
+ * Quick feet, at the park: five rounds, each a random arrow to press in time.
+ * Three or more right wins a few coins from the kids' pot.
+ */
+const quickFeet: MinigameDef = {
+  id: 'arrows',
+  label: 'Quick feet',
+  start: 'round',
+  vars: { round: 0, arrow: 0, score: 0 },
+  keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
+  states: {
+    // A new round draws an arrow, or after the fifth, the score is counted.
+    round: {
+      always: [
+        { when: { minigameVar: 'round', gte: 5 }, go: 'tally' },
+        {
+          go: 'pick',
+          effects: [
+            { kind: 'minigameVar', key: 'round', add: 1 },
+            { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
+          ],
+        },
+      ],
+    },
+    pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
+    ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
+    tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
+    won: { final: { effects: [{ kind: 'stat', key: 'coins', by: 5 }, { kind: 'scene', id: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ kind: 'scene', id: 'park.arrows-lost' }] } },
+  },
+}
 
 const they = { they: 'she', them: 'her', their: 'her', theirs: 'hers' }
 
@@ -159,6 +204,7 @@ export const town: Pack = {
     { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },
+    { id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] },
     { id: 'buyScarf', cost: { stats: { coins: 8 } }, requires: [onlyAt(['high-street']), { reason: 'You have one.', when: { not: { has: 'scarf' } } }], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
     // The camera: one photo of each person, if they're here to take.
     ...(['ava', 'sam'] as const).map((who) => ({
@@ -253,6 +299,19 @@ export const town: Pack = {
       body: [{ text: 'cafe.quiet' }],
       choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
     },
+    // How quick feet ends.
+    {
+      id: 'park.arrows-won',
+      title: 'Quick feet',
+      body: [{ text: 'park.arrows-won' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+    },
+    {
+      id: 'park.arrows-lost',
+      title: 'Quick feet',
+      body: [{ text: 'park.arrows-lost' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+    },
     {
       id: 'sam.hi',
       title: 'Sam',
@@ -261,6 +320,7 @@ export const town: Pack = {
       choices: [{ id: 'bye', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('sam') }, { kind: 'scene', id: null }] }],
     },
   ],
+  minigames: [quickFeet],
   collections: [{ id: 'notes', name: 'Notes' }],
   // On moving day the cat needs a name; the prose says it from then on.
   inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }],

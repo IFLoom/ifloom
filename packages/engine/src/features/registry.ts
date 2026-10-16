@@ -18,6 +18,7 @@ import { items, type ItemsShape } from './items.ts'
 import { locks } from './locks.ts'
 import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
+import { minigames, type MinigamesShape } from './minigames.ts'
 import { notices, type NoticesShape } from './notices.ts'
 import { scenes, type ScenesShape } from './scenes.ts'
 import { settings, type SettingsShape } from './settings.ts'
@@ -28,16 +29,17 @@ import { turns, type TurnsShape } from './turns.ts'
 import { variables, type VariablesShape } from './variables.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
-type Shapes = EntitiesShape | TurnsShape | VariablesShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | AudioShape | MediaShape
+type Shapes = EntitiesShape | TurnsShape | VariablesShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | MinigamesShape | AudioShape | MediaShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
  * fills and runner hooks run. The order is behaviour: triggers come before
  * scenes and audio, so a scene a trigger opens is counted as seen in the same
- * command; settings before audio, which requires it; stats before entities,
+ * command; minigames straight after scenes, so a scene with a minigame starts
+ * it in the command that opens it; settings before audio, which requires it; stats before entities,
  * so a loaded save's entities are filled after their stats.
  */
-export const FEATURES = [turns, variables, storylines, collections, notices, triggers, scenes, items, activities, inputs, settings, stats, audio, media, entities, locks] as const
+export const FEATURES = [turns, variables, storylines, collections, notices, triggers, scenes, minigames, items, activities, inputs, settings, stats, audio, media, entities, locks] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never
 type PartOf<T, K extends keyof FeatureShape> = T extends unknown ? (K extends keyof T ? (T[K] extends object ? T[K] : {}) : {}) : never

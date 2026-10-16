@@ -78,6 +78,17 @@ Why a value can't be entered. See [inputs](/reference/inputs).
 | `atMost` | `At most {max}.` | `{max}` |
 | `notAnOption` | `That is not one of the options.` | |
 
+### Minigames
+
+Why a [minigame](/reference/minigames)'s command can't be done. While one runs, everything else is refused with `finishFirst`.
+
+| Key | English | Placeholders |
+|---|---|---|
+| `noMinigame` | `Nothing is being played.` | |
+| `notLive` | `That does nothing now.` | |
+| `noTimer` | `Nothing is counting down.` | |
+| `tickLength` | `A tick is a number of milliseconds above 0.` | |
+
 ### Settings
 
 Why a [setting](/reference/settings) can't be changed to a value. A setting also uses `enterNumber`, `between` and `notAnOption` from the table above.

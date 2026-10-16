@@ -6,6 +6,11 @@
  * the audio player and the plugins compile against doesn't drift.
  *
  * Remove this file and its test once the built shapes are the accepted baseline.
+ *
+ * Updated on purpose since: minigames (phase 5) added the `minigameVar`
+ * condition, the `minigame` and `minigameVar` effects, the `tick` and
+ * `minigame` commands, `GameState.minigame`, `Game.minigames`,
+ * `Pack.minigames` and `View.minigame`.
  */
 import type {
   ActionDef,
@@ -31,6 +36,9 @@ import type {
   InputView,
   ItemDef,
   KindDef,
+  MinigameDef,
+  MinigameState,
+  MinigameView,
   MediaState,
   MigrationTools,
   Notice,
@@ -134,6 +142,12 @@ export type FrozenCondition =
   /** How many turns have passed. Turn 0 is the first, so `{ turn: true, gte: 3 }` is the fourth on. */
   | ({ turn: true } & FrozenRange)
   | { phase: Phase[] }
+  /**
+   * A variable of the minigame being played, read as a number: bare, whether
+   * it is above 0; with a range, whether it is in it. False with no minigame
+   * running. `{ minigameVar: 'score', gte: 3 }`.
+   */
+  | ({ minigameVar: string } & FrozenRange)
   /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
   | { custom: string; with?: Record<string, unknown> }
   /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`. */
@@ -203,6 +217,8 @@ export type FrozenGameState = {
   audio: AudioState
   /** The file each pool request was given, so a revisit and a reload show the same one. */
   media: MediaState
+  /** The minigame being played, or null. */
+  minigame: MinigameState | null
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -229,6 +245,10 @@ export type FrozenCommand =
   | { type: 'input'; id: string; value?: FlagValue }
   /** Change a `play` setting. Ignores locks, like a menu would. */
   | { type: 'setting'; id: string; value: FlagValue }
+  /** Time passing in the minigame being played. */
+  | { type: 'tick'; ms: number }
+  /** An input to the minigame being played, by name. */
+  | { type: 'minigame'; input: string }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 
@@ -283,6 +303,12 @@ export type FrozenEffect =
   | { kind: 'audio'; channel: string; track?: string | null }
   /** Play a sound once, on its track's channel. */
   | { kind: 'sound'; track: string }
+  /** Start a minigame, in its `start` state. One already running is dropped. */
+  | { kind: 'minigame'; id: string }
+  /** Set a variable of the minigame being played, add to it, or draw it at random. */
+  | { kind: 'minigameVar'; key: string; value: number }
+  | { kind: 'minigameVar'; key: string; add: number }
+  | { kind: 'minigameVar'; key: string; random: [number, number] }
 
 export type FrozenGame = {
   id: string
@@ -359,6 +385,8 @@ export type FrozenGame = {
   audio?: GameAudio
   /** The game's pools of pictures and videos. None if left out. */
   media?: GameMedia
+  /** The game's minigames. None if left out. */
+  minigames?: MinigameDef[]
 }
 
 export type FrozenPack = {
@@ -408,6 +436,8 @@ export type FrozenPack = {
   audio?: Partial<GameAudio>
   /** Pools of pictures and videos. A later pack's pool replaces an earlier one's by id. */
   media?: GameMedia
+  /** Minigames. A later pack's replaces an earlier one's by id. */
+  minigames?: MinigameDef[]
 }
 
 export type FrozenView = {
@@ -460,4 +490,6 @@ export type FrozenView = {
   settings: SettingView[]
   /** What should be playing on each channel, and the sounds that are due. Empty when the game has no audio. */
   audio: AudioView
+  /** The minigame being played, or null. */
+  minigame: MinigameView | null
 }

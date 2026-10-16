@@ -43,6 +43,10 @@ export type Reference =
   | { kind: string }
   | { activity: string }
   | { input: string }
+  /** A minigame, by id. */
+  | { minigame: string }
+  /** A variable some minigame declares in its `vars`. */
+  | { minigameVar: string }
   /** A prose key that needs words. */
   | { prose: string }
   /** A variants list that needs lines. */

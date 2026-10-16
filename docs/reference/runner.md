@@ -130,6 +130,8 @@ A barrier is a command that undo can't go back past: the irreversible choice its
 history: { stopWhen: { flag: 'rentPaid' } }
 ```
 
+A [`tick`](/reference/commands#tick) is no step of its own. One undo goes back to before the last command that wasn't a tick, so a minigame's clock doesn't fill the history. A tick that crosses a barrier, such as a timer whose final state ends a turn, still clears it.
+
 Undo can't re-roll anything. Every draw is seeded from the save, the turn and a name (see [Randomness](/reference/random)), so playing the same command again from the same state deals the same card.
 
 ## BacklogOptions
@@ -161,6 +163,7 @@ This is how the backlog grows, command by command:
 - **A choice's label is written on it.** A `choose` command sets `chose` on that entry.
 - **A new scene goes in after.** A scene the command opened is added as a new entry.
 - **A redraw is a new entry.** A choice that leaves the same scene on screen adds it again with its new beats, so each screen keeps its own choice.
+- **Ticks add nothing**, and nor does a [minigame](/reference/minigames) drawn over a scene. The scene a minigame's ending opens goes in with the next command that isn't a tick, as the scene on screen.
 - **Leaving adds nothing.** A choice that closes the scene adds no entry, and neither does walking between places with no scene open (the [places plugin](/plugins/places)'s `go`).
 
 ```ts
@@ -190,9 +193,11 @@ type AutosaveOptions = {
 
 | `every` | Saves after |
 |---|---|
-| `'command'` | every command that took. |
+| `'command'` | every command that took, except a [`tick`](/reference/commands#tick). |
 | `'scene'` | a command that opened, changed or closed the scene. |
 | `'turn'` | a command that started a new [turn](/reference/state#turn), such as going to bed in a game with the [calendar](/plugins/calendar). |
+
+A tick saves under `'scene'` or `'turn'` only when it changed the scene or the turn, such as a minigame's timer running out into a final state that ends the turn.
 
 `slot` defaults to `'auto'`. Autosaves are written in the background, in order. Await [`settled()`](#the-runner-s-members) before reading the slot back.
 

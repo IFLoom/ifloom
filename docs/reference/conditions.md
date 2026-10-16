@@ -75,6 +75,7 @@ type Condition =
   | { scene: string[] }
   | ({ turn: true } & Range)
   | { phase: Phase[] }
+  | ({ minigameVar: string } & Range)
   | { custom: string; with?: Record<string, unknown> }
   | PluginCall
 ```
@@ -291,6 +292,17 @@ Whether a [storyline](/reference/storylines) is open, meaning it isn't closed or
 ```
 
 Tests a storyline variable's number against a range. A variable that's missing or isn't a number counts as 0.
+
+### minigameVar
+
+```ts
+{ minigameVar: 'score', gte: 3 }
+{ minigameVar: 'arrow', gte: 2, lte: 2 }   // exactly 2
+```
+
+Tests a variable of the [minigame](/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
+
+The [content checker](/reference/checks) reports a variable that no minigame declares.
 
 ### item
 

@@ -102,14 +102,28 @@ export type StatDef = {
   derive?: Formula
   /** Levels the stat passes as it grows. None if left out. See `StatLevels`. */
   levels?: StatLevels
+  /**
+   * How a UI should draw it: the number, a bar from `min` to `max`, or pips,
+   * one per point. `'number'` if left out. Pips suit a small range: the
+   * checker reports pips on a stat whose range is more than 20.
+   */
+  display?: StatDisplay
 }
 
-/** A stat as the UI shows it: its value, its ceiling, and the value written out. */
+/** How a UI draws a stat: see `StatDef.display`. */
+export type StatDisplay = 'number' | 'bar' | 'pips'
+
+/** A stat as the UI shows it: its value, its range, the value written out, and how to draw it. */
 export type StatView = {
   key: StatKey
   label: string
   value: number
+  /** The lowest it can go. */
+  min: number
+  /** The highest it can go right now. */
   max: number
+  /** How to draw it, from `StatDef.display`: `'number'` if the game doesn't say. */
+  display: StatDisplay
   text: string
   /**
    * Where a stat with `levels` stands: its level, the value the next level
@@ -343,8 +357,10 @@ export function statView(state: GameState, game: Game, stat: StatDef, of: string
     key: stat.id,
     label: stat.label,
     value,
+    min: stat.min ?? 0,
     max: statMax(state, game, stat.id, cx),
     text: formatStat(stat, value),
+    display: stat.display ?? 'number',
     ...(level ? { level } : {}),
   }
 }
@@ -506,6 +522,11 @@ export const stats = defineFeature<StatsShape>({
       const where = `stat ${stat.id}`
       if (stat.of !== undefined && !kindIds.has(stat.of)) tools.problem(source, where, `belongs to unknown kind "${stat.of}"`)
       tools.check(source, where, [...(typeof stat.max === 'object' ? [{ value: stat.max.value }] : []), { when: stat.visible }])
+      // Pips are one per point, so a wide range can't be drawn as pips. A ceiling from a custom value isn't known until play.
+      if (stat.display === 'pips' && typeof stat.max !== 'object') {
+        const range = (stat.max ?? 100) - (stat.min ?? 0)
+        if (range > 20) tools.problem(source, where, `display pips needs a range of 20 or less; this one is ${range}`)
+      }
     }
     // Derived stats and levels: formulas, cycles, thresholds.
     for (const { where, what } of statProblems(game)) tools.problem({ list: 'stat', id: where.slice('stat '.length) }, where, what)

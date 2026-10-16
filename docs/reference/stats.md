@@ -38,7 +38,10 @@ type StatDef = {
   format?: string
   derive?: Formula
   levels?: StatLevels
+  display?: StatDisplay
 }
+
+type StatDisplay = 'number' | 'bar' | 'pips'
 ```
 
 | Field | Default | What it does |
@@ -57,6 +60,7 @@ type StatDef = {
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
+| `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
 
 **Gotchas.**
 - You have to declare a stat before you use it. The [content checker](/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.

@@ -281,3 +281,7 @@ A call that names an effect the game doesn't have gives `unknown effect "…"` w
 - **Values can have fractions.** `multiply` doesn't round, so `energy × 0.8` can read as 39.2. Give the stat a `format`, or round in your UI.
 - **Only the player's stats.** An entity's stats are never changed by an effect.
 - **Turns are the game's.** With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so `turns: 2` lasts until the player has slept twice.
+
+## See it in an example
+
+Small Town: `caffeinated` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyEffect('caffeinated')`, and the café's body reads it with `effectActive`.

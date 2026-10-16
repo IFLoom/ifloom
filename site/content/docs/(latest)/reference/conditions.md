@@ -517,3 +517,9 @@ console.log(explainText(why))
 //   ✗ not: the part below holds
 //     ✓ custom condition places/at
 ```
+
+## See it in an example
+
+- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat/open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` variable with `lt`, `is` and `gte`.
+- Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) uses `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
+- The Corner Café: the `review` trigger in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

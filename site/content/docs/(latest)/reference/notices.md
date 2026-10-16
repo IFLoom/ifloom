@@ -120,3 +120,8 @@ How many notices the state keeps. When a 51st is raised, the oldest goes, whethe
 - **A made-up id is only unique among the notices kept.** It's `notice.<turn>.<n>`, the first one not in the list, so once an old notice has gone its id can be handed out again. If you want to replace or dismiss a notice by id later, name it yourself.
 - **Notices don't stop anything.** They aren't prose in a scene. A notice raised while a scene is open waits in `view.notices` for the UI to show it.
 - **`dismiss` has no refusal of its own.** It works with a scene open and with nothing to dismiss. Only a [lock](/docs/reference/locks) that denies `'dismiss'` (or `'*'`) stops it. It counts as a command that took, so [triggers](/docs/reference/triggers) and plugins' `after` hooks run after it.
+
+## See it in an example
+
+- Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), the `welcome` trigger raises a notice tagged `post`, and the `rent` trigger one with an `id`.
+- The Corner Café: the `overdrawn`, `empty` and `review` triggers in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) each raise one, and its `reputation` stat raises a level notice.

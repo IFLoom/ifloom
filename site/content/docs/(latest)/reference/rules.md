@@ -170,3 +170,7 @@ onStat: (before, after, key) =>
 What the player is called, and what they're like, isn't a rule either. Keep it in [stats](/docs/reference/stats) and [variables](/docs/reference/state#flags), and print it in prose.
 
 The core has no characters, so it has no hooks for them. Which scene talking to someone opens is the [cast](/docs/plugins/cast#talkoption)'s `talk` option.
+
+## See it in an example
+
+Small Town: `rules` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has `resets` for the coffee and the post, a `turn` hook that puts energy back to 100, and two `locks`.

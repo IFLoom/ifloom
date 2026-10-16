@@ -210,3 +210,7 @@ type DebugView = {
 - **A variable's key isn't checked.** Any key is set, including a misspelt one.
 - **A `custom` entry in [`rules.commands`](/docs/reference/rules#commands) takes over the debug commands too,** as it does every plugin command.
 - **Never give the player a way to send these.** A debug command in a scene's choices or a game action would work in any build that still lists the plugin. Keep the plugin out of release builds, and keep the commands out of content.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `debug()` only when `withDebug` is set, and [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) sets it from `import.meta.env.DEV`. The test `has the debugger only when built with it` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) checks both builds.

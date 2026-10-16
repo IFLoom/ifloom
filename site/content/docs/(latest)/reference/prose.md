@@ -353,3 +353,7 @@ mediaKind('clips/kettle.mp4') // 'video'
 mediaKind('place/cafe.webp')  // 'image'
 ```
 
+## See it in an example
+
+- Small Town: [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts) holds every line by key, with choice labels as `<scene>#<choice>`. Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
+- The Letter: the `prose` in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) prints the reader's name with `{{playerName}}`.

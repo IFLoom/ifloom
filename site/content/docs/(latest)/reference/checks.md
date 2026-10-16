@@ -342,3 +342,7 @@ references: {
 ```
 
 A problem in an entry is reported as `<list> <id>`, against the pack the entry came from. A rule of the plugin's own that no reference can say, such as an exit to a place that isn't there, goes in its [`check`](/docs/reference/plugins#check).
+
+## See it in an example
+
+Small Town: the test `loads with nothing wrong` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) runs `checkGame` on the loaded game and expects no problems. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) turns the loader's problems into lines with `describeProblem`, and its `probes` are the states `ifloom snapshot` renders every scene in.

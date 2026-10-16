@@ -272,3 +272,7 @@ The [content checker](/docs/reference/checks) reports:
 - **Locks don't stop it.** `tick` and `minigame` ignore [locks](/docs/reference/locks) and plugin guards, because the minigame is already running. To keep the player out of one, gate what starts it.
 - **`{ minigameVar }` is false with no minigame running**, or for a variable the running one doesn't have, whatever the range, `lt` included.
 - **A variable is a number.** Use `copy` to keep one, and `{ flag }` to read it afterwards.
+
+## See it in an example
+
+Small Town: quick feet, `quickFeet` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), is five rounds of arrows to press in time, started by the park's `arrows` activity. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.

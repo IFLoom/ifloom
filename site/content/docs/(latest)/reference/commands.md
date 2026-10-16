@@ -229,3 +229,8 @@ Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full nam
 It's refused with `There is no such thing to do.` if none of the game's plugins has a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
 
 The [content checker](/docs/reference/checks#in-a-command) reports a button whose command names no plugin command, unless the plugin is an [absent partner](/docs/reference/checks#absent-partners).
+
+## See it in an example
+
+- Each example exports a `start` built on `startingState`: Small Town's in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts), The Letter's in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) with a name already typed, and The Corner Café's in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) with the opening scene closed.
+- The tests send commands with `apply`: the `read` helper in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) and the `play` helper in [`examples/cafe/tests/cafe.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/tests/cafe.test.ts).

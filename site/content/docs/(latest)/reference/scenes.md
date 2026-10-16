@@ -541,3 +541,8 @@ What a custom runtime supplies. You only need one if [`defaultRuntime`](#default
 - `prose` is a [`Prose`](/docs/reference/prose#prose): a [`ProseStore`](/docs/reference/prose#prosestore) plus `draw`, which picks a member and returns an effect that records the pick. [`drawVariant`](#drawvariant) is a ready-made `draw`.
 - `game` is the game, used for conditions, custom effects and panels.
 - `spent` and `spend` back `once`. With a `once.key`, they're called with `(key, '')` instead of `(scene.id, choice.id)`.
+
+## See it in an example
+
+- Small Town: `ava.hi` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is a data scene with a `variants` block, a line with a `when`, a `speaker` and a choice limited to once a turn.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) is three chapter scenes and two endings with `choices: []`.

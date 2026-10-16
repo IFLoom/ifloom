@@ -340,3 +340,7 @@ const after = replay(newGame, report)
 ```
 
 A command the game refuses is skipped, as it would have been at the time. Against a changed game, that means a log can go its own way after the first command that no longer takes. Compare the states to find where.
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) makes its runner with `createRunner`, turning on `history`, `backlog`, `saves`, a `profile` and `autosave: { every: 'turn' }`. The Letter and The Corner Café use `mountGame`, which makes one for them.

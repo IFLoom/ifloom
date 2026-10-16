@@ -40,7 +40,8 @@ export const corner: Pack = {
   kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }, { id: 'dish', label: 'Dish', plural: 'Menu' }],
   stats: [
     { id: 'coins', label: 'Coins', start: 120, min: -9999, max: 99999, format: '£{n}', spendable: true, lacking: 'Not enough in the till.' },
-    { id: 'reputation', label: 'Reputation', start: 20 },
+    // Word gets round in steps: the sidebar shows the level, and a notice says when it goes up.
+    { id: 'reputation', label: 'Reputation', start: 20, levels: { at: [40, 70, 90], notice: 'Word gets round: {label} is now level {level}.' } },
     { id: 'skill', label: 'Skill', of: 'staff', start: 1, min: 1, max: 10 },
     { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
     { id: 'wage', label: 'Wage', of: 'staff', start: 10, max: 50, format: '£{n}' },

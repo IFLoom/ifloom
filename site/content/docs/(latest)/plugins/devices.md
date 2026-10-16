@@ -530,3 +530,7 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
 - **A count badge reads a value by name.** Values from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins are named after the channels and feeds you configure, such as `messages/unread-texts`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.
+
+## See it in an example
+
+Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app showing a collection, and `openApp('camera')` opens it.

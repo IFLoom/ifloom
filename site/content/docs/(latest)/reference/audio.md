@@ -332,3 +332,7 @@ The [content checker](/docs/reference/checks) checks everything audio names. The
 - **A stage's prose doesn't cue.** `[[sound:id]]` in a [place's](/docs/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
 - **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.
 - **`volume` and `mute` name `ui` settings.** They live in the [profile](/docs/reference/profile), never in the state, so they don't change the game.
+
+## See it in an example
+
+None of the examples uses this yet. No example declares tracks, playlists or channels.

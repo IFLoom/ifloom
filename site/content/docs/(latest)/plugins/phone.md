@@ -370,3 +370,7 @@ apply(state, game, openApp('texts')).refused     // 'Not at work.'
 - **A lock on `devices/*` shuts the whole phone.** Every app is greyed out with the lock's reason, and an app left open closes after the command that makes the lock hold. A lock on `'*'`, such as the showcase's moving day, does the same unless its `except` lists `devices/open`. See [Devices](/docs/plugins/devices#gotchas).
 - **Stock app names aren't in the strings table.** They're names, not lines the plugins say, so you set them through `phone()`. `Messages` and `Social` come from the default `channels` and `feeds`, so pass your own with the names you want. `Contacts`, `Gallery` and the `Photos` collection have no option of their own. To rename one, turn the stock app off and add your own with the same sections, such as `{ id: 'people', name: 'People', icon: 'contacts', sections: [{ contacts: true }] }`.
 - **The Call button's label is a string.** It's [`devices/call`](/docs/plugins/devices#strings), and the devices, messages and feed plugins' refusals are strings too. See each plugin's Strings section and the [strings table](/docs/reference/strings).
+
+## See it in an example
+
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds its phone with `phone({ sidebar: true, apps: [...] })`, spreads `kit.plugins` into its `plugins`, and passes `kit.collections` as the game's `collections`.

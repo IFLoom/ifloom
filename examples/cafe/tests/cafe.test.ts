@@ -67,4 +67,12 @@ describe('The Corner Café', () => {
     expect(Object.keys(state.entities.staff)).toEqual(['ana', '#1'])
     expect(state.stats.reputation).toBe(30)
   })
+
+  it('reads reputation in levels, and says when word gets round', () => {
+    expect(view(open(), game).statsById.reputation.level).toEqual({ level: 0, next: 40, progress: 0.5 })
+    let state = play(open(), act('interview'), { type: 'choose', id: 'dev' })
+    state = play({ ...state, stats: { ...state.stats, reputation: 35 } }, act('staffLunch'))
+    expect(state.stats.reputation).toBe(45)
+    expect(state.notices.map((notice) => notice.title)).toContain('Word gets round: Reputation is now level 1.')
+  })
 })

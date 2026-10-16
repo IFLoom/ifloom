@@ -293,3 +293,7 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 - **Earned stays earned.** Nothing takes an achievement back, even if its condition stops holding.
 - **`seen` counts a scene as soon as it's on screen.** An achievement with `when: { seen: 'ava.river' }` is earned when the scene opens, not when the player leaves it.
 - **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievementEarned` and `{{v:achievements/earned}}` read this save only.
+
+## See it in an example
+
+Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition.

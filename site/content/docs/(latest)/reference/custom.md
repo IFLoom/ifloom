@@ -230,3 +230,8 @@ buildEffects(state, town, [{ custom: 'tip', with: { by: 2 } }, { custom: 'quests
 ```
 
 Data scenes, activities, triggers, `each` and a plugin's `context.apply` call it for you. You only need it in a [custom runtime](/docs/reference/scenes#sceneruntime) or a tool.
+
+## See it in an example
+
+- Small Town: [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) has a value, `catName`, that the flat's prose prints as `{{v:catName}}`, and an effect, `postLatest`, which the `post` activity in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) runs as `{ custom: 'postLatest' }`.
+- The Corner Café: `custom` in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) works out the week's `takings` and `wages` as effects, and `payroll` as a value the hiring scene prints.

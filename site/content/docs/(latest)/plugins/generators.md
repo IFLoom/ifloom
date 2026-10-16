@@ -181,3 +181,7 @@ A call that names a template the game doesn't have gives `unknown template "…"
 
 - **Entities are kept until something removes them.** A trigger that makes visitors every day fills the save with them. Remove the old ones with an [`each`](/docs/reference/effects#each) and [`remove`](/docs/reference/effects#remove), as the showcase does.
 - **Pools hold plain values.** A pool can't hold another pool; use `join` to put several draws together.
+
+## See it in an example
+
+Small Town: `data.generators` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has two pools and a `visitor` template, and the park's `visitors` trigger makes two a day with `generate('visitor', 2)`.

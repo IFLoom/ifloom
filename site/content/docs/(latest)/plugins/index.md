@@ -96,3 +96,7 @@ npm run new -- my-town --template town
 ```
 
 That writes `games/my-town`, a copy of Small Town. See [`ifloom new`](/docs/cli#ifloom-new) for the other templates.
+
+## See it in an example
+
+Small Town's [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) uses every plugin here, in its `plugins` list.

@@ -572,3 +572,7 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 - **A game that starts nowhere can't walk anywhere.** `places/go` from nowhere is refused with `You cannot get there from here.` A `places/move`, from an intro scene's last choice say, puts the player on the map.
 - **`locked` comes before the exits.** A locked place's reason is the refusal even when it isn't one step away.
 - **`places/go` lists no effects.** A lock with `effect` doesn't see it, and no plugin puts a price on it.
+
+## See it in an example
+
+Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `locked` opening hours on the café and the office, a `stage` in the café, and activities that require a place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

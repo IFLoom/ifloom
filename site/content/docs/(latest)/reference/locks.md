@@ -181,3 +181,7 @@ locks: [
 ```
 
 Buying a coffee takes no time, so it still works. A jog in the park, whose effects hold `pass(1)`, is greyed out with the line. If you deny `'*'` instead, the room empties (see [`lockedOut`](#lockedout)). Deny `['activity', 'choose']` to stop scene choices that pass time too.
+
+## See it in an example
+
+Small Town: `rules.locks` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) keeps moving day to its scene with `deny: ['*']` and `except: ['choose', 'input']`, and keeps the phone away at the office with `deny: ['devices/*']`. The tests `holds the player in moving day until they unpack` and `keeps the phone in the pocket at work` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) play both.

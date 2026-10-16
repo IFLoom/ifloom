@@ -1,7 +1,6 @@
 'use client'
 import Link from 'next/link'
 import { useEffect, useState, type CSSProperties } from 'react'
-import { latestTitle } from '@/lib/shared'
 import s from './HomeNav.module.css'
 
 const links = [
@@ -50,8 +49,8 @@ export function HomeNav() {
             ),
           )}
         </ul>
-        <span className={s.version} title="The docs on this site are for the latest, unreleased code">
-          {latestTitle}
+        <span className={s.version} title="The docs on this site are for the latest version">
+          Latest
         </span>
         <Link className={s.docs} href="/docs/guide/introduction">
           Docs
@@ -90,7 +89,7 @@ export function HomeNav() {
             </li>
           ))}
         </ul>
-        <p style={step(links.length + 1)}>{latestTitle}</p>
+        <p style={step(links.length + 1)}>Latest</p>
       </div>
     </>
   )

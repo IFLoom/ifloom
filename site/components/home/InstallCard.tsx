@@ -61,7 +61,6 @@ export function InstallCard() {
               </button>
             ))}
           </div>
-          <span className={s.soon}>With the first release</span>
         </div>
         <div className={s.line}>
           <code>
@@ -87,8 +86,8 @@ export function InstallCard() {
           </button>
         </div>
         <p className={s.note}>
-          This command arrives with the first release, when the packages go on npm. Until then you start from a checkout: <code>git clone</code> the repository, run{' '}
-          <code>npm install</code>, then <code>npm run new -- my-game</code>. <Link href="/docs/guide/installation">Installation</Link> walks you through it.
+          It makes a new game in <code>my-game</code> with a first scene, ready for <code>npm run dev</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
+          templates and options.
         </p>
         <p className={s.note}>
           <Link href="/editor">Try the editor</Link> to write a story in your browser with nothing to install, and export it when you're ready.

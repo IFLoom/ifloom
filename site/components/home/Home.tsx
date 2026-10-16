@@ -92,7 +92,7 @@ export function Home() {
       <main className={s.main}>
         <section className={cx(s.hero, s.wrap)}>
           <div className={cx(s.intro, 'reveal')}>
-            <span className={s.eyebrow}>Pre-release · TypeScript</span>
+            <span className={s.eyebrow}>Open source · TypeScript</span>
             <h1 className={s.h1}>
               Interactive fiction for <em>any shape</em> of game
             </h1>
@@ -241,7 +241,7 @@ export function Home() {
               <h2 id="closing-title" className={s.h2}>
                 Start with the guide
               </h2>
-              <p className={s.p}>It takes you from a checkout of the repository to a short novel of your own, then on to a game with a calendar, places and characters.</p>
+              <p className={s.p}>It takes you from a new project to a short novel of your own, then on to a game with a calendar, places and characters.</p>
               <div className={cx(s.ctas, s.center)}>
                 <Link className={s.cta} href="/docs/guide/introduction">
                   Read the docs
@@ -257,7 +257,7 @@ export function Home() {
       </main>
 
       <footer className={cx(s.footer, s.wrap)}>
-        <span>IFLoom is pre-release and MIT licensed.</span>
+        <span>IFLoom is open source and MIT licensed.</span>
         <nav aria-label="Footer">
           <Link href="/docs/guide/introduction">Docs</Link>
           <Link href="/docs/changelog">Changelog</Link>

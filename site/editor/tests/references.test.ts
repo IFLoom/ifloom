@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest'
+import { problemsOf } from '../lib/game.ts'
+import { sampleProject } from '../lib/model.ts'
+import { problemTarget, rename, variablesUsed } from '../lib/references.ts'
+
+describe('rename', () => {
+  it('moves a scene, its prose keys and everything that names it', () => {
+    const project = sampleProject()
+    project.pack.scenes[1].choices.push({ id: 'back', when: { seen: 'market' }, effects: [{ kind: 'scene', id: 'market' }] })
+    project.pack.prose['home#back'] = 'Go back out'
+    const next = rename(project, 'scene', 'market', 'square')
+    expect(next.intro).toBe('square')
+    expect(next.pack.scenes[0].id).toBe('square')
+    expect(next.pack.scenes[0].body).toEqual([{ text: 'square' }, { text: 'square/busker', when: { flag: 'heardBusker' } }])
+    expect(next.pack.prose['square#buy']).toBe('Buy an iced bun')
+    expect(next.pack.prose.market).toBeUndefined()
+    // A storylet named market.busker isn't the market scene's key: it keeps its name.
+    expect(next.pack.prose['market.busker']).toBeDefined()
+    expect(next.pack.scenes[1].choices[0]).toMatchObject({ when: { seen: 'square' }, effects: [{ kind: 'scene', id: 'square' }] })
+    expect(next.pack.scenes[2].choices[0].effects[1]).toEqual({ kind: 'scene', id: 'square' })
+    expect(problemsOf(next)).toEqual([])
+    // The original is untouched.
+    expect(project.pack.scenes[0].id).toBe('market')
+  })
+
+  it('moves a stat in conditions, effects and formulas', () => {
+    const project = sampleProject()
+    project.pack.stats.push({ id: 'worth', label: 'Worth', derive: { sum: ['coins', { scale: 'coins', by: 2 }] } })
+    const next = rename(project, 'stat', 'coins', 'pennies')
+    expect(next.pack.stats[0].id).toBe('pennies')
+    expect(next.pack.stats[1].derive).toEqual({ sum: ['pennies', { scale: 'pennies', by: 2 }] })
+    const buy = next.pack.scenes[0].choices[0]
+    expect(buy.blocked?.[0].when).toEqual({ stat: 'pennies', lt: 3 })
+    expect(buy.effects[0]).toEqual({ kind: 'stat', key: 'pennies', by: -3 })
+    expect(problemsOf(next)).toEqual([])
+  })
+
+  it('moves an item and a variable', () => {
+    const items = rename(sampleProject(), 'item', 'bun', 'roll')
+    expect(items.pack.scenes[1].body[1].when).toEqual({ has: 'roll' })
+    const vars = rename(sampleProject(), 'variable', 'heardBusker', 'heardFiddle')
+    expect(vars.variables[0].name).toBe('heardFiddle')
+    expect(variablesUsed(vars.pack)).toEqual(['heardFiddle'])
+    expect(problemsOf(vars)).toEqual([])
+  })
+})
+
+describe('problemTarget', () => {
+  it('finds the choice a problem is about', () => {
+    const project = sampleProject()
+    delete project.pack.prose['market#home']
+    project.pack.scenes[0].choices[0].effects.push({ kind: 'item', id: 'ring', by: 1 })
+    const targets = problemsOf(project).map((p) => problemTarget(project.pack, p))
+    expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'home' })
+    expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'buy' })
+  })
+
+  it('finds a stat, the intro and a block', () => {
+    const project = sampleProject()
+    expect(problemTarget(project.pack, { pack: 'x', where: 'stat coins', what: 'bad' })).toEqual({ thing: 'stat', id: 'coins' })
+    expect(problemTarget(project.pack, { pack: 'base', where: 'introScene', what: 'unknown scene "x"' })).toEqual({ thing: 'project', id: '', field: 'intro' })
+    expect(problemTarget(project.pack, { pack: 'x', where: 'scene home', what: 'unknown item "bun"' })).toEqual({ thing: 'scene', id: 'home', field: 'body' })
+  })
+})

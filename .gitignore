@@ -3,8 +3,6 @@ dist
 *.log
 .DS_Store
 *:Zone.Identifier
-docs/.vitepress/cache
-docs/.vitepress/dist
 playtest/
 
 # Your own games, as workspaces of this checkout

@@ -4,7 +4,7 @@ name: Docs
 # When the repo goes public, add back:
 #   push:
 #     branches: [main]
-#     paths: ['docs/**', 'packages/**', 'package.json', 'package-lock.json', '.github/workflows/docs.yml']
+#     paths: ['site/**', 'packages/**', 'CHANGELOG.md', 'package.json', 'package-lock.json', '.github/workflows/docs.yml']
 on:
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # The docs show when each page last changed, which needs the history.
+          # The whole history, so the site can tell when each page last changed.
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
@@ -32,11 +32,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Checks the docs' links, then builds the site as static files in site/out.
       - run: npm run docs:build
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: docs/.vitepress/dist
+          path: site/out
 
   deploy:
     needs: build

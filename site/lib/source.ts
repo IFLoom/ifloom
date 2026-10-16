@@ -8,6 +8,8 @@ const docs = defineDocs({
   docs: {
     schema: pageSchema,
     postprocess: { includeProcessedMarkdown: true },
+    // From git, so CI checks out the whole history.
+    lastModified: true,
   },
   meta: { schema: metaSchema },
 })

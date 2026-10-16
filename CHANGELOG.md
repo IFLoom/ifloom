@@ -35,7 +35,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `display: 'number' | 'bar' | 'pips'` on a stat, passed through the view with the stat's `min` and `max` so a UI can draw a bar or pips. The React UI's stat list draws a basic bar or a row of pips for it.
 - Keyboard shortcuts in the React UI, off unless you pass `keys`: the number keys pick the choices on screen, each showing its number, Escape opens the menu, and `keys: { map }` adds keys of your own that send a command.
 - `NoticeStrip` in the React UI: a row of unread counts (unseen notices, and apps with a badge) that open where they are. Add it to a layout as `'notice-strip'`.
-- These docs, with `llms.txt` and `llms-full.txt` for AI agents, and an `AGENTS.md` in every new game.
+- These docs, with search, a version picker, `llms.txt` and `llms-full.txt` for AI agents, every page as Markdown, and an `AGENTS.md` in every new game.
 
 ### Changed
 

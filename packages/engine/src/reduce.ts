@@ -2,9 +2,8 @@ import { say } from './strings.ts'
 import { rendering, warningIn, whyNotIn } from './availability.ts'
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
-import { fireTriggers } from './triggers.ts'
 import { screen } from './screen.ts'
-import { runAfter, runHooks } from './plugin.ts'
+import { runAfter } from './plugin.ts'
 import { startingState } from './intake.ts'
 import { commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
 import { afterSteps, screenSteps } from './features/registry.ts'
@@ -51,17 +50,17 @@ function noteShown(state: GameState, game: Game): GameState {
 }
 
 /**
- * The steps after a command took, in order: the game's triggers, the
- * features' steps that come straight after them (a new showing is seen), the
- * plugins' `after` hooks, the features' steps after those (a level gained is
- * noticed), then what the new state's screen shows.
+ * The steps after a command took, in order: the features' steps that come
+ * before the plugins' `after` hooks (the game's triggers fire, then a new
+ * showing is seen), those hooks, the features' steps after them (a level
+ * gained is noticed), then what the new state's screen shows.
  */
 function after(before: GameState, ran: GameState, game: Game): GameState {
   const cx = featureContext()
-  let next = fireTriggers(ran, game, (state, effects) => applyEffects(state, game, effects))
-  for (const step of afterSteps.triggers) next = step(before, next, game, cx)
+  let next = ran
+  for (const step of afterSteps.beforePlugins) next = step(before, next, game, cx)
   next = runAfter(game, before, next)
-  for (const step of afterSteps.hooks) next = step(before, next, game, cx)
+  for (const step of afterSteps.afterPlugins) next = step(before, next, game, cx)
   return noteShown(next, game)
 }
 
@@ -118,26 +117,6 @@ function run(
   const entry = commandEntry(command)
   if (!entry) return refuse(say(game, 'notSupported'))
   return entry.run(current, command, game, commandContext(rendered))
-}
-
-/**
- * The end of a turn: the counter moves on, `resets` are put back, `rules.turn`'s
- * effects apply, then the game's `onTurn` and every plugin's `turn` hook run.
- * `before` is the state the turn ended on, which `rules.turn` is asked about.
- * What runs here runs with `ending` set, so a `turn` effect among it (in the
- * rules, or applied by a plugin through its context) does nothing: a turn
- * ending inside a turn's end would ask `rules.turn` again, and again.
- */
-export function endTurn(state: GameState, game: Game, before: GameState = state): GameState {
-  const next = state.turn + 1
-  const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
-  const begun = runEffects(
-    { ...state, turn: next, flags: { ...state.flags, ...game.rules?.resets } },
-    game,
-    rule.effects,
-    true,
-  )
-  return runHooks(game, 'turn', game.rules?.onTurn?.(begun) ?? begun, true)
 }
 
 export function applyEffects(

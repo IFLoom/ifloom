@@ -4,9 +4,18 @@
  * effect draws at random from a named set (ADR 0005).
  */
 import { say } from '../strings.ts'
-import type { Game } from '../game.ts'
+import { sceneContext } from '../context.ts'
+import type { Game, Scene } from '../game.ts'
+import type { Reference } from '../references.ts'
+import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
-import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
+import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge } from './feature.ts'
+
+/** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
+export type Patch =
+  | { scene: string; addChoice: DataScene['choices'][number]; before?: string }
+  | { scene: string; dropChoice: string }
+  | { scene: string; replaceChoice: DataScene['choices'][number] }
 
 /**
  * What makes a scene a storylet: the named draws it can be drawn from, how
@@ -87,6 +96,95 @@ export type ScenesShape = {
     scene: { type: 'scene'; id: string }
     choose: { type: 'choose'; id: string }
     leave: { type: 'leave' }
+  }
+  game: {
+    /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
+    introScene?: string
+    /** Hand-written scenes and data scenes, side by side. */
+    scenes: (Scene | DataScene)[]
+  }
+  pack: {
+    scenes?: (Scene | DataScene)[]
+    /** Surgical changes to content an earlier pack declared. */
+    patches?: Patch[]
+  }
+  view: {
+    inScene: boolean
+  }
+  lists: 'scene'
+}
+
+function isDataScene(scene: Scene | DataScene): scene is DataScene {
+  return 'body' in scene && Array.isArray((scene as DataScene).body)
+}
+
+/** What prose blocks name: prose keys, variants and their art, conditions, media. */
+export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
+  const out: Reference[] = []
+  for (const block of blocks ?? []) {
+    if ('text' in block) out.push({ prose: block.text })
+    if ('variants' in block) {
+      out.push({ variants: block.variants })
+      for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
+    }
+    if ('media' in block) out.push({ media: block.media })
+    out.push({ when: block.when })
+    if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
+  }
+  return out
+}
+
+/** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
+export function dataSceneReferences(scene: DataScene): Reference[] {
+  const out: Reference[] = [{ blocks: scene.body }]
+  for (const choice of scene.choices) {
+    out.push({ prose: choice.label ?? `${scene.id}#${choice.id}` })
+    for (const entry of choice.labels ?? []) out.push({ prose: entry.key }, { when: entry.when })
+    out.push({ when: choice.when })
+    for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
+    out.push({ effects: choice.effects })
+  }
+  for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
+  if (scene.panelData !== undefined) out.push({ panel: scene.panelData })
+  out.push({ stage: scene.stage, choices: scene.choices.map((choice) => choice.id) })
+  return out
+}
+
+/**
+ * Scenes by id, a later pack's over an earlier one's, then each pack's
+ * patches to the data scenes merged so far. The base game's own aren't merged.
+ */
+function merge(problem: (from: string, where: string, what: string) => void): PackMerge<ScenesShape['game'], ScenesShape['pack']> {
+  const scenes = new Map<string, { value: Scene | DataScene; from: string }>()
+  return {
+    base: () => {},
+    add: (pack, from) => {
+      for (const scene of pack.scenes ?? []) scenes.set(scene.id, { value: scene, from })
+      for (const patch of pack.patches ?? []) {
+        const target = scenes.get(patch.scene)
+        if (!target || !isDataScene(target.value)) {
+          problem(from, `patch ${patch.scene}`, target ? 'that scene is not declarative, so it cannot be patched' : 'no such scene')
+          continue
+        }
+        const scene = { ...target.value, choices: [...target.value.choices] }
+        if ('dropChoice' in patch) {
+          scene.choices = scene.choices.filter((choice) => choice.id !== patch.dropChoice)
+        } else if ('replaceChoice' in patch) {
+          const at = scene.choices.findIndex((choice) => choice.id === patch.replaceChoice.id)
+          if (at < 0) problem(from, `patch ${patch.scene}`, `no choice ${patch.replaceChoice.id}`)
+          else scene.choices[at] = patch.replaceChoice
+        } else {
+          const at = patch.before ? scene.choices.findIndex((choice) => choice.id === patch.before) : -1
+          if (at >= 0) scene.choices.splice(at, 0, patch.addChoice)
+          else scene.choices.push(patch.addChoice)
+        }
+        scenes.set(patch.scene, { value: scene, from })
+      }
+    },
+    finish: (game) => {
+      game.scenes = [...scenes.values()].map((entry) => entry.value)
+    },
+    from: (_list, id) => (id === undefined ? undefined : scenes.get(id)?.from),
   }
 }
 
@@ -218,8 +316,26 @@ export const scenes = defineFeature<ScenesShape>({
       references: () => [],
     },
   },
-  // Every scene's storylet fields.
+  pack: { merge },
+  lists: ['scene'],
   check: (game, tools) => {
+    if (game.introScene !== undefined && !game.scenes.some((scene) => scene.id === game.introScene)) {
+      tools.problem(undefined, 'introScene', `unknown scene "${game.introScene}"`)
+    }
+    tools.twice('scene', 'scenes', game.scenes.map((entry) => entry.id))
+    // A data scene's content.
+    for (const scene of game.scenes) {
+      if (!isDataScene(scene)) continue
+      const source = { list: 'scene', id: scene.id }
+      const where = `scene ${scene.id}`
+      tools.check(source, where, dataSceneReferences(scene))
+      const ids = new Set<string>()
+      for (const choice of scene.choices) {
+        if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
+        ids.add(choice.id)
+      }
+    }
+    // Every scene's storylet fields.
     for (const scene of game.scenes) {
       const source = { list: 'scene', id: scene.id }
       const where = `scene ${scene.id}`
@@ -230,6 +346,60 @@ export const scenes = defineFeature<ScenesShape>({
       tools.check(source, where, [{ when: scene.when }])
     }
   },
+  // Render every scene against a probe state and check what falls out. A data scene's content is checked already.
+  probe: (game, { name, state }, tools, cx) => {
+    const ctx = sceneContext(state, game)
+    for (const listed of game.scenes) {
+      const scene = cx.sceneById(game, listed.id)
+      if (!scene) continue
+      const source = { list: 'scene', id: listed.id }
+      const where = `scene ${listed.id} (${name})`
+      let shown
+      try {
+        shown = scene.render(state, ctx)
+      } catch (error) {
+        tools.problem(source, where, `render threw: ${(error as Error).message}`)
+        continue
+      }
+      if (isDataScene(listed)) continue
+      const ids = new Set<string>()
+      for (const choice of shown.choices) {
+        if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
+        ids.add(choice.id)
+      }
+      tools.check(source, where, [
+        { markup: shown.body ?? '' },
+        ...(shown.media ?? []).map((media) => ({ media })),
+        ...Object.entries(shown.audio ?? {}).map(([channel, track]) => ({ channel, track })),
+        { stage: shown.stage, choices: shown.choices.map((choice) => choice.id) },
+        ...shown.choices.map((choice) => ({ within: `choice ${choice.id}`, refs: [{ effects: choice.effects }] })),
+      ])
+    }
+  },
+  // Scenes as gates, as places to go and to open, the choices in them, the draws, and prose blocks.
+  resolve: (game, tools) => {
+    const sceneOf = new Map(game.scenes.map((scene) => [scene.id, scene]))
+    const drawnFrom = new Set(game.scenes.flatMap((scene) => scene.drawnFrom ?? []))
+    return {
+      scene: (ref) => {
+        if (sceneOf.has(ref.scene)) return []
+        if (ref.as === 'gate') return [`gated on unknown scene "${ref.scene}"`]
+        if (ref.as === 'open') return [`opens unknown scene "${ref.scene}"`]
+        return [`goes to unknown scene "${ref.scene}"`]
+      },
+      choice: (ref) => {
+        const cut = ref.choice.lastIndexOf('/')
+        const scene = cut > 0 ? sceneOf.get(ref.choice.slice(0, cut)) : undefined
+        if (!scene) return [`gated on a choice in unknown scene "${ref.choice}"`]
+        // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.
+        if (isDataScene(scene) && !scene.choices.some((choice) => choice.id === ref.choice.slice(cut + 1))) return [`gated on unknown choice "${ref.choice}"`]
+        return []
+      },
+      drawnFrom: (ref) => (drawnFrom.has(ref.drawnFrom) ? [] : [`draws from "${ref.drawnFrom}", but no scene is drawn from it`]),
+      blocks: (ref, where) => tools.resolve(blockReferences(ref.blocks), where),
+    }
+  },
+  view: (state) => ({ inScene: Boolean(state.sceneId) }),
   // A new showing is seen, and dated the first time. Straight after the triggers, so plugins' `after` hooks see it.
-  afterCommand: { at: 'triggers', run: witnessed },
+  afterCommand: { at: 'beforePlugins', run: witnessed },
 })

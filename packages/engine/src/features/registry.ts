@@ -4,25 +4,40 @@
  * leaf. It checks each feature's `requires`, and merges what they declare
  * into the tables and lists the core reads.
  *
- * The core's own kinds that no feature owns yet are a provisional feature of
- * their own in `core.ts`, which hands them to `withCore` for the complete
- * tables. Moving a kind into a feature moves its entry out of that table.
+ * The core's own kinds (`all`, `any`, `not`, the custom calls and `start`)
+ * are in `core.ts`, which hands them to `withCore` for the complete tables.
  */
+import type { CarryOver, Game } from '../game.ts'
+import type { GameState } from '../types.ts'
+import { activities, type ActivitiesShape } from './activities.ts'
 import { audio, type AudioShape } from './audio.ts'
+import { collections, type CollectionsShape } from './collections.ts'
+import { entities, type EntitiesShape } from './entities.ts'
+import { inputs, type InputsShape } from './inputs.ts'
+import { items, type ItemsShape } from './items.ts'
+import { locks } from './locks.ts'
 import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
+import { notices, type NoticesShape } from './notices.ts'
 import { scenes, type ScenesShape } from './scenes.ts'
 import { settings, type SettingsShape } from './settings.ts'
 import { stats, type StatsShape } from './stats.ts'
+import { storylines, type StorylinesShape } from './storylines.ts'
+import { triggers, type TriggersShape } from './triggers.ts'
+import { turns, type TurnsShape } from './turns.ts'
+import { variables, type VariablesShape } from './variables.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
-type Shapes = SettingsShape | StatsShape | ScenesShape | AudioShape | MediaShape
+type Shapes = EntitiesShape | TurnsShape | VariablesShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | AudioShape | MediaShape
 
 /**
- * The core features, in the order their after-command steps, views, checks
- * and runner hooks run.
+ * The core features, in the order their after-command steps, views, checks,
+ * fills and runner hooks run. The order is behaviour: triggers come before
+ * scenes and audio, so a scene a trigger opens is counted as seen in the same
+ * command; settings before audio, which requires it; stats before entities,
+ * so a loaded save's entities are filled after their stats.
  */
-export const FEATURES = [settings, stats, scenes, audio, media] as const
+export const FEATURES = [turns, variables, storylines, collections, notices, triggers, scenes, items, activities, inputs, settings, stats, audio, media, entities, locks] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never
 type PartOf<T, K extends keyof FeatureShape> = T extends unknown ? (K extends keyof T ? (T[K] extends object ? T[K] : {}) : {}) : never
@@ -109,11 +124,49 @@ export const featureKinds: Record<string, { conditions: string[]; effects: strin
   ]),
 )
 
+/** What `MigrationTools.fill` can fill, by the features' names for it. */
+export type FeatureFill = Shapes extends infer T ? (T extends { fill: infer F } ? F : never) : never
+
 /** The features that do something after a command, in their declared order, by where they run. */
 export const afterSteps = {
-  triggers: all.flatMap((feature) => (feature.afterCommand?.at === 'triggers' ? [feature.afterCommand.run] : [])),
-  hooks: all.flatMap((feature) => (feature.afterCommand?.at === 'hooks' ? [feature.afterCommand.run] : [])),
+  beforePlugins: all.flatMap((feature) => (feature.afterCommand?.at === 'beforePlugins' ? [feature.afterCommand.run] : [])),
+  afterPlugins: all.flatMap((feature) => (feature.afterCommand?.at === 'afterPlugins' ? [feature.afterCommand.run] : [])),
 }
+/** Which feature each after-command step is, in order, by where it runs: for the contract that holds the order. */
+export const afterOrder = {
+  beforePlugins: all.flatMap((feature) => (feature.afterCommand?.at === 'beforePlugins' ? [feature.name] : [])),
+  afterPlugins: all.flatMap((feature) => (feature.afterCommand?.at === 'afterPlugins' ? [feature.name] : [])),
+}
+
+/** What a New Game+ carries, by feature, in order. */
+export const carrySteps = all.flatMap((feature) => (feature.carry ? [feature.carry.run] : []))
+
+/** What is wrong with each key of `game.carryOver`, by the key. */
+export const carryChecks = merged((feature) => (feature.carry?.check ? { [feature.carry.key]: feature.carry.check } : {}), 'carryOver key') as Partial<
+  Record<keyof CarryOver, NonNullable<NonNullable<AnyFeature['carry']>['check']>>
+>
+
+/** What `MigrationTools.fill` fills, by kind, in the features' order. */
+export const fillSteps = all.flatMap((feature) => (feature.fill ? [feature.fill] : [])) as unknown as readonly {
+  kind: FeatureFill
+  unversioned?: boolean
+  run: (state: GameState, game: Game) => GameState
+}[]
+
+/** What every load adds that the game declares and the save lacks, in order. */
+export const loadSteps = all.flatMap((feature) => (feature.loaded ? [feature.loaded] : []))
+
+/** The features' refusals that come before the plugins' guards, in order. */
+export const refusals = all.flatMap((feature) => (feature.refuses ? [feature.refuses] : []))
+
+/** The features' resolvers, in order. */
+export const resolverSteps = all.flatMap((feature) => (feature.resolve ? [{ name: feature.name, resolve: feature.resolve }] : []))
+
+/** The features' markup checks, in order. */
+export const markupChecks = all.flatMap((feature) => (feature.markup ? [feature.markup] : []))
+
+/** The features' checks against a probe state, in order. */
+export const probeChecks = all.flatMap((feature) => (feature.probe ? [feature.probe] : []))
 
 /** The features that record something from a screen, in order. */
 export const screenSteps = all.flatMap((feature) => (feature.fromScreen ? [feature.fromScreen] : []))
@@ -134,9 +187,9 @@ export const runnerHooks: readonly RunnerHooks[] = all.flatMap((feature) => (fea
 export const packFeatures = all.filter((feature) => feature.pack)
 
 /**
- * The complete tables: the core's provisional entries for the kinds no
- * feature owns yet, and every feature's. The types make it complete: a kind
- * in neither fails to compile where `core.ts` calls this.
+ * The complete tables: the core's own entries and every feature's. The types
+ * make it complete: a kind in neither fails to compile where `core.ts` calls
+ * this.
  */
 export function withCore<C extends object, E extends object, K extends object>(core: {
   conditions: { [P in keyof C]: ConditionEntry<C[P]> }

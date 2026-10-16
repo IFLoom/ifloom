@@ -10,7 +10,7 @@
 import type { Game, SceneMedia } from '../game.ts'
 import type { Command, Condition, GameState } from '../types.ts'
 import { artSrc, MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
-import { defineFeature, type FeatureContext } from './feature.ts'
+import { defineFeature, type FeatureContext, type ResolveTools } from './feature.ts'
 
 /**
  * One file in a pool: its path, as any picture's, the tags it answers to, and
@@ -356,6 +356,15 @@ export function poolManifestProblems(game: Game): { where: string; what: string 
   return out
 }
 
+/** Record the files a picture or video names: its own and its poster. */
+function mediaFiles(where: string, media: { src?: string; video?: boolean; poster?: string }, tools: ResolveTools): void {
+  if (media.src !== undefined) {
+    const video = Boolean(media.video) || mediaKind(media.src) === 'video'
+    tools.file(where, video ? 'video' : 'picture', artSrc(media.src, video ? 'video' : 'image'))
+  }
+  if (media.poster) tools.file(where, 'picture', artSrc(media.poster))
+}
+
 export const media = defineFeature<MediaShape>({
   name: 'media',
   state: {
@@ -389,6 +398,35 @@ export const media = defineFeature<MediaShape>({
         tools.file(`pool ${pool}`, video ? 'video' : 'picture', artSrc(entry.src, video ? 'video' : 'image'))
       }
     }
+  },
+  // A `{ media }` block and a stage: their files, and what they ask of the pools.
+  resolve: (game, tools) => ({
+    media: (ref, where) => {
+      mediaFiles(where, ref.media, tools)
+      return sceneMediaProblems(game, ref.media)
+    },
+    stage: (ref, where) => {
+      const value = ref.stage
+      if (!value) return []
+      for (const layer of Array.isArray(value.layers) ? value.layers : []) mediaFiles(where, layer, tools)
+      return [
+        ...stageProblems(game, value, ref.choices),
+        ...(Array.isArray(value.layers) ? value.layers : []).flatMap((layer, index) => tools.resolve([{ when: layer.when }], where).map((what) => `stage layer ${layer.id ?? index}: ${what}`)),
+        ...(value.hotspots ?? []).flatMap((hotspot) => tools.resolve([{ when: hotspot.when }, { command: hotspot.command }], where).map((what) => `hotspot ${hotspot.id}: ${what}`)),
+      ]
+    },
+    pool: (ref) => poolProblems(game, ref.pool, ref.tags ?? []),
+  }),
+  // The files media markup names, and the pools it asks.
+  markup: (game, text, where, tools) => {
+    for (const match of text.matchAll(new RegExp(MEDIA_MARKUP.source, 'g'))) {
+      const read = mediaParts(match[2], match[3])
+      if (read.flags.poster) tools.file(where, 'picture', artSrc(read.flags.poster))
+      if (read.pool !== undefined) continue
+      const video = match[1] === 'video' || match[1] === 'widevideo' || mediaKind(read.path) === 'video'
+      tools.file(where, video ? 'video' : 'picture', artSrc(read.path, video ? 'video' : 'image'))
+    }
+    return mediaMarkupProblems(game, text)
   },
   // The picks the new state's screen made, so a revisit and a reload show the same files. Only a game with pools picks.
   fromScreen: {

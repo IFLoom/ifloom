@@ -1,9 +1,9 @@
 import { say } from './strings.ts'
 import { sceneContext } from './context.ts'
 import { sceneById, type Game, type SceneView } from './game.ts'
-import { lockIn } from './locks.ts'
 import { pluginGuards, pluginsWatch } from './plugin.ts'
-import { commandContext, commandEntry } from './core.ts'
+import { commandContext, commandEntry, featureContext } from './core.ts'
+import { refusals } from './features/registry.ts'
 import type { Rendering } from './features/feature.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
@@ -17,7 +17,8 @@ export type { Rendering } from './features/feature.ts'
  * button and the rule behind it cannot disagree, and a refusal is always a
  * sentence the player can be shown.
  *
- * Checked in the order the player would notice: a lock first, then a command
+ * Checked in the order the player would notice: a lock first (what the
+ * features refuse before anything else), the plugins' guards, then a command
  * the game handles itself, then what the command needs.
  */
 export function whyNot(state: GameState, game: Game, command: Command): string | undefined {
@@ -48,8 +49,14 @@ export function whyNotIn(rendered: Rendering, state: GameState, game: Game, comm
   const exempt = ignoresLocks(game, command)
   let known = effects
   const effectsNow = () => (known ??= effectsIn(rendered, state, game, command))
-  const locked = exempt ? undefined : lockIn(state, game, command, effectsNow)?.reason
-  if (locked) return locked
+  // What the features refuse first, such as a lock.
+  if (!exempt) {
+    const cx = featureContext()
+    for (const refuse of refusals) {
+      const refused = refuse(state, command, game, effectsNow, cx)
+      if (refused) return refused
+    }
+  }
   if (!exempt && pluginsWatch(game)) {
     const refused = pluginGuards(game, state, { command, effects: effectsNow() }).find((entry) => typeof entry === 'string')
     if (refused !== undefined) return refused

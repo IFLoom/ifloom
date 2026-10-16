@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { KINDS } from '../../src/core.ts'
-import { checkRequires, FEATURES, featureKinds, type FeatureCommands, type FeatureConditions, type FeatureEffects } from '../../src/features/registry.ts'
+import { afterOrder, checkRequires, FEATURES, featureKinds, type FeatureCommands, type FeatureConditions, type FeatureEffects } from '../../src/features/registry.ts'
 
 /**
  * Core features are modules that register (ADR 0007). These hold them to
@@ -55,12 +55,23 @@ const FEATURE_FILES = Object.keys(SOURCES).filter((file) => file.startsWith(`${S
 describe('core features are leaves', () => {
   it('finds the features', () => {
     expect(FEATURE_FILES.map((file) => file.slice(SRC.length)).sort()).toEqual([
+      'features/activities.ts',
       'features/audio.ts',
+      'features/collections.ts',
+      'features/entities.ts',
       'features/feature.ts',
+      'features/inputs.ts',
+      'features/items.ts',
+      'features/locks.ts',
       'features/media.ts',
+      'features/notices.ts',
       'features/scenes.ts',
       'features/settings.ts',
       'features/stats.ts',
+      'features/storylines.ts',
+      'features/triggers.ts',
+      'features/turns.ts',
+      'features/variables.ts',
     ])
     // The registry loads every feature, and a feature what it needs: audio needs settings.
     expect([...loads(REGISTRY)].filter((file) => file.startsWith(`${SRC}features/`)).sort()).toEqual(FEATURE_FILES.sort())
@@ -96,16 +107,38 @@ describe('the registry', () => {
       for (const kind of kinds.commands) expect(KINDS.commands[kind as keyof typeof KINDS.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
     }
     expect(featureKinds).toEqual({
+      turns: { conditions: ['turn', 'phase'], effects: ['phase', 'turn'], commands: [] },
+      variables: { conditions: ['flag', 'counter'], effects: ['flag'], commands: [] },
+      storylines: { conditions: ['storylineFlag', 'storyline'], effects: ['storylineFlag', 'closeStoryline'], commands: [] },
+      collections: { conditions: ['collection'], effects: ['collect', 'discard'], commands: [] },
+      notices: { conditions: [], effects: ['notify'], commands: ['dismiss'] },
+      triggers: { conditions: [], effects: [], commands: [] },
+      scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
+      items: { conditions: ['item', 'has'], effects: ['item'], commands: ['use'] },
+      activities: { conditions: [], effects: [], commands: ['activity'] },
+      inputs: { conditions: [], effects: [], commands: ['input'] },
       settings: { conditions: ['setting'], effects: [], commands: ['setting'] },
       stats: { conditions: ['stat', 'tier', 'level'], effects: ['stat', 'setStat'], commands: [] },
-      scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
       audio: { conditions: [], effects: ['audio', 'sound'], commands: [] },
       media: { conditions: [], effects: [], commands: [] },
+      entities: { conditions: ['count', 'entity'], effects: ['create', 'remove', 'each'], commands: [] },
+      locks: { conditions: [], effects: [], commands: [] },
     })
+    // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
+    const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))
+    expect(Object.keys(KINDS.conditions).filter((kind) => !owned.has(kind))).toEqual(['all', 'any', 'not', 'custom'])
+    expect(Object.keys(KINDS.effects).filter((kind) => !owned.has(kind))).toEqual(['custom'])
+    expect(Object.keys(KINDS.commands).filter((kind) => !owned.has(kind))).toEqual(['start', 'custom'])
     // And the compiler holds the tables to the features' kinds: each is a key of the table the core reads.
     expectTypeOf<keyof FeatureConditions>().toExtend<keyof typeof KINDS.conditions>()
     expectTypeOf<keyof FeatureEffects>().toExtend<keyof typeof KINDS.effects>()
     expectTypeOf<keyof FeatureCommands>().toExtend<keyof typeof KINDS.commands>()
+  })
+
+  it('runs the steps after a command in the order they always ran', () => {
+    // The game's triggers fire first, so the showing a trigger opens is counted, and its sounds keyed, in the same command;
+    // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'audio'], afterPlugins: ['stats'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

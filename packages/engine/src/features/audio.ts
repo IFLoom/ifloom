@@ -549,13 +549,24 @@ export const audio = defineFeature<AudioShape>({
       if (!('playlist' in track)) tools.file(`track ${id}`, 'audio', audioSrc(track.src))
     }
   },
+  // Background audio, a cue and a sound file, wherever content names them.
+  resolve: (game, tools) => ({
+    channel: (ref) => placementProblems(game, { [ref.channel]: ref.track }),
+    sound: (ref) => cueProblems(game, ref.sound),
+    audio: (ref, where) => {
+      tools.file(where, 'audio', audioSrc(ref.audio))
+      return []
+    },
+  }),
+  // The sounds prose markup names.
+  markup: (game, text) => markupProblems(game, text),
   view: (_state, _game, shown) => {
     const { tracks: _tracks, ...audio } = shown.audio as AudioView & { tracks: unknown }
     return { audio }
   },
   // A new showing: its sounds get keys of their own. Where `witnessed` counted it, straight after the triggers.
   afterCommand: {
-    at: 'triggers',
+    at: 'beforePlugins',
     run: (before, after) => (after.sceneId && after.sceneId !== before.sceneId ? sceneShown(after) : after),
   },
   // What each background channel started playing, from the new state's screen. Only a game with audio.

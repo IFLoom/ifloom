@@ -11,7 +11,7 @@ import { customCall, type EffectRef } from './custom.ts'
 import type { SceneMedia } from './game.ts'
 import type { MediaStage } from './features/media.ts'
 import type { PluginArgs } from './plugin.ts'
-import type { Block, DataScene } from './scene.ts'
+import type { Block } from './scene.ts'
 import type { Command, Condition, Effect, FlagValue } from './types.ts'
 import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 
@@ -109,36 +109,4 @@ export function effectReferences(ref: EffectRef): Reference[] {
 /** What a command names. */
 export function commandReferences(command: Command): Reference[] {
   return commandEntry(command)?.references(command) ?? []
-}
-
-/** What prose blocks name: prose keys, variants and their art, conditions, media. */
-export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
-  const out: Reference[] = []
-  for (const block of blocks ?? []) {
-    if ('text' in block) out.push({ prose: block.text })
-    if ('variants' in block) {
-      out.push({ variants: block.variants })
-      for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
-    }
-    if ('media' in block) out.push({ media: block.media })
-    out.push({ when: block.when })
-    if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
-  }
-  return out
-}
-
-/** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
-export function dataSceneReferences(scene: DataScene): Reference[] {
-  const out: Reference[] = [{ blocks: scene.body }]
-  for (const choice of scene.choices) {
-    out.push({ prose: choice.label ?? `${scene.id}#${choice.id}` })
-    for (const entry of choice.labels ?? []) out.push({ prose: entry.key }, { when: entry.when })
-    out.push({ when: choice.when })
-    for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
-    out.push({ effects: choice.effects })
-  }
-  for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
-  if (scene.panelData !== undefined) out.push({ panel: scene.panelData })
-  out.push({ stage: scene.stage, choices: scene.choices.map((choice) => choice.id) })
-  return out
 }

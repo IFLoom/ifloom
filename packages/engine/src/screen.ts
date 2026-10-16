@@ -15,11 +15,10 @@ import { formatStat, statDef } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Game, type SceneMedia } from './game.ts'
-import { activityById } from './activity.ts'
 import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './sceneBody.ts'
 import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
-import { featureContext } from './core.ts'
+import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
 /**
@@ -285,17 +284,13 @@ function actionButton(
   rendered: Rendering,
   known?: readonly Effect[],
 ): RenderedChoice {
-  const activity =
-    action.command.type === 'activity'
-      ? activityById(game, action.command.id)
-      : undefined
   // Worked out here only when a plugin will look at them; a lock asks for them itself.
   const watched = pluginsWatch(game)
   const effects = known ?? (watched ? effectsIn(rendered, state, game, action.command) : undefined)
   const choice: RenderedChoice = {
     id: action.id,
     label: action.label,
-    price: priced(state, game, activity?.cost ?? {}, watched ? effects : []),
+    price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game) }, watched ? effects : []),
     disabled:
       action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ??
       whyNotIn(rendered, state, game, action.command, effects),

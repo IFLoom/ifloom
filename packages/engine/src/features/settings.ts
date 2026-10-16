@@ -73,6 +73,7 @@ export type SettingsShape = {
     settings: SettingView[]
   }
   lists: 'setting'
+  fill: 'settings'
 }
 
 /** The setting with this id, if the game declares it. */
@@ -265,12 +266,23 @@ export const settings = defineFeature<SettingsShape>({
     },
   },
   lists: ['setting'],
+  // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
+  fill: {
+    kind: 'settings',
+    unversioned: true,
+    run: (state, game) => {
+      const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && state.settings?.[setting.id] === undefined)
+      if (!lacking.length && state.settings) return state
+      return { ...state, settings: { ...state.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
+    },
+  },
   check: (game, tools) => {
     tools.twice('setting', 'settings', (game.settings ?? []).map((entry) => entry.id))
     for (const setting of game.settings ?? []) {
       for (const what of settingProblems(setting)) tools.problem({ list: 'setting', id: setting.id }, `setting ${setting.id}`, what)
     }
   },
+  resolve: (game) => ({ setting: (ref) => settingConditionProblems(game, ref.setting, ref.is) }),
   view: (state, game) => ({ settings: settingsView(state.settings, game) }),
   runner: {
     // A play setting changed in a game is the player's choice for the next game too.

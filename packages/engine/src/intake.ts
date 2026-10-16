@@ -6,24 +6,17 @@
  * and its load default once, in `FIELDS`, and both paths read that table.
  */
 import { say } from './strings.ts'
-import type { Game, ItemDef } from './game.ts'
+import type { Game } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
-import { SAVE_VERSION, type GameState, type StartOptions, type StorylineState } from './types.ts'
-import { clampStat } from './stats.ts'
-import { newEntity, startingEntities, writeEntity } from './entities.ts'
-import { settingAffects } from './features/settings.ts'
-import { emptyStoryline } from './storylines.ts'
+import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
 import { hash } from './random.ts'
 import { featureContext } from './core.ts'
 import type { StateField } from './features/feature.ts'
-import { featureFields, startSteps } from './features/registry.ts'
+import { carrySteps, featureFields, fillSteps, loadSteps, startSteps, type FeatureFill } from './features/registry.ts'
 
 export type { StartOptions } from './types.ts'
 
-/** How many of an item a new game starts with: its `start`, else 1 of gear and 0 of stuff. */
-export function itemStart(item: ItemDef): number {
-  return item.start ?? (item.kind === 'gear' ? 1 : 0)
-}
+export { itemStart } from './features/items.ts'
 
 /** One field of the state: what a new game has, and what a loaded state that lacks it gets. See `StateField`. */
 type Field<K extends keyof GameState> = StateField<GameState[K]>
@@ -38,23 +31,11 @@ type Field<K extends keyof GameState> = StateField<GameState[K]>
 export const FIELDS: { [K in keyof GameState]-?: Field<K> } = {
   version: { start: () => SAVE_VERSION },
   seed: { start: (game, options) => options.seed ?? hash(game.id) },
-  phase: { start: (game) => game.startPhase ?? '' },
-  turn: { start: () => 0, load: () => 0, keeps: (value) => typeof value === 'number' },
-  entities: { start: (game) => startingEntities(game), load: () => ({}) },
-  created: { start: () => ({}), load: () => ({}) },
-  removed: { start: () => [], load: () => [] },
-  // A storyline the save lacks is added by `fillGame`, from the game's list.
-  storylines: { start: (game) => Object.fromEntries(game.storylines.map((storyline) => [storyline.id, emptyStoryline()])) },
-  flags: { start: (_game, options) => ({ ...options.flags }) },
-  items: { start: (game) => Object.fromEntries(game.items.map((item) => [item.id, itemStart(item)])) },
-  collections: { start: () => ({}), load: () => ({}) },
-  notices: { start: () => [], load: () => [] },
-  fired: { start: () => ({}), load: () => ({}) },
+  ...featureFields,
   // A plugin the save lacks starts fresh in `carryPlugins`.
   plugins: { start: (game) => startingPlugins(game) },
   // Only a game that declares a version stamps its saves with one; `carryGame` carries it.
   gameVersion: { start: (game) => game.version },
-  ...featureFields,
 }
 
 function startingPlugins(game: Game): Record<string, PluginSlice> {
@@ -65,24 +46,11 @@ function startingPlugins(game: Game): Record<string, PluginSlice> {
   return out
 }
 
-/** What `carryOver` takes from the game before, laid over a fresh state. */
-function carried(state: GameState, game: Game, from: GameState): GameState {
-  const listed = game.carryOver
-  if (!listed) return state
-  const stats = { ...state.stats }
-  for (const id of listed.stats ?? []) {
-    if (typeof from.stats?.[id] === 'number') stats[id] = clampStat(state, game, id, from.stats[id])
-  }
-  const flags = { ...state.flags }
-  for (const key of listed.flags ?? []) {
-    if (from.flags?.[key] !== undefined) flags[key] = from.flags[key]
-  }
-  const items = { ...state.items }
-  const itemIds = listed.items === 'all' ? Object.keys(items) : (listed.items ?? [])
-  for (const id of itemIds) {
-    if (id in items && typeof from.items?.[id] === 'number') items[id] = from.items[id]
-  }
-  return { ...state, stats, flags, items }
+/** What `carryOver` takes from the game before, laid over a fresh state: each feature's fields, worked out from the fresh state. */
+function carried(state: GameState, game: Game, from: GameState, options: StartOptions): GameState {
+  if (!game.carryOver) return state
+  const cx = featureContext()
+  return Object.assign({ ...state }, ...carrySteps.map((step) => step(state, game, from, options, cx))) as GameState
 }
 
 /**
@@ -98,9 +66,7 @@ export function startingState(game: Game, options: StartOptions = {}): GameState
   }
   let state = fresh as GameState
   if (options.carry) {
-    // Carried over first, so variables the caller gives still win.
-    const plus = carried(state, game, options.carry)
-    state = { ...plus, flags: { ...plus.flags, ...options.flags } }
+    state = carried(state, game, options.carry, options)
   }
   return startSteps.reduce((next, step) => step(next, game, featureContext()), state)
 }
@@ -235,13 +201,12 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 }
 
 /**
- * What `MigrationTools.fill` can fill: the player's stats and each entity's
- * (start values), items (start counts), variables the game resets each turn
- * (`rules.resets`), play settings (defaults) and declared entities.
+ * What `MigrationTools.fill` can fill, each named by the feature that fills
+ * it: the player's stats and each entity's (start values), items (start
+ * counts), variables the game resets each turn (`rules.resets`), play
+ * settings (defaults) and declared entities.
  */
-export type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
-
-const FILL_KINDS: readonly FillKind[] = ['stats', 'items', 'variables', 'settings', 'entities']
+export type FillKind = FeatureFill
 
 /** What a step of `game.migrations` is given besides the state. */
 export type MigrationTools = {
@@ -258,47 +223,8 @@ export type MigrationTools = {
  * kinds asked for, every kind if left out. Nothing the save already has is
  * changed, and an entity removed in play is not brought back.
  */
-function fillDeclared(state: GameState, game: Game, kinds: readonly FillKind[] = FILL_KINDS): GameState {
-  let next = state
-  if (kinds.includes('stats')) {
-    const kept = (game.stats ?? []).filter((stat) => stat.derive === undefined)
-    const lacking = kept.filter((stat) => !stat.of && next.stats?.[stat.id] === undefined)
-    if (lacking.length) next = { ...next, stats: { ...next.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } }
-    for (const [kind, entities] of Object.entries(next.entities ?? {})) {
-      const owned = kept.filter((stat) => stat.of === kind)
-      for (const [id, entity] of Object.entries(entities)) {
-        const missing = owned.filter((stat) => entity.stats?.[stat.id] === undefined)
-        if (!missing.length) continue
-        const stats = { ...entity.stats, ...Object.fromEntries(missing.map((stat) => [stat.id, stat.start ?? 0])) }
-        next = writeEntity(next, `${kind}:${id}`, { ...entity, stats })
-      }
-    }
-  }
-  if (kinds.includes('items')) {
-    const lacking = game.items.filter((item) => next.items?.[item.id] === undefined)
-    if (lacking.length) {
-      next = { ...next, items: { ...next.items, ...Object.fromEntries(lacking.map((item) => [item.id, itemStart(item)])) } }
-    }
-  }
-  if (kinds.includes('variables')) {
-    const lacking = Object.entries(game.rules?.resets ?? {}).filter(([key]) => next.flags?.[key] === undefined)
-    if (lacking.length) next = { ...next, flags: { ...next.flags, ...Object.fromEntries(lacking) } }
-  }
-  if (kinds.includes('settings')) {
-    // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
-    const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && next.settings?.[setting.id] === undefined)
-    if (lacking.length || !next.settings) {
-      next = { ...next, settings: { ...next.settings, ...Object.fromEntries(lacking.map((setting) => [setting.id, setting.default])) } }
-    }
-  }
-  if (kinds.includes('entities')) {
-    // A declared entity the save does not have (a mod's, a new version's) joins it, unless it was removed in play.
-    const missing = (game.entities ?? []).filter(
-      (entity) => !next.entities?.[entity.of]?.[entity.id] && !(next.removed ?? []).includes(`${entity.of}:${entity.id}`),
-    )
-    for (const entity of missing) next = writeEntity(next, `${entity.of}:${entity.id}`, newEntity(game, entity.of, entity))
-  }
-  return next
+function fillDeclared(state: GameState, game: Game, kinds?: readonly FillKind[]): GameState {
+  return fillSteps.reduce((next, fill) => (!kinds || kinds.includes(fill.kind) ? fill.run(next, game) : next), state)
 }
 
 /**
@@ -324,20 +250,16 @@ function carryGame(state: GameState, game: Game): GameState | string {
 }
 
 /**
- * What the game as it is now declares and the save lacks: a storyline added
- * since. A game that declares no `version` also gets its play settings and
- * entities filled here, as it always has; one that declares a version fills
- * them in its own steps, with `tools.fill()`.
+ * What the game as it is now declares and the save lacks, as each feature's
+ * `loaded` says: a storyline added since. A game that declares no `version`
+ * also gets the fills marked `unversioned` (its play settings and entities)
+ * here, as it always has; one that declares a version fills them in its own
+ * steps, with `tools.fill()`.
  */
 function fillGame(state: GameState, game: Game): GameState {
-  let next = state
-  const lacking = game.storylines.filter((def) => !state.storylines?.[def.id])
-  if (lacking.length) {
-    const storylines: Record<string, StorylineState> = { ...state.storylines }
-    for (const def of lacking) storylines[def.id] = emptyStoryline()
-    next = { ...next, storylines }
-  }
-  return game.version === undefined ? fillDeclared(next, game, ['settings', 'entities']) : next
+  const next = loadSteps.reduce((filled, step) => step(filled, game), state)
+  if (game.version !== undefined) return next
+  return fillSteps.reduce((filled, fill) => (fill.unversioned ? fill.run(filled, game) : filled), next)
 }
 
 /**

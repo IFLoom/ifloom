@@ -1,7 +1,4 @@
-import type { CollectionEntry, CollectionItem } from './collections.ts'
-import type { Notice } from './notices.ts'
-import type { EntityState } from './entities.ts'
-import type { EffectRef, PluginCall } from './custom.ts'
+import type { PluginCall } from './custom.ts'
 import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
 
@@ -40,32 +37,6 @@ type CoreState = {
   version: typeof SAVE_VERSION
   /** Fixed per save. Keeps variant variants from dealing identically every run. */
   seed: number
-  phase: Phase
-  /**
-   * How many turns have passed: the engine's one clock. What a turn is belongs
-   * to the game — a day, an hour, a week, a chapter — and everything the engine
-   * dates (`seenOn`, `fired`, collection entries, notices) is dated in turns.
-   */
-  turn: number
-  /** The things the game keeps several of, by kind and id: `entities.staff.ana`. */
-  entities: Record<string, Record<string, EntityState>>
-  /** How many of each kind have been created in play, for the next one's id. */
-  created: Record<string, number>
-  /**
-   * Entities the game declared that were removed in play, by reference. A
-   * declared entity a save does not have is added when it loads (a mod's new
-   * character, say) unless it is here: gone for good.
-   */
-  removed: string[]
-  storylines: Record<string, StorylineState>
-  flags: Record<string, FlagValue>
-  items: Record<string, number>
-  /** Each collection's entries, by collection id, oldest first. */
-  collections: Record<string, CollectionEntry[]>
-  /** What the game has told the player outside scenes, oldest first. */
-  notices: Notice[]
-  /** The turn each trigger last fired, by trigger id. */
-  fired: Record<string, number>
   /** Each plugin's own state, by plugin id. */
   plugins: Record<string, PluginSlice>
   /**
@@ -115,39 +86,6 @@ export type CoreConditions = {
   all: { all: Condition[] }
   any: { any: Condition[] }
   not: { not: Condition }
-  /**
-   * A variable. Bare, it asks whether it is set to anything truthy; with `is`,
-   * whether it equals that; with a range, whether its number is in it (a
-   * variable that is not a number counts as 0): `{ flag: 'lies', gte: 3 }`.
-   * With `of`, an entity's variable: `{ flag: 'role', of: '$', is: 'cook' }`.
-   */
-  flag: { flag: string; is?: FlagValue; of?: string } & Range
-  storylineFlag: { storylineFlag: { storyline: string; key: string; is?: FlagValue } }
-  /**
-   * How many entities of a kind there are, or with `where`, how many it holds
-   * for (`'$'` in it is each one in turn). Bare, at least one:
-   * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }`.
-   */
-  count: { count: string; where?: Condition } & Range
-  /** An entity is in the game: `{ entity: 'staff:ana' }`. */
-  entity: { entity: string }
-  /**
-   * A storyline is open (`open: true`, the default): not closed, or closed
-   * until a turn that has come. With `open: false`, that it is closed for now.
-   */
-  storyline: { storyline: string; open?: boolean }
-  counter: { counter: { storyline: string; key: string } } & Range
-  item: { item: string } & Range
-  /** Owns at least one. */
-  has: { has: string }
-  /**
-   * What is in a collection. With `id`: that entry is there. Without: how many
-   * entries there are, at least one if no range is given.
-   */
-  collection: { collection: string; id?: string } & Range
-  /** How many turns have passed. Turn 0 is the first, so `{ turn: true, gte: 3 }` is the fourth on. */
-  turn: { turn: true } & Range
-  phase: { phase: Phase[] }
   /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
   custom: { custom: string; with?: Record<string, unknown> }
 }
@@ -171,35 +109,6 @@ export type Condition = ConditionMap[ConditionKind] | PluginCall
 export type CoreEffects = {
   /** A plugin's effect, by its full name. Content writes `{ custom: name, with }`; the engine turns it into this. */
   custom: { kind: 'custom'; name: string; with?: Record<string, unknown> }
-  storylineFlag: { kind: 'storylineFlag'; id: string; key: string; value: FlagValue }
-  /**
-   * Set a variable, or with `add`, add to its number (a variable that is not
-   * a number counts as 0). With `of`, the variable is an entity's.
-   */
-  flag: { kind: 'flag'; key: string; value: FlagValue; of?: string } | { kind: 'flag'; key: string; add: number; of?: string }
-  /**
-   * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
-   * left out, never reused; an id already there is left as it is.
-   */
-  create: { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> } }
-  /** Take an entity out of the game: `{ kind: 'remove', of: 'staff:ana' }`. */
-  remove: { kind: 'remove'; of: string }
-  /**
-   * The same effects for every entity of a kind (where `where` holds), one
-   * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
-   */
-  each: { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
-  item: { kind: 'item'; id: string; by: number }
-  phase: { kind: 'phase'; value: Phase }
-  closeStoryline: { kind: 'closeStoryline'; id: string; turns: number }
-  /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
-  turn: { kind: 'turn'; by?: number }
-  /** Add an entry to a collection. An id already there is left as it is. */
-  collect: { kind: 'collect'; to: string; entry: CollectionItem }
-  /** Take an entry out of a collection. */
-  discard: { kind: 'discard'; from: string; id: string }
-  /** Tell the player something outside a scene. `text` is a prose key. */
-  notify: { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
 }
 
 /** Every kind of effect: the core's and the features'. */
@@ -216,13 +125,6 @@ export type CoreCommands = {
    * scene: a name asked for on a title screen, a difficulty.
    */
   start: { type: 'start'; seed?: number; flags?: Record<string, FlagValue> }
-  /** Anything the pack declares as an ActivityDef: paperwork, a jog, a drink. */
-  activity: { type: 'activity'; id: string }
-  use: { type: 'use'; itemId: string }
-  /** Mark one notice seen, or every one. */
-  dismiss: { type: 'dismiss'; id?: string }
-  /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
-  input: { type: 'input'; id: string; value?: FlagValue }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
   custom: { type: 'custom'; name: string; with?: Record<string, unknown> }
 }

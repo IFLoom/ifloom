@@ -1,17 +1,12 @@
 import type { Plugin, PluginEntry } from './plugin.ts'
-import type { CollectionDef } from './collections.ts'
-import type { InputDef } from './inputs.ts'
-import type { TriggerDef } from './triggers.ts'
-import type { ActivityDef } from './activity.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
-import type { EntityDef, KindDef } from './entities.ts'
 import type { Custom } from './custom.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
-import { bakeScene, isDataScene, type DataScene } from './scene.ts'
+import { bakeScene, isDataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
 import type {
   Command,
@@ -228,28 +223,10 @@ type GameBase = {
    * holds in the profile's `finished`, so a title screen can offer New Game+.
    */
   finished?: Condition
-  /** The stretch a new game opens in. */
-  startPhase?: string
-  /** The kinds of thing the game keeps several of, each with its own stats. */
-  kinds?: KindDef[]
-  /** The things of those kinds there are at the start. More can be created in play. */
-  entities?: EntityDef[]
   /** The game's named functions: custom conditions, effects, values and panel data. */
   custom?: Custom
-  /**
-   * Actions offered in every location, after each location's own — waiting,
-   * checking a map. A game with none has none.
-   */
-  actions?: ActionDef[]
   /** The packs the game was loaded from, in order. Saves record them. */
   packs?: string[]
-  /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
-  introScene?: string
-  activities: ActivityDef[]
-  items: ItemDef[]
-  /** Hand-written scenes and data scenes, side by side. */
-  scenes: (Scene | DataScene)[]
-  storylines: StorylineDef[]
   prose?: ProseStore
   rules?: GameRules
   /**
@@ -258,12 +235,6 @@ type GameBase = {
    * Packs can add theirs; a later pack's line wins.
    */
   strings?: Record<string, string>
-  /** Named lists the game keeps entries in: a gallery, notes, a ledger. */
-  collections?: CollectionDef[]
-  /** Effects that happen by themselves the first time a condition holds. */
-  triggers?: TriggerDef[]
-  /** What the player can type or pick, and the variable each one writes. */
-  inputs?: InputDef[]
   /** The plugins the game is built with, in the order their hooks run. */
   plugins?: readonly Plugin<any>[]
   /**

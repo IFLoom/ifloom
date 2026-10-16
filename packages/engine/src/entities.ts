@@ -1,6 +1,7 @@
 import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
+import type { Reference } from './references.ts'
 import type { FlagValue, GameState, Stats } from './types.ts'
 
 /**
@@ -119,6 +120,12 @@ export function statOwnerProblem(owner: string | undefined, stat: string, ref: s
   if (owner === undefined) return `stat "${stat}" is the player's, not ${ref}'s`
   const kind = parseRef(ref)?.kind
   return kind !== undefined && kind !== owner ? `stat "${stat}" belongs to ${owner}, not ${kind}` : undefined
+}
+
+/** The kind an `of` names, as a reference, when it names one rather than `'$'`. */
+export function ofKind(ref: string | undefined): Reference[] {
+  const parts = ref === undefined ? undefined : parseRef(ref)
+  return parts ? [{ kind: parts.kind }] : []
 }
 
 /** Any one of a kind, for checking content written with `'$'` before it runs. */

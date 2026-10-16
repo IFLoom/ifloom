@@ -1,20 +1,13 @@
-import { holds, type Condition } from './condition.ts'
-import { buildEffects, type EffectRef } from './custom.ts'
+/**
+ * Triggers as the engine exports them, with the core's context bound in. The
+ * feature, and what a trigger is, are in `features/triggers.ts`.
+ */
 import type { Game } from './game.ts'
+import { featureContext } from './core.ts'
+import * as triggers from './features/triggers.ts'
 import type { Effect, GameState } from './types.ts'
 
-/**
- * Effects that happen by themselves: the first time `when` holds after a
- * command, they apply. A text that arrives the turn after a meeting, a notice
- * when a debt comes due, a scene that interrupts.
- */
-export type TriggerDef = {
-  id: string
-  when: Condition
-  effects: EffectRef[]
-  /** Fire once in the whole game (the default), or at most once a turn. */
-  once?: 'game' | 'turn'
-}
+export type { TriggerDef } from './features/triggers.ts'
 
 /**
  * Fire every trigger whose time has come, in the order the game lists them,
@@ -27,13 +20,5 @@ export function fireTriggers(
   game: Game,
   apply: (state: GameState, effects: Effect[]) => GameState,
 ): GameState {
-  let next = state
-  for (const trigger of game.triggers ?? []) {
-    const last = next.fired?.[trigger.id]
-    if (last !== undefined && (trigger.once !== 'turn' || last === next.turn)) continue
-    if (!holds(next, trigger.when, game)) continue
-    const effects = buildEffects(next, game, trigger.effects)
-    next = apply({ ...next, fired: { ...next.fired, [trigger.id]: next.turn } }, effects)
-  }
-  return next
+  return triggers.fireTriggers(state, game, apply, featureContext())
 }

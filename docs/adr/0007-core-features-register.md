@@ -1,6 +1,6 @@
 # 0007. Core features are modules that register, not plugins
 
-**Status:** Accepted, 2026-10-16. Step 1 implemented (settings, audio, media, scenes, stats); the rest of the core moves in step 2.
+**Status:** Accepted, 2026-10-16. Implemented: step 1 (settings, audio, media, scenes, stats) and step 2 (turns, variables, storylines, collections, notices, triggers, items, activities, inputs, entities, locks). The core keeps only `all`, `any`, `not`, the custom calls and `start`.
 
 ## Context
 
@@ -21,12 +21,19 @@ A core feature is a module in `packages/engine/src/features/`, declared with `de
 - its slice of the state, with each field's start and load defaults;
 - its kinds of condition (`holds`, `explain`, `references`), effect (`apply`, `references`) and command (`whyNot`, `run`, `effectsOf`, `ignoresLocks`, `references`), as tables keyed by kind;
 - its pack key, with a merge of its own, and the lists its problems name;
-- its checks, its piece of the view, and its steps after a command (`afterCommand`, and `fromScreen` for what the one screen of the new state shows);
+- its checks, the references it resolves (`resolve`, keyed like the reference: `item`, `stat`, `scene`), what it reads in prose markup, and its checks against a probe state;
+- what it fills into a loaded save (`fill`, by the name `MigrationTools.fill` uses, and `loaded` for what every load adds) and what a New Game+ carries (`carry`, by its key of `carryOver`);
+- what it refuses before the plugins' guards (`refuses`: a lock);
+- its piece of the view, and its steps after a command (`afterCommand`, and `fromScreen` for what the one screen of the new state shows);
 - its runner hooks, and `requires` for the features it needs.
 
-`features/registry.ts` imports the features and nothing else. It checks `requires` as it loads and merges the features' tables. The core's kinds that no feature owns yet are one provisional feature-like table in `core.ts`, which hands them to the registry's `withCore` for the complete tables (`KINDS`). Every shared switch is now a lookup in those tables, typed so that a kind with no entry fails to compile. A condition is looked up by its one kind key, and the checker reports a condition with none or several, an effect kind and a command type the engine doesn't have.
+`features/registry.ts` imports the features and nothing else. It checks `requires` as it loads and merges the features' tables. The core's own kinds are a table in `core.ts`: the `all`, `any` and `not` conditions, which hold by their parts, the custom condition, effect and command that are the plugins' seam, and `start`. It hands them to the registry's `withCore` for the complete tables (`KINDS`). Every shared switch is now a lookup in those tables, typed so that a kind with no entry fails to compile. A condition is looked up by its one kind key, and the checker reports a condition with none or several, an effect kind and a command type the engine doesn't have.
 
-Features are leaves. A feature never imports `reduce.ts`, `condition.ts`, `availability.ts`, `explain.ts`, `check.ts`, `loader.ts`, `intake.ts`, `screen.ts`, `view.ts`, `core.ts` or the registry, not even for a type, and nothing it loads at runtime loads those back. What it needs from the core (`holds`, `runEffects`, `endTurn`, `weighted`, `roll`, custom values, plugins' audio, a scene by id) comes in a `FeatureContext` argument, as a plugin's context does. So the registry can be built at load in any import order. `tests/contracts/features.test.ts` holds this.
+Features are leaves. A feature never imports `reduce.ts`, `condition.ts`, `availability.ts`, `explain.ts`, `check.ts`, `loader.ts`, `intake.ts`, `screen.ts`, `view.ts`, `core.ts` or the registry, not even for a type, and nothing it loads at runtime loads those back. What it needs from the core (`holds`, `runEffects`, `buildEffects`, `effectsOf`, the plugins' turn hooks, `weighted`, `roll`, custom values, plugins' audio, a scene by id) comes in a `FeatureContext` argument, as a plugin's context does. So the registry can be built at load in any import order. `tests/contracts/features.test.ts` holds this.
+
+The order of `FEATURES` is behaviour. The steps after a command run in it: the game's triggers fire first, then a new showing is counted and its sounds keyed, then the plugins' `after` hooks, then a level gained is noticed. So triggers are a feature like the rest, registered before scenes and audio, and `tests/contracts/features.test.ts` holds that order. The content checker runs each feature's checks in this order too, so its problems come feature by feature.
+
+What stays in the core: the conditions that hold by their parts, the custom calls, `start`, the reference resolver's recursion (`within`, `when`, `effects`, `command`) and the generic references (prose, variants, files, plugin calls and entries), `game.rules.commands` overriding a command's entry, `STEPS`, and the rendering of one screen (`screen.ts`), which still reads locks, stats for prices, media and audio.
 
 The public types are built from the pieces: `Condition`, `Effect` and `Command` from the core's kind maps and the features', and `GameState`, `Game`, `Pack` and `View` as a base plus each feature's piece. `tests/contracts/types.test.ts` holds each to a frozen copy of its old shape, both ways.
 

@@ -6,7 +6,7 @@
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
 import { tier } from '../tier.ts'
-import { entityOf, parseRef, writeEntity } from '../entities.ts'
+import { entityOf, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
@@ -156,6 +156,7 @@ export type StatsShape = {
     statsById: Record<string, StatView>
   }
   lists: 'stat'
+  fill: 'stats'
 }
 
 export function statDef(game: Game, id: string): StatDef | undefined {
@@ -366,12 +367,6 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
   return next
 }
 
-/** The kind an `of` names, when it names one rather than `'$'`. */
-function ofKind(ref: string | undefined): { kind: string }[] {
-  const parts = ref === undefined ? undefined : parseRef(ref)
-  return parts ? [{ kind: parts.kind }] : []
-}
-
 /** What a `stat` or `setStat` effect leaves: held to the stat's range, on the player or an entity, through `rules.onStat`. */
 function writeStat(state: GameState, game: Game, key: StatKey, of: string | undefined, to: (was: number) => number, cx: FeatureContext): GameState {
   // A derived stat is worked out, never written: the loader reports the effect.
@@ -464,6 +459,45 @@ export const stats = defineFeature<StatsShape>({
     },
   },
   lists: ['stat'],
+  // A kept stat the save lacks, the player's or an entity's, starts at its start.
+  fill: {
+    kind: 'stats',
+    run: (state, game) => {
+      let next = state
+      const kept = (game.stats ?? []).filter((stat) => stat.derive === undefined)
+      const lacking = kept.filter((stat) => !stat.of && next.stats?.[stat.id] === undefined)
+      if (lacking.length) next = { ...next, stats: { ...next.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } }
+      for (const [kind, entities] of Object.entries(next.entities ?? {})) {
+        const owned = kept.filter((stat) => stat.of === kind)
+        for (const [id, entity] of Object.entries(entities)) {
+          const missing = owned.filter((stat) => entity.stats?.[stat.id] === undefined)
+          if (!missing.length) continue
+          const stats = { ...entity.stats, ...Object.fromEntries(missing.map((stat) => [stat.id, stat.start ?? 0])) }
+          next = writeEntity(next, `${kind}:${id}`, { ...entity, stats })
+        }
+      }
+      return next
+    },
+  },
+  // A New Game+ carries the player's stats `carryOver` lists, held to the new game's range.
+  carry: {
+    key: 'stats',
+    run: (fresh, game, from, _options, cx) => {
+      const stats = { ...fresh.stats }
+      for (const id of game.carryOver?.stats ?? []) {
+        if (typeof from.stats?.[id] === 'number') stats[id] = clampStat(fresh, game, id, from.stats[id], cx)
+      }
+      return { stats }
+    },
+    check: (game, tools) => {
+      const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
+      for (const id of game.carryOver?.stats ?? []) {
+        const def = statOf.get(id)
+        if (!def) tools.problem(undefined, 'carryOver', `unknown stat "${id}"`)
+        else if (def.of !== undefined) tools.problem(undefined, 'carryOver', `stat "${id}" belongs to ${def.of}, not the player`)
+      }
+    },
+  },
   check: (game, tools) => {
     tools.twice('stat', 'stats', (game.stats ?? []).map((entry) => entry.id))
     const kindIds = new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.kinds ?? [])].map((kind) => kind.id))
@@ -476,6 +510,24 @@ export const stats = defineFeature<StatsShape>({
     // Derived stats and levels: formulas, cycles, thresholds.
     for (const { where, what } of statProblems(game)) tools.problem({ list: 'stat', id: where.slice('stat '.length) }, where, what)
   },
+  resolve: (game) => {
+    const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
+    return {
+      stat: (ref) => {
+        const def = statOf.get(ref.stat)
+        if ('starts' in ref) {
+          if (def?.of !== ref.starts) return [`no ${ref.starts} stat named "${ref.stat}"`]
+          return def.derive !== undefined ? [`stat "${ref.stat}" is derived: it is worked out, never written`] : []
+        }
+        if (!def) return [`unknown stat "${ref.stat}"`]
+        const out: string[] = []
+        const owner = statOwnerProblem(def.of, ref.stat, ref.of)
+        if (owner) out.push(owner)
+        if (ref.writes && def.derive !== undefined) out.push(`stat "${ref.stat}" is derived: it is worked out, never written`)
+        return out
+      },
+    }
+  },
   view: (state, game, _shown, cx) => ({
     // The listed stats the player can see right now, in the order the game declared them.
     stats: (game.stats ?? [])
@@ -484,5 +536,5 @@ export const stats = defineFeature<StatsShape>({
     statsById: Object.fromEntries((game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, statView(state, game, stat, undefined, cx)])),
   }),
   // After the plugins' `after` hooks, so a level a hook's reward reached is noticed too.
-  afterCommand: { at: 'hooks', run: levelUps },
+  afterCommand: { at: 'afterPlugins', run: levelUps },
 })

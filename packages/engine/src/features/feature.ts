@@ -1,19 +1,23 @@
 /**
  * What a core feature declares, and what the core lends it.
  *
- * A core feature (settings, audio, media, scenes, stats) is a module that
- * declares everything it adds in one place: its slice of the state, its kinds
- * of condition, effect and command, its pack key, its checks, its piece of the
- * view and its steps after a command. `registry.ts` merges them into the
- * tables the core reads, so the core's shared code names no feature.
+ * A core feature (scenes, stats, items, entities, triggers and the rest; see
+ * `FEATURES` in `registry.ts`) is a module that declares everything it adds in
+ * one place: its slice of the state, its kinds of condition, effect and
+ * command, its pack key, its checks and the references it resolves, its
+ * piece of the view, its steps after a command, and what it fills and
+ * carries. `registry.ts` merges them into the tables the core reads, so the
+ * core's shared code names no feature.
  *
- * A feature is a leaf. It imports types, and at runtime only modules that
- * import nothing back (strings, entities, notices, storylines, the scene
- * body). What it needs from the core, such as `holds` or `runEffects`, comes
- * in a `FeatureContext` argument, as a plugin's context does. That keeps the
- * registry free of import cycles. Core features aren't plugins: see ADR 0007.
+ * A feature is a leaf. It imports types, other features, and at runtime only
+ * modules that import nothing back (strings, entities, notices, storylines,
+ * collections, context, tier, the scene body). What it needs from the core,
+ * such as `holds` or `runEffects`, comes in a `FeatureContext` argument, as a
+ * plugin's context does. That keeps the registry free of import cycles. Core
+ * features aren't plugins: see ADR 0007.
  */
-import type { Game, Scene, SceneView } from '../game.ts'
+import type { EffectRef } from '../custom.ts'
+import type { CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
 import type { Command, Condition, Effect, GameState, Range, StartOptions } from '../types.ts'
@@ -24,8 +28,12 @@ export type FeatureContext = {
   holds: (state: GameState, condition: Condition | undefined, game?: Game) => boolean
   /** Apply effects; while `ending` is true, a `turn` effect does nothing. */
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
-  /** End the turn: the counter moves on and the game's and plugins' turn rules run. */
-  endTurn: (state: GameState, game: Game) => GameState
+  /** Every plugin's `turn` hook, as a turn ends. */
+  turnHooks: (state: GameState, game: Game) => GameState
+  /** What a command would apply, worked out before it runs, as `effectsOf` says. */
+  effectsOf: (state: GameState, game: Game, command: Command) => Effect[]
+  /** Effects as content writes them (custom calls among them) as the effects they stand for, read against `state`. */
+  buildEffects: (state: GameState, game: Game, refs: readonly EffectRef[]) => Effect[]
   /** One of `items` drawn by weight, seeded by `parts`; undefined when there are none. See `weighted`. */
   weighted: <T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]) => T | undefined
   /** A whole number from 0 to `max - 1`, seeded by `parts`. See `roll`. */
@@ -91,6 +99,8 @@ export type CommandEntry<C> = {
   effectsOf?: (state: GameState, command: C, game: Game, cx: CommandContext) => Effect[]
   /** Whether no lock or plugin guard stops it. False if left out. */
   ignoresLocks?: (command: C, game: Game) => boolean
+  /** The stats it spends, by id, for its button's price. None if left out. */
+  spends?: (command: C, game: Game) => Record<string, number> | undefined
   references: (command: C) => Reference[]
 }
 
@@ -127,8 +137,27 @@ export type PackMerge<G, P> = {
   from: (list: string, id: string | undefined) => string | undefined
 }
 
-/** Where an after-command step runs: straight after the game's triggers, or after the plugins' `after` hooks. */
-export type AfterSlot = 'triggers' | 'hooks'
+/** Where an after-command step runs: before the plugins' `after` hooks, or after them. */
+export type AfterSlot = 'beforePlugins' | 'afterPlugins'
+
+/** A state to render every scene against, for the content checker: `checkGame`'s `probes`. */
+export type FeatureProbe = { name: string; state: GameState }
+
+/** What the content checker lends a feature's resolvers. */
+export type ResolveTools = {
+  /** What these references name that the game doesn't have, worded for `where`: how a reference that holds more is looked inside. */
+  resolve: (refs: readonly Reference[], where: string) => string[]
+  /** Record a file the game names, as the page asks for it. */
+  file: (where: string, kind: 'picture' | 'video' | 'audio', path: string | null) => void
+}
+
+/** The references that have `K` as a key. */
+export type ReferenceOf<K extends string> = Extract<Reference, { [P in K]: unknown }>
+
+type ReferenceKey = Reference extends infer R ? (R extends unknown ? keyof R & string : never) : never
+
+/** How a feature resolves the references it answers for, by the key that tells each apart: what the game lacks, worded as a problem. */
+export type Resolvers = { [K in ReferenceKey]?: (ref: ReferenceOf<K>, where: string) => string[] }
 
 /** The kinds of things a feature declares, as types. Each key is optional. */
 export type FeatureShape = {
@@ -148,6 +177,8 @@ export type FeatureShape = {
   view?: object
   /** Its lists, as problems name them: `'setting'`. */
   lists?: string
+  /** What `MigrationTools.fill` fills for it, by name: `'settings'`. */
+  fill?: string
 }
 
 type Part<T extends FeatureShape, K extends keyof FeatureShape> = T[K] extends object ? T[K] : {}
@@ -167,12 +198,43 @@ export type FeatureSpec<T extends FeatureShape> = {
   commands?: { [K in keyof Part<T, 'commands'>]: CommandEntry<Part<T, 'commands'>[K]> }
   /** A new game's state once every field has its start value: what can only be worked out from the whole state. */
   started?: (state: GameState, game: Game, cx: FeatureContext) => GameState
+  /**
+   * Its key of `game.carryOver`, what a New Game+ takes from it, and what is
+   * wrong with what it lists. `run` reads `from`, the state the game before
+   * ended on; `fresh` is the new game's state before anything is carried, and
+   * what comes back is laid over it.
+   */
+  carry?: {
+    key: keyof CarryOver
+    run: (fresh: GameState, game: Game, from: GameState, options: StartOptions, cx: FeatureContext) => Partial<GameState>
+    check?: (game: Game, tools: FeatureCheckTools) => void
+  }
+  /**
+   * What the game declares and a loaded save lacks, filled in. `kind` names it
+   * for `MigrationTools.fill`; `unversioned` fills it on every load of a game
+   * that declares no `version` too.
+   */
+  fill?: { kind: T['fill'] & string; unversioned?: boolean; run: (state: GameState, game: Game) => GameState }
+  /** What every load adds that the game declares and the save lacks, whatever the game's version. */
+  loaded?: (state: GameState, game: Game) => GameState
   /** Its pack key: how a later pack's entries go over an earlier one's. */
   pack?: { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<Part<T, 'game'>, Part<T, 'pack'>> }
   /** The lists its problems name, which `pack.merge` answers for. */
   lists?: readonly (T['lists'] & string)[]
   /** Its own checks on the game's content. */
-  check?: (game: Game, tools: FeatureCheckTools) => void
+  check?: (game: Game, tools: FeatureCheckTools, cx: FeatureContext) => void
+  /** The references it answers for, resolved against one game. Called once per check. */
+  resolve?: (game: Game, tools: ResolveTools) => Resolvers
+  /** What is wrong with prose markup it reads, such as a sound or a pool it names. It records the files the markup names. */
+  markup?: (game: Game, text: string, where: string, tools: ResolveTools) => string[]
+  /** Its checks against one probe state. */
+  probe?: (game: Game, probe: FeatureProbe, tools: FeatureCheckTools, cx: FeatureContext) => void
+  /**
+   * Why no command can be run now, asked before the plugins' guards and never
+   * of a command that ignores locks. `effects` works the command's effects
+   * out when first asked.
+   */
+  refuses?: (state: GameState, command: Command, game: Game, effects: () => readonly Effect[], cx: FeatureContext) => string | undefined
   /** Its piece of the view. */
   view?: (state: GameState, game: Game, shown: ShownScreen, cx: FeatureContext) => Part<T, 'view'>
   /** A step after every command that took, before the screen is drawn, in the features' declared order. */
@@ -247,4 +309,31 @@ export function wanted(range: Range): string {
 /** A value read as a number: a variable that is not a number counts as 0. */
 export function counted(value: unknown): number {
   return typeof value === 'number' ? value : 0
+}
+
+/**
+ * A pack key merged by id: a later pack's entry replaces an earlier one's in
+ * its place, and a new one goes at the end. `base` reads what the base game
+ * declares itself, when the base can declare any. `key` is the id it merges
+ * by: `id` if left out.
+ */
+export function mergedById<G, P, T>(
+  read: { base?: (game: G) => readonly T[] | undefined; pack: (pack: P) => readonly T[] | undefined },
+  write: (game: Game, entries: T[]) => void,
+  key: (entry: T) => string = (entry) => (entry as { id: string }).id,
+): { merge: () => PackMerge<G, P> } {
+  return {
+    merge: () => {
+      const merged = new Map<string, { value: T; from: string }>()
+      const add = (list: readonly T[] | undefined, from: string) => {
+        for (const entry of list ?? []) merged.set(key(entry), { value: entry, from })
+      }
+      return {
+        base: (game) => add(read.base?.(game), 'base'),
+        add: (pack, from) => add(read.pack(pack), from),
+        finish: (game) => write(game, [...merged.values()].map((entry) => entry.value)),
+        from: (_list, id) => (id === undefined ? undefined : merged.get(id)?.from),
+      }
+    },
+  }
 }

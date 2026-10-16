@@ -18,7 +18,7 @@ You bring the story, and the screen if you want your own. The engine has no UI. 
 
 ## How it differs from other tools
 
-Twine and Ink are built around branching passages. The story is a graph of text, and the player walks it. If your story is a branching narrative and nothing more, they're the faster route. IFLoom handles that too (see [Your first story](/docs/guide/first-story)), but it's built for games that also keep state, such as numbers that change and things the game has several of. With plugins it adds a clock, a map and characters. Its conditions and effects are plain data, so the engine can check every scene before anyone plays it.
+Twine and Ink are built around branching passages. The story is a graph of text, and the player walks it. If your story is a branching narrative and nothing more, they're the faster route. IFLoom handles that too (see [Your first story](/docs/guide/first-story)), but it's built for games that also keep state, such as numbers that change and things the game has several of. With plugins it adds a clock, a map and characters. Its conditions and effects are plain data, so the engine can check every scene before anyone plays it. If you already know SugarCube or Harlowe, [Coming from SugarCube or Harlowe](/docs/guide/coming-from-twine) maps what you know to IFLoom.
 
 Ren'Py and other visual-novel engines give you a complete presentation layer (sprites, backgrounds, a text box, menus) and a script that drives it. IFLoom's engine is game logic with no DOM. The React UI gives you a ready-made screen with the scene, its choices, the stats, saves and menus, and it can show a picture for a scene. It doesn't do sprites, transitions or a visual-novel text box. If you want those, you draw them yourself from the view.
 

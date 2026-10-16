@@ -23,6 +23,7 @@
     "@ifloom/plugin-devices": "0.0.0",
     "@ifloom/plugin-effects": "0.0.0",
     "@ifloom/plugin-feed": "0.0.0",
+    "@ifloom/plugin-jobs": "0.0.0",
     "@ifloom/plugin-places": "0.0.0",
     "@ifloom/plugin-quests": "0.0.0",
     "@ifloom/plugin-shop": "0.0.0",

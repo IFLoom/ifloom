@@ -40,6 +40,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `@ifloom/plugin-achievements`: achievements earned the first time a condition holds or by an effect, secret ones shown as `???` until earned, and progress counts such as 4 of 10 read from a stat, a formula, a variable or a custom value. Each one earned raises a notice, and everything earned in any save is kept in the player's profile.
 - `@ifloom/plugin-shop`: vendors that sell items for prices in any spendable stat, with limited stock that restocks each turn or day, selling back at a fraction of the price, and a few goods marked down each day, drawn from the save's seed. A vendor keeps the calendar's hours and stands at a place on the map when the game has those plugins. Its `buy` command works on any button, with the price shown.
 - `spends` on a plugin's command: the stats it spends, so a button that sends it shows its price as an activity's does.
+- `@ifloom/plugin-jobs`: jobs with hiring requirements, shifts that cost stats and time and pay a wage in a spendable stat, promotion ladders with better pay, and getting fired for missed shifts or a condition such as a low performance stat. Shifts fall on the calendar's weekdays and periods and are worked at a place on the map when the game has those plugins.
 - These docs, with `llms.txt` and `llms-full.txt` for AI agents, and an `AGENTS.md` in every new game.
 
 ### Changed

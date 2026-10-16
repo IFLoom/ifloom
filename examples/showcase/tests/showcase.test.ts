@@ -7,6 +7,7 @@ import { apply, checkGame, holds, startingState, statValue, view, type Command, 
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { EffectsView } from '@ifloom/plugin-effects'
+import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
@@ -201,6 +202,25 @@ describe('Small Town', () => {
     expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
     // Closed in the evening, with the café.
     expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).refused).toBe('Closed.')
+  })
+
+  it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    expect(apply(state, game, applyFor('weekend')).refused).toBe('Ava doesn’t know you well enough yet.')
+    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    state = { ...state, entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } } }
+    state = run(state, applyFor('weekend'))
+    const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
+    expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
+    expect(apply(state, game, work('weekend')).refused).toBe('No shift today.')
+    // Saturday morning: a shift takes the morning and 25 energy, and pays 12 coins.
+    state = on({ ...state, stats: { ...state.stats, energy: 100 } }, 5, 'morning')
+    const coins = state.stats.coins
+    state = run(state, work('weekend'))
+    expect(state.stats).toMatchObject({ coins: coins + 12, energy: 75 })
+    expect(clock.read(state, game)).toEqual({ day: 5, period: 'afternoon' })
+    expect(job()).toMatchObject({ shifts: 1, nextShift: { day: 12, inDays: 7 } })
   })
 
   it('keeps the phone in the pocket at work', () => {

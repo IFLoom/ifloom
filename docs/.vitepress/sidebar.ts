@@ -93,6 +93,7 @@ export const sidebar: DefaultTheme.SidebarMulti = {
         { text: 'Effects', link: '/plugins/effects' },
         { text: 'Achievements', link: '/plugins/achievements' },
         { text: 'Shop', link: '/plugins/shop' },
+        { text: 'Jobs', link: '/plugins/jobs' },
         { text: 'Wardrobe', link: '/plugins/wardrobe' },
         { text: 'Messages', link: '/plugins/messages' },
         { text: 'Feed', link: '/plugins/feed' },

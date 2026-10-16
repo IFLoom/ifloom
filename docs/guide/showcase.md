@@ -224,6 +224,10 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 `town.ts`, `data.shop`, the café's actions, and `shop()` in `src/game.ts`. The counter is a [shop](/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins and flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`). Each day one of the two is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Buy a sandwich for later" and "Buy a flapjack" buttons send `buy('counter', 'sandwich')` and `buy('counter', 'flapjack')`, so they show today's price and grey out with `Sold out.` The test `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` plays it.
 
+### A job at the café
+
+`town.ts`, `data.jobs`, the café's actions, and `jobs()` in `src/game.ts`. Once Ava's friendship is 10 or more, "Ask Ava about weekend work" sends `applyFor('weekend')` and the player is taken on as weekend help, a [job](/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
+
 ### Achievements
 
 `town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.

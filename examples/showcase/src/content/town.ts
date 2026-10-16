@@ -8,6 +8,7 @@ import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifl
 import { questActive } from '@ifloom/plugin-quests'
 import { applyEffect, effectActive } from '@ifloom/plugin-effects'
 import { buy } from '@ifloom/plugin-shop'
+import { applyFor, work } from '@ifloom/plugin-jobs'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
@@ -42,6 +43,9 @@ const locations: LocationDef[] = [
       // The counter is the shop plugin's vendor: its price, stock and today's offer show on the button.
       { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'sandwich') },
       { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'flapjack') },
+      // Saturday mornings behind the counter, once Ava knows you: the jobs plugin's job.
+      { id: 'ask-work', label: 'Ask Ava about weekend work', command: applyFor('weekend') },
+      { id: 'shift', label: 'Work the Saturday shift', command: work('weekend') },
       // Something small happens while you sit: one of the café's storylets, drawn at random.
       { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
     ],
@@ -393,6 +397,27 @@ export const town: Pack = {
               done: { all: [{ since: 'ava.hi', gte: 3 }, { seen: 'ava.river' }] },
             },
           ],
+        },
+      ],
+    },
+    jobs: {
+      jobs: [
+        {
+          id: 'weekend',
+          title: 'Weekend help',
+          description: 'Saturday mornings behind the counter at the Corner Café.',
+          requires: [{ reason: 'Ava doesn’t know you well enough yet.', when: { stat: 'friendship', of: person('ava'), gte: 10 } }],
+          at: ['cafe'],
+          // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
+          days: [5],
+          hours: ['morning'],
+          shift: { cost: { energy: 25 }, passes: 1 },
+          ranks: [
+            { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
+            { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+          ],
+          // Miss two Saturdays and Ava finds someone else.
+          fire: { missed: 2 },
         },
       ],
     },

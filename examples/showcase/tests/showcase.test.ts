@@ -3,8 +3,9 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, holds, startingState, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, checkGame, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
 import type { DevicesView } from '@ifloom/plugin-devices'
+import type { EffectsView } from '@ifloom/plugin-effects'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
@@ -157,6 +158,20 @@ describe('Small Town', () => {
     expect(state.minigame).toBeNull()
     expect(state.sceneId).toBe('park.arrows-lost')
     expect(state.flags['minigame:arrows']).toBe(2)
+  })
+
+  it('leaves you caffeinated after a coffee, for the rest of the day and the next', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('coffee'), go('high-street'), go('office'), act('work'))
+    // 80 kept, plus 15 for the coffee, less 30 for the shift: 65, and 10 more on top while it lasts.
+    expect(state.stats.energy).toBe(65)
+    expect(statValue(state, game, 'energy')).toBe(75)
+    const effects = () => (view(state, game).plugins.effects as EffectsView).active
+    expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', label: 'Caffeinated', turnsLeft: 2 })])
+    state = run(on(state, 1, 'night'), sleep())
+    expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])
+    state = run(on(state, 2, 'night'), sleep())
+    expect(effects()).toEqual([])
   })
 
   it('keeps the phone in the pocket at work', () => {

@@ -216,6 +216,10 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 `src/game.ts` declares the [wardrobe](/plugins/wardrobe)'s two slots, `coat` and `neck`, and starts the player in the raincoat. `town.ts` has the clothes in `data.wardrobe`, and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
+### Timed effects
+
+`town.ts`, the `coffee` activity and `data.effects`, and `effects()` in `src/game.ts`. A coffee applies the [effects plugin](/plugins/effects)'s `caffeinated` with `applyEffect('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. While it lasts, the café has an extra line, `{ text: 'place.cafe/caffeinated', when: effectActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+
 ### Triggers and notices
 
 `town.ts`, `triggers`. `welcome` [fires](/reference/triggers) the first time the player is on the high street. It raises a [notice](/reference/notices), a note under the door, and files the note in the `notes` collection.

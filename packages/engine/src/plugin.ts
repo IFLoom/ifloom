@@ -119,6 +119,14 @@ export type Plugin<S = any> = {
    * loader lets it pass, and the condition is false and the effect does nothing.
    */
   cooperates?: string[]
+  /**
+   * Changes to what the player's stats read right now, worked out from the
+   * plugin's state: a timed boost, say. Nothing is written into the state;
+   * every reading of the stat (conditions, derived stats, costs, the view)
+   * sees the changed value, and `stat` and `setStat` effects still write the
+   * kept value underneath. Must not read stats itself, or it reads itself.
+   */
+  statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
   /** Words and numbers prose can print with <code v-pre>{{v:id/name}}</code>. */
   values?: Record<string, (state: GameState, context: PluginContext<S>) => string | number>
   hooks?: {
@@ -199,6 +207,19 @@ export type Plugin<S = any> = {
    * belong in `references.calls` instead. Asked of every call the checker finds.
    */
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+}
+
+/**
+ * A change to what one of the player's stats reads, from a plugin's
+ * `statModifiers`. A stat's adds are summed and its multipliers multiplied
+ * together, and it reads `(value + adds) × multipliers`, held to its range.
+ */
+export type StatModifier = {
+  stat: string
+  /** Added to the value. 0 if left out. */
+  add?: number
+  /** What the value, with the adds, is multiplied by. 1 if left out. */
+  multiply?: number
 }
 
 /** Who is speaking in a scene, as the screen draws them. */
@@ -428,6 +449,15 @@ export function pluginGuards(game: Game, state: GameState, asked: Asked): Refusa
   for (const plugin of game.plugins ?? []) {
     const refusal = plugin.guard?.(state, asked, pluginContext(plugin, state, game))
     if (refusal !== undefined) out.push(refusal)
+  }
+  return out
+}
+
+/** Every plugin's stat modifiers for this state, in plugin order. */
+export function pluginStatModifiers(game: Game, state: GameState): StatModifier[] {
+  const out: StatModifier[] = []
+  for (const plugin of game.plugins ?? []) {
+    if (plugin.statModifiers) out.push(...(plugin.statModifiers(state, pluginContext(plugin, state, game)) ?? []))
   }
   return out
 }

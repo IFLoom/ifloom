@@ -64,6 +64,7 @@ export type {
   Refusal,
   SpeakerView,
   StageDef,
+  StatModifier,
 } from './plugin.ts'
 export { definePlugin, pluginById, pluginQuery, pluginSpeaker } from './plugin.ts'
 

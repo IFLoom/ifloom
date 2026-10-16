@@ -10,6 +10,7 @@ export const prose: Record<string, string> = {
   'place.cafe': 'Six tables, one of them wobbly. The coffee machine sighs like it has been working since dawn, which it has.',
   'place.cafe/ava': 'Ava is behind the counter, flour to the elbows, and nods you in.',
   'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
+  'place.cafe/caffeinated': 'Your knee won’t stop jiggling under the table. The coffee is working.',
   'place.park': 'The river is slow and brown and full of ducks with opinions.',
   'place.office': 'Strip lights, a kettle, a stack of forms that never gets shorter.',
 

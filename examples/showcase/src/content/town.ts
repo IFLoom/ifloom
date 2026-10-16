@@ -6,6 +6,7 @@
  */
 import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
+import { applyEffect, effectActive } from '@ifloom/plugin-effects'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
@@ -51,6 +52,7 @@ const locations: LocationDef[] = [
       { text: 'place.cafe' },
       { text: 'place.cafe/ava', when: here('ava') },
       { text: 'place.cafe/raincoat', when: wearing('raincoat') },
+      { text: 'place.cafe/caffeinated', when: effectActive('caffeinated') },
     ],
   },
   {
@@ -198,6 +200,8 @@ export const town: Pack = {
       effects: [
         { kind: 'stat', key: 'energy', by: 15 },
         { kind: 'flag', key: 'hadCoffee', value: true },
+        // And a lift that lasts till tomorrow is out: 10 more energy, never written.
+        applyEffect('caffeinated'),
       ],
     },
     { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
@@ -382,6 +386,9 @@ export const town: Pack = {
           ],
         },
       ],
+    },
+    effects: {
+      effects: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },
     wardrobe: { clothes: [{ id: 'raincoat', slot: 'coat' }, { id: 'scarf', slot: 'neck' }] },
     messages: {

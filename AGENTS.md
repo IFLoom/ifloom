@@ -15,6 +15,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-places` (`@ifloom/plugin-places`) | Locations with exits and things to do, travel between them, and where the player is. Locations are content: `data.places.locations`. |
 | `packages/plugin-cast` (`@ifloom/plugin-cast`) | Characters with schedules, who is in the room, talking and calling; each character an entity, so relationships are stats the game declares. Characters are content: `data.cast.characters`. |
 | `packages/plugin-quests` (`@ifloom/plugin-quests`) | Quests: stages done by conditions, progress that is never taken back, tracking and news. |
+| `packages/plugin-effects` (`@ifloom/plugin-effects`) | Timed effects that last some turns: stat modifiers read through the engine's `statModifiers`, never written, and effects as one starts, each turn and as it ends. Effects are content: `data.effects.effects`. |
 | `packages/plugin-wardrobe` (`@ifloom/plugin-wardrobe`) | Slots the game declares, clothes that go in them, and what the player has on. |
 | `packages/plugin-messages` (`@ifloom/plugin-messages`) | Channels and threads of messages that arrive when the story allows; replies are choices. |
 | `packages/plugin-feed` (`@ifloom/plugin-feed`) | Feeds of posts that appear when the story allows, the player's own posts, likes and comments. |

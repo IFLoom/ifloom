@@ -195,6 +195,8 @@ Six tables, one of them wobbly. The coffee machine sighs like it has been workin
 
 Ava is behind the counter, flour to the elbows, and nods you in.
 
+Your knee won’t stop jiggling under the table. The coffee is working.
+
 === place:flat @ moving-day
 Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. The cat has claimed the warm spot on the sill.
 

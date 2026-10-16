@@ -89,6 +89,7 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-places` | Locations with exits, and travel between them. |
 | `@ifloom/plugin-cast` | Characters with schedules, conversations, calls and relationship stats. |
 | `@ifloom/plugin-quests` | A quest log with progress and hints. |
+| `@ifloom/plugin-effects` | Timed effects that change stats for a few turns. |
 | `@ifloom/plugin-wardrobe` | Clothing slots and what the player is wearing. |
 | `@ifloom/plugin-devices` | Phones, laptops and other in-game devices with their own apps. |
 | `@ifloom/plugin-messages` | Message threads whose replies are choices. |

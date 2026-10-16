@@ -159,7 +159,7 @@ import {
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
-  type PluginReferences, type ContentReferences,
+  type PluginReferences, type ContentReferences, type StatModifier,
 } from '@ifloom/engine'
 
 type Plugin<S = any> = {
@@ -173,6 +173,7 @@ type Plugin<S = any> = {
   strings?: Record<string, string>
   queries?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => unknown>
   cooperates?: string[]
+  statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
   values?: Record<string, (state: GameState, context: PluginContext<S>) => string | number>
   hooks?: {
     turn?: (state: GameState, context: PluginContext<S>) => GameState
@@ -211,6 +212,7 @@ type Plugin<S = any> = {
 | `strings` | The plugin's player-facing lines in English, by name without the prefix, such as `{ notFull: 'Your card is not full yet.' }`. The plugin says one with [`say(game, 'loyalty/notFull')`](/reference/strings#say), and a game rewords it as `strings: { 'loyalty/notFull': '…' }`. See [Plugins' strings](/reference/strings#plugins-strings). |
 | `queries` | Answers other plugins can ask for by name, with their context's `query`. See [Queries](#queries). |
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
+| `statModifiers` | Changes to what the player's stats read right now, such as a timed boost to energy. Nothing is written into the state. See [Stat modifiers](#stat-modifiers). |
 | `values` | Words and numbers that prose prints with <code v-pre>{{v:loyalty/stamps}}</code>. |
 | `hooks` | Code that runs at the end of each turn and after every command. See [Hooks](#hooks). |
 | `guard` | Whether a command may go ahead, given the effects it would apply. Returns a refusal, a warning or `undefined`. See [Guards](#guards). |
@@ -532,6 +534,46 @@ A UI reads the namespace from the runner, as in `await runner.profile?.get('endi
 **Gotchas.**
 - Only a runner with a `profile` calls `onCommand`. [`apply`](/reference/commands#apply), `dispatch` and [`replay`](/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
 - The profile isn't in the context, so a plugin's conditions, effects and view can't read it. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
+
+## Stat modifiers
+
+A plugin can change what the player's stats read without writing to them. Use it for a boost that wears off, such as a coffee that adds 10 energy for a couple of turns. The plugin keeps what's active in its own state, and `statModifiers` turns that into a list of changes:
+
+```ts
+import { definePlugin } from '@ifloom/engine'
+
+// Reading glasses: worn, they add 4 to intelligence.
+export const glasses = definePlugin<{ on: boolean }>({
+  id: 'glasses',
+  version: 1,
+  start: () => ({ on: false }),
+  effects: { wear: (_state, _args, { set }) => set({ on: true }) },
+  statModifiers: (_state, { slice }) => (slice.on ? [{ stat: 'intelligence', add: 4 }] : undefined),
+})
+```
+
+### StatModifier
+
+```ts
+type StatModifier = { stat: string; add?: number; multiply?: number }
+```
+
+| Field | What it is |
+|---|---|
+| `stat` | The id of one of the player's stats. |
+| `add` | Added to the value. 0 if left out. |
+| `multiply` | What the value is multiplied by, after the adds. 1 if left out. |
+
+Every plugin's modifiers are gathered, in the order `game.plugins` lists them. For each stat, the adds are summed, then the total is multiplied by every multiplier, then the result is held to the stat's range. So with a kept value of 5, `{ add: 3 }`, `{ multiply: 2 }` and `{ add: 2, multiply: 1.5 }` read as `(5 + 3 + 2) × 2 × 1.5 = 30`.
+
+Everything that reads a stat sees the changed value: [`statValue`](/reference/stats#statvalue), the `stat`, `tier` and `level` conditions, a [derived stat](/reference/stats#derived-stats)'s formula, an activity's cost check and `view.stats`. A derived stat reads its inputs changed, then has its own modifiers applied.
+
+**Gotchas.**
+- Modifiers are never written. A `stat` or `setStat` effect changes the kept value in `state.stats`, underneath. When the plugin stops returning a modifier, the stat reads its kept value again.
+- An activity's cost is checked against the changed value but paid from the kept one. With 5 energy kept and a boost of 10, a cost of 12 is allowed, and the kept value goes to 0 (held to the range). The boost still adds 10 on top while it lasts.
+- Only the player's stats. An entity's stats, read with `of`, are never changed.
+- `statModifiers` must not read stats itself, with `statValue` or a `stat` condition, because that read would ask for the modifiers again. Work them out from the plugin's own state.
+- A [level](/reference/stats#levels) reached through a modifier raises the level's notice, as one reached through an effect does.
 
 ## Guards, prices and labels
 

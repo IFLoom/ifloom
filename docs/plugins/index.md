@@ -10,6 +10,7 @@ A linear novel might use none of them. A life sim like the [showcase](/guide/sho
 | [Places](/plugins/places) | `@ifloom/plugin-places` | Locations with exits and things to do in each, walking between them, and where the player is. Locations are content, so a mod can add a room. |
 | [Cast](/plugins/cast) | `@ifloom/plugin-cast` | The game's people. Characters keep their own hours, and you can see who is in the room, talk to them and call them. What the game keeps about each one, such as a friendship, is a stat on them. Characters are content, so a mod can add someone. |
 | [Quests](/plugins/quests) | `@ifloom/plugin-quests` | What the player is doing, how far they've got, and a hint for what comes next. |
+| [Effects](/plugins/effects) | `@ifloom/plugin-effects` | Timed effects: a boost or an ailment that lasts some turns, changes what the player's stats read while it lasts, and can run effects as it starts, each turn and as it ends. |
 | [Wardrobe](/plugins/wardrobe) | `@ifloom/plugin-wardrobe` | Slots the game declares, clothes that go in them, and what the player has on. |
 | [Messages](/plugins/messages) | `@ifloom/plugin-messages` | Messages that arrive when the story allows, in channels and threads, with replies that work like choices. |
 | [Feed](/plugins/feed) | `@ifloom/plugin-feed` | Timelines of other people's posts, the player's own posts, and the likes and comments they get. |

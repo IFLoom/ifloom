@@ -7,6 +7,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
+import { effects } from '@ifloom/plugin-effects'
 import { quests } from '@ifloom/plugin-quests'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { phone } from '@ifloom/phone'
@@ -59,6 +60,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       cast(),
       ...kit.plugins,
       quests(),
+      effects(),
       wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
       ...(withDebug ? [debug()] : []),
     ],
@@ -93,8 +95,8 @@ export const start = (game: Game) => startingState(game)
 
 /**
  * The states `ifloom snapshot` renders every scene and place in: moving day,
- * a first morning, and a week in with Ava as a friend, the cat named and the
- * raincoat off.
+ * a first morning, and a week in with Ava as a friend, the cat named, the
+ * raincoat off and a coffee inside you.
  */
 export function probes(game: Game) {
   const first = clock.write({ ...start(game), phase: 'open', sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
@@ -110,7 +112,12 @@ export function probes(game: Game) {
         flags: { catName: 'Biscuit' },
         entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
         stats: { ...first.stats, charm: 5 },
-        plugins: { ...first.plugins, wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } } },
+        plugins: {
+          ...first.plugins,
+          wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } },
+          // Still buzzing from the morning's coffee.
+          effects: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
+        },
       },
     },
   ]

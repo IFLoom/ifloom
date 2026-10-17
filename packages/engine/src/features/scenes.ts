@@ -119,7 +119,7 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene {
   return 'body' in scene && Array.isArray((scene as DataScene).body)
 }
 
-/** What prose blocks name: prose keys, variants and their art, conditions, media. */
+/** What prose blocks name: prose keys, variants and their art, conditions, media, reveals. */
 export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
   const out: Reference[] = []
   for (const block of blocks ?? []) {
@@ -129,6 +129,7 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
       for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
     }
     if ('media' in block) out.push({ media: block.media })
+    if (block.reveal) out.push({ reveal: block.reveal })
     out.push({ when: block.when })
     if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
   }
@@ -344,7 +345,7 @@ export const scenes = defineFeature<ScenesShape>({
       if (scene.weight !== undefined && !(scene.weight > 0)) tools.problem(source, where, 'weight must be above 0')
       if (scene.weight !== undefined && !drawn) tools.problem(source, where, 'has a weight but no drawnFrom, so it is never drawn')
       if (scene.when !== undefined && !drawn) tools.problem(source, where, 'has a when but no drawnFrom; when only gates draws')
-      tools.check(source, where, [{ when: scene.when }])
+      tools.check(source, where, [{ when: scene.when }, { transition: scene.transition }])
     }
   },
   // Render every scene against a probe state and check what falls out. A data scene's content is checked already.

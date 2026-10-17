@@ -4,6 +4,7 @@ import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
+import { revealMarkup, type Reveal, type TransitionFields } from './features/transitions.ts'
 import {
   buildEffects,
   customPanel,
@@ -21,7 +22,7 @@ import type { Effect, GameState } from './types.ts'
  * adding a conditional line is adding a block rather than multiplying the
  * key space.
  */
-export type Block =
+export type Block = (
   | { text: string; when?: Condition }
   | {
       variants: string
@@ -43,7 +44,15 @@ export type Block =
    * order with the prose, exactly as its markup would.
    */
   | { media: SceneMedia; when?: Condition }
-
+) & {
+  /**
+   * Reveal this block after the ones before it, rather than with them:
+   * `{ delay: 1200, as: 'fade' }`. Written into the body as `[[reveal]]`
+   * markup, so the UI sees a `reveal` beat. Both are optional: 800
+   * milliseconds and `'fade'` if left out.
+   */
+  reveal?: Reveal
+}
 
 export type Choice = {
   id: string
@@ -75,7 +84,7 @@ export type Choice = {
   effects: EffectRef[]
 }
 
-export type DataScene = StoryletFields & MinigameSceneFields & {
+export type DataScene = StoryletFields & MinigameSceneFields & TransitionFields & {
   id: string
   title?: string
   speaker?: string
@@ -207,6 +216,8 @@ export function renderScene(
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
     const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), featureContext(), picks)
+    // A block revealed later opens with its reveal, so the beats after it wait for it.
+    if (block.reveal && (resolved.text || (shown && !shown.at))) parts.push(revealMarkup(block.reveal))
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
@@ -361,6 +372,7 @@ export function bakeScene(game: Game, scene: DataScene): Scene {
     ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
     ...(scene.when ? { when: scene.when } : {}),
     ...(scene.minigame !== undefined ? { minigame: scene.minigame } : {}),
+    ...(scene.transition !== undefined ? { transition: scene.transition } : {}),
     // `screen` passes a context with `picks`, to collect the pool picks the render makes.
     render: (state, ctx) => renderScene(scene, state, runtime, ctx?.picks),
   }

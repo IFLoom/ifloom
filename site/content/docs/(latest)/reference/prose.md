@@ -164,6 +164,7 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[diary]] … [[/diary]]` | `{ kind: 'prop', face: 'diary', text }` |
 | `[[sound:knock]]` | `{ kind: 'sound', track }`. Nothing to draw. |
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
+| `[[reveal]]`, `[[reveal:1500]]`, `[[reveal:1500\|slide-up]]` | `{ kind: 'reveal', delay, as, at }`. Nothing to draw: what follows waits. |
 
 ### Speech
 
@@ -265,6 +266,24 @@ The open scene's sound and voice beats are in [`view.audio.cues`](/docs/referenc
 - In a place's body (the [stage](/docs/reference/plugins#stage)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
 - The loader reports an unknown track, a playlist, and a track on a background channel such as `music`.
 
+### Reveals
+
+`[[reveal]]` on a paragraph of its own holds back what follows. It waits 800 milliseconds after the reveal before it, or after the scene comes on, then the UI brings the rest in with a fade. Give a delay in whole milliseconds after a colon, and a [transition name](/docs/reference/transitions#transitionname) after a `|`:
+
+```md
+Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
+
+[[reveal:1500|slide-up]]
+
+"I told you it was the only quiet in town." She shuffles up to make room.
+```
+
+Each one becomes a `reveal` beat. Its `at` is when it comes, counted from the scene coming on, so a UI can time each group without adding the delays up itself. A block's [`reveal`](/docs/reference/scenes#block) field writes the same markup. See [Reveals](/docs/reference/transitions#reveals) for what a UI should do with it.
+
+**Gotchas:**
+- Only a paragraph of its own counts. `[[reveal]]` inside a paragraph is shown as written, and the loader reports it.
+- The text after a reveal is in the beats from the start. Only how it's drawn waits, so screen readers have it all.
+
 ### Fenced sections
 
 `[[mail]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` open a section that runs to the matching close tag, across blank lines. Text before and after is parsed as usual. In `mail`, leading `From:`, `To:`, `Cc:`, `Bcc:`, `Subject:` and `Date:` lines become `headers` (`{ key, value }`, in order). One blank line after them is skipped, and the rest is `body`.
@@ -302,9 +321,10 @@ type SceneBeat =
   | { kind: 'mail'; headers: { key: string; value: string }[]; body: string }
   | { kind: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
   | { kind: 'sound'; track: string }
+  | { kind: 'reveal'; delay: number; as: TransitionName; at: number }
 ```
 
-One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`.
+One piece of a scene. A UI switches on `kind`, and draws nothing for `sound` or `reveal`. A `reveal` beat marks where held-back beats start: see [Reveals](#reveals).
 
 A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`, worked out from its [flags](#videos). Without flags they're `true`, `true`, `true` and `false`. With `controls`, `autoplay` is `false`.
 

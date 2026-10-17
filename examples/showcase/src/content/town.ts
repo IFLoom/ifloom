@@ -255,8 +255,11 @@ export const town: Pack = {
     {
       id: 'intro',
       title: 'Moving day',
-      body: [{ text: 'intro' }],
-      choices: [{ id: 'unpack', effects: [{ kind: 'scene', scene: null }, { kind: 'phase', to: 'open' }] }],
+      // Fades in from the title page; its second paragraph comes after a pause.
+      transition: { in: 'fade', out: 'fade', ms: 500 },
+      body: [{ text: 'intro' }, { text: 'intro.tonight', reveal: { delay: 1200 } }],
+      // The flat slides up into view once the boxes are in.
+      choices: [{ id: 'unpack', effects: [{ kind: 'scene', scene: null }, { kind: 'phase', to: 'open' }, { kind: 'transition', to: 'slide-up', ms: 400 }] }],
     },
     {
       id: 'ava.hi',
@@ -283,6 +286,7 @@ export const town: Pack = {
     {
       id: 'ava.river',
       title: 'By the river',
+      transition: { in: 'fade', out: 'fade', ms: 600 },
       speaker: 'ava',
       body: [{ text: 'ava.river' }],
       choices: [{ id: 'stay', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }, { kind: 'scene', scene: null }] }],

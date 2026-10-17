@@ -48,8 +48,8 @@ export const PART_KEYS = [
   'location', 'location-name', 'location-text', 'exits', 'exit',
   'people', 'people-title', 'person', 'person-portrait', 'person-name', 'person-role', 'person-actions',
   // Scenes
-  'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
-  'beat', 'mail-header', 'mail-body', 'voice-replay',
+  'scene-transition', 'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
+  'beat', 'reveal', 'mail-header', 'mail-body', 'voice-replay',
   // Pictures, videos, the stage and the viewer
   'video', 'stage-picture', 'stage-layer', 'hotspot', 'hotspot-warning', 'viewer-open', 'viewer', 'viewer-close',
   // Choices and buttons
@@ -166,13 +166,19 @@ export type UiOptions = {
    * minigame's keys work either way.
    */
   keys?: boolean | KeyOptions
+  /**
+   * Play scene transitions and prose reveals (`view.transition`, reveal
+   * beats). On if left out. `false` shows every scene and every line at once.
+   * A player whose system asks for reduced motion gets them at once either way.
+   */
+  motion?: boolean
 }
 
 const NONE = {}
-const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true, keys: false })
+const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true, keys: false, motion: true })
 
-/** Gives the components below it a game's `components`, `classes`, `unstyled`, `viewer` and `keys`. `GameProvider` uses it. */
-export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, keys, children }: UiOptions & { children: ReactNode }) {
+/** Gives the components below it a game's `components`, `classes`, `unstyled`, `viewer`, `keys` and `motion`. `GameProvider` uses it. */
+export function UiProvider({ components = NONE, classes = NONE, unstyled = false, viewer, keys, motion, children }: UiOptions & { children: ReactNode }) {
   const parent = useContext(UiContext)
   // Nested providers add to the outer one, so a screen can restyle just its own corner.
   const value = {
@@ -181,6 +187,7 @@ export function UiProvider({ components = NONE, classes = NONE, unstyled = false
     unstyled: unstyled || parent.unstyled,
     viewer: viewer ?? parent.viewer,
     keys: keys ?? parent.keys,
+    motion: motion ?? parent.motion,
   }
   return <UiContext.Provider value={value}>{children}</UiContext.Provider>
 }
@@ -195,6 +202,11 @@ export function usePart(name: PartKey, defaults: string, extra?: string): { 'dat
   const custom = classes[name]
   const className = typeof custom === 'function' ? cn(custom(base), extra) : cn(base, custom, extra)
   return { 'data-part': name, className }
+}
+
+/** The `motion` option in effect: true unless the game turned transitions off. See `useMotion` for the player's setting too. */
+export function useMotionOption(): boolean {
+  return useContext(UiContext).motion
 }
 
 /** Whether the media viewer is on: `viewer` in the UI options. */

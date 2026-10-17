@@ -90,6 +90,10 @@ None of it needs any change to the game's content.
 
 The town declares two [settings](/docs/reference/settings). `hints` is a play setting, on by default, and the high street shows a hint line only `when: { setting: 'hints' }`. `textSize` is a ui setting with the options `normal` and `large`. `main.tsx` copies it from the profile to `data-text-size` on the page's `<html>`, now and whenever it changes, and `styles.css` makes the root font bigger for `large`. [The title screen and settings](/docs/guide/title-screen) explains both.
 
+### Transitions and reveals
+
+`intro` and `ava.river` in `town.ts`. The moving-day scene has `transition: { in: 'fade', out: 'fade', ms: 500 }`, so it fades in from the title page, and its second block has `reveal: { delay: 1200 }`, so the line about the cat comes a moment after the first. Its Unpack choice ends with `{ kind: 'transition', to: 'slide-up', ms: 400 }`, and the flat rises into view. By the river, the scene fades, and Ava's prose holds `[[reveal:1500|slide-up]]` before her answer. The rest of the town swaps screens at once. See [Transitions](/docs/guide/transitions).
+
 ### The calendar
 
 `src/game.ts`, `clock`. The town keeps time with the [calendar plugin](/docs/plugins/calendar), `export const clock = calendar({ start: { day: 0, period: 'night' } })`. It's listed first in `plugins`, so every other plugin sees the new day when a turn ends. A turn is a day, which is the calendar's default, and a new game starts on the night you move in, day 0, a Monday. The header, `Day 1 · Monday night · Your flat`, is the calendar's label followed by the places plugin's, at [`view.when`](/docs/reference/view#the-clock-and-the-player).

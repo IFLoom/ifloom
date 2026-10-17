@@ -116,3 +116,102 @@
   --color-player-speech: var(--player-speech);
   --color-price: var(--price);
 }
+
+/*
+ * Scene transitions and prose reveals, by the names the engine gives
+ * (`view.transition`, reveal beats). `SceneStage` sets the attributes; these
+ * rules draw them. Redraw one, or add a name your game declares in
+ * `game.transitions.names`, with rules of your own:
+ *
+ *   [data-transition-in="curtain"] { animation-name: my-curtain-in; }
+ *   [data-leaving][data-transition-out="curtain"] { animation-name: my-curtain-out; }
+ *   [data-reveal="curtain"] { animation-name: my-curtain-in; }
+ *
+ * The scene before goes out first, then the new one comes in.
+ * `--ifloom-transition-ms` is how long each takes, `--ifloom-reveal-at` when
+ * a reveal comes, and `--ifloom-reveal-ms` how long it takes to come in.
+ * A player who asks for reduced motion gets everything at once.
+ */
+@keyframes ifloom-fade-in {
+  from { opacity: 0; }
+}
+@keyframes ifloom-fade-out {
+  to { opacity: 0; }
+}
+@keyframes ifloom-slide-up-in {
+  from { opacity: 0; transform: translateY(1.25rem); }
+}
+@keyframes ifloom-slide-up-out {
+  to { opacity: 0; transform: translateY(-1.25rem); }
+}
+@keyframes ifloom-slide-left-in {
+  from { opacity: 0; transform: translateX(2rem); }
+}
+@keyframes ifloom-slide-left-out {
+  to { opacity: 0; transform: translateX(-2rem); }
+}
+@keyframes ifloom-zoom-in {
+  from { opacity: 0; transform: scale(0.96); }
+}
+@keyframes ifloom-zoom-out {
+  to { opacity: 0; transform: scale(1.04); }
+}
+/* What waits for a reveal and can be pressed (the choices) is hidden until it comes, not only faded. */
+@keyframes ifloom-fade-in-hidden {
+  from { opacity: 0; visibility: hidden; }
+}
+
+@layer base {
+  [data-transition-in] {
+    animation-duration: var(--ifloom-transition-ms, 300ms);
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+  }
+  [data-transition-in="fade"] { animation-name: ifloom-fade-in; }
+  [data-transition-in="slide-up"] { animation-name: ifloom-slide-up-in; }
+  [data-transition-in="slide-left"] { animation-name: ifloom-slide-left-in; }
+  [data-transition-in="zoom"] { animation-name: ifloom-zoom-in; }
+
+  /* The scene before, kept in its place while it goes. */
+  [data-leaving] {
+    pointer-events: none;
+    animation-duration: var(--ifloom-transition-ms, 300ms);
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+  }
+  [data-leaving][data-transition-out="fade"] { animation-name: ifloom-fade-out; }
+  [data-leaving][data-transition-out="slide-up"] { animation-name: ifloom-slide-up-out; }
+  [data-leaving][data-transition-out="slide-left"] { animation-name: ifloom-slide-left-out; }
+  [data-leaving][data-transition-out="zoom"] { animation-name: ifloom-zoom-out; }
+  [data-leaving] [data-transition-in],
+  [data-leaving] [data-reveal] {
+    animation: none;
+  }
+
+  [data-reveal] {
+    animation-name: ifloom-fade-in;
+    animation-duration: var(--ifloom-reveal-ms, 400ms);
+    animation-delay: var(--ifloom-reveal-at, 0ms);
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+  }
+  [data-reveal="slide-up"] { animation-name: ifloom-slide-up-in; }
+  [data-reveal="slide-left"] { animation-name: ifloom-slide-left-in; }
+  [data-reveal="zoom"] { animation-name: ifloom-zoom-in; }
+  [data-reveal="none"] { animation-duration: 1ms; }
+  [data-reveal][data-reveal-choices] { animation-name: ifloom-fade-in-hidden; }
+  /* A click or a key shows the rest at once. */
+  [data-revealed] [data-reveal] {
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-transition-in],
+    [data-reveal] {
+      animation: none !important;
+    }
+    [data-leaving] {
+      display: none;
+    }
+  }
+}

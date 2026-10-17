@@ -49,7 +49,7 @@ export type GameProviderProps = UiOptions & {
  */
 const NONE = {}
 
-export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, keys, children }: GameProviderProps) {
+export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, keys, motion, children }: GameProviderProps) {
   // The view follows the runner. It builds one per state, and a new one when what the plugins'
   // views show of the profile changes, and hands the same object to everything that reads it
   // (the backlog, the audio player), so this builds nothing new.
@@ -64,7 +64,7 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
   )
   return (
     <GameContext.Provider value={value}>
-      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer} keys={keys}>
+      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer} keys={keys} motion={motion}>
         <KeysProvider>{children}</KeysProvider>
       </UiProvider>
     </GameContext.Provider>

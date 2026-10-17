@@ -24,7 +24,9 @@ A cost is a stat the choice spends. It's kept as a [`stat` effect](/docs/referen
 
 ### Prose
 
-Each block's words live under a [prose key](/docs/reference/prose#prose-keys). The editor names keys after the scene and choice ids (`market`, `market/2`, `market#buy`), and you can change a block's key by editing it above the text. The toolbar inserts each kind of [markup](/docs/reference/prose#markup): pictures, video, sound, voice lines, speaker lines, thoughts and pool pictures. Beside the text, the editor shows the beats the engine reads from it.
+Each block's words live under a [prose key](/docs/reference/prose#prose-keys). The editor names keys after the scene and choice ids (`market`, `market/2`, `market#buy`), and you can change a block's key by editing it above the text. The toolbar inserts each kind of [markup](/docs/reference/prose#markup): pictures, video, sound, voice lines, speaker lines, thoughts, pool pictures and a pause before what follows (`[[reveal]]`). Beside the text, the editor shows the beats the engine reads from it.
+
+A block's "Reveal it after a pause" box gives it a [`reveal`](/docs/reference/transitions#reveals): how long it waits and how it comes in. The scene's own fields have menus for how it comes in and goes out, and its effects can say how the next screen arrives. See [Transitions](/docs/guide/transitions).
 
 Pictures and videos are paths only. Nothing is uploaded, so the preview draws each one as a labelled box with its path. Put the files in your game's `art/` folder when you move to a project.
 

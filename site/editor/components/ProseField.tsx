@@ -83,6 +83,12 @@ function Beat({ beat }: { beat: SceneBeat }) {
       return <div className="rounded border border-fd-border p-2 text-xs whitespace-pre-wrap">{beat.body}</div>
     case 'prop':
       return <div className="rounded border border-fd-border p-2 text-xs whitespace-pre-wrap">{beat.text}</div>
+    case 'reveal':
+      return (
+        <p className="border-t border-dashed border-fd-border pt-1 text-xs text-fd-muted-foreground">
+          Then, {beat.delay} ms later ({beat.as}), at {beat.at} ms:
+        </p>
+      )
     default:
       return null
   }

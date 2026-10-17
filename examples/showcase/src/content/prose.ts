@@ -1,7 +1,8 @@
 /** Small Town's words, by key. Choice labels are `<scene>#<choice>`; reply labels `<message>#<reply>`. */
 export const prose: Record<string, string> = {
-  intro:
-    'The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a launderette; it smells of warm cotton.\n\nTomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
+  intro: 'The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a launderette; it smells of warm cotton.',
+  // Revealed after the line above: the scene's block says so with `reveal`.
+  'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
   'intro#unpack': 'Unpack',
 
   'place.flat': 'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
@@ -29,7 +30,8 @@ export const prose: Record<string, string> = {
   'ava.call#bye': 'Say goodnight',
 
   'ava.river':
-    'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.\n\n"I told you it was the only quiet in town." She shuffles up to make room.',
+    // `[[reveal]]` on a line of its own: what follows comes a moment later.
+    'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.\n\n[[reveal:1500|slide-up]]\n\n"I told you it was the only quiet in town." She shuffles up to make room.',
   'ava.river#stay': 'Sit with her until the light goes',
   'street.weather/drizzle': 'A fine drizzle that never quite becomes rain.',
   'street.weather/sun': 'Sun on the shopfronts; someone has put a chair out on the pavement.',

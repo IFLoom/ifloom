@@ -784,6 +784,7 @@ type StageDef = {
   title: string
   body?: readonly Block[]
   id?: string
+  transition?: Transition | TransitionName
 }
 ```
 
@@ -793,7 +794,8 @@ What the screen shows while no scene is open, such as a room's description, a sh
 |---|---|
 | `title` | The heading, such as a room's name. |
 | `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
-| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. |
+| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also the room's [`view.transition`](/docs/reference/view#transition) key, `room:<id>`. |
+| `transition` | How the room comes on screen and goes off. The game's [default](/docs/reference/transitions#gametransitions) if left out. Name it in [`references`](#references) as `{ transition }` so the checker sees it. |
 
 With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name and its `body`.
 

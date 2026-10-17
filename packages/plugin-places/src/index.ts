@@ -31,6 +31,8 @@ import {
   type PluginProblem,
   type Reference,
   type StageView,
+  type Transition,
+  type TransitionName,
 } from '@ifloom/engine'
 
 export type LocationKind = 'street' | 'venue' | 'room'
@@ -67,6 +69,12 @@ export type LocationDef = {
    * Null silences a channel. An open scene's audio and an `audio` effect's win over it.
    */
   audio?: Record<string, string | null>
+  /**
+   * How the room comes on screen and goes off while no scene is open:
+   * `'fade'`, or `{ in: 'slide-left', ms: 400 }`. The game's
+   * `transitions.default` if left out. See `view.transition`.
+   */
+  transition?: Transition | TransitionName
 }
 
 export type PlacesOptions = {
@@ -202,7 +210,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     label: (_state, { slice, game }) => locationById(game, slice.at)?.name,
     stage: (_state, { slice, game }) => {
       const place = locationById(game, slice.at)
-      return place ? { id: place.id, title: place.name, body: place.body } : undefined
+      return place ? { id: place.id, title: place.name, body: place.body, ...(place.transition !== undefined ? { transition: place.transition } : {}) } : undefined
     },
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
     audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
@@ -247,6 +255,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
             { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
             // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
             { stage: place.stage, choices: null },
+            { transition: place.transition },
             ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(place.actions ?? []).map((action) => ({
               within: `action ${action.id}`,

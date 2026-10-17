@@ -25,13 +25,14 @@ type Scene = {
   drawnFrom?: string[]
   weight?: number
   when?: Condition
+  transition?: Transition | TransitionName
   render: (state: GameState, ctx: SceneCtx) => SceneView
 }
 ```
 
 This is what sits in `game.scenes`. The engine calls `render` whenever it builds the view and again when the player chooses, so it must be a pure function of `state` (and of `ctx`, which comes from the state). If you need anything random, draw it with [`roll` or `pick`](/docs/reference/random), never `Math.random`.
 
-The top-level `title`, `speaker`, `frame`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)).
+The top-level `title`, `speaker`, `frame`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `transition` is how the scene comes on screen and goes off: see [Transitions](/docs/reference/transitions).
 
 ```ts
 import type { Scene } from '@ifloom/engine'
@@ -234,6 +235,7 @@ type DataScene = {
   weight?: number         // how often a draw picks it, 1 if left out
   when?: Condition        // only drawn while this holds
   minigame?: string       // a minigame that starts when it's entered
+  transition?: Transition | TransitionName   // how it comes on screen and goes off
   body: Block[]
   choices: Choice[]
 }
@@ -279,10 +281,11 @@ A channel the scene doesn't name keeps playing whatever an effect, the place or 
 ### Block
 
 ```ts
-type Block =
+type Block = (
   | { text: string; when?: Condition }
   | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
+) & { reveal?: Reveal }
 ```
 
 Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them.
@@ -292,6 +295,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually just an image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
+- **`reveal`**, on any block, makes it wait before it appears: `{ text: 'intro.tonight', reveal: { delay: 1200 } }`. It's written into the body as [`[[reveal]]`](/docs/reference/prose#reveals) markup before the block. See [Reveals](/docs/reference/transitions#reveals).
 
 **Gotchas.**
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.

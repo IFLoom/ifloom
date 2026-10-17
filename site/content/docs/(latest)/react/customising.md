@@ -168,6 +168,10 @@ Some parts carry a second attribute that says more:
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
 | `data-layer` | Every `stage-layer` | The layer's id, when it has one. |
 | `data-hotspot` | Every `hotspot` | The hotspot's id. |
+| `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/reference/transitions#transitionname). Not set with motion off. |
+| `data-transition-out`, `data-leaving` | The copy of the scene before | How it goes out. |
+| `data-reveal` | Every `reveal` | How its beats come in. |
+| `data-revealed` | The `scene` | Present once the player has shown every reveal at once. |
 
 The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-item`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
@@ -483,13 +487,15 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `scene` | The scene, an `<article>`. Carries `data-scene`, and `data-minigame` while a minigame runs. |
+| `scene-transition` | Holds the scene while it changes, and the copy of the scene before (`data-leaving`) while it goes. |
+| `scene` | The scene, an `<article>`. Carries `data-scene`, `data-transition-in` with how it comes in, and `data-minigame` while a minigame runs. |
 | `scene-header` | The row with the speaker's portrait and the title. |
 | `scene-portrait` | The speaker's portrait. |
 | `scene-title` | The scene's title. |
 | `stage-image` | The picture on the stage, above the text. |
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
+| `reveal` | The beats after a [reveal](/docs/reference/transitions#reveals), which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
 | `mail-header` | One header line of a letter (a `mail` beat). |
 | `mail-body` | A letter's body. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |

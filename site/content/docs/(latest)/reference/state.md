@@ -34,6 +34,7 @@ type GameState = {
   audio: AudioState
   media: MediaState
   minigame: MinigameState | null
+  transition: { to: TransitionName; ms?: number } | null
   gameVersion?: number
 }
 ```
@@ -240,6 +241,14 @@ minigame: MinigameState | null   // { id, state, elapsed, vars, steps }
 ```
 
 The [minigame](/docs/reference/minigames) being played, or `null`. See [`MinigameState`](/docs/reference/minigames#minigamestate). A save from before minigames loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
+
+### transition
+
+```ts
+transition: { to: TransitionName; ms?: number } | null
+```
+
+How the screen after the last command comes in, as a [`transition` effect](/docs/reference/effects#transition) set it, or `null`. It lasts one command: the next command that doesn't set it again clears it. [`view.transition`](/docs/reference/view#transition) reads it. A save from before transitions loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
 
 ## New Game+
 

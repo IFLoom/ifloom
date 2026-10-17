@@ -19,7 +19,7 @@ const TOOLS = [
   { id: 'stat', title: 'Stat', blurb: 'A StatDef for a pack’s stats or a game’s.' },
   { id: 'item', title: 'Item', blurb: 'An ItemDef for a pack’s items.' },
   { id: 'setting', title: 'Setting', blurb: 'A SettingDef for a game’s settings screen.' },
-  { id: 'markup', title: 'Prose markup', blurb: 'Pictures, video, sound, voice, speaker lines, thoughts and pool pictures, for a prose key.' },
+  { id: 'markup', title: 'Prose markup', blurb: 'Pictures, video, sound, voice, speaker lines, thoughts, pool pictures and reveals, for a prose key.' },
 ] as const
 type Tool = (typeof TOOLS)[number]['id']
 

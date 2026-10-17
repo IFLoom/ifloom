@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react'
 import type { Block, Choice, DataScene, SceneMedia } from '@ifloom/engine'
-import { costOf, isCost, shortBlock, withCost } from '../../lib/builders'
+import { costOf, isCost, shortBlock, transitionFields, transitionOptions, transitionValue, withCost } from '../../lib/builders'
 import { rename, renameChoice } from '../../lib/references'
 import { OptionalCondition } from '../ConditionBuilder'
 import { EffectList } from '../EffectBuilder'
@@ -73,6 +73,7 @@ export function SceneForm({ id }: { id: string }) {
             <ListInput value={scene.tags} onChange={(tags) => change((s) => void (s.tags = tags))} />
           </Field>
         </div>
+        <TransitionField value={scene.transition} onChange={(transition) => change((s) => void (s.transition = transition))} />
         <Checkbox checked={project.intro === scene.id} label="The game opens on this scene" onChange={(on) => update((draft) => void (draft.intro = on ? scene.id : null))} />
       </Section>
 
@@ -207,6 +208,48 @@ function BlockEditor({ block, onChange, prose, setProse, tools }: { block: Block
       <Field label="Shown only while">
         <OptionalCondition names={names} onCreate={create} value={block.when} onChange={(when) => onChange({ ...block, when } as Block)} add="Only show it while…" />
       </Field>
+      <RevealField block={block} onChange={onChange} />
+    </div>
+  )
+}
+
+/** How the scene comes on screen and goes off: a menu each way, and how long. Blank parts take the game's default. */
+function TransitionField({ value, onChange }: { value: DataScene['transition']; onChange: (value: DataScene['transition']) => void }) {
+  const fields = transitionFields(value)
+  const set = (patch: Partial<typeof fields>) => onChange(transitionValue({ ...fields, ...patch }))
+  const menu = (current: string) => [{ value: '', label: 'Game default' }, ...transitionOptions(current).map((name) => ({ value: name, label: name }))]
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      <Field label="Comes in" hint="How the scene appears.">
+        <Select aria-label="Transition in" value={fields.in} options={menu(fields.in)} onChange={(name) => set({ in: name })} />
+      </Field>
+      <Field label="Goes out" hint="How it leaves for the next screen.">
+        <Select aria-label="Transition out" value={fields.out} options={menu(fields.out)} onChange={(name) => set({ out: name })} />
+      </Field>
+      <Field label="Milliseconds" hint="Each way. 300 if left empty.">
+        <NumberInput aria-label="Transition milliseconds" value={fields.ms} onChange={(ms) => set({ ms })} />
+      </Field>
+    </div>
+  )
+}
+
+/** Whether a block comes after a pause, how long, and how. */
+function RevealField({ block, onChange }: { block: Block; onChange: (block: Block) => void }) {
+  const reveal = block.reveal
+  const set = (next: Block['reveal']) => {
+    const { reveal: _old, ...rest } = block
+    onChange((next ? { ...rest, reveal: next } : rest) as Block)
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Checkbox checked={reveal !== undefined} label="Reveal it after a pause" onChange={(on) => set(on ? {} : undefined)} />
+      {reveal ? (
+        <>
+          <NumberInput aria-label="Pause in milliseconds" className="w-24" value={reveal.delay} placeholder="800" onChange={(delay) => set({ ...reveal, delay })} />
+          <span className="text-xs text-fd-muted-foreground">ms, then</span>
+          <Select aria-label="Reveal transition" value={reveal.as ?? 'fade'} options={transitionOptions(reveal.as)} onChange={(as) => set({ ...reveal, as: as === 'fade' ? undefined : as })} />
+        </>
+      ) : null}
     </div>
   )
 }

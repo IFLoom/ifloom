@@ -20,6 +20,8 @@
  * `storylineKv`, `{ turn: true }` became `{ turn: range }`, a collection
  * condition's `entry`; `use` takes `id`, `setting` and `input` take `to`.
  * Gating: `Blocked`, and an activity's `blocked` in place of `requires`.
+ * Transitions: the `transition` effect, `GameState.transition`,
+ * `Game.transitions` and `View.transition`.
  */
 import type {
   ActionDef,
@@ -73,6 +75,9 @@ import type {
   StorylineDef,
   StorylineState,
   Stats,
+  Transition,
+  TransitionName,
+  TransitionView,
   TriggerDef,
   VariantMember,
 } from '../../src/index.ts'
@@ -228,6 +233,8 @@ export type FrozenGameState = {
   media: MediaState
   /** The minigame being played, or null. */
   minigame: MinigameState | null
+  /** How the screen after the last command arrives, as a `transition` effect set it, or null. */
+  transition: { to: TransitionName; ms?: number } | null
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -319,6 +326,8 @@ export type FrozenEffect =
   | { kind: 'minigameVar'; key: string; to: number }
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
+  /** The screen this command leaves on comes in with `to`. */
+  | { kind: 'transition'; to: TransitionName; ms?: number }
 
 export type FrozenGame = {
   id: string
@@ -402,6 +411,8 @@ export type FrozenGame = {
   media?: GameMedia
   /** The game's minigames. None if left out. */
   minigames?: MinigameDef[]
+  /** The default transition for every scene and room, and the game's own transition names. */
+  transitions?: { default?: Transition | TransitionName; names?: string[] }
 }
 
 export type FrozenPack = {
@@ -507,4 +518,6 @@ export type FrozenView = {
   audio: AudioView
   /** The minigame being played, or null. */
   minigame: MinigameView | null
+  /** The screen on show, and how it comes in and goes out. */
+  transition: TransitionView
 }

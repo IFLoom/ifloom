@@ -57,6 +57,7 @@ export const EFFECT_KINDS = [
   'sound',
   'minigame',
   'minigameVar',
+  'transition',
   'custom',
 ] as const satisfies readonly Effect['kind'][]
 
@@ -90,7 +91,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
  * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
  * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
  */
-export const EFFECT_FORMS = ['stat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
+export const EFFECT_FORMS = ['stat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio', 'transition'] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
@@ -105,12 +106,13 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   turn: 'End the turn',
   sound: 'Play a sound',
   audio: 'Background audio',
+  transition: 'How the next screen comes in',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
 
 /** The effect builder's menu, in order. Every form is in it. */
-export const EFFECT_MENU = ['stat', 'statTo', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
+export const EFFECT_MENU = ['stat', 'statTo', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'transition', 'plugin', 'json'] as const satisfies readonly EffectForm[]
 export const effectMenuComplete: Missing<EffectForm, (typeof EFFECT_MENU)[number]> = true
 
 /** The comparisons a range offers. `is` is only for kv keys and settings. */

@@ -87,6 +87,7 @@ type Screen = {
   plugins: Record<string, unknown>
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
+  transition: TransitionView
 }
 
 type ScreenChoice = RenderedChoice & { effects: Effect[] }
@@ -114,6 +115,7 @@ type ScreenScene = {
 | `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
 | `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
 | `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
+| `transition` | [`view.transition`](#transition): which screen this is, and how it comes in and goes out. |
 
 `view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether. Everything else it takes as it is.
 
@@ -277,6 +279,25 @@ cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
 ```
 
 The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/docs/reference/audio-player) does all of this. See [Audio](/docs/reference/audio).
+
+### transition
+
+| Field | Type | Meaning |
+|---|---|---|
+| `transition` | [`TransitionView`](/docs/reference/transitions#transitionview) | Which screen is on show (`key`), how it comes in (`in`) and goes out (`out`), and how long each takes (`ms`). `'none'` both ways when nothing declares one. |
+
+`key` is `scene:<id>` while a scene is open, `minigame:<id>` while a minigame runs, and `room:<id>` (or `room`) for the idle screen. Play a transition only when it changes: keep the screen before for its `out`, then bring the new one in with `in`. A choice that keeps the same scene open keeps the key, so nothing plays.
+
+```ts
+let shownKey = runner.view().transition.key
+runner.subscribe(() => {
+  const { key, in: entering, ms } = runner.view().transition
+  if (key !== shownKey) console.log(`${key} comes in with ${entering} over ${ms} ms`)
+  shownKey = key
+})
+```
+
+The reveal beats in `scene.beats` time the prose within a scene. See [Transitions](/docs/reference/transitions) for both, and the [Transitions guide](/docs/guide/transitions) for drawing them in each framework.
 
 ### plugins
 

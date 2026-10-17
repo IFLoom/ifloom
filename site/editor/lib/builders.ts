@@ -3,7 +3,7 @@
  * effect is edited with, a new one of each kind, and ranges. The builders
  * edit the engine's own objects; there is no second model to keep in step.
  */
-import type { Blocked, Condition, EffectRef, ItemDef, SettingDef, StatDef } from '@ifloom/engine'
+import { TRANSITIONS, type Blocked, type Condition, type EffectRef, type ItemDef, type SettingDef, type StatDef, type Transition, type TransitionName } from '@ifloom/engine'
 import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
@@ -93,6 +93,35 @@ export function withRange(condition: Condition, range: RangeForm): Condition {
   return next as Condition
 }
 
+/**
+ * The transitions a menu offers: the built-in ones, and `current` when it is
+ * a name of the game's own, so the menu still shows it.
+ */
+export function transitionOptions(current?: string): string[] {
+  return current && !(TRANSITIONS as readonly string[]).includes(current) ? [...TRANSITIONS, current] : [...TRANSITIONS]
+}
+
+/** A scene's `transition` as the scene form edits it: each part blank when it isn't set. */
+export type TransitionFields = { in: string; out: string; ms: number | undefined }
+
+/** A transition, by name or as a pair, as the form's fields. */
+export function transitionFields(value: Transition | TransitionName | undefined): TransitionFields {
+  if (value === undefined) return { in: '', out: '', ms: undefined }
+  if (typeof value === 'string') return { in: value, out: value, ms: undefined }
+  return { in: value.in ?? '', out: value.out ?? '', ms: value.ms }
+}
+
+/** The form's fields as the shortest transition that says them: none, a name for both ways, or a pair. */
+export function transitionValue(fields: TransitionFields): Transition | TransitionName | undefined {
+  if (!fields.in && !fields.out && fields.ms === undefined) return undefined
+  if (fields.in && fields.in === fields.out && fields.ms === undefined) return fields.in
+  return {
+    ...(fields.in ? { in: fields.in } : {}),
+    ...(fields.out ? { out: fields.out } : {}),
+    ...(fields.ms !== undefined ? { ms: fields.ms } : {}),
+  }
+}
+
 /** The form an effect is edited with. */
 export function effectForm(effect: EffectRef): EffectForm {
   if (isPluginCall(effect) || 'custom' in effect) return 'plugin'
@@ -112,6 +141,7 @@ export function effectForm(effect: EffectRef): EffectForm {
     case 'turn':
     case 'sound':
     case 'audio':
+    case 'transition':
       return effect.kind
     default:
       return 'json'
@@ -143,6 +173,8 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'sound', track: 'knock' }
     case 'audio':
       return { kind: 'audio', channel: 'music', to: 'calm' }
+    case 'transition':
+      return { kind: 'transition', to: 'fade' }
     case 'plugin':
       return { 'quests/start': { quest: 'errand' } }
     case 'json':

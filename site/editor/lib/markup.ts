@@ -4,7 +4,7 @@
  */
 import { parseBeats, type SceneBeat } from '@ifloom/engine'
 
-export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool'] as const
+export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'reveal'] as const
 export type MarkupKind = (typeof MARKUP_KINDS)[number]
 
 export const MARKUP_LABELS: Record<MarkupKind, string> = {
@@ -16,6 +16,7 @@ export const MARKUP_LABELS: Record<MarkupKind, string> = {
   speaker: 'Speaker line',
   mono: 'Thought (mono)',
   pool: 'Pool picture',
+  reveal: 'Pause, then reveal',
 }
 
 /** The fields each kind asks for, in order, with a sample value. */
@@ -47,6 +48,10 @@ export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sa
     { name: 'pool', label: 'Pool id', sample: 'door' },
     { name: 'tags', label: 'Tags, comma separated', sample: 'red,night' },
   ],
+  reveal: [
+    { name: 'delay', label: 'Pause, in milliseconds', sample: '1000' },
+    { name: 'as', label: 'Transition (fade, slide-up, slide-left, zoom, none)', sample: 'fade' },
+  ],
 }
 
 /** Alt text can't hold `|` or `]`, which the markup uses itself. */
@@ -73,6 +78,8 @@ export function markup(kind: MarkupKind, fields: Record<string, string>): string
       return `> ${f('text')}`
     case 'pool':
       return f('tags') ? `[[img:@${f('pool')}|${f('tags').replace(/\s+/g, '')}]]` : `[[img:@${f('pool')}]]`
+    case 'reveal':
+      return `[[reveal${f('delay') ? `:${f('delay').replace(/\D/g, '')}` : ''}${f('as') ? `|${f('as')}` : ''}]]`
   }
 }
 

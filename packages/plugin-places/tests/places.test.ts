@@ -148,6 +148,19 @@ describe('places', () => {
     expect(shown(state, g)).toEqual({ location: null, exits: [] })
   })
 
+  it('give the room its transition, keyed by the place', () => {
+    const fading: Pack = { ...town, data: { places: { locations: town.data!.places.locations.map((entry) => ({ ...entry, transition: entry.id === 'street' ? { in: 'slide-left', ms: 400 } : 'fade' })) } } }
+    const { game: g, problems } = loadGame([fading], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
+    expect(problems).toEqual([])
+    const house = startingState(g)
+    expect(view(house, g).transition).toEqual({ key: 'room:house', in: 'fade', out: 'fade', ms: 300 })
+    expect(view(walk(g, house, 'street'), g).transition).toEqual({ key: 'room:street', in: 'slide-left', out: 'none', ms: 400 })
+    const odd: Pack = { id: 'odd', schema: SCHEMA, prose: town.prose, data: { places: { locations: [place('house', [], { transition: 'spin' })] } } }
+    expect(loadGame([odd], { id: 't', title: 'T', plugins: [places({ start: 'house' })] }).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'locations house: unknown transition "spin"',
+    ])
+  })
+
   it('report places content names that are not there', () => {
     const broken: Pack = {
       id: 'broken',

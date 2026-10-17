@@ -46,6 +46,7 @@ type Game = {
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   audio?: GameAudio
   media?: GameMedia
+  transitions?: { default?: Transition | TransitionName; names?: string[] }
 }
 ```
 
@@ -82,6 +83,7 @@ type Game = {
 | `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging `base.data` and every pack's `data` by entry id. |
 | `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/docs/reference/audio#gameaudio). `loadGame` merges the base's and every pack's by id. Leave it out and the game is silent. See [Audio](/docs/reference/audio). |
 | `media` | The game's pools of pictures and videos, which content picks from by tags: `{ pools: { door: [{ src: 'door/red-night.jpg', tags: ['red', 'night'] }] } }`. A [`GameMedia`](/docs/reference/media#gamemedia). `loadGame` merges the base's and every pack's pools by id. Leave it out and there are no pools. See [Media](/docs/reference/media). |
+| `transitions` | How screens come and go when they don't say: `default`, a [`Transition`](/docs/reference/transitions#transition) or a name, for every scene and room, and `names` for transitions of the game's own beyond the built-in ones. Leave it out and screens swap at once. A key of the game only; packs can't set it. See [Transitions](/docs/reference/transitions#gametransitions). |
 
 A new game starts at turn 0 with `introScene` open. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/docs/reference/commands#startingstate).
 

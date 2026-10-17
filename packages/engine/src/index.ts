@@ -79,6 +79,9 @@ export { artSrc, mediaKind, parseBeats } from './sceneBody.ts'
 
 // Media: pools, and the stage
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
+// Transitions: how screens come and go, and prose revealed in steps
+export { TRANSITIONS } from './features/transitions.ts'
+export type { Reveal, Transition, TransitionName, TransitionView } from './features/transitions.ts'
 
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'

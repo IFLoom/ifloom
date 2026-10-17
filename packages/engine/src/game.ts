@@ -5,6 +5,7 @@ import type { Custom } from './custom.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
+import type { TransitionFields } from './features/transitions.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene } from './scene.ts'
@@ -139,7 +140,7 @@ export type SceneCtx = {
   picks?: Record<string, string>
 }
 
-export type Scene = StoryletFields & MinigameSceneFields & {
+export type Scene = StoryletFields & MinigameSceneFields & TransitionFields & {
   id: string
   title?: string
   speaker?: string

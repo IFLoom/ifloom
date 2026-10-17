@@ -70,6 +70,7 @@ type Effect =
   | { kind: 'minigameVar'; key: string; to: number }
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
+  | { kind: 'transition'; to: TransitionName; ms?: number }
 ```
 
 ### stat
@@ -340,6 +341,16 @@ It also adds 1 to the kv key `minigame:<id>`, which counts how many times the mi
 Changes a variable of the [minigame](/docs/reference/minigames#its-variables) being played: sets it `to` a value, changes it `by` an amount, or sets it to a whole number drawn from `random`, both ends included. The draw comes from the save's seed, so it's the same every time the same commands are played. With no minigame running, it does nothing.
 
 The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
+
+### transition
+
+```ts
+{ kind: 'transition', to: 'slide-up', ms: 400 }
+```
+
+Says how the screen this command leaves on comes in: `to` a [transition name](/docs/reference/transitions#transitionname), over `ms` milliseconds (else the screen's own). It lasts one command, and only changes what [`view.transition`](/docs/reference/view#transition) says, so it does nothing a save or a replay would notice. See [The transition effect](/docs/reference/transitions#the-transition-effect).
+
+The checker reports a name the game doesn't know.
 
 ## Computed effects
 

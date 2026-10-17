@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { audioSrc, type SceneBeat } from '@ifloom/engine'
 import { cn } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
@@ -12,6 +12,7 @@ import { Video } from './video.tsx'
 import { MediaViewer, type ViewerMedia } from './viewer.tsx'
 import { MinigamePanel, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
+import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
 function VoiceReplay({ voice }: { voice: string }) {
@@ -126,6 +127,9 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
     case 'sound':
       // Heard, not seen: the audio player plays it.
       return null
+    case 'reveal':
+      // A marker: the scene draws the beats after it as a group that waits for it.
+      return null
   }
 }
 
@@ -149,7 +153,37 @@ function MinigameSlot() {
   return Panel ? <Panel data={minigame} /> : <MinigamePanel />
 }
 
-function SceneStageImpl({ className }: { className?: string }) {
+/** How long a reveal takes to come in, as `--ifloom-reveal-ms` sets it in the base styles. Only for when to stop listening for a skip. */
+const REVEAL_MS = 400
+
+/**
+ * A scene's beats: those shown with it, then each reveal's beats in a
+ * `reveal` part that waits for it (`data-reveal` names how it comes in,
+ * `--ifloom-reveal-at` when). With motion off, the groups are drawn but wait
+ * for nothing.
+ */
+function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
+  const list = usePart('beats', 'flex flex-col gap-(--gap-beats)')
+  const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
+  return (
+    <div {...list}>
+      {revealGroups(beats).map((entry, at) =>
+        entry.reveal ? (
+          <div key={`reveal-${at}`} {...group} data-reveal={motion ? entry.reveal.as : undefined} style={motion ? revealStyle(entry.reveal.at) : undefined}>
+            {entry.beats.map(({ beat, index }) => (
+              <Beat key={index} beat={beat} />
+            ))}
+          </div>
+        ) : (
+          entry.beats.map(({ beat, index }) => <Beat key={index} beat={beat} />)
+        ),
+      )}
+    </div>
+  )
+}
+
+/** One scene, drawn once per `view.transition.key`: it comes in by `data-transition-in`, and its reveals run from then. */
+function SceneArticle({ className, motion }: { className?: string; motion: boolean }) {
   const { view, panels } = useGame()
   const scene = view.scene
   const Panel = scene.panel ? panels[scene.panel] : undefined
@@ -158,28 +192,62 @@ function SceneStageImpl({ className }: { className?: string }) {
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
   const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
   const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
-  const beats = usePart('beats', 'flex flex-col gap-(--gap-beats)')
+  const choicesGroup = usePart('reveal', '')
+  // Reveals wait until the player clicks the scene or presses a key, or they have all come in.
+  const last = view.minigame ? 0 : lastReveal(scene.beats)
+  const [revealed, setRevealed] = useState(false)
+  const pending = motion && last > 0 && !revealed
+  const skip = useCallback(() => setRevealed(true), [])
+  useSkipKey(pending, skip)
+  useEffect(() => {
+    if (!pending) return
+    const timer = setTimeout(skip, last + view.transition.ms + REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [pending, last, view.transition.ms, skip])
+  const entering = motion ? view.transition.in : undefined
   if (view.minigame) {
     return (
-      <article {...article} data-scene={scene.id ?? 'stage'} data-minigame={view.minigame.id}>
+      <article {...article} data-scene={scene.id ?? 'stage'} data-minigame={view.minigame.id} data-transition-in={entering}>
         <MinigameSlot />
       </article>
     )
   }
+  const choices = Panel ? <Panel data={scene.panelData} /> : <ChoiceList choices={scene.choices} />
   return (
-    <article {...article} data-scene={scene.id ?? 'stage'}>
+    <article
+      {...article}
+      data-scene={scene.id ?? 'stage'}
+      data-transition-in={entering}
+      data-revealed={last > 0 && (revealed || !motion) ? '' : undefined}
+      onClick={pending ? skip : undefined}
+    >
       <header {...header}>
         {scene.speaker?.portrait ? <Picture {...portrait} src={scene.speaker.portrait} alt="" /> : null}
         <h2 {...title}>{scene.title}</h2>
       </header>
       {scene.stage?.layers.length ? <Stage stage={scene.stage} /> : scene.stageImage ? <Picture {...image} src={scene.stageImage} alt="" /> : null}
-      <div {...beats}>
-        {scene.beats.map((beat, index) => (
-          <Beat key={index} beat={beat} />
-        ))}
-      </div>
-      {Panel ? <Panel data={scene.panelData} /> : <ChoiceList choices={scene.choices} />}
+      <Beats beats={scene.beats} motion={motion} />
+      {/* With reveals to come, the choices come with the last of them: not pressable, or read out, until then. */}
+      {last > 0 && motion ? (
+        <div {...choicesGroup} data-reveal="fade" data-reveal-choices="" style={revealStyle(last)}>
+          {choices}
+        </div>
+      ) : (
+        choices
+      )}
     </article>
+  )
+}
+
+function SceneStageImpl({ className }: { className?: string }) {
+  const { view } = useGame()
+  const motion = useMotion()
+  const frame = usePart('scene-transition', '')
+  const transition = view.transition
+  return (
+    <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} motion={motion} attrs={frame}>
+      <SceneArticle key={transition.key} className={className} motion={motion} />
+    </SceneFrame>
   )
 }
 
@@ -189,5 +257,11 @@ function SceneStageImpl({ className }: { className?: string }) {
  * either the game's own panel for it or its choices. While a minigame runs, it
  * draws that instead: the game's panel named by the minigame's id, else
  * `MinigamePanel`.
+ *
+ * It plays `view.transition` when the screen changes, in a `scene-transition`
+ * part that keeps a copy of the scene before for its `out`, and reveals the
+ * prose after each reveal beat in a `reveal` part, with the choices after the
+ * last. A click on the scene or a key press shows the rest at once. The
+ * `motion` option, or the player's reduced-motion setting, turns all of it off.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

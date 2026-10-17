@@ -26,6 +26,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Ways to make the React UI your own: replace any component, change the classes on any part, drop the styles entirely, or draw your own root.
 - Audio: music, ambience, sound effects and voice lines on channels, with volume and mute as settings. `@ifloom/audio` plays it with any framework.
 - Media: inline pictures and video, tagged picture pools, layered stages with hotspots, and a lightbox.
+- Transitions: a scene, a place or the whole game can fade, slide or zoom in and out, and a choice can say how the next screen arrives with a `transition` effect. A block's `reveal`, or `[[reveal]]` in prose, holds a line back so a scene's text appears one part after another. The engine only names them in `view.transition` and the scene's beats; the React UI draws them with CSS, shows everything at once on a click or a key, and plays nothing when the player asks for reduced motion or the game passes `motion: false`.
 - The CLI: `ifloom new` to start a game from a template, plus `dev`, `build`, `check`, `playtest` and `snapshot`.
 - `ifloom build` makes one HTML file that opens from disk, with its pictures beside it, or inside it if you add `--inline-assets`.
 - `ifloom playtest`, which plays your game with no one at the keyboard and writes every screen to a transcript.

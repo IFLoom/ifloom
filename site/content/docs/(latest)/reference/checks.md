@@ -259,6 +259,19 @@ Wherever content asks for a picture or a video, it's checked against `game.media
 
 A hotspot's `command` and `when`, and a layer's `when`, are checked as any command and condition are, with `hotspot <id>:` or `stage layer <id>:` in front.
 
+## Transitions
+
+Every [transition](/docs/reference/transitions) name content gives is checked against the built-in names (`TRANSITIONS`) and the game's `transitions.names`. That's a scene's `transition`, a place's, `game.transitions.default`, a `transition` effect, a block's `reveal` and `[[reveal]]` markup in prose.
+
+| Problem | When |
+|---|---|
+| `unknown transition "…"` | A name that's neither built in nor declared. |
+| `a transition's ms must be 0 or more` | A transition's `ms` is negative or not a number. |
+| `a reveal's delay must be whole milliseconds, 0 or more` | A block's `reveal.delay`. |
+| `[[reveal]] has a delay of "…"; it is whole milliseconds` | Markup such as `[[reveal:soon]]`. |
+| `[[reveal]] goes on a line of its own, with a blank line before and after` | `[[reveal]]` inside a paragraph, which is shown as written. |
+| `transition name "…" is not lower-case letters, digits and "-"` | An entry in `game.transitions.names`. Reported as `transitions`. |
+
 ## Plugin references
 
 A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with two functions, both optional:

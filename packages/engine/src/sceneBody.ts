@@ -1,3 +1,5 @@
+import type { TransitionName } from './features/transitions.ts'
+
 export type BeatSize = 'inline' | 'wide'
 
 export type MailHeader = { key: string; value: string }
@@ -30,6 +32,15 @@ export type SceneBeat =
   | { kind: 'prop'; face: PropFace; text: string }
   /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
   | { kind: 'sound'; track: string }
+  /**
+   * What follows is revealed later, from `[[reveal]]` on a line of its own or
+   * a block's `reveal`: `delay` milliseconds after the reveal before it (or the
+   * scene coming on), drawn with the transition `as`. `at` is when, counted
+   * from the scene coming on: the delays of this reveal and every one before
+   * it. Nothing to draw. The beats after it are in the body from the start, so
+   * a screen reader has them and a UI can show them all at once.
+   */
+  | { kind: 'reveal'; delay: number; as: TransitionName; at: number }
 
 /**
  * Where the game's pictures live, relative to the page.
@@ -196,6 +207,16 @@ function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<
   return null
 }
 
+/** How long a reveal waits when it doesn't say, in milliseconds. */
+export const DEFAULT_REVEAL_DELAY = 800
+
+/** `[[reveal]]`, `[[reveal:1200]]` or `[[reveal:1200|slide-up]]` on a block of its own, as a beat. `at` is filled in by `parseBeats`. */
+function revealBeat(block: string): Extract<SceneBeat, { kind: 'reveal' }> | null {
+  const match = block.match(/^\[\[reveal(?::\s*(\d*)\s*)?(?:\|\s*([a-z0-9-]*)\s*)?\]\]$/)
+  if (!match) return null
+  return { kind: 'reveal', delay: match[1] ? Number(match[1]) : DEFAULT_REVEAL_DELAY, as: match[2] || 'fade', at: 0 }
+}
+
 function parseBlocks(body: string): SceneBeat[] {
   let lastSay: 'character' | 'player' | null = null
   return body
@@ -205,6 +226,9 @@ function parseBlocks(body: string): SceneBeat[] {
     .flatMap((block): SceneBeat[] => {
       const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
       if (sound) return [{ kind: 'sound', track: sound[1].trim() }]
+      // A reveal leaves who spoke last as it was: a quote after one still answers the line before.
+      const reveal = revealBeat(block)
+      if (reveal) return [reveal]
       // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
       const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
       const said = voiced ? spoken(voiced[1], lastSay) : null
@@ -252,6 +276,14 @@ export function parseBeats(body: string): SceneBeat[] {
   }
   if (last < body.length) {
     beats.push(...parseBlocks(body.slice(last)))
+  }
+  // Each reveal's time from the scene coming on: its own delay after the one before.
+  let at = 0
+  for (const beat of beats) {
+    if (beat.kind === 'reveal') {
+      at += beat.delay
+      beat.at = at
+    }
   }
   return beats
 }

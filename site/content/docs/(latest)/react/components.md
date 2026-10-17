@@ -269,10 +269,11 @@ type UiOptions = {
   unstyled?: boolean
   viewer?: boolean
   keys?: boolean | KeyOptions
+  motion?: boolean
 }
 ```
 
-What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out.
+What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out. `motion: false` turns off scene transitions and prose reveals, so every scene and every line shows at once. It's on if you leave it out, and a player whose system asks for reduced motion gets everything at once either way. See [`SceneStage`](#scenestage).
 
 ### KeyOptions
 
@@ -449,16 +450,41 @@ From top to bottom, it draws:
 - the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`;
 - the title;
 - the scene's [`Stage`](#stage) when [`view.scene.stage`](/docs/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape;
-- each [`Beat`](#beat) of the body;
-- the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist).
+- each [`Beat`](#beat) of the body, with the beats after each [reveal](/docs/reference/transitions#reveals) in a `reveal` part that waits for it;
+- the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigamePanel`](#minigamepanel). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
 The `<article>` carries `data-scene` with the scene's id, or `stage` when no scene is open.
 
+**Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.transition.key`](/docs/reference/view#transition) changes. It carries `data-transition-in` with the new screen's `in`, which the base styles animate. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
+
+**Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/guide/transitions#the-react-ui) to restyle them.
+
+With [`motion`](#uioptions) off, or the player asking for reduced motion, none of this plays: no attribute is set and everything is shown at once.
+
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
-Replaceable as `SceneStage` in [`components`](#components). Parts: `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image` and `beats`.
+Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image`, `beats` and `reveal`.
+
+### useMotion
+
+```tsx
+function useMotion(): boolean
+function useReducedMotion(): boolean
+```
+
+`useMotion` says whether to play transitions and reveals: the [`motion`](#uioptions) option, unless the player's system asks for reduced motion. `useReducedMotion` says only the second, and follows the setting if the player changes it. Use them in a replacement component that animates anything.
+
+```tsx
+import { useGame, useMotion } from '@ifloom/react'
+
+function SceneTitle() {
+  const { view } = useGame()
+  const motion = useMotion()
+  return <h2 data-transition-in={motion ? view.transition.in : undefined}>{view.scene.title}</h2>
+}
+```
 
 ### Beat
 
@@ -478,6 +504,7 @@ One beat of a scene's body, drawn by kind:
 | `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
 | `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
 | `sound` | Nothing. The audio player plays it. |
+| `reveal` | Nothing. [`SceneStage`](#scenestage) holds back the beats after it. |
 
 ```tsx
 import { Beat } from '@ifloom/react'

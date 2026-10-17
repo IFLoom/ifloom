@@ -49,6 +49,8 @@ const DETAILS = [
   'is', 'gte', 'gt', 'lte', 'lt', 'open', 'where',
   // a change
   'by', 'to', 'random', 'turns',
+  // how long a transition takes
+  'ms',
   // what is made or drawn
   'entry', 'effects', 'from', 'otherwise', 'title', 'text', 'image', 'tag',
   // a notice's own id: the notice it makes, not a target

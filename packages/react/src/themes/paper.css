@@ -57,11 +57,12 @@
   text-indent: 1.5em;
 }
 
-[data-part="beat"][data-beat="text"]:first-child {
+/* A first paragraph, but not the first of a group a reveal holds back. */
+:not([data-part="reveal"]) > [data-part="beat"][data-beat="text"]:first-child {
   text-indent: 0;
 }
 
-[data-part="beat"][data-beat="text"]:first-child::first-letter {
+:not([data-part="reveal"]) > [data-part="beat"][data-beat="text"]:first-child::first-letter {
   float: left;
   font-size: 3.2em;
   line-height: 0.85;

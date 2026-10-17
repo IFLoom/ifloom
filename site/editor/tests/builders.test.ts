@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, checkGame, loadGame, parseBeats } from '@ifloom/engine'
-import { conditionForm, costOf, effectForm, newCondition, newEffect, rangeOf, shortBlock, snippet, withCost, withRange } from '../lib/builders.ts'
+import { conditionForm, costOf, effectForm, newCondition, newEffect, rangeOf, shortBlock, snippet, transitionFields, transitionOptions, transitionValue, withCost, withRange } from '../lib/builders.ts'
 import { CONDITION_FORMS, EFFECT_FORMS } from '../lib/kinds.ts'
 import { MARKUP_KINDS, insertParagraph, markup, proseBeats, sampleMarkup } from '../lib/markup.ts'
 
@@ -87,6 +87,20 @@ describe('the effect builder', () => {
   })
 })
 
+describe('the transition fields', () => {
+  it('read a transition and write the shortest one back', () => {
+    expect(transitionFields(undefined)).toEqual({ in: '', out: '', ms: undefined })
+    expect(transitionFields('fade')).toEqual({ in: 'fade', out: 'fade', ms: undefined })
+    expect(transitionValue({ in: 'fade', out: 'fade', ms: undefined })).toBe('fade')
+    expect(transitionValue({ in: '', out: '', ms: undefined })).toBeUndefined()
+    expect(transitionValue({ in: 'slide-up', out: '', ms: 400 })).toEqual({ in: 'slide-up', ms: 400 })
+    expect(transitionValue(transitionFields({ in: 'zoom', out: 'fade' }))).toEqual({ in: 'zoom', out: 'fade' })
+    // A name of the game's own stays on the menu.
+    expect(transitionOptions('curtain')).toEqual(['fade', 'slide-up', 'slide-left', 'zoom', 'none', 'curtain'])
+    expect(effectForm(newEffect('transition'))).toBe('transition')
+  })
+})
+
 describe('the markup helper', () => {
   it('writes markup the engine reads as the beat it means', () => {
     const beats = Object.fromEntries(MARKUP_KINDS.map((kind) => [kind, parseBeats(sampleMarkup(kind))]))
@@ -100,6 +114,9 @@ describe('the markup helper', () => {
     expect(proseBeats(sampleMarkup('pool'))).toEqual([{ kind: 'image', size: 'inline', src: 'pool:door', alt: 'tags red,night' }])
     expect(markup('speaker', { name: 'You', text: 'Just a coffee.' })).toBe('You: "Just a coffee."')
     expect(markup('img', { path: 'a', alt: 'x|y]' })).toBe('[[img:a|xy]]')
+    expect(beats.reveal).toEqual([{ kind: 'reveal', delay: 1000, as: 'fade', at: 1000 }])
+    expect(markup('reveal', { delay: '', as: '' })).toBe('[[reveal]]')
+    expect(markup('reveal', { delay: '1500 ms', as: 'slide-up' })).toBe('[[reveal:1500|slide-up]]')
   })
 
   it('puts a paragraph in with blank lines around it', () => {

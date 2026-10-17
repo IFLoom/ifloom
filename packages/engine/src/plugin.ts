@@ -7,6 +7,7 @@ import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { Reference } from './references.ts'
+import type { Transition, TransitionName } from './features/transitions.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -253,6 +254,8 @@ export type StageDef = {
    * place gives its own id to keep its lines its own. The plugin's id if left out.
    */
   id?: string
+  /** How the room comes on screen and goes off: a place's `transition`. The game's default if left out. */
+  transition?: Transition | TransitionName
 }
 
 /**

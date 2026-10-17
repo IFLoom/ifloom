@@ -41,6 +41,7 @@
     "random",
     "audio",
     "audio-player",
-    "media"
+    "media",
+    "transitions"
   ]
 }

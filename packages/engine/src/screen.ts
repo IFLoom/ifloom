@@ -20,6 +20,7 @@ import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './scen
 import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameDef } from './features/minigames.ts'
+import { transitionView, type TransitionView } from './features/transitions.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 
@@ -95,6 +96,8 @@ export type Screen = {
    * records as started.
    */
   audio: AudioView & { tracks: Record<string, string | null> }
+  /** Which screen this is, and how it comes in and goes out, as `view.transition` has it. */
+  transition: TransitionView
 }
 
 /**
@@ -122,7 +125,9 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
   const drawing: Drawing = { rendered: rendering(state, game, picks), picks }
   const idle = !lockedOut(state, game) && !state.sceneId && !state.minigame
   const dialogue = renderDialogue(state, game, drawing)
-  const room = dialogue ? null : standing(state, game, drawing)
+  // The room's stage, a plugin's (a place), when no scene is open.
+  const roomStage = dialogue ? undefined : pluginStage(game, state)
+  const room = dialogue ? null : standing(state, game, roomStage, drawing)
   const actions = idle ? idleActions(state, game, drawing) : []
   // A minigame being played is shown over the scene or the room, with no choices or buttons of theirs.
   const playing = playingScene(state, game, dialogue?.scene ?? room!, drawing)
@@ -138,13 +143,17 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
     plugins,
     picks,
     audio: { ...audioView(state, game, tracks, beats, cx), tracks },
+    transition: playing
+      ? transitionView(`minigame:${state.minigame!.id}`, undefined, game, state.transition)
+      : dialogue
+        ? transitionView(`scene:${state.sceneId}`, sceneById(game, state.sceneId!)?.transition, game, state.transition)
+        : transitionView(roomStage ? `room:${roomStage.id}` : 'room', roomStage?.transition, game, state.transition),
   }
 }
 
 /** The room itself, when no scene is playing over it. */
-function standing(state: GameState, game: Game, drawing: Drawing): ScreenScene {
+function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginStage>, drawing: Drawing): ScreenScene {
   // A plugin's stage; with none, there is nothing to read but the buttons.
-  const stage = pluginStage(game, state)
   const rendered = stage?.body
     ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks)
     : { body: '' }

@@ -36,7 +36,7 @@ A mod as a file. It's JSON that says what the mod is, which game it's for, and t
 | `version` | Shown beside the name. Optional, and never compared. |
 | `game` | The [`game.id`](/docs/reference/game#game) it was made for. Any other game refuses it. |
 | `description` | A line under the name. Optional. |
-| `pack` | The [pack](/docs/reference/loader#pack). Its `schema` must be the game's [`SCHEMA`](/docs/reference/loader#schema), and its `id` is replaced. |
+| `pack` | The [pack](/docs/reference/loader#pack). Its `schema` may be the game's [`SCHEMA`](/docs/reference/loader#schema) or an older one, which is [upgraded](/docs/reference/loader#upgradepack) when the mod is added. Its `id` is replaced. |
 
 This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-season.json`:
 
@@ -72,13 +72,13 @@ A pack in a file has only what JSON can hold: scenes, items, storylines, activit
 function readMod(text: string, gameId: string): ModFile | string
 ```
 
-Reads a mod file's text for the game `gameId`. It returns the mod with its pack's `id` set to `mod:<id>`, or the reason it can't be used, worded for the player:
+Reads a mod file's text for the game `gameId`. It returns the mod with its pack upgraded to [`SCHEMA`](/docs/reference/loader#schema) by [`upgradePack`](/docs/reference/loader#upgradepack) and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player:
 
 | When | Returns |
 |---|---|
 | The text isn't JSON, or lacks any of `ifloomMod: 1`, a string `id`, a string `name`, a string `game`, or a `pack` with a numeric `schema` | `That is not a mod file.` |
 | `game` isn't `gameId` | `That mod is for another game (<game>).` |
-| `pack.schema` isn't `SCHEMA` | `That mod was written for a version this game cannot read (schema <n>).` |
+| `pack.schema` is newer than `SCHEMA`, or too old to upgrade | `That mod was written for a version this game cannot read (schema <n>).` |
 
 ```ts
 import { readMod } from '@ifloom/engine'

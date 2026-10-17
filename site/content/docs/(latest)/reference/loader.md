@@ -4,7 +4,7 @@ title: "Packs and loading"
 `loadGame` takes your content as a list of packs, merges them in order into one game, and checks the result. Every broken reference comes back as a problem that names the pack it came from.
 
 ```ts
-import { loadGame, SCHEMA, type Pack, type Patch, type Loaded } from '@ifloom/engine'
+import { loadGame, SCHEMA, upgradePack, type Pack, type Patch, type Loaded } from '@ifloom/engine'
 ```
 
 Your game's own content is simply the first pack. Any later pack, such as a mod, is laid over it by id. This page covers the merge and which pack a problem is pinned on. The checks themselves are on [Checking content](/docs/reference/checks). [Mods](/docs/reference/mods) covers the other half: the packs a player installs into a built game, the file they come in, the store that keeps them and how the game loads them at start-up.
@@ -41,7 +41,7 @@ type Pack = {
 | Field | Merged how |
 |---|---|
 | `id` | Names the pack in problems, such as `'town'` or `'mod:sunday-market'`. |
-| `schema` | Must equal [`SCHEMA`](#schema), or the whole pack is skipped with a problem. |
+| `schema` | The [`SCHEMA`](#schema) it was written for. An older pack is [upgraded](#upgradepack) as it loads. A newer one is skipped whole, with a problem. |
 | `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `minigames`, `settings` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers`, `inputs`, `minigames` and `settings` on `loadGame`'s `base` come before every pack's. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/docs/reference/entities). |
 | `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
@@ -75,7 +75,37 @@ The game's other custom conditions, and its effects, values and panels, are left
 const SCHEMA = 4
 ```
 
-The content format this engine reads. A pack written for any other number is refused rather than half-loaded. [`loadGame`](#loadgame) skips it with the problem `written for schema 3, this engine reads 4`, and a [mod](/docs/reference/mods) with the wrong number is refused when the player adds it. Write `schema: SCHEMA` in your own packs so they always match.
+The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
+
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 5, this engine reads 4`, and a mod like that is refused when the player adds it.
+
+## upgradePack
+
+```ts
+function upgradePack(pack: { schema: number }): Pack | string
+```
+
+Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says why it can't. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
+
+It returns the pack at `SCHEMA`, or one of these reasons:
+
+| When | Returns |
+|---|---|
+| `schema` is newer than `SCHEMA` | `written for schema 5, this engine reads 4` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 1, too old for this engine to read (it reads 4)` |
+
+A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
+
+```ts
+import { upgradePack } from '@ifloom/engine'
+
+const pack = upgradePack(JSON.parse(text))
+if (typeof pack === 'string') console.warn(`old-pack.json: ${pack}`)
+```
+
+You rarely call it yourself, because `loadGame` and `readMod` do. Use it when you read a pack some other way, for example a tool that edits packs and writes them back at the current schema.
+
+**Gotcha.** Steps only cover packs in files: data scenes, plugin content and the rest of what JSON can hold. A pack written in TypeScript is checked by the compiler against the current types, so when a schema changes, you update it by hand and set its `schema` to `SCHEMA` again.
 
 ## loadGame
 
@@ -168,7 +198,7 @@ It also reports what is wrong with the packs themselves, which the merged game n
 
 | `where` | Problem |
 |---|---|
-| `pack` | `written for schema …, this engine reads …`: the pack's `schema` isn't [`SCHEMA`](#schema). The whole pack is skipped. |
+| `pack` | `written for schema …, this engine reads …`, or `… too old for this engine to read …`: the pack's `schema` is newer than [`SCHEMA`](#schema), or older than any [upgrade step](#upgradepack). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
 | `setting <id>` | `two settings share this id`: twice in one pack's list, or the base's. A later pack redeclaring one is fine. |
 | `variants <name>` | `"…" has a weight of …; a weight must be above 0`, for a [variants member](/docs/reference/prose#variantmember) with a weight of 0 or less. |

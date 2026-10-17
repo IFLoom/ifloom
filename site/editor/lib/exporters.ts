@@ -1,7 +1,7 @@
 /**
  * A project out as a pack, in JSON or TypeScript, and a JSON pack back in.
  */
-import { SCHEMA, type DataScene, type Pack } from '@ifloom/engine'
+import { SCHEMA, upgradePack, type DataScene, type Pack } from '@ifloom/engine'
 import { Raw, constName, formatTs, quote } from './format.ts'
 import { defaultPreview, newId, PLUGIN_IDS, PLUGINS, slug, type EditorPack, type PluginId, type Project } from './model.ts'
 import { variablesUsed } from './references.ts'
@@ -65,15 +65,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * is, and the editor's problems list says what `checkGame` makes of it.
  */
 export function fromJson(text: string, title?: string): Imported {
-  let raw: unknown
+  let parsed: unknown
   try {
-    raw = JSON.parse(text)
+    parsed = JSON.parse(text)
   } catch (error) {
     return { error: `That isn't JSON: ${(error as Error).message}` }
   }
-  if (!isRecord(raw)) return { error: 'A pack is a JSON object.' }
+  if (!isRecord(parsed)) return { error: 'A pack is a JSON object.' }
+  let raw = parsed
+  if (raw.schema !== undefined) {
+    // An older pack is brought up to the schema the editor writes.
+    const upgraded = typeof raw.schema === 'number' ? upgradePack({ ...raw, schema: raw.schema }) : 'has no schema number'
+    if (typeof upgraded === 'string') return { error: `This pack can't be opened: ${upgraded}.` }
+    raw = upgraded as unknown as Record<string, unknown>
+  }
   if (typeof raw.id !== 'string' || !raw.id) return { error: 'A pack needs an "id".' }
-  if (raw.schema !== undefined && raw.schema !== SCHEMA) return { error: `This pack was written for schema ${String(raw.schema)}; the editor writes ${SCHEMA}.` }
   for (const list of ['scenes', 'stats', 'items'] as const) {
     if (raw[list] !== undefined && !Array.isArray(raw[list])) return { error: `"${list}" should be a list.` }
   }

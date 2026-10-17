@@ -1,5 +1,6 @@
 import type { SaveDriver } from './drivers.ts'
-import { SCHEMA, type Pack } from './loader.ts'
+import type { Pack } from './loader.ts'
+import { upgradePack } from './upgrade.ts'
 
 /**
  * A mod as a file: what it is, which game it is for, and the pack it adds.
@@ -49,9 +50,11 @@ export function readMod(text: string, gameId: string): ModFile | string {
     return 'That is not a mod file.'
   }
   if (mod.game !== gameId) return `That mod is for another game (${mod.game}).`
-  if (mod.pack.schema !== SCHEMA) return `That mod was written for a version this game cannot read (schema ${mod.pack.schema}).`
+  // An older pack is upgraded now, so the store keeps it in this engine's schema.
+  const pack = upgradePack(mod.pack)
+  if (typeof pack === 'string') return `That mod was written for a version this game cannot read (schema ${mod.pack.schema}).`
   // The pack is named after the mod, so problems and saves point at it.
-  return { ...(mod as ModFile), pack: { ...mod.pack, id: `mod:${mod.id}` } }
+  return { ...(mod as ModFile), pack: { ...pack, id: `mod:${mod.id}` } }
 }
 
 /**

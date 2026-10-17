@@ -106,6 +106,7 @@ describe('JSON', () => {
     ['[1]', /JSON object/],
     ['{"schema": 4}', /needs an "id"/],
     ['{"id": "x", "schema": 1}', /schema 1/],
+    ['{"id": "x", "schema": 99}', /schema 99, this engine reads/],
     ['{"id": "x", "scenes": {}}', /should be a list/],
     ['{"id": "x", "scenes": [{"id": "a", "render": 1}]}', /isn't a data scene/],
   ])('refuses %s', (text, why) => {

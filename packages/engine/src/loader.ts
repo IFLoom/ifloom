@@ -6,6 +6,7 @@ import type { Flat } from './types.ts'
 import { checkContent, type Problem, type Source } from './check.ts'
 import { listOwners, packFeatures, type FeaturePack } from './features/registry.ts'
 import type { PackMerge } from './features/feature.ts'
+import { upgradePack } from './upgrade.ts'
 
 /**
  * Content arrives as ordered packs and is merged into one game.
@@ -14,14 +15,14 @@ import type { PackMerge } from './features/feature.ts'
  * which is the point: a mods folder becomes another entry in the list rather
  * than a change to the engine.
  */
-export const SCHEMA = 4
+export { SCHEMA } from './upgrade.ts'
 
 export type { Patch } from './features/scenes.ts'
 
 /** The fields of a pack the core merges itself. The features' (scenes, items, settings and the rest) are in `features/`. */
 type PackBase = {
   id: string
-  /** Schema this pack was written against. Refused if it is not ours. */
+  /** Schema this pack was written against. An older one is upgraded as it loads; a newer one is refused. */
   schema: number
   /** Player-facing words by key, over the engine's and plugins' own. Later packs override earlier ones. */
   strings?: Record<string, string>
@@ -100,13 +101,11 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     }
   }
   addData('base', base.data)
-  for (const pack of packs) {
-    if (pack.schema !== SCHEMA) {
-      problems.push({
-        pack: pack.id,
-        where: 'pack',
-        what: `written for schema ${pack.schema}, this engine reads ${SCHEMA}`,
-      })
+  for (const written of packs) {
+    // An older pack is carried forward to this schema; one that can't be is skipped whole.
+    const pack = upgradePack(written)
+    if (typeof pack === 'string') {
+      problems.push({ pack: written.id, where: 'pack', what: pack })
       continue
     }
     for (const merge of merges.values()) merge.add(pack, pack.id)

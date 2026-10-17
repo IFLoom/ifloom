@@ -5,6 +5,7 @@ import type { Plugin } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
+import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
 import { feed } from '@ifloom/plugin-feed'
@@ -34,6 +35,7 @@ const FACTORIES: Record<PluginId, Factory> = {
   messages,
   feed,
   devices,
+  cheats,
   debug,
 }
 

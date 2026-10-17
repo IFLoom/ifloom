@@ -408,3 +408,19 @@
   padding-left: 0.75rem;
   border-left: 2px solid var(--primary);
 }
+
+/* Cheats: a ruled list like the other plugins', with the groups in small capitals. */
+[data-part="cheat"] {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-part="cheats-group-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+[data-part="cheat-text"] {
+  font-style: italic;
+}

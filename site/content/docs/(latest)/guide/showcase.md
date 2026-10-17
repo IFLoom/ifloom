@@ -290,6 +290,10 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 `src/game.ts`, `strings`. One override, `'ui.quests': 'To do'`, renames the quest list. See [Overriding](/docs/reference/strings#overriding) and the [React UI's words](/docs/react#words).
 
+### Cheats
+
+`town.ts`, `data.cheats`, and `cheats()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). **+20 coins** is free for everyone. **Full energy**, under the group **Supporters**, is refused with `For supporters.` until the kv key `supporter` is set, standing in for a supporter unlock. The sidebar's **Cheats** button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the key is set` checks that a cheat works during moving day's lock and passes no time.
+
 ### Debug, in development only
 
 `src/game.ts` takes `withDebug`, and `src/main.tsx` passes `import.meta.env.DEV`. So the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) and its panel are there under `ifloom dev` and gone from `ifloom build`. The test `has the debugger only when built with it` holds it to that.

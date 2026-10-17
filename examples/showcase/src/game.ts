@@ -7,6 +7,7 @@ import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
+import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
 import { statuses } from '@ifloom/plugin-statuses'
 import { generators } from '@ifloom/plugin-generators'
@@ -72,6 +73,8 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       jobs(),
       generators(),
       wardrobe(),
+      // Cheats are for players; the debugger below is for the developer.
+      cheats(),
       ...(withDebug ? [debug()] : []),
     ],
     actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],

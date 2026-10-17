@@ -1675,6 +1675,7 @@ Every first-party plugin that has something for the player has a default here, w
 | [wardrobe](/docs/plugins/wardrobe) | [`WardrobeCard`](#wardrobecard) | [`useWardrobe`](#usewardrobe) | Sidebar, `'wardrobe'`. |
 | [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | Sidebar, `'statuses'`, under the stats. |
 | [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | Sidebar, `'achievements'`: a button under the menu. |
+| [cheats](/docs/plugins/cheats) | [`CheatPanel`](#cheatpanel), in a dialog | [`useCheats`](#usecheats) | Sidebar, `'cheats'`: a button under the achievements. |
 | [shop](/docs/plugins/shop) | [`ShopCounter`](#shopcounter), in a dialog | [`useShop`](#useshop) | Sidebar, `'shop'`: a button for each vendor here. |
 | [jobs](/docs/plugins/jobs) | [`JobBoard`](#jobboard) | [`useJobs`](#usejobs) | Stage, `'jobs'`, under the quests. |
 | [quests](/docs/plugins/quests) | [`QuestLog`](#questlog) | [`useQuests`](#usequests) | Stage, `'quests'`. |
@@ -1782,6 +1783,54 @@ import { useAchievements } from '@ifloom/react'
 function Trophies() {
   const data = useAchievements()
   return data ? <span>{data.earned}/{data.total}</span> : null
+}
+```
+
+### CheatPanel
+
+```tsx
+function CheatPanel(props: { className?: string }): JSX.Element | null
+```
+
+The [cheats](/docs/plugins/cheats) the player can see, from [`CheatsView`](/docs/plugins/cheats#cheatsview). The ones with no `group` come first, with no heading, then each group under its name, in the order the groups first appear. Each cheat (`data-cheat`) is a [`ChoiceButton`](#choicebutton) from its `button`, greyed out with its reason while it's refused, such as `For supporters.` or `Already used.` for a `once` cheat. Under it are its description and, once used, a badge saying how often (`ui.cheatUsedOnce`, `ui.cheatUsedTimes`).
+
+It draws nothing in a game without the plugin, or while every cheat is hidden.
+
+Replaceable as `CheatPanel` in [`components`](#components). Parts: `cheats`, `cheats-group` (with `data-cheats-group`), `cheats-group-title`, `cheat` (with `data-cheat` and `data-used`), `cheat-text`, `cheat-used` and `choice`.
+
+### CheatsButton
+
+```tsx
+function CheatsButton(props: { className?: string }): JSX.Element | null
+```
+
+What the `'cheats'` part draws: a **Cheats** button (`ui.cheats`) that opens a [`CheatPanel`](#cheatpanel) in a [`Dialog`](#dialog). Opening it sends no command. It draws nothing in a game without the plugin, or while it has no cheat the player can see, so a game whose cheats all wait hidden for an unlock shows no button until then.
+
+Replaceable as `CheatsButton` in [`components`](#components). Parts: `cheats-button`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### useCheats
+
+```ts
+function useCheats(): CheatsControls | null
+
+type CheatsControls = CheatsView & {
+  groups: CheatGroup[]
+  use: (cheat: string) => Result<GameState>
+}
+
+type CheatGroup = { name: string | null; cheats: CheatView[] }
+```
+
+The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
+
+```tsx
+import { useCheats } from '@ifloom/react'
+
+function QuickCoins() {
+  const cheats = useCheats()
+  const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
+  if (!coins) return null
+  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.label}</button>
 }
 ```
 

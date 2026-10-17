@@ -1,0 +1,378 @@
+---
+title: "Cheats"
+description: "Cheats for the player: effects they can use at any time, free for everyone or refused until a condition such as a supporter unlock holds, with a log of what was used."
+---
+`@ifloom/plugin-cheats` gives the player a panel of cheats, such as **+20 coins** or **Skip to chapter 3**. Each cheat is a list of effects that runs when the player presses it. It works in any scene and through any lock, costs nothing, and ends no turn unless its effects do.
+
+A cheat can be free for everyone, or refused with a reason (or hidden) while a condition holds. That's how you offer some cheats only to supporters, after the game is finished, or once a kv key is set. The plugin keeps a log of every use, so a replay shows them and your content can react, for example by refusing an achievement to a save that cheated.
+
+```ts
+import {
+  cheats, runCheat, cheatUsed, cheatDefs, cheatsView,
+  type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView,
+} from '@ifloom/plugin-cheats'
+```
+
+## Cheats or debug?
+
+The [debug plugin](/docs/plugins/debug) is for you while you build the game. Its commands set any stat, scene or clock by hand, it has no words for the player, and you leave it out of release builds.
+
+Cheats are part of the game the player gets. You write each one as content, with a label, effects and the reasons it's refused, and the React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
+
+## Install
+
+List the package in your game's `package.json`, beside the engine:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-cheats": "^0.0.0"
+  }
+}
+```
+
+Then add `cheats()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin cooperates with `unlocks` by name, so a cheat can name the `unlocks/has` condition even in a game without that plugin. It works on its own too.
+
+## cheats
+
+```ts
+function cheats(): DefinedPlugin<CheatsState, CheatsView>
+```
+
+Builds the plugin, with the id `cheats`. A new game has used no cheats.
+
+## Writing cheats
+
+Cheats are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `cheats.cheats`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { CheatDef } from '@ifloom/plugin-cheats'
+
+const coins: CheatDef = {
+  id: 'coins',
+  label: '+20 coins',
+  description: 'A little help with the rent.',
+  effects: [{ kind: 'stat', stat: 'coins', by: 20 }],
+}
+
+const energy: CheatDef = {
+  id: 'energy',
+  label: 'Full energy',
+  description: 'As if you had slept.',
+  group: 'Supporters',
+  blocked: [{ when: { not: { kv: 'supporter' } }, reason: 'For supporters.' }],
+  effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+}
+
+const town: Pack = {
+  id: 'town',
+  schema: SCHEMA,
+  data: { cheats: { cheats: [coins, energy] } },
+}
+```
+
+### CheatDef
+
+```ts
+type CheatDef = {
+  id: string
+  label: string
+  description?: string
+  effects: EffectRef[]
+  blocked?: Blocked[]
+  group?: string
+  once?: boolean
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among cheats. Content and the `cheats/use` command name it by this. |
+| `label` | What its button says. |
+| `description` | A line about it, under the button. |
+| `effects` | What it does, as any [effect list](/docs/reference/effects) runs, in order. Plugins' effects in their short form work too. |
+| `blocked` | Why it's refused. The first entry whose `when` holds greys the button out with its `reason`, or leaves it off the panel with `hide`. See [Supporter cheats](#supporter-cheats). |
+| `group` | The heading it's listed under. Cheats with no group come first, with no heading. |
+| `once` | Usable once in a save. After that its button is greyed out with `Already used.` |
+
+`blocked` is the same [`Blocked`](/docs/reference/actions#blocked) shape choices, actions, places and jobs use, refused while `when` holds.
+
+## Supporter cheats
+
+A game funded by supporters often keeps some cheats for them. Put the condition that says the player isn't a supporter in the cheat's `blocked`:
+
+```ts
+import type { CheatDef } from '@ifloom/plugin-cheats'
+
+const gold: CheatDef = {
+  id: 'gold',
+  label: '+500 coins',
+  group: 'Supporters',
+  blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
+  effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+}
+```
+
+`unlocks/has` is the condition of the unlocks plugin, which checks a code the player enters. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
+
+Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat.
+
+## Using a cheat
+
+The player uses a cheat with the `cheats/use` command. Its button in the [view](#the-view) sends it, and `runCheat(id)` writes it:
+
+```ts
+import { runCheat } from '@ifloom/plugin-cheats'
+
+runner.apply(runCheat('coins'))
+```
+
+When it takes, the cheat's effects run on the current state, then the plugin adds `{ cheat, turn }` to its log. The command:
+
+- **ignores locks.** It sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in an intro that only moves through its scenes, and no plugin guard stops it.
+- **costs nothing.** Its button has no price.
+- **ends no turn** unless its effects do. A cheat with `{ kind: 'turn' }` or `calendar/pass` among its effects passes time as written.
+- **is refused** with `There's no such cheat.` for an id the game doesn't have, with the reason of its first `blocked` entry that holds, and with `Already used.` for a `once` cheat used before.
+
+Plugins' `onCommand` hooks run after it as after any command, so an achievement whose condition a cheat meets is earned. A cheat is recorded in the command log like any other command, and [`replay`](/docs/reference/runner#replay) plays it back exactly.
+
+## Conditions
+
+| Content writes | Helper | Holds when |
+|---|---|---|
+| `{ 'cheats/used': { cheat } }` | `cheatUsed(id)` | This save has used the cheat. |
+| `{ 'cheats/used': {} }` | `cheatUsed()` | This save has used any cheat. |
+
+Use it to mark a save that cheated, or to keep something back from one:
+
+```ts
+import { cheatUsed } from '@ifloom/plugin-cheats'
+
+const honest = {
+  id: 'honest',
+  title: 'By the book',
+  description: 'Finish the game without a cheat.',
+  when: { all: [{ seen: 'ending' }, { not: cheatUsed() }] },
+}
+```
+
+## Value
+
+| Prose writes | Prints |
+|---|---|
+| `{{v:cheats/used}}` | How many times this save has used a cheat. |
+| `{{v:cheats/used cheat=coins}}` | How many times this save has used that one. |
+
+## Strings
+
+| Key | English |
+|---|---|
+| `cheats/unknown` | `There's no such cheat.` |
+| `cheats/usedOnce` | `Already used.`, on a `once` cheat after its use. |
+
+## The view
+
+`runner.view().plugins.cheats` is a `CheatsView`. The [React UI](/docs/react) draws it with [`CheatPanel`](/docs/react/components#cheatpanel), in a dialog opened from a **Cheats** button in the sidebar, and [`useCheats`](/docs/react/components#usecheats) gives this view with no markup.
+
+### CheatsView
+
+```ts
+type CheatsView = {
+  cheats: CheatView[]
+  used: number
+}
+```
+
+| Field | What it is |
+|---|---|
+| `cheats` | The cheats the player can see, in the order the game declares them. One blocked with `hide` is left out while its `when` holds. |
+| `used` | How many times this save has used a cheat. |
+
+### CheatView
+
+```ts
+type CheatView = {
+  id: string
+  label: string
+  description: string
+  group: string | null
+  once: boolean
+  used: number
+  button: RenderedChoice
+}
+```
+
+| Field | What it is |
+|---|---|
+| `description` | Its description, or `''`. |
+| `group` | Its group, or `null`. |
+| `used` | How many times this save has used it. |
+| `button` | A [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `cheats/use`. Its `disabled` is the reason it's refused now. |
+
+### Drawing it yourself
+
+Every framework reads the same slice. Here's a panel with the cheats under their groups:
+
+```ts tab="Plain JS" tab-group="framework"
+// src/cheats.ts
+import type { Runner, View } from '@ifloom/engine'
+import type { CheatsView } from '@ifloom/plugin-cheats'
+
+export function cheatPanel(view: View, runner: Runner): HTMLElement | null {
+  const cheats = (view.plugins.cheats as CheatsView | undefined)?.cheats ?? []
+  if (!cheats.length) return null
+  const panel = document.createElement('section')
+  const groups = [...new Set(cheats.map((cheat) => cheat.group))]
+  for (const group of groups) {
+    if (group) panel.appendChild(document.createElement('h3')).textContent = group
+    for (const cheat of cheats.filter((entry) => entry.group === group)) {
+      const button = panel.appendChild(document.createElement('button'))
+      button.textContent = cheat.used ? `${cheat.label} (used ${cheat.used})` : cheat.label
+      button.disabled = Boolean(cheat.button.disabled)
+      button.title = cheat.button.disabled ?? cheat.description
+      button.onclick = () => runner.apply(cheat.button.command)
+    }
+  }
+  return panel
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/hud/Cheats.tsx
+import { useCheats } from '@ifloom/react'
+
+export function Cheats() {
+  const cheats = useCheats()
+  if (!cheats?.cheats.length) return null
+  return (
+    <section className="space-y-3">
+      {cheats.groups.map((group) => (
+        <div key={group.name ?? ''} className="space-y-1">
+          {group.name ? <h3 className="font-semibold">{group.name}</h3> : null}
+          {group.cheats.map((cheat) => (
+            <button key={cheat.id} disabled={Boolean(cheat.button.disabled)} title={cheat.button.disabled ?? cheat.description} onClick={() => cheats.use(cheat.id)}>
+              {cheat.label}
+              {cheat.used ? ` (used ${cheat.used})` : ''}
+            </button>
+          ))}
+        </div>
+      ))}
+    </section>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/Cheats.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { CheatsView } from '@ifloom/plugin-cheats'
+import { runner, view } from './runner.ts'
+
+const cheats = computed(() => (view.value.plugins.cheats as CheatsView | undefined)?.cheats ?? [])
+const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.group))])
+</script>
+
+<template>
+  <section v-if="cheats.length">
+    <div v-for="group in groups" :key="group ?? ''">
+      <h3 v-if="group">{{ group }}</h3>
+      <button
+        v-for="cheat in cheats.filter((entry) => entry.group === group)"
+        :key="cheat.id"
+        :disabled="Boolean(cheat.button.disabled)"
+        :title="cheat.button.disabled ?? cheat.description"
+        @click="runner.apply(cheat.button.command)"
+      >
+        {{ cheat.label }}<template v-if="cheat.used"> (used {{ cheat.used }})</template>
+      </button>
+    </div>
+  </section>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/Cheats.svelte -->
+<script lang="ts">
+  import type { CheatsView } from '@ifloom/plugin-cheats'
+  import { runner, view } from './runner.ts'
+
+  const cheats = $derived(($view.plugins.cheats as CheatsView | undefined)?.cheats ?? [])
+  const groups = $derived([...new Set(cheats.map((cheat) => cheat.group))])
+</script>
+
+{#if cheats.length}
+  <section>
+    {#each groups as group (group ?? '')}
+      {#if group}<h3>{group}</h3>{/if}
+      {#each cheats.filter((entry) => entry.group === group) as cheat (cheat.id)}
+        <button disabled={Boolean(cheat.button.disabled)} title={cheat.button.disabled ?? cheat.description} onclick={() => runner.apply(cheat.button.command)}>
+          {cheat.label}{#if cheat.used} (used {cheat.used}){/if}
+        </button>
+      {/each}
+    {/each}
+  </section>
+{/if}
+```
+
+[Building UI for plugins](/docs/recipes/plugin-ui) has more pieces built this way.
+
+## The state
+
+### CheatsState
+
+```ts
+type CheatsState = { used: CheatUse[] }
+type CheatUse = { cheat: string; turn: number }
+```
+
+What the plugin keeps in a save, at `state.plugins.cheats`: every use of a cheat, oldest first, with the [turn](/docs/reference/state#turn) it was used on. A save from before the plugin was added loads with nothing used.
+
+## For code
+
+### Helpers
+
+```ts
+const runCheat: (cheat: string) => CommandRef
+const cheatUsed: (cheat?: string) => Condition
+```
+
+### cheatDefs
+
+```ts
+function cheatDefs(game: Game): CheatDef[]
+```
+
+The game's cheats, merged from its packs: `game.data.cheats.cheats`.
+
+### cheatsView
+
+```ts
+function cheatsView(state: GameState, context: PluginContext<CheatsState>): CheatsView
+```
+
+The plugin's view, as its `view` provider builds it. You need it only inside a plugin of your own that wraps this one. For the current game, read `runner.view()`.
+
+## Checks
+
+When the game loads, the plugin reports these problems against the pack each cheat came from, with `where` as `cheats <id>`:
+
+- Anything a cheat's effects or `blocked` conditions name that the game doesn't have (`unknown stat "…"`).
+- A cheat with an empty label (`has no label`) or no effects (`has no effects`).
+- A `blocked` entry with no reason.
+- Two cheats with one id, in a game built by hand. Packs merge by id, so a loaded game never has this.
+
+A `cheats/use` command or `cheats/used` condition that names a cheat the game doesn't have gives `unknown cheat "…"` where it's written.
+
+## Gotchas
+
+- **A cheat's effects run in order, on the state as it is.** A cheat that opens a scene does so on top of whatever is on screen.
+- **Locks don't stop it, but its effects still follow the rules.** A stat is held to its range, and `rules.onStat` runs for the player's stats, as with any `stat` effect.
+- **The log is the save's.** A new game starts with nothing used, and loading an older save brings back its log.
+- **A gate isn't protection.** Cheats are in the game's code, so a player who reads it can find them. Use it to thank supporters, not to lock away content.
+
+## See it in an example
+
+Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the kv key `supporter` is set, as a stand-in for a supporter unlock. The sidebar's **Cheats** button opens them.

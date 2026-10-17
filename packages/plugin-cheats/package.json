@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-cheats",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Cheats for IFLoom: a panel of effects the player can use at any time, free for everyone or refused until a condition (a supporter unlock, say) holds, with a log of what was used.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "^0.0.0"
+  }
+}

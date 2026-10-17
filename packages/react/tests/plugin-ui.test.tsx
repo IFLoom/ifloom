@@ -339,6 +339,6 @@ describe('the presets', async () => {
   }
   it.each(['paper', 'storybook', 'studio', 'terminal'])('%s styles each new default', (name) => {
     const css = read(name)
-    for (const part of ['achievement', 'good', 'job', 'status']) expect(css, part).toContain(`[data-part="${part}"]`)
+    for (const part of ['achievement', 'good', 'job', 'status', 'cheat']) expect(css, part).toContain(`[data-part="${part}"]`)
   })
 })

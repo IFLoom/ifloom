@@ -26,6 +26,7 @@
     "@ifloom/plugin-achievements": "^0.0.0",
     "@ifloom/plugin-calendar": "^0.0.0",
     "@ifloom/plugin-cast": "^0.0.0",
+    "@ifloom/plugin-cheats": "^0.0.0",
     "@ifloom/plugin-debug": "^0.0.0",
     "@ifloom/plugin-devices": "^0.0.0",
     "@ifloom/plugin-feed": "^0.0.0",
@@ -45,6 +46,9 @@
       "optional": true
     },
     "@ifloom/plugin-cast": {
+      "optional": true
+    },
+    "@ifloom/plugin-cheats": {
       "optional": true
     },
     "@ifloom/plugin-debug": {
@@ -96,6 +100,7 @@
     "@ifloom/plugin-achievements": "^0.0.0",
     "@ifloom/plugin-calendar": "^0.0.0",
     "@ifloom/plugin-cast": "^0.0.0",
+    "@ifloom/plugin-cheats": "^0.0.0",
     "@ifloom/plugin-debug": "^0.0.0",
     "@ifloom/plugin-devices": "^0.0.0",
     "@ifloom/plugin-feed": "^0.0.0",

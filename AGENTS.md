@@ -24,6 +24,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-messages` (`@ifloom/plugin-messages`) | Channels and threads of messages that arrive when the story allows; replies are choices. Channels and messages are content: `data.messages`. |
 | `packages/plugin-feed` (`@ifloom/plugin-feed`) | Feeds of posts that appear when the story allows, the player's own posts, likes and comments. Feeds and posts are content: `data.feed`. |
 | `packages/plugin-devices` (`@ifloom/plugin-devices`) | Devices with apps built from sections; opening one is free and doesn't leave the room. Devices and apps are content: `data.devices`. |
+| `packages/plugin-cheats` (`@ifloom/plugin-cheats`) | Cheats for the player: effects that run in any scene and through any lock, free or refused by `blocked` until a condition holds (a supporter unlock, say), with a log of each use. Unlike debug, it ships in the release. Cheats are content: `data.cheats.cheats`. |
 | `packages/phone` (`@ifloom/phone`) | A bundle, not a plugin: `phone()` wires devices, messages and feed into a smartphone, and returns the phone as `data`. |
 | `packages/plugin-debug` (`@ifloom/plugin-debug`) | Debug commands that ignore locks; left out of release builds. |
 | `packages/audio` (`@ifloom/audio`) | The audio player: `startAudio(runner)` plays `view.audio` in the browser with plain `HTMLAudioElement`s. Imports only the engine; any UI can use it. |

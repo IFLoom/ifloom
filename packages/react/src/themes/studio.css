@@ -290,3 +290,18 @@
 [data-part="job-actions"] [data-part="choice"] {
   padding-block: 0.4rem;
 }
+
+/* Cheats: cards like the rest of the app. */
+[data-part="cheat"] {
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--card);
+}
+
+[data-part="cheats-group-title"] {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}

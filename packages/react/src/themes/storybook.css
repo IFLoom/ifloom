@@ -333,3 +333,15 @@
 [data-part="achievements-button"] {
   border-radius: 999px;
 }
+
+/* Cheats: sticker cards, with a rounded button to open them. */
+[data-part="cheat"] {
+  padding: 0.6rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="cheats-button"] {
+  border-radius: 999px;
+}

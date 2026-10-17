@@ -635,6 +635,13 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `achievement-text` | Its description. |
 | `achievement-progress` | The progress bar. Fill it with `> span`. |
 | `achievement-progress-text` | The count under it (`5 of 20`). |
+| `cheats-button` | The sidebar's **Cheats** button. |
+| `cheats` | The cheat panel, in its dialog. |
+| `cheats-group` | One group of cheats. Carries `data-cheats-group`, empty for the cheats with no group. |
+| `cheats-group-title` | The group's heading. |
+| `cheat` | One cheat: its `choice` button, its description and how often it was used. Carries `data-cheat`, and `data-used` once it has been used. |
+| `cheat-text` | Its description. |
+| `cheat-used` | How many times this save has used it, on a badge. |
 | `vendors` | The row of buttons for the vendors here. |
 | `vendor-button` | One vendor's button. Carries `data-vendor`. |
 | `vendor-closed` | The **Closed** badge on it. |

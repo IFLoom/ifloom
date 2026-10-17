@@ -100,6 +100,10 @@ export const UI_STRINGS = {
   achievementEarned: 'Earned',
   achievementProgress: '{value} of {target}',
   noAchievements: 'No achievements yet.',
+  // cheats
+  cheats: 'Cheats',
+  cheatUsedOnce: 'Used once',
+  cheatUsedTimes: 'Used {n} times',
   // the shop
   shopAt: 'Shop at {vendor}',
   vendorClosed: 'Closed',

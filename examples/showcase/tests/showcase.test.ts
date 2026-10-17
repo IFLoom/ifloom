@@ -16,6 +16,7 @@ import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
 import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { call, talk } from '@ifloom/plugin-cast'
+import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
 import { clock, openCamera, smallTown } from '../src/game.ts'
 
 /** The town on a given day at a given time; a day is a turn here. */
@@ -136,6 +137,24 @@ describe('Small Town', () => {
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
     expect(achievements()[1]).toMatchObject({ title: 'Dusk by the river', earned: true })
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
+  })
+
+  it('offers a free cheat on moving day, and keeps the supporter one greyed out until the key is set', () => {
+    let state = startingState(game)
+    const coins = state.stats.coins
+    // Moving day locks everything but the scene; a cheat still works, and no time passes.
+    state = run(state, runCheat('coins'))
+    expect(state.stats.coins).toBe(coins + 20)
+    expect(state.turn).toBe(0)
+    expect(holds(state, cheatUsed('coins'), game)).toBe(true)
+    const shown = (s: GameState) => view(s, game).plugins.cheats as CheatsView
+    expect(shown(state).cheats.map((cheat) => [cheat.id, cheat.button.disabled ?? null])).toEqual([
+      ['coins', null],
+      ['energy', 'For supporters.'],
+    ])
+    expect(apply(state, game, runCheat('energy')).reason).toBe('For supporters.')
+    const supporter = { ...state, kv: { ...state.kv, supporter: true }, stats: { ...state.stats, energy: 10 } }
+    expect(run(supporter, runCheat('energy')).stats.energy).toBe(100)
   })
 
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {

@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react'
 import { Separator } from '../components/ui/separator.tsx'
 import { AchievementsButton } from './achievements.tsx'
+import { CheatsButton } from './cheats.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { DebugCard } from './debug.tsx'
@@ -45,6 +46,7 @@ export type PartName =
   | 'notice-strip'
   | 'statuses'
   | 'achievements'
+  | 'cheats'
   | 'shop'
   | 'jobs'
 
@@ -60,7 +62,7 @@ export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overl
 
 /** The React UI's own layout: everything at the side, the scene on the stage. */
 export const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
   stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
   overlay: ['notices'],
 } as const satisfies Required<Layout>
@@ -68,7 +70,7 @@ export const DEFAULT_LAYOUT = {
 /** A page to read, as a novel is: the scene, then what to type and the buttons, under the title. */
 export const READING_LAYOUT = {
   sidebar: [],
-  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements'],
+  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements', 'cheats'],
   overlay: ['notices'],
 } as const satisfies Required<Layout>
 
@@ -113,6 +115,7 @@ const PARTS: Record<PartName, () => ReactNode> = {
   'notice-strip': () => <NoticeStrip />,
   statuses: () => <StatusList />,
   achievements: () => <AchievementsButton />,
+  cheats: () => <CheatsButton />,
   shop: () => <ShopButtons />,
   jobs: () => <JobBoard />,
 }

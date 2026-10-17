@@ -3,6 +3,7 @@ import type { Command, Condition, Effect } from '../../src/index.ts'
 import { CONDITION_KINDS, EFFECT_KINDS } from '../../src/core.ts'
 import type { Plugin } from '../../src/plugin.ts'
 import { achievementEarned, achievements, grantAchievement } from '@ifloom/plugin-achievements'
+import { cheatUsed, cheats, runCheat } from '@ifloom/plugin-cheats'
 import { calendar, day, period, sleep, weekday, weekend } from '@ifloom/plugin-calendar'
 import { call, cast, hasMet, here, isAt, talk } from '@ifloom/plugin-cast'
 import { debug, debugGo, debugScene, debugItem, debugKv, debugStat, debugTime, debugTurn } from '@ifloom/plugin-debug'
@@ -126,6 +127,8 @@ const SAMPLES: Record<string, Call> = {
   'conditions:jobs/shifts': shiftsWorked('barista', { gte: 3 }),
   'effects:jobs/hire': hire('barista'),
   'effects:jobs/fire': fire('barista'),
+  'conditions:cheats/used': cheatUsed('coins'),
+  'commands:cheats/use': runCheat('coins'),
   'commands:jobs/apply': applyFor('barista'),
   'commands:jobs/work': work('barista'),
   'commands:jobs/quit': quit('barista'),
@@ -156,7 +159,7 @@ const SAMPLES: Record<string, Call> = {
 /** What a plugin call's arguments may be named, by role, beyond the core's targets and details. */
 const PLUGIN_NOUNS = [
   // the plugins' own targets
-  'achievement', 'status', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period',
+  'achievement', 'status', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period', 'cheat',
   // details: how many, where, who from, what with
   'count', 'stacks', 'runEnd', 'likes', 'video', 'at',
 ] as const
@@ -167,6 +170,7 @@ const firstParty: Plugin<any>[] = [
   achievements(),
   calendar(),
   cast(),
+  cheats(),
   debug(),
   devices(),
   feed(),

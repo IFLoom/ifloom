@@ -521,3 +521,39 @@ body {
 [data-part="achievements-button"]::after {
   content: "]";
 }
+
+/* Cheats: commands in a listing, as a console prints them. */
+[data-part="cheats-group-title"] {
+  text-transform: uppercase;
+}
+
+[data-part="cheats-group-title"]::before {
+  content: "# ";
+  color: var(--muted-foreground);
+}
+
+[data-part="cheat"] {
+  padding-left: 0.5rem;
+  border-left: 1px dashed var(--border);
+}
+
+[data-part="cheats"] {
+  counter-reset: choice;
+}
+
+[data-part="cheat"] [data-part="choice"] [data-part="choice-label"]::before {
+  content: "> ";
+}
+
+[data-part="cheats-button"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}
+
+[data-part="cheats-button"]::before {
+  content: "[";
+}
+
+[data-part="cheats-button"]::after {
+  content: "]";
+}

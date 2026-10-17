@@ -3,6 +3,7 @@ import type { Plugin } from '../../src/plugin.ts'
 import type { GameRules } from '../../src/game.ts'
 import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
+import { cheats } from '@ifloom/plugin-cheats'
 import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
@@ -49,6 +50,7 @@ const firstParty: Plugin<any>[] = [
   achievements(),
   calendar(),
   cast(),
+  cheats(),
   debug(),
   devices(),
   feed(),

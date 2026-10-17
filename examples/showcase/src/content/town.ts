@@ -477,6 +477,21 @@ export const town: Pack = {
         { id: 'river', title: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
       ],
     },
+    cheats: {
+      cheats: [
+        // Free for everyone.
+        { id: 'coins', label: '+20 coins', description: 'A little help with the rent.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
+        // A stand-in for a supporter unlock: a game with the unlocks plugin would ask `unlocks/has` instead of a kv key.
+        {
+          id: 'energy',
+          label: 'Full energy',
+          description: 'As if you had slept.',
+          group: 'Supporters',
+          blocked: [{ when: { not: { kv: 'supporter' } }, reason: 'For supporters.' }],
+          effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+        },
+      ],
+    },
     statuses: {
       statuses: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },

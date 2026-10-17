@@ -36,6 +36,7 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 - **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/docs/plugins/wardrobe).
 - **Active statuses**, under the stats, when the game has the [statuses plugin](/docs/plugins/statuses) and one is active, with the turns each has left.
 - **Achievements**, from a button under the menu, when the game has the [achievements plugin](/docs/plugins/achievements): a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
+- **Cheats**, from a button under the menu, when the game has the [cheats plugin](/docs/plugins/cheats) and at least one cheat the player can see. It opens a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
 - **The shop**, when the game has the [shop plugin](/docs/plugins/shop): a button for each vendor where the player is, opening a dialog with the goods, prices, stock and greyed-out reasons, to buy and sell back.
 - **A job board**, under the stage, when the game has the [jobs plugin](/docs/plugins/jobs): each job with its pay, rank, next shift and the reason applying is refused, and buttons to apply, work a shift and quit.
 
@@ -227,7 +228,7 @@ type Part = PartName | ReactNode
 type PartName =
   | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
   | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
-  | 'notice-strip' | 'statuses' | 'achievements' | 'shop' | 'jobs'
+  | 'notice-strip' | 'statuses' | 'achievements' | 'cheats' | 'shop' | 'jobs'
 ```
 
 | Part | What it draws |
@@ -251,6 +252,7 @@ type PartName =
 | `'notice-strip'` | [`NoticeStrip`](/docs/react/components#noticestrip), a row of unread counts. No built-in layout includes it. |
 | `'statuses'` | [`StatusList`](/docs/react/components#statuslist), the active statuses. |
 | `'achievements'` | [`AchievementsButton`](/docs/react/components#achievementsbutton), which opens the achievements. |
+| `'cheats'` | [`CheatsButton`](/docs/react/components#cheatsbutton), which opens the cheats. |
 | `'shop'` | [`ShopButtons`](/docs/react/components#shopbuttons), a button for each vendor here. |
 | `'jobs'` | [`JobBoard`](/docs/react/components#jobboard). |
 
@@ -258,14 +260,14 @@ Each built-in part draws nothing when the game has nothing for it. A game withou
 
 ```ts
 const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
   stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
   overlay: ['notices'],
 }
 
 const READING_LAYOUT = {
   sidebar: [],
-  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements'],
+  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements', 'cheats'],
   overlay: ['notices'],
 }
 ```
@@ -517,6 +519,9 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.achievementEarned` | `Earned` | |
 | `ui.achievementProgress` | `{value} of {target}` | `value`, `target` |
 | `ui.noAchievements` | `No achievements yet.` | |
+| `ui.cheats` | `Cheats` | |
+| `ui.cheatUsedOnce` | `Used once` | |
+| `ui.cheatUsedTimes` | `Used {n} times` | `n` |
 | `ui.shopAt` | `Shop at {vendor}` | `vendor`: its name |
 | `ui.vendorClosed` | `Closed` | |
 | `ui.buy` | `Buy` | |
@@ -567,6 +572,7 @@ Which component uses which keys:
 - **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings`, `ui.achievements` and `ui.credits`.
 - **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
 - **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.
+- **[Cheats](/docs/react/components#cheatpanel)**: `ui.cheats` on the button and the dialog, and `ui.cheatUsedOnce` and `ui.cheatUsedTimes` on a cheat used.
 - **[Shop](/docs/react/components#shopcounter)**: `ui.shopAt` to `ui.noGoods`.
 - **[Job board](/docs/react/components#jobboard)**: `ui.jobs` to `ui.jobFired`.
 - **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.

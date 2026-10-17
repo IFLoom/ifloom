@@ -21,6 +21,7 @@ A linear novel might use none of them. A life sim like the [showcase](/docs/guid
 | [Messages](/docs/plugins/messages) | `@ifloom/plugin-messages` | Messages that arrive when the story allows, in channels and threads, with replies that work like choices. |
 | [Feed](/docs/plugins/feed) | `@ifloom/plugin-feed` | Timelines of other people's posts, the player's own posts, and the likes and comments they get. |
 | [Devices](/docs/plugins/devices) | `@ifloom/plugin-devices` | Devices with apps declared as data, badges, and opening an app without leaving the room. |
+| [Cheats](/docs/plugins/cheats) | `@ifloom/plugin-cheats` | Cheats for the player, such as +20 coins, that work in any scene and through any lock. Each is free for everyone or refused (or hidden) until a condition holds, such as a supporter unlock. A log records what was used, and content can ask about it. |
 | [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a kv key, give the player an item (`debug/item`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
 
 There's also one bundle:
@@ -38,6 +39,7 @@ There's also one bundle:
   - The cast cooperates with places and the calendar. It asks places where the player is, and its schedules usually use the calendar's conditions. Without places, nobody is ever in the room, but calls still work.
   - The shop cooperates with the calendar and places. A vendor keeps the calendar's hours and stands at a place on the map.
   - Jobs cooperate with the calendar and places. Shifts fall on the calendar's weekdays and periods, take its time, and are worked at a place on the map.
+  - Cheats cooperate with unlocks by name. A supporter-only cheat names `unlocks/has` in its `blocked`, and without that plugin the condition is false, so the cheat stays refused.
   - Debug cooperates with the calendar and places. `debug/time` sets the calendar's clock and `debug/go` moves the player on the places map.
   - Messages, the feed and devices cooperate with the cast. Messages and posts show the [cast](/docs/plugins/cast)'s names and faces, and a device's contacts section lists the people the player can call.
   - A device's app can show another plugin's view by name, such as a messages channel or a feed. Messages and feeds work without a device.

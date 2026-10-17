@@ -17,6 +17,7 @@ const DEFAULTS: Record<string, { component: string; hook: string }> = {
   quests: { component: 'QuestLog', hook: 'useQuests' },
   statuses: { component: 'StatusList', hook: 'useStatuses' },
   achievements: { component: 'AchievementList', hook: 'useAchievements' },
+  cheats: { component: 'CheatPanel', hook: 'useCheats' },
   shop: { component: 'ShopCounter', hook: 'useShop' },
   jobs: { component: 'JobBoard', hook: 'useJobs' },
   wardrobe: { component: 'WardrobeCard', hook: 'useWardrobe' },

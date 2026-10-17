@@ -6,6 +6,8 @@ description: "Commands for testing that ignore locks: set a stat, a kv key, an i
 
 You'd want it while you build and test a game, so you can get straight to the state you want to look at without playing up to it. It's for you, not the player, so leave it out of release builds.
 
+To give the player cheats in the released game, such as +20 coins or a supporter-only shortcut, use the [cheats plugin](/docs/plugins/cheats) instead. Its cheats are content you write, with effects and reasons the player reads, and its log records each use.
+
 To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `debug()` to the game's `plugins` in development builds only. [Leave it out of release builds](#leave-it-out-of-release-builds) shows how.
 
 ```ts

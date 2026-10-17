@@ -202,8 +202,9 @@ export function questsView(record: QuestsState, game: Game): QuestsView {
   }
 }
 
+/** The quest a call names: `quest` in a condition or an effect, `id` in a command. */
 function questId(args: Record<string, unknown>): string {
-  return String(args.quest ?? '')
+  return String(args.quest ?? args.id ?? '')
 }
 
 /**
@@ -241,7 +242,7 @@ export function quests() {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'quests/track', with: { quest } }`; leave `quest` out to stop tracking. */
+      /** `{ type: 'custom', name: 'quests/track', with: { id } }`: track the quest `id`; leave `id` out to stop tracking. */
       track: {
         whyNot: (state, args, { slice, game }) => {
           const id = questId(args)
@@ -252,11 +253,11 @@ export function quests() {
         },
         run: (_state, args, { slice, set }) => set({ ...slice, tracked: questId(args) || null }),
       },
-      /** `{ type: 'custom', name: 'quests/seen', with: { quest } }`; leave `quest` out to mark them all. */
+      /** `{ type: 'custom', name: 'quests/seen', with: { id } }`: mark the quest `id` seen; leave `id` out to mark them all. */
       seen: {
         run: (state, args, { slice, set, game }) => {
           const record = advance(slice, state, game)
-          const ids = args.quest ? [questId(args)] : Object.keys(record.started)
+          const ids = args.id ? [questId(args)] : Object.keys(record.started)
           const seen = { ...record.seen }
           for (const id of ids) seen[id] = mark(record, id)
           return set({ ...record, seen })
@@ -276,7 +277,7 @@ export function quests() {
     view: (state, { slice, game }) => questsView(advance(slice, state, game), game),
     references: {
       // The quest a condition, effect or command names. Tracking or looking with none is fine.
-      calls: (_kind, _name, args) => (args.quest === undefined ? [] : [{ entry: String(args.quest), plugin: 'quests', list: 'quests', noun: 'quest' }]),
+      calls: (_kind, _name, args) => (questId(args) === '' ? [] : [{ entry: questId(args), plugin: 'quests', list: 'quests', noun: 'quest' }]),
       content: (game) =>
         questDefs(game).map((quest) => ({
           list: 'quests',
@@ -316,6 +317,6 @@ export const questReached = (quest: string, stage: string): Condition => ({
 /** An effect: start the quest now. */
 export const startQuest = (quest: string): EffectRef => ({ custom: 'quests/start', with: { quest } })
 /** A command: pin this quest, or unpin with no argument. */
-export const trackQuest = (quest?: string): Command => ({ type: 'custom', name: 'quests/track', with: { quest } })
+export const trackQuest = (quest?: string): Command => ({ type: 'custom', name: 'quests/track', with: { id: quest } })
 /** A command: the player has looked at this quest, or at all of them. */
-export const seeQuests = (quest?: string): Command => ({ type: 'custom', name: 'quests/seen', with: { quest } })
+export const seeQuests = (quest?: string): Command => ({ type: 'custom', name: 'quests/seen', with: { id: quest } })

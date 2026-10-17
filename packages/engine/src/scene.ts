@@ -1,5 +1,5 @@
 import { holds, type Condition } from './condition.ts'
-import type { Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
+import type { Blocked, Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
 import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
@@ -55,8 +55,8 @@ export type Choice = {
    */
   labels?: { when?: Condition; key: string }[]
   when?: Condition
-  /** Reasons it is on screen but cannot be taken. First match wins. */
-  blocked?: { when: Condition; reason: string }[]
+  /** Reasons it is on screen but cannot be taken (or, with `hide`, left off). First match wins. */
+  blocked?: Blocked[]
   /**
    * A line that only lands once a turn.
    * The reason is what the player reads on it afterwards — the line stays on
@@ -220,7 +220,9 @@ export function renderScene(
 
   const choices: SceneChoice[] = []
   for (const choice of scene.choices) {
-    const visible = holds(state, choice.when, runtime.game)
+    const visible =
+      holds(state, choice.when, runtime.game) &&
+      !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
     const already =
       choice.once !== undefined &&
       runtime.spent(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id)

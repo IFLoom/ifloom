@@ -46,8 +46,8 @@ export type InputView = {
 /** What the inputs feature adds, as types. */
 export type InputsShape = {
   commands: {
-    /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
-    input: { type: 'input'; id: string; value?: KvValue }
+    /** Write what the player typed or picked, `to` that value. A button leaves `to` out and the UI asks. */
+    input: { type: 'input'; id: string; to?: KvValue }
   }
   game: {
     /** What the player can type or pick, and the kv key each one writes. */
@@ -101,11 +101,11 @@ export const inputs = defineFeature<InputsShape>({
   name: 'inputs',
   commands: {
     input: {
-      whyNot: (state, command, game, cx) => inputRefusal(state, game, command.id, command.value, cx),
+      whyNot: (state, command, game, cx) => inputRefusal(state, game, command.id, command.to, cx),
       run: (state, command, game) => {
         const input = inputById(game, command.id)!
         const key = input.key ?? input.id
-        return { ...state, kv: { ...state.kv, [key]: inputValue(input, command.value!) } }
+        return { ...state, kv: { ...state.kv, [key]: inputValue(input, command.to!) } }
       },
       references: (command) => [{ input: command.id }],
     },

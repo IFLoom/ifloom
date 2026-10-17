@@ -15,10 +15,10 @@ function game(): Game {
         schema: SCHEMA,
         stats: [{ id: 'carrots', label: 'Carrots' }],
         activities: [
-          { id: 'dig', effects: [pass(1), { kind: 'stat', key: 'carrots', by: 1 }] },
+          { id: 'dig', effects: [pass(1), { kind: 'stat', stat: 'carrots', by: 1 }] },
           { id: 'wait', effects: [pass(1)] },
         ],
-        scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ kind: 'scene', id: null }] }] }],
+        scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ kind: 'scene', scene: null }] }] }],
         data: {
           places: {
             locations: [

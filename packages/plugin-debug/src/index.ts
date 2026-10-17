@@ -94,19 +94,19 @@ export function debug() {
         whyNot: (_state, args, { game }) => (isKvValue(args.to) ? undefined : sayDebug(game, 'badValue')),
         run: (state, args) => ({ ...state, kv: { ...state.kv, [String(args.key)]: args.to as KvValue } }),
       }),
-      /** `{ name: 'debug/item', with: { item, count } }`: set how many of an item the player has. */
+      /** `{ name: 'debug/item', with: { item, to } }`: set how many of an item the player has. */
       item: free({
         whyNot: (_state, args, { game }) =>
           !itemById(game, String(args.item))
             ? sayDebug(game, 'noSuchItem', String(args.item))
-            : isNumber(args.count) ? undefined : sayDebug(game, 'notANumber'),
-        run: (state, args) => ({ ...state, items: { ...state.items, [String(args.item)]: Math.max(0, Number(args.count)) } }),
+            : isNumber(args.to) ? undefined : sayDebug(game, 'notANumber'),
+        run: (state, args) => ({ ...state, items: { ...state.items, [String(args.item)]: Math.max(0, Number(args.to)) } }),
       }),
-      /** `{ name: 'debug/scene', with: { scene } }`: put a scene on screen; leave `scene` out to close it. */
+      /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
       scene: free({
         whyNot: (_state, args, { game }) =>
-          args.scene === undefined || sceneById(game, String(args.scene)) ? undefined : sayDebug(game, 'noSuchScene', String(args.scene)),
-        run: (state, args) => ({ ...state, sceneId: args.scene === undefined ? null : String(args.scene) }),
+          args.id === undefined || sceneById(game, String(args.id)) ? undefined : sayDebug(game, 'noSuchScene', String(args.id)),
+        run: (state, args) => ({ ...state, sceneId: args.id === undefined ? null : String(args.id) }),
       }),
       /**
        * `{ name: 'debug/time', with: { day?, period? } }`: set the calendar's clock, when the
@@ -124,23 +124,23 @@ export function debug() {
         run: (_state, args, { apply }) =>
           apply([{ custom: 'calendar/set', with: { ...(args.day === undefined ? {} : { day: Number(args.day) }), ...(args.period === undefined ? {} : { period: String(args.period) }) } }]),
       }),
-      /** `{ name: 'debug/turn', with: { turn } }`: set how many turns have passed. No turn's rules run. */
+      /** `{ name: 'debug/turn', with: { to } }`: set how many turns have passed. No turn's rules run. */
       turn: free({
         whyNot: (_state, args, { game }) =>
-          isNumber(args.turn) && Number.isInteger(args.turn) && args.turn >= 0 ? undefined : sayDebug(game, 'notATurn'),
-        run: (state, args) => ({ ...state, turn: Number(args.turn) }),
+          isNumber(args.to) && Number.isInteger(args.to) && args.to >= 0 ? undefined : sayDebug(game, 'notATurn'),
+        run: (state, args) => ({ ...state, turn: Number(args.to) }),
       }),
       /**
-       * `{ name: 'debug/go', with: { location } }`: be somewhere, when the game has places:
+       * `{ name: 'debug/go', with: { id } }`: be at the place `id`, when the game has places:
        * no exit needed, and nothing on arrival.
        */
       go: free({
         whyNot: (_state, args, { game, query }) => {
-          const known = query<boolean>('places/known', { value: String(args.location) })
+          const known = query<boolean>('places/known', { value: String(args.id) })
           if (known === undefined) return sayDebug(game, 'noPlaces')
-          return known ? undefined : sayDebug(game, 'noSuchPlace', String(args.location))
+          return known ? undefined : sayDebug(game, 'noSuchPlace', String(args.id))
         },
-        run: (_state, args, { apply }) => apply([{ custom: 'places/move', with: { value: String(args.location) } }]),
+        run: (_state, args, { apply }) => apply([{ custom: 'places/move', with: { value: String(args.id) } }]),
       }),
     },
     view: (state, { game }): DebugView => ({
@@ -163,12 +163,12 @@ export const setStat = (stat: string, to: number, of?: string): Command => ({ ty
 /** A command: set a key in the kv store. */
 export const setKv = (key: string, to: KvValue): Command => ({ type: 'custom', name: 'debug/kv', with: { key, to } })
 /** A command: set how many of an item the player has. */
-export const setItem = (item: string, count: number): Command => ({ type: 'custom', name: 'debug/item', with: { item, count } })
+export const setItem = (item: string, to: number): Command => ({ type: 'custom', name: 'debug/item', with: { item, to } })
 /** A command: put a scene on screen, or close it. */
-export const jumpTo = (scene?: string): Command => ({ type: 'custom', name: 'debug/scene', with: { scene } })
+export const jumpTo = (scene?: string): Command => ({ type: 'custom', name: 'debug/scene', with: { id: scene } })
 /** A command: set the clock. */
 export const setTime = (time: { day?: number; period?: string }): Command => ({ type: 'custom', name: 'debug/time', with: time })
 /** A command: set how many turns have passed. */
-export const setTurn = (turn: number): Command => ({ type: 'custom', name: 'debug/turn', with: { turn } })
+export const setTurn = (turn: number): Command => ({ type: 'custom', name: 'debug/turn', with: { to: turn } })
 /** A command: be somewhere. */
-export const goTo = (location: string): Command => ({ type: 'custom', name: 'debug/go', with: { location } })
+export const goTo = (location: string): Command => ({ type: 'custom', name: 'debug/go', with: { id: location } })

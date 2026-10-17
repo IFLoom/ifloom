@@ -71,8 +71,8 @@ export type EntitiesShape = {
      * left out, never reused; an id already there is left as it is.
      */
     create: { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
-    /** Take an entity out of the game: `{ kind: 'remove', of: 'staff:ana' }`. */
-    remove: { kind: 'remove'; of: string }
+    /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
+    remove: { kind: 'remove'; entity: string }
     /**
      * The same effects for every entity of a kind (where `where` holds), one
      * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
@@ -195,13 +195,13 @@ export const entities = defineFeature<EntitiesShape>({
     },
     remove: {
       apply: (state, effect, game) => {
-        if (!entityOf(state, effect.of)) return state
-        const gone = removeEntity(state, effect.of)
+        if (!entityOf(state, effect.entity)) return state
+        const gone = removeEntity(state, effect.entity)
         // A declared one stays gone when the save is next loaded.
-        const declared = (game.entities ?? []).some((entity) => `${entity.of}:${entity.id}` === effect.of)
-        return declared && !(gone.removed ?? []).includes(effect.of) ? { ...gone, removed: [...(gone.removed ?? []), effect.of] } : gone
+        const declared = (game.entities ?? []).some((entity) => `${entity.of}:${entity.id}` === effect.entity)
+        return declared && !(gone.removed ?? []).includes(effect.entity) ? { ...gone, removed: [...(gone.removed ?? []), effect.entity] } : gone
       },
-      references: (effect) => ofKind(effect.of),
+      references: (effect) => ofKind(effect.entity),
     },
     each: {
       apply: (state, effect, game, cx) => {

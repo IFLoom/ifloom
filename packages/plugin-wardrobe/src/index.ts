@@ -88,10 +88,10 @@ export function wardrobe(options: WardrobeOptions) {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'wardrobe/wear', with: { item } }`. */
+      /** `{ type: 'custom', name: 'wardrobe/wear', with: { id } }`: put on the item `id`. */
       wear: {
         whyNot: (state, args, { slice, game }) => {
-          const id = String(args.item ?? '')
+          const id = String(args.id ?? '')
           const def = clothing(game, id)
           if (!def) return itemById(game, id) ? say(game, 'wardrobe/notClothing', { item: name(game, id) }) : say(game, 'noSuchThing')
           if (slice.worn[def.slot] === id) return say(game, 'wardrobe/alreadyWearing', { item: name(game, id) })
@@ -99,16 +99,16 @@ export function wardrobe(options: WardrobeOptions) {
           return undefined
         },
         run: (_state, args, { slice, set, game }) => {
-          const id = String(args.item)
+          const id = String(args.id)
           const { slot } = clothing(game, id)!
           return set({ worn: { ...slice.worn, [slot]: id } })
         },
       },
-      /** `{ type: 'custom', name: 'wardrobe/takeOff', with: { slot } }`. */
+      /** `{ type: 'custom', name: 'wardrobe/takeOff', with: { id } }`: take off what is in the slot `id`. */
       takeOff: {
         whyNot: (_state, args, { slice, game }) =>
-          slice.worn[String(args.slot ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
-        run: (_state, args, { slice, set }) => set({ worn: { ...slice.worn, [String(args.slot)]: null } }),
+          slice.worn[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
+        run: (_state, args, { slice, set }) => set({ worn: { ...slice.worn, [String(args.id)]: null } }),
       },
     },
     hooks: {
@@ -130,7 +130,10 @@ export function wardrobe(options: WardrobeOptions) {
     }),
     references: {
       // The item a condition or `wear` names.
-      calls: (_kind, _name, args) => (args.item === undefined ? [] : [{ item: String(args.item) }]),
+      calls: (kind, name, args) => {
+        const item = kind === 'commands' ? (name === 'wear' ? args.id : undefined) : args.item
+        return item === undefined ? [] : [{ item: String(item) }]
+      },
       // A piece of clothing is an item, by its id.
       content: (game) => clothes(game).map((entry) => ({ list: 'clothes', id: entry.id, refs: [{ item: entry.id }] })),
     },
@@ -161,6 +164,6 @@ export const wearing = (item: string, slot?: string): Condition => ({
 /** A condition: something is in this slot. */
 export const slotFilled = (slot: string): Condition => ({ custom: 'wardrobe/wearing', with: { slot } })
 /** A command: put this on. */
-export const wear = (item: string): Command => ({ type: 'custom', name: 'wardrobe/wear', with: { item } })
+export const wear = (item: string): Command => ({ type: 'custom', name: 'wardrobe/wear', with: { id: item } })
 /** A command: take off whatever is in this slot. */
-export const takeOff = (slot: string): Command => ({ type: 'custom', name: 'wardrobe/takeOff', with: { slot } })
+export const takeOff = (slot: string): Command => ({ type: 'custom', name: 'wardrobe/takeOff', with: { id: slot } })

@@ -7,7 +7,7 @@ import { hashOf, selectionFromHash } from '../lib/selection.ts'
 describe('rename', () => {
   it('moves a scene, its prose keys and everything that names it', () => {
     const project = sampleProject()
-    project.pack.scenes[1].choices.push({ id: 'back', when: { seen: 'market' }, effects: [{ kind: 'scene', id: 'market' }] })
+    project.pack.scenes[1].choices.push({ id: 'back', when: { seen: 'market' }, effects: [{ kind: 'scene', scene: 'market' }] })
     project.pack.prose['home#back'] = 'Go back out'
     const next = rename(project, 'scene', 'market', 'square')
     expect(next.intro).toBe('square')
@@ -17,8 +17,8 @@ describe('rename', () => {
     expect(next.pack.prose.market).toBeUndefined()
     // A storylet named market.busker isn't the market scene's key: it keeps its name.
     expect(next.pack.prose['market.busker']).toBeDefined()
-    expect(next.pack.scenes[1].choices[0]).toMatchObject({ when: { seen: 'square' }, effects: [{ kind: 'scene', id: 'square' }] })
-    expect(next.pack.scenes[2].choices[0].effects[1]).toEqual({ kind: 'scene', id: 'square' })
+    expect(next.pack.scenes[1].choices[0]).toMatchObject({ when: { seen: 'square' }, effects: [{ kind: 'scene', scene: 'square' }] })
+    expect(next.pack.scenes[2].choices[0].effects[1]).toEqual({ kind: 'scene', scene: 'square' })
     expect(problemsOf(next)).toEqual([])
     // The original is untouched.
     expect(project.pack.scenes[0].id).toBe('market')
@@ -32,13 +32,13 @@ describe('rename', () => {
     expect(next.pack.stats[1].derive).toEqual({ sum: ['pennies', { scale: 'pennies', by: 2 }] })
     const buy = next.pack.scenes[0].choices[0]
     expect(buy.blocked?.[0].when).toEqual({ stat: 'pennies', lt: 3 })
-    expect(buy.effects[0]).toEqual({ kind: 'stat', key: 'pennies', by: -3 })
+    expect(buy.effects[0]).toEqual({ kind: 'stat', stat: 'pennies', by: -3 })
     expect(problemsOf(next)).toEqual([])
   })
 
   it('moves an item and a kv key', () => {
     const items = rename(sampleProject(), 'item', 'bun', 'roll')
-    expect(items.pack.scenes[1].body[1].when).toEqual({ has: 'roll' })
+    expect(items.pack.scenes[1].body[1].when).toEqual({ item: 'roll' })
     const vars = rename(sampleProject(), 'kv', 'heardBusker', 'heardFiddle')
     expect(vars.kv[0].name).toBe('heardFiddle')
     expect(kvUsed(vars.pack)).toEqual(['heardFiddle'])
@@ -64,7 +64,7 @@ describe('problemTarget', () => {
   it('finds the choice a problem is about', () => {
     const project = sampleProject()
     delete project.pack.prose['market#home']
-    project.pack.scenes[0].choices[0].effects.push({ kind: 'item', id: 'ring', by: 1 })
+    project.pack.scenes[0].choices[0].effects.push({ kind: 'item', item: 'ring', by: 1 })
     const targets = problemsOf(project).map((p) => problemTarget(project.pack, p))
     expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'home' })
     expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'buy' })

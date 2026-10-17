@@ -25,7 +25,7 @@ Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loa
 storylines: [{ id: 'ava', name: 'Ava' }]
 
 // Ava has had enough of you for three turns.
-{ kind: 'closeStoryline', id: 'ava', turns: 3 }
+{ kind: 'closeStoryline', storyline: 'ava', turns: 3 }
 
 // A choice offered only while she's talking to you.
 { id: 'apologise', when: { storyline: 'ava' }, effects: [/* … */] }

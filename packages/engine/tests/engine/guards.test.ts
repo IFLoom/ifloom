@@ -51,7 +51,7 @@ function shore(rules: Game['rules'] = {}): Game {
     activities: [
       ...town.activities,
       { id: 'swim', effects: [{ custom: 'tide/rise' }] },
-      { id: 'dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', key: 'luck', by: 1 }] },
+      { id: 'dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
     ],
     actions: [
       { id: 'swim', label: 'Swim', command: { type: 'activity', id: 'swim' } },
@@ -69,9 +69,9 @@ describe('effectsOf', () => {
     const game = shore()
     const state = begin(game)
     expect(effectsOf(state, game, { type: 'activity', id: 'dig' })).toEqual([
-      { kind: 'stat', key: 'coins', by: -1 },
+      { kind: 'stat', stat: 'coins', by: -1 },
       { kind: 'custom', name: 'tide/rise', with: { by: 2 } },
-      { kind: 'stat', key: 'luck', by: 1 },
+      { kind: 'stat', stat: 'luck', by: 1 },
     ])
     expect(effectsOf(state, game, { type: 'custom', name: 'tide/paddle' })).toEqual([{ kind: 'custom', name: 'tide/rise', with: { by: 2 } }])
     expect(effectsOf(state, game, { type: 'leave' })).toEqual([])

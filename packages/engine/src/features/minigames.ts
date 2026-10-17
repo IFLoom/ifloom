@@ -127,15 +127,15 @@ export type MinigamesShape = {
   }
   effects: {
     /** Start a minigame, in its `start` state. One already running is dropped. */
-    minigame: { kind: 'minigame'; id: string }
+    minigame: { kind: 'minigame'; minigame: string }
     /**
-     * Set a variable of the minigame being played, add to it, or set it to a
-     * whole number drawn from `random: [min, max]`, both included. Does
-     * nothing with no minigame running.
+     * Set a variable of the minigame being played `to` a value, change it `by`
+     * an amount, or set it to a whole number drawn from `random: [min, max]`,
+     * both included. Does nothing with no minigame running.
      */
     minigameVar:
-      | { kind: 'minigameVar'; key: string; value: number }
-      | { kind: 'minigameVar'; key: string; add: number }
+      | { kind: 'minigameVar'; key: string; to: number }
+      | { kind: 'minigameVar'; key: string; by: number }
       | { kind: 'minigameVar'; key: string; random: [number, number] }
   }
   commands: {
@@ -395,19 +395,19 @@ export const minigames = defineFeature<MinigamesShape>({
   },
   effects: {
     minigame: {
-      apply: (state, effect, game, cx) => startMinigame(state, game, effect.id, cx),
-      references: (effect) => [{ minigame: effect.id }],
+      apply: (state, effect, game, cx) => startMinigame(state, game, effect.minigame, cx),
+      references: (effect) => [{ minigame: effect.minigame }],
     },
     minigameVar: {
       apply: (state, effect, _game, cx) => {
         const running = state.minigame
         if (!running) return state
         let value: number
-        if ('add' in effect) value = (running.vars[effect.key] ?? 0) + effect.add
+        if ('by' in effect) value = (running.vars[effect.key] ?? 0) + effect.by
         else if ('random' in effect) {
           const [low, high] = [Math.min(...effect.random), Math.max(...effect.random)].map(Math.round)
           value = low + cx.roll(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', effect.key)
-        } else value = effect.value
+        } else value = effect.to
         return { ...state, minigame: { ...running, vars: { ...running.vars, [effect.key]: value } } }
       },
       references: (effect) => [{ minigameVar: effect.key }],

@@ -54,16 +54,16 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
     case 'stat':
       fields = (
         <>
-          <IdPicker noun="stat" aria-label="Stat" value={e.key} options={names.stats} onChange={(key) => set({ key })} onCreate={create('stat')} />
+          <IdPicker noun="stat" aria-label="Stat" value={e.stat} options={names.stats} onChange={(stat) => set({ stat })} onCreate={create('stat')} />
           <span className="text-xs text-fd-muted-foreground">by</span>
           <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
         </>
       )
       break
-    case 'setStat':
+    case 'statTo':
       fields = (
         <>
-          <IdPicker noun="stat" aria-label="Stat" value={e.key} options={names.stats} onChange={(key) => set({ key })} onCreate={create('stat')} />
+          <IdPicker noun="stat" aria-label="Stat" value={e.stat} options={names.stats} onChange={(stat) => set({ stat })} onCreate={create('stat')} />
           <span className="text-xs text-fd-muted-foreground">to</span>
           <NumberInput aria-label="To" value={e.to} onChange={(to) => set({ to: to ?? 0 })} />
         </>
@@ -90,14 +90,14 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
     case 'item':
       fields = (
         <>
-          <IdPicker noun="item" aria-label="Item" value={e.id} options={names.items} onChange={(id) => set({ id })} onCreate={create('item')} />
+          <IdPicker noun="item" aria-label="Item" value={e.item} options={names.items} onChange={(item) => set({ item })} onCreate={create('item')} />
           <span className="text-xs text-fd-muted-foreground">by</span>
           <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
         </>
       )
       break
     case 'scene':
-      fields = <IdPicker noun="scene" aria-label="Scene" empty="Close the scene" value={e.id ?? ''} options={names.scenes} onChange={(id) => set({ id: id || null })} onCreate={create('scene')} />
+      fields = <IdPicker noun="scene" aria-label="Scene" empty="Close the scene" value={e.scene ?? ''} options={names.scenes} onChange={(id) => set({ scene: id || null })} onCreate={create('scene')} />
       break
     case 'draw':
       fields = (
@@ -132,8 +132,9 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
       fields = (
         <>
           <TextInput aria-label="Channel" className="w-28" mono value={e.channel} placeholder="channel" onChange={(channel) => set({ channel: channel ?? '' })} />
-          <TextInput aria-label="Track" className="w-32" mono value={e.track ?? ''} placeholder={e.track === null ? 'silent' : 'track id'} onChange={(track) => set({ track: track || undefined })} />
-          <Button size="xs" variant="ghost" onClick={() => set({ track: null })} title="Silence the channel">
+          <span className="text-xs text-fd-muted-foreground">to</span>
+          <TextInput aria-label="Track" className="w-32" mono value={e.to ?? ''} placeholder={e.to === null ? 'silent' : 'track id'} onChange={(to) => set({ to: to || undefined })} />
+          <Button size="xs" variant="ghost" onClick={() => set({ to: null })} title="Silence the channel">
             Silence
           </Button>
         </>

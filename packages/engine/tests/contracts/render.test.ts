@@ -39,7 +39,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
         choices: [
           { id: 'knock', label: 'Knock', effects: [{ kind: 'kv', key: 'knocked', by: 1 }] },
           { id: 'wade', label: 'Wade in', effects: [{ kind: 'custom', name: 'tide/rise' }] },
-          { id: 'in', label: 'Go in', effects: [{ kind: 'scene', id: 'hall' }] },
+          { id: 'in', label: 'Go in', effects: [{ kind: 'scene', scene: 'hall' }] },
         ],
       }
     },
@@ -48,7 +48,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
     id: 'hall',
     render: (state) => {
       count(state)
-      return { body: 'The hall.', choices: [{ id: 'out', label: 'Go out', effects: [{ kind: 'scene', id: 'porch' }] }] }
+      return { body: 'The hall.', choices: [{ id: 'out', label: 'Go out', effects: [{ kind: 'scene', scene: 'porch' }] }] }
     },
   }
   const town = fixture({

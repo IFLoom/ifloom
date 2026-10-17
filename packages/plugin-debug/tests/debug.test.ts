@@ -72,7 +72,7 @@ describe('the debugger', () => {
     expect(whyNot(state, g, setTime({ day: -1 }))).toContain('A day is a whole number')
     expect(whyNot(state, g, setTime({ period: 'teatime' }))).toContain('one of morning, afternoon, evening, night, late')
     expect(whyNot(state, g, setTurn(-2))).toBe('A turn is a whole number from 0.')
-    expect(whyNot(state, g, { type: 'custom', name: 'debug/turn', with: { turn: '3' } })).toBe('A turn is a whole number from 0.')
+    expect(whyNot(state, g, { type: 'custom', name: 'debug/turn', with: { to: '3' } })).toBe('A turn is a whole number from 0.')
     expect(whyNot(state, g, { type: 'custom', name: 'debug/time', with: { day: '' } })).toContain('A day is a whole number')
     const bare = { ...g, plugins: [debug()] }
     expect(whyNot(startingState(bare), bare, setTime({ day: 1 }))).toBe('This game has no calendar.')

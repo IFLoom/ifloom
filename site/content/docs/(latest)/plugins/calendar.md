@@ -11,7 +11,7 @@ Here's where each time-related part of a game comes from:
 
 - **Time passing** is the [`calendar/pass`](#effects) effect, on an activity or a choice.
 - **Bed** is the [`sleep()`](#commands) command, usually on a room's action.
-- **Opening hours** are a [place](/docs/plugins/places)'s [`locked`](/docs/plugins/places#locationdef) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+- **Opening hours** are a [place](/docs/plugins/places)'s [`blocked`](/docs/plugins/places#locationdef) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 - **Schedules** are a [cast](/docs/plugins/cast) character's [`schedule`](/docs/plugins/cast#where-people-are) entries, with the calendar's conditions as their `when`, such as `{ location: 'cafe', when: period('morning', 'afternoon') }`.
 - **The header** is the calendar's [label](#the-label), at `view.when`.
 
@@ -183,20 +183,20 @@ const town: Pack = {
         place('high-street', 'High Street', ['flat', 'cafe', 'park', 'office']),
         {
           ...place('cafe', 'The Corner Café', ['high-street']),
-          locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+          blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
         },
         { ...place('park', 'Riverside Park', ['high-street']), actions: [act('jog', 'Go for a jog')] },
         {
           ...place('office', 'The Office', ['high-street']),
-          locked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
+          blocked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
           actions: [act('work', 'Do a shift')],
         },
       ],
     },
   },
   activities: [
-    { id: 'work', requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
-    { id: 'jog', requires: [onlyAt(['park'])], effects: [pass(1)] },
+    { id: 'work', blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
+    { id: 'jog', blocked: [onlyAt(['park'])], effects: [pass(1)] },
   ],
   prose: {
     'place.flat': 'Boxes everywhere.',
@@ -263,7 +263,7 @@ A UI reads the calendar at [`view.plugins.calendar`](#the-view) and the label at
 
 These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). A list becomes `with: { value: [...] }`, so the long form of the first row is `{ custom: 'calendar/period', with: { value: ['evening', 'night'] } }`. A single period or weekday works too, as in `{ 'calendar/period': 'evening' }`.
 
-You can use them anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a requirement, a lock or a schedule.
+You can use them anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry, a lock or a schedule.
 
 `calendar/day` counts from `0`, as the state does, but the player reads the day from `1`. So `day({ gte: 6 })` holds from what the header calls Day 7.
 
@@ -271,10 +271,10 @@ You can use them anywhere a [condition](/docs/reference/conditions) goes: a bloc
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { periods: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
+| `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
 | `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
-They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { periods: 2 } }`.
+They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
 
 A count that isn't a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar doesn't have, and leaves the period as it was.
 
@@ -289,7 +289,7 @@ A calendar built with `sleep: false` has no `calendar/sleep` command at all. The
 - `Finish this first.` (the engine's [`finishFirst`](/docs/reference/strings#refusals)) while a scene is open.
 - `Too early.` ([`calendar/tooEarly`](#strings)) in a period that isn't in `sleep.from`.
 
-Its [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does) is the pass it makes: `[{ kind: 'custom', name: 'calendar/pass', with: { periods: n } }]`. So a bed button carries a [price](#price-notes) (`until tomorrow morning`), and a lock on `calendar/pass` stops it.
+Its [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does) is the pass it makes: `[{ kind: 'custom', name: 'calendar/pass', with: { by: n } }]`. So a bed button carries a [price](#price-notes) (`until tomorrow morning`), and a lock on `calendar/pass` stops it.
 
 A lock names it `calendar/sleep`, or `calendar/*`.
 

@@ -13,7 +13,7 @@ const windowSeat: DataScene = {
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 }
 
 // The effect that draws one, on an activity or a choice.
@@ -102,7 +102,7 @@ export const rainyDays: Pack = {
       id: 'cafe.umbrella',
       drawnFrom: ['cafe'],
       body: [{ text: 'cafe.umbrella' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
     },
   ],
 }
@@ -117,7 +117,7 @@ The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while
 { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
 
 // the pack's activities
-{ id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
+{ id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
 ```
 
 Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when none of them can happen:
@@ -131,7 +131,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 },
 {
   id: 'cafe.crossword',
@@ -139,7 +139,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   drawnFrom: ['cafe'],
   when: { not: { seen: 'cafe.crossword' } },
   body: [{ text: 'cafe.crossword' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'charm', by: 1 }, { kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'charm', by: 1 }, { kind: 'scene', scene: null }] }],
 },
 {
   id: 'cafe.break',
@@ -149,14 +149,14 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   weight: 2,
   when: here('ava'),
   body: [{ text: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', scene: null }] }],
 },
 // When none of them can happen.
 {
   id: 'cafe.quiet',
   title: 'A quiet table',
   body: [{ text: 'cafe.quiet' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 },
 ```
 

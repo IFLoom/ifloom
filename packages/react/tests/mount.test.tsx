@@ -10,7 +10,7 @@ const loaded = () =>
       {
         id: 'letter',
         schema: SCHEMA,
-        scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ kind: 'scene', id: null }] }] }],
+        scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: { mat: 'A letter on the mat.', 'mat#open': 'Open it' },
       },
     ],

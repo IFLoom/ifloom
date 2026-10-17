@@ -133,7 +133,7 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   return (
     <div {...box} data-feed={feed.id}>
       {feed.unseen ? (
-        <button type="button" {...seenAll} onClick={() => send({ type: 'custom', name: 'feed/seen', with: { feed: feed.id } })}>
+        <button type="button" {...seenAll} onClick={() => send({ type: 'custom', name: 'feed/seen', with: { id: feed.id } })}>
           {words('allSeen')}
         </button>
       ) : null}

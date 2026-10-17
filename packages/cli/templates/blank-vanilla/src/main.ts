@@ -99,7 +99,7 @@ function drawBeat(beat: SceneBeat): void {
 function drawInput(parent: HTMLElement, input: InputView): void {
   if (input.kind === 'choice') {
     for (const option of input.options) {
-      add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, value: option.value })
+      add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, to: option.value })
     }
     return
   }
@@ -114,7 +114,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   add(form, 'button', 'OK').type = 'submit'
   form.onsubmit = (event) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(field.value) : field.value })
+    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(field.value) : field.value })
   }
 }
 

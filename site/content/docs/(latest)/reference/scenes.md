@@ -49,9 +49,9 @@ const counter: Scene = {
         id: 'buy',
         label: 'Buy a sandwich (4)',
         disabled: (state.stats.coins ?? 0) < 4 ? 'You need 4 coins.' : undefined,
-        effects: [{ kind: 'stat', key: 'coins', by: -4 }, { kind: 'item', id: 'sandwich', by: 1 }],
+        effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'item', item: 'sandwich', by: 1 }],
       },
-      { id: 'leave', label: 'Leave', effects: [{ kind: 'scene', id: null }] },
+      { id: 'leave', label: 'Leave', effects: [{ kind: 'scene', scene: null }] },
     ],
   }),
 }
@@ -118,7 +118,7 @@ type SceneChoice = {
 | `id` | What the `choose` command names. Unique within the scene. |
 | `label` | The button text. |
 | `visible` | `false` hides it. Shown by default. |
-| `disabled` | A reason. The button stays on screen, greyed out, with this text. |
+| `disabled` | A reason. The button stays on screen, greyed out, with this text. It's worked out by the render for this state; a [data scene](#choice) writes `blocked` instead and the engine fills it in. |
 | `tags` | Words the UI can style or filter the choice by, such as `['kind']` or `['risky']`. The engine gives them no meaning and passes them to the [`RenderedChoice`](/docs/reference/view#renderedchoice). |
 | `irreversible` | A warning the UI shows before the choice is taken. A [runner](/docs/reference/runner#historyoptions) with history on never undoes past it. |
 | `effects` | Applied in order when the player picks it. See [Effects](/docs/reference/effects). |
@@ -257,9 +257,9 @@ const hello: DataScene = {
     { text: 'ava.hi/regular', when: { seen: 'ava.hi', gte: 3 } },
   ],
   choices: [
-    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] },
-    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', key: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', id: null }] },
-    { id: 'bye', effects: [{ kind: 'scene', id: null }] },
+    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
+    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', scene: null }] },
+    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
 ```
@@ -317,7 +317,7 @@ const flat: DataScene = {
     ],
   },
   body: [{ text: 'flat.morning' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 }
 ```
 
@@ -344,7 +344,7 @@ type Choice = {
   label?: string
   labels?: { when?: Condition; key: string }[]
   when?: Condition
-  blocked?: { when: Condition; reason: string }[]
+  blocked?: Blocked[]
   once?: { per: 'turn'; reason: string; key?: string }
   tags?: string[]
   irreversible?: string
@@ -357,7 +357,7 @@ type Choice = {
 | `label` | The prose key for the button text. | `` `${scene.id}#${id}` `` |
 | `labels` | Labels that depend on state. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
-| `blocked` | Reasons to grey it out. The first whose `when` holds becomes the `disabled` text. | not blocked |
+| `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to just its `scene` effects so it still navigates. `key` records it under a different name. | unlimited |
 | `tags`, `irreversible` | Passed through to [`SceneChoice`](#scenechoice). | |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
@@ -369,7 +369,7 @@ type Choice = {
   id: 'ask',
   labels: [{ when: { seen: 'ava.river' }, key: 'ava.hi#ask-again' }],
   once: { per: 'turn', reason: 'You have asked today already.' },
-  effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }],
+  effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }],
 }
 ```
 
@@ -425,7 +425,7 @@ const avasBreak: DataScene = {
   weight: 2,
   when: here('ava'),
   body: [{ text: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', scene: null }] }],
 }
 ```
 

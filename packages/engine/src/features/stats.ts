@@ -98,7 +98,7 @@ export type StatDef = {
   /**
    * Work the stat out from others instead of keeping it: `{ sum: ['strength', 'agility'] }`.
    * A derived stat is read like any stat and never written; the loader
-   * reports a `stat` or `setStat` effect on one. See `Formula`.
+   * reports a `stat` effect on one. See `Formula`.
    */
   derive?: Formula
   /** Levels the stat passes as it grows. None if left out. See `StatLevels`. */
@@ -162,10 +162,12 @@ export type StatsShape = {
     level: { level: StatKey; of?: string } & Range
   }
   effects: {
-    /** Change a stat by `by`, held to its range: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each`). */
-    stat: { kind: 'stat'; key: StatKey; by: number; of?: string }
-    /** Put a stat at a value, held to its range: energy back to full overnight. */
-    setStat: { kind: 'setStat'; key: StatKey; to: number; of?: string }
+    /**
+     * Change a stat `by` an amount, or put it `to` a value (energy back to
+     * full overnight), held to its range: the player's, or with `of`, an
+     * entity's (`'staff:ana'`, or `'$'` in an `each`).
+     */
+    stat: { kind: 'stat'; stat: StatKey; by: number; of?: string } | { kind: 'stat'; stat: StatKey; to: number; of?: string }
   }
   game: {
     /** Every stat the game keeps. The engine has none of its own. */
@@ -429,7 +431,7 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
   return next
 }
 
-/** What a `stat` or `setStat` effect leaves: held to the stat's range, on the player or an entity, through `rules.onStat`. */
+/** What a `stat` effect leaves: held to the stat's range, on the player or an entity, through `rules.onStat`. */
 function writeStat(state: GameState, game: Game, key: StatKey, of: string | undefined, to: (was: number) => number, cx: FeatureContext): GameState {
   // A derived stat is worked out, never written: the loader reports the effect.
   if (statDef(game, key)?.derive !== undefined) return state
@@ -489,19 +491,13 @@ export const stats = defineFeature<StatsShape>({
   effects: {
     stat: {
       apply: (state, effect, game, cx) => {
-        const after = writeStat(state, game, effect.key, effect.of, (was) => was + effect.by, cx)
+        const set = 'to' in effect
+        const after = writeStat(state, game, effect.stat, effect.of, (was) => (set ? effect.to : was + effect.by), cx)
         if (after === state || effect.of !== undefined) return after
-        return game.rules?.onStat?.(state, after, effect.key, effect.by) ?? after
+        const delta = set ? after.stats[effect.stat] - (state.stats[effect.stat] ?? 0) : effect.by
+        return game.rules?.onStat?.(state, after, effect.stat, delta) ?? after
       },
-      references: (effect) => [{ stat: effect.key, of: effect.of, writes: true }, ...ofKind(effect.of)],
-    },
-    setStat: {
-      apply: (state, effect, game, cx) => {
-        const after = writeStat(state, game, effect.key, effect.of, () => effect.to, cx)
-        if (after === state || effect.of !== undefined) return after
-        return game.rules?.onStat?.(state, after, effect.key, after.stats[effect.key] - (state.stats[effect.key] ?? 0)) ?? after
-      },
-      references: (effect) => [{ stat: effect.key, of: effect.of, writes: true }, ...ofKind(effect.of)],
+      references: (effect) => [{ stat: effect.stat, of: effect.of, writes: true }, ...ofKind(effect.of)],
     },
   },
   pack: {

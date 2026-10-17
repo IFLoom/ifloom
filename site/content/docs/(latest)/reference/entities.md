@@ -58,9 +58,9 @@ state.entities.dish.soup     // { name: 'Soup of the day', stats: { price: 6, qu
 Ana's morale is the stat's `start`, 60. Her skill and wage come from her declaration. Content names her `'staff:ana'`:
 
 ```ts
-{ kind: 'stat', key: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
+{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
 { stat: 'quality', of: 'dish:soup', lt: 5 }                         // there is still room to improve it
-{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', key: 'morale', by: -8, of: '$' }] }   // a long week for everyone
+{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] }   // a long week for everyone
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }                   // two of them are happy
 ```
 
@@ -131,7 +131,7 @@ Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'
 **`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) tests for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 
 ```ts
-{ kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', of: '$' }] }
+{ kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
 ```
 
 A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner one, and there's no way to name the outer one:
@@ -169,7 +169,7 @@ const staff = (state: GameState) => Object.keys((loadState(state, game) as GameS
 const older = { ...save, entities: { ...save.entities, staff: { ana: save.entities.staff.ana } } }
 staff(older)    // ['ana', 'ben']: Ben joins
 
-const left = applyEffects(save, game, [{ kind: 'remove', of: 'staff:ben' }])
+const left = applyEffects(save, game, [{ kind: 'remove', entity: 'staff:ben' }])
 left.removed    // ['staff:ben']
 staff(left)     // ['ana']: he stays gone
 ```
@@ -208,7 +208,7 @@ function total(state: GameState, kind: string, stat: string): number {
 }
 
 // goes on the game as custom.effects
-wages: (state) => [{ kind: 'stat', key: 'coins', by: -total(state, 'staff', 'wage') }],
+wages: (state) => [{ kind: 'stat', stat: 'coins', by: -total(state, 'staff', 'wage') }],
 ```
 
 ### entityOf
@@ -308,7 +308,7 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 ## Gotchas
 
 - **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and bands by id alone.
-- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', key: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
+- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', stat: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.
 

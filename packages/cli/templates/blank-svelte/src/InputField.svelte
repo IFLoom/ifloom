@@ -9,14 +9,14 @@
 
   function submit(event: SubmitEvent) {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
   }
 </script>
 
 {#if input.kind === 'choice'}
   <div class="inputs" role="group" aria-label={input.label}>
     {#each input.options as option (option.value)}
-      <button onclick={() => runner.apply({ type: 'input', id: input.id, value: option.value })}>{option.label}</button>
+      <button onclick={() => runner.apply({ type: 'input', id: input.id, to: option.value })}>{option.label}</button>
     {/each}
   </div>
 {:else}

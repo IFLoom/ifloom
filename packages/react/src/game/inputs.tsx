@@ -21,7 +21,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
   useEffect(() => setText(input.value === null ? '' : String(input.value)), [input.value])
   const [said, setSaid] = useState<string | null>(null)
   const enter = (value: KvValue | undefined) => {
-    const out = send({ type: 'input', id: input.id, value })
+    const out = send({ type: 'input', id: input.id, to: value })
     setSaid(out.ok ? null : (out.refused ?? null))
   }
   const submit = (event: FormEvent) => {

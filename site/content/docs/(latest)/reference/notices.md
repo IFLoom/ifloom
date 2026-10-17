@@ -21,7 +21,7 @@ const town: Pack = {
     {
       id: 'pay-rent',
       effects: [
-        { kind: 'stat', key: 'coins', by: -30 },
+        { kind: 'stat', stat: 'coins', by: -30 },
         { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', text: 'notice.rent', tag: 'money' },
       ],
     },

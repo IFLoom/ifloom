@@ -57,7 +57,7 @@ const weekend: JobDef = {
   id: 'weekend',
   title: 'Weekend help',
   description: 'Saturday mornings behind the counter at the Corner Café.',
-  requires: [{ reason: 'Ava doesn’t know you well enough yet.', when: { stat: 'friendship', of: 'character:ava', gte: 10 } }],
+  blocked: [{ when: { not: { stat: 'friendship', of: 'character:ava', gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
   at: ['cafe'],
   days: [5],
   hours: ['morning'],
@@ -89,7 +89,7 @@ type JobDef = {
   id: string
   title: string
   description?: string
-  requires?: Requirement[]
+  blocked?: Blocked[]
   at?: string[]
   days?: number[]
   hours?: string[]
@@ -104,7 +104,7 @@ type JobDef = {
 | `id` | Unique among jobs. Commands name the job by it. |
 | `title` | Its name on the job board and in its notices. |
 | `description` | A line or two about it. |
-| `requires` | What it takes to be hired. Each is a [`Requirement`](/docs/reference/actions#requirement), `{ reason, when }`, as an activity's are. The first that doesn't hold refuses `jobs/apply` with its `reason`. |
+| `blocked` | Why an application is refused. Each is a [`Blocked`](/docs/reference/actions#blocked) entry, `{ when, reason }`, as an activity's are. The first whose `when` holds refuses `jobs/apply` with its `reason`. |
 | `at` | The [places](/docs/plugins/places) locations shifts are worked at. Anywhere if left out. |
 | `days` | The calendar's weekdays it has shifts on, from 0 (with the default week, 0 is Monday and 5 is Saturday). Every day if left out. |
 | `hours` | The calendar's periods a shift can start in. Any if left out. |
@@ -191,10 +191,10 @@ After every command, the player is fired from a job whose `fire.missed` has been
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'jobs/apply', with: { job } }` | `applyFor(job)` | A command. Hires the player at the first rank, if the job's `requires` all hold. Refused with `You already work there.` when they do. |
-| `{ type: 'custom', name: 'jobs/work', with: { job } }` | `work(job)` | A command. Works a shift: see [Shifts](#shifts). |
-| `{ type: 'custom', name: 'jobs/quit', with: { job } }` | `quit(job)` | A command. Leaves the job. They can apply again. |
-| `{ custom: 'jobs/hire', with: { job } }` | `hire(job)` | An effect. Hires the player now without asking the requirements, even after they were fired. |
+| `{ type: 'custom', name: 'jobs/apply', with: { id } }` | `applyFor(job)` | A command. Hires the player at the first rank of the job `id`, unless one of its `blocked` entries holds. Refused with `You already work there.` when they do. |
+| `{ type: 'custom', name: 'jobs/work', with: { id } }` | `work(job)` | A command. Works a shift at the job `id`: see [Shifts](#shifts). |
+| `{ type: 'custom', name: 'jobs/quit', with: { id } }` | `quit(job)` | A command. Leaves the job `id`. They can apply again. |
+| `{ custom: 'jobs/hire', with: { job } }` | `hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
 | `{ custom: 'jobs/fire', with: { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
 
 ## Strings
@@ -255,7 +255,7 @@ type RankView = { id: string; title: string; pay: Price | null }
 | `pay` | What a shift pays now, as a [`Price`](/docs/reference/view#price). For a job not held, the first rank's pay. |
 | `shifts`, `missed` | Shifts worked and missed in all. |
 | `nextShift` | The next day with a shift, the calendar's day or the turn, and how many days away (0 for today). `null` when not hired, or when there's none in the next two weeks. |
-| `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the first requirement that doesn't hold. |
+| `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the reason of the first `blocked` entry that holds. |
 | `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
 
 ## The state
@@ -306,7 +306,7 @@ When the game loads, the plugin reports these problems against the pack each job
 
 - No ranks (`has no ranks`), two ranks with one id, or `requires` on the first rank.
 - An unknown stat in the shift's cost or a rank's pay (`rank barista: unknown stat "gold"`).
-- Anything a requirement, the shift's effects, a rank's `when` or `fire.when` names that the game doesn't have.
+- Anything a `blocked` entry, the shift's effects, a rank's `when` or `fire.when` names that the game doesn't have.
 - A `days` entry that isn't a whole number from 0, a negative `passes`, or `fire.missed` below 1.
 - An unknown location in `at`, when the game has places.
 

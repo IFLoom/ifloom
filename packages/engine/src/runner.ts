@@ -11,6 +11,7 @@ import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
+import { upgradeCommand } from './upgrade.ts'
 
 /**
  * Undo and redo. Off unless the game asks for it; when on, `depth` steps deep,
@@ -84,14 +85,15 @@ export type CommandLog = { game: string; start: GameState; commands: Command[] }
 
 /**
  * Play a command log back against a game. Its start comes in through
- * `loadState`, so a log from an older engine or game still plays; the reason
- * comes back when it can't. Commands that are refused are skipped, as they were then.
+ * `loadState`, and its commands through `upgradeCommand`, so a log from an
+ * older engine or game still plays; the reason comes back when it can't.
+ * Commands that are refused are skipped, as they were then.
  */
 export function replay(game: Game, log: CommandLog): GameState | string {
   const start = loadState(log.start, game)
   if (typeof start === 'string') return start
   let state = start
-  for (const command of log.commands) state = apply(state, game, command).state
+  for (const command of log.commands) state = apply(state, game, upgradeCommand(command)).state
   return state
 }
 

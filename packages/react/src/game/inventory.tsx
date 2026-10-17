@@ -30,7 +30,7 @@ function InventoryImpl({ className }: { className?: string }) {
                 choice={{
                   id: `use-${item.id}`,
                   label: item.useLabel,
-                  command: { type: 'use', itemId: item.id },
+                  command: { type: 'use', id: item.id },
                   disabled: whyNotUse(runner, item.id),
                 }}
               />
@@ -49,5 +49,5 @@ function InventoryImpl({ className }: { className?: string }) {
 export const Inventory = overridable('Inventory', InventoryImpl)
 
 function whyNotUse(runner: Runner, itemId: string): string | undefined {
-  return whyNot(runner.state, runner.game, { type: 'use', itemId })
+  return whyNot(runner.state, runner.game, { type: 'use', id: itemId })
 }

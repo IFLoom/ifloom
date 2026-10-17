@@ -147,18 +147,18 @@ export function sampleProject(): Project {
             id: 'buy',
             blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3p for a bun.' }],
             effects: [
-              { kind: 'stat', key: 'coins', by: -3 },
-              { kind: 'item', id: 'bun', by: 1 },
+              { kind: 'stat', stat: 'coins', by: -3 },
+              { kind: 'item', item: 'bun', by: 1 },
             ],
           },
           { id: 'browse', effects: [{ kind: 'scene', from: 'market', otherwise: 'home' }] },
-          { id: 'home', effects: [{ kind: 'scene', id: 'home' }] },
+          { id: 'home', effects: [{ kind: 'scene', scene: 'home' }] },
         ],
       },
       {
         id: 'home',
         title: 'Home',
-        body: [{ text: 'home' }, { text: 'home/bun', when: { has: 'bun' } }],
+        body: [{ text: 'home' }, { text: 'home/bun', when: { item: 'bun' } }],
         choices: [],
       },
       {
@@ -167,7 +167,7 @@ export function sampleProject(): Project {
         drawnFrom: ['market'],
         when: { not: { kv: 'heardBusker' } },
         body: [{ text: 'market.busker' }],
-        choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', id: 'market' }] }],
+        choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', scene: 'market' }] }],
       },
     ],
     prose: {

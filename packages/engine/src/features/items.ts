@@ -4,7 +4,7 @@
 import { say } from '../strings.ts'
 import type { Game, ItemDef } from '../game.ts'
 import type { Range } from '../types.ts'
-import { defineFeature, inRange, mergedById, wanted } from './feature.ts'
+import { bounded, defineFeature, inRange, mergedById, wanted } from './feature.ts'
 
 /** What the items feature adds, as types. */
 export type ItemsShape = {
@@ -12,15 +12,15 @@ export type ItemsShape = {
     items: Record<string, number>
   }
   conditions: {
+    /** How many of an item the player carries. Bare, at least one: `{ item: 'umbrella' }`. */
     item: { item: string } & Range
-    /** Owns at least one. */
-    has: { has: string }
   }
   effects: {
-    item: { kind: 'item'; id: string; by: number }
+    /** Change how many of an item the player carries `by` an amount, or put it `to` a count. Never below 0. */
+    item: { kind: 'item'; item: string; by: number } | { kind: 'item'; item: string; to: number }
   }
   commands: {
-    use: { type: 'use'; itemId: string }
+    use: { type: 'use'; id: string }
   }
   game: {
     items: ItemDef[]
@@ -57,39 +57,41 @@ export const items = defineFeature<ItemsShape>({
   },
   conditions: {
     item: {
-      holds: (state, condition) => inRange(state.items[condition.item] ?? 0, condition),
-      explain: (state, condition) => `item ${condition.item}: ${state.items[condition.item] ?? 0} carried; wants ${wanted(condition)}`,
+      holds: (state, condition) => {
+        const count = state.items[condition.item] ?? 0
+        return bounded(condition) ? inRange(count, condition) : count > 0
+      },
+      explain: (state, condition) =>
+        `item ${condition.item}: ${state.items[condition.item] ?? 0} carried; wants ${bounded(condition) ? wanted(condition) : 'at least 1'}`,
       references: (condition) => [{ item: condition.item }],
-    },
-    has: {
-      holds: (state, condition) => (state.items[condition.has] ?? 0) > 0,
-      explain: (state, condition) => `item ${condition.has}: ${state.items[condition.has] ?? 0} owned; wants at least 1`,
-      references: (condition) => [{ item: condition.has }],
     },
   },
   effects: {
     item: {
-      apply: (state, effect) => ({ ...state, items: { ...state.items, [effect.id]: Math.max(0, (state.items[effect.id] ?? 0) + effect.by) } }),
-      references: (effect) => [{ item: effect.id }],
+      apply: (state, effect) => {
+        const count = 'to' in effect ? effect.to : (state.items[effect.item] ?? 0) + effect.by
+        return { ...state, items: { ...state.items, [effect.item]: Math.max(0, count) } }
+      },
+      references: (effect) => [{ item: effect.item }],
     },
   },
   commands: {
     use: {
       whyNot: (state, command, game) => {
-        const item = itemById(game, command.itemId)
+        const item = itemById(game, command.id)
         if (!item) return say(game, 'noSuchThing')
         if (!item.use) return say(game, 'doesNothing', { item: item.name })
-        return (state.items[command.itemId] ?? 0) > 0 ? undefined : say(game, 'haveNone', { item: item.name })
+        return (state.items[command.id] ?? 0) > 0 ? undefined : say(game, 'haveNone', { item: item.name })
       },
       run: (state, command, game, cx) => {
-        const item = itemById(game, command.itemId)!
-        return cx.runEffects(state, game, [{ kind: 'item', id: command.itemId, by: -1 }, ...item.use!.effects], false)
+        const item = itemById(game, command.id)!
+        return cx.runEffects(state, game, [{ kind: 'item', item: command.id, by: -1 }, ...item.use!.effects], false)
       },
       effectsOf: (_state, command, game) => {
-        const item = itemById(game, command.itemId)
-        return item?.use ? [{ kind: 'item', id: command.itemId, by: -1 }, ...item.use.effects] : []
+        const item = itemById(game, command.id)
+        return item?.use ? [{ kind: 'item', item: command.id, by: -1 }, ...item.use.effects] : []
       },
-      references: (command) => [{ item: command.itemId }],
+      references: (command) => [{ item: command.id }],
     },
   },
   // What the base game declares isn't merged: its items come from packs.

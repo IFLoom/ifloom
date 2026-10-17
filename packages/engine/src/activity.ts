@@ -7,7 +7,7 @@ import { featureContext } from './core.ts'
 import * as activities from './features/activities.ts'
 import type { GameState } from './types.ts'
 
-export type { ActivityCost, ActivityDef, Requirement } from './features/activities.ts'
+export type { ActivityCost, ActivityDef } from './features/activities.ts'
 export { activityById, need } from './features/activities.ts'
 
 /**

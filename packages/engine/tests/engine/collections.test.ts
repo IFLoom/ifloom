@@ -13,10 +13,10 @@ function withGallery(): Game {
     collections: [{ id: 'gallery', name: 'Photos', max: 2 }],
     activities: [
       ...fixture().activities,
-      { id: 'snapHouse', effects: [{ kind: 'collect', to: 'gallery', entry: { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg' } }] },
-      { id: 'snapStreet', effects: [{ kind: 'collect', to: 'gallery', entry: { id: 'street', title: 'The street' } }] },
-      { id: 'snapShop', effects: [{ kind: 'collect', to: 'gallery', entry: { id: 'shop', title: 'The shop', data: { blurry: true } } }] },
-      { id: 'deleteHouse', effects: [{ kind: 'discard', from: 'gallery', id: 'house' }] },
+      { id: 'snapHouse', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg' } }] },
+      { id: 'snapStreet', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'street', title: 'The street' } }] },
+      { id: 'snapShop', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'shop', title: 'The shop', data: { blurry: true } } }] },
+      { id: 'deleteHouse', effects: [{ kind: 'discard', collection: 'gallery', entry: 'house' }] },
     ],
   }
   game.prose = proseStore(game, { ...townProse, 'photo.house': 'The front door, {{playerFirst}}’s bike against it.' })
@@ -58,14 +58,14 @@ describe('collections', () => {
     const game = withGallery()
     const state = apply(apply(begin(game), game, act('snapHouse')).state, game, act('snapStreet')).state
     expect(holds(state, { collection: 'gallery' }, game)).toBe(true)
-    expect(holds(state, { collection: 'gallery', id: 'house' }, game)).toBe(true)
-    expect(holds(state, { collection: 'gallery', id: 'shop' }, game)).toBe(false)
+    expect(holds(state, { collection: 'gallery', entry: 'house' }, game)).toBe(true)
+    expect(holds(state, { collection: 'gallery', entry: 'shop' }, game)).toBe(false)
     expect(holds(state, { collection: 'gallery', gte: 3 }, game)).toBe(false)
     expect(holds(begin(game), { collection: 'gallery' }, game)).toBe(false)
   })
 
   it('are checked: an effect into a collection the game does not declare is reported', () => {
-    const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', kind: 'gear' as const, use: { label: 'Snap', effects: [{ kind: 'collect' as const, to: 'album', entry: { id: 'x' } }] } }] }
+    const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', kind: 'gear' as const, use: { label: 'Snap', effects: [{ kind: 'collect' as const, collection: 'album', entry: { id: 'x' } }] } }] }
     expect(problemsOf(game)).toContain('item camera: unknown collection "album"')
     const notes = { ...withGallery(), items: [{ id: 'pen', name: 'pen', desc: '', kind: 'gear' as const, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } }] }
     expect(problemsOf(notes)).toContain('item pen: no prose for "note.unwritten"')

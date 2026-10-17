@@ -13,7 +13,13 @@
  * `Pack.minigames` and `View.minigame`. The kv store renamed flags:
  * `GameState.kv`, `KvValue`, the `kv` and `storylineKv` conditions and
  * effects (`to` and `by`), `CarryOver.kv`, the start command's `kv`, an
- * entity's `kv`, an input's `key`, and added `Game.saveName`.
+ * entity's `kv`, an input's `key`, and added `Game.saveName`. Content naming
+ * (ADR 0008): effects name their target by its noun and set with `to` or
+ * change with `by` (`setStat` is `stat` with `to`, `item` takes `to`,
+ * `storylineKv` takes `by`); `has` folded into `item`, `counter` into
+ * `storylineKv`, `{ turn: true }` became `{ turn: range }`, a collection
+ * condition's `entry`; `use` takes `id`, `setting` and `input` take `to`.
+ * Gating: `Blocked`, and an activity's `blocked` in place of `requires`.
  */
 import type {
   ActionDef,
@@ -109,7 +115,8 @@ export type FrozenCondition =
    * since" is not true of something that has not happened.
    */
   | ({ since: string } & FrozenRange)
-  | { storylineKv: { storyline: string; key: string; is?: KvValue } }
+  /** A key in a storyline's kv store, read as `kv` reads one. */
+  | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & FrozenRange)
   /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
   | ({ stat: StatKey; of?: string } & FrozenRange)
   /**
@@ -132,19 +139,17 @@ export type FrozenCondition =
    * until a turn that has come. With `open: false`, that it is closed for now.
    */
   | { storyline: string; open?: boolean }
-  | ({ counter: { storyline: string; key: string } } & FrozenRange)
+  /** How many of an item the player carries. Bare, at least one. */
   | ({ item: string } & FrozenRange)
-  /** Owns at least one. */
-  | { has: string }
   /**
-   * What is in a collection. With `id`: that entry is there. Without: how many
+   * What is in a collection. With `entry`: that entry is there. Without: how many
    * entries there are, at least one if no range is given.
    */
-  | ({ collection: string; id?: string } & FrozenRange)
+  | ({ collection: string; entry?: string } & FrozenRange)
   /** The scene on screen is one of these. */
   | { scene: string[] }
-  /** How many turns have passed. Turn 0 is the first, so `{ turn: true, gte: 3 }` is the fourth on. */
-  | ({ turn: true } & FrozenRange)
+  /** How many turns have passed. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on. */
+  | { turn: FrozenRange }
   | { phase: Phase[] }
   /**
    * A variable of the minigame being played, read as a number: bare, whether
@@ -242,28 +247,28 @@ export type FrozenCommand =
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
-  | { type: 'use'; itemId: string }
+  | { type: 'use'; id: string }
   /** Mark one notice seen, or every one. */
   | { type: 'dismiss'; id?: string }
-  /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
-  | { type: 'input'; id: string; value?: KvValue }
+  /** Write what the player typed or picked. A button leaves `to` out and the UI asks. */
+  | { type: 'input'; id: string; to?: KvValue }
   /** Change a `play` setting. Ignores locks, like a menu would. */
-  | { type: 'setting'; id: string; value: KvValue }
+  | { type: 'setting'; id: string; to: KvValue }
   /** Time passing in the minigame being played. */
   | { type: 'tick'; ms: number }
   /** An input to the minigame being played, by name. */
   | { type: 'minigame'; input: string }
-  /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
+  /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 
 export type FrozenEffect =
-  /** Change a stat by `by`, held to its range: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each`). */
-  | { kind: 'stat'; key: StatKey; by: number; of?: string }
+  /** Change a stat `by` an amount or put it `to` a value, held to its range: the player's, or with `of`, an entity's. */
+  | { kind: 'stat'; stat: StatKey; by: number; of?: string }
+  | { kind: 'stat'; stat: StatKey; to: number; of?: string }
   /** A plugin's effect, by its full name. Content writes `{ custom: name, with }`; the engine turns it into this. */
   | { kind: 'custom'; name: string; with?: Record<string, unknown> }
-  /** Put a stat at a value, held to its range: energy back to full overnight. */
-  | { kind: 'setStat'; key: StatKey; to: number; of?: string }
-  | { kind: 'storylineKv'; id: string; key: string; to: KvValue }
+  | { kind: 'storylineKv'; storyline: string; key: string; to: KvValue }
+  | { kind: 'storylineKv'; storyline: string; key: string; by: number }
   /**
    * Set a key `to` a value, or change its number `by` an amount (a value
    * that is not a number counts as 0). With `of`, the key is an entity's.
@@ -275,43 +280,44 @@ export type FrozenEffect =
    * left out, never reused; an id already there is left as it is.
    */
   | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
-  /** Take an entity out of the game: `{ kind: 'remove', of: 'staff:ana' }`. */
-  | { kind: 'remove'; of: string }
+  /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
+  | { kind: 'remove'; entity: string }
   /**
    * The same effects for every entity of a kind (where `where` holds), one
    * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
    */
   | { kind: 'each'; of: string; where?: FrozenCondition; effects: EffectRef[] }
-  | { kind: 'scene'; id: string | null }
+  | { kind: 'scene'; scene: string | null }
   /**
    * Open one scene drawn at random from the scenes whose `drawnFrom` names
    * `from` and whose `when` holds, by their `weight`. With none to draw, open
    * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
    */
   | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'item'; id: string; by: number }
-  | { kind: 'phase'; value: Phase }
-  | { kind: 'closeStoryline'; id: string; turns: number }
+  | { kind: 'item'; item: string; by: number }
+  | { kind: 'item'; item: string; to: number }
+  | { kind: 'phase'; to: Phase }
+  | { kind: 'closeStoryline'; storyline: string; turns: number }
   /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
   | { kind: 'turn'; by?: number }
   /** Add an entry to a collection. An id already there is left as it is. */
-  | { kind: 'collect'; to: string; entry: CollectionItem }
-  /** Take an entry out of a collection. */
-  | { kind: 'discard'; from: string; id: string }
+  | { kind: 'collect'; collection: string; entry: CollectionItem }
+  /** Take an entry out of a collection, by its id. */
+  | { kind: 'discard'; collection: string; entry: string }
   /** Tell the player something outside a scene. `text` is a prose key. */
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
   /**
-   * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', track: 'calm' }`.
+   * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', to: 'calm' }`.
    * `track: null` silences the channel; leaving `track` out hands it back to the place or the game's default.
    */
   | { kind: 'audio'; channel: string; track?: string | null }
   /** Play a sound once, on its track's channel. */
   | { kind: 'sound'; track: string }
   /** Start a minigame, in its `start` state. One already running is dropped. */
-  | { kind: 'minigame'; id: string }
-  /** Set a variable of the minigame being played, add to it, or draw it at random. */
-  | { kind: 'minigameVar'; key: string; value: number }
-  | { kind: 'minigameVar'; key: string; add: number }
+  | { kind: 'minigame'; minigame: string }
+  /** Set a variable of the minigame being played, change it, or draw it at random. */
+  | { kind: 'minigameVar'; key: string; to: number }
+  | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
 
 export type FrozenGame = {

@@ -23,7 +23,7 @@ const ava: CharacterDef = {
 }
 const sam: CharacterDef = { id: 'sam', name: 'Sam', home: 'park', talk: 'sam.hi', stats: { friendship: 5 } }
 
-const scene = (id: string) => ({ id, body: [{ text: id }], choices: [{ id: 'bye', effects: [{ kind: 'scene' as const, id: null }] }] })
+const scene = (id: string) => ({ id, body: [{ text: id }], choices: [{ id: 'bye', effects: [{ kind: 'scene' as const, scene: null }] }] })
 
 const town: Pack = {
   id: 'town',
@@ -131,11 +131,11 @@ describe('the cast', () => {
     expect(view(clock.write(met, { day: 0, period: 'evening' }), g).plugins.cast).toBeDefined()
   })
 
-  it('answer queries about whoever is named, as value, who or id', () => {
+  it('answer queries about whoever is named, as value, character or id', () => {
     const { game: g } = game()
     const cafe = run(g, startingState(g), go('cafe'))
     const where = pluginQuery(g, 'cast/where')!
-    expect([where(cafe, { value: 'ava' }), where(cafe, { who: 'ava' }), where(cafe, { id: 'ava' })]).toEqual(['cafe', 'cafe', 'cafe'])
+    expect([where(cafe, { value: 'ava' }), where(cafe, { character: 'ava' }), where(cafe, { id: 'ava' })]).toEqual(['cafe', 'cafe', 'cafe'])
     expect(where(cafe, { id: 'nobody' })).toBeUndefined()
   })
 
@@ -159,7 +159,7 @@ describe('the cast', () => {
       id: 'broken',
       schema: SCHEMA,
       stats: [{ id: 'trust', label: 'Trust', of: 'character' }],
-      activities: [{ id: 'wave', requires: [{ when: here('ghost'), reason: 'No.' }] }],
+      activities: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
       data: {
         places: { locations: [{ id: 'yard', name: 'Yard', tag: '', kind: 'room', exits: [], art: '', body: [] }] },
         cast: {

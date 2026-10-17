@@ -19,8 +19,8 @@ const story: Pack = {
       title: 'The door',
       body: [{ text: 'start' }],
       choices: [
-        { id: 'knock', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'scene', id: 'inside' }] },
-        { id: 'wait', effects: [{ kind: 'scene', id: 'inside' }] },
+        { id: 'knock', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'scene', scene: 'inside' }] },
+        { id: 'wait', effects: [{ kind: 'scene', scene: 'inside' }] },
       ],
     },
     {
@@ -28,7 +28,7 @@ const story: Pack = {
       title: 'Inside',
       // The engine remembers every choice, so a later scene can ask about one.
       body: [{ text: 'inside' }, { text: 'inside/knocked', when: { chose: 'start/knock' } }],
-      choices: [{ id: 'again', effects: [{ kind: 'scene', id: 'start' }] }],
+      choices: [{ id: 'again', effects: [{ kind: 'scene', scene: 'start' }] }],
     },
   ],
   prose: {

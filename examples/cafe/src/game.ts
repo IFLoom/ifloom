@@ -25,9 +25,9 @@ export const custom: Custom = {
         const dish = entityOf(state, ref)!
         return sum + dish.stats.price * dish.stats.quality
       }, 0)
-      return [{ kind: 'stat', key: 'coins', by: Math.round((covers * perCover) / 10) }]
+      return [{ kind: 'stat', stat: 'coins', by: Math.round((covers * perCover) / 10) }]
     },
-    wages: (state): EffectRef[] => [{ kind: 'stat', key: 'coins', by: -total(state, 'staff', 'wage') }],
+    wages: (state): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, 'staff', 'wage') }],
   },
   values: {
     payroll: (state) => total(state, 'staff', 'wage'),
@@ -60,28 +60,28 @@ export const corner: Pack = {
         { custom: 'takings' },
         { custom: 'wages' },
         // A week's work wears everyone down a little.
-        { kind: 'each', of: 'staff', effects: [{ kind: 'stat', key: 'morale', by: -8, of: '$' }] },
+        { kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] },
         // Anyone at the end of their tether hands in their apron.
-        { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', of: '$' }] },
+        { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] },
         { kind: 'turn' },
       ],
     },
     {
       id: 'staffLunch',
       cost: { stats: { coins: 25 } },
-      requires: [{ when: { count: 'staff' }, reason: 'There is nobody to feed.' }],
-      effects: [{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', key: 'morale', by: 15, of: '$' }] }],
+      blocked: [{ when: { not: { count: 'staff' } }, reason: 'There is nobody to feed.' }],
+      effects: [{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: 15, of: '$' }] }],
     },
     {
       id: 'improveSoup',
       cost: { stats: { coins: 40 } },
-      requires: [{ when: { stat: 'quality', of: 'dish:soup', lt: 5 }, reason: 'It could not be better.' }],
-      effects: [{ kind: 'stat', key: 'quality', by: 1, of: 'dish:soup' }],
+      blocked: [{ when: { stat: 'quality', of: 'dish:soup', gte: 5 }, reason: 'It could not be better.' }],
+      effects: [{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }],
     },
     {
       id: 'interview',
-      requires: [{ when: { count: 'staff', lt: 4 }, reason: 'There is no room behind the counter.' }],
-      effects: [{ kind: 'scene', id: 'hiring' }],
+      blocked: [{ when: { count: 'staff', gte: 4 }, reason: 'There is no room behind the counter.' }],
+      effects: [{ kind: 'scene', scene: 'hiring' }],
     },
   ],
   scenes: [
@@ -89,16 +89,16 @@ export const corner: Pack = {
       id: 'opening',
       title: 'The Corner Café',
       body: [{ text: 'opening' }],
-      choices: [{ id: 'begin', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'begin', effects: [{ kind: 'scene', scene: null }] }],
     },
     {
       id: 'hiring',
       title: 'Interviews',
       body: [{ text: 'hiring' }],
       choices: [
-        { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', id: null }] },
-        { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', id: null }] },
-        { id: 'nobody', effects: [{ kind: 'scene', id: null }] },
+        { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', scene: null }] },
+        { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', scene: null }] },
+        { id: 'nobody', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
   ],
@@ -109,7 +109,7 @@ export const corner: Pack = {
     {
       id: 'review',
       when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
-      effects: [{ kind: 'stat', key: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
+      effects: [{ kind: 'stat', stat: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
     },
   ],
   prose: {

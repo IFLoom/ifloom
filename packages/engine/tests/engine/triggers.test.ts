@@ -10,11 +10,11 @@ function withTriggers(): Game {
       // A note through the door the first time the player goes out.
       { id: 'note', when: { kv: 'at', is: 'street' }, effects: [{ kind: 'notify', title: 'A note on the mat' }, { kind: 'kv', key: 'note', to: true }] },
       // Fires off the one before it, in the same pass.
-      { id: 'read', when: { kv: 'note' }, effects: [{ kind: 'stat', key: 'intelligence', by: 1 }] },
+      { id: 'read', when: { kv: 'note' }, effects: [{ kind: 'stat', stat: 'intelligence', by: 1 }] },
       // Every turn the player is in the shop, once a turn.
-      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ kind: 'stat', key: 'luck', by: 1 }] },
+      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ kind: 'stat', stat: 'luck', by: 1 }] },
       // Opens a scene, which counts as seen.
-      { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ kind: 'scene', id: 'rosa.hello' }] },
+      { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ kind: 'scene', scene: 'rosa.hello' }] },
     ],
   }
 }

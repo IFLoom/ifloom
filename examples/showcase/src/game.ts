@@ -78,7 +78,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       // A coffee and a post a day; each new day (a turn, here) resets them.
       resets: { hadCoffee: false, postedToday: false },
       // Energy back to full overnight.
-      turn: () => ({ effects: [{ kind: 'setStat', key: 'energy', to: 100 }] }),
+      turn: () => ({ effects: [{ kind: 'stat', stat: 'energy', to: 100 }] }),
       locks: [
         // Moving day only moves through its scene.
         { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },

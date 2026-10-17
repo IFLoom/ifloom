@@ -48,22 +48,22 @@ describe('the effect builder', () => {
   })
 
   it('falls back to JSON for an entity’s stat', () => {
-    expect(effectForm({ kind: 'stat', key: 'morale', by: 1, of: 'staff:ana' })).toBe('json')
+    expect(effectForm({ kind: 'stat', stat: 'morale', by: 1, of: 'staff:ana' })).toBe('json')
   })
 
   it('reads and writes a cost', () => {
-    const effects = [{ kind: 'item', id: 'bun', by: 1 } as const, { kind: 'stat', key: 'coins', by: -3 } as const]
+    const effects = [{ kind: 'item', item: 'bun', by: 1 } as const, { kind: 'stat', stat: 'coins', by: -3 } as const]
     expect(costOf(effects)).toEqual([{ stat: 'coins', amount: 3 }])
     expect(withCost(effects, [{ stat: 'coins', amount: 4 }])).toEqual([
-      { kind: 'stat', key: 'coins', by: -4 },
-      { kind: 'item', id: 'bun', by: 1 },
+      { kind: 'stat', stat: 'coins', by: -4 },
+      { kind: 'item', item: 'bun', by: 1 },
     ])
-    expect(withCost(effects, [])).toEqual([{ kind: 'item', id: 'bun', by: 1 }])
+    expect(withCost(effects, [])).toEqual([{ kind: 'item', item: 'bun', by: 1 }])
     expect(shortBlock({ id: 'coins', label: 'Coins' }, 'coins', 4)).toEqual({ when: { stat: 'coins', lt: 4 }, reason: 'You need 4 coins.' })
   })
 
   it('writes snippets as TypeScript', () => {
-    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], items: [], kv: [], choices: [], sets: [] }))).toBe("{ kind: 'stat', key: 'coins', by: 1 }")
+    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], items: [], kv: [], choices: [], sets: [] }))).toBe("{ kind: 'stat', stat: 'coins', by: 1 }")
     expect(snippet({ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] })).toBe("{ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] }")
   })
 

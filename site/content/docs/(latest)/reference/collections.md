@@ -24,9 +24,9 @@ const town: Pack = {
   activities: [
     {
       id: 'read-note',
-      effects: [{ kind: 'collect', to: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome', data: { from: 'sam' } } }],
+      effects: [{ kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome', data: { from: 'sam' } } }],
     },
-    { id: 'bin-note', effects: [{ kind: 'discard', from: 'notes', id: 'welcome' }] },
+    { id: 'bin-note', effects: [{ kind: 'discard', collection: 'notes', entry: 'welcome' }] },
   ],
   prose: { 'notice.welcome': 'Welcome to the building, {{playerName}}! Bins go out Thursday.' },
 }
@@ -43,7 +43,7 @@ state.collections.notes
 view(state, game).collections.notes.entries[0].text
 // 'Welcome to the building, Alex! Bins go out Thursday.'
 
-holds(state, { collection: 'notes', id: 'welcome' }, game)  // true
+holds(state, { collection: 'notes', entry: 'welcome' }, game)  // true
 ```
 
 ## CollectionDef
@@ -154,8 +154,8 @@ The declaration with that id, or `undefined`.
   custom: {
     effects: {
       logWage: (state) => [
-        { kind: 'collect', to: 'ledger', entry: { id: `wage.${state.turn}`, title: 'Office shift', data: { coins: 20 } } },
-        { kind: 'stat', key: 'coins', by: 20 },
+        { kind: 'collect', collection: 'ledger', entry: { id: `wage.${state.turn}`, title: 'Office shift', data: { coins: 20 } } },
+        { kind: 'stat', stat: 'coins', by: 20 },
       ],
     },
   },

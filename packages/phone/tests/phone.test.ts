@@ -51,21 +51,21 @@ const town: Pack = {
   ],
   storylines: [{ id: 'ava', name: 'Ava' }],
   scenes: [
-    { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', id: null }] }] },
-    { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', id: null }] }] },
+    { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
   ],
   activities: [
     {
       id: 'photo',
-      requires: [{ reason: 'Nobody to take a picture of.', when: here('ava') }],
-      effects: [{ kind: 'collect', to: 'gallery', entry: { id: 'ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' } }],
+      blocked: [{ when: { not: here('ava') }, reason: 'Nobody to take a picture of.' }],
+      effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' } }],
     },
     {
       id: 'post',
       cost: { stats: { energy: 10 } },
-      requires: [
-        { reason: 'Nothing to post yet.', when: { collection: 'gallery' } },
-        { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
+      blocked: [
+        { when: { not: { collection: 'gallery' } }, reason: 'Nothing to post yet.' },
+        { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [
         pass(1),
@@ -121,7 +121,7 @@ const town: Pack = {
   custom: {
     values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
     // How a post did: the game's own roll, here a fixed one.
-    effects: { fanReaction: () => [{ kind: 'stat', key: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
+    effects: { fanReaction: () => [{ kind: 'stat', stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
   },
 }
 

@@ -139,7 +139,7 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
               type="button"
               {...back}
               aria-label={words('back')}
-              onClick={() => send({ type: 'custom', name: 'devices/close', with: { device: device.id } })}
+              onClick={() => send({ type: 'custom', name: 'devices/close', with: { id: device.id } })}
             >
               <Icon name="back" />
             </button>

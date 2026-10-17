@@ -28,9 +28,7 @@ export const CONDITION_KEYS = [
   'tier',
   'level',
   'storyline',
-  'counter',
   'item',
-  'has',
   'collection',
   'scene',
   'turn',
@@ -42,7 +40,6 @@ export const CONDITION_KEYS = [
 /** Every kind of effect the engine has. */
 export const EFFECT_KINDS = [
   'stat',
-  'setStat',
   'kv',
   'storylineKv',
   'create',
@@ -69,7 +66,7 @@ export const conditionKeysComplete: Missing<ConditionKey, (typeof CONDITION_KEYS
 export const effectKindsComplete: Missing<Effect['kind'], (typeof EFFECT_KINDS)[number]> = true
 
 /** The conditions the builder has a form for. Anything else is edited as JSON. */
-export const CONDITION_FORMS = ['all', 'any', 'not', 'stat', 'kv', 'item', 'has', 'chose', 'seen', 'since', 'setting', 'level', 'turn'] as const satisfies readonly ConditionKey[]
+export const CONDITION_FORMS = ['all', 'any', 'not', 'stat', 'kv', 'item', 'chose', 'seen', 'since', 'setting', 'level', 'turn'] as const satisfies readonly ConditionKey[]
 export type ConditionForm = (typeof CONDITION_FORMS)[number] | 'plugin' | 'json'
 
 export const CONDITION_LABELS: Record<ConditionForm, string> = {
@@ -79,7 +76,6 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   stat: 'Stat',
   kv: 'kv key',
   item: 'Item count',
-  has: 'Has item',
   chose: 'Chose',
   seen: 'Seen scene',
   since: 'Turns since scene',
@@ -90,13 +86,16 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   json: 'Other (JSON)',
 }
 
-/** The effects the builder has a form for. `kvBy` and `draw` are the `by` and `from` shapes of `kv` and `scene`. */
-export const EFFECT_FORMS = ['stat', 'setStat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
-export type EffectForm = (typeof EFFECT_FORMS)[number] | 'kvBy' | 'draw' | 'plugin' | 'json'
+/**
+ * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
+ * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
+ */
+export const EFFECT_FORMS = ['stat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
+export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
   stat: 'Change a stat',
-  setStat: 'Set a stat',
+  statTo: 'Set a stat',
   kv: 'Set a kv key',
   kvBy: 'Change a kv key by',
   item: 'Give or take an item',
@@ -111,7 +110,7 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
 }
 
 /** The effect builder's menu, in order. Every form is in it. */
-export const EFFECT_MENU = ['stat', 'setStat', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
+export const EFFECT_MENU = ['stat', 'statTo', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
 export const effectMenuComplete: Missing<EffectForm, (typeof EFFECT_MENU)[number]> = true
 
 /** The comparisons a range offers. `is` is only for kv keys and settings. */

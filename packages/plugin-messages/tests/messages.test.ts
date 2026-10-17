@@ -24,7 +24,7 @@ function game(extra: Partial<Pack> = {}): Game {
     id: 'town',
     schema: SCHEMA,
     storylines: [{ id: 'ava', name: 'Ava' }],
-    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', id: null }] }] }],
+    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
     activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] }],
     prose: {

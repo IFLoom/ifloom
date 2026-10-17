@@ -58,7 +58,7 @@ function loaded(scene?: Pack['scenes']) {
         body: [],
         choices: [
           { id: 'hint', label: 'bakery#hint', when: { setting: 'hints' }, effects: [] },
-          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'hard' }, effects: [{ kind: 'scene', id: null }] },
+          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'hard' }, effects: [{ kind: 'scene', scene: null }] },
         ],
       },
     ],
@@ -90,7 +90,7 @@ describe('settings at the start', () => {
 describe('the setting command', () => {
   it('sets a play setting', () => {
     const g = game()
-    const result = apply(startingState(g), g, { type: 'setting', id: 'difficulty', value: 'hard' })
+    const result = apply(startingState(g), g, { type: 'setting', id: 'difficulty', to: 'hard' })
     expect(result.ok).toBe(true)
     expect(result.state.settings.difficulty).toBe('hard')
   })
@@ -98,7 +98,7 @@ describe('the setting command', () => {
   it('is refused for an unknown id, a ui setting, or a value that does not fit', () => {
     const g = game()
     const start = startingState(g)
-    const refused = (id: string, value: boolean | number | string) => apply(start, g, { type: 'setting', id, value }).refused
+    const refused = (id: string, value: boolean | number | string) => apply(start, g, { type: 'setting', id, to: value }).refused
     expect(refused('volume', 3)).toBe('There is no such setting.')
     expect(refused('textSize', 'large')).toBe('That setting does not change the game.')
     expect(refused('hints', 'yes')).toBe('Choose on or off.')
@@ -110,21 +110,21 @@ describe('the setting command', () => {
 
   it('uses the game’s strings for its refusals', () => {
     const g = game({ strings: { noSuchSetting: 'No.' } })
-    expect(apply(startingState(g), g, { type: 'setting', id: 'volume', value: 1 }).refused).toBe('No.')
+    expect(apply(startingState(g), g, { type: 'setting', id: 'volume', to: 1 }).refused).toBe('No.')
   })
 
   it('ignores locks', () => {
-    const g = game({ rules: { locks: [{ when: { turn: true, gte: 0 }, deny: ['*'], reason: 'Not now.' }] } })
+    const g = game({ rules: { locks: [{ when: { turn: { gte: 0 } }, deny: ['*'], reason: 'Not now.' }] } })
     expect(apply(startingState(g), g, { type: 'activity', id: 'wait' }).refused).toBe('Not now.')
-    expect(apply(startingState(g), g, { type: 'setting', id: 'hints', value: false }).ok).toBe(true)
+    expect(apply(startingState(g), g, { type: 'setting', id: 'hints', to: false }).ok).toBe(true)
   })
 
   it('is logged by the runner and replays exactly', () => {
     const g = game()
     const runner = createRunner(g, begin(g))
-    runner.apply({ type: 'setting', id: 'hints', value: false })
+    runner.apply({ type: 'setting', id: 'hints', to: false })
     runner.apply({ type: 'activity', id: 'read' })
-    runner.apply({ type: 'setting', id: 'patience', value: 10 })
+    runner.apply({ type: 'setting', id: 'patience', to: 10 })
     expect(runner.log().commands.map((command) => command.type)).toEqual(['setting', 'activity', 'setting'])
     expect(replay(g, runner.log())).toEqual(runner.state)
     expect((replay(g, runner.log()) as GameState).settings).toEqual({ hints: false, difficulty: 'usual', patience: 10 })
@@ -147,8 +147,8 @@ describe('the setting condition', () => {
     expect(problems).toEqual([])
     const open = { ...startingState(g), sceneId: 'bakery' }
     expect(view(open, g).scene.choices.map((choice) => choice.id)).toEqual(['hint'])
-    const changed = apply(open, g, { type: 'setting', id: 'difficulty', value: 'hard' }).state
-    const off = apply(changed, g, { type: 'setting', id: 'hints', value: false }).state
+    const changed = apply(open, g, { type: 'setting', id: 'difficulty', to: 'hard' }).state
+    const off = apply(changed, g, { type: 'setting', id: 'hints', to: false }).state
     expect(view(off, g).scene.choices.map((choice) => choice.id)).toEqual(['leave'])
   })
 })

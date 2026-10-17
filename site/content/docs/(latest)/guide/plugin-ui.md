@@ -292,7 +292,7 @@ You don't need a counter for a simple shop. A location's actions can send [`buy`
 
 ## A job board
 
-The jobs view lists every job, held or not. A job not held has an `apply` button, whose `disabled` is the first hiring requirement the player doesn't meet. A job held has a `work` button, with the shift's cost as its `price` and the reason it can't be worked now as its `disabled`:
+The jobs view lists every job, held or not. A job not held has an `apply` button, whose `disabled` is the reason of the job's first `blocked` entry that holds. A job held has a `work` button, with the shift's cost as its `price` and the reason it can't be worked now as its `disabled`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/jobs.ts

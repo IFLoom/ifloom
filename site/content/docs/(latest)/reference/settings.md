@@ -96,7 +96,7 @@ Use it for `ui` settings, and for play settings before a game starts. During a g
 A play setting changes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it.
 
 ```ts
-runner.apply({ type: 'setting', id: 'difficulty', value: 'hard' })
+runner.apply({ type: 'setting', id: 'difficulty', to: 'hard' })
 ```
 
 A ui setting changes through [`runner.setUiSetting`](/docs/reference/runner#setuisetting), which writes the profile and leaves the state alone:

@@ -45,7 +45,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
           <button
             type="button"
             {...(quest.tracked ? tracked : untracked)}
-            onClick={() => send({ type: 'custom', name: 'quests/track', with: { quest: quest.tracked ? undefined : quest.id } })}
+            onClick={() => send({ type: 'custom', name: 'quests/track', with: { id: quest.tracked ? undefined : quest.id } })}
           >
             {quest.tracked ? words('untrack') : words('track')}
           </button>

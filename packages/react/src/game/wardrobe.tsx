@@ -36,10 +36,10 @@ function WardrobePanelImpl({ className }: { className?: string }) {
         <div key={slot.id} {...row} data-slot-id={slot.id}>
           <span {...slotName}>{slot.label}</span>
           <span {...worn}>{slot.name ?? words('nothingOn')}</span>
-          {slot.item ? button(words('takeOff'), { type: 'custom', name: 'wardrobe/takeOff', with: { slot: slot.id } }, 'off') : null}
+          {slot.item ? button(words('takeOff'), { type: 'custom', name: 'wardrobe/takeOff', with: { id: slot.id } }, 'off') : null}
           {data.spare
             .filter((entry) => entry.slot === slot.id)
-            .map((entry) => button(words('wearItem', { item: entry.name }), { type: 'custom', name: 'wardrobe/wear', with: { item: entry.id } }, entry.id))}
+            .map((entry) => button(words('wearItem', { item: entry.name }), { type: 'custom', name: 'wardrobe/wear', with: { id: entry.id } }, entry.id))}
         </div>
       ))}
     </section>

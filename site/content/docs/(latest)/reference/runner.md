@@ -288,7 +288,7 @@ if (!refused) document.body.dataset.textSize = 'large'
 
 The write happens in the background. Await `settled()` if you need it done. It throws if the runner has no `profile`.
 
-A `play` setting goes through `apply({ type: 'setting', id, value })` instead. When that takes, the runner writes the new value to the profile's `settings` too, so the next new game starts with it.
+A `play` setting goes through `apply({ type: 'setting', id, to: value })` instead. When that takes, the runner writes the new value to the profile's `settings` too, so the next new game starts with it.
 
 ### newGame
 
@@ -325,7 +325,7 @@ function replay(game: Game, log: CommandLog): GameState | string
 
 Plays a command log back and returns the state it leads to. The engine is deterministic, so the same log against the same game gives the same state every time.
 
-The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. If it can't be loaded, `replay` returns the reason instead of a state.
+The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used, such as `{ type: 'use', itemId }`, are read with today's names. If the start can't be loaded, `replay` returns the reason instead of a state.
 
 ```ts
 import { replay, type CommandLog } from '@ifloom/engine'

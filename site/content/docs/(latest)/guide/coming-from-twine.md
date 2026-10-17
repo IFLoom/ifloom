@@ -42,9 +42,9 @@ const cafe: Pack = {
         {
           id: 'coffee',
           blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3 coins.' }],
-          effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'kv', key: 'hadCoffee', to: true }, { kind: 'scene', id: 'street' }],
+          effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'kv', key: 'hadCoffee', to: true }, { kind: 'scene', scene: 'street' }],
         },
-        { id: 'leave', effects: [{ kind: 'scene', id: 'street' }] },
+        { id: 'leave', effects: [{ kind: 'scene', scene: 'street' }] },
       ],
     },
     { id: 'street', title: 'The high street', body: [{ text: 'street' }], choices: [] },
@@ -81,13 +81,13 @@ It's longer, and it does a few things the passage doesn't:
 Each change is an [effect](/docs/reference/effects), and a choice runs its list of effects in order when the player picks it:
 
 ```ts
-{ kind: 'stat', key: 'coins', by: 2 }
-{ kind: 'setStat', key: 'coins', to: 5 }
+{ kind: 'stat', stat: 'coins', by: 2 }
+{ kind: 'stat', stat: 'coins', to: 5 }
 { kind: 'kv', key: 'metAva', to: true }
 { kind: 'kv', key: 'visits', by: 1 }
 ```
 
-Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [items](/docs/reference/game#itemdef): `{ kind: 'item', id: 'umbrella', by: 1 }`.
+Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [items](/docs/reference/game#itemdef): `{ kind: 'item', item: 'umbrella', by: 1 }`.
 
 There's no temporary `_variable`. A value you only need while a scene is on screen is usually a condition you can write where it's used.
 
@@ -134,7 +134,7 @@ An `<<if>>` around a link becomes one of two things on the choice:
   id: 'cake',
   when: { seen: 'ava.hi' },
   blocked: [{ when: { stat: 'coins', lt: 4 }, reason: 'You need 4 coins.' }],
-  effects: [{ kind: 'stat', key: 'coins', by: -4 }],
+  effects: [{ kind: 'stat', stat: 'coins', by: -4 }],
 }
 ```
 
@@ -164,8 +164,8 @@ A passage is a [scene](/docs/reference/scenes), and each link is a choice whose 
   id: 'street',
   body: [{ text: 'street' }],
   choices: [
-    { id: 'cafe', effects: [{ kind: 'scene', id: 'cafe' }] },
-    { id: 'park', effects: [{ kind: 'scene', id: 'park' }] },
+    { id: 'cafe', effects: [{ kind: 'scene', scene: 'cafe' }] },
+    { id: 'park', effects: [{ kind: 'scene', scene: 'park' }] },
   ],
 }
 ```
@@ -182,8 +182,8 @@ The link text is the prose under `scene#choice`, so `'street#cafe': 'Go to the c
 Both are choices. A choice with a `scene` effect moves on, and one without stays on the scene, which is redrawn with the new state:
 
 ```ts
-{ id: 'coffee', effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'scene', id: 'cafe' }] }
-{ id: 'tip', effects: [{ kind: 'stat', key: 'coins', by: -1 }, { kind: 'kv', key: 'tipped', to: true }] }
+{ id: 'coffee', effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'scene', scene: 'cafe' }] }
+{ id: 'tip', effects: [{ kind: 'stat', stat: 'coins', by: -1 }, { kind: 'kv', key: 'tipped', to: true }] }
 ```
 
 A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open, and each sends one [command](/docs/reference/commands). When the button does something with a price, it usually runs an [activity](/docs/reference/actions#activitydef), which can refuse with a reason:
@@ -194,7 +194,7 @@ activities: [
   {
     id: 'coffee',
     cost: { stats: { coins: 3 } },
-    requires: [{ reason: 'One is enough for today.', when: { not: { kv: 'hadCoffee' } } }],
+    blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
     effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
   },
 ],
@@ -212,12 +212,12 @@ The button shows the cost as its price, and it's greyed out with `Not enough Coi
 <<include "Menu">>
 ```
 
-`<<goto>>` is the `scene` effect. Put it in the effects of whatever should move the player: a choice, an activity or a [trigger](/docs/reference/triggers). `{ kind: 'scene', id: null }` closes the scene and goes back to the game's idle screen, which is the room the player is in when the game has the [places plugin](/docs/plugins/places).
+`<<goto>>` is the `scene` effect. Put it in the effects of whatever should move the player: a choice, an activity or a [trigger](/docs/reference/triggers). `{ kind: 'scene', scene: null }` closes the scene and goes back to the game's idle screen, which is the room the player is in when the game has the [places plugin](/docs/plugins/places).
 
 A `<<goto>>` that runs as soon as a passage shows, because some condition holds, is a trigger. It fires by itself after a command, the first time its `when` holds:
 
 ```ts
-triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ kind: 'scene', id: 'broke' }] }]
+triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ kind: 'scene', scene: 'broke' }] }]
 ```
 
 `<<include>>` is a prose key used by more than one scene. A block names a key, and any number of scenes can name the same one:
@@ -246,7 +246,7 @@ custom: {
     payFor: (_state, args) => {
       const price = Number(args.price ?? 0)
       return [
-        { kind: 'stat', key: 'coins', by: -price },
+        { kind: 'stat', stat: 'coins', by: -price },
         { kind: 'kv', key: 'spent', by: price },
       ]
     },
@@ -261,7 +261,7 @@ custom: {
 {
   id: 'cake',
   when: { custom: 'canAfford', with: { price: 4 } },
-  effects: [{ custom: 'payFor', with: { price: 4 } }, { kind: 'scene', id: null }],
+  effects: [{ custom: 'payFor', with: { price: 4 } }, { kind: 'scene', scene: null }],
 }
 ```
 
@@ -317,7 +317,7 @@ entities: [
 The same effects and conditions reach them with `of`:
 
 ```ts
-{ kind: 'stat', key: 'price', by: 1, of: 'dish:soup' }
+{ kind: 'stat', stat: 'price', by: 1, of: 'dish:soup' }
 { stat: 'price', of: 'dish:soup', gte: 6 }
 ```
 
@@ -483,7 +483,7 @@ audio: {
 ```ts
 { id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [{ text: 'cafe' }], choices: [] }
 { kind: 'sound', track: 'bell' }
-{ kind: 'audio', channel: 'music', track: null }
+{ kind: 'audio', channel: 'music', to: null }
 ```
 
 The engine works out what should be playing, and the [audio player](/docs/reference/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
@@ -534,7 +534,7 @@ const windowSeat: DataScene = {
   weight: 3,
   when: { not: { seen: 'cafe.window' } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 }
 
 const sit: Effect = { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
@@ -573,8 +573,8 @@ minigames: [
     start: 'boiling',
     states: {
       boiling: { label: 'kettle.boiling', after: { ms: 3000, go: 'boiled' }, on: [{ input: 'pour', go: 'early' }] },
-      boiled: { final: { effects: [{ kind: 'scene', id: 'kettle.done' }] } },
-      early: { final: { effects: [{ kind: 'scene', id: 'kettle.weak' }] } },
+      boiled: { final: { effects: [{ kind: 'scene', scene: 'kettle.done' }] } },
+      early: { final: { effects: [{ kind: 'scene', scene: 'kettle.weak' }] } },
     },
   },
 ],
@@ -588,10 +588,10 @@ Harlowe's macros map to the same places as SugarCube's.
 
 | Harlowe | IFLoom |
 |---|---|
-| `(set: $coins to it + 2)` | `{ kind: 'stat', key: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
+| `(set: $coins to it + 2)` | `{ kind: 'stat', stat: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
 | `(set: $metAva to true)` | `{ kind: 'kv', key: 'metAva', to: true }` |
 | `(if: $coins >= 3)[…](else:)[…]` | A block or a choice with `when: { stat: 'coins', gte: 3 }`, and one with `lt: 3` for the else |
-| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ kind: 'scene', id: 'cafe' }`, labelled by the prose key `street#cafe` |
+| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ kind: 'scene', scene: 'cafe' }`, labelled by the prose key `street#cafe` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
 | `(display: "Menu")` | A prose key, `cafe.menu`, used as a block in each scene that shows it |
 | `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a custom value |

@@ -149,7 +149,7 @@ const text: MessageDef = {
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
   replies: [
-    { id: 'yes', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] },
+    { id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
     { id: 'later' },
   ],
 }
@@ -188,7 +188,7 @@ const town: Pack = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   activities: [{ id: 'wait', effects: [pass(1)] }],
   scenes: [
-    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', id: null }] }] },
+    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -228,7 +228,7 @@ const town: Pack = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
         },
         {
           id: 'ava.beans',
@@ -335,7 +335,7 @@ An unknown message is false.
 | Command | Helper | Does |
 |---|---|---|
 | `{ type: 'custom', name: 'messages/reply', with: { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the message replied and read, then runs the reply's effects. |
-| `{ type: 'custom', name: 'messages/read', with: { thread?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread read. With `channel`, only that channel's. Leave both out to mark everything read. |
+| `{ type: 'custom', name: 'messages/read', with: { id?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
 
 `messages/reply` is refused, in this order, with:
 

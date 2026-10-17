@@ -44,7 +44,7 @@ describe('the runner', () => {
 
     const vow: Game = {
       ...fixture(),
-      scenes: [{ id: 'vow', body: [{ text: 'vow' }], choices: [{ id: 'swear', irreversible: 'For good.', effects: [{ kind: 'scene', id: null }] }] }],
+      scenes: [{ id: 'vow', body: [{ text: 'vow' }], choices: [{ id: 'swear', irreversible: 'For good.', effects: [{ kind: 'scene', scene: null }] }] }],
     }
     vow.prose = proseStore(vow, { vow: 'Will you?', 'vow#swear': 'Swear it' })
     const sworn = createRunner(vow, begin(vow, { sceneId: 'vow' }), { history: true })

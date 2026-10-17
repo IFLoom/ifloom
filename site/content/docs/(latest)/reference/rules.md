@@ -8,7 +8,7 @@ import type { GameRules } from '@ifloom/engine'
 
 const rules: GameRules = {
   resets: { hadCoffee: false, postedToday: false },
-  turn: () => ({ effects: [{ kind: 'setStat', key: 'energy', to: 100 }] }),
+  turn: () => ({ effects: [{ kind: 'stat', stat: 'energy', to: 100 }] }),
 }
 ```
 
@@ -44,7 +44,7 @@ turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
 
 **When:** at the end of each turn, with the state the turn ended on and the number of the turn about to begin.
 
-**Does:** its `effects` run in order, after the counter has moved on and [`resets`](#resets) are written. Ending a turn doesn't touch any stat by itself, so a game whose energy fills up overnight says so here with a [`setStat`](/docs/reference/effects#setstat) effect.
+**Does:** its `effects` run in order, after the counter has moved on and [`resets`](#resets) are written. Ending a turn doesn't touch any stat by itself, so a game whose energy fills up overnight says so here with a [`stat`](/docs/reference/effects#setting-a-stat) effect that sets it `to` a value.
 
 **Without it:** no effects, and every stat stays as it was.
 
@@ -52,7 +52,7 @@ turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
 turn: (state, nextTurn) => ({
   effects: [
     // A late coffee costs a fifth of the night's rest.
-    { kind: 'setStat', key: 'energy', to: state.kv.lateCoffee ? 80 : 100 },
+    { kind: 'stat', stat: 'energy', to: state.kv.lateCoffee ? 80 : 100 },
     { kind: 'kv', key: 'lateCoffee', to: false },
     // In this game a turn is a day, and market day comes every seventh.
     { kind: 'kv', key: 'marketOpen', to: nextTurn % 7 === 5 },
@@ -156,7 +156,7 @@ A stat's ceiling is part of its declaration, not a rule. A ceiling that moves is
 onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
 ```
 
-**When:** after every [`stat`](/docs/reference/effects#stat) and [`setStat`](/docs/reference/effects#setstat) effect on one of the player's stats, with the state before and after it. `after` is already held to the stat's declared range. For `stat`, `by` is the effect's own `by`, even when the range cut it short. For `setStat`, `by` is the change it made. It isn't called for an [entity's stat](/docs/reference/stats#entity-stats) (an effect with `of`), or when an activity's cost is paid.
+**When:** after every [`stat`](/docs/reference/effects#stat) effect on one of the player's stats, with the state before and after it. `after` is already held to the stat's declared range. For an effect with `by`, `by` is the effect's own `by`, even when the range cut it short. For one with `to`, `by` is the change it made. It isn't called for an [entity's stat](/docs/reference/stats#entity-stats) (an effect with `of`), or when an activity's cost is paid.
 
 **Does:** return `before` to veto the change, `after` to let it stand, or `after` with more changes of your own.
 

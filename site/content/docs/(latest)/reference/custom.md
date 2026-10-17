@@ -10,7 +10,7 @@ const town: Game = {
   // ...
   custom: {
     conditions: { marketDay: (state) => state.turn % 7 === 5 },
-    effects: { tip: (state, args) => [{ kind: 'stat', key: 'coins', by: -Number(args.by ?? 1) }] },
+    effects: { tip: (state, args) => [{ kind: 'stat', stat: 'coins', by: -Number(args.by ?? 1) }] },
     values: { breadPrice: (state) => (state.kv.marketDay ? 4 : 5) },
     panels: { stallPrices: (state) => ({ bread: state.kv.marketDay ? 4 : 5, jam: 3 }) },
   },
@@ -80,13 +80,13 @@ custom: {
   effects: {
     bumpVisits: (state, args) => {
       const now = Number(state.storylines.ava?.kv.visits ?? 0)
-      return [{ kind: 'storylineKv', id: 'ava', key: 'visits', to: now + Number(args.by ?? 1) }]
+      return [{ kind: 'storylineKv', storyline: 'ava', key: 'visits', to: now + Number(args.by ?? 1) }]
     },
   },
 }
 
 // a choice
-effects: [{ custom: 'bumpVisits', with: { by: 1 } }, { kind: 'scene', id: null }]
+effects: [{ custom: 'bumpVisits', with: { by: 1 } }, { kind: 'scene', scene: null }]
 ```
 
 **Gotchas.**
@@ -126,7 +126,7 @@ How the value is read:
 // in a data scene: Ava thanks you once the bread quest is done
 { text: 'ava.hi/thanks', when: { 'quests/done': { quest: 'bread' } } }
 // a choice that starts it
-{ id: 'offer-help', effects: [{ 'quests/start': { quest: 'bread' } }, { kind: 'scene', id: null }] }
+{ id: 'offer-help', effects: [{ 'quests/start': { quest: 'bread' } }, { kind: 'scene', scene: null }] }
 ```
 
 **Gotchas.**
@@ -226,7 +226,7 @@ What a game's custom effect returns is flattened the same way, all against the s
 import { buildEffects } from '@ifloom/engine'
 
 buildEffects(state, town, [{ custom: 'tip', with: { by: 2 } }, { custom: 'quests/start', with: { quest: 'letter' } }])
-// [{ kind: 'stat', key: 'coins', by: -2 }, { kind: 'custom', name: 'quests/start', with: { quest: 'letter' } }]
+// [{ kind: 'stat', stat: 'coins', by: -2 }, { kind: 'custom', name: 'quests/start', with: { quest: 'letter' } }]
 ```
 
 Data scenes, activities, triggers, `each` and a plugin's `context.apply` call it for you. You only need it in a [custom runtime](/docs/reference/scenes#sceneruntime) or a tool.

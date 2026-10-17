@@ -58,7 +58,7 @@ export type SettingsShape = {
   }
   commands: {
     /** Change a `play` setting. Ignores locks, like a menu would. */
-    setting: { type: 'setting'; id: string; value: KvValue }
+    setting: { type: 'setting'; id: string; to: KvValue }
   }
   game: {
     /** What the player can change from a settings screen. None if left out. */
@@ -236,11 +236,11 @@ export const settings = defineFeature<SettingsShape>({
   },
   commands: {
     setting: {
-      whyNot: (_state, command, game) => settingRefusal(game, command.id, command.value),
-      run: (state, command) => ({ ...state, settings: { ...state.settings, [command.id]: command.value } }),
+      whyNot: (_state, command, game) => settingRefusal(game, command.id, command.to),
+      run: (state, command) => ({ ...state, settings: { ...state.settings, [command.id]: command.to } }),
       // A menu's business rather than the story's: no lock or plugin guard stops it.
       ignoresLocks: () => true,
-      references: (command) => [{ setting: command.id, is: command.value }],
+      references: (command) => [{ setting: command.id, is: command.to }],
     },
   },
   // A later pack redeclares a setting by id; the same id twice in one list is a mistake.
@@ -288,8 +288,8 @@ export const settings = defineFeature<SettingsShape>({
     // A play setting changed in a game is the player's choice for the next game too.
     afterCommand: (command, remember) => {
       if (command.type !== 'setting') return
-      const { id, value } = command
-      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+      const { id, to } = command
+      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: to })))
     },
     newGame: async (start, profile) => ({ ...start, settings: start.settings ?? (await profile?.get<Record<string, unknown>>('settings')) }),
   },

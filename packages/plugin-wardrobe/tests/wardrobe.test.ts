@@ -31,7 +31,7 @@ function game(extra: Partial<Pack> = {}): Game {
       { id: 'sandals', name: 'sandals', desc: '', kind: 'stuff', start: 1 },
       { id: 'umbrella', name: 'umbrella', desc: '', kind: 'stuff', start: 1 },
     ],
-    activities: [{ id: 'sellBoots', effects: [{ kind: 'item', id: 'boots', by: -1 }] }],
+    activities: [{ id: 'sellBoots', effects: [{ kind: 'item', item: 'boots', by: -1 }] }],
     data: {
       wardrobe: {
         clothes: [
@@ -75,7 +75,7 @@ describe('the wardrobe', () => {
     expect(out.state.items).toMatchObject({ sandals: 1, boots: 1 })
     expect(holds(out.state, wearing('sandals', 'feet'), g)).toBe(true)
     expect(holds(out.state, wearing('boots'), g)).toBe(false)
-    expect(holds(out.state, { has: 'boots' }, g)).toBe(true)
+    expect(holds(out.state, { item: 'boots' }, g)).toBe(true)
   })
 
   it('takes clothes off', () => {

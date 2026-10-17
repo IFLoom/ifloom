@@ -97,8 +97,8 @@ scenes: [
     title: 'Chapter one: the stop',
     body: [{ text: 'ch1.stop' }],
     choices: [
-      { id: 'share', effects: [{ kind: 'scene', id: 'ch2.bus' }] },
-      { id: 'keep', effects: [{ kind: 'scene', id: 'ch2.bus' }] },
+      { id: 'share', effects: [{ kind: 'scene', scene: 'ch2.bus' }] },
+      { id: 'keep', effects: [{ kind: 'scene', scene: 'ch2.bus' }] },
     ],
   },
   {
@@ -131,7 +131,7 @@ stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
 Sharing the umbrella raises it. Put the stat effect before the scene change:
 
 ```ts
-{ id: 'share', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'scene', id: 'ch2.bus' }] },
+{ id: 'share', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch2.bus' }] },
 ```
 
 A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it under the story.
@@ -163,12 +163,12 @@ Now the driver. The player can pay, make an excuse, or, if they shared the umbre
 
 ```ts
 choices: [
-  { id: 'pay', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'scene', id: 'ch3.home' }] },
-  { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'scene', id: 'ch3.home' }] },
+  { id: 'pay', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch3.home' }] },
+  { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'scene', scene: 'ch3.home' }] },
   {
     id: 'blame',
     when: { chose: 'ch1.stop/share' },
-    effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'scene', id: 'ch3.home' }],
+    effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'scene', scene: 'ch3.home' }],
   },
 ],
 ```
@@ -186,8 +186,8 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
     { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
   ],
   choices: [
-    { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', id: 'end.wave' }] },
-    { id: 'door', effects: [{ kind: 'scene', id: 'end.door' }] },
+    { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
+    { id: 'door', effects: [{ kind: 'scene', scene: 'end.door' }] },
   ],
 },
 { id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },
@@ -236,7 +236,7 @@ export default loadGame([story], {
 The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ kind: 'turn' }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
+{ id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }] },
 ```
 
 Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. The saves menu names each save by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
@@ -385,9 +385,9 @@ const story: Pack = {
         {
           id: 'share',
           when: { kv: 'playerName' },
-          effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }],
+          effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }],
         },
-        { id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
+        { id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }] },
       ],
     },
     {
@@ -399,12 +399,12 @@ const story: Pack = {
         { text: 'ch2.bus/kept', when: { chose: 'ch1.stop/keep' } },
       ],
       choices: [
-        { id: 'pay', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }] },
-        { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }] },
+        { id: 'pay', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
+        { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
         {
           id: 'blame',
           when: { chose: 'ch1.stop/share' },
-          effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }],
+          effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }],
         },
       ],
     },
@@ -418,8 +418,8 @@ const story: Pack = {
         { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
       ],
       choices: [
-        { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', id: 'end.wave' }] },
-        { id: 'door', effects: [{ kind: 'scene', id: 'end.door' }] },
+        { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
+        { id: 'door', effects: [{ kind: 'scene', scene: 'end.door' }] },
       ],
     },
     { id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },

@@ -26,7 +26,7 @@ What a choice does is a list of effects. When something applies is a condition. 
 
 ```ts
 // effects
-[{ kind: 'stat', key: 'friendship', by: 5, of: 'character:ava' }, { kind: 'stat', key: 'coins', by: -3 }]
+[{ kind: 'stat', stat: 'friendship', by: 5, of: 'character:ava' }, { kind: 'stat', stat: 'coins', by: -3 }]
 
 // a condition
 { all: [{ 'places/at': ['cafe'] }, { 'cast/here': ['ava'] }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
@@ -62,7 +62,7 @@ See [The game](/docs/reference/game) and [Rules and hooks](/docs/reference/rules
 
 `view(state, game)` turns the state into a view. It has the scene on screen, with its body already split into beats, the choices, the buttons on offer, and each plugin's own part, such as the places plugin's exits. Every button carries the command it sends, and a button that can't be pressed carries the reason.
 
-An activity's requirements and a lock's reason are each written once, and both `apply` and `view` read them, so the greyed-out button and the refusal say the same thing. Your UI draws the view and sends commands. It never needs to read the state directly.
+An activity's `blocked` reasons and a lock's reason are each written once, and both `apply` and `view` read them, so the greyed-out button and the refusal say the same thing. Your UI draws the view and sends commands. It never needs to read the state directly.
 
 See [The view](/docs/reference/view).
 

@@ -59,7 +59,7 @@ describe('the effect list', () => {
     render(<Harness />)
     const out = () => JSON.parse(screen.getByTestId('out').textContent!)
     fireEvent.click(screen.getByText('+ Add an effect'))
-    expect(out()).toEqual([{ kind: 'scene', id: 'market' }])
+    expect(out()).toEqual([{ kind: 'scene', scene: 'market' }])
     fireEvent.change(screen.getByLabelText('Kind of effect'), { target: { value: 'draw' } })
     expect(out()).toEqual([{ kind: 'scene', from: 'market' }])
     fireEvent.change(screen.getByLabelText('Otherwise'), { target: { value: 'home' } })
@@ -112,8 +112,8 @@ describe('the scene form', () => {
     expect(latest.pack.scenes[0].choices[0].blocked).toEqual([{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3 coins.' }])
     fireEvent.change(within(card).getByLabelText('Amount'), { target: { value: '4' } })
     expect(latest.pack.scenes[0].choices[0].effects).toEqual([
-      { kind: 'stat', key: 'coins', by: -4 },
-      { kind: 'item', id: 'bun', by: 1 },
+      { kind: 'stat', stat: 'coins', by: -4 },
+      { kind: 'item', item: 'bun', by: 1 },
     ])
   })
 

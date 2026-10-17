@@ -1,9 +1,8 @@
 /**
- * The kv store: keys with a true/false, number or text value, and a
- * storyline's counters. A key is the player's, or with `of`, an entity's.
+ * The kv store: keys with a true/false, number or text value. A key is the
+ * player's, or with `of`, an entity's. A storyline's keys are in `storylines.ts`.
  */
 import { entityOf, ofKind, writeEntity } from '../entities.ts'
-import { storylineOf } from '../storylines.ts'
 import type { KvValue, Range } from '../types.ts'
 import { bounded, counted, defineFeature, inRange, wanted } from './feature.ts'
 
@@ -21,7 +20,6 @@ export type KvShape = {
      * `{ kv: 'role', of: '$', is: 'cook' }`.
      */
     kv: { kv: string; is?: KvValue; of?: string } & Range
-    counter: { counter: { storyline: string; key: string } } & Range
   }
   effects: {
     /**
@@ -57,15 +55,6 @@ export const kv = defineFeature<KvShape>({
         return `${condition.of === undefined ? '' : `${condition.of} `}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
       },
       references: (condition) => ofKind(condition.of),
-    },
-    counter: {
-      holds: (state, condition) => inRange(counted(storylineOf(state, condition.counter.storyline).kv[condition.counter.key]), condition),
-      explain: (state, condition) => {
-        const { storyline, key } = condition.counter
-        const value = storylineOf(state, storyline).kv[key]
-        return `counter ${storyline}.${key} is ${typeof value === 'number' ? value : 0}; wants ${wanted(condition)}`
-      },
-      references: (condition) => [{ storyline: condition.counter.storyline }],
     },
   },
   effects: {

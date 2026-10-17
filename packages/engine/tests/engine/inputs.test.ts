@@ -20,9 +20,9 @@ function withInputs(): Game {
 describe('inputs', () => {
   it('write what the player typed or picked, trimmed, to its kv key', () => {
     const game = withInputs()
-    let state = apply(begin(game), game, { type: 'input', id: 'petName', value: '  Biscuit ' }).state
-    state = apply(state, game, { type: 'input', id: 'alarm', value: 7 }).state
-    state = apply(state, game, { type: 'input', id: 'tea', value: 'coffee' }).state
+    let state = apply(begin(game), game, { type: 'input', id: 'petName', to: '  Biscuit ' }).state
+    state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
+    state = apply(state, game, { type: 'input', id: 'tea', to: 'coffee' }).state
     expect(state.kv).toMatchObject({ petName: 'Biscuit', wakeAt: 7, tea: 'coffee' })
     expect(view(state, game).inputs.alarm).toMatchObject({ kind: 'number', min: 5, max: 10, value: 7 })
   })
@@ -30,7 +30,7 @@ describe('inputs', () => {
   it('refuse what the declaration does not allow, in words the player can read', () => {
     const game = withInputs()
     const state = begin(game)
-    const say = (id: string, value?: string | number) => whyNot(state, game, { type: 'input', id, value })
+    const say = (id: string, value?: string | number) => whyNot(state, game, { type: 'input', id, to: value })
     expect(say('petName')).toBe('Enter something first.')
     expect(say('petName', '   ')).toBe('Enter something first.')
     expect(say('petName', 'Sir Biscuit the Third')).toBe('Keep it to 12 characters.')

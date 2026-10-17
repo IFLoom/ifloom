@@ -345,7 +345,7 @@ function SettingsPageImpl({ className }: { className?: string }) {
       if (runner.setUiSetting(setting.id, value)) return
     } else if (inGame || !runner.profile) {
       // No profile to keep it in: change the game in play, and New game keeps it.
-      send({ type: 'setting', id: setting.id, value })
+      send({ type: 'setting', id: setting.id, to: value })
       if (inGame) return
     } else {
       void runner.profile.update<Record<string, unknown>>('settings', (now) => ({ ...now, [setting.id]: value }))

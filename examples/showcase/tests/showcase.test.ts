@@ -51,12 +51,12 @@ describe('Small Town', () => {
   })
 
   it('names the cat on moving day, and says the name after', () => {
-    let state = run(startingState(game), { type: 'input', id: 'catName', value: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
+    let state = run(startingState(game), { type: 'input', id: 'catName', to: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
-    expect(apply(state, game, { type: 'input', id: 'catName', value: 'Rex' }).refused).toBe('Not now.')
+    expect(apply(state, game, { type: 'input', id: 'catName', to: 'Rex' }).refused).toBe('Not now.')
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'sandwich'))
     expect(view(state, game).pack.find((item) => item.id === 'sandwich')?.useLabel).toBe('Eat the sandwich')
-    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', itemId: 'sandwich' })
+    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', id: 'sandwich' })
     expect(state.stats.energy).toBe(75)
     expect(state.items.sandwich).toBe(0)
   })

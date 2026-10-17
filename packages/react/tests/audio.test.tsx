@@ -32,7 +32,7 @@ function cafe(audio = true): Game {
         id: 'cafe',
         schema: SCHEMA,
         scenes: [
-          { id: 'door', title: 'The door', body: [{ text: 'door' }], choices: [{ id: 'in', effects: [{ kind: 'sound', track: 'bell' }, { kind: 'scene', id: 'counter' }] }] },
+          { id: 'door', title: 'The door', body: [{ text: 'door' }], choices: [{ id: 'in', effects: [{ kind: 'sound', track: 'bell' }, { kind: 'scene', scene: 'counter' }] }] },
           { id: 'counter', title: 'The counter', body: [{ text: 'counter' }], choices: [] },
         ],
         prose: {

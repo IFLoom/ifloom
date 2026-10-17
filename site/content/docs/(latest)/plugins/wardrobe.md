@@ -139,8 +139,8 @@ const town: Pack = {
     { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.', kind: 'stuff', start: 1 },
   ],
   activities: [
-    { id: 'buyScarf', cost: { stats: { coins: 8 } }, requires: [onlyAt(['high-street'])], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
-    { id: 'bench', requires: [onlyAt(['park']), need('Too cold without a scarf.', wearing('scarf'))], effects: [] },
+    { id: 'buyScarf', cost: { stats: { coins: 8 } }, blocked: [onlyAt(['high-street'])], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
+    { id: 'bench', blocked: [onlyAt(['park']), need('Too cold without a scarf.', wearing('scarf'))], effects: [] },
   ],
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
@@ -218,16 +218,16 @@ whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf
 | `{ custom: 'wardrobe/wearing', with: { item, slot } }` | `wearing(item, slot)` | That item is on in that slot. |
 | `{ custom: 'wardrobe/wearing', with: { slot } }` | `slotFilled(slot)` | Something is in that slot. |
 
-You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a requirement or a lock. In the short form, with the full name as the only key, `{ 'wardrobe/wearing': { item: 'scarf' } }` is the same as the first row (see [plugin calls](/docs/reference/custom#plugincall)). With neither `item` nor `slot`, it's false. An unknown item, or a slot the save has nothing in, is false.
+You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. In the short form, with the full name as the only key, `{ 'wardrobe/wearing': { item: 'scarf' } }` is the same as the first row (see [plugin calls](/docs/reference/custom#plugincall)). With neither `item` nor `slot`, it's false. An unknown item, or a slot the save has nothing in, is false.
 
-To ask whether the player has an item at all, worn or not, use the engine's [`{ has }`](/docs/reference/conditions#has).
+To ask whether the player has an item at all, worn or not, use the engine's [`{ item }`](/docs/reference/conditions#item).
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'wardrobe/wear', with: { item } }` | `wear(item)` | Puts the item on in its slot, in place of whatever was there. What comes off stays the player's. |
-| `{ type: 'custom', name: 'wardrobe/takeOff', with: { slot } }` | `takeOff(slot)` | Empties the slot. |
+| `{ type: 'custom', name: 'wardrobe/wear', with: { id } }` | `wear(item)` | Puts the item `id` on in its slot, in place of whatever was there. What comes off stays the player's. |
+| `{ type: 'custom', name: 'wardrobe/takeOff', with: { id } }` | `takeOff(slot)` | Empties the slot `id`. |
 
 `wardrobe/wear` is refused, in this order, with:
 
@@ -341,7 +341,7 @@ base · start coat · the player does not start with "raincoat"
 
 - **The player has to start owning what they start wearing.** An item in `start` needs a `start` count above 0, or `kind: 'gear'`, which starts at 1. Otherwise the load reports it.
 - **Losing an item takes it off after the command.** Whether it's sold, used up or taken by an effect, once the player has none, the plugin's `after` [hook](/docs/reference/plugins#hooks) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
-- **`{ has }` counts worn items.** Worn clothes are still owned, so `{ has: 'raincoat' }` and `{ item: 'raincoat' }` hold while it's on. To ask whether it's on, use `wearing`.
+- **`{ item }` counts worn items.** Worn clothes are still owned, so `{ item: 'raincoat' }` holds while it's on. To ask whether it's on, use `wearing`.
 - **Wearing doesn't check where the player is or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks an item id as on, not a count. A player with two scarves wears one, and selling one leaves it on.
 - **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wearing(item)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `slotFilled('hat')` and `wearing('cap', 'hat')` still hold, and `takeOff('hat')` isn't refused and empties it. Put the slot back and the item is on again everywhere.

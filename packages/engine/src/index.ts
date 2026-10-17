@@ -11,6 +11,7 @@ export type {
   GameRules,
   ItemDef,
   ActionDef,
+  Blocked,
   ProseStore,
   Scene,
   SceneChoice,
@@ -114,7 +115,7 @@ export type { Explanation } from './explain.ts'
 export { explain, explainText } from './explain.ts'
 
 // Actions and locks
-export type { ActivityCost, ActivityDef, Requirement } from './activity.ts'
+export type { ActivityCost, ActivityDef } from './activity.ts'
 export {
   activityBlocked,
   activityById,

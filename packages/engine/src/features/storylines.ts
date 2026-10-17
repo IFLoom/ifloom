@@ -4,8 +4,8 @@
  */
 import { emptyStoryline, storylineOf, storylineOpen } from '../storylines.ts'
 import type { StorylineDef } from '../game.ts'
-import type { KvValue, StorylineState } from '../types.ts'
-import { defineFeature, mergedById } from './feature.ts'
+import type { KvValue, Range, StorylineState } from '../types.ts'
+import { bounded, counted, defineFeature, inRange, mergedById, wanted } from './feature.ts'
 
 /** What the storylines feature adds, as types. */
 export type StorylinesShape = {
@@ -13,7 +13,13 @@ export type StorylinesShape = {
     storylines: Record<string, StorylineState>
   }
   conditions: {
-    storylineKv: { storylineKv: { storyline: string; key: string; is?: KvValue } }
+    /**
+     * A key in a storyline's kv store, read as the `kv` condition reads one:
+     * bare, whether it is truthy; with `is`, whether it equals that; with a
+     * range, whether its number is in it.
+     * `{ storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 3 }`.
+     */
+    storylineKv: { storylineKv: { storyline: string; key: string }; is?: KvValue } & Range
     /**
      * A storyline is open (`open: true`, the default): not closed, or closed
      * until a turn that has come. With `open: false`, that it is closed for now.
@@ -21,8 +27,10 @@ export type StorylinesShape = {
     storyline: { storyline: string; open?: boolean }
   }
   effects: {
-    storylineKv: { kind: 'storylineKv'; id: string; key: string; to: KvValue }
-    closeStoryline: { kind: 'closeStoryline'; id: string; turns: number }
+    /** Set a storyline's key `to` a value, or change its number `by` an amount, as the `kv` effect does. */
+    storylineKv: { kind: 'storylineKv'; storyline: string; key: string; to: KvValue } | { kind: 'storylineKv'; storyline: string; key: string; by: number }
+    /** Close a storyline for some turns. */
+    closeStoryline: { kind: 'closeStoryline'; storyline: string; turns: number }
   }
   game: {
     storylines: StorylineDef[]
@@ -42,14 +50,16 @@ export const storylines = defineFeature<StorylinesShape>({
   conditions: {
     storylineKv: {
       holds: (state, condition) => {
-        const { storyline, key, is } = condition.storylineKv
+        const { storyline, key } = condition.storylineKv
         const value = storylineOf(state, storyline).kv[key]
-        return is === undefined ? Boolean(value) : value === is
+        if (condition.is !== undefined) return value === condition.is
+        if (bounded(condition)) return inRange(counted(value), condition)
+        return Boolean(value)
       },
       explain: (state, condition) => {
-        const { storyline, key, is } = condition.storylineKv
+        const { storyline, key } = condition.storylineKv
         const value = storylineOf(state, storyline).kv[key]
-        const want = is === undefined ? 'set' : `= ${JSON.stringify(is)}`
+        const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : bounded(condition) ? wanted(condition) : 'set'
         return `storyline ${storyline} kv ${key} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
       },
       references: (condition) => [{ storyline: condition.storylineKv.storyline }],
@@ -66,17 +76,19 @@ export const storylines = defineFeature<StorylinesShape>({
   effects: {
     storylineKv: {
       apply: (state, effect) => {
-        const cur = storylineOf(state, effect.id)
-        return { ...state, storylines: { ...state.storylines, [effect.id]: { ...cur, kv: { ...cur.kv, [effect.key]: effect.to } } } }
+        const cur = storylineOf(state, effect.storyline)
+        const was = cur.kv[effect.key]
+        const value = 'by' in effect ? (typeof was === 'number' ? was : 0) + effect.by : effect.to
+        return { ...state, storylines: { ...state.storylines, [effect.storyline]: { ...cur, kv: { ...cur.kv, [effect.key]: value } } } }
       },
-      references: (effect) => [{ storyline: effect.id }],
+      references: (effect) => [{ storyline: effect.storyline }],
     },
     closeStoryline: {
       apply: (state, effect) => {
-        const cur = storylineOf(state, effect.id)
-        return { ...state, storylines: { ...state.storylines, [effect.id]: { ...cur, closedUntil: state.turn + effect.turns } } }
+        const cur = storylineOf(state, effect.storyline)
+        return { ...state, storylines: { ...state.storylines, [effect.storyline]: { ...cur, closedUntil: state.turn + effect.turns } } }
       },
-      references: (effect) => [{ storyline: effect.id }],
+      references: (effect) => [{ storyline: effect.storyline }],
     },
   },
   // What the base game declares isn't merged: its storylines come from packs.

@@ -127,7 +127,7 @@ export type CoreCommands = {
    * scene: a name asked for on a title screen, a difficulty.
    */
   start: { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
-  /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
+  /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
   custom: { type: 'custom'; name: string; with?: Record<string, unknown> }
 }
 

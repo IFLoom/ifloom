@@ -4,7 +4,7 @@ import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src
 
 const apps: AppDef[] = [
   { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ text: 'notes.intro' }] }] },
-  { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
+  { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
   { id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop', when: { kv: 'emailSetUp' }, badge: { when: { kv: 'newMail' } }, sections: [{ panel: 'inbox' }] },
 ]
 

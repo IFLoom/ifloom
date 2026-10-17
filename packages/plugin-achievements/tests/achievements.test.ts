@@ -40,7 +40,7 @@ function game(extra: Partial<Pack> = {}): Game {
       { id: 'charm', label: 'Charm', start: 2 },
     ],
     activities: [
-      { id: 'earn', effects: [{ kind: 'stat', key: 'coins', by: 30 }] },
+      { id: 'earn', effects: [{ kind: 'stat', stat: 'coins', by: 30 }] },
       { id: 'bank', effects: [{ kind: 'kv', key: 'bank', to: true }] },
       { id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] },
       { id: 'kindness', effects: [grantAchievement('kind')] },

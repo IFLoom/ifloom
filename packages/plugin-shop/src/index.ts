@@ -273,8 +273,8 @@ function buyEffects(state: GameState, args: PluginArgs, cx: Ctx): Effect[] {
   const count = countOf(args)
   const paid: Effect[] = Object.entries(times(priceToday(state, vendor, good, cx), count))
     .filter(([, amount]) => amount > 0)
-    .map(([key, amount]) => ({ kind: 'stat', key, by: -amount }))
-  return [...paid, { kind: 'item', id: good.item, by: count }]
+    .map(([stat, amount]) => ({ kind: 'stat', stat, by: -amount }))
+  return [...paid, { kind: 'item', item: good.item, by: count }]
 }
 
 function sellEffects(state: GameState, args: PluginArgs, cx: Ctx): Effect[] {
@@ -284,8 +284,8 @@ function sellEffects(state: GameState, args: PluginArgs, cx: Ctx): Effect[] {
   const count = countOf(args)
   const paid: Effect[] = Object.entries(times(sellPrice(vendor, good), count))
     .filter(([, amount]) => amount > 0)
-    .map(([key, amount]) => ({ kind: 'stat', key, by: amount }))
-  return [{ kind: 'item', id: good.item, by: -count }, ...paid]
+    .map(([stat, amount]) => ({ kind: 'stat', stat, by: amount }))
+  return [{ kind: 'item', item: good.item, by: -count }, ...paid]
 }
 
 /** The state with `by` more of a good gone (or fewer, selling back), counted against its restock. */

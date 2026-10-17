@@ -34,9 +34,9 @@ const cold: EffectDef = {
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  onStart: [{ kind: 'stat', key: 'sneezes', by: 1 }],
-  eachTurn: [{ kind: 'stat', key: 'coins', by: -1 }],
-  onEnd: [{ kind: 'stat', key: 'recovered', by: 1 }],
+  onStart: [{ kind: 'stat', stat: 'sneezes', by: 1 }],
+  eachTurn: [{ kind: 'stat', stat: 'coins', by: -1 }],
+  onEnd: [{ kind: 'stat', stat: 'recovered', by: 1 }],
 }
 
 function game(extra: EffectDef[] = []): Game {
@@ -57,7 +57,7 @@ function game(extra: EffectDef[] = []): Game {
       { id: 'cure', effects: [removeEffect('cold')] },
       { id: 'cureFully', effects: [removeEffect('cold', true)] },
       { id: 'climb', cost: { stats: { energy: 55 } } },
-      { id: 'tire', effects: [{ kind: 'stat', key: 'energy', by: -10 }] },
+      { id: 'tire', effects: [{ kind: 'stat', stat: 'energy', by: -10 }] },
     ],
     data: { effects: { effects: [caffeinated, cold, ...extra] } },
   }
@@ -115,7 +115,7 @@ describe('timed effects', () => {
   })
 
   it('refresh by default: applied again, the turns start over and onStart does not run again', () => {
-    const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ kind: 'stat', key: 'sneezes', by: 1 }] }])
+    const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ kind: 'stat', stat: 'sneezes', by: 1 }] }])
     let state = run(fresh(g), g, 'rest')
     state = apply(state, g, { type: 'custom', name: 'effects/apply', with: { id: 'count' } }).state
     state = run(state, g, 'rest')
@@ -193,7 +193,7 @@ describe('timed effects', () => {
           data: {
             effects: {
               effects: [
-                { id: 'bad', label: 'Bad', turns: 0, max: 2, modifiers: [{ stat: 'luck', add: 1 }], onEnd: [{ kind: 'item', id: 'moonstone', by: 1 }] },
+                { id: 'bad', label: 'Bad', turns: 0, max: 2, modifiers: [{ stat: 'luck', add: 1 }], onEnd: [{ kind: 'item', item: 'moonstone', by: 1 }] },
               ],
             },
           },

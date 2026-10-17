@@ -27,10 +27,10 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 
 - [Data scenes](/docs/reference/scenes#datascene): a block's `when`, a choice's `when`, `blocked` and `labels`, and a `variants` block's `gate`.
 - The game's own [actions](/docs/reference/actions#actiondef): `when` and `blocked`.
-- An [activity](/docs/reference/actions#requirement)'s `requires`.
+- An [activity](/docs/reference/actions#blocked)'s `blocked`.
 - [Stages](/docs/reference/progress#stages): `needs`.
 - [Locks](/docs/reference/locks), [triggers](/docs/reference/triggers) and [inputs](/docs/reference/inputs): `when`.
-- A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `locked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#characterdef) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
+- A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `blocked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#characterdef) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
 
 ## Range
 
@@ -62,32 +62,32 @@ type Condition =
   | ({ chose: string } & Range)
   | ({ seen: string } & Range)
   | ({ since: string } & Range)
-  | { storylineKv: { storyline: string; key: string; is?: KvValue } }
+  | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & Range)
   | ({ stat: StatKey; of?: string } & Range)
   | ({ count: string; where?: Condition } & Range)
   | { entity: string }
   | ({ level: StatKey; of?: string } & Range)
   | { tier: StatKey; gte: number }
   | { storyline: string; open?: boolean }
-  | ({ counter: { storyline: string; key: string } } & Range)
   | ({ item: string } & Range)
-  | ({ collection: string; id?: string } & Range)
-  | { has: string }
+  | ({ collection: string; entry?: string } & Range)
   | { scene: string[] }
-  | ({ turn: true } & Range)
+  | { turn: Range }
   | { phase: Phase[] }
   | ({ minigameVar: string } & Range)
   | { custom: string; with?: Record<string, unknown> }
   | PluginCall
 ```
 
-**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
+A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gte: 3 }`, `{ item: 'scarf' }`, `{ storyline: 'ava' }`. The range or `is` sits beside it. A condition that names nothing, such as `turn`, takes its range as its value: `{ turn: { gte: 3 } }`.
+
+**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', item: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
 
 ### all, any, not
 
 ```ts
-{ all: [{ kv: 'marketDay' }, { has: 'scarf' }] }   // on market day, with a scarf
-{ any: [{ has: 'scarf' }, { has: 'raincoat' }] }
+{ all: [{ kv: 'marketDay' }, { item: 'scarf' }] }   // on market day, with a scarf
+{ any: [{ item: 'scarf' }, { item: 'raincoat' }] }
 { not: { phase: ['arrival'] } }
 ```
 
@@ -169,10 +169,14 @@ Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [
 
 ```ts
 { storylineKv: { storyline: 'ava', key: 'lentBook' } }
-{ storylineKv: { storyline: 'ava', key: 'favourite', is: 'poetry' } }
+{ storylineKv: { storyline: 'ava', key: 'favourite' }, is: 'poetry' }
 ```
 
-Works like [`kv`](#kv) without a range, on a [storyline](/docs/reference/storylines)'s own kv store. Bare, it asks whether the key is truthy. With `is`, it tests strict equality.
+```ts
+{ storylineKv: { storyline: 'ava', key: 'visits' }, gte: 3 }
+```
+
+Works like [`kv`](#kv) on a [storyline](/docs/reference/storylines)'s own kv store, named by the storyline and the key. Bare, it asks whether the key is truthy. With `is`, it tests strict equality. With a range, it tests the key's number, and a key that's missing or isn't a number counts as 0.
 
 ### stat
 
@@ -286,14 +290,6 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 
 **Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: person('ava'), gte: 20 }`.
 
-### counter
-
-```ts
-{ counter: { storyline: 'ava', key: 'visits' }, gte: 3 }
-```
-
-Tests the number under a key in a storyline's kv store against a range. A key that's missing or isn't a number counts as 0.
-
 ### minigameVar
 
 ```ts
@@ -312,28 +308,20 @@ The [content checker](/docs/reference/checks) reports a variable that no minigam
 { item: 'sandwich', gte: 3 }
 ```
 
-How many of an item the player has. Something the [wardrobe plugin](/docs/plugins/wardrobe) has them wearing still counts.
+How many of an item the player has. Bare, it means at least one. Something the [wardrobe plugin](/docs/plugins/wardrobe) has them wearing still counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
 
 ### collection
 
 ```ts
-{ collection: 'notes', id: 'welcome' }   // that entry is there
-{ collection: 'notes' }                  // at least one entry
-{ collection: 'notes', gte: 10 }         // ten or more
-{ collection: 'notes', lt: 1 }           // none at all
+{ collection: 'notes', entry: 'welcome' }   // that entry is there
+{ collection: 'notes' }                     // at least one entry
+{ collection: 'notes', gte: 10 }            // ten or more
+{ collection: 'notes', lt: 1 }              // none at all
 ```
 
-What's in a [collection](/docs/reference/collections). With `id`, it's true when an entry with that id is there, and any range is ignored. Without `id`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
+What's in a [collection](/docs/reference/collections). With `entry`, it's true when an entry with that id is there, and any range is ignored. Without `entry`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
 
 The [content checker](/docs/reference/checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
-
-### has
-
-```ts
-{ has: 'raincoat' }
-```
-
-The player has at least one. It's the same as a bare `{ item: 'raincoat' }`. With the [wardrobe plugin](/docs/plugins/wardrobe), a worn raincoat counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
 
 ### scene
 
@@ -346,11 +334,11 @@ The scene on screen is one of these. It's false when no scene is open.
 ### turn
 
 ```ts
-{ turn: true, gte: 3 }   // the fourth turn on
-{ turn: true, lt: 1 }    // still the first turn
+{ turn: { gte: 3 } }   // the fourth turn on
+{ turn: { lt: 1 } }    // still the first turn
 ```
 
-How many [turns](/docs/reference/state#turn) have passed, counting from 0. A bare `{ turn: true }` is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/docs/reference/effects#turn) effect.
+How many [turns](/docs/reference/state#turn) have passed, counting from 0, in a [range](#range). It names nothing, so the range is its value. An empty range, `{ turn: {} }`, is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/docs/reference/effects#turn) effect.
 
 The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#plugin-shorthand): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
 
@@ -421,7 +409,7 @@ import { holds } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
 
-holds(state, { has: 'scarf' })                // true with a scarf
+holds(state, { item: 'scarf' })                // true with a scarf
 holds(state, at('cafe'), town)                // a plugin's condition needs the game
 holds(state, here('ava'), town)               // so does the cast's
 ```

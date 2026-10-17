@@ -127,7 +127,7 @@ const settle: QuestDef = {
 const scarf: QuestDef = {
   id: 'scarf',
   title: 'Something warm',
-  stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { has: 'scarf' } }],
+  stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { item: 'scarf' } }],
 }
 
 const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
@@ -139,10 +139,10 @@ const town: Pack = {
   schema: SCHEMA,
   items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' }],
   activities: [
-    { id: 'unpack', requires: [onlyAt(['flat'])], effects: [{ kind: 'phase', value: 'open' }] },
-    { id: 'collar', requires: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },
-    { id: 'buyScarf', requires: [onlyAt(['high-street'])], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
-    { id: 'coffee', requires: [onlyAt(['cafe'])], effects: [{ kind: 'kv', key: 'hadCoffee', to: true }] },
+    { id: 'unpack', blocked: [onlyAt(['flat'])], effects: [{ kind: 'phase', to: 'open' }] },
+    { id: 'collar', blocked: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },
+    { id: 'buyScarf', blocked: [onlyAt(['high-street'])], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
+    { id: 'coffee', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'kv', key: 'hadCoffee', to: true }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -242,8 +242,8 @@ It works in a data scene choice's effects and an activity's `effects`. The short
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'quests/track', with: { quest } }` | `trackQuest(quest)` | Pins the quest, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
-| `{ type: 'custom', name: 'quests/seen', with: { quest } }` | `seeQuests(quest)` | Marks the quest as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
+| `{ type: 'custom', name: 'quests/track', with: { id } }` | `trackQuest(quest)` | Pins the quest `id`, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
+| `{ type: 'custom', name: 'quests/seen', with: { id } }` | `seeQuests(quest)` | Marks the quest `id` as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
 
 `quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that hasn't started or is finished. `quests/seen` is never refused, except by [locks](/docs/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
 

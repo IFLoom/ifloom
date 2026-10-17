@@ -193,13 +193,13 @@ export function messages(options: MessagesOptions) {
           return applyRefs(next, game, reply.effects ?? [])
         },
       },
-      /** `{ type: 'custom', name: 'messages/read', with: { thread, channel? } }`: mark a thread read; leave both out for everything. */
+      /** `{ type: 'custom', name: 'messages/read', with: { id?, channel? } }`: mark the thread `id` read; leave both out for everything. */
       read: {
         run: (_state, args, { slice, set, game }) => {
           const read = { ...slice.read }
           for (const message of messageDefs(game)) {
             if (slice.arrived[message.id] === undefined) continue
-            if (args.thread !== undefined && threadOf(message) !== args.thread) continue
+            if (args.id !== undefined && threadOf(message) !== args.id) continue
             if (args.channel !== undefined && message.channel !== args.channel) continue
             read[message.id] = true
           }
@@ -327,7 +327,7 @@ export const replyTo = (message: string, reply: string): Command => ({
   with: { message, reply },
 })
 /** A command: mark a thread read, or every message with no thread given. */
-export const readThread = (thread?: string): Command => ({ type: 'custom', name: 'messages/read', with: { thread } })
+export const readThread = (thread?: string): Command => ({ type: 'custom', name: 'messages/read', with: { id: thread } })
 /** A condition: the message has arrived. */
 export const messageArrived = (message: string): Condition => ({ custom: 'messages/arrived', with: { message } })
 /** A condition: the player replied to the message, or with that reply. */

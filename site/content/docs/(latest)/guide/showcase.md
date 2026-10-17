@@ -98,7 +98,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `requires: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
+Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
 
 `town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -110,7 +110,7 @@ Buying a coffee or a sandwich takes no time. A button that passes time carries t
 
 ### Opening hours
 
-`town.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`locked`](/docs/plugins/places#locationdef) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+`town.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`blocked`](/docs/plugins/places#locationdef) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 
 The office's list is checked in order, so the most particular reason comes first:
 
@@ -173,7 +173,7 @@ Her small talk comes straight after that line, so each of the three lines is a n
 `town.ts`, the `sit` activity and the four `cafe.*` scenes after the rest, with their words in `prose.ts`. The café has a "Sit a while" button, a room action that runs the activity `sit`. Its one effect draws a [storylet](/docs/reference/storylets):
 
 ```ts
-{ id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] }
+{ id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] }
 ```
 
 Three scenes name `'cafe'` in their `drawnFrom`, each with a weight and a `when`:
@@ -200,7 +200,7 @@ Friendship says how well the player knows her, and [`since`](/docs/reference/con
 
 ### Friendship, and who you talk to where
 
-`town.ts`, `stats` and Ava's `talk`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
+`town.ts`, `stats` and Ava's `talk`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
 
 Talking to Ava opens the first of her [`talk`](/docs/plugins/cast#talkoption) options whose `when` holds. The first one is:
 

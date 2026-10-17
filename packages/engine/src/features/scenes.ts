@@ -84,7 +84,8 @@ export type ScenesShape = {
   }
   effects: {
     scene:
-      | { kind: 'scene'; id: string | null }
+      /** Open a scene, or close the one on screen with `scene: null`. */
+      | { kind: 'scene'; scene: string | null }
       /**
        * Open one scene drawn at random from the scenes whose `drawnFrom` names
        * `from` and whose `when` holds, by their `weight`. With none to draw, open
@@ -270,11 +271,11 @@ export const scenes = defineFeature<ScenesShape>({
     scene: {
       apply: (state, effect, game, cx) => {
         if ('from' in effect) return drawStorylet(state, game, effect.from, effect.otherwise, cx)
-        return { ...state, sceneId: effect.id }
+        return { ...state, sceneId: effect.scene }
       },
       references: (effect) => {
         if ('from' in effect) return [{ drawnFrom: effect.from }, ...(effect.otherwise !== undefined ? [{ scene: effect.otherwise, as: 'go' as const }] : [])]
-        return effect.id === null ? [] : [{ scene: effect.id, as: 'go' }]
+        return effect.scene === null ? [] : [{ scene: effect.scene, as: 'go' }]
       },
     },
   },

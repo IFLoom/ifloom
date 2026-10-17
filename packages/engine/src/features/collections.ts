@@ -28,16 +28,16 @@ export type CollectionsShape = {
   }
   conditions: {
     /**
-     * What is in a collection. With `id`: that entry is there. Without: how many
-     * entries there are, at least one if no range is given.
+     * What is in a collection. With `entry`: that entry is there. Without: how
+     * many entries there are, at least one if no range is given.
      */
-    collection: { collection: string; id?: string } & Range
+    collection: { collection: string; entry?: string } & Range
   }
   effects: {
     /** Add an entry to a collection. An id already there is left as it is. */
-    collect: { kind: 'collect'; to: string; entry: CollectionItem }
-    /** Take an entry out of a collection. */
-    discard: { kind: 'discard'; from: string; id: string }
+    collect: { kind: 'collect'; collection: string; entry: CollectionItem }
+    /** Take an entry out of a collection, by its id. */
+    discard: { kind: 'discard'; collection: string; entry: string }
   }
   game: {
     /** Named lists the game keeps entries in: a gallery, notes, a ledger. */
@@ -62,14 +62,14 @@ export const collections = defineFeature<CollectionsShape>({
     collection: {
       holds: (state, condition) => {
         const entries = state.collections?.[condition.collection] ?? []
-        if (condition.id !== undefined) return entries.some((entry) => entry.id === condition.id)
+        if (condition.entry !== undefined) return entries.some((entry) => entry.id === condition.entry)
         if (!bounded(condition)) return entries.length > 0
         return inRange(entries.length, condition)
       },
       explain: (state, condition) => {
         const entries = state.collections?.[condition.collection] ?? []
-        if (condition.id !== undefined) {
-          return `${condition.collection} ${entries.some((entry) => entry.id === condition.id) ? 'has' : 'lacks'} ${condition.id}; wants it there`
+        if (condition.entry !== undefined) {
+          return `${condition.collection} ${entries.some((entry) => entry.id === condition.entry) ? 'has' : 'lacks'} ${condition.entry}; wants it there`
         }
         return `${condition.collection} has ${entries.length}; wants ${bounded(condition) ? wanted(condition) : 'at least 1'}`
       },
@@ -78,16 +78,16 @@ export const collections = defineFeature<CollectionsShape>({
   },
   effects: {
     collect: {
-      apply: (state, effect, game) => collect(state, game, effect.to, effect.entry),
+      apply: (state, effect, game) => collect(state, game, effect.collection, effect.entry),
       references: (effect) => [
-        { collection: effect.to },
+        { collection: effect.collection },
         ...(effect.entry.text !== undefined ? [{ prose: effect.entry.text }] : []),
         ...(effect.entry.image !== undefined ? [{ picture: effect.entry.image, asWritten: true }] : []),
       ],
     },
     discard: {
-      apply: (state, effect) => discard(state, effect.from, effect.id),
-      references: (effect) => [{ collection: effect.from }],
+      apply: (state, effect) => discard(state, effect.collection, effect.entry),
+      references: (effect) => [{ collection: effect.collection }],
     },
   },
   pack: mergedById<CollectionsShape['game'], CollectionsShape['pack'], CollectionDef>(

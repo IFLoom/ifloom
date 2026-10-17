@@ -181,7 +181,7 @@ describe('storylines', () => {
     const state = begin(game)
     expect(holds(state, { storyline: 'rosa' }, game)).toBe(true)
     expect(holds(state, { storyline: 'rosa', open: false }, game)).toBe(false)
-    const closed = applyEffects(state, game, [{ kind: 'closeStoryline', id: 'rosa', turns: 3 }])
+    const closed = applyEffects(state, game, [{ kind: 'closeStoryline', storyline: 'rosa', turns: 3 }])
     expect(holds(closed, { storyline: 'rosa' }, game)).toBe(false)
     expect(holds(closed, { storyline: 'rosa', open: false }, game)).toBe(true)
     expect(holds({ ...closed, turn: closed.turn + 3 }, { storyline: 'rosa' }, game)).toBe(true)

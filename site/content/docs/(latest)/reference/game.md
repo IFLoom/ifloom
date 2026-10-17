@@ -158,7 +158,7 @@ const sandwich: ItemDef = {
   name: 'sandwich',
   desc: 'Cheese and pickle, wrapped in paper.',
   kind: 'stuff',
-  use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', key: 'energy', by: 25 }] },
+  use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', stat: 'energy', by: 25 }] },
 }
 ```
 

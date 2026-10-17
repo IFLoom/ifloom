@@ -19,8 +19,8 @@ describe('custom functions belong to their game', () => {
   })
 
   it('runs a custom effect by name, and drops one the game does not have', () => {
-    const game = { ...fixture(), custom: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ kind: 'stat' as const, key: 'coins', by: Number(args.by) }] } } }
-    expect(buildEffects(begin(game), game, [{ custom: 'tip', with: { by: 2 } }])).toEqual([{ kind: 'stat', key: 'coins', by: 2 }])
+    const game = { ...fixture(), custom: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ kind: 'stat' as const, stat: 'coins', by: Number(args.by) }] } } }
+    expect(buildEffects(begin(game), game, [{ custom: 'tip', with: { by: 2 } }])).toEqual([{ kind: 'stat', stat: 'coins', by: 2 }])
     expect(buildEffects(begin(game), game, [{ custom: 'nothing' }])).toEqual([])
   })
 

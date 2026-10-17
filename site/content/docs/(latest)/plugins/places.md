@@ -12,8 +12,8 @@ Here's where each place-related part of a game comes from:
 - **The map** is a list of [`LocationDef`](#locationdef)s, each naming its `exits`.
 - **Walking** is the [`go()`](#commands) command, which the view hands the UI on each [exit](#exitview).
 - **Being somewhere at once** (a lift home, or a scene that ends across town) is the [`moveTo()`](#effects) effect.
-- **Opening hours** are a location's `locked` entries, written with the [calendar](/docs/plugins/calendar)'s conditions. See [Opening hours](#opening-hours).
-- **"Only in the café"** is the [`at()`](#conditions) condition, or [`onlyAt()`](#helpers) as an activity's requirement.
+- **Opening hours** are a location's `blocked` entries, written with the [calendar](/docs/plugins/calendar)'s conditions. See [Opening hours](#opening-hours).
+- **"Only in the café"** is the [`at()`](#conditions) condition, or [`onlyAt()`](#helpers) in an activity's `blocked` list.
 - **The header** is the plugin's [label](#the-label), at `view.when`.
 
 ```ts
@@ -115,7 +115,7 @@ type LocationDef = {
   exits: readonly string[]
   art: string
   stage?: MediaStage
-  locked?: { when: Condition; reason: string; hide?: boolean }[]
+  blocked?: Blocked[]
   body: Block[]
   actions?: ActionDef[]
   audio?: Record<string, string | null>
@@ -132,7 +132,7 @@ type LocationDef = {
 | `exits` | The places one step away. Exits are one-way, so list the way back on the other place too. |
 | `art` | The background image, passed through to the view. |
 | `stage` | A layered picture with hotspots, as a [scene's stage](/docs/reference/scenes#the-stage). Its hotspots send a `command`, because a place has no choices. See [The picture stage](#the-picture-stage). |
-| `locked` | Walking in here is refused while one of these [conditions](/docs/reference/conditions) holds. The first that holds gives the `reason`, which is both the refusal and the exit's `disabled` text. With `hide: true`, the exit is left off the screen while it holds, instead of greyed out. |
+| `blocked` | Walking in here is refused while one of these [conditions](/docs/reference/conditions) holds. The first that holds gives the `reason`, which is both the refusal and the exit's `disabled` text. With `hide: true`, the exit is left off the screen while it holds, instead of greyed out. |
 | `body` | What the player reads here while no scene is open. These are [prose blocks](/docs/reference/scenes#block), exactly as in a data scene's body, so pictures and videos sit in it in order, from markup or `{ media }` blocks. |
 | `actions` | What there is to do here, as [`ActionDef`](/docs/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
 | `audio` | What plays on background [audio channels](/docs/reference/audio#channels) while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. `null` silences a channel. See [Audio](#audio). |
@@ -166,7 +166,7 @@ const locations: LocationDef[] = [
   },
   {
     id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'], art: 'place/cafe',
-    locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [{ text: 'place.cafe' }],
     actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
   },
@@ -195,14 +195,14 @@ The [loader](/docs/reference/loader#pack) merges locations by id, as it merges s
 
 ### Rooms inside rooms
 
-Give a place a `parent` when it's inside another, such as a back room inside the café. [`within('cafe')`](#conditions) then holds in either. A `locked` entry with `hide: true` keeps the door off the screen until it's open to the player:
+Give a place a `parent` when it's inside another, such as a back room inside the café. [`within('cafe')`](#conditions) then holds in either. A `blocked` entry with `hide: true` keeps the door off the screen until it's open to the player:
 
 ```ts
 import { type LocationDef } from '@ifloom/plugin-places'
 
 const backRoom: LocationDef = {
   id: 'cafe.back', name: 'The back room', tag: 'Café', kind: 'room', parent: 'cafe', exits: ['cafe'], art: 'place/cafe-back',
-  locked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
+  blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
   body: [{ text: 'place.cafe.back' }],
 }
 ```
@@ -211,7 +211,7 @@ Add `'cafe.back'` to the café's `exits` too. Until the `staff` kv key is set, t
 
 ### Opening hours
 
-The engine has no opening hours of its own, so a place's `locked` list does the job. Each entry is a [condition](/docs/reference/conditions) and the line the player reads while it holds. With the [calendar](/docs/plugins/calendar#conditions), the conditions can read the time of day and the day of the week. This is the showcase's office, open in the day on weekdays only (from `examples/showcase/src/content/town.ts`):
+The engine has no opening hours of its own, so a place's `blocked` list does the job. Each entry is a [condition](/docs/reference/conditions) and the line the player reads while it holds. With the [calendar](/docs/plugins/calendar#conditions), the conditions can read the time of day and the day of the week. This is the showcase's office, open in the day on weekdays only (from `examples/showcase/src/content/town.ts`):
 
 ```ts
 import { period, weekday } from '@ifloom/plugin-calendar'
@@ -219,7 +219,7 @@ import { type LocationDef } from '@ifloom/plugin-places'
 
 const office: LocationDef = {
   id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'], art: 'place/office',
-  locked: [
+  blocked: [
     { when: weekday(5, 6), reason: 'Shut at weekends.' },
     { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
     { when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' },
@@ -230,11 +230,11 @@ const office: LocationDef = {
 
 The first entry that holds gives the reason, so put the most particular first. On a Friday evening the player reads `Closed. Back on Monday.`, and on a Tuesday evening `Closed. Opens tomorrow morning.` The exit is greyed out with the same line.
 
-`locked` only stops the player walking in. A player who's already inside when it starts to hold stays there. If they should leave, send them out with a [`moveTo`](#effects) effect from a [trigger](/docs/reference/triggers).
+`blocked` only stops the player walking in. A player who's already inside when it starts to hold stays there. If they should leave, send them out with a [`moveTo`](#effects) effect from a [trigger](/docs/reference/triggers).
 
 ## A worked example
 
-The town above, with the calendar and a coffee to buy in the café. The coffee is only sold in the café, so it uses [`onlyAt`](#helpers) as its requirement.
+The town above, with the calendar and a coffee to buy in the café. The coffee is only sold in the café, so it lists [`onlyAt`](#helpers) in its `blocked`.
 
 ```ts
 import { apply, loadGame, startingState, view, whyNot, type ActivityDef } from '@ifloom/engine'
@@ -244,7 +244,7 @@ import { town } from './town.ts'
 
 const coffee: ActivityDef = {
   id: 'coffee',
-  requires: [onlyAt(['cafe'], 'There is no coffee here.')],
+  blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
   effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
 }
 
@@ -283,19 +283,19 @@ A UI reads the room at [`view.plugins.places`](#the-view), the description at `v
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'places/go', with: { to: 'cafe' } }` | `go('cafe')` | Walks through an exit to that place, then runs the [`arrive`](#placesoptions) option. |
+| `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }` | `go('cafe')` | Walks through an exit to that place, then runs the [`arrive`](#placesoptions) option. |
 
 `places/go` is refused, in this order, with:
 
 1. `Finish this first.` (the engine's [`finishFirst`](/docs/reference/strings#refusals)) while a scene is open.
 2. `There is no such place.` ([`places/noSuchPlace`](#strings)) when the game has no place with that id.
 3. `You are already here.` ([`places/alreadyHere`](#strings)) when the player is there already.
-4. The `reason` of the destination's first `locked` entry whose `when` holds.
+4. The `reason` of the destination's first `blocked` entry whose `when` holds.
 5. `You cannot get there from here.` ([`places/cannotGetThere`](#strings)) when the destination isn't one of this place's `exits`, or the player is nowhere.
 
-Because `locked` is asked before the exits, a closed café says it's closed even from across town.
+Because `blocked` is asked before the exits, a closed café says it's closed even from across town.
 
-A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*`, and stops every journey. To stop some journeys and not others, use the destination's `locked`.
+A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*`, and stops every journey. To stop some journeys and not others, use the destination's `blocked`.
 
 ## Effects
 
@@ -305,7 +305,7 @@ A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*
 
 It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { value: 'cafe' } }`.
 
-No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `locked` place. The [`arrive`](#placesoptions) option doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
+No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The [`arrive`](#placesoptions) option doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
 
 ## Conditions
 
@@ -443,7 +443,7 @@ An exit is left out when:
 
 - its place doesn't exist
 - the first [lock](/docs/reference/locks#lock) that stops `places/go` to it has `hide`
-- one of its place's `locked` entries with `hide: true` holds
+- one of its place's `blocked` entries with `hide: true` holds
 
 Any other exit is shown, greyed out with its refusal if it can't be taken.
 
@@ -502,7 +502,7 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 
 `places/go` also uses the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
 
-[`onlyAt`](#helpers)'s reason is plain text written into the requirement (`Not here.` if left out), not a string a game can override.
+[`onlyAt`](#helpers)'s reason is plain text written into the `blocked` entry (`Not here.` if left out), not a string a game can override.
 
 ## For code
 
@@ -517,7 +517,7 @@ const go: (to: string) => Command
 const at: (...places: string[]) => Condition
 const within: (...places: string[]) => Condition
 const moveTo: (place: string) => EffectRef
-const onlyAt: (places: string[], reason?: string) => Requirement
+const onlyAt: (places: string[], reason?: string) => Blocked
 ```
 
 | Helper | Returns |
@@ -528,7 +528,7 @@ const onlyAt: (places: string[], reason?: string) => Requirement
 | `go` | The [`places/go`](#commands) command. |
 | `at`, `within` | The [conditions](#conditions). |
 | `moveTo` | The [`places/move`](#effects) effect. |
-| `onlyAt` | A [requirement](/docs/reference/actions#requirement) for an activity's `requires`: `{ when: at(...places), reason }`. The reason is `Not here.` if left out. |
+| `onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an activity: `{ when: { not: at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
 
 `locationById` and `locationsOf` read the game's content, so they work on any state. `where` reads the state alone.
 
@@ -536,7 +536,7 @@ const onlyAt: (places: string[], reason?: string) => Requirement
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up, wherever content writes it: an activity's requirements and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
+**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up, wherever content writes it: an activity's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
 
 ```text
 town · activity swim · unknown location "lido"
@@ -548,7 +548,7 @@ town · activity swim · unknown location "lido"
 - An exit to a place the game doesn't have (`exit to unknown location "…"`).
 - A `parent` the game doesn't have (`inside unknown location "…"`), or one that leads back round to the place (`is inside itself`, on every place in the loop).
 - Anything the `body` names that the game doesn't have, such as prose keys, variants or conditions (`no prose for "…"`).
-- Anything a `locked` entry's `when` names that the game doesn't have.
+- Anything a `blocked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown location "moon"`).
 - A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/docs/reference/checks#audio).
 - Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/docs/reference/checks#media).
@@ -570,9 +570,9 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 - **`arrive` runs on `places/go` only.** A `places/move` puts the player somewhere with nothing on the doorstep. The engine has no arrival rule or hook of its own, so the `arrive` option is the only doorstep there is.
 - **Exits are one-way.** List the way back on the other place.
 - **A game that starts nowhere can't walk anywhere.** `places/go` from nowhere is refused with `You cannot get there from here.` A `places/move`, from an intro scene's last choice say, puts the player on the map.
-- **`locked` comes before the exits.** A locked place's reason is the refusal even when it isn't one step away.
+- **`blocked` comes before the exits.** A locked place's reason is the refusal even when it isn't one step away.
 - **`places/go` lists no effects.** A lock with `effect` doesn't see it, and no plugin puts a price on it.
 
 ## See it in an example
 
-Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `locked` opening hours on the café and the office, a `stage` in the café, and activities that require a place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.
+Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `blocked` opening hours on the café and the office, a `stage` in the café, and activities that require a place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

@@ -28,7 +28,7 @@ const market: Pack = {
   schema: SCHEMA,
   prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
   variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
-  activities: [{ id: 'buy', requires: [{ when: { 'stall/sells': 'bread' }, reason: 'Sold out.' }] }, { id: 'ask', requires: [{ when: { 'stall/sells': 'fish' }, reason: 'No.' }] }],
+  activities: [{ id: 'buy', blocked: [{ when: { not: { 'stall/sells': 'bread' } }, reason: 'Sold out.' }] }, { id: 'ask', blocked: [{ when: { not: { 'stall/sells': 'fish' } }, reason: 'No.' }] }],
 }
 
 function game(rules: Game['rules'] = {}) {

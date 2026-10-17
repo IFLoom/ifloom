@@ -3,7 +3,7 @@ import { loadGame, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { mods, readMod } from '../../src/mods.ts'
-import { PACK_STEPS, SCHEMA, upgradePack, type RawPack } from '../../src/upgrade.ts'
+import { PACK_STEPS, SCHEMA, upgradeCommand, upgradePack, type RawPack } from '../../src/upgrade.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 
 /**
@@ -119,7 +119,7 @@ describe('content migrations', () => {
               effects: [
                 { kind: 'kv', key: 'metAva', to: true },
                 { kind: 'kv', key: 'visits', by: 1 },
-                { kind: 'storylineKv', id: 'rosa', key: 'met', to: true },
+                { kind: 'storylineKv', storyline: 'rosa', key: 'met', to: true },
                 { kind: 'create', of: 'staff', entity: { name: 'Bo', kv: { role: 'waiter' } } },
               ],
             },
@@ -150,5 +150,148 @@ describe('content migrations', () => {
       schema: SCHEMA,
       triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kind: 'kv', key: 'regular', to: true }] }],
     })
+  })
+
+  it('rename schema 5 fields to the naming rule and gating to blocked, however deep they sit', () => {
+    const v5 = {
+      id: 'evening',
+      schema: 5,
+      prose: { has: 'Words are left alone.' },
+      activities: [
+        { id: 'nap', requires: [{ when: { not: { kv: 'napped' } }, reason: 'Once a day.' }, { when: { stat: 'energy', lt: 50 }, reason: 'Not tired.' }] },
+        { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }], requires: [{ when: { 'places/at': ['park'] }, reason: 'Not here.' }] },
+      ],
+      items: [{ id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'setStat', key: 'energy', to: 100, of: 'staff:ana' }] } }],
+      triggers: [
+        {
+          id: 'late',
+          when: { all: [{ turn: true, gte: 3 }, { has: 'tea' }, { counter: { storyline: 'rosa', key: 'visits' }, gte: 2 }, { storylineKv: { storyline: 'rosa', key: 'met', is: true } }] },
+          effects: [
+            { kind: 'stat', key: 'coins', by: -2 },
+            { kind: 'item', id: 'tea', by: 1 },
+            { kind: 'phase', value: 'night' },
+            { kind: 'scene', id: null },
+            { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' },
+            { kind: 'storylineKv', id: 'rosa', key: 'met', to: true },
+            { kind: 'closeStoryline', id: 'rosa', turns: 2 },
+            { kind: 'collect', to: 'notes', entry: { id: 'n1' } },
+            { kind: 'discard', from: 'notes', id: 'n1' },
+            { kind: 'each', of: 'staff', where: { collection: 'notes', id: 'n1' }, effects: [{ kind: 'remove', of: '$' }] },
+            { kind: 'audio', channel: 'music', track: null },
+            { kind: 'minigame', id: 'arrows' },
+            { kind: 'minigameVar', key: 'score', add: 1 },
+            { kind: 'minigameVar', key: 'round', value: 0 },
+            { custom: 'achievements/grant', with: { id: 'regular' } },
+            { 'effects/apply': { id: 'tired' } },
+            { kind: 'custom', name: 'calendar/pass', with: { periods: 2 } },
+          ],
+        },
+      ],
+      scenes: [
+        {
+          id: 'cafe',
+          body: [{ text: 'cafe', when: { 'cast/at': { who: 'ava', at: ['cafe'] } } }],
+          choices: [{ id: 'sit', when: { custom: 'effects/active', with: { id: 'tired' } }, effects: [] }],
+        },
+      ],
+      data: {
+        places: {
+          locations: [
+            {
+              id: 'cafe',
+              locked: [{ when: { phase: ['night'] }, reason: 'Shut.', hide: true }],
+              actions: [
+                { id: 'talk', label: 'Talk', command: { type: 'custom', name: 'cast/talk', with: { who: 'ava' } } },
+                { id: 'drink', label: 'Drink', command: { type: 'use', itemId: 'tea' } },
+                { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', value: 0 } },
+              ],
+            },
+          ],
+        },
+        jobs: { jobs: [{ id: 'barista', requires: [{ when: { kv: 'metAva' }, reason: 'Not yet.' }], ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }] }] },
+      },
+    }
+    expect(upgradePack(v5)).toEqual({
+      id: 'evening',
+      schema: SCHEMA,
+      prose: { has: 'Words are left alone.' },
+      activities: [
+        { id: 'nap', blocked: [{ when: { kv: 'napped' }, reason: 'Once a day.' }, { when: { not: { stat: 'energy', lt: 50 } }, reason: 'Not tired.' }] },
+        { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }, { when: { not: { 'places/at': ['park'] } }, reason: 'Not here.' }] },
+      ],
+      items: [{ id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } }],
+      triggers: [
+        {
+          id: 'late',
+          when: { all: [{ turn: { gte: 3 } }, { item: 'tea' }, { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 }, { storylineKv: { storyline: 'rosa', key: 'met' }, is: true }] },
+          effects: [
+            { kind: 'stat', stat: 'coins', by: -2 },
+            { kind: 'item', item: 'tea', by: 1 },
+            { kind: 'phase', to: 'night' },
+            { kind: 'scene', scene: null },
+            { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' },
+            { kind: 'storylineKv', storyline: 'rosa', key: 'met', to: true },
+            { kind: 'closeStoryline', storyline: 'rosa', turns: 2 },
+            { kind: 'collect', collection: 'notes', entry: { id: 'n1' } },
+            { kind: 'discard', collection: 'notes', entry: 'n1' },
+            { kind: 'each', of: 'staff', where: { collection: 'notes', entry: 'n1' }, effects: [{ kind: 'remove', entity: '$' }] },
+            { kind: 'audio', channel: 'music', to: null },
+            { kind: 'minigame', minigame: 'arrows' },
+            { kind: 'minigameVar', key: 'score', by: 1 },
+            { kind: 'minigameVar', key: 'round', to: 0 },
+            { custom: 'achievements/grant', with: { achievement: 'regular' } },
+            { 'effects/apply': { effect: 'tired' } },
+            { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
+          ],
+        },
+      ],
+      scenes: [
+        {
+          id: 'cafe',
+          body: [{ text: 'cafe', when: { 'cast/at': { character: 'ava', at: ['cafe'] } } }],
+          choices: [{ id: 'sit', when: { custom: 'effects/active', with: { effect: 'tired' } }, effects: [] }],
+        },
+      ],
+      data: {
+        places: {
+          locations: [
+            {
+              id: 'cafe',
+              actions: [
+                { id: 'talk', label: 'Talk', command: { type: 'custom', name: 'cast/talk', with: { id: 'ava' } } },
+                { id: 'drink', label: 'Drink', command: { type: 'use', id: 'tea' } },
+                { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', to: 0 } },
+              ],
+              blocked: [{ when: { phase: ['night'] }, reason: 'Shut.', hide: true }],
+            },
+          ],
+        },
+        jobs: { jobs: [{ id: 'barista', ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }], blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Not yet.' }] }] },
+      },
+    })
+  })
+
+  it('install a schema 5 mod with an activity that requires, and play it as blocked', async () => {
+    const file = JSON.stringify({
+      ifloomMod: 1,
+      id: 'naps',
+      name: 'Naps',
+      game: 'fixture',
+      pack: { id: 'naps', schema: 5, activities: [{ id: 'nap', requires: [{ when: { has: 'pillow' }, reason: 'No pillow.' }], effects: [{ kind: 'setStat', key: 'coins', to: 0 }] }] },
+    })
+    const added = await mods('fixture', memoryDriver()).add(file)
+    expect(typeof added !== 'string' && added.pack).toEqual({
+      id: 'mod:naps',
+      schema: SCHEMA,
+      activities: [{ id: 'nap', blocked: [{ when: { not: { item: 'pillow' } }, reason: 'No pillow.' }], effects: [{ kind: 'stat', stat: 'coins', to: 0 }] }],
+    })
+  })
+
+  it('upgrade an old command log’s commands as replay reads them', () => {
+    expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'use', id: 'tea' })
+    expect(upgradeCommand({ type: 'setting', id: 'volume', value: 0.5 })).toEqual({ type: 'setting', id: 'volume', to: 0.5 })
+    expect(upgradeCommand({ type: 'custom', name: 'places/go', with: { to: 'park' } })).toEqual({ type: 'custom', name: 'places/go', with: { id: 'park' } })
+    const now = { type: 'use', id: 'tea' }
+    expect(upgradeCommand(now)).toEqual(now)
   })
 })

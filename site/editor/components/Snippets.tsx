@@ -80,9 +80,9 @@ function ConditionTool() {
 
 function EffectsTool() {
   const [value, setValue] = useState<EffectRef[]>([
-    { kind: 'stat', key: 'coins', by: -4 },
-    { kind: 'item', id: 'umbrella', by: 1 },
-    { kind: 'scene', id: null },
+    { kind: 'stat', stat: 'coins', by: -4 },
+    { kind: 'item', item: 'umbrella', by: 1 },
+    { kind: 'scene', scene: null },
   ])
   return <Split form={<EffectList value={value} names={NAMES} onChange={setValue} />} code={snippet(value)} />
 }

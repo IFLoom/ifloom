@@ -56,7 +56,7 @@ describe('inlineAssets', () => {
 
 describe('checkGame', () => {
   it('prints a loader problem in the loader\'s words', () => {
-    const loaded = loadGame([{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', id: 'nowhere' }] }] }] }], {
+    const loaded = loadGame([{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }], {
       id: 'town',
       title: 'Town',
       introScene: 'intro',
@@ -71,7 +71,7 @@ describe('checkGame', () => {
       activities: [],
       items: [],
       storylines: [],
-      scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', id: 'nowhere' }] }] }],
+      scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }],
     }
     expect(checkGame({ default: game })).toEqual(['game · scene intro · no prose for "intro#go"', 'game · scene intro · goes to unknown scene "nowhere"'])
     // A loaded game's problems come from its loader, and aren't found a second time.
@@ -109,7 +109,7 @@ describe('the files a game names', () => {
                 hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
               },
               body: [{ text: 'knock' }, { media: { src: 'flat/letter.png' } }, { media: { pool: 'door', tags: ['red'] } }],
-              choices: [{ id: 'answer', effects: [{ kind: 'scene', id: null }] }],
+              choices: [{ id: 'answer', effects: [{ kind: 'scene', scene: null }] }],
             },
           ],
           prose: {

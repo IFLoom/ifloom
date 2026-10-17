@@ -74,8 +74,8 @@ describe('the runner and the profile', () => {
     const prof = profile(g, memoryDriver())
     const runner = createRunner(g, begin(g), { profile: prof })
     expect(runner.profile).toBe(prof)
-    runner.apply({ type: 'setting', id: 'hints', value: false })
-    runner.apply({ type: 'setting', id: 'hints', value: 'maybe' })
+    runner.apply({ type: 'setting', id: 'hints', to: false })
+    runner.apply({ type: 'setting', id: 'hints', to: 'maybe' })
     await runner.settled()
     expect(await prof.get('settings')).toEqual({ hints: false })
   })
@@ -200,7 +200,7 @@ describe('the runner and the profile', () => {
     const broken = { ...memoryDriver(), set: async () => Promise.reject(new Error('full')) }
     const errors: unknown[] = []
     const runner = createRunner(g, begin(g), { profile: profile(g, broken), onSaveError: (error) => errors.push(error) })
-    runner.apply({ type: 'setting', id: 'hints', value: false })
+    runner.apply({ type: 'setting', id: 'hints', to: false })
     await runner.settled()
     expect(errors).toHaveLength(1)
     expect(runner.state.settings.hints).toBe(false)

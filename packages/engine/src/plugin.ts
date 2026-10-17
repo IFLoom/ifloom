@@ -133,7 +133,7 @@ export type Plugin<S = any> = {
    * Changes to what the player's stats read right now, worked out from the
    * plugin's state: a timed boost, say. Nothing is written into the state;
    * every reading of the stat (conditions, derived stats, costs, the view)
-   * sees the changed value, and `stat` and `setStat` effects still write the
+   * sees the changed value, and `stat` effects still write the
    * kept value underneath. Must not read stats itself, or it reads itself.
    */
   statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined

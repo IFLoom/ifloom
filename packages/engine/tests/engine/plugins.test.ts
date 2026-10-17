@@ -209,7 +209,7 @@ describe('plugins working together', () => {
     id: 'shore',
     schema: SCHEMA,
     activities: [
-      { id: 'wade', requires: [{ when: { 'tides/high': true }, reason: 'The tide is out.' }], effects: [{ 'tides/turn': true }] },
+      { id: 'wade', blocked: [{ when: { not: { 'tides/high': true } }, reason: 'The tide is out.' }], effects: [{ 'tides/turn': true }] },
       { id: 'swim', effects: [{ 'tides/turn': {} }] },
     ],
   }

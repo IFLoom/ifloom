@@ -21,7 +21,7 @@ export const custom: Custom = {
       const likes = 2 + roll(10, state.seed, state.turn, 'likes') + (state.stats.charm ?? 0)
       return [
         postTo('social', id, { text: 'post.photo', image: latest.image }),
-        { kind: 'stat', key: 'charm', by: 1 },
+        { kind: 'stat', stat: 'charm', by: 1 },
         react(id, { likes, from: 'ava', text: 'comment.nice' }),
       ]
     },

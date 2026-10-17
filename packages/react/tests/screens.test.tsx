@@ -19,7 +19,7 @@ function game(): Game {
           { id: 'cape', name: 'cape', desc: '', kind: 'gear' },
         ],
         activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
-        scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', id: null }] }] }],
+        scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
         inputs: [
           { id: 'catName', label: 'Name the cat', kind: 'text', maxLength: 8 },
           { id: 'tea', label: 'Tea or coffee', kind: 'choice', options: [{ value: 'tea', label: 'Tea' }, { value: 'coffee', label: 'Coffee' }] },

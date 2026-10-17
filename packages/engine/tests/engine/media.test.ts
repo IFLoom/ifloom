@@ -85,7 +85,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}) {
     },
     activities: [
       { id: 'nap' },
-      { id: 'jog', requires: [{ when: { kv: 'rested' }, reason: 'Too tired.' }] },
+      { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] },
     ],
     scenes,
     ...extra,
@@ -113,7 +113,7 @@ describe('media in a data scene’s body', () => {
       { media: { src: 'flat/mug', at: 'end' } },
       { media: { src: 'flat/cat' }, when: { kv: 'cat' } },
     ],
-    choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+    choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
   }
 
   it('sits where it is written, with a lead still first and an end one last', () => {
@@ -150,7 +150,7 @@ describe('pools', () => {
   const doorstep: DataScene = {
     id: 'doorstep',
     body: [{ text: 'flat.door' }, { media: { pool: 'door', tags: ['blue', 'red'] } }, { media: { pool: 'window', at: 'lead' } }],
-    choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+    choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
   }
 
   it('prefer the files with every tag, then drop tags from the end of the request', () => {
@@ -181,7 +181,7 @@ describe('pools', () => {
   })
 
   it('are recorded after a command, under pool, tags, owner and slot, and the view then reads them', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', id: 'doorstep' }] }] })
+    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const before = startingState(g, { seed: 7 })
     expect(before.media).toEqual({ picks: {} })
     const after = apply(before, g, { type: 'activity', id: 'knock' }).state
@@ -193,7 +193,7 @@ describe('pools', () => {
   })
 
   it('stay the same across a reload, even once the pool has more files', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', id: 'doorstep' }] }] })
+    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const after = apply(startingState(g, { seed: 7 }), g, { type: 'activity', id: 'knock' }).state
     const shown = view(after, g).scene.beats[3]
     const loaded = loadState(JSON.parse(JSON.stringify(after)), g) as GameState
@@ -205,7 +205,7 @@ describe('pools', () => {
   })
 
   it('replay exactly', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', id: 'doorstep' }] }] })
+    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const start = startingState(g, { seed: 3 })
     const commands: Command[] = [{ type: 'activity', id: 'knock' }, { type: 'choose', id: 'leave' }, { type: 'activity', id: 'knock' }]
     let state = start
@@ -251,7 +251,7 @@ describe('the stage', () => {
     },
     body: [{ text: 'flat.wake' }],
     choices: [
-      { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ kind: 'scene', id: null }] },
+      { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ kind: 'scene', scene: null }] },
       { id: 'tea', when: { kv: 'kettle' }, effects: [] },
       { id: 'phone', effects: [] },
     ],

@@ -72,12 +72,12 @@ The game's other custom conditions, and its effects, values and panels, are left
 ## SCHEMA
 
 ```ts
-const SCHEMA = 5
+const SCHEMA = 6
 ```
 
 The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 6, this engine reads 5`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 7, this engine reads 6`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -89,7 +89,8 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 
 | Step | What it rewrites |
 |---|---|
-| 4 to 5 | Flags become the [kv store](/docs/reference/state#kv). `{ flag }` and `{ storylineKv }` conditions become `{ kv }` and `{ storylineKv }`. The `flag` effect becomes `kv`, with `value` as `to` and `add` as `by`, and `storylineKv` becomes `storylineKv` with `to`. A `kv` record on an entity, a character, a generator template or a `create` effect becomes `kv`, and an input's `variable` becomes `key`. Prose, strings, variants and custom functions are left alone. |
+| 4 to 5 | Flags become the [kv store](/docs/reference/state#kv). `{ flag }` and `{ storylineFlag }` conditions become `{ kv }` and `{ storylineKv }`. The `flag` effect becomes `kv`, with `value` as `to` and `add` as `by`, and `storylineFlag` becomes `storylineKv` with `to`. A `flags` record on an entity, a character, a generator template or a `create` effect becomes `kv`, and an input's `variable` becomes `key`. Prose, strings, variants and custom functions are left alone. |
+| 5 to 6 | One naming rule for content (see [Effects](/docs/reference/effects#effect) and [Commands](/docs/reference/commands#command)). An effect names its target by its noun: `stat`'s and `setStat`'s `key` becomes `stat` (and `setStat` becomes `stat` with `to`), `item`'s, `scene`'s and `minigame`'s `id` becomes `item`, `scene` and `minigame`, `storylineKv`'s and `closeStoryline`'s `id` becomes `storyline`, `collect`'s `to` and `discard`'s `from` become `collection` (and `discard`'s `id` becomes `entry`), and `remove`'s `of` becomes `entity`. `phase`'s `value`, `audio`'s `track` and `minigameVar`'s `value` become `to`, and `minigameVar`'s `add` becomes `by`. `{ has }` becomes `{ item }`, `{ turn: true, gte }` becomes `{ turn: { gte } }`, `{ counter }` and `storylineKv`'s inner `is` become one `{ storylineKv }`, and a `{ collection }` condition's `id` becomes `entry`. The `use` command's `itemId` becomes `id`, and `setting`'s and `input`'s `value` becomes `to`. The first-party plugins' renamed arguments follow, such as `places/go`'s `to`, which becomes `id`. Gating: an activity's or a job's `requires` becomes `blocked`, with each `when` turned round, and a place's or an app's `locked` becomes `blocked`. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -97,8 +98,8 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 6, this engine reads 5` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 5)` |
+| `schema` is newer than `SCHEMA` | `written for schema 7, this engine reads 6` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 6)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 
@@ -186,7 +187,7 @@ const mod: Pack = {
   schema: SCHEMA,
   prose: { 'ava.hi#coffee': 'Ask what she recommends' },
   patches: [
-    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ kind: 'stat', key: 'energy', by: 5 }] }, before: 'bye' },
+    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] }, before: 'bye' },
   ],
 }
 ```

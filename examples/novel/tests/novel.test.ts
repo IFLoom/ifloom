@@ -29,13 +29,13 @@ describe('The Letter', () => {
     let state = startingState(game)
     expect(view(state, game).scene.choices).toEqual([])
     expect(view(state, game).inputs.playerName).toBeDefined()
-    state = read(state, { type: 'input', id: 'playerName', value: 'Robin' })
+    state = read(state, { type: 'input', id: 'playerName', to: 'Robin' })
     expect(view(state, game).scene.body).toContain('You turn it over, Robin.')
     expect(view(state, game).scene.choices.map((choice) => choice.id)).toEqual(['open', 'shelf'])
   })
 
   it('remembers an early choice and branches on it two chapters on', () => {
-    const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
+    const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const opened = read(named, choose('open'))
     expect(holds(opened, { chose: 'ch1.mat/open' }, game)).toBe(true)
     expect(view(opened, game).scene.body).toContain('the postcard tucked inside')
@@ -46,7 +46,7 @@ describe('The Letter', () => {
   })
 
   it('counts fibs and reads the count back as a range, with a chapter as a turn', () => {
-    const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
+    const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const tangled = read(named, choose('open'), choose('blame'))
     expect(tangled.kv.fibs).toBe(2)
     expect(tangled.turn).toBe(2)
@@ -56,7 +56,7 @@ describe('The Letter', () => {
   })
 
   it('opens the braver ending only to a reader with the courage for it', () => {
-    const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
+    const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const brave = read(named, choose('open'), choose('truth'))
     expect(brave.stats.courage).toBe(3)
     expect(read(brave, choose('hand')).sceneId).toBe('end.kept')
@@ -66,7 +66,7 @@ describe('The Letter', () => {
   })
 
   it('counts as finished at either ending, and a New Game+ remembers the first read', () => {
-    const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
+    const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const ended = read(named, choose('shelf'), choose('deny'), choose('post'))
     expect(holds(ended, game.finished!, game)).toBe(true)
     expect(holds(named, game.finished!, game)).toBe(false)

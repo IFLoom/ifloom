@@ -164,11 +164,11 @@ export function feed(options: FeedOptions) {
     },
     effects: {
       /**
-       * `{ custom: 'feed/post', with: { feed, id, text?, image?, video?, likes? } }`: the
-       * player posts. An id already posted is left as it is.
+       * `{ custom: 'feed/post', with: { feed, post, text?, image?, video?, likes? } }`: the
+       * player posts to `feed`, as the post with id `post`. An id already posted is left as it is.
        */
       post: (state, args, { slice, set }) => {
-        const id = String(args.id)
+        const id = String(args.post)
         // A feed the game doesn't have would hold a post nobody can see.
         if (slice.own.some((post) => post.id === id) || !feedIds.has(String(args.feed))) return state
         const post: OwnPost = {
@@ -203,10 +203,10 @@ export function feed(options: FeedOptions) {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'feed/seen', with: { feed } }`: the player has looked; leave `feed` out for all. */
+      /** `{ type: 'custom', name: 'feed/seen', with: { id } }`: the player has looked at the feed `id`; leave `id` out for all. */
       seen: {
         run: (_state, args, { slice, set, game }) => {
-          const ids = args.feed === undefined ? [...feedIds] : [String(args.feed)]
+          const ids = args.id === undefined ? [...feedIds] : [String(args.id)]
           const seen = { ...slice.seen }
           for (const id of ids) seen[id] = count(slice, game, id)
           return set({ ...slice, seen })
@@ -317,7 +317,7 @@ export function feed(options: FeedOptions) {
 /** An effect: the player posts to a feed. `text` is a prose key. */
 export const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
   custom: 'feed/post',
-  with: { feed: feedId, id, ...post },
+  with: { feed: feedId, post: id, ...post },
 })
 /** An effect: likes, a comment, or both, on a post. */
 export const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({
@@ -325,7 +325,7 @@ export const react = (post: string, reaction: { likes?: number; from?: string; t
   with: { post, ...reaction },
 })
 /** A command: the player has looked at a feed, or at every feed. */
-export const seeFeed = (feedId?: string): Command => ({ type: 'custom', name: 'feed/seen', with: { feed: feedId } })
+export const seeFeed = (feedId?: string): Command => ({ type: 'custom', name: 'feed/seen', with: { id: feedId } })
 /** A condition: the player has posted at least `gte` times, to one feed or any. */
 export const hasPosted = (gte = 1, feedId?: string): Condition => ({
   custom: 'feed/posted',

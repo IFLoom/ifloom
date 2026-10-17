@@ -30,8 +30,8 @@ const stall: DataScene = {
   panelData: 'stallPrices',
   body: [{ text: 'stall' }],
   choices: [
-    { id: 'buy', effects: [{ kind: 'stat', key: 'coins', by: -4 }, { kind: 'scene', id: null }] },
-    { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+    { id: 'buy', effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'scene', scene: null }] },
+    { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
 

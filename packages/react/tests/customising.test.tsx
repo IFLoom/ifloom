@@ -21,7 +21,7 @@ function letter(): Game {
             title: 'The mat',
             body: [{ text: 'mat' }, { text: 'mat/ava' }],
             choices: [
-              { id: 'open', effects: [{ kind: 'scene', id: null }] },
+              { id: 'open', effects: [{ kind: 'scene', scene: null }] },
               { id: 'shelf', effects: [{ kind: 'notify', title: 'Hello', text: 'hello' }] },
             ],
           },

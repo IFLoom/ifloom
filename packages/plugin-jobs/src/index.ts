@@ -23,6 +23,7 @@ import {
   say,
   statDef,
   statValue,
+  type Blocked,
   type Command,
   type Condition,
   type Effect,
@@ -36,7 +37,6 @@ import {
   type Range,
   type Reference,
   type RenderedChoice,
-  type Requirement,
 } from '@ifloom/engine'
 
 /** What working one shift takes. */
@@ -74,8 +74,8 @@ export type JobDef = {
   title: string
   /** A line or two about it, for the job board. */
   description?: string
-  /** What it takes to be hired, each with the reason it's refused. */
-  requires?: Requirement[]
+  /** Why an application is refused: the first entry whose `when` holds gives its reason. */
+  blocked?: Blocked[]
   /** Where shifts are worked, with the places plugin. Anywhere if left out. */
   at?: string[]
   /** The weekdays it has shifts on, with the calendar plugin, from 0. Every day if left out. */
@@ -202,18 +202,18 @@ function priceView(game: Game, amounts: Record<string, number>): Price | null {
 /** Why the player can't apply, or undefined. */
 function cantApply(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
-  const job = jobOf(game, args.job)
+  const job = jobOf(game, args.id)
   if (!job) return say(game, 'jobs/unknown')
   if (slice.held[job.id]) return say(game, 'jobs/alreadyHired')
   if (slice.fired[job.id] !== undefined) return say(game, 'jobs/wasFired')
-  for (const requirement of job.requires ?? []) if (!holds(state, requirement.when, game)) return requirement.reason
+  for (const entry of job.blocked ?? []) if (holds(state, entry.when, game)) return entry.reason
   return undefined
 }
 
 /** Why the player can't work a shift now, or undefined. */
 function cantWork(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
-  const job = jobOf(game, args.job)
+  const job = jobOf(game, args.id)
   if (!job) return say(game, 'jobs/unknown')
   const held = slice.held[job.id]
   if (!held) return say(game, 'jobs/notHired')
@@ -235,11 +235,11 @@ function cantWork(state: GameState, args: PluginArgs, context: PluginContext<Job
 function shiftEffects(job: JobDef, held: HeldJob | undefined): Effect[] {
   const cost: Effect[] = Object.entries(job.shift.cost ?? {})
     .filter(([, amount]) => amount > 0)
-    .map(([key, amount]) => ({ kind: 'stat', key, by: -amount }))
-  const time: Effect[] = job.shift.passes ? [{ kind: 'custom', name: 'calendar/pass', with: { periods: job.shift.passes } }] : []
+    .map(([stat, amount]) => ({ kind: 'stat', stat, by: -amount }))
+  const time: Effect[] = job.shift.passes ? [{ kind: 'custom', name: 'calendar/pass', with: { by: job.shift.passes } }] : []
   const pay: Effect[] = Object.entries(payOf(job, held))
     .filter(([, amount]) => amount !== 0)
-    .map(([key, amount]) => ({ kind: 'stat', key, by: amount }))
+    .map(([stat, amount]) => ({ kind: 'stat', stat, by: amount }))
   return [...cost, ...time, ...pay]
 }
 
@@ -345,8 +345,8 @@ export function jobsView(state: GameState, context: PluginContext<JobsState>): J
   }
 }
 
-function jobRef(args: PluginArgs): Reference[] {
-  return args.job === undefined ? [] : [{ entry: String(args.job), plugin: ID, list: 'jobs', noun: 'job' }]
+function jobRef(job: unknown): Reference[] {
+  return job === undefined ? [] : [{ entry: String(job), plugin: ID, list: 'jobs', noun: 'job' }]
 }
 
 /**
@@ -400,26 +400,26 @@ export function jobs() {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'jobs/apply', with: { job } }`. */
+      /** `{ type: 'custom', name: 'jobs/apply', with: { id } }`: apply for the job `id`. */
       apply: {
         whyNot: (state, args, context) => cantApply(state, args, context),
-        run: (state, args, context) => hired(state, jobOf(context.game, args.job)!, context),
+        run: (state, args, context) => hired(state, jobOf(context.game, args.id)!, context),
       },
-      /** `{ type: 'custom', name: 'jobs/work', with: { job } }`. */
+      /** `{ type: 'custom', name: 'jobs/work', with: { id } }`: work a shift at the job `id`. */
       work: {
         whyNot: (state, args, context) => cantWork(state, args, context),
-        spends: (_state, args, { game }) => jobOf(game, args.job)?.shift.cost,
+        spends: (_state, args, { game }) => jobOf(game, args.id)?.shift.cost,
         effectsOf: (_state, args, { game, slice }) => {
-          const job = jobOf(game, args.job)
+          const job = jobOf(game, args.id)
           return job ? shiftEffects(job, slice.held[job.id]) : []
         },
         run: (state, args, context) => {
-          const job = jobOf(context.game, args.job)!
+          const job = jobOf(context.game, args.id)!
           const held = context.slice.held[job.id]
           const today = dayOf(state, context.game)
           // The shift's own effects come after the cost and the time, before the pay.
           const effects = shiftEffects(job, held)
-          const pay = effects.filter((effect) => effect.kind === 'stat' && effect.by > 0)
+          const pay = effects.filter((effect) => effect.kind === 'stat' && 'by' in effect && effect.by > 0)
           const before = effects.filter((effect) => !pay.includes(effect))
           let next = context.apply([...before, ...(job.shift.effects ?? []), ...pay])
           const slice = sliceOf(next)
@@ -428,12 +428,12 @@ export function jobs() {
           return next
         },
       },
-      /** `{ type: 'custom', name: 'jobs/quit', with: { job } }`: leave it. The player can apply again. */
+      /** `{ type: 'custom', name: 'jobs/quit', with: { id } }`: leave the job `id`. The player can apply again. */
       quit: {
-        whyNot: (_state, args, { slice, game }) => (slice.held[String(args.job ?? '')] ? undefined : say(game, 'jobs/notHired')),
+        whyNot: (_state, args, { slice, game }) => (slice.held[String(args.id ?? '')] ? undefined : say(game, 'jobs/notHired')),
         run: (state, args, context) => {
           const held = { ...context.slice.held }
-          delete held[String(args.job)]
+          delete held[String(args.id)]
           return context.set({ ...context.slice, held }, state)
         },
       },
@@ -441,14 +441,14 @@ export function jobs() {
     hooks: { after: review },
     view: (state, context) => jobsView(state, context),
     references: {
-      calls: (_kind, _name, args) => jobRef(args),
+      calls: (kind, _name, args) => jobRef(kind === 'commands' ? args.id : args.job),
       content: (game) =>
         jobDefs(game).map((job) => ({
           list: 'jobs',
           id: job.id,
           refs: [
             ...(job.at ?? []).map((location): Reference => ({ entry: location, plugin: 'places', list: 'locations', noun: 'location' })),
-            ...(job.requires ?? []).map((requirement): Reference => ({ within: 'requires', refs: [{ when: requirement.when }] })),
+            ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] })),
             { within: 'shift', refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }] },
             ...(job.ranks ?? []).map((rank): Reference => ({
               within: `rank ${rank.id}`,
@@ -479,11 +479,11 @@ export function jobs() {
 }
 
 /** A command: apply for the job. */
-export const applyFor = (job: string): Command => ({ type: 'custom', name: 'jobs/apply', with: { job } })
+export const applyFor = (job: string): Command => ({ type: 'custom', name: 'jobs/apply', with: { id: job } })
 /** A command: work a shift at the job. */
-export const work = (job: string): Command => ({ type: 'custom', name: 'jobs/work', with: { job } })
+export const work = (job: string): Command => ({ type: 'custom', name: 'jobs/work', with: { id: job } })
 /** A command: leave the job. */
-export const quit = (job: string): Command => ({ type: 'custom', name: 'jobs/quit', with: { job } })
+export const quit = (job: string): Command => ({ type: 'custom', name: 'jobs/quit', with: { id: job } })
 /** An effect: hire the player now, asking no requirements. */
 export const hire = (job: string): EffectRef => ({ custom: 'jobs/hire', with: { job } })
 /** An effect: fire the player from the job now. */

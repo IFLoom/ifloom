@@ -15,7 +15,7 @@ const stats: StatDef[] = [
 const game = { /* … */, stats }
 ```
 
-A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which adds to it, or a [`setStat` effect](/docs/reference/effects#setstat), which sets it. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an activity's [cost](/docs/reference/actions#activitycost) spends it.
+A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which changes it `by` an amount or sets it `to` a value. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an activity's [cost](/docs/reference/actions#activitycost) spends it.
 
 A stat can also be [derived](#derived-stats), worked out from other stats by a formula instead of kept, and any stat can have [levels](#levels) that it passes as it grows.
 
@@ -49,7 +49,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 | Field | Default | What it does |
 |---|---|---|
-| `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', key: id }`. |
+| `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', stat: id }`. |
 | `of` | the player's | The [kind](/docs/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
@@ -113,7 +113,7 @@ The other fields work much as they do for the player's stats:
 
 | Field | On an entity stat |
 |---|---|
-| `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', key: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
+| `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', stat: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
 | `format` | How the value is written in the entity's [`StatView`](/docs/reference/view#statview). |
 | `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { kv: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
@@ -157,11 +157,11 @@ const stats: StatDef[] = [
 
 const rules: GameRules = {
   // A full night's sleep puts energy back at its ceiling.
-  turn: () => ({ effects: [{ kind: 'setStat', key: 'energy', to: 9999 }] }),
+  turn: () => ({ effects: [{ kind: 'stat', stat: 'energy', to: 9999 }] }),
 }
 ```
 
-The `setStat` asks for more than any ceiling, so it's held to `energyCeiling` as it stands that morning. A button that costs `{ stats: { coins: 3, energy: 10 } }` shows `3c` and `10`, and a player with 2 coins reads *Not enough on you.*
+The `stat` effect's `to` asks for more than any ceiling, so it's held to `energyCeiling` as it stands that morning. A button that costs `{ stats: { coins: 3, energy: 10 } }` shows `3c` and `10`, and a player with 2 coins reads *Not enough on you.*
 
 ## statDef
 
@@ -352,11 +352,11 @@ A derived stat that another formula reads is held to its range before the other 
 
 ### What it can't do
 
-A derived stat is never written. A `stat` or `setStat` effect on one does nothing, a [cost](/docs/reference/actions#activitycost) doesn't spend it, and a [`create`](/docs/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
+A derived stat is never written. A `stat` effect on one does nothing, a [cost](/docs/reference/actions#activitycost) doesn't spend it, and a [`create`](/docs/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
 
 The [content checker](/docs/reference/checks) reports each of these:
 
-- a `stat` or `setStat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
+- a `stat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
 - an activity whose `cost` spends one (`spends stat "…", which is derived and never written`);
 - a derived stat with `spendable` or a `start`;
 - a formula that names a stat the game doesn't declare, or one with another owner;

@@ -60,17 +60,17 @@ const house: Pack = {
       audio: { music: 'tense' },
       body: [{ text: 'door.knock' }],
       choices: [
-        { id: 'open', effects: [{ kind: 'scene', id: null }] },
+        { id: 'open', effects: [{ kind: 'scene', scene: null }] },
         { id: 'again', effects: [{ kind: 'sound', track: 'buzz' }] },
-        { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+        { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
-    { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }] },
-    { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }] },
+    { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
   ],
   activities: [
-    { id: 'radio', effects: [{ kind: 'audio', channel: 'music', track: 'radio' }] },
-    { id: 'silence', effects: [{ kind: 'audio', channel: 'music', track: null }] },
+    { id: 'radio', effects: [{ kind: 'audio', channel: 'music', to: 'radio' }] },
+    { id: 'silence', effects: [{ kind: 'audio', channel: 'music', to: null }] },
     { id: 'default', effects: [{ kind: 'audio', channel: 'music' }] },
     { id: 'buzz', effects: [{ kind: 'sound', track: 'buzz' }] },
     { id: 'rest', effects: [{ kind: 'turn' }] },
@@ -273,7 +273,7 @@ describe('audio', () => {
       schema: SCHEMA,
       prose: { 'bad.text': 'Hush.\n\n[[sound:calm]]\n\n"Hi." [[voice:nobody]]', 'bad#go': 'Go' },
       scenes: [{ id: 'bad', audio: { music: 'knock', sfx: 'calm', stereo: 'calm' }, body: [{ text: 'bad.text' }], choices: [{ id: 'go', effects: [{ kind: 'sound', track: 'radio' }] }] }],
-      activities: [{ id: 'bang', effects: [{ kind: 'sound', track: 'bang' }, { kind: 'audio', channel: 'music', track: 'gone' }] }],
+      activities: [{ id: 'bang', effects: [{ kind: 'sound', track: 'bang' }, { kind: 'audio', channel: 'music', to: 'gone' }] }],
       audio: {
         tracks: {
           hiss: { src: 'hiss.ogg', channel: 'radio', volume: 2 },

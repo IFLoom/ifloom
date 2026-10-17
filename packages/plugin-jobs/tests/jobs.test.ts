@@ -29,11 +29,11 @@ const cafe: JobDef = {
   id: 'cafe',
   title: 'Weekend help',
   description: 'Saturdays at the Corner Café.',
-  requires: [{ reason: 'Ava needs to know you first.', when: { kv: 'metAva' } }],
+  blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Ava needs to know you first.' }],
   at: ['cafe'],
   days: [5],
   hours: ['morning'],
-  shift: { cost: { energy: 20 }, passes: 1, effects: [{ kind: 'stat', key: 'manner', by: 1 }] },
+  shift: { cost: { energy: 20 }, passes: 1, effects: [{ kind: 'stat', stat: 'manner', by: 1 }] },
   ranks: [
     { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
     { id: 'barista', title: 'Barista', pay: { coins: 18 }, requires: { shifts: 3 } },
@@ -56,12 +56,12 @@ function game(...partners: Plugin[]): Game {
     activities: [
       { id: 'meet', effects: [{ kind: 'kv', key: 'metAva', to: true }] },
       { id: 'sleep', effects: [{ kind: 'turn' }] },
-      { id: 'rest', effects: [{ kind: 'setStat', key: 'energy', to: 100 }] },
-      { id: 'snap', effects: [{ kind: 'setStat', key: 'manner', to: 0 }] },
+      { id: 'rest', effects: [{ kind: 'stat', stat: 'energy', to: 100 }] },
+      { id: 'snap', effects: [{ kind: 'stat', stat: 'manner', to: 0 }] },
       { id: 'hired', effects: [hire('cafe')] },
       { id: 'sacked', effects: [fire('cafe')] },
       // A week goes by, with the calendar's five periods a day.
-      { id: 'week', effects: [{ custom: 'calendar/pass', with: { periods: 35 } }] },
+      { id: 'week', effects: [{ custom: 'calendar/pass', with: { by: 35 } }] },
     ],
     data: {
       jobs: { jobs: [cafe] },
@@ -178,7 +178,7 @@ describe('jobs, on their own', () => {
                 {
                   id: 'bad',
                   title: 'Bad',
-                  requires: [{ reason: 'x', when: { item: 'badge' } }],
+                  blocked: [{ when: { not: { item: 'badge' } }, reason: 'x' }],
                   shift: { cost: { stamina: 1 } },
                   ranks: [{ id: 'a', title: 'A', pay: { gold: 1 }, requires: { shifts: 1 } }, { id: 'a', title: 'A', pay: {} }],
                   fire: { missed: 0 },
@@ -192,7 +192,7 @@ describe('jobs, on their own', () => {
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action y: unknown job "nope"',
-      'jobs bad: requires: unknown item "badge"',
+      'jobs bad: blocked: unknown item "badge"',
       'jobs bad: shift: unknown stat "stamina"',
       'jobs bad: rank a: unknown stat "gold"',
       'jobs bad: two ranks are called "a"',

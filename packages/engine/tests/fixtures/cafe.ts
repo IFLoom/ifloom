@@ -23,9 +23,9 @@ export const cafe: Pack = {
         {
           id: 'chat',
           once: { per: 'turn', reason: 'She has heard enough from you today.' },
-          effects: [{ kind: 'stat', key: 'luck', by: 1 }],
+          effects: [{ kind: 'stat', stat: 'luck', by: 1 }],
         },
-        { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+        { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
   ],

@@ -149,7 +149,7 @@ The plugin's view reads it as [`context.profile`](/docs/reference/plugins#the-pr
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'achievements/earned', with: { id } }` | `achievementEarned(id)` | This save has earned the achievement. |
+| `{ custom: 'achievements/earned', with: { achievement } }` | `achievementEarned(id)` | This save has earned the achievement. |
 
 It reads what this save has earned, not the profile, so a replay of a save always reads the same. An unknown achievement is never earned.
 
@@ -157,9 +157,9 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'achievements/grant', with: { id } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
+| `{ custom: 'achievements/grant', with: { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
-In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { id } }`.
+In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
 
 ## Value
 

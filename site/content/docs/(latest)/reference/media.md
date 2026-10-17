@@ -55,8 +55,8 @@ const knock: DataScene = {
   },
   body: [{ text: 'flat.knock' }, { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }],
   choices: [
-    { id: 'answer', effects: [{ kind: 'scene', id: 'flat.visitor' }] },
-    { id: 'ignore', effects: [{ kind: 'scene', id: null }] },
+    { id: 'answer', effects: [{ kind: 'scene', scene: 'flat.visitor' }] },
+    { id: 'ignore', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
 ```

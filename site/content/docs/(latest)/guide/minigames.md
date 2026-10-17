@@ -29,7 +29,7 @@ const ARROWS = ['up', 'down', 'left', 'right'] as const
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   label: `arrows.${arrow}`,
   after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', add: 1 }] } : {}) })),
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}) })),
 })
 ```
 
@@ -69,7 +69,7 @@ const quickFeet: MinigameDef = {
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', add: 1 },
+            { kind: 'minigameVar', key: 'round', by: 1 },
             { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
           ],
         },
@@ -78,8 +78,8 @@ const quickFeet: MinigameDef = {
     pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
     tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', key: 'coins', by: 5 }, { kind: 'scene', id: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ kind: 'scene', id: 'park.arrows-lost' }] } },
+    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
   },
 }
 ```
@@ -122,11 +122,11 @@ export const town: Pack = {
   // ...
   minigames: [quickFeet],
   activities: [
-    { id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] },
+    { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
   ],
   scenes: [
-    { id: 'park.arrows-won', title: 'Quick feet', body: [{ text: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }] },
-    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ text: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }] },
+    { id: 'park.arrows-won', title: 'Quick feet', body: [{ text: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ text: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
   ],
 }
 ```

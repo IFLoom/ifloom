@@ -48,7 +48,7 @@ type Lock = {
 | `reason` | The refusal and the disabled text, written for the player. |
 
 **Gotchas.**
-- A lock stops a command wherever it's aimed, so `deny: ['places/go']` stops every journey. To keep the player out of some places and not others, give those places a [`locked`](/docs/plugins/places#locationdef) entry instead.
+- A lock stops a command wherever it's aimed, so `deny: ['places/go']` stops every journey. To keep the player out of some places and not others, give those places a [`blocked`](/docs/plugins/places#locationdef) entry instead.
 - A lock with `effect` still only stops what `deny` covers. `deny: ['*']` with `effect: 'turn'` stops every command that would end a turn.
 - `effect` only sees what [`effectsOf`](/docs/reference/actions#effectsof) lists, which is an activity's cost and effects, a choice's effects, an item's use, and a plugin command's own [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). The calendar's `sleep` lists a `calendar/pass`, not a `turn`, so `effect: 'turn'` doesn't stop it but `effect: 'calendar/pass'` does.
 - A lock that denies `'*'` counts for [`lockedOut`](#lockedout) even when it has an `effect`, so the room shows no exits, people or actions while it's on.
@@ -123,7 +123,7 @@ rules: {
 The last choice of the intro:
 
 ```ts
-effects: [{ kind: 'phase', value: 'open' }, moveTo('flat')]
+effects: [{ kind: 'phase', to: 'open' }, moveTo('flat')]
 ```
 
 In a game with the [calendar](/docs/plugins/calendar), the intro's scenes may need to carry the clock through the night. Build the calendar with `calendar({ curfew: { not: { phase: ['arrival'] } } })` so its curfew doesn't apply during the intro.
@@ -138,11 +138,11 @@ locks: [
 ]
 ```
 
-Every exit shows greyed out with `Stay in tonight.` To keep the player out of the park but let them walk the high street, put the condition on the park itself, as a place's [`locked`](/docs/plugins/places#locationdef) entry. Add `hide: true` for a place that shouldn't be on the map at all:
+Every exit shows greyed out with `Stay in tonight.` To keep the player out of the park but let them walk the high street, put the condition on the park itself, as a place's [`blocked`](/docs/plugins/places#locationdef) entry. Add `hide: true` for a place that shouldn't be on the map at all:
 
 ```ts
-{ id: 'park', /* … */ locked: [{ when: { phase: ['first-night'] }, reason: 'Too far for tonight.' }] }
-{ id: 'office', /* … */ locked: [{ when: { phase: ['first-night'] }, reason: 'Nobody is in yet.', hide: true }] }
+{ id: 'park', /* … */ blocked: [{ when: { phase: ['first-night'] }, reason: 'Too far for tonight.' }] }
+{ id: 'office', /* … */ blocked: [{ when: { phase: ['first-night'] }, reason: 'Nobody is in yet.', hide: true }] }
 ```
 
 A lock's `hide` leaves any button off the screen, not only exits. With this lock, late at night every activity button, such as Buy a coffee, is gone rather than greyed out, while the exits home still show:

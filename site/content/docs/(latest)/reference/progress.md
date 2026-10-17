@@ -32,8 +32,8 @@ import { person } from '@ifloom/plugin-cast'
   id: 'chat',
   label: 'Ask how the coffee machine is behaving',
   effects: [
-    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }]),
-    { kind: 'scene', id: 'ava.chat.machine' },
+    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }]),
+    { kind: 'scene', scene: 'ava.chat.machine' },
   ],
 }
 ```
@@ -85,7 +85,7 @@ effects: [bumped(state, 'ava', 'coffeesBought')]
 if (count(state, 'ava', 'coffeesBought') >= 10) { /* she knows your order */ }
 ```
 
-In data, the same counter is the `{ counter: { storyline, key }, gte }` [condition](/docs/reference/conditions).
+In data, the same counter is the `{ storylineKv: { storyline, key }, gte }` [condition](/docs/reference/conditions).
 
 **Gotcha:** `bumped` reads the count when the effect is built. Two `bumped` effects for the same key in one list both start from the same value, so the second overwrites the first instead of adding to it.
 
@@ -139,7 +139,7 @@ const AVA: Stages = {
   stages: [
     { id: 'name', key: 'knowsName', scene: 'ava.name' },
     { id: 'recipe', key: 'sharedRecipe', scene: 'ava.recipe', after: 3,
-      needs: { counter: { storyline: 'ava', key: 'visits' }, gte: 5 } },
+      needs: { storylineKv: { storyline: 'ava', key: 'visits' }, gte: 5 } },
     { id: 'river', key: 'avaTrusts', scene: 'ava.river', after: 7 },
   ],
 }

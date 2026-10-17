@@ -29,8 +29,8 @@ Deep paths such as `@ifloom/engine/scene.ts` still resolve, because the packages
 
 Nothing is promised until the first release, but some parts are built to survive change:
 
-- **Saves carry their version.** The format is at version 11 (`SAVE_VERSION`). When the format changes, an older save is carried forward a step at a time when it's loaded, so a player's saves survive an engine update. Plugins version their own state the same way. See [Saves](/docs/reference/saves).
-- **Packs carry their schema.** A pack says which version of the content format it was written for with `schema: SCHEMA`. The loader leaves out a pack written for another version, and reports it as a problem, rather than misreading it. See [Packs and loading](/docs/reference/loader).
+- **Saves carry their version.** The format is at version 12 (`SAVE_VERSION`). When the format changes, an older save is carried forward a step at a time when it's loaded, so a player's saves survive an engine update. Plugins version their own state the same way. See [Saves](/docs/reference/saves).
+- **Packs carry their schema.** A pack says which version of the content format it was written for with `schema: SCHEMA`. The loader upgrades a pack written for an older version, so old packs and mod files keep loading, and leaves out one written for a newer version with a problem, rather than misreading it. See [Packs and loading](/docs/reference/loader).
 
 Everything else can still change, including function names, option names and the shapes of content. When one does, the reference pages change with it. Known gaps are described on the reference page they affect, usually under its gotchas.
 

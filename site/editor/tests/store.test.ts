@@ -59,4 +59,32 @@ describe('the project store', () => {
     expect(loaded?.pack.schema).toBe(SCHEMA)
     expect(loaded?.pack.scenes[0]).toEqual({ id: 'market', body: [{ text: 'market', when: { kv: 'heardBusker' } }], choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }] }] })
   })
+  it('upgrades a schema 5 project to the content naming rule and blocked', async () => {
+    const store = projectStore(new IDBFactory())
+    const current = sampleProject()
+    const old = {
+      ...current,
+      pack: {
+        ...current.pack,
+        schema: 5,
+        items: [{ id: 'bun', name: 'Bun', desc: 'A bun.', kind: 'stuff', use: { label: 'Eat', effects: [{ kind: 'setStat', key: 'energy', to: 10 }] } }],
+        scenes: [
+          {
+            id: 'market',
+            body: [{ text: 'market', when: { has: 'bun' } }],
+            choices: [{ id: 'buy', blocked: [{ when: { turn: true, lt: 1 }, reason: 'Not yet.' }], effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'item', id: 'bun', by: 1 }, { kind: 'scene', id: null }] }],
+          },
+        ],
+      },
+    }
+    await store.put(old as never)
+    const loaded = await store.get(old.id)
+    expect(loaded?.pack.schema).toBe(SCHEMA)
+    expect(loaded?.pack.items[0].use?.effects).toEqual([{ kind: 'stat', stat: 'energy', to: 10 }])
+    expect(loaded?.pack.scenes[0]).toEqual({
+      id: 'market',
+      body: [{ text: 'market', when: { item: 'bun' } }],
+      choices: [{ id: 'buy', blocked: [{ when: { turn: { lt: 1 } }, reason: 'Not yet.' }], effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'item', item: 'bun', by: 1 }, { kind: 'scene', scene: null }] }],
+    })
+  })
 })

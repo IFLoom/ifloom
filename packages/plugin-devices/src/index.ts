@@ -23,6 +23,7 @@ import {
   say,
   whyNot,
   type Block,
+  type Blocked,
   type Command,
   type Condition,
   type Game,
@@ -71,8 +72,8 @@ export type AppDef = {
   on: string
   /** Installed: off the home screen until this holds. */
   when?: Condition
-  /** On the home screen but greyed out while one holds, with its reason. */
-  locked?: { when: Condition; reason: string }[]
+  /** On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. */
+  blocked?: Blocked[]
   /** A count from a value (`messages/unread-texts`), or a dot while a condition holds. */
   badge?: { count: string } | { when: Condition }
   sections: Section[]
@@ -148,7 +149,12 @@ export function devices(options: DevicesOptions) {
   function refusal(state: GameState, game: Game, app: AppDef | undefined): string | undefined {
     if (!app) return say(game, 'devices/noSuchApp')
     if (!holds(state, app.when, game)) return say(game, 'devices/notInstalled')
-    return app.locked?.find((entry) => holds(state, entry.when, game))?.reason
+    return app.blocked?.find((entry) => holds(state, entry.when, game))?.reason
+  }
+
+  /** Is something left off the screen by one of its `blocked` entries that hides? */
+  function hides(state: GameState, game: Game, blocked: readonly Blocked[] | undefined): boolean {
+    return Boolean(blocked?.some((entry) => entry.hide && holds(state, entry.when, game)))
   }
 
   function badgeOf(state: GameState, game: Game, app: AppDef): number | boolean {
@@ -166,7 +172,7 @@ export function devices(options: DevicesOptions) {
     if ('actions' in section) {
       return {
         kind: 'actions',
-        actions: section.actions.filter((action) => holds(state, action.when, game)).map((action) => renderAction(state, game, action)),
+        actions: section.actions.filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked)).map((action) => renderAction(state, game, action)),
       }
     }
     if ('collection' in section) {
@@ -205,7 +211,7 @@ export function devices(options: DevicesOptions) {
       name: app.name,
       icon: app.icon,
       badge: badgeOf(state, game, app),
-      // The same answer opening it gets: the app's own `locked`, and any lock on `devices/open`.
+      // The same answer opening it gets: the app's own `blocked`, and any lock on `devices/open`.
       disabled: whyNot(state, game, openApp(app.id)),
       command: openApp(app.id),
       sections: open ? app.sections.map((section, index) => sectionView(state, game, app, section, index)) : [],
@@ -232,22 +238,22 @@ export function devices(options: DevicesOptions) {
           : Boolean(slice.open[String(args.device)]),
     },
     commands: {
-      /** `{ type: 'custom', name: 'devices/open', with: { app } }`. Free: no time passes. */
+      /** `{ type: 'custom', name: 'devices/open', with: { id } }`: open the app `id`. Free: no time passes. */
       open: {
-        whyNot: (state, args, { game }) => refusal(state, game, appById(game, String(args.app ?? ''))),
+        whyNot: (state, args, { game }) => refusal(state, game, appById(game, String(args.id ?? ''))),
         run: (_state, args, { slice, set, game }) => {
-          const app = appById(game, String(args.app))!
+          const app = appById(game, String(args.id))!
           return set({ ...slice, open: { ...slice.open, [app.on]: app.id } })
         },
       },
-      /** `{ type: 'custom', name: 'devices/close', with: { device } }`: back to the home screen. */
+      /** `{ type: 'custom', name: 'devices/close', with: { id } }`: the device `id` back to its home screen. */
       close: {
-        whyNot: (_state, args, { game }) => (deviceIds.has(String(args.device ?? '')) ? undefined : say(game, 'devices/noSuchDevice')),
-        run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.device)]: null } }),
+        whyNot: (_state, args, { game }) => (deviceIds.has(String(args.id ?? '')) ? undefined : say(game, 'devices/noSuchDevice')),
+        run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.id)]: null } }),
       },
     },
     hooks: {
-      // An app that could not be opened now — not installed, locked, or a lock on
+      // An app that could not be opened now — not installed, blocked, or a lock on
       // the device (no phone at work) — closes, so its buttons are not left live.
       after: (_before, after, { slice, set, game }) => {
         let open = slice.open
@@ -259,7 +265,7 @@ export function devices(options: DevicesOptions) {
     },
     view: (state, { slice, game }): DevicesView => ({
       devices: options.devices.map((device): DeviceView => {
-        const installed = apps(game).filter((app) => app.on === device.id && holds(state, app.when, game))
+        const installed = apps(game).filter((app) => app.on === device.id && holds(state, app.when, game) && !hides(state, game, app.blocked))
         const shown = installed.map((app) => appView(state, game, app, false))
         const openId = slice.open[device.id] ?? null
         const openApp = installed.find((app) => app.id === openId)
@@ -282,7 +288,7 @@ export function devices(options: DevicesOptions) {
           id: app.id,
           refs: [
             { when: app.when },
-            ...(app.locked ?? []).map((entry) => ({ when: entry.when })),
+            ...(app.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(app.badge && 'count' in app.badge ? [{ value: app.badge.count }] : []),
             ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {
@@ -316,8 +322,8 @@ export function devices(options: DevicesOptions) {
 }
 
 /** A command: open this app. */
-export const openApp = (app: string): Command => ({ type: 'custom', name: 'devices/open', with: { app } })
+export const openApp = (app: string): Command => ({ type: 'custom', name: 'devices/open', with: { id: app } })
 /** A command: back to this device's home screen. */
-export const closeApp = (device: string): Command => ({ type: 'custom', name: 'devices/close', with: { device } })
+export const closeApp = (device: string): Command => ({ type: 'custom', name: 'devices/close', with: { id: device } })
 /** A condition: this app is open. */
 export const appOpen = (app: string): Condition => ({ custom: 'devices/open', with: { app } })

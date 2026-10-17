@@ -106,7 +106,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
 | `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineKv` or `counter`. |
-| `unknown item "…"` | An item nobody declares, in `item` or `has`. |
+| `unknown item "…"` | An item nobody declares, in an `item` condition or effect, or a `use` command. |
 | `unknown stat "…"` | A stat nobody declares, in `stat`, `level` or `tier`. |
 | `unknown collection "…"` | A collection nobody declares. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'` names no kind and isn't checked. |
@@ -129,11 +129,11 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `an effect needs a kind, or a custom call by name` | An effect with neither, such as `{}`. It does nothing. |
 | `no custom effect named "…"` | A `{ custom }` or short-form effect that neither the game nor a plugin declares. |
 | `no plugin effect named "…"` | A long-form `{ kind: 'custom', name }` effect that no plugin declares. Only a plugin can answer the long form. |
-| `unknown stat "…"` | A `stat` or `setStat` effect names a stat nobody declares. |
-| A stat owner problem | A `stat` or `setStat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
-| `stat "…" is derived: it is worked out, never written` | A `stat` or `setStat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
+| `unknown stat "…"` | A `stat` effect names a stat nobody declares. |
+| A stat owner problem | A `stat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
+| `stat "…" is derived: it is worked out, never written` | A `stat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
 | `no <kind> stat named "…"` | A `create` effect gives its entity a stat that isn't declared `of` its kind. |
-| `unknown kind "…"` | A `create`'s or `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `kv` or `remove` effect. |
+| `unknown kind "…"` | A `create`'s or `each`'s `of`, the kind in the `of` of a `stat` or `kv` effect, or in a `remove` effect's `entity`. |
 | `unknown item "…"` | An `item` effect. |
 | `unknown storyline "…"` | A `storylineKv` or `closeStoryline` effect. |
 | `unknown collection "…"` | A `collect` or `discard`. |
@@ -162,7 +162,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 
 ### Stat owners
 
-A stat is either the player's or belongs to a [kind](/docs/reference/entities). Wherever a stat is named, in `stat` and `level` conditions and in `stat` and `setStat` effects, it has to be named on the right owner:
+A stat is either the player's or belongs to a [kind](/docs/reference/entities). Wherever a stat is named, in `stat` and `level` conditions and in `stat` effects, it has to be named on the right owner:
 
 | Problem | Means |
 |---|---|
@@ -180,7 +180,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 |---|---|
 | `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and `no custom panel named "…"` for its `panelData`. For every scene, data or hand-written, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `item <id>` | The effects of its `use`. |
-| `activity <id>` | Each requirement's `when`, and its `effects`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. |
+| `activity <id>` | Each `blocked` entry's `when`, and its `effects`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. |
 | `action <id>` | The game's own [`actions`](/docs/reference/game#game): each one's `when` and `blocked`, and its `command`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |

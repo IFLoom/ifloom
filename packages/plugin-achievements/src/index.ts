@@ -191,13 +191,13 @@ export function achievements() {
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {
-      /** `{ custom: 'achievements/earned', with: { id } }`: earned in this save. */
-      earned: (_state, args, { slice }) => slice.earned[String(args.id ?? '')] !== undefined,
+      /** `{ custom: 'achievements/earned', with: { achievement } }`: earned in this save. */
+      earned: (_state, args, { slice }) => slice.earned[String(args.achievement ?? '')] !== undefined,
     },
     effects: {
-      /** `{ custom: 'achievements/grant', with: { id } }`: earn it now, if it isn't earned. */
+      /** `{ custom: 'achievements/grant', with: { achievement } }`: earn it now, if it isn't earned. */
       grant: (state, args, { slice, set, game }) => {
-        const id = String(args.id ?? '')
+        const id = String(args.achievement ?? '')
         if (slice.earned[id] !== undefined || !achievementDefs(game).some((def) => def.id === id)) return state
         return earn(state, [id], game, set, slice)
       },
@@ -225,7 +225,7 @@ export function achievements() {
     },
     view: (state, { slice, game, profile }) => achievementsView(slice, state, game, profile),
     references: {
-      calls: (_kind, _name, args) => (args.id === undefined ? [] : [{ entry: String(args.id), plugin: ID, list: 'achievements', noun: 'achievement' }]),
+      calls: (_kind, _name, args) => (args.achievement === undefined ? [] : [{ entry: String(args.achievement), plugin: ID, list: 'achievements', noun: 'achievement' }]),
       content: (game) =>
         achievementDefs(game).map((def) => ({
           list: 'achievements',
@@ -266,6 +266,6 @@ function progressRefs(value: ProgressValue): Reference[] {
 }
 
 /** A condition: the achievement is earned in this save. */
-export const achievementEarned = (id: string): Condition => ({ custom: 'achievements/earned', with: { id } })
+export const achievementEarned = (id: string): Condition => ({ custom: 'achievements/earned', with: { achievement: id } })
 /** An effect: earn the achievement now. */
-export const grantAchievement = (id: string): EffectRef => ({ custom: 'achievements/grant', with: { id } })
+export const grantAchievement = (id: string): EffectRef => ({ custom: 'achievements/grant', with: { achievement: id } })

@@ -16,7 +16,7 @@ export function count(state: GameState, storylineId: string, key: string): numbe
 }
 
 export function counted(storylineId: string, key: string, value: number): Effect {
-  return { kind: 'storylineKv', id: storylineId, key, to: value }
+  return { kind: 'storylineKv', storyline: storylineId, key, to: value }
 }
 
 export function bumped(

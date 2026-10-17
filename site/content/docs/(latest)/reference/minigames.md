@@ -24,7 +24,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   on: ARROWS.map((input) => ({
     input,
     go: 'round',
-    ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', add: 1 }] } : {}),
+    ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}),
   })),
 })
 
@@ -42,7 +42,7 @@ const quickFeet: MinigameDef = {
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', add: 1 },
+            { kind: 'minigameVar', key: 'round', by: 1 },
             { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
           ],
         },
@@ -51,8 +51,8 @@ const quickFeet: MinigameDef = {
     pick: { always: ARROWS.map((arrow, i) => ({ when: { minigameVar: 'arrow', gte: i + 1, lte: i + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
     tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', key: 'coins', by: 5 }, { kind: 'scene', id: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ kind: 'scene', id: 'park.arrows-lost' }] } },
+    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
   },
 }
 
@@ -60,12 +60,12 @@ export const town: Pack = {
   id: 'town',
   schema: SCHEMA,
   minigames: [quickFeet],
-  activities: [{ id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] }],
+  activities: [{ id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] }],
   // ...
 }
 ```
 
-The park offers it as a button whose activity applies [`{ kind: 'minigame', id: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
+The park offers it as a button whose activity applies [`{ kind: 'minigame', minigame: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
 
 ```ts
 import { apply, view } from '@ifloom/engine'
@@ -194,7 +194,7 @@ A field on a [scene](/docs/reference/scenes), data or hand-built. The minigame s
   title: 'The coconut shy',
   minigame: 'coconut',
   body: [{ text: 'fair.coconut' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
 }
 ```
 

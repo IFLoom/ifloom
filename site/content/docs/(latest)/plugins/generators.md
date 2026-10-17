@@ -68,7 +68,7 @@ const town: Pack = {
       id: 'visitors',
       once: 'turn',
       when: at('park'),
-      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', of: '$' }] }, generate('visitor', 2)],
+      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', entity: '$' }] }, generate('visitor', 2)],
     },
   ],
   data: { generators: { pools, templates: [visitor] } },

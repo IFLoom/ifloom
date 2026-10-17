@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react'
 import type { Block, Choice, DataScene, SceneMedia } from '@ifloom/engine'
-import { costOf, shortBlock, withCost } from '../../lib/builders'
+import { costOf, isCost, shortBlock, withCost } from '../../lib/builders'
 import { rename, renameChoice } from '../../lib/references'
 import { OptionalCondition } from '../ConditionBuilder'
 import { EffectList } from '../EffectBuilder'
@@ -358,7 +358,7 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           </Field>
 
           <Field label="Effects" hint="Run in order when the player picks it.">
-            <EffectList {...builder} value={choice.effects.filter((e) => !cost.length || !('kind' in e && e.kind === 'stat' && e.of === undefined && e.by < 0))} onChange={(effects) => set({ effects: withCost(effects, cost) })} />
+            <EffectList {...builder} value={choice.effects.filter((e) => !cost.length || !isCost(e))} onChange={(effects) => set({ effects: withCost(effects, cost) })} />
           </Field>
 
           <details className="text-xs">

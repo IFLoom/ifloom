@@ -7,7 +7,7 @@ import { createRunner, replay } from '../../src/runner.ts'
 import type { DataScene } from '../../src/scene.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 
-const leave = [{ id: 'leave', effects: [{ kind: 'scene' as const, id: null }] }]
+const leave = [{ id: 'leave', effects: [{ kind: 'scene' as const, scene: null }] }]
 
 /** A café with things that might happen while you sit there. */
 function scene(id: string, extra: Partial<DataScene> = {}): DataScene {

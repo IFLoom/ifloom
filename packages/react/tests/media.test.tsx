@@ -44,7 +44,7 @@ function flat(extra: Partial<Pack> = {}): Game {
             body: [{ text: 'evening' }],
             choices: [
               { id: 'call', effects: [{ kind: 'kv', key: 'called', to: true }] },
-              { id: 'out', effects: [{ kind: 'scene', id: null }] },
+              { id: 'out', effects: [{ kind: 'scene', scene: null }] },
             ],
           },
         ],

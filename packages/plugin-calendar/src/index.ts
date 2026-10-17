@@ -91,9 +91,9 @@ function passed(effects: readonly Effect[]): number {
   }, 0)
 }
 
-/** `{ value: n }` (from `{ 'calendar/pass': n }`) or `{ periods: n }`. */
+/** `{ value: n }` (from `{ 'calendar/pass': n }`) or `{ by: n }`. */
 function periodsIn(args: Record<string, unknown>): number {
-  const n = Number(args.periods ?? args.value ?? 1)
+  const n = Number(args.by ?? args.value ?? 1)
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
 }
 
@@ -168,7 +168,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       curfew: (state, _args, context) => curfewBinds(state, context),
     },
     effects: {
-      /** `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { periods: 2 } }`: time goes by. */
+      /** `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { by: 2 } }`: time goes by that many periods. */
       pass: (state, args, context) => pass(state, periodsIn(args), context),
       /** `{ 'calendar/set': { day, period } }`: put the clock somewhere. Ends no turn. */
       // A period the calendar does not have leaves the period as it was.
@@ -187,7 +187,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
               return sleep.from.includes(slice.period) ? undefined : say(game, `${ID}/tooEarly`)
             },
             run: (state, _args, context) => pass(state, untilMorning(context.slice), context),
-            effectsOf: (_state, _args, { slice }) => [{ kind: 'custom', name: `${ID}/pass`, with: { periods: untilMorning(slice) } }],
+            effectsOf: (_state, _args, { slice }) => [{ kind: 'custom', name: `${ID}/pass`, with: { by: untilMorning(slice) } }],
           },
         }
       : {},

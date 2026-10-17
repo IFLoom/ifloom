@@ -126,8 +126,8 @@ export const OFFSTAGE = 'offstage'
 
 /** A list from arguments: `{ 'cast/here': ['ava'] }` arrives as `{ value: ['ava'] }`. */
 function ids(args: PluginArgs, key = 'value'): string[] {
-  // Who is asked about may be written `value`, `who` or `id`; places only as `at`.
-  const value = key === 'at' ? args.at : (args[key] ?? args.who ?? args.id)
+  // Who is asked about may be written `value`, `character` or `id`; places only as `at`.
+  const value = key === 'at' ? args.at : (args[key] ?? args.character ?? args.id)
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
@@ -221,9 +221,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
         const def = characterById(context.game, id)
         return def ? isHere(state, context, def) : false
       }),
-      /** `{ 'cast/at': { who: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
+      /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
       at: (state, args, { game }) => {
-        const def = characterById(game, ids(args, 'who')[0])
+        const def = characterById(game, ids(args, 'character')[0])
         return def ? ids(args, 'at').includes(locationOf(state, game, def)) : false
       },
       /** `{ 'cast/met': 'ava' }`: the player has met them. */
@@ -233,19 +233,19 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
       }),
     },
     commands: {
-      /** `{ type: 'custom', name: 'cast/talk', with: { who } }`: start a conversation with someone here. */
+      /** `{ type: 'custom', name: 'cast/talk', with: { id } }`: start a conversation with someone here. */
       talk: {
-        whyNot: (state, args, context) => talkBlocked(state, context, ids(args, 'who')[0]),
+        whyNot: (state, args, context) => talkBlocked(state, context, ids(args, 'id')[0]),
         run: (state, args, { game }) => {
-          const def = characterById(game, ids(args, 'who')[0])!
+          const def = characterById(game, ids(args, 'id')[0])!
           return { ...state, sceneId: talkOption(state, game, def)!.scene }
         },
       },
-      /** `{ type: 'custom', name: 'cast/call', with: { who } }`: reach someone from anywhere. */
+      /** `{ type: 'custom', name: 'cast/call', with: { id } }`: reach someone from anywhere. */
       call: {
-        whyNot: (state, args, { game }) => callBlocked(state, game, ids(args, 'who')[0]),
+        whyNot: (state, args, { game }) => callBlocked(state, game, ids(args, 'id')[0]),
         run: (state, args, { game }) => {
-          const def = characterById(game, ids(args, 'who')[0])!
+          const def = characterById(game, ids(args, 'id')[0])!
           return { ...state, sceneId: def.call?.scene ?? talkOption(state, game, def)?.scene ?? talkOptions(def)[0]?.scene ?? null }
         },
       },
@@ -283,9 +283,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
       }
     },
     references: {
-      // The people a call names, as value, who or id.
+      // The people a call names, as value, character or id.
       calls: (kindOf, name, args) => {
-        const named = kindOf === 'conditions' ? (name === 'at' ? ids(args, 'who') : ids(args)) : ids(args, 'who')
+        const named = kindOf === 'conditions' ? (name === 'at' ? ids(args, 'character') : ids(args)) : ids(args, 'id')
         return named.map((id) => ({ entry: id, plugin: ID, list: 'characters', noun: 'character' }))
       },
       content: (game) => {
@@ -326,13 +326,13 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
 }
 
 /** The command that starts a conversation. */
-export const talk = (who: string): Command => ({ type: 'custom', name: `${ID}/talk`, with: { who } })
+export const talk = (who: string): Command => ({ type: 'custom', name: `${ID}/talk`, with: { id: who } })
 /** The command that calls someone. */
-export const call = (who: string): Command => ({ type: 'custom', name: `${ID}/call`, with: { who } })
+export const call = (who: string): Command => ({ type: 'custom', name: `${ID}/call`, with: { id: who } })
 /** True while any of these is in the room. */
 export const here = (...who: string[]): Condition => ({ [`${ID}/here`]: who })
 /** True while this one is in one of these places. */
-export const isAt = (who: string, ...places: string[]): Condition => ({ [`${ID}/at`]: { who, at: places } })
+export const isAt = (who: string, ...places: string[]): Condition => ({ [`${ID}/at`]: { character: who, at: places } })
 /** True once the player has met any of these. */
 export const hasMet = (...who: string[]): Condition => ({ [`${ID}/met`]: who })
 /** How content names someone, for `of`: `person('ava')` is `'character:ava'`. */

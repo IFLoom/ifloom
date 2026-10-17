@@ -124,7 +124,7 @@ type AppDef = {
   icon: string
   on: string
   when?: Condition
-  locked?: { when: Condition; reason: string }[]
+  blocked?: Blocked[]
   badge?: { count: string } | { when: Condition }
   sections: Section[]
 }
@@ -137,11 +137,11 @@ type AppDef = {
 | `icon` | A name the UI maps to a picture. |
 | `on` | The [device](#devicedef) it's on. |
 | `when` | When the app is installed. It stays off the home screen until this holds. If you leave it out, it's always installed. |
-| `locked` | The app shows on the home screen but is greyed out while one of these holds, with the first one's `reason`. A [lock](/docs/reference/locks) on `devices/open` greys it out too. |
+| `blocked` | The app shows on the home screen but is greyed out while one of these [`Blocked`](/docs/reference/actions#blocked) entries holds, with the first one's `reason`. With `hide: true`, it's left off the home screen instead. A [lock](/docs/reference/locks) on `devices/open` greys it out too. |
 | `badge` | `{ count: name }` shows the number a [value](/docs/reference/custom) gives, such as `messages/unread-texts`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
 | `sections` | What fills the app, top to bottom. |
 
-An icon's states come from fields you already have. A locked icon comes from `locked`, a new one from a badge, and a waiting one from an action's reason.
+An icon's states come from fields you already have. A locked icon comes from `blocked`, a new one from a badge, and a waiting one from an action's reason.
 
 ### Section
 
@@ -171,7 +171,7 @@ import type { AppDef } from '@ifloom/plugin-devices'
 
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
-  locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
+  blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
   sections: [{ prose: [{ text: 'bank.balance' }] }],   // 'You have {{v:balance}}.'
 }
 
@@ -222,13 +222,13 @@ const apps: AppDef[] = [
     sections: [{
       actions: [
         { id: 'sandwich', label: 'Order a sandwich', command: { type: 'activity', id: 'orderSandwich' } },
-        { id: 'scarf', label: 'Order a scarf', command: { type: 'activity', id: 'orderScarf' }, when: { not: { has: 'scarf' } } },
+        { id: 'scarf', label: 'Order a scarf', command: { type: 'activity', id: 'orderScarf' }, when: { not: { item: 'scarf' } } },
       ],
     }],
   },
   {
     id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
-    locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
+    blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
     sections: [{ prose: [{ text: 'bank.balance' }] }],
   },
   {
@@ -254,9 +254,9 @@ const town: Pack = {
   ],
   collections: [{ id: 'notes', name: 'Notes' }],
   activities: [
-    { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
-    { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
-    { id: 'jot', effects: [{ kind: 'collect', to: 'notes', entry: { id: 'shopping', title: 'Shopping', text: 'note.shopping' } }] },
+    { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
+    { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
+    { id: 'jot', effects: [{ kind: 'collect', collection: 'notes', entry: { id: 'shopping', title: 'Shopping', text: 'note.shopping' } }] },
     { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
   ],
   prose: {
@@ -353,8 +353,8 @@ In the short form, with the full name as the only key, it's `{ 'devices/open': {
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'devices/open', with: { app } }` | `openApp(app)` | Opens the app on its device. Any app already open on that device closes. |
-| `{ type: 'custom', name: 'devices/close', with: { device } }` | `closeApp(device)` | Goes back to the device's home screen. |
+| `{ type: 'custom', name: 'devices/open', with: { id } }` | `openApp(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
+| `{ type: 'custom', name: 'devices/close', with: { id } }` | `closeApp(device)` | Takes the device `id` back to its home screen. |
 
 Both are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
 
@@ -363,7 +363,7 @@ Both are free, so no time passes and the player doesn't move. [Locks](/docs/refe
 1. a [lock](/docs/reference/locks)'s `reason`
 2. `There is no such app.`
 3. `That is not installed.`, while the app's `when` doesn't hold
-4. the `reason` of the first `locked` entry that holds
+4. the `reason` of the first `blocked` entry that holds
 
 An app's `disabled` in the view is this same answer, so a lock that stops opening greys out every app with its reason.
 
@@ -448,7 +448,7 @@ type AppView = {
 | Field | What it is |
 |---|---|
 | `badge` | A count, a dot (`true`, or `false` when the dot's condition doesn't hold), or `0` for an app with no badge. |
-| `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `locked` reason that holds. It's left out if the app can be opened. |
+| `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `blocked` reason that holds. It's left out if the app can be opened. |
 | `command` | The command that opens it, `openApp(id)`. |
 | `sections` | Only filled in for the open app. In `apps`, every app's `sections` is `[]`, so read them from `open`. |
 
@@ -502,7 +502,7 @@ const appOpen: (app: string) => Condition
 When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 - an app on a device the plugin wasn't given (`no device called "…"`)
-- anything the app's `when`, a `locked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
+- anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
 - a count badge naming a value no plugin and no custom function has (`no custom value named "…"`)
 - a collection the game doesn't declare (`unknown collection "…"`)
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
@@ -525,7 +525,7 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **Section data is filled in for the open app only.** `apps[i].sections` is always `[]`. Draw the home screen from `apps`, and the screen of an app from `open`.
 - **A `plugin` section only names the slice.** It carries the plugin's id and `with`, not the plugin's data. The UI draws `view.plugins[section.plugin]` with that plugin's renderer, picking out the part `with` names, such as one channel or one feed.
 - **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
-- **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `locked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
+- **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `blocked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
 - **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
 - **A count badge reads a value by name.** Values from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins are named after the channels and feeds you configure, such as `messages/unread-texts`. A value that isn't a number counts as `0`.

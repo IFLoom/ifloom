@@ -22,6 +22,21 @@ export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
 export type { MinigameSceneFields } from './features/minigames.ts'
 
+/**
+ * Why something the player could do is refused for now: a choice, an action,
+ * an activity, a place, an app. Each entry is checked in order, and the first
+ * whose `when` holds refuses it with its `reason`, which the button shows
+ * greyed out. With `hide`, the button is left off the screen instead.
+ */
+export type Blocked = {
+  /** Refused while this holds. */
+  when: Condition
+  /** What the player reads on the greyed-out button, and the refusal. */
+  reason: string
+  /** Leave it off the screen while `when` holds, rather than greyed out. */
+  hide?: boolean
+}
+
 /** Something to do, as a button: a command, and when it is offered. The game's own, a plugin's, a place's. */
 export type ActionDef = {
   id: string
@@ -30,11 +45,11 @@ export type ActionDef = {
   /** Only offered while this holds. */
   when?: Condition
   /**
-   * Shown but greyed out while one of these holds, with its reason. For a
-   * reason the engine already knows — a lock, an activity's requirement — let
-   * `whyNot` say it instead.
+   * Shown but greyed out while one of these holds, with its reason (or left
+   * off with `hide`). For a reason the engine already knows, such as a lock
+   * or an activity's own `blocked`, let `whyNot` say it instead.
    */
-  blocked?: { when: Condition; reason: string }[]
+  blocked?: Blocked[]
 }
 
 export type ItemDef = {

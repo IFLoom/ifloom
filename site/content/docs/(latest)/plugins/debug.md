@@ -72,13 +72,13 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'debug/stat', with: { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running the [`setStat`](/docs/reference/effects#setstat) effect. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
+| `{ type: 'custom', name: 'debug/stat', with: { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
 | `{ type: 'custom', name: 'debug/kv', with: { key, to } }` | `setKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ type: 'custom', name: 'debug/item', with: { item, count } }` | `setItem(item, count)` | Sets how many of an item the player has. Below 0 counts as 0. |
-| `{ type: 'custom', name: 'debug/scene', with: { scene } }` | `jumpTo(scene?)` | Puts a scene on screen. With no `scene`, it closes the one that's open. |
+| `{ type: 'custom', name: 'debug/item', with: { item, to } }` | `setItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
+| `{ type: 'custom', name: 'debug/scene', with: { id } }` | `jumpTo(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
 | `{ type: 'custom', name: 'debug/time', with: { day?, period? } }` | `setTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
-| `{ type: 'custom', name: 'debug/turn', with: { turn } }` | `setTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ type: 'custom', name: 'debug/go', with: { location } }` | `goTo(location)` | Puts the player in a place, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
+| `{ type: 'custom', name: 'debug/turn', with: { to } }` | `setTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
+| `{ type: 'custom', name: 'debug/go', with: { id } }` | `goTo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
 
 A command is refused, with a line from [Strings](#strings), when:
 
@@ -97,7 +97,7 @@ The commands set the state and nothing else, so you can get to the state you wan
 
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
-- **No exit for `debug/go`.** It ignores a place's [`locked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the places plugin's [`arrive`](/docs/plugins/places#placesoptions) option doesn't run.
+- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the places plugin's [`arrive`](/docs/plugins/places#placesoptions) option doesn't run.
 - **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.turn`](/docs/reference/rules#turn), [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `turn` [hook](/docs/reference/plugins#hooks), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 
@@ -205,7 +205,7 @@ type DebugView = {
 
 - **A number must be a number.** `to: '5'`, `to: ''` or `to: null` in a command written by hand is refused with `debug/notANumber`, and so are `NaN` and `Infinity`.
 - **A stat is held to its range** as the game declares it, so `setStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
-- **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through the `setStat` effect, so the game's [`rules.onStat`](/docs/reference/rules#onstat) never sees the change.
+- **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so the game's [`rules.onStat`](/docs/reference/rules#onstat) never sees the change.
 - **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
 - **A kv key isn't checked.** Any key is set, including a misspelt one.
 - **A `custom` entry in [`rules.commands`](/docs/reference/rules#commands) takes over the debug commands too,** as it does every plugin command.

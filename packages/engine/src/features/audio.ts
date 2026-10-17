@@ -119,10 +119,10 @@ export type AudioShape = {
   }
   effects: {
     /**
-     * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', track: 'calm' }`.
-     * `track: null` silences the channel; leaving `track` out hands it back to the place or the game's default.
+     * Put a background channel `to` a track, kept in the save: `{ kind: 'audio', channel: 'music', to: 'calm' }`.
+     * `to: null` silences the channel; leaving `to` out hands it back to the place or the game's default.
      */
-    audio: { kind: 'audio'; channel: string; track?: string | null }
+    audio: { kind: 'audio'; channel: string; to?: string | null }
     /** Play a sound once, on its track's channel. */
     sound: { kind: 'sound'; track: string }
   }
@@ -489,8 +489,8 @@ export const audio = defineFeature<AudioShape>({
   started: (state, game, cx) => noteStarted(state, game, undefined, cx),
   effects: {
     audio: {
-      apply: (state, effect) => setChannel(state, effect.channel, effect.track),
-      references: (effect) => [{ channel: effect.channel, track: effect.track }],
+      apply: (state, effect) => setChannel(state, effect.channel, effect.to),
+      references: (effect) => [{ channel: effect.channel, track: effect.to }],
     },
     sound: {
       apply: (state, effect) => soundCue(state, effect.track),

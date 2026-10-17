@@ -18,6 +18,7 @@ import {
   warningOf,
   whyNot,
   type ActionDef,
+  type Blocked,
   type Block,
   type Command,
   type Condition,
@@ -29,7 +30,6 @@ import {
   type PluginArgs,
   type PluginProblem,
   type Reference,
-  type Requirement,
   type StageView,
 } from '@ifloom/engine'
 
@@ -54,10 +54,10 @@ export type LocationDef = {
   stage?: MediaStage
   /**
    * Travel here is refused while one of these holds, with its reason: a door
-   * shut for the night, a gate locked until a quest is done. With `hide`, the
+   * shut for the night, a gate shut until a quest is done. With `hide`, the
    * exit is left off the screen instead of greyed out.
    */
-  locked?: { when: Condition; reason: string; hide?: boolean }[]
+  blocked?: Blocked[]
   /** What the player reads here while no scene is open: prose blocks, as a data scene's body. */
   body: Block[]
   /** What there is to do here, offered as buttons. */
@@ -128,7 +128,7 @@ export function where(state: GameState): string | null {
 const location = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
 
 function ids(args: PluginArgs): string[] {
-  const value = args.value ?? args.at ?? args.to ?? args.id
+  const value = args.value ?? args.id
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
@@ -146,8 +146,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     const place = locationById(game, to)
     if (!place) return say(game, `${ID}/noSuchPlace`)
     if (to === at) return say(game, `${ID}/alreadyHere`)
-    const locked = place.locked?.find((entry) => holds(state, entry.when, game))
-    if (locked) return locked.reason
+    const blocked = place.blocked?.find((entry) => holds(state, entry.when, game))
+    if (blocked) return blocked.reason
     if (at === null || !locationById(game, at)?.exits.includes(to)) return say(game, `${ID}/cannotGetThere`)
     return undefined
   }
@@ -180,7 +180,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'places/go', with: { to } }`: walk through an exit. */
+      /** `{ type: 'custom', name: 'places/go', with: { id } }`: walk through an exit to the place `id`. */
       go: {
         whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, ids(args)[0]),
         run: (_state, args, { set, game }) => {
@@ -215,7 +215,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         if (!dest) continue
         const command = go(id)
         if (lockOn(state, game, command)?.hide) continue
-        if (dest.locked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
+        if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
         const exit: ExitView = { id, name: dest.name, tag: dest.tag, kind: dest.kind, art: dest.art, command }
         const disabled = whyNot(state, game, command)
         if (disabled) exit.disabled = disabled
@@ -247,7 +247,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
             { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
             // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
             { stage: place.stage, choices: null },
-            ...(place.locked ?? []).map((entry) => ({ when: entry.when })),
+            ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(place.actions ?? []).map((action) => ({
               within: `action ${action.id}`,
               refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
@@ -272,12 +272,12 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
 }
 
 /** The command that walks to a place by an exit. */
-export const go = (to: string): Command => ({ type: 'custom', name: `${ID}/go`, with: { to } })
+export const go = (id: string): Command => ({ type: 'custom', name: `${ID}/go`, with: { id } })
 /** True in any of these places. */
 export const at = (...places: string[]): Condition => ({ [`${ID}/at`]: places })
 /** True in any of these places, or anywhere inside one. */
 export const within = (...places: string[]): Condition => ({ [`${ID}/within`]: places })
 /** The effect that puts the player somewhere at once. */
 export const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: place })
-/** A requirement: only in these places. Its reason is plain text, "Not here." if left out. */
-export const onlyAt = (places: string[], reason?: string): Requirement => ({ when: at(...places), reason: reason ?? 'Not here.' })
+/** A `blocked` entry: refused anywhere but these places. Its reason is plain text, "Not here." if left out. */
+export const onlyAt = (places: string[], reason?: string): Blocked => ({ when: { not: at(...places) }, reason: reason ?? 'Not here.' })

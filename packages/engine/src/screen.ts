@@ -14,7 +14,8 @@ import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './ava
 import { formatStat, statDef } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
-import { sceneById, type ActionDef, type Game, type SceneMedia } from './game.ts'
+import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
+import { activityById } from './activity.ts'
 import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './sceneBody.ts'
 import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
@@ -253,7 +254,7 @@ function drawStage(
     if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
     let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
     if (hotspot.choice !== undefined) button = choices?.find((choice) => choice.id === hotspot.choice)
-    else if (hotspot.command && !hiddenByLock(state, game, hotspot.command, drawing.rendered)) {
+    else if (hotspot.command && !hidden(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command }, drawing.rendered)) {
       button = actionButton(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command }, drawing.rendered)
     }
     if (!button) continue
@@ -270,8 +271,15 @@ function drawStage(
   return { aspect: stage.aspect ?? null, layers, hotspots }
 }
 
-/** Is this button left off the screen by a lock that hides? Never one that ignores locks. */
-function hiddenByLock(state: GameState, game: Game, command: Command, rendered: Rendering): boolean {
+/**
+ * Is this button left off the screen? By its own `blocked` entry that hides,
+ * by its activity's, or by a lock that hides (never on one that ignores locks).
+ */
+function hidden(state: GameState, game: Game, action: ActionDef, rendered: Rendering): boolean {
+  const hides = (entries: readonly Blocked[] | undefined) => Boolean(entries?.some((entry) => entry.hide && holds(state, entry.when, game)))
+  const command = action.command
+  if (hides(action.blocked)) return true
+  if (command.type === 'activity' && hides(activityById(game, command.id)?.blocked)) return true
   if (command.type === 'custom' && pluginCommand(game, command.name)?.ignoresLocks) return false
   return Boolean(lockIn(state, game, command, () => effectsIn(rendered, state, game, command))?.hide)
 }
@@ -282,7 +290,7 @@ function hiddenByLock(state: GameState, game: Game, command: Command, rendered: 
  */
 function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoice[] {
   return [...pluginButtons(game, state), ...(game.actions ?? [])]
-    .filter((action) => holds(state, action.when, game) && !hiddenByLock(state, game, action.command, drawing.rendered))
+    .filter((action) => holds(state, action.when, game) && !hidden(state, game, action, drawing.rendered))
     .map((action) => {
       const effects = effectsIn(drawing.rendered, state, game, action.command)
       return { ...actionButton(state, game, action, drawing.rendered, effects), effects }
@@ -355,8 +363,8 @@ function priceOfEffects(
 ): Price | undefined {
   const spent: Record<string, number> = {}
   for (const effect of effects) {
-    if (effect.kind === 'stat' && effect.of === undefined && effect.by < 0 && statDef(game, effect.key)?.spendable) {
-      spent[effect.key] = (spent[effect.key] ?? 0) - effect.by
+    if (effect.kind === 'stat' && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
+      spent[effect.stat] = (spent[effect.stat] ?? 0) - effect.by
     }
   }
   const stats: Record<string, number> = {}

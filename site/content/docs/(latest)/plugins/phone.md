@@ -193,11 +193,11 @@ import type { MessageDef } from '@ifloom/plugin-messages'
 const activities: ActivityDef[] = [
   ...(['ava', 'sam'] as const).map((who) => ({
     id: `photo-${who}`,
-    requires: [{ reason: 'They aren’t here.', when: here(who) }],
+    blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
     effects: [
       {
         kind: 'collect' as const,
-        to: 'gallery',
+        collection: 'gallery',
         entry: { id: `photo.${who}`, title: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `art/photo/${who}.svg` },
       },
     ],
@@ -205,10 +205,9 @@ const activities: ActivityDef[] = [
   {
     id: 'post',
     cost: { stats: { energy: 5 } },
-    requires: [
-      { reason: 'Take a photo first.', when: { collection: 'gallery' } },
-      { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
-    ],
+    blocked: [
+      { when: { not: { collection: 'gallery' } }, reason: 'Take a photo first.' },
+      { when: { kv: 'postedToday' }, reason: 'You have posted today.' }],
     // postLatest is a custom effect that posts the photo and rolls its likes.
     effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
   },
@@ -227,7 +226,7 @@ const text: MessageDef = {
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
-  replies: [{ id: 'yes', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+  replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
 }
 ```
 
@@ -305,7 +304,7 @@ apply(state, game, call('ava')).refused   // in the morning: 'She’s busy at th
 state = apply(state, game, openApp('contacts')).state
 phoneOf(state).open?.sections[0]
 // { kind: 'list', entries: [{ id: 'ava', title: 'Ava', text: 'Runs the café', image: 'art/character/ava.svg',
-//   actions: [{ id: 'call-ava', label: 'Call', command: { type: 'custom', name: 'cast/call', with: { who: 'ava' } } }] }] }
+//   actions: [{ id: 'call-ava', label: 'Call', command: { type: 'custom', name: 'cast/call', with: { id: 'ava' } } }] }] }
 state = apply(state, game, call('ava')).state
 state.sceneId           // 'ava.call'
 ```

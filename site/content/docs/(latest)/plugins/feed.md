@@ -141,7 +141,7 @@ The player posts with the `feed/post` effect. It names the feed and gives the po
 ```ts
 import { postTo } from '@ifloom/plugin-feed'
 
-const long = { custom: 'feed/post', with: { feed: 'social', id: 'river', text: 'own.river', image: 'art/photo/river.svg' } }
+const long = { custom: 'feed/post', with: { feed: 'social', post: 'river', text: 'own.river', image: 'art/photo/river.svg' } }
 const short = postTo('social', 'river', { text: 'own.river', image: 'art/photo/river.svg' })   // the same
 const clip = postTo('social', 'ducks', { text: 'own.ducks', video: 'art/clips/ducks.mp4' })
 ```
@@ -185,7 +185,7 @@ const town: Pack = {
     { id: 'wait', effects: [pass(1)] },
     {
       id: 'photoRiver',
-      requires: [onlyAt(['park'])],
+      blocked: [onlyAt(['park'])],
       effects: [pass(1), postTo('social', 'river', { text: 'own.river', image: 'art/photo/river.svg' }), { custom: 'howItDid' }],
     },
   ],
@@ -205,7 +205,7 @@ const town: Pack = {
         { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
         {
           ...place('high-street', 'High Street', ['flat', 'park']),
-          actions: [{ id: 'board', label: 'Read the notice board', command: { type: 'custom', name: 'feed/seen', with: { feed: 'board' } } }],
+          actions: [{ id: 'board', label: 'Read the notice board', command: { type: 'custom', name: 'feed/seen', with: { id: 'board' } } }],
         },
         place('park', 'Riverside Park', ['high-street']),
       ],
@@ -284,7 +284,7 @@ feeds(state).unseen     // 1: the notice board
 
 // The high street's button reads the board
 state = apply(state, game, go('high-street')).state
-state = apply(state, game, { type: 'custom', name: 'feed/seen', with: { feed: 'board' } }).state
+state = apply(state, game, { type: 'custom', name: 'feed/seen', with: { id: 'board' } }).state
 feeds(state).unseen     // 0
 ```
 
@@ -309,16 +309,16 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'feed/post', with: { feed, id, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
+| `{ custom: 'feed/post', with: { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ custom: 'feed/react', with: { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', id: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as an item's `use` or what `rules.turn` returns, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
+They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as an item's `use` or what `rules.turn` returns, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'feed/seen', with: { feed? } }` | `seeFeed(feed?)` | Marks the feed as looked at, which clears its `unseen`. `seeFeed()`, with no feed, marks them all. |
+| `{ type: 'custom', name: 'feed/seen', with: { id? } }` | `seeFeed(feed?)` | Marks the feed `id` as looked at, which clears its `unseen`. `seeFeed()`, with no feed, marks them all. |
 
 Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends it when the player opens a feed.
 

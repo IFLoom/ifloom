@@ -47,7 +47,7 @@ const cafe: Pack = {
   stats: [{ id: 'energy', label: 'Energy', start: 50 }],
   activities: [
     // Each coffee gives energy and a stamp.
-    { id: 'coffee', effects: [{ kind: 'stat', key: 'energy', by: 15 }, { custom: 'loyalty/stamp' }] },
+    { id: 'coffee', effects: [{ kind: 'stat', stat: 'energy', by: 15 }, { custom: 'loyalty/stamp' }] },
   ],
   scenes: [
     {
@@ -55,8 +55,8 @@ const cafe: Pack = {
       body: [{ text: 'counter' }],
       choices: [
         // Only offered once the card is full.
-        { id: 'free-coffee', when: { custom: 'loyalty/full' }, effects: [{ kind: 'scene', id: null }] },
-        { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+        { id: 'free-coffee', when: { custom: 'loyalty/full' }, effects: [{ kind: 'scene', scene: null }] },
+        { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
   ],
@@ -120,7 +120,7 @@ export const loyalty = definePlugin<Card>({
         return undefined
       },
       run: (state, _args, { slice, set, game }) =>
-        set({ ...slice, free: slice.free - 1 }, applyEffects(state, game, [{ kind: 'stat', key: 'energy', by: 15 }])),
+        set({ ...slice, free: slice.free - 1 }, applyEffects(state, game, [{ kind: 'stat', stat: 'energy', by: 15 }])),
     },
   },
   values: {
@@ -586,7 +586,7 @@ Every plugin's modifiers are gathered, in the order `game.plugins` lists them. F
 Everything that reads a stat sees the changed value: [`statValue`](/docs/reference/stats#statvalue), the `stat`, `tier` and `level` conditions, a [derived stat](/docs/reference/stats#derived-stats)'s formula, an activity's cost check and `view.stats`. A derived stat reads its inputs changed, then has its own modifiers applied.
 
 **Gotchas.**
-- Modifiers are never written. A `stat` or `setStat` effect changes the kept value in `state.stats`, underneath. When the plugin stops returning a modifier, the stat reads its kept value again.
+- Modifiers are never written. A `stat` effect changes the kept value in `state.stats`, underneath. When the plugin stops returning a modifier, the stat reads its kept value again.
 - An activity's cost is checked against the changed value but paid from the kept one. With 5 energy kept and a boost of 10, a cost of 12 is allowed, and the kept value goes to 0 (held to the range). The boost still adds 10 on top while it lasts.
 - Only the player's stats. An entity's stats, read with `of`, are never changed.
 - `statModifiers` must not read stats itself, with `statValue` or a `stat` condition, because that read would ask for the modifiers again. Work them out from the plugin's own state.
@@ -646,8 +646,8 @@ import { onlyAt } from '@ifloom/plugin-places'
 
 // in the pack
 activities: [
-  { id: 'cook', requires: [onlyAt(['flat'])], effects: [{ kind: 'stat', key: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
-  { id: 'bake', requires: [onlyAt(['flat'])], effects: [{ kind: 'item', id: 'loaf', by: 1 }, { 'dishes/add': true }] },
+  { id: 'cook', blocked: [onlyAt(['flat'])], effects: [{ kind: 'stat', stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
+  { id: 'bake', blocked: [onlyAt(['flat'])], effects: [{ kind: 'item', item: 'loaf', by: 1 }, { 'dishes/add': true }] },
 ],
 // on the flat, in data.places.locations
 actions: [
@@ -1096,7 +1096,7 @@ argProblems: (kind, name, args) =>
 ```
 
 ```ts
-activities: [{ id: 'ask', requires: [{ when: { 'stall/sells': 'fish' }, reason: 'Not today.' }] }]
+activities: [{ id: 'ask', blocked: [{ when: { not: { 'stall/sells': 'fish' } }, reason: 'Not today.' }] }]
 // town · activity ask · nobody sells "fish"
 ```
 
@@ -1160,7 +1160,7 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 
 - **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
-- **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, put a requirement on the activity, or have a [guard](#guards) refuse any command that would apply the effect.
+- **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the activity a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
 - **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/docs/reference/rules#turn) take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.
 

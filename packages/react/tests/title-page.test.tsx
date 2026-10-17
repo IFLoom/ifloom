@@ -33,7 +33,7 @@ function letter(): Game {
             body: [{ text: 'mat' }, { when: { kv: 'readBefore' }, text: 'again' }],
             choices: [
               { id: 'open', effects: [{ kind: 'kv', key: 'readBefore', to: true }] },
-              { id: 'leave', effects: [{ kind: 'scene', id: null }] },
+              { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
             ],
           },
         ],
@@ -131,7 +131,7 @@ describe('the pages', () => {
     fireEvent.click(screen.getByText('Settings'))
     await act(async () => fireEvent.click(document.querySelector('#setting-hints')!))
     expect(runner.state.settings.hints).toBe(false)
-    expect(runner.log().commands).toContainEqual({ type: 'setting', id: 'hints', value: false })
+    expect(runner.log().commands).toContainEqual({ type: 'setting', id: 'hints', to: false })
     fireEvent.click(screen.getByText('Back'))
     expect(await screen.findByText('A letter on the mat.')).toBeTruthy()
   })

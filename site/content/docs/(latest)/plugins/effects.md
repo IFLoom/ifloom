@@ -128,7 +128,7 @@ const cold: EffectDef = {
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  eachTurn: [{ kind: 'stat', key: 'coins', by: -1 }],
+  eachTurn: [{ kind: 'stat', stat: 'coins', by: -1 }],
   onEnd: [{ kind: 'notify', title: 'You feel a bit better.' }],
 }
 ```
@@ -147,7 +147,7 @@ The effects it runs are applied while the turn is ending, so a `turn` effect amo
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'effects/active', with: { id, stacks? } }` | `effectActive(id, stacks?)` | The effect is active. With `stacks`, a [range](/docs/reference/conditions#range) such as `{ gte: 2 }`, only when it has that many stacks. |
+| `{ custom: 'effects/active', with: { effect, stacks? } }` | `effectActive(id, stacks?)` | The effect is active. With `stacks`, a [range](/docs/reference/conditions#range) such as `{ gte: 2 }`, only when it has that many stacks. |
 
 ```ts
 import { type Block } from '@ifloom/engine'
@@ -162,8 +162,8 @@ An unknown effect is never active.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'effects/apply', with: { id } }` | `applyEffect(id)` | Starts the effect, or refreshes or stacks it if it's active. |
-| `{ custom: 'effects/remove', with: { id, runEnd? } }` | `removeEffect(id, runEnd?)` | Takes every stack off. `onEnd` runs once per stack only when `runEnd` is `true`. It's `false` if left out. |
+| `{ custom: 'effects/apply', with: { effect } }` | `applyEffect(id)` | Starts the effect, or refreshes or stacks it if it's active. |
+| `{ custom: 'effects/remove', with: { effect, runEnd? } }` | `removeEffect(id, runEnd?)` | Takes every stack off. `onEnd` runs once per stack only when `runEnd` is `true`. It's `false` if left out. |
 
 `runEnd` lets you decide per call. A medicine that cures a cold might skip its `onEnd`, while a scene where the cold runs its course early might want it:
 
@@ -174,13 +174,13 @@ const medicine = removeEffect('cold')        // gone, nothing else happens
 const recovered = removeEffect('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing an effect the game doesn't have does nothing. In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'effects/apply', with: { id } }`.
+Applying or removing an effect the game doesn't have does nothing. In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'effects/apply', with: { effect: 'tired' } }`.
 
 ## Commands
 
 | Command | Does |
 |---|---|
-| `{ type: 'custom', name: 'effects/apply', with: { id } }` | The same as the effect. Refused with `Nothing like that can happen.` for an effect the game doesn't have. |
+| `{ type: 'custom', name: 'effects/apply', with: { id } }` | The same as the effect, naming it `id` as every command does. Refused with `Nothing like that can happen.` for an effect the game doesn't have. |
 | `{ type: 'custom', name: 'effects/remove', with: { id, runEnd? } }` | The same as the effect. Refused with `That isn’t affecting you.` when it isn't active. |
 
 Use them for a button the player presses, such as "Shake it off".

@@ -603,7 +603,7 @@ An [input](/docs/reference/inputs) is a value the game asks the player for, such
 function drawInput(parent: HTMLElement, input: InputView): void {
   if (input.kind === 'choice') {
     for (const option of input.options) {
-      add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, value: option.value })
+      add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, to: option.value })
     }
     return
   }
@@ -618,7 +618,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   add(form, 'button', 'OK').type = 'submit'
   form.onsubmit = (event) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(field.value) : field.value })
+    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(field.value) : field.value })
   }
 }
 ```
@@ -636,7 +636,7 @@ export function InputField({ input }: { input: InputView }) {
     return (
       <div className="inputs" role="group" aria-label={input.label}>
         {input.options.map((option) => (
-          <button key={String(option.value)} onClick={() => runner.apply({ type: 'input', id: input.id, value: option.value })}>
+          <button key={String(option.value)} onClick={() => runner.apply({ type: 'input', id: input.id, to: option.value })}>
             {option.label}
           </button>
         ))}
@@ -645,7 +645,7 @@ export function InputField({ input }: { input: InputView }) {
   }
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
   }
   return (
     <form onSubmit={submit}>
@@ -678,13 +678,13 @@ const props = defineProps<{ input: InputView }>()
 const value = ref(props.input.value === null ? '' : String(props.input.value))
 
 function submit() {
-  runner.apply({ type: 'input', id: props.input.id, value: props.input.kind === 'number' ? Number(value.value) : value.value })
+  runner.apply({ type: 'input', id: props.input.id, to: props.input.kind === 'number' ? Number(value.value) : value.value })
 }
 </script>
 
 <template>
   <div v-if="input.kind === 'choice'" class="inputs" role="group" :aria-label="input.label">
-    <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, value: option.value })">
+    <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, to: option.value })">
       {{ option.label }}
     </button>
   </div>
@@ -717,14 +717,14 @@ function submit() {
 
   function submit(event: SubmitEvent) {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, value: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
   }
 </script>
 
 {#if input.kind === 'choice'}
   <div class="inputs" role="group" aria-label={input.label}>
     {#each input.options as option (option.value)}
-      <button onclick={() => runner.apply({ type: 'input', id: input.id, value: option.value })}>{option.label}</button>
+      <button onclick={() => runner.apply({ type: 'input', id: input.id, to: option.value })}>{option.label}</button>
     {/each}
   </div>
 {:else}

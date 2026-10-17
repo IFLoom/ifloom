@@ -103,12 +103,9 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
       fields = (
         <>
           <IdPicker noun="item" aria-label="Item" value={c.item as string} options={names.items} onChange={(id) => set({ item: id })} onCreate={create('item')} />
-          <RangeEditor value={value} onChange={onChange} ops={[...RANGE_OPS]} />
+          <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
         </>
       )
-      break
-    case 'has':
-      fields = <IdPicker noun="item" aria-label="Item" value={c.has as string} options={names.items} onChange={(id) => set({ has: id })} onCreate={create('item')} />
       break
     case 'chose':
       fields = (
@@ -128,7 +125,8 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
       )
       break
     case 'turn':
-      fields = <RangeEditor value={value} onChange={onChange} ops={[...RANGE_OPS]} />
+      // The range is the condition's value: `{ turn: { gte: 3 } }`.
+      fields = <RangeEditor value={c.turn as Condition} onChange={(turn) => onChange({ turn } as Condition)} ops={[...RANGE_OPS]} />
       break
     case 'plugin':
     case 'json':

@@ -345,7 +345,7 @@ The first time `finished` holds, the runner records it in the profile's `finishe
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
 ```ts
-{ id: 'post', effects: [{ kind: 'kv', key: 'readBefore', to: true }, { kind: 'scene', id: 'end.posted' }] }
+{ id: 'post', effects: [{ kind: 'kv', key: 'readBefore', to: true }, { kind: 'scene', scene: 'end.posted' }] }
 
 body: [
   { text: 'ch1.mat' },

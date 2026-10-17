@@ -36,7 +36,7 @@ In a game beside the checkout, add them as `file:` links instead, as [Installati
 
 The core has no map, so places come from the places plugin. A location has an id, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each naming a piece of prose by key. You write the words themselves in step 4.
 
-`kind` says what sort of place it is. `locked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
+`kind` says what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
 import { period } from '@ifloom/plugin-calendar'
@@ -69,7 +69,7 @@ const locations: LocationDef[] = [
     kind: 'venue',
     exits: ['high-street'],
     art: 'place/cafe',
-    locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
       { text: 'cafe/ruth', when: here('ruth') },
@@ -145,7 +145,7 @@ const stats: StatDef[] = [
 
 `of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: person('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
 
-An activity is something the player can do. It has a cost the engine charges before the effects apply, and requirements. Each requirement is a condition with the reason the player reads while it doesn't hold. The engine refuses the activity, with that reason, when a requirement fails or the player can't pay.
+An activity is something the player can do. It has a cost the engine charges before the effects apply, and a `blocked` list. Each entry is a condition with the reason the player reads while it holds. The engine refuses the activity, with that reason, when an entry holds or the player can't pay.
 
 ```ts
 import type { ActivityDef } from '@ifloom/engine'
@@ -156,14 +156,14 @@ const activities: ActivityDef[] = [
   { id: 'wait', effects: [pass(1)] },
   {
     id: 'coffee',
-    requires: [onlyAt(['cafe'], 'There is no coffee here.')],
+    blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
     cost: { stats: { coins: 3 } },
-    effects: [pass(1), { kind: 'stat', key: 'energy', by: 20 }],
+    effects: [pass(1), { kind: 'stat', stat: 'energy', by: 20 }],
   },
 ]
 ```
 
-`onlyAt` is the places plugin's requirement. The coffee can only be bought in the café, and anywhere else it's refused with `There is no coffee here.` `cost.stats` is what it spends, by stat id. `pass(1)` is the calendar's effect for one period of time going by. `wait` does nothing but pass a period, and in step 5 the game offers it as a button in every room. See [Activities and buttons](/docs/reference/actions), the places plugin's [helpers](/docs/plugins/places#helpers) and the calendar's [effects](/docs/plugins/calendar#effects).
+`onlyAt` is the places plugin's `blocked` entry for "anywhere but here". The coffee can only be bought in the café, and anywhere else it's refused with `There is no coffee here.` `cost.stats` is what it spends, by stat id. `pass(1)` is the calendar's effect for one period of time going by. `wait` does nothing but pass a period, and in step 5 the game offers it as a button in every room. See [Activities and buttons](/docs/reference/actions), the places plugin's [helpers](/docs/plugins/places#helpers) and the calendar's [effects](/docs/plugins/calendar#effects).
 
 ## 4. Scenes
 
@@ -178,11 +178,11 @@ const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
   body: [{ text: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'bed', effects: [{ kind: 'scene', scene: null }] }],
 }
 ```
 
-`{ kind: 'scene', id: null }` closes the scene and leaves the player standing in the room.
+`{ kind: 'scene', scene: null }` closes the scene and leaves the player standing in the room.
 
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
@@ -201,11 +201,11 @@ const ruthTalk: DataScene = {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', key: 'friendship', by: 5, of: person('ruth') },
-        { kind: 'scene', id: null },
+        { kind: 'stat', stat: 'friendship', by: 5, of: person('ruth') },
+        { kind: 'scene', scene: null },
       ],
     },
-    { id: 'bye', effects: [{ kind: 'scene', id: null }] },
+    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
 ```
@@ -647,7 +647,7 @@ const locations: LocationDef[] = [
     kind: 'venue',
     exits: ['high-street'],
     art: 'place/cafe',
-    locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
       { text: 'cafe/ruth', when: here('ruth') },
@@ -690,9 +690,9 @@ const activities: ActivityDef[] = [
   { id: 'wait', effects: [pass(1)] },
   {
     id: 'coffee',
-    requires: [onlyAt(['cafe'], 'There is no coffee here.')],
+    blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
     cost: { stats: { coins: 3 } },
-    effects: [pass(1), { kind: 'stat', key: 'energy', by: 20 }],
+    effects: [pass(1), { kind: 'stat', stat: 'energy', by: 20 }],
   },
 ]
 
@@ -700,7 +700,7 @@ const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
   body: [{ text: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ kind: 'scene', id: null }] }],
+  choices: [{ id: 'bed', effects: [{ kind: 'scene', scene: null }] }],
 }
 
 const ruthTalk: DataScene = {
@@ -715,11 +715,11 @@ const ruthTalk: DataScene = {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', key: 'friendship', by: 5, of: person('ruth') },
-        { kind: 'scene', id: null },
+        { kind: 'stat', stat: 'friendship', by: 5, of: person('ruth') },
+        { kind: 'scene', scene: null },
       ],
     },
-    { id: 'bye', effects: [{ kind: 'scene', id: null }] },
+    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
 

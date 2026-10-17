@@ -18,12 +18,17 @@ export type TurnsShape = {
     turn: number
   }
   conditions: {
-    /** How many turns have passed. Turn 0 is the first, so `{ turn: true, gte: 3 }` is the fourth on. */
-    turn: { turn: true } & Range
+    /**
+     * How many turns have passed, in a range. It names nothing, so the range
+     * is its value. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on.
+     */
+    turn: { turn: Range }
+    /** The game is in one of these phases. */
     phase: { phase: Phase[] }
   }
   effects: {
-    phase: { kind: 'phase'; value: Phase }
+    /** Move the game `to` a phase. */
+    phase: { kind: 'phase'; to: Phase }
     /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
     turn: { kind: 'turn'; by?: number }
   }
@@ -66,8 +71,8 @@ export const turns = defineFeature<TurnsShape>({
   },
   conditions: {
     turn: {
-      holds: (state, condition) => inRange(state.turn, condition),
-      explain: (state, condition) => `turn ${state.turn}; wants ${wanted(condition)}`,
+      holds: (state, condition) => inRange(state.turn, condition.turn),
+      explain: (state, condition) => `turn ${state.turn}; wants ${wanted(condition.turn)}`,
       references: () => [],
     },
     phase: {
@@ -78,7 +83,7 @@ export const turns = defineFeature<TurnsShape>({
   },
   effects: {
     phase: {
-      apply: (state, effect) => ({ ...state, phase: effect.value }),
+      apply: (state, effect) => ({ ...state, phase: effect.to }),
       references: () => [],
     },
     turn: {

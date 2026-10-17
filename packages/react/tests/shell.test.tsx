@@ -21,7 +21,7 @@ function game(strings: Record<string, string> = {}): Game {
         schema: SCHEMA,
         stats: [{ id: 'coins', label: 'Coins', start: 3, format: '{n}c', spendable: true }],
         activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'cake', cost: { stats: { coins: 10 } } }],
-        scenes: [{ id: 'intro', title: 'Morning', body: [{ text: 'intro' }], choices: [{ id: 'up', effects: [{ kind: 'scene', id: null }] }] }],
+        scenes: [{ id: 'intro', title: 'Morning', body: [{ text: 'intro' }], choices: [{ id: 'up', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: {
           'place.house': 'Quiet.',
           'place.street': 'Busy.',

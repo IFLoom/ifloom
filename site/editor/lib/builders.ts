@@ -3,7 +3,7 @@
  * effect is edited with, a new one of each kind, and ranges. The builders
  * edit the engine's own objects; there is no second model to keep in step.
  */
-import type { Condition, EffectRef, ItemDef, SettingDef, StatDef } from '@ifloom/engine'
+import type { Blocked, Condition, EffectRef, ItemDef, SettingDef, StatDef } from '@ifloom/engine'
 import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
@@ -26,6 +26,11 @@ export function conditionForm(condition: Condition): ConditionForm {
   // Only the keys a form shows: its kind, a range, and `is` for kv keys and settings.
   const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'kv' || kind === 'setting' ? ['is'] : [])])
   if (kind === 'all' || kind === 'any' || kind === 'not') return keys.length === 1 ? kind : 'json'
+  // A turn's range is its value: `{ turn: { gte: 3 } }`.
+  if (kind === 'turn') {
+    const range = (condition as { turn: unknown }).turn
+    return keys.length === 1 && typeof range === 'object' && range !== null && rangeOf(range as Condition) !== undefined ? kind : 'json'
+  }
   if (keys.some((k) => !allowed.has(k))) return 'json'
   if (rangeOf(condition) === undefined) return 'json'
   return kind
@@ -46,8 +51,6 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
       return { kv: names.kv[0] ?? 'met' }
     case 'item':
       return { item: names.items[0] ?? 'key', gte: 1 }
-    case 'has':
-      return { has: names.items[0] ?? 'key' }
     case 'chose':
       return { chose: names.choices[0] ?? 'start/go' }
     case 'seen':
@@ -59,7 +62,7 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
     case 'level':
       return { level: names.stats[0] ?? 'coins', gte: 1 }
     case 'turn':
-      return { turn: true, gte: 1 }
+      return { turn: { gte: 1 } }
     case 'plugin':
       return { 'quests/done': { quest: 'errand' } }
     case 'json':
@@ -96,14 +99,15 @@ export function effectForm(effect: EffectRef): EffectForm {
   if (!('kind' in effect)) return 'json'
   switch (effect.kind) {
     case 'stat':
-    case 'setStat':
-      return effect.of === undefined ? effect.kind : 'json'
+      if (effect.of !== undefined) return 'json'
+      return 'to' in effect ? 'statTo' : 'stat'
     case 'kv':
       if (effect.of !== undefined) return 'json'
       return 'by' in effect ? 'kvBy' : 'kv'
     case 'scene':
       return 'from' in effect ? 'draw' : 'scene'
     case 'item':
+      return 'by' in effect ? 'item' : 'json'
     case 'notify':
     case 'turn':
     case 'sound':
@@ -118,17 +122,17 @@ export function effectForm(effect: EffectRef): EffectForm {
 export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef {
   switch (form) {
     case 'stat':
-      return { kind: 'stat', key: names.stats[0] ?? 'coins', by: 1 }
-    case 'setStat':
-      return { kind: 'setStat', key: names.stats[0] ?? 'coins', to: 0 }
+      return { kind: 'stat', stat: names.stats[0] ?? 'coins', by: 1 }
+    case 'statTo':
+      return { kind: 'stat', stat: names.stats[0] ?? 'coins', to: 0 }
     case 'kv':
       return { kind: 'kv', key: names.kv[0] ?? 'met', to: true }
     case 'kvBy':
       return { kind: 'kv', key: names.kv[0] ?? 'visits', by: 1 }
     case 'item':
-      return { kind: 'item', id: names.items[0] ?? 'key', by: 1 }
+      return { kind: 'item', item: names.items[0] ?? 'key', by: 1 }
     case 'scene':
-      return { kind: 'scene', id: names.scenes[0] ?? null }
+      return { kind: 'scene', scene: names.scenes[0] ?? null }
     case 'draw':
       return { kind: 'scene', from: names.sets[0] ?? 'market' }
     case 'notify':
@@ -138,27 +142,32 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
     case 'sound':
       return { kind: 'sound', track: 'knock' }
     case 'audio':
-      return { kind: 'audio', channel: 'music', track: 'calm' }
+      return { kind: 'audio', channel: 'music', to: 'calm' }
     case 'plugin':
       return { 'quests/start': { quest: 'errand' } }
     case 'json':
-      return { kind: 'phase', value: 'day' }
+      return { kind: 'phase', to: 'day' }
   }
+}
+
+/** A `stat` effect that takes from the player's own stat: part of what a choice costs. */
+export function isCost(e: EffectRef): e is { kind: 'stat'; stat: string; by: number } {
+  return 'kind' in e && e.kind === 'stat' && 'by' in e && e.of === undefined && e.by < 0
 }
 
 /** What a choice costs: its negative `stat` effects on the player's stats, as amounts. */
 export function costOf(effects: readonly EffectRef[]): { stat: string; amount: number }[] {
-  return effects.flatMap((e) => ('kind' in e && e.kind === 'stat' && e.of === undefined && e.by < 0 ? [{ stat: e.key, amount: -e.by }] : []))
+  return effects.flatMap((e) => (isCost(e) ? [{ stat: e.stat, amount: -e.by }] : []))
 }
 
 /** The effects with the cost replaced: the old cost entries taken out, the new ones put first. */
 export function withCost(effects: readonly EffectRef[], cost: { stat: string; amount: number }[]): EffectRef[] {
-  const rest = effects.filter((e) => !('kind' in e && e.kind === 'stat' && e.of === undefined && e.by < 0))
-  return [...cost.filter((c) => c.amount > 0).map((c): EffectRef => ({ kind: 'stat', key: c.stat, by: -c.amount })), ...rest]
+  const rest = effects.filter((e) => !isCost(e))
+  return [...cost.filter((c) => c.amount > 0).map((c): EffectRef => ({ kind: 'stat', stat: c.stat, by: -c.amount })), ...rest]
 }
 
 /** The `blocked` entry that greys a choice out when the player can't pay. */
-export function shortBlock(stat: StatDef | undefined, id: string, amount: number): { when: Condition; reason: string } {
+export function shortBlock(stat: StatDef | undefined, id: string, amount: number): Blocked {
   const label = (stat?.label ?? id).toLowerCase()
   return { when: { stat: id, lt: amount }, reason: `You need ${amount} ${label}.` }
 }

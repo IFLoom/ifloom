@@ -26,7 +26,7 @@ const town: Pack = {
       when: at('high-street'),
       effects: [
         { kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' },
-        { kind: 'collect', to: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
+        { kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
       ],
     },
     {
@@ -34,7 +34,7 @@ const town: Pack = {
       once: 'turn',
       when: { all: [weekday(6), day({ gte: 6 })] },
       effects: [
-        { kind: 'stat', key: 'coins', by: -30 },
+        { kind: 'stat', stat: 'coins', by: -30 },
         { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', tag: 'money' },
       ],
     },

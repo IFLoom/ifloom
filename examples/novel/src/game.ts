@@ -27,8 +27,8 @@ export const letter: Pack = {
         { text: 'ch1.mat/named', when: { kv: 'playerName' } },
       ],
       choices: [
-        { id: 'open', when: { kv: 'playerName' }, effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
-        { id: 'shelf', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
+        { id: 'open', when: { kv: 'playerName' }, effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
+        { id: 'shelf', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
       ],
     },
     {
@@ -40,13 +40,13 @@ export const letter: Pack = {
         { text: 'ch2.stairs/shelved', when: { chose: 'ch1.mat/shelf' } },
       ],
       choices: [
-        { id: 'truth', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
-        { id: 'deny', effects: [{ kind: 'kv', key: 'fibs', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
+        { id: 'truth', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
+        { id: 'deny', effects: [{ kind: 'kv', key: 'fibs', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
         // A lie to cover a letter you opened is a second lie.
         {
           id: 'blame',
           when: { chose: 'ch1.mat/open' },
-          effects: [{ kind: 'kv', key: 'fibs', by: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }],
+          effects: [{ kind: 'kv', key: 'fibs', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }],
         },
       ],
     },
@@ -61,8 +61,8 @@ export const letter: Pack = {
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
-        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [readIt, { kind: 'scene', id: 'end.kept' }] },
-        { id: 'post', effects: [readIt, { kind: 'scene', id: 'end.posted' }] },
+        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [readIt, { kind: 'scene', scene: 'end.kept' }] },
+        { id: 'post', effects: [readIt, { kind: 'scene', scene: 'end.posted' }] },
       ],
     },
     { id: 'end.kept', title: 'The end', body: [{ text: 'end.kept' }], choices: [] },

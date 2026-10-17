@@ -38,7 +38,7 @@ const locations: LocationDef[] = [
   {
     ...place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'] }),
     // Open in the day; the door says when it opens again.
-    locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
       // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
@@ -77,7 +77,7 @@ const locations: LocationDef[] = [
   {
     ...place({ id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'] }),
     // Weekdays only, in the day.
-    locked: [
+    blocked: [
       { when: weekday(5, 6), reason: 'Shut at weekends.' },
       { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
       { when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' },
@@ -93,7 +93,7 @@ const ARROWS = ['up', 'down', 'left', 'right'] as const
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   label: `arrows.${arrow}`,
   after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', add: 1 }] } : {}) })),
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}) })),
 })
 
 /**
@@ -114,7 +114,7 @@ const quickFeet: MinigameDef = {
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', add: 1 },
+            { kind: 'minigameVar', key: 'round', by: 1 },
             { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
           ],
         },
@@ -123,8 +123,8 @@ const quickFeet: MinigameDef = {
     pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
     tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', key: 'coins', by: 5 }, { kind: 'scene', id: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ kind: 'scene', id: 'park.arrows-lost' }] } },
+    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
   },
 }
 
@@ -200,14 +200,14 @@ export const town: Pack = {
       name: 'sandwich',
       desc: 'Cheese and pickle, wrapped in paper.',
       kind: 'stuff',
-      use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', key: 'energy', by: 25 }] },
+      use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', stat: 'energy', by: 25 }] },
     },
     {
       id: 'flapjack',
       name: 'flapjack',
       desc: 'Oats, syrup and a lot of butter.',
       kind: 'stuff',
-      use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', key: 'energy', by: 10 }] },
+      use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', stat: 'energy', by: 10 }] },
     },
   ],
   activities: [
@@ -215,28 +215,28 @@ export const town: Pack = {
     {
       id: 'coffee',
       cost: { stats: { coins: 3 } },
-      requires: [onlyAt(['cafe']), { reason: 'One is enough for today.', when: { not: { kv: 'hadCoffee' } } }],
+      blocked: [onlyAt(['cafe']), { when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
       effects: [
-        { kind: 'stat', key: 'energy', by: 15 },
+        { kind: 'stat', stat: 'energy', by: 15 },
         { kind: 'kv', key: 'hadCoffee', to: true },
         // And a lift that lasts till tomorrow is out: 10 more energy, never written.
         applyEffect('caffeinated'),
       ],
     },
-    { id: 'buySandwich', cost: { stats: { coins: 4 } }, requires: [onlyAt(['cafe'])], effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
-    { id: 'sit', requires: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
-    { id: 'work', cost: { stats: { energy: 30 } }, requires: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', key: 'coins', by: 20 }] },
-    { id: 'jog', cost: { stats: { energy: 15 } }, requires: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', key: 'charm', by: 1 }] },
-    { id: 'arrows', requires: [onlyAt(['park'])], effects: [{ kind: 'minigame', id: 'arrows' }] },
-    { id: 'buyScarf', cost: { stats: { coins: 8 } }, requires: [onlyAt(['high-street']), { reason: 'You have one.', when: { not: { has: 'scarf' } } }], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
+    { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
+    { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
+    { id: 'work', cost: { stats: { energy: 30 } }, blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
+    { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
+    { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
+    { id: 'buyScarf', cost: { stats: { coins: 8 } }, blocked: [onlyAt(['high-street']), { when: { item: 'scarf' }, reason: 'You have one.' }], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
     // The camera: one photo of each person, if they're here to take.
     ...(['ava', 'sam'] as const).map((who) => ({
       id: `photo-${who}`,
-      requires: [{ reason: 'They aren’t here.', when: here(who) }],
+      blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
       effects: [
         {
           kind: 'collect' as const,
-          to: 'gallery',
+          collection: 'gallery',
           entry: { id: `photo.${who}`, title: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `art/photo/${who}.svg` },
         },
       ],
@@ -244,9 +244,9 @@ export const town: Pack = {
     {
       id: 'post',
       cost: { stats: { energy: 5 } },
-      requires: [
-        { reason: 'Take a photo first.', when: { collection: 'gallery' } },
-        { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
+      blocked: [
+        { when: { not: { collection: 'gallery' } }, reason: 'Take a photo first.' },
+        { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
     },
@@ -256,7 +256,7 @@ export const town: Pack = {
       id: 'intro',
       title: 'Moving day',
       body: [{ text: 'intro' }],
-      choices: [{ id: 'unpack', effects: [{ kind: 'scene', id: null }, { kind: 'phase', value: 'open' }] }],
+      choices: [{ id: 'unpack', effects: [{ kind: 'scene', scene: null }, { kind: 'phase', to: 'open' }] }],
     },
     {
       id: 'ava.hi',
@@ -268,9 +268,9 @@ export const town: Pack = {
         { text: 'ava.hi/regular', when: { seen: 'ava.hi', gte: 3 } },
       ],
       choices: [
-        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] },
-        { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', key: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', id: null }] },
-        { id: 'bye', effects: [{ kind: 'scene', id: null }] },
+        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
+        { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', scene: null }] },
+        { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
     {
@@ -278,14 +278,14 @@ export const town: Pack = {
       title: 'Ava, on the phone',
       speaker: 'ava',
       body: [{ text: 'ava.call' }],
-      choices: [{ id: 'bye', effects: [{ kind: 'stat', key: 'friendship', by: 3, of: person('ava') }, { kind: 'scene', id: null }] }],
+      choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by: 3, of: person('ava') }, { kind: 'scene', scene: null }] }],
     },
     {
       id: 'ava.river',
       title: 'By the river',
       speaker: 'ava',
       body: [{ text: 'ava.river' }],
-      choices: [{ id: 'stay', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }, { kind: 'scene', id: null }] }],
+      choices: [{ id: 'stay', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }, { kind: 'scene', scene: null }] }],
     },
     // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
     {
@@ -295,7 +295,7 @@ export const town: Pack = {
       weight: 3,
       when: { not: { seen: 'cafe.window', gte: 2 } },
       body: [{ text: 'cafe.window' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
     },
     {
       id: 'cafe.crossword',
@@ -303,7 +303,7 @@ export const town: Pack = {
       drawnFrom: ['cafe'],
       when: { not: { seen: 'cafe.crossword' } },
       body: [{ text: 'cafe.crossword' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'charm', by: 1 }, { kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'charm', by: 1 }, { kind: 'scene', scene: null }] }],
     },
     {
       id: 'cafe.break',
@@ -313,34 +313,34 @@ export const town: Pack = {
       weight: 2,
       when: here('ava'),
       body: [{ text: 'cafe.break' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'stat', key: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', scene: null }] }],
     },
     // When none of them can happen.
     {
       id: 'cafe.quiet',
       title: 'A quiet table',
       body: [{ text: 'cafe.quiet' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
     },
     // How quick feet ends.
     {
       id: 'park.arrows-won',
       title: 'Quick feet',
       body: [{ text: 'park.arrows-won' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
     },
     {
       id: 'park.arrows-lost',
       title: 'Quick feet',
       body: [{ text: 'park.arrows-lost' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
     },
     {
       id: 'sam.hi',
       title: 'Sam',
       speaker: 'sam',
       body: [{ text: 'sam.hi' }],
-      choices: [{ id: 'bye', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('sam') }, { kind: 'scene', id: null }] }],
+      choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('sam') }, { kind: 'scene', scene: null }] }],
     },
   ],
   minigames: [quickFeet],
@@ -355,7 +355,7 @@ export const town: Pack = {
       id: 'visitors',
       once: 'turn',
       when: at('park'),
-      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', of: '$' }] }, generate('visitor', 2)],
+      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', entity: '$' }] }, generate('visitor', 2)],
     },
     // A note under the door the first time the player steps out.
     {
@@ -363,7 +363,7 @@ export const town: Pack = {
       when: at('high-street'),
       effects: [
         { kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' },
-        { kind: 'collect', to: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
+        { kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
       ],
     },
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.
@@ -372,7 +372,7 @@ export const town: Pack = {
       once: 'turn',
       when: { all: [weekday(6), day({ gte: 6 })] },
       effects: [
-        { kind: 'stat', key: 'coins', by: -30 },
+        { kind: 'stat', stat: 'coins', by: -30 },
         { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', tag: 'money' },
       ],
     },
@@ -421,7 +421,7 @@ export const town: Pack = {
           id: 'weekend',
           title: 'Weekend help',
           description: 'Saturday mornings behind the counter at the Corner Café.',
-          requires: [{ reason: 'Ava doesn’t know you well enough yet.', when: { stat: 'friendship', of: person('ava'), gte: 10 } }],
+          blocked: [{ when: { not: { stat: 'friendship', of: person('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
           at: ['cafe'],
           // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
           days: [5],
@@ -483,7 +483,7 @@ export const town: Pack = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
         },
       ],
     },

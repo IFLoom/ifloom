@@ -20,7 +20,7 @@ describe('checkGame', () => {
   })
 
   it('names the pack "game" for a hand-built game, and describes a problem as pack · where · what', () => {
-    const game: Game = { ...fixture(), finished: { has: 'trophy' } }
+    const game: Game = { ...fixture(), finished: { item: 'trophy' } }
     expect(checkGame(game).problems).toEqual([{ pack: 'game', where: 'finished', what: 'unknown item "trophy"' }])
     expect(checkGame(game).problems.map(describeProblem)).toEqual(['game · finished · unknown item "trophy"'])
   })
@@ -30,10 +30,10 @@ describe('checkGame', () => {
       id: 'town',
       schema: SCHEMA,
       prose: { 'shop#buy': 'Buy one.' },
-      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { has: 'missing' }, effects: [] }] }],
+      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { item: 'missing' }, effects: [] }] }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown item "missing"'])
-    expect(problemsOf({ ...fixture(), activities: [...fixture().activities, { id: 'eat', requires: [{ when: { has: 'missing' }, reason: 'Nothing to eat.' }] }] })).toEqual([
+    expect(problemsOf({ ...fixture(), activities: [...fixture().activities, { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }] })).toEqual([
       'activity eat: unknown item "missing"',
     ])
   })
@@ -65,7 +65,7 @@ describe('checkGame', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      items: [{ id: 'map', name: 'Map', desc: '', kind: 'gear', use: { label: 'Read', effects: [{ kind: 'scene', id: 'missing' }, { kind: 'storylineKv', id: 'nobody', key: 'k', to: true }] } }],
+      items: [{ id: 'map', name: 'Map', desc: '', kind: 'gear', use: { label: 'Read', effects: [{ kind: 'scene', scene: 'missing' }, { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true }] } }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual([
       'town · item map · goes to unknown scene "missing"',
@@ -78,7 +78,7 @@ describe('checkGame', () => {
       id: 'town',
       schema: SCHEMA,
       prose: { 'shop#buy': 'Buy one.' },
-      scenes: [{ id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', id: 'roll', by: 1 }] }] }],
+      scenes: [{ id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', item: 'roll', by: 1 }] }] }],
     }
     const { game, problems } = loadGame([pack], base())
     const again = checkGame(game).problems
@@ -95,7 +95,7 @@ describe('checkGame', () => {
       ...fixture(),
       scenes: [
         ...fixture().scenes,
-        { id: 'porch', render: (state) => ({ body: '[[sound:knock]]', choices: [{ id: 'in', label: 'In', effects: [{ kind: 'scene', id: state.turn > 0 ? 'hall' : null }] }] }) },
+        { id: 'porch', render: (state) => ({ body: '[[sound:knock]]', choices: [{ id: 'in', label: 'In', effects: [{ kind: 'scene', scene: state.turn > 0 ? 'hall' : null }] }] }) },
         {
           id: 'cellar',
           render: () => {
@@ -130,7 +130,7 @@ describe('a cooperating partner the game does not have', () => {
       prose: { 'shore#wade': 'Wade in.' },
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
       items: [{ id: 'net', name: 'Net', desc: '', kind: 'gear', use: { label: 'Cast', effects: [named.long] } }],
-      activities: [{ id: 'paddle', requires: [{ when: named.when, reason: 'Not now.' }], effects: [named.short, named.long] }],
+      activities: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
     const loaded = loadGame([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
     expect(loaded.problems).toEqual([])
@@ -165,7 +165,7 @@ describe('the files a game names', () => {
           id: 'flat',
           body: [{ text: 'flat.in' }, { media: { src: 'clip', video: true, poster: 'clip-still' } }, { media: { pool: 'door', tags: ['day'] } }],
           stage: { layers: [{ src: 'room.png' }] },
-          choices: [{ id: 'snap', label: 'flat.in', effects: [{ kind: 'collect', to: 'album', entry: { id: 'flat', image: './art/photo/flat.png' } }, { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' }] }],
+          choices: [{ id: 'snap', label: 'flat.in', effects: [{ kind: 'collect', collection: 'album', entry: { id: 'flat', image: './art/photo/flat.png' } }, { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' }] }],
         },
       ],
     }

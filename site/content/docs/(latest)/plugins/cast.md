@@ -24,7 +24,7 @@ import { type Condition, type Effect } from '@ifloom/engine'
 import { person } from '@ifloom/plugin-cast'
 
 const closeToAva: Condition = { stat: 'friendship', of: person('ava'), gte: 25 }          // 'character:ava'
-const chat: Effect = { kind: 'stat', key: 'friendship', by: 5, of: person('ava') }
+const chat: Effect = { kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }
 ```
 
 The plugin keeps no state of its own. Where people are is worked out from their schedules each time, and what the game keeps about them lives in their entities.
@@ -215,7 +215,7 @@ const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
 const chat = (id: string, who: string, by: number): DataScene => ({
   id, speaker: who, body: [{ text: id }],
-  choices: [{ id: 'bye', effects: [{ kind: 'stat', key: 'friendship', by, of: person(who) }, { kind: 'scene', id: null }] }],
+  choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by, of: person(who) }, { kind: 'scene', scene: null }] }],
 })
 
 const town: Pack = {
@@ -264,9 +264,9 @@ startingState(game).entities.character
 //   sam: { name: 'Sam', stats: { friendship: 0 }, kv: {} } }
 
 const isFriend: Condition = { stat: 'friendship', of: person('ava'), gte: 25 }
-const warmer: Effect = { kind: 'stat', key: 'friendship', by: 10, of: person('ava') }
+const warmer: Effect = { kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }
 // Everyone drifts apart a little.
-const drift: Effect = { kind: 'each', of: 'character', effects: [{ kind: 'stat', key: 'friendship', by: -1, of: '$' }] }
+const drift: Effect = { kind: 'each', of: 'character', effects: [{ kind: 'stat', stat: 'friendship', by: -1, of: '$' }] }
 ```
 
 The entities are made when the game loads, from the merged content, so a mod's character gets their stats too. If the game declares an entity itself with the same kind and id, the game's wins whole. A save made before a character was added gains them when it loads (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
@@ -385,7 +385,7 @@ apply(state, game, talk('ava')).state.sceneId   // 'ava.hi': not friends yet
 apply(state, game, call('ava')).state.sceneId   // 'ava.call'
 
 // A few more chats later, as a test would fake them.
-const friends = applyEffects(state, game, [{ kind: 'stat', key: 'friendship', by: 20, of: 'character:ava' }])
+const friends = applyEffects(state, game, [{ kind: 'stat', stat: 'friendship', by: 20, of: 'character:ava' }])
 holds(friends, { stat: 'friendship', of: 'character:ava', gte: 25 }, game)   // true
 apply(friends, game, talk('ava')).state.sceneId                           // 'ava.river'
 ```
@@ -394,8 +394,8 @@ apply(friends, game, talk('ava')).state.sceneId                           // 'av
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'cast/talk', with: { who: 'ava' } }` | `talk('ava')` | Opens the first of their [`talk`](#talkoption) options whose `when` holds. |
-| `{ type: 'custom', name: 'cast/call', with: { who: 'ava' } }` | `call('ava')` | Opens their `call.scene`, or else their talk scene, from anywhere. |
+| `{ type: 'custom', name: 'cast/talk', with: { id: 'ava' } }` | `talk('ava')` | Opens the first of their [`talk`](#talkoption) options whose `when` holds. |
+| `{ type: 'custom', name: 'cast/call', with: { id: 'ava' } }` | `call('ava')` | Opens their `call.scene`, or else their talk scene, from anywhere. |
 
 `cast/talk` is refused, in this order, with:
 
@@ -420,7 +420,7 @@ A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or 
 | Content writes | Helper | Holds when |
 |---|---|---|
 | `{ 'cast/here': ['ava', 'sam'] }` | `here('ava', 'sam')` | Any of them is in the room with the player. |
-| `{ 'cast/at': { who: 'ava', at: ['park'] } }` | `isAt('ava', 'park')` | They're in one of these places, wherever the player is. |
+| `{ 'cast/at': { character: 'ava', at: ['park'] } }` | `isAt('ava', 'park')` | They're in one of these places, wherever the player is. |
 | `{ 'cast/met': ['ava'] }` | `hasMet('ava')` | The player has [met](#meeting-people) any of them. |
 
 These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { value: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': 'ava' }`. A character the game doesn't have never holds.
@@ -429,7 +429,7 @@ These are the short forms, with the full name as the only key (see [plugin calls
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ value }`, `{ who }` or `{ id }`.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ value }`, `{ character }` or `{ id }`.
 
 | Query | Answers |
 |---|---|

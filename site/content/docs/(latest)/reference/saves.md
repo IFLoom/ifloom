@@ -421,7 +421,7 @@ const base: Partial<Game> = {
 ```
 
 **Gotchas.**
-- A stat the save lacks reads as its `start` in conditions and the view either way, so a missing stat doesn't break anything. But a `stat` effect adds to what's kept, which is 0 for a stat that isn't there, so `{ kind: 'stat', key: 'patience', by: 1 }` on a save without `patience` gives 1, not `start + 1`. Fill new stats whose `start` isn't 0.
+- A stat the save lacks reads as its `start` in conditions and the view either way, so a missing stat doesn't break anything. But a `stat` effect adds to what's kept, which is 0 for a stat that isn't there, so `{ kind: 'stat', stat: 'patience', by: 1 }` on a save without `patience` gives 1, not `start + 1`. Fill new stats whose `start` isn't 0.
 - An item the save lacks counts as 0 until it's filled, and gear the player should start with isn't there.
 - A missing step is skipped without a word. Keep every old step when you add a new one, or a save from before it skips that change.
 

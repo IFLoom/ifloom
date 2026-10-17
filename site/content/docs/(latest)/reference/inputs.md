@@ -38,15 +38,15 @@ import { apply, view } from '@ifloom/engine'
 view(state, game).inputs.alarm
 // { id: 'alarm', label: 'Wake at', kind: 'number', maxLength: null, min: 5, max: 10, options: [], value: null }
 
-state = apply(state, game, { type: 'input', id: 'alarm', value: 7 }).state
-state = apply(state, game, { type: 'input', id: 'catName', value: '  Biscuit ' }).state
+state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
+state = apply(state, game, { type: 'input', id: 'catName', to: '  Biscuit ' }).state
 
 state.kv  // { wakeAt: 7, catName: 'Biscuit', ... }
 ```
 
 Prose reads the value back like any kv key, and conditions test it with [`{ kv }`](/docs/reference/conditions#kv), such as `{ kv: 'order', is: 'tea' }`.
 
-A button can send the command with no `value`, as `{ type: 'input', id: 'catName' }`, and the UI asks for the value when it's pressed. If the command arrives without one, it's refused with `Enter something first.`, so the UI must fill the value in before passing it on.
+A button can send the command with no `to`, as `{ type: 'input', id: 'catName' }`, and the UI asks for the value when it's pressed. If the command arrives without one, it's refused with `Enter something first.`, so the UI must fill the value in before passing it on.
 
 ## InputDef
 

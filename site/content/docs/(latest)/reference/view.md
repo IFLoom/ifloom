@@ -518,7 +518,7 @@ type InputView = {
 }
 ```
 
-An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` is only set for text inputs, and is 40 if the input doesn't say. `min` and `max` are `null` when not declared. `options` is `[]` for anything but a choice. `value` is what its kv key holds now, or `null` if it holds nothing yet. Send what the player enters as `{ type: 'input', id, value }`.
+An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` is only set for text inputs, and is 40 if the input doesn't say. `min` and `max` are `null` when not declared. `options` is `[]` for anything but a choice. `value` is what its kv key holds now, or `null` if it holds nothing yet. Send what the player enters as `{ type: 'input', id, to: value }`.
 
 ## SettingView
 

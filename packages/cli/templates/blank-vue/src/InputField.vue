@@ -8,13 +8,13 @@ const props = defineProps<{ input: InputView }>()
 const value = ref(props.input.value === null ? '' : String(props.input.value))
 
 function submit() {
-  runner.apply({ type: 'input', id: props.input.id, value: props.input.kind === 'number' ? Number(value.value) : value.value })
+  runner.apply({ type: 'input', id: props.input.id, to: props.input.kind === 'number' ? Number(value.value) : value.value })
 }
 </script>
 
 <template>
   <div v-if="input.kind === 'choice'" class="inputs" role="group" :aria-label="input.label">
-    <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, value: option.value })">
+    <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, to: option.value })">
       {{ option.label }}
     </button>
   </div>

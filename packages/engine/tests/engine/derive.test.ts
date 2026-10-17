@@ -19,9 +19,9 @@ function withStats(...more: StatDef[]): Game {
     stats: [...game.stats!, { id: 'baking', label: 'Baking', start: 4 }, { id: 'patience', label: 'Patience', start: 6 }, ...more],
     activities: [
       ...game.activities,
-      { id: 'bake', effects: [{ kind: 'stat', key: 'baking', by: 5 }] },
-      { id: 'set', effects: [{ kind: 'setStat', key: 'skill', to: 50 }] },
-      { id: 'nudge', effects: [{ kind: 'stat', key: 'skill', by: 5 }] },
+      { id: 'bake', effects: [{ kind: 'stat', stat: 'baking', by: 5 }] },
+      { id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 50 }] },
+      { id: 'nudge', effects: [{ kind: 'stat', stat: 'skill', by: 5 }] },
     ],
   }
 }
@@ -77,7 +77,7 @@ describe('derived stats', () => {
       id: 'town',
       schema: SCHEMA,
       stats: [{ id: 'baking', label: 'Baking' }, { id: 'skill', label: 'Skill', derive: 'baking', spendable: true, start: 3 }],
-      activities: [{ id: 'set', effects: [{ kind: 'setStat', key: 'skill', to: 5 }], cost: { stats: { skill: 1 } } }],
+      activities: [{ id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 5 }], cost: { stats: { skill: 1 } } }],
     }
     const problems = loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)
     expect(problems).toEqual(
@@ -172,7 +172,7 @@ describe('levels', () => {
     const quiet = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5] } })
     const loud = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5, 10], notice: '{label} is now level {level}.' } })
     const cook = (game: Game, from: number) => {
-      const withCook = { ...game, activities: [...game.activities, { id: 'cook', effects: [{ kind: 'stat' as const, key: 'cooking', by: 3 }] }] }
+      const withCook = { ...game, activities: [...game.activities, { id: 'cook', effects: [{ kind: 'stat' as const, stat: 'cooking', by: 3 }] }] }
       return apply(begin(withCook, { stats: { ...startingState(game).stats, cooking: from } }), withCook, { type: 'activity', id: 'cook' }).state
     }
     expect(cook(quiet, 3).notices).toEqual([])

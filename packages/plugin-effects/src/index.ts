@@ -197,8 +197,9 @@ function endTurn(state: GameState, context: PluginContext<EffectsState>): GameSt
   return next
 }
 
+/** The timed effect a call names: `effect` in a condition or an effect, `id` in a command. */
 function idOf(args: PluginArgs): string {
-  return String(args.id ?? '')
+  return String(args.effect ?? args.id ?? '')
 }
 
 function stacksOf(args: PluginArgs): Range | undefined {
@@ -216,7 +217,7 @@ export function effects() {
     start: emptyState,
     strings: { unknown: 'Nothing like that can happen.', notActive: 'That isn’t affecting you.' },
     conditions: {
-      /** `{ custom: 'effects/active', with: { id, stacks? } }`: active, with that many stacks if asked. */
+      /** `{ custom: 'effects/active', with: { effect, stacks? } }`: active, with that many stacks if asked. */
       active: (_state, args, { slice }) => {
         const record = slice.active.find((entry) => entry.id === idOf(args))
         if (!record) return false
@@ -225,9 +226,9 @@ export function effects() {
       },
     },
     effects: {
-      /** `{ custom: 'effects/apply', with: { id } }`: start it, refresh it or add a stack. */
+      /** `{ custom: 'effects/apply', with: { effect } }`: start it, refresh it or add a stack. */
       apply: (state, args, context) => applyTo(state, idOf(args), context),
-      /** `{ custom: 'effects/remove', with: { id, runEnd? } }`: take every stack off, running `onEnd` only if asked. */
+      /** `{ custom: 'effects/remove', with: { effect, runEnd? } }`: take every stack off, running `onEnd` only if asked. */
       remove: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
     },
     commands: {
@@ -235,14 +236,14 @@ export function effects() {
       apply: {
         whyNot: (_state, args, { game }) => (defOf(game, idOf(args)) ? undefined : say(game, 'effects/unknown')),
         run: (state, args, context) => applyTo(state, idOf(args), context),
-        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/apply', with: { id: idOf(args) } }],
+        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/apply', with: { effect: idOf(args) } }],
       },
       /** `{ type: 'custom', name: 'effects/remove', with: { id, runEnd? } }`. */
       remove: {
         whyNot: (_state, args, { slice, game }) =>
           slice.active.some((entry) => entry.id === idOf(args)) ? undefined : say(game, 'effects/notActive'),
         run: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
-        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/remove', with: { id: idOf(args), runEnd: args.runEnd === true } }],
+        effectsOf: (_state, args) => [{ kind: 'custom', name: 'effects/remove', with: { effect: idOf(args), runEnd: args.runEnd === true } }],
       },
     },
     statModifiers: (_state, { slice, game }) => (slice.active.length ? combined(game, slice.active) : undefined),
@@ -251,7 +252,7 @@ export function effects() {
     },
     view: (_state, { slice, game }) => effectsView(slice, game),
     references: {
-      calls: (_kind, _name, args) => (args.id === undefined ? [] : [{ entry: String(args.id), plugin: ID, list: 'effects', noun: 'effect' }]),
+      calls: (_kind, _name, args) => (idOf(args) === '' ? [] : [{ entry: idOf(args), plugin: ID, list: 'effects', noun: 'effect' }]),
       content: (game) =>
         effectDefs(game).map((def) => ({
           list: 'effects',
@@ -283,8 +284,8 @@ export function effects() {
 }
 
 /** A condition: the effect is active, with a number of stacks in this range if given. */
-export const effectActive = (id: string, stacks?: Range): Condition => ({ custom: 'effects/active', with: stacks ? { id, stacks } : { id } })
+export const effectActive = (id: string, stacks?: Range): Condition => ({ custom: 'effects/active', with: stacks ? { effect: id, stacks } : { effect: id } })
 /** An effect: apply the timed effect, refreshing or stacking it if it's already active. */
-export const applyEffect = (id: string): EffectRef => ({ custom: 'effects/apply', with: { id } })
+export const applyEffect = (id: string): EffectRef => ({ custom: 'effects/apply', with: { effect: id } })
 /** An effect: take every stack of the timed effect off. `runEnd` runs its `onEnd` once per stack. */
-export const removeEffect = (id: string, runEnd = false): EffectRef => ({ custom: 'effects/remove', with: runEnd ? { id, runEnd } : { id } })
+export const removeEffect = (id: string, runEnd = false): EffectRef => ({ custom: 'effects/remove', with: runEnd ? { effect: id, runEnd } : { effect: id } })

@@ -72,10 +72,10 @@ The first chapter's choices wait on it with `when: { kv: 'playerName' }`, so the
 stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
 ```
 
-Opening the letter and telling the truth each pay `{ kind: 'stat', key: 'courage', by: 1 }`. The braver ending is a choice that's only offered to a reader with enough courage:
+Opening the letter and telling the truth each pay `{ kind: 'stat', stat: 'courage', by: 1 }`. The braver ending is a choice that's only offered to a reader with enough courage:
 
 ```ts
-{ id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ kind: 'scene', id: 'end.kept' }] },
+{ id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ kind: 'scene', scene: 'end.kept' }] },
 ```
 
 ### Choices the engine remembers
@@ -106,7 +106,7 @@ A kv key that was never set counts as 0, so the honest reader's line needs nothi
 Every choice that moves on to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'truth', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
+{ id: 'truth', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
 ```
 
 So `state.turn` is the chapter the reader has reached, counting from 0. Anything dated is dated in chapters, such as `{ since }`, a [trigger](/docs/reference/triggers) set to fire `once: 'turn'`, or a choice marked `once: { per: 'turn' }`. The Letter has no calendar, so there are no periods and no bed.
@@ -259,8 +259,8 @@ The same effects and conditions that change and test the player's stats take an 
 {
   id: 'improveSoup',
   cost: { stats: { coins: 40 } },
-  requires: [{ when: { stat: 'quality', of: 'dish:soup', lt: 5 }, reason: 'It could not be better.' }],
-  effects: [{ kind: 'stat', key: 'quality', by: 1, of: 'dish:soup' }],
+  blocked: [{ when: { stat: 'quality', of: 'dish:soup', gte: 5 }, reason: 'It could not be better.' }],
+  effects: [{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }],
 },
 ```
 
@@ -273,8 +273,8 @@ Putting a card in the window opens a scene of interviews, while there's room beh
 ```ts
 {
   id: 'interview',
-  requires: [{ when: { count: 'staff', lt: 4 }, reason: 'There is no room behind the counter.' }],
-  effects: [{ kind: 'scene', id: 'hiring' }],
+  blocked: [{ when: { count: 'staff', gte: 4 }, reason: 'There is no room behind the counter.' }],
+  effects: [{ kind: 'scene', scene: 'hiring' }],
 },
 ```
 
@@ -282,9 +282,9 @@ Each choice in the scene hires someone with a [`create`](/docs/reference/effects
 
 ```ts
 choices: [
-  { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', id: null }] },
-  { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', id: null }] },
-  { id: 'nobody', effects: [{ kind: 'scene', id: null }] },
+  { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', scene: null }] },
+  { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', scene: null }] },
+  { id: 'nobody', effects: [{ kind: 'scene', scene: null }] },
 ],
 ```
 
@@ -301,9 +301,9 @@ A single activity, sent by the game's Count the till and end the week button, ru
     { custom: 'takings' },
     { custom: 'wages' },
     // A week's work wears everyone down a little.
-    { kind: 'each', of: 'staff', effects: [{ kind: 'stat', key: 'morale', by: -8, of: '$' }] },
+    { kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] },
     // Anyone at the end of their tether hands in their apron.
-    { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', of: '$' }] },
+    { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] },
     { kind: 'turn' },
   ],
 },
@@ -318,7 +318,7 @@ Here's what it does, in order:
      return entitiesOf(state, kind).reduce((sum, ref) => sum + (entityOf(state, ref)?.stats[stat] ?? 0), 0)
    }
 
-   wages: (state): EffectRef[] => [{ kind: 'stat', key: 'coins', by: -total(state, 'staff', 'wage') }],
+   wages: (state): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, 'staff', 'wage') }],
    ```
 
    Like any custom effect in a list, both are worked out from the state before the list runs, so the wages include anyone who quits further down.
@@ -337,7 +337,7 @@ In the first week there's only Ana. The kitchen gets out 24 covers, and the menu
 {
   id: 'review',
   when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
-  effects: [{ kind: 'stat', key: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
+  effects: [{ kind: 'stat', stat: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
 },
 ```
 
@@ -499,7 +499,7 @@ import { cast } from '@ifloom/plugin-cast'
 plugins: [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-A place keeps hours with its `locked` list and the calendar's conditions. An activity that only happens in one place requires [`onlyAt(['cafe'])`](/docs/plugins/places#helpers). A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
+A place keeps hours with its `blocked` list and the calendar's conditions. An activity that only happens in one place requires [`onlyAt(['cafe'])`](/docs/plugins/places#helpers). A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: person('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 

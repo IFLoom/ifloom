@@ -114,7 +114,7 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
       if (Array.isArray(c.scene)) c.scene = c.scene.map((id) => (id === from ? to : id))
     }
     visit.effect = (e) => {
-      if (e.kind === 'scene' && e.id === from) e.id = to
+      if (e.kind === 'scene' && e.scene === from) e.scene = to
       if (e.kind === 'scene' && e.otherwise === from) e.otherwise = to
     }
   } else if (thing === 'stat') {
@@ -126,16 +126,15 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
       for (const k of ['stat', 'tier', 'level'] as const) if (c[k] === from) c[k] = to
     }
     visit.effect = (e) => {
-      if ((e.kind === 'stat' || e.kind === 'setStat') && e.key === from) e.key = to
+      if (e.kind === 'stat' && e.stat === from) e.stat = to
     }
   } else if (thing === 'item') {
     for (const item of pack.items) if (item.id === from) item.id = to
     visit.condition = (c) => {
       if (c.item === from) c.item = to
-      if (c.has === from) c.has = to
     }
     visit.effect = (e) => {
-      if (e.kind === 'item' && e.id === from) e.id = to
+      if (e.kind === 'item' && e.item === from) e.item = to
     }
   } else {
     for (const entry of next.kv) if (entry.name === from) entry.name = to

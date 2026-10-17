@@ -26,7 +26,7 @@ const town: Pack = {
     'place.park': 'Ducks.',
   },
   activities: [
-    { id: 'coffee', requires: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'kv', key: 'coffee', to: true }] },
+    { id: 'coffee', blocked: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'kv', key: 'coffee', to: true }] },
     { id: 'nap', effects: [pass(1)] },
     { id: 'hop', effects: [moveTo('park')] },
   ],
@@ -37,10 +37,10 @@ const town: Pack = {
         place('street', ['house', 'cafe', 'park']),
         place('cafe', ['street', 'back'], {
           kind: 'venue',
-          locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+          blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
           actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
         }),
-        place('back', ['cafe'], { parent: 'cafe', locked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }] }),
+        place('back', ['cafe'], { parent: 'cafe', blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }] }),
         place('park', ['street']),
       ],
     },
@@ -152,7 +152,7 @@ describe('places', () => {
     const broken: Pack = {
       id: 'broken',
       schema: SCHEMA,
-      activities: [{ id: 'swim', requires: [{ when: at('lido'), reason: 'No.' }], effects: [moveTo('pier')] }],
+      activities: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
       data: {
         places: {
           locations: [
@@ -188,7 +188,7 @@ describe('places', () => {
           default: { music: 'calm' },
         },
         activities: [
-          { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', track: null }] },
+          { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', to: null }] },
           { id: 'listen', effects: [{ kind: 'audio', channel: 'ambience' }] },
         ],
         data: { places: { locations: [place('cafe', ['street'], { kind: 'venue', audio: { ambience: 'murmur' }, ...extra })] } },

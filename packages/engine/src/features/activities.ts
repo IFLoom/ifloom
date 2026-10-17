@@ -5,7 +5,7 @@
  */
 import { say } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
-import type { ActionDef, Game } from '../game.ts'
+import type { ActionDef, Blocked, Game } from '../game.ts'
 import type { Condition, Effect, GameState } from '../types.ts'
 import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
 import { lockedBy } from './locks.ts'
@@ -14,14 +14,15 @@ import { clampStat, lackingLine, statDef, statValue } from './stats.ts'
 /**
  * One thing the player can do standing in a room: paperwork, a jog, a drink.
  *
- * The requirement list is the single source of truth for both halves of an
- * activity — the reducer refuses on it, and the view renders its reason as the
+ * Its `blocked` list is the single source of truth for both halves of an
+ * activity: the reducer refuses on it, and the view renders its reason as the
  * disabled text. They cannot drift, because there is only one of them.
  */
 export type ActivityDef = {
   id: string
   cost?: ActivityCost
-  requires?: readonly Requirement[]
+  /** Refused while one of these holds, with its reason; a button for it is left off the screen with `hide`. */
+  blocked?: readonly Blocked[]
   /** Applied after the cost, in order. `{ custom: name }` for one that is computed. */
   effects?: readonly EffectRef[]
 }
@@ -31,13 +32,6 @@ export type ActivityCost = {
   stats?: Record<string, number>
   /** Refusal lines by stat id, when this activity's voice beats the stat's own. */
   reasons?: Record<string, string>
-}
-
-export type Requirement = {
-  /** Shown to the player when the requirement is not met. */
-  reason: string
-  /** Met while this holds. */
-  when: Condition
 }
 
 /** What the activities feature adds, as types. */
@@ -60,9 +54,12 @@ export type ActivitiesShape = {
   lists: 'activity'
 }
 
-/** A requirement: met while `when` holds, and `reason` when it does not. */
-export function need(reason: string, when: Condition): Requirement {
-  return { reason, when }
+/**
+ * A `blocked` entry written the other way round: refused with `reason` unless
+ * `when` holds. `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
+ */
+export function need(reason: string, when: Condition): Blocked {
+  return { when: { not: when }, reason }
 }
 
 export function activityById(
@@ -81,8 +78,8 @@ export function activityBlocked(state: GameState, game: Game, activity: Activity
   if (state.sceneId) return say(game, 'finishFirst')
   const locked = lockedBy(state, game, { type: 'activity', id: activity.id }, cx)
   if (locked) return locked
-  for (const requirement of activity.requires ?? []) {
-    if (!cx.holds(state, requirement.when, game)) return requirement.reason
+  for (const entry of activity.blocked ?? []) {
+    if (cx.holds(state, entry.when, game)) return entry.reason
   }
   const cost = activity.cost ?? {}
   for (const [id, amount] of Object.entries(cost.stats ?? {})) {
@@ -125,7 +122,7 @@ export const activities = defineFeature<ActivitiesShape>({
       effectsOf: (state, command, game, cx) => {
         const activity = activityById(game, command.id)
         if (!activity) return []
-        const paid: Effect[] = Object.entries(activity.cost?.stats ?? {}).map(([key, amount]) => ({ kind: 'stat', key, by: -amount }))
+        const paid: Effect[] = Object.entries(activity.cost?.stats ?? {}).map(([key, amount]) => ({ kind: 'stat', stat: key, by: -amount }))
         return [...paid, ...cx.buildEffects(state, game, activity.effects ?? [])]
       },
       spends: (command, game) => activityById(game, command.id)?.cost?.stats,
@@ -143,7 +140,7 @@ export const activities = defineFeature<ActivitiesShape>({
     for (const activity of game.activities) {
       const source = { list: 'activity', id: activity.id }
       const where = `activity ${activity.id}`
-      tools.check(source, where, [...(activity.requires ?? []).map((entry) => ({ when: entry.when })), { effects: activity.effects }])
+      tools.check(source, where, [...(activity.blocked ?? []).map((entry) => ({ when: entry.when })), { effects: activity.effects }])
       for (const id of Object.keys(activity.cost?.stats ?? {})) {
         const def = statOf.get(id)
         if (!def) tools.problem(source, where, `spends unknown stat "${id}"`)

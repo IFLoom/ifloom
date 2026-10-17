@@ -26,13 +26,13 @@ import { apply } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 
 const out = apply(state, game, go('cafe'))
-if (!out.ok) console.log(out.refused) // the reason, such as a place's `locked` line
+if (!out.ok) console.log(out.refused) // the reason, such as a place's `blocked` line
 state = out.state
 ```
 
 Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind.
 
-`refused` is always a sentence you can show the player. It's the same line [`whyNot`](/docs/reference/actions#whynot) gives, and the view greys the button out with it. The lines quoted on this page are the engine's English from the [strings table](/docs/reference/strings#refusals), and a game, a pack or a translation can reword them (`finishFirst`, `noSuchScene` and so on). Lines your game wrote, such as a lock's or a requirement's `reason`, are printed as written.
+`refused` is always a sentence you can show the player. It's the same line [`whyNot`](/docs/reference/actions#whynot) gives, and the view greys the button out with it. The lines quoted on this page are the engine's English from the [strings table](/docs/reference/strings#refusals), and a game, a pack or a translation can reword them (`finishFirst`, `noSuchScene` and so on). Lines your game wrote, such as a lock's or a `blocked` entry's `reason`, are printed as written.
 
 ### What happens, in order
 
@@ -130,14 +130,16 @@ type Command =
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
-  | { type: 'use'; itemId: string }
+  | { type: 'use'; id: string }
   | { type: 'dismiss'; id?: string }
-  | { type: 'input'; id: string; value?: KvValue }
-  | { type: 'setting'; id: string; value: KvValue }
+  | { type: 'input'; id: string; to?: KvValue }
+  | { type: 'setting'; id: string; to: KvValue }
   | { type: 'tick'; ms: number }
   | { type: 'minigame'; input: string }
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 ```
+
+A command that names one thing names it `id`, and one that sets a value takes it as `to`. Plugins' commands follow the same rule, as in `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`.
 
 The union is closed, so a game can't add a command type. Something new for the player to do is an [activity](/docs/reference/actions), not a command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `talk('ava')`.
 
@@ -153,7 +155,7 @@ Starts a new game, with this seed and these kv keys if given. It's never refused
 
 Runs the [activity](/docs/reference/actions) with this id. It pays the activity's cost, then applies its effects.
 
-It's refused with `There is no such thing to do.` if there's no such activity. After that comes the first reason from [`activityBlocked`](/docs/reference/actions#activityblocked): a scene is open, a lock, a requirement (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), or too little of a stat the cost spends. Last comes a plugin guard's [warning](/docs/reference/actions#warningof).
+It's refused with `There is no such thing to do.` if there's no such activity. After that comes the first reason from [`activityBlocked`](/docs/reference/actions#activityblocked): a scene is open, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), or too little of a stat the cost spends. Last comes a plugin guard's [warning](/docs/reference/actions#warningof).
 
 ### scene
 
@@ -178,7 +180,11 @@ Closes the scene on screen. It's never refused by the engine, even with no scene
 
 ### use
 
-Uses one of an item. It spends one, then runs the item's `use.effects`.
+```ts
+{ type: 'use', id: 'umbrella' }
+```
+
+Uses one of the item `id`. It spends one, then runs the item's `use.effects`.
 
 It's refused with `There is no such thing.` for an unknown item, `The <name> does not do anything.` for an item with no `use`, and `You have no <name>.` when the player has none.
 
@@ -194,17 +200,17 @@ Marks one [notice](/docs/reference/notices), or every notice, as seen. It has no
 ### input
 
 ```ts
-{ type: 'input', id: 'catName', value: 'Biscuit' }
+{ type: 'input', id: 'catName', to: 'Biscuit' }
 ```
 
-Writes what the player typed or picked to the [input](/docs/reference/inputs)'s kv key (its `key`, or the input's id), with text trimmed. A button can carry the command without `value` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
+Writes what the player typed or picked to the [input](/docs/reference/inputs)'s kv key (its `key`, or the input's id), with text trimmed. A button can carry the command without `to` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
 
 After a lock, it's refused with the line from [`inputRefusal`](/docs/reference/inputs#inputrefusal): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
 
 ### setting
 
 ```ts
-{ type: 'setting', id: 'difficulty', value: 'hard' }
+{ type: 'setting', id: 'difficulty', to: 'hard' }
 ```
 
 Changes a `play` [setting](/docs/reference/settings) in the state. A settings screen sends it when the player changes one mid-game. It's a command like any other, so it goes in the runner's [log](/docs/reference/runner#commandlog) and [`replay`](/docs/reference/runner#replay) gives the same game. A runner with a [profile](/docs/reference/profile) also stores the new value there, so the next new game starts with it.
@@ -240,7 +246,7 @@ An input to the [minigame](/docs/reference/minigames) being played. It takes the
 ### custom
 
 ```ts
-{ type: 'custom', name: 'quests/track', with: { quest: 'bread' } }
+{ type: 'custom', name: 'quests/track', with: { id: 'bread' } }
 ```
 
 Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full name, with the plugin's id in front. `with` is passed as its arguments, or `{}` when left out.

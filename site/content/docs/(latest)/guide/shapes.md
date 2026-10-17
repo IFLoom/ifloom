@@ -91,12 +91,12 @@ The same condition can hide a choice. `blame` ("Only something that came open in
 
 ### A count
 
-Each lie adds to a kv key with `{ kind: 'kv', key: 'lies', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
+Each lie adds to a kv key with `{ kind: 'kv', key: 'fibs', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
 
 ```ts
-{ text: 'ch3.door.honest', when: { kv: 'lies', lt: 1 } },
-{ text: 'ch3.door.fib', when: { kv: 'lies', is: 1 } },
-{ text: 'ch3.door.tangle', when: { kv: 'lies', gte: 2 } },
+{ text: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
+{ text: 'ch3.door.fib', when: { kv: 'fibs', is: 1 } },
+{ text: 'ch3.door.tangle', when: { kv: 'fibs', gte: 2 } },
 ```
 
 A kv key that was never set counts as 0, so the honest reader's line needs nothing written first.

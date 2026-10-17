@@ -66,7 +66,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 
 The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts`, `src/styles.css` and `src/minigame.ts`, which runs a minigame's clock and keys. [Using another framework](/docs/guide/frameworks) walks through them.
 
-`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
+`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
 Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends only on `@ifloom/*` packages (and, for `vue` and `svelte`, the framework, its Vite plugin and its type checker), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
 
@@ -375,10 +375,10 @@ type NewGameOptions = {
   name: string
   template?: TemplateName
   into?: string
-  theme?: ThemeName
+  theme?: ThemeName | 'none'
 }
 
-type TemplateName = 'blank' | 'vanilla' | 'novel' | 'cafe' | 'town'
+type TemplateName = 'blank' | 'vanilla' | 'vue' | 'svelte' | 'novel' | 'cafe' | 'town'
 const TEMPLATES: readonly TemplateName[]
 
 type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
@@ -387,7 +387,7 @@ const THEMES: readonly ThemeName[]
 
 What `ifloom new` runs. It copies a template into `into` (`games/<name>` in the checkout if left out), sets the package name, fills in the title, and returns the folder and the files it wrote. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
 
-`theme` is the React UI's preset, written into `src/styles.css`. Left out, a `blank` game gets one from `THEMES` at random and a copied example keeps its own. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla` template (which ignores `theme`) and for a game whose stylesheet imports no preset.
+`theme` is the React UI's preset, written into `src/styles.css`. Left out, a `blank` game gets one from `THEMES` at random and a copied example keeps its own. `'none'` takes the preset out. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla`, `vue` and `svelte` templates (which ignore `theme`) and for a game whose stylesheet imports no preset.
 
 ```ts
 import { newGame } from '@ifloom/cli'

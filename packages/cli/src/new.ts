@@ -24,9 +24,10 @@ export type NewGameOptions = {
   /**
    * The React UI preset to start from. Left out, a blank game gets one at
    * random, so two new games don't start out looking alike, and a copied
-   * example keeps its own. The vanilla, vue and svelte templates have no React UI and ignore it.
+   * example keeps its own. `'none'` leaves the preset out, for the React UI's
+   * plain default look. The vanilla, vue and svelte templates have no React UI and ignore it.
    */
-  theme?: ThemeName
+  theme?: ThemeName | 'none'
 }
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
@@ -80,8 +81,8 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   }
   const source = SOURCES[template]
   if (!source) throw new Error(`There is no template "${template}". Pick one of: ${TEMPLATES.join(', ')}.`)
-  if (options.theme && !THEMES.includes(options.theme)) {
-    throw new Error(`There is no theme "${options.theme}". Pick one of: ${THEMES.join(', ')}.`)
+  if (options.theme && options.theme !== 'none' && !THEMES.includes(options.theme)) {
+    throw new Error(`There is no theme "${options.theme}". Pick one of: ${THEMES.join(', ')}, or none.`)
   }
   const dir = options.into ?? here(`../../../games/${name}`)
   if (existsSync(dir) && readdirSync(dir).length > 0) throw new Error(`${dir} already exists and isn't empty.`)
@@ -107,13 +108,15 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   delete pkg.description
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
-  // The preset: the one asked for, a random one for a blank game, or the example's own.
+  // The preset: the one asked for (none takes it out), a random one for a blank game, or the example's own.
   const styles = join(dir, 'src/styles.css')
   let theme: ThemeName | null = null
   if (!NO_REACT.has(template) && existsSync(styles)) {
-    const chosen = options.theme ?? (template === 'blank' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
     const css = readFileSync(styles, 'utf8')
-    if (chosen) {
+    const chosen = options.theme ?? (template === 'blank' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
+    if (chosen === 'none') {
+      writeFileSync(styles, css.replace(/@import "@ifloom\/react\/themes\/[\w-]+\.css";\n?/, ''))
+    } else if (chosen) {
       const line = `@import "@ifloom/react/themes/${chosen}.css";`
       const withTheme = /@import "@ifloom\/react\/themes\/[\w-]+\.css";/.test(css)
         ? css.replace(/@import "@ifloom\/react\/themes\/[\w-]+\.css";/, line)

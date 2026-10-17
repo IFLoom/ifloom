@@ -46,6 +46,14 @@ describe('ifloom new', () => {
     expect(() => newGame({ name: 'odd', theme: 'neon' as never, into: fresh() })).toThrow(/no theme "neon"/)
   })
 
+  it.each(['blank', 'novel'] as const)('leaves the preset out of the %s template with theme none', (template) => {
+    const { dir, theme } = newGame({ name: 'plain-look', template, theme: 'none', into: fresh() })
+    expect(theme).toBeNull()
+    const css = readFileSync(join(dir, 'src/styles.css'), 'utf8')
+    expect(css).toContain('@import "@ifloom/react/styles.css";')
+    expect(css).not.toMatch(/@ifloom\/react\/themes\//)
+  })
+
   it.each(['vanilla', 'vue', 'svelte'] as const)('uses no React in the %s template, and draws the plain blank game', (template) => {
     const { dir, files, theme } = newGame({ name: 'the-door', template, into: fresh() })
     expect(theme).toBeNull()

@@ -54,6 +54,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Diagrams in the docs, drawn with Mermaid: how the engine, your game and your UI fit together, what happens in a command, how a save loads, how plugins join the core, the runner's loop and the quick feet minigame. Each keeps its Mermaid source in the page's Markdown and in `llms-full.txt`.
 - The docs are at https://ifloom.dev, with an MCP server at `https://ifloom.dev/api/mcp` that an agent can use to search them and read single pages, and an Open menu on each page that opens it in ChatGPT, Claude or Cursor, or as Markdown.
 - Old packs and mods keep loading. A pack written for an older `SCHEMA` is upgraded step by step as `loadGame` loads it, as a mod file is when a player adds it, and as the editor opens it. `upgradePack` does the same for a pack you read yourself. Only a pack from a newer engine is refused.
+- `ifloom new --theme none` starts a React UI game with no theme preset, in the UI's plain default look. It works for a copied example too.
 
 ### Changed
 

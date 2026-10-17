@@ -59,7 +59,7 @@ npm run new -- my-cafe --template cafe
 
 The `vanilla`, `vue` and `svelte` templates draw the scene, choices, inputs, stats and minigames themselves and play the game's sound, with no React. [Using another framework](/docs/guide/frameworks) walks through their code, and is the place to start for any other framework.
 
-A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
+A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, leave it out with `--theme none` for the plain default look, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
 
 [`ifloom new`](/docs/cli#ifloom-new) has the details.
 

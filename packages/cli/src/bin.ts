@@ -4,7 +4,7 @@
  *
  *   ifloom new <name> [--template blank]
  *                            a new game in games/<name>, from blank, vanilla, vue, svelte, novel, cafe or town;
- *                            --theme paper|terminal|studio|storybook picks the React UI's preset
+ *                            --theme paper|terminal|studio|storybook picks the React UI's preset, or none for its plain look
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
  *                            one HTML file and its art and sound, checked to open from disk;
@@ -140,8 +140,8 @@ function create(name: string | undefined, template: string | undefined, theme: s
     return 1
   }
   try {
-    const made = newGame({ name, template: template as TemplateName | undefined, theme: theme as ThemeName | undefined })
-    const look = made.theme ? `, with the ${made.theme} theme` : ''
+    const made = newGame({ name, template: template as TemplateName | undefined, theme: theme as ThemeName | 'none' | undefined })
+    const look = made.theme ? `, with the ${made.theme} theme` : theme === 'none' ? ', with no theme preset' : ''
     console.log(`Made ${name} in ${relative(process.cwd(), made.dir) || '.'} from the ${template ?? 'blank'} template${look}. Next:\n`)
     console.log('  npm install')
     console.log(`  npm run dev -w ${name}`)
@@ -183,7 +183,7 @@ async function main(): Promise<number> {
     case 'new':
       return create(positional(), flag('template'), flag('theme'))
     default:
-      console.log(`ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]`)
+      console.log(`ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update]`)
       return command === 'help' ? 0 : 1
   }
 }

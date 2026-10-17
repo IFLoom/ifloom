@@ -24,11 +24,12 @@ Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others fro
 
 `@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
 
-If you want a different version of one of those tools, there are three cases:
+To use a different version of Vite or `vite-plugin-singlefile`:
 
-- **A version inside the CLI's range**, such as a newer Tailwind 4.x: add it to your own `package.json`. npm uses your version, because it satisfies the CLI's range.
-- **A version outside the range:** force it with npm's [`overrides`](https://docs.npmjs.com/cli/configuring-npm/package-json#overrides) (`pnpm.overrides` in pnpm). It may not work.
-- **Another major of Tailwind:** the React UI's stylesheet is written for Tailwind 4, so the React UI decides that one. If you need something else, set `tailwind: false` on the [preset](#the-vite-preset) and style the game yourself.
+- **Inside the CLI's range,** such as a newer Vite 8.x: add it to your own `package.json`. Your package manager uses your version, because it satisfies the CLI's range.
+- **Outside the range:** force it with npm's [`overrides`](https://docs.npmjs.com/cli/configuring-npm/package-json#overrides) (`pnpm.overrides` in pnpm). It may not work.
+
+Tailwind and your framework's Vite plugin are your game's own dependencies, so you pick their versions. The React UI's Tailwind source is written for Tailwind 4. With another version, or none, import the [prebuilt stylesheet](/docs/react/customising#without-tailwind) instead.
 
 Then add scripts to your `package.json`. These are Small Town's:
 

@@ -203,7 +203,7 @@ const rules: GameRules = {
 }
 ```
 
-Days missed simply add nothing to `owed`, so the week's pay is the wage times the days worked.
+Days missed add nothing to `owed`, so the week's pay is the wage times the days worked.
 
 ### "Worked today"
 
@@ -384,4 +384,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's **Ask about weekend work** choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings, is in the newspaper's ads, whose `use` opens the board with only that job.
+Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings, is in the newspaper's ads, whose `use` opens the board with only that job.

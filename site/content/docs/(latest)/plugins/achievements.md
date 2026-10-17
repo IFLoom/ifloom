@@ -98,9 +98,9 @@ type AchievementDef = {
 
 An achievement is earned:
 
-- the first time `when` holds, if it has one;
-- otherwise, the first time `progress` reaches its target, if it has one;
-- and always by the [`achievements/grant`](#effects) effect, so one with neither is earned only that way.
+- the first time `when` holds, if it has one
+- otherwise, the first time `progress` reaches its target, if it has one
+- at any time by the [`achievements/grant`](#effects) effect, so one with neither is earned only that way
 
 ### Progress
 
@@ -253,7 +253,7 @@ The game's achievements, merged from its packs: `game.data.achievements.achievem
 function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView
 ```
 
-The `AchievementsView` for a record. It needs the state to read progress. `stored` is what the profile's `achievements` namespace holds, an [`AchievementsProfile`](#achievementsprofile); each achievement in it shows as earned, with `earnedOn` `null` unless this save earned it too. The plugin's view is `achievementsView(slice, state, game, context.profile)`.
+The `AchievementsView` for a record. It needs the state to read progress. `stored` is what the profile's `achievements` namespace holds, an [`AchievementsProfile`](#achievementsprofile). Each achievement in it shows as earned, with `earnedOn` `null` unless this save earned it too. The plugin's view is `achievementsView(slice, state, game, context.profile)`.
 
 ```ts
 import type { Game, GameState, Runner } from '@ifloom/engine'
@@ -298,4 +298,4 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 
 ## See it in an example
 
-Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition. With pages on, the title screen and the sidebar's **Achievements** button open the React UI's achievements page.
+Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition. With pages on, the title screen and the sidebar's Achievements button open the React UI's achievements page.

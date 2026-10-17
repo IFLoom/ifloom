@@ -192,7 +192,7 @@ The body is a [variants](/docs/reference/prose#variantmember) block, so the word
 
 ## A worked example
 
-A cut-down Small Town. The player meets Ava at the café, and she texts the next morning. Saying yes brings a second text. A letter from the town council lands on the mat on the second afternoon. There's no phone here. The texts and the letters are just two channels, and the flat has a button to pick up the post.
+A cut-down Small Town. The player meets Ava at the café, and she texts the next morning. Saying yes brings a second text. A letter from the town council lands on the mat on the second afternoon. There's no phone here. The texts and the letters are two channels, and the flat has a button to pick up the post.
 
 The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
 
@@ -296,7 +296,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-Here's how it plays. A new game starts in the flat on Monday morning:
+A new game starts in the flat on Monday morning. Played through:
 
 ```ts
 import { apply, startingState, view, whyNot, type GameState } from '@ifloom/engine'

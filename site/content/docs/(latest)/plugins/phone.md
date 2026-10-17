@@ -235,7 +235,7 @@ const text: MessageDef = {
 }
 ```
 
-Here's how it plays. Moving day locks everything with `'*'`, so every app reads `Unpack first.` until the player unpacks:
+Moving day locks everything with `'*'`, so in a new game every app reads `Unpack first.` until the player unpacks:
 
 ```ts
 import { apply, startingState, view, type Game, type GameState } from '@ifloom/engine'

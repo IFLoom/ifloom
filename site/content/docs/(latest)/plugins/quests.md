@@ -181,7 +181,7 @@ const journal = (state: GameState) => view(state, game).plugins.quests as Quests
 const run = (state: GameState, id: string) => apply(state, game, { type: 'activity', id }).state
 ```
 
-Here's how it plays:
+Playing it through:
 
 ```ts
 let state = startingState(game)

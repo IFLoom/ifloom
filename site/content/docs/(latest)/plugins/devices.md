@@ -161,7 +161,7 @@ type Section =
 | `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [custom value](/docs/reference/custom) in a token can print a balance or the weather. |
 | `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has an activity's price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. |
 | `{ collection }` | A declared [collection](/docs/reference/collections)'s entries, newest first, such as a gallery or notes. |
-| `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a **Call** button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
+| `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
 | `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/plugins/feed). |
 | `{ panel }` | A screen the game draws itself, with the data the game's [custom panel](/docs/reference/custom) of that name returns. |
 
@@ -197,7 +197,7 @@ In a game without the cast, the section is an empty list.
 
 ## A worked example
 
-Here's a laptop in the player's flat, in a town like the [showcase](/docs/guide/showcase)'s. It has four apps:
+This laptop sits in the player's flat, in a town like the [showcase](/docs/guide/showcase)'s. It has four apps:
 
 - Notes, over a `notes` collection
 - a café app that delivers, with a button that only shows while the player has no scarf
@@ -285,7 +285,7 @@ export const { game } = loadGame([town], {
 })
 ```
 
-Here's how it plays, starting at home:
+Played from a new game, starting at home:
 
 ```ts
 import { apply, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
@@ -362,10 +362,10 @@ Both are free, so no time passes and the player doesn't move. [Locks](/docs/refe
 
 `devices/open` is refused with the first of these that applies:
 
-1. a [lock](/docs/reference/locks)'s `reason`
+1. A [lock](/docs/reference/locks)'s `reason`.
 2. `There is no such app.`
-3. `That is not installed.`, while the app's `when` doesn't hold
-4. the `reason` of the first `blocked` entry that holds
+3. `That is not installed.`, while the app's `when` doesn't hold.
+4. The `reason` of the first `blocked` entry that holds.
 
 An app's `disabled` in the view is this same answer, so a lock that stops opening greys out every app with its reason.
 

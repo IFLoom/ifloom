@@ -280,7 +280,7 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 
 - **Stats are read, never written.** `state.stats` keeps the value underneath. Read stats with [`statValue`](/docs/reference/stats#statvalue) or from the view, not from `state.stats`, to see the status.
 - **A cost is checked against the changed value but paid from the kept one.** With 5 energy kept and a boost of 10, something that costs 12 is allowed, and the kept value goes to 0.
-- **Values can have fractions.** `multiply` doesn't round, so `energy × 0.8` can read as 39.2. Give the stat a `format`, or round in your UI.
+- **Values can have fractions.** `multiply` doesn't round, so `energy × 0.8` can read as 39.2. Give the stat a [`round`](/docs/reference/stats#rounding), as Small Town's energy has, or round in your UI.
 - **Only the player's stats.** An entity's stats are never changed by a status.
 - **Turns are the game's.** With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so `turns: 2` lasts until the player has slept twice.
 

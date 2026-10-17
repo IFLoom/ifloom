@@ -26,7 +26,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `generators()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin works on its own, cooperates with no other, and keeps no state of its own: what it makes are ordinary entities in the game state.
+Then add `generators()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin works on its own, cooperates with no other, and keeps no state of its own. What it makes are ordinary entities in the game state.
 
 ## generators
 
@@ -180,7 +180,7 @@ A call that names a template the game doesn't have gives `unknown template "…"
 ## Gotchas
 
 - **Entities are kept until something removes them.** A trigger that makes visitors every day fills the save with them. Remove the old ones with an [`each`](/docs/reference/effects#each) and [`remove`](/docs/reference/effects#remove), as the showcase does.
-- **Pools hold plain values.** A pool can't hold another pool; use `join` to put several draws together.
+- **Pools hold plain values.** A pool can't hold another pool. Use `join` to put several draws together.
 
 ## See it in an example
 

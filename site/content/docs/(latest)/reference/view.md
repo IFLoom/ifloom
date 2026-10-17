@@ -11,7 +11,7 @@ The engine has no UI of its own. It hands your UI one object, a `View`, that say
 
 Every button in a `View` already carries its command and its price. If it can't be pressed, it also carries the reason, worded for the player. The reducer refuses with the same reasons, so the screen and the rules can't disagree. Show greyed-out buttons with their reason rather than hiding them.
 
-Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). Read on if you want to write your own UI.
+Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). The rest of this page is for writing your own.
 
 ```ts
 import { renderAction, screen, view, type View } from '@ifloom/engine'
@@ -25,7 +25,7 @@ function view(state: GameState, game: Game, options?: ViewOptions): View
 
 Builds the whole `View` from the state in one pass. It's pure, and cheap enough to call after every command. It's built from [`screen`](#screen), so the open scene is rendered once per call, however many choices it has.
 
-`options` is a [`ViewOptions`](#viewoptions). You rarely pass it yourself: the [runner](/docs/reference/runner#the-view-cache) does, so that plugins' views can show what the player's profile holds. Called with just the state and the game, no plugin's view sees the profile.
+`options` is a [`ViewOptions`](#viewoptions). You rarely pass it yourself: the [runner](/docs/reference/runner#the-view-cache) does, so that plugins' views can show what the player's profile holds. Called with only the state and the game, no plugin's view sees the profile.
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -373,10 +373,10 @@ function renderAction(state: GameState, game: Game, action: ActionDef): Rendered
 
 Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as the view does for the idle screen's buttons. Use it in a [plugin](/docs/reference/plugins) that shows actions somewhere other than a room, such as an app on a device or a notice board. The button gets:
 
-- its `label`;
-- a `price` from the activity's `cost`, if the action sends `{ type: 'activity' }`, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects;
-- `disabled` from the first `blocked` entry that holds, or else [`whyNot`](/docs/reference/actions#whynot) for its command;
-- `warning` from [`warningOf`](/docs/reference/actions#warningof).
+- its `label`
+- a `price` from the activity's `cost`, if the action sends `{ type: 'activity' }`, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects
+- `disabled` from the first `blocked` entry that holds, or else [`whyNot`](/docs/reference/actions#whynot) for its command
+- `warning` from [`warningOf`](/docs/reference/actions#warningof)
 
 ```ts
 import { renderAction } from '@ifloom/engine'

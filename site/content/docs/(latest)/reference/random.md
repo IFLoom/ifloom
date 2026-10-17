@@ -10,7 +10,7 @@ import { hash, roll, pick, chance, weighted } from '@ifloom/engine'
 
 ## Why deterministic
 
-- **Undo and snapshots.** A state is the whole game. Replaying a command from a saved state gives the same result, so undo just goes back to the previous state, and a test can pin a screen exactly.
+- **Undo and snapshots.** A state is the whole game. Replaying a command from a saved state gives the same result, so undo goes back to the previous state, and a test can pin a screen exactly.
 - **No save-scumming.** Reloading and trying again deals the same draw. The player can't re-roll today's market prices by walking out and back in.
 - **Rendering is pure.** A scene's `render` runs every time the view is built and again when a choice is picked. With `Math.random`, the screen the player read and the choice they picked could disagree.
 
@@ -155,10 +155,10 @@ When every weight is a whole number, the draw is `hash(parts) % total`, walking 
 
 The engine draws with it wherever content has weights:
 
-- [storylets](/docs/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws;
-- [variants](/docs/reference/prose#variantmember) with a weight on any member;
-- [pool files](/docs/reference/media#poolfile), when a pool request picks a file;
-- shuffled [playlists](/docs/reference/audio#playlistdef), drawn without replacement.
+- [storylets](/docs/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws
+- [variants](/docs/reference/prose#variantmember) with a weight on any member
+- [pool files](/docs/reference/media#poolfile), when a pool request picks a file
+- shuffled [playlists](/docs/reference/audio#playlistdef), drawn without replacement
 
 **Gotchas.**
 - The order of `items` matters. The same parts and the same weights in another order can draw a different item.

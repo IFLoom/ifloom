@@ -46,9 +46,9 @@ Any scene can be a storylet, a [data scene](/docs/reference/scenes#datascene) or
 
 This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or an item's use. When it runs, it:
 
-1. finds the eligible scenes, which are the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds;
-2. draws one of them by weight, with [`weighted`](/docs/reference/random#weighted);
-3. opens the scene it drew.
+1. Finds the eligible scenes: the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds.
+2. Draws one of them by weight, with [`weighted`](/docs/reference/random#weighted).
+3. Opens the scene it drew.
 
 If no scene is eligible, it opens `otherwise`. If you gave no `otherwise`, the effect leaves the scene on screen as it was. `otherwise` can be any scene, and doesn't need a `drawnFrom` of its own.
 
@@ -60,9 +60,9 @@ A draw is worked out from the save's [seed](/docs/reference/random#the-seed), th
 
 So:
 
-- the same save draws the same scene, and reloading doesn't re-roll it;
-- a second draw from the same set in the same turn is a fresh draw, because the count has moved on;
-- two saves with different seeds draw differently;
+- The same save draws the same scene, and reloading doesn't re-roll it.
+- A second draw from the same set in the same turn is a fresh draw, because the count has moved on.
+- Two saves with different seeds draw differently.
 - [`replay`](/docs/reference/runner#replay) runs the same commands on the same start and draws the same scenes, because the draw is part of the command.
 
 **Gotchas.**
@@ -130,7 +130,7 @@ const maybeSomething: CustomEffect = (state, args) =>
 
 ## Adding to a set
 
-A set has no list of members. Every scene that names it in `drawnFrom` is a member, so a [pack](/docs/reference/loader#pack) or a [mod](/docs/reference/mods) adds one just by declaring a scene:
+A set has no list of members. Every scene that names it in `drawnFrom` is a member, so a [pack](/docs/reference/loader#pack) or a [mod](/docs/reference/mods) adds one by declaring a scene:
 
 ```ts
 import type { Pack } from '@ifloom/engine'

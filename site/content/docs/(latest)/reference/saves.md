@@ -116,7 +116,7 @@ The part of `indexedDB` the driver needs, typed by the engine because it carries
 
 ### A driver of your own
 
-A driver is a name and four functions over strings. Here's one for a desktop wrapper that writes each save as a file:
+A driver is a name and four functions over strings. This one, for a desktop wrapper, writes each save as a file:
 
 ```ts
 import type { SaveDriver } from '@ifloom/engine'
@@ -325,7 +325,7 @@ These are the changes to the save format so far, with what loading a save from b
 
 - **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into flags (now the [kv store](/docs/reference/state#kv)) of the same names, so `{{playerName}}` still fills in, and adds an empty [`chosen`](/docs/reference/state#chosen).
 - **2 → 3** brings in the [turn](/docs/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: flags named `day:<id>` (the [once-a-turn](/docs/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/docs/reference/state#storylines), and each [collection](/docs/reference/collections) entry's and [notice](/docs/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
-- **3 → 4** brings in [entities](/docs/reference/entities): the save gets an empty [`entities`](/docs/reference/state#entities) and an empty [`created`](/docs/reference/state#created), The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
+- **3 → 4** brings in [entities](/docs/reference/entities): the save gets an empty [`entities`](/docs/reference/state#entities) and an empty [`created`](/docs/reference/state#created). The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
 - **4 → 5** takes the clock out of the engine. The save's `time: { day, period }` moves into the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, `plugins.calendar = { version: 1, state: { day, period } }`, with the old last period `'sleep'` renamed `'late'`, the calendar's word for it. A save that already has a `plugins.calendar` keeps it. A game without the calendar keeps the entry unused, as it keeps the state of any plugin it doesn't have.
 - **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/docs/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/docs/plugins/places#placesoptions), because a plugin missing from a save gets its starting state when it loads. A game without the places plugin keeps the entry unused.
 - **6 → 7** brings in [`removed`](/docs/reference/state#removed), empty on an older save, the list of declared entities removed in play. Older saves didn't record them, so a declared entity removed in a save from before version 7 isn't on the list, and loading puts it back at its start.
@@ -450,7 +450,7 @@ type MigrationTools = {
 
 What a step gets besides the state. `fill(kinds)` returns the state the step was given with what the game declares and the save lacks filled in, for the kinds you name. Leave `kinds` out to fill every kind. Nothing the save already has is changed, so `fill` never resets a value the player has earned.
 
-A [plugin's migration](/docs/reference/plugins#state-and-migrations) step gets the same tools. There, `fill` gives the whole game state as the engine carried it, filled the same way, for a step that needs to read the game; the step still returns only the plugin's own state.
+A [plugin's migration](/docs/reference/plugins#state-and-migrations) step gets the same tools. There, `fill` gives the whole game state as the engine carried it, filled the same way, for a step that needs to read the game. The step still returns only the plugin's own state.
 
 ### FillKind
 

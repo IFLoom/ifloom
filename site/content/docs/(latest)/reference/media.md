@@ -24,7 +24,7 @@ import {
 
 ## A worked example
 
-In the showcase, someone knocks at the flat in the evening. The front door is picked from a pool of doors, the window behind it is a short clip of rain, and the door itself is a hotspot that takes the scene's `answer` choice.
+Say someone knocks at the showcase's flat in the evening. (Small Town has no pools or video yet, so this is an example of what one would look like.) The front door is picked from a pool of doors, the window behind it is a short clip of rain, and the door itself is a hotspot that takes the scene's `answer` choice.
 
 ```ts
 import type { DataScene, Game } from '@ifloom/engine'
@@ -125,9 +125,9 @@ A weight only matters among the files that fit. It doesn't make a file fit a req
 
 You ask a pool for a file in three places:
 
-- markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`;
-- a `{ media }` block or a hand-built scene's `media`, as `{ pool: 'door', tags: ['red', 'night'] }`;
-- a stage layer, as `{ pool: 'window', tags: ['rain'] }`.
+- markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`
+- a `{ media }` block or a hand-built scene's `media`, as `{ pool: 'door', tags: ['red', 'night'] }`
+- a stage layer, as `{ pool: 'window', tags: ['rain'] }`
 
 The engine picks a file in three steps.
 
@@ -225,7 +225,7 @@ type HotspotDef = {
 
 A clickable area. `rect` is `[x, y, width, height]` in percent of the stage, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. Give exactly one of:
 
-- **`command`**, any [command](/docs/reference/commands), greyed out by the same rules as an [action's button](/docs/reference/view#renderaction);
+- **`command`**, any [command](/docs/reference/commands), greyed out by the same rules as an [action's button](/docs/reference/view#renderaction).
 - **`choice`**, a choice of the open scene by id, which takes that choice's command, `disabled` and `warning`.
 
 It's left out while its `when` fails, and while its `layer` isn't shown.

@@ -21,7 +21,7 @@ const town: Game = {
 | Kind | Content writes | Where |
 |---|---|---|
 | `conditions` | `{ custom: 'marketDay' }` | Any [condition](/docs/reference/conditions#custom) |
-| `effects` | `{ custom: 'tip', with: { by: 2 } }` | A data scene choice's [effects](/docs/reference/effects#computed-effects), an [activity](/docs/reference/actions#activitydef)'s `effects`, a [trigger](/docs/reference/triggers)'s `effects`, an [`each`](/docs/reference/effects#each)'s `effects`, what another custom effect returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
+| `effects` | `{ custom: 'tip', with: { by: 2 } }` | A data scene choice's [effects](/docs/reference/effects#computed-effects), an [activity](/docs/reference/actions#activitydef)'s `effects`, a [trigger](/docs/reference/triggers)'s `effects`, an [`each`](/docs/reference/effects#each)'s `effects`, an item's `use`, what another custom effect returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
 | `values` | `{{v:breadPrice}}`, or `{ value: 'breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
 | `panels` | `panelData: 'stallPrices'` | A [data scene](/docs/reference/scenes#paneldata) |
 
@@ -134,7 +134,7 @@ effects: [{ kind: 'stat', stat: 'coins', by: 4 }, { custom: 'double' }, { custom
 
 **Gotchas.**
 - A button's price, and what a plugin's [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, a custom effect is called with the state on screen, as [`previewEffects`](#previeweffects) does. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
-- Item uses take plain [effects](/docs/reference/effects), not `EffectRef`. Write the long form there, `{ kind: 'custom', name: 'tip', with: { by: 2 } }`, which runs the same way.
+- A list of plain [effects](/docs/reference/effects), such as a plugin's `effectsOf`, doesn't take `EffectRef`. Write the long form there, `{ kind: 'custom', name: 'tip', with: { by: 2 } }`, which runs the same way.
 - Inside an [`each`](/docs/reference/effects#each), the function runs once per entity, on the state the entities before it left.
 - A custom effect that returns another of the game's custom effects runs that one in its turn too. This stops at 10 deep, so a custom effect that names itself does nothing past that rather than hanging.
 

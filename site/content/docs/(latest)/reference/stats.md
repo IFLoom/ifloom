@@ -120,7 +120,7 @@ The other fields work much as they do for the player's stats:
 
 ### A purse and an energy gauge
 
-Here are two stats a town game is likely to want. Coins are spent, and the UI shows them in a purse of its own. Energy has a ceiling that grows with fitness, and fills back up overnight.
+A town game usually wants these two stats. Coins are spent, and the UI shows them in a purse of its own. Energy has a ceiling that grows with fitness, and fills back up overnight.
 
 ```ts
 import type { Custom, GameRules, StatDef } from '@ifloom/engine'
@@ -229,7 +229,7 @@ lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
 function formatStat(def: StatDef | undefined, value: number): string
 ```
 
-A value as the player reads it, through the declaration's `format`. With no format, or no declaration, it's just the number.
+A value as the player reads it, through the declaration's `format`. With no format, or no declaration, it's the plain number.
 
 ```ts
 import { formatStat, statDef } from '@ifloom/engine'
@@ -255,9 +255,9 @@ The engine works a derived stat out from its [`Formula`](#formula) every time so
 
 Everything that reads stats reads a derived one the same way, through [`statValue`](#statvalue):
 
-- a [`{ stat }`](/docs/reference/conditions#stat) condition and a [`{ level }`](/docs/reference/conditions#level) condition;
-- an activity's [cost](/docs/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though);
-- the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats.
+- a [`{ stat }`](/docs/reference/conditions#stat) condition and a [`{ level }`](/docs/reference/conditions#level) condition
+- an activity's [cost](/docs/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though)
+- the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats
 
 A derived stat isn't in `state.stats`, so a hand-written scene or a custom function that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
 
@@ -339,10 +339,10 @@ A derived stat is never written. A `stat` effect on one does nothing, a [cost](/
 
 The [content checker](/docs/reference/checks) reports each of these:
 
-- a `stat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`);
-- an activity whose `cost` spends one (`spends stat "…", which is derived and never written`);
-- a derived stat with `spendable` or a `start`;
-- a formula that names a stat the game doesn't declare, or one with another owner;
+- a `stat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`)
+- an activity whose `cost` spends one (`spends stat "…", which is derived and never written`)
+- a derived stat with `spendable` or a `start`
+- a formula that names a stat the game doesn't declare, or one with another owner
 - a cycle, such as `service` reading `mood` while `mood` reads `service`. It's reported as `derive goes round in a cycle: service → mood → service`. If you run the game anyway, a formula that goes round reads 0 once it's 64 steps deep.
 
 These come from the [content checker](/docs/reference/checks), wherever the effect or the stat is.
@@ -410,8 +410,8 @@ The React UI's [`StatList`](/docs/react/components#statlist) shows a levelled st
 
 The [content checker](/docs/reference/checks) reports, against `stat <id>`:
 
-- `levels.at needs at least one threshold`, for an empty or missing `at`;
-- `levels.at must go up, each threshold above the last`, for thresholds out of order or repeated;
+- `levels.at needs at least one threshold`, for an empty or missing `at`
+- `levels.at must go up, each threshold above the last`, for thresholds out of order or repeated
 - `levels.at … outside the stat's range (… to …)`, for a threshold below the stat's `min` or above its `max`. A stat whose `max` is a `{ value }` has no upper bound for this check.
 
 ## statValue

@@ -155,8 +155,8 @@ The React UI's [`PanelHost`](/docs/react/components#panelhost) draws these names
 
 The [content checker](/docs/reference/checks#in-an-effect) allows any panel name, because the UI decides what each one draws. A plugin that knows a panel checks its `with` with [`panelProblems`](/docs/reference/plugins#checking-panels):
 
-- the shop's `shop` panel needs a `vendor` the game has: `unknown vendor "kiosk"`;
-- the jobs plugin's `jobs` panel takes an optional `job` list of jobs the game has: `unknown job "circus"`.
+- The shop's `shop` panel needs a `vendor` the game has: `unknown vendor "kiosk"`.
+- The jobs plugin's `jobs` panel takes an optional `job` list of jobs the game has: `unknown job "circus"`.
 
 ## See it in an example
 

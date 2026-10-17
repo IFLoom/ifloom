@@ -121,7 +121,7 @@ type SceneChoice = {
 | `id` | What the `choose` command names. Unique within the scene. |
 | `label` | The button text. |
 | `visible` | `false` hides it. Shown by default. |
-| `disabled` | A reason. The button stays on screen, greyed out, with this text. It's worked out by the render for this state; a [data scene](#choice) writes `blocked` instead and the engine fills it in. |
+| `disabled` | A reason. The button stays on screen, greyed out, with this text. It's worked out by the render for this state. A [data scene](#choice) writes `blocked` instead and the engine fills it in. |
 | `tags` | Words the UI can style or filter the choice by, such as `['kind']` or `['risky']`. The engine gives them no meaning and passes them to the [`RenderedChoice`](/docs/reference/view#renderedchoice). |
 | `irreversible` | A warning the UI shows before the choice is taken. A [runner](/docs/reference/runner#historyoptions) with history on never undoes past it. |
 | `effects` | Applied in order when the player picks it. See [Effects](/docs/reference/effects). |
@@ -140,7 +140,7 @@ The `choose` command first asks [`whyNot`](/docs/reference/actions#whynot), whic
 5. The choice's `disabled` is set. The refusal is the disabled text. Then, for a choice with a `command`, that command is asked as it would be on its own: a lock on it, a plugin's guard and its own `whyNot`. A `command` that is itself `choose` is refused.
 6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [`warningOf`](/docs/reference/actions#warningof)).
 
-Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` just closes it. Use [`apply`](/docs/reference/commands#apply) rather than `dispatch` when you need to know which of these happened.
+Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` closes it. Use [`apply`](/docs/reference/commands#apply) rather than `dispatch` when you need to know which of these happened.
 
 ## SceneCtx
 
@@ -296,7 +296,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 - **`text`** renders the prose at that key. An unwritten key renders nothing.
 - **`variants`** renders one member of a named set of variants, drawn by [`drawVariant`](#drawvariant) (or a custom runtime's `prose.draw`). What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
-  - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually just an image line) goes in front of the drawn member.
+  - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
 - **`reveal`**, on any block, makes it wait before it appears: `{ text: 'intro.tonight', reveal: { delay: 1200 } }`. It's written into the body as [`[[reveal]]`](/docs/reference/prose#reveals) markup before the block. See [Reveals](/docs/reference/transitions#reveals).
 
@@ -366,7 +366,7 @@ type Choice = {
 | `labels` | Labels that depend on state. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
-| `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to just its `scene` effects so it still navigates. `key` records it under a different name. | unlimited |
+| `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. `key` records it under a different name. | unlimited |
 | `tags`, `irreversible` | Passed through to [`SceneChoice`](#scenechoice). | |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'activity', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
@@ -413,7 +413,7 @@ const custom: Custom = {
 
 A scene with `choices: []` is an ending. Nothing moves the story on from it: the view has no choices, and while a scene is open no actions, exits or people are offered either. What the player does next is the UI's business.
 
-- **In the React UI** with [`pages`](/docs/react#pages) on, the player's menu has **Title screen**, which leads to **New game**, **Continue** and **Load**. Without `pages`, they can still load a save from the menu. Say so in the ending's words if the player might not know.
+- **In the React UI** with [`pages`](/docs/react#pages) on, the player's menu has Title screen, which leads to New game, Continue and Load. Without `pages`, they can still load a save from the menu. Say so in the ending's words if the player might not know.
 - **In a UI of your own,** draw a "Start again" button when `view.scene.id` is set and the scene has no choices, and call [`runner.newGame()`](/docs/reference/runner#newgame) from it.
 
 There's no command that starts a new game from content, so a "Start again" choice inside the story isn't possible. For a game over that the rest of the game should respect too, set a [phase](/docs/reference/state#phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:

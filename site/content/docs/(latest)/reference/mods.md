@@ -10,7 +10,7 @@ import { mods, readMod, type Mods, type ModFile, type InstalledMod } from '@iflo
 
 A mod is data only. Nothing in it runs, so it can do what a pack can do and no more, and the game's code is the code the game shipped.
 
-This page covers what happens at runtime: the file a player adds, the store that keeps it, and how a game loads it when it starts. How packs merge, and the checks the loader runs on them, is on [Packs and loading](/docs/reference/loader).
+Below are the file a player adds, the store that keeps it, and how a game loads it when it starts. How packs merge, and the checks the loader runs on them, is on [Packs and loading](/docs/reference/loader).
 
 ## ModFile
 

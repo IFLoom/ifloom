@@ -19,7 +19,7 @@ Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loa
 
 | Field | Meaning |
 |---|---|
-| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', id, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
+| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
 | `kv` | The storyline's own kv store. Set its keys with [`{ kind: 'storylineKv' }`](/docs/reference/effects#storylinekv), read them with a [`{ storylineKv }`](/docs/reference/conditions#storylinekv) condition, count them with [progress counters](/docs/reference/progress) and show them with the `{{n:storyline.key}}` token. |
 
 ```ts

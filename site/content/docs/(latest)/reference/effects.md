@@ -117,7 +117,7 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 
 Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [custom effects](/docs/reference/custom#effects), on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that neither the game nor its plugins has does nothing.
 
-In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one. Item uses only take plain effects, so write the long form there.
+In a data scene choice, an activity, a trigger or an item's use, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one.
 
 **Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
 
@@ -244,7 +244,7 @@ Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already 
 
 Without `id`, it gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). A number is never given again, even once the entity that had it is [removed](#remove). With `id`, it gets that id, unless an entity of that kind already has it. In that case the effect does nothing, and the entity there keeps its name and numbers.
 
-Here's a choice that hires someone, from the café's interviews:
+This choice, from the café's interviews, hires someone:
 
 ```ts
 choices: [
@@ -255,7 +255,7 @@ choices: [
 
 **Gotchas.**
 - The id it was given isn't handed back. To refer to someone created without an id, go through them all with [`each`](#each) or [`entitiesOf`](/docs/reference/entities#entitiesof), or give an `id` of your own.
-- An `id` that's a whole number, such as `'7'`, does nothing, just like one that's already taken. It would otherwise jump to the front of the kind's order. See [Ids](/docs/reference/entities#ids).
+- An `id` that's a whole number, such as `'7'`, does nothing, as one that's already taken does. It would otherwise jump to the front of the kind's order. See [Ids](/docs/reference/entities#ids).
 - `entity.stats` is taken as written, not held to range, until an effect next moves it.
 - The [content checker](/docs/reference/checks) reports a kind the game doesn't declare.
 
@@ -400,7 +400,7 @@ A custom effect runs in its turn. Its function is called with the state the effe
 You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
-- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places. Neither is an `Effect`, so item uses take plain effects. `rules.onTurn`'s `apply` takes either.
+- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, in an item's `use`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places, and `rules.onTurn`'s `apply` takes either. Neither is a plain `Effect`, so a list that takes only those, such as a plugin's `effectsOf`, needs the long form.
 - A button's price, a guard and a lock see a custom effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
 - Custom effects that return custom effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.

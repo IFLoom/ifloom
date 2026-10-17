@@ -6,8 +6,7 @@
   "description": "The IFLoom engine: state, commands, scenes, conditions and effects. No DOM, no genre.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*"
+    ".": "./src/index.ts"
   },
   "files": [
     "src"

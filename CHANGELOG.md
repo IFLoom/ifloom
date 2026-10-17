@@ -92,6 +92,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - **Breaking:** every first-party helper writes the short form, `{ 'quests/done': { quest } }`, commands included (typed `CommandRef`), and every plugin factory declares what it returns. A view still gives its commands in the long form.
 - Old packs and mods are rewritten to the above as they load (schema 7): the first-party calls' bare values are named, badges' `count` becomes `value` with its arguments, and value tokens in prose and strings take their arguments.
 - **Breaking:** the profile's own namespaces have prefixes. The engine's `settings` and `finished` are `core:settings` and `core:finished`, and the React UI's `gate` is `ui:gate`. A plugin keeps its bare id, and the content checker refuses a plugin id of `core` or `ui`. A profile stored under the old names is moved the first time it's read.
+- **Breaking:** `@ifloom/engine` has one entry point. Deep paths such as `@ifloom/engine/scene.ts` no longer resolve; import from `@ifloom/engine`.
 
 ### Removed
 

@@ -23,7 +23,7 @@ Each [first-party plugin](/docs/plugins) is a package of its own, imported the s
 
 The engine has no DOM and no framework. The React UI is its own package, `@ifloom/react`, so that a UI for another framework can be a package of its own too. Until one exists, the `vue`, `svelte` and `vanilla` templates draw a game without it, and [Using another framework](/docs/guide/frameworks) walks through them.
 
-Deep paths such as `@ifloom/engine/scene.ts` still resolve, because the packages ship their source files. They aren't part of the API. Anything you can only reach that way is internal, isn't documented, and can change or vanish without notice.
+The engine has one entry point, `@ifloom/engine`. A deep path such as `@ifloom/engine/scene.ts` doesn't resolve: anything not exported from the entry is internal, isn't documented, and can change or vanish without notice.
 
 ## What's settled and what isn't
 

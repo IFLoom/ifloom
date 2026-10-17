@@ -298,4 +298,4 @@ Fades and ducking move in steps on `setTimeout`, so a test with fake timers can 
 
 ## See it in an example
 
-None of the examples uses this yet. No example has any sound, so nothing here is played by one.
+None of the examples has any sound yet.

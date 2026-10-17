@@ -31,7 +31,7 @@ const runner = await browserRunner(game)
 startClock(runner)
 ```
 
-It only runs while a timer does, so it costs nothing the rest of the time. When the player switches to another tab, it sends what passed until then and stops; when they come back, it starts afresh, so the round waits for them. When an input moves the minigame to a new state, that state's clock starts from the input.
+It only runs while a timer does, so it costs nothing the rest of the time. When the player switches to another tab, it sends what passed until then and stops. When they come back, it starts afresh, so the round waits for them. When an input moves the minigame to a new state, that state's clock starts from the input.
 
 **Gotcha.** Start one per runner. Two clocks would each send ticks, and the timers would run twice as fast.
 
@@ -128,7 +128,7 @@ Presses the minigame's inputs from the keyboard while one is being played, as [`
 function minigameInput(minigame: MinigameView, key: string): string | undefined
 ```
 
-The input a key presses, by `KeyboardEvent.key`, whether or not it does anything now. It's the minigame's own [`keys`](/docs/reference/minigames#minigamedef) if it gives the input any; else the arrow keys and space for inputs named `up`, `down`, `left`, `right` and `space`; else the input's own name when it's one letter. One-letter keys match either case.
+The input a key presses, by `KeyboardEvent.key`, whether or not it does anything now. It's the minigame's own [`keys`](/docs/reference/minigames#minigamedef) if it gives the input any. Otherwise it's the arrow keys and space for inputs named `up`, `down`, `left`, `right` and `space`, and failing that the input's own name when it's one letter. One-letter keys match either case.
 
 ```ts
 minigameInput(runner.view().minigame!, 'ArrowLeft') // 'left'

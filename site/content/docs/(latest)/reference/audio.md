@@ -336,4 +336,4 @@ The [content checker](/docs/reference/checks) checks everything audio names. The
 
 ## See it in an example
 
-None of the examples uses this yet. No example declares tracks, playlists or channels.
+None of the examples declares tracks, playlists or channels yet.

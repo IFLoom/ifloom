@@ -1,5 +1,6 @@
 // Scaffolds a first-party plugin, packages/plugin-<name>, modelled on
-// plugin-quests, and wires it into the root typecheck and the docs
+// plugin-quests, with its code and test from the CLI's plugin template
+// (packages/cli/templates/plugin), and wires it into the root typecheck and the docs
 // navigation (the plugins folder's meta.json).
 // What needs words (the AGENTS.md row, the plugins index, the CHANGELOG, the
 // showcase) is left to you: `git grep "TODO(new-plugin)"` lists the stubs.
@@ -9,6 +10,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { pluginNames } from '../packages/cli/src/new.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const remove = process.argv[2] === '--remove'
@@ -18,10 +20,7 @@ if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
   process.exit(1)
 }
 
-const words = name.split('-')
-const camel = words[0] + words.slice(1).map((w) => w[0].toUpperCase() + w.slice(1)).join('')
-const Pascal = camel[0].toUpperCase() + camel.slice(1)
-const title = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')
+const { camel, Pascal, title } = pluginNames(name)
 const pkgDir = join(root, 'packages', `plugin-${name}`)
 const at = (path: string) => relative(root, path)
 
@@ -81,6 +80,20 @@ if (existsSync(pkgDir)) {
   process.exit(1)
 }
 
+/**
+ * A file of `ifloom new --template plugin`, the plugin starter anyone can use,
+ * filled in for this plugin: one source for the skeleton and its test. Its
+ * `TODO:` stubs become `TODO(new-plugin):`, which the skill's grep finds.
+ */
+function fromTemplate(file: string): string {
+  return readFileSync(join(root, 'packages', 'cli', 'templates', 'plugin', file), 'utf8')
+    .replaceAll('{{title}}', title)
+    .replaceAll('__id__', name)
+    .replaceAll('__camel__', camel)
+    .replaceAll('__Pascal__', Pascal)
+    .replaceAll('TODO:', 'TODO(new-plugin):')
+}
+
 // The docs contract reads the page by a path relative to tests/contracts.
 const pageGlob = `${relative(join(pkgDir, 'tests', 'contracts'), docsDir).replace(/[()[\]{}]/g, (c) => `\\\\${c}`)}/${name}.{md,mdx}`
 
@@ -110,160 +123,9 @@ const files: Record<string, string> = {
 }
 `,
 
-  'src/index.ts': `/**
- * @ifloom/plugin-${name}: TODO(new-plugin) what it adds, in a sentence or two.
- *
- * Imports only @ifloom/engine and requires no other plugin (ADR 0003). To
- * work with one the game may have, list it in \`cooperates\` and ask it
- * through conditions, effects and \`query\`.
- */
-import { definePlugin, say, type CommandRef, type Condition, type DefinedPlugin, type EffectRef, type Game, type PluginProblem } from '@ifloom/engine'
+  'src/index.ts': fromTemplate('src/index.ts'),
 
-const ID = '${name}'
-
-/** One entry of the plugin's content, from a pack's \`data.${name}.entries\`. TODO(new-plugin): the real fields. */
-export type ${Pascal}Entry = {
-  id: string
-  label: string
-}
-
-/** What the plugin keeps in a save. Bump \`version\` and add a migration when this changes shape. */
-export type ${Pascal}State = {
-  /** Entries marked, with the turn each was marked on. */
-  marked: Record<string, number>
-}
-
-/** What the UI reads at \`view.plugins.${name}\`. */
-export type ${Pascal}View = {
-  entries: { id: string; label: string; marked: boolean }[]
-}
-
-/** The game's entries: \`data.${name}.entries\`, from its packs. */
-export function ${camel}Entries(game: Game): ${Pascal}Entry[] {
-  return (game.data?.[ID]?.entries ?? []) as ${Pascal}Entry[]
-}
-
-/** The entry a call names: a condition's or an effect's \`entry\`, a command's \`id\` (ADR 0008). */
-function entryId(args: Record<string, unknown>): string {
-  return String(args.entry ?? args.id ?? '')
-}
-
-/**
- * The plugin. Add it to the game's \`plugins\`, and put entries in a pack's
- * \`data.${name}.entries\`. Anything a mod could add or change is content in
- * \`data\`, never an option (ADR 0009). Hooks are flat members named \`onX\`
- * (\`onTurn\`, \`onCommand\`); providers are nouns (\`view\`, \`label\`).
- */
-export function ${camel}(): DefinedPlugin<${Pascal}State, ${Pascal}View> {
-  return definePlugin<${Pascal}State, ${Pascal}View>({
-    id: ID,
-    version: 1,
-    start: () => ({ marked: {} }),
-    strings: { noSuchEntry: 'There is nothing like that.' },
-    conditions: {
-      /** \`{ '${name}/marked': { entry } }\`: the entry has been marked. */
-      marked: (_state, args, { slice }) => slice.marked[entryId(args)] !== undefined,
-    },
-    effects: {
-      /** \`{ '${name}/mark': { entry } }\`: mark the entry now. */
-      mark: (state, args, { slice, set, game }) => {
-        const id = entryId(args)
-        if (slice.marked[id] !== undefined || !${camel}Entries(game).some((entry) => entry.id === id)) return state
-        return set({ ...slice, marked: { ...slice.marked, [id]: state.turn } })
-      },
-    },
-    commands: {
-      /** \`{ '${name}/mark': { id } }\`: mark the entry \`id\`. */
-      mark: {
-        whyNot: (_state, args, { game }) => (${camel}Entries(game).some((entry) => entry.id === entryId(args)) ? undefined : say(game, '${name}/noSuchEntry')),
-        run: (state, args, { slice, set }) => set({ ...slice, marked: { ...slice.marked, [entryId(args)]: state.turn } }),
-      },
-    },
-    view: (_state, { slice, game }): ${Pascal}View => ({
-      entries: ${camel}Entries(game).map((entry) => ({ id: entry.id, label: entry.label, marked: slice.marked[entry.id] !== undefined })),
-    }),
-    references: {
-      // The entry a condition, effect or command names, for the content checker.
-      calls: (_kind, _name, args) => (entryId(args) === '' ? [] : [{ entry: entryId(args), plugin: ID, list: 'entries', noun: 'entry' }]),
-    },
-    check: (game) => {
-      const problems: PluginProblem[] = []
-      const seen = new Set<string>()
-      for (const entry of ${camel}Entries(game)) {
-        if (seen.has(entry.id)) problems.push({ list: 'entries', id: entry.id, what: 'two entries share this id' })
-        seen.add(entry.id)
-      }
-      return problems
-    },
-  })
-}
-
-/** A condition: the entry has been marked. */
-export const ${camel}Marked = (entry: string): Condition => ({ [\`\${ID}/marked\`]: { entry } })
-/** An effect: mark the entry. */
-export const mark${Pascal} = (entry: string): EffectRef => ({ [\`\${ID}/mark\`]: { entry } })
-/** A command: mark the entry. */
-export const mark${Pascal}Command = (entry: string): CommandRef => ({ [\`\${ID}/mark\`]: { id: entry } })
-`,
-
-  [`tests/${name}.test.ts`]: `import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, checkGame, holds, loadGame, startingState, view, type Game, type Pack } from '@ifloom/engine'
-import { ${camel}, ${camel}Marked, mark${Pascal}, mark${Pascal}Command, type ${Pascal}Entry } from '../src/index.ts'
-
-const entries: ${Pascal}Entry[] = [
-  { id: 'bread', label: 'A loaf of bread' },
-  { id: 'milk', label: 'A pint of milk' },
-]
-
-function game(extra: Partial<Pack> = {}): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
-    activities: [{ id: 'shop', effects: [mark${Pascal}('bread')] }],
-    data: { ${JSON.stringify(name)}: { entries } },
-    ...extra,
-  }
-  const loaded = loadGame([town], { id: '${name}-town', title: '${title} town', plugins: [${camel}()] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
-}
-
-const shown = (g: Game, state = startingState(g)) => ${camel}().viewIn(view(state, g))!
-
-// TODO(new-plugin): replace these with the plugin's real behaviour, and add a describe block
-// for each plugin it cooperates with: the game with the partner, and without it.
-describe('${name}', () => {
-  it('marks an entry through its effect and its command, and shows it', () => {
-    const g = game()
-    const fresh = { ...startingState(g), sceneId: null }
-    expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
-    const shopped = apply(fresh, g, { type: 'activity', id: 'shop' })
-    expect(shopped.reason).toBeUndefined()
-    expect(holds(shopped.state, ${camel}Marked('bread'), g)).toBe(true)
-    const milk = apply(shopped.state, g, mark${Pascal}Command('milk'))
-    expect(shown(g, milk.state).entries.map((entry) => entry.marked)).toEqual([true, true])
-  })
-
-  it('refuses to mark what is not there', () => {
-    const g = game()
-    expect(apply({ ...startingState(g), sceneId: null }, g, mark${Pascal}Command('cheese')).reason).toBe('There is nothing like that.')
-  })
-
-  it('reports an entry content names that the game lacks', () => {
-    const loaded = loadGame(
-      [{ id: 'town', schema: SCHEMA, activities: [{ id: 'shop', effects: [mark${Pascal}('cheese')] }], data: { ${JSON.stringify(name)}: { entries } } }],
-      { id: '${name}-town', title: '${title} town', plugins: [${camel}()] },
-    )
-    expect(loaded.problems.map((problem) => problem.what)).toEqual(['unknown entry "cheese"'])
-  })
-
-  it('reports two entries with one id in a hand-built game (packs merge by id, so a loaded one has none)', () => {
-    const g = game()
-    const doubled = { ...g, data: { ${JSON.stringify(name)}: { entries: [...entries, entries[0]] } } }
-    expect(checkGame(doubled).problems.map((problem) => problem.what)).toContain('two entries share this id')
-  })
-})
-`,
+  [`tests/${name}.test.ts`]: fromTemplate('tests/plugin.test.ts'),
 
   'tests/contracts/boundary.test.ts': `import { describe, expect, it } from 'vitest'
 

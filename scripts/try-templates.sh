@@ -7,15 +7,16 @@
 # install doesn't have. The next template keeps its own tsconfig, and gets the
 # `turbopack.root` the Next recipe gives a game linked from a checkout. Slower than verify.sh's steps
 # (an npm install per template), so run it when a template, the Vite preset or
-# a package's dependencies change, not on every commit.
+# a package's dependencies change, not on every commit. The plugin template
+# makes a plugin package, not a game, so it gets install, test and typecheck.
 #
-#   scripts/try-templates.sh [template...]   react vue svelte vanilla next if none named
+#   scripts/try-templates.sh [template...]   react vue svelte vanilla next plugin if none named
 set -euo pipefail
 cd "$(dirname "$0")/.."
 checkout=$(pwd)
 
 templates=("$@")
-(( ${#templates[@]} )) || templates=(react vue svelte vanilla next)
+(( ${#templates[@]} )) || templates=(react vue svelte vanilla next plugin)
 
 out=$(mktemp -d "${TMPDIR:-/tmp}/ifloom-templates-XXXXXX")
 trap 'rm -rf "$out"' EXIT
@@ -55,8 +56,15 @@ if (template === 'next') {
   writeFileSync(config, readFileSync(config, 'utf8').replace(/(transpilePackages: \[[^\]]*\],\n)/, `$1  turbopack: { root: ${JSON.stringify(root)} },\n`))
 }
 EOF
-  if (cd "$dir" && npm install --no-audit --no-fund --loglevel=error && npm run check && npm run playtest && npm run build && npm run typecheck); then
-    echo "-- $template: installs, checks, playtests, builds and typechecks"
+  if [[ $template == plugin ]]; then
+    steps='npm install --no-audit --no-fund --loglevel=error && npm test && npm run typecheck'
+    said='installs, tests and typechecks'
+  else
+    steps='npm install --no-audit --no-fund --loglevel=error && npm run check && npm run playtest && npm run build && npm run typecheck'
+    said='installs, checks, playtests, builds and typechecks'
+  fi
+  if (cd "$dir" && eval "$steps"); then
+    echo "-- $template: $said"
   else
     failed+=("$template")
   fi

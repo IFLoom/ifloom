@@ -68,6 +68,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `ifloom unlock-hash <unlock>`, and locked content in `ifloom build`, `dev` and `check` (see above). `profile()` now needs only the game's id, so it can be opened before the game is built.
 - Hooks for every plugin the React UI draws, giving the same data and actions with no markup: `useQuests`, `useWardrobe`, `useMessages`, `useFeed`, `useClock`, `usePlaces`, `usePeople`, `useDebug`, `useAchievements`, `useShop`, `useJobs` and `useStatuses`, beside `useDevices`. Each built-in card is now drawn from its hook.
 - A Community plugins page in the docs, listing plugins other people have written, what a listing needs (the public API only, no UI of its own, the engine as a peer, tests, an open-source licence) and how to submit one through a GitHub issue form.
+- `ifloom new <name> --template plugin` starts a plugin as a package of its own: `@ifloom/engine` as a caret peer, a `definePlugin` with a declared state and view, a condition, an effect and a command with typed helpers, a Vitest test, a complete `tsconfig.json`, `test` and `typecheck` scripts, and a README with what Community plugins needs to list it.
 
 ### Changed
 

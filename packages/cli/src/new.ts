@@ -1,13 +1,14 @@
 /**
  * `ifloom new`: a new game from a template, ready to run. The `react`,
  * `vanilla`, `vue`, `svelte` and `next` templates live beside this file; the others are the example games, copied from the
- * checkout so there is only one of each to keep working.
+ * checkout so there is only one of each to keep working. The `plugin` template
+ * is not a game: it's a plugin package of its own, with a test, to publish on npm.
  */
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town'] as const
+export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town', 'plugin'] as const
 export type TemplateName = (typeof TEMPLATES)[number]
 
 /** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
@@ -15,7 +16,12 @@ export const THEMES = ['paper', 'terminal', 'studio', 'storybook'] as const
 export type ThemeName = (typeof THEMES)[number]
 
 export type NewGameOptions = {
-  /** The game's package name, which is also its folder's: `my-story`. */
+  /**
+   * The game's package name, which is also its folder's: `my-story`. For the
+   * `plugin` template it's the plugin's package name, such as
+   * `ifloom-plugin-weather`, and the plugin's id is the name without
+   * `ifloom-plugin-` or `plugin-` in front: `weather`.
+   */
   name: string
   /** What to start from. `react` if left out. */
   template?: TemplateName
@@ -49,13 +55,21 @@ const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
   novel: { dir: here('../../../examples/novel'), shared: ['AGENTS.md', 'gitignore'] },
   cafe: { dir: here('../../../examples/cafe'), shared: ['AGENTS.md', 'gitignore'] },
   town: { dir: here('../../../examples/showcase'), shared: ['AGENTS.md', 'gitignore'] },
+  // A plugin package: its own tsconfig, test and README, and no page.
+  plugin: { dir: here('../templates/plugin'), shared: [] },
 }
+
+/** The templates that copy an example game, which keeps its title and leaves its tests behind. */
+const EXAMPLES = new Set<TemplateName>(['novel', 'cafe', 'town'])
 
 /** What an example has that a new game should not: its build, its tests, its recorded runs. */
 const LEFT_OUT = new Set(['node_modules', 'dist', 'dist-one', 'tests', 'snapshots', 'playtest', 'mods'])
 
+/** What any template may have lying around that is never copied. */
+const BUILT = new Set(['node_modules', 'dist'])
+
 /** The templates that draw the game without the React UI, and so take no theme. */
-const NO_REACT = new Set<TemplateName>(['vanilla', 'vue', 'svelte'])
+const NO_REACT = new Set<TemplateName>(['vanilla', 'vue', 'svelte', 'plugin'])
 
 const VALID_NAME = /^[a-z0-9][a-z0-9._~-]*$/
 
@@ -66,6 +80,22 @@ function titleOf(name: string): string {
     .filter(Boolean)
     .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+/**
+ * The plugin template's names, from its package name: the plugin's id
+ * (`weather`), and that id as code names (`weather`, `Weather`) and a title.
+ * Its code holds `__id__`, `__camel__` and `__Pascal__`, which TypeScript reads
+ * as names, so the template still parses.
+ */
+export function pluginNames(name: string): { id: string; camel: string; Pascal: string; title: string } {
+  const id = name.replace(/^(?:ifloom-)?plugin-/, '')
+  if (!/^[a-z][a-z0-9-]*$/.test(id)) {
+    throw new Error(`"${id}" can't be a plugin's id: start with a letter and use lower-case letters, digits and dashes, like ifloom-plugin-weather.`)
+  }
+  const words = id.split('-').filter(Boolean)
+  const camel = words[0] + words.slice(1).map((word) => word[0].toUpperCase() + word.slice(1)).join('')
+  return { id, camel, Pascal: camel[0].toUpperCase() + camel.slice(1), title: titleOf(id) }
 }
 
 /** Every file under a folder, as paths relative to it. */
@@ -89,19 +119,25 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   const dir = options.into ?? here(`../../../games/${name}`)
   if (existsSync(dir) && readdirSync(dir).length > 0) throw new Error(`${dir} already exists and isn't empty.`)
 
-  cpSync(source.dir, dir, { recursive: true, filter: (path) => !LEFT_OUT.has(relative(source.dir, path).split(/[\\/]/)[0]) })
+  const plugin = template === 'plugin' ? pluginNames(name) : null
+  const example = EXAMPLES.has(template)
+  cpSync(source.dir, dir, { recursive: true, filter: (path) => !(example ? LEFT_OUT : BUILT).has(relative(source.dir, path).split(/[\\/]/)[0]) })
   for (const file of source.shared) {
     cpSync(here(`../templates/shared/${file}`), join(dir, file === 'gitignore' ? '.gitignore' : file))
   }
   // npm leaves a .gitignore out of a published package, so a template keeps its own as `gitignore`.
   if (existsSync(join(dir, 'gitignore'))) renameSync(join(dir, 'gitignore'), join(dir, '.gitignore'))
 
-  const title = titleOf(name)
+  // The plugin's test is named for it.
+  if (plugin) renameSync(join(dir, 'tests/plugin.test.ts'), join(dir, `tests/${plugin.id}.test.ts`))
+
+  const title = plugin?.title ?? titleOf(name)
   const files = filesUnder(dir)
   for (const file of files.filter((path) => /\.(ts|tsx|json|html|md|css)$/.test(path))) {
     const path = join(dir, file)
     const text = readFileSync(path, 'utf8')
-    const filled = text.replaceAll('{{name}}', name).replaceAll('{{title}}', title)
+    let filled = text.replaceAll('{{name}}', name).replaceAll('{{title}}', title)
+    if (plugin) filled = filled.replaceAll('__id__', plugin.id).replaceAll('__camel__', plugin.camel).replaceAll('__Pascal__', plugin.Pascal)
     if (filled !== text) writeFileSync(path, filled)
   }
 
@@ -109,7 +145,7 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   const pkgPath = join(dir, 'package.json')
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
   pkg.name = name
-  delete pkg.description
+  if (example) delete pkg.description
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
   // The preset: the one asked for (none takes it out), a random one for a `react` game, or the example's own.

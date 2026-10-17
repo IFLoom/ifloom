@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
+import { pluginNames } from '../src/new.ts'
 
 /** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
 const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
@@ -23,8 +24,11 @@ const PAGE_FILES = (template: (typeof TEMPLATES)[number]) =>
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
 
+/** The templates that make a game; `plugin` makes a plugin package. */
+const GAMES = TEMPLATES.filter((template) => template !== 'plugin')
+
 describe('ifloom new', () => {
-  it.each(TEMPLATES)('makes a game from the %s template, named for it', (template) => {
+  it.each(GAMES)('makes a game from the %s template, named for it', (template) => {
     const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.name).toBe('my-story')
@@ -111,6 +115,46 @@ describe('ifloom new', () => {
   it('gives the vanilla template the preset alone', () => {
     const { dir } = newGame({ name: 'plain', template: 'vanilla', into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain('export default ifloom()')
+  })
+
+  it('makes a plugin package from the plugin template, named for the plugin', () => {
+    const { dir, files, theme } = newGame({ name: 'ifloom-plugin-rainy-day', template: 'plugin', into: fresh() })
+    expect(theme).toBeNull()
+    expect(files.sort()).toEqual(['.gitignore', 'README.md', 'package.json', 'src/index.ts', 'tests/rainy-day.test.ts', 'tsconfig.json'])
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    expect(pkg).toMatchObject({
+      name: 'ifloom-plugin-rainy-day',
+      description: 'Rainy Day: a plugin for IFLoom.',
+      license: 'MIT',
+      exports: { '.': './src/index.ts' },
+      scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
+      // The engine is the game's: a caret peer, and a dev dependency for the plugin's own tests.
+      peerDependencies: { '@ifloom/engine': '^0.0.0' },
+    })
+    expect(pkg.private).toBeUndefined()
+    expect(pkg.dependencies).toBeUndefined()
+    expect(Object.keys(pkg.devDependencies)).toEqual(['@ifloom/engine', 'typescript', 'vitest'])
+    // Standalone: the tsconfig extends nothing in the checkout.
+    expect(JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')).extends).toBeUndefined()
+    const source = readFileSync(join(dir, 'src/index.ts'), 'utf8')
+    for (const name of ["const ID = 'rainy-day'", 'export function rainyDay(): DefinedPlugin<RainyDayState, RainyDayView>', 'definePlugin<RainyDayState, RainyDayView>', 'conditions: {', 'effects: {', 'commands: {', 'view: (', 'export const markRainyDayCommand']) {
+      expect(source).toContain(name)
+    }
+    expect(readFileSync(join(dir, 'tests/rainy-day.test.ts'), 'utf8')).toContain("from '../src/index.ts'")
+    const readme = readFileSync(join(dir, 'README.md'), 'utf8')
+    expect(readme).toContain('# Rainy Day')
+    expect(readme).toContain('npm install ifloom-plugin-rainy-day')
+    expect(readme).toContain('## Getting it listed')
+    // Nothing is left to fill in but the TODOs.
+    for (const file of files) expect(readFileSync(join(dir, file), 'utf8')).not.toMatch(/\{\{\w+\}\}|__(?:id|camel|Pascal)__/)
+  })
+
+  it('takes a plugin\'s id from its package name, and refuses one that can\'t be an id', () => {
+    expect(pluginNames('weather')).toEqual({ id: 'weather', camel: 'weather', Pascal: 'Weather', title: 'Weather' })
+    expect(pluginNames('plugin-bus-stops')).toEqual({ id: 'bus-stops', camel: 'busStops', Pascal: 'BusStops', title: 'Bus Stops' })
+    expect(pluginNames('ifloom-plugin-tide')).toMatchObject({ id: 'tide' })
+    expect(() => newGame({ name: 'ifloom-plugin-2d', template: 'plugin', into: fresh() })).toThrow(/can't be a plugin's id/)
+    expect(() => newGame({ name: 'tide.chart', template: 'plugin', into: fresh() })).toThrow(/can't be a plugin's id/)
   })
 
   it('refuses a bad name, an unknown template, and a folder already in use', () => {

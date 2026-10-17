@@ -53,6 +53,7 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 | `novel` | A copy of The Letter. |
 | `cafe` | A copy of The Corner Café. |
 | `town` | A copy of Small Town, with every plugin. |
+| `plugin` | Not a game: a plugin package of its own, with a test, to publish on npm. See [A plugin beside the checkout](#a-plugin-beside-the-checkout). |
 
 ```sh
 npm run new -- my-cafe --template cafe
@@ -240,3 +241,37 @@ Each plugin's folder is `packages/` and the part of its name after `@ifloom/`, s
 ### Type-checking scripts that use the CLI
 
 The tsconfig above covers code that runs in the browser. A file that imports `@ifloom/cli`, such as a [playtest policy](/docs/cli#policy), pulls in the CLI's own source, which uses Node's modules, so `tsc` reports `Cannot find name 'node:fs'`. Either keep such files out of `include` (in a `tools/` folder, say), or add `@types/node` to your dev dependencies and `"node"` to `types`.
+
+## A plugin beside the checkout
+
+A plugin you mean to publish lives in its own folder and repository, like a game beside the checkout. Make it from the `plugin` template and move it out:
+
+```sh
+cd ifloom
+npm run new -- ifloom-plugin-weather --template plugin
+mv games/ifloom-plugin-weather ../ifloom-plugin-weather
+```
+
+Its `tsconfig.json` is already complete. Point the engine dev dependency at the checkout in `package.json`, and leave the peer dependency as it is, since that's the range a game will see once the plugin is on npm:
+
+```json
+{
+  "peerDependencies": {
+    "@ifloom/engine": "^0.0.0"
+  },
+  "devDependencies": {
+    "@ifloom/engine": "file:../ifloom/packages/engine"
+  }
+}
+```
+
+Then install and run its tests:
+
+```sh
+cd ../ifloom-plugin-weather
+npm install
+npm test
+npm run typecheck
+```
+
+[`ifloom new`](/docs/cli#a-plugin-package) lists what's in the package, [Writing a plugin](/docs/reference/plugins) covers every part of one, and [Community plugins](/docs/plugins/community) says how to get it listed.

@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 8
+export const SCHEMA = 9
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -65,6 +65,19 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
         return [key, WORDS.has(key) ? value : deep(value, toSchema8)]
       }),
     ) as RawPack,
+  // 8 → 9: an item's and a place's `kind` meant a genre the engine shouldn't
+  // know, so it's gone. It becomes a tag, and gear's one at the start becomes
+  // the item's `start`: `{ kind: 'gear' }` is `{ tags: ['gear'], start: 1 }`.
+  8: (pack) => {
+    const out: RawPack = { ...pack }
+    if (Array.isArray(pack.items)) out.items = pack.items.map((item) => (isRecord(item) ? kindToTags(item, ['gear', 'stuff']) : item))
+    const data = pack.data
+    if (isRecord(data) && isRecord(data.places) && Array.isArray(data.places.locations)) {
+      const locations = data.places.locations.map((location) => (isRecord(location) ? kindToTags(location, ['street', 'venue', 'room']) : location))
+      out.data = { ...data, places: { ...data.places, locations } }
+    }
+    return out
+  },
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -283,6 +296,14 @@ function toSchema7(value: Record<string, unknown>): Record<string, unknown> {
     out = { ...out, badge: { ...rest, ...valueCall(count as string) } }
   }
   return out
+}
+
+/** An item or a place with its old `kind` as a tag; gear without a `start` starts with one. */
+function kindToTags(value: Record<string, unknown>, kinds: readonly string[]): Record<string, unknown> {
+  if (typeof value.kind !== 'string' || !kinds.includes(value.kind)) return value
+  const { kind, ...rest } = value
+  const tags = Array.isArray(rest.tags) ? (rest.tags.includes(kind) ? rest.tags : [...rest.tags, kind]) : [kind]
+  return { ...rest, tags, ...(kind === 'gear' && rest.start === undefined ? { start: 1 } : {}) }
 }
 
 /** The statuses plugin's calls, by the timed-effects plugin's names. */

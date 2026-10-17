@@ -239,8 +239,8 @@ const apps: AppDef[] = [
 ]
 
 const locations: LocationDef[] = [
-  { id: 'flat', name: 'Your flat', tag: 'Home', art: 'place/flat', kind: 'room', exits: ['high-street'], body: [{ text: 'place.flat' }] },
-  { id: 'high-street', name: 'High Street', tag: 'Small Town', art: 'place/high-street', kind: 'street', exits: ['flat'], body: [{ text: 'place.high-street' }] },
+  { id: 'flat', name: 'Your flat', tag: 'Home', art: 'place/flat', exits: ['high-street'], body: [{ text: 'place.flat' }] },
+  { id: 'high-street', name: 'High Street', tag: 'Small Town', art: 'place/high-street', exits: ['flat'], body: [{ text: 'place.high-street' }] },
 ]
 
 const town: Pack = {
@@ -248,8 +248,8 @@ const town: Pack = {
   schema: SCHEMA,
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
   items: [
-    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.', kind: 'stuff' },
-    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
+    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
   ],
   collections: [{ id: 'notes', name: 'Notes' }],
   activities: [

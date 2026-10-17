@@ -7,7 +7,6 @@ const place = (id: string, exits: string[], extra: Partial<LocationDef> = {}): L
   id,
   name: id[0].toUpperCase() + id.slice(1),
   tag: 'Town',
-  kind: 'room',
   exits,
   art: `place/${id}`,
   body: [{ text: `place.${id}` }],
@@ -34,9 +33,8 @@ const town: Pack = {
     places: {
       locations: [
         place('house', ['street']),
-        place('street', ['house', 'cafe', 'park']),
+        place('street', ['house', 'cafe', 'park'], { tags: ['outdoors'] }),
         place('cafe', ['street', 'back'], {
-          kind: 'venue',
           blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
           actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
         }),
@@ -80,8 +78,8 @@ describe('places', () => {
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', frame: 'stage' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
-      location: { id: 'house', name: 'House', tag: 'Town', kind: 'room', art: 'place/house', stage: null },
-      exits: [{ id: 'street', name: 'Street', tag: 'Town', kind: 'room', art: 'place/street', command: commandOf(go('street')) }],
+      location: { id: 'house', name: 'House', tag: 'Town', tags: [], art: 'place/house', stage: null },
+      exits: [{ id: 'street', name: 'Street', tag: 'Town', tags: ['outdoors'], art: 'place/street', command: commandOf(go('street')) }],
     })
   })
 
@@ -217,7 +215,7 @@ describe('places', () => {
           { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', to: null }] },
           { id: 'listen', effects: [{ kind: 'audio', channel: 'ambience' }] },
         ],
-        data: { places: { locations: [place('cafe', ['street'], { kind: 'venue', audio: { ambience: 'murmur' }, ...extra })] } },
+        data: { places: { locations: [place('cafe', ['street'], { audio: { ambience: 'murmur' }, ...extra })] } },
       }
       const { game: g, problems } = loadGame([town, sounds], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' })] })
       return { g, problems }
@@ -264,7 +262,7 @@ describe('places', () => {
         id: 'pictures',
         schema: SCHEMA,
         media: { pools: { counter: [{ src: 'cafe/counter-day.jpg', tags: ['day'] }, { src: 'cafe/counter-night.jpg', tags: ['night'] }] } },
-        data: { places: { locations: [place('cafe', ['street', 'back'], { kind: 'venue', stage })] } },
+        data: { places: { locations: [place('cafe', ['street', 'back'], { stage })] } },
       }
       const { game: g, problems } = loadGame([town, pictures], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'cafe' })] })
       return { g, problems }

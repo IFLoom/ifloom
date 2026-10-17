@@ -41,9 +41,9 @@ export type ItemsShape = {
   fill: 'items'
 }
 
-/** How many of an item a new game starts with: its `start`, else 1 of gear and 0 of stuff. */
+/** How many of an item a new game starts with: its `start`, else 0. */
 export function itemStart(item: ItemDef): number {
-  return item.start ?? (item.kind === 'gear' ? 1 : 0)
+  return item.start ?? 0
 }
 
 function itemById(game: Game, id: string): ItemDef | undefined {

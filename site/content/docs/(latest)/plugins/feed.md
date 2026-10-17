@@ -184,7 +184,7 @@ import { cast } from '@ifloom/plugin-cast'
 import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',

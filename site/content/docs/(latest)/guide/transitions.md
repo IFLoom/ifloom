@@ -31,7 +31,7 @@ The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, list
 A place takes a `transition` too, for the room while no scene is open, so walking between places can slide:
 
 ```ts
-{ id: 'high-street', name: 'High Street', tag: 'Town', kind: 'street', exits: ['flat', 'cafe'], art: 'place/high-street', body: [{ text: 'place.high-street' }], transition: 'slide-left' }
+{ id: 'high-street', name: 'High Street', tag: 'Town', exits: ['flat', 'cafe'], art: 'place/high-street', body: [{ text: 'place.high-street' }], transition: 'slide-left' }
 ```
 
 For the whole game, set a default on the `Game`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:

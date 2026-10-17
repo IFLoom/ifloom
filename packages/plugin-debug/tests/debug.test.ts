@@ -15,12 +15,12 @@ function game(): Game {
     data: {
       places: {
         locations: [
-          { id: 'house', name: 'House', tag: 'Home', kind: 'room', exits: [], art: '', body: [] },
-          { id: 'island', name: 'Island', tag: 'Far', kind: 'room', exits: [], art: '', body: [] },
+          { id: 'house', name: 'House', tag: 'Home', exits: [], art: '', body: [] },
+          { id: 'island', name: 'Island', tag: 'Far', exits: [], art: '', body: [] },
         ],
       },
     },
-    items: [{ id: 'key', name: 'key', desc: '', kind: 'stuff' }],
+    items: [{ id: 'key', name: 'key', desc: '' }],
     scenes: [{ id: 'intro', body: [], choices: [] }, { id: 'ending', body: [], choices: [] }],
     storylines: [{ id: 'ava', name: 'Ava' }],
     stats: [{ id: 'luck', label: 'Luck', max: 10 }],

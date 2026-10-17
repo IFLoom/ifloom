@@ -81,8 +81,8 @@ describe('state fields', () => {
 
 describe('itemStart', () => {
   it('is the item’s start, else one of gear and none of stuff', () => {
-    expect(itemStart({ id: 'a', name: 'A', desc: '', kind: 'gear' })).toBe(1)
-    expect(itemStart({ id: 'b', name: 'B', desc: '', kind: 'stuff' })).toBe(0)
-    expect(itemStart({ id: 'c', name: 'C', desc: '', kind: 'gear', start: 0 })).toBe(0)
+    expect(itemStart({ id: 'a', name: 'A', desc: '', start: 1 })).toBe(1)
+    expect(itemStart({ id: 'b', name: 'B', desc: '' })).toBe(0)
+    expect(itemStart({ id: 'c', name: 'C', desc: '', start: 0 })).toBe(0)
   })
 })

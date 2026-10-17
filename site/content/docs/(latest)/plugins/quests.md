@@ -133,12 +133,12 @@ const scarf: QuestDef = {
 
 const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
-  items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' }],
+  items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' }],
   activities: [
     { id: 'unpack', blocked: [onlyAt(['flat'])], effects: [{ kind: 'phase', to: 'open' }] },
     { id: 'collar', blocked: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },

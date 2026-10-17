@@ -93,7 +93,7 @@ Returns a new game at turn 0, with `introScene` open and counted as seen. Every 
 - Each [plugin](/docs/reference/plugins)'s state is its `start`. For example, where the player stands is the [places plugin](/docs/plugins/places#placesoptions)'s `start` option.
 - The phase is `game.startPhase`, or `''`.
 - Every declared storyline is empty.
-- Each `gear` item is held once and each `stuff` item not at all, unless the item's `start` says otherwise. `itemStart(item)` gives that number for one item.
+- Each item is held `start` times, or not at all if it gives no `start`. `itemStart(item)` gives that number for one item.
 - Each declared [stat](/docs/reference/stats) is at its `start`. The engine adds no stats of its own.
 - Each `play` [setting](/docs/reference/settings) is at the value given in `settings`, or its default.
 

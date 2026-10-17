@@ -22,9 +22,9 @@ function game(): Game {
         data: {
           places: {
             locations: [
-              { id: 'bedroom', name: 'Bedroom', tag: 'Home', kind: 'room', exits: ['hall'], art: '', body: [{ text: 'bedroom' }], actions: [{ id: 'bed', label: 'Sleep', command: sleep() }] },
-              { id: 'hall', name: 'Hall', tag: 'Home', kind: 'room', exits: ['bedroom', 'garden'], art: '', body: [{ text: 'hall' }] },
-              { id: 'garden', name: 'Garden', tag: 'Out', kind: 'street', exits: ['hall'], art: '', body: [{ text: 'garden' }], actions: [{ id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } }] },
+              { id: 'bedroom', name: 'Bedroom', tag: 'Home', exits: ['hall'], art: '', body: [{ text: 'bedroom' }], actions: [{ id: 'bed', label: 'Sleep', command: sleep() }] },
+              { id: 'hall', name: 'Hall', tag: 'Home', exits: ['bedroom', 'garden'], art: '', body: [{ text: 'hall' }] },
+              { id: 'garden', name: 'Garden', tag: 'Out', exits: ['hall'], art: '', body: [{ text: 'garden' }], actions: [{ id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } }] },
             ],
           },
         },

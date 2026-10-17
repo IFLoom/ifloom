@@ -219,7 +219,7 @@ describe('content migrations', () => {
         { id: 'nap', blocked: [{ when: { kv: 'napped' }, reason: 'Once a day.' }, { when: { not: { stat: 'energy', lt: 50 } }, reason: 'Not tired.' }] },
         { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }, { when: { not: { 'places/at': { location: ['park'] } } }, reason: 'Not here.' }] },
       ],
-      items: [{ id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } }],
+      items: [{ id: 'tea', name: 'Tea', desc: '', tags: ['stuff'], use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } }],
       triggers: [
         {
           id: 'late',
@@ -359,6 +359,29 @@ describe('content migrations', () => {
       ],
       actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } }, when: { custom: 'statuses/active', with: { status: 'cold' } } }],
       data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
+    })
+  })
+
+  it('turn an item’s and a place’s kind into a tag at schema 9, and gear into a start of one', () => {
+    const v8 = {
+      id: 'town',
+      schema: 8,
+      items: [
+        { id: 'umbrella', name: 'Umbrella', desc: '', kind: 'gear' },
+        { id: 'coat', name: 'Coat', desc: '', kind: 'gear', start: 0, tags: ['clothes'] },
+        { id: 'bun', name: 'Bun', desc: '', kind: 'stuff' },
+      ],
+      data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', kind: 'street', exits: [], art: '', body: [] }] } },
+    }
+    expect(upgradePack(v8)).toEqual({
+      id: 'town',
+      schema: SCHEMA,
+      items: [
+        { id: 'umbrella', name: 'Umbrella', desc: '', tags: ['gear'], start: 1 },
+        { id: 'coat', name: 'Coat', desc: '', start: 0, tags: ['clothes', 'gear'] },
+        { id: 'bun', name: 'Bun', desc: '', tags: ['stuff'] },
+      ],
+      data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', exits: [], art: '', body: [], tags: ['street'] }] } },
     })
   })
 

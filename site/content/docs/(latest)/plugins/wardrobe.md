@@ -96,8 +96,8 @@ const town: Pack = {
   id: 'town',
   schema: SCHEMA,
   items: [
-    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', kind: 'gear' },
-    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
+    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
   ],
   data: {
     wardrobe: {
@@ -114,7 +114,7 @@ const town: Pack = {
 }
 ```
 
-The raincoat is `kind: 'gear'`, so the player starts with one, which the coat slot's `start` needs.
+The raincoat has `start: 1`, so the player starts with one, which the coat slot's `start` needs.
 
 ## A worked example
 
@@ -127,16 +127,16 @@ import { wearing } from '@ifloom/plugin-wardrobe'
 
 const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Pack = {
   id: 'town',
   schema: SCHEMA,
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
   items: [
-    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', kind: 'gear' },
-    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
-    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.', kind: 'stuff', start: 1 },
+    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
+    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.', start: 1 },
   ],
   activities: [
     { id: 'buyScarf', cost: { stats: { coins: 8 } }, blocked: [onlyAt(['high-street'])], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
@@ -342,7 +342,7 @@ town · slots coat · starts with "raincoat", which the player does not start wi
 
 ## Gotchas
 
-- **The player has to start owning what they start wearing.** A slot's `start` item needs a `start` count above 0, or `kind: 'gear'`, which starts at 1. Otherwise the load reports it.
+- **The player has to start owning what they start wearing.** A slot's `start` item needs a `start` count above 0, such as `start: 1`. Otherwise the load reports it.
 - **Losing an item takes it off after the command.** Whether it's sold, used up or taken by an effect, once the player has none, the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
 - **`{ item }` counts worn items.** Worn clothes are still owned, so `{ item: 'raincoat' }` holds while it's on. To ask whether it's on, use `wearing`.
 - **Wearing doesn't check where the player is or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.

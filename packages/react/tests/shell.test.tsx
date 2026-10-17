@@ -33,8 +33,8 @@ function game(strings: Record<string, string> = {}): Game {
         data: {
           places: {
             locations: [
-              { id: 'house', name: 'House', tag: 'Home', kind: 'room', exits: ['street'], art: '', body: [{ text: 'place.house' }] },
-              { id: 'street', name: 'High Street', tag: 'Out', kind: 'street', exits: ['house'], art: '', body: [{ text: 'place.street' }] },
+              { id: 'house', name: 'House', tag: 'Home', exits: ['street'], art: '', body: [{ text: 'place.house' }] },
+              { id: 'street', name: 'High Street', tag: 'Out', exits: ['house'], art: '', body: [{ text: 'place.street' }] },
             ],
           },
           messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] },

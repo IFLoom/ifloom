@@ -204,7 +204,7 @@ import { cast, person, type CharacterDef } from '@ifloom/plugin-cast'
 import { messageReplied, messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const ava: CharacterDef = {
   id: 'ava',

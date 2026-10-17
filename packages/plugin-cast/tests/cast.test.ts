@@ -35,9 +35,9 @@ const town: Pack = {
   data: {
     places: {
       locations: [
-        { id: 'street', name: 'Street', tag: 'Town', kind: 'street', exits: ['cafe', 'park'], art: '', body: [] },
-        { id: 'cafe', name: 'Café', tag: 'Town', kind: 'venue', exits: ['street'], art: '', body: [] },
-        { id: 'park', name: 'Park', tag: 'Town', kind: 'street', exits: ['street'], art: '', body: [] },
+        { id: 'street', name: 'Street', tag: 'Town', exits: ['cafe', 'park'], art: '', body: [] },
+        { id: 'cafe', name: 'Café', tag: 'Town', exits: ['street'], art: '', body: [] },
+        { id: 'park', name: 'Park', tag: 'Town', exits: ['street'], art: '', body: [] },
       ],
     },
     cast: { characters: [ava, sam] },
@@ -161,7 +161,7 @@ describe('the cast', () => {
       stats: [{ id: 'trust', label: 'Trust', of: 'character' }],
       activities: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
       data: {
-        places: { locations: [{ id: 'yard', name: 'Yard', tag: '', kind: 'room', exits: [], art: '', body: [] }] },
+        places: { locations: [{ id: 'yard', name: 'Yard', tag: '', exits: [], art: '', body: [] }] },
         cast: {
           characters: [
             { id: 'mole', name: 'Mole', home: 'burrow', talk: 'mole.hi', storyline: 'tunnels', schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }] },

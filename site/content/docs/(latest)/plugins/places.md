@@ -21,7 +21,7 @@ Here's where each place-related part of a game comes from:
 import {
   places, go, at, within, moveTo, onlyAt, where, locationsOf, locationById,
   type PlacesOptions, type PlacesState, type PlacesView, type ExitView,
-  type LocationDef, type LocationKind, type Arrival,
+  type LocationDef, type Arrival,
 } from '@ifloom/plugin-places'
 ```
 
@@ -97,7 +97,7 @@ type LocationDef = {
   id: string
   name: string
   tag: string
-  kind: LocationKind
+  tags?: string[]
   parent?: string
   exits: readonly string[]
   art: string
@@ -116,7 +116,7 @@ type LocationDef = {
 | `id` | What content names the place by, as in `go('cafe')` or `at('cafe')`. Unique among the places. |
 | `name` | Shown on the exit, as the screen's title while the player is here, and in the [label](#the-label). |
 | `tag` | A word or two under the name, such as `Home` or `Café`. |
-| `kind` | A [`LocationKind`](#locationkind). |
+| `tags` | Words your UI can style or filter places by, such as `['outdoors']`. The view passes them through, and the plugin gives them no meaning. |
 | `parent` | The place it's inside, such as a room's building. [`places/within`](#conditions) follows it. |
 | `exits` | The places one step away. Exits are one-way, so list the way back on the other place too. |
 | `art` | The background image, passed through to the view. |
@@ -147,14 +147,6 @@ What happens as the player walks into a place, such as someone catching them on 
 
 The [content checker](/docs/reference/checks) checks its `when` and its effects as `locations park · arrive: …`.
 
-### LocationKind
-
-```ts
-type LocationKind = 'street' | 'venue' | 'room'
-```
-
-A label the view passes through to the UI. The plugin treats all three alike.
-
 ### In a pack
 
 Locations go in a [pack](/docs/reference/loader#pack)'s `data`, under `places.locations`. This is the [showcase](/docs/guide/showcase)'s map, cut down to what this page needs, in a file `town.ts`:
@@ -166,23 +158,23 @@ import { type LocationDef } from '@ifloom/plugin-places'
 
 const locations: LocationDef[] = [
   {
-    id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', exits: ['high-street'], art: 'place/flat',
+    id: 'flat', name: 'Your flat', tag: 'Home', exits: ['high-street'], art: 'place/flat',
     body: [{ text: 'place.flat' }],
     actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }],
   },
   {
-    id: 'high-street', name: 'High Street', tag: 'Small Town', kind: 'street', exits: ['flat', 'cafe', 'park', 'office'], art: 'place/high-street',
+    id: 'high-street', name: 'High Street', tag: 'Small Town', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'], art: 'place/high-street',
     body: [{ text: 'place.high-street' }],
   },
   {
-    id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'], art: 'place/cafe',
+    id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'], art: 'place/cafe',
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [{ text: 'place.cafe' }],
     actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
   },
-  { id: 'park', name: 'Riverside Park', tag: 'Small Town', kind: 'street', exits: ['high-street'], art: 'place/park', body: [{ text: 'place.park' }] },
+  { id: 'park', name: 'Riverside Park', tag: 'Small Town', exits: ['high-street'], art: 'place/park', body: [{ text: 'place.park' }] },
   {
-    id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'], art: 'place/office',
+    id: 'office', name: 'The Office', tag: 'Work', exits: ['high-street'], art: 'place/office',
     body: [{ text: 'place.office' }],
   },
 ]
@@ -211,7 +203,7 @@ Give a place a `parent` when it's inside another, such as a back room inside the
 import { type LocationDef } from '@ifloom/plugin-places'
 
 const backRoom: LocationDef = {
-  id: 'cafe.back', name: 'The back room', tag: 'Café', kind: 'room', parent: 'cafe', exits: ['cafe'], art: 'place/cafe-back',
+  id: 'cafe.back', name: 'The back room', tag: 'Café', parent: 'cafe', exits: ['cafe'], art: 'place/cafe-back',
   blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
   body: [{ text: 'place.cafe.back' }],
 }
@@ -228,7 +220,7 @@ import { period, weekday } from '@ifloom/plugin-calendar'
 import { type LocationDef } from '@ifloom/plugin-places'
 
 const office: LocationDef = {
-  id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'], art: 'place/office',
+  id: 'office', name: 'The Office', tag: 'Work', exits: ['high-street'], art: 'place/office',
   blocked: [
     { when: weekday(5, 6), reason: 'Shut at weekends.' },
     { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
@@ -425,7 +417,7 @@ A place can give a `stage` as well as its `art`: layers of pictures or videos wi
 
 ```ts
 {
-  id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street', 'cafe.back'], art: 'place/cafe',
+  id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street', 'cafe.back'], art: 'place/cafe',
   stage: {
     aspect: '16/9',
     layers: [
@@ -462,7 +454,7 @@ The place's `name`, which the view joins into [`view.when`](/docs/reference/view
 The place the player is at supplies its `audio` through the plugin's [`audio` hook](/docs/reference/plugins#audio). In the showcase, the café has its murmur and the music carries on from the game's default:
 
 ```ts
-place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'], audio: { ambience: 'cafe.murmur' } })
+place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'], audio: { ambience: 'cafe.murmur' } })
 ```
 
 Walk back out to the high street and the ambience stops, because the street names none. A place's audio is the third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. A room inside another doesn't take its parent's audio, so give the back room its own if it should sound the same. Nothing plays while the player is nowhere.
@@ -475,7 +467,7 @@ Walk back out to the high street and the ambience stops, because the street name
 
 ```ts
 type PlacesView = {
-  location: { id: string; name: string; tag: string; kind: LocationKind; art: string; stage: StageView | null } | null
+  location: { id: string; name: string; tag: string; tags: string[]; art: string; stage: StageView | null } | null
   exits: ExitView[]
 }
 ```
@@ -500,7 +492,7 @@ type ExitView = {
   id: string
   name: string
   tag: string
-  kind: LocationKind
+  tags: string[]
   art: string
   disabled?: string
   warning?: string
@@ -510,7 +502,7 @@ type ExitView = {
 
 | Field | What it is |
 |---|---|
-| `id`, `name`, `tag`, `kind`, `art` | The destination's, from its [`LocationDef`](#locationdef). |
+| `id`, `name`, `tag`, `tags`, `art` | The destination's, from its [`LocationDef`](#locationdef). `tags` is `[]` when it has none. |
 | `disabled` | Why it can't be taken now: what [`whyNot`](/docs/reference/actions#whynot) says for its command. A closed café's exit reads `Closed. Opens tomorrow morning.` |
 | `warning` | Set when the exit can be pressed but a plugin [guard](/docs/reference/plugins#guards) warns against it. The reducer refuses it. |
 | `command` | What to send to take it: `go(id)`. |
@@ -519,8 +511,8 @@ On a new game in the flat:
 
 ```ts
 {
-  location: { id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', art: 'place/flat', stage: null },
-  exits: [{ id: 'high-street', name: 'High Street', tag: 'Small Town', kind: 'street', art: 'place/high-street', command: go('high-street') }],
+  location: { id: 'flat', name: 'Your flat', tag: 'Home', tags: [], art: 'place/flat', stage: null },
+  exits: [{ id: 'high-street', name: 'High Street', tag: 'Small Town', tags: ['outdoors'], art: 'place/high-street', command: go('high-street') }],
 }
 ```
 

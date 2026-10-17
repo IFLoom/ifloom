@@ -30,7 +30,7 @@ const textWaiting: Condition = { all: [{ custom: 'messages/arrived', with: { mes
 
 const locations: LocationDef[] = [
   {
-    ...place({ id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', exits: ['high-street'] }),
+    ...place({ id: 'flat', name: 'Your flat', tag: 'Home', exits: ['high-street'] }),
     // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
     body: [{ text: 'place.flat' }, { text: 'place.flat/text', when: textWaiting }],
     actions: [
@@ -40,13 +40,13 @@ const locations: LocationDef[] = [
     ],
   },
   {
-    ...place({ id: 'high-street', name: 'High Street', kind: 'street', exits: ['flat', 'cafe', 'park', 'office'] }),
+    ...place({ id: 'high-street', name: 'High Street', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'] }),
     // The street, then a line about the weather, drawn afresh each day.
     body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street/hint', when: { setting: 'hints' } }],
     actions: [{ id: 'scarf', label: 'Buy a scarf at the market', command: { type: 'activity', id: 'buyScarf' } }],
   },
   {
-    ...place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', kind: 'venue', exits: ['high-street'] }),
+    ...place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'] }),
     // Open in the day; the door says when it opens again.
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
@@ -76,7 +76,7 @@ const locations: LocationDef[] = [
     ],
   },
   {
-    ...place({ id: 'park', name: 'Riverside Park', kind: 'street', exits: ['high-street'] }),
+    ...place({ id: 'park', name: 'Riverside Park', tags: ['outdoors'], exits: ['high-street'] }),
     // The river, then a line while the day's visitors are about.
     body: [{ text: 'place.park' }, { text: 'place.park/visitors', when: { count: 'visitor', gte: 1 } }],
     actions: [
@@ -85,7 +85,7 @@ const locations: LocationDef[] = [
     ],
   },
   {
-    ...place({ id: 'office', name: 'The Office', tag: 'Work', kind: 'venue', exits: ['high-street'] }),
+    ...place({ id: 'office', name: 'The Office', tag: 'Work', exits: ['high-street'] }),
     // Weekdays only, in the day.
     blocked: [
       { when: weekday(5, 6), reason: 'Shut at weekends.' },
@@ -203,20 +203,18 @@ export const town: Pack = {
     { id: 'charm', label: 'Charm', start: 1, max: 20 },
   ],
   items: [
-    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', kind: 'gear' },
-    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.', kind: 'stuff' },
+    { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
+    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
     {
       id: 'sandwich',
       name: 'sandwich',
       desc: 'Cheese and pickle, wrapped in paper.',
-      kind: 'stuff',
       use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', stat: 'energy', by: 25 }] },
     },
     {
       id: 'flapjack',
       name: 'flapjack',
       desc: 'Oats, syrup and a lot of butter.',
-      kind: 'stuff',
       use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', stat: 'energy', by: 10 }] },
     },
   ],

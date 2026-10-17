@@ -119,7 +119,7 @@ export function newStat(id: string): StatDef {
 }
 
 export function newItem(id: string): ItemDef {
-  return { id, name: id.charAt(0).toUpperCase() + id.slice(1), desc: '', kind: 'stuff' }
+  return { id, name: id.charAt(0).toUpperCase() + id.slice(1), desc: '' }
 }
 
 /** A copy of a project under a new id and title. */
@@ -136,7 +136,7 @@ export function sampleProject(): Project {
     id: 'market-day',
     schema: SCHEMA,
     stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, format: '{n}p', spendable: true }],
-    items: [{ id: 'bun', name: 'Iced bun', desc: 'Still warm from the bakery stall.', kind: 'stuff' }],
+    items: [{ id: 'bun', name: 'Iced bun', desc: 'Still warm from the bakery stall.' }],
     scenes: [
       {
         id: 'market',

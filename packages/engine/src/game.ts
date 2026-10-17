@@ -59,7 +59,9 @@ export type ItemDef = {
   id: string
   name: string
   desc: string
-  kind: 'gear' | 'stuff'
+  /** Words the UI can sort, style or filter items by: `['clothes']`. The engine gives them no meaning. */
+  tags?: string[]
+  /** How many a new game starts with. 0 if left out. */
   start?: number
   use?: { label: string; effects: Effect[] }
 }

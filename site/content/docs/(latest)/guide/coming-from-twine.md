@@ -284,10 +284,10 @@ stats: [
   { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true },
   { id: 'energy', label: 'Energy', start: 80 },
 ],
-items: [{ id: 'umbrella', name: 'umbrella', desc: 'Big enough for two.', kind: 'gear' }],
+items: [{ id: 'umbrella', name: 'umbrella', desc: 'Big enough for two.', start: 1 }],
 ```
 
-`gear` starts at 1 and `stuff` at 0, unless `start` says otherwise. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
+An item starts at its `start`, or 0 if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
 
 When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or an item (a thing they have). If it's neither, set it with an effect on the first scene's choices.
 

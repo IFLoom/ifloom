@@ -139,7 +139,7 @@ type ItemDef = {
   id: string
   name: string
   desc: string
-  kind: 'gear' | 'stuff'
+  tags?: string[]
   start?: number
   use?: { label: string; effects: Effect[] }
 }
@@ -147,8 +147,8 @@ type ItemDef = {
 
 | Field | What it does |
 |---|---|
-| `kind` | `gear` starts at 1 in a new game and `stuff` at 0, unless `start` says otherwise. |
-| `start` | How many a new game starts with. |
+| `tags` | Words your UI can sort, style or filter items by, such as `['clothes']`. The engine gives them no meaning. |
+| `start` | How many a new game starts with. 0 if left out. |
 | `use` | Makes the item usable with [`use`](/docs/reference/commands#use). Using it spends one, then runs these [effects](/docs/reference/effects). |
 
 An item has no slot of its own. To let the player wear one, add the [wardrobe plugin](/docs/plugins/wardrobe) and list the item among its clothes.
@@ -160,7 +160,7 @@ const sandwich: ItemDef = {
   id: 'sandwich',
   name: 'sandwich',
   desc: 'Cheese and pickle, wrapped in paper.',
-  kind: 'stuff',
+  tags: ['food'],
   use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', stat: 'energy', by: 25 }] },
 }
 ```
@@ -243,7 +243,7 @@ const shown = intro?.render(state, sceneContext(state, game))
 ```ts
 import { itemById } from '@ifloom/engine'
 
-itemById(game, 'sandwich')?.kind   // 'stuff'
+itemById(game, 'sandwich')?.tags   // ['food']
 ```
 
 ## Checking a game

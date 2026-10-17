@@ -65,9 +65,9 @@ describe('collections', () => {
   })
 
   it('are checked: an effect into a collection the game does not declare is reported', () => {
-    const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', kind: 'gear' as const, use: { label: 'Snap', effects: [{ kind: 'collect' as const, collection: 'album', entry: { id: 'x' } }] } }] }
+    const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', start: 1, use: { label: 'Snap', effects: [{ kind: 'collect' as const, collection: 'album', entry: { id: 'x' } }] } }] }
     expect(problemsOf(game)).toContain('item camera: unknown collection "album"')
-    const notes = { ...withGallery(), items: [{ id: 'pen', name: 'pen', desc: '', kind: 'gear' as const, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } }] }
+    const notes = { ...withGallery(), items: [{ id: 'pen', name: 'pen', desc: '', start: 1, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } }] }
     expect(problemsOf(notes)).toContain('item pen: no prose for "note.unwritten"')
   })
 })

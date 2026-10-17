@@ -15,8 +15,8 @@ function game(): Game {
         id: 'town',
         schema: SCHEMA,
         items: [
-          { id: 'coat', name: 'coat', desc: '', kind: 'gear' },
-          { id: 'cape', name: 'cape', desc: '', kind: 'gear' },
+          { id: 'coat', name: 'coat', desc: '', start: 1 },
+          { id: 'cape', name: 'cape', desc: '', start: 1 },
         ],
         activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
         scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
@@ -26,7 +26,7 @@ function game(): Game {
         ],
         prose: { 'place.house': 'Home.', intro: 'Hi.', 'intro#go': 'Go in' },
         data: {
-          places: { locations: [{ id: 'house', name: 'House', tag: 'Home', kind: 'room', exits: [], art: '', body: [{ text: 'place.house' }] }] },
+          places: { locations: [{ id: 'house', name: 'House', tag: 'Home', exits: [], art: '', body: [{ text: 'place.house' }] }] },
           wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'coat' }], clothes: [{ id: 'coat', slot: 'back' }, { id: 'cape', slot: 'back' }] },
         },
       },

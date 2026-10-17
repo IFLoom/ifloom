@@ -59,7 +59,7 @@ describe('checkGame', () => {
         { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
         { id: 'odd', label: 'Odd', command: { type: 'activity', id: 'wait' } },
       ],
-      items: [...town.items, { id: 'kite', name: 'Kite', desc: '', kind: 'gear' as const, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
+      items: [...town.items, { id: 'kite', name: 'Kite', desc: '', start: 1, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
     } as Game
     expect(problemsOf(game)).toEqual([
       'item kite: unknown effect kind "fly"',
@@ -75,7 +75,7 @@ describe('checkGame', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      items: [{ id: 'map', name: 'Map', desc: '', kind: 'gear', use: { label: 'Read', effects: [{ kind: 'scene', scene: 'missing' }, { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true }] } }],
+      items: [{ id: 'map', name: 'Map', desc: '', start: 1, use: { label: 'Read', effects: [{ kind: 'scene', scene: 'missing' }, { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true }] } }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual([
       'town · item map · goes to unknown scene "missing"',
@@ -139,7 +139,7 @@ describe('a cooperating partner the game does not have', () => {
       schema: SCHEMA,
       prose: { 'shore#wade': 'Wade in.' },
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
-      items: [{ id: 'net', name: 'Net', desc: '', kind: 'gear', use: { label: 'Cast', effects: [named.long] } }],
+      items: [{ id: 'net', name: 'Net', desc: '', start: 1, use: { label: 'Cast', effects: [named.long] } }],
       activities: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
     const loaded = loadGame([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
@@ -152,7 +152,7 @@ describe('a cooperating partner the game does not have', () => {
       ...fixture(),
       plugins: [beach],
       actions: [{ id: 'look', label: 'Look', when: { 'moon/up': true }, command: { type: 'custom', name: 'moon/look' } }],
-      items: [{ id: 'net', name: 'Net', desc: '', kind: 'gear', use: { label: 'Cast', effects: [{ kind: 'custom', name: 'moon/pull' }] } }],
+      items: [{ id: 'net', name: 'Net', desc: '', start: 1, use: { label: 'Cast', effects: [{ kind: 'custom', name: 'moon/pull' }] } }],
     }
     expect(problemsOf(game)).toEqual([
       'item net: no plugin effect named "moon/pull"',

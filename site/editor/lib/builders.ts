@@ -212,7 +212,7 @@ export function snippet(value: unknown): string {
 /** A new stat, item or setting for the snippet forms. */
 export const SNIPPET_DEFAULTS = {
   stat: { id: 'coins', label: 'Coins', start: 20, max: 9999, format: '{n}c', spendable: true } satisfies StatDef,
-  item: { id: 'umbrella', name: 'Umbrella', desc: 'A black umbrella with a bent spoke.', kind: 'gear' } satisfies ItemDef,
+  item: { id: 'umbrella', name: 'Umbrella', desc: 'A black umbrella with a bent spoke.', start: 1 } satisfies ItemDef,
   setting: { id: 'hints', label: 'Show hints', kind: 'toggle', default: true } satisfies SettingDef,
 }
 

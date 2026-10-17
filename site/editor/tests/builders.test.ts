@@ -31,7 +31,7 @@ describe('the condition builder', () => {
           id: 'p',
           schema: SCHEMA,
           stats: [{ id: 'coins', label: 'Coins', levels: { at: [5] } }],
-          items: [{ id: 'key', name: 'Key', desc: 'A key.', kind: 'stuff' }],
+          items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
           scenes: [{ id: 'a', body: [{ text: 'a', when: { all: conditions } }], choices: [{ id: 'go', effects: [] }] }],
           prose: { a: 'A.', 'a#go': 'Go' },
         },
@@ -74,7 +74,7 @@ describe('the effect builder', () => {
           id: 'p',
           schema: SCHEMA,
           stats: [{ id: 'coins', label: 'Coins' }],
-          items: [{ id: 'key', name: 'Key', desc: 'A key.', kind: 'stuff' }],
+          items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
           scenes: [
             { id: 'a', body: [{ text: 'a' }], choices: [{ id: 'go', effects: [newEffect('stat', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }), newEffect('item', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }), newEffect('scene', { scenes: ['a'], stats: [], items: [], kv: [], choices: [], sets: [] })] }] },
           ],

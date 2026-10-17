@@ -106,17 +106,10 @@ export function ItemFields({ value, onChange, withId, ...builder }: BuilderProps
         <Field label="Name">
           <TextInput value={value.name} onChange={(name) => set({ name: name ?? '' })} />
         </Field>
-        <Field label="Kind">
-          <Select
-            value={value.kind}
-            options={[
-              { value: 'stuff', label: 'Stuff' },
-              { value: 'gear', label: 'Gear' },
-            ]}
-            onChange={(kind) => set({ kind })}
-          />
+        <Field label="Tags" hint="Words to sort or style items by, separated by commas. The engine gives them no meaning.">
+          <ListInput value={value.tags} placeholder="clothes" onChange={(tags) => set({ tags })} />
         </Field>
-        <Field label="Start with" hint="How many a new game has.">
+        <Field label="Start with" hint="How many a new game has. None if left empty.">
           <NumberInput value={value.start} onChange={(start) => set({ start })} />
         </Field>
       </div>

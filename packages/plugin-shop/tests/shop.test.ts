@@ -42,7 +42,7 @@ const stall: VendorDef = {
   goods: ['apple', 'pear', 'plum', 'fig'].map((item) => ({ item, price: { coins: 4 } })),
 }
 
-const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', kind: 'venue', art: '', exits, body: [] })
+const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
   const town: Pack = {
@@ -52,7 +52,7 @@ function game(...partners: Plugin[]): Game {
       { id: 'coins', label: 'Coins', start: 20, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
       { id: 'energy', label: 'Energy', start: 50, spendable: true },
     ],
-    items: ['coffee', 'biscuit', 'sandwich', 'cake', 'apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '', kind: 'stuff' as const })),
+    items: ['coffee', 'biscuit', 'sandwich', 'cake', 'apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })),
     activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'sleep', effects: [{ kind: 'turn' }] }],
     data: {
       shop: { vendors: [counter, stall] },

@@ -71,8 +71,8 @@ const town: Pack = {
   schema: SCHEMA,
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999, spendable: true, format: '{n} coins' }],
   items: [
-    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.', kind: 'stuff' },
-    { id: 'flapjack', name: 'flapjack', desc: 'Oats and syrup.', kind: 'stuff' },
+    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.' },
+    { id: 'flapjack', name: 'flapjack', desc: 'Oats and syrup.' },
   ],
   data: { shop: { vendors: [counter] } },
 }

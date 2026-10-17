@@ -36,15 +36,14 @@ import {
   type TransitionName,
 } from '@ifloom/engine'
 
-export type LocationKind = 'street' | 'venue' | 'room'
-
 /** A place, as content declares it in `data.places.locations`. */
 export type LocationDef = {
   id: string
   name: string
   /** A word or two under the name: "Home", "Café". */
   tag: string
-  kind: LocationKind
+  /** Words the UI can style or filter places by: `['outdoors']`. The plugin gives them no meaning. */
+  tags?: string[]
   /** The place it is inside: a room's building. `places/within` follows it. */
   parent?: string
   /** The places one step away. */
@@ -100,7 +99,7 @@ export type ExitView = {
   id: string
   name: string
   tag: string
-  kind: LocationKind
+  tags: string[]
   art: string
   /** Why it cannot be taken now, if it cannot. */
   disabled?: string
@@ -116,7 +115,7 @@ export type PlacesView = {
    * engine's `stageView` draws it, or null when it has none. Its hotspots are
    * left out while a scene is open or a lock holds everything, as the exits are.
    */
-  location: { id: string; name: string; tag: string; kind: LocationKind; art: string; stage: StageView | null } | null
+  location: { id: string; name: string; tag: string; tags: string[]; art: string; stage: StageView | null } | null
   /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
   exits: ExitView[]
 }
@@ -233,7 +232,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         const command = commandOf(go(id))
         if (lockOn(state, game, command)?.hide) continue
         if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
-        const exit: ExitView = { id, name: dest.name, tag: dest.tag, kind: dest.kind, art: dest.art, command }
+        const exit: ExitView = { id, name: dest.name, tag: dest.tag, tags: dest.tags ?? [], art: dest.art, command }
         const disabled = whyNot(state, game, command)
         if (disabled) exit.disabled = disabled
         const warning = warningOf(state, game, command)
@@ -243,7 +242,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       const stage = place ? stageView(state, game, place.stage, place.id, null, picks) : null
       return {
         location: place
-          ? { id: place.id, name: place.name, tag: place.tag, kind: place.kind, art: place.art, stage: stage && !idle ? { ...stage, hotspots: [] } : stage }
+          ? { id: place.id, name: place.name, tag: place.tag, tags: place.tags ?? [], art: place.art, stage: stage && !idle ? { ...stage, hotspots: [] } : stage }
           : null,
         exits,
       }

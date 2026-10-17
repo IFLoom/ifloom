@@ -175,7 +175,7 @@ The engine writes some keys here itself, so don't use these prefixes for your ow
 
 ### items
 
-How many of each item the player is carrying, by id. It never goes below 0. A new game holds 1 of each `gear` item and 0 of each `stuff` item, unless the item's `start` says otherwise. The [wardrobe plugin](/docs/plugins/wardrobe) leaves worn clothes counted here, so wearing something doesn't change how many the player has.
+How many of each item the player is carrying, by id. It never goes below 0. A new game holds each item's `start`, or 0 if it gives none. The [wardrobe plugin](/docs/plugins/wardrobe) leaves worn clothes counted here, so wearing something doesn't change how many the player has.
 
 ### collections
 

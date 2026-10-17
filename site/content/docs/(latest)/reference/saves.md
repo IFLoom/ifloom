@@ -424,7 +424,7 @@ const base: Partial<Game> = {
 
 **Gotchas.**
 - A stat the save lacks reads as its `start` in conditions and the view either way, so a missing stat doesn't break anything. But a `stat` effect adds to what's kept, which is 0 for a stat that isn't there, so `{ kind: 'stat', stat: 'patience', by: 1 }` on a save without `patience` gives 1, not `start + 1`. Fill new stats whose `start` isn't 0.
-- An item the save lacks counts as 0 until it's filled, and gear the player should start with isn't there.
+- An item the save lacks counts as 0 until it's filled, so an item the player should start with isn't there.
 - A missing step is skipped without a word. Keep every old step when you add a new one, or a save from before it skips that change.
 
 ### MigrationTools
@@ -452,7 +452,7 @@ type FillKind = 'stats' | 'items' | 'kv' | 'settings' | 'entities'
 | Kind | What `fill` adds |
 |---|---|
 | `stats` | Each of the player's stats the save lacks, at its `start`, and each entity stat an entity in the save lacks, at its `start`. Not [derived stats](/docs/reference/stats#derived-stats), which are never kept. |
-| `items` | Each item the save lacks, at its `start`, or 1 for gear and 0 for anything else if it gives none. |
+| `items` | Each item the save lacks, at its `start`, or 0 if it gives none. |
 | `kv` | Each key in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other keys have no declared value, so set them in the step yourself. |
 | `settings` | Each `play` [setting](/docs/reference/settings) the save lacks, at its default. |
 | `entities` | Each declared [entity](/docs/reference/entities) the save doesn't have, at its start, unless [`state.removed`](/docs/reference/state#removed) says it was removed in play. |

@@ -29,10 +29,10 @@ function game(extra: Partial<Pack> = {}): Game {
     id: 'town',
     schema: SCHEMA,
     items: [
-      { id: 'raincoat', name: 'raincoat', desc: '', kind: 'stuff', start: 1 },
-      { id: 'boots', name: 'boots', desc: '', kind: 'stuff', start: 1 },
-      { id: 'sandals', name: 'sandals', desc: '', kind: 'stuff', start: 1 },
-      { id: 'umbrella', name: 'umbrella', desc: '', kind: 'stuff', start: 1 },
+      { id: 'raincoat', name: 'raincoat', desc: '', start: 1 },
+      { id: 'boots', name: 'boots', desc: '', start: 1 },
+      { id: 'sandals', name: 'sandals', desc: '', start: 1 },
+      { id: 'umbrella', name: 'umbrella', desc: '', start: 1 },
     ],
     activities: [{ id: 'sellBoots', effects: [{ kind: 'item', item: 'boots', by: -1 }] }],
     data: {
@@ -128,7 +128,7 @@ describe('the wardrobe', () => {
         {
           id: 'town',
           schema: SCHEMA,
-          items: [{ id: 'boots', name: 'boots', desc: '', kind: 'stuff' }],
+          items: [{ id: 'boots', name: 'boots', desc: '' }],
           data: { wardrobe: { clothes: [{ id: 'boots', slot: 'feet' }] } },
         },
       ],

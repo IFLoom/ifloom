@@ -106,9 +106,9 @@ const town: Pack = {
     },
     places: {
       locations: [
-        { id: 'house', name: 'House', tag: 'Home', kind: 'room', exits: ['cafe', 'work'], art: '', body: [{ text: 'place.house' }] },
-        { id: 'cafe', name: 'Café', tag: 'Café', kind: 'room', exits: ['house'], art: '', body: [{ text: 'place.cafe' }] },
-        { id: 'work', name: 'Work', tag: 'Work', kind: 'room', exits: ['house'], art: '', body: [{ text: 'place.work' }] },
+        { id: 'house', name: 'House', tag: 'Home', exits: ['cafe', 'work'], art: '', body: [{ text: 'place.house' }] },
+        { id: 'cafe', name: 'Café', tag: 'Café', exits: ['house'], art: '', body: [{ text: 'place.cafe' }] },
+        { id: 'work', name: 'Work', tag: 'Work', exits: ['house'], art: '', body: [{ text: 'place.work' }] },
       ],
     },
     messages: {

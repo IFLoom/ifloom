@@ -41,7 +41,7 @@ const cafe: JobDef = {
   fire: { missed: 2, when: { stat: 'manner', lt: 1 } },
 }
 
-const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', kind: 'venue', art: '', exits, body: [] })
+const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
   const town: Pack = {

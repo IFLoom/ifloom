@@ -213,7 +213,7 @@ const sam: CharacterDef = {
 }
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 const chat = (id: string, who: string, by: number): DataScene => ({
   id, speaker: who, body: [{ text: id }],
   choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by, of: person(who) }, { kind: 'scene', scene: null }] }],

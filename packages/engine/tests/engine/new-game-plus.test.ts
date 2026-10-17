@@ -12,8 +12,8 @@ function game(carryOver: Game['carryOver']): Game {
   return {
     ...fixture(),
     items: [
-      { id: 'umbrella', name: 'Umbrella', desc: 'Black, with a bent spoke.', kind: 'gear' },
-      { id: 'bun', name: 'Bun', desc: 'From the bakery.', kind: 'stuff' },
+      { id: 'umbrella', name: 'Umbrella', desc: 'Black, with a bent spoke.', start: 1 },
+      { id: 'bun', name: 'Bun', desc: 'From the bakery.' },
     ],
     carryOver,
   }

@@ -181,7 +181,7 @@ describe('plugins', () => {
       actions: [{ id: 'drop', label: 'Drop', command: { type: 'custom' as const, name: 'shells/fling' } }],
     }
     expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
-    const items = { ...withShells(), items: [{ id: 'cloth', name: 'cloth', desc: '', kind: 'stuff' as const, use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
+    const items = { ...withShells(), items: [{ id: 'cloth', name: 'cloth', desc: '', use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
     expect(problemsOf(items)).toContain('item cloth: no plugin effect named "shells/polish"')
   })
 })

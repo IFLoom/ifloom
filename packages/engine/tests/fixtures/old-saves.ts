@@ -26,8 +26,8 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
       { id: 'skill', label: 'Skill', of: 'staff', start: 1 },
     ],
     items: [
-      { id: 'umbrella', name: 'Umbrella', desc: 'Blue.', kind: 'gear' },
-      { id: 'apple', name: 'Apple', desc: 'Red.', kind: 'stuff', start: 2 },
+      { id: 'umbrella', name: 'Umbrella', desc: 'Blue.', start: 1 },
+      { id: 'apple', name: 'Apple', desc: 'Red.', start: 2 },
     ],
     scenes: [{ id: 'start', render: () => ({ choices: [] }) }],
     storylines: [

@@ -124,7 +124,7 @@ type PhoneKit = {
 | App id | Name | Icon | Badge | Sections |
 |---|---|---|---|---|
 | each channel's id | the channel's name | `messages` | `messages/unread` with `{ channel }` | `{ plugin: 'messages', with: { channel } }` |
-| each feed's id | the feed's name | `feed` | `feed/unseen` with `{ feed }` | `{ plugin: 'feed', with: { feed } }` |
+| each feed's id | the feed's name | `feed` | `feed/unread` with `{ feed }` | `{ plugin: 'feed', with: { feed } }` |
 | `contacts` | Contacts | `contacts` | none | `{ contacts: true }` |
 | `gallery` | Gallery | `gallery` | none | `{ collection: 'gallery' }` |
 
@@ -367,7 +367,7 @@ apply(state, game, openApp('texts')).reason     // 'Not at work.'
 - **Pass on `collections` as well as `plugins`.** The Gallery app lists the `gallery` collection. If the game doesn't declare it, the loader reports the app (`apps gallery · unknown collection "gallery"`) and every effect that collects into it (`activity photo-ava · unknown collection "gallery"`). Spread `kit.collections` into the game's `collections`, beside any of your own, or turn the gallery off with `gallery: false`.
 - **Don't add the plugins a second time.** The kit already has devices, messages and feed. Adding `messages(...)` again gives two plugins with one id, which the loader reports. For more channels or feeds, pass `channels` and `feeds` to `phone()`.
 - **Channels, feeds and apps share one list of ids.** Each one becomes an app with its own id, so a channel and a feed with the same id, or an app of yours called `contacts`, replace one another. Give each its own id.
-- **Badges name the channels and feeds.** The texts app counts `messages/unread` with `{ channel: 'texts' }`, and the Social app `feed/unseen` with `{ feed: 'social' }`. Renaming a channel means renaming it in its badge too.
+- **Badges name the channels and feeds.** The texts app counts `messages/unread` with `{ channel: 'texts' }`, and the Social app `feed/unread` with `{ feed: 'social' }`. Renaming a channel means renaming it in its badge too.
 - **Messages and posts arrive only after a command.** They arrive at the end of the first command after which their `when` holds, so a text whose `when` holds on a new game arrives after the player's first command. See [Messages](/docs/plugins/messages#gotchas).
 - **Opening an app is free and doesn't leave the room.** The camera at the café photographs whoever is at the café. Opening the phone takes no time and moves nobody.
 - **A `plugin` section only names the slice.** The Messages and Social apps carry `{ kind: 'plugin', plugin, with }`. The UI draws `view.plugins.messages` or `view.plugins.feed`, picking the channel or feed in `with`.

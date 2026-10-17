@@ -530,7 +530,7 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `blocked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
 - **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
-- **A count badge reads a value by name, with arguments.** The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unseen', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
+- **A count badge reads a value by name, with arguments.** The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unread', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.
 
 ## See it in an example

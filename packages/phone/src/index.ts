@@ -72,7 +72,7 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
       name: entry.name,
       icon: 'feed',
       on,
-      badge: { value: 'feed/unseen', with: { feed: entry.id } },
+      badge: { value: 'feed/unread', with: { feed: entry.id } },
       sections: [{ plugin: 'feed', with: { feed: entry.id } }],
     })),
     ...(options.contacts === false ? [] : [{ id: 'contacts', name: 'Contacts', icon: 'contacts', on, sections: [{ contacts: true as const }] }]),

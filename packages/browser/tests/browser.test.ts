@@ -156,6 +156,16 @@ describe('startKeys', () => {
     stop()
   })
 
+  it('lets Escape through when its handler says it did nothing', () => {
+    const runner = runnerFor()
+    let menuOnScreen = false
+    const stop = startKeys(runner, { escape: () => menuOnScreen })
+    expect(press('Escape')).toBe(true) // not taken: the page still gets it
+    menuOnScreen = true
+    expect(press('Escape')).toBe(false)
+    stop()
+  })
+
   it('presses a minigame’s inputs from the keyboard, before the number keys', () => {
     const runner = runnerFor()
     const stop = startKeys(runner)

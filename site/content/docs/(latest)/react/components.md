@@ -287,7 +287,7 @@ type KeyOptions = {
 Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an object to add your own:
 
 - **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`Actions`](#actions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing. [Inline actions](#inlineaction) in the prose have no number: they're reached with Tab, like a link.
-- **Escape** opens the [`GameMenu`](#gamemenu)'s buttons in a dialog, if the menu is on screen.
+- **Escape** opens the [`GameMenu`](#gamemenu)'s buttons in a dialog, if the menu is on screen. With no menu, the key is left to the page.
 - **`map`** sends a [command](/docs/reference/commands) for each key you list, by its [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) name. Your keys come first, so mapping `'1'` or `'Escape'` replaces what it does.
 
 ```tsx

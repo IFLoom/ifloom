@@ -66,8 +66,12 @@ export function KeysProvider({ children }: { children: ReactNode }) {
     if (!on) return
     return startKeys(runner, {
       map,
-      // The newest menu on screen.
-      escape: () => [...menus].at(-1)?.(),
+      // The newest menu on screen. With none, Escape goes on to the page.
+      escape: () => {
+        const open = [...menus].at(-1)
+        if (!open) return false
+        open()
+      },
       // The button on screen with that number: what's drawn is what's picked, whatever the layout.
       choices: (key) => {
         const button = document.querySelector<HTMLButtonElement>(`[data-choice-key="${key}"]`)

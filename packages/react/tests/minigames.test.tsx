@@ -296,6 +296,24 @@ describe('hotkeys', () => {
     expect(runner.state.stats.energy).toBe(60)
   })
 
+  it('leave Escape to the page when there is no menu to open', () => {
+    // Whether the page still gets the key: false once a handler takes it.
+    const escape = () => {
+      let passed = true
+      act(() => void (passed = fireEvent.keyDown(window, { key: 'Escape' })))
+      return passed
+    }
+    render(<GameShell runner={runnerFor()} keys />)
+    expect(escape()).toBe(false)
+    expect(screen.getByRole('dialog', { name: 'Menu' })).toBeTruthy()
+    cleanup()
+    // A runner with no saves, undo or backlog, and no pages or mods: no menu.
+    const g = game()
+    render(<GameShell runner={createRunner(g, startingState(g))} keys />)
+    expect(escape()).toBe(true)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('send the game’s own commands from its map, before the built-in keys', () => {
     const runner = runnerFor()
     render(<GameShell runner={runner} keys={{ map: { w: { type: 'activity', id: 'wave' }, '1': { type: 'choose', id: 'rest' } } }} />)

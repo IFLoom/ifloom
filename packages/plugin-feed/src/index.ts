@@ -221,10 +221,10 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
     values: {
       /**
        * Posts the player hasn't looked at: in every feed, or in one with
-       * `{ feed }`. <code v-pre>{{v:feed/unseen feed=social}}</code>, or a
-       * badge's `{ value: 'feed/unseen', with: { feed: 'social' } }`.
+       * `{ feed }`. <code v-pre>{{v:feed/unread feed=social}}</code>, or a
+       * badge's `{ value: 'feed/unread', with: { feed: 'social' } }`.
        */
-      unseen: (_state, args, { slice, game }) =>
+      unread: (_state, args, { slice, game }) =>
         feedsOf(game)
           .filter((entry) => args.feed === undefined || entry.id === String(args.feed))
           .reduce((sum, entry) => sum + unseenIn(slice, game, entry.id), 0),

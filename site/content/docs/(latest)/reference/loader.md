@@ -75,7 +75,7 @@ The game's other custom conditions, and its effects, values and panels, are left
 ## SCHEMA
 
 ```ts
-const SCHEMA = 11
+const SCHEMA = 12
 ```
 
 The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
@@ -99,6 +99,7 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 | 8 to 9 | An item's `kind` and a place's `kind` are gone. Each becomes a tag: `{ kind: 'stuff' }` becomes `{ tags: ['stuff'] }`, and a place's `'street'`, `'venue'` or `'room'` the same way. An item that was `'gear'` with no `start` also gets `start: 1`, since gear used to start at one. |
 | 9 to 10 | A choice in a scene is `scene#choice`, as its label's prose key already was (see [Ids and separators](/docs/reference/game#ids-and-separators)). `{ chose: 'ch1.mat/open' }` becomes `{ chose: 'ch1.mat#open' }`. Prose keys are your own names, which code can hold too, so they're left as they are. |
 | 10 to 11 | A stat's hidden `bands` are [levels](/docs/reference/stats#statlevels) the player isn't shown: `bands: [10, 20]` becomes `levels: { at: [10, 20], hidden: true }`, and `{ tier: 'charm', gte: 2 }` becomes `{ level: 'charm', gte: 2 }`. A stat that had both keeps its `levels` and loses its `bands`. |
+| 11 to 12 | The [feed plugin](/docs/plugins/feed#values)'s value `feed/unseen` is `feed/unread`, as its view and the messages plugin count news: in a value's name, such as a badge's `{ value: 'feed/unseen' }`, and in prose and strings tokens, `{{v:feed/unseen feed=social}}`. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -106,7 +107,7 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 12, this engine reads 11` |
+| `schema` is newer than `SCHEMA` | `written for schema 13, this engine reads 12` |
 | `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 11)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.

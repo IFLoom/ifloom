@@ -8,7 +8,7 @@ import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 11
+export const SCHEMA = 12
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -94,6 +94,17 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
       Object.entries(pack).map(([key, value]) => {
         if (key === 'stats' && Array.isArray(value)) value = value.map((stat) => (isRecord(stat) ? bandsToLevels(stat) : stat))
         return [key, WORDS.has(key) ? value : deep(value, toSchema11)]
+      }),
+    ) as RawPack,
+  // 11 → 12: the feed plugin counts news as `unread`, as its view and the
+  // messages plugin do, so its value `feed/unseen` is `feed/unread`: in a
+  // value's name (a badge, a stat's `max`, an achievement's progress) and in
+  // prose and strings tokens, `{{v:feed/unseen feed=social}}`.
+  11: (pack) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => {
+        if (key === 'prose' || key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? text.replace(/\{\{v:feed\/unseen(?=[\s}])/g, '{{v:feed/unread') : text])) : value]
+        return [key, WORDS.has(key) ? value : deep(value, (inner) => (inner.value === 'feed/unseen' ? { ...inner, value: 'feed/unread' } : inner))]
       }),
     ) as RawPack,
 }

@@ -76,8 +76,12 @@ export type KeysOptions = {
    * UI that clicks the button it drew with that number.
    */
   choices?: boolean | ((key: number) => boolean)
-  /** What Escape does, such as opening the game's menu. Nothing if left out. */
-  escape?: () => void
+  /**
+   * What Escape does, such as opening the game's menu. Nothing if left out.
+   * Return `false` when it did nothing, such as with no menu on screen, and
+   * the key goes on to the page as if it weren't there.
+   */
+  escape?: () => boolean | void
   /**
    * Keys of the game's own, by `KeyboardEvent.key` (`'m'`, `'F2'`, `' '`): the
    * command each sends. They come before the built-in keys, so mapping `'1'`
@@ -105,9 +109,7 @@ export function startKeys(runner: Runner, options: KeysOptions = {}): () => void
       return
     }
     if (event.key === 'Escape') {
-      if (!escape) return
-      event.preventDefault()
-      escape()
+      if (escape && escape() !== false) event.preventDefault()
       return
     }
     if (!choices || !/^[1-9]$/.test(event.key)) return

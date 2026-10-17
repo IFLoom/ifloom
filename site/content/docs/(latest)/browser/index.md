@@ -42,7 +42,7 @@ function startKeys(runner: Runner, options?: KeysOptions): () => void
 
 type KeysOptions = {
   choices?: boolean | ((key: number) => boolean)
-  escape?: () => void
+  escape?: () => boolean | void
   map?: Record<string, CommandRef>
   minigame?: boolean
 }
@@ -53,7 +53,7 @@ The game's keyboard shortcuts, in this order:
 | Option | What it does | Default |
 |---|---|---|
 | `map` | Keys of the game's own, by [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) (`'m'`, `'F2'`, `' '`), each with the command it sends. They come first, so mapping `'1'` or `'Escape'` replaces what that key does. | none |
-| `escape` | What Escape does, such as opening your menu. | nothing |
+| `escape` | What Escape does, such as opening your menu. Return `false` when it did nothing, such as with no menu to open, and the key goes on to the page untouched. | nothing |
 | `choices` | The number keys 1 to 9 pick the choices on screen, in [`numberedChoices`](#numberedchoices) order. A greyed-out choice is skipped. Pass a function to pick yourself: it gets the key's number and returns whether it picked anything. | on |
 | `minigame` | A minigame's inputs from the keyboard too, through [`startMinigameKeys`](#startminigamekeys). | on |
 

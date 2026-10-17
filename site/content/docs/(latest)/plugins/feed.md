@@ -87,7 +87,7 @@ type FeedDef = { id: string; name: string }
 
 | Field | What it is |
 |---|---|
-| `id` | What posts name the feed by. It's also what the [value](#values) `feed/unseen` takes as `feed`. |
+| `id` | What posts name the feed by. It's also what the [value](#values) `feed/unread` takes as `feed`. |
 | `name` | What the player reads. |
 
 Feeds are content. List them in a pack's `data.feed.feeds`, in the order the view lists them. They're merged by id, so a mod can add a feed or rename one.
@@ -154,7 +154,7 @@ const short = postTo('social', 'river', { text: 'own.river', image: 'art/photo/r
 const clip = postTo('social', 'ducks', { text: 'own.ducks', video: 'art/clips/ducks.mp4' })
 ```
 
-The post is stamped with the current [turn](/docs/reference/state). If the player has already posted that id, nothing happens, so an action that posts the same id twice makes one post. A `feed` the plugin wasn't given does nothing either. The player's own posts never count as [unseen](#values).
+The post is stamped with the current [turn](/docs/reference/state). If the player has already posted that id, nothing happens, so an action that posts the same id twice makes one post. A `feed` the plugin wasn't given does nothing either. The player's own posts never count as [unread](#values).
 
 ### Reactions
 
@@ -335,10 +335,10 @@ Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends 
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:feed/unseen}}` | Other people's posts the player hasn't looked at, in every feed. |
-| `{{v:feed/unseen feed=social}}` | Other people's posts the player hasn't looked at in that feed. |
+| `{{v:feed/unread}}` | Other people's posts the player hasn't looked at, in every feed. |
+| `{{v:feed/unread feed=social}}` | Other people's posts the player hasn't looked at in that feed. |
 
-The player's own posts are never counted, since they aren't news to the player. The value works as a badge too, with the feed as its argument: a devices app's `badge: { value: 'feed/unseen', with: { feed: 'social' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up).
+The player's own posts are never counted, since they aren't news to the player. The value works as a badge too, with the feed as its argument: a devices app's `badge: { value: 'feed/unread', with: { feed: 'social' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up).
 
 ## Strings
 
@@ -513,8 +513,8 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **Posts appear only after a command.** The plugin looks for new posts in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
 - **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a kv key, a day (the calendar's `day({ gte: 2 })`) or a scene seen.
 - **A post appears once.** After that it stays, whatever `when` does.
-- **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unseen` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
-- **A feed the game doesn't have counts nothing.** `feed/unseen` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
+- **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unread` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
+- **A feed the game doesn't have counts nothing.** `feed/unread` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
 - **Own-post and comment prose keys are checked where they're written.** A `text` key that a [custom effect](/docs/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` kv key.

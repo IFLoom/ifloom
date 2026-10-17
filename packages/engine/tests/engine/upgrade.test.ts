@@ -304,7 +304,7 @@ describe('content migrations', () => {
     expect(unwrap(upgradePack(v6))).toEqual({
       id: 'phone',
       schema: SCHEMA,
-      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unseen feed=social}} posts; {{v:rentDue}} due.' },
+      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:rentDue}} due.' },
       strings: { hint: '{{v:messages/unread channel=post}} letters' },
       activities: [
         {
@@ -419,6 +419,25 @@ describe('content migrations', () => {
         { id: 'cooking', label: 'Cooking', levels: { at: [10, 30] } },
       ],
       activities: [{ id: 'flirt', blocked: [{ when: { not: { level: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
+    })
+  })
+
+  it('call the feed’s value feed/unread at schema 12, in values and in tokens', () => {
+    const v11 = {
+      id: 'phone',
+      schema: 11,
+      prose: { badge: '{{v:feed/unseen}} new, {{v:feed/unseen feed=social}} on social; {{v:feed/unseenish}} stays.' },
+      strings: { hint: '{{v:feed/unseen feed=board}} pinned' },
+      stats: [{ id: 'buzz', label: 'Buzz', max: { value: 'feed/unseen' } }],
+      data: { devices: { apps: [{ id: 'social', badge: { value: 'feed/unseen', with: { feed: 'social' } } }, { id: 'texts', badge: { value: 'messages/unread' } }] } },
+    }
+    expect(unwrap(upgradePack(v11))).toEqual({
+      id: 'phone',
+      schema: SCHEMA,
+      prose: { badge: '{{v:feed/unread}} new, {{v:feed/unread feed=social}} on social; {{v:feed/unseenish}} stays.' },
+      strings: { hint: '{{v:feed/unread feed=board}} pinned' },
+      stats: [{ id: 'buzz', label: 'Buzz', max: { value: 'feed/unread' } }],
+      data: { devices: { apps: [{ id: 'social', badge: { value: 'feed/unread', with: { feed: 'social' } } }, { id: 'texts', badge: { value: 'messages/unread' } }] } },
     })
   })
 

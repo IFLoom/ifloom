@@ -1070,7 +1070,7 @@ A row of buttons for what the runner offers:
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
 - **Enter a code** (`ui.enterCode`) when the provider was given [`unlocks`](#unlocksoption), the game has the unlocks plugin and `pages` is off. With pages on, codes are entered on the settings page instead.
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
-- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), or takes codes.
+- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), takes codes or has mods.
 
 With [`keys`](#keyoptions) on, Escape opens the same buttons in a dialog headed **Menu** (`ui.menu`).
 
@@ -1212,10 +1212,10 @@ function ModManager(props: { className?: string }): JSX.Element | null
 The mods screen, over the [`ModsOption`](#modsoption) given to the provider:
 
 - **Add a mod file** (`ui.addMod`) reads a `.json` file through the store's [`add`](/docs/reference/mods#mods). If the file can't be used, it shows why in the words of [`readMod`](/docs/reference/mods#readmod), such as `That mod is for another game (corner-cafe).` A mod with the same id as one already there replaces it.
-- Every mod added is listed in name order (`data-mod` with its id), with its name, version and description. Each has a button to turn it **On** or **Off** (`ui.modOn`, `ui.modOff`), which reads what the mod is now, and a button to **Delete** it (`ui.remove`). Under it are the `problems` that start `mod:<id> `. With no mods, it shows `ui.noMods`.
-- Once anything has changed, **Restart with these mods** (`ui.applyMods`) appears and calls `onChange`.
+- Every mod added is listed in name order (`data-mod` with its id), with its name, version and description. Each has a button to turn it **On** or **Off** (`ui.modOn`, `ui.modOff`), which reads what the mod is now and carries `aria-pressed`, and a button to **Delete** it (`ui.remove`). Under it are the `problems` that start `mod:<id> `. With no mods, it shows `ui.noMods`.
+- Once anything has changed, a line saying the change takes effect on a restart (`ui.modsChanged`) appears with **Restart with these mods** (`ui.applyMods`), which calls `onChange`.
 
-The screen carries `data-mods`. It draws nothing when the provider has no `mods`.
+The screen carries `data-mods`. It draws nothing when the provider has no `mods`. [`GameMenu`](#gamemenu) opens it in a dialog, and with [`pages`](#pages) on, the [`SettingsPage`](#settingspage) shows it too.
 
 ```tsx
 import { GameProvider, ModManager } from '@ifloom/react'
@@ -1230,7 +1230,7 @@ import { GameProvider, ModManager } from '@ifloom/react'
 - **Nothing changes until the restart.** A mod is part of the game, so turning one on or off changes the store, not the game that's running. The player keeps playing the game as it was loaded until `onChange` builds it again.
 - **The problems are the ones from start-up.** A mod added since then shows no problems until the game is built again with it.
 
-Replaceable as `ModManager` in [`components`](#components). Parts: `mods`, `mod` (with `data-mod`), `mod-name`, `mod-version`, `mod-state`, `mod-text`, `mod-problem`, `mods-message`, `mods-empty`, `file-button` and `button`.
+Replaceable as `ModManager` in [`components`](#components). Parts: `mods`, `mod` (with `data-mod`), `mod-name`, `mod-version`, `mod-state`, `mod-text`, `mod-problem`, `mods-message`, `mods-empty`, `mods-restart`, `mods-changed`, `file-button` and `button`.
 
 ### useMods
 
@@ -1369,7 +1369,7 @@ The game's title (`view.title`), the `subtitle` and `art` if given, and a column
 - **New game** (`ui.newGame`, `new`) calls [`runner.newGame()`](/docs/reference/runner#newgame), which takes the player's stored settings from the profile.
 - **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/reference/state#new-game) and the profile's `core:finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
 - **Load** (`ui.load`, `load`) when the runner has `saves`.
-- **Settings** (`ui.settings`, `settings`) when the game declares any setting.
+- **Settings** (`ui.settings`, `settings`) when the game declares any setting, takes codes (with [`unlocks`](#unlocksoption) on the provider) or has [`mods`](#modsoption).
 - **Achievements** (`ui.achievements`, `achievements`) in a game with the [achievements plugin](/docs/plugins/achievements), unless `achievements` is `false` or you added your own page with that id.
 - A button for each of your own pages, by its id.
 - **Credits** (`ui.credits`, `credits`) when `credits` are given.
@@ -1393,9 +1393,9 @@ Each value comes from [`runner.settings()`](/docs/reference/runner#settings), an
 
 A refused change shows its reason under the list.
 
-With [`unlocks`](#unlocksoption) on the provider, an [`UnlocksPanel`](#unlockspanel) follows the list, for entering a code, and the page says nothing about having no settings.
+With [`unlocks`](#unlocksoption) on the provider, an [`UnlocksPanel`](#unlockspanel) follows the list, for entering a code. With [`mods`](#modsoption), a Mods section follows that: a heading (`ui.mods`), a line about mods (`ui.modsHint`) and the [`ModManager`](#modmanager), where the player adds, turns on or off and deletes mods and restarts with the change. With either, the page says nothing about having no settings, and the title screen and the menu offer Settings even when the game declares none. The menu keeps its own Mods button.
 
-Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty`, `settings-message` and `page-back`.
+Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty`, `settings-message`, `settings-mods` (with `data-settings-mods`), `mods-title`, `mods-hint` and `page-back`.
 
 ### LoadPage
 

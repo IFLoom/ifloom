@@ -64,6 +64,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.17 0.008 60);
   --foreground: oklch(0.95 0.005 85);
   --card: oklch(0.21 0.01 60);
@@ -162,6 +163,28 @@
 }
 
 @layer base {
+  /*
+   * The preset's body font everywhere. Dialogs and tooltips are drawn in
+   * <body>, outside the page, so they take it from here.
+   */
+  body {
+    font-family: var(--font-body);
+  }
+  /* Checkboxes, radio buttons, sliders and progress bars in the preset's colour, not the browser's blue. */
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  progress {
+    accent-color: var(--primary);
+  }
+  /*
+   * While a dialog is open, notices wait behind it: on a phone they sit at the
+   * bottom of the window, where they'd show under a long dialog's last lines.
+   */
+  body:has([role="dialog"][data-state="open"]) [data-part="overlay"] {
+    visibility: hidden;
+  }
+
   [data-transition-in] {
     animation-duration: var(--ifloom-transition-ms, 300ms);
     animation-timing-function: ease-out;

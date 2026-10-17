@@ -69,6 +69,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Hooks for every plugin the React UI draws, giving the same data and actions with no markup: `useQuests`, `useWardrobe`, `useMessages`, `useFeed`, `useClock`, `usePlaces`, `usePeople`, `useDebug`, `useAchievements`, `useShop`, `useJobs` and `useStatuses`, beside `useDevices`. Each built-in card is now drawn from its hook.
 - A Community plugins page in the docs, listing plugins other people have written, what a listing needs (the public API only, no UI of its own, the engine as a peer, tests, an open-source licence) and how to submit one through a GitHub issue form.
 - `ifloom new <name> --template plugin` starts a plugin as a package of its own: `@ifloom/engine` as a caret peer, a `definePlugin` with a declared state and view, a condition, an effect and a command with typed helpers, a Vitest test, a complete `tsconfig.json`, `test` and `typecheck` scripts, and a README with what Community plugins needs to list it.
+- With pages on, the React UI's settings page has a Mods section when the game has mods: each mod's name, version and description, an on and off toggle, its problems, Delete, adding one from a file, and a line and button to restart with the change. The menu keeps its Mods button, and Settings now shows on the title screen and in the menu for a game with mods and no settings of its own.
 
 ### Changed
 
@@ -139,5 +140,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - In the React UI with `keys` on, Escape is left to the page again when there's no menu on screen, instead of being swallowed. `startKeys`'s `escape` can return `false` to let the key through the same way.
 - On a phone, the React UI no longer leaves a gap between the side column and the scene. The page's rows now start at the top instead of stretching to fill the window.
 - The terminal preset's status line of notices no longer covers the top of the page. It's now the first row of the page and pushes everything else down, so the scene title, the notice strip and a minigame stay in view. On wide screens it sticks to the top as you scroll.
+- Every dialog in the React UI (the menu's, saves, backlog, mods, codes, a device, the notice strip's, the shop, cheats and achievements) is drawn the same way: in the preset's body font and colours, with a gap at the sides on a phone, and no taller than the window, scrolling inside. Tooltips take the preset's font too.
+- Checkboxes, radio buttons and sliders in the React UI take the preset's colour instead of the browser's blue, and the terminal preset tells the browser it's dark, so native controls draw dark.
+- While a dialog is open, the React UI's notices wait behind it, so on a phone they no longer show under the bottom of a long dialog.
 
 [Unreleased]: https://github.com/IFLoom/ifloom/commits/main

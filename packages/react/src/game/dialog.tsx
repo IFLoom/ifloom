@@ -5,19 +5,37 @@ import { usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
 /**
+ * The classes every dialog of the UI starts from, so they all look alike: the
+ * preset's body font and colours (a dialog is drawn in <body>, outside the
+ * page), a gap at the sides on a phone, and no taller than the window, with
+ * its own scroll.
+ */
+export const DIALOG_CLASSES = {
+  dialog:
+    'fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 font-body text-foreground shadow-lg',
+  overlay: 'fixed inset-0 z-50 bg-black/50',
+  title: 'font-heading text-lg font-semibold leading-none',
+  close: 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100',
+} as const
+
+/** The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with `extra` classes on the dialog. */
+export function useDialogParts(extra?: string) {
+  return {
+    dialog: usePart('dialog', DIALOG_CLASSES.dialog, extra),
+    overlay: usePart('dialog-overlay', DIALOG_CLASSES.overlay),
+    title: usePart('dialog-title', DIALOG_CLASSES.title),
+    close: usePart('dialog-close', DIALOG_CLASSES.close),
+  }
+}
+
+/**
  * A dialog drawn with the UI's `dialog` parts, as the menu's and the devices'
  * are: open while `open` is true, titled `title`, calling `onClose` when the
  * player closes it. Internal: the shop and the achievements use it.
  */
 export function PartDialog({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const words = useWords()
-  const dialog = usePart(
-    'dialog',
-    'fixed top-1/2 left-1/2 z-50 grid max-h-[90vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 font-body shadow-lg',
-  )
-  const overlay = usePart('dialog-overlay', 'fixed inset-0 z-50 bg-black/50')
-  const heading = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
-  const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
+  const { dialog, overlay, title: heading, close } = useDialogParts()
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       {open ? (

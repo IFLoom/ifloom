@@ -483,6 +483,8 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.modOn` | `On` | |
 | `ui.modOff` | `Off` | |
 | `ui.applyMods` | `Restart with these mods` | |
+| `ui.modsHint` | `Mods add to the game or change it. Add one from a file, and turn it on or off here.` | |
+| `ui.modsChanged` | `Changes to mods take effect when the game restarts.` | |
 | `ui.close` | `Close` | |
 | `ui.priceSeparator` | ` · ` | |
 | `ui.itemCount` | `×{n}` | `n` |
@@ -580,7 +582,7 @@ Which component uses which keys:
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
 - **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
-- **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.applyMods`, plus `ui.remove` from the saves menu for its **Delete** button.
+- **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its **Delete** button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
 - **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings`, `ui.achievements` and `ui.credits`.
 - **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
 - **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.

@@ -85,6 +85,8 @@ function ModManagerImpl({ className }: { className?: string }) {
   const text = usePart('mod-text', 'text-muted-foreground')
   const problem = usePart('mod-problem', 'text-xs text-destructive')
   const empty = usePart('mods-empty', 'text-muted-foreground')
+  const restartRow = usePart('mods-restart', 'flex flex-wrap items-center gap-2')
+  const changed = usePart('mods-changed', 'text-muted-foreground')
   const restart = usePart('button', buttonVariants({ size: 'sm' }))
   if (!mods.available) return null
   const add = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +109,7 @@ function ModManagerImpl({ className }: { className?: string }) {
                   {mod.name}
                   {mod.version ? <span {...version}> {mod.version}</span> : null}
                 </p>
-                <button {...(mod.enabled ? onButton : offButton)} onClick={() => void mods.toggle(mod.id)}>
+                <button {...(mod.enabled ? onButton : offButton)} aria-pressed={mod.enabled} onClick={() => void mods.toggle(mod.id)}>
                   {mod.enabled ? words('modOn') : words('modOff')}
                 </button>
                 <button {...removeButton} onClick={() => void mods.remove(mod.id)}>
@@ -127,9 +129,12 @@ function ModManagerImpl({ className }: { className?: string }) {
         <p {...empty}>{words('noMods')}</p>
       )}
       {mods.changed && mods.restart ? (
-        <button {...restart} onClick={mods.restart}>
-          {words('applyMods')}
-        </button>
+        <div {...restartRow} role="status">
+          <p {...changed}>{words('modsChanged')}</p>
+          <button {...restart} onClick={mods.restart}>
+            {words('applyMods')}
+          </button>
+        </div>
       ) : null}
     </section>
   )
@@ -140,6 +145,9 @@ function ModManagerImpl({ className }: { className?: string }) {
  * and adding one from a file. Mods change the game itself, so a change takes
  * effect when the game is built again — `onChange` is where the game does that,
  * usually by reloading the page. Problems the loader found in a mod are listed
- * under it. Needs `mods` on the provider. `useMods` is the same without the look.
+ * under it, and once anything has changed, a line saying a restart applies it
+ * and the button that does. Needs `mods` on the provider. It's in the menu,
+ * and on the settings page when the game has pages. `useMods` is the same
+ * without the look.
  */
 export const ModManager = overridable('ModManager', ModManagerImpl)

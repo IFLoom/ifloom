@@ -12,6 +12,7 @@ import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { BrokenSlot, useSaves } from './saves.tsx'
 import { AchievementsPage } from './achievements.tsx'
+import { ModManager } from './mods.tsx'
 import { UnlocksPanel } from './unlocks.tsx'
 import { useWords } from './words.ts'
 
@@ -208,7 +209,7 @@ export function Heading({ children }: { children: ReactNode }) {
 }
 
 function TitlePageImpl({ className }: { className?: string }) {
-  const { runner, view, unlocks } = useGame()
+  const { runner, view, unlocks, mods } = useGame()
   const words = useWords()
   const { go, options } = usePage()
   const saves = useSaves()
@@ -261,7 +262,7 @@ function TitlePageImpl({ className }: { className?: string }) {
             {words('load')}
           </button>
         ) : null}
-        {view.settings.length || (unlocks && view.plugins.unlocks) ? (
+        {view.settings.length || (unlocks && view.plugins.unlocks) || mods ? (
           <button {...button} data-title-button="settings" onClick={() => go('settings')}>
             {words('settings')}
           </button>
@@ -337,7 +338,7 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
 }
 
 function SettingsPageImpl({ className }: { className?: string }) {
-  const { runner, view, unlocks } = useGame()
+  const { runner, view, unlocks, mods } = useGame()
   const words = useWords()
   const values = useSyncExternalStore(runner.subscribe, () => runner.settings())
   const [said, setSaid] = useState<string | null>(null)
@@ -347,6 +348,9 @@ function SettingsPageImpl({ className }: { className?: string }) {
   const label = usePart('setting-label', 'font-medium')
   const empty = usePart('settings-empty', 'text-muted-foreground')
   const message = usePart('settings-message', 'text-destructive')
+  const modsSection = usePart('settings-mods', 'flex flex-col gap-3')
+  const modsTitle = usePart('mods-title', 'font-heading font-semibold')
+  const modsHint = usePart('mods-hint', 'text-sm text-muted-foreground')
 
   const change = (setting: SettingView, value: KvValue) => {
     const result = runner.setSetting(setting.id, value)
@@ -367,11 +371,20 @@ function SettingsPageImpl({ className }: { className?: string }) {
             </li>
           ))}
         </ul>
-      ) : unlocks ? null : (
+      ) : unlocks || mods ? null : (
         <p {...empty}>{words('noSettings')}</p>
       )}
       {said ? <p {...message}>{said}</p> : null}
       {unlocks ? <UnlocksPanel /> : null}
+      {mods ? (
+        <section {...modsSection} data-settings-mods aria-labelledby="settings-mods-title">
+          <h3 {...modsTitle} id="settings-mods-title">
+            {words('mods')}
+          </h3>
+          <p {...modsHint}>{words('modsHint')}</p>
+          <ModManager />
+        </section>
+      ) : null}
       <div>
         <BackButton />
       </div>
@@ -385,7 +398,8 @@ function SettingsPageImpl({ className }: { className?: string }) {
  * `runner.setSetting`: a ui setting is written to the profile, and a play
  * setting changes the game in play and is kept in the profile for the next
  * new game. A refusal is shown under the list. With `unlocks` on the
- * provider, the `UnlocksPanel` follows, for entering a code.
+ * provider, the `UnlocksPanel` follows, for entering a code, and with `mods`,
+ * a Mods section holding the `ModManager`.
  */
 export const SettingsPage = overridable('SettingsPage', SettingsPageImpl)
 

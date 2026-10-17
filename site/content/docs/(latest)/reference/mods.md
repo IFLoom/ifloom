@@ -313,7 +313,7 @@ async function addFile(event: Event) {
 </section>
 ```
 
-In the React UI, `mods` on [`GameShell`](/docs/react#gameshell) adds Mods to the player's menu. That opens the [mod manager](/docs/react/components#modmanager), where the player adds a file, turns mods on and off, and restarts with the change. `onChange` is the restart, and reloading the page runs `main.tsx` again. Each line of `problems` starting `mod:<id> ` is shown under that mod, as the other tabs do by hand.
+In the React UI, `mods` on [`GameShell`](/docs/react#gameshell) adds Mods to the player's menu, and with `pages` on, a Mods section to the [settings page](/docs/react/components#settingspage). Both show the [mod manager](/docs/react/components#modmanager), where the player adds a file, turns mods on and off, and restarts with the change. `onChange` is the restart, and reloading the page runs `main.tsx` again. Each line of `problems` starting `mod:<id> ` is shown under that mod, as the other tabs do by hand.
 
 The first argument to `mods` must be the game's `id`, the same one the files name in `game`.
 

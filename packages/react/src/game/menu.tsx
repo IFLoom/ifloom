@@ -3,6 +3,7 @@ import { buttonVariants } from '../components/ui/button.tsx'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog.tsx'
 import { Backlog } from './backlog.tsx'
 import { useGame } from './context.tsx'
+import { useDialogParts } from './dialog.tsx'
 import { Icon } from './icon.tsx'
 import { useMenuKey } from './keys.tsx'
 import { ModManager } from './mods.tsx'
@@ -25,13 +26,7 @@ function GameMenuImpl({ className }: { className?: string }) {
   const menu = usePart('menu', 'flex flex-wrap gap-2', className)
   const opener = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'outline' }))
   const step = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'ghost' }))
-  const dialog = usePart(
-    'dialog',
-    'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg',
-  )
-  const overlay = usePart('dialog-overlay', 'fixed inset-0 z-50 bg-black/50')
-  const title = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
-  const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
+  const { dialog, overlay, title, close } = useDialogParts()
   if (!shown) return null
   const heading =
     open === 'saves' ? words('saves')
@@ -61,7 +56,7 @@ function GameMenuImpl({ className }: { className?: string }) {
           {words('enterCode')}
         </button>
       ) : null}
-      {pages.enabled && (view.settings.length || codes) ? (
+      {pages.enabled && (view.settings.length || codes || mods) ? (
         <button {...opener} onClick={() => pages.go('settings')}>
           {words('settings')}
         </button>
@@ -114,7 +109,7 @@ function GameMenuImpl({ className }: { className?: string }) {
  * The player's menu: saves, the backlog, undo and redo — each only if the game
  * turned it on when it made the runner, and mods and codes when the provider
  * has them. With pages on, it also has Settings (if the game has any, or
- * codes, which are entered there) and Title screen, which switch to those
+ * codes or mods, which are there too) and Title screen, which switch to those
  * pages. With
  * `keys` on, Escape opens the same buttons in a dialog.
  */

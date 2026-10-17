@@ -4,6 +4,7 @@ import { buttonVariants } from '../components/ui/button.tsx'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog.tsx'
 import { useGame } from './context.tsx'
 import { DeviceDialog, useDevice, useDevices } from './device.tsx'
+import { useDialogParts } from './dialog.tsx'
 import { Icon } from './icon.tsx'
 import { Notice } from './notices.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -18,13 +19,7 @@ function NoticeStripImpl({ className }: { className?: string }) {
   const strip = usePart('notice-strip', 'flex flex-wrap gap-2', className)
   const item = usePart('notice-strip-item', buttonVariants({ size: 'sm', variant: 'outline' }))
   const badge = usePart('badge', badgeVariants())
-  const dialog = usePart(
-    'dialog',
-    'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg',
-  )
-  const overlay = usePart('dialog-overlay', 'fixed inset-0 z-50 bg-black/50')
-  const title = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
-  const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
+  const { dialog, overlay, title, close } = useDialogParts()
   const allSeen = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
   const unseen = view.notices.unseen
   // Each app with a badge, on any device: the button opens the device on that app.

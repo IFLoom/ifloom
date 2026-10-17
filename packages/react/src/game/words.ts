@@ -68,6 +68,8 @@ export const UI_STRINGS = {
   modOn: 'On',
   modOff: 'Off',
   applyMods: 'Restart with these mods',
+  modsHint: 'Mods add to the game or change it. Add one from a file, and turn it on or off here.',
+  modsChanged: 'Changes to mods take effect when the game restarts.',
   close: 'Close',
   priceSeparator: ' · ',
   itemCount: '×{n}',

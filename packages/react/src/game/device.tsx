@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../compon
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { assetUrl } from './assets.ts'
+import { useDialogParts } from './dialog.tsx'
 import { Icon } from './icon.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
@@ -173,14 +174,7 @@ export const DeviceScreen = overridable('DeviceScreen', DeviceScreenImpl)
 function DeviceDialogImpl({ deviceId, onClose }: { deviceId: string | null; onClose: () => void }) {
   const words = useWords()
   const device = useDevices().find((entry) => entry.id === deviceId)
-  const dialog = usePart(
-    'dialog',
-    'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg',
-    device?.frame === 'phone' ? 'max-w-sm' : undefined,
-  )
-  const overlay = usePart('dialog-overlay', 'fixed inset-0 z-50 bg-black/50')
-  const title = usePart('dialog-title', 'font-heading text-lg font-semibold leading-none')
-  const close = usePart('dialog-close', 'absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100')
+  const { dialog, overlay, title, close } = useDialogParts(device?.frame === 'phone' ? 'max-w-sm' : undefined)
   return (
     <Dialog open={Boolean(device)} onOpenChange={(open) => (open ? undefined : onClose())}>
       {device ? (

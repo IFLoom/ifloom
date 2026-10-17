@@ -563,7 +563,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 |---|---|
 | `menu` | The player's menu, the row of buttons. |
 | `menu-button` | Each button in it: Saves, Backlog, Mods, Undo and Redo. With keys on, Escape opens the same buttons in a dialog. |
-| `dialog` | A dialog box: the menu's dialog, or a device's. A device's carries `data-frame`. |
+| `dialog` | A dialog box: the menu's, a device's, the notice strip's, the shop's, the cheats' or the achievements'. A device's carries `data-frame`. Each is in the preset's body font, no taller than the window, and scrolls inside. |
 | `dialog-overlay` | The dimmed page behind a dialog. |
 | `dialog-title` | A dialog's title. |
 | `dialog-close` | A dialog's close button. |
@@ -589,6 +589,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `mod-problem` | A problem the loader found in it. |
 | `mods-message` | Why a mod file couldn't be added. |
 | `mods-empty` | The line shown when no mods are added. |
+| `mods-restart` | The line and button that appear once a mod has changed. |
+| `mods-changed` | The line saying a restart applies the change. |
 
 ### Plugins' cards
 
@@ -776,6 +778,9 @@ These are drawn only when `pages` is on. See [Pages](/docs/react/components#page
 | `setting-value` | A slider's value, beside it. |
 | `settings-empty` | The line shown when the game has no settings. |
 | `settings-message` | Why the last change to a setting was refused. |
+| `settings-mods` | The settings page's Mods section, when the game has mods. Carries `data-settings-mods`. |
+| `mods-title` | Its heading. |
+| `mods-hint` | The line under the heading. |
 | `load-page` | The load page. Its slots use the saves menu's parts, `save-slot` and the rest. |
 | `credits-page` | The credits page. |
 | `credits` | Its list. |

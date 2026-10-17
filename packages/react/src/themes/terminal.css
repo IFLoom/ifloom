@@ -7,6 +7,7 @@
  *   @import "@ifloom/react/themes/terminal.css";
  */
 :root {
+  color-scheme: dark;
   --font-body: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --font-heading: var(--font-body);
   --text-title: 0.875rem;
@@ -169,16 +170,19 @@ body {
 }
 
 [data-part="button"],
-[data-part="menu-button"] {
+[data-part="menu-button"],
+[data-part="device-button"] {
   border-radius: 0;
   text-transform: lowercase;
 }
 
-[data-part="menu-button"]::before {
+[data-part="menu-button"]::before,
+[data-part="device-button"]::before {
   content: "[";
 }
 
-[data-part="menu-button"]::after {
+[data-part="menu-button"]::after,
+[data-part="device-button"]::after {
   content: "]";
 }
 

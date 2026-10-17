@@ -9,7 +9,8 @@ import type { GameState } from './types.ts'
  * - `{{name}}` — a key in the kv store (a name the player typed is a
  *   key like any other: `{{playerName}}`);
  * - `{{n:storyline.key}}` — a counter on a storyline;
- * - `{{v:name}}` — one of the game's custom values.
+ * - `{{v:name}}` — a custom value, the game's or a plugin's, with any
+ *   arguments after the name: `{{v:messages/unread channel=texts}}`.
  *
  * A token naming a value the game does not have is left as it is, so the
  * missing name shows on screen instead of vanishing. The content checker
@@ -20,15 +21,29 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
         .replace(/\{\{n:([A-Za-z0-9_-]+)\.([A-Za-z0-9_]+)\}\}/g, (_match, storyline, key) =>
       String(count(state, storyline, key)),
     )
-    .replace(/\{\{v:((?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+)\}\}/g, (match, name) => {
+    .replace(VALUE_TOKEN, (match, name, args) => {
       const fn = customValue(game, name)
-      return fn ? String(fn(state)) : match
+      return fn ? String(fn(state, tokenArgs(args))) : match
     })
     // kv keys last: a value the player typed is shown as typed, never read as a token.
     .replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (match, key) => {
       const value = state.kv[key]
       return typeof value === 'string' || typeof value === 'number' ? String(value) : match
     })
+}
+
+/** A value token: `{{v:name}}`, or `{{v:name key=value …}}` with arguments. */
+export const VALUE_TOKEN = /\{\{v:((?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
+
+/** A value token's arguments, `channel=texts count=2`, as `with`: numbers and true/false read as such. */
+export function tokenArgs(text: string | undefined): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {}
+  for (const pair of (text ?? '').trim().split(/\s+/).filter(Boolean)) {
+    const at = pair.indexOf('=')
+    const raw = pair.slice(at + 1)
+    out[pair.slice(0, at)] = raw === 'true' ? true : raw === 'false' ? false : raw.trim() !== '' && Number.isFinite(Number(raw)) ? Number(raw) : raw
+  }
+  return out
 }
 
 /**

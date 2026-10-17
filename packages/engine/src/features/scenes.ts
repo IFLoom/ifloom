@@ -10,6 +10,7 @@ import type { Reference } from '../references.ts'
 import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
+import { commandOf } from '../calls.ts'
 import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
@@ -370,7 +371,8 @@ export const scenes = defineFeature<ScenesShape>({
         if (!choice || choice.visible === false) return say(game, 'notOnOffer')
         if (choice.disabled) return choice.disabled
         // The command it sends, asked as it would be on its own. A choice can't send a choice.
-        if (choice.command) return choice.command.type === 'choose' ? say(game, 'notOnOffer') : cx.whyNotCommand(state, game, choice.command)
+        const sends = choice.command && commandOf(choice.command)
+        if (sends) return sends.type === 'choose' ? say(game, 'notOnOffer') : cx.whyNotCommand(state, game, sends)
         return undefined
       },
       run: (state, command, game, cx) => {
@@ -380,13 +382,14 @@ export const scenes = defineFeature<ScenesShape>({
         const key = `${scene.id}/${choice.id}`
         const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
         // The command it sends first, then its effects.
-        const sent = choice.command ? cx.runCommand(marked, game, choice.command) : marked
+        const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
         return cx.runEffects(sent, game, choice.effects, false)
       },
       effectsOf: (state, command, game, cx) => {
         const choice = cx.rendered.scene()?.choices.find((entry) => entry.id === command.id)
         if (!choice) return []
-        return choice.command && choice.command.type !== 'choose' ? [...choice.effects, ...cx.effectsOfCommand(state, game, choice.command)] : [...choice.effects]
+        const sends = choice.command && commandOf(choice.command)
+        return sends && sends.type !== 'choose' ? [...choice.effects, ...cx.effectsOfCommand(state, game, sends)] : [...choice.effects]
       },
       references: () => [],
     },
@@ -413,7 +416,7 @@ export const scenes = defineFeature<ScenesShape>({
       for (const choice of scene.choices) {
         if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
         ids.add(choice.id)
-        if (choice.command?.type === 'choose') tools.problem(source, where, `choice ${choice.id}: a choice's command can't be another choice; put the effects on this one`)
+        if (choice.command && commandOf(choice.command).type === 'choose') tools.problem(source, where, `choice ${choice.id}: a choice's command can't be another choice; put the effects on this one`)
       }
     }
     // Every scene's storylet fields.

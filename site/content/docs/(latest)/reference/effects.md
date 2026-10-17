@@ -114,11 +114,11 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 { kind: 'custom', name: 'quests/start', with: { quest: 'letter' } }
 ```
 
-Runs a [plugin](/docs/reference/plugins)'s effect, by its full name, on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that none of the game's plugins has does nothing.
+Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [custom effects](/docs/reference/custom#effects), on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that neither the game nor its plugins has does nothing.
 
 In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one. Item uses and [`rules.turn`](/docs/reference/rules#turn) only take plain effects, so write the long form there.
 
-**Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form, wherever the effect is data. `rules.turn` is a function, so nothing checks a name it returns, and a typo there silently does nothing.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. `rules.turn` is a function, so nothing checks a name it returns, and a typo there silently does nothing.
 
 ### storylineKv
 
@@ -167,7 +167,7 @@ With `from` instead of `scene`, it draws a [storylet](/docs/reference/storylets)
 
 The draw is seeded by the save, the turn and a count of draws from that set, kept in the kv key `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
 
-The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { value: 'park' } }`.
+The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'park' } }`.
 
 ### item
 
@@ -358,7 +358,7 @@ The checker reports a name the game doesn't know.
 Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next stage of this ladder", declare a custom effect on the game and name it in the content:
 
 ```ts
-type CustomEffect = (state: GameState, args: Record<string, unknown>) => EffectRef[]
+type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
 type EffectRef = Effect | { custom: string; with?: Record<string, unknown> } | PluginCall
 ```
 
@@ -380,14 +380,14 @@ const custom: Custom = {
 effects: [{ custom: 'bumpVisits', with: { by: 1 } }, { kind: 'scene', scene: null }]
 ```
 
-The custom effect's effects take its place in the list, in order. It can return anything content can write: plain effects, a plugin's effect such as `{ custom: 'quests/start', with: { quest: 'letter' } }`, or another of the game's own custom effects, which is worked out in turn. `with` is passed as `args`, or `{}` when left out. A [pack](/docs/reference/loader#pack) can ship custom effects in its `custom.effects`. See [Custom functions](/docs/reference/custom) for the other kinds.
+A custom effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own custom effects, which runs in its turn too. `with` is passed as `args`, or `{}` when left out. A [pack](/docs/reference/loader#pack) can ship custom effects in its `custom.effects`. See [Custom functions](/docs/reference/custom) for the other kinds.
 
-You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. It isn't worked out up front. It becomes a [`custom`](#custom) effect that runs in its turn, on the state the effects before it left. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
+You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
 - `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places. Neither is an `Effect`, so item uses and `rules.turn` take plain effects.
-- A game's custom effect is worked out from the state before any of the list applies, so it doesn't see what the effects before it in the same list did. A plugin's effect does, even one a game's custom effect returns. The custom effect is worked out up front, but the plugin effect in its result runs in its turn.
-- Custom effects that return custom effects are worked out up to 10 deep, all against the same state. One that names itself, or a loop of them, adds nothing past that.
+- A button's price, a guard and a lock see a custom effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
+- Custom effects that return custom effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.
 - To flatten a list yourself, in a custom runtime for example, use [`buildEffects`](/docs/reference/custom#buildeffects).
 

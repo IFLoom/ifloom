@@ -120,8 +120,8 @@ type PhoneKit = {
 
 | App id | Name | Icon | Badge | Sections |
 |---|---|---|---|---|
-| each channel's id | the channel's name | `messages` | `messages/unread-<channel>` | `{ plugin: 'messages', with: { channel } }` |
-| each feed's id | the feed's name | `feed` | `feed/unseen-<feed>` | `{ plugin: 'feed', with: { feed } }` |
+| each channel's id | the channel's name | `messages` | `messages/unread` with `{ channel }` | `{ plugin: 'messages', with: { channel } }` |
+| each feed's id | the feed's name | `feed` | `feed/unseen` with `{ feed }` | `{ plugin: 'feed', with: { feed } }` |
 | `contacts` | Contacts | `contacts` | none | `{ contacts: true }` |
 | `gallery` | Gallery | `gallery` | none | `{ collection: 'gallery' }` |
 

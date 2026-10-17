@@ -29,7 +29,7 @@ export const loyalty = definePlugin<Card>({
     full: (_state, _args, { slice }) => slice.stamps >= 5,
   },
   values: {
-    stamps: (_state, { slice }) => slice.stamps,
+    stamps: (_state, _args, { slice }) => slice.stamps,
   },
 })
 ```
@@ -125,7 +125,7 @@ export const loyalty = definePlugin<Card>({
     },
   },
   values: {
-    stamps: (_state, { slice }) => slice.stamps,
+    stamps: (_state, _args, { slice }) => slice.stamps,
   },
   view: (_state, { slice }) => ({ stamps: slice.stamps, free: slice.free }),
 })
@@ -176,7 +176,7 @@ type Plugin<S = any> = {
   queries?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => unknown>
   cooperates?: string[]
   statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
-  values?: Record<string, (state: GameState, context: PluginContext<S>) => string | number>
+  values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
   hooks?: {
     turn?: (state: GameState, context: PluginContext<S>) => GameState
     after?: (before: GameState, after: GameState, context: PluginContext<S>) => GameState
@@ -215,7 +215,7 @@ type Plugin<S = any> = {
 | `queries` | Answers other plugins can ask for by name, with their context's `query`. See [Queries](#queries). |
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
 | `statModifiers` | Changes to what the player's stats read right now, such as a timed boost to energy. Nothing is written into the state. See [Stat modifiers](#stat-modifiers). |
-| `values` | Words and numbers that prose prints with `{{v:loyalty/stamps}}`. |
+| `values` | Words and numbers that prose prints with `{{v:loyalty/stamps}}`, and a badge or a stat's ceiling reads as `{ value: 'loyalty/stamps', with }`. Asked with arguments, as a condition is. |
 | `hooks` | Code that runs at the end of each turn and after every command. See [Hooks](#hooks). |
 | `guard` | Whether a command may go ahead, given the effects it would apply. Returns a refusal, a warning or `undefined`. See [Guards](#guards). |
 | `price` | What a button costs that the engine can't say, in the plugin's words. See [Prices](#prices). |
@@ -235,20 +235,20 @@ type Plugin<S = any> = {
 ## PluginContext
 
 ```ts
-type PluginContext<S> = {
-  game: Game
+type PluginContext<S> = CustomContext & {
   slice: S
   set: (next: S, on?: GameState) => GameState
-  query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   picks?: Record<string, string>
   profile?: unknown
 }
 ```
 
-Every plugin function gets this alongside the game state:
+Every plugin function gets this alongside the game state. It has everything a game's own [custom function](/docs/reference/custom#customcontext) gets, and more:
 
 - `game` is the game.
+- `value(name, args?)` reads a [value](/docs/reference/custom#values) by name, a plugin's or the game's own, about the state the function was handed.
+- `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`.
 - `slice` is the plugin's own state, typed. If the save has none yet, it's `start(game)`, or `undefined` for a plugin with no `start`.
 - `set(next, on?)` returns a game state with the plugin's state replaced by `next`. It writes onto `on`, which defaults to the state the function was handed.
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
@@ -341,17 +341,18 @@ Content calls a plugin by its full name: the plugin's id, a `/`, and the name in
 |---|---|
 | condition | `{ custom: 'loyalty/stamps', with: { atLeast: 3 } }`, or in short `{ 'loyalty/stamps': { atLeast: 3 } }` |
 | effect | `{ custom: 'loyalty/stamp' }`, or in short `{ 'loyalty/stamp': true }`, in a data scene choice's, an activity's or a trigger's effects |
-| command | `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef): a place's action, a game action or a plugin's [button](#buttons) |
-| value | `{{v:loyalty/stamps}}` in prose |
+| command | `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, or in short `{ 'loyalty/redeem': {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef): a place's action, a game action or a plugin's [button](#buttons) |
+| value | `{{v:loyalty/stamps}}` in prose, `{{v:loyalty/stamps card=gold}}` with arguments, or `{ value: 'loyalty/stamps', with: { card: 'gold' } }` as a badge or a stat's ceiling |
 
-The short form has the plugin's full name as its only key, and what it asks as the value. See [`PluginCall`](/docs/reference/custom#plugincall) for how a value that isn't an object is passed.
+The short form has the plugin's full name as its only key, and the call's arguments as an object as the value, or `true` for none. See [`PluginCall`](/docs/reference/custom#plugincall).
 
 A name with a `/` belongs to a plugin. The engine looks it up among the plugins first, and only then among the game's [custom functions](/docs/reference/custom), so keep `/` out of the game's own names.
 
 A plugin usually exports small typed helpers that write these objects for authors who work in code, such as the quests plugin's [`questDone`](/docs/plugins/quests#helpers).
 
 **Gotchas.**
-- A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{v:loyalty/stamps-left}}` prints. Anything else isn't a token and is left on screen as written.
+- A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{v:loyalty/stamps-left}}` prints. Its arguments follow as `key=value`. Anything else isn't a token and is left on screen as written.
+- Don't put an id in a value's name, such as `loyalty/stamps-gold`. Take it as an argument, so one value serves every card and a mod's new card needs no code.
 - A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/docs/reference/checks) reports most of them when the game loads.
 
 ## Queries
@@ -423,16 +424,16 @@ export const loyalty = definePlugin<Card>({
 
 A plugin's effect is a real step in its list. [`buildEffects`](/docs/reference/custom#buildeffects) turns `{ custom: 'loyalty/stamp', with }` into an [`Effect`](/docs/reference/effects#custom), `{ kind: 'custom', name: 'loyalty/stamp', with }`. When the list applies, each plugin effect runs on the state the effects before it left, so two stamps in one list give two stamps.
 
-A game's own custom effect works differently. It's worked out up front, when the list is built, from the state before any of the list applies, and returns plain effects that take its place.
+A game's own [custom effect](/docs/reference/custom#effects) runs in order the same way. Its function is called in its turn, with the state the effects before it left:
 
 ```ts
 effects: [
   { custom: 'loyalty/stamp' },
-  { custom: 'countStamps' }, // the game's own: sees the card as it was before the stamp
+  { custom: 'countStamps' }, // the game's own: sees the card with the stamp on it
 ]
 ```
 
-Inside an activity, the effects are worked out before the cost is paid, but a plugin effect runs after the cost and after every effect before it.
+Inside an activity, every effect runs after the cost is paid and after every effect before it.
 
 ## State and migrations
 
@@ -1023,7 +1024,7 @@ type ContentReferences = { list: string; id: string; refs: readonly Reference[] 
 
 What the plugin's calls and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
 
-- **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, and a [short call](/docs/reference/custom#plugincall)'s value that isn't an object arrives as `{ value }`. The checker asks it about every call it finds, wherever the call is.
+- **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the pack that entry came from.
 
 Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
@@ -1093,13 +1094,13 @@ What's wrong with how content calls one of this plugin's conditions, effects or 
 
 ```ts
 argProblems: (kind, name, args) =>
-  kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.value))
-    ? [`nobody sells "${String(args.value)}"`]
+  kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
+    ? [`nobody sells "${String(args.item)}"`]
     : [],
 ```
 
 ```ts
-activities: [{ id: 'ask', blocked: [{ when: { not: { 'stall/sells': 'fish' } }, reason: 'Not today.' }] }]
+activities: [{ id: 'ask', blocked: [{ when: { not: { 'stall/sells': { item: 'fish' } } }, reason: 'Not today.' }] }]
 // town · activity ask · nobody sells "fish"
 ```
 

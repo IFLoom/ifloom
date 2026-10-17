@@ -156,17 +156,10 @@ const SAMPLES: Record<string, Call> = {
 /** What a plugin call's arguments may be named, by role, beyond the core's targets and details. */
 const PLUGIN_NOUNS = [
   // the plugins' own targets
-  'achievement', 'effect', 'character', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period',
+  'achievement', 'effect', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period',
   // details: how many, where, who from, what with
   'count', 'stacks', 'runEnd', 'likes', 'video', 'at',
 ] as const
-
-/**
- * The short form's one argument: `{ 'places/at': ['cafe'] }` is asked with
- * `{ value: ['cafe'] }`. R4 of the refinement plan replaces it; until then it
- * is the one place `value` is read.
- */
-const SHORT_FORM = 'value'
 
 const allowed = new Set<string>([...TARGETS, ...DETAILS, ...PLUGIN_NOUNS])
 
@@ -190,11 +183,13 @@ const firstParty: Plugin<any>[] = [
 /** The first-party plugins' sources, by path, for the arguments they read. */
 const SOURCES = import.meta.glob('../../../plugin-*/src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
-/** A call's arguments, long or short. */
+/** A call's arguments, long or short. A short call's are an object, or `true` for none (ADR 0009). */
 function argsOf(call: Call): Record<string, unknown> {
   if ('with' in call || 'type' in call || 'custom' in call) return (call.with as Record<string, unknown> | undefined) ?? {}
   const [only] = Object.values(call)
-  return only !== null && typeof only === 'object' && !Array.isArray(only) ? (only as Record<string, unknown>) : { [SHORT_FORM]: only }
+  if (only === true) return {}
+  expect(only !== null && typeof only === 'object' && !Array.isArray(only), `a short call's arguments are an object: ${JSON.stringify(call)}`).toBe(true)
+  return only as Record<string, unknown>
 }
 
 describe('content naming (ADR 0008)', () => {
@@ -220,9 +215,9 @@ describe('content naming (ADR 0008)', () => {
       const args = argsOf(call)
       const names = Object.keys(args).filter((name) => args[name] !== undefined)
       for (const name of names) {
-        if ((BANNED as readonly string[]).includes(name) && !(name === SHORT_FORM && !('with' in call))) wrong.push(`${kind}: ${name} is a banned word`)
+        if ((BANNED as readonly string[]).includes(name)) wrong.push(`${kind}: ${name} is a banned word`)
         else if (/[a-z]Id$/.test(name)) wrong.push(`${kind}: ${name} names a target by its id; use the noun, or id in a command`)
-        else if (name !== SHORT_FORM && !allowed.has(name)) wrong.push(`${kind}: ${name} is not a name the rule knows`)
+        else if (!allowed.has(name)) wrong.push(`${kind}: ${name} is not a name the rule knows`)
       }
       // Conditions and effects name their target by its noun, never `id`.
       if (role !== 'commands' && names.includes('id')) wrong.push(`${kind}: names its target id, not by its noun`)
@@ -237,7 +232,7 @@ describe('content naming (ADR 0008)', () => {
     expect(Object.keys(SOURCES).length).toBeGreaterThanOrEqual(firstParty.length)
     for (const [path, source] of Object.entries(SOURCES)) {
       for (const [, name] of source.matchAll(/\bargs\.([A-Za-z]+)/g)) {
-        if (name !== SHORT_FORM && !allowed.has(name)) wrong.push(`${path.split('/').at(-3)}: args.${name}`)
+        if (!allowed.has(name)) wrong.push(`${path.split('/').at(-3)}: args.${name}`)
       }
     }
     expect([...new Set(wrong)]).toEqual([])

@@ -123,7 +123,7 @@ function threadOf(message: MessageDef): string {
 
 /** Who a message is from, as the cast plugin knows them, asked by name: a name and a face, or the name as written. */
 function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
-  const known = pluginQuery(game, 'cast/person')?.(state, { value: from }) as { name: string; portrait: string | null } | undefined
+  const known = pluginQuery(game, 'cast/person')?.(state, { character: from }) as { name: string; portrait: string | null } | undefined
   return known ?? { name: from, portrait: null }
 }
 
@@ -208,15 +208,12 @@ export function messages(options: MessagesOptions) {
       },
     },
     values: {
-      /** <code v-pre>{{v:messages/unread}}</code>: unread messages in every channel. */
-      unread: (_state, { slice, game }) => unreadIn(slice, game),
-      // One per channel: `messages/unread-texts`.
-      ...Object.fromEntries(
-        options.channels.map((channel) => [
-          `unread-${channel.id}`,
-          (_state: GameState, { slice, game }: { slice: MessagesState; game: Game }) => unreadIn(slice, game, channel.id),
-        ]),
-      ),
+      /**
+       * Unread messages: in every channel, or in one with `{ channel }`.
+       * <code v-pre>{{v:messages/unread channel=texts}}</code>, or a badge's
+       * `{ value: 'messages/unread', with: { channel: 'texts' } }`.
+       */
+      unread: (_state, args, { slice, game }) => unreadIn(slice, game, args.channel === undefined ? undefined : String(args.channel)),
     },
     hooks: {
       // Deliver what has come due, and say so.

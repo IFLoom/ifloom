@@ -110,7 +110,7 @@ export function postDefs(game: Game): PostDef[] {
 
 /** Who posted, as the cast plugin knows them, asked by name: a name and a face, or the name as written. */
 function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
-  const known = pluginQuery(game, 'cast/person')?.(state, { value: from }) as { name: string; portrait: string | null } | undefined
+  const known = pluginQuery(game, 'cast/person')?.(state, { character: from }) as { name: string; portrait: string | null } | undefined
   return known ?? { name: from, portrait: null }
 }
 
@@ -214,16 +214,15 @@ export function feed(options: FeedOptions) {
       },
     },
     values: {
-      /** <code v-pre>{{v:feed/unseen}}</code>: posts the player hasn't looked at, in every feed. */
-      unseen: (_state, { slice, game }) =>
-        options.feeds.reduce((sum, entry) => sum + unseenIn(slice, game, entry.id), 0),
-      ...Object.fromEntries(
-        options.feeds.map((entry) => [
-          `unseen-${entry.id}`,
-          (_state: GameState, { slice, game }: { slice: FeedState; game: Game }) =>
-            unseenIn(slice, game, entry.id),
-        ]),
-      ),
+      /**
+       * Posts the player hasn't looked at: in every feed, or in one with
+       * `{ feed }`. <code v-pre>{{v:feed/unseen feed=social}}</code>, or a
+       * badge's `{ value: 'feed/unseen', with: { feed: 'social' } }`.
+       */
+      unseen: (_state, args, { slice, game }) =>
+        options.feeds
+          .filter((entry) => args.feed === undefined || entry.id === String(args.feed))
+          .reduce((sum, entry) => sum + unseenIn(slice, game, entry.id), 0),
     },
     hooks: {
       after: (_before, after, { slice, set, game }) => {

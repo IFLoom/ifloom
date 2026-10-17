@@ -256,13 +256,13 @@ A UI reads the calendar at [`view.plugins.calendar`](#the-view) and the label at
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'calendar/period': ['evening', 'night'] }` | `period('evening', 'night')` | It's one of these periods. |
-| `{ 'calendar/weekday': [0, 1, 2, 3, 4] }` | `weekday(0, 1, 2, 3, 4)` | It's one of these days of the week, from `0`. In a seven-day week, `0` is Monday. |
+| `{ 'calendar/period': { period: ['evening', 'night'] } }` | `period('evening', 'night')` | It's one of these periods. |
+| `{ 'calendar/weekday': { day: [0, 1, 2, 3, 4] } }` | `weekday(0, 1, 2, 3, 4)` | It's one of these days of the week, from `0`. In a seven-day week, `0` is Monday. |
 | `{ 'calendar/weekend': true }` | `weekend()` | It's one of the [`weekend`](#calendaroptions) days. |
 | `{ 'calendar/day': { gte: 6 } }` | `day({ gte: 6 })` | The day, from `0`, is in this [range](/docs/reference/conditions#range). |
 | `{ 'calendar/curfew': true }` | none | The [curfew](#calendaroptions) binds right now. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). A list becomes `with: { value: [...] }`, so the long form of the first row is `{ custom: 'calendar/period', with: { value: ['evening', 'night'] } }`. A single period or weekday works too, as in `{ 'calendar/period': 'evening' }`.
+These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'calendar/period', with: { period: ['evening', 'night'] } }`. A single period or weekday works too, as in `{ 'calendar/period': { period: 'evening' } }`.
 
 You can use them anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry, a lock or a schedule.
 
@@ -272,7 +272,7 @@ You can use them anywhere a [condition](/docs/reference/conditions) goes: a bloc
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
+| `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
 | `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
 They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.

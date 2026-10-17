@@ -32,6 +32,7 @@ import {
   type PluginProblem,
   type Reference,
   type RenderedChoice,
+  type ValueRef,
 } from '@ifloom/engine'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
@@ -74,8 +75,12 @@ export type AppDef = {
   when?: Condition
   /** On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. */
   blocked?: Blocked[]
-  /** A count from a value (`messages/unread-texts`), or a dot while a condition holds. */
-  badge?: { count: string } | { when: Condition }
+  /**
+   * A count from a value, asked with its arguments
+   * (`{ value: 'messages/unread', with: { channel: 'texts' } }`), or a dot
+   * while a condition holds (`{ when }`).
+   */
+  badge?: ValueRef | { when: Condition }
   sections: Section[]
 }
 
@@ -160,7 +165,7 @@ export function devices(options: DevicesOptions) {
   function badgeOf(state: GameState, game: Game, app: AppDef): number | boolean {
     if (!app.badge) return 0
     if ('when' in app.badge) return holds(state, app.badge.when, game)
-    const value = Number(customValue(game, app.badge.count)?.(state) ?? 0)
+    const value = Number(customValue(game, app.badge.value)?.(state, app.badge.with ?? {}) ?? 0)
     return Number.isFinite(value) ? value : 0
   }
 
@@ -289,7 +294,7 @@ export function devices(options: DevicesOptions) {
           refs: [
             { when: app.when },
             ...(app.blocked ?? []).map((entry) => ({ when: entry.when })),
-            ...(app.badge && 'count' in app.badge ? [{ value: app.badge.count }] : []),
+            ...(app.badge && 'value' in app.badge ? [{ value: app.badge.value }] : []),
             ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {
               if ('collection' in section) return [{ collection: section.collection }]

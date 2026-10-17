@@ -11,7 +11,7 @@ import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
 ## apply
 
 ```ts
-function apply(state: GameState | null, game: Game, command: Command): Applied
+function apply(state: GameState | null, game: Game, command: CommandRef): Applied
 
 type Applied = {
   state: GameState
@@ -31,7 +31,7 @@ if (!out.ok) console.log(out.refused) // the reason, such as a place's `blocked`
 state = out.state
 ```
 
-Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind.
+Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind. It takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's command in short works too.
 
 `refused` is always a sentence you can show the player. It's the same line [`whyNot`](/docs/reference/actions#whynot) gives, and the view greys the button out with it. The lines quoted on this page are the engine's English from the [strings table](/docs/reference/strings#refusals), and a game, a pack or a translation can reword them (`finishFirst`, `noSuchScene` and so on). Lines your game wrote, such as a lock's or a `blocked` entry's `reason`, are printed as written.
 
@@ -70,7 +70,7 @@ Locks are checked before the game's own handler, so a lock can stop a command th
 ## dispatch
 
 ```ts
-function dispatch(state: GameState | null, game: Game, command: Command): GameState
+function dispatch(state: GameState | null, game: Game, command: CommandRef): GameState
 ```
 
 Returns `apply(...).state`. Use it where a refusal needs no handling, such as replaying a known-good list of commands in a test.
@@ -251,6 +251,8 @@ An input to the [minigame](/docs/reference/minigames) being played. It takes the
 ```
 
 Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full name, with the plugin's id in front. `with` is passed as its arguments, or `{}` when left out.
+
+Content, `apply` and the runner also take it in short, with the full name as the only key: `{ 'quests/track': { id: 'bread' } }` (see [`CommandRef`](/docs/reference/custom#commandref)). The view always gives it in this long form.
 
 It's refused with `There is no such thing to do.` if none of the game's plugins has a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
 

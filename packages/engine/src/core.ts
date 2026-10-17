@@ -13,7 +13,7 @@
  */
 import { say } from './strings.ts'
 import { holds } from './condition.ts'
-import { buildEffects, customCall, customCondition, customValue } from './custom.ts'
+import { buildEffects, customCall, customCondition, customEffect, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runHooks } from './plugin.ts'
@@ -116,13 +116,25 @@ const conditions: { [K in keyof CoreConditions]: ConditionEntry<CoreConditions[K
   },
 }
 
+/** How deep the game's custom effects are running inside each other: ten deep is a loop, not a design. */
+let customDepth = 0
+
 /** The core's effects. */
 const effects: { [K in keyof CoreEffects]: EffectEntry<CoreEffects[K]> } = {
   custom: {
+    // A plugin's effect, or the game's own worked out now, on the state the effects before it left.
     apply: (state, effect, game, cx) => {
+      const fromPlugin = pluginEffect(game, effect.name, cx.ending)
+      if (fromPlugin) return fromPlugin(state, effect.with ?? {})
       // A plugin the game no longer has does nothing, as an unknown custom effect does.
-      const fn = pluginEffect(game, effect.name, cx.ending)
-      return fn ? fn(state, effect.with ?? {}) : state
+      const fn = customEffect(game, effect.name)
+      if (!fn || customDepth >= 10) return state
+      customDepth += 1
+      try {
+        return cx.runEffects(state, game, buildEffects(state, game, fn(state, effect.with ?? {})), cx.ending)
+      } finally {
+        customDepth -= 1
+      }
     },
     references: (effect) => [{ call: 'effects', name: effect.name, with: effect.with, long: true }],
   },

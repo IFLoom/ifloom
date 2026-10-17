@@ -1,4 +1,4 @@
-import { apply, buildEffects, inlineChoices, pluginQuery, statDef, view, type Command, type Game, type GameState, type View } from '@ifloom/engine'
+import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type Game, type GameState, type View } from '@ifloom/engine'
 
 /** Picks the next command from what is on screen, or null to stop. */
 export type Policy = (screen: View, state: GameState, game: Game) => Command | null
@@ -73,7 +73,7 @@ function isBed(command: Command): boolean {
 /** Does this place offer a bed: an action, its own or the game's, that goes to bed? */
 function hasBed(game: Game, all: Place[], locationId: string | null): boolean {
   const actions = [...(all.find((place) => place.id === locationId)?.actions ?? []), ...(game.actions ?? [])]
-  return actions.some((action) => isBed(action.command))
+  return actions.some((action) => isBed(commandOf(action.command)))
 }
 
 /** The first step on the shortest walk from here to a place where `goal` holds, if there is one. */

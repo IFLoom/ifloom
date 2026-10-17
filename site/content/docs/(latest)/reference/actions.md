@@ -194,7 +194,7 @@ Spends a cost without checking it. Each stat in `cost.stats` goes down by its am
 type ActionDef = {
   id: string
   label: string
-  command: Command
+  command: CommandRef
   when?: Condition
   blocked?: Blocked[]
 }
@@ -208,7 +208,7 @@ While no scene is open, the view shows the plugins' buttons first and then the g
 |---|---|
 | `id` | Names the button. The view passes it on as the [`RenderedChoice`](/docs/reference/view#renderedchoice)'s `id`. |
 | `label` | The button's text. |
-| `command` | What to send when it's pressed. |
+| `command` | What to send when it's pressed: a [command](/docs/reference/commands), or a plugin's in short, as in `{ 'places/go': { id: 'cafe' } }` (see [`CommandRef`](/docs/reference/custom#commandref)). The view shows it in the long form. |
 | `when` | The button is only on screen while this holds. Without it, it's always there. |
 | `blocked` | The button is on screen but greyed out while one of these holds, or left off with `hide`. The first that does gives the disabled text. See [`Blocked`](#blocked). |
 
@@ -259,7 +259,7 @@ A `blocked` entry that holds takes the place of `whyNot`'s line. Use it sparingl
 ## whyNot
 
 ```ts
-function whyNot(state: GameState, game: Game, command: Command): string | undefined
+function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined
 ```
 
 Why the player can't do this right now, or `undefined` if they can. It answers for every command: activities, choices, items, inputs and plugin commands such as the [cast](/docs/plugins/cast#commands)'s talking and calling. The reducer refuses with this line and the view greys buttons out with it, so the two can't disagree, and every refusal is a sentence a UI can show as it is.
@@ -287,7 +287,7 @@ whyNot(state, game, talk('ava'))
 ## warningOf
 
 ```ts
-function warningOf(state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined
+function warningOf(state: GameState, game: Game, command: CommandRef, effects?: readonly Effect[]): string | undefined
 ```
 
 A warning on a command that can still be pressed, or `undefined`. It's the `reason` of the first soft refusal a plugin's [guard](/docs/reference/plugins#guards) gives, with the plugins asked in the order `game.plugins` lists them. The engine has no warnings of its own. It isn't asked for a plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), for the [`setting`](/docs/reference/commands#setting) command, or in a game where no plugin has a `guard` or a `price`.
@@ -308,14 +308,14 @@ warningOf(state, game, { type: 'activity', id: 'work' })
 ## effectsOf
 
 ```ts
-function effectsOf(state: GameState, game: Game, command: Command): Effect[]
+function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[]
 ```
 
-What a command would apply, worked out before it runs, as plain [effects](/docs/reference/effects). [Plugins' guards and prices](/docs/reference/plugins#guards-prices-and-labels) and [locks with `effect`](/docs/reference/locks#lock) look at this.
+What a command would apply, worked out before it runs, as plain [effects](/docs/reference/effects). [Plugins' guards and prices](/docs/reference/plugins#guards-prices-and-labels) and [locks with `effect`](/docs/reference/locks#lock) look at this. The game's own [custom effects](/docs/reference/custom#effects) among them are worked out against `state`, as [`previewEffects`](/docs/reference/custom#previeweffects) does, so a guard sees what they'd do.
 
 | Command | Effects |
 |---|---|
-| `activity` | First its cost, as a `stat` effect of minus the amount for each stat in `cost.stats`, then its `effects`, with custom ones built as the activity would build them. |
+| `activity` | First its cost, as a `stat` effect of minus the amount for each stat in `cost.stats`, then its `effects`, with the game's custom ones worked out against `state`. |
 | `choose` | The effects of that choice in the open scene, as it renders now. |
 | `use` | The item down by one, then the item's `use` effects. |
 | `custom` | The plugin command's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), or none if it has none. |
@@ -329,7 +329,7 @@ import { effectsOf } from '@ifloom/engine'
 // the showcase's { id: 'work', cost: { stats: { energy: 30 } }, effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] }
 effectsOf(state, game, { type: 'activity', id: 'work' })
 // [{ kind: 'stat', stat: 'energy', by: -30 },
-//  { kind: 'custom', name: 'calendar/pass', with: { value: 2 } },
+//  { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
 //  { kind: 'stat', stat: 'coins', by: 20 }]
 ```
 

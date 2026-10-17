@@ -420,17 +420,17 @@ A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or 
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'cast/here': ['ava', 'sam'] }` | `here('ava', 'sam')` | Any of them is in the room with the player. |
+| `{ 'cast/here': { character: ['ava', 'sam'] } }` | `here('ava', 'sam')` | Any of them is in the room with the player. |
 | `{ 'cast/at': { character: 'ava', at: ['park'] } }` | `isAt('ava', 'park')` | They're in one of these places, wherever the player is. |
-| `{ 'cast/met': ['ava'] }` | `hasMet('ava')` | The player has [met](#meeting-people) any of them. |
+| `{ 'cast/met': { character: ['ava'] } }` | `hasMet('ava')` | The player has [met](#meeting-people) any of them. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { value: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': 'ava' }`. A character the game doesn't have never holds.
+These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { character: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': { character: 'ava' } }`. A character the game doesn't have never holds.
 
 `cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `isAt('ava', OFFSTAGE)` holds while she's out of town.
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ value }`, `{ character }` or `{ id }`.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ character }`.
 
 | Query | Answers |
 |---|---|
@@ -571,7 +571,7 @@ const person: (who: string, kind?: string) => string
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `who`) or `cast/met` is looked up wherever the [content checker](/docs/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
+**Character ids that content names.** Every character named in `cast/here`, `cast/at` (its `character`) or `cast/met` is looked up wherever the [content checker](/docs/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
 
 ```text
 town · activity wave · unknown character "ghost"

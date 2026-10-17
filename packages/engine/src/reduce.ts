@@ -4,6 +4,7 @@ import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { screen } from './screen.ts'
 import { runAfter } from './plugin.ts'
+import { commandOf, type CommandRef } from './custom.ts'
 import { startingState } from './intake.ts'
 import { commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
 import { afterSteps, screenSteps } from './features/registry.ts'
@@ -71,8 +72,9 @@ function after(before: GameState, ran: GameState, game: Game): GameState {
 export function apply(
   state: GameState | null,
   game: Game,
-  command: Command,
+  ref: CommandRef,
 ): Applied {
+  const command = commandOf(ref)
   if (command.type === 'start') {
     return {
       state: startingState(game, { seed: command.seed, kv: command.kv }),
@@ -96,7 +98,7 @@ export function apply(
 export function dispatch(
   state: GameState | null,
   game: Game,
-  command: Command,
+  command: CommandRef,
 ): GameState {
   return apply(state, game, command).state
 }

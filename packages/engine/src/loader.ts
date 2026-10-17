@@ -47,6 +47,37 @@ type PackBase = {
 /** A pack of content: what the core merges, and each feature's pack key. */
 export type Pack = Flat<PackBase & FeaturePack>
 
+/**
+ * Every key a pack can hold, the core's and the features'. Typed complete, so
+ * a new pack key that isn't listed here fails to compile. A key a pack holds
+ * that isn't here is reported, not quietly dropped: `actions` belong to the
+ * game, not to a pack.
+ */
+const PACK_KEYS: { [K in keyof Pack]-?: true } = {
+  id: true,
+  schema: true,
+  strings: true,
+  prose: true,
+  variants: true,
+  custom: true,
+  data: true,
+  scenes: true,
+  patches: true,
+  items: true,
+  storylines: true,
+  activities: true,
+  collections: true,
+  triggers: true,
+  inputs: true,
+  settings: true,
+  stats: true,
+  audio: true,
+  media: true,
+  minigames: true,
+  kinds: true,
+  entities: true,
+}
+
 export type Loaded = {
   game: Game
   prose: Record<string, string>
@@ -107,6 +138,9 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     if (typeof pack === 'string') {
       problems.push({ pack: written.id, where: 'pack', what: pack })
       continue
+    }
+    for (const key of Object.keys(pack)) {
+      if (!Object.hasOwn(PACK_KEYS, key)) problems.push({ pack: pack.id, where: 'pack', what: `a pack has no "${key}", so it was left out` })
     }
     for (const merge of merges.values()) merge.add(pack, pack.id)
     Object.assign(prose, pack.prose ?? {})

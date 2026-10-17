@@ -131,12 +131,12 @@ describe('the cast', () => {
     expect(view(clock.write(met, { day: 0, period: 'evening' }), g).plugins.cast).toBeDefined()
   })
 
-  it('answer queries about whoever is named, as value, character or id', () => {
+  it('answer queries about whoever is named as character', () => {
     const { game: g } = game()
     const cafe = run(g, startingState(g), go('cafe'))
     const where = pluginQuery(g, 'cast/where')!
-    expect([where(cafe, { value: 'ava' }), where(cafe, { character: 'ava' }), where(cafe, { id: 'ava' })]).toEqual(['cafe', 'cafe', 'cafe'])
-    expect(where(cafe, { id: 'nobody' })).toBeUndefined()
+    expect(where(cafe, { character: 'ava' })).toBe('cafe')
+    expect(where(cafe, { character: 'nobody' })).toBeUndefined()
   })
 
   it('say who is speaking in their scenes', () => {

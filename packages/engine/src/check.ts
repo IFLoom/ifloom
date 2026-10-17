@@ -4,9 +4,9 @@
  * names. `loadGame` runs it on the game it merges; a hand-built game calls
  * `checkGame` itself.
  */
-import { customCall, customPanel, customValue, hasCustomEffect, customCondition, type EffectRef } from './custom.ts'
+import { commandOf, customCall, customPanel, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
-import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginEffect, pluginName, type Plugin } from './plugin.ts'
+import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { artSrc } from './sceneBody.ts'
 import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, type FeatureList } from './features/registry.ts'
@@ -64,6 +64,8 @@ export function checkGame(game: Game, options: { probes?: readonly Probe[] } = {
  * to ask.
  */
 function shapeProblems(condition: Condition): string[] {
+  const short = shortFormProblem(condition)
+  if (short) return [short]
   const kinds = conditionKinds(condition)
   if (kinds.length === 1) return []
   const keys = Object.keys(condition)
@@ -73,13 +75,19 @@ function shapeProblems(condition: Condition): string[] {
 
 /** What is wrong with an effect's kind: one the engine doesn't have does nothing. A custom call by name has none. */
 function kindProblem(effect: EffectRef): string[] {
+  const short = shortFormProblem(effect)
+  if (short) return [short]
   if (customCall(effect)) return []
   if (!('kind' in effect)) return ['an effect needs a kind, or a custom call by name']
   return (EFFECT_KINDS as string[]).includes(effect.kind) ? [] : [`unknown effect kind "${String(effect.kind)}"`]
 }
 
-/** What is wrong with a command's type: one the engine doesn't have is refused. */
-function typeProblem(command: { type: string }): string[] {
+/** What is wrong with a command's type: one the engine doesn't have is refused. A plugin's short form is read as `custom`. */
+function typeProblem(ref: CommandRef): string[] {
+  const short = shortFormProblem(ref)
+  if (short) return [short]
+  const command = commandOf(ref)
+  if (typeof command.type !== 'string') return ['a command needs a type, or a plugin command in short']
   return (COMMAND_KINDS as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
 }
 
@@ -127,7 +135,6 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     const known =
       kind === 'conditions' ? Boolean(customCondition(game, name))
       : kind === 'commands' ? Boolean(pluginCommand(game, name))
-      : long ? Boolean(pluginEffect(game, name))
       : hasCustomEffect(game, name)
     if (!known) {
       // A cooperating partner the game doesn't have: content may name it, and it is simply not there.

@@ -38,15 +38,18 @@ export {
   statValue,
 } from './stats.ts'
 export type {
+  CommandRef,
   Custom,
   CustomCondition,
+  CustomContext,
   CustomEffect,
   CustomPanel,
   CustomValue,
   EffectRef,
   PluginCall,
+  ValueRef,
 } from './custom.ts'
-export { buildEffects, customCondition, customEffect, customPanel, customValue, hasCustomEffect } from './custom.ts'
+export { buildEffects, commandOf, customCondition, customEffect, customPanel, customValue, hasCustomEffect, previewEffects } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built
 export type {

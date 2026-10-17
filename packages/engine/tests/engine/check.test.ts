@@ -117,8 +117,8 @@ describe('checkGame', () => {
 describe('a cooperating partner the game does not have', () => {
   const beach = definePlugin({ id: 'beach', version: 1, cooperates: ['tides'] })
   const named = {
-    when: { 'tides/high': true },
-    short: { 'tides/turn': true },
+    when: { 'tides/high': true as const },
+    short: { 'tides/turn': true as const },
     long: { kind: 'custom' as const, name: 'tides/turn' },
     command: { type: 'custom' as const, name: 'tides/check' },
   }

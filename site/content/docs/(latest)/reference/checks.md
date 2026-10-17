@@ -39,6 +39,7 @@ It never throws on bad content. It returns the problems in the order it found th
 **Gotchas:**
 - A hand-written `Scene` is a function, so the checker can't see inside it. Only its [storylet](/docs/reference/storylets) fields are checked, unless you give it probes.
 - It doesn't run your custom functions. A [custom effect](/docs/reference/custom#effects) that returns a broken effect, or a `rules.turn` that does, is only found in play.
+- A key a pack can't hold, such as `actions`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `a pack has no "actions", so it was left out`. A hand-built game has no packs, so `checkGame` has nothing to say about it.
 - It doesn't check the tokens in prose, such as `{{v:breadPrice}}`. An unknown one is left on screen as written, so you can see it.
 
 ## Probes
@@ -104,6 +105,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 
 | Problem | When the condition names |
 |---|---|
+| `"…" takes its arguments as an object, …` | A [short plugin call](/docs/reference/custom#plugincall) whose value isn't an object or `true`, such as `{ 'places/at': ['cafe'] }`. It's asked with no arguments. The same problem is reported for an effect or a command written that way. |
 | `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
 | `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineKv` or `counter`. |
@@ -129,7 +131,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown effect kind "…"` | A `kind` the engine doesn't have. The effect does nothing. |
 | `an effect needs a kind, or a custom call by name` | An effect with neither, such as `{}`. It does nothing. |
 | `no custom effect named "…"` | A `{ custom }` or short-form effect that neither the game nor a plugin declares. |
-| `no plugin effect named "…"` | A long-form `{ kind: 'custom', name }` effect that no plugin declares. Only a plugin can answer the long form. |
+| `no plugin effect named "…"` | A long-form `{ kind: 'custom', name }` effect that neither the game nor a plugin declares. |
 | `unknown stat "…"` | A `stat` effect names a stat nobody declares. |
 | A stat owner problem | A `stat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
 | `stat "…" is derived: it is worked out, never written` | A `stat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
@@ -157,7 +159,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `use` | `unknown item "…"` |
 | `input` | `unknown input "…"` |
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
-| `custom` | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
+| `custom`, or a plugin's command in short | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
 
 `start`, `choose`, `leave`, `dismiss`, `tick` and `minigame` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
@@ -331,7 +333,7 @@ type Reference =
   | { markup: string }
   | { when: Condition | undefined }
   | { effects: readonly EffectRef[] | undefined }
-  | { command: Command | undefined }
+  | { command: CommandRef | undefined }
   | { blocks: readonly Block[] | undefined }
   | { media: SceneMedia }
   | { stage: MediaStage | undefined; choices: readonly string[] | null }

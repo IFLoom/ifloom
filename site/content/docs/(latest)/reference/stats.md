@@ -31,7 +31,7 @@ type StatDef = {
   label: string
   start?: number
   min?: number
-  max?: number | { value: string }
+  max?: number | ValueRef
   visible?: Condition
   listed?: boolean
   spendable?: boolean
@@ -55,7 +55,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
 | `min` | `0` | The lowest any effect or cost can take it. |
-| `max` | `100` | The highest any effect or payment can take it. Either a number, or `{ value: name }` for a ceiling that moves. The name is a [custom value](/docs/reference/custom#values) from `game.custom.values`, worked out against the state each time. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `max` | `100` | The highest any effect or payment can take it. Either a number, or a [`ValueRef`](/docs/reference/custom#values), `{ value: name, with? }`, for a ceiling that moves. The name is a [custom value](/docs/reference/custom#values), the game's or a plugin's, worked out against the state each time and asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
 | `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |

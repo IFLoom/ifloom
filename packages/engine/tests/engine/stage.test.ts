@@ -13,12 +13,12 @@ const stall = definePlugin<{ open: boolean }>({
   id: 'stall',
   version: 1,
   start: () => ({ open: true }),
-  conditions: { sells: (_state, args) => ['bread', 'eggs'].includes(String(args.value)) },
+  conditions: { sells: (_state, args) => ['bread', 'eggs'].includes(String(args.item)) },
   commands: { haggle: { run: (state) => state } },
   stage: (_state, { slice }) => (slice.open ? { id: 'market', title: 'The market stall', body: [{ text: 'stall.open' }, { variants: 'stall.cries' }] } : undefined),
   buttons: () => [{ id: 'haggle', label: 'Haggle', command: { type: 'custom', name: 'stall/haggle' } }],
   argProblems: (kind, name, args) =>
-    kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.value)) ? [`nobody sells "${String(args.value)}"`] : [],
+    kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item)) ? [`nobody sells "${String(args.item)}"`] : [],
   check: (game, { problems }) =>
     problems([{ blocks: [{ text: 'stall.sign' }] }, { command: { type: 'scene', id: 'stall.closing' } }]).map((what) => ({ list: 'stall', id: game.id, what })),
 })
@@ -28,7 +28,7 @@ const market: Pack = {
   schema: SCHEMA,
   prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
   variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
-  activities: [{ id: 'buy', blocked: [{ when: { not: { 'stall/sells': 'bread' } }, reason: 'Sold out.' }] }, { id: 'ask', blocked: [{ when: { not: { 'stall/sells': 'fish' } }, reason: 'No.' }] }],
+  activities: [{ id: 'buy', blocked: [{ when: { not: { 'stall/sells': { item: 'bread' } } }, reason: 'Sold out.' }] }, { id: 'ask', blocked: [{ when: { not: { 'stall/sells': { item: 'fish' } } }, reason: 'No.' }] }],
 }
 
 function game(rules: Game['rules'] = {}) {

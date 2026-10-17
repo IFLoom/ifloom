@@ -106,7 +106,7 @@ An achievement is earned:
 
 ```ts
 type ProgressDef = { value: ProgressValue; target: number }
-type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | { value: string }
+type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | ValueRef
 ```
 
 `value` says where the count comes from:
@@ -117,7 +117,7 @@ type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | 
 | `{ sum: ['coins', 'savings'] }` | A [formula](/docs/reference/stats#formula) over the player's stats, the same kind a derived stat uses. |
 | `{ stat: 'friendship', of: 'character:ava' }` | One stat of an [entity](/docs/reference/entities). |
 | `{ kv: 'coffees' }` | A key in the [kv store](/docs/reference/state#kv). One that isn't a number reads 0. |
-| `{ value: 'quests/updates' }` | A [custom value](/docs/reference/custom), the game's or a plugin's. |
+| `{ value: 'quests/updates' }` | A [custom value](/docs/reference/custom#values), the game's or a plugin's, asked with `with` if it has one: `{ value: 'messages/unread', with: { channel: 'texts' } }`. |
 
 Stats read as [`statValue`](/docs/reference/stats#statvalue) reads them, so a timed effect's boost counts. The view holds the count between 0 and `target`, and shows it full once the achievement is earned.
 

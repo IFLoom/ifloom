@@ -174,7 +174,7 @@ function hasCalendar(game: Game): boolean {
 function shiftDay(job: JobDef, day: number, state: GameState, context: PluginContext<JobsState>): boolean {
   if (!job.days || !hasCalendar(context.game)) return true
   const then = context.apply([{ custom: 'calendar/set', with: { day } }], state)
-  return holds(then, { custom: 'calendar/weekday', with: { value: job.days } }, context.game)
+  return holds(then, { 'calendar/weekday': { day: job.days } }, context.game)
 }
 
 /** Is the player at the job's workplace? Always, without the places plugin or a job with no `at`. */

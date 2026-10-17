@@ -55,7 +55,7 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
       name: channel.name,
       icon: 'messages',
       on,
-      badge: { count: `messages/unread-${channel.id}` },
+      badge: { value: 'messages/unread', with: { channel: channel.id } },
       sections: [{ plugin: 'messages', with: { channel: channel.id } }],
     })),
     ...feeds.map((entry): AppDef => ({
@@ -63,7 +63,7 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
       name: entry.name,
       icon: 'feed',
       on,
-      badge: { count: `feed/unseen-${entry.id}` },
+      badge: { value: 'feed/unseen', with: { feed: entry.id } },
       sections: [{ plugin: 'feed', with: { feed: entry.id } }],
     })),
     ...(options.contacts === false ? [] : [{ id: 'contacts', name: 'Contacts', icon: 'contacts', on, sections: [{ contacts: true as const }] }]),

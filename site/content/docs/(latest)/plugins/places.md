@@ -340,9 +340,9 @@ A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'places/move': 'cafe' }` | `moveTo('cafe')` | Puts the player there at once, and closes any open scene. |
+| `{ 'places/move': { location: 'cafe' } }` | `moveTo('cafe')` | Puts the player there at once, and closes any open scene. |
 
-It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { value: 'cafe' } }`.
+It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
 
 No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The [`arrive`](#placesoptions) option doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
 
@@ -350,10 +350,10 @@ No exit is needed and nothing is refused, so the player can be moved from nowher
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'places/at': ['cafe', 'park'] }` | `at('cafe', 'park')` | The player is in one of these places. |
-| `{ 'places/within': ['cafe'] }` | `within('cafe')` | The player is in one of these places, or anywhere inside one, following each place's `parent`. |
+| `{ 'places/at': { location: ['cafe', 'park'] } }` | `at('cafe', 'park')` | The player is in one of these places. |
+| `{ 'places/within': { location: ['cafe'] } }` | `within('cafe')` | The player is in one of these places, or anywhere inside one, following each place's `parent`. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'places/at', with: { value: ['cafe', 'park'] } }`. A single place works too, as in `{ 'places/at': 'cafe' }`.
+These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'places/at', with: { location: ['cafe', 'park'] } }`. A single place works too, as in `{ 'places/at': { location: 'cafe' } }`.
 
 In the café's [back room](#rooms-inside-rooms), `at('cafe.back')` and `within('cafe')` hold, and `at('cafe')` doesn't. Neither holds while the player is nowhere. `within('cafe', 'office')` holds inside either building.
 
@@ -365,7 +365,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 |---|---|
 | `places/here` | Where the player is: the place's id, or `null`. |
 | `places/all` | Every place the game has: [`locationsOf(game)`](#helpers). |
-| `places/known` | Whether the game has a place with this id, given as `{ value }` (or `{ id }`): `true` or `false`. |
+| `places/known` | Whether the game has a place with this id, given as `{ location }`: `true` or `false`. |
 | `places/exits` | The current place's `exits`, as listed, leaving out any the game doesn't have. Empty when nowhere. |
 
 For example, a delivery plugin that only hands over parcels at the flat, when the game has places, asks where the player is:

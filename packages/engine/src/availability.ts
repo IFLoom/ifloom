@@ -6,6 +6,7 @@ import { commandContext, commandEntry, featureContext } from './core.ts'
 import { refusals } from './features/registry.ts'
 import type { Rendering } from './features/feature.ts'
 import type { Command, Effect, GameState } from './types.ts'
+import { commandOf, previewEffects, type CommandRef } from './custom.ts'
 
 export type { Rendering } from './features/feature.ts'
 
@@ -21,8 +22,8 @@ export type { Rendering } from './features/feature.ts'
  * features refuse before anything else), the plugins' guards, then a command
  * the game handles itself, then what the command needs.
  */
-export function whyNot(state: GameState, game: Game, command: Command): string | undefined {
-  return whyNotIn(rendering(state, game), state, game, command)
+export function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined {
+  return whyNotIn(rendering(state, game), state, game, commandOf(command))
 }
 
 /** A rendering of this state's open scene, done when first asked for. `picks` collects a data scene's new pool picks. */
@@ -85,13 +86,17 @@ export function ignoresLocks(game: Game, command: Command): boolean {
  * effects) then its effects, a choice's effects, an item's use, a plugin
  * command's `effectsOf`. Anything else applies nothing that can be known ahead.
  */
-export function effectsOf(state: GameState, game: Game, command: Command): Effect[] {
-  return effectsIn(rendering(state, game), state, game, command)
+export function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[] {
+  return effectsIn(rendering(state, game), state, game, commandOf(command))
 }
 
-/** `effectsOf`, asking `rendered` for the open scene instead of rendering it. */
+/**
+ * `effectsOf`, asking `rendered` for the open scene instead of rendering it.
+ * The game's own custom effects among them are worked out against `state`
+ * (`previewEffects`), so a price or a guard sees what they would do.
+ */
 export function effectsIn(rendered: Rendering, state: GameState, game: Game, command: Command): Effect[] {
-  return commandEntry(command)?.effectsOf?.(state, command, game, commandContext(rendered)) ?? []
+  return previewEffects(state, game, commandEntry(command)?.effectsOf?.(state, command, game, commandContext(rendered)) ?? [])
 }
 
 /**
@@ -101,8 +106,8 @@ export function effectsIn(rendered: Rendering, state: GameState, game: Game, com
  * `whyNot`; the reducer still refuses the command with it. `effects` saves
  * working them out again when the caller has them.
  */
-export function warningOf(state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined {
-  return warningIn(rendering(state, game), state, game, command, effects)
+export function warningOf(state: GameState, game: Game, command: CommandRef, effects?: readonly Effect[]): string | undefined {
+  return warningIn(rendering(state, game), state, game, commandOf(command), effects)
 }
 
 /** `warningOf`, asking `rendered` for the open scene instead of rendering it. */

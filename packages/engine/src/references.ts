@@ -7,13 +7,13 @@
  * its feature's (`KINDS` in core.ts), which are typed complete: a new
  * condition key, effect kind or command type with no entry fails to compile.
  */
-import { customCall, type EffectRef } from './custom.ts'
+import { commandOf, customCall, type CommandRef, type EffectRef } from './calls.ts'
 import type { SceneMedia } from './game.ts'
 import type { MediaStage } from './features/media.ts'
 import type { Reveal, Transition, TransitionName } from './features/transitions.ts'
 import type { PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
-import type { Command, Condition, Effect, KvValue } from './types.ts'
+import type { Condition, Effect, KvValue } from './types.ts'
 import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 
 /**
@@ -90,7 +90,7 @@ export type Reference =
   /** Effects, looked inside. */
   | { effects: readonly EffectRef[] | undefined }
   /** A button's command, looked inside. */
-  | { command: Command | undefined }
+  | { command: CommandRef | undefined }
   /** Prose blocks, as a data scene's body. */
   | { blocks: readonly Block[] | undefined }
   /**
@@ -120,7 +120,8 @@ export function effectReferences(ref: EffectRef): Reference[] {
   return effectEntry(effect)?.references(effect) ?? []
 }
 
-/** What a command names. */
-export function commandReferences(command: Command): Reference[] {
+/** What a command names, in either form. */
+export function commandReferences(ref: CommandRef): Reference[] {
+  const command = commandOf(ref)
   return commandEntry(command)?.references(command) ?? []
 }

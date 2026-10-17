@@ -91,9 +91,9 @@ function passed(effects: readonly Effect[]): number {
   }, 0)
 }
 
-/** `{ value: n }` (from `{ 'calendar/pass': n }`) or `{ by: n }`. */
+/** `{ by: n }`, or one period with none. */
 function periodsIn(args: Record<string, unknown>): number {
-  const n = Number(args.by ?? args.value ?? 1)
+  const n = Number(args.by ?? 1)
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
 }
 
@@ -156,10 +156,10 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
     strings,
     start: () => ({ day: startDay, period: options.start?.period ?? ids[0] }),
     conditions: {
-      /** `{ 'calendar/period': ['morning', 'afternoon'] }`. */
-      period: (_state, args, { slice }) => list(args).includes(slice.period),
-      /** `{ 'calendar/weekday': [0, 1, 2, 3, 4] }`: Monday to Friday, in a seven-day week. */
-      weekday: (_state, args, { slice }) => list(args).map(Number).includes(weekdayIndex(slice.day)),
+      /** `{ 'calendar/period': { period: ['morning', 'afternoon'] } }`. */
+      period: (_state, args, { slice }) => list(args.period).includes(slice.period),
+      /** `{ 'calendar/weekday': { day: [0, 1, 2, 3, 4] } }`: Monday to Friday, in a seven-day week. */
+      weekday: (_state, args, { slice }) => list(args.day).map(Number).includes(weekdayIndex(slice.day)),
       /** `{ 'calendar/weekend': true }`. */
       weekend: (_state, _args, { slice }) => weekend.includes(weekdayIndex(slice.day)),
       /** `{ 'calendar/day': { gte: 6 } }`: the day, from 0, in a range. */
@@ -168,7 +168,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       curfew: (state, _args, context) => curfewBinds(state, context),
     },
     effects: {
-      /** `{ 'calendar/pass': 2 }` or `{ 'calendar/pass': { by: 2 } }`: time goes by that many periods. */
+      /** `{ 'calendar/pass': { by: 2 } }`: time goes by that many periods, or one with no `by`. */
       pass: (state, args, context) => pass(state, periodsIn(args), context),
       /** `{ 'calendar/set': { day, period } }`: put the clock somewhere. Ends no turn. */
       // A period the calendar does not have leaves the period as it was.
@@ -198,9 +198,9 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       bedtime: (_state, _args, { slice }) => Boolean(sleep?.from.includes(slice.period)),
     },
     values: {
-      day: (_state, { slice }) => slice.day + 1,
-      weekday: (_state, context) => words(context, context.slice).weekday,
-      period: (_state, context) => words(context, context.slice).period,
+      day: (_state, _args, { slice }) => slice.day + 1,
+      weekday: (_state, _args, context) => words(context, context.slice).weekday,
+      period: (_state, _args, context) => words(context, context.slice).period,
     },
     hooks: {
       // A turn ended by anything else moves the clock to the start of the next one.
@@ -264,20 +264,19 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
   })
 }
 
-/** A list from a condition's arguments: `['morning']` arrives as `{ value: ['morning'] }`. */
-function list(args: Record<string, unknown>): unknown[] {
-  const value = args.value ?? args.is
+/** One or several, as a list: `period: 'morning'` or `period: ['morning', 'noon']`. */
+function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : value === undefined ? [] : [value]
 }
 
 /** The command that goes to bed. */
 export const sleep = (): Command => ({ type: 'custom', name: `${ID}/sleep` })
 /** Time going by: `n` periods. */
-export const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: n })
+export const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: { by: n } })
 /** True in any of these periods. */
-export const period = (...ids: string[]): Condition => ({ [`${ID}/period`]: ids })
+export const period = (...ids: string[]): Condition => ({ [`${ID}/period`]: { period: ids } })
 /** True on any of these days of the week, from 0. */
-export const weekday = (...days: number[]): Condition => ({ [`${ID}/weekday`]: days })
+export const weekday = (...days: number[]): Condition => ({ [`${ID}/weekday`]: { day: days } })
 /** True at the weekend. */
 export const weekend = (): Condition => ({ [`${ID}/weekend`]: true })
 /** The day, from 0, in a range: `day({ gte: 6 })`. */

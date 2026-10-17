@@ -47,7 +47,7 @@ const shells = definePlugin<Tally>({
       run: (_state, args, { slice, set }) => set({ ...slice, found: slice.found.filter((shell) => shell !== args.shell) }),
     },
   },
-  values: { count: (_state, { slice }) => slice.found.length },
+  values: { count: (_state, _args, { slice }) => slice.found.length },
   hooks: {
     turn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
   },

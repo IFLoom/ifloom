@@ -88,7 +88,7 @@ type FeedDef = { id: string; name: string }
 
 | Field | What it is |
 |---|---|
-| `id` | What posts name the feed by. It also names the feed's [value](#values), `feed/unseen-<id>`. |
+| `id` | What posts name the feed by. It's also what the [value](#values) `feed/unseen` takes as `feed`. |
 | `name` | What the player reads. |
 
 The feeds are code, not content, so a mod can't add one.
@@ -328,9 +328,9 @@ Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends 
 | Prose writes | Prints |
 |---|---|
 | `{{v:feed/unseen}}` | Other people's posts the player hasn't looked at, in every feed. |
-| `{{v:feed/unseen-<feed>}}` | Other people's posts the player hasn't looked at in that feed. There's one for each feed you configure, such as `{{v:feed/unseen-social}}` and `{{v:feed/unseen-board}}`. |
+| `{{v:feed/unseen feed=social}}` | Other people's posts the player hasn't looked at in that feed. |
 
-The player's own posts are never counted, since they aren't news to the player. The per-feed values also work as badges, such as a devices app's `badge: { count: 'feed/unseen-social' }`, and code can read them with [`customValue`](/docs/reference/custom). A value name may contain `-`, so they print in prose like any other.
+The player's own posts are never counted, since they aren't news to the player. The value works as a badge too, with the feed as its argument: a devices app's `badge: { value: 'feed/unseen', with: { feed: 'social' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up).
 
 ## Strings
 
@@ -505,8 +505,8 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **Posts appear only after a command.** The plugin looks for new posts in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
 - **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a kv key, a day (the calendar's `day({ gte: 2 })`) or a scene seen.
 - **A post appears once.** After that it stays, whatever `when` does.
-- **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unseen-<feed>`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
-- **`feed/unseen-<feed>` names come from your feeds.** A feed called `social` gives `feed/unseen-social`. If you rename the feed, every badge that names the old value stops counting.
+- **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unseen` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
+- **A feed the game doesn't have counts nothing.** `feed/unseen` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
 - **Own-post and comment prose keys are checked where they're written.** A `text` key that a [custom effect](/docs/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` kv key.

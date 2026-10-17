@@ -23,6 +23,7 @@ import { minigameDef } from './features/minigames.ts'
 import { transitionView, type TransitionView } from './features/transitions.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
+import { commandOf, previewEffects } from './custom.ts'
 
 /**
  * What pressing a button will spend, shown on it before it is pressed. Only
@@ -267,8 +268,9 @@ function drawStage(
     if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
     let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
     if (hotspot.choice !== undefined) button = choices?.find((choice) => choice.id === hotspot.choice)
-    else if (hotspot.command && !hidden(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command }, drawing.rendered)) {
-      button = actionButton(state, game, { id: hotspot.id, label: hotspot.label, command: hotspot.command }, drawing.rendered)
+    else if (hotspot.command) {
+      const action = { id: hotspot.id, label: hotspot.label, command: commandOf(hotspot.command) }
+      if (!hidden(state, game, action, drawing.rendered)) button = actionButton(state, game, action, drawing.rendered)
     }
     if (!button) continue
     hotspots.push({
@@ -288,7 +290,7 @@ function drawStage(
  * Is this button left off the screen? By its own `blocked` entry that hides,
  * by its activity's, or by a lock that hides (never on one that ignores locks).
  */
-function hidden(state: GameState, game: Game, action: ActionDef, rendered: Rendering): boolean {
+function hidden(state: GameState, game: Game, action: Action, rendered: Rendering): boolean {
   const hides = (entries: readonly Blocked[] | undefined) => Boolean(entries?.some((entry) => entry.hide && holds(state, entry.when, game)))
   const command = action.command
   if (hides(action.blocked)) return true
@@ -303,6 +305,7 @@ function hidden(state: GameState, game: Game, action: ActionDef, rendered: Rende
  */
 function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoice[] {
   return [...pluginButtons(game, state), ...(game.actions ?? [])]
+    .map(asAction)
     .filter((action) => holds(state, action.when, game) && !hidden(state, game, action, drawing.rendered))
     .map((action) => {
       const effects = effectsIn(drawing.rendered, state, game, action.command)
@@ -321,14 +324,20 @@ export function renderAction(
   game: Game,
   action: ActionDef,
 ): RenderedChoice {
-  return actionButton(state, game, action, rendering(state, game))
+  return actionButton(state, game, asAction(action), rendering(state, game))
 }
+
+/** An action whose command is in the long form, as the view shows it. */
+type Action = Omit<ActionDef, 'command'> & { command: Command }
+
+/** An action as content wrote it, with a plugin's short command read into the long form. */
+const asAction = (action: ActionDef): Action => ({ ...action, command: commandOf(action.command) })
 
 /** `renderAction`, asking `rendered` for the open scene. `effects`, when the caller has worked them out. */
 function actionButton(
   state: GameState,
   game: Game,
-  action: ActionDef,
+  action: Action,
   rendered: Rendering,
   known?: readonly Effect[],
 ): RenderedChoice {
@@ -431,8 +440,10 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
     .map((choice) => {
       const command = { type: 'choose', id: choice.id } as const
       // A choice that also sends a command applies what that command would, after its own effects' price.
-      const effects = choice.command ? [...choice.effects, ...effectsIn(drawing.rendered, state, game, choice.command)] : [...choice.effects]
-      const spends = choice.command ? commandEntry(choice.command)?.spends?.(choice.command, game, state) : undefined
+      // The game's own custom effects among them are worked out against this state, for the price and the guards.
+      const sends = choice.command && commandOf(choice.command)
+      const effects = [...previewEffects(state, game, choice.effects), ...(sends ? effectsIn(drawing.rendered, state, game, sends) : [])]
+      const spends = sends ? commandEntry(sends)?.spends?.(sends, game, state) : undefined
       return {
         id: choice.id,
         label: choice.label,

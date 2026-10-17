@@ -217,7 +217,7 @@ describe('content migrations', () => {
       prose: { has: 'Words are left alone.' },
       activities: [
         { id: 'nap', blocked: [{ when: { kv: 'napped' }, reason: 'Once a day.' }, { when: { not: { stat: 'energy', lt: 50 } }, reason: 'Not tired.' }] },
-        { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }, { when: { not: { 'places/at': ['park'] } }, reason: 'Not here.' }] },
+        { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }, { when: { not: { 'places/at': { location: ['park'] } } }, reason: 'Not here.' }] },
       ],
       items: [{ id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } }],
       triggers: [
@@ -267,6 +267,66 @@ describe('content migrations', () => {
           ],
         },
         jobs: { jobs: [{ id: 'barista', ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }], blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Not yet.' }] }] },
+      },
+    })
+  })
+
+  it('name the first-party calls’ bare values at schema 7, and values’ arguments', () => {
+    const v6 = {
+      id: 'phone',
+      schema: 6,
+      prose: { badge: 'You have {{v:messages/unread-texts}} new and {{v:feed/unseen-social}} posts; {{v:rentDue}} due.' },
+      strings: { hint: '{{v:messages/unread-post}} letters' },
+      activities: [
+        {
+          id: 'jog',
+          blocked: [
+            { when: { not: { 'places/at': ['park', 'river'] } }, reason: 'Not here.' },
+            { when: { 'calendar/period': 'night' }, reason: 'Too dark.' },
+            { when: { custom: 'cast/here', with: { value: ['ava'] } }, reason: 'Ava is here.' },
+            { when: { 'calendar/weekend': true }, reason: 'Weekend.' },
+            { when: { 'cast/met': { id: 'sam' } }, reason: 'Met Sam.' },
+          ],
+          effects: [{ 'calendar/pass': 2 }, { kind: 'custom', name: 'places/move', with: { value: 'park' } }, { 'tides/turn': 'high' }],
+        },
+      ],
+      data: {
+        devices: {
+          apps: [
+            { id: 'texts', badge: { count: 'messages/unread-texts' } },
+            { id: 'bank', badge: { count: 'rentDue' } },
+            { id: 'news', badge: { when: { kv: 'news' } } },
+          ],
+        },
+      },
+    }
+    expect(upgradePack(v6)).toEqual({
+      id: 'phone',
+      schema: SCHEMA,
+      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unseen feed=social}} posts; {{v:rentDue}} due.' },
+      strings: { hint: '{{v:messages/unread channel=post}} letters' },
+      activities: [
+        {
+          id: 'jog',
+          blocked: [
+            { when: { not: { 'places/at': { location: ['park', 'river'] } } }, reason: 'Not here.' },
+            { when: { 'calendar/period': { period: 'night' } }, reason: 'Too dark.' },
+            { when: { custom: 'cast/here', with: { character: ['ava'] } }, reason: 'Ava is here.' },
+            { when: { 'calendar/weekend': true }, reason: 'Weekend.' },
+            { when: { 'cast/met': { character: 'sam' } }, reason: 'Met Sam.' },
+          ],
+          // A call that isn't the first party's keeps its bare value, for the checker to report.
+          effects: [{ 'calendar/pass': { by: 2 } }, { kind: 'custom', name: 'places/move', with: { location: 'park' } }, { 'tides/turn': 'high' }],
+        },
+      ],
+      data: {
+        devices: {
+          apps: [
+            { id: 'texts', badge: { value: 'messages/unread', with: { channel: 'texts' } } },
+            { id: 'bank', badge: { value: 'rentDue' } },
+            { id: 'news', badge: { when: { kv: 'news' } } },
+          ],
+        },
       },
     })
   })

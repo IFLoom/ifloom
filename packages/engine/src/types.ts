@@ -1,4 +1,4 @@
-import type { PluginCall } from './custom.ts'
+import type { PluginCall } from './calls.ts'
 import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
 
@@ -109,7 +109,12 @@ export type Condition = ConditionMap[ConditionKind] | PluginCall
 
 /** The effects the core keeps itself, by kind. The features' are in `features/`. */
 export type CoreEffects = {
-  /** A plugin's effect, by its full name. Content writes `{ custom: name, with }`; the engine turns it into this. */
+  /**
+   * A custom effect by name: the game's own, or a plugin's by its full name.
+   * Content writes `{ custom: name, with }` or the short form; the engine
+   * turns either into this. It runs in its turn, on the state the effects
+   * before it left.
+   */
   custom: { kind: 'custom'; name: string; with?: Record<string, unknown> }
 }
 

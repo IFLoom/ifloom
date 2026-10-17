@@ -266,7 +266,7 @@ export function quests() {
     },
     values: {
       /** <code v-pre>{{v:quests/updates}}</code>: quests with news, for a badge. */
-      updates: (state, { slice, game }) => questsView(advance(slice, state, game), game).updates,
+      updates: (state, _args, { slice, game }) => questsView(advance(slice, state, game), game).updates,
     },
     hooks: {
       after: (_before, after, { slice, set, game }) => {

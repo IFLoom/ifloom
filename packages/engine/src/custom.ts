@@ -1,6 +1,8 @@
 import type { Game } from './game.ts'
-import { pluginCondition, pluginEffect, pluginValue } from './plugin.ts'
+import { pluginCondition, pluginEffect, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
+import { roll } from './random.ts'
 import type { Effect, GameState } from './types.ts'
+import { customCall, type EffectRef } from './calls.ts'
 
 /**
  * The game's own code, by name.
@@ -18,14 +20,17 @@ import type { Effect, GameState } from './types.ts'
  * A name with a `/` in it belongs to a plugin — `quests/done` is the `done`
  * condition of the plugin `quests` — and is looked up there instead.
  */
-export type CustomCondition = (state: GameState, args: Record<string, unknown>) => boolean
+export type CustomCondition = (state: GameState, args: PluginArgs, context: CustomContext) => boolean
 /**
  * Works out effects from the state. It can return anything content can write,
- * a plugin's `{ custom: 'quests/start' }` or another of the game's own included.
+ * a plugin's `{ 'quests/start': { quest } }` or another of the game's own
+ * included. It runs in its turn, on the state the effects before it left.
  */
-export type CustomEffect = (state: GameState, args: Record<string, unknown>) => EffectRef[]
-export type CustomValue = (state: GameState) => string | number
-export type CustomPanel = (state: GameState) => unknown
+export type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
+/** A word or a number for prose (`{{v:name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
+export type CustomValue = (state: GameState, args: PluginArgs, context: CustomContext) => string | number
+/** What a scene's or an app's panel draws, shaped by the game. */
+export type CustomPanel = (state: GameState, context: CustomContext) => unknown
 
 export type Custom = {
   conditions?: Record<string, CustomCondition>
@@ -35,85 +40,104 @@ export type Custom = {
 }
 
 /**
- * A plugin's condition or effect in short: its full name as the only key,
- * what it is asked as the value. `{ 'quests/done': { quest: 'bakery' } }` is
- * `{ custom: 'quests/done', with: { quest: 'bakery' } }`. A value that is not
- * an object is passed as `with: { value }`: `{ 'calendar/period': ['morning'] }`
- * asks with `{ value: ['morning'] }`, and `true` asks with nothing.
+ * What a game's own function is handed besides the state and its arguments,
+ * as a plugin's is (`PluginContext` has all of it too): the game, the
+ * plugins' answers and values, and seeded draws.
  */
-export type PluginCall = { [name: `${string}/${string}`]: unknown }
-
-/** A call by name, in either form, as the engine reads it. */
-export type CustomCall = { custom: string; with?: Record<string, unknown> }
-
-/** An effect as content writes it: a plain effect, or a custom one by name, in either form. */
-export type EffectRef = Effect | CustomCall | PluginCall
-
-/**
- * The call a condition or effect makes, if it is one: `{ custom }` as written,
- * or the short form read into it. Anything else — a built-in — is undefined.
- */
-export function customCall(entry: object): CustomCall | undefined {
-  if ('custom' in entry && typeof entry.custom === 'string') return entry as CustomCall
-  if ('kind' in entry) return undefined
-  const keys = Object.keys(entry)
-  if (keys.length !== 1 || !keys[0].includes('/')) return undefined
-  const value = (entry as Record<string, unknown>)[keys[0]]
-  if (value === true || value === undefined) return { custom: keys[0] }
-  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    return { custom: keys[0], with: value as Record<string, unknown> }
-  }
-  return { custom: keys[0], with: { value } }
+export type CustomContext = {
+  game: Game
+  /**
+   * Ask a plugin something by its full name: `query('places/here')`.
+   * Undefined when the game does not have that plugin.
+   */
+  query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
+  /**
+   * A value by name, a plugin's (`messages/unread`) or the game's own, asked
+   * with `args`. Undefined when nobody has it.
+   */
+  value: (name: string, args?: PluginArgs) => string | number | undefined
+  /**
+   * A whole number from 0 to `max - 1`, drawn from the save's seed, the turn
+   * and `name`: the same save and turn always draw the same.
+   */
+  roll: (max: number, name: string) => number
 }
 
-export function customCondition(game: Game | undefined, name: string): CustomCondition | undefined {
+/** The context a game's own function or a plugin's gets for this state. */
+export function customContext(state: GameState, game: Game): CustomContext {
+  return {
+    game,
+    query: <T,>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
+    value: (name, args = {}) => customValue(game, name)?.(state, args),
+    roll: (max, name) => roll(max, name, state.seed, state.turn),
+  }
+}
+
+export { commandOf, customCall, shortFormProblem, type CommandRef, type CustomCall, type EffectRef, type PluginCall, type ValueRef } from './calls.ts'
+
+/** A custom condition by name, a plugin's or the game's own, ready to ask. */
+export function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined {
   const fromPlugin = pluginCondition(game, name)
   if (fromPlugin) return fromPlugin
-  return game?.custom?.conditions?.[name]
+  const fn = game?.custom?.conditions?.[name]
+  return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
 }
 
-export function customEffect(game: Game | undefined, name: string): CustomEffect | undefined {
-  return game?.custom?.effects?.[name]
+/** One of the game's own custom effects by name, ready to work out the effects it stands for. A plugin's isn't one: see `hasCustomEffect`. */
+export function customEffect(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => EffectRef[]) | undefined {
+  const fn = game?.custom?.effects?.[name]
+  return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
 }
 
-export function customValue(game: Game | undefined, name: string): CustomValue | undefined {
+/** A value by name, a plugin's or the game's own, ready to ask. */
+export function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined {
   const fromPlugin = pluginValue(game, name)
   if (fromPlugin) return fromPlugin
-  return game?.custom?.values?.[name]
+  const fn = game?.custom?.values?.[name]
+  return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
 }
 
 /** Does the game or one of its plugins have an effect by this name? */
 export function hasCustomEffect(game: Game | undefined, name: string): boolean {
-  return Boolean(pluginEffect(game, name) ?? customEffect(game, name))
+  return Boolean(pluginEffect(game, name) ?? game?.custom?.effects?.[name])
 }
 
-export function customPanel(game: Game | undefined, name: string): CustomPanel | undefined {
-  return game?.custom?.panels?.[name]
+/** A custom panel by name, ready to draw. */
+export function customPanel(game: Game | undefined, name: string): ((state: GameState) => unknown) | undefined {
+  const fn = game?.custom?.panels?.[name]
+  return fn && game ? (state) => fn(state, customContext(state, game)) : undefined
 }
-
 
 /**
- * Flatten an effect list into the plain effects the reducer takes. A game's
- * custom effect is worked out here, from the state before any of the list
- * applies; a plugin's is passed on as `{ kind: 'custom' }` and runs in its turn,
- * on the state the effects before it left. A custom effect nobody has
- * contributes nothing; the content checker (`checkGame`) reports it by name.
+ * Flatten an effect list into the plain effects the reducer takes. A custom
+ * call, the game's own or a plugin's, is passed on as `{ kind: 'custom' }`
+ * and runs in its turn, on the state the effects before it left. A custom
+ * effect nobody has contributes nothing; the content checker (`checkGame`)
+ * reports it by name.
  */
-export function buildEffects(state: GameState, game: Game, refs: readonly EffectRef[], depth = 0): Effect[] {
+export function buildEffects(_state: GameState, game: Game, refs: readonly EffectRef[]): Effect[] {
   const out: Effect[] = []
   for (const entry of refs) {
     const ref = customCall(entry)
-    if (!ref) {
-      out.push(entry as Effect)
-      continue
-    }
-    if (pluginEffect(game, ref.custom)) {
-      out.push({ kind: 'custom', name: ref.custom, with: ref.with })
-      continue
-    }
-    const fn = customEffect(game, ref.custom)
+    if (!ref) out.push(entry as Effect)
+    else if (hasCustomEffect(game, ref.custom)) out.push(ref.with ? { kind: 'custom', name: ref.custom, with: ref.with } : { kind: 'custom', name: ref.custom })
+  }
+  return out
+}
+
+/**
+ * Effects with each of the game's own custom effects worked out against
+ * `state`: what a button would do, before it runs, for prices, guards and
+ * locks to see. Applying them works each one out in its turn instead, so
+ * what this shows is read from the state before any of them apply.
+ */
+export function previewEffects(state: GameState, game: Game, effects: readonly Effect[], depth = 0): Effect[] {
+  const out: Effect[] = []
+  for (const effect of effects) {
+    const fn = effect.kind === 'custom' && !pluginEffect(game, effect.name) ? customEffect(game, effect.name) : undefined
+    if (!fn) out.push(effect)
     // A custom effect can name others; ten deep is a loop, not a design.
-    if (fn && depth < 10) out.push(...buildEffects(state, game, fn(state, ref.with ?? {}), depth + 1))
+    else if (depth < 10) out.push(...previewEffects(state, game, buildEffects(state, game, fn(state, (effect as { with?: PluginArgs }).with ?? {})), depth + 1))
   }
   return out
 }

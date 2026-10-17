@@ -353,9 +353,9 @@ The game's current [stage](/docs/reference/state#phase) is one of these.
 
 ### Where the player is
 
-The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/docs/plugins/places#conditions), write `at('cafe', 'park')` (short for `{ 'places/at': ['cafe', 'park'] }`) for "in one of these places", and `within('cafe')` for "in the café or a room inside it".
+The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/docs/plugins/places#conditions), write `at('cafe', 'park')` (short for `{ 'places/at': { location: ['cafe', 'park'] } }`) for "in one of these places", and `within('cafe')` for "in the café or a room inside it".
 
-It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions), write `here('ava')` (short for `{ 'cast/here': ['ava'] }`) for "Ava is in the room with the player", and `isAt('ava', 'park')` for "Ava is in the park, wherever the player is".
+It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions), write `here('ava')` (short for `{ 'cast/here': { character: ['ava'] } }`) for "Ava is in the room with the player", and `isAt('ava', 'park')` for "Ava is in the park, wherever the player is".
 
 **Gotcha.** An object whose key the engine doesn't know, such as `{ at: ['cafe'] }`, never holds, and the loader doesn't report it.
 
@@ -395,7 +395,7 @@ const town: Game = {
 { 'wardrobe/wearing': { item: 'raincoat' } }
 ```
 
-A plugin's condition with its full name as the only key. See [`PluginCall`](/docs/reference/custom#plugincall) for how the value becomes `with`. It holds, fails and is checked exactly like the `{ custom }` it stands for.
+A plugin's condition with its full name as the only key, and its arguments as an object (or `true` for none). See [`PluginCall`](/docs/reference/custom#plugincall). It holds, fails and is checked exactly like the `{ custom }` it stands for.
 
 ## holds
 

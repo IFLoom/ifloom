@@ -126,7 +126,7 @@ type AppDef = {
   on: string
   when?: Condition
   blocked?: Blocked[]
-  badge?: { count: string } | { when: Condition }
+  badge?: ValueRef | { when: Condition }
   sections: Section[]
 }
 ```
@@ -139,7 +139,7 @@ type AppDef = {
 | `on` | The [device](#devicedef) it's on. |
 | `when` | When the app is installed. It stays off the home screen until this holds. If you leave it out, it's always installed. |
 | `blocked` | The app shows on the home screen but is greyed out while one of these [`Blocked`](/docs/reference/actions#blocked) entries holds, with the first one's `reason`. With `hide: true`, it's left off the home screen instead. A [lock](/docs/reference/locks) on `devices/open` greys it out too. |
-| `badge` | `{ count: name }` shows the number a [value](/docs/reference/custom) gives, such as `messages/unread-texts`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
+| `badge` | A [`ValueRef`](/docs/reference/custom#values), `{ value, with }`, shows the number that value gives for its arguments, such as `{ value: 'messages/unread', with: { channel: 'texts' } }`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
 | `sections` | What fills the app, top to bottom. |
 
 An icon's states come from fields you already have. A locked icon comes from `blocked`, a new one from a badge, and a waiting one from an action's reason.
@@ -179,7 +179,7 @@ const bank: AppDef = {
 const mail: AppDef = {
   id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
   when: { kv: 'emailSetUp' },
-  badge: { count: 'messages/unread-email' },
+  badge: { value: 'messages/unread', with: { channel: 'email' } },
   sections: [{ plugin: 'messages', with: { channel: 'email' } }],
 }
 ```
@@ -516,7 +516,7 @@ The action check catches an unknown scene, activity or item, a plugin command no
 A problem with an app from a pack is pinned on that pack. One with an app given to `devices(...)` is pinned on `base`.
 
 ```text
-base · apps mail · no custom value named "messages/unread-mail"
+base · apps mail · no custom value named "messages/unread"
 mod:radio · apps tuner · no custom panel named "dial"
 ```
 
@@ -529,7 +529,7 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `blocked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
 - **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
-- **A count badge reads a value by name.** Values from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins are named after the channels and feeds you configure, such as `messages/unread-texts`. A value that isn't a number counts as `0`.
+- **A count badge reads a value by name, with arguments.** The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unseen', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.
 
 ## See it in an example

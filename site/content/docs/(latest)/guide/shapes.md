@@ -321,7 +321,7 @@ Here's what it does, in order:
    wages: (state): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, 'staff', 'wage') }],
    ```
 
-   Like any custom effect in a list, both are worked out from the state before the list runs, so the wages include anyone who quits further down.
+   Like any custom effect in a list, each runs in its turn, on the state the effects before it left. The wages come before anyone quits, so they include anyone who quits further down.
 2. **Morale.** [`each`](/docs/reference/effects#each) runs the same effects for every one of a kind, with `'$'` standing for the one each time. Everyone loses 8 morale.
 3. **Quitting.** `each` with `where` only runs for those the condition holds for. Anyone now below 20 is [removed](/docs/reference/effects#remove). Who an `each` visits is fixed when it starts, so removing someone partway through is safe.
 4. **The turn.** [`{ kind: 'turn' }`](/docs/reference/effects#turn) ends the turn. A turn here is a week, and nobody ever sleeps.

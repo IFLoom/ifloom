@@ -136,11 +136,11 @@ export function debug() {
        */
       go: free({
         whyNot: (_state, args, { game, query }) => {
-          const known = query<boolean>('places/known', { value: String(args.id) })
+          const known = query<boolean>('places/known', { location: String(args.id) })
           if (known === undefined) return sayDebug(game, 'noPlaces')
           return known ? undefined : sayDebug(game, 'noSuchPlace', String(args.id))
         },
-        run: (_state, args, { apply }) => apply([{ custom: 'places/move', with: { value: String(args.id) } }]),
+        run: (_state, args, { apply }) => apply([{ 'places/move': { location: String(args.id) } }]),
       }),
     },
     view: (state, { game }): DebugView => ({

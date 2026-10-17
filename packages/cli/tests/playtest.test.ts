@@ -78,7 +78,7 @@ describe('snapshot', () => {
     // The same words and choices the player's screen gets, scene and room.
     const scene = view({ ...start, sceneId: 'wake' }, g).scene
     expect(scene.choices.map((choice) => choice.disabled)).toEqual(['Too sleepy.'])
-    const room = view(applyEffects({ ...start, sceneId: null }, g, [{ kind: 'custom', name: 'places/move', with: { value: 'hall' } }]), g).scene
+    const room = view(applyEffects({ ...start, sceneId: null }, g, [{ kind: 'custom', name: 'places/move', with: { location: 'hall' } }]), g).scene
     expect(text).toContain(`=== place:hall @ start\n${room.body}`)
     expect(room.body).toBe('A hall.')
   })

@@ -41,7 +41,7 @@ export type FeatureContext = {
   /** A whole number from 0 to `max - 1`, seeded by `parts`. See `roll`. */
   roll: (max: number, ...parts: (string | number)[]) => number
   /** A custom value by name, the game's or a plugin's. */
-  customValue: (game: Game | undefined, name: string) => ((state: GameState) => string | number) | undefined
+  customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
   /** What the plugins' `statModifiers` change about the player's stats right now. */
   statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
   /** What the plugins put on background channels, by channel. */

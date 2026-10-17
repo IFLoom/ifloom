@@ -75,7 +75,7 @@ describe('devices', () => {
         name: 'X',
         icon: 'x',
         on: 'watch',
-        badge: { count: 'nope/value' },
+        badge: { value: 'nope/value' },
         sections: [{ collection: 'album' }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
       },
     ]

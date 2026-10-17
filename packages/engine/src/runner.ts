@@ -13,6 +13,7 @@ import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
 import { inlineChoices, pastBeats } from './screen.ts'
 import { upgradeCommand } from './upgrade.ts'
+import { commandOf, type CommandRef } from './custom.ts'
 
 /**
  * Undo and redo. Off unless the game asks for it; when on, `depth` steps deep,
@@ -278,7 +279,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
      * nothing to the backlog, and it autosaves only when it changes the scene
      * or the turn (for those policies).
      */
-    apply(command: Command): Applied {
+    apply(ref: CommandRef): Applied {
+      const command = commandOf(ref)
       const before = state
       const ticking = command.type === 'tick'
       // The view the command was sent from: usually built already, for the UI that sent it.

@@ -98,6 +98,7 @@ A line of prose can carry tokens, which are filled in for the save when the line
 | `{{n:ava.visits}}` | The counter `visits` on storyline `ava` ([`count`](/docs/reference/progress#counters)), or 0 if unset. |
 | `{{v:coffeePrice}}` | The game's [custom value](/docs/reference/custom#values) `coffeePrice`, as text. |
 | `{{v:quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. |
+| `{{v:messages/unread channel=texts}}` | A value asked with arguments, here `{ channel: 'texts' }`. |
 
 `A coffee is {{v:coffeePrice}} today, {{playerName}}.`
 
@@ -108,7 +109,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 - A key in a token is letters, digits and `_`, and can't start with a digit. A key named `cat-name` can be set but can't be printed this way.
 - A `{{v:…}}` naming a value the game doesn't declare is left in place, so the missing name shows on screen instead of vanishing.
 - In `{{n:storyline.key}}`, the storyline id is letters, digits, `_` and `-`, and the key is letters, digits and `_`.
-- A `{{v:…}}` name is letters, digits, `_` and `-`. A plugin value is the plugin's id (letters, digits and `-`), a `/`, and such a name, so `{{v:messages/unread-texts}}` prints. Anything else isn't a token and is left as written.
+- A `{{v:…}}` name is letters, digits, `_` and `-`. A plugin value is the plugin's id (letters, digits and `-`), a `/`, and such a name. Arguments follow the name as `key=value`, separated by spaces, as in `{{v:messages/unread channel=texts}}`. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
 - The pronoun forms on a [cast](/docs/plugins/cast#characterdef) character (`pronouns`) aren't tokens. A game that wants them substitutes them itself.
 
 ## fillTokens

@@ -37,7 +37,7 @@ export function snapshot(game: Game, probes: Probe[]): string {
   for (const location of [...places].sort((a, b) => a.id.localeCompare(b.id))) {
     for (const probe of probes) {
       // Stood there with no scene open, the room as `view` draws it.
-      const state = applyEffects({ ...probe.state, sceneId: null }, game, [{ kind: 'custom', name: 'places/move', with: { value: location.id } }])
+      const state = applyEffects({ ...probe.state, sceneId: null }, game, [{ kind: 'custom', name: 'places/move', with: { location: location.id } }])
       out.push(`=== place:${location.id} @ ${probe.name}\n${view(state, game).scene.body}`)
     }
   }

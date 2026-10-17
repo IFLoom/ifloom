@@ -27,7 +27,6 @@ import {
   type Game,
   type GameState,
   type MediaStage,
-  type PluginArgs,
   type PluginProblem,
   type Reference,
   type StageView,
@@ -131,12 +130,11 @@ export function where(state: GameState): string | null {
   return (state.plugins?.[ID]?.state as PlacesState | undefined)?.at ?? null
 }
 
-/** A list from arguments: `{ 'places/at': ['cafe'] }` arrives as `{ value: ['cafe'] }`. */
 /** A reference to one of the game's locations. */
 const location = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
 
-function ids(args: PluginArgs): string[] {
-  const value = args.value ?? args.id
+/** One location or several, as a list: `location: 'cafe'` or `location: ['cafe', 'park']`. */
+function ids(value: unknown): string[] {
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
@@ -170,19 +168,19 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     },
     start: () => ({ at: options.start ?? null }),
     conditions: {
-      /** `{ 'places/at': ['cafe', 'park'] }`: the player is in one of these. */
-      at: (_state, args, { slice }) => slice.at !== null && ids(args).includes(slice.at),
-      /** `{ 'places/within': 'office' }`: the player is there, or somewhere inside it; with a list, any of them. */
+      /** `{ 'places/at': { location: ['cafe', 'park'] } }`: the player is in one of these. */
+      at: (_state, args, { slice }) => slice.at !== null && ids(args.location).includes(slice.at),
+      /** `{ 'places/within': { location: 'office' } }`: the player is there, or somewhere inside it; with a list, any of them. */
       within: (_state, args, { slice, game }) => {
         if (slice.at === null) return false
         const around = [slice.at, ...ancestors(game, slice.at)]
-        return ids(args).some((id) => around.includes(id))
+        return ids(args.location).some((id) => around.includes(id))
       },
     },
     effects: {
-      /** `{ 'places/move': 'park' }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
+      /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
       move: (state, args, { set, game }) => {
-        const to = ids(args)[0]
+        const to = ids(args.location)[0]
         if (!locationById(game, to)) return state
         return set({ at: to }, { ...state, sceneId: null })
       },
@@ -190,9 +188,9 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     commands: {
       /** `{ type: 'custom', name: 'places/go', with: { id } }`: walk through an exit to the place `id`. */
       go: {
-        whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, ids(args)[0]),
+        whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, ids(args.id)[0]),
         run: (_state, args, { set, game }) => {
-          const arrived = set({ at: ids(args)[0] })
+          const arrived = set({ at: ids(args.id)[0] })
           return options.arrive ? options.arrive(arrived, game) : arrived
         },
       },
@@ -200,12 +198,12 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     queries: {
       here: (_state, _args, { slice }) => slice.at,
       all: (_state, _args, { game }) => locationsOf(game),
-      known: (_state, args, { game }) => Boolean(locationById(game, ids(args)[0])),
+      known: (_state, args, { game }) => Boolean(locationById(game, ids(args.location)[0])),
       exits: (_state, _args, { slice, game }) => (locationById(game, slice.at)?.exits ?? []).filter((id) => locationById(game, id)),
     },
     values: {
-      name: (_state, { slice, game }) => locationById(game, slice.at)?.name ?? '',
-      tag: (_state, { slice, game }) => locationById(game, slice.at)?.tag ?? '',
+      name: (_state, _args, { slice, game }) => locationById(game, slice.at)?.name ?? '',
+      tag: (_state, _args, { slice, game }) => locationById(game, slice.at)?.tag ?? '',
     },
     label: (_state, { slice, game }) => locationById(game, slice.at)?.name,
     stage: (_state, { slice, game }) => {
@@ -242,7 +240,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     references: {
       // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`.
       calls: (kind, name, args) => {
-        const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args) : []) : kind === 'effects' ? (name === 'move' ? ids(args) : []) : name === 'go' ? ids(args) : []
+        const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args.location) : []) : kind === 'effects' ? (name === 'move' ? ids(args.location) : []) : name === 'go' ? ids(args.id) : []
         return named.map(location)
       },
       content: (game) => [
@@ -285,10 +283,10 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
 /** The command that walks to a place by an exit. */
 export const go = (id: string): Command => ({ type: 'custom', name: `${ID}/go`, with: { id } })
 /** True in any of these places. */
-export const at = (...places: string[]): Condition => ({ [`${ID}/at`]: places })
+export const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: places } })
 /** True in any of these places, or anywhere inside one. */
-export const within = (...places: string[]): Condition => ({ [`${ID}/within`]: places })
+export const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { location: places } })
 /** The effect that puts the player somewhere at once. */
-export const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: place })
+export const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
 /** A `blocked` entry: refused anywhere but these places. Its reason is plain text, "Not here." if left out. */
 export const onlyAt = (places: string[], reason?: string): Blocked => ({ when: { not: at(...places) }, reason: reason ?? 'Not here.' })

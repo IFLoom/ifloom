@@ -23,6 +23,7 @@ import {
   type GameState,
   type PluginProblem,
   type Reference,
+  type ValueRef,
 } from '@ifloom/engine'
 
 /**
@@ -30,7 +31,7 @@ import {
  * stat's id is the simplest), one stat of an entity, a key in the kv store, or a custom
  * value by name (the game's or a plugin's, such as `quests/updates`).
  */
-export type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | { value: string }
+export type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | ValueRef
 
 /** How far towards an achievement the player is: the value, out of `target`. */
 export type ProgressDef = { value: ProgressValue; target: number }
@@ -117,7 +118,7 @@ export function progressValue(value: ProgressValue, state: GameState, game: Game
   let out: unknown
   if (typeof value === 'object' && 'stat' in value) out = statValue(state, game, value.stat, value.of)
   else if (typeof value === 'object' && 'kv' in value) out = state.kv[value.kv]
-  else if (typeof value === 'object' && 'value' in value) out = customValue(game, value.value)?.(state)
+  else if (typeof value === 'object' && 'value' in value) out = customValue(game, value.value)?.(state, value.with ?? {})
   else out = evaluate(value, state, game)
   return typeof out === 'number' && Number.isFinite(out) ? out : 0
 }
@@ -204,7 +205,7 @@ export function achievements() {
     },
     values: {
       /** <code v-pre>{{v:achievements/earned}}</code>: how many this save has earned. */
-      earned: (_state, { slice }) => Object.keys(slice.earned).length,
+      earned: (_state, _args, { slice }) => Object.keys(slice.earned).length,
     },
     hooks: {
       after: (_before, after, { slice, set, game }) => {

@@ -9,6 +9,7 @@
  */
 import type { Game, SceneMedia } from '../game.ts'
 import type { Command, Condition, GameState } from '../types.ts'
+import type { CommandRef } from '../calls.ts'
 import { artSrc, MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
 import { defineFeature, type FeatureContext, type ResolveTools } from './feature.ts'
 
@@ -52,7 +53,8 @@ export type HotspotDef = {
   rect: [number, number, number, number]
   /** What a screen reader reads, and the tooltip. */
   label: string
-  command?: Command
+  /** What it sends, as an action's `command`. */
+  command?: CommandRef
   /** A choice of the open scene, by id. */
   choice?: string
   when?: Condition

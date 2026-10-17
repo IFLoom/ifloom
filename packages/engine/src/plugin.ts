@@ -1,6 +1,6 @@
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
-import { buildEffects, type EffectRef } from './custom.ts'
+import { buildEffects, customContext, type CustomContext, type EffectRef } from './custom.ts'
 // A cycle, and a needed one: applying effects runs plugins' effects and hooks, which apply effects.
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
@@ -13,12 +13,12 @@ import type { Transition, TransitionName } from './features/transitions.ts'
 export type PluginArgs = Record<string, unknown>
 
 /**
- * What every plugin function is handed besides the game state: the game, the
- * plugin's own state, typed, and `set` to return the game state with the
- * plugin's state replaced.
+ * What every plugin function is handed besides the game state: what a game's
+ * own functions get (the game, `query`, `value` and `roll`; see
+ * `CustomContext`), the plugin's own state, typed, and `set` to return the
+ * game state with the plugin's state replaced.
  */
-export type PluginContext<S> = {
-  game: Game
+export type PluginContext<S> = CustomContext & {
   slice: S
   /**
    * The game state with the plugin's state replaced: on the state the function
@@ -26,12 +26,6 @@ export type PluginContext<S> = {
    * of the game state and wants the plugin's state written onto that.
    */
   set: (next: S, on?: GameState) => GameState
-  /**
-   * Ask another plugin something by its full name: `query('places/here')`.
-   * Undefined when the game does not have that plugin, so a plugin can work
-   * with a partner when it is there and without it when it is not.
-   */
-  query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
   /**
    * Apply effects as content would — any effect, a custom one or another
    * plugin's included — to the state the function was handed, or to `on`. How
@@ -138,8 +132,12 @@ export type Plugin<S = any> = {
    * kept value underneath. Must not read stats itself, or it reads itself.
    */
   statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
-  /** Words and numbers prose can print with <code v-pre>{{v:id/name}}</code>. */
-  values?: Record<string, (state: GameState, context: PluginContext<S>) => string | number>
+  /**
+   * Words and numbers content can read by name, asked with arguments as a
+   * condition is: in prose as <code v-pre>{{v:id/name channel=texts}}</code>,
+   * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
+   */
+  values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
   hooks?: {
     /** At the start of each turn, after the game's own `onTurn`. */
     turn?: (state: GameState, context: PluginContext<S>) => GameState
@@ -339,10 +337,9 @@ function writeSlice<S>(plugin: Plugin<S>, state: GameState, next: S): GameState 
 /** The context a plugin's functions get, for this game state. */
 export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game, options: ContextOptions = {}): PluginContext<S> {
   const context: PluginContext<S> = {
-    game,
+    ...customContext(state, game),
     slice: readSlice(plugin, state, game),
     set: (next, on = state) => writeSlice(plugin, on, next),
-    query: <T,>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
     apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), options.ending ?? false),
   }
   if (options.picks) context.picks = options.picks
@@ -408,7 +405,7 @@ function member<K extends 'conditions' | 'effects' | 'commands' | 'values' | 'qu
 export function pluginCondition(game: Game | undefined, name: string) {
   const found = member(game, name, 'conditions')
   if (!found || !game) return undefined
-  return (state: GameState, args: PluginArgs) => found.fn(state, args, pluginContext(found.plugin, state, game))
+  return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
 }
 
 /** A plugin's effect by full name, ready to apply. `ending` while a turn is ending. */
@@ -432,11 +429,11 @@ export function pluginCommand(game: Game | undefined, name: string) {
   }
 }
 
-/** A plugin's value by full name. */
+/** A plugin's value by full name, ready to ask with arguments. */
 export function pluginValue(game: Game | undefined, name: string) {
   const found = member(game, name, 'values')
   if (!found || !game) return undefined
-  return (state: GameState) => found.fn(state, pluginContext(found.plugin, state, game))
+  return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
 }
 
 /** Run one hook on every plugin that has it, in the order the game lists them. `ending` while a turn is ending. */

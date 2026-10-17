@@ -88,7 +88,7 @@ type Channel = { id: string; name: string }
 
 | Field | What it is |
 |---|---|
-| `id` | What messages name the channel by, and the `tag` on the notices they raise. It also names the channel's [value](#values), `messages/unread-<id>`. |
+| `id` | What messages name the channel by, and the `tag` on the notices they raise. It's also what the [value](#values) `messages/unread` takes as `channel`. |
 | `name` | What the player reads. |
 
 The channels are code, not content, so a mod can't add one.
@@ -383,9 +383,9 @@ Both are commands like any other, so triggers run after them, and so does every 
 | Prose writes | Prints |
 |---|---|
 | `{{v:messages/unread}}` | Unread messages in every channel. |
-| `{{v:messages/unread-<channel>}}` | Unread messages in that channel, one value for each channel you configure: `{{v:messages/unread-texts}}`, `{{v:messages/unread-letters}}`. |
+| `{{v:messages/unread channel=texts}}` | Unread messages in that channel. |
 
-The per-channel values also work as badges, such as a devices app's `badge: { count: 'messages/unread-texts' }`, and code can read them with [`customValue`](/docs/reference/custom). A value name may contain `-`, so they print in prose like any other.
+The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up), or a custom function with its context's `value('messages/unread', { channel: 'texts' })`.
 
 ## Strings
 
@@ -558,7 +558,7 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 - **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time. See [Messages that come again](#messages-that-come-again).
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
-- **`messages/unread-<channel>` names come from your channels.** A channel called `texts` gives `messages/unread-texts`. If you rename the channel, every badge that names the old value stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
+- **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<message id>`, the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
 - **The sender is matched by id.** A `from` that's a [cast](/docs/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
 - **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.

@@ -29,7 +29,7 @@ What a choice does is a list of effects. When something applies is a condition. 
 [{ kind: 'stat', stat: 'friendship', by: 5, of: 'character:ava' }, { kind: 'stat', stat: 'coins', by: -3 }]
 
 // a condition
-{ all: [{ 'places/at': ['cafe'] }, { 'cast/here': ['ava'] }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
+{ all: [{ 'places/at': { location: 'cafe' } }, { 'cast/here': { character: 'ava' } }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
 ```
 
 Because they're data rather than functions, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/docs/reference/custom) the game declares.

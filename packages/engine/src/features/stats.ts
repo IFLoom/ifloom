@@ -10,6 +10,7 @@ import { entityOf, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
+import type { ValueRef } from '../calls.ts'
 import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
 
 /**
@@ -62,10 +63,11 @@ export type StatDef = {
   /** Lowest it can go. 0 if left out. */
   min?: number
   /**
-   * Highest it can go. 100 if left out. A number, or the name of a custom
-   * value (`{ value: 'energyMax' }`) when the ceiling moves with the game.
+   * Highest it can go. 100 if left out. A number, or a custom value by name
+   * (`{ value: 'energyMax' }`, with `with` for its arguments) when the
+   * ceiling moves with the game.
    */
-  max?: number | { value: string }
+  max?: number | ValueRef
   /** When the player can see it. Always, if left out. */
   visible?: Condition
   /**
@@ -371,7 +373,7 @@ export function statMax(state: GameState, game: Game, id: string, cx: FeatureCon
   if (max === undefined) return 100
   if (typeof max === 'number') return max
   const fn = cx.customValue(game, max.value)
-  return fn ? Number(fn(state)) : 100
+  return fn ? Number(fn(state, max.with ?? {})) : 100
 }
 
 /** A value held to the stat's declared range (0–100 unless it says). */

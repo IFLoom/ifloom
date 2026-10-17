@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 6
+export const SCHEMA = 7
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -36,6 +36,18 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   // 5 → 6: one naming rule (ADR 0008) and one gating shape, wherever content
   // can hold them. Words and code are left as they are.
   5: (pack) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, toSchema6)])) as RawPack,
+  // 6 → 7: a plugin call's arguments are always named (ADR 0009). The
+  // first-party calls that took a bare value (`{ 'places/at': ['cafe'] }`,
+  // read as `{ value }`) name it, and values take arguments instead of
+  // encoding them in the name: `messages/unread-texts` is `messages/unread`
+  // with `{ channel: 'texts' }`, in a badge and in prose.
+  6: (pack) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => {
+        if (key === 'prose' || key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? valueTokens(text) : text])) : value]
+        return [key, WORDS.has(key) ? value : deep(value, toSchema7)]
+      }),
+    ) as RawPack,
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -191,6 +203,67 @@ function toSchema6(value: Record<string, unknown>): Record<string, unknown> {
   if (Array.isArray(out.locked)) {
     const { locked, ...rest } = out
     out = { ...rest, blocked: [...(Array.isArray(rest.blocked) ? rest.blocked : []), ...locked] }
+  }
+  return out
+}
+
+/**
+ * The first-party calls that took one bare value at schema 6, and what that
+ * value is named now. A short call's value that isn't an object was read as
+ * `{ value }`, and some read `id` as well.
+ */
+const NAMED_VALUE: Record<string, string> = {
+  'calendar/period': 'period',
+  'calendar/weekday': 'day',
+  'calendar/pass': 'by',
+  'cast/here': 'character',
+  'cast/met': 'character',
+  'places/at': 'location',
+  'places/within': 'location',
+  'places/move': 'location',
+}
+
+/** Arguments with the bare `value` (or `id`) named by the call's noun. */
+function namedValue(args: unknown, noun: string): unknown {
+  if (!isRecord(args)) return args
+  const from = 'value' in args ? 'value' : 'id' in args ? 'id' : undefined
+  return from && !(noun in args) ? renamed(args, { [from]: noun }) : args
+}
+
+/** A value that encoded its argument in its name, as schema 7 asks it: `{ value, with }`. */
+function valueCall(name: string): { value: string; with?: Record<string, unknown> } {
+  const unread = /^messages\/unread-(.+)$/.exec(name)
+  if (unread) return { value: 'messages/unread', with: { channel: unread[1] } }
+  const unseen = /^feed\/unseen-(.+)$/.exec(name)
+  if (unseen) return { value: 'feed/unseen', with: { feed: unseen[1] } }
+  return { value: name }
+}
+
+/** Prose and strings with schema 6's value names in their tokens, as schema 7 writes them. */
+function valueTokens(text: string): string {
+  return text.replace(/\{\{v:(messages\/unread|feed\/unseen)-([A-Za-z0-9_-]+)\}\}/g, (_match, name: string, id: string) =>
+    `{{v:${name} ${name === 'messages/unread' ? 'channel' : 'feed'}=${id}}}`,
+  )
+}
+
+/**
+ * Schema 6 content in one object, as schema 7 writes it: a first-party call's
+ * bare value named, in short or long form, and an app's badge `{ count }` as
+ * a value with its arguments.
+ */
+function toSchema7(value: Record<string, unknown>): Record<string, unknown> {
+  let out = value
+  if (out.kind === 'custom' && typeof out.name === 'string' && NAMED_VALUE[out.name]) out = { ...out, with: namedValue(out.with, NAMED_VALUE[out.name]) }
+  if (typeof out.custom === 'string' && NAMED_VALUE[out.custom]) out = { ...out, with: namedValue(out.with, NAMED_VALUE[out.custom]) }
+  const keys = Object.keys(out)
+  if (keys.length === 1 && NAMED_VALUE[keys[0]]) {
+    const inner = out[keys[0]]
+    const noun = NAMED_VALUE[keys[0]]
+    if (inner !== true && inner !== undefined) out = { [keys[0]]: isRecord(inner) ? namedValue(inner, noun) : { [noun]: inner } }
+  }
+  if (isRecord(out.badge) && typeof out.badge.count === 'string') {
+    const { count, ...rest } = out.badge
+    out = { ...out, badge: { ...rest, ...valueCall(count as string) } }
   }
   return out
 }

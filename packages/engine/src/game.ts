@@ -2,6 +2,7 @@ import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
 import type { Custom } from './custom.ts'
+import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
@@ -42,7 +43,8 @@ export type Blocked = {
 export type ActionDef = {
   id: string
   label: string
-  command: Command
+  /** What it sends: a command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`). */
+  command: CommandRef
   /** Only offered while this holds. */
   when?: Condition
   /**
@@ -72,7 +74,7 @@ export type SceneChoice = {
   irreversible?: string
   effects: Effect[]
   /** A command it sends as well, run before its effects. See `Choice.command`. */
-  command?: Command
+  command?: CommandRef
 }
 
 /**

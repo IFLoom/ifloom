@@ -101,6 +101,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - **Breaking:** a stat's hidden `bands` are levels the player isn't shown, so one condition reads both. `bands: [10, 20, 30]` is `levels: { at: [10, 20, 30], hidden: true }`, the `{ tier: 'charm', gte: 2 }` condition is `{ level: 'charm', gte: 2 }`, and `tier()` and `statBand` are gone: `levelAt(value, at)` and `statLevel` do both jobs. A hidden stat's view has no `level`. Old packs and mods are rewritten as they load (schema 11).
 - **Breaking:** `saves.list()` lists saves that can't be read too, after the rest, as `{ slot, broken }` with the reason (`SaveListing` and `BrokenSave`), so a player can delete one instead of it hiding in storage. Tell them apart with `'broken' in entry`. The React UI's save menu and load page show them with a Delete button (`ui.brokenSave`), and `useSaves` gives them as `broken`.
 - `items`, `storylines` and `activities` are optional on `Game`, like its other lists, so a game built by hand without any can leave them out. Code that reads them should allow for `undefined`.
+- An item's `use` takes effects in any form, like a choice's or an activity's: a plugin's short call such as `applyStatus('caffeinated')` or `{ custom }` work there now, not only the long form.
 
 ### Removed
 

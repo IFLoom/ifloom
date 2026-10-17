@@ -2,7 +2,7 @@ import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
 import type { Custom, TurnContext } from './custom.ts'
-import type { CommandRef } from './calls.ts'
+import type { CommandRef, EffectRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
@@ -63,7 +63,8 @@ export type ItemDef = {
   tags?: string[]
   /** How many a new game starts with. 0 if left out. */
   start?: number
-  use?: { label: string; effects: Effect[] }
+  /** A button in the inventory: using one spends it, then runs these effects, in either form. */
+  use?: { label: string; effects: EffectRef[] }
 }
 
 export type SceneChoice = {

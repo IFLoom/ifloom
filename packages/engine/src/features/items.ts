@@ -87,11 +87,12 @@ export const items = defineFeature<ItemsShape>({
       },
       run: (state, command, game, cx) => {
         const item = itemById(game, command.id)!
-        return cx.runEffects(state, game, [{ kind: 'item', item: command.id, by: -1 }, ...item.use!.effects], false)
+        // Its effects read the state as it was before the item was spent, as an activity's do before its cost.
+        return cx.runEffects(state, game, [{ kind: 'item', item: command.id, by: -1 }, ...cx.buildEffects(state, game, item.use!.effects)], false)
       },
-      effectsOf: (_state, command, game) => {
+      effectsOf: (state, command, game, cx) => {
         const item = itemById(game, command.id)
-        return item?.use ? [{ kind: 'item', item: command.id, by: -1 }, ...item.use.effects] : []
+        return item?.use ? [{ kind: 'item', item: command.id, by: -1 }, ...cx.buildEffects(state, game, item.use.effects)] : []
       },
       references: (command) => [{ item: command.id }],
     },

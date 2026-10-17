@@ -141,7 +141,7 @@ type ItemDef = {
   desc: string
   tags?: string[]
   start?: number
-  use?: { label: string; effects: Effect[] }
+  use?: { label: string; effects: EffectRef[] }
 }
 ```
 
@@ -149,7 +149,7 @@ type ItemDef = {
 |---|---|
 | `tags` | Words your UI can sort, style or filter items by, such as `['clothes']`. The engine gives them no meaning. |
 | `start` | How many a new game starts with. 0 if left out. |
-| `use` | Makes the item usable with [`use`](/docs/reference/commands#use). Using it spends one, then runs these [effects](/docs/reference/effects). |
+| `use` | Makes the item usable with [`use`](/docs/reference/commands#use). Using it spends one, then runs these [effects](/docs/reference/effects), in any form: `{ kind: 'stat', … }`, `{ custom }` or a plugin's short call such as `applyStatus('caffeinated')`. They read the state as it was before the item was spent. |
 
 An item has no slot of its own. To let the player wear one, add the [wardrobe plugin](/docs/plugins/wardrobe) and list the item among its clothes.
 

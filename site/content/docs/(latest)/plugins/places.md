@@ -341,7 +341,7 @@ A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*
 |---|---|---|
 | `{ 'places/move': { location: 'cafe' } }` | `moveTo('cafe')` | Puts the player there at once, and closes any open scene. |
 
-It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
+It works in any effect list: a data scene choice's, an activity's or an item's use. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
 
 No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The place's [`arrive`](#arrival) doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
 

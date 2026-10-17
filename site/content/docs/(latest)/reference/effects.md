@@ -167,7 +167,7 @@ With `from` instead of `scene`, it draws a [storylet](/docs/reference/storylets)
 
 The draw is seeded by the save, the turn and a count of draws from that set, kept in the kv key `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
 
-The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'park' } }`.
+The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, such as a plugin's `effectsOf`, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'park' } }`.
 
 ### item
 

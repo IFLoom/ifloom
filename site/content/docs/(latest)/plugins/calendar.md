@@ -275,7 +275,7 @@ You can use them anywhere a [condition](/docs/reference/conditions) goes: a bloc
 | `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
 | `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
-They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
+They work in any effect list: a data scene choice's, an activity's or an item's use. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
 
 A count that isn't a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar doesn't have, and leaves the period as it was.
 

@@ -237,7 +237,7 @@ An unknown quest or stage is false.
 |---|---|---|
 | `{ 'quests/start': { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
 
-It works in a data scene choice's effects and an activity's `effects`. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plain-effect list (an item's use), write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
+It works in any effect list: a data scene choice's, an activity's or an item's use. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
 
 ## Commands
 

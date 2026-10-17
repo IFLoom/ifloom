@@ -1168,7 +1168,7 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 - **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the activity a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
-- **A plain-effect list takes the long form.** Item uses take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
+- **A plain-effect list takes the long form.** A plugin's `effectsOf` and `applyEffects` take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. Every list content writes (a choice's, an activity's, a trigger's, an item's use) takes any form. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.
 
 ## See it in an example

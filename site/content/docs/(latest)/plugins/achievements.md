@@ -159,7 +159,7 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 |---|---|---|
 | `{ 'achievements/grant': { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
-In a plain-effect list (an item's use), write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
+It works in any effect list, an item's use included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
 
 ## Value
 

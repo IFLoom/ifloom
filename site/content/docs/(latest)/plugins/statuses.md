@@ -174,7 +174,7 @@ const medicine = removeStatus('cold')        // gone, nothing else happens
 const recovered = removeStatus('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing a status the game doesn't have does nothing. In a plain-effect list (an item's use), write the long form, `{ kind: 'custom', name: 'statuses/apply', with: { status: 'tired' } }`.
+Applying or removing a status the game doesn't have does nothing. Both work in any effect list, an item's use included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'statuses/apply', with: { status: 'tired' } }`.
 
 ## Commands
 

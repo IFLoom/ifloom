@@ -460,7 +460,7 @@ The `<article>` carries `data-scene` with the scene's id, or `stage` when no sce
 
 **Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.transition.key`](/docs/reference/view#transition) changes. It carries `data-transition-in` with the new screen's `in`, which the base styles animate. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
 
-**Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/guide/transitions#the-react-ui) to restyle them.
+**Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/recipes/transitions#the-react-ui) to restyle them.
 
 With [`motion`](#uioptions) off, or the player asking for reduced motion, none of this plays: no attribute is set and everything is shown at once.
 
@@ -821,7 +821,7 @@ stats: [
 ]
 ```
 
-They're deliberately plain. For anything more, such as a bar that changes colour as it runs low, write your own: [Building your own HUD](/docs/guide/hud) shows how.
+They're deliberately plain. For anything more, such as a bar that changes colour as it runs low, write your own: [Building your own HUD](/docs/recipes/hud) shows how.
 
 To reword them, set the words in the game's [`strings`](/docs/react#words):
 
@@ -1165,7 +1165,7 @@ With `pages` on (see [mountGame](/docs/react#mountgame)), the game opens on a ti
 - `load`, `settings` and `credits`;
 - any page you add in `PagesOptions.pages`, by its id.
 
-The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/docs/guide/title-screen) walks through setting it up.
+The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/docs/recipes/title-screen) walks through setting it up.
 
 ### PagesOptions
 
@@ -1417,7 +1417,7 @@ import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
 <GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, stage: ['notice-strip', ...DEFAULT_LAYOUT.stage] }} />
 ```
 
-Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/guide/hud) shows how to write your own from the view.
+Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/recipes/hud) shows how to write your own from the view.
 
 Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-strip`, `notice-strip-item` (with `data-strip`) and `badge`, plus the dialog's parts.
 
@@ -1456,7 +1456,7 @@ const components: Components = {
 <GameShell runner={runner} panels={{ coconut: Coconuts }} components={components} />
 ```
 
-The [Minigames guide](/docs/guide/minigames#your-own-panel) builds a panel of your own.
+The [Minigames recipe](/docs/recipes/minigames#your-own-panel) builds a panel of your own.
 
 Replaceable as `MinigameCard` in [`components`](#components). Parts: `minigame` (with `data-minigame` and `data-state`), `minigame-title`, `minigame-state`, `minigame-timer`, `minigame-inputs` and `minigame-input` (with `data-input`).
 
@@ -1691,7 +1691,7 @@ Replaceable as `FeedSection` in [`components`](#components). Parts: `feed`, `pos
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-Plays the game's sound with the [audio player](/docs/reference/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner; outside one, pass `runner`. The other options go to [`startAudio`](/docs/reference/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/docs/react#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/docs/react#sound).
+Plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner; outside one, pass `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/docs/react#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/docs/react#sound).
 
 ```tsx
 function App() {

@@ -1,0 +1,13 @@
+{
+  "title": "Recipes",
+  "description": "How to build the common pieces of a game",
+  "root": true,
+  "pages": [
+    "title-screen",
+    "hud",
+    "plugin-ui",
+    "minigames",
+    "transitions",
+    "inline-actions"
+  ]
+}

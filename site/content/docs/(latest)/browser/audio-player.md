@@ -18,7 +18,7 @@ import { startAudio, type AudioLike, type AudioOptions, type AudioPlayer } from 
 
 ## Install
 
-Add `@ifloom/audio` beside the engine, the same way you added the engine (see [Installation](/docs/guide/installation)). `@ifloom/react` already depends on it. It plays files with the browser's own `HTMLAudioElement`, so it needs no build step or extra library, and it works from a page opened from disk.
+Add `@ifloom/audio` beside the engine, the same way you added the engine (see [Installation](/docs/guide/installation)). `@ifloom/react` takes it as a peer dependency, which npm installs with it. It plays files with the browser's own `HTMLAudioElement`, so it needs no build step or extra library, and it works from a page opened from disk.
 
 Put your sound files in the game's `public/audio/` folder. A track's `src` is read through [`audioSrc`](/docs/reference/audio#audiosrc), so `{ src: 'music/calm.ogg' }` is `public/audio/music/calm.ogg`. [`ifloom check`](/docs/cli#ifloom-check) reports any that are missing.
 

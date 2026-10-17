@@ -1,0 +1,9 @@
+{
+  "title": "Browser",
+  "description": "@ifloom/browser and @ifloom/audio",
+  "root": true,
+  "pages": [
+    "index",
+    "audio-player"
+  ]
+}

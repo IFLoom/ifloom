@@ -90,7 +90,7 @@ const stored = await runner.profile?.get<Record<string, unknown>>('core:settings
 const size = settingValue(runner.game, stored, 'textSize')
 ```
 
-With a runner you rarely need it: [`runner.settings()`](/docs/reference/runner#settings) reads every setting this way, `ui` settings from the profile and play settings from the game in play, and React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/reference/audio-player#volume-and-mute) read that. Use `settingValue` when you hold stored settings without a runner.
+With a runner you rarely need it: [`runner.settings()`](/docs/reference/runner#settings) reads every setting this way, `ui` settings from the profile and play settings from the game in play, and React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/browser/audio-player#volume-and-mute) read that. Use `settingValue` when you hold stored settings without a runner.
 
 ## Changing a setting
 

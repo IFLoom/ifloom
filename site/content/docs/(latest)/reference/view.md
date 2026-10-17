@@ -281,7 +281,7 @@ channels.music.volumeSetting  // 'musicVolume': read its value from the profile
 cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
 ```
 
-The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/docs/reference/audio-player) does all of this. See [Audio](/docs/reference/audio).
+The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/docs/browser/audio-player) does all of this. See [Audio](/docs/reference/audio).
 
 ### transition
 
@@ -300,7 +300,7 @@ runner.subscribe(() => {
 })
 ```
 
-The reveal beats in `scene.beats` time the prose within a scene. See [Transitions](/docs/reference/transitions) for both, and the [Transitions guide](/docs/guide/transitions) for drawing them in each framework.
+The reveal beats in `scene.beats` time the prose within a scene. See [Transitions](/docs/reference/transitions) for both, and the [Transitions recipe](/docs/recipes/transitions) for drawing them in each framework.
 
 ### plugins
 

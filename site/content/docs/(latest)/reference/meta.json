@@ -40,8 +40,6 @@
     "progress",
     "random",
     "audio",
-    "audio-player",
-    "browser",
     "media",
     "transitions"
   ]

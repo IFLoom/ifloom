@@ -16,7 +16,7 @@ import {
 } from '@ifloom/plugin-achievements'
 ```
 
-The plugin has no UI of its own. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/guide/plugin-ui#an-achievements-page) builds an achievements page on it.
+The plugin has no UI of its own. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
 
 ## Install
 

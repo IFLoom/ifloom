@@ -392,7 +392,7 @@ One piece of a paragraph that holds [inline actions or tooltips](#inline-actions
 - `action` is an inline action: `text` is the words of its link, and `choice` is what it presses, as [`view.scene.choices`](/docs/reference/view#the-scene) would have it (`command`, `disabled`, `price`, `irreversible`, `warning`). Send `choice.command` when it's pressed and `disabled` is unset.
 - `tip` is a tooltip: `text` is the words shown, and `tip` the note, filled in for this save.
 
-A UI draws an `action` as a button in the line and a `tip` as a button that shows its note. The React UI does both with [`InlineAction`](/docs/react/components#inlineaction) and [`Tip`](/docs/react/components#tip). For your own UI, see [Actions and tooltips in the text](/docs/guide/inline-actions).
+A UI draws an `action` as a button in the line and a `tip` as a button that shows its note. The React UI does both with [`InlineAction`](/docs/react/components#inlineaction) and [`Tip`](/docs/react/components#tip). For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ## parseBeats
 

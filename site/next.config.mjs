@@ -2,6 +2,22 @@ import { createMDX } from 'fumadocs-mdx/next'
 
 const withMDX = createMDX()
 
+/** Docs pages that moved, old path to new, each redirected as a page and as its Markdown under /llms.mdx/. */
+const MOVED = {
+  // The timed-effects plugin became the statuses plugin.
+  'plugins/effects': 'plugins/statuses',
+  // The how-to pages left the guide for Recipes.
+  'guide/title-screen': 'recipes/title-screen',
+  'guide/hud': 'recipes/hud',
+  'guide/plugin-ui': 'recipes/plugin-ui',
+  'guide/minigames': 'recipes/minigames',
+  'guide/transitions': 'recipes/transitions',
+  'guide/inline-actions': 'recipes/inline-actions',
+  // The browser packages left the engine's reference.
+  'reference/browser': 'browser',
+  'reference/audio-player': 'browser/audio-player',
+}
+
 const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'feed', 'generators', 'jobs', 'messages', 'places', 'quests', 'shop', 'statuses', 'wardrobe']
 
 /** @type {import('next').NextConfig} */
@@ -21,11 +37,11 @@ const config = {
   },
   // Pages that moved, so old links still land.
   async redirects() {
-    return [
-      // The timed-effects plugin became the statuses plugin.
-      { source: '/docs/plugins/effects', destination: '/docs/plugins/statuses', permanent: true },
-      { source: '/llms.mdx/docs/plugins/effects', destination: '/llms.mdx/docs/plugins/statuses', permanent: true },
-    ]
+    return Object.entries(MOVED).flatMap(([from, to]) => [
+      { source: `/docs/${from}`, destination: `/docs/${to}`, permanent: true },
+      // A page's Markdown is at /llms.mdx/docs/<page>/content.md.
+      { source: `/llms.mdx/docs/${from}/:rest*`, destination: `/llms.mdx/docs/${to}/:rest*`, permanent: true },
+    ])
   },
 }
 

@@ -57,7 +57,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 
 | Template | What you get |
 |---|---|
-| `react` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/guide/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
+| `react` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/recipes/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
 | `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
@@ -65,7 +65,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |
 | `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
 
-The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/reference/browser). [Using another framework](/docs/guide/frameworks) walks through them.
+The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Using another framework](/docs/guide/frameworks) walks through them.
 
 `--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
@@ -477,7 +477,7 @@ checkBuild('dist')   // []
 - **The map's keys are the paths the game uses**, `art/…`, as [`artSrc`](/docs/reference/prose#artsrc) writes them. With another `folder`, they start with that folder's name instead.
 - **With nothing to inline, the page is left alone.** When there's no `art/` folder, or it's empty, no script is added and nothing is removed. The result says `files: 0`.
 - **A second run changes nothing.** On a folder already inlined only videos are left in `art/`, if anything, so the same rule applies.
-- **`audio/` isn't touched.** The sound files the [audio player](/docs/reference/audio-player) plays stay beside the page. You could pass `folder: 'audio'`, but the player looks for files beside the page and never reads the map, so they wouldn't play.
+- **`audio/` isn't touched.** The sound files the [audio player](/docs/browser/audio-player) plays stay beside the page. You could pass `folder: 'audio'`, but the player looks for files beside the page and never reads the map, so they wouldn't play.
 
 ### checkGame
 

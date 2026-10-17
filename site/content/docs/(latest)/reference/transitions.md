@@ -3,7 +3,7 @@ title: Transitions
 description: How a scene or a room comes on screen and goes off, and prose revealed a step at a time. The engine names them; the UI draws them.
 ---
 
-A scene can fade in, a room can slide in from the side, and a paragraph can wait a moment before it appears. The engine never animates anything. It names the transition in the [view](/docs/reference/view#transition), as it names the music in `view.audio`, and the UI decides how to draw it. The React UI draws the built-in names with CSS. With another framework, the [Transitions guide](/docs/guide/transitions) shows how to apply them.
+A scene can fade in, a room can slide in from the side, and a paragraph can wait a moment before it appears. The engine never animates anything. It names the transition in the [view](/docs/reference/view#transition), as it names the music in `view.audio`, and the UI decides how to draw it. The React UI draws the built-in names with CSS. With another framework, the [Transitions recipe](/docs/recipes/transitions) shows how to apply them.
 
 Where a transition can come from, most specific first:
 
@@ -33,7 +33,7 @@ The built-in names, which every UI is asked to know:
 | `zoom` | Grows slightly into place. | Grows slightly and fades. |
 | `none` | Appears at once. | Goes at once. |
 
-The set is open. Any other name a game declares in [`transitions.names`](#gametransitions) is passed through to the UI as it is, and the UI draws it with CSS of the game's own (see [Your own names](/docs/guide/transitions#your-own-names)). The [content checker](#checks) reports a name that's neither built in nor declared, so a typo such as `'fdae'` is caught when the game loads.
+The set is open. Any other name a game declares in [`transitions.names`](#gametransitions) is passed through to the UI as it is, and the UI draws it with CSS of the game's own (see [Your own names](/docs/recipes/transitions#your-own-names)). The [content checker](#checks) reports a name that's neither built in nor declared, so a typo such as `'fdae'` is caught when the game loads.
 
 ## Transition
 

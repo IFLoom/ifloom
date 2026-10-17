@@ -16,7 +16,7 @@ npm install
 npm run dev -w my-game
 ```
 
-Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/reference/browser) (see [Minigames](#minigames)). They share two files:
+Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share two files:
 
 - `src/game.ts`, the game.
 - `src/styles.css`, a plain stylesheet.
@@ -838,14 +838,14 @@ defineProps<{ minigame: MinigameView }>()
 </section>
 ```
 
-Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/reference/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
+Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
 
-- [`startClock(runner)`](/docs/reference/browser#startclock) sends a `tick` about every 100 ms while a timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
-- [`startKeys(runner)`](/docs/reference/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
+- [`startClock(runner)`](/docs/browser#startclock) sends a `tick` about every 100 ms while a timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
+- [`startKeys(runner)`](/docs/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
 
 They're plain DOM, so every framework uses them the same way, and the React UI runs the same code. Each returns a function that stops it.
 
-The [Minigames guide](/docs/guide/minigames#your-own-panel) draws a panel for one minigame by its id, in each framework.
+The [Minigames recipe](/docs/recipes/minigames#your-own-panel) draws a panel for one minigame by its id, in each framework.
 
 ## What else to draw
 
@@ -854,16 +854,16 @@ The [view reference](/docs/reference/view) lists every field. Beyond what the te
 - `when`, where the game is in time and place, when a plugin says.
 - `notices`, news the player hasn't dismissed. Send `{ type: 'dismiss' }` to clear them.
 - `scene.speaker` and `scene.stageImage`, who is talking and the picture to show with them.
-- `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice, and [Building UI for plugins](/docs/guide/plugin-ui) draws some of them.
-- `settings`, for a settings page. See [The title screen and settings](/docs/guide/title-screen#add-settings).
+- `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice, and [Building UI for plugins](/docs/recipes/plugin-ui) draws some of them.
+- `settings`, for a settings page. See [The title screen and settings](/docs/recipes/title-screen#add-settings).
 
 `entities`, `collections` and `pack` are there when your game has them.
 
 ## Sound
 
-If your game lists tracks in [`game.audio`](/docs/reference/audio), the templates already play them. [`startAudio`](/docs/reference/audio-player#startaudio) follows the runner, not your components, so it works the same whatever draws the page. Start it once, next to the runner, as each template's runner module does. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
+If your game lists tracks in [`game.audio`](/docs/reference/audio), the templates already play them. [`startAudio`](/docs/browser/audio-player#startaudio) follows the runner, not your components, so it works the same whatever draws the page. Start it once, next to the runner, as each template's runner module does. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
 
-A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/reference/audio-player#audioplayer) with the track's file:
+A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/browser/audio-player#audioplayer) with the track's file:
 
 ```ts
 import { audioSrc } from '@ifloom/engine'
@@ -878,4 +878,4 @@ if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.vol
 - [The runner](/docs/reference/runner) lists everything else a runner does, such as undo, saves and the backlog.
 - [The view](/docs/reference/view) describes every field you can draw.
 - [Commands](/docs/reference/commands) lists the commands you can send.
-- [Building your own HUD](/docs/guide/hud), [Building UI for plugins](/docs/guide/plugin-ui) and [The title screen](/docs/guide/title-screen) show what they build in each framework.
+- [Building your own HUD](/docs/recipes/hud), [Building UI for plugins](/docs/recipes/plugin-ui) and [The title screen](/docs/recipes/title-screen) show what they build in each framework.

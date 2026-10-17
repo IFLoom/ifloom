@@ -207,7 +207,7 @@ import { runner, view } from './runner.ts'
 
 The page to read needs no clock, room or people, because the game has none. The name the reader types is an [input](/docs/guide/frameworks#inputs), drawn as in the templates.
 
-In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` kv key that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/guide/title-screen) covers how it works.
+In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` kv key that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/recipes/title-screen) covers how it works.
 
 In React, [`READING_LAYOUT`](/docs/react#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
 

@@ -406,7 +406,7 @@ In the React UI, a layout is the closest thing to arranging the UI bar:
 - **StoryCaption** is a part on the sidebar, such as `'stats'`, or a component of your own in the list. See [Parts of your own](/docs/react#parts-of-your-own).
 - **StoryMenu** is the player's menu, the `'menu'` part.
 - **PassageHeader and PassageFooter** are parts above and below `'scene'` on the stage.
-- **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/guide/title-screen) walks through them, with a title screen of your own for the other templates.
+- **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
 - **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Using another framework](/docs/guide/frameworks).
 
 ### The `Setting` API
@@ -488,7 +488,7 @@ audio: {
 { kind: 'audio', channel: 'music', to: null }
 ```
 
-The engine works out what should be playing, and the [audio player](/docs/reference/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
+The engine works out what should be playing, and the [audio player](/docs/browser/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
 
 ### Images and video
 

@@ -140,7 +140,7 @@ It sets up what most games want:
 | `unstyled` | `false`. `true` drops every built-in class. |
 | `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
 | `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
-| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/reference/audio-player#startaudio) as its [options](/docs/reference/audio-player#audiooptions). See [Sound](#sound). |
+| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
 
 Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` and `className` are ignored, and the rest go to the provider.
 
@@ -326,11 +326,11 @@ mountGame(game, {
 
 The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains **Settings** and **Title screen**.
 
-Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/reference/state#new-game) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/guide/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
+Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/reference/state#new-game) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
 
 ## Sound
 
-When the game lists any tracks in [`game.audio`](/docs/reference/audio), `mountGame` starts the [audio player](/docs/reference/audio-player) for you. Music starts on the player's first click or key press, and each sound plays once. You don't need to add anything to the page, and the settings page already draws the game's volume and mute settings.
+When the game lists any tracks in [`game.audio`](/docs/reference/audio), `mountGame` starts the [audio player](/docs/browser/audio-player) for you. Music starts on the player's first click or key press, and each sound plays once. You don't need to add anything to the page, and the settings page already draws the game's volume and mute settings.
 
 To see what it's doing, pass it a log:
 
@@ -348,7 +348,7 @@ A spoken line with a voice, `Ava: "Morning!" [[voice:ava.morning]]`, gets a smal
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-If you draw [`GameShell`](#gameshell) yourself rather than with `mountGame`, start the player with `useAudio`. It starts when the component mounts and stops when it unmounts. Inside a [`GameProvider`](/docs/react/components#gameprovider) it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/reference/audio-player#audiooptions), and are read once, when the player starts.
+If you draw [`GameShell`](#gameshell) yourself rather than with `mountGame`, start the player with `useAudio`. It starts when the component mounts and stops when it unmounts. Inside a [`GameProvider`](/docs/react/components#gameprovider) it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
 
 ```tsx
 import { useAudio, GameShell } from '@ifloom/react'
@@ -359,7 +359,7 @@ function App() {
 }
 ```
 
-It returns the [player](/docs/reference/audio-player#audioplayer) once it has started, and `null` before then. Use one or the other: `mountGame` with `useAudio` inside it would play every sound twice.
+It returns the [player](/docs/browser/audio-player#audioplayer) once it has started, and `null` before then. Use one or the other: `mountGame` with `useAudio` inside it would play every sound twice.
 
 ## Pictures and video
 

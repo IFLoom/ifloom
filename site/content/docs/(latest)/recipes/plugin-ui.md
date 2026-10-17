@@ -548,8 +548,8 @@ const showAchievements = ref(false)
 {/if}
 ```
 
-In the React UI, the counter and the board go in lists of the [layout](/docs/react#layouts), and the achievements page is one of the [pages](/docs/guide/title-screen#pages-of-your-own), so the title screen gets an Achievements button. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
+In the React UI, the counter and the board go in lists of the [layout](/docs/react#layouts), and the achievements page is one of the [pages](/docs/recipes/title-screen#pages-of-your-own), so the title screen gets an Achievements button. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
 
 ## The same for any plugin
 
-Every first-party plugin works this way. Read its slice of `view.plugins` by the type its package exports, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD guide](/docs/guide/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/plugins/statuses#the-view) has a view to list active statuses beside the stats.
+Every first-party plugin works this way. Read its slice of `view.plugins` by the type its package exports, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD recipe](/docs/recipes/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/plugins/statuses#the-view) has a view to list active statuses beside the stats.

@@ -2,7 +2,7 @@
 title: "Audio"
 description: "Tracks, playlists and channels, what plays on a background channel, sounds and voices, and the volume settings."
 ---
-You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/docs/reference/effects#audio) and [`sound`](/docs/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/docs/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/docs/reference/view#audio). The [audio player](/docs/reference/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/docs/react#sound) starts it for you.
+You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/docs/reference/effects#audio) and [`sound`](/docs/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/docs/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/docs/reference/view#audio). The [audio player](/docs/browser/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/docs/react#sound) starts it for you.
 
 ```ts
 import {
@@ -328,7 +328,7 @@ The [content checker](/docs/reference/checks) checks everything audio names. The
 
 ## Gotchas
 
-- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/docs/reference/audio-player), `view.audio` is only data.
+- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/docs/browser/audio-player), `view.audio` is only data.
 - **A sound effect is kept, a scene's sound isn't.** A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out, so a player that has just started marks every key it can see as already heard. Otherwise loading a save would replay old sounds.
 - **A stage's prose doesn't cue.** `[[sound:id]]` in a [place's](/docs/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
 - **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.

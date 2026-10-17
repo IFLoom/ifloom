@@ -256,7 +256,7 @@ else if (loaded.value.missingPacks.length) showMessage(`Made with mods you don't
 
 `runner.view()` keeps the view it built and the state it built it for. Asked again while the state is the same object, it returns the same view without building it again. After a command, an undo or a load, the state is a new object, so the next call builds a new view.
 
-This means everything that reads the view can call `runner.view()` freely. In a browser, the backlog, the [React UI](/docs/react) and the [audio player](/docs/reference/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
+This means everything that reads the view can call `runner.view()` freely. In a browser, the backlog, the [React UI](/docs/react) and the [audio player](/docs/browser/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
 
 ```ts
 runner.apply({ type: 'choose', id: 'open' })

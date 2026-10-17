@@ -13,7 +13,7 @@ import {
 } from '@ifloom/plugin-shop'
 ```
 
-The plugin has no UI of its own. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as an activity's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/guide/plugin-ui#a-shop-counter) builds one.
+The plugin has no UI of its own. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as an activity's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
 
 ## Install
 

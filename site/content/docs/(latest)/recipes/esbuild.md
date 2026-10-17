@@ -2,7 +2,7 @@
 title: "esbuild"
 description: "Build an IFLoom game with esbuild: no set-up for the packages, Tailwind's CLI or the prebuilt stylesheet for the React UI, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
 ---
-Use esbuild if you want the smallest build set-up you can read in one go. It compiles TypeScript and JSX itself, so your game needs no loader, and a script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
+Use esbuild if you want a small build set-up. It compiles TypeScript and JSX itself, so your game needs no loader, and a build script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
 
 ## Install
 
@@ -33,7 +33,7 @@ The React UI's stylesheet is written for Tailwind CSS v4, which esbuild doesn't 
 npx tailwindcss -i src/styles.css -o tailwind.css
 ```
 
-Or go without Tailwind: import the prebuilt stylesheet, and a preset if you like, from `main.ts` as plain CSS, and leave out the Tailwind steps below.
+To go without Tailwind, import the prebuilt stylesheet from `main.ts` as plain CSS, with a preset if you like, and leave out the Tailwind steps below.
 
 ```ts
 import '@ifloom/react/styles.min.css'

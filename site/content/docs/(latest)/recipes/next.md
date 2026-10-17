@@ -6,7 +6,7 @@ Use Next when your game lives on a website: a page of a site you already run on 
 
 Next builds a website for a server to host. It can't make the single `index.html` that opens from disk, which [`ifloom build`](/docs/cli#ifloom-build) makes for a game players download. Even a static export (`output: 'export'`) loads its scripts in chunks from absolute paths, so it needs a web server. If you want both, keep the game in its own package with the CLI, and import it into the site too.
 
-Next is React, so this page uses React throughout: the [React UI](/docs/react), or your own UI in React.
+Next is React, so everything below uses React, either the [React UI](/docs/react) or your own UI written in React.
 
 ## Start from the template
 
@@ -34,7 +34,7 @@ games/my-site/
 └── AGENTS.md
 ```
 
-Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` from the `ifloom` CLI, and `typecheck`. The rest of this page goes through each part, so you can do the same in an app of your own.
+Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` from the `ifloom` CLI, and `typecheck`. The sections below go through each part, so you can set up an app of your own the same way.
 
 ## Add the packages
 
@@ -82,7 +82,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 `styles.css` brings Tailwind itself, so don't import `tailwindcss` again. If the app already has Tailwind v4 of its own, import `@ifloom/react/theme.css` after your `@import "tailwindcss"` instead (see [Bringing your own Tailwind](/docs/react/customising#bringing-your-own-tailwind)). The second line picks a [theme preset](/docs/react/customising#1-pick-a-theme-preset), and is optional.
 
-To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` from the root layout instead, and a preset as `@ifloom/react/themes/paper.min.css`, then leave out the PostCSS config. Without the React UI you need no Tailwind at all either. Style your own UI however the app already does.
+To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` from the root layout instead, and a preset as `@ifloom/react/themes/paper.min.css`, then leave out the PostCSS config. If you don't use the React UI, you don't need Tailwind at all, and you can style your own UI however the app already does.
 
 ## Start the game in a client component
 
@@ -137,7 +137,7 @@ The page around the game is an ordinary Next page. Put the game on any route, be
 
 ## Your own UI instead
 
-To draw the game yourself, read the view with React's `useSyncExternalStore`, which takes exactly what `runner.subscribe` and `runner.view` are:
+To draw the game yourself, read the view with React's `useSyncExternalStore`. Its first two arguments are a subscribe function and a snapshot function, and `runner.subscribe` and `runner.view` are both:
 
 ```tsx
 'use client'
@@ -160,7 +160,7 @@ function Playing({ runner }: { runner: Runner }) {
 }
 ```
 
-The third argument is the server's snapshot, which `useSyncExternalStore` asks for in a server-rendered app. Then `@ifloom/react` and Tailwind can go. Keep `@ifloom/audio` and `@ifloom/browser` for sound, the minigame clock and the keys (see [A UI from scratch](/docs/guide/ui-from-scratch)). [Your own UI in any framework](/docs/guide/frameworks) has the rest of a UI in React by hand.
+The third argument is the server's snapshot, which `useSyncExternalStore` asks for in a server-rendered app. With your own UI you can drop `@ifloom/react` and Tailwind. Keep `@ifloom/audio` and `@ifloom/browser` for sound, the minigame clock and the keys (see [A UI from scratch](/docs/guide/ui-from-scratch)). [Your own UI in any framework](/docs/guide/frameworks) has the rest of a UI in React by hand.
 
 ## Check and playtest it
 
@@ -179,7 +179,7 @@ The CLI's `check` and `playtest` don't use Next. They load `src/game.ts` with th
 }
 ```
 
-Keep the game in `src/game.ts`, exported as `default` or `game`, or pass its path: `ifloom check app/game/content.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. `ifloom dev` and `ifloom build` aren't for a Next app. Use Next's own.
+Keep the game in `src/game.ts`, exported as `default` or `game`, or pass its path: `ifloom check app/game/content.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. In a Next app, use Next's own `dev` and `build` in place of `ifloom dev` and `ifloom build`.
 
 ## Can it make the single offline file?
 

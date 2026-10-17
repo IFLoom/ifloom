@@ -39,7 +39,7 @@ npm install
 npm run dev -w my-game
 ```
 
-`npm run new` makes a new game in `games/my-game`. The `games/` folder is an npm workspace, which is why you run `npm install` again: it links the new game to the engine and its tools. Git ignores `games/`, so your game stays out of the engine's history and pulling a newer IFLoom leaves it alone.
+`npm run new` makes a new game in `games/my-game`. The `games/` folder is an npm workspace, so you run `npm install` again to link the new game to the engine and its tools. Git ignores `games/`, so your game stays out of the engine's history and pulling a newer IFLoom leaves it alone.
 
 The default template is a small game drawn with the [React UI](/docs/react). Pick another with `--template`:
 
@@ -128,7 +128,7 @@ Inside the checkout nothing needs building. Each package's `exports` in its `pac
 - the website
 - Node itself, which the checkout's `.npmrc` runs with `--conditions=ifloom-source` for npm's scripts and `npx`, so the `ifloom` command runs from source too
 
-So a change to a package shows straight away in the examples and in your games in `games/`. Each package also builds to JavaScript, its type declarations and source maps in its `dist/` folder, which is what a game beside the checkout, or one installed from npm, uses:
+A change to a package shows up straight away in the examples and in your games in `games/`. Each package also builds into its `dist/` folder as JavaScript, type declarations and source maps. A game beside the checkout uses those files, as will a game that installs IFLoom from npm:
 
 ```sh
 npm run build    # every package's dist/
@@ -147,7 +147,7 @@ work/
 └── my-game/     your game
 ```
 
-Your game installs the packages as they'll be published: `npm run pack` in the checkout builds each one and packs it into `ifloom/packs/`, and your game depends on those files. It works with npm, pnpm, yarn or bun.
+Your game installs the packages as they'll be published. `npm run pack` in the checkout builds each one and packs it into a file in `ifloom/packs/`, and your game depends on those files. You can use npm, pnpm, yarn or bun.
 
 1. Build and pack the packages:
 
@@ -268,7 +268,7 @@ A calendar, places, characters, quests, a wardrobe and a phone each come as a pl
 }
 ```
 
-Each package's file is `packs/`, its name without the `@` and with the `/` as a `-`, and its version: `@ifloom/plugin-jobs` is `packs/ifloom-plugin-jobs-0.0.0.tgz`. The [phone](/docs/plugins/phone) is a bundle rather than a plugin, and it needs the three plugins it wires together beside it:
+A package's file in `packs/` is its name with the `@` dropped and the `/` turned into a `-`, then its version. So `@ifloom/plugin-jobs` is `packs/ifloom-plugin-jobs-0.0.0.tgz`. The [phone](/docs/plugins/phone) is a bundle rather than a plugin, and it needs the three plugins it wires together beside it:
 
 ```json
 {
@@ -297,7 +297,7 @@ npm run new -- ifloom-plugin-weather --template plugin
 mv games/ifloom-plugin-weather ../ifloom-plugin-weather
 ```
 
-Its `tsconfig.json` is already complete. Point the engine dev dependency at the packed engine in `package.json` (run `npm run pack` in the checkout first), and leave the peer dependency as it is, since that's the range a game will see once the plugin is on npm:
+Its `tsconfig.json` is already complete. In `package.json`, point the engine dev dependency at the packed engine (run `npm run pack` in the checkout first). Leave the peer dependency as it is. That's the range a game will see once the plugin is on npm.
 
 ```json
 {

@@ -2,7 +2,7 @@
 title: "The CLI"
 description: "The ifloom command: new, dev, build, check, playtest, snapshot and unlock-hash, the Vite preset, and the functions behind them for scripts."
 ---
-`@ifloom/cli` runs your game while you write it and builds it into a folder that opens from disk. It also checks the game for the problems the loader can find, plays it unattended, and records how every scene reads. It also starts new games. It has seven commands and a Vite preset:
+`@ifloom/cli` starts new games, runs your game while you write it, and builds it into a folder that opens from disk. It can also check the game for problems the loader finds, play it with no one at the keyboard, and record how every scene reads. It has seven commands and a Vite preset:
 
 | Command | Does |
 |---|---|
@@ -20,7 +20,7 @@ Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others fro
 
 ## Install
 
-[Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/cli` as a dev dependency the same way.
+[Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies on the packed packages. Add `@ifloom/cli` as a dev dependency the same way.
 
 `@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
 
@@ -75,7 +75,13 @@ The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the
 
 `--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
-Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends on `@ifloom/*` packages and on the Vite plugins its UI needs (React's and Tailwind's for `react` and the examples; for `vue` and `svelte`, the framework, its Vite plugin and its type checker; for `next`, Next, React and Tailwind's PostCSS plugin, with `dev` and `build` running Next and `check` and `playtest` running `ifloom`), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
+Every new game has the scripts `dev`, `build`, `check` and `playtest`. It also has an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). Its `package.json` depends on the `@ifloom/*` packages and on what its UI needs:
+
+- `react` and the examples: React's and Tailwind's Vite plugins.
+- `vue` and `svelte`: the framework, its Vite plugin and its type checker.
+- `next`: Next, React and Tailwind's PostCSS plugin. Its `dev` and `build` run Next, and its `check` and `playtest` run `ifloom`.
+
+The copies of the examples leave out their tests, builds and recorded runs.
 
 The name has to work as an npm package name: lower-case letters, digits and dashes. `ifloom new` refuses a folder that already exists and isn't empty.
 
@@ -211,11 +217,11 @@ locations cafe: no file public/art/cafe/room.jpg
 
 A game with [locked content](#locked-content) is checked with it. `check` reads the packs in `src/unlocks/` from source, so it needs no code, and passes them to the module's function as `{ unlocked }` (see below). It checks the game with them, and reports:
 
-- a file in `src/unlocks/` whose name isn't one of the game's unlocks;
-- a code that's set (in the environment or a `.env` file) but doesn't match its unlock's hash;
-- a module that left the packs out of its game.
+- a file in `src/unlocks/` whose name isn't one of the game's unlocks
+- a code that's set (in the environment or a `.env` file) but doesn't match its unlock's hash
+- a module that left the packs out of its game
 
-An unlock whose code isn't set is a note, not a problem. The game without its unlocks is checked as well. What it lacks that the locked packs bring, such as a scene only they have, is listed after the problems as references into locked content, skipped. Make sure the game reaches each of those only behind `unlocks/has`.
+An unlock whose code isn't set gets a note, and doesn't count as a problem. The game without its unlocks is checked as well. What it lacks that the locked packs bring, such as a scene only they have, is listed after the problems as references into locked content, skipped. Make sure the game reaches each of those only behind `unlocks/has`.
 
 ```
 IFLOOM_UNLOCK_SUPPORTER isn't set: unlock "supporter"'s content was checked from source, but ifloom build needs the code to encrypt it.
@@ -228,8 +234,8 @@ No problems.
 
 Export the game as `default` or as `game`, in any of these shapes:
 
-- a [`Game`](/docs/reference/game#game);
-- what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are;
+- a [`Game`](/docs/reference/game#game).
+- what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are.
 - a function, called with no arguments, that returns either of those. A game with [locked content](#locked-content-in-a-check) is called with `{ unlocked }` too, the locked packs, to load after its own.
 
 The simplest module returns what `loadGame` gave it:
@@ -307,7 +313,7 @@ Wind down the street, rattling the bakery sign.
 > {"type":"custom","name":"cast/talk","with":{"who":"sam"}}
 ```
 
-`[>]` is a button the player can press, `[ ]` is one that's greyed out (with its reason after the dash), and `->` is a way out. A button's price is in brackets after it. A person's buttons carry their name, as in `Sam: Talk`, because otherwise every person's would read **Talk**.
+`[>]` is a button the player can press, `[ ]` is one that's greyed out (with its reason after the dash), and `->` is a way out. A button's price is in brackets after it. A person's buttons carry their name, as in `Sam: Talk`, because otherwise every person's would read `Talk`.
 
 `character` in the numbers is the [cast](/docs/plugins/cast)'s kind. Small Town has two characters. The friendship declared on them is a stat of that kind, so it isn't a column.
 
@@ -343,7 +349,7 @@ ifloom playtest tools/playtest.ts --turns 14
 
 **Gotchas.**
 
-- **The explorer is curious, not clever.** It knows nothing about your game, so it shows what a player poking at every button meets, not a route through the story. To reach a scene that needs good choices, write a policy of your own.
+- **The explorer doesn't know your game.** It shows what a player poking at every button meets, and won't find a route through the story. To reach a scene that needs good choices, write a policy of your own.
 - **There's one row per turn played.** A `--turns 7` run that plays them all has seven rows, each taken as that turn ended. A run that stops early ends with a row for the turn it stopped in, which may have only just begun. A run stops early when the policy gives up, at the step limit, or in a refusal loop.
 - **A turn only ends when the game ends one.** The count moves on with a [`turn`](/docs/reference/effects#turn) effect, which the [calendar](/docs/plugins/calendar#what-a-turn-is) applies as time passes and when the player goes to bed. In a game that never ends a turn, the run never reaches its turns. It stops at the policy or the step limit instead.
 - **The transcript shows screens, not news.** Notices raised along the way (a payday, a promotion, rent taken) aren't in it, and nor are inputs or the stat list. Read the `.metrics` file for the numbers, or check the notices in a test with [`view(state, game).notices`](/docs/reference/notices).
@@ -370,7 +376,7 @@ changed: sam.hi @ moving-day (gone)
 3 scene renders changed. If you meant it, run again with --update.
 ```
 
-Commit the file. A difference is either a bug or a change you meant. Read the diff before you run `--update`. It tells you which scene now reads differently, and in which state, which is exactly what a change to a condition or a prose key can do without anyone noticing. Small Town's tests compare its snapshot on every run, so a change to how any scene reads fails them until the file is updated.
+Commit the file. A difference is either a bug or a change you meant. Read the diff before you run `--update`. It tells you which scene now reads differently, and in which state. A change to a condition or a prose key can do that without anyone noticing. Small Town's tests compare its snapshot on every run, so a change to how any scene reads fails them until the file is updated.
 
 ### What snapshot reads
 
@@ -535,8 +541,8 @@ function checkBuild(dir: string, files?: readonly FileRef[]): string[]
 
 Returns what's wrong with a built folder as a game that opens from disk, or an empty list when nothing is. It reads `dir/index.html` and reports:
 
-- each `<script src>` and each stylesheet `<link>` that's a full address (`https://…`, `//…`) or starts with `/`;
-- each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`);
+- each `<script src>` and each stylesheet `<link>` that's a full address (`https://…`, `//…`) or starts with `/`
+- each module script loaded from a file beside the page, which a browser refuses from disk (`index.html loads the module script …, which won't load from disk; build as one file`)
 - given the `files` the game names, from [`checkGame(game).files`](/docs/reference/checks#fileref) or [`gameFrom`](#gamefrom), each one that isn't in the folder, as [`checkFiles`](#checkfiles) reports it. A picture already in the page from `--inline-assets` counts as there.
 
 With no `index.html`, the one problem is `no index.html in <dir>`.
@@ -663,10 +669,10 @@ type PlaytestOptions = {
 
 What `ifloom playtest` runs. It plays `game` from `start`, asking `policy` (default [`explorer()`](#explorer)) for each command and running it with [`apply`](/docs/reference/commands#apply). It stops at the first of:
 
-- `turns` turns passed since `start`'s turn;
-- the policy returning `null`;
-- `steps` commands, refused ones included, as a guard against a policy going round in circles;
-- the same command refused on two steps in a row.
+- `turns` turns passed since `start`'s turn
+- the policy returning `null`
+- `steps` commands, refused ones included, as a guard against a policy going round in circles
+- the same command refused on two steps in a row
 
 ```ts
 import { expect, it } from 'vitest'
@@ -756,15 +762,15 @@ The default policy: a curious player who knows nothing about the game. Each call
 4. **The first step toward the nearest place** it hasn't been to this turn.
 5. **Ending the turn**, with an action that ends the turn. Failing that, it takes an action not done this turn, or else the first action there is. An activity that only passes time counts as waiting, and waits until this step.
 
-To tell which buttons end the turn, it tries each one. It runs the button's command on the current state with [`apply`](/docs/reference/commands#apply) and checks whether `turn` went up. `apply` is deterministic and the state carries its seed, so the try is exactly what pressing it would do, and the explorer doesn't have to know anything about the game. So even in a game with no calendar, it does everything else there is to do before pressing the button that moves the week on.
+To tell which buttons end the turn, it tries each one. It runs the button's command on the current state with [`apply`](/docs/reference/commands#apply) and checks whether `turn` went up. `apply` is deterministic and the state carries its seed, so trying a button gives the same result as pressing it, and the explorer doesn't have to know anything about the game. So even in a game with no calendar, it does everything else there is to do before pressing the button that moves the week on.
 
 Where the player is, the map and the exits come from the [places](/docs/plugins/places) plugin, asked by name. The explorer uses the `places/here` and `places/all` [queries](/docs/plugins/places#queries), and the exits in the plugin's [view](/docs/plugins/places#the-view), taking each exit by sending its own `command`. In a game without the places plugin, the explorer never walks. In a game without the cast, it has nobody to talk to.
 
 It never presses a button with a [`warning`](/docs/reference/view#renderedchoice), such as the calendar's `That would run past dawn.` When there's nothing left to press, it returns `null` and the play stops.
 
-In Small Town, it unpacks, sleeps, talks to Sam and Ava, buys a coffee and a scarf, works and jogs, and walks home to bed every night. That's what a player trying every button meets, not a route through the story.
+In Small Town, it unpacks, sleeps, talks to Sam and Ava, buys a coffee and a scarf, works and jogs, and walks home to bed every night. A player trying every button would do the same. It doesn't follow the story.
 
-The Corner Café has no map, no people and no clock, so every turn offers the same few buttons. Each week the explorer buys the staff lunch, gets better ingredients for the soup while it can, puts a card in the window while there's room and hires the first applicant. Only then does it count the till and end the week:
+The Corner Café uses no places, cast or calendar, so every turn offers the same few buttons. Each week the explorer buys the staff lunch, gets better ingredients for the soup while it can, puts a card in the window while there's room and hires the first applicant. Only then does it count the till and end the week:
 
 ```
 == Turn 1
@@ -788,7 +794,7 @@ turn	coins	reputation	staff	dish	scenes	refused
 8	718	30	4	2	0	0
 ```
 
-It takes on Dev, then Fen, then turns the next applicant away, taking a different branch of the interview each time it comes back. From the fifth week the kitchen is full and the soup is as good as it gets, so it buys lunch and ends the week while the till keeps climbing. That's the kind of curve the numbers are there to show.
+It takes on Dev, then Fen, then turns the next applicant away, taking a different branch of the interview each time it comes back. From the fifth week the kitchen is full and the soup is as good as it gets, so it buys lunch and ends the week while the till keeps climbing. The `coins` column shows that climb week by week.
 
 **Gotchas.**
 
@@ -804,10 +810,10 @@ function screenText(screen: View): string
 
 A screen as plain text, as the transcript shows it. In order, it writes:
 
-- a header line, `== Turn N · <when>`, with the turn (counted from 1) and [`view.when`](/docs/reference/view#the-clock-and-the-player) in the plugins' words. In Small Town that's the calendar's `Day 2 · Tuesday morning`, then the [places](/docs/plugins/places#the-label) plugin's place, `High Street`. The `<when>` part is left out when no plugin sets it;
-- `#` and the scene's title;
-- the scene's body;
-- every button: the scene's choices, then the actions, then each present person's buttons from the [cast](/docs/plugins/cast#the-view)'s `present`, labelled `<Name>: <label>`. Each is `[>]`, or `[ ]` when greyed out. Its price follows in brackets, separated by commas: the stats' text, then the plugins' [notes](/docs/reference/view#price), such as the calendar's `until afternoon`. A greyed-out button ends with `— ` and the reason;
+- a header line, `== Turn N · <when>`, with the turn (counted from 1) and [`view.when`](/docs/reference/view#the-clock-and-the-player) in the plugins' words. In Small Town that's the calendar's `Day 2 · Tuesday morning`, then the [places](/docs/plugins/places#the-label) plugin's place, `High Street`. The `<when>` part is left out when no plugin sets it.
+- `#` and the scene's title.
+- the scene's body.
+- every button: the scene's choices, then the actions, then each present person's buttons from the [cast](/docs/plugins/cast#the-view)'s `present`, labelled `<Name>: <label>`. Each is `[>]`, or `[ ]` when greyed out. Its price follows in brackets, separated by commas: the stats' text, then the plugins' [notes](/docs/reference/view#price), such as the calendar's `until afternoon`. A greyed-out button ends with `— ` and the reason.
 - each exit in the places plugin's [view](/docs/plugins/places#the-view), as `->`, with its reason if it's closed.
 
 ```ts
@@ -852,7 +858,7 @@ Six tables, one of them wobbly. The coffee machine sighs like it has been workin
 Ava is behind the counter, flour to the elbows, and nods you in.
 ```
 
-Every block comes from the engine's [`view`](/docs/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/docs/reference/locks) or a plugin's guard would refuse it with, just as on screen. Data scenes and hand-written ones both render. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
+Every block comes from the engine's [`view`](/docs/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/docs/reference/locks) or a plugin's guard would refuse it with, as on screen. Data scenes and hand-written ones both render. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
 
 The places are the ones the [places](/docs/plugins/places) plugin's `places/all` [query](/docs/plugins/places#queries) returns, asked by name with [`pluginQuery`](/docs/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>`. The player is moved there by the plugin's own [`places/move`](/docs/plugins/places#effects) effect, with `sceneId` cleared, and the block holds the room's body as `view(...).scene` draws it when no scene is open.
 

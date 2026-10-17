@@ -44,9 +44,9 @@ export default { plugins: { '@tailwindcss/postcss': {} } }
 
 The config is an ES module, so the `package.json` has `"type": "module"`, as every template's does.
 
-**TypeScript.** `esbuild-loader` compiles your game's TypeScript and JSX quickly. The @ifloom packages are compiled JavaScript with type declarations, so the rule skips `node_modules` as usual. `ts-loader` or `babel-loader` work too. The engine's code needs ES2023, so don't set an older `target`.
+**TypeScript.** `esbuild-loader` compiles your game's TypeScript and JSX. The @ifloom packages are compiled JavaScript with type declarations, so the rule skips `node_modules` as usual. `ts-loader` or `babel-loader` work too. The engine's code needs ES2023, so don't set an older `target`.
 
-**Styles.** The React UI's stylesheet, `@ifloom/react/styles.css`, is written for Tailwind CSS v4, which `postcss-loader` runs here, so you can use Tailwind's classes in your own components too. To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` instead, and a preset as `@ifloom/react/themes/paper.min.css`, then take `postcss-loader` out of the CSS rule and drop the PostCSS config. Without the React UI you don't need either.
+**Styles.** The React UI's stylesheet, `@ifloom/react/styles.css`, is written for Tailwind CSS v4. `postcss-loader` runs Tailwind here, so you can use its classes in your own components too. To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` instead, and a preset as `@ifloom/react/themes/paper.min.css`, then take `postcss-loader` out of the CSS rule and drop the PostCSS config. Without the React UI you don't need either.
 
 `index.html` is the template's, with the `<script>` tag removed, since `HtmlWebpackPlugin` adds one:
 

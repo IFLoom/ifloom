@@ -68,7 +68,7 @@ function withMinigames(extra: Partial<Game> = {}): Game {
     ...base,
     minigames: [arrows, toss],
     activities: [
-      ...base.activities,
+      ...(base.activities ?? []),
       { id: 'play', effects: [{ kind: 'minigame', minigame: 'arrows' }] },
       { id: 'flip', effects: [{ kind: 'minigame', minigame: 'toss' }] },
     ],
@@ -343,7 +343,7 @@ describe('the minigame checks', () => {
     const good = withMinigames()
     const game: Game = {
       ...good,
-      activities: [...good.activities, { id: 'chess', effects: [{ kind: 'minigame', minigame: 'chess' }] }],
+      activities: [...(good.activities ?? []), { id: 'chess', effects: [{ kind: 'minigame', minigame: 'chess' }] }],
       scenes: [...good.scenes, { id: 'board', body: [], minigame: 'draughts', choices: [] }],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where} · ${problem.what}`)).toEqual([

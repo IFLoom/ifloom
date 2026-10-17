@@ -117,7 +117,8 @@ export { itemStart, loadState, startingState } from './intake.ts'
 
 // Conditions, and why they hold
 export type { Condition, Range } from './condition.ts'
-export { holds, inRange } from './condition.ts'
+export { holds } from './condition.ts'
+export { inRange } from './range.ts'
 export type { Explanation } from './explain.ts'
 export { explain, explainText } from './explain.ts'
 

@@ -5,7 +5,8 @@
 import { emptyStoryline, storylineOf, storylineOpen } from '../storylines.ts'
 import type { StorylineDef } from '../game.ts'
 import type { KvValue, Range, StorylineState } from '../types.ts'
-import { bounded, counted, defineFeature, inRange, mergedById, wanted } from './feature.ts'
+import { defineFeature, mergedById } from './feature.ts'
+import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /** What the storylines feature adds, as types. */
 export type StorylinesShape = {
@@ -33,7 +34,8 @@ export type StorylinesShape = {
     closeStoryline: { kind: 'closeStoryline'; storyline: string; turns: number }
   }
   game: {
-    storylines: StorylineDef[]
+    /** Threads of story with their own kv store, closed for a while when they need a rest. None if left out. */
+    storylines?: StorylineDef[]
   }
   pack: {
     storylines?: StorylineDef[]
@@ -45,7 +47,7 @@ export const storylines = defineFeature<StorylinesShape>({
   name: 'storylines',
   state: {
     // A storyline the save lacks is added by `loaded`, from the game's list.
-    storylines: { start: (game) => Object.fromEntries(game.storylines.map((storyline) => [storyline.id, emptyStoryline()])) },
+    storylines: { start: (game) => Object.fromEntries((game.storylines ?? []).map((storyline) => [storyline.id, emptyStoryline()])) },
   },
   conditions: {
     storylineKv: {
@@ -53,7 +55,7 @@ export const storylines = defineFeature<StorylinesShape>({
         const { storyline, key } = condition.storylineKv
         const value = storylineOf(state, storyline).kv[key]
         if (condition.is !== undefined) return value === condition.is
-        if (bounded(condition)) return inRange(counted(value), condition)
+        if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },
       explain: (state, condition) => {
@@ -98,15 +100,15 @@ export const storylines = defineFeature<StorylinesShape>({
   lists: ['storyline'],
   // A storyline the game added since the save was made starts empty, whatever the game's version.
   loaded: (state, game) => {
-    const lacking = game.storylines.filter((def) => !state.storylines?.[def.id])
+    const lacking = (game.storylines ?? []).filter((def) => !state.storylines?.[def.id])
     if (!lacking.length) return state
     const storylines: Record<string, StorylineState> = { ...state.storylines }
     for (const def of lacking) storylines[def.id] = emptyStoryline()
     return { ...state, storylines }
   },
-  check: (game, tools) => tools.twice('storyline', 'storylines', game.storylines.map((entry) => entry.id)),
+  check: (game, tools) => tools.twice('storyline', 'storylines', (game.storylines ?? []).map((entry) => entry.id)),
   resolve: (game) => {
-    const ids = new Set(game.storylines.map((storyline) => storyline.id))
+    const ids = new Set((game.storylines ?? []).map((storyline) => storyline.id))
     return { storyline: (ref) => (ids.has(ref.storyline) ? [] : [`unknown storyline "${ref.storyline}"`]) }
   },
 })

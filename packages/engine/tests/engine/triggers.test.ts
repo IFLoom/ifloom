@@ -41,7 +41,7 @@ describe('triggers', () => {
   })
 
   it('count a scene they open as seen', () => {
-    const game = { ...withTriggers(), activities: [...fixture().activities, { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }] }
+    const game = { ...withTriggers(), activities: [...(fixture().activities ?? []), { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }] }
     const state = apply(begin(game), game, { type: 'activity', id: 'ring' }).state
     expect(state.sceneId).toBe('rosa.hello')
     expect(state.seen['rosa.hello']).toBe(1)

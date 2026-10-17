@@ -9,7 +9,7 @@ function withNotices(): Game {
   return {
     ...fixture(),
     activities: [
-      ...fixture().activities,
+      ...(fixture().activities ?? []),
       { id: 'rent', effects: [{ kind: 'notify', id: 'rent', title: 'Rent is due', tag: 'money' }] },
       { id: 'post', effects: [{ kind: 'notify', title: 'A letter came', tag: 'post' }] },
       { id: 'hum', effects: [{ kind: 'notify', title: 'Something hums' }] },

@@ -276,7 +276,7 @@ type GameBase = {
 export type Game = Flat<GameBase & FeatureGame>
 
 export function itemById(game: Game, id: string) {
-  return game.items.find((item) => item.id === id)
+  return (game.items ?? []).find((item) => item.id === id)
 }
 
 /**

@@ -21,7 +21,8 @@ import {
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
-import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge } from './feature.ts'
+import { defineFeature, type FeatureContext, type PackMerge } from './feature.ts'
+import { inRange, wanted } from '../range.ts'
 import { statView, type StatView } from './stats.ts'
 
 /** One entity as the UI draws it. */

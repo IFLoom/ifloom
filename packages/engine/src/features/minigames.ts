@@ -13,7 +13,8 @@ import { say } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, Effect, GameState, Range } from '../types.ts'
-import { bounded, defineFeature, inRange, mergedById, wanted, type FeatureCheckTools, type FeatureContext } from './feature.ts'
+import { defineFeature, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
+import { bounded, inRange, wanted } from '../range.ts'
 
 /** A state a transition can go to at random: its id, or its id with a weight (1 if left out). */
 export type MinigameTarget = string | { state: string; weight?: number }

@@ -43,7 +43,7 @@ describe('checkGame', () => {
       scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { item: 'missing' }, effects: [] }] }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown item "missing"'])
-    expect(problemsOf({ ...fixture(), activities: [...fixture().activities, { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }] })).toEqual([
+    expect(problemsOf({ ...fixture(), activities: [...(fixture().activities ?? []), { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }] })).toEqual([
       'activity eat: unknown item "missing"',
     ])
   })
@@ -59,7 +59,7 @@ describe('checkGame', () => {
         { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
         { id: 'odd', label: 'Odd', command: { type: 'activity', id: 'wait' } },
       ],
-      items: [...town.items, { id: 'kite', name: 'Kite', desc: '', start: 1, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
+      items: [...(town.items ?? []), { id: 'kite', name: 'Kite', desc: '', start: 1, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
     } as Game
     expect(problemsOf(game)).toEqual([
       'item kite: unknown effect kind "fly"',

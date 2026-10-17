@@ -60,7 +60,7 @@ function withShells(): Game {
     ...fixture(),
     plugins: [shells],
     activities: [
-      ...fixture().activities,
+      ...(fixture().activities ?? []),
       { id: 'beachcomb', effects: [{ custom: 'shells/find', with: { shell: 'whelk' } }] },
     ],
   }

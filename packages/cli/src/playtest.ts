@@ -146,7 +146,7 @@ export function explorer(): Policy {
       if (entry.command.type !== 'activity') return true
       // An activity that only lets time pass is waiting, not doing; its cost does not count.
       const id = entry.command.id
-      const effects = buildEffects(state, game, game.activities.find((activity) => activity.id === id)?.effects ?? [])
+      const effects = buildEffects(state, game, (game.activities ?? []).find((activity) => activity.id === id)?.effects ?? [])
       return effects.some((effect) => !(effect.kind === 'custom' && effect.name === 'calendar/pass'))
     })
     if (action) {

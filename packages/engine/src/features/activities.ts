@@ -41,7 +41,8 @@ export type ActivitiesShape = {
     activity: { type: 'activity'; id: string }
   }
   game: {
-    activities: ActivityDef[]
+    /** What the player can do, by id, as an action's or a choice's command sends it. None if left out. */
+    activities?: ActivityDef[]
     /**
      * Actions offered in every location, after each location's own — waiting,
      * checking a map. A game with none has none.
@@ -66,7 +67,7 @@ export function activityById(
   game: Game,
   id: string,
 ): ActivityDef | undefined {
-  return game.activities.find((activity) => activity.id === id)
+  return (game.activities ?? []).find((activity) => activity.id === id)
 }
 
 /**
@@ -135,9 +136,9 @@ export const activities = defineFeature<ActivitiesShape>({
   }),
   lists: ['activity'],
   check: (game, tools) => {
-    tools.twice('activity', 'activities', game.activities.map((entry) => entry.id))
+    tools.twice('activity', 'activities', (game.activities ?? []).map((entry) => entry.id))
     const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
-    for (const activity of game.activities) {
+    for (const activity of game.activities ?? []) {
       const source = { list: 'activity', id: activity.id }
       const where = `activity ${activity.id}`
       tools.check(source, where, [...(activity.blocked ?? []).map((entry) => ({ when: entry.when })), { effects: activity.effects }])
@@ -152,7 +153,7 @@ export const activities = defineFeature<ActivitiesShape>({
     }
   },
   resolve: (game) => {
-    const ids = new Set(game.activities.map((activity) => activity.id))
+    const ids = new Set((game.activities ?? []).map((activity) => activity.id))
     return { activity: (ref) => (ids.has(ref.activity) ? [] : [`unknown activity "${ref.activity}"`]) }
   },
 })

@@ -3,7 +3,6 @@ import { conditionEntry, featureContext } from './core.ts'
 import type { Condition, GameState } from './types.ts'
 
 export type { Condition, Range } from './types.ts'
-export { inRange } from './features/feature.ts'
 
 /**
  * Whether a condition holds. No condition always holds. A condition is

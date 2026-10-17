@@ -6,7 +6,8 @@
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
 import type { KvValue, Range } from '../types.ts'
-import { bounded, counted, defineFeature, inRange, wanted } from './feature.ts'
+import { defineFeature } from './feature.ts'
+import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /**
  * Something the player can change from a settings screen, declared by the
@@ -223,7 +224,7 @@ export const settings = defineFeature<SettingsShape>({
       holds: (state, condition) => {
         const value = state.settings?.[condition.setting]
         if (condition.is !== undefined) return value === condition.is
-        if (bounded(condition)) return inRange(counted(value), condition)
+        if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },
       explain: (state, condition) => {

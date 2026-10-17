@@ -49,7 +49,7 @@ function shore(rules: Game['rules'] = {}): Game {
     ...town,
     plugins: [tide],
     activities: [
-      ...town.activities,
+      ...(town.activities ?? []),
       { id: 'swim', effects: [{ custom: 'tide/rise' }] },
       { id: 'dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
     ],
@@ -132,7 +132,7 @@ describe('locks by effect', () => {
     expect(whyNot(stormy, game, { type: 'custom', name: 'tide/paddle' })).toBe('Not in a storm.')
     expect(whyNot(stormy, game, { type: 'activity', id: 'read' })).toBeUndefined()
     const built = fixture({ locks: [{ when: { kv: 'storm' }, deny: ['activity'], effect: 'turn', reason: 'Not yet.' }] })
-    const turning = { ...built, activities: [...built.activities, { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
+    const turning = { ...built, activities: [...(built.activities ?? []), { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
     expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'rest' })).toBe('Not yet.')
     expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'read' })).toBeUndefined()
   })

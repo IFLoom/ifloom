@@ -4,7 +4,8 @@
  */
 import { collect, discard, type CollectionDef, type CollectionEntry, type CollectionItem } from '../collections.ts'
 import type { KvValue, Range } from '../types.ts'
-import { bounded, defineFeature, inRange, mergedById, wanted } from './feature.ts'
+import { defineFeature, mergedById } from './feature.ts'
+import { bounded, inRange, wanted } from '../range.ts'
 
 export type CollectionView = {
   name: string

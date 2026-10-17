@@ -380,11 +380,11 @@ export type FrozenGame = {
   packs?: string[]
   /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
   introScene?: string
-  activities: ActivityDef[]
-  items: ItemDef[]
+  activities?: ActivityDef[]
+  items?: ItemDef[]
   /** Hand-written scenes and data scenes, side by side. */
   scenes: (Scene | DataScene)[]
-  storylines: StorylineDef[]
+  storylines?: StorylineDef[]
   prose?: ProseStore
   rules?: GameRules
   /**

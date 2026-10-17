@@ -11,7 +11,8 @@ import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
-import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
+import { defineFeature, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
+import { inRange, wanted } from '../range.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
 export type Patch =

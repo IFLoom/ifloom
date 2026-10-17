@@ -18,7 +18,7 @@ function withStats(...more: StatDef[]): Game {
     ...game,
     stats: [...game.stats!, { id: 'baking', label: 'Baking', start: 4 }, { id: 'patience', label: 'Patience', start: 6 }, ...more],
     activities: [
-      ...game.activities,
+      ...(game.activities ?? []),
       { id: 'bake', effects: [{ kind: 'stat', stat: 'baking', by: 5 }] },
       { id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 50 }] },
       { id: 'nudge', effects: [{ kind: 'stat', stat: 'skill', by: 5 }] },
@@ -172,7 +172,7 @@ describe('levels', () => {
     const quiet = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5] } })
     const loud = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5, 10], notice: '{label} is now level {level}.' } })
     const cook = (game: Game, from: number) => {
-      const withCook = { ...game, activities: [...game.activities, { id: 'cook', effects: [{ kind: 'stat' as const, stat: 'cooking', by: 3 }] }] }
+      const withCook = { ...game, activities: [...(game.activities ?? []), { id: 'cook', effects: [{ kind: 'stat' as const, stat: 'cooking', by: 3 }] }] }
       return apply(begin(withCook, { stats: { ...startingState(game).stats, cooking: from } }), withCook, { type: 'activity', id: 'cook' }).state
     }
     expect(cook(quiet, 3).notices).toEqual([])

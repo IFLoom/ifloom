@@ -152,7 +152,7 @@ describe('the calendar', () => {
     expect(button(game, clock.write(startingState(game), { day: 0, period: 'night' }), 'nap').price).toEqual({ notes: ['until late'] })
     expect(button(game, clock.write(startingState(game), { day: 0, period: 'evening' }), 'bed').price).toEqual({ notes: ['until tomorrow morning'] })
     // Further than tomorrow, the day by name.
-    const far = { ...game, actions: [{ id: 'trek', label: 'Trek', command: { type: 'activity' as const, id: 'trek' } }], activities: [...game.activities, { id: 'trek', effects: [pass(11)] }] }
+    const far = { ...game, actions: [{ id: 'trek', label: 'Trek', command: { type: 'activity' as const, id: 'trek' } }], activities: [...(game.activities ?? []), { id: 'trek', effects: [pass(11)] }] }
     expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({ notes: ['until Wednesday afternoon'] })
   })
 

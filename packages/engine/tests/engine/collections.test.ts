@@ -12,7 +12,7 @@ function withGallery(): Game {
     ...fixture(),
     collections: [{ id: 'gallery', name: 'Photos', max: 2 }],
     activities: [
-      ...fixture().activities,
+      ...(fixture().activities ?? []),
       { id: 'snapHouse', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg' } }] },
       { id: 'snapStreet', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'street', title: 'The street' } }] },
       { id: 'snapShop', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'shop', title: 'The shop', data: { blurry: true } } }] },

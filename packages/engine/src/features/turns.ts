@@ -4,7 +4,8 @@
  */
 import type { Game } from '../game.ts'
 import type { GameState, Phase, Range } from '../types.ts'
-import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
+import { defineFeature, type FeatureContext } from './feature.ts'
+import { inRange, wanted } from '../range.ts'
 
 /** What the turns feature adds, as types. */
 export type TurnsShape = {

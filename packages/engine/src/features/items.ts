@@ -4,7 +4,8 @@
 import { say } from '../strings.ts'
 import type { Game, ItemDef } from '../game.ts'
 import type { Range } from '../types.ts'
-import { bounded, defineFeature, inRange, mergedById, wanted } from './feature.ts'
+import { defineFeature, mergedById } from './feature.ts'
+import { bounded, inRange, wanted } from '../range.ts'
 
 /** What the items feature adds, as types. */
 export type ItemsShape = {
@@ -23,7 +24,8 @@ export type ItemsShape = {
     use: { type: 'use'; id: string }
   }
   game: {
-    items: ItemDef[]
+    /** The things the player can carry. None if left out. */
+    items?: ItemDef[]
   }
   pack: {
     items?: ItemDef[]
@@ -47,13 +49,13 @@ export function itemStart(item: ItemDef): number {
 }
 
 function itemById(game: Game, id: string): ItemDef | undefined {
-  return game.items.find((item) => item.id === id)
+  return (game.items ?? []).find((item) => item.id === id)
 }
 
 export const items = defineFeature<ItemsShape>({
   name: 'items',
   state: {
-    items: { start: (game) => Object.fromEntries(game.items.map((item) => [item.id, itemStart(item)])) },
+    items: { start: (game) => Object.fromEntries((game.items ?? []).map((item) => [item.id, itemStart(item)])) },
   },
   conditions: {
     item: {
@@ -103,7 +105,7 @@ export const items = defineFeature<ItemsShape>({
   fill: {
     kind: 'items',
     run: (state, game) => {
-      const lacking = game.items.filter((item) => state.items?.[item.id] === undefined)
+      const lacking = (game.items ?? []).filter((item) => state.items?.[item.id] === undefined)
       if (!lacking.length) return state
       return { ...state, items: { ...state.items, ...Object.fromEntries(lacking.map((item) => [item.id, itemStart(item)])) } }
     },
@@ -122,21 +124,21 @@ export const items = defineFeature<ItemsShape>({
     },
     check: (game, tools) => {
       if (!Array.isArray(game.carryOver?.items)) return
-      const ids = new Set(game.items.map((item) => item.id))
+      const ids = new Set((game.items ?? []).map((item) => item.id))
       for (const id of game.carryOver.items) if (!ids.has(id)) tools.problem(undefined, 'carryOver', `unknown item "${id}"`)
     },
   },
   check: (game, tools) => {
-    tools.twice('item', 'items', game.items.map((entry) => entry.id))
-    for (const item of game.items) tools.check({ list: 'item', id: item.id }, `item ${item.id}`, [{ effects: item.use?.effects }])
+    tools.twice('item', 'items', (game.items ?? []).map((entry) => entry.id))
+    for (const item of game.items ?? []) tools.check({ list: 'item', id: item.id }, `item ${item.id}`, [{ effects: item.use?.effects }])
   },
   resolve: (game) => {
-    const ids = new Set(game.items.map((item) => item.id))
+    const ids = new Set((game.items ?? []).map((item) => item.id))
     return { item: (ref) => (ids.has(ref.item) ? [] : [`unknown item "${ref.item}"`]) }
   },
   // The items the player has at least one of, in the order the game lists them.
   view: (state, game) => ({
-    pack: game.items
+    pack: (game.items ?? [])
       .map((item) => ({
         id: item.id,
         name: item.name,

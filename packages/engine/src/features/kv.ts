@@ -4,7 +4,8 @@
  */
 import { entityOf, ofKind, writeEntity } from '../entities.ts'
 import type { KvValue, Range } from '../types.ts'
-import { bounded, counted, defineFeature, inRange, wanted } from './feature.ts'
+import { defineFeature } from './feature.ts'
+import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /** What the kv feature adds, as types. */
 export type KvShape = {
@@ -44,7 +45,7 @@ export const kv = defineFeature<KvShape>({
         if (!store) return false
         const value = store[condition.kv]
         if (condition.is !== undefined) return value === condition.is
-        if (bounded(condition)) return inRange(counted(value), condition)
+        if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },
       explain: (state, condition) => {

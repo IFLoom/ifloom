@@ -29,10 +29,10 @@ type Game = {
   kinds?: KindDef[]
   entities?: EntityDef[]
   introScene?: string
-  activities: ActivityDef[]
-  items: ItemDef[]
+  activities?: ActivityDef[]
+  items?: ItemDef[]
   scenes: (Scene | DataScene)[]
-  storylines: StorylineDef[]
+  storylines?: StorylineDef[]
   prose?: ProseStore
   rules?: GameRules
   strings?: Record<string, string>
@@ -66,10 +66,10 @@ type Game = {
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
 | `kinds` | The kinds of thing the game keeps several of, such as staff or dishes, each with stats of its own. See [Entities](/docs/reference/entities). |
 | `entities` | The things of those kinds that exist at the start of a new game. More can be [created](/docs/reference/effects#create) in play. See [Entities](/docs/reference/entities). |
-| `activities` | Everything the player can do, such as paperwork, a jog or a drink. See [Activities and buttons](/docs/reference/actions). |
-| `items` | Things the player can have. See [`ItemDef`](#itemdef). |
+| `activities` | Everything the player can do, such as paperwork, a jog or a drink. None if left out. See [Activities and buttons](/docs/reference/actions). |
+| `items` | Things the player can have. None if left out. See [`ItemDef`](#itemdef). |
 | `scenes` | Every scene. [Data scenes](/docs/reference/scenes#datascene) and hand-written [`Scene`](/docs/reference/scenes#scene)s sit side by side. A data scene is baked into a `Scene` the first time [`sceneById`](#scenebyid) asks for it. |
-| `storylines` | The storylines. See [`StorylineDef`](#storylinedef). |
+| `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
 | `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, make it with [`proseStore`](/docs/reference/prose#prosestore-1). |
 | `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the base's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
 | `collections` | Named lists the game keeps entries in, such as letters, photos or a ledger. See [Collections](/docs/reference/collections). |

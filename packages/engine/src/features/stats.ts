@@ -10,7 +10,8 @@ import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { ValueRef } from '../calls.ts'
-import { defineFeature, inRange, wanted, type FeatureContext } from './feature.ts'
+import { defineFeature, type FeatureContext } from './feature.ts'
+import { inRange, wanted } from '../range.ts'
 
 /**
  * How a derived stat is worked out from other stats. A number is itself, a

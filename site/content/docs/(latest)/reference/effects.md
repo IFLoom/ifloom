@@ -72,6 +72,7 @@ type Effect =
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
   | { kind: 'transition'; to: TransitionName; ms?: number }
+  | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
 ```
 
 ### stat
@@ -352,6 +353,20 @@ The checker reports a variable that no minigame declares in its `vars`, and one 
 Says how the screen this command leaves on comes in: `to` a [transition name](/docs/reference/transitions#transitionname), over `ms` milliseconds (else the screen's own). It lasts one command, and only changes what [`view.transition`](/docs/reference/view#transition) says, so it does nothing a save or a replay would notice. See [The transition effect](/docs/reference/transitions#the-transition-effect).
 
 The checker reports a name the game doesn't know.
+
+### panel
+
+```ts
+{ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
+{ kind: 'panel', panel: 'jobs' }
+{ kind: 'panel', panel: null }
+```
+
+Opens a [panel](/docs/reference/panels) over the story by name, such as a shop's counter or a job board, with what it needs in `with`. A panel already open is replaced, and `panel: null` closes it. The UI decides what each name draws. The shop and jobs plugins write these for you with [`openShop`](/docs/plugins/shop#opening-a-counter) and [`openJobs`](/docs/plugins/jobs#opening-the-job-board).
+
+The panel stays open while the player uses it, and closes when a later command ends a turn or changes the scene. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
+
+The checker allows any name. A plugin that knows a panel checks its `with`, so the shop reports an unknown vendor. See [Checking a panel](/docs/reference/panels#checking-a-panel).
 
 ## Computed effects
 

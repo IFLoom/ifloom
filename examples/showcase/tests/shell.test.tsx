@@ -31,17 +31,34 @@ describe('the showcase shell', () => {
     expect(keys.slice(0, 2)).toEqual(['1', '2'])
   })
 
-  it('draws the plugins\' defaults: the counter, the job board, the achievements and the statuses', () => {
+  it('draws the plugins\' defaults: the achievements and the statuses, and the counter and the job board in panels', () => {
     const run = (state: GameState, ...commands: (Command | CommandRef)[]) => commands.reduce<GameState>((now, command) => apply(now, game, command).state, state)
     const unpacked = run(startingState(game), { type: 'choose', id: 'unpack' })
     const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'activity', id: 'coffee' })
     const runner = createRunner(game, cafe)
     render(<GameShell runner={runner} layout={layout} />)
     expect(document.querySelector('[data-status="caffeinated"]')?.textContent).toContain('Caffeinated')
-    expect(document.querySelector('[data-job="weekend"]')?.textContent).toContain('Ava doesn’t know you well enough yet.')
-    act(() => void fireEvent.click(screen.getByRole('button', { name: /Shop at The counter/ })))
+    expect(screen.getByRole('button', { name: /Achievements/ }).textContent).toContain('of 2')
+    // Nothing about the shop or the jobs is on screen until content opens it.
+    expect(document.querySelector('[data-job], [data-vendor]')).toBeNull()
+    // The café's "Go to the counter" opens the counter.
+    act(() => void fireEvent.click(screen.getByRole('button', { name: /Go to the counter/ })))
     expect(screen.getByRole('dialog', { name: 'The counter' }).querySelector('[data-good="flapjack"]')).not.toBeNull()
     act(() => void fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' }))
-    expect(screen.getByRole('button', { name: /Achievements/ }).textContent).toContain('of 2')
+    expect(runner.state.panel).toBeNull()
+    // Asking Ava about work opens the job board, every job on it.
+    act(() => void fireEvent.click(screen.getByRole('button', { name: /Talk to Ava/ })))
+    act(() => void fireEvent.click(screen.getByRole('button', { name: /Ask about weekend work/ })))
+    const board = screen.getByRole('dialog', { name: 'Jobs' })
+    expect(board.querySelector('[data-job="weekend"]')?.textContent).toContain('Ava doesn’t know you well enough yet.')
+    expect(board.querySelector('[data-job="dogs"]')).not.toBeNull()
+  })
+
+  it('opens the newspaper\'s job ads from the inventory: the board, with only the paper\'s jobs', () => {
+    const runner = createRunner(game, apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state)
+    render(<GameShell runner={runner} layout={layout} />)
+    act(() => void fireEvent.click(screen.getByRole('button', { name: /Read the job ads/ })))
+    const board = screen.getByRole('dialog', { name: 'Jobs' })
+    expect([...board.querySelectorAll('[data-job]')].map((job) => job.getAttribute('data-job'))).toEqual(['dogs'])
   })
 })

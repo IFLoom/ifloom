@@ -3,7 +3,7 @@
  * runner for the view, draw it, send a command when a button is pressed, and
  * draw again when the state changes. Any framework can do the same.
  */
-import { browserRunner, type InlineSpan, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
+import { browserRunner, type InlineSpan, type InputView, type MinigameView, type OpenPanel, type SceneBeat, type View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
@@ -55,6 +55,9 @@ function draw(view: View): void {
   }
 
   add(root, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '), 'stats')
+
+  // A panel content opened, such as a shop's counter, over everything else.
+  if (view.panel) drawPanel(view.panel)
 }
 
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
@@ -166,6 +169,22 @@ function drawMinigame(minigame: MinigameView): void {
   }
   const inputs = add(section, 'div', '', 'choices')
   for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
+}
+
+/**
+ * The panel content opened (`{ kind: 'panel', panel, with }`) over the story: a shop's counter, a job board.
+ * Draw each one your game opens by its name, from what it was opened with; closing it sends `closePanel`.
+ */
+function drawPanel(panel: OpenPanel): void {
+  const dialog = add(root, 'section', '', 'panel')
+  dialog.setAttribute('role', 'dialog')
+  dialog.setAttribute('aria-modal', 'true')
+  dialog.setAttribute('aria-label', panel.panel)
+  dialog.dataset.panel = panel.panel
+  const box = add(dialog, 'div')
+  add(box, 'h2', panel.panel)
+  add(box, 'pre', JSON.stringify(panel.with, null, 2))
+  add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
 }
 
 runner.subscribe(() => draw(runner.view()))

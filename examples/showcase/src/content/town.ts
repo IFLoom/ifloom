@@ -15,6 +15,8 @@ import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { here, person, talk, type CharacterDef } from '@ifloom/plugin-cast'
 import { openApp } from '@ifloom/plugin-devices'
 import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { openShop } from '@ifloom/plugin-shop'
+import { openJobs } from '@ifloom/plugin-jobs'
 import { prose } from './prose.ts'
 
 const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: string }): LocationDef => ({
@@ -50,9 +52,9 @@ const locations: LocationDef[] = [
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+      // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
+      { id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } },
       // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
-      // The counter (the shop plugin's vendor) and the weekend job need no buttons here: the React UI's
-      // shop button and job board draw them from the plugins' views.
       { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
       // Something small happens while you sit: one of the café's storylets, drawn at random.
       { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
@@ -212,6 +214,14 @@ export const town: Pack = {
       desc: 'Oats, syrup and a lot of butter.',
       use: { label: 'Eat the flapjack', effects: [{ kind: 'stat', stat: 'energy', by: 10 }] },
     },
+    // Reading it opens the job board with only the paper's ads on it: an item opening a panel.
+    {
+      id: 'paper',
+      name: 'newspaper',
+      desc: 'Today’s Small Town Gazette. The back page is job ads.',
+      start: 1,
+      use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] },
+    },
   ],
   activities: [
     { id: 'wait', effects: [pass(1)] },
@@ -227,6 +237,7 @@ export const town: Pack = {
       ],
     },
     { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
+    { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
     { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
     { id: 'work', cost: { stats: { energy: 30 } }, blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
@@ -276,6 +287,8 @@ export const town: Pack = {
       choices: [
         { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
         { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', scene: null }] },
+        // She points you at the job board by the till: the scene closes and the board opens over the room.
+        { id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] },
         { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
@@ -441,6 +454,16 @@ export const town: Pack = {
           // Miss two Saturdays and Ava finds someone else.
           fire: { missed: 2 },
         },
+        {
+          id: 'dogs',
+          title: 'Dog walker',
+          description: 'An hour round the park with somebody’s spaniel, on weekday evenings. In the Gazette’s ads.',
+          at: ['park'],
+          days: [0, 1, 2, 3, 4],
+          hours: ['evening'],
+          shift: { cost: { energy: 15 }, passes: 1 },
+          ranks: [{ id: 'walker', title: 'Dog walker', pay: { coins: 6 } }],
+        },
       ],
     },
     generators: {
@@ -466,6 +489,7 @@ export const town: Pack = {
             { item: 'sandwich', price: { coins: 4 } },
             // Two a day, baked each morning.
             { item: 'flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
+            { item: 'paper', price: { coins: 2 } },
           ],
         },
       ],

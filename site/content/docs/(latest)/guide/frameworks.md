@@ -820,6 +820,82 @@ They're plain DOM, so every framework uses them the same way, and the React UI r
 
 The [Minigames recipe](/docs/recipes/minigames#your-own-panel) draws a panel for one minigame by its id, in each framework.
 
+## Panels
+
+Content can open a [panel](/docs/reference/panels) over the story, such as a shop's counter or a job board. `view.panel` is its name and what it was opened with, or `null`. The templates draw a placeholder dialog with the name, what it was opened with and a Close button that sends `{ type: 'closePanel' }`. Replace its body with your own drawing for each name your game opens.
+
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, called at the end of draw(view) when view.panel isn't null
+function drawPanel(panel: OpenPanel): void {
+  const dialog = add(root, 'section', '', 'panel')
+  dialog.setAttribute('role', 'dialog')
+  dialog.setAttribute('aria-modal', 'true')
+  dialog.setAttribute('aria-label', panel.panel)
+  const box = add(dialog, 'div')
+  add(box, 'h2', panel.panel)
+  add(box, 'pre', JSON.stringify(panel.with, null, 2))
+  add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/Panel.tsx, drawn by App as {view.panel ? <Panel panel={view.panel} /> : null}
+import type { OpenPanel } from '@ifloom/engine'
+import { runner } from './runner.ts'
+
+export function Panel({ panel }: { panel: OpenPanel }) {
+  return (
+    <section className="panel" role="dialog" aria-modal="true" aria-label={panel.panel}>
+      <div>
+        <h2>{panel.panel}</h2>
+        <pre>{JSON.stringify(panel.with, null, 2)}</pre>
+        <button onClick={() => runner.apply({ type: 'closePanel' })}>Close</button>
+      </div>
+    </section>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/Panel.vue, drawn by App.vue as <Panel v-if="view.panel" :panel="view.panel" /> -->
+<script setup lang="ts">
+import type { OpenPanel } from '@ifloom/engine'
+import { runner } from './runner.ts'
+
+defineProps<{ panel: OpenPanel }>()
+</script>
+
+<template>
+  <section class="panel" role="dialog" aria-modal="true" :aria-label="panel.panel">
+    <div>
+      <h2>{{ panel.panel }}</h2>
+      <pre>{{ JSON.stringify(panel.with, null, 2) }}</pre>
+      <button @click="runner.apply({ type: 'closePanel' })">Close</button>
+    </div>
+  </section>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/Panel.svelte, drawn by App.svelte as {#if $view.panel}<Panel panel={$view.panel} />{/if} -->
+<script lang="ts">
+  import type { OpenPanel } from '@ifloom/engine'
+  import { runner } from './runner.ts'
+
+  let { panel }: { panel: OpenPanel } = $props()
+</script>
+
+<section class="panel" role="dialog" aria-modal="true" aria-label={panel.panel}>
+  <div>
+    <h2>{panel.panel}</h2>
+    <pre>{JSON.stringify(panel.with, null, 2)}</pre>
+    <button onclick={() => runner.apply({ type: 'closePanel' })}>Close</button>
+  </div>
+</section>
+```
+
+The React UI draws panels itself with [`PanelHost`](/docs/react/components#panelhost), which knows the shop's and the jobs' panels by name.
+
 ## What else to draw
 
 The [view reference](/docs/reference/view) lists every field. Beyond what the templates draw, these are the ones games most often want:

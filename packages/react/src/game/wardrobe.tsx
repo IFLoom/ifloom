@@ -42,7 +42,7 @@ export function useWardrobe(): WardrobeControls | null {
   }
 }
 
-function WardrobeCardImpl({ className }: { className?: string }) {
+function WardrobeCardImpl({ className, title: titleText }: { className?: string; title?: string | false }) {
   const { send } = useGame()
   const words = useWords()
   const section = usePart('wardrobe', 'flex flex-col gap-2 text-sm', className)
@@ -60,7 +60,7 @@ function WardrobeCardImpl({ className }: { className?: string }) {
   )
   return (
     <section {...section} data-wardrobe>
-      <h3 {...title}>{words('wardrobe')}</h3>
+      {titleText === false ? null : <h3 {...title}>{titleText ?? words('wardrobe')}</h3>}
       {data.slots.map((slot) => (
         <div key={slot.id} {...row} data-slot-id={slot.id}>
           <span {...slotName}>{slot.label}</span>

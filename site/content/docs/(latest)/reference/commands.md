@@ -135,6 +135,7 @@ type Command =
   | { type: 'setting'; id: string; to: KvValue }
   | { type: 'tick'; ms: number }
   | { type: 'minigame'; input: string }
+  | { type: 'closePanel' }
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 ```
 
@@ -144,7 +145,7 @@ The union is closed, so a game can't add a command type. Something new for the p
 
 Each built-in handler below runs only if no lock or plugin [guard](/docs/reference/plugins#guards) stopped the command and the game has no handler for its type. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/actions#warningof).
 
-While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss` and `setting` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
+While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss`, `setting` and `closePanel` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
 
 ### start
 
@@ -241,6 +242,14 @@ Ticks go in the runner's [log](/docs/reference/runner#commandlog), so [`replay`]
 ```
 
 An input to the [minigame](/docs/reference/minigames) being played. It takes the running state's first `on` entry for that input whose `when` holds: its effects, then where it goes. No lock or plugin guard stops it. It's refused with `Nothing is being played.` when no minigame runs, and `That does nothing now.` when the input isn't live. [`view.minigame.inputs`](/docs/reference/minigames#minigameview) lists the live ones.
+
+### closePanel
+
+```ts
+{ type: 'closePanel' }
+```
+
+Closes the open [panel](/docs/reference/panels). A UI sends it when the player dismisses the panel's dialog. No lock or plugin guard stops it, so a lock can't hold a panel open. It's refused with `Nothing is open.` when no panel is open. It ends no turn and changes nothing else.
 
 ### custom
 

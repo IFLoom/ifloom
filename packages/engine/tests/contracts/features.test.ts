@@ -67,6 +67,7 @@ describe('core features are leaves', () => {
       'features/media.ts',
       'features/minigames.ts',
       'features/notices.ts',
+      'features/panels.ts',
       'features/scenes.ts',
       'features/settings.ts',
       'features/stats.ts',
@@ -125,6 +126,7 @@ describe('the registry', () => {
       audio: { conditions: [], effects: ['audio', 'sound'], commands: [] },
       media: { conditions: [], effects: [], commands: [] },
       transitions: { conditions: [], effects: ['transition'], commands: [] },
+      panels: { conditions: [], effects: ['panel'], commands: ['closePanel'] },
       entities: { conditions: ['count', 'entity'], effects: ['create', 'remove', 'each'], commands: [] },
       locks: { conditions: [], effects: [], commands: [] },
     })
@@ -144,7 +146,8 @@ describe('the registry', () => {
     // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
     // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
     // A transition effect's override is cleared after the hooks, so one a hook sets lasts its command as the game's own do.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'transitions'] })
+    // A panel closes after the hooks, so a turn or a scene a hook moves on closes it too.
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'transitions', 'panels'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

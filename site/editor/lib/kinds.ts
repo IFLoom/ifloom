@@ -57,6 +57,7 @@ export const EFFECT_KINDS = [
   'minigame',
   'minigameVar',
   'transition',
+  'panel',
   'custom',
 ] as const satisfies readonly Effect['kind'][]
 

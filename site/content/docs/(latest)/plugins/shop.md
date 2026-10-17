@@ -173,6 +173,36 @@ const actions: ActionDef[] = [
 ]
 ```
 
+## Opening a counter
+
+Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `openShop`, from anything that runs effects: a place's action, a choice in a person's scene, an item's `use`, an app's button.
+
+```ts
+import { openShop } from '@ifloom/plugin-shop'
+
+// { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
+activities: [{ id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] }],
+// and in the café's location:
+actions: [{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }],
+```
+
+The counter stays open while the player buys and sells, and closes when a turn ends or the scene changes. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
+
+Opening a counter doesn't move the player. A vendor with `at` still sells only there, so a counter opened from somewhere else greys its buttons out with `You aren’t at that shop.` For a shop on a phone or a laptop, leave `at` out:
+
+```ts
+// An online shop: no `at`, so it sells wherever the player is.
+const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ item: 'scarf', price: { coins: 10 } }] }
+// An activity opens it, and a laptop app's actions section has a button for the activity.
+const browse: ActivityDef = { id: 'browse', effects: [openShop('webshop')] }
+const app: AppDef = {
+  id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'laptop',
+  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', command: { type: 'activity', id: 'browse' } }] }],
+}
+```
+
+The checker reports an `openShop` for a vendor the game doesn't have (`unknown vendor "kiosk"`), and a `shop` panel opened with no `vendor`.
+
 ## Conditions
 
 | Content writes | Helper | Holds when |
@@ -197,7 +227,7 @@ An unknown vendor or item is false.
 
 `view(state, game).plugins.shop` is a `ShopView`. Each good carries ready-made buttons, built with the engine's [`renderAction`](/docs/reference/view#renderaction), so a UI draws them like any other button.
 
-The [React UI](/docs/react) draws it with [`ShopButtons`](/docs/react/components#shopbuttons), a button for each vendor where the player is, opening a [`ShopCounter`](/docs/react/components#shopcounter) in a dialog. [`useShop`](/docs/react/components#useshop) gives the same data and the buy and sell commands with no markup.
+The [React UI](/docs/react) draws the `shop` panel as a [`ShopCounter`](/docs/react/components#shopcounter) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useShop`](/docs/react/components#useshop) gives the same data and the buy and sell commands with no markup, for a counter you place yourself.
 
 ### ShopView
 
@@ -274,7 +304,10 @@ const buy: (vendor: string, item: string, count?: number) => CommandRef
 const sell: (vendor: string, item: string, count?: number) => CommandRef
 const vendorOpen: (vendor: string) => Condition
 const inStock: (vendor: string, item: string) => Condition
+const openShop: (vendor: string) => Effect
 ```
+
+`openShop` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter).
 
 ### vendorDefs
 
@@ -315,4 +348,4 @@ A command that names a vendor or item the game doesn't have gives `unknown vendo
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café has no buttons of its own for it: the React UI's **Shop at The counter** button opens the counter.
+Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café's **Go to the counter** action opens it with `openShop('counter')`, and the counter also sells the newspaper whose job ads open the jobs panel.

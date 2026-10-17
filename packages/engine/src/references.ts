@@ -56,6 +56,8 @@ export type Reference =
   | { value: string }
   /** A custom panel. */
   | { panel: string }
+  /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `panelProblems`. */
+  | { openPanel: string; with?: PluginArgs }
   /** Background audio: a track (or silence) on a channel. */
   | { channel: string; track: string | null | undefined }
   /** A track played once. */

@@ -5,7 +5,11 @@ import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
 import { KeysProvider } from './keys.tsx'
 
-/** A game's own component for a scene panel or an app's panel section: it gets the data the game's custom panel returned. */
+/**
+ * A game's own component for a scene panel, an app's panel section or a panel
+ * content opens (`{ kind: 'panel' }`): it gets the data the game's custom panel
+ * returned, or what the panel was opened with.
+ */
 export type PanelComponent = ComponentType<{ data: unknown }>
 
 /** Draws another plugin's view inside an app: a messages channel, a feed. Gets the plugin's slice of the view and the section's `with`. */
@@ -50,7 +54,7 @@ const GameContext = createContext<GameContextValue | null>(null)
 
 export type GameProviderProps = UiOptions & {
   runner: Runner
-  /** The game's own panels, by the name its scenes and apps give. */
+  /** The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. */
   panels?: Record<string, PanelComponent>
   /** Renderers for plugin sections in apps, by plugin id, over the built-in ones. */
   sections?: Record<string, PluginSectionComponent>

@@ -238,6 +238,23 @@ resets: { workedToday: false }
 | `{ 'jobs/hire': { job } }` | `hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
 | `{ 'jobs/fire': { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
 
+## Opening the job board
+
+Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `openJobs`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper's `use`, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
+
+```ts
+import { openJobs } from '@ifloom/plugin-jobs'
+
+// Every job: { kind: 'panel', panel: 'jobs' }
+{ id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] }
+// Only the paper's ads: { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }
+{ id: 'paper', name: 'newspaper', desc: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] } }
+```
+
+The board stays open while the player applies, and closes when a turn ends or the scene changes, so working a shift that passes time closes it. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
+
+The checker reports a `job` list entry the game doesn't have (`unknown job "circus"`), and a `job` that isn't a list of ids.
+
 ## Strings
 
 | Key | English |
@@ -259,7 +276,7 @@ The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`
 
 `view(state, game).plugins.jobs` is a `JobsView`.
 
-The [React UI](/docs/react) draws it with [`JobBoard`](/docs/react/components#jobboard), and [`useJobs`](/docs/react/components#usejobs) gives the same data and the apply, work and quit commands with no markup.
+The [React UI](/docs/react) draws the `jobs` panel as a [`JobBoard`](/docs/react/components#jobboard) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useJobs`](/docs/react/components#usejobs) gives the same data and the apply, work and quit commands with no markup.
 
 ### JobsView
 
@@ -325,7 +342,10 @@ const fire: (job: string) => EffectRef
 const hasJob: (job: string, rank?: string) => Condition
 const wasFired: (job: string) => Condition
 const shiftsWorked: (job: string, range: Range) => Condition
+const openJobs: (jobs?: string[]) => Effect
 ```
+
+`openJobs` opens the job board in the `jobs` panel, with only `jobs` on it if given. See [Opening the job board](#opening-the-job-board).
 
 ### jobDefs
 
@@ -364,4 +384,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. The café has no buttons of its own for it: the React UI's job board, under the stage, applies and works the shifts.
+Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's **Ask about weekend work** choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings, is in the newspaper's ads, whose `use` opens the board with only that job.

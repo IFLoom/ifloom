@@ -302,6 +302,14 @@ runner.subscribe(() => {
 
 The reveal beats in `scene.beats` time the prose within a scene. See [Transitions](/docs/reference/transitions) for both, and the [Transitions recipe](/docs/recipes/transitions) for drawing them in each framework.
 
+### panel
+
+| Field | Type | Meaning |
+|---|---|---|
+| `panel` | [`OpenPanel`](/docs/reference/panels#openpanel) ` \| null` | The [panel](/docs/reference/panels) content opened, by name, with what it was opened with. `null` when none is open. |
+
+Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
+
 ### plugins
 
 | Field | Type | Meaning |

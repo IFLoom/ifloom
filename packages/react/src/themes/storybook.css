@@ -329,7 +329,6 @@
   background: var(--secondary);
 }
 
-[data-part="vendor-button"],
 [data-part="achievements-button"] {
   border-radius: 999px;
 }

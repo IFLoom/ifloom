@@ -1,8 +1,6 @@
 import type { GameState, Result } from '@ifloom/engine'
 import type { ShopView, VendorView } from '@ifloom/plugin-shop'
-import { useState } from 'react'
 import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceButton, usePriceText } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { PartDialog } from './dialog.tsx'
@@ -11,7 +9,7 @@ import { useWords } from './words.ts'
 
 /** What `useShop` returns: the shop plugin's view, the vendors where the player is, and its commands. */
 export type ShopControls = ShopView & {
-  /** The vendors at the player's location (every vendor, in a game without places). */
+  /** The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. */
   here: VendorView[]
   /** Buy `count` (1 if left out) of an item: sends `shop/buy`, refused with its reason as the buy button says. */
   buy: (vendor: string, item: string, count?: number) => Result<GameState>
@@ -19,7 +17,7 @@ export type ShopControls = ShopView & {
   sell: (vendor: string, item: string, count?: number) => Result<GameState>
 }
 
-/** The shop plugin's view with its commands, or null in a game without the plugin. `ShopButtons`, `ShopDialog` and `ShopCounter` are drawn from it. */
+/** The shop plugin's view with its commands, or null in a game without the plugin. `ShopDialog`, `ShopCounter` and the `shop` panel are drawn from it. */
 export function useShop(): ShopControls | null {
   const { view, send } = useGame()
   const shop = view.plugins.shop as ShopView | undefined
@@ -100,32 +98,3 @@ function ShopDialogImpl({ vendorId, onClose }: { vendorId: string | null; onClos
 
 /** The vendor with this id in a dialog, titled with its name and drawn as a `ShopCounter`. Closed while `vendorId` is null or names no vendor. */
 export const ShopDialog = overridable('ShopDialog', ShopDialogImpl)
-
-function ShopButtonsImpl({ className }: { className?: string }) {
-  const words = useWords()
-  const shop = useShop()
-  const [openId, setOpenId] = useState<string | null>(null)
-  const row = usePart('vendors', 'flex flex-wrap gap-2', className)
-  const button = usePart('vendor-button', buttonVariants({ variant: 'outline', size: 'sm' }))
-  const closed = usePart('vendor-closed', badgeVariants({ variant: 'secondary' }))
-  const here = shop?.here ?? []
-  if (!here.length) return null
-  return (
-    <div {...row} data-shop>
-      {here.map((vendor) => (
-        <button key={vendor.id} type="button" {...button} onClick={() => setOpenId(vendor.id)} data-vendor={vendor.id}>
-          {words('shopAt', { vendor: vendor.name })}
-          {vendor.closed ? <span {...closed}>{words('vendorClosed')}</span> : null}
-        </button>
-      ))}
-      <ShopDialog vendorId={openId} onClose={() => setOpenId(null)} />
-    </div>
-  )
-}
-
-/**
- * A button for each vendor where the player is, opening it in a
- * `ShopDialog`: the `'shop'` part. Opening one sends no command. Nothing in a
- * game without the shop plugin, or where no vendor stands.
- */
-export const ShopButtons = overridable('ShopButtons', ShopButtonsImpl)

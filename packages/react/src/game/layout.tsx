@@ -8,15 +8,14 @@ import { DebugCard } from './debug.tsx'
 import { DeviceButtons } from './device.tsx'
 import { EntityTable } from './entities.tsx'
 import { InputFields } from './inputs.tsx'
-import { JobBoard } from './jobs.tsx'
 import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
 import { Notices } from './notices.tsx'
 import { NoticeStrip } from './strip.tsx'
+import { PanelHost } from './panels.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { SceneStage } from './scene.tsx'
-import { ShopButtons } from './shop.tsx'
 import { StatusList } from './statuses.tsx'
 import { Clock, LocationCard, PeopleCard, StatList } from './sidebar.tsx'
 import { WardrobeCard } from './wardrobe.tsx'
@@ -47,31 +46,30 @@ export type PartName =
   | 'statuses'
   | 'achievements'
   | 'cheats'
-  | 'shop'
-  | 'jobs'
+  | 'panel'
 
 /** A part of a layout: a built-in one by name, or anything of the game's own. */
 export type Part = PartName | ReactNode
 
 /**
  * Where the parts go: a column at the side, the stage, and the overlay that
- * floats over the page (notices, by default). No side column, and the stage is
+ * floats over the page (notices and the open panel, by default). No side column, and the stage is
  * all there is; an empty overlay draws nothing over the page.
  */
 export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
 
 /** The React UI's own layout: everything at the side, the scene on the stage. */
 export const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
-  stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
-  overlay: ['notices'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
+  stage: ['scene', 'inputs', 'quests', 'debug'],
+  overlay: ['notices', 'panel'],
 } as const satisfies Required<Layout>
 
 /** A page to read, as a novel is: the scene, then what to type and the buttons, under the title. */
 export const READING_LAYOUT = {
   sidebar: [],
   stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements', 'cheats'],
-  overlay: ['notices'],
+  overlay: ['notices', 'panel'],
 } as const satisfies Required<Layout>
 
 function TitleImpl() {
@@ -116,8 +114,7 @@ const PARTS: Record<PartName, () => ReactNode> = {
   statuses: () => <StatusList />,
   achievements: () => <AchievementsButton />,
   cheats: () => <CheatsButton />,
-  shop: () => <ShopButtons />,
-  jobs: () => <JobBoard />,
+  panel: () => <PanelHost />,
 }
 
 function isPartName(part: Part): part is PartName {

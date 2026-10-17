@@ -4,8 +4,8 @@ import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@te
 import type { ReactNode } from 'react'
 import { SCHEMA, createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
-import { jobs } from '@ifloom/plugin-jobs'
-import { shop, type ShopView } from '@ifloom/plugin-shop'
+import { jobs, openJobs } from '@ifloom/plugin-jobs'
+import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
 import { applyStatus, statuses } from '@ifloom/plugin-statuses'
 import {
   AchievementList,
@@ -13,6 +13,7 @@ import {
   GameProvider,
   GameShell,
   JobBoard,
+  PanelHost,
   ShopCounter,
   StatusList,
   useAchievements,
@@ -27,7 +28,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-/** A street with a counter, two jobs, three achievements and a coffee that gives a buzz. */
+/** A street with a counter, two jobs on a board and one in the paper, three achievements and a coffee that gives a buzz. */
 function game(withPlugins = true): Game {
   return loadGame(
     [
@@ -43,7 +44,14 @@ function game(withPlugins = true): Game {
           { id: 'flapjack', name: 'Flapjack', desc: '' },
           { id: 'cake', name: 'Cake', desc: '' },
         ],
-        activities: [{ id: 'coffee', effects: [applyStatus('buzz')] }, { id: 'sleep', effects: [{ kind: 'turn' }] }],
+        activities: [
+          { id: 'coffee', effects: [applyStatus('buzz')] },
+          { id: 'sleep', effects: [{ kind: 'turn' }] },
+          { id: 'counter', effects: [openShop('counter')] },
+          { id: 'board', effects: [openJobs()] },
+          { id: 'paper', effects: [openJobs(['weekend'])] },
+          { id: 'pockets', effects: [{ kind: 'panel', panel: 'pockets', with: { title: 'Your pockets' } }] },
+        ],
         data: {
           shop: {
             vendors: [
@@ -100,6 +108,14 @@ function game(withPlugins = true): Game {
       actions: [
         { id: 'coffee', label: 'Have a coffee', command: { type: 'activity', id: 'coffee' } },
         { id: 'sleep', label: 'Sleep', command: { type: 'activity', id: 'sleep' } },
+        ...(withPlugins
+          ? [
+              { id: 'counter', label: 'Go to the counter', command: { type: 'activity' as const, id: 'counter' } },
+              { id: 'board', label: 'Read the job board', command: { type: 'activity' as const, id: 'board' } },
+              { id: 'paper', label: 'Read the paper', command: { type: 'activity' as const, id: 'paper' } },
+            ]
+          : []),
+        { id: 'pockets', label: 'Check your pockets', command: { type: 'activity', id: 'pockets' } },
       ],
     },
   ).game
@@ -112,11 +128,12 @@ function play(props: Partial<Parameters<typeof GameShell>[0]> = {}, g = game()):
 }
 
 const part = (name: string) => document.querySelector(`[data-part="${name}"]`)
+const press = (name: RegExp | string) => act(() => void fireEvent.click(screen.getByRole('button', { name })))
 
 describe('the shop', () => {
-  it('opens the vendor from the sidebar, with prices, stock and greyed-out reasons', () => {
+  it('opens the vendor in a panel from a room\'s action, with prices, stock and greyed-out reasons', () => {
     play()
-    act(() => void fireEvent.click(screen.getByRole('button', { name: /Shop at The counter/ })))
+    press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
     const cake = within(dialog.querySelector('[data-good="cake"]') as HTMLElement)
     const buyCake = cake.getByRole('button', { name: /Buy/ }) as HTMLButtonElement
@@ -127,9 +144,30 @@ describe('the shop', () => {
     expect(within(dialog.querySelector('[data-good="flapjack"]') as HTMLElement).getByText('1 left')).toBeTruthy()
   })
 
+  it('has no button of its own: a vendor opens only from content', () => {
+    play()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.querySelector('[data-vendor]')).toBeNull()
+  })
+
+  it('stays open while the player buys, and closing it sends closePanel', () => {
+    const runner = play()
+    press('Go to the counter')
+    const dialog = screen.getByRole('dialog', { name: 'The counter' })
+    const flapjack = () => within(dialog.querySelector('[data-good="flapjack"]') as HTMLElement)
+    act(() => void fireEvent.click(flapjack().getByRole('button', { name: /Buy/ })))
+    act(() => void fireEvent.click(flapjack().getByRole('button', { name: /Sell/ })))
+    expect(runner.state.stats.coins).toBe(4)
+    expect(screen.getByRole('dialog', { name: 'The counter' })).toBeTruthy()
+    press('Close')
+    expect(runner.state.panel).toBeNull()
+    expect(runner.log().commands.at(-1)).toEqual({ type: 'closePanel' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('buys, then sells back, and the counter follows the state', () => {
     const runner = play()
-    act(() => void fireEvent.click(screen.getByRole('button', { name: /Shop at The counter/ })))
+    press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
     const sandwich = () => within(dialog.querySelector('[data-good="sandwich"]') as HTMLElement)
     expect(sandwich().queryByRole('button', { name: /Sell/ })).toBeNull()
@@ -145,7 +183,7 @@ describe('the shop', () => {
   it('says sold out on the button once the stock is gone', () => {
     const runner = play()
     act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', item: 'flapjack' } }))
-    act(() => void fireEvent.click(screen.getByRole('button', { name: /Shop at The counter/ })))
+    press('Go to the counter')
     const flapjack = document.querySelector('[data-good="flapjack"]') as HTMLElement
     const button = within(flapjack).getByRole('button', { name: /Buy/ }) as HTMLButtonElement
     expect(button.disabled).toBe(true)
@@ -156,6 +194,8 @@ describe('the shop', () => {
 describe('the job board', () => {
   it('lists every job, with Apply greyed out by its reason', () => {
     play()
+    press('Read the job board')
+    expect(screen.getByRole('dialog', { name: 'Jobs' })).toBeTruthy()
     const office = within(document.querySelector('[data-job="office"]') as HTMLElement)
     const apply = office.getByRole('button', { name: /Apply/ }) as HTMLButtonElement
     expect(apply.disabled).toBe(true)
@@ -163,14 +203,26 @@ describe('the job board', () => {
     expect(office.getByText('Pays 20 coins a shift')).toBeTruthy()
   })
 
+  it('shows only the jobs the panel was opened with', () => {
+    play()
+    press('Read the paper')
+    const dialog = screen.getByRole('dialog', { name: 'Jobs' })
+    expect([...dialog.querySelectorAll('[data-job]')].map((job) => job.getAttribute('data-job'))).toEqual(['weekend'])
+    // The dialog's title is the heading: the board's own is left off.
+    expect(within(dialog).queryByRole('heading', { level: 3 })).toBeNull()
+  })
+
   it('applies, works a shift for its pay, shows the rank and the way up, and quits', () => {
     const runner = play()
+    press('Read the job board')
     const weekend = () => within(document.querySelector('[data-job="weekend"]') as HTMLElement)
     act(() => void fireEvent.click(weekend().getByRole('button', { name: /Apply/ })))
     expect(document.querySelector('[data-job="weekend"]')!.hasAttribute('data-hired')).toBe(true)
     expect(weekend().getByText('Help')).toBeTruthy()
     expect(weekend().getByText('Next: Barista, after 2 more shifts')).toBeTruthy()
     act(() => void fireEvent.click(weekend().getByRole('button', { name: /Work a shift/ })))
+    // Without a calendar a shift takes no time, so the board stays open.
+    expect(runner.state.panel).toEqual({ panel: 'jobs', with: {} })
     expect(runner.state.stats.coins).toBe(17)
     expect(runner.state.stats.energy).toBe(25)
     // Once a turn, without a calendar: the button now says why not.
@@ -239,43 +291,85 @@ describe('the statuses', () => {
 describe('the defaults, wired', () => {
   it('draw nothing in a game without their plugins', () => {
     play({}, game(false))
-    for (const name of ['vendors', 'jobs', 'achievements-button', 'statuses']) expect(part(name), name).toBeNull()
+    for (const name of ['shop', 'jobs', 'achievements-button', 'statuses']) expect(part(name), name).toBeNull()
   })
 
   it('go when their part is left out of the layout', () => {
-    const drop = new Set(['shop', 'jobs', 'achievements'])
-    play({ layout: { ...DEFAULT_LAYOUT, sidebar: DEFAULT_LAYOUT.sidebar.filter((name) => !drop.has(name)), stage: DEFAULT_LAYOUT.stage.filter((name) => !drop.has(name)) } })
-    for (const name of ['vendors', 'jobs', 'achievements-button']) expect(part(name), name).toBeNull()
+    const drop = new Set(['achievements', 'panel'])
+    play({ layout: { ...DEFAULT_LAYOUT, sidebar: DEFAULT_LAYOUT.sidebar.filter((name) => !drop.has(name)), overlay: DEFAULT_LAYOUT.overlay.filter((name) => !drop.has(name)) } })
+    expect(part('achievements-button')).toBeNull()
+    press('Go to the counter')
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('are replaced by name in components, which get the built-in one as Default', () => {
     const components: Components = {
       JobBoard: () => <p>Our own board</p>,
-      ShopButtons: ({ Default }) => (
+      ShopCounter: ({ Default, ...props }) => (
         <div data-testid="wrapped">
-          <Default />
+          <Default {...props} />
         </div>
       ),
     }
     play({ components })
+    press('Read the job board')
     expect(screen.getByText('Our own board')).toBeTruthy()
     expect(part('jobs')).toBeNull()
-    expect(within(screen.getByTestId('wrapped')).getByRole('button', { name: /Shop at The counter/ })).toBeTruthy()
+    press('Close')
+    press('Go to the counter')
+    expect(within(screen.getByTestId('wrapped')).getByText('Sandwich')).toBeTruthy()
   })
 
   it('take classes, and keep their parts when unstyled', () => {
     play({ classes: { job: 'bg-job' }, unstyled: true })
+    press('Read the job board')
     const job = part('job') as HTMLElement
     expect(job.className).toBe('bg-job')
-    for (const name of ['jobs', 'job-title', 'job-actions', 'vendors', 'vendor-button', 'achievements-button']) expect(part(name), name).not.toBeNull()
+    for (const name of ['jobs', 'job-title', 'job-actions', 'achievements-button']) expect(part(name), name).not.toBeNull()
   })
 
   it('say what the game says, through ui. strings', () => {
     const g = game()
-    const runner = createRunner({ ...g, strings: { ...g.strings, 'ui.jobs': 'Work', 'ui.shopAt': 'Visit {vendor}' } }, startingState(g))
+    const runner = createRunner({ ...g, strings: { ...g.strings, 'ui.jobs': 'Work', 'ui.buy': 'Take' } }, startingState(g))
     render(<GameShell runner={runner} />)
-    expect(screen.getByRole('heading', { name: 'Work' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Visit The counter/ })).toBeTruthy()
+    press('Read the job board')
+    expect(screen.getByRole('dialog', { name: 'Work' })).toBeTruthy()
+    press('Close')
+    press('Go to the counter')
+    expect(screen.getAllByRole('button', { name: /Take/ }).length).toBe(3)
+  })
+})
+
+describe('the panels', () => {
+  it('draw the built-in ones by name, and a game\'s own over them, with what they were opened with', () => {
+    const Pockets = ({ data }: { data: unknown }) => <p>Lint and {JSON.stringify(data)}</p>
+    const Board = () => <p>The café's own board</p>
+    const runner = play({ panels: { pockets: Pockets, jobs: Board } })
+    press('Check your pockets')
+    expect(screen.getByRole('dialog', { name: 'Your pockets' }).textContent).toContain('Lint and {"title":"Your pockets"}')
+    press('Close')
+    press('Read the job board')
+    expect(screen.getByRole('dialog', { name: 'Jobs' }).textContent).toContain('The café\'s own board')
+    act(() => void runner.apply({ type: 'closePanel' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('show nothing for a name nothing draws', () => {
+    play()
+    press('Check your pockets')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('are drawn by a PanelHost in a layout of your own', () => {
+    const g = game()
+    const runner = createRunner(g, startingState(g))
+    render(
+      <GameProvider runner={runner}>
+        <PanelHost />
+      </GameProvider>,
+    )
+    act(() => void runner.apply({ type: 'activity', id: 'counter' }))
+    expect(screen.getByRole('dialog', { name: 'The counter' })).toBeTruthy()
   })
 })
 

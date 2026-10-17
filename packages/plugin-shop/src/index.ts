@@ -133,6 +133,8 @@ export type ShopView = {
 }
 
 const ID = 'shop'
+/** The panel a UI draws a vendor's counter in. */
+const PANEL = 'shop'
 
 function emptyState(): ShopState {
   return { sold: {} }
@@ -408,6 +410,12 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
           ],
         })),
     },
+    // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.
+    panelProblems: (panel, args, _game, tools) => {
+      if (panel !== PANEL) return []
+      if (typeof args.vendor !== 'string') return ['the shop panel needs a vendor: { vendor: "<id>" }']
+      return tools.problems([{ entry: args.vendor, plugin: ID, list: 'vendors', noun: 'vendor' }])
+    },
     check: (game) => {
       const problems: PluginProblem[] = []
       for (const vendor of vendorDefs(game)) {
@@ -437,6 +445,12 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
 export const buy = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/buy': count === undefined ? { vendor, item } : { vendor, item, count } })
 /** A command: sell `count` (1 if left out) of an item back to a vendor. */
 export const sell = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/sell': count === undefined ? { vendor, item } : { vendor, item, count } })
+/**
+ * An effect: open the vendor's counter in the `shop` panel, from a place's
+ * action, a person's, an item's `use`, an app or a choice. The UI draws it;
+ * `@ifloom/react` draws a `ShopCounter`.
+ */
+export const openShop = (vendor: string): Effect => ({ kind: 'panel', panel: PANEL, with: { vendor } })
 /** A condition: the vendor is open now. */
 export const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
 /** A condition: the vendor offers the item now and has one left. */

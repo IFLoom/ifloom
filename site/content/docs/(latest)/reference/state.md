@@ -36,6 +36,7 @@ type GameState = {
   media: MediaState
   minigame: MinigameState | null
   transition: { to: TransitionName; ms?: number } | null
+  panel: OpenPanel | null
   gameVersion?: number
 }
 ```
@@ -250,6 +251,14 @@ transition: { to: TransitionName; ms?: number } | null
 ```
 
 How the screen after the last command comes in, as a [`transition` effect](/docs/reference/effects#transition) set it, or `null`. It lasts one command: the next command that doesn't set it again clears it. [`view.transition`](/docs/reference/view#transition) reads it. A save from before transitions loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
+
+### panel
+
+```ts
+panel: OpenPanel | null   // { panel: 'shop', with: { vendor: 'counter' } }
+```
+
+The [panel](/docs/reference/panels) open over the story, with what it was opened with, or `null`. A [`panel` effect](/docs/reference/effects#panel) sets it and the [`closePanel`](/docs/reference/commands#closepanel) command clears it. [`view.panel`](/docs/reference/view#panel) reads it. A save from before panels loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
 
 ## New Game+
 

@@ -40,7 +40,8 @@ import type { KeyOptions } from './keys.tsx'
 import type { AchievementList, AchievementsButton, AchievementsPage } from './achievements.tsx'
 import type { CheatPanel, CheatsButton } from './cheats.tsx'
 import type { UnlocksPanel } from './unlocks.tsx'
-import type { ShopButtons, ShopCounter, ShopDialog } from './shop.tsx'
+import type { ShopCounter, ShopDialog } from './shop.tsx'
+import type { PanelHost } from './panels.tsx'
 import type { JobBoard } from './jobs.tsx'
 import type { StatusList } from './statuses.tsx'
 
@@ -83,7 +84,6 @@ export const PART_KEYS = [
   'cheats-button', 'cheats', 'cheats-group', 'cheats-group-title', 'cheat', 'cheat-text', 'cheat-used',
   'unlocks', 'unlocks-title', 'unlock-form', 'unlock-input', 'unlocks-message', 'unlocks-entered', 'unlocks-list', 'unlock', 'unlock-name', 'unlock-state', 'unlock-text', 'unlock-problem',
   'achievement', 'achievement-image', 'achievement-title', 'achievement-text', 'achievement-progress', 'achievement-progress-text',
-  'vendors', 'vendor-button', 'vendor-closed',
   'shop', 'shop-closed', 'shop-empty', 'goods', 'good', 'good-name', 'good-details', 'good-off', 'good-full-price', 'good-stock', 'good-owned', 'good-actions',
   'jobs', 'jobs-title', 'job', 'job-title', 'job-rank', 'job-fired', 'job-text', 'job-details', 'job-pay', 'job-shift', 'job-next', 'job-record', 'job-actions',
   'entities', 'entity-table', 'entity-heading', 'entity-columns', 'entity-column', 'entity-row', 'entity-name', 'entity-value',
@@ -153,7 +153,7 @@ export type Components = Partial<{
   CheatPanel: Override<PropsOf<typeof CheatPanel>>
   CheatsButton: Override<PropsOf<typeof CheatsButton>>
   UnlocksPanel: Override<PropsOf<typeof UnlocksPanel>>
-  ShopButtons: Override<PropsOf<typeof ShopButtons>>
+  PanelHost: Override<PropsOf<typeof PanelHost>>
   ShopDialog: Override<PropsOf<typeof ShopDialog>>
   ShopCounter: Override<PropsOf<typeof ShopCounter>>
   JobBoard: Override<PropsOf<typeof JobBoard>>

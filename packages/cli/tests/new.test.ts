@@ -87,8 +87,8 @@ describe('ifloom new', () => {
 
   it.each([
     ['react', 'react(), tailwindcss()', ['src/main.ts', 'src/styles.css']],
-    ['vue', 'vue()', ['src/App.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue']],
-    ['svelte', 'svelte()', ['src/App.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte']],
+    ['vue', 'vue()', ['src/App.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue', 'src/Panel.vue']],
+    ['svelte', 'svelte()', ['src/App.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte', 'src/Panel.svelte']],
   ] as const)('gives the %s template its framework\'s Vite plugin and components', (template, plugin, components) => {
     const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}]`)

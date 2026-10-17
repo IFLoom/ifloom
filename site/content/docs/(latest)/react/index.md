@@ -256,22 +256,23 @@ type PartName =
 | `'statuses'` | [`StatusList`](/docs/react/components#statuslist), the active statuses. |
 | `'achievements'` | [`AchievementsButton`](/docs/react/components#achievementsbutton), which opens the achievements. |
 | `'cheats'` | [`CheatsButton`](/docs/react/components#cheatsbutton), which opens the cheats. |
-| `'shop'` | [`ShopButtons`](/docs/react/components#shopbuttons), a button for each vendor here. |
-| `'jobs'` | [`JobBoard`](/docs/react/components#jobboard). |
+| `'panel'` | [`PanelHost`](/docs/react/components#panelhost), the [panel](/docs/reference/panels) content opened, such as a shop's counter or the job board, in a dialog. |
+
+Shops and job boards aren't parts. Content opens them in a [panel](/docs/reference/panels) from a place, a person, an item or an app, and the `'panel'` part draws it.
 
 Each built-in part draws nothing when the game has nothing for it. A game without a calendar shows no clock, and one without the cast shows no people. So a layout can safely list parts a game doesn't use. Two layouts are exported:
 
 ```ts
 const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
-  stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
-  overlay: ['notices'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
+  stage: ['scene', 'inputs', 'quests', 'debug'],
+  overlay: ['notices', 'panel'],
 }
 
 const READING_LAYOUT = {
   sidebar: [],
   stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements', 'cheats'],
-  overlay: ['notices'],
+  overlay: ['notices', 'panel'],
 }
 ```
 
@@ -432,6 +433,8 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | Key | English | Fills |
 |---|---|---|
 | `ui.quests` | `Quests` | |
+| `ui.people` | `People` | |
+| `ui.stats` | `Stats` | |
 | `ui.statLevel` | `Level {level}` | `level` |
 | `ui.statProgress` | `{label}: {percent}% of the way to level {next}` | `label`, `percent`, `next` |
 | `ui.questNew` | `New` | |
@@ -536,8 +539,6 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.restartForUnlock` | `Restart to add it` | |
 | `ui.unlocked` | `Unlocked` | |
 | `ui.locked` | `Locked` | |
-| `ui.shopAt` | `Shop at {vendor}` | `vendor`: its name |
-| `ui.vendorClosed` | `Closed` | |
 | `ui.buy` | `Buy` | |
 | `ui.sellFor` | `Sell for {price}` | `price`: what selling one pays |
 | `ui.stockLeft` | `{n} left` | `n` |
@@ -588,7 +589,8 @@ Which component uses which keys:
 - **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.
 - **[Cheats](/docs/react/components#cheatpanel)**: `ui.cheats` on the button and the dialog, and `ui.cheatUsedOnce` and `ui.cheatUsedTimes` on a cheat used.
 - **[Codes](/docs/react/components#unlockspanel)**: `ui.enterCode` to `ui.locked`, on the code box and its list, and `ui.enterCode` on the menu's button.
-- **[Shop](/docs/react/components#shopcounter)**: `ui.shopAt` to `ui.noGoods`.
+- **[Shop](/docs/react/components#shopcounter)**: `ui.buy` to `ui.noGoods`.
+- **[Panels](/docs/react/components#panelhost)**: each built-in panel's dialog is titled with its card's heading word (`ui.jobs`, `ui.wardrobe`, `ui.inventory`, `ui.quests`, `ui.achievements`, `ui.statuses`), or `ui.people` and `ui.stats`. The shop's is the vendor's name.
 - **[Job board](/docs/react/components#jobboard)**: `ui.jobs` to `ui.jobFired`.
 - **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
 

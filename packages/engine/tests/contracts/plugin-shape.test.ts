@@ -40,7 +40,7 @@ const MEMBERS = {
   // Providers: answers, never a change to the state.
   providers: ['guard', 'price', 'label', 'stage', 'buttons', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'kinds', 'entities'],
   // What the content checker asks.
-  checks: ['references', 'check', 'argProblems'],
+  checks: ['references', 'check', 'argProblems', 'panelProblems'],
   // What `definePlugin` adds for code outside the plugin.
   defined: ['read', 'write', 'viewIn'],
 } as const

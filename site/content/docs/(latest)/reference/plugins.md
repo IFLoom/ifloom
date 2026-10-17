@@ -201,6 +201,7 @@ type Plugin<S = any> = {
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+  panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
 }
 ```
 
@@ -236,6 +237,7 @@ type Plugin<S = any> = {
 | `references` | What its calls and content name, for the [content checker](/docs/reference/checks) to resolve. See [References](#references). |
 | `check` | Rules of its own about its content, checked with the rest of the game. See [check](#check). |
 | `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, by a rule of its own. See [Checking calls](#checking-calls). |
+| `panelProblems` | What's wrong with what content opens one of its [panels](/docs/reference/panels) with. See [Checking panels](#checking-panels). |
 
 ## PluginContext
 
@@ -1116,6 +1118,26 @@ activities: [{ id: 'ask', blocked: [{ when: { not: { 'stall/sells': { item: 'fis
 ```
 
 The checker asks it about every call it finds and reports each problem as the call's own, where the call is.
+
+### Checking panels
+
+```ts
+panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
+```
+
+What's wrong with the `with` of a [`panel` effect](/docs/reference/effects#panel), for a panel the plugin's UI draws. The checker asks every plugin about every `panel` effect it finds, so answer `[]` for a name that isn't yours. A name no plugin answers for is allowed, because the UI decides what it draws. `tools.problems` words the ids it names as the checker does.
+
+The shop plugin checks its `shop` panel like this:
+
+```ts
+panelProblems: (panel, args, _game, tools) => {
+  if (panel !== 'shop') return []
+  if (typeof args.vendor !== 'string') return ['the shop panel needs a vendor: { vendor: "<id>" }']
+  return tools.problems([{ entry: args.vendor, plugin: 'shop', list: 'vendors', noun: 'vendor' }])
+}
+```
+
+Each problem is reported where the effect is, such as `activity counter: unknown vendor "kiosk"`.
 
 ### PluginProblem
 

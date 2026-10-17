@@ -227,6 +227,14 @@ export type Plugin<S = any, V = unknown> = {
    * belong in `references.calls` instead. Asked of every call the checker finds.
    */
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+  /**
+   * What is wrong with what content opens a panel with (`{ kind: 'panel',
+   * panel, with }`), for the panels this plugin's UI draws: `['unknown vendor
+   * "fish"']` for `panel: 'shop'`. Answer `[]` for a panel that isn't this
+   * plugin's; a panel no plugin knows is the UI's business. `tools` words the
+   * ids it names as the checker does. Asked of every panel effect the checker finds.
+   */
+  panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
 }
 
 /**

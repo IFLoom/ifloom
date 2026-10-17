@@ -26,7 +26,7 @@ export function useQuests(): QuestsControls | null {
   }
 }
 
-function QuestLogImpl({ className, title }: { className?: string; title?: string }) {
+function QuestLogImpl({ className, title }: { className?: string; title?: string | false }) {
   const words = useWords()
   const log = usePart('quests', 'flex flex-col gap-3', className)
   const heading = usePart('quests-title', 'flex items-center gap-2 font-heading font-semibold')
@@ -46,10 +46,12 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   if (!quests) return null
   return (
     <section {...log} data-quests>
-      <h3 {...heading}>
-        {title ?? words('quests')}
-        {quests.updates ? <span {...updates}>{quests.updates}</span> : null}
-      </h3>
+      {title === false ? null : (
+        <h3 {...heading}>
+          {title ?? words('quests')}
+          {quests.updates ? <span {...updates}>{quests.updates}</span> : null}
+        </h3>
+      )}
       {quests.active.map((quest) => (
         <div key={quest.id} {...card} data-quest={quest.id}>
           <p {...questTitle}>

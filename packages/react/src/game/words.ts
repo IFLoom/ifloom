@@ -8,6 +8,9 @@ import { useGame } from './context.tsx'
  */
 export const UI_STRINGS = {
   quests: 'Quests',
+  // the panels' titles that no card already has a word for
+  people: 'People',
+  stats: 'Stats',
   statLevel: 'Level {level}',
   statProgress: '{label}: {percent}% of the way to level {next}',
   questNew: 'New',
@@ -117,8 +120,6 @@ export const UI_STRINGS = {
   unlocked: 'Unlocked',
   locked: 'Locked',
   // the shop
-  shopAt: 'Shop at {vendor}',
-  vendorClosed: 'Closed',
   buy: 'Buy',
   sellFor: 'Sell for {price}',
   stockLeft: '{n} left',

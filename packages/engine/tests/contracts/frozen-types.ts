@@ -23,7 +23,8 @@
  * Transitions: the `transition` effect, `GameState.transition`,
  * `Game.transitions` and `View.transition`. R5: the `tier` condition folded
  * into `level` (hidden bands are `levels.hidden`); `items`, `storylines` and
- * `activities` optional on `Game`.
+ * `activities` optional on `Game`. Panels: the `panel` effect, the
+ * `closePanel` command, `GameState.panel` and `View.panel`.
  */
 import type {
   ActionDef,
@@ -53,6 +54,7 @@ import type {
   MinigameState,
   MinigameView,
   MediaState,
+  OpenPanel,
   MigrationTools,
   Notice,
   NoticesView,
@@ -236,6 +238,8 @@ export type FrozenGameState = {
   minigame: MinigameState | null
   /** How the screen after the last command arrives, as a `transition` effect set it, or null. */
   transition: { to: TransitionName; ms?: number } | null
+  /** The panel open over the story, or null. */
+  panel: OpenPanel | null
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -266,6 +270,8 @@ export type FrozenCommand =
   | { type: 'tick'; ms: number }
   /** An input to the minigame being played, by name. */
   | { type: 'minigame'; input: string }
+  /** Close the open panel. */
+  | { type: 'closePanel' }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
 
@@ -327,6 +333,8 @@ export type FrozenEffect =
   | { kind: 'minigameVar'; key: string; to: number }
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
+  /** Open a panel by name, with what it needs; `panel: null` closes it. */
+  | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
   /** The screen this command leaves on comes in with `to`. */
   | { kind: 'transition'; to: TransitionName; ms?: number }
 
@@ -521,4 +529,6 @@ export type FrozenView = {
   minigame: MinigameView | null
   /** The screen on show, and how it comes in and goes out. */
   transition: TransitionView
+  /** The panel open over the story, or null. */
+  panel: OpenPanel | null
 }

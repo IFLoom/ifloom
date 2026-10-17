@@ -35,6 +35,7 @@ export const STRINGS = {
   notAnOption: 'That is not one of the options.',
   // Minigames.
   noMinigame: 'Nothing is being played.',
+  noPanel: 'Nothing is open.',
   notLive: 'That does nothing now.',
   noTimer: 'Nothing is counting down.',
   tickLength: 'A tick is a number of milliseconds above 0.',

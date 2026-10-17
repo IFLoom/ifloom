@@ -34,7 +34,7 @@ export function useJobs(): JobsControls | null {
   }
 }
 
-function JobBoardImpl({ className, title }: { className?: string; title?: string }) {
+function JobBoardImpl({ className, title, jobs: only }: { className?: string; title?: string | false; jobs?: readonly string[] }) {
   const words = useWords()
   const priceText = usePriceText()
   const board = usePart('jobs', 'flex flex-col gap-3', className)
@@ -52,7 +52,8 @@ function JobBoardImpl({ className, title }: { className?: string; title?: string
   const actions = usePart('job-actions', 'flex flex-col gap-1.5')
   const quit = usePart('button', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
   const jobs = useJobs()
-  if (!jobs || !jobs.jobs.length) return null
+  const shown = only ? (jobs?.jobs ?? []).filter((job) => only.includes(job.id)) : (jobs?.jobs ?? [])
+  if (!jobs || !shown.length) return null
   const shiftLine = (inDays: number) =>
     inDays === 0 ? words('shiftToday') : inDays === 1 ? words('shiftTomorrow') : words('shiftInDays', { n: inDays })
   const nextLine = (job: JobView) => {
@@ -63,8 +64,8 @@ function JobBoardImpl({ className, title }: { className?: string; title?: string
   }
   return (
     <section {...board} data-jobs>
-      <h3 {...heading}>{title ?? words('jobs')}</h3>
-      {jobs.jobs.map((job) => {
+      {title === false ? null : <h3 {...heading}>{title ?? words('jobs')}</h3>}
+      {shown.map((job) => {
         const paid = priceText(job.pay)
         const promotion = nextLine(job)
         return (
@@ -110,6 +111,8 @@ function JobBoardImpl({ className, title }: { className?: string; title?: string
  * next shift, how far to the next rank and the shifts worked and missed. A
  * job not held has an Apply button, greyed out with what's missing; a job held
  * has Work a shift, with the shift's cost and why it can't be worked now, and
- * Quit. A job the player was fired from says so. A thin default on `useJobs`.
+ * Quit. A job the player was fired from says so. `jobs` shows only those
+ * jobs, by id, as a newspaper's ads would; `title={false}` leaves the heading
+ * off, as the `jobs` panel does under its dialog's title. A thin default on `useJobs`.
  */
 export const JobBoard = overridable('JobBoard', JobBoardImpl)

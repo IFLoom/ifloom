@@ -20,6 +20,7 @@ import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, 
 import { media, type MediaShape } from './media.ts'
 import { minigames, type MinigamesShape } from './minigames.ts'
 import { notices, type NoticesShape } from './notices.ts'
+import { panels, type PanelsShape } from './panels.ts'
 import { scenes, type ScenesShape } from './scenes.ts'
 import { settings, type SettingsShape } from './settings.ts'
 import { stats, type StatsShape } from './stats.ts'
@@ -30,7 +31,7 @@ import { turns, type TurnsShape } from './turns.ts'
 import { kv, type KvShape } from './kv.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
-type Shapes = EntitiesShape | TurnsShape | KvShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | MinigamesShape | AudioShape | MediaShape | TransitionsShape
+type Shapes = EntitiesShape | TurnsShape | KvShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | MinigamesShape | AudioShape | MediaShape | TransitionsShape | PanelsShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
@@ -40,9 +41,11 @@ type Shapes = EntitiesShape | TurnsShape | KvShape | StorylinesShape | Collectio
  * it in the command that opens it; settings before audio, which requires it; stats before entities,
  * so a loaded save's entities are filled after their stats; transitions anywhere
  * after the plugins' hooks, since only its after-command step (clearing a
- * `transition` effect's override a command didn't set) depends on order.
+ * `transition` effect's override a command didn't set) depends on order;
+ * panels after the plugins' hooks too, so a turn or scene a hook moves on
+ * closes the panel the command found open.
  */
-export const FEATURES = [turns, kv, storylines, collections, notices, triggers, scenes, minigames, items, activities, inputs, settings, stats, audio, media, transitions, entities, locks] as const
+export const FEATURES = [turns, kv, storylines, collections, notices, triggers, scenes, minigames, items, activities, inputs, settings, stats, audio, media, transitions, panels, entities, locks] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never
 type PartOf<T, K extends keyof FeatureShape> = T extends unknown ? (K extends keyof T ? (T[K] extends object ? T[K] : {}) : {}) : never

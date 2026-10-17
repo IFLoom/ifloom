@@ -10,12 +10,13 @@ This page is about adding screens. To change how the built-in ones look, or to r
 
 ## Panels
 
-A panel is a screen your game draws itself, in place of the usual one. There are two places a panel can go:
+A panel is a screen your game draws itself, in place of the usual one. There are three places a panel can go:
 
 - **A scene's panel** is drawn instead of the scene's choices. Think of a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/scenes#sceneview).
 - **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
+- **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built_in_panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
 
-In both cases the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the game's [custom panel](/docs/reference/custom#panels) returned, and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
+In each case the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the game's [custom panel](/docs/reference/custom#panels) returned (or, for an open panel, what it was opened with), and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
 
 ### A scene's panel
 

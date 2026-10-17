@@ -10,7 +10,7 @@ export function useStatuses(): StatusesView | null {
   return (view.plugins.statuses as StatusesView | undefined) ?? null
 }
 
-function StatusListImpl({ className, title }: { className?: string; title?: string }) {
+function StatusListImpl({ className, title }: { className?: string; title?: string | false }) {
   const { runner } = useGame()
   const words = useWords()
   const section = usePart('statuses', 'flex flex-col gap-2 text-sm', className)
@@ -27,7 +27,7 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
   const signed = (n: number) => (n > 0 ? `+${n}` : String(n))
   return (
     <section {...section} data-statuses>
-      <h3 {...heading}>{title ?? words('statuses')}</h3>
+      {title === false ? null : <h3 {...heading}>{title ?? words('statuses')}</h3>}
       <ul className="flex flex-col gap-2">
         {data.active.map((status) => {
           const changes = status.modifiers.flatMap((modifier) => [

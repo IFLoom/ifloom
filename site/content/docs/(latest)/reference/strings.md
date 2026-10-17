@@ -91,6 +91,14 @@ Why a [minigame](/docs/reference/minigames)'s command can't be done. While one r
 | `noTimer` | `Nothing is counting down.` | |
 | `tickLength` | `A tick is a number of milliseconds above 0.` | |
 
+### Panels
+
+Why [`closePanel`](/docs/reference/commands#closepanel) can't be done.
+
+| Key | English | Placeholders |
+|---|---|---|
+| `noPanel` | `Nothing is open.` | |
+
 ### Settings
 
 Why a [setting](/docs/reference/settings) can't be changed to a value. A setting also uses `enterNumber`, `between` and `notAnOption` from the table above.

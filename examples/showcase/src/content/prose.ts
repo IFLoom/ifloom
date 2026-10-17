@@ -29,6 +29,7 @@ export const prose: Record<string, string> = {
   'ava.hi.regular': 'She has your cup out before you ask.',
   'ava.hi#chat': 'Chat for a minute',
   'ava.hi#compliment': 'Tell her the café is the best thing in town',
+  'ava.hi#work': 'Ask about weekend work',
   'ava.hi#bye': 'Leave her to it',
   'ava.call': '"Oh, hello! I’m on the bench by the river. Come and find me some evening."',
   'ava.call#bye': 'Say goodnight',

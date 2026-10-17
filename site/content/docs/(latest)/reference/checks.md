@@ -147,6 +147,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown minigame "…"` | A `minigame` effect. |
 | `minigame variable "…" is not in any minigame's vars` | A `minigameVar` effect. |
 | Whatever the plugin says | For a call to a plugin's effect, what its references name and its `argProblems`. |
+| Whatever the plugins say | For a `panel` effect, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. Any panel name is allowed. |
 
 Inside an `each`, its `where` is checked as a condition and its `effects` as effects, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
 
@@ -161,7 +162,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
 | `custom`, or a plugin's command in short | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
 
-`start`, `choose`, `leave`, `dismiss`, `tick` and `minigame` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
+`start`, `choose`, `leave`, `dismiss`, `tick`, `minigame` and `closePanel` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
 ### Stat owners
 

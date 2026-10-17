@@ -3,6 +3,7 @@
   import Beat from './Beat.svelte'
   import InputField from './InputField.svelte'
   import Minigame from './Minigame.svelte'
+  import Panel from './Panel.svelte'
 
   // A scene's choices, or the game's own buttons when no scene is open.
   const choices = $derived([...$view.scene.choices, ...$view.actions])
@@ -29,3 +30,6 @@
 </div>
 
 <p class="stats">{$view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
+
+<!-- A panel content opened, such as a shop's counter, over everything else. -->
+{#if $view.panel}<Panel panel={$view.panel} />{/if}

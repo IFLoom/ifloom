@@ -17,7 +17,7 @@ import {
   type Plugin, type CommandRef } from '@ifloom/engine'
 import { calendar, pass } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
-import { buy, inStock, sell, shop, vendorOpen, type ShopView, type VendorDef } from '../src/index.ts'
+import { buy, inStock, openShop, sell, shop, vendorOpen, type ShopView, type VendorDef } from '../src/index.ts'
 
 /** The café counter: coffee for coins, three biscuits a day, and half back on a sandwich. */
 const counter: VendorDef = {
@@ -247,5 +247,33 @@ describe('the shop with places', () => {
     const g = game(clock, places({ start: 'cafe' }))
     expect(whyNot(fresh(g), g, buy('counter', 'coffee'))).toBeUndefined()
     expect(whyNot(clock.write(fresh(g), { day: 0, period: 'night' }), g, buy('counter', 'coffee'))).toBe('The shutter is down.')
+  })
+})
+
+describe('the shop panel', () => {
+  it('opens a vendor\'s counter from anything that runs effects, and stays open while the player buys', () => {
+    const base = game()
+    const g = { ...base, activities: [...(base.activities ?? []), { id: 'counter', effects: [openShop('counter')] }] }
+    expect(openShop('counter')).toEqual({ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } })
+    const open = run(fresh(g), g, { type: 'activity', id: 'counter' })
+    expect(view(open, g).panel).toEqual({ panel: 'shop', with: { vendor: 'counter' } })
+    const bought = run(open, g, buy('counter', 'coffee'), buy('counter', 'biscuit'))
+    expect(bought.panel).toEqual(open.panel)
+  })
+
+  it('checks the vendor a panel is opened with', () => {
+    const loaded = loadGame(
+      [{ id: 'town', schema: SCHEMA, data: { shop: { vendors: [stall] } }, items: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })), stats: [{ id: 'coins', label: 'Coins', spendable: true }], activities: [
+          { id: 'a', effects: [openShop('stall')] },
+          { id: 'b', effects: [openShop('kiosk')] },
+          { id: 'c', effects: [{ kind: 'panel', panel: 'shop' }] },
+          { id: 'd', effects: [{ kind: 'panel', panel: 'map', with: { vendor: 'kiosk' } }] },
+        ] }],
+      { id: 'g', title: 'g', plugins: [shop()] },
+    )
+    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'activity b: unknown vendor "kiosk"',
+      'activity c: the shop panel needs a vendor: { vendor: "<id>" }',
+    ])
   })
 })

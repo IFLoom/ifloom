@@ -4,6 +4,7 @@ import { runner, view } from './runner.ts'
 import Beat from './Beat.vue'
 import InputField from './InputField.vue'
 import Minigame from './Minigame.vue'
+import Panel from './Panel.vue'
 
 // A scene's choices, or the game's own buttons when no scene is open.
 const choices = computed(() => [...view.value.scene.choices, ...view.value.actions])
@@ -31,4 +32,7 @@ const choices = computed(() => [...view.value.scene.choices, ...view.value.actio
   </div>
 
   <p class="stats">{{ view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ') }}</p>
+
+  <!-- A panel content opened, such as a shop's counter, over everything else. -->
+  <Panel v-if="view.panel" :panel="view.panel" />
 </template>

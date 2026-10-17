@@ -17,6 +17,7 @@ Ava looks up from the till and grins.
 
 Ava: "Walk the river at dusk sometime. It’s the only quiet in town."
   [>] Chat for a minute
+  [>] Ask about weekend work
   [>] Leave her to it
 
 === ava.hi @ first-morning
@@ -26,6 +27,7 @@ Ava looks up from the till and grins.
 
 Ava: "New beans this week. Tell me if they’re awful. Nobody else will."
   [>] Chat for a minute
+  [>] Ask about weekend work
   [>] Leave her to it
 
 === ava.hi @ a-week-in
@@ -38,6 +40,7 @@ Ava: "Rain later. The ducks know before the forecast does."
 She has your cup out before you ask.
   [>] Chat for a minute
   [>] Tell her the café is the best thing in town
+  [>] Ask about weekend work
   [>] Leave her to it
 
 === ava.river @ moving-day

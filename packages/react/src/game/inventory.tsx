@@ -4,7 +4,7 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-function InventoryImpl({ className }: { className?: string }) {
+function InventoryImpl({ className, title: titleText }: { className?: string; title?: string | false }) {
   const { view, runner } = useGame()
   const words = useWords()
   const section = usePart('inventory', 'flex flex-col gap-2 text-sm', className)
@@ -16,7 +16,7 @@ function InventoryImpl({ className }: { className?: string }) {
   if (!view.pack.length) return null
   return (
     <section {...section} data-inventory>
-      <h3 {...title}>{words('inventory')}</h3>
+      {titleText === false ? null : <h3 {...title}>{titleText ?? words('inventory')}</h3>}
       <ul className="flex flex-col gap-2">
         {view.pack.map((item) => (
           <li key={item.id} {...row} data-item={item.id}>

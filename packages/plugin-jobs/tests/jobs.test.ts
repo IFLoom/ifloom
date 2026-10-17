@@ -17,7 +17,7 @@ import {
   type Plugin, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
-import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work, type JobDef, type JobsView } from '../src/index.ts'
+import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, type JobDef, type JobsView } from '../src/index.ts'
 
 /**
  * Weekend help at the café: friends of the owner only, Saturday mornings,
@@ -242,5 +242,30 @@ describe('jobs with places', () => {
     const state = run(fresh(g), g, act('meet'), applyFor('cafe'))
     expect(whyNot(state, g, work('cafe'))).toBe('You aren’t at work.')
     expect(run(state, g, go('cafe'), work('cafe')).stats.coins).toBe(12)
+  })
+})
+
+describe('the jobs panel', () => {
+  it('opens the job board, or some of its jobs, and stays open as the player applies', () => {
+    expect(openJobs()).toEqual({ kind: 'panel', panel: 'jobs' })
+    expect(openJobs(['cafe'])).toEqual({ kind: 'panel', panel: 'jobs', with: { job: ['cafe'] } })
+    const base = game()
+    const g = { ...base, activities: [...(base.activities ?? []), { id: 'paper', effects: [openJobs(['cafe'])] }] }
+    const open = run(fresh(g), g, act('meet'), { type: 'activity', id: 'paper' })
+    expect(view(open, g).panel).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
+    expect(run(open, g, applyFor('cafe')).panel).toEqual(open.panel)
+  })
+
+  it('checks the jobs a panel lists', () => {
+    const loaded = loadGame([{ id: 'town', schema: SCHEMA, data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } }, activities: [
+        { id: 'a', effects: [openJobs(['cafe'])] },
+        { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
+        { id: 'c', effects: [{ kind: 'panel', panel: 'jobs', with: { job: 'cafe' } }] },
+        { id: 'd', effects: [openJobs()] },
+      ] }], { id: 'g', title: 'g', plugins: [jobs()] })
+    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'activity b: unknown job "circus"',
+      "activity c: the jobs panel's job is a list of job ids",
+    ])
   })
 })

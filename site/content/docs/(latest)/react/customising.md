@@ -656,9 +656,6 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `unlock-name` | Its label, with its badge. |
 | `unlock-state` | The **Locked** or **Unlocked** badge. |
 | `unlock-text` | Its description. |
-| `vendors` | The row of buttons for the vendors here. |
-| `vendor-button` | One vendor's button. Carries `data-vendor`. |
-| `vendor-closed` | The **Closed** badge on it. |
 | `shop` | A vendor's counter, in its dialog. Carries `data-vendor`, and `data-closed` while it's closed. |
 | `shop-closed` | Why it's closed. |
 | `shop-empty` | What it says when nothing is on offer. |

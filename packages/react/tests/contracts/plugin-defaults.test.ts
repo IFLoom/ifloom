@@ -9,8 +9,12 @@ import pkg from '../../package.json' with { type: 'json' }
  * own. A plugin "has something for the player" when it puts a slice in the
  * view (a `view` provider). The few that do and still want no UI are listed in
  * NO_UI with the reason.
+ *
+ * Nothing about a shop or a job board is drawn by itself: content opens them
+ * (`openShop`, `openJobs`), so their default is a built-in panel by that
+ * name, which `PanelHost` draws. `panel` names it.
  */
-const DEFAULTS: Record<string, { component: string; hook: string }> = {
+const DEFAULTS: Record<string, { component: string; hook: string; panel?: string }> = {
   calendar: { component: 'Clock', hook: 'useClock' },
   places: { component: 'LocationCard', hook: 'usePlaces' },
   cast: { component: 'PeopleCard', hook: 'usePeople' },
@@ -19,8 +23,8 @@ const DEFAULTS: Record<string, { component: string; hook: string }> = {
   achievements: { component: 'AchievementList', hook: 'useAchievements' },
   cheats: { component: 'CheatPanel', hook: 'useCheats' },
   unlocks: { component: 'UnlocksPanel', hook: 'useUnlocks' },
-  shop: { component: 'ShopCounter', hook: 'useShop' },
-  jobs: { component: 'JobBoard', hook: 'useJobs' },
+  shop: { component: 'ShopCounter', hook: 'useShop', panel: 'shop' },
+  jobs: { component: 'JobBoard', hook: 'useJobs', panel: 'jobs' },
   wardrobe: { component: 'WardrobeCard', hook: 'useWardrobe' },
   messages: { component: 'MessagesSection', hook: 'useMessages' },
   feed: { component: 'FeedSection', hook: 'useFeed' },
@@ -66,6 +70,16 @@ describe('the default UI for first-party plugins', () => {
       expect(typeof exported[component], `${id}: ${component}`).toBe('function')
       expect(exported[component]?.displayName, `${id}: ${component} is overridable`).toBe(component)
       expect(typeof exported[hook], `${id}: ${hook}`).toBe('function')
+    }
+  })
+
+  it('draws the panels the plugins open by name, and only those plugins wait to be opened', () => {
+    const sources = Object.fromEntries(PLUGINS.map((plugin) => [plugin.id, SOURCES[plugin.path]]))
+    for (const [id, { panel }] of Object.entries(DEFAULTS)) {
+      // A plugin that answers for a panel's `with` has its panel drawn by name, and is listed with it.
+      const opens = /panelProblems:/.test(sources[id] ?? '')
+      expect(Boolean(panel), `${id}: panel`).toBe(opens)
+      if (panel) expect(typeof ui.BUILT_IN_PANELS[panel], `${id}: the ${panel} panel`).toBe('function')
     }
   })
 

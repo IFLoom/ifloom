@@ -8,7 +8,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
-import { effects } from '@ifloom/plugin-effects'
+import { statuses } from '@ifloom/plugin-statuses'
 import { generators } from '@ifloom/plugin-generators'
 import { jobs } from '@ifloom/plugin-jobs'
 import { quests } from '@ifloom/plugin-quests'
@@ -66,7 +66,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       cast(),
       ...kit.plugins,
       quests(),
-      effects(),
+      statuses(),
       achievements(),
       shop(),
       jobs(),
@@ -127,7 +127,7 @@ export function probes(game: Game) {
           ...first.plugins,
           wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } },
           // Still buzzing from the morning's coffee.
-          effects: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
+          statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
         },
       }, game, [{ kind: 'custom', name: 'generators/generate', with: { template: 'visitor', count: 2 } }]),
     },

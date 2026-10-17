@@ -89,7 +89,7 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-places` | Locations with exits, and travel between them. |
 | `@ifloom/plugin-cast` | Characters with schedules, conversations, calls and relationship stats. |
 | `@ifloom/plugin-quests` | A quest log with progress and hints. |
-| `@ifloom/plugin-effects` | Timed effects that change stats for a few turns. |
+| `@ifloom/plugin-statuses` | Timed statuses that change stats for a few turns. |
 | `@ifloom/plugin-achievements` | Achievements, secret ones and progress counts, kept in the player's profile. |
 | `@ifloom/plugin-shop` | Vendors, stock, selling back and daily discounts. |
 | `@ifloom/plugin-jobs` | Jobs, shifts and wages, promotions and getting fired. |

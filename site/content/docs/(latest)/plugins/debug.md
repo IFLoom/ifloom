@@ -10,7 +10,7 @@ To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `de
 
 ```ts
 import {
-  debug, setStat, setKv, setItem, jumpTo, setTime, setTurn, goTo,
+  debug, debugStat, debugKv, debugItem, debugScene, debugTime, debugTurn, debugGo,
   type DebugView,
 } from '@ifloom/plugin-debug'
 ```
@@ -73,13 +73,13 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'debug/stat': { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
-| `{ 'debug/kv': { key, to } }` | `setKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ 'debug/item': { item, to } }` | `setItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
-| `{ 'debug/scene': { id } }` | `jumpTo(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
-| `{ 'debug/time': { day?, period? } }` | `setTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
-| `{ 'debug/turn': { to } }` | `setTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ 'debug/go': { id } }` | `goTo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
+| `{ 'debug/stat': { stat, to, of? } }` | `debugStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
+| `{ 'debug/kv': { key, to } }` | `debugKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
+| `{ 'debug/item': { item, to } }` | `debugItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
+| `{ 'debug/scene': { id } }` | `debugScene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
+| `{ 'debug/time': { day?, period? } }` | `debugTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
+| `{ 'debug/turn': { to } }` | `debugTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
+| `{ 'debug/go': { id } }` | `debugGo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
 
 A command is refused, with a line from [Strings](#strings), when:
 
@@ -109,13 +109,13 @@ They still go through [`apply`](/docs/reference/commands#apply) like any command
 ```ts
 import type { CommandRef, KvValue } from '@ifloom/engine'
 
-const setStat: (stat: string, to: number, of?: string) => CommandRef
-const setKv: (key: string, to: KvValue) => CommandRef
-const setItem: (item: string, count: number) => CommandRef
-const jumpTo: (scene?: string) => CommandRef
-const setTime: (time: { day?: number; period?: string }) => CommandRef
-const setTurn: (turn: number) => CommandRef
-const goTo: (location: string) => CommandRef
+const debugStat: (stat: string, to: number, of?: string) => CommandRef
+const debugKv: (key: string, to: KvValue) => CommandRef
+const debugItem: (item: string, count: number) => CommandRef
+const debugScene: (scene?: string) => CommandRef
+const debugTime: (time: { day?: number; period?: string }) => CommandRef
+const debugTurn: (turn: number) => CommandRef
+const debugGo: (location: string) => CommandRef
 ```
 
 Each one builds the command above, ready for [`apply`](/docs/reference/commands#apply) or a [runner](/docs/reference/runner).
@@ -127,36 +127,36 @@ Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s c
 ```ts
 import { apply, startingState, type CommandRef, type Game } from '@ifloom/engine'
 import { where } from '@ifloom/plugin-places'
-import { goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv } from '@ifloom/plugin-debug'
+import { debugGo, debugScene, debugItem, debugStat, debugTime, debugTurn, debugKv } from '@ifloom/plugin-debug'
 
 declare const game: Game // the showcase, built with debug()
 
 let state = startingState(game) // moving day, behind a lock that denies '*'
 
 const set = (command: CommandRef) => (state = apply(state, game, command).state)
-set(setStat('coins', 40))
-set(setKv('catName', 'Biscuit'))
-set(setItem('sandwich', 2))
-set(setStat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
-set(setTurn(4))
-set(setTime({ day: 4, period: 'afternoon' }))      // the game has the calendar
-set(goTo('cafe'))                                  // and the places plugin
-set(jumpTo('ava.hi'))
+set(debugStat('coins', 40))
+set(debugKv('catName', 'Biscuit'))
+set(debugItem('sandwich', 2))
+set(debugStat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
+set(debugTurn(4))
+set(debugTime({ day: 4, period: 'afternoon' }))      // the game has the calendar
+set(debugGo('cafe'))                                  // and the places plugin
+set(debugScene('ava.hi'))
 
 state.stats.coins    // 40
 where(state)         // 'cafe'
 state.sceneId        // 'ava.hi'
 state.turn           // 4
 
-apply(state, game, setStat('luck', 3)).refused     // 'There is no stat called luck.'
-apply(state, game, setStat('friendship', 5, 'character:ghost')).refused
+apply(state, game, debugStat('luck', 3)).refused     // 'There is no stat called luck.'
+apply(state, game, debugStat('friendship', 5, 'character:ghost')).refused
 // 'There is nobody and nothing called character:ghost.'
-apply(state, game, setStat('friendship', 5)).refused // 'That is not whose friendship it is.'
-apply(state, game, goTo('moon')).refused           // 'There is no location called moon.'
-apply(state, game, setItem('sandwich', NaN)).refused // 'That needs a number.'
-apply(state, game, setTime({ period: 'noon' })).refused
+apply(state, game, debugStat('friendship', 5)).refused // 'That is not whose friendship it is.'
+apply(state, game, debugGo('moon')).refused           // 'There is no location called moon.'
+apply(state, game, debugItem('sandwich', NaN)).refused // 'That needs a number.'
+apply(state, game, debugTime({ period: 'noon' })).refused
 // 'A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.'
-apply(state, game, setTurn(-1)).refused            // 'A turn is a whole number from 0.'
+apply(state, game, debugTurn(-1)).refused            // 'A turn is a whole number from 0.'
 ```
 
 The debug commands don't change the [phase](/docs/reference/state#phase), so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from `{ ...startingState(game), phase: 'open', sceneId: null }` instead, as the showcase's own `probes` do.
@@ -205,7 +205,7 @@ type DebugView = {
 ## Gotchas
 
 - **A number must be a number.** `to: '5'`, `to: ''` or `to: null` in a command written by hand is refused with `debug/notANumber`, and so are `NaN` and `Infinity`.
-- **A stat is held to its range** as the game declares it, so `setStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
+- **A stat is held to its range** as the game declares it, so `debugStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
 - **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so the game's [`rules.onStat`](/docs/reference/rules#onstat) never sees the change.
 - **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
 - **A kv key isn't checked.** Any key is set, including a misspelt one.

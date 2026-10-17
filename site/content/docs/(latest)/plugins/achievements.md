@@ -119,7 +119,7 @@ type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | 
 | `{ kv: 'coffees' }` | A key in the [kv store](/docs/reference/state#kv). One that isn't a number reads 0. |
 | `{ value: 'quests/updates' }` | A [custom value](/docs/reference/custom#values), the game's or a plugin's, asked with `with` if it has one: `{ value: 'messages/unread', with: { channel: 'texts' } }`. |
 
-Stats read as [`statValue`](/docs/reference/stats#statvalue) reads them, so a timed effect's boost counts. The view holds the count between 0 and `target`, and shows it full once the achievement is earned.
+Stats read as [`statValue`](/docs/reference/stats#statvalue) reads them, so a timed status's boost counts. The view holds the count between 0 and `target`, and shows it full once the achievement is earned.
 
 With both `when` and `progress`, `when` decides and the progress is only shown. That suits a count the player watches that isn't what earns it, such as coins saved towards a goal that a scene checks.
 

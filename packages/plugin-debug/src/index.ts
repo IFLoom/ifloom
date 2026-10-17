@@ -160,16 +160,16 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 }
 
 /** A command: put a stat at a value. */
-export const setStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
+export const debugStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
 /** A command: set a key in the kv store. */
-export const setKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
+export const debugKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
 /** A command: set how many of an item the player has. */
-export const setItem = (item: string, to: number): CommandRef => ({ 'debug/item': { item, to } })
+export const debugItem = (item: string, to: number): CommandRef => ({ 'debug/item': { item, to } })
 /** A command: put a scene on screen, or close it. */
-export const jumpTo = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
+export const debugScene = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
 /** A command: set the clock. */
-export const setTime = (time: { day?: number; period?: string }): CommandRef => ({ 'debug/time': time })
+export const debugTime = (time: { day?: number; period?: string }): CommandRef => ({ 'debug/time': time })
 /** A command: set how many turns have passed. */
-export const setTurn = (turn: number): CommandRef => ({ 'debug/turn': { to: turn } })
+export const debugTurn = (turn: number): CommandRef => ({ 'debug/turn': { to: turn } })
 /** A command: be somewhere. */
-export const goTo = (location: string): CommandRef => ({ 'debug/go': { id: location } })
+export const debugGo = (location: string): CommandRef => ({ 'debug/go': { id: location } })

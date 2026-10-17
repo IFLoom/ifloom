@@ -6,7 +6,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
-import { effects } from '@ifloom/plugin-effects'
+import { statuses } from '@ifloom/plugin-statuses'
 import { feed } from '@ifloom/plugin-feed'
 import { generators } from '@ifloom/plugin-generators'
 import { jobs } from '@ifloom/plugin-jobs'
@@ -51,7 +51,6 @@ const firstParty: Plugin<any>[] = [
   cast(),
   debug(),
   devices(),
-  effects(),
   feed(),
   generators(),
   jobs(),
@@ -59,6 +58,7 @@ const firstParty: Plugin<any>[] = [
   places(),
   quests(),
   shop(),
+  statuses(),
   wardrobe(),
 ]
 

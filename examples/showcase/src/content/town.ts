@@ -6,7 +6,7 @@
  */
 import { SCHEMA, type Condition, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
-import { applyEffect, effectActive } from '@ifloom/plugin-effects'
+import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { buy } from '@ifloom/plugin-shop'
 import { applyFor, work } from '@ifloom/plugin-jobs'
 import { generate } from '@ifloom/plugin-generators'
@@ -72,7 +72,7 @@ const locations: LocationDef[] = [
       { text: 'place.cafe' },
       { text: 'place.cafe/ava', when: here('ava') },
       { text: 'place.cafe/raincoat', when: wearing('raincoat') },
-      { text: 'place.cafe/caffeinated', when: effectActive('caffeinated') },
+      { text: 'place.cafe/caffeinated', when: statusActive('caffeinated') },
     ],
   },
   {
@@ -230,7 +230,7 @@ export const town: Pack = {
         { kind: 'stat', stat: 'energy', by: 15 },
         { kind: 'kv', key: 'hadCoffee', to: true },
         // And a lift that lasts till tomorrow is out: 10 more energy, never written.
-        applyEffect('caffeinated'),
+        applyStatus('caffeinated'),
       ],
     },
     { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
@@ -485,8 +485,8 @@ export const town: Pack = {
         { id: 'river', title: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
       ],
     },
-    effects: {
-      effects: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
+    statuses: {
+      statuses: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },
     wardrobe: {
       // You arrive in your raincoat.

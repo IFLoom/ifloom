@@ -240,7 +240,7 @@ describe('content migrations', () => {
             { kind: 'minigameVar', key: 'score', by: 1 },
             { kind: 'minigameVar', key: 'round', to: 0 },
             { custom: 'achievements/grant', with: { achievement: 'regular' } },
-            { 'effects/apply': { effect: 'tired' } },
+            { 'statuses/apply': { status: 'tired' } },
             { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
           ],
         },
@@ -249,7 +249,7 @@ describe('content migrations', () => {
         {
           id: 'cafe',
           body: [{ text: 'cafe', when: { 'cast/at': { character: 'ava', at: ['cafe'] } } }],
-          choices: [{ id: 'sit', when: { custom: 'effects/active', with: { effect: 'tired' } }, effects: [] }],
+          choices: [{ id: 'sit', when: { custom: 'statuses/active', with: { status: 'tired' } }, effects: [] }],
         },
       ],
       data: {
@@ -331,6 +331,37 @@ describe('content migrations', () => {
     })
   })
 
+  it('rename the timed-effects plugin’s calls, content and strings to the statuses plugin’s at schema 8', () => {
+    const v7 = {
+      id: 'colds',
+      schema: 7,
+      strings: { 'effects/unknown': 'No such thing.', 'quests/done': 'Done.' },
+      activities: [
+        {
+          id: 'sneeze',
+          blocked: [{ when: { 'effects/active': { effect: 'cold', stacks: { gte: 3 } } }, reason: 'Enough.' }],
+          effects: [{ 'effects/apply': { effect: 'cold' } }, { kind: 'custom', name: 'effects/remove', with: { effect: 'warm', runEnd: true } }],
+        },
+      ],
+      actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'effects/remove', with: { id: 'cold' } }, when: { custom: 'effects/active', with: { effect: 'cold' } } }],
+      data: { effects: { effects: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'effects/apply': { effect: 'tired' } }] }] }, quests: { quests: [] } },
+    }
+    expect(upgradePack(v7)).toEqual({
+      id: 'colds',
+      schema: SCHEMA,
+      strings: { 'statuses/unknown': 'No such thing.', 'quests/done': 'Done.' },
+      activities: [
+        {
+          id: 'sneeze',
+          blocked: [{ when: { 'statuses/active': { status: 'cold', stacks: { gte: 3 } } }, reason: 'Enough.' }],
+          effects: [{ 'statuses/apply': { status: 'cold' } }, { kind: 'custom', name: 'statuses/remove', with: { status: 'warm', runEnd: true } }],
+        },
+      ],
+      actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } }, when: { custom: 'statuses/active', with: { status: 'cold' } } }],
+      data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
+    })
+  })
+
   it('install a schema 5 mod with an activity that requires, and play it as blocked', async () => {
     const file = JSON.stringify({
       ifloomMod: 1,
@@ -351,6 +382,7 @@ describe('content migrations', () => {
     expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'use', id: 'tea' })
     expect(upgradeCommand({ type: 'setting', id: 'volume', value: 0.5 })).toEqual({ type: 'setting', id: 'volume', to: 0.5 })
     expect(upgradeCommand({ type: 'custom', name: 'places/go', with: { to: 'park' } })).toEqual({ type: 'custom', name: 'places/go', with: { id: 'park' } })
+    expect(upgradeCommand({ type: 'custom', name: 'effects/apply', with: { id: 'cold' } })).toEqual({ type: 'custom', name: 'statuses/apply', with: { id: 'cold' } })
     const now = { type: 'use', id: 'tea' }
     expect(upgradeCommand(now)).toEqual(now)
   })

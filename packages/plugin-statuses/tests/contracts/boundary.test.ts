@@ -6,7 +6,7 @@ const SOURCES = import.meta.glob(['../../src/**/*.ts'], {
   eager: true,
 }) as Record<string, string>
 
-describe('the effects plugin', () => {
+describe('the statuses plugin', () => {
   // A plugin proves the plugin API only if it uses nothing else: the engine's
   // front door, and its own files.
   it('imports only @ifloom/engine and its own files', () => {

@@ -5,9 +5,9 @@ import type { Plugin } from '../../src/plugin.ts'
 import { achievementEarned, achievements, grantAchievement } from '@ifloom/plugin-achievements'
 import { calendar, day, period, sleep, weekday, weekend } from '@ifloom/plugin-calendar'
 import { call, cast, hasMet, here, isAt, talk } from '@ifloom/plugin-cast'
-import { debug, goTo, jumpTo, setItem, setKv, setStat, setTime, setTurn } from '@ifloom/plugin-debug'
+import { debug, debugGo, debugScene, debugItem, debugKv, debugStat, debugTime, debugTurn } from '@ifloom/plugin-debug'
 import { appOpen, closeApp, devices, openApp } from '@ifloom/plugin-devices'
-import { applyEffect, effectActive, effects, removeEffect } from '@ifloom/plugin-effects'
+import { applyStatus, removeStatus, statusActive, statuses } from '@ifloom/plugin-statuses'
 import { feed, hasPosted, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 import { generate, generators } from '@ifloom/plugin-generators'
 import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work } from '@ifloom/plugin-jobs'
@@ -99,21 +99,21 @@ const SAMPLES: Record<string, Call> = {
   'conditions:cast/met': hasMet('ava'),
   'commands:cast/talk': talk('ava'),
   'commands:cast/call': call('ava'),
-  'commands:debug/stat': setStat('coins', 5),
-  'commands:debug/kv': setKv('met', true),
-  'commands:debug/item': setItem('scarf', 1),
-  'commands:debug/scene': jumpTo('intro'),
-  'commands:debug/time': setTime({ day: 2, period: 'morning' }),
-  'commands:debug/turn': setTurn(3),
-  'commands:debug/go': goTo('park'),
+  'commands:debug/stat': debugStat('coins', 5),
+  'commands:debug/kv': debugKv('met', true),
+  'commands:debug/item': debugItem('scarf', 1),
+  'commands:debug/scene': debugScene('intro'),
+  'commands:debug/time': debugTime({ day: 2, period: 'morning' }),
+  'commands:debug/turn': debugTurn(3),
+  'commands:debug/go': debugGo('park'),
   'conditions:devices/open': appOpen('camera'),
   'commands:devices/open': openApp('camera'),
   'commands:devices/close': closeApp('phone'),
-  'conditions:effects/active': effectActive('tired', { gte: 2 }),
-  'effects:effects/apply': applyEffect('tired'),
-  'effects:effects/remove': removeEffect('tired', true),
-  'commands:effects/apply': { type: 'custom', name: 'effects/apply', with: { id: 'tired' } },
-  'commands:effects/remove': { type: 'custom', name: 'effects/remove', with: { id: 'tired', runEnd: true } },
+  'conditions:statuses/active': statusActive('tired', { gte: 2 }),
+  'effects:statuses/apply': applyStatus('tired'),
+  'effects:statuses/remove': removeStatus('tired', true),
+  'commands:statuses/apply': { type: 'custom', name: 'statuses/apply', with: { id: 'tired' } },
+  'commands:statuses/remove': { type: 'custom', name: 'statuses/remove', with: { id: 'tired', runEnd: true } },
   'conditions:feed/appeared': { custom: 'feed/appeared', with: { post: 'p1' } },
   'conditions:feed/posted': hasPosted(2, 'fans'),
   'conditions:feed/likes': { custom: 'feed/likes', with: { post: 'p1', gte: 3 } },
@@ -156,7 +156,7 @@ const SAMPLES: Record<string, Call> = {
 /** What a plugin call's arguments may be named, by role, beyond the core's targets and details. */
 const PLUGIN_NOUNS = [
   // the plugins' own targets
-  'achievement', 'effect', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period',
+  'achievement', 'status', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period',
   // details: how many, where, who from, what with
   'count', 'stacks', 'runEnd', 'likes', 'video', 'at',
 ] as const
@@ -169,7 +169,6 @@ const firstParty: Plugin<any>[] = [
   cast(),
   debug(),
   devices(),
-  effects(),
   feed(),
   generators(),
   jobs(),
@@ -177,6 +176,7 @@ const firstParty: Plugin<any>[] = [
   places(),
   quests(),
   shop(),
+  statuses(),
   wardrobe(),
 ]
 

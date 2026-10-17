@@ -10,7 +10,7 @@ import { TShirtIcon } from '@phosphor-icons/react/dist/csr/TShirt'
 import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag'
 import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy'
 import { BriefcaseIcon } from '@phosphor-icons/react/dist/csr/Briefcase'
-import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle'
+import { HourglassMediumIcon } from '@phosphor-icons/react/dist/csr/HourglassMedium'
 import { ChatCircleIcon } from '@phosphor-icons/react/dist/csr/ChatCircle'
 import { RssIcon } from '@phosphor-icons/react/dist/csr/Rss'
 import { DeviceMobileIcon } from '@phosphor-icons/react/dist/csr/DeviceMobile'
@@ -40,7 +40,7 @@ const pluginIcons: Record<string, Icon> = {
   quests: FlagIcon,
   achievements: TrophyIcon,
   jobs: BriefcaseIcon,
-  effects: SparkleIcon,
+  statuses: HourglassMediumIcon,
   messages: ChatCircleIcon,
   feed: RssIcon,
   devices: DeviceMobileIcon,
@@ -50,7 +50,7 @@ const pluginIcons: Record<string, Icon> = {
 
 const pluginGroups = [
   { name: 'World', plugins: ['calendar', 'places', 'cast', 'shop', 'wardrobe'] },
-  { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'effects'] },
+  { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'statuses'] },
   { name: 'Phone', plugins: ['messages', 'feed', 'devices'] },
   { name: 'Tools', plugins: ['debug', 'generators'] },
 ]

@@ -7,7 +7,6 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
 import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
-import { effects } from '@ifloom/plugin-effects'
 import { feed } from '@ifloom/plugin-feed'
 import { generators } from '@ifloom/plugin-generators'
 import { jobs } from '@ifloom/plugin-jobs'
@@ -15,6 +14,7 @@ import { messages } from '@ifloom/plugin-messages'
 import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
+import { statuses } from '@ifloom/plugin-statuses'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { PLUGIN_IDS, type PluginId, type PreviewSettings } from './model.ts'
 
@@ -25,7 +25,7 @@ const FACTORIES: Record<PluginId, Factory> = {
   places,
   cast,
   quests,
-  effects,
+  statuses,
   achievements,
   shop,
   jobs,

@@ -2,7 +2,7 @@ import { createMDX } from 'fumadocs-mdx/next'
 
 const withMDX = createMDX()
 
-const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'effects', 'feed', 'generators', 'jobs', 'messages', 'places', 'quests', 'shop', 'wardrobe']
+const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'feed', 'generators', 'jobs', 'messages', 'places', 'quests', 'shop', 'statuses', 'wardrobe']
 
 /** @type {import('next').NextConfig} */
 const config = {
@@ -18,6 +18,14 @@ const config = {
   // TODO(launch): remove, with app/robots.ts and metadata.robots in app/layout.tsx. See ROADMAP "Release readiness".
   async headers() {
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
+  },
+  // Pages that moved, so old links still land.
+  async redirects() {
+    return [
+      // The timed-effects plugin became the statuses plugin.
+      { source: '/docs/plugins/effects', destination: '/docs/plugins/statuses', permanent: true },
+      { source: '/llms.mdx/docs/plugins/effects', destination: '/llms.mdx/docs/plugins/statuses', permanent: true },
+    ]
   },
 }
 

@@ -26,7 +26,7 @@ export const PLUGINS = {
   places: { label: 'Places', options: '{}' },
   cast: { label: 'Cast', options: '{}' },
   quests: { label: 'Quests', options: '' },
-  effects: { label: 'Timed effects', options: '' },
+  statuses: { label: 'Statuses', options: '' },
   achievements: { label: 'Achievements', options: '' },
   shop: { label: 'Shop', options: '' },
   jobs: { label: 'Jobs', options: '' },

@@ -158,6 +158,13 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
       ),
     }
   },
+  // 12 → 13: the timed-effects plugin is the statuses plugin, so its state moves from `plugins.effects`.
+  12: (state) => {
+    const plugins = state.plugins as Record<string, unknown> | undefined
+    if (!plugins || !('effects' in plugins) || 'statuses' in plugins) return state
+    const { effects, ...rest } = plugins
+    return { ...state, plugins: { ...rest, statuses: effects } }
+  },
 }
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */

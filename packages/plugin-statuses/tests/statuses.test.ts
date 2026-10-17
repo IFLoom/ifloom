@@ -16,9 +16,9 @@ import {
   type GameState,
   type Pack,
 } from '@ifloom/engine'
-import { applyEffect, effectActive, effects, removeEffect, type EffectDef, type EffectsView } from '../src/index.ts'
+import { applyStatus, statusActive, statuses, removeStatus, type StatusDef, type StatusesView } from '../src/index.ts'
 
-const caffeinated: EffectDef = {
+const caffeinated: StatusDef = {
   id: 'caffeinated',
   label: 'Caffeinated',
   turns: 2,
@@ -27,7 +27,7 @@ const caffeinated: EffectDef = {
   onEnd: [{ kind: 'kv', key: 'buzzing', to: false }],
 }
 /** A cold: a stack per sneeze, at most three, each taking a fifth off energy and a coin a turn for tissues. */
-const cold: EffectDef = {
+const cold: StatusDef = {
   id: 'cold',
   label: 'A cold',
   turns: 3,
@@ -39,7 +39,7 @@ const cold: EffectDef = {
   onEnd: [{ kind: 'stat', stat: 'recovered', by: 1 }],
 }
 
-function game(extra: EffectDef[] = []): Game {
+function game(extra: StatusDef[] = []): Game {
   const town: Pack = {
     id: 'town',
     schema: SCHEMA,
@@ -51,17 +51,17 @@ function game(extra: EffectDef[] = []): Game {
       { id: 'stamina', label: 'Stamina', derive: { scale: 'energy', by: 2 }, max: 1000 },
     ],
     activities: [
-      { id: 'coffee', effects: [applyEffect('caffeinated')] },
-      { id: 'sneeze', effects: [applyEffect('cold')] },
+      { id: 'coffee', effects: [applyStatus('caffeinated')] },
+      { id: 'sneeze', effects: [applyStatus('cold')] },
       { id: 'rest', effects: [{ kind: 'turn' }] },
-      { id: 'cure', effects: [removeEffect('cold')] },
-      { id: 'cureFully', effects: [removeEffect('cold', true)] },
+      { id: 'cure', effects: [removeStatus('cold')] },
+      { id: 'cureFully', effects: [removeStatus('cold', true)] },
       { id: 'climb', cost: { stats: { energy: 55 } } },
       { id: 'tire', effects: [{ kind: 'stat', stat: 'energy', by: -10 }] },
     ],
-    data: { effects: { effects: [caffeinated, cold, ...extra] } },
+    data: { statuses: { statuses: [caffeinated, cold, ...extra] } },
   }
-  const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [effects()] })
+  const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [statuses()] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -76,9 +76,9 @@ function run(state: GameState, g: Game, ...ids: string[]): GameState {
 }
 
 const fresh = (g: Game) => ({ ...startingState(g), sceneId: null })
-const shown = (state: GameState, g: Game) => view(state, g).plugins.effects as EffectsView
+const shown = (state: GameState, g: Game) => view(state, g).plugins.statuses as StatusesView
 
-describe('timed effects', () => {
+describe('timed statuses', () => {
   it('change what a stat reads while they last, and never write it', () => {
     const g = game()
     const state = run(fresh(g), g, 'coffee')
@@ -106,10 +106,10 @@ describe('timed effects', () => {
     ])
     state = run(state, g, 'rest')
     expect(shown(state, g).active[0].turnsLeft).toBe(1)
-    expect(holds(state, effectActive('caffeinated'), g)).toBe(true)
+    expect(holds(state, statusActive('caffeinated'), g)).toBe(true)
     state = run(state, g, 'rest')
     expect(shown(state, g).active).toEqual([])
-    expect(holds(state, effectActive('caffeinated'), g)).toBe(false)
+    expect(holds(state, statusActive('caffeinated'), g)).toBe(false)
     expect(state.kv.buzzing).toBe(false)
     expect(statValue(state, g, 'energy')).toBe(50)
   })
@@ -117,9 +117,9 @@ describe('timed effects', () => {
   it('refresh by default: applied again, the turns start over and onStart does not run again', () => {
     const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ kind: 'stat', stat: 'sneezes', by: 1 }] }])
     let state = run(fresh(g), g, 'rest')
-    state = apply(state, g, { type: 'custom', name: 'effects/apply', with: { id: 'count' } }).state
+    state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
     state = run(state, g, 'rest')
-    state = apply(state, g, { type: 'custom', name: 'effects/apply', with: { id: 'count' } }).state
+    state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
     expect(shown(state, g).active[0]).toMatchObject({ turnsLeft: 2, stacks: 1 })
     expect(state.stats.sneezes).toBe(1)
   })
@@ -130,8 +130,8 @@ describe('timed effects', () => {
     expect(shown(state, g).active[0]).toMatchObject({ stacks: 2, turnsLeft: 3, modifiers: [{ stat: 'energy', multiply: 0.8 * 0.8 }] })
     expect(statValue(state, g, 'energy')).toBeCloseTo(32)
     expect(state.stats.sneezes).toBe(2)
-    expect(holds(state, effectActive('cold', { gte: 2 }), g)).toBe(true)
-    expect(holds(state, effectActive('cold', { gte: 3 }), g)).toBe(false)
+    expect(holds(state, statusActive('cold', { gte: 2 }), g)).toBe(true)
+    expect(holds(state, statusActive('cold', { gte: 3 }), g)).toBe(false)
     // One coin a turn for the first stack's first turn, then two a turn.
     expect(state.stats.coins).toBe(19)
     state = run(state, g, 'sneeze', 'sneeze')
@@ -147,23 +147,23 @@ describe('timed effects', () => {
     expect(shown(state, g).active).toEqual([])
   })
 
-  it('come off with effects/remove, running onEnd only when asked', () => {
+  it('come off with statuses/remove, running onEnd only when asked', () => {
     const g = game()
     const sick = run(fresh(g), g, 'sneeze', 'sneeze')
     const cured = run(sick, g, 'cure')
-    expect(holds(cured, effectActive('cold'), g)).toBe(false)
+    expect(holds(cured, statusActive('cold'), g)).toBe(false)
     expect(cured.stats.recovered).toBe(0)
     const fully = run(sick, g, 'cureFully')
     expect(fully.stats.recovered).toBe(2)
   })
 
-  it('take commands, refused for an unknown effect or one that is not active', () => {
+  it('take commands, refused for an unknown status or one that is not active', () => {
     const g = game()
-    const remove: Command = { type: 'custom', name: 'effects/remove', with: { id: 'cold' } }
+    const remove: Command = { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } }
     expect(whyNot(fresh(g), g, remove)).toBe('That isn’t affecting you.')
-    expect(whyNot(fresh(g), g, { type: 'custom', name: 'effects/apply', with: { id: 'flu' } })).toBe('Nothing like that can happen.')
+    expect(whyNot(fresh(g), g, { type: 'custom', name: 'statuses/apply', with: { id: 'flu' } })).toBe('Nothing like that can happen.')
     const sick = run(fresh(g), g, 'sneeze')
-    expect(holds(apply(sick, g, remove).state, effectActive('cold'), g)).toBe(false)
+    expect(holds(apply(sick, g, remove).state, statusActive('cold'), g)).toBe(false)
   })
 
   it('replay exactly from a command log', () => {
@@ -182,31 +182,31 @@ describe('timed effects', () => {
     expect(statValue(run(loaded, g, 'coffee'), g, 'energy')).toBe(60)
   })
 
-  it('report effects that name what the game does not have, and their own mistakes', () => {
+  it('report statuses that name what the game does not have, and their own mistakes', () => {
     const loaded = loadGame(
       [
         {
           id: 'mod',
           schema: SCHEMA,
           stats: [{ id: 'energy', label: 'Energy' }],
-          activities: [{ id: 'x', effects: [applyEffect('flu')] }],
+          activities: [{ id: 'x', effects: [applyStatus('flu')] }],
           data: {
-            effects: {
-              effects: [
+            statuses: {
+              statuses: [
                 { id: 'bad', label: 'Bad', turns: 0, max: 2, modifiers: [{ stat: 'luck', add: 1 }], onEnd: [{ kind: 'item', item: 'moonstone', by: 1 }] },
               ],
             },
           },
         },
       ],
-      { id: 'g', title: 'g', plugins: [effects()] },
+      { id: 'g', title: 'g', plugins: [statuses()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity x: unknown effect "flu"',
-      'effects bad: unknown stat "luck"',
-      'effects bad: onEnd: unknown item "moonstone"',
-      'effects bad: turns must be 1 or more',
-      'effects bad: max only applies with reapply: "stack"',
+      'activity x: unknown status "flu"',
+      'statuses bad: unknown stat "luck"',
+      'statuses bad: onEnd: unknown item "moonstone"',
+      'statuses bad: turns must be 1 or more',
+      'statuses bad: max only applies with reapply: "stack"',
     ])
   })
 })

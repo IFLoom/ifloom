@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { commandOf, apply, checkGame, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState, type CommandRef } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
-import type { EffectsView } from '@ifloom/plugin-effects'
+import type { StatusesView } from '@ifloom/plugin-statuses'
 import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import type { MessagesView } from '@ifloom/plugin-messages'
@@ -185,7 +185,7 @@ describe('Small Town', () => {
     // 80 kept, plus 15 for the coffee, less 30 for the shift: 65, and 10 more on top while it lasts.
     expect(state.stats.energy).toBe(65)
     expect(statValue(state, game, 'energy')).toBe(75)
-    const effects = () => (view(state, game).plugins.effects as EffectsView).active
+    const effects = () => (view(state, game).plugins.statuses as StatusesView).active
     expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', label: 'Caffeinated', turnsLeft: 2 })])
     state = run(on(state, 1, 'night'), sleep())
     expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])

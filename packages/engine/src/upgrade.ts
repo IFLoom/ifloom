@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 7
+export const SCHEMA = 8
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -46,6 +46,23 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
       Object.entries(pack).map(([key, value]) => {
         if (key === 'prose' || key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? valueTokens(text) : text])) : value]
         return [key, WORDS.has(key) ? value : deep(value, toSchema7)]
+      }),
+    ) as RawPack,
+  // 7 → 8: the timed-effects plugin is the statuses plugin, so its calls don't
+  // read like the engine's effects: `effects/apply` with `{ effect }` is
+  // `statuses/apply` with `{ status }`, its content moves from
+  // `data.effects.effects` to `data.statuses.statuses`, and its strings from
+  // `effects/…` to `statuses/…`.
+  7: (pack) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => {
+        if (key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [STATUS_STRINGS[id] ?? id, text])) : value]
+        if (key === 'data' && isRecord(value) && isRecord(value.effects) && !('statuses' in value)) {
+          const { effects, ...rest } = value
+          const { effects: list, ...other } = effects
+          value = { ...rest, statuses: list === undefined ? other : { ...other, statuses: list } }
+        }
+        return [key, WORDS.has(key) ? value : deep(value, toSchema8)]
       }),
     ) as RawPack,
 }
@@ -268,13 +285,35 @@ function toSchema7(value: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
+/** The statuses plugin's calls, by the timed-effects plugin's names. */
+const STATUS_CALLS: Record<string, string> = { 'effects/active': 'statuses/active', 'effects/apply': 'statuses/apply', 'effects/remove': 'statuses/remove' }
+
+/** The statuses plugin's strings, by the timed-effects plugin's ids. */
+const STATUS_STRINGS: Record<string, string> = { 'effects/unknown': 'statuses/unknown', 'effects/notActive': 'statuses/notActive' }
+
 /**
- * A command from an older engine, as this one takes it: what `replay` plays a
- * command log from before schema 6 with. A command already in this shape
- * comes back as it is.
+ * Schema 7 content in one object, as schema 8 writes it: the timed-effects
+ * plugin's calls as the statuses plugin's, long or short, with a condition's
+ * or an effect's `effect` named `status`. A command keeps its `id`.
+ */
+function toSchema8(value: Record<string, unknown>): Record<string, unknown> {
+  let out = value
+  const status = (args: unknown) => (isRecord(args) && 'effect' in args && !('status' in args) ? renamed(args, { effect: 'status' }) : args)
+  if (out.kind === 'custom' && typeof out.name === 'string' && STATUS_CALLS[out.name]) out = { ...out, name: STATUS_CALLS[out.name], with: status(out.with) }
+  if (out.type === 'custom' && typeof out.name === 'string' && STATUS_CALLS[out.name]) out = { ...out, name: STATUS_CALLS[out.name] }
+  if (typeof out.custom === 'string' && STATUS_CALLS[out.custom]) out = { ...out, custom: STATUS_CALLS[out.custom], with: status(out.with) }
+  if (Object.keys(out).some((key) => STATUS_CALLS[key])) {
+    out = Object.fromEntries(Object.entries(out).map(([key, inner]) => (STATUS_CALLS[key] ? [STATUS_CALLS[key], status(inner)] : [key, inner])))
+  }
+  return out
+}
+
+/**
+ * A command from an older engine, as this one takes it: what `replay` plays an
+ * old command log with. A command already in this shape comes back as it is.
  */
 export function upgradeCommand<C>(command: C): C {
-  return isRecord(command) && typeof command.type === 'string' ? (toSchema6(command) as C) : command
+  return isRecord(command) && typeof command.type === 'string' ? (toSchema8(toSchema6(command)) as C) : command
 }
 
 /**

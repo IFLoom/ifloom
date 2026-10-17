@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 /**
- * Everything the effects plugin exports is on its docs page. A developer learns
+ * Everything the statuses plugin exports is on its docs page. A developer learns
  * the plugin from the docs site alone, so an export the page does not name is
  * a feature nobody can find.
  */
@@ -11,7 +11,7 @@ const INDEX = import.meta.glob('../../src/index.ts', {
   eager: true,
 }) as Record<string, string>
 
-const PAGE = import.meta.glob('../../../../site/content/docs/\\(latest\\)/plugins/effects.{md,mdx}', {
+const PAGE = import.meta.glob('../../../../site/content/docs/\\(latest\\)/plugins/statuses.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -32,7 +32,7 @@ function exportedNames(source: string): string[] {
 }
 
 describe('the docs', () => {
-  it('name every export of @ifloom/plugin-effects on its page', () => {
+  it('name every export of @ifloom/plugin-statuses on its page', () => {
     const names = exportedNames(Object.values(INDEX)[0])
     expect(names.length).toBeGreaterThan(10)
     const page = Object.values(PAGE)[0] ?? ''

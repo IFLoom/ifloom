@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { apply, startingState, view, whyNot, type Game, type GameState, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places, where } from '@ifloom/plugin-places'
-import { debug, goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv, type DebugView } from '../src/index.ts'
+import { debug, debugGo, debugScene, debugItem, debugStat, debugTime, debugTurn, debugKv, type DebugView } from '../src/index.ts'
 
 const clock = calendar()
 
@@ -43,13 +43,13 @@ describe('the debugger', () => {
     const state = run(
       startingState(g),
       g,
-      setStat('luck', 50),
-      setKv('metAva', true),
-      setItem('key', 2),
-      setTime({ day: 6, period: 'evening' }),
-      setTurn(9),
-      goTo('island'),
-      jumpTo('ending'),
+      debugStat('luck', 50),
+      debugKv('metAva', true),
+      debugItem('key', 2),
+      debugTime({ day: 6, period: 'evening' }),
+      debugTurn(9),
+      debugGo('island'),
+      debugScene('ending'),
     )
     expect(state).toMatchObject({
       stats: { luck: 10 },
@@ -60,28 +60,28 @@ describe('the debugger', () => {
     })
     expect(clock.read(state, g)).toEqual({ day: 6, period: 'evening' })
     expect(where(state)).toBe('island')
-    expect(run(state, g, jumpTo()).sceneId).toBeNull()
+    expect(run(state, g, debugScene()).sceneId).toBeNull()
   })
 
   it('refuses what the game does not have', () => {
     const g = game()
     const state = startingState(g)
-    expect(whyNot(state, g, setStat('charm', 1))).toBe('There is no stat called charm.')
-    expect(whyNot(state, g, goTo('moon'))).toBe('There is no location called moon.')
-    expect(whyNot(state, g, jumpTo('epilogue'))).toBe('There is no scene called epilogue.')
-    expect(whyNot(state, g, setTime({ day: -1 }))).toContain('A day is a whole number')
-    expect(whyNot(state, g, setTime({ period: 'teatime' }))).toContain('one of morning, afternoon, evening, night, late')
-    expect(whyNot(state, g, setTurn(-2))).toBe('A turn is a whole number from 0.')
+    expect(whyNot(state, g, debugStat('charm', 1))).toBe('There is no stat called charm.')
+    expect(whyNot(state, g, debugGo('moon'))).toBe('There is no location called moon.')
+    expect(whyNot(state, g, debugScene('epilogue'))).toBe('There is no scene called epilogue.')
+    expect(whyNot(state, g, debugTime({ day: -1 }))).toContain('A day is a whole number')
+    expect(whyNot(state, g, debugTime({ period: 'teatime' }))).toContain('one of morning, afternoon, evening, night, late')
+    expect(whyNot(state, g, debugTurn(-2))).toBe('A turn is a whole number from 0.')
     expect(whyNot(state, g, { type: 'custom', name: 'debug/turn', with: { to: '3' } })).toBe('A turn is a whole number from 0.')
     expect(whyNot(state, g, { type: 'custom', name: 'debug/time', with: { day: '' } })).toContain('A day is a whole number')
     const bare = { ...g, plugins: [debug()] }
-    expect(whyNot(startingState(bare), bare, setTime({ day: 1 }))).toBe('This game has no calendar.')
-    expect(whyNot(startingState(bare), bare, goTo('island'))).toBe('This game has no places.')
-    expect(whyNot(state, g, setStat('luck', Number('lots')))).toBe('That needs a number.')
-    expect(whyNot(state, g, setStat('luck', 1, 'character:nobody'))).toBe('There is nobody and nothing called character:nobody.')
+    expect(whyNot(startingState(bare), bare, debugTime({ day: 1 }))).toBe('This game has no calendar.')
+    expect(whyNot(startingState(bare), bare, debugGo('island'))).toBe('This game has no places.')
+    expect(whyNot(state, g, debugStat('luck', Number('lots')))).toBe('That needs a number.')
+    expect(whyNot(state, g, debugStat('luck', 1, 'character:nobody'))).toBe('There is nobody and nothing called character:nobody.')
     const withAva = { ...state, entities: { character: { ava: { name: 'Ava', stats: {}, kv: {} } } } }
-    expect(whyNot(withAva, g, setStat('luck', 1, 'character:ava'))).toBe('That is not whose luck it is.')
-    expect(whyNot(state, g, setItem('key', NaN))).toBe('That needs a number.')
+    expect(whyNot(withAva, g, debugStat('luck', 1, 'character:ava'))).toBe('That is not whose luck it is.')
+    expect(whyNot(state, g, debugItem('key', NaN))).toBe('That needs a number.')
   })
 
   it('shows the locks that are on, and the seed', () => {
@@ -93,6 +93,6 @@ describe('the debugger', () => {
 
   it('is simply absent from a game built without it', () => {
     const g = { ...game(), plugins: [] }
-    expect(whyNot(startingState(g), g, setStat('luck', 1))).toBe('Finish the intro.')
+    expect(whyNot(startingState(g), g, debugStat('luck', 1))).toBe('Finish the intro.')
   })
 })

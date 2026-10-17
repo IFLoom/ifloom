@@ -395,7 +395,6 @@ describe('saves', () => {
   it('carry a version-10 save forward with nothing picked', () => {
     const g = game([])
     const { media: _media, ...now } = startingState(g)
-    expect(SAVE_VERSION).toBe(12)
-    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: 12, media: { picks: {} } })
+    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: SAVE_VERSION, media: { picks: {} } })
   })
 })

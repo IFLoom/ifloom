@@ -222,9 +222,9 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 `src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `town.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/docs/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
-### Timed effects
+### Timed statuses
 
-`town.ts`, the `coffee` activity and `data.effects`, and `effects()` in `src/game.ts`. A coffee applies the [effects plugin](/docs/plugins/effects)'s `caffeinated` with `applyEffect('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. While it lasts, the café has an extra line, `{ text: 'place.cafe/caffeinated', when: effectActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+`town.ts`, the `coffee` activity and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. While it lasts, the café has an extra line, `{ text: 'place.cafe/caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
 
 ### The café counter
 

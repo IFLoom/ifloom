@@ -141,7 +141,7 @@ export function sampleProject(): Project {
       {
         id: 'market',
         title: 'The market',
-        body: [{ text: 'market' }, { text: 'market/busker', when: { kv: 'heardBusker' } }],
+        body: [{ text: 'market' }, { text: 'market.fiddler', when: { kv: 'heardBusker' } }],
         choices: [
           {
             id: 'buy',
@@ -158,7 +158,7 @@ export function sampleProject(): Project {
       {
         id: 'home',
         title: 'Home',
-        body: [{ text: 'home' }, { text: 'home/bun', when: { item: 'bun' } }],
+        body: [{ text: 'home' }, { text: 'home.bun', when: { item: 'bun' } }],
         choices: [],
       },
       {
@@ -172,12 +172,12 @@ export function sampleProject(): Project {
     ],
     prose: {
       market: 'Saturday, and the market is busy. The bakery stall has iced buns at 3p each.',
-      'market/busker': 'The fiddler is still playing by the fountain.',
+      'market.fiddler': 'The fiddler is still playing by the fountain.',
       'market#buy': 'Buy an iced bun',
       'market#browse': 'Wander the stalls',
       'market#home': 'Walk home',
       home: 'You let yourself in and put the kettle on.',
-      'home/bun': 'The bun goes on a plate. It deserves a plate.',
+      'home.bun': 'The bun goes on a plate. It deserves a plate.',
       'market.busker': 'A woman with a fiddle is playing something quick by the fountain.\n\nBusker: "Any requests?"',
       'market.busker#listen': 'Stay for a tune',
     },

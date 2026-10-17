@@ -385,6 +385,21 @@ describe('content migrations', () => {
     })
   })
 
+  it('write a chose key as scene#choice at schema 10, and leave prose keys alone', () => {
+    const v9 = {
+      id: 'letter',
+      schema: 9,
+      prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
+      scenes: [{ id: 'ch2.stairs', body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat/open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }], choices: [] }],
+    }
+    expect(upgradePack(v9)).toEqual({
+      id: 'letter',
+      schema: SCHEMA,
+      prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
+      scenes: [{ id: 'ch2.stairs', body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat#open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }], choices: [] }],
+    })
+  })
+
   it('install a schema 5 mod with an activity that requires, and play it as blocked', async () => {
     const file = JSON.stringify({
       ifloomMod: 1,

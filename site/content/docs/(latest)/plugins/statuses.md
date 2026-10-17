@@ -153,7 +153,7 @@ The effects it runs are applied while the turn is ending, so a `turn` effect amo
 import { type Block } from '@ifloom/engine'
 import { statusActive } from '@ifloom/plugin-statuses'
 
-const block: Block = { text: 'place.cafe/caffeinated', when: statusActive('caffeinated') }
+const block: Block = { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') }
 ```
 
 An unknown status is never active.

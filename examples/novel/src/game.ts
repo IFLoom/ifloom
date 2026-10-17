@@ -23,8 +23,8 @@ export const letter: Pack = {
       body: [
         { text: 'ch1.mat' },
         // Only in a New Game+, which carries `readBefore` over from a finished read.
-        { text: 'ch1.mat/again', when: { kv: 'readBefore' } },
-        { text: 'ch1.mat/named', when: { kv: 'playerName' } },
+        { text: 'ch1.mat.again', when: { kv: 'readBefore' } },
+        { text: 'ch1.mat.named', when: { kv: 'playerName' } },
       ],
       choices: [
         { id: 'open', when: { kv: 'playerName' }, effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
@@ -36,8 +36,8 @@ export const letter: Pack = {
       title: 'Chapter two: the stairs',
       body: [
         { text: 'ch2.stairs' },
-        { text: 'ch2.stairs/opened', when: { chose: 'ch1.mat/open' } },
-        { text: 'ch2.stairs/shelved', when: { chose: 'ch1.mat/shelf' } },
+        { text: 'ch2.stairs.opened', when: { chose: 'ch1.mat#open' } },
+        { text: 'ch2.stairs.shelved', when: { chose: 'ch1.mat#shelf' } },
       ],
       choices: [
         { id: 'truth', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
@@ -45,7 +45,7 @@ export const letter: Pack = {
         // A lie to cover a letter you opened is a second lie.
         {
           id: 'blame',
-          when: { chose: 'ch1.mat/open' },
+          when: { chose: 'ch1.mat#open' },
           effects: [{ kind: 'kv', key: 'fibs', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }],
         },
       ],
@@ -55,9 +55,9 @@ export const letter: Pack = {
       title: 'Chapter three: the door',
       body: [
         { text: 'ch3.door' },
-        { text: 'ch3.door/honest', when: { kv: 'fibs', lt: 1 } },
-        { text: 'ch3.door/fib', when: { kv: 'fibs', is: 1 } },
-        { text: 'ch3.door/tangle', when: { kv: 'fibs', gte: 2 } },
+        { text: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
+        { text: 'ch3.door.fib', when: { kv: 'fibs', is: 1 } },
+        { text: 'ch3.door.tangle', when: { kv: 'fibs', gte: 2 } },
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
@@ -71,20 +71,20 @@ export const letter: Pack = {
   prose: {
     'ch1.mat':
       'The flat still smells of someone else’s cooking. On the mat, under the takeaway menus, is a letter with a stamp from the seaside and a name on it that isn’t yours: J. Hart.',
-    'ch1.mat/again': 'You have the oddest feeling you have stood here before, with this exact letter in your hand.',
-    'ch1.mat/named': 'You turn it over, {{playerName}}. The flap is barely stuck.',
+    'ch1.mat.again': 'You have the oddest feeling you have stood here before, with this exact letter in your hand.',
+    'ch1.mat.named': 'You turn it over, {{playerName}}. The flap is barely stuck.',
     'ch1.mat#open': 'Open it',
     'ch1.mat#shelf': 'Put it on the shelf by the door',
     'ch2.stairs': 'Mrs Okafor from downstairs catches you on the landing. “Has anything come for June? Her sister keeps asking.”',
-    'ch2.stairs/opened': 'You think of the postcard tucked inside, and the phone number written on it twice.',
-    'ch2.stairs/shelved': 'You think of the letter on the shelf, still sealed.',
+    'ch2.stairs.opened': 'You think of the postcard tucked inside, and the phone number written on it twice.',
+    'ch2.stairs.shelved': 'You think of the letter on the shelf, still sealed.',
     'ch2.stairs#truth': 'Tell her about the letter',
     'ch2.stairs#deny': '“Nothing yet.”',
     'ch2.stairs#blame': '“Only something that came open in the post.”',
     'ch3.door': 'On Saturday someone knocks. A woman with June’s chin and a carrier bag of shopping: “I’m her sister. I was told there might be post.”',
-    'ch3.door/honest': 'You already told Mrs Okafor everything, and it shows: she smiles before you speak.',
-    'ch3.door/fib': 'Mrs Okafor is behind her on the stairs, not quite looking at you.',
-    'ch3.door/tangle': 'Mrs Okafor is behind her on the stairs, and she has clearly been talking.',
+    'ch3.door.honest': 'You already told Mrs Okafor everything, and it shows: she smiles before you speak.',
+    'ch3.door.fib': 'Mrs Okafor is behind her on the stairs, not quite looking at you.',
+    'ch3.door.tangle': 'Mrs Okafor is behind her on the stairs, and she has clearly been talking.',
     'ch3.door#hand': 'Give her the letter yourself',
     'ch3.door#post': 'Say you’ll send it on',
     'end.kept': 'She reads it on your doorstep and laughs, then cries a bit, then asks if you want a biscuit. You do.',

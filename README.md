@@ -32,14 +32,14 @@ export const letter: Pack = {
       id: 'mat',
       body: [{ text: 'mat' }],
       choices: [
-        { id: 'open', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'scene', id: 'stairs' }] },
-        { id: 'shelf', effects: [{ kind: 'scene', id: 'stairs' }] },
+        { id: 'open', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'scene', scene: 'stairs' }] },
+        { id: 'shelf', effects: [{ kind: 'scene', scene: 'stairs' }] },
       ],
     },
     {
       id: 'stairs',
       // The engine remembers every choice, so later scenes can ask about it.
-      body: [{ text: 'stairs' }, { text: 'stairs/opened', when: { chose: 'mat/open' } }],
+      body: [{ text: 'stairs' }, { text: 'stairs.opened', when: { chose: 'mat#open' } }],
       choices: [],
     },
   ],
@@ -48,7 +48,7 @@ export const letter: Pack = {
     'mat#open': 'Open it',
     'mat#shelf': 'Put it on the shelf',
     stairs: 'Your neighbour catches you on the landing.',
-    'stairs/opened': 'You think of the postcard you found inside.',
+    'stairs.opened': 'You think of the postcard you found inside.',
   },
 }
 ```

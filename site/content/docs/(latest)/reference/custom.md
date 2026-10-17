@@ -93,8 +93,8 @@ custom: {
 }
 
 // in a data scene
-{ text: 'ava.hi/regular', when: { custom: 'isRegular' } }
-{ text: 'ava.hi/usual', when: { custom: 'visitedAtLeast', with: { times: 10 } } }
+{ text: 'ava.hi.regular', when: { custom: 'isRegular' } }
+{ text: 'ava.hi.usual', when: { custom: 'visitedAtLeast', with: { times: 10 } } }
 ```
 
 **Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it, and [`explain`](/docs/reference/conditions#explain) shows it as `custom condition isRegular is not declared by the game`.
@@ -165,7 +165,7 @@ The value is always the arguments as an object, named as the [content naming rul
 
 ```ts
 // in a data scene: Ava thanks you once the bread quest is done
-{ text: 'ava.hi/thanks', when: { 'quests/done': { quest: 'bread' } } }
+{ text: 'ava.hi.thanks', when: { 'quests/done': { quest: 'bread' } } }
 // a choice that starts it
 { id: 'offer-help', effects: [{ 'quests/start': { quest: 'bread' } }, { kind: 'scene', scene: null }] }
 ```

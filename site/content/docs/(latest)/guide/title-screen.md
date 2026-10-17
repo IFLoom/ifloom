@@ -225,7 +225,7 @@ A setting is either part of the game or only part of how it looks. [Settings](/d
 ```ts
 body: [
   { text: 'place.high-street' },
-  { text: 'place.high-street/hint', when: { setting: 'hints' } },
+  { text: 'place.high-street.hint', when: { setting: 'hints' } },
 ],
 ```
 
@@ -349,7 +349,7 @@ The Letter sets `readBefore` as the reader reaches an ending, and its first chap
 
 body: [
   { text: 'ch1.mat' },
-  { text: 'ch1.mat/again', when: { kv: 'readBefore' } },
+  { text: 'ch1.mat.again', when: { kv: 'readBefore' } },
 ],
 ```
 

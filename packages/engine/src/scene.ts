@@ -345,7 +345,7 @@ export function drawVariant(
  * prose store, the draw above, and once-a-turn lines recorded per turn (`once.ts`).
  */
 export function defaultRuntime(game: Game): SceneRuntime {
-  const id = (scene: string, choice: string) => (choice ? `${scene}.${choice}` : scene)
+  const id = (scene: string, choice: string) => (choice ? `${scene}#${choice}` : scene)
   return {
     game,
     prose: {

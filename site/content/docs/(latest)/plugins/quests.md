@@ -226,7 +226,7 @@ You can use them anywhere a condition goes: a block's `when`, a choice, a lock o
 import { type Block } from '@ifloom/engine'
 import { questDone } from '@ifloom/plugin-quests'
 
-const block: Block = { text: 'place.cafe/regular', when: questDone('settle') }
+const block: Block = { text: 'place.cafe.regular', when: questDone('settle') }
 ```
 
 An unknown quest or stage is false.

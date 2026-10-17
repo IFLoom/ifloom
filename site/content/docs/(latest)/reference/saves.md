@@ -325,6 +325,7 @@ These are the changes to the save format so far, with what loading a save from b
 - **10 → 11** adds [`media`](/docs/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
 - **11 → 12** renames `flags` to [`kv`](/docs/reference/state#kv) at the top level, on every [storyline](/docs/reference/state#storylines) and on every [entity](/docs/reference/state#entities). The keys and values are kept as they are.
 - **12 → 13** moves `plugins.effects` to `plugins.statuses`, because the timed-effects plugin is now the [statuses plugin](/docs/plugins/statuses). A save that already has `plugins.statuses` keeps it.
+- **13 → 14** rekeys [`chosen`](/docs/reference/state#chosen) from `scene/choice` to `scene#choice`. A choice's once-a-turn record isn't moved, so in a save made partway through a turn, a `once` choice already taken that turn can be taken once more.
 
 A save from version 0 doesn't load.
 
@@ -333,7 +334,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 13
+const SAVE_VERSION: 14
 ```
 
 The current save format. Every new state carries it in `state.version`.
@@ -366,7 +367,7 @@ const { game, problems } = loadGame([letter], {
 })
 ```
 
-A reader who saved at the door after two lies under version 1 loads with `fibs: 2`, so the door scene still shows the line for two or more (`ch3.door/tangle`). The novel's test `reads a save from version 1, when the count was called lies` loads such a save.
+A reader who saved at the door after two lies under version 1 loads with `fibs: 2`, so the door scene still shows the line for two or more (`ch3.door.tangle`). The novel's test `reads a save from version 1, when the count was called lies` loads such a save.
 
 ### Versions and steps
 

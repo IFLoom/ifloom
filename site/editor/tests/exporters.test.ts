@@ -128,7 +128,7 @@ describe('TypeScript', () => {
     const source = toTypeScript(sampleProject())
     expect(source).toContain("  stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, format: '{n}p', spendable: true }],")
     expect(source).toContain("        { id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', scene: 'market' }] },")
-    expect(source).toContain("    { id: 'home', title: 'Home', body: [{ text: 'home' }, { text: 'home/bun', when: { item: 'bun' } }], choices: [] },")
+    expect(source).toContain("    { id: 'home', title: 'Home', body: [{ text: 'home' }, { text: 'home.bun', when: { item: 'bun' } }], choices: [] },")
     expect(source).toContain("    'market#buy': 'Buy an iced bun',")
     expect(source).toContain(" * - `heardBusker`: Set once you have listened to the busker.")
     expect(source).toContain("loadGame([marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })")

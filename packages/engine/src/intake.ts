@@ -9,6 +9,7 @@ import { say } from './strings.ts'
 import type { Game } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
+import { choiceKey } from './upgrade.ts'
 import { hash } from './random.ts'
 import { featureContext } from './core.ts'
 import type { StateField } from './features/feature.ts'
@@ -165,6 +166,12 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
     const { effects, ...rest } = plugins
     return { ...state, plugins: { ...rest, statuses: effects } }
   },
+  // 13 → 14: a choice in a scene is `scene#choice` (ADR 0010), so the choices picked are counted by it.
+  // The once-a-turn records of choices (`turn:scene.choice` in kv) aren't moved: each lasts the turn it was made in.
+  13: (state) => ({
+    ...state,
+    chosen: Object.fromEntries(Object.entries((state.chosen ?? {}) as Record<string, number>).map(([key, count]) => [choiceKey(key), count])),
+  }),
 }
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */

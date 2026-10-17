@@ -110,7 +110,7 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
     case 'chose':
       fields = (
         <>
-          <IdPicker noun="scene/choice" aria-label="Choice" value={c.chose as string} options={names.choices} onChange={(id) => set({ chose: id })} />
+          <IdPicker noun="scene#choice" aria-label="Choice" value={c.chose as string} options={names.choices} onChange={(id) => set({ chose: id })} />
           <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
         </>
       )

@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 9
+export const SCHEMA = 10
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -78,6 +78,12 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
     }
     return out
   },
+  // 9 → 10: one separator rule for ids (ADR 0010): a choice in a scene is
+  // `scene#choice`, as its label's prose key already was, so `/` only ever
+  // names a plugin. `{ chose: 'ch1.mat/open' }` is `{ chose: 'ch1.mat#open' }`.
+  // Prose keys are the author's own names, which code can also hold, so they
+  // are left as they are.
+  9: (pack) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, toSchema10)])) as RawPack,
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -304,6 +310,18 @@ function kindToTags(value: Record<string, unknown>, kinds: readonly string[]): R
   const { kind, ...rest } = value
   const tags = Array.isArray(rest.tags) ? (rest.tags.includes(kind) ? rest.tags : [...rest.tags, kind]) : [kind]
   return { ...rest, tags, ...(kind === 'gear' && rest.start === undefined ? { start: 1 } : {}) }
+}
+
+/** A `scene/choice` key as `scene#choice`: the last `/` is the one between them, as the engine read it. */
+export function choiceKey(key: string): string {
+  if (key.includes('#')) return key
+  const cut = key.lastIndexOf('/')
+  return cut > 0 ? `${key.slice(0, cut)}#${key.slice(cut + 1)}` : key
+}
+
+/** Schema 9 content in one object, as schema 10 writes it: a `chose` condition's key with `#`. */
+function toSchema10(value: Record<string, unknown>): Record<string, unknown> {
+  return typeof value.chose === 'string' ? { ...value, chose: choiceKey(value.chose) } : value
 }
 
 /** The statuses plugin's calls, by the timed-effects plugin's names. */

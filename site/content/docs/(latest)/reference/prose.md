@@ -11,9 +11,11 @@ A prose key is a plain string. The engine only gives meaning to the label patter
 | Key | Used for |
 |---|---|
 | `ava.hi` | Any `text` block. By convention, the scene's id is the key for its main body. |
-| `ava.hi/regular` | Any other block. The `/` is a convention, not syntax. |
+| `ava.hi.regular` | Any other block. A `.` before the part is a convention, not syntax. |
 | `ava.hi#chat` | The label for choice `chat` in scene `ava.hi`. It's the default when a choice gives no `label`. |
-| `ava.smalltalk/rain#chat` | A label written for one drawn variant. If that member was drawn, it beats the scene's own label. |
+| `ava.smalltalk.rain#chat` | A label written for one drawn variant. If that member was drawn, it beats the scene's own label. |
+
+Keep `/` out of your keys. It names a plugin everywhere else, as in `quests/done`. See [Ids and separators](/docs/reference/game#ids-and-separators).
 
 Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/loader) and [`proseStore`](#prosestore-1) take them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
 
@@ -53,10 +55,10 @@ import { proseStore, type Game } from '@ifloom/engine'
 const town: Game = { /* ... */ }
 town.prose = proseStore(town, {
   'ava.hi': 'Ava looks up from the till. "Morning, {{playerName}}."',
-  'street.weather/drizzle': 'A fine drizzle that never quite becomes rain.',
-  'street.weather/sun': 'Sun on the shopfronts.',
+  'street.weather.drizzle': 'A fine drizzle that never quite becomes rain.',
+  'street.weather.sun': 'Sun on the shopfronts.',
 }, {
-  'street.weather': ['street.weather/drizzle', 'street.weather/sun'],
+  'street.weather': ['street.weather.drizzle', 'street.weather.sun'],
 })
 ```
 
@@ -73,7 +75,7 @@ One member of a variants list, in a [pack](/docs/reference/loader#pack)'s `varia
 ```ts
 variants: {
   // Sun three times as often as drizzle or wind.
-  'street.weather': [{ text: 'street.weather/sun', weight: 3 }, 'street.weather/drizzle', 'street.weather/wind'],
+  'street.weather': [{ text: 'street.weather.sun', weight: 3 }, 'street.weather.drizzle', 'street.weather.wind'],
 }
 ```
 
@@ -458,5 +460,5 @@ mediaKind('place/cafe.webp')  // 'image'
 ## See it in an example
 
 - Small Town: [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts) holds every line by key, with choice labels as `<scene>#<choice>`. Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
-- Small Town's intro has a tooltip on "launderette", and the flat's `place.flat/text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
+- Small Town's intro has a tooltip on "launderette", and the flat's `place.flat.text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
 - The Letter: the `prose` in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) prints the reader's name with `{{playerName}}`.

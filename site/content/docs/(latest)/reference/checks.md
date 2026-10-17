@@ -343,7 +343,7 @@ type Reference =
 | Reference | Checked as |
 |---|---|
 | `{ scene, as }` | A scene that has to exist. `as` words the problem: `gated on…` for a condition, `opens…` for a button, `goes to…` (the default) for an effect. |
-| `{ choice }` | A `scene/choice` key, as `chose` checks it. |
+| `{ choice }` | A `scene#choice` key, as `chose` checks it. |
 | `{ stat, of, writes }` | A stat read, or with `writes`, written, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
 | `{ item }`, `{ storyline }`, `{ collection }`, `{ kind }`, `{ activity }`, `{ input }` | An id that has to be declared. |

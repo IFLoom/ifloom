@@ -69,9 +69,12 @@ export function kvUsed(pack: EditorPack): string[] {
 }
 
 /** A key renamed when it is the old scene id, or starts with it and then `/` or `#`. */
-function moveKey(key: string, from: string, to: string): string {
+function moveKey(key: string, from: string, to: string, scenes: readonly string[]): string {
   if (key === from) return to
   if (key.startsWith(`${from}/`) || key.startsWith(`${from}#`)) return to + key.slice(from.length)
+  // A sub-key, `cafe.hint`, unless it belongs to another scene whose id goes on from this one's, `cafe.counter`.
+  const owner = scenes.filter((id) => key === id || key.startsWith(`${id}.`) || key.startsWith(`${id}#`)).sort((a, b) => b.length - a.length)[0]
+  if (key.startsWith(`${from}.`) && owner === from) return to + key.slice(from.length)
   return key
 }
 
@@ -86,7 +89,7 @@ function renameFormula(formula: unknown, from: string, to: string): unknown {
 
 /**
  * The project with one scene, stat, item or kv key renamed everywhere it is
- * named. A scene's prose keys (`id`, `id/…`, `id#…`) move with it.
+ * named. A scene's prose keys (`id`, `id.…`, `id#…`, and an older `id/…`) move with it.
  */
 export function rename(project: Project, thing: Thing, from: string, to: string): Project {
   if (from === to || !to) return project
@@ -94,23 +97,24 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
   const pack = next.pack
   const visit: Visit = {}
   if (thing === 'scene') {
+    const scenes = pack.scenes.map((scene) => scene.id)
     for (const scene of pack.scenes) {
       if (scene.id === from) scene.id = to
       for (const block of scene.body) {
-        if ('text' in block) block.text = moveKey(block.text, from, to)
+        if ('text' in block) block.text = moveKey(block.text, from, to, scenes)
       }
       for (const choice of scene.choices) {
-        if (choice.label) choice.label = moveKey(choice.label, from, to)
-        for (const label of choice.labels ?? []) label.key = moveKey(label.key, from, to)
+        if (choice.label) choice.label = moveKey(choice.label, from, to, scenes)
+        for (const label of choice.labels ?? []) label.key = moveKey(label.key, from, to, scenes)
       }
     }
-    pack.prose = Object.fromEntries(Object.entries(pack.prose).map(([key, text]) => [moveKey(key, from, to), text]))
+    pack.prose = Object.fromEntries(Object.entries(pack.prose).map(([key, text]) => [moveKey(key, from, to, scenes), text]))
     if (next.intro === from) next.intro = to
     if (next.preview.start === from) next.preview.start = to
     visit.condition = (c) => {
       if (c.seen === from) c.seen = to
       if (c.since === from) c.since = to
-      if (typeof c.chose === 'string' && c.chose.startsWith(`${from}/`)) c.chose = to + c.chose.slice(from.length)
+      if (typeof c.chose === 'string' && c.chose.startsWith(`${from}#`)) c.chose = to + c.chose.slice(from.length)
       if (Array.isArray(c.scene)) c.scene = c.scene.map((id) => (id === from ? to : id))
     }
     visit.effect = (e) => {
@@ -152,7 +156,7 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
 
 /**
  * The project with a choice renamed: its id, its default label key
- * (`scene#choice`) and every `{ chose: 'scene/choice' }` that asks about it.
+ * (`scene#choice`) and every `{ chose: 'scene#choice' }` that asks about it.
  */
 export function renameChoice(project: Project, sceneId: string, from: string, to: string): Project {
   if (from === to || !to) return project
@@ -169,7 +173,7 @@ export function renameChoice(project: Project, sceneId: string, from: string, to
   }
   walkPack(next.pack, {
     condition: (c) => {
-      if (c.chose === `${sceneId}/${from}`) c.chose = `${sceneId}/${to}`
+      if (c.chose === `${sceneId}#${from}`) c.chose = `${sceneId}#${to}`
     },
   })
   // The scene's prose that draws it inline: `[[act:from]]` and `[[act:from|words]]`.

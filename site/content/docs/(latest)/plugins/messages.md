@@ -360,7 +360,7 @@ You can use them anywhere a condition goes, such as another message's `when`, a 
 ```ts
 import { messageReplied } from '@ifloom/plugin-messages'
 
-const block = { text: 'place.cafe/ava-coffee', when: messageReplied('ava.text', 'yes') }
+const block = { text: 'place.cafe.ava-coffee', when: messageReplied('ava.text', 'yes') }
 ```
 
 An unknown message is false.

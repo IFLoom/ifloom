@@ -69,8 +69,8 @@ const locations: LocationDef[] = [
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
-      { text: 'cafe/ruth', when: here('ruth') },
-      { text: 'cafe/empty', when: { not: here('ruth') } },
+      { text: 'cafe.ruth', when: here('ruth') },
+      { text: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
@@ -190,8 +190,8 @@ const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { text: 'ruth.talk/hello' },
-    { text: 'ruth.talk/regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
+    { text: 'ruth.talk.hello' },
+    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
   ],
   choices: [
     {
@@ -218,12 +218,12 @@ const prose: Record<string, string> = {
   'house': 'The kettle, the window, the post on the mat.',
   'high-street': 'Shopfronts, a bus stop, a bakery smell from the corner.',
   'cafe': 'Steam on the windows.',
-  'cafe/ruth': 'Ruth is behind the counter, flour to the elbows.',
-  'cafe/empty': 'The counter is empty.',
+  'cafe.ruth': 'Ruth is behind the counter, flour to the elbows.',
+  'cafe.empty': 'The counter is empty.',
   'intro': 'The last box is in. {{playerName}}, you could sleep for a week.',
   'intro#bed': 'Go to bed',
-  'ruth.talk/hello': '"Morning. What can I get you?"',
-  'ruth.talk/regular': 'She is already reaching for your usual cup.',
+  'ruth.talk.hello': '"Morning. What can I get you?"',
+  'ruth.talk.regular': 'She is already reaching for your usual cup.',
   'ruth.talk#chat': 'Ask how the bread is going',
   'ruth.talk#bye': 'Just the coffee, thanks',
 }
@@ -644,8 +644,8 @@ const locations: LocationDef[] = [
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
-      { text: 'cafe/ruth', when: here('ruth') },
-      { text: 'cafe/empty', when: { not: here('ruth') } },
+      { text: 'cafe.ruth', when: here('ruth') },
+      { text: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
@@ -701,8 +701,8 @@ const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { text: 'ruth.talk/hello' },
-    { text: 'ruth.talk/regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
+    { text: 'ruth.talk.hello' },
+    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
   ],
   choices: [
     {
@@ -721,12 +721,12 @@ const prose: Record<string, string> = {
   'house': 'The kettle, the window, the post on the mat.',
   'high-street': 'Shopfronts, a bus stop, a bakery smell from the corner.',
   'cafe': 'Steam on the windows.',
-  'cafe/ruth': 'Ruth is behind the counter, flour to the elbows.',
-  'cafe/empty': 'The counter is empty.',
+  'cafe.ruth': 'Ruth is behind the counter, flour to the elbows.',
+  'cafe.empty': 'The counter is empty.',
   'intro': 'The last box is in. {{playerName}}, you could sleep for a week.',
   'intro#bed': 'Go to bed',
-  'ruth.talk/hello': '"Morning. What can I get you?"',
-  'ruth.talk/regular': 'She is already reaching for your usual cup.',
+  'ruth.talk.hello': '"Morning. What can I get you?"',
+  'ruth.talk.regular': 'She is already reaching for your usual cup.',
   'ruth.talk#chat': 'Ask how the bread is going',
   'ruth.talk#bye': 'Just the coffee, thanks',
 }

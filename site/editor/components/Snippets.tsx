@@ -24,7 +24,7 @@ const TOOLS = [
 type Tool = (typeof TOOLS)[number]['id']
 
 /** A few sample ids, so the pickers have something to offer. */
-const NAMES = { scenes: ['cafe.counter', 'street', 'home'], stats: ['coins', 'charm', 'energy'], items: ['umbrella', 'key'], kv: ['metAva', 'visits'], choices: ['cafe.counter/buy'], sets: ['cafe'] }
+const NAMES = { scenes: ['cafe.counter', 'street', 'home'], stats: ['coins', 'charm', 'energy'], items: ['umbrella', 'key'], kv: ['metAva', 'visits'], choices: ['cafe.counter#buy'], sets: ['cafe'] }
 
 export function Snippets() {
   const [tool, setTool] = useState<Tool>('condition')

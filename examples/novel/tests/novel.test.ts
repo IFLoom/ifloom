@@ -37,7 +37,7 @@ describe('The Letter', () => {
   it('remembers an early choice and branches on it two chapters on', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const opened = read(named, choose('open'))
-    expect(holds(opened, { chose: 'ch1.mat/open' }, game)).toBe(true)
+    expect(holds(opened, { chose: 'ch1.mat#open' }, game)).toBe(true)
     expect(view(opened, game).scene.body).toContain('the postcard tucked inside')
     expect(view(opened, game).scene.choices.map((choice) => choice.id)).toEqual(['truth', 'deny', 'blame'])
     const shelved = read(named, choose('shelf'))
@@ -85,7 +85,7 @@ describe('The Letter', () => {
       turn: 2,
       sceneId: 'ch3.door',
       kv: { playerName: 'Robin', lies: 2 },
-      chosen: { 'ch1.mat/open': 1, 'ch2.stairs/blame': 1 },
+      chosen: { 'ch1.mat#open': 1, 'ch2.stairs#blame': 1 },
     } as Partial<GameState>
     delete state.gameVersion
     const file = (saved: object) =>

@@ -134,12 +134,12 @@ Tests a `play` [setting](/docs/reference/settings), the value in [`state.setting
 ### chose
 
 ```ts
-{ chose: 'ava.hi/compliment' }          // picked at least once
-{ chose: 'ava.hi/compliment', gte: 3 }  // three times or more
-{ chose: 'ava.hi/compliment', lt: 1 }   // never
+{ chose: 'ava.hi#compliment' }          // picked at least once
+{ chose: 'ava.hi#compliment', gte: 3 }  // three times or more
+{ chose: 'ava.hi#compliment', lt: 1 }   // never
 ```
 
-How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a kv key.
+How many times the player has picked a choice. The key is the scene's id, a `#` and the choice's id, as in the choice's label key (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a kv key.
 
 **Gotcha.** The [content checker](/docs/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
 
@@ -509,6 +509,6 @@ console.log(explainText(why))
 
 ## See it in an example
 
-- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat/open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
+- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat#open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
 - Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) uses `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
 - The Corner Café: the `review` trigger in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

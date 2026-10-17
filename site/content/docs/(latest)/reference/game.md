@@ -216,6 +216,19 @@ The words a data scene draws on. `line` gives the text for a key, filled in for 
 
 **Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/docs/reference/loader#loadgame) sets it. A game built by hand sets it with [`proseStore`](/docs/reference/prose#prosestore-1).
 
+## Ids and separators
+
+Content names things by id, and an id is letters, digits, `-` and `_`, in parts joined by `.`, such as `cafe.counter`. The other separators always mean the same thing, wherever they appear:
+
+| Separator | Means | Examples |
+|---|---|---|
+| `.` | A part of an id. | Scene `cafe.counter`, prose key `place.cafe.ava`, audio track `cafe.murmur` |
+| `/` | A plugin's name: its id, then the name. | `quests/done`, `statuses/apply`, `{{v:messages/unread}}`, the string `calendar/period.morning` |
+| `#` | A choice in a scene, or a reply to a message. | The label key `ch1.mat#open`, and `{ chose: 'ch1.mat#open' }` |
+| `:` | A reference with what it is in front. | The entity `character:ava`, a mod's pack `mod:naps`, the profile's `core:settings` |
+
+So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` is looked up among the plugins first.
+
 ## Looking things up
 
 ```ts

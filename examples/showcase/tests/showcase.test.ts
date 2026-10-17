@@ -278,7 +278,7 @@ describe('Small Town', () => {
     await store.add(readFileSync(new URL('../mods/fog-season.json', import.meta.url), 'utf8'))
     const modded = smallTown({ mods: await store.packs() })
     expect(modded.problems).toEqual([])
-    expect(modded.game.prose?.variants('street.weather')).toContain('street.weather/fog')
+    expect(modded.game.prose?.variants('street.weather')).toContain('street.weather.fog')
     const fresh = startingState(modded.game)
     const park = { ...fresh, sceneId: null, phase: 'open', plugins: { ...fresh.plugins, places: { version: 1, state: { at: 'park' } satisfies PlacesState } } }
     expect(view(park, modded.game).scene.body).toContain('fog')

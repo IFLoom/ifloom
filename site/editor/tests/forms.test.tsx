@@ -13,7 +13,7 @@ import { problemTarget } from '../lib/references'
 
 afterEach(cleanup)
 
-const names = { scenes: ['market', 'home'], stats: ['coins'], items: ['bun'], kv: ['met'], choices: ['market/buy'], sets: ['market'] }
+const names = { scenes: ['market', 'home'], stats: ['coins'], items: ['bun'], kv: ['met'], choices: ['market#buy'], sets: ['market'] }
 
 describe('the condition builder', () => {
   it('switches kind and edits the fields of the new one', () => {

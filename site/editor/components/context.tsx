@@ -39,7 +39,7 @@ export function useEditor(): EditorContextValue {
   return value
 }
 
-/** The pickers' ids, from the pack: scene ids, stats, items, kv keys, `scene/choice` pairs and storylet sets. */
+/** The pickers' ids, from the pack: scene ids, stats, items, kv keys, `scene#choice` pairs and storylet sets. */
 export function namesOf(project: Project): Names {
   const { pack } = project
   return {
@@ -47,7 +47,7 @@ export function namesOf(project: Project): Names {
     stats: pack.stats.map((s) => s.id),
     items: pack.items.map((i) => i.id),
     kv: project.kv.map((v) => v.name),
-    choices: pack.scenes.flatMap((s) => s.choices.map((c) => `${s.id}/${c.id}`)),
+    choices: pack.scenes.flatMap((s) => s.choices.map((c) => `${s.id}#${c.id}`)),
     sets: [...new Set(pack.scenes.flatMap((s) => s.drawnFrom ?? []))],
   }
 }

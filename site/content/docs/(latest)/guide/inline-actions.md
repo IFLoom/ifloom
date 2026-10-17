@@ -43,13 +43,13 @@ In a room, with no scene open, `[[act:id]]` names one of the room's buttons: a p
 ```ts
 {
   id: 'flat',
-  body: [{ text: 'place.flat' }, { text: 'place.flat/text', when: textWaiting }],
+  body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
   actions: [
     { id: 'bed', label: 'Go to bed', command: sleep() },
     { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
   ],
 }
-// 'place.flat/text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].'
+// 'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].'
 ```
 
 ## Add a tooltip

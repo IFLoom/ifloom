@@ -14,13 +14,13 @@ describe('choices the player made', () => {
   it('are remembered by scene and choice, and `{ chose }` reads them', () => {
     const { game } = withCafe()
     const at = { ...begin(game), sceneId: 'cafe.counter' }
-    expect(holds(at, { chose: 'cafe.counter/chat' }, game)).toBe(false)
+    expect(holds(at, { chose: 'cafe.counter#chat' }, game)).toBe(false)
     const after = apply(at, game, { type: 'choose', id: 'chat' }).state
-    expect(after.chosen).toEqual({ 'cafe.counter/chat': 1 })
-    expect(holds(after, { chose: 'cafe.counter/chat' }, game)).toBe(true)
-    expect(holds(after, { chose: 'cafe.counter/chat', gte: 2 }, game)).toBe(false)
-    expect(holds(after, { chose: 'cafe.counter/leave' }, game)).toBe(false)
-    expect(explain(after, { chose: 'cafe.counter/chat', gt: 1 }, game).why).toBe('choice cafe.counter/chat picked 1 times; wants more than 1')
+    expect(after.chosen).toEqual({ 'cafe.counter#chat': 1 })
+    expect(holds(after, { chose: 'cafe.counter#chat' }, game)).toBe(true)
+    expect(holds(after, { chose: 'cafe.counter#chat', gte: 2 }, game)).toBe(false)
+    expect(holds(after, { chose: 'cafe.counter#leave' }, game)).toBe(false)
+    expect(explain(after, { chose: 'cafe.counter#chat', gt: 1 }, game).why).toBe('choice cafe.counter#chat picked 1 times; wants more than 1')
   })
 
   it('a choice that names a scene or choice the game does not have is reported', () => {
@@ -36,8 +36,8 @@ describe('choices the player made', () => {
               body: [{ text: 'ch1.door' }],
               choices: [
                 { id: 'knock', effects: [] },
-                { id: 'thanks', when: { chose: 'ch1.door/kick' }, effects: [] },
-                { id: 'later', when: { chose: 'ch9.end/leave' }, effects: [] },
+                { id: 'thanks', when: { chose: 'ch1.door#kick' }, effects: [] },
+                { id: 'later', when: { chose: 'ch9.end#leave' }, effects: [] },
               ],
             },
           ],
@@ -47,8 +47,8 @@ describe('choices the player made', () => {
       { id, title },
     )
     expect(problems.map((problem) => problem.what)).toEqual([
-      'gated on unknown choice "ch1.door/kick"',
-      'gated on a choice in unknown scene "ch9.end/leave"',
+      'gated on unknown choice "ch1.door#kick"',
+      'gated on a choice in unknown scene "ch9.end#leave"',
     ])
   })
 })

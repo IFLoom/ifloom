@@ -75,12 +75,12 @@ The game's other custom conditions, and its effects, values and panels, are left
 ## SCHEMA
 
 ```ts
-const SCHEMA = 9
+const SCHEMA = 10
 ```
 
 The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 10, this engine reads 9`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 11, this engine reads 10`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -97,6 +97,7 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 | 6 to 7 | A plugin call's arguments are always an object (see [PluginCall](/docs/reference/custom#plugincall)). The first-party calls that took a bare value name it: `{ 'places/at': ['cafe'] }` becomes `{ 'places/at': { location: ['cafe'] } }`, and the same for `places/within` and `places/move` (`location`), `cast/here` and `cast/met` (`character`), `calendar/period` (`period`), `calendar/weekday` (`day`) and `calendar/pass` (`by`), in the short form and the long. Values take arguments instead of holding them in their names: an app's badge `{ count: 'messages/unread-texts' }` becomes `{ value: 'messages/unread', with: { channel: 'texts' } }`, `feed/unseen-<feed>` becomes `feed/unseen` with `{ feed }`, and any other `count` becomes `value`. Prose and strings get the same change in their tokens: `{{v:messages/unread-texts}}` becomes `{{v:messages/unread channel=texts}}`. |
 | 7 to 8 | The timed-effects plugin is the [statuses plugin](/docs/plugins/statuses). `effects/active`, `effects/apply` and `effects/remove` become `statuses/active`, `statuses/apply` and `statuses/remove`, in the short form and the long, and a condition's or an effect's `effect` becomes `status` (a command keeps its `id`). Its content moves from `data.effects.effects` to `data.statuses.statuses`, and its strings from `effects/unknown` and `effects/notActive` to `statuses/…`. |
 | 8 to 9 | An item's `kind` and a place's `kind` are gone. Each becomes a tag: `{ kind: 'stuff' }` becomes `{ tags: ['stuff'] }`, and a place's `'street'`, `'venue'` or `'room'` the same way. An item that was `'gear'` with no `start` also gets `start: 1`, since gear used to start at one. |
+| 9 to 10 | A choice in a scene is `scene#choice`, as its label's prose key already was (see [Ids and separators](/docs/reference/game#ids-and-separators)). `{ chose: 'ch1.mat/open' }` becomes `{ chose: 'ch1.mat#open' }`. Prose keys are your own names, which code can hold too, so they're left as they are. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -104,8 +105,8 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 10, this engine reads 9` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 9)` |
+| `schema` is newer than `SCHEMA` | `written for schema 11, this engine reads 10` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 10)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 

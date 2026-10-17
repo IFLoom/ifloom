@@ -104,7 +104,7 @@ export type FrozenCondition =
   | ({ setting: string; is?: KvValue } & FrozenRange)
   /**
    * How many times a choice has been picked, by `scene/choice`. Bare, at least
-   * once: `{ chose: 'bakery.counter/buy-bread' }`.
+   * once: `{ chose: 'bakery.counter#buy-bread' }`.
    */
   | ({ chose: string } & FrozenRange)
   /**

@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 13, each in the
+ * A save of every format version the engine has had, 1 to 14, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -132,6 +132,9 @@ const v12 = {
 const { effects: v12Effects, ...v12Plugins } = v12.plugins
 const v13 = { ...v12, version: 13, plugins: { ...v12Plugins, statuses: v12Effects } }
 
+// Choices picked are counted by `scene#choice`; until 14 it was `scene/choice`.
+const v14 = { ...v13, version: 14, chosen: { 'start#go': 1 } }
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -147,4 +150,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   11: v11,
   12: v12,
   13: v13,
+  14: v14,
 }

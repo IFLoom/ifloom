@@ -52,11 +52,11 @@ This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-sea
     "id": "fog-season",
     "schema": 6,
     "prose": {
-      "street.weather/fog": "Fog down the high street; the bakery's lights are the only colour in it.",
+      "street.weather.fog": "Fog down the high street; the bakery's lights are the only colour in it.",
       "place.park": "The river has gone grey under the fog, and even the ducks are keeping their opinions to themselves."
     },
     "variants": {
-      "street.weather": ["street.weather/fog"]
+      "street.weather": ["street.weather.fog"]
     }
   }
 }

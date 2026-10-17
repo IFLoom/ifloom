@@ -27,7 +27,7 @@ const story: Pack = {
       id: 'inside',
       title: 'Inside',
       // The engine remembers every choice, so a later scene can ask about one.
-      body: [{ text: 'inside' }, { text: 'inside/knocked', when: { chose: 'start/knock' } }],
+      body: [{ text: 'inside' }, { text: 'inside.knocked', when: { chose: 'start#knock' } }],
       choices: [{ id: 'again', effects: [{ kind: 'scene', scene: 'start' }] }],
     },
   ],
@@ -36,7 +36,7 @@ const story: Pack = {
     'start#knock': 'Knock',
     'start#wait': 'Wait for someone to open it',
     inside: 'It opens onto a quiet room with a kettle just coming to the boil.',
-    'inside/knocked': 'Someone calls out that they will be with you in a minute.',
+    'inside.knocked': 'Someone calls out that they will be with you in a minute.',
     'inside#again': 'Start again',
   },
 }

@@ -23,7 +23,7 @@ describe('the condition builder', () => {
   })
 
   it('makes conditions the checker accepts', () => {
-    const names = { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: ['a/go'], sets: [] }
+    const names = { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: ['a#go'], sets: [] }
     const conditions = CONDITION_FORMS.filter((f) => f !== 'setting').map((f) => newCondition(f, names))
     const { problems } = loadGame(
       [

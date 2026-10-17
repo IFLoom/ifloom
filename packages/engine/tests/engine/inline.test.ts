@@ -135,7 +135,7 @@ describe('inline actions and tooltips', () => {
     expect(applied.ok).toBe(true)
     expect(phone.read(applied.state, game).open).toBe(true)
     expect(applied.state.kv.answered).toBe(true)
-    expect(applied.state.chosen['hall/answer']).toBe(1)
+    expect(applied.state.chosen['hall#answer']).toBe(1)
   })
 
   it('replay to the same state, and go in the backlog as words', () => {

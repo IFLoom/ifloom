@@ -344,8 +344,8 @@ import { appOpen } from '@ifloom/plugin-devices'
 const body: Block[] = [
   { text: 'place.cafe' },
   // Ava looks up when you're on your phone at the counter.
-  { text: 'place.cafe/ava-looks-up', when: { custom: 'devices/open', with: { device: 'phone' } } },
-  { text: 'place.cafe/camera', when: appOpen('camera') },
+  { text: 'place.cafe.ava-looks-up', when: { custom: 'devices/open', with: { device: 'phone' } } },
+  { text: 'place.cafe.camera', when: appOpen('camera') },
 ]
 ```
 

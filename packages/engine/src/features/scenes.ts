@@ -56,7 +56,7 @@ export type ScenesShape = {
      */
     seenOn: Record<string, number>
     /**
-     * How many times each choice has been picked, by `scene/choice`. Kept for
+     * How many times each choice has been picked, by `scene#choice`. Kept for
      * every choice, so content can branch on an earlier decision without each one
      * needing a kv key of its own.
      */
@@ -64,8 +64,8 @@ export type ScenesShape = {
   }
   conditions: {
     /**
-     * How many times a choice has been picked, by `scene/choice`. Bare, at least
-     * once: `{ chose: 'bakery.counter/buy-bread' }`.
+     * How many times a choice has been picked, by `scene#choice`. Bare, at least
+     * once: `{ chose: 'bakery.counter#buy-bread' }`.
      */
     chose: { chose: string } & Range
     /**
@@ -379,7 +379,7 @@ export const scenes = defineFeature<ScenesShape>({
         const scene = cx.sceneById(game, state.sceneId!)
         if (!scene) return { ...state, sceneId: null }
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)!
-        const key = `${scene.id}/${choice.id}`
+        const key = `${scene.id}#${choice.id}`
         const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
         // The command it sends first, then its effects.
         const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
@@ -473,7 +473,7 @@ export const scenes = defineFeature<ScenesShape>({
         return [`goes to unknown scene "${ref.scene}"`]
       },
       choice: (ref) => {
-        const cut = ref.choice.lastIndexOf('/')
+        const cut = ref.choice.lastIndexOf('#')
         const scene = cut > 0 ? sceneOf.get(ref.choice.slice(0, cut)) : undefined
         if (!scene) return [`gated on a choice in unknown scene "${ref.choice}"`]
         // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.

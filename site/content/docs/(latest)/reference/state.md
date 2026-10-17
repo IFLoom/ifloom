@@ -96,7 +96,7 @@ The [turn](#turn) each scene was first entered. It's never overwritten. The intr
 
 ### chosen
 
-How many times each choice has been picked, keyed `scene/choice`, as in `{ 'cafe.counter/buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
+How many times each choice has been picked, keyed `scene#choice`, as in `{ 'cafe.counter#buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
 
 ### stats
 

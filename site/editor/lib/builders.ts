@@ -52,7 +52,7 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
     case 'item':
       return { item: names.items[0] ?? 'key', gte: 1 }
     case 'chose':
-      return { chose: names.choices[0] ?? 'start/go' }
+      return { chose: names.choices[0] ?? 'start#go' }
     case 'seen':
       return { seen: names.scenes[0] ?? 'start' }
     case 'since':

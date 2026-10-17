@@ -12,10 +12,10 @@ describe('rename', () => {
     const next = rename(project, 'scene', 'market', 'square')
     expect(next.intro).toBe('square')
     expect(next.pack.scenes[0].id).toBe('square')
-    expect(next.pack.scenes[0].body).toEqual([{ text: 'square' }, { text: 'square/busker', when: { kv: 'heardBusker' } }])
+    expect(next.pack.scenes[0].body).toEqual([{ text: 'square' }, { text: 'square.fiddler', when: { kv: 'heardBusker' } }])
     expect(next.pack.prose['square#buy']).toBe('Buy an iced bun')
     expect(next.pack.prose.market).toBeUndefined()
-    // A storylet named market.busker isn't the market scene's key: it keeps its name.
+    // A storylet named market.busker isn't the market scene's sub-key: it keeps its name.
     expect(next.pack.prose['market.busker']).toBeDefined()
     expect(next.pack.scenes[1].choices[0]).toMatchObject({ when: { seen: 'square' }, effects: [{ kind: 'scene', scene: 'square' }] })
     expect(next.pack.scenes[2].choices[0].effects[1]).toEqual({ kind: 'scene', scene: 'square' })
@@ -49,13 +49,13 @@ describe('rename', () => {
 describe('renameChoice', () => {
   it('moves the choice, its label and what asks about it', () => {
     const project = sampleProject()
-    project.pack.scenes[1].body.push({ text: 'home/fed', when: { chose: 'market/buy' } })
-    project.pack.prose['home/fed'] = 'Fed.'
+    project.pack.scenes[1].body.push({ text: 'home.fed', when: { chose: 'market#buy' } })
+    project.pack.prose['home.fed'] = 'Fed.'
     const next = renameChoice(project, 'market', 'buy', 'treat')
     expect(next.pack.scenes[0].choices[0].id).toBe('treat')
     expect(next.pack.prose['market#treat']).toBe('Buy an iced bun')
     expect(next.pack.prose['market#buy']).toBeUndefined()
-    expect(next.pack.scenes[1].body[2].when).toEqual({ chose: 'market/treat' })
+    expect(next.pack.scenes[1].body[2].when).toEqual({ chose: 'market#treat' })
     expect(problemsOf(next)).toEqual([])
   })
 

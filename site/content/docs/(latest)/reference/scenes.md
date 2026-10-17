@@ -259,7 +259,7 @@ const hello: DataScene = {
   body: [
     { text: 'ava.hi' },
     { variants: 'ava.smalltalk' },
-    { text: 'ava.hi/regular', when: { seen: 'ava.hi', gte: 3 } },
+    { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
   ],
   choices: [
     { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
@@ -269,7 +269,7 @@ const hello: DataScene = {
 }
 ```
 
-Its prose lives under the keys `ava.hi` and `ava.hi/regular`, the members of the variants `ava.smalltalk` (`ava.smalltalk/rain` and the rest), and the labels `ava.hi#chat`, `ava.hi#compliment` and `ava.hi#bye`. See [The showcase](/docs/guide/showcase#data-scenes-variants-and-once-a-turn-choices) for how it plays.
+Its prose lives under the keys `ava.hi` and `ava.hi.regular`, the members of the variants `ava.smalltalk` (`ava.smalltalk.rain` and the rest), and the labels `ava.hi#chat`, `ava.hi#compliment` and `ava.hi#bye`. See [The showcase](/docs/guide/showcase#data-scenes-variants-and-once-a-turn-choices) for how it plays.
 
 ### audio
 
@@ -527,7 +527,7 @@ With `weightOf`, and any member weighing something other than 1, it draws by wei
 ```ts
 import { drawVariant } from '@ifloom/engine'
 
-const { id, remember } = drawVariant(state, 'street.weather', ['street.weather/drizzle', 'street.weather/sun', 'street.weather/wind'])
+const { id, remember } = drawVariant(state, 'street.weather', ['street.weather.drizzle', 'street.weather.sun', 'street.weather.wind'])
 // id: one of the three; remember: { kind: 'kv', key: 'variants:street.weather', to: 1 }
 ```
 

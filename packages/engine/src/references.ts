@@ -24,7 +24,7 @@ import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 export type Reference =
   /** A scene, as a gate (`{ seen }`), as somewhere an effect goes, or as a button opens it. */
   | { scene: string; as?: 'gate' | 'go' | 'open' }
-  /** A choice, by `scene/choice`. */
+  /** A choice, by `scene#choice`. */
   | { choice: string }
   /** A draw some scene's `drawnFrom` has to name. */
   | { drawnFrom: string }

@@ -32,7 +32,7 @@ const locations: LocationDef[] = [
   {
     ...place({ id: 'flat', name: 'Your flat', tag: 'Home', exits: ['high-street'] }),
     // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
-    body: [{ text: 'place.flat' }, { text: 'place.flat/text', when: textWaiting }],
+    body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
     actions: [
       { id: 'bed', label: 'Go to bed', command: sleep() },
       // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
@@ -42,7 +42,7 @@ const locations: LocationDef[] = [
   {
     ...place({ id: 'high-street', name: 'High Street', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'] }),
     // The street, then a line about the weather, drawn afresh each day.
-    body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street/hint', when: { setting: 'hints' } }],
+    body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street.hint', when: { setting: 'hints' } }],
     actions: [{ id: 'scarf', label: 'Buy a scarf at the market', command: { type: 'activity', id: 'buyScarf' } }],
   },
   {
@@ -70,15 +70,15 @@ const locations: LocationDef[] = [
     },
     body: [
       { text: 'place.cafe' },
-      { text: 'place.cafe/ava', when: here('ava') },
-      { text: 'place.cafe/raincoat', when: wearing('raincoat') },
-      { text: 'place.cafe/caffeinated', when: statusActive('caffeinated') },
+      { text: 'place.cafe.ava', when: here('ava') },
+      { text: 'place.cafe.raincoat', when: wearing('raincoat') },
+      { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
     ],
   },
   {
     ...place({ id: 'park', name: 'Riverside Park', tags: ['outdoors'], exits: ['high-street'] }),
     // The river, then a line while the day's visitors are about.
-    body: [{ text: 'place.park' }, { text: 'place.park/visitors', when: { count: 'visitor', gte: 1 } }],
+    body: [{ text: 'place.park' }, { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } }],
     actions: [
       { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
       { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
@@ -276,7 +276,7 @@ export const town: Pack = {
       body: [
         { text: 'ava.hi' },
         { variants: 'ava.smalltalk' },
-        { text: 'ava.hi/regular', when: { seen: 'ava.hi', gte: 3 } },
+        { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
       ],
       choices: [
         { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
@@ -391,8 +391,8 @@ export const town: Pack = {
   ],
   prose,
   variants: {
-    'ava.smalltalk': ['ava.smalltalk/rain', 'ava.smalltalk/beans', 'ava.smalltalk/river'],
-    'street.weather': ['street.weather/drizzle', 'street.weather/sun', 'street.weather/wind'],
+    'ava.smalltalk': ['ava.smalltalk.rain', 'ava.smalltalk.beans', 'ava.smalltalk.river'],
+    'street.weather': ['street.weather.drizzle', 'street.weather.sun', 'street.weather.wind'],
   },
   data: {
     places: { locations },

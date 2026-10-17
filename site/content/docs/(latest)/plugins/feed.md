@@ -308,8 +308,8 @@ feeds(state).unseen     // 0
 Each can also be written short, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)):
 
 ```ts
-const long = { text: 'place.cafe/ava-saw-it', when: { custom: 'feed/likes', with: { post: 'river', gte: 10 } } }
-const short = { text: 'place.cafe/ava-saw-it', when: { 'feed/likes': { post: 'river', gte: 10 } } }   // the same
+const long = { text: 'place.cafe.ava-saw-it', when: { custom: 'feed/likes', with: { post: 'river', gte: 10 } } }
+const short = { text: 'place.cafe.ava-saw-it', when: { 'feed/likes': { post: 'river', gte: 10 } } }   // the same
 ```
 
 An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.

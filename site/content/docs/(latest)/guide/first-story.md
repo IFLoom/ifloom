@@ -138,21 +138,21 @@ A stat stays between its `min` (0 unless you say) and its `max`. Every template 
 
 ## 4. A choice the story remembers
 
-The engine counts every choice the player takes, by `scene/choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/docs/reference/conditions#chose) condition, so you don't need to record it yourself.
+The engine counts every choice the player takes, by `scene#choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/docs/reference/conditions#chose) condition, so you don't need to record it yourself.
 
 Give the second chapter a line for each choice at the stop. A block with a `when` only shows while its condition holds:
 
 ```ts
 body: [
   { text: 'ch2.bus' },
-  { text: 'ch2.bus/shared', when: { chose: 'ch1.stop/share' } },
-  { text: 'ch2.bus/kept', when: { chose: 'ch1.stop/keep' } },
+  { text: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
+  { text: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
 ],
 ```
 
 ```ts
-'ch2.bus/shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
-'ch2.bus/kept': 'Behind you, the man from the stop is wringing out his sleeves.',
+'ch2.bus.shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
+'ch2.bus.kept': 'Behind you, the man from the stop is wringing out his sleeves.',
 ```
 
 A choice can have a `when` too. A choice whose condition doesn't hold isn't offered at all.
@@ -167,7 +167,7 @@ choices: [
   { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'scene', scene: 'ch3.home' }] },
   {
     id: 'blame',
-    when: { chose: 'ch1.stop/share' },
+    when: { chose: 'ch1.stop#share' },
     effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'scene', scene: 'ch3.home' }],
   },
 ],
@@ -181,9 +181,9 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
   title: 'Chapter three: home',
   body: [
     { text: 'ch3.home' },
-    { text: 'ch3.home/none', when: { kv: 'excuses', lt: 1 } },
-    { text: 'ch3.home/one', when: { kv: 'excuses', is: 1 } },
-    { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
+    { text: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
+    { text: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
+    { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
   ],
   choices: [
     { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
@@ -207,13 +207,13 @@ inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, wh
 `{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. The prose prints any key by name with a token, `{{playerName}}`:
 
 ```ts
-'ch1.stop/named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
+'ch1.stop.named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
 ```
 
 Show that line, and hold the first chapter's choices back, until the name is in:
 
 ```ts
-body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { kv: 'playerName' } }],
+body: [{ text: 'ch1.stop' }, { text: 'ch1.stop.named', when: { kv: 'playerName' } }],
 choices: [
   { id: 'share', when: { kv: 'playerName' }, effects: [/* … */] },
   { id: 'keep', when: { kv: 'playerName' }, effects: [/* … */] },
@@ -380,7 +380,7 @@ const story: Pack = {
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { kv: 'playerName' } }],
+      body: [{ text: 'ch1.stop' }, { text: 'ch1.stop.named', when: { kv: 'playerName' } }],
       choices: [
         {
           id: 'share',
@@ -395,15 +395,15 @@ const story: Pack = {
       title: 'Chapter two: the bus',
       body: [
         { text: 'ch2.bus' },
-        { text: 'ch2.bus/shared', when: { chose: 'ch1.stop/share' } },
-        { text: 'ch2.bus/kept', when: { chose: 'ch1.stop/keep' } },
+        { text: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
+        { text: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
       ],
       choices: [
         { id: 'pay', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
         { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
         {
           id: 'blame',
-          when: { chose: 'ch1.stop/share' },
+          when: { chose: 'ch1.stop#share' },
           effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }],
         },
       ],
@@ -413,9 +413,9 @@ const story: Pack = {
       title: 'Chapter three: home',
       body: [
         { text: 'ch3.home' },
-        { text: 'ch3.home/none', when: { kv: 'excuses', lt: 1 } },
-        { text: 'ch3.home/one', when: { kv: 'excuses', is: 1 } },
-        { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
+        { text: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
+        { text: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
+        { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
       ],
       choices: [
         { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
@@ -427,19 +427,19 @@ const story: Pack = {
   ],
   prose: {
     'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',
-    'ch1.stop/named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
+    'ch1.stop.named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
     'ch1.stop#share': 'Hold the umbrella over both of you',
     'ch1.stop#keep': 'Keep the umbrella to yourself',
     'ch2.bus': 'The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."',
-    'ch2.bus/shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
-    'ch2.bus/kept': 'Behind you, the man from the stop is wringing out his sleeves.',
+    'ch2.bus.shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
+    'ch2.bus.kept': 'Behind you, the man from the stop is wringing out his sleeves.',
     'ch2.bus#pay': 'Count out the fare in coins',
     'ch2.bus#excuse': '“It worked this morning.”',
     'ch2.bus#blame': '“He’s paying for me.”',
     'ch3.home': 'Your stop. The man gets off too, and turns up your street.',
-    'ch3.home/none': 'The driver calls goodnight after you both.',
-    'ch3.home/one': 'The driver watches you go and says nothing.',
-    'ch3.home/more': 'The man gives you a long look and walks a little faster.',
+    'ch3.home.none': 'The driver calls goodnight after you both.',
+    'ch3.home.one': 'The driver watches you go and says nothing.',
+    'ch3.home.more': 'The man gives you a long look and walks a little faster.',
     'ch3.home#wave': 'Wave him in for a cup of tea',
     'ch3.home#door': 'Let yourself in',
     'end.wave': 'He turns out to live two doors down. He brings biscuits next time.',

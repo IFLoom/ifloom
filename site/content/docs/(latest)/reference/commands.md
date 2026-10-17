@@ -164,7 +164,7 @@ Opens a scene by id. It's refused with `Finish this first.` if a scene is alread
 
 ### choose
 
-Takes a choice in the scene on screen. The scene is rendered against the current state and the choice is found by id. Its count in [`chosen`](/docs/reference/state#chosen), under `scene/choice`, goes up by one, and then its effects run in order.
+Takes a choice in the scene on screen. The scene is rendered against the current state and the choice is found by id. Its count in [`chosen`](/docs/reference/state#chosen), under `scene#choice`, goes up by one, and then its effects run in order.
 
 It's refused with, in order:
 

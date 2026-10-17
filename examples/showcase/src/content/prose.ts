@@ -9,24 +9,24 @@ export const prose: Record<string, string> = {
 
   'place.flat': 'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
   // `[[act:read-text|…]]` draws the flat's "Read your messages" action here, in the line.
-  'place.flat/text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
+  'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
   'place.high-street': 'A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.',
-  'place.high-street/hint': 'Hint: the café is open in the day, and whoever runs it likes a chat.',
+  'place.high-street.hint': 'Hint: the café is open in the day, and whoever runs it likes a chat.',
   'place.cafe': 'Six tables, one of them wobbly. The coffee machine sighs like it has been working since dawn, which it has.',
-  'place.cafe/ava': 'Ava is behind the counter, flour to the elbows, and nods you in.',
-  'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
-  'place.cafe/caffeinated': 'Your knee won’t stop jiggling under the table. The coffee is working.',
+  'place.cafe.ava': 'Ava is behind the counter, flour to the elbows, and nods you in.',
+  'place.cafe.raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
+  'place.cafe.caffeinated': 'Your knee won’t stop jiggling under the table. The coffee is working.',
   'place.park': 'The river is slow and brown and full of ducks with opinions.',
-  'place.park/visitors': 'A few people are out along the path today, walking off their lunch.',
+  'place.park.visitors': 'A few people are out along the path today, walking off their lunch.',
   'place.office': 'Strip lights, a kettle, a stack of forms that never gets shorter.',
 
   // A paragraph in quotes is a spoken line, so narration goes in its own paragraph.
   'ava.hi': 'Ava looks up from the till and grins.\n\n"You’re the one above the launderette. Welcome to the worst-kept secret in town: me."',
   // Named lines: they follow another of Ava's, and a bare quote there would read as the player's.
-  'ava.smalltalk/rain': 'Ava: "Rain later. The ducks know before the forecast does."',
-  'ava.smalltalk/beans': 'Ava: "New beans this week. Tell me if they’re awful. Nobody else will."',
-  'ava.smalltalk/river': 'Ava: "Walk the river at dusk sometime. It’s the only quiet in town."',
-  'ava.hi/regular': 'She has your cup out before you ask.',
+  'ava.smalltalk.rain': 'Ava: "Rain later. The ducks know before the forecast does."',
+  'ava.smalltalk.beans': 'Ava: "New beans this week. Tell me if they’re awful. Nobody else will."',
+  'ava.smalltalk.river': 'Ava: "Walk the river at dusk sometime. It’s the only quiet in town."',
+  'ava.hi.regular': 'She has your cup out before you ask.',
   'ava.hi#chat': 'Chat for a minute',
   'ava.hi#compliment': 'Tell her the café is the best thing in town',
   'ava.hi#bye': 'Leave her to it',
@@ -37,9 +37,9 @@ export const prose: Record<string, string> = {
     // `[[reveal]]` on a line of its own: what follows comes a moment later.
     'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.\n\n[[reveal:1500|slide-up]]\n\n"I told you it was the only quiet in town." She shuffles up to make room.',
   'ava.river#stay': 'Sit with her until the light goes',
-  'street.weather/drizzle': 'A fine drizzle that never quite becomes rain.',
-  'street.weather/sun': 'Sun on the shopfronts; someone has put a chair out on the pavement.',
-  'street.weather/wind': 'Wind down the street, rattling the bakery sign.',
+  'street.weather.drizzle': 'A fine drizzle that never quite becomes rain.',
+  'street.weather.sun': 'Sun on the shopfronts; someone has put a chair out on the pavement.',
+  'street.weather.wind': 'Wind down the street, rattling the bakery sign.',
   'cafe.window': 'You take the stool by the window. A bus goes by, then a man with a ladder, then the same bus the other way.',
   'cafe.window#leave': 'Finish your cup',
   'cafe.crossword':

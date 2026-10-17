@@ -145,7 +145,7 @@ const town: Pack = {
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
     'place.cafe': 'Six tables, one of them wobbly.',
-    'place.cafe/raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
+    'place.cafe.raincoat': 'Someone points at your raincoat and grins. It is very yellow.',
     'place.park': 'The river is slow and brown.',
   },
   data: {
@@ -154,7 +154,7 @@ const town: Pack = {
         { ...place('high-street', 'High Street', ['cafe', 'park']), actions: [act('buyScarf', 'Buy a scarf at the market')] },
         {
           ...place('cafe', 'The Corner Café', ['high-street']),
-          body: [{ text: 'place.cafe' }, { text: 'place.cafe/raincoat', when: wearing('raincoat') }],
+          body: [{ text: 'place.cafe' }, { text: 'place.cafe.raincoat', when: wearing('raincoat') }],
         },
         { ...place('park', 'Riverside Park', ['high-street']), actions: [act('bench', 'Sit on the bench by the river')] },
       ],

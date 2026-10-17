@@ -37,7 +37,7 @@ const cafe: Pack = {
     {
       id: 'cafe',
       title: 'The Corner Café',
-      body: [{ text: 'cafe' }, { text: 'cafe/broke', when: { stat: 'coins', lt: 3 } }],
+      body: [{ text: 'cafe' }, { text: 'cafe.broke', when: { stat: 'coins', lt: 3 } }],
       choices: [
         {
           id: 'coffee',
@@ -51,7 +51,7 @@ const cafe: Pack = {
   ],
   prose: {
     cafe: 'Ava looks up from the till. "The usual?"',
-    'cafe/broke': 'Your pockets feel light.',
+    'cafe.broke': 'Your pockets feel light.',
     'cafe#coffee': 'Buy a coffee',
     'cafe#leave': 'Head back out',
     street: 'The high street, busy with the market.',
@@ -103,17 +103,17 @@ A scene's body is a list of blocks, and each block can have a `when`. A block wh
 ```ts
 body: [
   { text: 'cafe' },
-  { text: 'cafe/regular', when: { kv: 'visits', gte: 3 } },
-  { text: 'cafe/new', when: { kv: 'visits', lt: 3 } },
+  { text: 'cafe.regular', when: { kv: 'visits', gte: 3 } },
+  { text: 'cafe.new', when: { kv: 'visits', lt: 3 } },
 ],
 ```
 
 There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don't overlap:
 
 ```ts
-{ text: 'cafe/rich', when: { stat: 'coins', gte: 20 } },
-{ text: 'cafe/ok', when: { stat: 'coins', gte: 5, lt: 20 } },
-{ text: 'cafe/broke', when: { stat: 'coins', lt: 5 } },
+{ text: 'cafe.rich', when: { stat: 'coins', gte: 20 } },
+{ text: 'cafe.ok', when: { stat: 'coins', gte: 5, lt: 20 } },
+{ text: 'cafe.broke', when: { stat: 'coins', lt: 5 } },
 ```
 
 `and`, `or` and `not` are `all`, `any` and `not`:
@@ -146,7 +146,7 @@ A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usu
 
 An `<<if>>` that only exists to vary a line, so the player doesn't read the same words every visit, is a set of [variants](/docs/reference/prose#variantmember). The block `{ variants: 'cafe.chatter' }` shows one of the set each time, and rotates through them.
 
-The engine also remembers things you'd keep a variable for in Twine. `{ seen: 'ava.hi' }` asks whether the player has been to a scene, and `{ chose: 'cafe/coffee' }` asks whether they've ever picked that choice. `visited()` and the "did they pick this?" variable both become conditions you don't have to set up.
+The engine also remembers things you'd keep a variable for in Twine. `{ seen: 'ava.hi' }` asks whether the player has been to a scene, and `{ chose: 'cafe#coffee' }` asks whether they've ever picked that choice. `visited()` and the "did they pick this?" variable both become conditions you don't have to set up.
 
 ### Passages and links
 
@@ -426,7 +426,7 @@ settings: [
 ```
 
 ```ts
-{ text: 'cafe/hint', when: { setting: 'hints' } }
+{ text: 'cafe.hint', when: { setting: 'hints' } }
 ```
 
 ### Old saves, `Config.saves` and `Save.onLoad`
@@ -637,8 +637,8 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
 {
   id: 'cafe',
   body: [
-    { text: 'cafe/waiting', when: { not: { kv: 'askedUsual' } } },
-    { text: 'cafe/usual', when: { kv: 'askedUsual' } },
+    { text: 'cafe.waiting', when: { not: { kv: 'askedUsual' } } },
+    { text: 'cafe.usual', when: { kv: 'askedUsual' } },
   ],
   choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kind: 'kv', key: 'askedUsual', to: true }] }],
 }

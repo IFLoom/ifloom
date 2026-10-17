@@ -7,3 +7,7 @@ playtest/
 
 # Your own games, as workspaces of this checkout
 games/
+
+# Unlock codes and other secrets: never in git
+.env.local
+.env.*.local

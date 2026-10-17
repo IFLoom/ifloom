@@ -642,6 +642,18 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `cheat` | One cheat: its `choice` button, its description and how often it was used. Carries `data-cheat`, and `data-used` once it has been used. |
 | `cheat-text` | Its description. |
 | `cheat-used` | How many times this save has used it, on a badge. |
+| `unlocks` | The code box and the list of unlocks. |
+| `unlocks-title` | Its **Enter a code** heading. |
+| `unlock-form` | The text box and the **Unlock** button. |
+| `unlock-input` | The text box. |
+| `unlocks-message` | Why the last code didn't work. |
+| `unlocks-entered` | What the last code unlocked. |
+| `unlock-problem` | Content the profile remembers that couldn't be opened. |
+| `unlocks-list` | The list of unlocks. |
+| `unlock` | One unlock. Carries `data-unlock`, and `data-unlocked` once it's unlocked. |
+| `unlock-name` | Its label, with its badge. |
+| `unlock-state` | The **Locked** or **Unlocked** badge. |
+| `unlock-text` | Its description. |
 | `vendors` | The row of buttons for the vendors here. |
 | `vendor-button` | One vendor's button. Carries `data-vendor`. |
 | `vendor-closed` | The **Closed** badge on it. |

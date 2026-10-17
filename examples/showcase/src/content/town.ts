@@ -14,6 +14,7 @@ import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { here, person, talk, type CharacterDef } from '@ifloom/plugin-cast'
 import { openApp } from '@ifloom/plugin-devices'
+import { hasUnlock } from '@ifloom/plugin-unlocks'
 import { prose } from './prose.ts'
 
 const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: string }): LocationDef => ({
@@ -481,14 +482,26 @@ export const town: Pack = {
       cheats: [
         // Free for everyone.
         { id: 'coins', label: '+20 coins', description: 'A little help with the rent.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
-        // A stand-in for a supporter unlock: a game with the unlocks plugin would ask `unlocks/has` instead of a kv key.
+        // For supporters: refused until the supporter code has been entered (the unlocks plugin's `unlocks/has`).
         {
           id: 'energy',
           label: 'Full energy',
           description: 'As if you had slept.',
           group: 'Supporters',
-          blocked: [{ when: { not: { kv: 'supporter' } }, reason: 'For supporters.' }],
+          blocked: [{ when: { not: hasUnlock('supporter') }, reason: 'For supporters.' }],
           effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+        },
+      ],
+    },
+    unlocks: {
+      unlocks: [
+        // The code's hash, from `ifloom unlock-hash supporter`; the code is in .env, never here.
+        // It opens the cheat above and src/unlocks/supporter.ts, a scene in the café.
+        {
+          id: 'supporter',
+          label: 'Supporter edition',
+          description: 'A thank-you scene in the café, and the Full energy cheat.',
+          hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
         },
       ],
     },

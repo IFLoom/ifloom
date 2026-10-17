@@ -3,7 +3,7 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { commandOf, apply, checkGame, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState, type CommandRef } from '@ifloom/engine'
+import { commandOf, apply, checkGame, createRunner, memoryDriver, profile, replay, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState, type CommandRef } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { StatusesView } from '@ifloom/plugin-statuses'
@@ -17,7 +17,10 @@ import { sleep } from '@ifloom/plugin-calendar'
 import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { call, talk } from '@ifloom/plugin-cast'
 import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
+import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlockDefs, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
+import supporterPack from '../src/unlocks/supporter.ts'
 
 /** The town on a given day at a given time; a day is a turn here. */
 const on = (state: GameState, day: number, period: string): GameState => clock.write({ ...state, turn: day }, { day, period })
@@ -139,7 +142,7 @@ describe('Small Town', () => {
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
   })
 
-  it('offers a free cheat on moving day, and keeps the supporter one greyed out until the key is set', () => {
+  it('offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded', () => {
     let state = startingState(game)
     const coins = state.stats.coins
     // Moving day locks everything but the scene; a cheat still works, and no time passes.
@@ -153,8 +156,40 @@ describe('Small Town', () => {
       ['energy', 'For supporters.'],
     ])
     expect(apply(state, game, runCheat('energy')).reason).toBe('For supporters.')
-    const supporter = { ...state, kv: { ...state.kv, supporter: true }, stats: { ...state.stats, energy: 10 } }
+    const supporter = run({ ...state, stats: { ...state.stats, energy: 10 } }, recordUnlock('supporter'))
     expect(run(supporter, runCheat('energy')).stats.energy).toBe(100)
+  })
+
+  it('unlocks the supporter edition with the code in .env: the cheat at once, and the café scene once the game is built again', async () => {
+    // The showcase's code is public on purpose, so anyone can try it; a real game keeps its codes out of the repo.
+    const code = /IFLOOM_UNLOCK_SUPPORTER=(.+)/.exec(readFileSync(new URL('../.env', import.meta.url), 'utf8'))![1].trim()
+    const supporter = unlockDefs(game).find((entry) => entry.id === 'supporter')!
+    const content = { supporter: await lockContent(code, game.id, supporter, [supporterPack]) }
+    const driver = memoryDriver()
+    const runner = createRunner(game, startingState(game, { seed: 4 }), { history: true, profile: profile(game, driver) })
+    const codes = startUnlocks(runner, { content })
+    expect(await codes.enter('SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
+    const entered = await codes.enter(code.toLowerCase())
+    expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: true } })
+    expect(holds(runner.state, hasUnlock('supporter'), game)).toBe(true)
+    expect(runner.apply(runCheat('energy')).ok).toBe(true)
+    // Replayed, the unlock and the cheat play the same.
+    const replayed = replay(game, runner.log())
+    expect(replayed.ok && replayed.value).toEqual(runner.state)
+
+    // The next launch: the profile's proof opens the content, and the café can draw the back room.
+    await runner.settled()
+    const opened = await unlockedPacks(game.id, profile({ id: game.id }, driver), content)
+    expect(opened.problems).toEqual([])
+    const full = smallTown({ unlocked: opened.packs })
+    expect(full.problems).toEqual([])
+    let state: GameState = apply(startingState(full.game, { seed: 4 }), full.game, recordUnlock('supporter')).state
+    state = apply(state, full.game, { type: 'choose', id: 'unpack' }).state
+    state = apply(on(state, 1, 'morning'), full.game, go('high-street')).state
+    state = apply(state, full.game, go('cafe')).state
+    state = apply(state, full.game, act('sit')).state
+    expect(state.sceneId).toBe('cafe.back-room')
+    expect(view(state, full.game).scene.title).toBe('The back room')
   })
 
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {

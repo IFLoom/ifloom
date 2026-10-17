@@ -345,3 +345,21 @@
 [data-part="cheats-button"] {
   border-radius: 999px;
 }
+
+/* Codes: a rounded box and sticker cards. */
+[data-part="unlock-input"] {
+  border-radius: 999px;
+  padding-inline: 1rem;
+  text-transform: uppercase;
+}
+
+[data-part="unlock"] {
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="unlock-form"] [data-part="button"] {
+  border-radius: 999px;
+}

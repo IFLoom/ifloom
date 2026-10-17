@@ -1,0 +1,539 @@
+---
+title: "Unlocks"
+description: "Codes the player enters to unlock cheats, scenes and whole packs of content, with the content encrypted in the build so it can't be read without the code."
+---
+`@ifloom/plugin-unlocks` lets the player enter a code, such as the one a game's supporters get, to unlock things. An unlock can open a cheat or a scene through the `unlocks/has` condition. It can also carry content of its own: packs that `ifloom build` encrypts with a key only the code can make, so the shipped game can't be read or patched open without it.
+
+The game never contains a code. It has a slow hash of each one, which can check a code but can't give it back. A code that works is remembered in the player's [profile](/docs/reference/profile), so it outlives saves and new games, and is entered once.
+
+```ts
+import {
+  unlocks, startUnlocks, unlockedPacks, hasUnlock, recordUnlock, unlockDefs,
+  unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS,
+  type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView,
+  type UnlockCodes, type Entered, type LockedContent,
+} from '@ifloom/plugin-unlocks'
+```
+
+[Supporter content and cheats](/docs/recipes/supporter-content) puts it together for a game funded by supporters, and says plainly what each kind of gate protects.
+
+## What it protects
+
+- **Locked content is protected.** A pack in `src/unlocks/` ships only encrypted (AES-GCM, under a key derived from the code). Without the code, nobody can read it or switch it on by editing the game.
+- **A condition gate only deters.** `unlocks/has` reads the save. A cheat or a choice behind it is in the game's code, so anyone who edits the code or the save can open it.
+- **A code can be shared.** Nothing checks who enters it, and there's no server. Give each release new codes, as [the recipe](/docs/recipes/supporter-content#a-release) shows.
+
+## Install
+
+List the package in your game's `package.json`, beside the engine:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-unlocks": "^0.0.0"
+  }
+}
+```
+
+Then add `unlocks()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. It needs no other plugin. The [cheats plugin](/docs/plugins/cheats#supporter-cheats) cooperates with it by name.
+
+Codes are checked with WebCrypto (`crypto.subtle`), which every current browser has, on a page opened from disk too, and Node 20 and later.
+
+## unlocks
+
+```ts
+function unlocks(): DefinedPlugin<UnlocksState, UnlocksView>
+```
+
+Builds the plugin, with the id `unlocks`. A new game has nothing unlocked.
+
+## Writing unlocks
+
+Unlocks are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `unlocks.unlocks`. This is the showcase's one:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { UnlockDef } from '@ifloom/plugin-unlocks'
+
+const supporter: UnlockDef = {
+  id: 'supporter',
+  label: 'Supporter edition',
+  description: 'A thank-you scene in the café, and the Full energy cheat.',
+  // From `ifloom unlock-hash supporter`. The code itself is in .env, never here.
+  hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
+}
+
+const town: Pack = { id: 'town', schema: SCHEMA, data: { unlocks: { unlocks: [supporter] } } }
+```
+
+### UnlockDef
+
+```ts
+type UnlockDef = {
+  id: string
+  label: string
+  description?: string
+  hash: string
+  salt?: string
+  iterations?: number
+}
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among unlocks. `unlocks/has` names it by this, and its locked content is `src/unlocks/<id>.ts`. |
+| `label` | Its name for the player, in the list of unlocks. |
+| `description` | What it opens, under the label. |
+| `hash` | The code's hash, 64 hex digits, as [`ifloom unlock-hash`](/docs/cli#ifloom-unlock-hash) prints it. |
+| `salt` | Extra salt for the hash. Change it to get a new hash for the same code. |
+| `iterations` | PBKDF2's rounds for this code. `600000` if left out. Use fewer only in tests. |
+
+### Making the hash
+
+Put the code in an environment variable named after the unlock, then ask the CLI for its hash:
+
+```sh
+# .env.local, which git leaves out
+IFLOOM_UNLOCK_SUPPORTER=BREAD-2026-OVEN
+```
+
+```sh
+ifloom unlock-hash supporter
+```
+
+Paste the `hash` it prints into the unlock. The hash is salted with the game's id and the unlock's id (and `salt`), so the same code gives a different hash in another game or another unlock. `envName(id)` gives the variable's name.
+
+### Locked content
+
+Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per unlock, exporting a pack (or a list of packs) as `default`. It must be data, as a [mod](/docs/reference/mods) is: scenes, prose, plugin content, no functions. `ifloom build` encrypts it under the unlock's code and puts it in the page, and refuses any import of it from your code. [The CLI](/docs/cli#locked-content) has the details.
+
+```ts
+// src/unlocks/supporter.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { hasUnlock } from '@ifloom/plugin-unlocks'
+
+const supporter: Pack = {
+  id: 'supporter',
+  schema: SCHEMA,
+  scenes: [
+    {
+      id: 'cafe.back-room',
+      title: 'The back room',
+      drawnFrom: ['cafe'],
+      weight: 5,
+      when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
+      body: [{ text: 'cafe.back-room' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+    },
+  ],
+  prose: {
+    'cafe.back-room': 'Ava lifts the counter flap and waves you through to the back room…',
+    'cafe.back-room#leave': 'Thank her and head back out',
+  },
+}
+
+export default supporter
+```
+
+The game's own content can't point into a locked pack without a problem when the pack isn't there. Reach locked content from inside it, as this storylet does by joining a deck the base game draws from, or only behind `unlocks/has`. `ifloom check` [lists](/docs/cli#locked-content-in-a-check) any reference into locked content it finds.
+
+Your game module takes the packs as `unlocked`, and loads them after its own:
+
+```ts
+// src/game.ts
+import { loadGame, type Pack } from '@ifloom/engine'
+import { unlocks } from '@ifloom/plugin-unlocks'
+import { town } from './town.ts'
+
+export function build({ unlocked = [] as Pack[] } = {}) {
+  return loadGame([town, ...unlocked], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] })
+}
+
+export default build
+```
+
+## Entering codes
+
+A game with unlocks does two things at start-up. Before it builds the game, it opens the content of every unlock the player has entered a code for, with [`unlockedPacks`](#unlockedpacks). After it makes the runner, it starts taking codes with [`startUnlocks`](#startunlocks).
+
+```mermaid
+sequenceDiagram
+  participant Page
+  participant Profile
+  participant Runner
+  Page->>Profile: unlockedPacks(id, profile)
+  Profile-->>Page: proofs of codes entered before
+  Page->>Page: decrypt the page's locked content, loadGame([...packs, ...unlocked])
+  Page->>Runner: startUnlocks(runner)
+  Note over Runner: records each remembered unlock in the game in play
+  Page->>Runner: codes.enter(code)
+  Runner->>Profile: remember the proof
+  Runner->>Runner: apply unlocks/record
+  Runner-->>Page: { unlock, restart }
+  Note over Page: restart: reload, so the new content is loaded
+```
+
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts
+import { browserRunner, localStorageDriver, profile } from '@ifloom/engine'
+import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { build } from './game.ts'
+
+// The profile browserRunner uses, opened before the game is built.
+const opened = await unlockedPacks('small-town', profile({ id: 'small-town' }, localStorageDriver()))
+const { game } = build({ unlocked: opened.packs })
+const runner = await browserRunner(game)
+const codes = startUnlocks(runner)
+
+const form = document.body.appendChild(document.createElement('form'))
+const input = form.appendChild(document.createElement('input'))
+input.placeholder = 'Code'
+form.appendChild(document.createElement('button')).textContent = 'Unlock'
+const said = form.appendChild(document.createElement('p'))
+form.onsubmit = async (event) => {
+  event.preventDefault()
+  const result = await codes.enter(input.value)
+  said.textContent = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+  if (result.ok && result.value.restart) location.reload()
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/main.tsx
+import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
+import { GameShell } from '@ifloom/react'
+import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { createRoot } from 'react-dom/client'
+import { build } from './game.ts'
+
+const driver = localStorageDriver()
+const stored = profile({ id: 'small-town' }, driver)
+const opened = await unlockedPacks('small-town', stored)
+const { game } = build({ unlocked: opened.packs })
+const runner = createRunner(game, startingState(game), { saves: saves(game, driver), profile: stored })
+
+// A code box on the settings page, and in the menu without pages.
+createRoot(document.getElementById('root')!).render(
+  <GameShell runner={runner} pages={{}} unlocks={{ start: startUnlocks, problems: opened.problems, onChange: () => location.reload() }} />,
+)
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/CodeBox.vue. In src/runner.ts, build the game with unlockedPacks first, as the Plain JS tab does,
+     then add: export const codes = startUnlocks(runner) -->
+<script setup lang="ts">
+import { ref } from 'vue'
+import { codes } from './runner.ts'
+
+const code = ref('')
+const said = ref('')
+async function enter() {
+  const result = await codes.enter(code.value)
+  said.value = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+  if (result.ok && result.value.restart) location.reload()
+}
+</script>
+
+<template>
+  <form @submit.prevent="enter">
+    <input v-model="code" placeholder="Code" />
+    <button>Unlock</button>
+    <p v-if="said">{{ said }}</p>
+  </form>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/CodeBox.svelte. In src/runner.ts, build the game with unlockedPacks first, as the Plain JS tab does,
+     then add: export const codes = startUnlocks(runner) -->
+<script lang="ts">
+  import { codes } from './runner.ts'
+
+  let code = $state('')
+  let said = $state('')
+  async function enter(event: SubmitEvent) {
+    event.preventDefault()
+    const result = await codes.enter(code)
+    said = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+    if (result.ok && result.value.restart) location.reload()
+  }
+</script>
+
+<form onsubmit={enter}>
+  <input bind:value={code} placeholder="Code" />
+  <button>Unlock</button>
+  {#if said}<p>{said}</p>{/if}
+</form>
+```
+
+The React UI draws the code box for you with [`UnlocksPanel`](/docs/react/components#unlockspanel) when you pass `unlocks` to `GameShell`, `GameProvider` or `mountGame`.
+
+### unlockedPacks
+
+```ts
+function unlockedPacks(
+  game: string,
+  profile: Profile,
+  content?: Readonly<Record<string, LockedContent>>,
+): Promise<{ packs: Pack[]; problems: string[] }>
+```
+
+The content of every unlock the profile remembers a code for, decrypted and upgraded to this engine's schema with [`upgradePack`](/docs/reference/loader#upgradepack), ready to load after the game's own packs. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
+
+Call it before you build the game, with the game's id and its profile. [`profile`](/docs/reference/profile#profile) reads only the id, so `profile({ id: 'small-town' }, driver)` opens it before the game exists. Use the same driver the runner will use.
+
+Content that won't open is left out and listed in `problems` as `unlock:<id> · its code has changed since it was entered; enter the new one`. That happens after a release with new codes, or to a page someone has tampered with. It never throws.
+
+### startUnlocks
+
+```ts
+function startUnlocks(runner: Runner, options?: { content?: Readonly<Record<string, LockedContent>> }): UnlockCodes
+```
+
+Starts taking codes on a runner. It reads the profile, checks each remembered unlock against this release's hash, and records the ones that match in the game in play with `unlocks/record`. From then on it records them into every new game and loaded save as well, so `unlocks/has` holds wherever the player has the code. Needs the runner's `profile`.
+
+### UnlockCodes
+
+```ts
+type UnlockCodes = {
+  ready: Promise<void>
+  enter(code: string): Promise<Result<Entered>>
+  stop(): void
+}
+```
+
+| Member | What it does |
+|---|---|
+| `ready` | Settles once the remembered unlocks have been checked and recorded. |
+| `enter` | Tries the code against every unlock in turn. On a match it stores a proof made from the code in the profile, records the unlock in the game in play, and says what it unlocked. It never throws. |
+| `stop` | Stops recording remembered unlocks into new games and loaded saves. |
+
+`enter` refuses an empty code with `Type a code first.`, a code that matches nothing with `That code doesn't unlock anything.`, and a runner with no profile with `This game can't remember codes here.`. Checking takes a moment on purpose: a fraction of a second per unlock on a phone.
+
+### Entered
+
+```ts
+type Entered = { unlock: string; label: string; already: boolean; restart: boolean }
+```
+
+| Field | What it is |
+|---|---|
+| `unlock`, `label` | The unlock the code opened. |
+| `already` | It was unlocked already. The code worked and nothing changed. |
+| `restart` | It has locked content that the game in play doesn't have yet. Build the game again to add it, usually by reloading the page, as for [mods](/docs/reference/mods). |
+
+## Conditions
+
+| Content writes | Helper | Holds when |
+|---|---|---|
+| `{ 'unlocks/has': { unlock } }` | `hasUnlock(id)` | The unlock is recorded in this save. |
+
+Use it anywhere a condition goes: a [cheat's](/docs/plugins/cheats#supporter-cheats) `blocked`, a choice's `when`, a storylet's `when`.
+
+```ts
+import { hasUnlock } from '@ifloom/plugin-unlocks'
+
+const choice = { id: 'back-room', when: hasUnlock('supporter'), effects: [{ kind: 'scene', scene: 'cafe.back-room' }] }
+```
+
+It reads the save, not the profile. Conditions must give the same answer when a save is [replayed](/docs/reference/runner#replay), and the profile is outside the save. So the save keeps its own record, which `startUnlocks` keeps in step with the profile.
+
+## The command
+
+| Content writes | Helper | Does |
+|---|---|---|
+| `{ 'unlocks/record': { id } }` | `recordUnlock(id)` | Records the unlock in this save. |
+
+`startUnlocks` sends it once a code has worked. It ignores locks, so it works during an intro that locks everything else, and it's in the command log, so a replay plays it. It's refused with `There's no such unlock.` for an id the game doesn't have, and `That's unlocked already.` for one already recorded.
+
+It checks no code. Anyone who can run commands, from the browser's console say, can send it. That's why a condition gate only deters, and why content you want kept from people without the code belongs in a locked pack.
+
+## Strings
+
+| Key | English |
+|---|---|
+| `unlocks/wrong` | `That code doesn't unlock anything.` |
+| `unlocks/empty` | `Type a code first.` |
+| `unlocks/noProfile` | `This game can't remember codes here.` |
+| `unlocks/notSaved` | `The code worked, but it couldn't be remembered. Try again.` |
+| `unlocks/unknown` | `There's no such unlock.` |
+| `unlocks/already` | `That's unlocked already.` |
+
+## The view
+
+`runner.view().plugins.unlocks` is an `UnlocksView`. The [React UI](/docs/react) draws it with [`UnlocksPanel`](/docs/react/components#unlockspanel), and [`useUnlocks`](/docs/react/components#useunlocks) gives it with no markup.
+
+### UnlocksView
+
+```ts
+type UnlocksView = {
+  unlocks: UnlockView[]
+  unlocked: number
+  total: number
+}
+
+type UnlockView = { id: string; label: string; description: string; unlocked: boolean }
+```
+
+| Field | What it is |
+|---|---|
+| `unlocks` | Every unlock, in the order the game declares them. `unlocked` is whether this save has it recorded. `description` is `''` without one. |
+| `unlocked` | How many are unlocked. |
+| `total` | How many there are. |
+
+### Drawing it yourself
+
+A list of the unlocks, with which the player has:
+
+```ts tab="Plain JS" tab-group="framework"
+import type { View } from '@ifloom/engine'
+import type { UnlocksView } from '@ifloom/plugin-unlocks'
+
+export function unlockList(view: View): HTMLElement | null {
+  const shown = view.plugins.unlocks as UnlocksView | undefined
+  if (!shown?.total) return null
+  const list = document.createElement('ul')
+  for (const unlock of shown.unlocks) {
+    list.appendChild(document.createElement('li')).textContent = `${unlock.label}: ${unlock.unlocked ? 'unlocked' : 'locked'}`
+  }
+  return list
+}
+```
+
+```tsx tab="React" tab-group="framework"
+import { useUnlocks } from '@ifloom/react'
+
+export function UnlockList() {
+  const unlocks = useUnlocks()
+  if (!unlocks?.total) return null
+  return (
+    <ul>
+      {unlocks.unlocks.map((unlock) => (
+        <li key={unlock.id}>
+          {unlock.label}: {unlock.unlocked ? 'unlocked' : 'locked'}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { UnlocksView } from '@ifloom/plugin-unlocks'
+import { view } from './runner.ts'
+
+const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefined)
+</script>
+
+<template>
+  <ul v-if="shown?.total">
+    <li v-for="unlock in shown.unlocks" :key="unlock.id">{{ unlock.label }}: {{ unlock.unlocked ? 'unlocked' : 'locked' }}</li>
+  </ul>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<script lang="ts">
+  import type { UnlocksView } from '@ifloom/plugin-unlocks'
+  import { view } from './runner.ts'
+
+  const shown = $derived($view.plugins.unlocks as UnlocksView | undefined)
+</script>
+
+{#if shown?.total}
+  <ul>
+    {#each shown.unlocks as unlock (unlock.id)}
+      <li>{unlock.label}: {unlock.unlocked ? 'unlocked' : 'locked'}</li>
+    {/each}
+  </ul>
+{/if}
+```
+
+## The state and the profile
+
+### UnlocksState
+
+```ts
+type UnlocksState = { unlocked: string[] }
+```
+
+What the plugin keeps in a save, at `state.plugins.unlocks`: the unlocks recorded in it, in the order they were. A save from before the plugin was added loads with none.
+
+### UnlocksProfile
+
+```ts
+type UnlocksProfile = { unlocked: Record<string, { proof: string }> }
+```
+
+What the plugin keeps in the player's profile, under `unlocks`: for each code that worked, a proof made from it, in hex. The profile never holds the code. The proof can't give the code back, but it opens this release's content for that unlock, so treat a profile as the player's own.
+
+## How codes are checked
+
+A code goes through these steps, all in WebCrypto:
+
+1. **Normalised** with `normaliseCode`: Unicode-normalised (NFKC), spaces and hyphens taken out, in capitals. `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
+2. **Stretched** with PBKDF2-SHA256, salted with `ifloom-unlock:<game id>:<unlock id>` (and `:<salt>`), for `iterations` rounds (`ITERATIONS`, 600,000, unless the unlock says). That gives a 32-byte proof. This is the slow step, which makes guessing codes one at a time expensive.
+3. **Split** with HKDF-SHA256 into two keys with different labels. One is the unlock's `hash`. The other is the AES-GCM key for its locked content. Knowing the hash gives neither the proof nor the key.
+
+Locked content is the packs as JSON, encrypted with AES-256-GCM under that key, with a fresh 12-byte nonce, and the game's and unlock's ids bound to it. Changing a byte of it, or moving it to another game or unlock, makes it fail to open.
+
+Even so, a short code can be guessed. Every guess costs the same slow step, but a four-letter code has few enough possibilities to try them all. Use codes of 12 characters or more, letters and digits, picked at random.
+
+### The functions behind it
+
+These are what the CLI and `startUnlocks` use. A game rarely calls them itself.
+
+```ts
+const ITERATIONS: 600000
+function normaliseCode(code: string): string
+function envName(unlock: string): string
+function unlockHash(code: string, game: string, def: Pick<UnlockDef, 'id' | 'salt' | 'iterations'>): Promise<string>
+function codeFits(code: string, game: string, def: UnlockDef): Promise<boolean>
+function lockContent(code: string, game: string, def: UnlockDef, packs: readonly Pack[]): Promise<LockedContent>
+function contentScript(locked: readonly LockedContent[]): string
+function lockedContent(): Readonly<Record<string, LockedContent>>
+function unlockDefs(game: Game): UnlockDef[]
+```
+
+| Function | What it does |
+|---|---|
+| `envName` | The variable a build reads an unlock's code from: `IFLOOM_UNLOCK_SUPPORTER` for `supporter`, `IFLOOM_UNLOCK_EARLY_ACCESS` for `early-access`. |
+| `unlockHash` | The hash of a code, as `ifloom unlock-hash` prints it. |
+| `codeFits` | Whether a code is the unlock's. |
+| `lockContent` | Encrypts packs under a code. Throws if the code isn't the unlock's, or a pack has a function in it. |
+| `contentScript` | The `<script>` the build puts in the page's head, setting `window.__ifloomUnlocks`. |
+| `lockedContent` | What that script set, by unlock, or `{}` in a page without it. |
+| `unlockDefs` | The game's unlocks, merged from its packs: `game.data.unlocks.unlocks`. |
+
+### LockedContent
+
+```ts
+type LockedContent = { ifloomUnlock: 1; game: string; unlock: string; iv: string; data: string }
+```
+
+One unlock's content as the page holds it: the game's and unlock's ids, the nonce and the encrypted packs, both in base64.
+
+## Checks
+
+When the game loads, the plugin reports these against the pack each unlock came from, with `where` as `unlocks <id>`:
+
+- An unlock with an empty label (`has no label`).
+- A hash that isn't 64 hex digits (`its hash isn't one ifloom unlock-hash printed (64 hex digits)`), such as a code pasted in by mistake.
+- `iterations` that isn't a whole number above 0.
+- Two unlocks with one id, in a game built by hand.
+
+An `unlocks/has` condition or `unlocks/record` command that names an unlock the game doesn't have gives `unknown unlock "…"` where it's written. [`ifloom check`](/docs/cli#locked-content-in-a-check) checks the code in the environment against the hash, and the game with its locked content.
+
+## Gotchas
+
+- **New codes, new hashes.** Change a code and the old proof no longer matches. A player who entered the old code sees the unlock as locked, and its content is listed in `unlockedPacks`'s problems until they enter the new one.
+- **A save made with locked content** names its packs, like any save. Loaded in a game without them, it's flagged as made with packs this game doesn’t have, in [`missingPacks`](/docs/reference/saves#loadedsave).
+- **Pictures, sound and video aren't encrypted.** Only the packs are. A file in `public/` ships as it is, even if only locked content names it.
+- **No server.** Codes are checked on the player's machine, so nothing stops a code being shared, and nothing can take an unlock back.
+
+## See it in an example
+
+Small Town: the unlock `supporter` in `data.unlocks` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), its locked scene in [`src/unlocks/supporter.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/unlocks/supporter.ts), and the code, public for the example, in `examples/showcase/.env`: `SMALL-TOWN-SUPPORTER`. `src/main.tsx` opens the content with `unlockedPacks` before it builds the game, and gives `startUnlocks` to `GameShell`. Enter the code on the settings page and the **Full energy** cheat opens at once. After the restart, **Sit a while** at the café can draw the back room.

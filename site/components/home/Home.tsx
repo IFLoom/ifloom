@@ -16,6 +16,7 @@ import { RssIcon } from '@phosphor-icons/react/dist/csr/Rss'
 import { DeviceMobileIcon } from '@phosphor-icons/react/dist/csr/DeviceMobile'
 import { BugIcon } from '@phosphor-icons/react/dist/csr/Bug'
 import { MagicWandIcon } from '@phosphor-icons/react/dist/csr/MagicWand'
+import { LockKeyOpenIcon } from '@phosphor-icons/react/dist/csr/LockKeyOpen'
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle'
 import type { Icon } from '@phosphor-icons/react/dist/lib/types'
 import Link from 'next/link'
@@ -46,6 +47,7 @@ const pluginIcons: Record<string, Icon> = {
   feed: RssIcon,
   devices: DeviceMobileIcon,
   cheats: MagicWandIcon,
+  unlocks: LockKeyOpenIcon,
   debug: BugIcon,
   generators: ShuffleIcon,
 }
@@ -54,7 +56,7 @@ const pluginGroups = [
   { name: 'World', plugins: ['calendar', 'places', 'cast', 'shop', 'wardrobe'] },
   { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'statuses'] },
   { name: 'Phone', plugins: ['messages', 'feed', 'devices'] },
-  { name: 'Tools', plugins: ['cheats', 'debug', 'generators'] },
+  { name: 'Tools', plugins: ['cheats', 'unlocks', 'debug', 'generators'] },
 ]
 
 const frameworks = ['React', 'Vue', 'Svelte', 'plain DOM']

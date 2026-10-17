@@ -36,6 +36,7 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 - **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/docs/plugins/wardrobe).
 - **Active statuses**, under the stats, when the game has the [statuses plugin](/docs/plugins/statuses) and one is active, with the turns each has left.
 - **Achievements**, from a button under the menu, when the game has the [achievements plugin](/docs/plugins/achievements): a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
+- **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks) and you pass `unlocks`. It lists the unlocks, and a code that opens new content offers to restart.
 - **Cheats**, from a button under the menu, when the game has the [cheats plugin](/docs/plugins/cheats) and at least one cheat the player can see. It opens a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
 - **The shop**, when the game has the [shop plugin](/docs/plugins/shop): a button for each vendor where the player is, opening a dialog with the goods, prices, stock and greyed-out reasons, to buy and sell back.
 - **A job board**, under the stage, when the game has the [jobs plugin](/docs/plugins/jobs): each job with its pay, rank, next shift and the reason applying is refused, and buttons to apply, work a shift and quit.
@@ -192,6 +193,7 @@ type GameShellProps = {
   panels?: Record<string, PanelComponent>
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
+  unlocks?: UnlocksOption
   components?: Components
   classes?: Classes
   unstyled?: boolean
@@ -209,6 +211,7 @@ type GameShellProps = {
 | `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
 | `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/docs/react/extending#plugin-sections). |
 | `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on **Mods** in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
+| `unlocks` | Codes the player can enter, for the [unlocks plugin](/docs/plugins/unlocks): its `startUnlocks`, what couldn't be opened, and how to restart. It puts a code box on the settings page, or in the menu without pages. See [`UnlocksOption`](/docs/react/components#unlocksoption). |
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
 | `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
@@ -522,6 +525,15 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.cheats` | `Cheats` | |
 | `ui.cheatUsedOnce` | `Used once` | |
 | `ui.cheatUsedTimes` | `Used {n} times` | `n` |
+| `ui.enterCode` | `Enter a code` | |
+| `ui.code` | `Code` | |
+| `ui.unlock` | `Unlock` | |
+| `ui.checkingCode` | `Checking…` | |
+| `ui.unlockedNow` | `Unlocked: {label}.` | `label`: the unlock's |
+| `ui.unlockedAlready` | `{label} was unlocked already.` | `label` |
+| `ui.restartForUnlock` | `Restart to add it` | |
+| `ui.unlocked` | `Unlocked` | |
+| `ui.locked` | `Locked` | |
 | `ui.shopAt` | `Shop at {vendor}` | `vendor`: its name |
 | `ui.vendorClosed` | `Closed` | |
 | `ui.buy` | `Buy` | |
@@ -573,6 +585,7 @@ Which component uses which keys:
 - **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
 - **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.
 - **[Cheats](/docs/react/components#cheatpanel)**: `ui.cheats` on the button and the dialog, and `ui.cheatUsedOnce` and `ui.cheatUsedTimes` on a cheat used.
+- **[Codes](/docs/react/components#unlockspanel)**: `ui.enterCode` to `ui.locked`, on the code box and its list, and `ui.enterCode` on the menu's button.
 - **[Shop](/docs/react/components#shopcounter)**: `ui.shopAt` to `ui.noGoods`.
 - **[Job board](/docs/react/components#jobboard)**: `ui.jobs` to `ui.jobFired`.
 - **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.

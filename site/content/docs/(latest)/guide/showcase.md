@@ -31,7 +31,9 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | `src/content/prose.ts` | Every word the player reads, by key. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. |
 | `src/content/custom.ts` | The only code in the content: an effect worked out from the state, and a value the prose prints. |
 | `src/game.ts` | The game put together: the pack, the plugins, the phone, the rules, the locks and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
-| `src/main.tsx` | The page. It loads the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/react)'s `GameShell`, its title screen and its mod manager. |
+| `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
+| `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
+| `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/react)'s `GameShell`, its title screen, its mod manager and its code box. |
 | `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/react/customising#1-pick-a-theme-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/docs/reference/mods) for a player to add. It isn't part of the game. |
@@ -40,7 +42,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | `tests/build.test.ts` | `ifloom check`, the build check and the snapshot comparison, as tests. |
 | `snapshots/scenes.txt` | Every scene and place in three states, as `ifloom snapshot` last wrote it. It's committed. |
 
-The other examples start with one call to [`mountGame`](/docs/react#mountgame) in `src/main.ts`. Small Town writes `src/main.tsx` by hand instead, because it has to load the player's mods before it can make the game.
+The other examples start with one call to [`mountGame`](/docs/react#mountgame) in `src/main.ts`. Small Town writes `src/main.tsx` by hand instead, because it has to load the supporter content and the player's mods before it can make the game.
 
 ## Feature by feature
 
@@ -290,9 +292,11 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 `src/game.ts`, `strings`. One override, `'ui.quests': 'To do'`, renames the quest list. See [Overriding](/docs/reference/strings#overriding) and the [React UI's words](/docs/react#words).
 
-### Cheats
+### Cheats and the supporter code
 
-`town.ts`, `data.cheats`, and `cheats()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). **+20 coins** is free for everyone. **Full energy**, under the group **Supporters**, is refused with `For supporters.` until the kv key `supporter` is set, standing in for a supporter unlock. The sidebar's **Cheats** button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the key is set` checks that a cheat works during moving day's lock and passes no time.
+`town.ts`, `data.cheats` and `data.unlocks`, and `cheats()` and `unlocks()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). **+20 coins** is free for everyone. **Full energy**, under the group **Supporters**, is refused with `For supporters.` until the [unlock](/docs/plugins/unlocks) `supporter` is recorded. The sidebar's **Cheats** button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded` checks that a cheat works during moving day's lock and passes no time.
+
+The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env` and public on purpose. Its content, `src/unlocks/supporter.ts`, is one more of the café's storylets, **The back room**. `ifloom build` encrypts it into the page, and `src/main.tsx` opens it with `unlockedPacks` once the player has the code. Enter the code on the settings page: the cheat opens at once, and **Restart to add it** reloads the page with the scene, which **Sit a while** at the café can then draw. The test `unlocks the supporter edition with the code in .env` plays that, and replays it exactly. [Supporter content and cheats](/docs/recipes/supporter-content) explains what this protects and what it doesn't.
 
 ### Debug, in development only
 

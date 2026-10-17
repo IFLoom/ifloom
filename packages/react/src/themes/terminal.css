@@ -557,3 +557,36 @@ body {
 [data-part="cheats-button"]::after {
   content: "]";
 }
+
+/* Codes: a prompt to type at, and the unlocks as a listing. */
+[data-part="unlocks-title"] {
+  text-transform: uppercase;
+}
+
+[data-part="unlocks-title"]::before {
+  content: "# ";
+  color: var(--muted-foreground);
+}
+
+[data-part="unlock-form"]::before {
+  content: "$";
+  color: var(--primary);
+}
+
+[data-part="unlock-input"] {
+  border-width: 0 0 1px;
+  border-style: dashed;
+  border-radius: 0;
+  background: transparent;
+  text-transform: uppercase;
+}
+
+[data-part="unlock"] {
+  border-width: 0 0 0 1px;
+  border-style: dashed;
+  border-radius: 0;
+}
+
+[data-part="unlock-state"] {
+  border-radius: 0;
+}

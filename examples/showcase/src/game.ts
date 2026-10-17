@@ -15,6 +15,7 @@ import { jobs } from '@ifloom/plugin-jobs'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { unlocks } from '@ifloom/plugin-unlocks'
 import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
 import { custom } from './content/custom.ts'
@@ -47,10 +48,12 @@ const kit = phone({
 
 /**
  * Build the game. `withDebug` adds the debugger; leave it off in a release
- * build. `mods` are the packs of the player's mods, loaded over the town.
+ * build. `unlocked` are the supporter packs the player's codes have opened
+ * (from `unlockedPacks`), and `mods` the packs of the player's mods, loaded
+ * over the town in that order.
  */
-export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame([town, ...mods], {
+export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
+  const { game, problems } = loadGame([town, ...unlocked, ...mods], {
     id: 'small-town',
     title: 'Small Town',
     introScene: 'intro',
@@ -75,6 +78,8 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       wardrobe(),
       // Cheats are for players; the debugger below is for the developer.
       cheats(),
+      // Supporter codes: one opens a cheat and a scene.
+      unlocks(),
       ...(withDebug ? [debug()] : []),
     ],
     actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
@@ -98,9 +103,13 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
 /** A command that opens the phone's camera, for tests and walkthroughs. */
 export const openCamera = openApp('camera')
 
-/** What `ifloom check` loads: the release build of the game, and its loader's problems. */
-export default function release() {
-  return smallTown()
+/**
+ * What `ifloom check` loads: the release build of the game, and its loader's
+ * problems. It passes the supporter content as `unlocked`, read from
+ * src/unlocks/, to check the game with it too.
+ */
+export default function release({ unlocked = [] as Pack[] } = {}) {
+  return smallTown({ unlocked })
 }
 
 /** Where `ifloom playtest` and `ifloom snapshot` start: moving day. */

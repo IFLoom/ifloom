@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
 import type { Command, GameState, Mods, Result, Runner, View } from '@ifloom/engine'
+import type { UnlockCodes } from '@ifloom/plugin-unlocks'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
 import { KeysProvider } from './keys.tsx'
@@ -19,9 +20,25 @@ export type ModsOption = {
   onChange?: () => void
 }
 
+/**
+ * Codes the player can enter, for a game with the unlocks plugin: how to
+ * start entering them on the runner (`startUnlocks`), what went wrong opening
+ * remembered content, and how to start over with new content.
+ */
+export type UnlocksOption = {
+  /** `startUnlocks` from `@ifloom/plugin-unlocks`. The provider calls it with its runner, and stops it when it goes. */
+  start: (runner: Runner) => UnlockCodes
+  /** What `unlockedPacks` said it couldn't open, shown under the code box. */
+  problems?: string[]
+  /** Build the game again with the content a code has just opened: usually `() => location.reload()`. */
+  onChange?: () => void
+}
+
 export type GameContextValue = {
   runner: Runner
   mods?: ModsOption
+  /** The provider's `unlocks`, with the codes started on its runner (null until they are). */
+  unlocks?: UnlocksOption & { codes: UnlockCodes | null }
   view: View
   /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
   send: (command: Command) => Result<GameState>
@@ -39,6 +56,8 @@ export type GameProviderProps = UiOptions & {
   sections?: Record<string, PluginSectionComponent>
   /** Mods the player can add, turn off or remove. Leave out for a game without mods. */
   mods?: ModsOption
+  /** Codes the player can enter. Leave out for a game without the unlocks plugin. */
+  unlocks?: UnlocksOption
   children: ReactNode
 }
 
@@ -49,7 +68,7 @@ export type GameProviderProps = UiOptions & {
  */
 const NONE = {}
 
-export function GameProvider({ runner, panels = NONE, sections = NONE, mods, components, classes, unstyled, viewer, keys, motion, children }: GameProviderProps) {
+export function GameProvider({ runner, panels = NONE, sections = NONE, mods, unlocks, components, classes, unstyled, viewer, keys, motion, children }: GameProviderProps) {
   // The view follows the runner. It builds one per state, and a new one when what the plugins'
   // views show of the profile changes, and hands the same object to everything that reads it
   // (the backlog, the audio player), so this builds nothing new.
@@ -58,9 +77,22 @@ export function GameProvider({ runner, panels = NONE, sections = NONE, mods, com
     () => runner.view(),
   )
   const send = useCallback((command: Command) => runner.apply(command), [runner])
+  // Codes start on the runner once it's drawn, and stop when it goes: from then on, every new game and loaded save gets the unlocks the profile remembers.
+  const [codes, setCodes] = useState<UnlockCodes | null>(null)
+  const start = unlocks?.start
+  useEffect(() => {
+    if (!start) return
+    const started = start(runner)
+    setCodes(started)
+    return () => {
+      started.stop()
+      setCodes(null)
+    }
+  }, [start, runner])
+  const unlocking = useMemo(() => (unlocks ? { ...unlocks, codes } : undefined), [unlocks, codes])
   const value = useMemo(
-    () => ({ runner, view, send, panels, mods, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
-    [runner, view, send, panels, sections, mods],
+    () => ({ runner, view, send, panels, mods, unlocks: unlocking, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
+    [runner, view, send, panels, sections, mods, unlocking],
   )
   return (
     <GameContext.Provider value={value}>

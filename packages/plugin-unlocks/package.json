@@ -1,0 +1,17 @@
+{
+  "name": "@ifloom/plugin-unlocks",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Unlock codes for IFLoom: codes a player enters, checked against a slow hash, that open cheats and scenes, and content the build encrypts under the code.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "@ifloom/engine": "^0.0.0"
+  }
+}

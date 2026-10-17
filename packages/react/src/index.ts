@@ -10,7 +10,7 @@
 
 // The game
 export { GameProvider, useGame } from './game/context.tsx'
-export type { GameContextValue, GameProviderProps, ModsOption, PanelComponent, PluginSectionComponent } from './game/context.tsx'
+export type { GameContextValue, GameProviderProps, ModsOption, PanelComponent, PluginSectionComponent, UnlocksOption } from './game/context.tsx'
 export { GameShell } from './game/shell.tsx'
 export { Actions, DEFAULT_LAYOUT, Parts, READING_LAYOUT, Sidebar, Title } from './game/layout.tsx'
 export type { Layout, Part, PartName, SidebarProps } from './game/layout.tsx'
@@ -45,6 +45,8 @@ export type { DebugControls } from './game/debug.tsx'
 export { AchievementList, AchievementsButton, AchievementsPage, useAchievements } from './game/achievements.tsx'
 export { CheatPanel, CheatsButton, useCheats } from './game/cheats.tsx'
 export type { CheatGroup, CheatsControls } from './game/cheats.tsx'
+export { UnlocksPanel, useUnlocks } from './game/unlocks.tsx'
+export type { UnlocksControls } from './game/unlocks.tsx'
 export { ShopButtons, ShopCounter, ShopDialog, useShop } from './game/shop.tsx'
 export type { ShopControls } from './game/shop.tsx'
 export { JobBoard, useJobs } from './game/jobs.tsx'

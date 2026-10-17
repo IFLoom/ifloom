@@ -1,8 +1,8 @@
 ---
 title: "The CLI"
-description: "The ifloom command: new, dev, build, check, playtest and snapshot, the Vite preset, and the functions behind them for scripts."
+description: "The ifloom command: new, dev, build, check, playtest, snapshot and unlock-hash, the Vite preset, and the functions behind them for scripts."
 ---
-`@ifloom/cli` runs your game while you write it and builds it into a folder that opens from disk. It also checks the game for the problems the loader can find, plays it unattended, and records how every scene reads. It also starts new games. It has six commands and a Vite preset:
+`@ifloom/cli` runs your game while you write it and builds it into a folder that opens from disk. It also checks the game for the problems the loader can find, plays it unattended, and records how every scene reads. It also starts new games. It has seven commands and a Vite preset:
 
 | Command | Does |
 |---|---|
@@ -12,6 +12,7 @@ description: "The ifloom command: new, dev, build, check, playtest and snapshot,
 | `ifloom check [module]` | Loads the game and lists every problem the [content checker](/docs/reference/checks) finds, once, and every sound, picture and video file missing from `public/`. |
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
+| `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/plugins/unlocks), without printing the code. |
 
 Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
 
@@ -88,6 +89,8 @@ Starts Vite's dev server with the game's `vite.config.ts` and prints its address
 
 Under `ifloom dev`, `import.meta.env.DEV` is `true`, so it's where the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) belongs.
 
+A game with [locked content](#locked-content) gets it encrypted into the page under `ifloom dev` too, so you can enter a code and play it. An unlock whose code isn't set is left out, with a warning, rather than stopping the server.
+
 ## ifloom build
 
 ```sh
@@ -123,6 +126,32 @@ index.html  440.6 kB
 - **Videos are never inlined either.** A `.mp4` or `.webm` file stays in `art/`, and the command says how many it left. [`Video`](/docs/react/components#video) asks [`assetUrl`](/docs/react/components#asseturl) too, finds nothing in the page, and plays the file beside it. An animated `.gif` or `.webp` is a picture, so it does go in.
 - **Inline only a small game.** Every picture goes in the page, a third bigger than the file because of base64, and is read before the game first draws. A game with a few hundred kilobytes of art is fine as one file. One with megabytes of art is better as a folder.
 
+### Locked content
+
+A game with supporter content keeps it in `src/unlocks/`, one file per unlock, named after it: `src/unlocks/supporter.ts` for the unlock `supporter`. Each file exports a [pack](/docs/reference/loader#pack), or a list of packs, as `default`. The packs must be data, as a [mod](/docs/reference/mods)'s are.
+
+```ts
+// src/unlocks/supporter.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+const supporter: Pack = {
+  id: 'supporter',
+  schema: SCHEMA,
+  scenes: [/* … */],
+  prose: { /* … */ },
+}
+
+export default supporter
+```
+
+`ifloom build` then does three things with it:
+
+1. **It keeps it out of the page.** A file in `src/unlocks/` is never bundled. If any of your code imports one, the build stops with `… is locked content (src/unlocks/), which the page must never import`.
+2. **It encrypts it into the page.** It reads each unlock's code from `IFLOOM_UNLOCK_<UNLOCK>` (`IFLOOM_UNLOCK_SUPPORTER` for `supporter`), in the environment or a `.env` file, checks the code against the unlock's `hash`, and encrypts the packs under a key made from the code. The result goes in a script in the page's head, so it works from disk. A missing code, or one that doesn't match the hash, stops the build.
+3. **It checks nothing leaked.** After the build it searches every file in the folder for each code and for every line of the locked packs' prose and titles that the rest of the game doesn't also have. Any it finds is a problem, and the command exits with `1`.
+
+Vite reads `.env`, `.env.local` and `.env.production` from the game's folder. Put real codes in `.env.local`, which the repository's `.gitignore` leaves out, or in your build machine's environment. Vite gives the page only variables starting with `VITE_`, so an `IFLOOM_UNLOCK_` variable never reaches it. [Supporter content and cheats](/docs/recipes/supporter-content) walks through a release.
+
 **What it doesn't check.** The build isn't searched for `fetch` or a dynamic `import()`. A bundled library can name `fetch` without ever calling it, so finding the word in the output means nothing. The engine's and the UI's own contract tests check their source never loads anything at runtime. Your own code has to keep that rule too.
 
 ## ifloom check
@@ -154,13 +183,30 @@ prose flat.knock: no file public/art/flat/kettle.mp4
 locations cafe: no file public/art/cafe/room.jpg
 ```
 
+### Locked content in a check
+
+A game with [locked content](#locked-content) is checked with it. `check` reads the packs in `src/unlocks/` from source, so it needs no code, and passes them to the module's function as `{ unlocked }` (see below). It checks the game with them, and reports:
+
+- a file in `src/unlocks/` whose name isn't one of the game's unlocks;
+- a code that's set (in the environment or a `.env` file) but doesn't match its unlock's hash;
+- a module that left the packs out of its game.
+
+An unlock whose code isn't set is a note, not a problem. The game without its unlocks is checked as well. What it lacks that the locked packs bring, such as a scene only they have, is listed after the problems as references into locked content, skipped. Make sure the game reaches each of those only behind `unlocks/has`.
+
+```
+IFLOOM_UNLOCK_SUPPORTER isn't set: unlock "supporter"'s content was checked from source, but ifloom build needs the code to encrypt it.
+Without its unlocks the game has 1 reference into locked content, skipped here. Reach it only behind unlocks/has:
+  town · scene cafe.menu · goes to unknown scene "cafe.back-room"
+No problems.
+```
+
 ### What the module exports
 
 Export the game as `default` or as `game`, in any of these shapes:
 
 - a [`Game`](/docs/reference/game#game);
 - what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are;
-- a function, called with no arguments, that returns either of those.
+- a function, called with no arguments, that returns either of those. A game with [locked content](#locked-content-in-a-check) is called with `{ unlocked }` too, the locked packs, to load after its own.
 
 The simplest module returns what `loadGame` gave it:
 
@@ -175,7 +221,20 @@ export default function release() {
 }
 ```
 
-A function export lets you check the release build when the module builds the game with options, because `check` calls it with none. Small Town does this. Its `smallTown({ withDebug, mods })` builds the game with the calendar, places, cast, phone, quests and wardrobe plugins, and its default export is `release()`, which calls `smallTown()` with no debug plugin and no mods. See [`examples/showcase/src/game.ts`](/docs/guide/showcase#the-files).
+A function export lets you check the release build when the module builds the game with options, because `check` calls it with none. Small Town does this. Its `smallTown({ withDebug, unlocked, mods })` builds the game with the calendar, places, cast, phone, quests and wardrobe plugins, and its default export is `release({ unlocked })`, which calls `smallTown({ unlocked })` with no debug plugin and no mods. See [`examples/showcase/src/game.ts`](/docs/guide/showcase#the-files).
+
+```ts
+// src/game.ts, for a game with locked content
+import { loadGame, type Pack } from '@ifloom/engine'
+import { unlocks } from '@ifloom/plugin-unlocks'
+import { story } from './story.ts'
+
+export function build({ unlocked = [] as Pack[] } = {}) {
+  return loadGame([story, ...unlocked], { id: 'my-game', title: 'My Game', introScene: 'start', plugins: [unlocks()] })
+}
+
+export default build
+```
 
 ## ifloom playtest
 
@@ -327,6 +386,27 @@ export function probes(game: Game) {
 - **Each scene is rendered as if it were open in the probe's state**, wherever the probe's player stands. A scene that only makes sense in one place is rendered in all of them. That's deliberate, because it shows what its conditions do, but keep it in mind when you read the file.
 - **A probe is a state you wrote by hand.** Nothing checks that a game could reach it, so set the calendar's clock and `turn` so they agree. Build each probe from the start state, as above, so it stays a whole state when the game adds a field.
 
+## ifloom unlock-hash
+
+```sh
+ifloom unlock-hash supporter                   # the code from IFLOOM_UNLOCK_SUPPORTER
+ifloom unlock-hash supporter < code.txt        # or piped in, when the variable isn’t set
+```
+
+Prints the hash of an unlock's code, for the unlock's `hash` in the [unlocks plugin](/docs/plugins/unlocks#writing-unlocks). It reads the code from `IFLOOM_UNLOCK_<UNLOCK>`, in the environment or a `.env` file, or from what's piped in when that isn't set. It never prints the code.
+
+The hash is salted with the game's id and the unlock's, so it loads the game module (`src/game.ts`, or the module you name) to find the id. If the unlock is already declared, its `salt` and `iterations` are used, and the command says whether the hash it has matches.
+
+```
+The hash of IFLOOM_UNLOCK_SUPPORTER for unlock "supporter" in small-town:
+
+  hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
+
+The unlock has this hash already.
+```
+
+It needs `@ifloom/plugin-unlocks` among the game's dependencies, since the hash is the plugin's.
+
 ## The Vite preset
 
 ```ts
@@ -347,10 +427,11 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It sets up two things, and knows no UI framework:
+It sets up three things, and knows no UI framework:
 
 - **One file.** `vite-plugin-singlefile` puts the script and the stylesheet inside `index.html`.
 - **`base: './'`**, so every path is relative and the folder opens from disk or from an itch.io subpath.
+- **Locked content.** In a game with `src/unlocks/`, it refuses any import of those files from the page, and encrypts them into the page's head, under `vite build` and `vite dev` alike (see [Locked content](#locked-content)). A game without the folder gets nothing from it.
 
 A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game linked to a checkout:
 
@@ -530,8 +611,10 @@ checkFiles(files, 'dist')   // []
 ### gameFrom
 
 ```ts
-function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[]; files: FileRef[] }
+function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; files: FileRef[] }
 ```
+
+`unlocked` is passed to a module that exports a function, as `{ unlocked }`, for a game with [locked content](#locked-content-in-a-check).
 
 The game a module exports, and its problems as text. A module that exports what `loadGame` returns comes with its problems: [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. A game exported without problems, such as one built by hand, is checked with [`checkGame`](/docs/reference/checks#checkgame) here. `files` is the checker's list of the files the game names, for [`checkFiles`](#checkfiles) or [`checkBuild`](#checkbuild). It throws when the module has neither a `default` nor a `game` export.
 

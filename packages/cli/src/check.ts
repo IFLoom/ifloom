@@ -1,19 +1,25 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { checkGame as checkContent, describeProblem, type FileRef, type Game, type Problem } from '@ifloom/engine'
+import { checkGame as checkContent, describeProblem, type FileRef, type Game, type Pack, type Problem } from '@ifloom/engine'
 
-/** What a game module can export: a game, `{ game, problems }`, or a function that returns either. */
-type Exported = Game | { game: Game; problems?: unknown[] } | (() => Game | { game: Game; problems?: unknown[] })
+/**
+ * What a game module can export: a game, `{ game, problems }`, or a function
+ * that returns either. A game with locked content (`src/unlocks/`) exports a
+ * function that takes `{ unlocked }`, the packs to load after its own, so
+ * `ifloom check` can check the game with them.
+ */
+type Exported = Game | { game: Game; problems?: unknown[] } | ((options?: { unlocked?: Pack[] }) => Game | { game: Game; problems?: unknown[] })
 
 /**
  * The game a module exports, as `default` or `game`, with its content
  * checker's problems and the files it names. A loaded game comes with its
  * problems, since `loadGame` ran the checker; a hand-built one is checked
- * here. Either way each problem is listed once.
+ * here. Either way each problem is listed once. `unlocked` packs are passed
+ * to a module that exports a function, as `{ unlocked }`.
  */
-export function gameFrom(module: Record<string, unknown>): { game: Game; problems: string[]; files: FileRef[] } {
+export function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; files: FileRef[] } {
   let found = (module.default ?? module.game) as Exported | undefined
-  if (typeof found === 'function') found = found()
+  if (typeof found === 'function') found = unlocked ? found({ unlocked }) : found()
   if (!found) throw new Error('The game module exports no game: export it as `default` or `game`.')
   if ('game' in found && typeof found.game === 'object' && Array.isArray(found.problems)) {
     return { game: found.game, problems: found.problems.map(asText), files: checkContent(found.game).files }

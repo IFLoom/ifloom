@@ -1,0 +1,10 @@
+{
+  "name": "locked-fixture",
+  "private": true,
+  "type": "module",
+  "description": "A tiny game with locked content, for the CLI's tests of encrypting it.",
+  "dependencies": {
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-unlocks": "^0.0.0"
+  }
+}

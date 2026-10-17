@@ -45,8 +45,12 @@ function renamed(data: Record<string, unknown>): Record<string, unknown> | undef
   return out
 }
 
-/** A game's profile, kept wherever its driver keeps things. Reads and writes run one at a time, in order. */
-export function profile(game: Game, driver: SaveDriver): Profile {
+/**
+ * A game's profile, kept wherever its driver keeps things. Reads and writes
+ * run one at a time, in order. Only the game's `id` is read, so a profile can
+ * be opened before the game is built: `profile({ id: 'small-town' }, driver)`.
+ */
+export function profile(game: Pick<Game, 'id'>, driver: SaveDriver): Profile {
   const key = `${game.id}.profile`
   const listeners = new Set<(namespace: string, value: unknown) => void>()
   let data: Record<string, unknown> | undefined

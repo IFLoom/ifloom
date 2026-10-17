@@ -36,6 +36,7 @@
     "@ifloom/plugin-quests": "^0.0.0",
     "@ifloom/plugin-shop": "^0.0.0",
     "@ifloom/plugin-statuses": "^0.0.0",
+    "@ifloom/plugin-unlocks": "^0.0.0",
     "@ifloom/plugin-wardrobe": "^0.0.0"
   },
   "peerDependenciesMeta": {
@@ -78,6 +79,9 @@
     "@ifloom/plugin-statuses": {
       "optional": true
     },
+    "@ifloom/plugin-unlocks": {
+      "optional": true
+    },
     "@ifloom/plugin-wardrobe": {
       "optional": true
     }
@@ -110,6 +114,7 @@
     "@ifloom/plugin-quests": "^0.0.0",
     "@ifloom/plugin-shop": "^0.0.0",
     "@ifloom/plugin-statuses": "^0.0.0",
+    "@ifloom/plugin-unlocks": "^0.0.0",
     "@ifloom/plugin-wardrobe": "^0.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0"

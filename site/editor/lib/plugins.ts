@@ -16,6 +16,7 @@ import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { statuses } from '@ifloom/plugin-statuses'
+import { unlocks } from '@ifloom/plugin-unlocks'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { PLUGIN_IDS, type PluginId, type PreviewSettings } from './model.ts'
 
@@ -36,6 +37,7 @@ const FACTORIES: Record<PluginId, Factory> = {
   feed,
   devices,
   cheats,
+  unlocks,
   debug,
 }
 

@@ -62,7 +62,7 @@ const energy: CheatDef = {
   label: 'Full energy',
   description: 'As if you had slept.',
   group: 'Supporters',
-  blocked: [{ when: { not: { kv: 'supporter' } }, reason: 'For supporters.' }],
+  blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
   effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
 }
 
@@ -115,9 +115,9 @@ const gold: CheatDef = {
 }
 ```
 
-`unlocks/has` is the condition of the unlocks plugin, which checks a code the player enters. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
+`unlocks/has` is the condition of the [unlocks plugin](/docs/plugins/unlocks), which checks a code the player enters. Its helper `hasUnlock('supporter')` writes the same condition. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
 
-Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat.
+Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat. To keep content from people without the code, put it in an unlock's [locked content](/docs/plugins/unlocks#locked-content), which ships encrypted. [Supporter content and cheats](/docs/recipes/supporter-content) compares the two.
 
 ## Using a cheat
 
@@ -375,4 +375,4 @@ A `cheats/use` command or `cheats/used` condition that names a cheat the game do
 
 ## See it in an example
 
-Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the kv key `supporter` is set, as a stand-in for a supporter unlock. The sidebar's **Cheats** button opens them.
+Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the unlock `supporter` is recorded, which the code `SMALL-TOWN-SUPPORTER` does. The sidebar's **Cheats** button opens them.

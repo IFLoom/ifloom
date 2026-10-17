@@ -36,6 +36,7 @@ export const PLUGINS = {
   feed: { label: 'Feed', options: '' },
   devices: { label: 'Devices', options: '' },
   cheats: { label: 'Cheats', options: '' },
+  unlocks: { label: 'Unlocks', options: '' },
   debug: { label: 'Debug', options: '' },
 } as const satisfies Record<string, { label: string; options: string }>
 export type PluginId = keyof typeof PLUGINS

@@ -104,6 +104,16 @@ export const UI_STRINGS = {
   cheats: 'Cheats',
   cheatUsedOnce: 'Used once',
   cheatUsedTimes: 'Used {n} times',
+  // unlocks
+  enterCode: 'Enter a code',
+  code: 'Code',
+  unlock: 'Unlock',
+  checkingCode: 'Checking…',
+  unlockedNow: 'Unlocked: {label}.',
+  unlockedAlready: '{label} was unlocked already.',
+  restartForUnlock: 'Restart to add it',
+  unlocked: 'Unlocked',
+  locked: 'Locked',
   // the shop
   shopAt: 'Shop at {vendor}',
   vendorClosed: 'Closed',

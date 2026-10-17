@@ -424,3 +424,28 @@
 [data-part="cheat-text"] {
   font-style: italic;
 }
+
+/* Codes: the box as a ruled line to write on, and the unlocks as a ruled list. */
+[data-part="unlock-input"] {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+}
+
+[data-part="unlock"] {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+[data-part="unlocks-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+[data-part="unlock-text"] {
+  font-style: italic;
+}

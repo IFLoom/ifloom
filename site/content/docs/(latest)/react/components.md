@@ -27,7 +27,7 @@ import {
   useAudio,
   UI_STRINGS, uiSay, useWords,
   PART_KEYS, UiProvider, usePart, overridable,
-  type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption,
+  type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption, type UnlocksOption,
   type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey, type FrameProps, type IconName,
   type SavesState, type ModsState, type DevicesState, type DeviceState,
   type ClockState, type PlacesControls, type QuestsControls, type WardrobeControls, type WardrobeSlotControls,
@@ -163,6 +163,7 @@ type GameProviderProps = {
   panels?: Record<string, PanelComponent>
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
+  unlocks?: UnlocksOption
   components?: Components
   classes?: Classes
   unstyled?: boolean
@@ -174,11 +175,11 @@ type GameProviderProps = {
 
 Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, reads `runner.view()` again only when the state changes or what the plugins' views show of the profile does, and hands both down through [`useGame`](#usegame).
 
-`panels` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
+`panels` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `unlocks` turns on the [code box](#unlockspanel): the provider calls its `start` with the runner once it's drawn, and stops what it started when it goes. See [`UnlocksOption`](#unlocksoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
 Use it on its own to build [your own layout](/docs/react/extending#your-own-layout).
 
-**Gotcha.** Define `panels`, `sections`, `mods`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
+**Gotcha.** Define `panels`, `sections`, `mods`, `unlocks`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
 
 ### useGame
 
@@ -188,6 +189,7 @@ function useGame(): GameContextValue
 type GameContextValue = {
   runner: Runner
   mods?: ModsOption
+  unlocks?: UnlocksOption & { codes: UnlockCodes | null }
   view: View
   send: (command: Command) => Applied
   panels: Record<string, PanelComponent>
@@ -195,7 +197,7 @@ type GameContextValue = {
 }
 ```
 
-Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` and `sections` are what the provider was given, with the built-in sections added. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
+Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` and `sections` are what the provider was given, with the built-in sections added. `mods` is the provider's `mods`, if any. `unlocks` is the provider's `unlocks`, if any, with `codes`, the [`UnlockCodes`](/docs/plugins/unlocks#unlockcodes) its `start` gave, or `null` until the provider has started them. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -238,6 +240,30 @@ The game's [mods](/docs/reference/mods), for the [mod manager](#modmanager). Pas
 | `store` | The [`Mods`](/docs/reference/mods#mods) store the game loaded its mods from at start-up. |
 | `problems` | What the [content checker](/docs/reference/checks) found, as [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes it. Each problem that starts `mod:<id> ` is shown under that mod. The rest aren't shown. |
 | `onChange` | Builds the game again with the mods as they now are, usually `() => location.reload()`. Without it, the manager never offers to restart. |
+
+### UnlocksOption
+
+```ts
+type UnlocksOption = {
+  start: (runner: Runner) => UnlockCodes
+  problems?: string[]
+  onChange?: () => void
+}
+```
+
+Codes the player can enter, for a game with the [unlocks plugin](/docs/plugins/unlocks). Pass it as `unlocks` on [`GameShell`](/docs/react#gameshell), [`GameProvider`](#gameprovider) or [`mountGame`](/docs/react#mountgame). The React UI imports no plugin code, so you hand it the plugin's `startUnlocks`:
+
+```tsx
+import { startUnlocks } from '@ifloom/plugin-unlocks'
+
+<GameShell runner={runner} pages={{}} unlocks={{ start: startUnlocks, problems: opened.problems, onChange: () => location.reload() }} />
+```
+
+| Field | What it is |
+|---|---|
+| `start` | [`startUnlocks`](/docs/plugins/unlocks#startunlocks). The provider calls it with its runner. |
+| `problems` | What [`unlockedPacks`](/docs/plugins/unlocks#unlockedpacks) couldn't open, shown under the code box. |
+| `onChange` | Builds the game again with the content a code has just opened, usually `() => location.reload()`. Without it, the box never offers to restart. |
 
 ```tsx
 import { indexedDbDriver, mods } from '@ifloom/engine'
@@ -1042,12 +1068,13 @@ A row of buttons for what the runner offers:
 - **Saves** (`ui.saves`) when the runner was made with `saves`;
 - **Backlog** (`ui.backlog`) when [`runner.offers`](/docs/reference/runner#the-runners-members)`.backlog` is on;
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
+- **Enter a code** (`ui.enterCode`) when the provider was given [`unlocks`](#unlocksoption), the game has the unlocks plugin and `pages` is off. With pages on, codes are entered on the settings page instead.
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
-- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings).
+- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), or takes codes.
 
 With [`keys`](#keyoptions) on, Escape opens the same buttons in a dialog headed **Menu** (`ui.menu`).
 
-Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
+Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Enter a code opens an [`UnlocksPanel`](#unlockspanel) the same way. Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
 
 So you choose what the player sees when you make the runner:
 
@@ -1366,6 +1393,8 @@ Each value comes from [`runner.settings()`](/docs/reference/runner#settings), an
 
 A refused change shows its reason under the list.
 
+With [`unlocks`](#unlocksoption) on the provider, an [`UnlocksPanel`](#unlockspanel) follows the list, for entering a code, and the page says nothing about having no settings.
+
 Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty`, `settings-message` and `page-back`.
 
 ### LoadPage
@@ -1676,6 +1705,7 @@ Every first-party plugin that has something for the player has a default here, w
 | [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | Sidebar, `'statuses'`, under the stats. |
 | [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | Sidebar, `'achievements'`: a button under the menu. |
 | [cheats](/docs/plugins/cheats) | [`CheatPanel`](#cheatpanel), in a dialog | [`useCheats`](#usecheats) | Sidebar, `'cheats'`: a button under the achievements. |
+| [unlocks](/docs/plugins/unlocks) | [`UnlocksPanel`](#unlockspanel) | [`useUnlocks`](#useunlocks) | The settings page, or the menu without pages, when the provider has [`unlocks`](#unlocksoption). |
 | [shop](/docs/plugins/shop) | [`ShopCounter`](#shopcounter), in a dialog | [`useShop`](#useshop) | Sidebar, `'shop'`: a button for each vendor here. |
 | [jobs](/docs/plugins/jobs) | [`JobBoard`](#jobboard) | [`useJobs`](#usejobs) | Stage, `'jobs'`, under the quests. |
 | [quests](/docs/plugins/quests) | [`QuestLog`](#questlog) | [`useQuests`](#usequests) | Stage, `'quests'`. |
@@ -1831,6 +1861,65 @@ function QuickCoins() {
   const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
   if (!coins) return null
   return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.label}</button>
+}
+```
+
+### UnlocksPanel
+
+```tsx
+function UnlocksPanel(props: { className?: string }): JSX.Element | null
+```
+
+Entering a code, and the game's [unlocks](/docs/plugins/unlocks). Under an **Enter a code** heading (`ui.enterCode`) are a text box (`ui.code`) and an **Unlock** button (`ui.unlock`), which says **Checking…** (`ui.checkingCode`) while the code is checked. A wrong code shows the plugin's reason as an alert. One that works says **Unlocked: Supporter edition.** (`ui.unlockedNow`, or `ui.unlockedAlready`), and when it opened content the game in play doesn't have, a **Restart to add it** button (`ui.restartForUnlock`) calls the option's `onChange`. The option's `problems` follow, then each unlock (`data-unlock`, and `data-unlocked` once it's unlocked) with its label, a **Locked** or **Unlocked** badge (`ui.locked`, `ui.unlocked`) and its description.
+
+The box shows only when the provider has [`unlocks`](#unlocksoption) and its codes have started. Without it the list still shows. It draws nothing in a game without the plugin, or with no unlocks. The settings page and the menu draw it for you.
+
+Replaceable as `UnlocksPanel` in [`components`](#components). Parts: `unlocks`, `unlocks-title`, `unlock-form`, `unlock-input`, `button`, `unlocks-message`, `unlocks-entered`, `unlock-problem`, `unlocks-list`, `unlock` (with `data-unlock` and `data-unlocked`), `unlock-name`, `unlock-state` and `unlock-text`.
+
+### useUnlocks
+
+```ts
+function useUnlocks(): UnlocksControls | null
+
+type UnlocksControls = UnlocksView & {
+  available: boolean
+  enter: (code: string) => Promise<boolean>
+  checking: boolean
+  entered: Entered | null
+  message: string | null
+  restart: (() => void) | undefined
+  problems: string[]
+}
+```
+
+The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `unlocks`, `unlocked` and `total`) and the code box's state, or `null` in a game without the plugin.
+
+| Field | What it is |
+|---|---|
+| `available` | Whether codes can be entered: the provider has `unlocks`, and has started them. |
+| `enter` | Tries a code with [`UnlockCodes.enter`](/docs/plugins/unlocks#unlockcodes). Resolves to whether it worked. |
+| `checking` | True while a code is being checked. |
+| `entered` | What the last code that worked unlocked, as [`Entered`](/docs/plugins/unlocks#entered), or `null`. |
+| `message` | Why the last code didn't work, or `null`. |
+| `restart` | The option's `onChange`, when the last code opened content that needs it. Otherwise undefined. |
+| `problems` | The option's `problems`. |
+
+```tsx
+import { useState } from 'react'
+import { useUnlocks } from '@ifloom/react'
+
+function CodeBox() {
+  const unlocks = useUnlocks()
+  const [code, setCode] = useState('')
+  if (!unlocks?.available) return null
+  return (
+    <form onSubmit={(event) => { event.preventDefault(); void unlocks.enter(code) }}>
+      <input value={code} onChange={(event) => setCode(event.target.value)} />
+      <button disabled={unlocks.checking}>Unlock</button>
+      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.label}.` : null)}
+      {unlocks.restart ? <button type="button" onClick={unlocks.restart}>Restart</button> : null}
+    </form>
+  )
 }
 ```
 

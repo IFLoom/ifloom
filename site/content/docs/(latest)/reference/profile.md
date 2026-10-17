@@ -17,10 +17,12 @@ await stored.get('core:settings') // { hints: false, textSize: 'large' }
 ## profile
 
 ```ts
-function profile(game: Game, driver: SaveDriver): Profile
+function profile(game: Pick<Game, 'id'>, driver: SaveDriver): Profile
 ```
 
 Makes the profile for a game, kept wherever the [driver](/docs/reference/saves#drivers) keeps things. It's one JSON object, stored at the key `<game id>.profile`, holding a value for each namespace. Use the same driver as your saves or a different one.
+
+Only the game's `id` is read, so you can open the profile before the game is built, with `profile({ id: 'small-town' }, driver)`. The [unlocks plugin](/docs/plugins/unlocks) does this to find the supporter content to load.
 
 Reads and writes run one at a time, in the order you make them. The first one reads the stored object, and later reads come from memory. A stored value that isn't valid JSON is treated as an empty profile.
 

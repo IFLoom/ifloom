@@ -305,3 +305,22 @@
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
+
+/* Codes: cards like the rest of the app, the code in a fixed-width face. */
+[data-part="unlock"] {
+  background: var(--card);
+  border-radius: calc(var(--radius) * 0.6);
+}
+
+[data-part="unlock-input"] {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-part="unlocks-title"] {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}

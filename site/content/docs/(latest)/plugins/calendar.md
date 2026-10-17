@@ -241,7 +241,7 @@ state = apply(state, game, { type: 'activity', id: 'jog' }).state   // night →
 state.turn                        // 0: still Monday
 
 button('jog').warning             // 'That would run past dawn.'
-apply(state, game, { type: 'activity', id: 'jog' }).refused   // 'That would run past dawn.'
+apply(state, game, { type: 'activity', id: 'jog' }).reason   // 'That would run past dawn.'
 
 walk('high-street', 'flat')
 button('bed').price               // { notes: ['until tomorrow morning'] }

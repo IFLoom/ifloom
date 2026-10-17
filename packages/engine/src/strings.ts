@@ -41,7 +41,7 @@ export const STRINGS = {
   // Settings.
   noSuchSetting: 'There is no such setting.',
   notAGameSetting: 'That setting does not change the game.',
-  notAUiSetting: 'That setting changes the game, so it is set with a command.',
+  noProfile: 'This game keeps no settings between plays.',
   onOrOff: 'Choose on or off.',
   inSteps: 'In steps of {step}.',
   // Buttons and labels.
@@ -54,6 +54,9 @@ export const STRINGS = {
   pluginNewer: 'That save was made with a newer version of {plugin}.',
   gameNewer: 'That save was made with a newer version of this game.',
   pluginUnreadable: "That save's {plugin} is from a version this game cannot read.",
+  noSaves: 'This game keeps no saves.',
+  emptySlot: 'Nothing is saved there.',
+  notSaved: 'The game could not be saved.',
   /** A save's name when no plugin says when it is. */
   turnLabel: 'Turn {turn}',
 } as const

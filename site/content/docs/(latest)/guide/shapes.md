@@ -131,7 +131,7 @@ import { browserRunner, type View } from '@ifloom/engine'
 import { theLetter } from './game.ts'
 import './styles.css'
 
-const runner = browserRunner(theLetter().game)
+const runner = await browserRunner(theLetter().game)
 const root = document.querySelector<HTMLElement>('#root')!
 
 /** One column, like a book's: the chapter, its words, then the buttons. */
@@ -357,7 +357,7 @@ import { browserRunner, type View } from '@ifloom/engine'
 import { cornerCafe } from './game.ts'
 import './styles.css'
 
-const runner = browserRunner(cornerCafe().game)
+const runner = await browserRunner(cornerCafe().game)
 const root = document.querySelector<HTMLElement>('#root')!
 
 /** A table for each kind, the staff and the menu: a row for each one, a cell for each stat. */

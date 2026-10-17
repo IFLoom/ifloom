@@ -313,7 +313,7 @@ import { apply } from '@ifloom/engine'
 
 const tried = apply(state, game, { type: 'activity', id: 'coffee' })
 tried.ok      // false: the intro scene is still open
-tried.refused // 'Finish this first.'
+tried.reason // 'Finish this first.'
 ```
 
 A refused command leaves the state untouched, so `apply` is how you tell a refusal from a command that did nothing. `refused` is diagnostic text, because the button for that command in the view already carries the player-facing reason. `Finish this first.` is the engine's own line. A game can reword it, and every other line the engine says, in the [strings table](/docs/reference/strings).
@@ -341,7 +341,7 @@ Try the same choice twice in one day and it is refused:
 
 ```ts
 state = dispatch(state, game, talk('ruth'))
-apply(state, game, { type: 'choose', id: 'chat' }).refused // 'She has a queue.'
+apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 ```
 
 ## 8. Draw the view
@@ -401,7 +401,7 @@ The stats in the price are the engine's, and the note is the calendar's, which p
 ```ts
 state = dispatch(state, game, { type: 'activity', id: 'coffee' }) // afternoon
 state.stats                                                      // { coins: 2, energy: 70 }
-apply(state, game, { type: 'activity', id: 'coffee' }).refused   // 'Not enough on you.'
+apply(state, game, { type: 'activity', id: 'coffee' }).reason   // 'Not enough on you.'
 ```
 
 Wait another period and it's evening. Ruth has gone for the day and the café has shut.
@@ -413,7 +413,7 @@ view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 view(state, game).scene.body // 'Steam on the windows.\n\nThe counter is empty.'
 
 state = dispatch(state, game, go('high-street'))
-apply(state, game, go('cafe')).refused
+apply(state, game, go('cafe')).reason
 // 'Closed. Opens tomorrow morning.'
 ```
 
@@ -442,7 +442,7 @@ runner.subscribe(() => render(runner.view()))
 
 function press(button: { command: Command }) {
   const result = runner.apply(button.command)
-  if (!result.ok) console.warn(result.refused)
+  if (!result.ok) console.warn(result.reason)
 }
 ```
 
@@ -580,7 +580,7 @@ Then run `npm run dev -w my-town`. In the Vue and Svelte templates, `src/main.ts
 
 The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/guide/plugin-ui) draws them, and [Using another framework](/docs/guide/frameworks) draws the rest of the view.
 
-With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/reference/runner#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and returns the runner. The other templates call `browserRunner` themselves.
+With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/reference/runner#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and resolves to the runner. The other templates call `browserRunner` themselves.
 
 Save to a slot of your own, and load it back. Slots are names you pick:
 
@@ -591,7 +591,7 @@ runner.apply(go('cafe'))
 runner.apply(talk('ruth'))  // a new scene: autosaved to 'auto'
 
 const loaded = await runner.load('1')   // back on the high street, with a fresh undo history
-if (typeof loaded === 'string') console.warn(loaded) // why it could not be read
+if (!loaded.ok) console.warn(loaded.reason) // why it could not be read
 ```
 
 The saves are kept under keys that start with the game's id, `new-in-town`, so another game opened in the same browser never reads them. See [Saves](/docs/reference/saves) and [Shipping a game](/docs/guide/shipping#saves).
@@ -777,7 +777,7 @@ state = dispatch(chat.state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'bye' })
 state = dispatch(state, game, { type: 'activity', id: 'coffee' })
 console.log(state.stats) // { coins: 2, energy: 70 }
-console.log(apply(state, game, { type: 'activity', id: 'coffee' }).refused) // 'Not enough on you.'
+console.log(apply(state, game, { type: 'activity', id: 'coffee' }).reason) // 'Not enough on you.'
 
 // Now through a runner, as a UI would. In a browser, use localStorageDriver() or indexedDbDriver().
 const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {

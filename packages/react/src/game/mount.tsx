@@ -33,13 +33,14 @@ function problemText(problem: unknown): string {
 }
 
 /**
- * Start a game in the page: a runner with undo, saves and autosave, and the
+ * Start a game in the page: a runner with undo, saves and autosave (from
+ * `browserRunner`, so it starts with the player's stored settings), the
  * whole React UI drawn into `#root`, or your own `app`, and the game's sound
- * playing if it has any. Takes a game, or what
- * `loadGame` returns, whose problems are logged as warnings. Returns the runner,
- * for anything the game wants to drive itself.
+ * playing if it has any. Takes a game, or what `loadGame` returns, whose
+ * problems are logged as warnings. Resolves to the runner once the game is
+ * drawn, for anything the game wants to drive itself.
  */
-export function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options: MountOptions = {}): Runner {
+export async function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options: MountOptions = {}): Promise<Runner> {
   const { root = '#root', start, runner: runnerOptions, app: App, audio, ...shell } = options
   const game = 'game' in loaded && typeof loaded.game === 'object' ? loaded.game : (loaded as Game)
   const problems = 'game' in loaded && typeof loaded.game === 'object' ? (loaded.problems ?? []) : []
@@ -48,7 +49,7 @@ export function mountGame(loaded: Game | { game: Game; problems?: readonly unkno
   const element = typeof root === 'string' ? document.querySelector(root) : root
   if (!element) throw new Error(`mountGame: nothing in the page matches ${String(root)}.`)
 
-  const runner = browserRunner(game, { start, ...runnerOptions })
+  const runner = await browserRunner(game, { start, ...runnerOptions })
   if (audio !== false && hasAudio(game)) startPlayer(runner, audio)
   const { layout: _layout, className: _className, pages, ...provider } = shell
   createRoot(element).render(

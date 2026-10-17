@@ -5,6 +5,7 @@ import { mods, readMod } from '../../src/mods.ts'
 import { saves } from '../../src/save.ts'
 import { startingState } from '../../src/intake.ts'
 import { withCafe } from '../fixtures/cafe.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 const mod = (extra: object = {}) =>
   JSON.stringify({
@@ -19,17 +20,17 @@ const mod = (extra: object = {}) =>
 describe('mods', () => {
   it('read a mod file for this game, naming its pack after the mod', () => {
     const read = readMod(mod(), 'fixture')
-    expect(typeof read !== 'string' && read.pack.id).toBe('mod:night-market')
-    expect(readMod('not json', 'fixture')).toBe('That is not a mod file.')
-    expect(readMod(mod({ game: undefined }), 'fixture')).toBe('That is not a mod file.')
-    expect(readMod(mod({ pack: { id: 'x' } }), 'fixture')).toBe('That is not a mod file.')
-    expect(readMod(mod({ game: 'other' }), 'fixture')).toBe('That mod is for another game (other).')
-    expect(readMod(mod({ pack: { id: 'x', schema: 99 } }), 'fixture')).toBe('That mod was written for a version this game cannot read (schema 99).')
+    expect(read.ok && read.value.pack.id).toBe('mod:night-market')
+    expect(readMod('not json', 'fixture')).toEqual({ ok: false, reason: 'That is not a mod file.' })
+    expect(readMod(mod({ game: undefined }), 'fixture')).toEqual({ ok: false, reason: 'That is not a mod file.' })
+    expect(readMod(mod({ pack: { id: 'x' } }), 'fixture')).toEqual({ ok: false, reason: 'That is not a mod file.' })
+    expect(readMod(mod({ game: 'other' }), 'fixture')).toEqual({ ok: false, reason: 'That mod is for another game (other).' })
+    expect(readMod(mod({ pack: { id: 'x', schema: 99 } }), 'fixture')).toEqual({ ok: false, reason: 'That mod was written for a version this game cannot read (schema 99).' })
   })
 
   it('are kept by a driver, on or off, and give the packs of the ones that are on', async () => {
     const store = mods('fixture', memoryDriver())
-    expect(await store.add(mod())).toMatchObject({ id: 'night-market', enabled: true })
+    expect(unwrap(await store.add(mod()))).toMatchObject({ id: 'night-market', enabled: true })
     expect((await store.packs()).map((pack) => pack.id)).toEqual(['mod:night-market'])
     await store.setEnabled('night-market', false)
     expect(await store.packs()).toEqual([])

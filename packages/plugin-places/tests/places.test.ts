@@ -61,7 +61,7 @@ function game(options: PlacesOptions = { start: 'house' }, rules: GameRules = {}
 function walk(g: Game, state: GameState, ...to: string[]): GameState {
   for (const id of to) {
     const out = apply(state, g, go(id))
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state

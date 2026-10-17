@@ -47,8 +47,8 @@ export function useMods(): ModsState {
     async add(file) {
       if (!mods) return false
       const added = await mods.store.add(await file.text())
-      setMessage(typeof added === 'string' ? added : null)
-      if (typeof added === 'string') return false
+      setMessage(added.ok ? null : added.reason)
+      if (!added.ok) return false
       await after()
       return true
     },

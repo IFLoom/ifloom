@@ -11,6 +11,7 @@ import { statValue } from '../../src/stats.ts'
 import type { GameState } from '../../src/types.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /** A save file as an older build of the game wrote it. */
 function fileOf(game: Game, state: GameState): string {
@@ -74,32 +75,30 @@ describe('the game’s own migrations', () => {
     // A version-10 save, from before media, with the clock at its version 1.
     const { media: _media, ...old } = startingState(before)
     const state = { ...old, version: 10, plugins: { clock: { version: 1, state: { h: 7 } } } } as unknown as GameState
-    const loaded = saves(game, memoryDriver()).importText(fileOf(game, state))
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loaded = unwrap(saves(game, memoryDriver()).importText(fileOf(game, state)))
     expect(ran).toEqual(['1:media:{"version":2,"state":{"hour":7}}', '2:true'])
     expect(loaded.state.gameVersion).toBe(3)
     expect(loaded.meta.gameVersion).toBe(1)
     // A save already at version 2 runs only the last step.
     ran.length = 0
-    expect(loadState({ ...startingState(game), gameVersion: 2 }, game)).toMatchObject({ gameVersion: 3 })
+    expect(unwrap(loadState({ ...startingState(game), gameVersion: 2 }, game))).toMatchObject({ gameVersion: 3 })
     expect(ran).toEqual(['2:undefined'])
   })
 
   it('refuse a save from a newer version of the game', () => {
     const game = grown({ version: 2 })
     const newer = { ...startingState(game), gameVersion: 3 }
-    expect(saves(game, memoryDriver()).importText(fileOf(game, newer))).toBe('That save was made with a newer version of this game.')
+    expect(saves(game, memoryDriver()).importText(fileOf(game, newer))).toEqual({ ok: false, reason: 'That save was made with a newer version of this game.' })
     const said = { ...game, strings: { gameNewer: 'Update the game first.' } }
-    expect(loadState(newer, said)).toBe('Update the game first.')
+    expect(loadState(newer, said)).toEqual({ ok: false, reason: 'Update the game first.' })
     // A game that declares no version is version 1.
-    expect(typeof loadState({ ...startingState(before), gameVersion: 2 }, before)).toBe('string')
+    expect(loadState({ ...startingState(before), gameVersion: 2 }, before).ok).toBe(false)
   })
 
   it('fill what the game declares only when a step asks, and only the kinds it asks for', () => {
     const old = { ...startingState(before), sceneId: null }
     const read = (game: Game) => {
-      const loaded = saves(game, memoryDriver()).importText(fileOf(game, old))
-      if (typeof loaded === 'string') throw new Error(loaded)
+      const loaded = unwrap(saves(game, memoryDriver()).importText(fileOf(game, old)))
       return loaded.state
     }
     const untouched = read(grown({ version: 2 }))
@@ -128,8 +127,7 @@ describe('the game’s own migrations', () => {
       migrations: { 1: (_state, tools) => ({ patience: tools.fill(['stats']).stats.patience }) },
     })
     const counted = grown({ version: 2, plugins: [counter] })
-    const withCounter = saves(counted, memoryDriver()).importText(fileOf(counted, { ...old, plugins: { counter: { version: 1, state: {} } } } as unknown as GameState))
-    if (typeof withCounter === 'string') throw new Error(withCounter)
+    const withCounter = unwrap(saves(counted, memoryDriver()).importText(fileOf(counted, { ...old, plugins: { counter: { version: 1, state: {} } } } as unknown as GameState)))
     expect(withCounter.state.plugins.counter).toEqual({ version: 2, state: { patience: 7 } })
 
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
@@ -143,14 +141,13 @@ describe('the game’s own migrations', () => {
   it('leave a game with no version filling settings and entities by itself, as before', () => {
     const old = { ...startingState(before), sceneId: null, settings: undefined } as unknown as GameState
     const game = grown()
-    const loaded = saves(game, memoryDriver()).importText(fileOf(game, old))
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loaded = unwrap(saves(game, memoryDriver()).importText(fileOf(game, old)))
     expect(loaded.state.settings).toEqual({ hints: true })
     expect(loaded.state.entities.staff.ana.name).toBe('Ana')
     expect(loaded.state).not.toHaveProperty('gameVersion')
     // loadState does the same for a state that never went through a save.
-    expect((loadState(old, game) as GameState).settings).toEqual({ hints: true })
-    expect((loadState(old, grown({ version: 1 })) as GameState).settings).toEqual({})
+    expect(unwrap(loadState(old, game)).settings).toEqual({ hints: true })
+    expect(unwrap(loadState(old, grown({ version: 1 }))).settings).toEqual({})
   })
 
   it('report a step keyed outside the versions it could carry', () => {

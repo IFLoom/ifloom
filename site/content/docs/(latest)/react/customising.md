@@ -707,6 +707,7 @@ These are drawn only when `pages` is on. See [Pages](/docs/react/components#page
 | `setting-control` | Its checkbox, radio buttons or slider. |
 | `setting-value` | A slider's value, beside it. |
 | `settings-empty` | The line shown when the game has no settings. |
+| `settings-message` | Why the last change to a setting was refused. |
 | `load-page` | The load page. Its slots use the saves menu's parts, `save-slot` and the rest. |
 | `credits-page` | The credits page. |
 | `credits` | Its list. |

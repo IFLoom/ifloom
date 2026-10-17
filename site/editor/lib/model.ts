@@ -70,11 +70,11 @@ export type Project = {
  */
 export function upgradeProject(stored: Project & { variables?: KvKey[] }): Project {
   const { variables, ...project } = stored
-  const pack = project.pack.schema === SCHEMA ? project.pack : upgradePack(project.pack)
+  const upgraded = project.pack.schema === SCHEMA ? undefined : upgradePack(project.pack)
   return {
     ...project,
     kv: project.kv ?? variables ?? [],
-    pack: typeof pack === 'string' ? project.pack : (pack as EditorPack),
+    pack: upgraded?.ok ? (upgraded.value as EditorPack) : project.pack,
   }
 }
 

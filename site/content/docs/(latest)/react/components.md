@@ -203,7 +203,7 @@ function GoHome() {
   const [said, setSaid] = useState<string>()
   return (
     <>
-      <Button onClick={() => setSaid(send(go('flat')).refused)}>Go home</Button>
+      <Button onClick={() => setSaid(send(go('flat')).reason)}>Go home</Button>
       {said ? <p className="text-sm text-muted-foreground">{said}</p> : null}
     </>
   )
@@ -1026,8 +1026,8 @@ type SavesState = {
   slots: SaveMeta[]
   broken: BrokenSave[]
   refresh: () => Promise<void>
-  save: (name?: string) => Promise<void>
-  overwrite: (slot: string) => Promise<void>
+  save: (name?: string) => Promise<boolean>
+  overwrite: (slot: string) => Promise<boolean>
   load: (slot: string) => Promise<boolean>
   remove: (slot: string) => Promise<void>
   exportFile: (slot: string) => Promise<void>
@@ -1046,13 +1046,13 @@ The [`SavesMenu`](#savesmenu) without its look: the slots, and everything the me
 | `slots` | Every save that can be read, newest first, as [`SaveMeta`](/docs/reference/saves#savemeta). Read again whenever the view changes. |
 | `broken` | Saves that are there but can't be read, as [`BrokenSave`](/docs/reference/saves#savelisting)s with why. They can only be deleted, with `remove`. |
 | `refresh` | Reads the slots again. |
-| `save` | Saves in a new slot, the next free number, with `name` if you give one. |
-| `overwrite` | Saves over a slot, with the default name. |
+| `save` | Saves in a new slot, the next free number, with `name` if you give one. `true` if it was written. |
+| `overwrite` | Saves over a slot, with the default name. `true` if it was written. |
 | `load` | Loads a slot. `true` if it loaded. |
 | `remove` | Deletes a slot. |
 | `exportFile` | Downloads a slot as `<game>-<slot>.json`. |
 | `importFile` | Loads a save from a file the player kept. `true` if it loaded. |
-| `message` | Why the last load or import failed, or `null`. |
+| `message` | Why the last save, load or import failed, or `null`. |
 | `missingPacks`, `missingPlugins` | What the last loaded save was made with that this game doesn't have. |
 
 ```tsx
@@ -1273,15 +1273,14 @@ function SettingsPage(props: { className?: string }): JSX.Element
 
 The settings, drawn from [`view.settings`](/docs/reference/view#settings): a checkbox for a toggle, radio buttons for a choice, and a slider with its value beside it for a range. It says `ui.noSettings` when the game declares none, and has a Back button (`ui.back`).
 
-Where a change goes depends on the setting and on where the page was opened from:
+Each value comes from [`runner.settings()`](/docs/reference/runner#settings), and each change goes through [`runner.setSetting`](/docs/reference/runner#setsetting):
 
-- **A ui setting** goes through [`runner.setUiSetting`](/docs/reference/runner#setuisetting), which writes the profile.
-- **A play setting, opened from the game,** is sent as a [`setting`](/docs/reference/commands#setting) command, so it changes the game in play. The runner also writes it to the profile.
-- **A play setting, opened from the title screen,** is written straight to the profile's `core:settings`. The game in play doesn't change, and the next new game starts with it.
+- **A ui setting** is written to the profile.
+- **A play setting** is sent as a [`setting`](/docs/reference/commands#setting) command, so it changes the game in play, and the runner writes it to the profile, so the next new game starts with it. Without a profile, New game keeps the settings in play.
 
-Without a profile, a play setting is always sent as a command, and New game keeps the settings in play.
+A refused change shows its reason under the list.
 
-Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty` and `page-back`.
+Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty`, `settings-message` and `page-back`.
 
 ### LoadPage
 
@@ -1336,7 +1335,7 @@ Replaceable as `GatePage` in [`components`](#components). Parts: `gate-page`, `g
 function useSetting(id: string): KvValue | undefined
 ```
 
-A setting's current value, for your own components. A play setting's comes from the view, so it's the game in play's. A ui setting's comes from the profile, and the component redraws when it changes. If the stored value doesn't suit the setting any more, you get its default. It's `undefined` for a setting the game doesn't declare.
+A setting's current value, for your own components, as [`runner.settings()`](/docs/reference/runner#settings) gives it. A play setting's is the game in play's. A ui setting's comes from the profile, and the component redraws when it changes. If the stored value doesn't suit the setting any more, you get its default. It's `undefined` for a setting the game doesn't declare. Change one with [`runner.setSetting`](/docs/reference/runner#setsetting).
 
 ```tsx
 import { useSetting } from '@ifloom/react'

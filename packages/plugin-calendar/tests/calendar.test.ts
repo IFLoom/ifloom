@@ -43,7 +43,7 @@ const act = (id: string) => ({ type: 'activity' as const, id })
 function run(game: Game, state: GameState, ...commands: Parameters<typeof apply>[2][]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -137,7 +137,7 @@ describe('the calendar', () => {
     const night = clock.write(startingState(game), { day: 0, period: 'night' })
     expect(button(game, night, 'nap').warning).toBeUndefined()
     expect(button(game, night, 'walk').warning).toBe('That would run past dawn.')
-    expect(apply(night, game, act('walk')).refused).toBe('That would run past dawn.')
+    expect(apply(night, game, act('walk')).reason).toBe('That would run past dawn.')
     expect(button(game, night, 'bed').warning).toBeUndefined()
     const late = clock.write(startingState(game), { day: 0, period: 'late' })
     expect((view(late, game).plugins.calendar as CalendarView).curfew).toBe(true)

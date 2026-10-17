@@ -164,8 +164,8 @@ The exception is an entity that left in play. A [`remove`](/docs/reference/effec
 ```ts
 import { applyEffects, loadState, type GameState } from '@ifloom/engine'
 
-// loadState gives a string for a save it refuses; these two load.
-const staff = (state: GameState) => Object.keys((loadState(state, game) as GameState).entities.staff)
+// loadState fails for a save it refuses; these two load.
+const staff = (state: GameState) => Object.keys((loadState(state, game).value as GameState).entities.staff)
 
 const older = { ...save, entities: { ...save.entities, staff: { ana: save.entities.staff.ana } } }
 staff(older)    // ['ana', 'ben']: Ben joins

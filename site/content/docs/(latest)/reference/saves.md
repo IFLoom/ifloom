@@ -146,19 +146,19 @@ Keys contain dots (`corner-cafe.save.auto`), and the slot part is whatever the g
 function saves(game: Game, driver: SaveDriver): Saves
 ```
 
-One game's saves, kept wherever its driver keeps them. `Saves` is `ReturnType<typeof saves>`.
+One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. A save that can't be read is answered with a [`Result`](/docs/reference/runner#result), never thrown.
 
 Slots are names your game picks, such as `'auto'` for the runner's autosave, `'quick'` for a quicksave key, or `'1'`, `'2'` and `'3'` for a save screen. There's no fixed number of them.
 
 | Member | What it does |
 |---|---|
 | `driver` | The driver it was given. |
-| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is `{ name?, played?, savedAt? }`. |
-| `read(slot)` | The slot read back as a [`LoadedSave`](#loadedsave). `null` if the slot is empty, or a string saying why if it couldn't be read. |
+| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is a `SaveExtra`, `{ name?, played?, savedAt? }`: the save's name, the time played and when it was written, each made up if left out. It rejects only if the driver fails. |
+| `read(slot)` | The slot read back, as a `Result` whose value is the [`LoadedSave`](#loadedsave), or `null` if the slot is empty. It fails with the reason a save can't be read. |
 | `list()` | Every save this game has, as [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |
 | `remove(slot)` | Empties a slot. |
 | `exportSlot(slot)` | The save as text, for the player to keep as a file. `null` if the slot is empty. |
-| `importText(text)` | Reads text from a file the player picked, with the same checks as `read`. Synchronous, and writes nothing. |
+| `importText(text)` | Reads text from a file the player picked, with the same checks as `read`, as a `Result` with the `LoadedSave`. Synchronous, and writes nothing. |
 
 ```ts
 // A load screen. A save that can't be read can still be deleted.
@@ -170,13 +170,13 @@ for (const entry of await store.list()) {
 // The player's own copy, and back again.
 download('corner-cafe.save', await store.exportSlot('1'))
 const loaded = store.importText(await pickedFile.text())
-if (typeof loaded === 'string') showMessage(loaded)
-else await store.write('1', loaded.state, { name: loaded.meta.name, played: loaded.meta.played })
+if (!loaded.ok) showMessage(loaded.reason)
+else await store.write('1', loaded.value.state, { name: loaded.value.meta.name, played: loaded.value.meta.played })
 ```
 
-`read` and `importText` refuse a save with a line the player can read:
+`read` and `importText` refuse a save with a `reason` the player can read:
 
-| Returns | When |
+| Reason | When |
 |---|---|
 | `'That is not a save file.'` | Not JSON, or JSON that isn't an IFLoom save. |
 | `'That save belongs to another game (<id>).'` | The save's `meta.game` isn't this game's id. |
@@ -275,25 +275,25 @@ A save read back: its details, and the state carried forward to the current vers
 
 ```ts
 const loaded = await store.read('1')
-if (loaded && typeof loaded !== 'string' && loaded.missingPacks.length) {
-  showMessage(`This save used mods you do not have: ${loaded.missingPacks.join(', ')}.`)
+if (loaded.ok && loaded.value?.missingPacks.length) {
+  showMessage(`This save used mods you do not have: ${loaded.value.missingPacks.join(', ')}.`)
 }
 ```
 
 ## loadState
 
 ```ts
-function loadState(raw: unknown, game: Game): GameState | string
+function loadState(raw: unknown, game: Game): Result<GameState>
 ```
 
-Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns the state, or the reason it can't, as one of the [refusals](#saves) above.
+Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns a [`Result`](/docs/reference/runner#result) with the state, or the reason it can't, as one of the [refusals](#saves) above.
 
 ```ts
 import { createRunner, loadState } from '@ifloom/engine'
 
-const state = loadState(JSON.parse(text), game)
-if (typeof state === 'string') throw new Error(state)
-const runner = createRunner(game, state)
+const loaded = loadState(JSON.parse(text), game)
+if (!loaded.ok) throw new Error(loaded.reason)
+const runner = createRunner(game, loaded.value)
 ```
 
 It does these in order:

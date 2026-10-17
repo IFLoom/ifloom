@@ -12,7 +12,7 @@ const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
-export const runner = browserRunner(game)
+export const runner = await browserRunner(game)
 
 // A readable store fits the runner: it starts by subscribing, and stops with
 // the function `subscribe` returns.

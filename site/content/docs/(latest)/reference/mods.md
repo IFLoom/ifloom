@@ -69,12 +69,12 @@ A pack in a file has only what JSON can hold: scenes, items, storylines, activit
 ## readMod
 
 ```ts
-function readMod(text: string, gameId: string): ModFile | string
+function readMod(text: string, gameId: string): Result<ModFile>
 ```
 
-Reads a mod file's text for the game `gameId`. It returns the mod with its pack upgraded to [`SCHEMA`](/docs/reference/loader#schema) by [`upgradePack`](/docs/reference/loader#upgradepack) and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player:
+Reads a mod file's text for the game `gameId`. It returns a [`Result`](/docs/reference/runner#result): the mod with its pack upgraded to [`SCHEMA`](/docs/reference/loader#schema) by [`upgradePack`](/docs/reference/loader#upgradepack) and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player:
 
-| When | Returns |
+| When | Reason |
 |---|---|
 | The text isn't JSON, or lacks any of `ifloomMod: 1`, a string `id`, a string `name`, a string `game`, or a `pack` with a numeric `schema` | `That is not a mod file.` |
 | `game` isn't `gameId` | `That mod is for another game (<game>).` |
@@ -84,8 +84,8 @@ Reads a mod file's text for the game `gameId`. It returns the mod with its pack 
 import { readMod } from '@ifloom/engine'
 
 const read = readMod(text, 'small-town')
-if (typeof read === 'string') showMessage(read)
-else read.pack.id // 'mod:fog-season'
+if (!read.ok) showMessage(read.reason)
+else read.value.pack.id // 'mod:fog-season'
 ```
 
 The store's `add` calls it for you. Only call it yourself to look at a file without keeping it.
@@ -97,9 +97,9 @@ The store's `add` calls it for you. Only call it yourself to look at a file with
 ```ts
 function mods(gameId: string, driver: SaveDriver): Mods
 
-type Mods = {
+interface Mods {
   list(): Promise<InstalledMod[]>
-  add(text: string): Promise<InstalledMod | string>
+  add(text: string): Promise<Result<InstalledMod>>
   remove(id: string): Promise<void>
   setEnabled(id: string, enabled: boolean): Promise<void>
   packs(): Promise<Pack[]>
@@ -111,7 +111,7 @@ One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers
 | Member | What it does |
 |---|---|
 | `list()` | Every mod added, on or off, sorted by name. |
-| `add(text)` | Reads a file's text with [`readMod`](#readmod) and keeps the mod, switched on. Returns it, or the refusal. A mod with the same `id` as one already there replaces it, and is switched on again. |
+| `add(text)` | Reads a file's text with [`readMod`](#readmod) and keeps the mod, switched on. Returns a `Result` with it, or the refusal. A mod with the same `id` as one already there replaces it, and is switched on again. |
 | `remove(id)` | Forgets the mod. |
 | `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list but is left out of the game. An unknown id does nothing. |
 | `packs()` | The packs of the mods that are on, in name order. Load these after the game's own. |
@@ -153,7 +153,7 @@ export const modStore = mods('small-town', indexedDbDriver({ database: 'small-to
 export const { game, problems } = smallTown({ mods: await modStore.packs() })
 if (problems.length) console.warn(problems.join('\n'))
 
-export const runner = browserRunner(game)
+export const runner = await browserRunner(game)
 ```
 
 `smallTown`, in `src/game.ts`, passes the packs to [`loadGame`](/docs/reference/loader#loadgame) after its own. Trimmed, it reads:
@@ -201,7 +201,7 @@ export async function modManager(store: Mods, problems: string[]): Promise<HTMLE
     const chosen = file.files?.[0]
     if (!chosen) return
     const added = await store.add(await chosen.text())
-    if (typeof added === 'string') alert(added) // why it isn't a mod for this game
+    if (!added.ok) alert(added.reason) // why it isn't a mod for this game
     else location.reload()
   }
   return section
@@ -259,7 +259,7 @@ async function addFile(event: Event) {
   const chosen = (event.target as HTMLInputElement).files?.[0]
   if (!chosen) return
   const added = await modStore.add(await chosen.text())
-  if (typeof added === 'string') refused.value = added
+  if (!added.ok) refused.value = added.reason
   else location.reload()
 }
 </script>
@@ -295,7 +295,7 @@ async function addFile(event: Event) {
     const chosen = (event.currentTarget as HTMLInputElement).files?.[0]
     if (!chosen) return
     const added = await modStore.add(await chosen.text())
-    if (typeof added === 'string') refused = added
+    if (!added.ok) refused = added.reason
     else location.reload()
   }
 </script>

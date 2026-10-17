@@ -254,7 +254,7 @@ describe('startAudio', () => {
     player.stop()
   })
 
-  it('sets volumes from the profile, the defaults, and mute', async () => {
+  it('sets volumes from the settings, the defaults, and mute', async () => {
     const t = setup()
     const player = startAudio(t.runner, t.options)
     t.click()
@@ -262,13 +262,13 @@ describe('startAudio', () => {
     const calm = t.last('audio/calm.ogg')
     // Nothing stored yet: the setting's default, 80 of 0 to 100.
     expect(calm.volume).toBeCloseTo(0.8)
-    t.runner.setUiSetting('musicVolume', 25)
+    t.runner.setSetting('musicVolume', 25)
     await t.runner.settled()
     expect(calm.volume).toBeCloseTo(0.25)
-    t.runner.setUiSetting('muted', true)
+    t.runner.setSetting('muted', true)
     await t.runner.settled()
     expect(calm.volume).toBe(0)
-    t.runner.setUiSetting('muted', false)
+    t.runner.setSetting('muted', false)
     await t.runner.settled()
     expect(calm.volume).toBeCloseTo(0.25)
     player.stop()

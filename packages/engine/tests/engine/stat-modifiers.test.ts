@@ -9,6 +9,7 @@ import { loadState } from '../../src/intake.ts'
 import type { Game } from '../../src/game.ts'
 import type { GameState } from '../../src/types.ts'
 import { begin, fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /**
  * A pair of reading glasses: worn, they add to intelligence. What the
@@ -97,7 +98,7 @@ describe('stat modifiers', () => {
     const on = wearing(g)
     expect(whyNot(on, g, { type: 'activity', id: 'crossword' })).toBeUndefined()
     const done = apply(on, g, { type: 'activity', id: 'crossword' })
-    expect(done.refused).toBeUndefined()
+    expect(done.reason).toBeUndefined()
     // 5 kept, less 8, held at 0: the glasses' 4 is still added on top.
     expect(done.state.stats.intelligence).toBe(0)
     expect(statValue(done.state, g, 'intelligence')).toBe(4)
@@ -114,8 +115,7 @@ describe('stat modifiers', () => {
   it('read nothing from a save that has no state for the plugin', () => {
     const g = game([{ stat: 'intelligence', add: 4 }])
     const { plugins: _gone, ...old } = begin(g)
-    const loaded = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loaded = unwrap(loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g))
     expect(statValue(loaded, g, 'intelligence')).toBe(5)
   })
 })

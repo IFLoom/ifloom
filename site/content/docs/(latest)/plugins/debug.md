@@ -148,15 +148,15 @@ where(state)         // 'cafe'
 state.sceneId        // 'ava.hi'
 state.turn           // 4
 
-apply(state, game, debugStat('luck', 3)).refused     // 'There is no stat called luck.'
-apply(state, game, debugStat('friendship', 5, 'character:ghost')).refused
+apply(state, game, debugStat('luck', 3)).reason     // 'There is no stat called luck.'
+apply(state, game, debugStat('friendship', 5, 'character:ghost')).reason
 // 'There is nobody and nothing called character:ghost.'
-apply(state, game, debugStat('friendship', 5)).refused // 'That is not whose friendship it is.'
-apply(state, game, debugGo('moon')).refused           // 'There is no location called moon.'
-apply(state, game, debugItem('sandwich', NaN)).refused // 'That needs a number.'
-apply(state, game, debugTime({ period: 'noon' })).refused
+apply(state, game, debugStat('friendship', 5)).reason // 'That is not whose friendship it is.'
+apply(state, game, debugGo('moon')).reason           // 'There is no location called moon.'
+apply(state, game, debugItem('sandwich', NaN)).reason // 'That needs a number.'
+apply(state, game, debugTime({ period: 'noon' })).reason
 // 'A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.'
-apply(state, game, debugTurn(-1)).refused            // 'A turn is a whole number from 0.'
+apply(state, game, debugTurn(-1)).reason            // 'A turn is a whole number from 0.'
 ```
 
 The debug commands don't change the [phase](/docs/reference/state#phase), so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from `{ ...startingState(game), phase: 'open', sceneId: null }` instead, as the showcase's own `probes` do.

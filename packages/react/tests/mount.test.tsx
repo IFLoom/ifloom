@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, screen } from '@testing-library/react'
-import { SCHEMA, loadGame, memoryDriver, saves } from '@ifloom/engine'
+import { SCHEMA, loadGame, memoryDriver, saves, type Runner } from '@ifloom/engine'
 import { mountGame } from '../src/index.ts'
 
 const loaded = () =>
@@ -32,9 +32,9 @@ function page(): HTMLElement {
 describe('mountGame', () => {
   it('draws the game into #root and returns a runner that plays it', async () => {
     page()
-    let runner!: ReturnType<typeof mountGame>
+    let runner!: Runner
     await act(async () => {
-      runner = mountGame(loaded())
+      runner = await mountGame(loaded())
     })
     expect(screen.getByText('A letter on the mat.')).toBeTruthy()
     await act(async () => void runner.apply({ type: 'choose', id: 'open' }))
@@ -52,16 +52,16 @@ describe('mountGame', () => {
   it('takes its own root and runner options', async () => {
     const root = page()
     root.id = 'elsewhere'
-    let runner!: ReturnType<typeof mountGame>
+    let runner!: Runner
     const store = saves(loaded().game, memoryDriver())
     await act(async () => {
-      runner = mountGame(loaded(), { root, runner: { saves: store, history: false } })
+      runner = await mountGame(loaded(), { root, runner: { saves: store, history: false } })
     })
     expect(runner.saves).toBe(store)
     expect(runner.offers.undo).toBe(false)
   })
 
-  it('says when there is nowhere to draw', () => {
-    expect(() => mountGame(loaded())).toThrow(/#root/)
+  it('says when there is nowhere to draw', async () => {
+    await expect(mountGame(loaded())).rejects.toThrow(/#root/)
   })
 })

@@ -15,7 +15,7 @@ const { game } = smallTown()
 function run(state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state

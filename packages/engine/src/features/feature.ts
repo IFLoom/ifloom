@@ -269,8 +269,6 @@ export type FeatureSpec<T extends FeatureShape> = {
 export type RunnerHooks = {
   /** After a command took. `remember` queues a write to the profile; only a runner with a profile calls this. */
   afterCommand?: (command: Command, remember: (write: (profile: Profile) => Promise<unknown>) => void) => void
-  /** What a new game the runner starts is given, from the profile. */
-  newGame?: (start: StartOptions, profile: Profile | undefined) => Promise<StartOptions>
 }
 
 /** A feature as the registry holds it: every table there, empty if it declares none. */

@@ -97,7 +97,7 @@ describe('plugins', () => {
     const drop = { type: 'custom' as const, name: 'shells/drop', with: { shell: 'whelk' } }
     expect(whyNot(begin(game), game, drop)).toBe('You do not have that shell.')
     const refused = apply(begin(game), game, drop)
-    expect(refused).toMatchObject({ ok: false, refused: 'You do not have that shell.' })
+    expect(refused).toMatchObject({ ok: false, reason: 'You do not have that shell.' })
     const found = apply(begin(game), game, { type: 'activity', id: 'beachcomb' }).state
     expect(shells.read(apply(found, game, drop).state, game).found).toEqual([])
     expect(whyNot(begin(game), game, { type: 'custom', name: 'shells/juggle' })).toBe('There is no such thing to do.')
@@ -106,7 +106,7 @@ describe('plugins', () => {
   it('refuse a state their plugin cannot read', () => {
     const game = withShells()
     const newer = { ...begin(game), plugins: { shells: { version: 3, state: { weird: true } } } }
-    expect(loadState(newer, game)).toBe('That save was made with a newer version of shells.')
+    expect(loadState(newer, game)).toEqual({ ok: false, reason: 'That save was made with a newer version of shells.' })
   })
 
   it('can be stopped by a lock, one command or the whole plugin', () => {
@@ -139,12 +139,12 @@ describe('plugins', () => {
     const old = { ...begin(game), plugins: { shells: { version: 1, state: { count: 2 } } } }
     await store.write('1', old)
     const back = await store.read('1')
-    expect(back && typeof back !== 'string' && back.state.plugins.shells).toEqual({
+    expect(back.ok && back.value?.state.plugins.shells).toEqual({
       version: 2,
       state: { found: ['old-0', 'old-1'], days: 0 },
     })
     await store.write('2', { ...begin(game), plugins: { shells: { version: 3, state: {} } } })
-    expect(await store.read('2')).toBe('That save was made with a newer version of shells.')
+    expect(await store.read('2')).toEqual({ ok: false, reason: 'That save was made with a newer version of shells.' })
   })
 
   it('report a save made with a plugin the game no longer has, and keep its state', async () => {
@@ -155,8 +155,8 @@ describe('plugins', () => {
       state: { ...begin(game), plugins: { kites: { version: 1, state: { flown: 3 } } } },
     })
     const back = saves(game, memoryDriver()).importText(text)
-    expect(back && typeof back !== 'string' && back.missingPlugins).toEqual(['kites'])
-    expect(back && typeof back !== 'string' && back.state.plugins.kites).toEqual({ version: 1, state: { flown: 3 } })
+    expect(back.ok && back.value?.missingPlugins).toEqual(['kites'])
+    expect(back.ok && back.value?.state.plugins.kites).toEqual({ version: 1, state: { flown: 3 } })
   })
 
   it('take content from packs, merged by id, and check it', () => {

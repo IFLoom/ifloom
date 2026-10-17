@@ -21,7 +21,7 @@ describe('the strings table', () => {
     }
     const busy = begin(game, { sceneId: 'rosa.hello' })
     expect(whyNot(busy, game, { type: 'activity', id: 'go-street' })).toBe('Not yet, love.')
-    expect(apply(busy, game, { type: 'activity', id: 'go-street' }).refused).toBe('Not yet, love.')
+    expect(apply(busy, game, { type: 'activity', id: 'go-street' }).reason).toBe('Not yet, love.')
   })
 
   it('come from packs too, so a translation can ship as a mod, later packs winning', () => {

@@ -13,7 +13,7 @@ const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
-const runner = browserRunner(game)
+const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)

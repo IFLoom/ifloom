@@ -33,7 +33,7 @@ function game(): Game {
 const run = (state: GameState, g: Game, ...commands: CommandRef[]) =>
   commands.reduce<GameState>((s, command) => {
     const out = apply(s, g, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     return out.state
   }, state)
 

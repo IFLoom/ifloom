@@ -35,8 +35,8 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     // With no plugin to say when, the turn: counted from 1, as a player would.
     expect(meta.name).toBe('Turn 5')
     const back = await store.read('1')
-    expect(back && typeof back !== 'string' && back.state).toEqual(state)
-    expect(await store.read('empty')).toBeNull()
+    expect(back.ok && back.value?.state).toEqual(state)
+    expect(await store.read('empty')).toEqual({ ok: true, value: null })
   })
 
   it('name a save with game.saveName, and leave it unnamed without one', async () => {
@@ -80,10 +80,10 @@ describe('save files', () => {
     await store.write('1', startingState(game))
     const text = (await store.exportSlot('1'))!
     const back = store.importText(text)
-    expect(typeof back !== 'string' && back.state.version).toBe(SAVE_VERSION)
-    expect(store.importText('not json')).toBe('That is not a save file.')
+    expect(back.ok && back.value.state.version).toBe(SAVE_VERSION)
+    expect(store.importText('not json')).toEqual({ ok: false, reason: 'That is not a save file.' })
     const other = saves({ ...game, id: 'another' }, memoryDriver())
-    expect(other.importText(text)).toBe('That save belongs to another game (fixture).')
+    expect(other.importText(text)).toEqual({ ok: false, reason: 'That save belongs to another game (fixture).' })
   })
 
   it('names the packs a save was made with that this game no longer has', async () => {
@@ -93,13 +93,13 @@ describe('save files', () => {
     const text = (await store.exportSlot('1'))!
     const without = saves({ ...game, packs: ['town'] }, memoryDriver())
     const read = without.importText(text)
-    expect(typeof read !== 'string' && read.missingPacks).toEqual(['cafe'])
+    expect(read.ok && read.value.missingPacks).toEqual(['cafe'])
   })
 
   it('keeps each game to its own keys in a shared driver', async () => {
     const { game } = withCafe()
     const shared = memoryDriver()
     await saves(game, shared).write('1', startingState(game))
-    expect(await saves({ ...game, id: 'another' }, shared).read('1')).toBeNull()
+    expect(await saves({ ...game, id: 'another' }, shared).read('1')).toEqual({ ok: true, value: null })
   })
 })

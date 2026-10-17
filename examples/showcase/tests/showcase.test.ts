@@ -26,7 +26,7 @@ const { game, problems } = smallTown()
 function run(state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state
@@ -45,7 +45,7 @@ describe('Small Town', () => {
   it('holds the player in moving day until they unpack', () => {
     const start = startingState(game)
     expect(view(start, game).scene.title).toBe('Moving day')
-    expect(apply(start, game, go('high-street')).refused).toBe('Unpack first.')
+    expect(apply(start, game, go('high-street')).reason).toBe('Unpack first.')
     const unpacked = run(start, { type: 'choose', id: 'unpack' })
     expect(quests(unpacked).active.map((quest) => quest.id)).toEqual(['settle', 'friend'])
   })
@@ -53,7 +53,7 @@ describe('Small Town', () => {
   it('names the cat on moving day, and says the name after', () => {
     let state = run(startingState(game), { type: 'input', id: 'catName', to: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
-    expect(apply(state, game, { type: 'input', id: 'catName', to: 'Rex' }).refused).toBe('Not now.')
+    expect(apply(state, game, { type: 'input', id: 'catName', to: 'Rex' }).reason).toBe('Not now.')
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'sandwich'))
     expect(view(state, game).pack.find((item) => item.id === 'sandwich')?.useLabel).toBe('Eat the sandwich')
     state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', id: 'sandwich' })
@@ -82,7 +82,7 @@ describe('Small Town', () => {
 
     state = run(state, act('coffee'))
     expect(state.stats).toMatchObject({ coins: 9, energy: 95 })
-    expect(apply(state, game, act('coffee')).refused).toBe('One is enough for today.')
+    expect(apply(state, game, act('coffee')).reason).toBe('One is enough for today.')
 
     state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
     state = run(state, openCamera, act('photo-ava'), act('post'))
@@ -96,7 +96,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
-    expect(apply(state, game, call('ava')).refused).toBe('She’s busy at the counter. Try her this evening.')
+    expect(apply(state, game, call('ava')).reason).toBe('She’s busy at the counter. Try her this evening.')
     state = run(on(state, 1, 'night'), sleep())
     expect(state.stats.energy).toBe(100)
     const texts = (view(state, game).plugins.messages as MessagesView).channels[0]
@@ -158,7 +158,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('park'), act('arrows'))
     expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500, inputs: ['up', 'down', 'left', 'right'] })
-    expect(apply(state, game, act('jog')).refused).toBe('Finish this first.')
+    expect(apply(state, game, act('jog')).reason).toBe('Finish this first.')
     const coins = state.stats.coins
     // Three arrows pressed in time, after a moment's thought; the last two left to time out.
     for (let round = 0; round < 3; round += 1) {
@@ -205,7 +205,7 @@ describe('Small Town', () => {
     expect(state.stats.coins).toBe(coins - 4)
     expect(state.items.sandwich).toBe(1)
     // Only in the café.
-    expect(apply(run(state, go('high-street')), game, act('buySandwich')).refused).toBeDefined()
+    expect(apply(run(state, go('high-street')), game, act('buySandwich')).reason).toBeDefined()
   })
 
   it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
@@ -218,25 +218,25 @@ describe('Small Town', () => {
     const button = view(state, game).actions.find((action) => action.id === 'flapjack')!
     expect(button.price?.stats?.[0].id).toBe('coins')
     state = run(state, buy('counter', 'flapjack'), buy('counter', 'flapjack'))
-    expect(apply(state, game, buy('counter', 'flapjack')).refused).toBe('Sold out.')
+    expect(apply(state, game, buy('counter', 'flapjack')).reason).toBe('Sold out.')
     expect(view(state, game).actions.find((action) => action.id === 'flapjack')!.disabled).toBe('Sold out.')
     const coins = state.stats.coins
     state = run(state, buy('counter', 'sandwich'), { type: 'custom', name: 'shop/sell', with: { vendor: 'counter', item: 'sandwich' } })
     expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
     // Closed in the evening, with the café.
-    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).refused).toBe('Closed.')
+    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).reason).toBe('Closed.')
   })
 
   it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    expect(apply(state, game, applyFor('weekend')).refused).toBe('Ava doesn’t know you well enough yet.')
+    expect(apply(state, game, applyFor('weekend')).reason).toBe('Ava doesn’t know you well enough yet.')
     state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
     state = { ...state, entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } } }
     state = run(state, applyFor('weekend'))
     const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
     expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
-    expect(apply(state, game, work('weekend')).refused).toBe('No shift today.')
+    expect(apply(state, game, work('weekend')).reason).toBe('No shift today.')
     // Saturday morning: a shift takes the morning and 25 energy, and pays 12 coins.
     state = on({ ...state, stats: { ...state.stats, energy: 100 } }, 5, 'morning')
     const coins = state.stats.coins
@@ -266,7 +266,7 @@ describe('Small Town', () => {
   it('keeps the phone in the pocket at work', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('office'))
-    expect(apply(state, game, openCamera).refused).toBe('Not at work.')
+    expect(apply(state, game, openCamera).reason).toBe('Not at work.')
     state = run(state, act('work'))
     expect(state.stats.coins).toBe(32)
   })

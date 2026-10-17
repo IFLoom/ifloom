@@ -16,7 +16,7 @@ describe('locks', () => {
     expect(lockedBy(night, game, { type: 'activity', id: 'read' })).toBe('It is dark.')
     const refused = apply(night, game, { type: 'activity', id: 'read' })
     expect(refused.ok).toBe(false)
-    expect(refused.refused).toBe('It is dark.')
+    expect(refused.reason).toBe('It is dark.')
     expect(apply(day, game, { type: 'activity', id: 'read' }).ok).toBe(true)
   })
 

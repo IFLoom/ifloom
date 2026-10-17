@@ -31,7 +31,7 @@ export async function titleScreen(root: HTMLElement, runner: Runner, start: () =
     carryOn.textContent = 'Continue'
     carryOn.onclick = async () => {
       const loaded = await runner.load(newest.slot)
-      if (loaded && typeof loaded !== 'string') start()
+      if (loaded.ok) start()
     }
   }
 }
@@ -84,7 +84,7 @@ async function newGame() {
 
 async function carryOn(slot: string) {
   const loaded = await runner.load(slot)
-  if (loaded && typeof loaded !== 'string') emit('start')
+  if (loaded.ok) emit('start')
 }
 </script>
 
@@ -130,7 +130,7 @@ const started = ref(false)
 
   async function carryOn(slot: string) {
     const loaded = await runner.load(slot)
-    if (loaded && typeof loaded !== 'string') onstart()
+    if (loaded.ok) onstart()
   }
 </script>
 
@@ -215,7 +215,7 @@ const town: Pack = {
 }
 ```
 
-The React UI's settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game. With the other templates, draw `view.settings` yourself. Each [`SettingView`](/docs/reference/view#settingview) has its value and the kind of control it wants. Send a `play` setting as a [`setting`](/docs/reference/commands#setting) command, and change a `ui` setting with [`runner.setUiSetting`](/docs/reference/runner#setuisetting).
+The React UI's settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game. With the other templates, draw `view.settings` yourself. Each [`SettingView`](/docs/reference/view#settingview) has its value and the kind of control it wants. Read every value with [`runner.settings()`](/docs/reference/runner#settings), and send a change of either kind with [`runner.setSetting`](/docs/reference/runner#setsetting).
 
 A setting is either part of the game or only part of how it looks. [Settings](/docs/reference/settings) has the details, and the next two sections show each kind in use.
 
@@ -230,10 +230,7 @@ body: [
 ],
 ```
 
-Where the player changes it matters:
-
-- **From the title screen**, before a game, the new value is stored in the profile. The game in play doesn't change, and the next new game starts with it.
-- **During a game**, from the menu, the UI sends a [`setting`](/docs/reference/commands#setting) command. The change applies at once, it's logged with the other commands, and it's stored in the profile for later games too.
+When the player changes it, from the title screen or the menu, `runner.setSetting` sends a [`setting`](/docs/reference/commands#setting) command. The change applies to the game in play at once, it's logged with the other commands, and it's stored in the profile, so the next new game starts with it too.
 
 A save keeps the settings it was made with, so loading an old save brings its own values back.
 
@@ -241,22 +238,11 @@ A save keeps the settings it was made with, so loading an old save brings its ow
 
 `textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/docs/reference/profile), and your own code applies it.
 
-Read it where you draw the story. It's in the profile's `core:settings`, and the profile tells its listeners when the player changes it. In the React UI, [`useSetting`](/docs/react/components#usesetting) does both and redraws the component:
+Read it where you draw the story, with [`runner.settings()`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/react/components#usesetting) reads it and redraws the component:
 
 ```ts tab="Plain JS" tab-group="framework"
-// src/main.ts, in the vanilla template
-let textSize: unknown = 'normal'
-const readTextSize = (settings: unknown) => {
-  textSize = (settings as Record<string, unknown> | undefined)?.textSize
-  draw(runner.view())
-}
-void runner.profile?.get('core:settings').then(readTextSize)
-runner.profile?.subscribe((namespace, value) => {
-  if (namespace === 'core:settings') readTextSize(value)
-})
-
-// In draw():
-root.classList.toggle('large', textSize === 'large')
+// src/main.ts, in the vanilla template. In draw():
+root.classList.toggle('large', runner.settings().textSize === 'large')
 ```
 
 ```tsx tab="React" tab-group="framework"
@@ -274,11 +260,9 @@ function Story({ children }: { children: React.ReactNode }) {
 import { onUnmounted, ref } from 'vue'
 import { runner } from './runner.ts'
 
-const size = ref<unknown>()
-const read = (settings: unknown) => (size.value = (settings as Record<string, unknown> | undefined)?.textSize)
-void runner.profile?.get('core:settings').then(read)
-const stop = runner.profile?.subscribe((namespace, value) => namespace === 'core:settings' && read(value))
-onUnmounted(() => stop?.())
+const size = ref(runner.settings().textSize)
+const stop = runner.subscribe(() => (size.value = runner.settings().textSize))
+onUnmounted(stop)
 </script>
 
 <template>
@@ -293,27 +277,22 @@ onUnmounted(() => stop?.())
   import { runner } from './runner.ts'
 
   let { children }: { children: Snippet } = $props()
-  let size = $state<unknown>()
-  const read = (settings: unknown) => (size = (settings as Record<string, unknown> | undefined)?.textSize)
-  void runner.profile?.get('core:settings').then(read)
-  $effect(() => runner.profile?.subscribe((namespace, value) => namespace === 'core:settings' && read(value)))
+  let size = $state(runner.settings().textSize)
+  $effect(() => runner.subscribe(() => (size = runner.settings().textSize)))
 </script>
 
 <div class:large={size === 'large'}>{@render children()}</div>
 ```
 
-To apply it to every page, including the title screen, put it on the page instead. This works the same whatever draws the game. The showcase copies it from the profile to an attribute on `<html>`:
+To apply it to every page, including the title screen, put it on the page instead. This works the same whatever draws the game. The showcase copies it from the runner to an attribute on `<html>`:
 
 ```ts
 // src/main.tsx
-function showTextSize(settings: unknown) {
-  const size = (settings as Record<string, unknown> | undefined)?.textSize
-  document.documentElement.dataset.textSize = size === 'large' ? 'large' : 'normal'
+function showTextSize() {
+  document.documentElement.dataset.textSize = runner.settings().textSize === 'large' ? 'large' : 'normal'
 }
-void stored.get('core:settings').then(showTextSize)
-stored.subscribe((namespace, value) => {
-  if (namespace === 'core:settings') showTextSize(value)
-})
+showTextSize()
+runner.subscribe(showTextSize)
 ```
 
 Then the stylesheet uses the attribute. The React UI sizes everything in `rem`, so a larger root font scales the whole page, and so will your own stylesheet if it does the same:
@@ -324,8 +303,6 @@ Then the stylesheet uses the attribute. The React UI sizes everything in `rem`, 
   font-size: 118.75%;
 }
 ```
-
-Here `stored` is the profile given to the runner. With `browserRunner` or `mountGame`, it's `runner.profile`.
 
 ## Offer New Game+
 

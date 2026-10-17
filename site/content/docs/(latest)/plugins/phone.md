@@ -303,7 +303,7 @@ declare const game: Game
 declare let state: GameState // the same day, at home
 const phoneOf = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
 
-apply(state, game, call('ava')).refused   // in the morning: 'She’s busy at the counter. Try her this evening.'
+apply(state, game, call('ava')).reason   // in the morning: 'She’s busy at the counter. Try her this evening.'
 
 // ...wait until the evening
 state = apply(state, game, openApp('contacts')).state
@@ -358,7 +358,7 @@ state = apply(state, game, go('high-street')).state
 state = apply(state, game, go('office')).state
 phoneOf(state).open                              // null: the camera closed on arrival
 phoneOf(state).apps.map((app) => app.disabled)   // ['Not at work.', 'Not at work.', ...]
-apply(state, game, openApp('texts')).refused     // 'Not at work.'
+apply(state, game, openApp('texts')).reason     // 'Not at work.'
 ```
 
 ## Gotchas

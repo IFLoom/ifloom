@@ -111,7 +111,7 @@ Here `src/game.ts` exports what [`loadGame`](/docs/reference/loader#loadgame) re
 ## mountGame
 
 ```ts
-function mountGame(game: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Runner
+function mountGame(game: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Promise<Runner>
 
 type MountOptions = Omit<GameShellProps, 'runner'> & {
   root?: string | Element
@@ -122,14 +122,14 @@ type MountOptions = Omit<GameShellProps, 'runner'> & {
 }
 ```
 
-`mountGame` makes a runner for the game with the engine's [`browserRunner`](/docs/reference/runner#browserrunner) and draws [`GameShell`](#gameshell) into the page, or your own `app`, inside React's `StrictMode`. It returns the runner, so your own code can still send commands or read the state.
+`mountGame` makes a runner for the game with the engine's [`browserRunner`](/docs/reference/runner#browserrunner) and draws [`GameShell`](#gameshell) into the page, or your own `app`, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
 
 It sets up what most games want:
 
 | Option | Default |
 |---|---|
-| `root` | `'#root'`. An element, or a selector for one. It throws if nothing matches. |
-| `start` | A new game, `startingState(game, { seed })`, with a random seed so each playthrough draws its own variants. |
+| `root` | `'#root'`. An element, or a selector for one. It rejects if nothing matches. |
+| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's stored play settings. |
 | `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
 | `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
 | `app` | None, so `GameShell` is drawn. Your own root component, drawn inside a [`GameProvider`](/docs/react/components#gameprovider) instead. `useGame`, the hooks and every built-in component work in it. With `pages` on, it's drawn on the `game` page. See [Write your own root](/docs/react/customising#8-write-your-own-root). |
@@ -146,7 +146,7 @@ Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `m
 import { mountGame } from '@ifloom/react'
 import game from './game.ts'
 
-const runner = mountGame(game, {
+const runner = await mountGame(game, {
   runner: { backlog: { limit: 200 } },
   layout: { sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'entities', 'actions'] },
 })

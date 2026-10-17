@@ -10,6 +10,7 @@ import { pickKey, poolCandidates } from '../../src/features/media.ts'
 import { SAVE_VERSION, type Command, type GameState } from '../../src/types.ts'
 import type { Game, Scene } from '../../src/game.ts'
 import type { DataScene } from '../../src/scene.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 const video = { autoplay: true, loop: true, muted: true, controls: false }
 
@@ -196,7 +197,7 @@ describe('pools', () => {
     const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const after = apply(startingState(g, { seed: 7 }), g, { type: 'activity', id: 'knock' }).state
     const shown = view(after, g).scene.beats[3]
-    const loaded = loadState(JSON.parse(JSON.stringify(after)), g) as GameState
+    const loaded = unwrap(loadState(JSON.parse(JSON.stringify(after)), g))
     const more: Game = { ...g, media: { pools: { ...pools, door: [{ src: 'door/blue-dusk.jpg', tags: ['blue', 'red'] }, ...pools.door] } } }
     expect(view(loaded, more).scene.beats[3]).toEqual(shown)
     // A pick whose file has gone from the pool is drawn again.
@@ -211,8 +212,8 @@ describe('pools', () => {
     let state = start
     for (const command of commands) state = apply(state, g, command).state
     const replayed = replay(g, { game: g.id, start, commands })
-    expect(replayed).toEqual(state)
-    expect(view(replayed as GameState, g).scene.beats).toEqual(view(state, g).scene.beats)
+    expect(unwrap(replayed)).toEqual(state)
+    expect(view(unwrap(replayed), g).scene.beats).toEqual(view(state, g).scene.beats)
   })
 
   it('resolve in a hand-built scene’s body and media, by position', () => {
@@ -395,6 +396,6 @@ describe('saves', () => {
   it('carry a version-10 save forward with nothing picked', () => {
     const g = game([])
     const { media: _media, ...now } = startingState(g)
-    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: SAVE_VERSION, media: { picks: {} } })
+    expect(unwrap(loadState({ ...now, version: 10 }, g))).toEqual({ ...now, version: SAVE_VERSION, media: { picks: {} } })
   })
 })

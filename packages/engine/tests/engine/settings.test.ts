@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { GameState } from '../../src/types.ts'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
@@ -12,6 +11,7 @@ import { problemsOf } from '../fixtures/checked.ts'
 import { settingValue } from '../../src/features/settings.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 const SETTINGS: SettingDef[] = [
   { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
@@ -98,7 +98,7 @@ describe('the setting command', () => {
   it('is refused for an unknown id, a ui setting, or a value that does not fit', () => {
     const g = game()
     const start = startingState(g)
-    const refused = (id: string, value: boolean | number | string) => apply(start, g, { type: 'setting', id, to: value }).refused
+    const refused = (id: string, value: boolean | number | string) => apply(start, g, { type: 'setting', id, to: value }).reason
     expect(refused('volume', 3)).toBe('There is no such setting.')
     expect(refused('textSize', 'large')).toBe('That setting does not change the game.')
     expect(refused('hints', 'yes')).toBe('Choose on or off.')
@@ -110,12 +110,12 @@ describe('the setting command', () => {
 
   it('uses the game’s strings for its refusals', () => {
     const g = game({ strings: { noSuchSetting: 'No.' } })
-    expect(apply(startingState(g), g, { type: 'setting', id: 'volume', to: 1 }).refused).toBe('No.')
+    expect(apply(startingState(g), g, { type: 'setting', id: 'volume', to: 1 }).reason).toBe('No.')
   })
 
   it('ignores locks', () => {
     const g = game({ rules: { locks: [{ when: { turn: { gte: 0 } }, deny: ['*'], reason: 'Not now.' }] } })
-    expect(apply(startingState(g), g, { type: 'activity', id: 'wait' }).refused).toBe('Not now.')
+    expect(apply(startingState(g), g, { type: 'activity', id: 'wait' }).reason).toBe('Not now.')
     expect(apply(startingState(g), g, { type: 'setting', id: 'hints', to: false }).ok).toBe(true)
   })
 
@@ -126,8 +126,8 @@ describe('the setting command', () => {
     runner.apply({ type: 'activity', id: 'read' })
     runner.apply({ type: 'setting', id: 'patience', to: 10 })
     expect(runner.log().commands.map((command) => command.type)).toEqual(['setting', 'activity', 'setting'])
-    expect(replay(g, runner.log())).toEqual(runner.state)
-    expect((replay(g, runner.log()) as GameState).settings).toEqual({ hints: false, difficulty: 'usual', patience: 10 })
+    expect(unwrap(replay(g, runner.log()))).toEqual(runner.state)
+    expect(unwrap(replay(g, runner.log())).settings).toEqual({ hints: false, difficulty: 'usual', patience: 10 })
   })
 })
 

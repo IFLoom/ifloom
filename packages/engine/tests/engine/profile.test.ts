@@ -95,19 +95,59 @@ describe('the runner and the profile', () => {
     expect(await prof.get('core:settings')).toEqual({ hints: false })
   })
 
-  it('writes a ui setting to the profile only, and refuses one it cannot take', async () => {
+  it('sets a ui setting in the profile only, and refuses one it cannot take', async () => {
     const g = game()
     const prof = profile(g, memoryDriver())
     const runner = createRunner(g, begin(g), { profile: prof })
     const before = runner.state
-    expect(runner.setUiSetting('textSize', 'large')).toBeUndefined()
-    expect(runner.setUiSetting('textSize', 'huge')).toBe('That is not one of the options.')
-    expect(runner.setUiSetting('hints', false)).toBe('That setting changes the game, so it is set with a command.')
+    expect(runner.setSetting('textSize', 'large')).toEqual({ ok: true, value: 'large' })
+    expect(runner.settings().textSize).toBe('large')
+    expect(runner.setSetting('textSize', 'huge')).toEqual({ ok: false, reason: 'That is not one of the options.' })
+    expect(runner.setSetting('volume', 3)).toEqual({ ok: false, reason: 'There is no such setting.' })
     await runner.settled()
     expect(await prof.get('core:settings')).toEqual({ textSize: 'large' })
     expect(runner.state).toBe(before)
     expect(runner.log().commands).toEqual([])
-    expect(() => createRunner(g, begin(g)).setUiSetting('textSize', 'large')).toThrow()
+    // Without a profile there is nowhere to keep one; nothing throws.
+    expect(createRunner(g, begin(g)).setSetting('textSize', 'large')).toEqual({ ok: false, reason: 'This game keeps no settings between plays.' })
+  })
+
+  it('sets a play setting as the setting command, kept for the next game', async () => {
+    const g = game()
+    const prof = profile(g, memoryDriver())
+    const runner = createRunner(g, begin(g), { profile: prof })
+    let told = 0
+    runner.subscribe(() => told++)
+    expect(runner.setSetting('hints', false)).toEqual({ ok: true, value: false })
+    expect(runner.state.settings.hints).toBe(false)
+    expect(runner.log().commands).toEqual([{ type: 'setting', id: 'hints', to: false }])
+    expect(runner.setSetting('hints', 'maybe')).toEqual({ ok: false, reason: 'Choose on or off.' })
+    expect(told).toBe(1)
+    await runner.settled()
+    expect(await prof.get('core:settings')).toEqual({ hints: false })
+    // Without a profile, a new game keeps the one in play.
+    const plain = createRunner(g, begin(g))
+    plain.setSetting('hints', false)
+    expect((await plain.newGame()).settings).toEqual({ hints: false })
+  })
+
+  it('gives every setting, play and ui, as the profile holds them once read', async () => {
+    const g = game()
+    const prof = profile(g, memoryDriver())
+    await prof.set('core:settings', { hints: false, textSize: 'large' })
+    const runner = createRunner(g, begin(g), { profile: prof })
+    // Before the profile is read, a ui setting is its default; the play one is the game's.
+    expect(runner.settings()).toEqual({ hints: true, textSize: 'small' })
+    let told = 0
+    runner.subscribe(() => told++)
+    await runner.settled()
+    expect(runner.settings()).toEqual({ hints: true, textSize: 'large' })
+    expect(told).toBe(1)
+    // The same object until something changes.
+    expect(runner.settings()).toBe(runner.settings())
+    // A value stored that no longer fits reads as the default.
+    await prof.set('core:settings', { textSize: 'huge' })
+    expect(runner.settings().textSize).toBe('small')
   })
 
   it('records finished once, the first time it holds', async () => {

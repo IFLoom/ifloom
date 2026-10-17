@@ -11,6 +11,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import type { Game, MinigameDef } from '../../src/index.ts'
 import type { Command, GameState } from '../../src/types.ts'
 import { begin, fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /**
  * Three rounds: each draws an arrow (1 up, 2 down) and gives 1.5 seconds to
@@ -82,7 +83,7 @@ function withMinigames(extra: Partial<Game> = {}): Game {
 function run(state: GameState, game: Game, ...commands: Command[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state
@@ -225,7 +226,7 @@ describe('minigames', () => {
     const game = withMinigames()
     const { minigame: _minigame, ...old } = begin(game)
     const loaded = loadState(JSON.parse(JSON.stringify(old)), game)
-    expect(typeof loaded !== 'string' && loaded.minigame).toBeNull()
+    expect(loaded.ok && loaded.value.minigame).toBeNull()
   })
 })
 
@@ -239,7 +240,7 @@ describe('the runner, with a minigame', () => {
     runner.apply({ type: 'tick', ms: 1600 })
     runner.apply(wrong(runner.state))
     expect(runner.log().commands.filter((command) => command.type === 'tick')).toHaveLength(2)
-    expect(replay(game, runner.log())).toEqual(runner.state)
+    expect(unwrap(replay(game, runner.log()))).toEqual(runner.state)
   })
 
   it('undoes past ticks to before the last command that was not one', () => {

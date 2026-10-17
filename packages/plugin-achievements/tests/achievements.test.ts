@@ -56,7 +56,7 @@ function game(extra: Partial<Pack> = {}): Game {
 function run(state: GameState, g: Game, ...ids: string[]): GameState {
   for (const id of ids) {
     const out = apply(state, g, { type: 'activity', id })
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -170,10 +170,11 @@ describe('achievements', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
     for (const id of ['earn', 'dusk', 'bank', 'kindness']) runner.apply({ type: 'activity', id })
-    expect(replay(g, runner.log())).toEqual(runner.state)
+    expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
-    const loaded = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
+    if (!loadedRead.ok) throw new Error(loadedRead.reason)
+    const loaded = loadedRead.value
     expect(shown(loaded, g).earned).toBe(0)
     expect(shown(run(loaded, g, 'dusk'), g).earned).toBe(1)
   })

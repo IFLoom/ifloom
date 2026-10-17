@@ -90,27 +90,22 @@ const stored = await runner.profile?.get<Record<string, unknown>>('core:settings
 const size = settingValue(runner.game, stored, 'textSize')
 ```
 
-Use it for `ui` settings, and for play settings before a game starts. During a game, a play setting's value is in the state, and `view.settings` has it. React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/reference/audio-player#volume-and-mute) both read settings this way.
+With a runner you rarely need it: [`runner.settings()`](/docs/reference/runner#settings) reads every setting this way, `ui` settings from the profile and play settings from the game in play, and React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/reference/audio-player#volume-and-mute) read that. Use `settingValue` when you hold stored settings without a runner.
 
 ## Changing a setting
 
-A play setting changes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it.
+Change either kind with [`runner.setSetting`](/docs/reference/runner#setsetting). It checks the value against the declaration, and refuses an unknown id or a value the setting can't take.
 
 ```ts
-runner.apply({ type: 'setting', id: 'difficulty', to: 'hard' })
+runner.setSetting('difficulty', 'hard') // a play setting: sent as the setting command
+runner.setSetting('textSize', 'large')  // a ui setting: written to the profile
 ```
 
-A ui setting changes through [`runner.setUiSetting`](/docs/reference/runner#setuisetting), which writes the profile and leaves the state alone:
-
-```ts
-runner.setUiSetting('textSize', 'large')
-```
-
-Both check the value against the declaration, and refuse an unknown id, the wrong kind of setting, or a value it can't take.
+A play setting goes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it. A ui setting is written to the profile and leaves the state alone. [`runner.settings()`](/docs/reference/runner#settings) gives every setting's value now.
 
 ## A new game
 
-A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
+A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) or [`browserRunner`](/docs/reference/runner#browserrunner) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
 
 A save keeps the play settings it was made with. Loading it doesn't apply the player's newer choices. A save from before settings existed, or one made before you added a setting, gets each missing setting's default when it loads.
 

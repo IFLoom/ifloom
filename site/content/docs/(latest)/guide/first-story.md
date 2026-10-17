@@ -251,7 +251,7 @@ import { browserRunner, type View } from '@ifloom/engine'
 import loaded from './game.ts'
 import './styles.css'
 
-const runner = browserRunner(loaded.game)
+const runner = await browserRunner(loaded.game)
 const root = document.querySelector<HTMLElement>('#root')!
 
 function draw(view: View): void {
@@ -290,7 +290,7 @@ import { shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/engine'
 import loaded from './game.ts'
 
-export const runner = browserRunner(loaded.game)
+export const runner = await browserRunner(loaded.game)
 
 // The view as Vue state, replaced after every change of state.
 export const view = shallowRef(runner.view())
@@ -312,7 +312,7 @@ import { readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/engine'
 import loaded from './game.ts'
 
-export const runner = browserRunner(loaded.game)
+export const runner = await browserRunner(loaded.game)
 
 // The view as a store, set again after every change of state.
 export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))

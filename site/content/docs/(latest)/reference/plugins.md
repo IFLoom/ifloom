@@ -673,7 +673,7 @@ const cook = screen.actions.find((a) => a.id === 'cook')!
 cook.disabled                                // undefined: it can be pressed
 cook.warning                                 // 'The dishes would pile up. Wash up first.'
 cook.price                                   // { notes: ['2 dishes to wash'] }
-apply(state, game, { type: 'activity', id: 'cook' }).refused // 'The dishes would pile up. Wash up first.'
+apply(state, game, { type: 'activity', id: 'cook' }).reason // 'The dishes would pile up. Wash up first.'
 ```
 
 With three, Bake bread is greyed out with `Not with the sink this full.` Wash up empties the sink and ends the turn.

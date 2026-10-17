@@ -196,8 +196,8 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
     const out = apply(state, game, command)
     if (!out.ok) {
       refused += 1
-      refusals.push({ turn: state.turn + 1, command, reason: out.refused ?? '' })
-      lines.push(`  refused: ${out.refused}`)
+      refusals.push({ turn: state.turn + 1, command, reason: out.reason ?? '' })
+      lines.push(`  refused: ${out.reason}`)
       // Refused twice running with nothing in between: a policy that can't move on stops here.
       if (refusedLast && JSON.stringify(refusals.at(-2)?.command) === JSON.stringify(command)) break
       refusedLast = true

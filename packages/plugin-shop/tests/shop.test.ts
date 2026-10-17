@@ -67,7 +67,7 @@ function game(...partners: Plugin[]): Game {
 function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state
@@ -160,10 +160,11 @@ describe('the shop, on its own', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
     for (const command of [buy('counter', 'biscuit', 2), buy('stall', 'fig'), sell('counter', 'biscuit'), { type: 'activity' as const, id: 'sleep' }, buy('counter', 'biscuit', 3)]) runner.apply(command)
-    expect(replay(g, runner.log())).toEqual(runner.state)
+    expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
-    const loaded = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
+    if (!loadedRead.ok) throw new Error(loadedRead.reason)
+    const loaded = loadedRead.value
     expect(goods(loaded, g).find((good) => good.item === 'biscuit')!.stock).toBe(3)
   })
 

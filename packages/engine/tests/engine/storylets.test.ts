@@ -6,6 +6,7 @@ import { startingState } from '../../src/intake.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import type { DataScene } from '../../src/scene.ts'
 import { problemsOf } from '../fixtures/checked.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 const leave = [{ id: 'leave', effects: [{ kind: 'scene' as const, scene: null }] }]
 
@@ -84,7 +85,7 @@ describe('storylets', () => {
       runner.apply({ type: 'choose', id: 'leave' })
     }
     expect(new Set(opened).size).toBe(2)
-    expect(replay(game, runner.log())).toEqual(runner.state)
+    expect(unwrap(replay(game, runner.log()))).toEqual(runner.state)
   })
 
   it('report a draw no scene is in, an unknown otherwise and a bad weight', () => {

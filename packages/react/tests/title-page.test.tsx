@@ -124,7 +124,7 @@ describe('the pages', () => {
     expect(await driver.get('letter.save.3')).toBeNull()
   })
 
-  it('stores a play setting changed before a game, and the next new game uses it', async () => {
+  it('sets a play setting from the title screen through the runner, and the next new game keeps it', async () => {
     const { runner } = play()
     fireEvent.click(await screen.findByText('Settings'))
     const hints = document.querySelector('#setting-hints') as HTMLInputElement
@@ -132,7 +132,7 @@ describe('the pages', () => {
     await act(async () => fireEvent.click(hints))
     await runner.settled()
     expect(await runner.profile!.get('core:settings')).toEqual({ hints: false })
-    expect(runner.state.settings.hints).toBe(true)
+    expect(runner.state.settings.hints).toBe(false)
 
     fireEvent.click(screen.getByText('Back'))
     await act(async () => fireEvent.click(titleButton('new')!))

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
+import { SCHEMA, createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import type { AudioLike } from '@ifloom/audio'
 import { GameShell, mountGame, useAudio } from '../src/index.ts'
 
@@ -65,9 +65,9 @@ describe('audio in the React UI', () => {
     page()
     const made: FakeAudio[] = []
     const createAudio = (src: string) => (made.push(new FakeAudio(src)), made.at(-1)!)
-    let runner!: ReturnType<typeof mountGame>
+    let runner!: Runner
     await act(async () => {
-      runner = mountGame(cafe(), { audio: { createAudio } })
+      runner = await mountGame(cafe(), { audio: { createAudio } })
     })
     await act(async () => {
       fireEvent.pointerDown(document.body)
@@ -84,9 +84,9 @@ describe('audio in the React UI', () => {
 
   it('mountGame leaves sound off with audio: false, and draws no replay button', async () => {
     page()
-    let runner!: ReturnType<typeof mountGame>
+    let runner!: Runner
     await act(async () => {
-      runner = mountGame(cafe(), { audio: false })
+      runner = await mountGame(cafe(), { audio: false })
     })
     await act(async () => void runner.apply({ type: 'choose', id: 'in' }))
     expect(document.querySelector('[data-part="voice-replay"]')).toBeNull()

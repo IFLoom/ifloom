@@ -1,6 +1,6 @@
 ---
 title: "The runner"
-description: "The runner: undo, backlog, command log, saving, loading, autosave, new games, and browserRunner for the browser."
+description: "The runner: undo, backlog, command log, saving, loading, autosave, settings, new games, the Result it answers with, and browserRunner for the browser."
 ---
 The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/commands#apply) with the things every game's UI would otherwise build for itself: undo and redo, a backlog of what was shown, a command log, saving, loading and autosave. It also tells listeners when the state changes.
 
@@ -8,13 +8,13 @@ The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/
 import {
   createRunner, browserRunner, replay,
   type Runner, type RunnerOptions, type HistoryOptions, type BacklogOptions,
-  type AutosaveOptions, type BacklogEntry, type CommandLog, type StartOptions,
+  type AutosaveOptions, type BacklogEntry, type CommandLog, type StartOptions, type Result,
 } from '@ifloom/engine'
 ```
 
 Everything but the command log is off unless you turn it on, so a runner with no options is `apply` plus a subscription. For a walk-through, see [A game with a world](/docs/guide/first-game#10-drive-it-with-a-runner).
 
-If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/docs/react#mountgame) makes the runner with [`browserRunner`](#browserrunner), which sets up undo 50 deep, saves and a [profile](/docs/reference/profile) in `localStorage`, an autosave each turn and a random seed. It draws the game into the page and returns the runner. Its `runner` option is merged over those defaults. In a browser without React, call `browserRunner` yourself. Build the runner with `createRunner`, as below, when you want something different.
+If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/docs/react#mountgame) makes the runner with [`browserRunner`](#browserrunner), which sets up undo 50 deep, saves and a [profile](/docs/reference/profile) in `localStorage`, an autosave each turn and a random seed. It draws the game into the page and resolves to the runner. Its `runner` option is merged over those defaults. In a browser without React, call `browserRunner` yourself. Build the runner with `createRunner`, as below, when you want something different.
 
 ## createRunner
 
@@ -42,44 +42,31 @@ runner.apply(go('high-street'))
 ## browserRunner
 
 ```ts
-function browserRunner(
-  game: Game,
-  options?: RunnerOptions & { start?: GameState; settings?: Record<string, unknown> },
-): Runner
+function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Promise<Runner>
 ```
 
 A runner with what most games in a browser want. It's `createRunner` with these defaults:
 
 | | Default |
 |---|---|
-| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants. |
-| `settings` | None, so every `play` [setting](/docs/reference/settings) starts at its default. |
+| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's `play` [settings](/docs/reference/settings) from the profile. |
 | `history` | `{ depth: 50 }`, so undo goes 50 steps back. |
 | `saves` | `saves(game, localStorageDriver())`, saves in the browser's `localStorage` under keys that start with the game's id. |
 | `profile` | `profile(game, localStorageDriver())`, the [profile](/docs/reference/profile) at `<game id>.profile` in the same `localStorage`. |
 | `autosave` | `{ every: 'turn' }`, to the `auto` slot. |
 
-Pass `start` to begin from another state, and any [`RunnerOptions`](#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so does the `vanilla` template:
+Pass `start` to begin from another state, and any [`RunnerOptions`](#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so do the `vanilla`, `vue` and `svelte` templates:
 
 ```ts
 import { browserRunner } from '@ifloom/engine'
 
-const runner = browserRunner(game, { backlog: { limit: 200 } })
+const runner = await browserRunner(game, { backlog: { limit: 200 } })
 
 runner.subscribe(() => draw(runner.view()))
 draw(runner.view())
 ```
 
-**Starting with the player's settings.** `browserRunner` returns straight away, so it can't wait for the profile to be read. If your game has `play` settings, read them first and pass them in. The profile you read from is the one the runner should keep, so pass it too:
-
-```ts
-import { browserRunner, localStorageDriver, profile } from '@ifloom/engine'
-
-const stored = profile(game, localStorageDriver())
-const runner = browserRunner(game, { profile: stored, settings: await stored.get('core:settings') })
-```
-
-If you can't wait at that point, start the runner without `settings` and call [`await runner.newGame()`](#newgame) when the player presses New game. `newGame` reads the stored settings itself.
+It's async because it reads the profile before it starts. The new game gets the player's stored `play` settings, and [`runner.settings()`](#settings) has their `ui` settings from the first frame, so a text size or a volume is right before anything is drawn. A profile that can't be read starts the game with the defaults.
 
 **Gotcha.** Its saves and profile go to `localStorage`, which a test or a script in Node doesn't have. The runner still starts there, but every save, autosave and profile write fails with `localStorage is not available here`. Pass your own stores, such as `{ saves: saves(game, memoryDriver()), profile: profile(game, memoryDriver()) }` with [`memoryDriver`](/docs/reference/saves#memorydriver), or use `createRunner`.
 
@@ -104,8 +91,8 @@ type RunnerOptions = {
 | `backlog` | Keeps what was shown, turn by turn. `true` turns it on with the defaults below. | off |
 | `autosave` | Saves by itself after commands. Does nothing without `saves`. | off |
 | `now` | The clock for time played, and for when `finished` is recorded, in milliseconds. Tests pass their own. | `Date.now` |
-| `onSaveError` | Told when an autosave or a [profile](/docs/reference/profile) write fails. Later writes still run. | failures dropped |
-| `profile` | The [profile](/docs/reference/profile) the runner writes settings (`core:settings`), [`finished`](#finished) (`core:finished`) and plugins' namespaces to. You need it for `setUiSetting`. | none |
+| `onSaveError` | Told when a save or a [profile](/docs/reference/profile) write fails, with the error. Later writes still run. | failures dropped |
+| `profile` | The [profile](/docs/reference/profile) the runner writes settings (`core:settings`), [`finished`](#finished) (`core:finished`) and plugins' namespaces to. You need it to change a `ui` setting. | none |
 
 ## HistoryOptions
 
@@ -207,16 +194,31 @@ A tick saves under `'scene'` or `'turn'` only when it changed the scene or the t
 
 A write that fails is reported to `onSaveError`, and doesn't stop the writes after it.
 
+## Result
+
+```ts
+type Result<T> = { ok: true; value: T } | { ok: false; reason: string }
+```
+
+What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay), [`readMod`](/docs/reference/mods#readmod) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
+
+```ts
+const result = runner.apply({ type: 'choose', id: 'chat' })
+if (!result.ok) showMessage(result.reason) // 'She has a queue.'
+```
+
+The engine's own [`apply`](/docs/reference/commands#apply) answers in the same shape, with the state on both sides. [`checkGame`](/docs/reference/checks#checkgame) is different: its problems are a report on content that works, not a failure.
+
 ## The runner's members
 
-`Runner` is `ReturnType<typeof createRunner>`.
+`Runner` is an interface. Every member is listed here.
 
 | Member | What it does |
 |---|---|
 | `game` | The game it plays. |
 | `state` | The current [`GameState`](/docs/reference/state). It's read-only, so change it through `apply`. |
 | `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state, with the plugins' views shown the profile. See [The view cache](#the-view-cache). |
-| `apply(command)` | Runs a command and returns [`Applied`](/docs/reference/commands#apply): `ok`, the next `state`, and `refused` when it didn't take. A refused command changes nothing. It adds no history or log entry and calls no listeners. |
+| `apply(command)` | Runs a command. Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `canUndo` / `canRedo` | Whether there's anything to undo or redo, for greying out the buttons. Always `false` with history off. |
 | `backlog()` | The backlog, oldest first. Empty with the backlog off. Undo takes it back to where it was. |
@@ -224,30 +226,28 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 | `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`. A save menu lists, exports and imports through it. |
 | `offers` | `{ undo: boolean, backlog: boolean }`: whether the game turned on `history` and `backlog`, so a menu shows only what's on offer. |
 | `played()` | Time played in milliseconds, counting from the time recorded in any save loaded. |
-| `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where (see [`SaveMeta`](/docs/reference/saves#savemeta)). |
-| `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to the [`LoadedSave`](/docs/reference/saves#loadedsave), to `null` for an empty slot, or to a string saying why the save couldn't be read. On `null` or a string, the runner is unchanged. |
+| `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to a [`Result`](#result) with its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where. It fails with `This game keeps no saves.` without `saves`, and with `The game could not be saved.` when the driver throws, which `onSaveError` hears about too. |
+| `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to a [`Result`](#result) with the [`LoadedSave`](/docs/reference/saves#loadedsave). It fails with `Nothing is saved there.` for an empty slot, `This game keeps no saves.` without `saves`, or the reason the save can't be read. On a failure the runner is unchanged. |
 | `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/docs/reference/saves), exactly as `load` would. The [`LoadedSave`](/docs/reference/saves#loadedsave) has already been through `loadState`. |
-| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, and the profile has been read for the plugins' views. |
+| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, and the profile has been read for the settings and the plugins' views. |
 | `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`. |
-| `setUiSetting(id, value)` | Changes a `ui` setting in the profile. See [below](#setuisetting). |
+| `settings()` | Every setting's value now, `play` and `ui`. See [below](#settings). |
+| `setSetting(id, to)` | Changes a setting of either kind. See [below](#setsetting). |
 | `newGame(options?)` | Starts a new game in place. See [below](#newgame). |
-| `subscribe(listener)` | Calls `listener(state)` after every change of state: a command, an undo, a redo, a load or a new game. It's also called, with the same state, when what the plugins' views show of the profile changes. Returns a function that stops it. |
+| `subscribe(listener)` | Calls `listener(state)` after every change of state: a command, an undo, a redo, a load or a new game. It's also called, with the same state, when a `ui` setting changes and when what the plugins' views show of the profile changes. Returns a function that stops it. |
 
-`save` and `load` are async, and their promises can reject. Both reject if the runner was given no `saves`. They also reject if the save store's driver throws while writing or reading, because `onSaveError` only hears about autosaves. Catch the error where you call them:
+`save` and `load` are async, and answer with a [`Result`](#result) rather than throwing:
 
 ```ts
 undoButton.disabled = !runner.canUndo
 undoButton.onclick = () => runner.undo()
 
-try {
-  await runner.save('quick')
-} catch (error) {
-  showMessage(`Couldn't save: ${String(error)}`)
-}
+const saved = await runner.save('quick')
+if (!saved.ok) showMessage(saved.reason)
 
 const loaded = await runner.load('quick')
-if (typeof loaded === 'string') showMessage(loaded)
-else if (loaded?.missingPacks.length) showMessage(`Made with mods you don't have: ${loaded.missingPacks.join(', ')}`)
+if (!loaded.ok) showMessage(loaded.reason)
+else if (loaded.value.missingPacks.length) showMessage(`Made with mods you don't have: ${loaded.value.missingPacks.join(', ')}`)
 ```
 
 **Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or simply `log()`, whose `start` is that state.
@@ -274,22 +274,39 @@ A UI that redraws only when `runner.state` changes misses these. Compare `runner
 
 **Gotcha.** Only the latest state's view is kept. Calling [`view`](/docs/reference/view#view) yourself always builds a new one, and one built without the runner has no profile, so in a UI driven by a runner, read `runner.view()`.
 
-### setUiSetting
+### settings
 
 ```ts
-runner.setUiSetting(id: string, value: KvValue): string | undefined
+runner.settings(): Readonly<Record<string, KvValue>>
 ```
 
-Changes a `ui` [setting](/docs/reference/settings), such as a text size, and writes it to the profile's `core:settings`. It never touches the state, so it adds nothing to the log or history and calls no listeners. It returns why the value was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command, or `undefined` when it took. A `play` setting is refused with `That setting changes the game, so it is set with a command.`
+Every [setting](/docs/reference/settings) the game declares, by id, with its value now. It's synchronous, so a UI can read it while it draws.
+
+- **A `play` setting** comes from the game in play, `state.settings`.
+- **A `ui` setting** comes from the profile's `core:settings`. A stored value the setting can't take any more reads as its default. So does every `ui` setting before the profile has been read, and in a runner without a profile.
 
 ```ts
-const refused = runner.setUiSetting('textSize', 'large')
-if (!refused) document.body.dataset.textSize = 'large'
+const { textSize, hints } = runner.settings()
+document.body.dataset.textSize = String(textSize)
 ```
 
-The write happens in the background. Await `settled()` if you need it done. It throws if the runner has no `profile`.
+It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default; await `settled()` to be sure it has. [`browserRunner`](#browserrunner) waits for that read before it returns.
 
-A `play` setting goes through `apply({ type: 'setting', id, to: value })` instead. When that takes, the runner writes the new value to the profile's `core:settings` too, so the next new game starts with it.
+### setSetting
+
+```ts
+runner.setSetting(id: string, to: KvValue): Result<KvValue>
+```
+
+Changes a setting of either kind, after checking the value against the setting's declaration. Returns a [`Result`](#result) with the value, or why it was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command.
+
+- **A `play` setting** is sent as the `setting` command, so it changes the game in play and is logged like any command. When it takes, the runner writes it to the profile's `core:settings` too, so the next new game starts with it.
+- **A `ui` setting** is written to the profile's `core:settings` and never touches the state. `settings()` shows it at once, listeners are called, and the write finishes in the background. Await `settled()` if you need it done. Without a profile it's refused with `This game keeps no settings between plays.`
+
+```ts
+const result = runner.setSetting('textSize', 'large')
+if (!result.ok) showMessage(result.reason)
+```
 
 ### newGame
 
@@ -297,7 +314,7 @@ A `play` setting goes through `apply({ type: 'setting', id, to: value })` instea
 runner.newGame(options?: StartOptions): Promise<GameState>
 ```
 
-Starts a new game in place, with a fresh history, backlog and log and no time played, and tells listeners. It takes the same options as [`startingState`](/docs/reference/commands#startingstate). If you leave out `settings`, it reads them from the profile. If you leave out `seed`, it picks a random one.
+Starts a new game in place, with a fresh history, backlog and log and no time played, and tells listeners. It takes the same options as [`startingState`](/docs/reference/commands#startingstate). If you leave out `settings`, it uses the player's: the profile's, or without a profile the ones in the game in play. If you leave out `seed`, it picks a random one.
 
 ```ts
 newGameButton.onclick = () => runner.newGame()
@@ -321,19 +338,20 @@ Everything you need to play a game back exactly: the game's id, the state it sta
 ## replay
 
 ```ts
-function replay(game: Game, log: CommandLog): GameState | string
+function replay(game: Game, log: CommandLog): Result<GameState>
 ```
 
-Plays a command log back and returns the state it leads to. The engine is deterministic, so the same log against the same game gives the same state every time.
+Plays a command log back and returns the state it leads to, as a [`Result`](#result). The engine is deterministic, so the same log against the same game gives the same state every time.
 
-The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used, such as `{ type: 'use', itemId }`, are read with today's names. If the start can't be loaded, `replay` returns the reason instead of a state.
+The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used, such as `{ type: 'use', itemId }`, are read with today's names. If the start can't be loaded, `replay` fails with the reason.
 
 ```ts
 import { replay, type CommandLog } from '@ifloom/engine'
 
 // A player's bug report: the log, as JSON.
 const report: CommandLog = JSON.parse(text)
-const state = replay(game, report)
+const played = replay(game, report)
+if (played.ok) console.log(played.value.turn)
 
 // Two versions of a game, played the same way.
 const before = replay(oldGame, report)

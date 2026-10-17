@@ -83,7 +83,7 @@ describe('plugin guards', () => {
     const game = shore()
     expect(whyNot(at(game, 3), game, { type: 'activity', id: 'swim' })).toBe('Not at high tide.')
     expect(action(game, 3, 'swim').disabled).toBe('Not at high tide.')
-    expect(apply(at(game, 3), game, { type: 'activity', id: 'swim' }).refused).toBe('Not at high tide.')
+    expect(apply(at(game, 3), game, { type: 'activity', id: 'swim' }).reason).toBe('Not at high tide.')
   })
 
   it('warn softly: the button stays pressable with the warning, and the reducer refuses it', () => {
@@ -91,7 +91,7 @@ describe('plugin guards', () => {
     const dig = action(game, 2, 'dig')
     expect(dig.disabled).toBeUndefined()
     expect(dig.warning).toBe('The tide would turn.')
-    expect(apply(at(game, 2), game, { type: 'activity', id: 'dig' }).refused).toBe('The tide would turn.')
+    expect(apply(at(game, 2), game, { type: 'activity', id: 'dig' }).reason).toBe('The tide would turn.')
     expect(warningOf(at(game, 0), game, { type: 'activity', id: 'dig' })).toBeUndefined()
     expect(action(game, 2, 'paddle').warning).toBe('The tide would turn.')
   })
@@ -145,6 +145,6 @@ describe('scene choices', () => {
     const state = { ...begin(locked), sceneId: 'cafe.counter', kv: { rush: true } }
     const chat = view(state, locked).scene.choices.find((choice) => choice.id === 'chat')!
     expect(chat.disabled).toBe('Not in the rush.')
-    expect(apply(state, locked, { type: 'choose', id: 'chat' }).refused).toBe('Not in the rush.')
+    expect(apply(state, locked, { type: 'choose', id: 'chat' }).reason).toBe('Not in the rush.')
   })
 })

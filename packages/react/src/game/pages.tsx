@@ -4,8 +4,8 @@
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
-import { settingValue, type KvValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
+import type { KvValue, GameState, SaveMeta, SettingView } from '@ifloom/engine'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -103,17 +103,13 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
 }
 
 /**
- * A setting's current value. A play setting's comes from the game state (the
- * view); a ui setting's from the profile, live as it changes. Undefined for a
- * setting the game doesn't declare.
+ * A setting's current value, as `runner.settings()` gives it, kept up to date:
+ * a play setting's from the game in play, a ui setting's from the profile.
+ * Undefined for a setting the game doesn't declare.
  */
 export function useSetting(id: string): KvValue | undefined {
-  const { runner, view } = useGame()
-  const stored = useProfile<Record<string, unknown>>('core:settings')
-  const setting = view.settings.find((entry) => entry.id === id)
-  if (!setting) return undefined
-  if (setting.affects === 'play') return setting.value ?? setting.default
-  return settingValue(runner.game, stored, id)
+  const { runner } = useGame()
+  return useSyncExternalStore(runner.subscribe, () => runner.settings()[id])
 }
 
 /** Gives the pages below it a place among the pages. `GameShell` uses it when `pages` is on. */
@@ -215,11 +211,10 @@ function TitlePageImpl({ className }: { className?: string }) {
     await start()
     go('game')
   }
-  // Without a profile there are no stored settings, so a new game keeps the ones in play now.
-  const fresh = () => runner.newGame(runner.profile ? {} : { settings: runner.state.settings })
+  const fresh = () => runner.newGame()
   const carried = async () => {
     const save = latest && runner.saves ? await runner.saves.read(latest.slot) : null
-    const carry: GameState = save && typeof save !== 'string' ? save.state : runner.state
+    const carry: GameState = save?.ok && save.value ? save.value.state : runner.state
     return runner.newGame({ carry })
   }
   const added = Object.entries(options.pages ?? {}).filter(([, page]) => page.showOnTitle !== false)
@@ -320,37 +315,20 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
 }
 
 function SettingsPageImpl({ className }: { className?: string }) {
-  const { runner, view, send } = useGame()
+  const { runner, view } = useGame()
   const words = useWords()
-  const { from } = usePage()
-  const stored = useProfile<Record<string, unknown>>('core:settings')
+  const values = useSyncExternalStore(runner.subscribe, () => runner.settings())
+  const [said, setSaid] = useState<string | null>(null)
   const section = usePageParts(className, 'settings-page')
   const list = usePart('settings', 'flex flex-col gap-4')
   const row = usePart('setting', 'flex flex-col gap-2 rounded-lg border p-3')
   const label = usePart('setting-label', 'font-medium')
   const empty = usePart('settings-empty', 'text-muted-foreground')
-  // Optimistic values, shown until the profile says what it stored.
-  const [changed, setChanged] = useState<Record<string, KvValue>>({})
-  // Opened from a game in play, a play setting changes that game; from the title screen, the next one.
-  const inGame = from === 'game'
+  const message = usePart('settings-message', 'text-destructive')
 
-  const valueOf = (setting: SettingView): KvValue => {
-    if (setting.affects === 'play' && inGame) return setting.value ?? setting.default
-    if (setting.id in changed) return changed[setting.id]
-    return settingValue(runner.game, stored, setting.id) ?? setting.default
-  }
   const change = (setting: SettingView, value: KvValue) => {
-    if (setting.affects === 'ui') {
-      if (!runner.profile) return
-      if (runner.setUiSetting(setting.id, value)) return
-    } else if (inGame || !runner.profile) {
-      // No profile to keep it in: change the game in play, and New game keeps it.
-      send({ type: 'setting', id: setting.id, to: value })
-      if (inGame) return
-    } else {
-      void runner.profile.update<Record<string, unknown>>('core:settings', (now) => ({ ...now, [setting.id]: value }))
-    }
-    setChanged((now) => ({ ...now, [setting.id]: value }))
+    const result = runner.setSetting(setting.id, value)
+    setSaid(result.ok ? null : result.reason)
   }
 
   return (
@@ -363,13 +341,14 @@ function SettingsPageImpl({ className }: { className?: string }) {
               <label {...label} id={`setting-${setting.id}-label`} htmlFor={`setting-${setting.id}`}>
                 {setting.label}
               </label>
-              <SettingControl setting={setting} value={valueOf(setting)} change={(value) => change(setting, value)} />
+              <SettingControl setting={setting} value={values[setting.id] ?? setting.default} change={(value) => change(setting, value)} />
             </li>
           ))}
         </ul>
       ) : (
         <p {...empty}>{words('noSettings')}</p>
       )}
+      {said ? <p {...message}>{said}</p> : null}
       <div>
         <BackButton />
       </div>
@@ -379,10 +358,10 @@ function SettingsPageImpl({ className }: { className?: string }) {
 
 /**
  * The settings page, drawn from `view.settings`: a checkbox for a toggle,
- * radio buttons for a choice, a slider for a range. A ui setting is written to
- * the profile. A play setting changes the game in play when the page was
- * opened from the game; from the title screen it's written to the profile, so
- * the next new game starts with it.
+ * radio buttons for a choice, a slider for a range. Each change goes through
+ * `runner.setSetting`: a ui setting is written to the profile, and a play
+ * setting changes the game in play and is kept in the profile for the next
+ * new game. A refusal is shown under the list.
  */
 export const SettingsPage = overridable('SettingsPage', SettingsPageImpl)
 

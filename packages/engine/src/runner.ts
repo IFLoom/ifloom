@@ -1,13 +1,15 @@
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import { localStorageDriver } from './drivers.ts'
-import { apply, type Applied } from './reduce.ts'
+import { apply } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
 import { pluginContext, pluginView } from './plugin.ts'
 import { profile as makeProfile, type Profile } from './profile.ts'
-import { settingRefusal } from './features/settings.ts'
+import { settingAffects, settingById, settingRefusal, settingValue } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
+import { fail, ok, type Result } from './result.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
+import { say } from './strings.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
@@ -59,7 +61,7 @@ export type RunnerOptions = {
   onSaveError?: (error: unknown) => void
   /**
    * What outlives a save: settings, `finished`, plugins' namespaces. Without
-   * one, nothing is written there and `setUiSetting` throws.
+   * one, nothing is written there, and a `ui` setting can't be changed.
    */
   profile?: Profile
 }
@@ -91,15 +93,111 @@ export type CommandLog = { game: string; start: GameState; commands: Command[] }
  * older engine or game still plays; the reason comes back when it can't.
  * Commands that are refused are skipped, as they were then.
  */
-export function replay(game: Game, log: CommandLog): GameState | string {
+export function replay(game: Game, log: CommandLog): Result<GameState> {
   const start = loadState(log.start, game)
-  if (typeof start === 'string') return start
-  let state = start
+  if (!start.ok) return start
+  let state = start.value
   for (const command of log.commands) state = apply(state, game, upgradeCommand(command)).state
-  return state
+  return ok(state)
 }
 
 type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
+
+/**
+ * The one object a UI drives, as `createRunner` and `browserRunner` give it.
+ * Anything that can fail in a way a UI should expect (a refused command, an
+ * empty slot, a setting with no profile to keep it) answers with a `Result`
+ * and never throws.
+ */
+export interface Runner {
+  /** The game this runner plays. */
+  readonly game: Game
+  /** The current state. */
+  readonly state: GameState
+  /**
+   * What a UI draws for the current state. Built once per state: asked again
+   * for the same state, it hands back the same object, so a UI, the audio
+   * player and the backlog can all read it without building it again.
+   * Each plugin's view is shown its own profile namespace. When one of
+   * those changes, the view becomes a new object with that plugin's view
+   * built again, and listeners are told, though the state is the same.
+   */
+  view(): View
+  /**
+   * Run a command: the new state, or why it was refused (the state is then
+   * left as it was). A `tick` is logged like any command, but undo steps
+   * over it, it adds nothing to the backlog, and it autosaves only when it
+   * changes the scene or the turn (for those policies).
+   */
+  apply(ref: CommandRef): Result<GameState>
+  /** Whether `undo` would do anything. */
+  readonly canUndo: boolean
+  /** Whether `redo` would do anything. */
+  readonly canRedo: boolean
+  /** Step back one command. False when there is nothing to undo. */
+  undo(): boolean
+  /** Step forward again after an undo. False when there is nothing to redo. */
+  redo(): boolean
+  /** What was shown, oldest first. Empty unless the backlog is on. */
+  backlog(): BacklogEntry[]
+  /** The start state and every command since, for `replay`. */
+  log(): CommandLog
+  /** Time played, in milliseconds, counting from any save loaded. */
+  played(): number
+  /** The saves this runner writes to, for a menu that lists, exports or imports them. Undefined without `saves`. */
+  readonly saves: Saves | undefined
+  /** Whether the game turned on undo, and the backlog: what a menu should offer. */
+  readonly offers: { undo: boolean; backlog: boolean }
+  /** Save to a slot now: what the save says about itself, or why it wasn't written (no `saves`, or the driver failed). */
+  save(slot: string, name?: string): Promise<Result<SaveMeta>>
+  /**
+   * Put a save in play that did not come from a slot, one the player
+   * imported from a file (`saves.importText`), as `load` would.
+   */
+  restore(loaded: LoadedSave): void
+  /**
+   * Load a slot: the state, a fresh history, backlog and log from it, and
+   * the time played it recorded. A failure says why: no `saves`, an empty
+   * slot, or a save this game can't read.
+   */
+  load(slot: string): Promise<Result<LoadedSave>>
+  /**
+   * Settles when every autosave and profile write so far has been written,
+   * and the profile first read for the settings and the plugins' views.
+   */
+  settled(): Promise<void>
+  /** The profile this runner writes settings and `finished` to. Undefined without `profile`. */
+  readonly profile: Profile | undefined
+  /**
+   * Every setting the game declares, by id, with its value now. A `play`
+   * setting's comes from the game in play; a `ui` setting's from the
+   * profile, or its default until the profile has been read (`settled`) or
+   * without one. Stored values that no longer fit are read as the default.
+   * The same object comes back until a value changes.
+   */
+  settings(): Readonly<Record<string, KvValue>>
+  /**
+   * Change a setting of either kind, checked against its declaration. A
+   * `play` setting is sent as the `setting` command, so it changes the game
+   * in play, and the profile keeps it for the next new game. A `ui` setting
+   * is written to the profile only, and needs one. Listeners are told.
+   * The value set, or why it was refused.
+   */
+  setSetting(id: string, to: KvValue): Result<KvValue>
+  /**
+   * Start a new game in place: fresh history, backlog and log, no time
+   * played. Play settings not given are the player's: the profile's, or
+   * without one the game in play's. The seed is random unless given. For
+   * New Game+, pass `carry: runner.state`.
+   */
+  newGame(start?: StartOptions): Promise<GameState>
+  /**
+   * Hear about every change of state, of a setting, and of what the view
+   * shows of the profile (the last two leave the state as it was). Returns
+   * the way to stop.
+   */
+  subscribe(listener: (state: GameState) => void): () => void
+}
 
 /**
  * The one object a UI drives. It wraps `apply` with what every game's UI
@@ -107,7 +205,7 @@ type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
  * saving, loading and autosave — and tells listeners when the state changes.
  * Everything but the command log is off unless the game turns it on.
  */
-export function createRunner(game: Game, start: GameState, options: RunnerOptions = {}) {
+export function createRunner(game: Game, start: GameState, options: RunnerOptions = {}): Runner {
   const now = options.now ?? Date.now
   const history: HistoryOptions | null =
     options.history === true ? {} : options.history ? options.history : null
@@ -133,6 +231,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   // written, frozen. Only plugins with a view, and only with a profile.
   const viewers = new Map((options.profile ? (game.plugins ?? []) : []).filter((plugin) => plugin.view).map((plugin) => [plugin.id, plugin]))
   let shownProfile: Readonly<Record<string, unknown>> = {}
+  // The profile's `core:settings` as last read or written, and `settings()` as last built.
+  let storedSettings: Record<string, unknown> | undefined
+  let settingsHeard = false
+  let builtSettings: { state: GameState['settings']; stored: typeof storedSettings; value: Readonly<Record<string, KvValue>> } | null = null
 
   /** The view of a state, built once per state object and kept for the latest one. */
   function viewOf(of: GameState): View {
@@ -205,10 +307,43 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     remembering = remembering.then(() => write(profile)).catch((error: unknown) => options.onSaveError?.(error))
   }
 
-  // The plugins' views see their profile namespaces: read each now, and follow every write after.
-  if (options.profile && viewers.size) {
-    options.profile.subscribe(profileSeen)
+  /** The ui settings' values as stored settings give them. */
+  const uiValues = (stored: Record<string, unknown> | undefined) =>
+    JSON.stringify((game.settings ?? []).filter((setting) => settingAffects(setting) === 'ui').map((setting) => settingValue(game, stored, setting.id)))
+
+  /** The profile's settings were read or written. Listeners are told if a ui setting now reads differently. */
+  function settingsSeen(value: unknown): void {
+    const next = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined
+    const before = uiValues(storedSettings)
+    storedSettings = next
+    if (uiValues(next) !== before) notify()
+  }
+
+  // The settings and the plugins' views see the profile: read it now, and follow every write after.
+  if (options.profile) {
+    options.profile.subscribe((namespace, value) => {
+      if (namespace === 'core:settings') {
+        settingsHeard = true
+        settingsSeen(value)
+      } else profileSeen(namespace, value)
+    })
+    remember(async (profile) => {
+      const value = await profile.get('core:settings')
+      // A write heard while this was being read is newer.
+      if (!settingsHeard) settingsSeen(value)
+    })
     for (const id of viewers.keys()) remember(async (profile) => profileSeen(id, await profile.get(id)))
+  }
+
+  function settingsNow(): Readonly<Record<string, KvValue>> {
+    if (builtSettings && builtSettings.state === state.settings && builtSettings.stored === storedSettings) return builtSettings.value
+    const value: Record<string, KvValue> = {}
+    for (const setting of game.settings ?? []) {
+      value[setting.id] =
+        settingAffects(setting) === 'play' ? (state.settings?.[setting.id] ?? setting.default) : (settingValue(game, storedSettings, setting.id) ?? setting.default)
+    }
+    builtSettings = { state: state.settings, stored: storedSettings, value: Object.freeze(value) }
+    return builtSettings.value
   }
 
   /** After a command took: what it changes in the profile. */
@@ -255,94 +390,80 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     return before.turn !== after.turn
   }
 
+  /** Run a command: the runner's `apply`. */
+  function run(ref: CommandRef): Result<GameState> {
+    const command = commandOf(ref)
+    const before = state
+    const ticking = command.type === 'tick'
+    // The view the command was sent from: usually built already, for the UI that sent it.
+    let from: View | undefined
+    const fromView = () => (from ??= viewOf(before))
+    const result = apply(before, game, command)
+    if (!result.ok) return fail(result.reason)
+    const prior = snapshot()
+    state = result.state
+    log = { ...log, commands: [...log.commands, command] }
+    if (backlogLimit && !ticking) {
+      // Each scene as it was shown, with the choice made in it: the scene on
+      // screen before the command goes in first if it isn't there yet (the
+      // opening scene, say), the choice is written on it, then whatever new
+      // scene the command opened goes in after.
+      // Each entry is dated by the screen it was on.
+      const entry = (screen: View): BacklogEntry => ({
+        turn: screen.turn,
+        when: screen.when,
+        sceneId: screen.scene.id!,
+        title: screen.scene.title,
+        beats: pastBeats(screen.scene.beats),
+      })
+      const shown = fromView()
+      let next = backlog
+      // A minigame drawn over a scene is not the scene: it goes in neither before nor after.
+      if (shown.scene.id && !shown.minigame) {
+        const last = next.at(-1)
+        const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
+        if (!showing) next = [...next, entry(shown)]
+        if (command.type === 'choose') {
+          const label = [...shown.scene.choices, ...inlineChoices(shown.scene.beats)].find((choice) => choice.id === command.id)?.label
+          if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
+        }
+      }
+      const after = viewOf(state)
+      if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
+      backlog = next.slice(-backlogLimit)
+    }
+    if (history) {
+      if (barrier(before, state, command, fromView)) {
+        undoStack = []
+        redoStack = []
+      }
+      // A tick is no step of its own: one undo goes back to before the last command that wasn't one.
+      else if (!ticking) {
+        undoStack = [...undoStack, prior].slice(-depth)
+        redoStack = []
+      }
+    }
+    // A tick is written to the profile only when it ends the minigame, not ten times a second.
+    if (!ticking || (before.minigame && !state.minigame)) recordInProfile(before, state, command)
+    changed(before, ticking)
+    return ok(state)
+  }
+
   return {
-    /** The game this runner plays. */
     game,
-    /** The current state. */
     get state(): GameState {
       return state
     },
-    /**
-     * What a UI draws for the current state. Built once per state: asked again
-     * for the same state, it hands back the same object, so a UI, the audio
-     * player and the backlog can all read it without building it again.
-     * Each plugin's view is shown its own profile namespace. When one of
-     * those changes, the view becomes a new object with that plugin's view
-     * built again, and listeners are told, though the state is the same.
-     */
     view(): View {
       return viewOf(state)
     },
-    /**
-     * Run a command; returns whether it took, and why not if it did not. A
-     * `tick` is logged like any command, but undo steps over it, it adds
-     * nothing to the backlog, and it autosaves only when it changes the scene
-     * or the turn (for those policies).
-     */
-    apply(ref: CommandRef): Applied {
-      const command = commandOf(ref)
-      const before = state
-      const ticking = command.type === 'tick'
-      // The view the command was sent from: usually built already, for the UI that sent it.
-      let from: View | undefined
-      const fromView = () => (from ??= viewOf(before))
-      const result = apply(before, game, command)
-      if (!result.ok) return result
-      const prior = snapshot()
-      state = result.state
-      log = { ...log, commands: [...log.commands, command] }
-      if (backlogLimit && !ticking) {
-        // Each scene as it was shown, with the choice made in it: the scene on
-        // screen before the command goes in first if it isn't there yet (the
-        // opening scene, say), the choice is written on it, then whatever new
-        // scene the command opened goes in after.
-        // Each entry is dated by the screen it was on.
-        const entry = (screen: View): BacklogEntry => ({
-          turn: screen.turn,
-          when: screen.when,
-          sceneId: screen.scene.id!,
-          title: screen.scene.title,
-          beats: pastBeats(screen.scene.beats),
-        })
-        const shown = fromView()
-        let next = backlog
-        // A minigame drawn over a scene is not the scene: it goes in neither before nor after.
-        if (shown.scene.id && !shown.minigame) {
-          const last = next.at(-1)
-          const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
-          if (!showing) next = [...next, entry(shown)]
-          if (command.type === 'choose') {
-            const label = [...shown.scene.choices, ...inlineChoices(shown.scene.beats)].find((choice) => choice.id === command.id)?.label
-            if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
-          }
-        }
-        const after = viewOf(state)
-        if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
-        backlog = next.slice(-backlogLimit)
-      }
-      if (history) {
-        if (barrier(before, state, command, fromView)) {
-          undoStack = []
-          redoStack = []
-        }
-        // A tick is no step of its own: one undo goes back to before the last command that wasn't one.
-        else if (!ticking) {
-          undoStack = [...undoStack, prior].slice(-depth)
-          redoStack = []
-        }
-      }
-      // A tick is written to the profile only when it ends the minigame, not ten times a second.
-      if (!ticking || (before.minigame && !state.minigame)) recordInProfile(before, state, command)
-      changed(before, ticking)
-      return result
-    },
+    apply: run,
     get canUndo(): boolean {
       return undoStack.length > 0
     },
     get canRedo(): boolean {
       return redoStack.length > 0
     },
-    /** Step back one command. False when there is nothing to undo. */
     undo(): boolean {
       const step = undoStack.at(-1)
       if (!step) return false
@@ -354,7 +475,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       changed(before)
       return true
     },
-    /** Step forward again after an undo. False when there is nothing to redo. */
     redo(): boolean {
       const step = redoStack.at(-1)
       if (!step) return false
@@ -366,81 +486,65 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       changed(before)
       return true
     },
-    /** What was shown, oldest first. Empty unless the backlog is on. */
     backlog(): BacklogEntry[] {
       return backlog
     },
-    /** The start state and every command since, for `replay`. */
     log(): CommandLog {
       return log
     },
-    /** Time played, in milliseconds, counting from any save loaded. */
     played,
-    /** The saves this runner writes to, for a menu that lists, exports or imports them. Undefined without `saves`. */
     saves: options.saves,
-    /** Whether the game turned on undo, and the backlog: what a menu should offer. */
     offers: { undo: Boolean(history), backlog: backlogLimit > 0 },
-    /** Save to a slot now. Needs `saves`. */
-    async save(slot: string, name?: string): Promise<SaveMeta> {
-      if (!options.saves) throw new Error('This runner was given no saves to write to.')
+    async save(slot: string, name?: string): Promise<Result<SaveMeta>> {
+      if (!options.saves) return fail(say(game, 'noSaves'))
       const saves = options.saves
       const toSave = state
       await saving
-      return saves.write(slot, toSave, { name, played: played() })
+      try {
+        return ok(await saves.write(slot, toSave, { name, played: played() }))
+      } catch (error) {
+        options.onSaveError?.(error)
+        return fail(say(game, 'notSaved'))
+      }
     },
-    /**
-     * Put a save in play that did not come from a slot — one the player
-     * imported from a file (`saves.importText`) — as `load` would.
-     */
     restore,
-    /**
-     * Load a slot: the state, a fresh history, backlog and log from it, and
-     * the time played it recorded. Null if the slot is empty; a string says
-     * why it could not be read.
-     */
-    async load(slot: string): Promise<LoadedSave | string | null> {
-      if (!options.saves) throw new Error('This runner was given no saves to read from.')
-      const loaded = await options.saves.read(slot)
-      if (!loaded || typeof loaded === 'string') return loaded
-      restore(loaded)
-      return loaded
+    async load(slot: string): Promise<Result<LoadedSave>> {
+      if (!options.saves) return fail(say(game, 'noSaves'))
+      const read = await options.saves.read(slot)
+      if (!read.ok) return read
+      if (!read.value) return fail(say(game, 'emptySlot'))
+      restore(read.value)
+      return ok(read.value)
     },
-    /** Settles when every autosave and profile write so far has been written, and the profile first read for the plugins' views. */
-    async settled(): Promise<SaveMeta | null> {
+    async settled(): Promise<void> {
       await remembering
-      return saving
+      await saving
     },
-    /** The profile this runner writes settings and `finished` to. Undefined without `profile`. */
     profile: options.profile,
-    /**
-     * Change a `ui` setting: checked against its declaration, then written to
-     * the profile, never to the state. Returns why it was refused, or
-     * undefined. A `play` setting is changed with the `setting` command.
-     */
-    setUiSetting(id: string, value: KvValue): string | undefined {
-      if (!options.profile) throw new Error('This runner was given no profile to write settings to.')
-      const refused = settingRefusal(game, id, value, 'ui')
-      if (refused) return refused
-      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: value })))
-      return undefined
+    settings: settingsNow,
+    setSetting(id: string, to: KvValue): Result<KvValue> {
+      const setting = settingById(game, id)
+      if (!setting) return fail(say(game, 'noSuchSetting'))
+      if (settingAffects(setting) === 'play') {
+        const applied = run({ type: 'setting', id, to })
+        return applied.ok ? ok(to) : fail(applied.reason)
+      }
+      if (!options.profile) return fail(say(game, 'noProfile'))
+      const refused = settingRefusal(game, id, to, 'runner')
+      if (refused) return fail(refused)
+      // Shown at once; the profile catches up in order.
+      settingsSeen({ ...storedSettings, [id]: to })
+      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: to })))
+      return ok(to)
     },
-    /**
-     * Start a new game in place: fresh history, backlog and log, no time
-     * played. Settings not given come from the profile's `core:settings`; the seed
-     * is random unless given. For New Game+, pass `carry: runner.state`.
-     */
     async newGame(start: StartOptions = {}): Promise<GameState> {
-      // What the features take from the profile: the play settings.
-      let given = start
-      for (const hooks of runnerHooks) if (hooks.newGame) given = await hooks.newGame(given, options.profile)
-      const fresh = startingState(game, { seed: randomSeed(), ...given })
+      // The player's play settings: the profile's, once read, or the game in play's without one.
+      await remembering
+      const settings = start.settings ?? (options.profile ? storedSettings : state.settings)
+      const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
       begin(fresh, 0)
       return fresh
     },
-    /**
-     * Hear about every change of state, and every change to what the view
-     * shows of the profile, which leaves the state as it was. Returns the way to stop.
-     */
     subscribe(listener: (state: GameState) => void): () => void {
       listeners.add(listener)
       return () => listeners.delete(listener)
@@ -448,7 +552,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   }
 }
 
-export type Runner = ReturnType<typeof createRunner>
 
 /** A deep, frozen copy of a JSON value from the profile, so a view can read it and never change what is stored. */
 function frozenCopy(value: unknown): unknown {
@@ -470,22 +573,29 @@ function randomSeed(): number {
 /**
  * A runner with what most games in a browser want: a new game with a random
  * seed, undo 50 steps deep, saves and a profile in `localStorage`, and an
- * autosave each turn. Pass a `start` to begin elsewhere, `settings` for the
- * new game's play settings (the profile's, read beforehand), and runner
- * options to change any default; they are merged over these. Any UI can use
- * it: the React UI's `mountGame` does, and so does the vanilla template.
+ * autosave each turn. It reads the profile before it starts, so the new
+ * game has the player's play settings and `settings()` has their ui
+ * settings from the first frame. Pass a `start` to begin elsewhere, and
+ * runner options to change any default; they are merged over these. Any UI
+ * can use it: the React UI's `mountGame` does, and so does the vanilla template.
  */
-export function browserRunner(
-  game: Game,
-  options: RunnerOptions & { start?: GameState; settings?: Record<string, unknown> } = {},
-): Runner {
-  const { start, settings, ...runnerOptions } = options
+export async function browserRunner(game: Game, options: RunnerOptions & { start?: GameState } = {}): Promise<Runner> {
+  const { start, ...runnerOptions } = options
   const driver = localStorageDriver()
-  return createRunner(game, start ?? startingState(game, { seed: randomSeed(), settings }), {
+  const merged: RunnerOptions = {
     history: { depth: 50 },
     saves: saves(game, driver),
     profile: makeProfile(game, driver),
     autosave: { every: 'turn' },
     ...runnerOptions,
-  })
+  }
+  let first = start
+  if (!first) {
+    // A profile that can't be read starts the game with the defaults.
+    const settings = await merged.profile?.get<Record<string, unknown>>('core:settings').catch(() => undefined)
+    first = startingState(game, { seed: randomSeed(), settings })
+  }
+  const runner = createRunner(game, first, merged)
+  await runner.settled()
+  return runner
 }

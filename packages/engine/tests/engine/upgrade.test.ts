@@ -5,6 +5,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import { mods, readMod } from '../../src/mods.ts'
 import { PACK_STEPS, SCHEMA, upgradeCommand, upgradePack, type RawPack } from '../../src/upgrade.ts'
 import { withCafe } from '../fixtures/cafe.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /**
  * A made-up schema before the oldest real one, whose packs called prose
@@ -35,19 +36,19 @@ const oldPack = { id: 'evening', schema: OLD, lines: { 'cafe.counter': 'Lanterns
 describe('content migrations', () => {
   it('bring an old pack up to this schema, step by step, without changing it', () => {
     const upgraded = upgradePack(oldPack)
-    expect(typeof upgraded !== 'string' && upgraded.schema).toBe(SCHEMA)
-    expect(typeof upgraded !== 'string' && upgraded.prose).toEqual(oldPack.lines)
+    expect(upgraded.ok && upgraded.value.schema).toBe(SCHEMA)
+    expect(upgraded.ok && upgraded.value.prose).toEqual(oldPack.lines)
     expect(oldPack.schema).toBe(OLD)
   })
 
   it('leave a pack at this schema as it is', () => {
     const pack: Pack = { id: 'now', schema: SCHEMA, prose: { a: 'A.' } }
-    expect(upgradePack(pack)).toBe(pack)
+    expect(unwrap(upgradePack(pack))).toBe(pack)
   })
 
   it('refuse a pack from a newer engine, or one older than any step', () => {
-    expect(upgradePack({ schema: SCHEMA + 1 })).toBe(`written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}`)
-    expect(upgradePack({ schema: OLD - 1 })).toBe(`written for schema ${OLD - 1}, too old for this engine to read (it reads ${SCHEMA})`)
+    expect(upgradePack({ schema: SCHEMA + 1 })).toEqual({ ok: false, reason: `written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}` })
+    expect(upgradePack({ schema: OLD - 1 })).toEqual({ ok: false, reason: `written for schema ${OLD - 1}, too old for this engine to read (it reads ${SCHEMA})` })
   })
 
   it('let loadGame load an old pack, and skip a newer one with a problem', () => {
@@ -62,7 +63,7 @@ describe('content migrations', () => {
     const file = JSON.stringify({ ifloomMod: 1, id: 'evening', name: 'Evening', game: 'fixture', pack: oldPack })
     const store = mods('fixture', memoryDriver())
     const added = await store.add(file)
-    expect(typeof added !== 'string' && added.pack).toMatchObject({ id: 'mod:evening', schema: SCHEMA, prose: oldPack.lines })
+    expect(added.ok && added.value.pack).toMatchObject({ id: 'mod:evening', schema: SCHEMA, prose: oldPack.lines })
     const { base, own } = cafe()
     const { game, problems } = loadGame([own, ...(await store.packs())], base)
     expect(problems.filter((problem) => problem.pack === 'mod:evening')).toEqual([])
@@ -71,7 +72,7 @@ describe('content migrations', () => {
 
   it('refuse a mod from a newer engine', () => {
     const file = JSON.stringify({ ifloomMod: 1, id: 'later', name: 'Later', game: 'fixture', pack: { id: 'later', schema: SCHEMA + 1 } })
-    expect(readMod(file, 'fixture')).toBe(`That mod was written for a version this game cannot read (schema ${SCHEMA + 1}).`)
+    expect(readMod(file, 'fixture')).toEqual({ ok: false, reason: `That mod was written for a version this game cannot read (schema ${SCHEMA + 1}).` })
   })
 
   it('turn schema 4 flags into the kv store, however deep they sit', () => {
@@ -101,7 +102,7 @@ describe('content migrations', () => {
       ],
       data: { cast: { characters: [{ id: 'rosa', name: 'Rosa', flags: { mood: 'calm' } }] } },
     }
-    const pack = upgradePack(v4) as unknown as Record<string, unknown>
+    const pack = unwrap(upgradePack(v4)) as unknown as Record<string, unknown>
     expect(pack).toEqual({
       id: 'evening',
       schema: SCHEMA,
@@ -145,7 +146,7 @@ describe('content migrations', () => {
       },
     })
     const added = await mods('fixture', memoryDriver()).add(file)
-    expect(typeof added !== 'string' && added.pack).toEqual({
+    expect(added.ok && added.value.pack).toEqual({
       id: 'mod:regulars',
       schema: SCHEMA,
       triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kind: 'kv', key: 'regular', to: true }] }],
@@ -211,7 +212,7 @@ describe('content migrations', () => {
         jobs: { jobs: [{ id: 'barista', requires: [{ when: { kv: 'metAva' }, reason: 'Not yet.' }], ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }] }] },
       },
     }
-    expect(upgradePack(v5)).toEqual({
+    expect(unwrap(upgradePack(v5))).toEqual({
       id: 'evening',
       schema: SCHEMA,
       prose: { has: 'Words are left alone.' },
@@ -300,7 +301,7 @@ describe('content migrations', () => {
         },
       },
     }
-    expect(upgradePack(v6)).toEqual({
+    expect(unwrap(upgradePack(v6))).toEqual({
       id: 'phone',
       schema: SCHEMA,
       prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unseen feed=social}} posts; {{v:rentDue}} due.' },
@@ -346,7 +347,7 @@ describe('content migrations', () => {
       actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'effects/remove', with: { id: 'cold' } }, when: { custom: 'effects/active', with: { effect: 'cold' } } }],
       data: { effects: { effects: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'effects/apply': { effect: 'tired' } }] }] }, quests: { quests: [] } },
     }
-    expect(upgradePack(v7)).toEqual({
+    expect(unwrap(upgradePack(v7))).toEqual({
       id: 'colds',
       schema: SCHEMA,
       strings: { 'statuses/unknown': 'No such thing.', 'quests/done': 'Done.' },
@@ -373,7 +374,7 @@ describe('content migrations', () => {
       ],
       data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', kind: 'street', exits: [], art: '', body: [] }] } },
     }
-    expect(upgradePack(v8)).toEqual({
+    expect(unwrap(upgradePack(v8))).toEqual({
       id: 'town',
       schema: SCHEMA,
       items: [
@@ -392,7 +393,7 @@ describe('content migrations', () => {
       prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
       scenes: [{ id: 'ch2.stairs', body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat/open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }], choices: [] }],
     }
-    expect(upgradePack(v9)).toEqual({
+    expect(unwrap(upgradePack(v9))).toEqual({
       id: 'letter',
       schema: SCHEMA,
       prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
@@ -410,7 +411,7 @@ describe('content migrations', () => {
       ],
       activities: [{ id: 'flirt', blocked: [{ when: { not: { tier: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
     }
-    expect(upgradePack(v10)).toEqual({
+    expect(unwrap(upgradePack(v10))).toEqual({
       id: 'town',
       schema: SCHEMA,
       stats: [
@@ -430,7 +431,7 @@ describe('content migrations', () => {
       pack: { id: 'naps', schema: 5, activities: [{ id: 'nap', requires: [{ when: { has: 'pillow' }, reason: 'No pillow.' }], effects: [{ kind: 'setStat', key: 'coins', to: 0 }] }] },
     })
     const added = await mods('fixture', memoryDriver()).add(file)
-    expect(typeof added !== 'string' && added.pack).toEqual({
+    expect(added.ok && added.value.pack).toEqual({
       id: 'mod:naps',
       schema: SCHEMA,
       activities: [{ id: 'nap', blocked: [{ when: { not: { item: 'pillow' } }, reason: 'No pillow.' }], effects: [{ kind: 'stat', stat: 'coins', to: 0 }] }],

@@ -11,6 +11,7 @@ import { SAVE_VERSION, type GameState } from '../../src/types.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /** Somewhere to stand in for places: the street hums while the `at` kv key says you're there. */
 const street = definePlugin({
@@ -96,7 +97,7 @@ function game(packs: Pack[] = [house]) {
 function play(state: GameState, g: ReturnType<typeof game>['game'], ...commands: Parameters<typeof apply>[2][]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -228,7 +229,7 @@ describe('audio', () => {
       const again = play(state, g, { type: 'choose', id: 'again' })
       // The scene's beats keep their keys; the buzz is new.
       expect(keys(again)).toEqual([`cue:${state.seed}:1`, ...keys(state)])
-      expect(keys(loadState(JSON.parse(JSON.stringify(again)), g) as GameState)).toEqual(keys(again))
+      expect(keys(unwrap(loadState(JSON.parse(JSON.stringify(again)), g)))).toEqual(keys(again))
     })
 
     it('are new each time the scene is entered', () => {
@@ -260,7 +261,7 @@ describe('audio', () => {
       expect([...order.tracks].sort()).toEqual(['a', 'b', 'c', 'd'])
       // Started on turn 1, and still drawn from turn 1 after a turn has passed.
       expect(played.audio.started.music).toEqual({ track: 'radio', turn: 1 })
-      expect(view(replay(g, { game: g.id, start, commands: [...commands] }) as GameState, g).audio.channels.music.playlist).toEqual(order)
+      expect(view(unwrap(replay(g, { game: g.id, start, commands: [...commands] })), g).audio.channels.music.playlist).toEqual(order)
       // Another seed, another order.
       const others = [1, 2, 3, 4, 5].map((seed) => view(play({ ...start, seed }, g, ...commands), g).audio.channels.music.playlist!.tracks.join())
       expect(others.some((tracks) => tracks !== order.tracks.join())).toBe(true)
@@ -340,13 +341,13 @@ describe('audio', () => {
     it('carry a version-9 save forward with nothing played and no showings', () => {
       const { game: g } = game()
       const { audio: _audio, media: _media, ...now } = startingState(g)
-      expect(loadState({ ...now, version: 9 }, g)).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
+      expect(unwrap(loadState({ ...now, version: 9 }, g))).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
     })
 
     it('keep the effects’ channels and cues', () => {
       const { game: g } = game()
       const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'buzz' })
-      expect((loadState(JSON.parse(JSON.stringify(state)), g) as GameState).audio).toEqual(state.audio)
+      expect(unwrap(loadState(JSON.parse(JSON.stringify(state)), g)).audio).toEqual(state.audio)
     })
   })
 })

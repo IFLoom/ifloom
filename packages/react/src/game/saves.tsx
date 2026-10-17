@@ -1,4 +1,4 @@
-import type { BrokenSave, LoadedSave, SaveMeta } from '@ifloom/engine'
+import type { BrokenSave, LoadedSave, Result, SaveMeta } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -15,10 +15,10 @@ export type SavesState = {
   broken: BrokenSave[]
   /** Read the slots again. */
   refresh: () => Promise<void>
-  /** Save in a new slot (the next free number), with the player's `name` for it if given. */
-  save: (name?: string) => Promise<void>
-  /** Save over an existing slot. */
-  overwrite: (slot: string) => Promise<void>
+  /** Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. */
+  save: (name?: string) => Promise<boolean>
+  /** Save over an existing slot. True if it was written. */
+  overwrite: (slot: string) => Promise<boolean>
   /** Load a slot. True if it loaded. */
   load: (slot: string) => Promise<boolean>
   /** Delete a slot. */
@@ -27,7 +27,7 @@ export type SavesState = {
   exportFile: (slot: string) => Promise<void>
   /** Load a save from a file the player kept. True if it loaded. */
   importFile: (file: File) => Promise<boolean>
-  /** Why the last load or import failed, or null. */
+  /** Why the last save, load or import failed, or null. */
   message: string | null
   /** Packs the last loaded save was made with that this game doesn't have. */
   missingPacks: string[]
@@ -62,6 +62,11 @@ export function useSaves(): SavesState {
     setMessage(why)
     setMissing({ packs: [], plugins: [] })
   }
+  const written = async (result: Result<SaveMeta>) => {
+    setMessage(result.ok ? null : result.reason)
+    await refresh()
+    return result.ok
+  }
   const next = String(slots.filter((meta) => /^\d+$/.test(meta.slot)).reduce((most, meta) => Math.max(most, Number(meta.slot)), 0) + 1)
 
   return {
@@ -70,21 +75,18 @@ export function useSaves(): SavesState {
     broken,
     refresh,
     async save(name) {
-      await runner.save(next, name)
-      await refresh()
+      return written(await runner.save(next, name))
     },
     async overwrite(slot) {
-      await runner.save(slot)
-      await refresh()
+      return written(await runner.save(slot))
     },
     async load(slot) {
       const result = await runner.load(slot)
-      if (typeof result === 'string') {
-        failed(result)
+      if (!result.ok) {
+        failed(result.reason)
         return false
       }
-      if (!result) return false
-      loaded(result)
+      loaded(result.value)
       return true
     },
     async remove(slot) {
@@ -107,12 +109,12 @@ export function useSaves(): SavesState {
     async importFile(file) {
       if (!store) return false
       const result = store.importText(await file.text())
-      if (typeof result === 'string') {
-        failed(result)
+      if (!result.ok) {
+        failed(result.reason)
         return false
       }
-      runner.restore(result)
-      loaded(result)
+      runner.restore(result.value)
+      loaded(result.value)
       return true
     },
     message,

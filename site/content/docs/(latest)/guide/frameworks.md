@@ -31,7 +31,7 @@ A UI talks to the engine through a [runner](/docs/reference/runner). You need th
 ```ts
 import { browserRunner } from '@ifloom/engine'
 
-const runner = browserRunner(game)
+const runner = await browserRunner(game)
 
 runner.view()              // View: what to draw right now
 runner.apply(command)      // run a command, such as a choice the player pressed
@@ -83,7 +83,7 @@ const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
-const runner = browserRunner(game)
+const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)
@@ -105,7 +105,7 @@ import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
 import { startClock, startKeys } from './minigame.ts'
 
-export const runner = browserRunner(loaded.game)
+export const runner = await browserRunner(loaded.game)
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
 startClock(runner)
@@ -131,7 +131,7 @@ const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
-export const runner = browserRunner(game)
+export const runner = await browserRunner(game)
 
 // The view is replaced whole after every change, so a shallowRef is enough:
 // Vue only needs to know that it changed, not to look inside it.
@@ -164,7 +164,7 @@ const { game, problems } = loaded
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
-export const runner = browserRunner(game)
+export const runner = await browserRunner(game)
 
 // A readable store fits the runner: it starts by subscribing, and stops with
 // the function `subscribe` returns.

@@ -85,10 +85,10 @@ A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`re
 ## upgradePack
 
 ```ts
-function upgradePack(pack: { schema: number }): Pack | string
+function upgradePack(pack: { schema: number }): Result<Pack>
 ```
 
-Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says why it can't. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
+Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says why it can't, as a [`Result`](/docs/reference/runner#result). The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
 
 | Step | What it rewrites |
 |---|---|
@@ -114,8 +114,8 @@ A pack already at `SCHEMA` comes back unchanged, as the same object. The pack yo
 ```ts
 import { upgradePack } from '@ifloom/engine'
 
-const pack = upgradePack(JSON.parse(text))
-if (typeof pack === 'string') console.warn(`old-pack.json: ${pack}`)
+const upgraded = upgradePack(JSON.parse(text))
+if (!upgraded.ok) console.warn(`old-pack.json: ${upgraded.reason}`)
 ```
 
 You rarely call it yourself, because `loadGame` and `readMod` do. Use it when you read a pack some other way, for example a tool that edits packs and writes them back at the current schema.

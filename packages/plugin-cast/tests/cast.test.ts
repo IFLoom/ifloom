@@ -60,7 +60,7 @@ function game(withPlaces = true): { game: Game; clock: ReturnType<typeof calenda
 function run(g: Game, state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state

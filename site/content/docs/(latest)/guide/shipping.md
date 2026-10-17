@@ -100,7 +100,7 @@ The templates make their runner with [`browserRunner`](/docs/reference/runner#br
 import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
-const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
 ```
 
 ```ts tab="React" tab-group="framework"
@@ -118,7 +118,7 @@ import { shallowRef } from 'vue'
 import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
-export const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
 export const view = shallowRef(runner.view())
 runner.subscribe(() => (view.value = runner.view()))
 ```
@@ -129,7 +129,7 @@ import { readable } from 'svelte/store'
 import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
-export const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
 export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
 ```
 

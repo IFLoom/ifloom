@@ -36,7 +36,7 @@ const game: Game = {
 
 // `busy` is a state with a scene open
 whyNot(busy, game, { type: 'activity', id: 'coffee' })   // 'Not yet, love.'
-apply(busy, game, go('high-street')).refused              // 'Not yet, love.' (the places plugin says it too)
+apply(busy, game, go('high-street')).reason              // 'Not yet, love.' (the places plugin says it too)
 whyNot(busy, game, talk('ava'))                           // 'Not yet, love.' (and so does the cast)
 whyNot(state, game, talk('ava'))                          // 'Ava has popped out.' when Ava is elsewhere
 ```
@@ -99,7 +99,7 @@ Why a [setting](/docs/reference/settings) can't be changed to a value. A setting
 |---|---|---|
 | `noSuchSetting` | `There is no such setting.` | |
 | `notAGameSetting` | `That setting does not change the game.` | |
-| `notAUiSetting` | `That setting changes the game, so it is set with a command.` | |
+| `noProfile` | `This game keeps no settings between plays.` | [`runner.setSetting`](/docs/reference/runner#setsetting) on a `ui` setting, in a runner with no profile |
 | `onOrOff` | `Choose on or off.` | |
 | `inSteps` | `In steps of {step}.` | `{step}` is the range's `step` |
 
@@ -122,6 +122,9 @@ See [saves](/docs/reference/saves).
 | `gameNewer` | `That save was made with a newer version of this game.` | |
 | `pluginNewer` | `That save was made with a newer version of {plugin}.` | `{plugin}` is the plugin's id |
 | `pluginUnreadable` | `That save's {plugin} is from a version this game cannot read.` | `{plugin}` |
+| `noSaves` | `This game keeps no saves.` | The runner's `save` or `load`, in a runner with no `saves` |
+| `emptySlot` | `Nothing is saved there.` | The runner's `load`, on an empty slot |
+| `notSaved` | `The game could not be saved.` | The runner's `save`, when the driver fails |
 | `turnLabel` | `Turn {turn}` | `{turn}` is the [turn](/docs/reference/state#turn), counted from 1. It's a save's [default name](/docs/reference/saves#savemeta) when no plugin says when or where the save is. |
 
 The engine keeps no time of day, places or people, so it has no words for them. The plugins that keep them have their own strings:

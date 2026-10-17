@@ -22,7 +22,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
   const [said, setSaid] = useState<string | null>(null)
   const enter = (value: KvValue | undefined) => {
     const out = send({ type: 'input', id: input.id, to: value })
-    setSaid(out.ok ? null : (out.refused ?? null))
+    setSaid(out.ok ? null : (out.reason ?? null))
   }
   const submit = (event: FormEvent) => {
     event.preventDefault()

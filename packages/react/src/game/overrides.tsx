@@ -85,7 +85,7 @@ export const PART_KEYS = [
   // The pages around the game
   'title-page', 'title-art', 'title-name', 'title-subtitle', 'title-buttons', 'title-button',
   'page-heading', 'page-back',
-  'settings-page', 'settings', 'setting', 'setting-label', 'setting-control', 'setting-value', 'settings-empty',
+  'settings-page', 'settings', 'setting', 'setting-label', 'setting-control', 'setting-value', 'settings-empty', 'settings-message',
   'load-page', 'credits-page', 'credits', 'credit', 'credit-link',
   'gate-page', 'gate-title', 'gate-text', 'gate-buttons', 'gate-confirm', 'gate-decline',
 ] as const

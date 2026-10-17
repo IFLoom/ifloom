@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
-import type { Applied, Command, Mods, Runner, View } from '@ifloom/engine'
+import type { Command, GameState, Mods, Result, Runner, View } from '@ifloom/engine'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
 import { KeysProvider } from './keys.tsx'
@@ -23,8 +23,8 @@ export type GameContextValue = {
   runner: Runner
   mods?: ModsOption
   view: View
-  /** Run a command. Returns what `apply` returned, so a caller can show a refusal. */
-  send: (command: Command) => Applied
+  /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
+  send: (command: Command) => Result<GameState>
   panels: Record<string, PanelComponent>
   sections: Record<string, PluginSectionComponent>
 }

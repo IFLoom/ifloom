@@ -13,13 +13,14 @@ export function clamp(n: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, n))
 }
 
-export type Applied = {
-  state: GameState
-  /** False when the command was refused: state comes back untouched. */
-  ok: boolean
-  /** Why it was refused. Diagnostic, not necessarily player-facing. */
-  refused?: string
-}
+/**
+ * What `apply` says about a command: the shape of a `Result`, with the state
+ * on both sides. When `ok` is false the command was refused, `state` is the
+ * one it was sent to, untouched, and `reason` says why.
+ */
+export type Applied =
+  | { ok: true; state: GameState; reason?: never }
+  | { ok: false; state: GameState; reason: string }
 
 class Refused extends Error {
   readonly detail: string
@@ -89,7 +90,7 @@ export function apply(
     return { state: after(current, run(current, game, command), game), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
-      return { state: current, ok: false, refused: error.detail }
+      return { state: current, ok: false, reason: error.detail }
     }
     throw error
   }

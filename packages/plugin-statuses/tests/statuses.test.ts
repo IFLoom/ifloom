@@ -71,7 +71,7 @@ function game(extra: StatusDef[] = []): Game {
 function run(state: GameState, g: Game, ...ids: string[]): GameState {
   for (const id of ids) {
     const out = apply(state, g, { type: 'activity', id })
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -102,7 +102,7 @@ describe('timed statuses', () => {
   it('start from an item’s use, written in the short form', () => {
     const g = game()
     const out = apply(fresh(g), g, { type: 'use', id: 'flask' })
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     expect(out.state.items.flask).toBe(0)
     expect(holds(out.state, statusActive('caffeinated'), g)).toBe(true)
   })
@@ -180,14 +180,15 @@ describe('timed statuses', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
     for (const id of ['sneeze', 'coffee', 'rest', 'sneeze', 'rest', 'rest']) runner.apply({ type: 'activity', id })
-    expect(replay(g, runner.log())).toEqual(runner.state)
+    expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
   })
 
   it('load an old save that has no state for the plugin', () => {
     const g = game()
     const { plugins: _none, ...old } = fresh(g)
-    const loaded = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
-    if (typeof loaded === 'string') throw new Error(loaded)
+    const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
+    if (!loadedRead.ok) throw new Error(loadedRead.reason)
+    const loaded = loadedRead.value
     expect(shown(loaded, g).active).toEqual([])
     expect(statValue(run(loaded, g, 'coffee'), g, 'energy')).toBe(60)
   })

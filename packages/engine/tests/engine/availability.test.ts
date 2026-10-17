@@ -42,7 +42,7 @@ describe('one answer to "can I do this?"', () => {
     for (const state of states) {
       for (const button of buttons(state, game)) {
         const result = apply(state, game, button.command)
-        expect({ command: button.command, refused: result.refused }).toEqual({
+        expect({ command: button.command, refused: result.reason }).toEqual({
           command: button.command,
           refused: button.disabled ?? button.warning,
         })

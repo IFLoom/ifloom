@@ -149,7 +149,7 @@ const phoneOf = (state: GameState, g: Game) => (view(state, g).plugins.devices a
 function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
-    expect(out.refused, JSON.stringify(command)).toBeUndefined()
+    expect(out.reason, JSON.stringify(command)).toBeUndefined()
     state = out.state
   }
   return state
@@ -208,13 +208,13 @@ describe('a smartphone on the sidebar', () => {
     expect(state.sceneId).toBe('ava.call')
     expect(where(state)).toBe('house')
     const night = clock.write(begin(g), { day: 1, period: 'night' })
-    expect(apply(night, g, call('ava')).refused).toBe('Straight to voicemail.')
+    expect(apply(night, g, call('ava')).reason).toBe('Straight to voicemail.')
   })
 
   it('stays in the pocket at work: its apps greyed out, and one left open closes', () => {
     const g = game()
     const state = run(begin(g), g, openApp('camera'), go('work'))
-    expect(apply(state, g, openApp('texts')).refused).toBe('Not at work.')
+    expect(apply(state, g, openApp('texts')).reason).toBe('Not at work.')
     expect(phoneOf(state, g).open).toBeNull()
     expect(phoneOf(state, g).apps.every((app) => app.disabled === 'Not at work.')).toBe(true)
   })

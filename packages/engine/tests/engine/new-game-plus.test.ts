@@ -7,6 +7,7 @@ import { loadState, startingState } from '../../src/intake.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
 import { fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 function game(carryOver: Game['carryOver']): Game {
   return {
@@ -74,7 +75,7 @@ describe('version 9 saves', () => {
   it('carries a version-8 state forward with no settings', () => {
     const g = fixture()
     const { settings: _settings, audio: _audio, ...now } = startingState(g)
-    expect(loadState({ ...now, version: 8 }, g)).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
+    expect(unwrap(loadState({ ...now, version: 8 }, g))).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
   })
 
   it('loads a version-8 save with every play setting at its default', async () => {
@@ -83,7 +84,7 @@ describe('version 9 saves', () => {
     const { settings: _settings, ...old } = { ...startingState(g), version: 8 }
     const file = { ifloom: 1, meta: { game: g.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 8 }, state: old }
     const loaded = store.importText(JSON.stringify(file))
-    expect(typeof loaded !== 'string' && loaded.state.settings).toEqual({ hints: true, difficulty: 'usual' })
+    expect(loaded.ok && loaded.value.state.settings).toEqual({ hints: true, difficulty: 'usual' })
   })
 
   it('gives a play setting added since the save its default, and keeps the ones it had', async () => {
@@ -92,6 +93,6 @@ describe('version 9 saves', () => {
     await store.write('1', startingState(before, { settings: { hints: false } }))
     const after = saves({ ...before, settings }, store.driver)
     const loaded = await after.read('1')
-    expect(loaded && typeof loaded !== 'string' && loaded.state.settings).toEqual({ hints: false, difficulty: 'usual' })
+    expect(loaded.ok && loaded.value?.state.settings).toEqual({ hints: false, difficulty: 'usual' })
   })
 })

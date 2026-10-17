@@ -578,17 +578,14 @@ type SettingView = {
 
 A [setting](/docs/reference/settings) as a settings screen draws it. `options` is only there for a choice, and `min`, `max` and `step` only for a range (`step` only if declared). `affects` is `'play'` when the declaration leaves it out.
 
-`value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. Read it from the [profile](/docs/reference/profile) instead, falling back to `default`:
+`value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. A runner gives both kinds with [`runner.settings()`](/docs/reference/runner#settings):
 
 ```ts
-const stored = (await runner.profile?.get<Record<string, KvValue>>('core:settings')) ?? {}
-for (const setting of runner.view().settings) {
-  const value = setting.value ?? stored[setting.id] ?? setting.default
-  drawSetting(setting, value)
-}
+const values = runner.settings()
+for (const setting of runner.view().settings) drawSetting(setting, values[setting.id])
 ```
 
-Send a change to a `play` setting as the [`setting`](/docs/reference/commands#setting) command, and a change to a `ui` setting through [`runner.setUiSetting`](/docs/reference/runner#setuisetting).
+Send a change of either kind through [`runner.setSetting`](/docs/reference/runner#setsetting).
 
 ## SpeakerView
 

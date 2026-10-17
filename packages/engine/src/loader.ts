@@ -134,11 +134,12 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
   addData('base', base.data)
   for (const written of packs) {
     // An older pack is carried forward to this schema; one that can't be is skipped whole.
-    const pack = upgradePack(written)
-    if (typeof pack === 'string') {
-      problems.push({ pack: written.id, where: 'pack', what: pack })
+    const upgraded = upgradePack(written)
+    if (!upgraded.ok) {
+      problems.push({ pack: written.id, where: 'pack', what: upgraded.reason })
       continue
     }
+    const pack = upgraded.value
     for (const key of Object.keys(pack)) {
       if (!Object.hasOwn(PACK_KEYS, key)) problems.push({ pack: pack.id, where: 'pack', what: `a pack has no "${key}", so it was left out` })
     }

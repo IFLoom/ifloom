@@ -110,7 +110,7 @@ describe('the wardrobe', () => {
     const barefoot = apply(state, g, takeOff('feet')).state
     const sandals = apply(barefoot, g, wear('sandals')).state
     expect(whyNot(apply(sandals, g, takeOff('feet')).state, g, wear('raincoat'))).toBeUndefined()
-    expect(apply(state, g, wear('umbrella'))).toMatchObject({ ok: false, refused: 'The umbrella is not something you wear.' })
+    expect(apply(state, g, wear('umbrella'))).toMatchObject({ ok: false, reason: 'The umbrella is not something you wear.' })
   })
 
   it('reports clothes that are not items or name a slot the game does not have', () => {

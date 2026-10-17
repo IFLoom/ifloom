@@ -24,7 +24,7 @@ function CommandForm({ label, fields, build }: { label: string; fields: string[]
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const out = send(build(values))
-    setSaid(out.ok ? null : (out.refused ?? null))
+    setSaid(out.ok ? null : (out.reason ?? null))
   }
   return (
     <form {...form} onSubmit={submit}>

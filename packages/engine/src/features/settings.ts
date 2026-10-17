@@ -120,13 +120,13 @@ export function settingValue(game: Game, stored: Record<string, unknown> | undef
 
 /**
  * Why this value can't be given to this setting, as the player reads it;
- * undefined if it can. `affects` is the kind of setting the caller sets: the
- * `setting` command sets `play` ones, `runner.setUiSetting` sets `ui` ones.
+ * undefined if it can. Through the `setting` command (`'command'`) only a
+ * `play` setting can be set; `runner.setSetting` (`'runner'`) sets either kind.
  */
-export function settingRefusal(game: Game, id: string, value: unknown, affects: 'play' | 'ui' = 'play'): string | undefined {
+export function settingRefusal(game: Game, id: string, value: unknown, through: 'command' | 'runner' = 'command'): string | undefined {
   const setting = settingById(game, id)
   if (!setting) return say(game, 'noSuchSetting')
-  if (settingAffects(setting) !== affects) return say(game, affects === 'play' ? 'notAGameSetting' : 'notAUiSetting')
+  if (through === 'command' && settingAffects(setting) !== 'play') return say(game, 'notAGameSetting')
   switch (settingFault(setting, value)) {
     case 'toggle':
       return say(game, 'onOrOff')
@@ -292,6 +292,5 @@ export const settings = defineFeature<SettingsShape>({
       const { id, to } = command
       remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: to })))
     },
-    newGame: async (start, profile) => ({ ...start, settings: start.settings ?? (await profile?.get<Record<string, unknown>>('core:settings')) }),
   },
 })

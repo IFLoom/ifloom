@@ -73,7 +73,7 @@ function game(extra: QuestDef[] = []): Game {
 function run(state: GameState, g: Game, ...commands: Parameters<typeof apply>[2][]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state

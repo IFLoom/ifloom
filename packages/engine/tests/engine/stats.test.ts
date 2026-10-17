@@ -87,8 +87,8 @@ describe('spending stats', () => {
     const house = begin(game, { stats: { coins: 10, puff: 5, charm: 1 } })
     const ate = apply(house, game, { type: 'activity', id: 'cake' })
     expect(ate.state.stats).toMatchObject({ coins: 6, puff: 3 })
-    expect(apply(house, game, { type: 'activity', id: 'feast' }).refused).toBe('Short by a few.')
-    expect(apply(house, game, { type: 'activity', id: 'run' }).refused).toBe('Not enough puff.')
+    expect(apply(house, game, { type: 'activity', id: 'feast' }).reason).toBe('Short by a few.')
+    expect(apply(house, game, { type: 'activity', id: 'run' }).reason).toBe('Not enough puff.')
   })
 
   it('works a moving ceiling out from a named value', () => {

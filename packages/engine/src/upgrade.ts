@@ -4,6 +4,7 @@
  * `intake.ts` carries a save. `loadGame` and `readMod` both go through
  * `upgradePack`, so an old pack and an old mod file still load.
  */
+import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
@@ -385,15 +386,15 @@ export function upgradeCommand<C>(command: C): C {
  * written for a newer engine, or for one so old there is no step from it. A
  * pack already at `SCHEMA` comes back as it is.
  */
-export function upgradePack(pack: { schema: number }): Pack | string {
+export function upgradePack(pack: { schema: number }): Result<Pack> {
   const from = pack.schema
-  if (!Number.isInteger(from)) return `has no schema number`
-  if (from > SCHEMA) return `written for schema ${from}, this engine reads ${SCHEMA}`
+  if (!Number.isInteger(from)) return fail(`has no schema number`)
+  if (from > SCHEMA) return fail(`written for schema ${from}, this engine reads ${SCHEMA}`)
   let raw = pack as RawPack
   for (let version = from; version < SCHEMA; version += 1) {
     const step = PACK_STEPS[version]
-    if (!step) return `written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`
+    if (!step) return fail(`written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`)
     raw = { ...step(raw), schema: version + 1 }
   }
-  return raw as unknown as Pack
+  return ok(raw as unknown as Pack)
 }

@@ -7,6 +7,7 @@ import { saves } from '../../src/save.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
 import { OLD_SAVES, oldSavesGame, oldSavesVersioned } from '../fixtures/old-saves.ts'
 import expected from '../fixtures/old-saves.expected.json'
+import { unwrap } from '../fixtures/result.ts'
 
 const games: [keyof typeof expected, () => Game][] = [
   ['unversioned', oldSavesGame],
@@ -24,10 +25,9 @@ describe('loadState', () => {
       for (const [version, state] of Object.entries(OLD_SAVES)) {
         const game = make()
         const loaded = loadState(state, game)
-        expect(loaded, `version ${version}`).toEqual(expected[name][version as keyof (typeof expected)[typeof name]])
-        const read = saves(game, memoryDriver()).importText(fileOf(game, state))
-        if (typeof read === 'string') throw new Error(read)
-        expect(read.state, `version ${version} through the store`).toEqual(loaded)
+        expect(unwrap(loaded), `version ${version}`).toEqual(expected[name][version as keyof (typeof expected)[typeof name]])
+        const read = unwrap(saves(game, memoryDriver()).importText(fileOf(game, state)))
+        expect(read.state, `version ${version} through the store`).toEqual(unwrap(loaded))
       }
     })
   }
@@ -36,26 +36,26 @@ describe('loadState', () => {
     for (const [, make] of games) {
       const game = make()
       const fresh = startingState(game, { seed: 9 })
-      expect(loadState(JSON.parse(JSON.stringify(fresh)), game)).toEqual(fresh)
+      expect(unwrap(loadState(JSON.parse(JSON.stringify(fresh)), game))).toEqual(fresh)
     }
   })
 
   it('refuses what is not a state, and a version it has no route from', () => {
     const game = oldSavesGame()
-    expect(loadState(null, game)).toBe('That is not a save file.')
-    expect(loadState('{}', game)).toBe('That is not a save file.')
-    expect(loadState({ ...OLD_SAVES[1], version: 0 }, game)).toBe('That save is from a version this game cannot read.')
-    expect(loadState({ ...OLD_SAVES[11], version: SAVE_VERSION + 1 }, game)).toBe('That save is from a version this game cannot read.')
-    expect(loadState({ ...OLD_SAVES[11], version: 9.5 }, game)).toBe('That save is from a version this game cannot read.')
+    expect(loadState(null, game)).toEqual({ ok: false, reason: 'That is not a save file.' })
+    expect(loadState('{}', game)).toEqual({ ok: false, reason: 'That is not a save file.' })
+    expect(loadState({ ...OLD_SAVES[1], version: 0 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
+    expect(loadState({ ...OLD_SAVES[11], version: SAVE_VERSION + 1 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
+    expect(loadState({ ...OLD_SAVES[11], version: 9.5 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
     const newer = { ...OLD_SAVES[11], plugins: { clock: { version: 3, state: {} } } }
-    expect(loadState(newer, game)).toBe('That save was made with a newer version of clock.')
+    expect(loadState(newer, game)).toEqual({ ok: false, reason: 'That save was made with a newer version of clock.' })
   })
 
   it('starts a command log from an old save', () => {
     const game = oldSavesGame()
     const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'activity', id: 'wait' }] })
-    expect(played).toMatchObject({ version: SAVE_VERSION, media: { picks: {} } })
-    expect(replay(game, { game: game.id, start: { version: 0 } as unknown as GameState, commands: [] })).toBe('That save is from a version this game cannot read.')
+    expect(unwrap(played)).toMatchObject({ version: SAVE_VERSION, media: { picks: {} } })
+    expect(replay(game, { game: game.id, start: { version: 0 } as unknown as GameState, commands: [] })).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
   })
 })
 
@@ -73,7 +73,7 @@ describe('state fields', () => {
     expect(filled.length).toBeGreaterThan(5)
     for (const [key, field] of filled) {
       const { [key]: _gone, ...lacking } = fresh as Record<string, unknown>
-      const loaded = loadState(lacking, game) as Record<string, unknown>
+      const loaded = unwrap(loadState(lacking, game)) as Record<string, unknown>
       expect(loaded[key], key).toEqual((field as { load: () => unknown }).load())
     }
   })

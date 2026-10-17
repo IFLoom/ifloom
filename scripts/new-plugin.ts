@@ -238,7 +238,7 @@ describe('${name}', () => {
     const fresh = { ...startingState(g), sceneId: null }
     expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
     const shopped = apply(fresh, g, { type: 'activity', id: 'shop' })
-    expect(shopped.refused).toBeUndefined()
+    expect(shopped.reason).toBeUndefined()
     expect(holds(shopped.state, ${camel}Marked('bread'), g)).toBe(true)
     const milk = apply(shopped.state, g, mark${Pascal}Command('milk'))
     expect(shown(g, milk.state).entries.map((entry) => entry.marked)).toEqual([true, true])
@@ -246,7 +246,7 @@ describe('${name}', () => {
 
   it('refuses to mark what is not there', () => {
     const g = game()
-    expect(apply({ ...startingState(g), sceneId: null }, g, mark${Pascal}Command('cheese')).refused).toBe('There is nothing like that.')
+    expect(apply({ ...startingState(g), sceneId: null }, g, mark${Pascal}Command('cheese')).reason).toBe('There is nothing like that.')
   })
 
   it('reports an entry content names that the game lacks', () => {

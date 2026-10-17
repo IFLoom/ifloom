@@ -8,7 +8,7 @@ const { game, problems } = theLetter()
 function read(state: GameState, ...commands: Command[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -96,8 +96,9 @@ describe('The Letter', () => {
       })
     const store = saves(game, memoryDriver())
     for (const saved of [state, { ...state, gameVersion: 1 }]) {
-      const loaded = store.importText(file(saved))
-      if (typeof loaded === 'string') throw new Error(loaded)
+      const loadedRead = store.importText(file(saved))
+      if (!loadedRead.ok) throw new Error(loadedRead.reason)
+      const loaded = loadedRead.value
       expect(loaded.meta.gameVersion).toBe(1)
       expect(loaded.state.gameVersion).toBe(2)
       expect(loaded.state.kv).toEqual({ playerName: 'Robin', fibs: 2 })

@@ -3,12 +3,13 @@ import { holds } from '../../src/condition.ts'
 import { SCHEMA, loadGame } from '../../src/loader.ts'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
-import { SAVE_VERSION, type GameState } from '../../src/types.ts'
+import { SAVE_VERSION } from '../../src/types.ts'
 import { explain } from '../../src/explain.ts'
 import { proseStore } from '../../src/prose.ts'
 import { view } from '../../src/view.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { begin, fixture } from '../fixtures/town.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 describe('choices the player made', () => {
   it('are remembered by scene and choice, and `{ chose }` reads them', () => {
@@ -100,12 +101,12 @@ describe('a new game', () => {
     const game = fixture()
     const { chosen: _chosen, kv: _kv, ...now } = startingState(game)
     const old = { ...now, version: 1, playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', flags: { tidy: true } }
-    expect(loadState(old, game)).toMatchObject({
+    expect(unwrap(loadState(old, game))).toMatchObject({
       version: SAVE_VERSION,
       chosen: {},
       kv: { playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', tidy: true },
     })
-    expect(loadState(old, game)).not.toHaveProperty('playerName')
+    expect(unwrap(loadState(old, game))).not.toHaveProperty('playerName')
   })
 
   it('carries a version-2 save onto turns: the day is the turn, and day stamps become turn stamps', () => {
@@ -120,7 +121,7 @@ describe('a new game', () => {
       collections: { gallery: [{ id: 'house', day: 2 }] },
       notices: [{ id: 'n', title: 'Rent', day: 3, seen: false }],
     }
-    expect(loadState(old, game)).toMatchObject({
+    expect(unwrap(loadState(old, game))).toMatchObject({
       version: SAVE_VERSION,
       turn: 4,
       kv: { 'turn:cafe.counter.chat': 4, tidy: true },
@@ -134,32 +135,32 @@ describe('a new game', () => {
     const game = fixture()
     const now = startingState(game)
     const old = { ...now, version: 4, time: { day: 3, period: 'sleep' } }
-    const moved = loadState(old, game) as GameState
+    const moved = unwrap(loadState(old, game))
     expect(moved).not.toHaveProperty('time')
     expect(moved.plugins.calendar).toEqual({ version: 1, state: { day: 3, period: 'late' } })
-    expect((loadState({ ...now, version: 4, time: { day: 1, period: 'morning' } }, game) as GameState).plugins.calendar).toEqual({ version: 1, state: { day: 1, period: 'morning' } })
+    expect(unwrap(loadState({ ...now, version: 4, time: { day: 1, period: 'morning' } }, game)).plugins.calendar).toEqual({ version: 1, state: { day: 1, period: 'morning' } })
   })
 
   it('carries a version-5 save’s place to the places plugin', () => {
     const game = fixture()
     const now = startingState(game)
-    const moved = loadState({ ...now, version: 5, locationId: 'shop' }, game) as GameState
+    const moved = unwrap(loadState({ ...now, version: 5, locationId: 'shop' }, game))
     expect(moved).not.toHaveProperty('locationId')
     expect(moved.plugins.places).toEqual({ version: 1, state: { at: 'shop' } })
-    expect((loadState({ ...now, version: 5, locationId: null }, game) as GameState).plugins.places).toBeUndefined()
+    expect(unwrap(loadState({ ...now, version: 5, locationId: null }, game)).plugins.places).toBeUndefined()
   })
 
   it('carries a version-7 save’s storylines on without standing or rapport', () => {
     const game = fixture()
     const now = startingState(game)
-    const moved = loadState({ ...now, version: 7, storylines: { rosa: { standing: 40, rapport: 3, closedUntil: null, flags: { met: true } } } }, game) as GameState
+    const moved = unwrap(loadState({ ...now, version: 7, storylines: { rosa: { standing: 40, rapport: 3, closedUntil: null, flags: { met: true } } } }, game))
     expect(moved.storylines.rosa).toEqual({ closedUntil: null, kv: { met: true } })
   })
 
   it('saves and loads without a player name', () => {
     const game = fixture()
     const state = startingState(game)
-    expect(loadState(JSON.parse(JSON.stringify(state)), game)).toEqual(state)
+    expect(unwrap(loadState(JSON.parse(JSON.stringify(state)), game))).toEqual(state)
   })
 })
 

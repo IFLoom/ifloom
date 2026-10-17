@@ -6,7 +6,7 @@
  *   import { startAudio } from '@ifloom/audio'
  *   const player = startAudio(runner)
  */
-import { settingValue, type AudioChannelView, type AudioCue, type AudioView, type CommandLog, type Runner } from '@ifloom/engine'
+import type { AudioChannelView, AudioCue, AudioView, CommandLog, KvValue, Runner } from '@ifloom/engine'
 
 /** The parts of an `HTMLAudioElement` the player uses. Tests pass a fake through `createAudio`. */
 export type AudioLike = {
@@ -81,8 +81,8 @@ function errorName(error: unknown): string {
  * Play a runner's `view.audio` in the browser until `stop()`. Background
  * channels crossfade when their file changes and step through playlists. Each
  * cue key plays once, and the keys already in the view when the player starts
- * count as heard, so loading a save replays nothing. Volumes come from the
- * game's ui settings in `runner.profile`. Nothing plays until the player first
+ * count as heard, so loading a save replays nothing. Volumes and muting come
+ * from the game's settings, as `runner.settings()` gives them. Nothing plays until the player first
  * clicks or presses a key, or until `unlock()`.
  */
 export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPlayer {
@@ -92,7 +92,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
 
   let audio: AudioView = runner.view().audio
   let lastLog: CommandLog = runner.log()
-  let stored: Record<string, unknown> = {}
+  let settings: Readonly<Record<string, KvValue>> = runner.settings()
   let unlocked = false
   let stopped = false
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -113,13 +113,13 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   function rangeGain(id: string): number {
     const setting = runner.game.settings?.find((entry) => entry.id === id)
     if (!setting || setting.kind !== 'range') return 1
-    const at = Number(settingValue(runner.game, stored, id))
+    const at = Number(settings[id] ?? setting.default)
     return setting.max > setting.min ? clamp((at - setting.min) / (setting.max - setting.min)) : 1
   }
 
   function muted(): boolean {
     const id = audio.muteSetting
-    return id ? settingValue(runner.game, stored, id) === true : false
+    return id ? settings[id] === true : false
   }
 
   function gain(channel: string): number {
@@ -385,27 +385,16 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
 
   // Wiring
 
-  const stopRunner = runner.subscribe(() => sync())
-  const profile = runner.profile
-  let settingsHeard = false
-  const stopProfile = profile?.subscribe((namespace, value) => {
-    if (namespace !== 'core:settings') return
-    settingsHeard = true
-    stored = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
-    log(`settings changed${muted() ? ', muted' : ''}`)
-    kick()
+  const stopRunner = runner.subscribe(() => {
+    // The runner hands back the same settings object until one changes.
+    const now = runner.settings()
+    if (now !== settings && !stopped) {
+      settings = now
+      log(`settings changed${muted() ? ', muted' : ''}`)
+      kick()
+    }
+    sync()
   })
-  if (profile) {
-    void profile.get<Record<string, unknown>>('core:settings').then(
-      (value) => {
-        // A write heard while this was being read is newer.
-        if (stopped || settingsHeard) return
-        stored = value && typeof value === 'object' ? value : {}
-        kick()
-      },
-      (error: unknown) => log(`settings unreadable (${errorName(error)})`),
-    )
-  }
   root?.addEventListener('pointerdown', onGesture, true)
   root?.addEventListener('keydown', onGesture, true)
   log(`started, ${heard.size} cue${heard.size === 1 ? '' : 's'} already heard; waiting for a click or key press`)
@@ -423,7 +412,6 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
       if (stopped) return
       stopped = true
       stopRunner()
-      stopProfile?.()
       root?.removeEventListener('pointerdown', onGesture, true)
       root?.removeEventListener('keydown', onGesture, true)
       if (timer !== undefined) clearTimeout(timer)

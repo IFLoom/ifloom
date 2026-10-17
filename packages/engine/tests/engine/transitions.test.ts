@@ -47,7 +47,7 @@ function make(extra: Partial<Pack> = {}, base: Partial<Game> = {}) {
 
 function choose(state: GameState, game: Game, id: string): GameState {
   const applied = apply(state, game, { type: 'choose', id })
-  if (!applied.ok) throw new Error(applied.refused)
+  if (!applied.ok) throw new Error(applied.reason)
   return applied.state
 }
 

@@ -201,14 +201,14 @@ view(cafe, game).scene.body   // 'Six tables, one of them wobbly.\n\nSomeone poi
 state = apply(state, game, takeOff('coat')).state
 closet(state).spare                        // [{ id: 'raincoat', name: 'raincoat', slot: 'coat' }]
 state.items.raincoat                       // 1: taking it off doesn't lose it
-apply(state, game, takeOff('coat')).refused   // 'There is nothing to take off.'
+apply(state, game, takeOff('coat')).reason   // 'There is nothing to take off.'
 
 whyNot(state, game, wear('scarf'))         // 'You have no scarf.'
 whyNot(state, game, wear('sandwich'))      // 'The sandwich is not something you wear.'
 state = apply(state, game, { type: 'activity', id: 'buyScarf' }).state
 state = apply(state, game, wear('scarf')).state
 holds(state, slotFilled('neck'), game)     // true
-apply(state, game, wear('scarf')).refused  // 'You are already wearing the scarf.'
+apply(state, game, wear('scarf')).reason  // 'You are already wearing the scarf.'
 
 state = apply(state, game, go('park')).state
 whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf is on

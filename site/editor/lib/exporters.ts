@@ -75,9 +75,9 @@ export function fromJson(text: string, title?: string): Imported {
   let raw = parsed
   if (raw.schema !== undefined) {
     // An older pack is brought up to the schema the editor writes.
-    const upgraded = typeof raw.schema === 'number' ? upgradePack({ ...raw, schema: raw.schema }) : 'has no schema number'
-    if (typeof upgraded === 'string') return { error: `This pack can't be opened: ${upgraded}.` }
-    raw = upgraded as unknown as Record<string, unknown>
+    const upgraded = typeof raw.schema === 'number' ? upgradePack({ ...raw, schema: raw.schema }) : { ok: false as const, reason: 'has no schema number' }
+    if (!upgraded.ok) return { error: `This pack can't be opened: ${upgraded.reason}.` }
+    raw = upgraded.value as unknown as Record<string, unknown>
   }
   if (typeof raw.id !== 'string' || !raw.id) return { error: 'A pack needs an "id".' }
   for (const list of ['scenes', 'stats', 'items'] as const) {

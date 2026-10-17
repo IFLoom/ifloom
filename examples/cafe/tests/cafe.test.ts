@@ -8,7 +8,7 @@ const { game, problems } = cornerCafe()
 function play(state: GameState, ...commands: Command[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
-    expect(out.refused).toBeUndefined()
+    expect(out.reason).toBeUndefined()
     state = out.state
   }
   return state
@@ -36,7 +36,7 @@ describe('The Corner Café', () => {
     expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 }, kv: {} })
     expect(holds(state, { count: 'staff', gte: 3 }, game)).toBe(true)
     state = play(state, act('interview'), { type: 'choose', id: 'dev' })
-    expect(apply(state, game, act('interview')).refused).toBe('There is no room behind the counter.')
+    expect(apply(state, game, act('interview')).reason).toBe('There is no room behind the counter.')
   })
 
   it('ends a week: takings in, wages out, everyone a little more tired, and the turn moves on', () => {

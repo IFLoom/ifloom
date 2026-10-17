@@ -5,6 +5,7 @@
  * forward and fills it in. Each field of the state declares its new-game value
  * and its load default once, in `FIELDS`, and both paths read that table.
  */
+import { fail, ok, type Result } from './result.ts'
 import { say } from './strings.ts'
 import type { Game } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
@@ -299,13 +300,13 @@ function fillGame(state: GameState, game: Game): GameState {
  * own steps and each field's load default, the plugins' migrations, the
  * game's migrations, then what the game declares and the save lacks.
  */
-export function loadState(raw: unknown, game: Game): GameState | string {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return say(game, 'notASave')
+export function loadState(raw: unknown, game: Game): Result<GameState> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(say(game, 'notASave'))
   const engine = carryEngine(raw as Saved)
-  if (!engine) return say(game, 'saveTooOld')
+  if (!engine) return fail(say(game, 'saveTooOld'))
   const plugged = carryPlugins(engine, game)
-  if (typeof plugged === 'string') return plugged
+  if (typeof plugged === 'string') return fail(plugged)
   const carried = carryGame(plugged, game)
-  if (typeof carried === 'string') return carried
-  return fillGame(carried, game)
+  if (typeof carried === 'string') return fail(carried)
+  return ok(fillGame(carried, game))
 }

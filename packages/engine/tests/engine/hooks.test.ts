@@ -44,7 +44,7 @@ describe('the game’s hooks', () => {
     })
     const refused = apply(begin(game), game, { type: 'leave' })
     expect(refused.ok).toBe(false)
-    expect(refused.refused).toBe('Nothing to leave.')
+    expect(refused.reason).toBe('Nothing to leave.')
     const home = apply(begin(game, { kv: { at: 'shop' }, sceneId: 'rosa.hello' }), game, { type: 'leave' })
     expect(home.state.kv.at).toBe('house')
   })

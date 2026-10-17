@@ -13,21 +13,19 @@ import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
 ```ts
 function apply(state: GameState | null, game: Game, command: CommandRef): Applied
 
-type Applied = {
-  state: GameState
-  ok: boolean
-  refused?: string
-}
+type Applied =
+  | { ok: true; state: GameState }
+  | { ok: false; state: GameState; reason: string }
 ```
 
-Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `refused` says why.
+Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides; the runner's `apply` gives a plain `Result` with the new state as its `value`.
 
 ```ts
 import { apply } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 
 const out = apply(state, game, go('cafe'))
-if (!out.ok) console.log(out.refused) // the reason, such as a place's `blocked` line
+if (!out.ok) console.log(out.reason) // the reason, such as a place's `blocked` line
 state = out.state
 ```
 
@@ -219,7 +217,7 @@ Changes a `play` [setting](/docs/reference/settings) in the state. A settings sc
 No lock or plugin guard stops it, because changing a setting is the menu's business, not the story's. It's refused with:
 
 - `There is no such setting.` for an id the game doesn't declare
-- `That setting does not change the game.` for a `ui` setting, which never enters the state (use [`runner.setUiSetting`](/docs/reference/runner#setuisetting))
+- `That setting does not change the game.` for a `ui` setting, which never enters the state (use [`runner.setSetting`](/docs/reference/runner#setsetting))
 - `Choose on or off.` for a toggle given anything but `true` or `false`
 - `That is not one of the options.` for a choice given a value it doesn't list
 - `Enter a number.`, `Between <min> and <max>.` or `In steps of <step>.` for a range

@@ -11,6 +11,7 @@ import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
 import type { DataScene } from '../../src/scene.ts'
 import type { GameState } from '../../src/types.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 /** A phone that opens; refused while the battery is flat, and opening it costs a coin. */
 const phone = definePlugin<{ open: boolean }>({
@@ -126,7 +127,7 @@ describe('inline actions and tooltips', () => {
     const flat = start(game, { flat: true })
     expect(inlineChoices(view(flat, game).scene.beats).find((choice) => choice.id === 'answer')?.disabled).toBe('The battery is flat.')
     const refused = apply(flat, game, { type: 'choose', id: 'answer' })
-    expect(refused).toMatchObject({ ok: false, refused: 'The battery is flat.' })
+    expect(refused).toMatchObject({ ok: false, reason: 'The battery is flat.' })
   })
 
   it('run the command a choice sends, then its effects', () => {
@@ -143,7 +144,7 @@ describe('inline actions and tooltips', () => {
     const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
     expect(runner.apply({ type: 'choose', id: 'answer' }).ok).toBe(true)
     expect(runner.apply({ type: 'choose', id: 'knock' }).ok).toBe(true)
-    expect(replay(game, runner.log())).toEqual(runner.state)
+    expect(unwrap(replay(game, runner.log()))).toEqual(runner.state)
     expect(runner.backlog().map((entry) => entry.chose)).toEqual(['Answer', 'Knock', undefined])
     const [entry] = runner.backlog()
     const ring = entry.beats[0]

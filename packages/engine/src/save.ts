@@ -4,6 +4,7 @@ import type { Game } from './game.ts'
 import { pluginById, pluginLabel } from './plugin.ts'
 import type { GameState } from './types.ts'
 import { loadState } from './intake.ts'
+import { fail, ok, type Result } from './result.ts'
 
 /** What a save says about itself, for a load screen. */
 export type SaveMeta = {
@@ -53,6 +54,41 @@ export type LoadedSave = {
   missingPlugins: string[]
 }
 
+/** What a save's write is given besides the state. */
+export type SaveExtra = {
+  /** The player's name for it. One made from where and when if left out. */
+  name?: string
+  /** Time played, in milliseconds. 0 if left out. */
+  played?: number
+  /** When it was written, epoch milliseconds. Now if left out. */
+  savedAt?: number
+}
+
+/** One game's saves, as `saves` gives them. */
+export interface Saves {
+  /** Where the saves are kept. */
+  readonly driver: SaveDriver
+  /** Write a state to a slot, and return what the save says about itself. Rejects only if the driver fails. */
+  write(slot: string, state: GameState, extra?: SaveExtra): Promise<SaveMeta>
+  /**
+   * A slot read back, carried forward and checked against this game. The
+   * value is null when the slot is empty; a failure says why the save can't be read.
+   */
+  read(slot: string): Promise<Result<LoadedSave | null>>
+  /**
+   * Every save this game has, newest first, then any that can't be read, as
+   * `{ slot, broken }` with the reason, by slot. Tell them apart with
+   * `'broken' in entry`; a broken one can still be removed.
+   */
+  list(): Promise<SaveListing[]>
+  /** Delete a slot. Nothing happens if it is empty. */
+  remove(slot: string): Promise<void>
+  /** A save as text a player can keep as a file, or null if the slot is empty. */
+  exportSlot(slot: string): Promise<string | null>
+  /** Text from a file a player picked, checked against this game: the save, or why it was refused. */
+  importText(text: string): Result<LoadedSave>
+}
+
 function isSaveFile(data: unknown): data is { ifloom: 1; meta: SaveMeta; state: unknown } {
   const file = data as { ifloom?: unknown; meta?: { game?: unknown } } | null
   return Boolean(file && file.ifloom === 1 && typeof file.meta?.game === 'string')
@@ -67,11 +103,11 @@ function isSaveFile(data: unknown): data is { ifloom: 1; meta: SaveMeta; state: 
  * new version never orphans an old save. Slots are names — `'auto'`,
  * `'quick'`, `'1'` — chosen by the game.
  */
-export function saves(game: Game, driver: SaveDriver) {
+export function saves(game: Game, driver: SaveDriver): Saves {
   const prefix = `${game.id}.save.`
   const key = (slot: string) => `${prefix}${slot}`
 
-  function meta(slot: string, state: GameState, extra: { name?: string; played?: number; savedAt?: number }): SaveMeta {
+  function meta(slot: string, state: GameState, extra: SaveExtra): SaveMeta {
     const when = pluginLabel(game, state)
     return {
       game: game.id,
@@ -91,69 +127,56 @@ export function saves(game: Game, driver: SaveDriver) {
   }
 
   /** Read a save file's text: carried forward, checked against this game. */
-  function read(text: string): LoadedSave | string {
+  function read(text: string): Result<LoadedSave> {
     let data: unknown
     try {
       data = JSON.parse(text)
     } catch {
-      return say(game, 'notASave')
+      return fail(say(game, 'notASave'))
     }
-    if (!isSaveFile(data)) return say(game, 'notASave')
-    if (data.meta.game !== game.id) return say(game, 'otherGame', { game: data.meta.game })
-    const state = loadState(data.state, game)
-    if (typeof state === 'string') return state
+    if (!isSaveFile(data)) return fail(say(game, 'notASave'))
+    if (data.meta.game !== game.id) return fail(say(game, 'otherGame', { game: data.meta.game }))
+    const loaded = loadState(data.state, game)
+    if (!loaded.ok) return loaded
+    const state = loaded.value
     const missingPacks = (data.meta.packs ?? []).filter((id) => !(game.packs ?? []).includes(id))
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion
     const meta = { ...data.meta, gameVersion: data.meta.gameVersion ?? recorded ?? 1 }
-    return { meta, state, missingPacks, missingPlugins }
+    return ok({ meta, state, missingPacks, missingPlugins })
   }
 
   return {
     driver,
-    /** Write a state to a slot, and return what the save says about itself. */
-    async write(
-      slot: string,
-      state: GameState,
-      extra: { name?: string; played?: number; savedAt?: number } = {},
-    ): Promise<SaveMeta> {
+    async write(slot, state, extra = {}) {
       const file: SaveFile = { ifloom: 1, meta: meta(slot, state, extra), state }
       await driver.set(key(slot), JSON.stringify(file))
       return file.meta
     },
-    /** A slot read back, or null if it is empty; a string says why it could not be read. */
-    async read(slot: string): Promise<LoadedSave | string | null> {
+    async read(slot) {
       const text = await driver.get(key(slot))
-      return text === null ? null : read(text)
+      return text === null ? ok(null) : read(text)
     },
-    /**
-     * Every save this game has, newest first, then any that can't be read, as
-     * `{ slot, broken }` with the reason, by slot. Tell them apart with
-     * `'broken' in entry`; a broken one can still be removed.
-     */
-    async list(): Promise<SaveListing[]> {
+    async list() {
       const out: SaveMeta[] = []
       const broken: BrokenSave[] = []
       for (const k of await driver.keys(prefix)) {
         const text = await driver.get(k)
         if (text === null) continue
         const loaded = read(text)
-        if (typeof loaded === 'string') broken.push({ slot: k.slice(prefix.length), broken: loaded })
-        else out.push(loaded.meta)
+        if (!loaded.ok) broken.push({ slot: k.slice(prefix.length), broken: loaded.reason })
+        else out.push(loaded.value.meta)
       }
       return [...out.sort((a, b) => b.savedAt - a.savedAt), ...broken.sort((a, b) => a.slot.localeCompare(b.slot))]
     },
-    async remove(slot: string): Promise<void> {
+    async remove(slot) {
       await driver.remove(key(slot))
     },
-    /** A save as text a player can keep as a file. */
-    async exportSlot(slot: string): Promise<string | null> {
+    async exportSlot(slot) {
       return driver.get(key(slot))
     },
-    /** Text from a file a player picked, checked; a string says why it was refused. */
     importText: read,
   }
 }
 
-export type Saves = ReturnType<typeof saves>

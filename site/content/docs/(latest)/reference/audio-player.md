@@ -43,7 +43,7 @@ import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
 
-const runner = browserRunner(loaded.game)
+const runner = await browserRunner(loaded.game)
 startAudio(runner)
 ```
 

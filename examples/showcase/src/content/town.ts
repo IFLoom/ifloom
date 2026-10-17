@@ -4,7 +4,7 @@
  * Everything here is data — conditions, effects, prose keys — so a mod could
  * ship any of it. The few things that are computed live in `custom.ts`.
  */
-import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
+import { SCHEMA, type Condition, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { applyEffect, effectActive } from '@ifloom/plugin-effects'
 import { buy } from '@ifloom/plugin-shop'
@@ -15,6 +15,7 @@ import { wearing } from '@ifloom/plugin-wardrobe'
 import { day, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { here, person, talk, type CharacterDef } from '@ifloom/plugin-cast'
+import { openApp } from '@ifloom/plugin-devices'
 import { prose } from './prose.ts'
 
 const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: string }): LocationDef => ({
@@ -24,10 +25,19 @@ const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: str
   ...location,
 })
 
+/** Ava's text has come and hasn't been read. */
+const textWaiting: Condition = { all: [{ custom: 'messages/arrived', with: { message: 'ava.text' } }, { not: { custom: 'messages/read', with: { message: 'ava.text' } } }] }
+
 const locations: LocationDef[] = [
   {
     ...place({ id: 'flat', name: 'Your flat', tag: 'Home', kind: 'room', exits: ['high-street'] }),
-    actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }],
+    // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
+    body: [{ text: 'place.flat' }, { text: 'place.flat/text', when: textWaiting }],
+    actions: [
+      { id: 'bed', label: 'Go to bed', command: sleep() },
+      // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
+      { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
+    ],
   },
   {
     ...place({ id: 'high-street', name: 'High Street', kind: 'street', exits: ['flat', 'cafe', 'park', 'office'] }),

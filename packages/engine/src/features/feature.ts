@@ -62,8 +62,20 @@ export type EffectContext = FeatureContext & { ending: boolean }
  */
 export type Rendering = { scene: () => SceneView | undefined }
 
-/** A feature's context while a command is asked about or run: the open scene, rendered once. */
-export type CommandContext = FeatureContext & { rendered: Rendering }
+/**
+ * A feature's context while a command is asked about or run: the open scene,
+ * rendered once, and another command asked about, worked out and run with that
+ * same rendering, for a choice that sends one.
+ */
+export type CommandContext = FeatureContext & {
+  rendered: Rendering
+  /** Why another command would be refused in this state, as `whyNot` says. */
+  whyNotCommand: (state: GameState, game: Game, command: Command) => string | undefined
+  /** What another command would apply in this state, as `effectsOf` says. */
+  effectsOfCommand: (state: GameState, game: Game, command: Command) => Effect[]
+  /** Run another command in this state as the reducer runs one it allows, without the steps after a command. */
+  runCommand: (state: GameState, game: Game, command: Command) => GameState
+}
 
 /** One field of the state: what a new game has, and what a loaded state that lacks it gets. */
 export type StateField<T> = {

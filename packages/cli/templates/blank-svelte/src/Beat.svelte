@@ -1,16 +1,17 @@
 <script lang="ts">
   import type { SceneBeat } from '@ifloom/engine'
+  import Line from './Line.svelte'
 
   // One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
 {#if beat.kind === 'text'}
-  <p>{beat.text}</p>
+  <p><Line text={beat.text} spans={beat.spans} /></p>
 {:else if beat.kind === 'mono'}
   <p class="beat-mono">{beat.text}</p>
 {:else if beat.kind === 'say'}
-  <p class="beat-say" data-who={beat.who}>{beat.text}</p>
+  <p class="beat-say" data-who={beat.who}><Line text={beat.text} spans={beat.spans} /></p>
 {:else if beat.kind === 'image'}
   <img class="beat-image" src={beat.src} alt={beat.alt ?? ''} />
 {:else if beat.kind === 'video'}

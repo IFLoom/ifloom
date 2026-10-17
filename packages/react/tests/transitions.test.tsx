@@ -152,3 +152,29 @@ describe('scene transitions', () => {
     expect(scene().querySelector('[data-reveal]')).toBeNull()
   })
 })
+
+describe('the paper preset', async () => {
+  /** Paper's drop-cap selector, as its stylesheet writes it. */
+  // Read as text from disk: a stylesheet imported in a test comes back empty. The package has no Node types, hence the loose import.
+  const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync: (path: string, encoding: string) => string }
+  // Under jsdom the test's URL can be from the project root rather than a file URL.
+  const url = new URL('../src/themes/paper.css', import.meta.url)
+  const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd()
+  const paper = fs.readFileSync(decodeURIComponent(url.protocol === 'file:' ? url.pathname : cwd + url.pathname), 'utf8')
+  const dropCap = /([^{}/]+)::first-letter\s*\{/.exec(paper)![1].trim()
+
+  it('gives only a scene\'s first paragraph a drop cap, in the scene and in the copy of it going out', () => {
+    vi.useFakeTimers()
+    play()
+    goIn()
+    const capped = (root: Element) => [...root.querySelectorAll(dropCap)].map((line) => line.textContent)
+    // The hall's revealed lines have none.
+    expect(capped(scene())).toEqual(['A long hall.'])
+    // The copy SceneFrame keeps on screen while a scene goes out is its HTML, inside `data-leaving`.
+    const copy = document.createElement('div')
+    copy.setAttribute('data-leaving', '')
+    copy.innerHTML = scene().outerHTML
+    document.body.append(copy)
+    expect(capped(copy)).toEqual(['A long hall.'])
+  })
+})

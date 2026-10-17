@@ -11,6 +11,7 @@ import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
+import { inlineChoices, pastBeats } from './screen.ts'
 import { upgradeCommand } from './upgrade.ts'
 
 /**
@@ -166,7 +167,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   function barrier(before: GameState, after: GameState, command: Command, shown: () => View): boolean {
     if (!history) return false
     if (history.stopAtIrreversible !== false && command.type === 'choose') {
-      const choice = shown().scene.choices.find((entry) => entry.id === command.id)
+      const scene = shown().scene
+      const choice = [...scene.choices, ...inlineChoices(scene.beats)].find((entry) => entry.id === command.id)
       if (choice?.irreversible) return true
     }
     if (history.stopAtNewTurn && after.turn !== before.turn) return true
@@ -298,7 +300,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
           when: screen.when,
           sceneId: screen.scene.id!,
           title: screen.scene.title,
-          beats: screen.scene.beats,
+          beats: pastBeats(screen.scene.beats),
         })
         const shown = fromView()
         let next = backlog
@@ -308,7 +310,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
           const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
           if (!showing) next = [...next, entry(shown)]
           if (command.type === 'choose') {
-            const label = shown.scene.choices.find((choice) => choice.id === command.id)?.label
+            const label = [...shown.scene.choices, ...inlineChoices(shown.scene.beats)].find((choice) => choice.id === command.id)?.label
             if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
           }
         }

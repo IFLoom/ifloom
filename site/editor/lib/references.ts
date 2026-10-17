@@ -172,6 +172,13 @@ export function renameChoice(project: Project, sceneId: string, from: string, to
       if (c.chose === `${sceneId}/${from}`) c.chose = `${sceneId}/${to}`
     },
   })
+  // The scene's prose that draws it inline: `[[act:from]]` and `[[act:from|words]]`.
+  const inline = new RegExp(`\\[\\[act:\\s*${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(?=[|\\]])`, 'g')
+  for (const block of scene.body) {
+    if (!('text' in block)) continue
+    const text = next.pack.prose[block.text]
+    if (text !== undefined) next.pack.prose[block.text] = text.replace(inline, `[[act:${to}`)
+  }
   next.updated = Date.now()
   return next
 }

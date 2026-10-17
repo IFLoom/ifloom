@@ -57,12 +57,16 @@
   text-indent: 1.5em;
 }
 
-/* A first paragraph, but not the first of a group a reveal holds back. */
-:not([data-part="reveal"]) > [data-part="beat"][data-beat="text"]:first-child {
+/*
+ * A scene's first paragraph: the first beat of its beats list. Not the first of
+ * a group a reveal holds back, which sits a level down, and the same in the
+ * copy of the scene before that stays on screen while it goes out.
+ */
+[data-part="beats"] > [data-part="beat"][data-beat="text"]:first-child {
   text-indent: 0;
 }
 
-:not([data-part="reveal"]) > [data-part="beat"][data-beat="text"]:first-child::first-letter {
+[data-part="beats"] > [data-part="beat"][data-beat="text"]:first-child::first-letter {
   float: left;
   font-size: 3.2em;
   line-height: 0.85;
@@ -336,4 +340,32 @@
 [data-part="notice-strip-item"] {
   border-radius: 0;
   font-family: var(--font-body);
+}
+
+/* Inline actions read as the book's own links, and tooltips as a pencilled note. */
+[data-part="inline-action"] {
+  font-weight: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+[data-part="inline-action"][data-disabled] {
+  text-decoration-style: dotted;
+}
+
+[data-part="tip"] {
+  text-decoration-color: var(--muted-foreground);
+}
+
+[data-part="tip-content"] {
+  border-radius: 0;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: none;
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+[data-part="inline-action"] [data-part="choice-price"] {
+  padding-left: 0;
 }

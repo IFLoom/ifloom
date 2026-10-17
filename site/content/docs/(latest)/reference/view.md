@@ -109,8 +109,8 @@ type ScreenScene = {
 | Field | Meaning |
 |---|---|
 | `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `stage` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
-| `choices` | The open scene's visible choices. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
-| `actions` | The room's buttons while no scene or minigame is open, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/docs/reference/actions#effectsof)). |
+| `choices` | The open scene's visible choices, except those its prose draws inline. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
+| `actions` | The room's buttons while no scene or minigame is open, except those its prose draws inline, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/docs/reference/actions#effectsof)). |
 | `stage` | The open scene's stage, resolved as [`stageView`](#stageview) does. `null` for the room, and while a minigame runs. |
 | `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
 | `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
@@ -145,6 +145,8 @@ While no scene is open, the screen is the idle screen. It shows the [stage](#the
 | `actions` | [`RenderedChoice[]`](#renderedchoice) | What the player can do. |
 
 `actions` is empty while a scene or a [minigame](#minigame) is open, or while a [lock](/docs/reference/locks) that stops everything is on. Then the player can only move through the scene.
+
+A button the room's prose draws inline with `[[act:id]]` is left out of `actions`, and is in `scene.beats` instead (see [inline actions](/docs/reference/prose#inline-actions-and-tooltips)).
 
 Otherwise `actions` is every plugin's [`buttons`](/docs/reference/plugins#buttons), in the order `game.plugins` lists them, then the game's own [`actions`](/docs/reference/game#game). A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in `game.actions`.
 
@@ -183,7 +185,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 | `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking. The id is the render's `speaker`, else the scene's, and the first plugin whose [`speaker`](/docs/reference/plugins#speakers) knows it says who it is (the [cast](/docs/plugins/cast#speakers) does for its characters). `null` otherwise. Never guessed from the scene's id. |
 | `stageImage` | `string \| null` | The big picture: the render's `portrait`, else the speaker's portrait, else `null`. |
 | `stage` | [`StageView`](/docs/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/docs/plugins/places#placesview)). |
-| `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices. Hidden ones (`visible: false`) are left out, and disabled ones stay. |
+| `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices. Hidden ones (`visible: false`) are left out, and disabled ones stay. So are the ones the prose draws inline with `[[act:id]]`: those are in `beats`, as `action` [spans](/docs/reference/prose#inlinespan). |
 
 If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/docs/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
 
@@ -331,13 +333,28 @@ type RenderedChoice = {
 }
 ```
 
-Every pressable thing in a `View`: scene choices, the game's and plugins' buttons, and the cast's Talk buttons. Send `command` when it's pressed.
+Every pressable thing in a `View`: scene choices, the game's and plugins' buttons, the cast's Talk buttons, and the inline actions in a beat's [spans](/docs/reference/prose#inlinespan). Send `command` when it's pressed.
 
 - **`disabled`** is the reason it can't be pressed. Show it.
 - **`warning`** means the button can be pressed, but the reducer will refuse it with this line. It's a plugin [guard](/docs/reference/plugins#guards)'s soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` Show it and offer something else. It comes from [`warningOf`](/docs/reference/actions#warningof), on buttons and scene choices alike. The places plugin's exits carry one too, as [`ExitView.warning`](/docs/plugins/places#exitview). The engine sets no warnings of its own.
 - **`irreversible`** is a warning to show before sending. The [React UI](/docs/react/components#choicebutton) prints it on the button.
 - **`tags`** are a scene choice's [`tags`](/docs/reference/scenes#scenechoice), passed through as words to style or filter it by. The engine gives them no meaning, and other buttons have none.
 - **`price`** is what pressing it will cost. See [Price](#price).
+
+## inlineChoices
+
+```ts
+import { inlineChoices } from '@ifloom/engine'
+
+function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[]
+```
+
+The choices or buttons a body's beats draw inline, in the order they come. With `view.scene.choices` (or `view.actions` in a room) it's everything the player can press on the screen, which a test, a bot or a text UI may want in one list.
+
+```ts
+const shown = view(state, game)
+const all = [...inlineChoices(shown.scene.beats), ...shown.scene.choices]
+```
 
 ## renderAction
 

@@ -71,6 +71,8 @@ export type SceneChoice = {
   tags?: string[]
   irreversible?: string
   effects: Effect[]
+  /** A command it sends as well, run before its effects. See `Choice.command`. */
+  command?: Command
 }
 
 /**

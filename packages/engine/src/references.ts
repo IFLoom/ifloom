@@ -93,6 +93,11 @@ export type Reference =
   | { command: Command | undefined }
   /** Prose blocks, as a data scene's body. */
   | { blocks: readonly Block[] | undefined }
+  /**
+   * The inline actions (`[[act:id]]`) in a body, as blocks or as rendered
+   * prose, against `offers`: the ids of the choices or buttons it can name.
+   */
+  | { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
   /** A `{ media }` block. */
   | { media: SceneMedia }
   /** A stage. `choices` are its scene's choice ids, or null for a stage with no scene. */

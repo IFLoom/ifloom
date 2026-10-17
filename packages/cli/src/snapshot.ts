@@ -1,4 +1,4 @@
-import { applyEffects, pluginQuery, startingState, view, type Game, type GameState, type RenderedChoice } from '@ifloom/engine'
+import { applyEffects, inlineChoices, pluginQuery, startingState, view, type Game, type GameState, type RenderedChoice } from '@ifloom/engine'
 
 /** A state to render every scene in, with a name for the snapshot file. */
 export type Probe = { name: string; state: GameState }
@@ -24,7 +24,7 @@ export function snapshot(game: Game, probes: Probe[]): string {
       let text: string
       try {
         const shown = view({ ...probe.state, sceneId: scene.id }, game).scene
-        text = [shown.body, ...shown.choices.map(choiceLine)].join('\n')
+        text = [shown.body, ...inlineChoices(shown.beats).map(choiceLine), ...shown.choices.map(choiceLine)].join('\n')
       } catch (error) {
         text = `!! threw: ${error instanceof Error ? error.message : String(error)}`
       }

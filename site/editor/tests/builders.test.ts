@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, checkGame, loadGame, parseBeats } from '@ifloom/engine'
+import { SCHEMA, checkGame, inlineMarkup, loadGame, parseBeats } from '@ifloom/engine'
 import { conditionForm, costOf, effectForm, newCondition, newEffect, rangeOf, shortBlock, snippet, transitionFields, transitionOptions, transitionValue, withCost, withRange } from '../lib/builders.ts'
 import { CONDITION_FORMS, EFFECT_FORMS } from '../lib/kinds.ts'
-import { MARKUP_KINDS, insertParagraph, markup, proseBeats, sampleMarkup } from '../lib/markup.ts'
+import { MARKUP_KINDS, insertInline, insertParagraph, markup, proseBeats, sampleMarkup } from '../lib/markup.ts'
 
 describe('the condition builder', () => {
   it('opens every new condition in its own form', () => {
@@ -117,6 +117,14 @@ describe('the markup helper', () => {
     expect(beats.reveal).toEqual([{ kind: 'reveal', delay: 1000, as: 'fade', at: 1000 }])
     expect(markup('reveal', { delay: '', as: '' })).toBe('[[reveal]]')
     expect(markup('reveal', { delay: '1500 ms', as: 'slide-up' })).toBe('[[reveal:1500|slide-up]]')
+    expect(inlineMarkup(sampleMarkup('act'))).toEqual([{ kind: 'act', id: 'answer', text: 'Pick it up', markup: '[[act:answer|Pick it up]]' }])
+    expect(markup('act', { id: 'answer', words: '' })).toBe('[[act:answer]]')
+    expect(inlineMarkup(sampleMarkup('tip'))).toEqual([{ kind: 'tip', key: 'market.stall', text: 'the stall', markup: '[[tip:market.stall|the stall]]' }])
+  })
+
+  it('puts an inline action or a tooltip in the line, with spaces round it', () => {
+    expect(insertInline('The phone rings.', 15, '[[act:answer]]')).toEqual({ text: 'The phone rings [[act:answer]].', cursor: 30 })
+    expect(insertInline('Ring', 4, '[[act:a]]')).toEqual({ text: 'Ring [[act:a]]', cursor: 14 })
   })
 
   it('puts a paragraph in with blank lines around it', () => {

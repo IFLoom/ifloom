@@ -16,7 +16,7 @@ import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { activityById } from './activity.ts'
-import { artSrc, mediaKind, parseBeats, videoView, type SceneBeat } from './sceneBody.ts'
+import { artSrc, inlineMarkup, mediaKind, parseBeats, videoView, type InlineSpan, type SceneBeat } from './sceneBody.ts'
 import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameDef } from './features/minigames.ts'
@@ -128,7 +128,11 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
   // The room's stage, a plugin's (a place), when no scene is open.
   const roomStage = dialogue ? undefined : pluginStage(game, state)
   const room = dialogue ? null : standing(state, game, roomStage, drawing)
-  const actions = idle ? idleActions(state, game, drawing) : []
+  const offered = idle ? idleActions(state, game, drawing) : []
+  // A room's prose can hold its buttons inline, as a scene's holds its choices: those leave the list.
+  const inRoom = room ? inlineBeats(room.beats, offered, () => undefined, state, game) : null
+  const actions = inRoom ? inRoom.offered : offered
+  if (room && inRoom) room.beats = inRoom.beats
   // A minigame being played is shown over the scene or the room, with no choices or buttons of theirs.
   const playing = playingScene(state, game, dialogue?.scene ?? room!, drawing)
   const plugins = pluginViews(state, game, picks, options.profile)
@@ -369,8 +373,9 @@ function priceOfEffects(
   state: GameState,
   game: Game,
   effects: readonly Effect[],
+  spends: Record<string, number> = {},
 ): Price | undefined {
-  const spent: Record<string, number> = {}
+  const spent: Record<string, number> = { ...spends }
   for (const effect of effects) {
     if (effect.kind === 'stat' && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
       spent[effect.stat] = (spent[effect.stat] ?? 0) - effect.by
@@ -425,19 +430,25 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
     .filter((choice) => choice.visible !== false)
     .map((choice) => {
       const command = { type: 'choose', id: choice.id } as const
+      // A choice that also sends a command applies what that command would, after its own effects' price.
+      const effects = choice.command ? [...choice.effects, ...effectsIn(drawing.rendered, state, game, choice.command)] : [...choice.effects]
+      const spends = choice.command ? commandEntry(choice.command)?.spends?.(choice.command, game, state) : undefined
       return {
         id: choice.id,
         label: choice.label,
-        price: priceOfEffects(state, game, choice.effects),
+        price: priceOfEffects(state, game, effects, spends),
         // The choice's own reason first; then a lock or a plugin's guard, as the reducer will ask.
-        disabled: choice.disabled ?? whyNotIn(drawing.rendered, state, game, command, choice.effects),
+        disabled: choice.disabled ?? whyNotIn(drawing.rendered, state, game, command, effects),
         tags: choice.tags,
         irreversible: choice.irreversible,
-        warning: warningIn(drawing.rendered, state, game, command, choice.effects),
+        warning: warningIn(drawing.rendered, state, game, command, effects),
         command,
-        effects: [...choice.effects],
+        effects,
       }
     })
+  // Choices the prose holds inline are drawn there, and leave the list. A stage's hotspot may still name one.
+  const labels = new Map(rendered.choices.map((choice) => [choice.id, choice.label]))
+  const inline = inlineBeats(beats, choices, (id) => labels.get(id), state, game)
   const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
   const frame = rendered.frame ?? scene.frame ?? (speaker ? 'talk' : 'stage')
   return {
@@ -446,7 +457,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       id: state.sceneId,
       title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
       body,
-      beats,
+      beats: inline.beats,
       frame,
       tags: rendered.tags ?? scene.tags ?? [],
       panel: rendered.panel ?? scene.panel ?? null,
@@ -454,7 +465,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       speaker,
       stageImage: rendered.portrait ?? speaker?.portrait ?? null,
     },
-    choices,
+    choices: inline.offered,
     stage: drawStage(state, game, rendered.stage, state.sceneId, choices, drawing),
   }
 }
@@ -462,4 +473,85 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
 /** Who is speaking: the id the scene names, as a plugin knows them. Never guessed from the scene's id. */
 function speakerOf(id: string | undefined, game: Game, state: GameState): SpeakerView | null {
   return id ? (pluginSpeaker(game, state, id) ?? null) : null
+}
+
+/** A screen's choice as the view shows it: without its effects. */
+export function renderedChoice({ effects: _effects, ...choice }: ScreenChoice): RenderedChoice {
+  return choice
+}
+
+/**
+ * Beats with their inline markup drawn. Each inline action is given the choice
+ * or button of `offered` it names, which then leaves `offered`, so it is drawn
+ * in the prose and not in the list as well. One `offered` doesn't have (left
+ * off, or not there) is shown as its words, as is a second mention of one
+ * already drawn. Each tooltip gets its prose line, filled in for this save; one
+ * with no line is shown as its words. `label` gives the words of a choice that
+ * isn't offered, for markup that doesn't give its own.
+ */
+function inlineBeats(
+  beats: SceneBeat[],
+  offered: ScreenChoice[],
+  label: (id: string) => string | undefined,
+  state: GameState,
+  game: Game,
+): { beats: SceneBeat[]; offered: ScreenChoice[] } {
+  const used = new Set<string>()
+  const drawn = beats.map((beat): SceneBeat => {
+    if (beat.kind !== 'text' && beat.kind !== 'say') return beat
+    const parts = inlineMarkup(beat.text)
+    if (!parts) return beat
+    const spans: InlineSpan[] = []
+    const words = (text: string) => {
+      const prev = spans.at(-1)
+      if (prev?.kind === 'text') prev.text += text
+      else spans.push({ kind: 'text', text })
+    }
+    for (const part of parts) {
+      if (part.kind === 'text') words(part.text)
+      else if (part.kind === 'tip') {
+        const tip = game.prose?.line(part.key, state)
+        if (tip === undefined) words(part.text)
+        else spans.push({ kind: 'tip', text: part.text, tip })
+      } else {
+        const choice = used.has(part.id) ? undefined : offered.find((entry) => entry.id === part.id)
+        if (!choice) {
+          words(part.text ?? label(part.id) ?? offered.find((entry) => entry.id === part.id)?.label ?? part.markup)
+          continue
+        }
+        used.add(part.id)
+        spans.push({ kind: 'action', text: part.text ?? choice.label, choice: renderedChoice(choice) })
+      }
+    }
+    const text = spans.map((span) => span.text).join('')
+    return spans.some((span) => span.kind !== 'text') ? { ...beat, text, spans } : { ...beat, text }
+  })
+  return { beats: drawn, offered: used.size ? offered.filter((choice) => !used.has(choice.id)) : offered }
+}
+
+/** The choices and buttons a scene's or a room's prose holds inline, in the order they come. */
+export function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[] {
+  return beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans.flatMap((span) => (span.kind === 'action' ? [span.choice] : [])) : []))
+}
+
+/**
+ * Beats as the backlog keeps them: an inline action is history there, so it
+ * becomes its words and nothing can press it. Tooltips stay.
+ */
+export function pastBeats(beats: readonly SceneBeat[]): SceneBeat[] {
+  return beats.map((beat) => {
+    if (!('spans' in beat) || !beat.spans?.some((span) => span.kind === 'action')) return beat
+    const spans: InlineSpan[] = []
+    for (const span of beat.spans) {
+      const prev = spans.at(-1)
+      if (span.kind === 'tip') spans.push(span)
+      else if (prev?.kind === 'text') prev.text += span.text
+      else spans.push({ kind: 'text', text: span.text })
+    }
+    if (spans.every((span) => span.kind === 'text')) {
+      const { spans: _spans, ...rest } = beat
+      return rest
+    }
+    return { ...beat, spans }
+  })
 }

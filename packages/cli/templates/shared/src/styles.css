@@ -53,6 +53,45 @@ body {
   color: #a33;
 }
 
+.inline-action,
+.tip {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: #4a3b8f;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.tip {
+  color: inherit;
+  text-decoration-style: dotted;
+}
+
+.inline-action[aria-disabled='true'] {
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* A tooltip's note, or a greyed-out action's reason: shown on hover, focus or a tap. */
+.note {
+  display: none;
+  position: absolute;
+  max-width: 16rem;
+  margin: 1.8em 0 0 -4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 0.4rem;
+  background: #fff;
+  font-size: 0.9rem;
+}
+
+:is(.inline-action, .tip):is(:hover, :focus-visible, [aria-expanded='true']) + .note {
+  display: block;
+}
+
 .timer {
   height: 0.5rem;
   overflow: hidden;

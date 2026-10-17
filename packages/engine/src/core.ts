@@ -17,8 +17,8 @@ import { buildEffects, customCall, customCondition, customValue } from './custom
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runHooks } from './plugin.ts'
-import { runEffects } from './reduce.ts'
-import { effectsOf } from './availability.ts'
+import { runEffects, runIn } from './reduce.ts'
+import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
 import { roll, weighted } from './random.ts'
 import type { Reference } from './references.ts'
 import { type CommandContext, type EffectContext, type FeatureContext, type Rendering } from './features/feature.ts'
@@ -67,7 +67,13 @@ export function effectContext(ending: boolean): EffectContext {
 
 /** The context a command is asked about and run with: the open scene, rendered once. */
 export function commandContext(rendered: Rendering): CommandContext {
-  return { ...featureContext(), rendered }
+  return {
+    ...featureContext(),
+    rendered,
+    whyNotCommand: (state, game, command) => whyNotIn(rendered, state, game, command),
+    effectsOfCommand: (state, game, command) => effectsIn(rendered, state, game, command),
+    runCommand: (state, game, command) => runIn(rendered, state, game, command),
+  }
 }
 
 const none = (): Reference[] => []

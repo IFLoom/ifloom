@@ -12,7 +12,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Frame, Icon,
   DEFAULT_LAYOUT, READING_LAYOUT, Parts, Title, Actions,
-  SceneStage, Beat, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
+  SceneStage, Beat, InlineAction, Tip, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Sidebar, Clock, StatList, EntityTable, LocationPanel, PeoplePanel, Inventory, WardrobePanel,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -285,7 +285,7 @@ type KeyOptions = {
 
 Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an object to add your own:
 
-- **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`Actions`](#actions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing.
+- **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`Actions`](#actions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing. [Inline actions](#inlineaction) in the prose have no number: they're reached with Tab, like a link.
 - **Escape** opens the [`GameMenu`](#gamemenu)'s buttons in a dialog, if the menu is on screen.
 - **`map`** sends a [command](/docs/reference/commands) for each key you list, by its [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) name. Your keys come first, so mapping `'1'` or `'Escape'` replaces what it does.
 
@@ -313,7 +313,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigamePanel`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigamePanel`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -496,9 +496,9 @@ One beat of a scene's body, drawn by kind:
 
 | Kind | Drawn as |
 |---|---|
-| `text` | A paragraph. |
+| `text` | A paragraph. Its `spans`, when it has them, are drawn in the line: an inline action as an [`InlineAction`](#inlineaction) and a tooltip as a [`Tip`](#tip). |
 | `mono` | A paragraph in a monospace font. |
-| `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/docs/react#sound) is running. |
+| `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/docs/react#sound) is running. Its `spans` are drawn as a `text` beat's are. |
 | `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. Clicking it opens the [`MediaViewer`](#mediaviewer). |
 | `video` | A [`Video`](#video), sized as a picture is. Clicking it opens the `MediaViewer`, unless the clip has controls, which have a full-screen button of their own. |
 | `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
@@ -517,6 +517,45 @@ The [`Backlog`](#backlog), [`MessagesSection`](#messagessection) and [`FeedSecti
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
 Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body`, `voice-replay` and `viewer-open`. A video beat is a `video` part, with `data-beat="video"`.
+
+### InlineAction
+
+```tsx
+function InlineAction(props: { text: string; choice: RenderedChoice; className?: string }): JSX.Element
+```
+
+An inline action in the prose, from an `action` [span](/docs/reference/prose#inlinespan): `text` as a button inside the line, which sends `choice.command`. A price follows the words in a [`PriceTag`](#pricetag).
+
+A greyed-out one isn't `disabled`. It has `aria-disabled="true"` and `data-disabled`, so it can still be reached with Tab and its reason read out, and pressing it does nothing but show the reason. The reason (or a `warning`, or an `irreversible` note) is in a `tip-content` bubble that opens on hover, on keyboard focus and on a tap, and closes on Escape or a tap elsewhere. It's also the button's description, through `aria-describedby`.
+
+Inline actions have no [number key](#keyoptions). The number keys go on picking the choices in the list.
+
+Replaceable as `InlineAction` in [`components`](#components). Parts: `inline-action` (with `data-choice`, and `data-disabled`, `data-warning` and `data-irreversible` when they apply) and `tip-content`.
+
+### Tip
+
+```tsx
+function Tip(props: { text: string; tip: string; className?: string }): JSX.Element
+```
+
+A tooltip in the prose, from a `tip` [span](/docs/reference/prose#inlinespan): `text` as a button inside the line, underlined with dots, and `tip` in a `tip-content` bubble with `role="tooltip"`. The bubble opens on hover with a mouse, on keyboard focus and on a tap, and closes on Escape, on a tap elsewhere and when the pointer leaves. The button has `aria-describedby` pointing at the note, so a screen reader reads it, and `aria-expanded` while it's open.
+
+The bubble is put in the page's `body`, so a scrolling panel can't clip it, and it's kept inside the window: under the words, or above them when there's no room below.
+
+Replaceable as `Tip` in [`components`](#components). Parts: `tip` and `tip-content`.
+
+```tsx
+import type { Components } from '@ifloom/react'
+
+// A tooltip that's always written out in brackets instead.
+const components: Components = {
+  Tip: ({ text, tip }) => (
+    <span data-part="tip">
+      {text} ({tip})
+    </span>
+  ),
+}
+```
 
 ### Picture
 

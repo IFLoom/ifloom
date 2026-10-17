@@ -272,6 +272,26 @@ Every [transition](/docs/reference/transitions) name content gives is checked ag
 | `[[reveal]] goes on a line of its own, with a blank line before and after` | `[[reveal]]` inside a paragraph, which is shown as written. |
 | `transition name "…" is not lower-case letters, digits and "-"` | An entry in `game.transitions.names`. Reported as `transitions`. |
 
+## Inline actions and tooltips
+
+[Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips) are checked in every prose line, and against the choices of the scene (or the buttons of the room) whose body names them. A data scene's body is checked against its choices, a hand-built scene's rendered body against the choices its render gives, and a place's body against its `actions` and the game's.
+
+| Problem | When |
+|---|---|
+| `[[act:…]] names no choice or action offered here` | The id isn't one of the scene's choices, or the room's buttons. |
+| `[[act:…]] is in one line twice; only the first is drawn as an action` | The same id twice in one prose line. |
+| `[[act:…]] is in two blocks that can show together; only the first is drawn as an action` | Two blocks name it, and at least one has no `when`. Members of one variants list are drawn one at a time, so they can each name it. |
+| `[[act]] needs the id of a choice: [[act:id]] or [[act:id\|words]]` | `[[act:]]` or `[[act:\|words]]`. |
+| `[[act:…\|]] has no words; leave out the "\|" to use the choice's label` | An empty `\|`. |
+| `[[tip]] needs a prose key: [[tip:key\|words]]` | `[[tip:\|words]]`. |
+| `[[tip:…]] needs the words to show: [[tip:…\|words]]` | A tooltip with no words, which is shown as written. |
+| `[[tip:…]]: no prose for "…"` | The tooltip's key has no prose. |
+| `[[act:…]] or [[tip:…]] is not closed with "]]", or is missing its ":"` | Markup that the reader can't find the end of. |
+| `[[act]] and [[tip]] are shown as written in a "> " line; use them in narration or a spoken line` | Inline markup in a thought. |
+| `choice …: a choice's command can't be another choice; put the effects on this one` | A choice's [`command`](/docs/reference/scenes#choice) is `choose`. |
+
+A choice's `command` is checked as any command is, under `choice <id>:`.
+
 ## Plugin references
 
 A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with two functions, both optional:

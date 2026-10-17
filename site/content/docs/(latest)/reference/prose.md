@@ -165,6 +165,8 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[sound:knock]]` | `{ kind: 'sound', track }`. Nothing to draw. |
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 | `[[reveal]]`, `[[reveal:1500]]`, `[[reveal:1500\|slide-up]]` | `{ kind: 'reveal', delay, as, at }`. Nothing to draw: what follows waits. |
+| `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
+| `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
 
 ### Speech
 
@@ -284,6 +286,41 @@ Each one becomes a `reveal` beat. Its `at` is when it comes, counted from the sc
 - Only a paragraph of its own counts. `[[reveal]]` inside a paragraph is shown as written, and the loader reports it.
 - The text after a reveal is in the beats from the start. Only how it's drawn waits, so screen readers have it all.
 
+### Inline actions and tooltips
+
+These two go inside a paragraph, in narration or a spoken line. Unlike the markup above, they don't need a paragraph of their own.
+
+```md
+Your phone is ringing on the counter. [[act:answer|Pick it up]], or let it ring.
+
+The [[tip:cafe.board|board above the till]] lists six kinds of toast.
+```
+
+- `[[act:id|words]]` draws the scene's choice `id` inside the line, as a link with `words` on it. Write `[[act:id]]` to use the choice's own label. A choice named this way is left out of the list of choices, so it's in one place on the screen. In a room (a place's prose, while no scene is open), `id` names one of the room's buttons instead: the place's `actions` or the game's.
+- `[[tip:key|words]]` shows `words` with a short note the player can open. The note is the prose line `key`, so it can be translated and changed by a mod like any other line, and its [tokens](#tokens) are filled in.
+
+The view gives the paragraph's beat a `spans` list: the same words in pieces, in order. An `action` span carries the whole [`RenderedChoice`](/docs/reference/view#renderedchoice), so a UI can grey it out with its reason and show its price, as it would in the list. A `tip` span carries the note. The beat's `text` still has every word, without the markup, for a UI that draws only text. See [`InlineSpan`](#inlinespan).
+
+A choice can send any command as well as its effects, with its [`command`](/docs/reference/scenes#choice) field, so an inline action can open the phone or buy something from a shop:
+
+```ts
+const kitchen: DataScene = {
+  id: 'kitchen.phone',
+  body: [{ text: 'kitchen.phone' }],
+  choices: [
+    { id: 'answer', command: openApp('texts'), effects: [{ kind: 'kv', key: 'answered', to: true }] },
+    { id: 'ignore', effects: [{ kind: 'scene', scene: null }] },
+  ],
+}
+```
+
+**Gotchas:**
+- A choice left off the screen (its `when` fails, or a `blocked` entry with `hide` holds) is drawn as its words, with no link. So is one the scene doesn't have, and the loader reports it.
+- One choice is drawn inline once. A second `[[act:]]` for it shows as words, and the loader reports it when both can be on screen together. Two blocks that each have a `when` are taken to be alternatives and aren't reported.
+- A tooltip whose key has no prose shows its words with no note, and the loader reports it. `[[tip:key]]` with no words is shown as written.
+- Inline markup in a `> ` line, a picture's alt text or a fenced section is shown as written.
+- The backlog keeps an inline action as its words, with nothing to press. Tooltips stay.
+
 ### Fenced sections
 
 `[[mail]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` open a section that runs to the matching close tag, across blank lines. Text before and after is parsed as usual. In `mail`, leading `From:`, `To:`, `Cc:`, `Bcc:`, `Subject:` and `Date:` lines become `headers` (`{ key, value }`, in order). One blank line after them is skipped, and the rest is `body`.
@@ -303,9 +340,9 @@ The atlas you asked for is in. We hold books for a week.
 import type { SceneBeat } from '@ifloom/engine'
 
 type SceneBeat =
-  | { kind: 'text'; text: string }
+  | { kind: 'text'; text: string; spans?: InlineSpan[] }
   | { kind: 'mono'; text: string }
-  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string }
+  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
   | { kind: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
   | {
       kind: 'video'
@@ -326,9 +363,30 @@ type SceneBeat =
 
 One piece of a scene. A UI switches on `kind`, and draws nothing for `sound` or `reveal`. A `reveal` beat marks where held-back beats start: see [Reveals](#reveals).
 
+A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw. Its `text` is the same words without the markup either way.
+
 A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`, worked out from its [flags](#videos). Without flags they're `true`, `true`, `true` and `false`. With `controls`, `autoplay` is `false`.
 
 A data scene's `{ media }` blocks become `image` or `video` beats where they are in the body. Media with `at: 'lead'` comes before the body, and media with `at: 'end'` (or a hand-built scene's [`media`](/docs/reference/scenes#scenemedia) with no `at`) comes after it.
+
+## InlineSpan
+
+```ts
+import type { InlineSpan } from '@ifloom/engine'
+
+type InlineSpan =
+  | { kind: 'text'; text: string }
+  | { kind: 'action'; text: string; choice: RenderedChoice }
+  | { kind: 'tip'; text: string; tip: string }
+```
+
+One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips), in order. Joined, the `text` of every span is the beat's `text`.
+
+- `text` is words to draw as they are.
+- `action` is an inline action: `text` is the words of its link, and `choice` is what it presses, as [`view.scene.choices`](/docs/reference/view#the-scene) would have it (`command`, `disabled`, `price`, `irreversible`, `warning`). Send `choice.command` when it's pressed and `disabled` is unset.
+- `tip` is a tooltip: `text` is the words shown, and `tip` the note, filled in for this save.
+
+A UI draws an `action` as a button in the line and a `tip` as a button that shows its note. The React UI does both with [`InlineAction`](/docs/react/components#inlineaction) and [`Tip`](/docs/react/components#tip). For your own UI, see [Actions and tooltips in the text](/docs/guide/inline-actions).
 
 ## parseBeats
 
@@ -338,7 +396,27 @@ import { parseBeats } from '@ifloom/engine'
 function parseBeats(body: string): SceneBeat[]
 ```
 
-The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene.
+The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]` and `[[tip:]]` in the text: the view draws them, because only the view knows the choices and the prose.
+
+## inlineMarkup
+
+```ts
+import { inlineMarkup, type InlinePart } from '@ifloom/engine'
+
+function inlineMarkup(text: string): InlinePart[] | null
+
+type InlinePart =
+  | { kind: 'text'; text: string }
+  | { kind: 'act'; id: string; text?: string; markup: string }
+  | { kind: 'tip'; key: string; text: string; markup: string }
+```
+
+A line cut at its `[[act:]]` and `[[tip:]]` markup, as written, or `null` when it has none. `markup` is the markup itself. Malformed markup (no id or key, a tooltip with no words) stays in the text around it. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
+
+```ts
+inlineMarkup('Ring. [[act:answer|Pick up]]')
+// [{ kind: 'text', text: 'Ring. ' }, { kind: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' }]
+```
 
 ## artSrc
 
@@ -376,4 +454,5 @@ mediaKind('place/cafe.webp')  // 'image'
 ## See it in an example
 
 - Small Town: [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts) holds every line by key, with choice labels as `<scene>#<choice>`. Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
+- Small Town's intro has a tooltip on "launderette", and the flat's `place.flat/text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
 - The Letter: the `prose` in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) prints the reader's name with `{{playerName}}`.

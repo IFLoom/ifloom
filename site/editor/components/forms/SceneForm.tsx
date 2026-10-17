@@ -4,7 +4,7 @@
  * with their prose, and its choices.
  */
 import { useEffect, useState } from 'react'
-import type { Block, Choice, DataScene, SceneMedia } from '@ifloom/engine'
+import { inlineMarkup, type Block, type Choice, type DataScene, type SceneMedia } from '@ifloom/engine'
 import { costOf, isCost, shortBlock, transitionFields, transitionOptions, transitionValue, withCost } from '../../lib/builders'
 import { rename, renameChoice } from '../../lib/references'
 import { OptionalCondition } from '../ConditionBuilder'
@@ -319,6 +319,17 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
   const builder = { names, onCreate: create }
   const statDef = (id: string) => project.pack.stats.find((s) => s.id === id)
   const spendable = project.pack.stats.filter((s) => !s.derive && !s.of)
+  // The body's prose keys whose text draws this choice inline, with `[[act:id]]`.
+  const textKeys = scene.body.flatMap((block) => ('text' in block ? [block.text] : []))
+  const inlineIn = textKeys.filter((key) => (inlineMarkup(project.pack.prose[key] ?? '') ?? []).some((part) => part.kind === 'act' && part.id === choice.id))
+  const putInline = () => {
+    const key = textKeys.at(-1)
+    if (!key) return
+    update((draft) => {
+      const text = (draft.pack.prose[key] ?? '').replace(/\s+$/, '')
+      draft.pack.prose[key] = `${text}${text ? ' ' : ''}[[act:${choice.id}]]`
+    })
+  }
 
   return (
     <div id={`choice-${choice.id}`} className={cx('rounded-md border bg-fd-background', open ? 'border-fd-primary' : 'border-fd-border')}>
@@ -329,6 +340,7 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           </span>
           <code className="text-xs">{choice.id}</code>
           <span className="truncate text-sm">{label || <em className="text-fd-muted-foreground">No label yet</em>}</span>
+          {inlineIn.length ? <span className="shrink-0 rounded bg-fd-primary/10 px-1 text-xs text-fd-primary">in the text</span> : null}
           {cost.length ? <span className="shrink-0 rounded bg-fd-secondary px-1 text-xs">costs {cost.map((c) => `${c.amount} ${c.stat}`).join(', ')}</span> : null}
         </button>
         {tools}
@@ -351,6 +363,20 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
               <TextInput value={label} placeholder="The button text" onChange={(text) => update((draft) => void (draft.pack.prose[labelKey] = text ?? ''))} />
             </Field>
           </div>
+
+          <Field label="In the text" hint="A choice the body's prose names with [[act:id]] is drawn there, as a link in the line, and not in the list of choices.">
+            {inlineIn.length ? (
+              <p className="text-xs">
+                Drawn inline by <code>[[act:{choice.id}]]</code> in {inlineIn.map((key) => <code key={key} className="me-1">{key}</code>)}
+              </p>
+            ) : (
+              <div>
+                <Button size="xs" disabled={!textKeys.length} onClick={putInline} title={textKeys.length ? `Add [[act:${choice.id}]] to the end of ${textKeys.at(-1)}` : 'Add a text block first'}>
+                  Put it in the text
+                </Button>
+              </div>
+            )}
+          </Field>
 
           <Field label="What it costs" hint="Spending a stat takes it from the player and shows as the button's price when the stat is spendable.">
             <div className="flex flex-col gap-1">
@@ -405,7 +431,7 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           </Field>
 
           <details className="text-xs">
-            <summary className="cursor-pointer text-fd-muted-foreground">More: once a turn, a warning, tags, labels</summary>
+            <summary className="cursor-pointer text-fd-muted-foreground">More: once a turn, a warning, tags, a command, labels</summary>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               <Field label="Once a turn: the reason shown after" hint="Left empty, it can be taken any number of times.">
                 <TextInput optional value={choice.once?.reason} onChange={(reason) => set({ once: reason ? { per: 'turn', reason } : undefined })} />
@@ -417,6 +443,9 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
                 <ListInput value={choice.tags} onChange={(tags) => set({ tags })} />
               </Field>
             </div>
+            <Field label="Sends a command" hint={'As JSON, run before the effects, such as a plugin\'s: { "type": "custom", "name": "devices/open", "with": { "id": "texts" } }. It is greyed out while the command would be refused.'}>
+              <JsonField label="Command" rows={2} value={choice.command ?? null} onChange={(command) => set({ command: command && typeof command === 'object' && 'type' in command ? command : undefined })} />
+            </Field>
             <Field label="Labels that depend on state" hint={'As JSON, first match wins: [{ "when": { "seen": "home" }, "key": "market#buy-again" }].'}>
               <JsonField label="Labels" rows={2} value={choice.labels ?? []} onChange={(labels) => set({ labels: Array.isArray(labels) && labels.length ? labels : undefined })} />
             </Field>

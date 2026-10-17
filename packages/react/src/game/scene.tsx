@@ -12,6 +12,7 @@ import { Video } from './video.tsx'
 import { MediaViewer, type ViewerMedia } from './viewer.tsx'
 import { MinigamePanel, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
+import { InlineSpans } from './inline.tsx'
 import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
@@ -79,13 +80,13 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
   const prop = usePart('beat', 'rounded-lg border-2 border-dashed p-4 text-center font-medium')
   switch (beat.kind) {
     case 'text':
-      return <p {...text} data-beat="text">{beat.text}</p>
+      return <p {...text} data-beat="text">{beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}</p>
     case 'mono':
       return <p {...mono} data-beat="mono">{beat.text}</p>
     case 'say':
       return (
         <p {...say} data-beat="say" data-who={beat.who}>
-          {beat.text}
+          {beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}
           {beat.voice ? <VoiceReplay voice={beat.voice} /> : null}
         </p>
       )
@@ -139,7 +140,8 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
  * gets a button to hear it again while the game's sound is playing. A picture
  * or a clip opens in the `MediaViewer` when clicked, unless the viewer is off.
  * Each carries `data-beat` with its kind, and `data-part="beat"`, except a
- * video, which is a `"video"` part. Replace it in `components` to draw some
+ * video, which is a `"video"` part. A line with inline actions or tooltips
+ * draws them as `InlineAction` and `Tip` buttons in the line. Replace it in `components` to draw some
  * kinds your own way and hand the rest to `Default`.
  */
 export const Beat = overridable('Beat', BeatImpl)

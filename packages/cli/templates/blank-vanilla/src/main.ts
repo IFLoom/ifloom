@@ -3,7 +3,7 @@
  * runner for the view, draw it, send a command when a button is pressed, and
  * draw again when the state changes. Any framework can do the same.
  */
-import { browserRunner, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
+import { browserRunner, type InlineSpan, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
 import { startClock, startKeys } from './minigame.ts'
@@ -61,13 +61,13 @@ function draw(view: View): void {
 function drawBeat(beat: SceneBeat): void {
   switch (beat.kind) {
     case 'text':
-      add(root, 'p', beat.text)
+      drawLine(add(root, 'p'), beat.text, beat.spans)
       break
     case 'mono':
       add(root, 'p', beat.text, 'beat-mono')
       break
     case 'say':
-      add(root, 'p', beat.text, 'beat-say').dataset.who = beat.who
+      drawLine(add(root, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
       break
     case 'image':
       Object.assign(add(root, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
@@ -93,6 +93,42 @@ function drawBeat(beat: SceneBeat): void {
       add(root, 'div', beat.text, 'beat-prop')
       break
   }
+}
+
+let notes = 0
+
+/**
+ * A line's words, with its inline actions and tooltips as buttons in it. A
+ * tooltip, or a greyed-out action's reason, is a note after the button that
+ * shows on hover, on focus and on a tap (see `.note` in styles.css).
+ */
+function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefined): HTMLElement {
+  if (!spans) {
+    line.textContent = text
+    return line
+  }
+  for (const span of spans) {
+    if (span.kind === 'text') {
+      line.append(span.text)
+      continue
+    }
+    const button = add(line, 'button', span.text, span.kind === 'tip' ? 'tip' : 'inline-action')
+    button.type = 'button'
+    const note = span.kind === 'tip' ? span.tip : span.choice.disabled
+    if (span.kind === 'action') {
+      // Greyed out but still focusable, so its reason can be read.
+      if (span.choice.disabled) button.setAttribute('aria-disabled', 'true')
+      else button.onclick = () => runner.apply(span.choice.command)
+    }
+    if (!note) continue
+    const id = `note-${(notes += 1)}`
+    const shown = add(line, 'span', note, 'note')
+    Object.assign(shown, { id, role: 'tooltip' })
+    button.setAttribute('aria-describedby', id)
+    button.setAttribute('aria-expanded', 'false')
+    if (!button.onclick) button.onclick = () => button.setAttribute('aria-expanded', String(button.getAttribute('aria-expanded') !== 'true'))
+  }
+  return line
 }
 
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */

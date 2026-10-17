@@ -74,8 +74,8 @@ export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
 export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from './scene.ts'
 export type { VariantMember } from './prose.ts'
 export { fillTokens, proseStore } from './prose.ts'
-export type { SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
-export { artSrc, mediaKind, parseBeats } from './sceneBody.ts'
+export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
+export { artSrc, inlineMarkup, mediaKind, parseBeats } from './sceneBody.ts'
 
 // Media: pools, and the stage
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
@@ -203,6 +203,7 @@ export { browserRunner, createRunner, replay } from './runner.ts'
 
 // The view a UI draws, and the screen it is built from
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
+export { inlineChoices } from './screen.ts'
 export { renderAction, screen, stageView } from './screen.ts'
 export type {
   StatView,

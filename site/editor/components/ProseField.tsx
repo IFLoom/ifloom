@@ -4,15 +4,17 @@
  * engine reads from it.
  */
 import { useRef } from 'react'
-import type { SceneBeat } from '@ifloom/engine'
-import { MARKUP_KINDS, MARKUP_LABELS, insertParagraph, proseBeats, sampleMarkup } from '../lib/markup'
+import { inlineMarkup, type SceneBeat } from '@ifloom/engine'
+import { INLINE_KINDS, MARKUP_KINDS, MARKUP_LABELS, insertInline, insertParagraph, proseBeats, sampleMarkup, type MarkupKind } from '../lib/markup'
 import { Button, cx, inputClass } from './ui'
 
 export function ProseField({ value, onChange, rows = 4, label }: { value: string; onChange: (value: string) => void; rows?: number; label: string }) {
   const area = useRef<HTMLTextAreaElement>(null)
-  function insert(paragraph: string) {
+  function insert(kind: MarkupKind) {
     const at = area.current?.selectionStart ?? value.length
-    const next = insertParagraph(value, at, paragraph)
+    const snippet = sampleMarkup(kind)
+    // An inline action or a tooltip goes in the line at the cursor; anything else is a paragraph of its own.
+    const next = INLINE_KINDS.has(kind) ? insertInline(value, at, snippet) : insertParagraph(value, at, snippet)
     onChange(next.text)
     requestAnimationFrame(() => {
       area.current?.focus()
@@ -23,7 +25,7 @@ export function ProseField({ value, onChange, rows = 4, label }: { value: string
     <div className="@container flex flex-col gap-1">
       <div className="flex flex-wrap gap-1" role="toolbar" aria-label={`Markup for ${label}`}>
         {MARKUP_KINDS.map((kind) => (
-          <Button key={kind} size="xs" variant="ghost" className="border border-fd-border" onClick={() => insert(sampleMarkup(kind))} title={`Insert ${sampleMarkup(kind)}`}>
+          <Button key={kind} size="xs" variant="ghost" className="border border-fd-border" onClick={() => insert(kind)} title={`Insert ${sampleMarkup(kind)}`}>
             {MARKUP_LABELS[kind]}
           </Button>
         ))}
@@ -62,14 +64,14 @@ function Media({ kind, src, alt }: { kind: string; src: string; alt?: string }) 
 function Beat({ beat }: { beat: SceneBeat }) {
   switch (beat.kind) {
     case 'text':
-      return <p>{beat.text}</p>
+      return <p><Inline text={beat.text} /></p>
     case 'mono':
       return <p className="font-mono text-xs italic text-fd-muted-foreground">{beat.text}</p>
     case 'say':
       return (
         <p className={cx('rounded-md px-2 py-1', beat.who === 'player' ? 'ms-6 bg-fd-primary/10' : 'me-6 bg-fd-secondary')}>
           <span className="me-1 text-xs font-semibold text-fd-muted-foreground">{beat.who === 'player' ? 'You' : 'Character'}</span>
-          {beat.text}
+          <Inline text={beat.text} />
           {beat.voice ? <span className="ms-1 text-xs text-fd-muted-foreground">(voice {beat.voice})</span> : null}
         </p>
       )
@@ -92,4 +94,28 @@ function Beat({ beat }: { beat: SceneBeat }) {
     default:
       return null
   }
+}
+
+/** A line with its inline actions drawn as links and its tooltips underlined, each saying what it names. */
+function Inline({ text }: { text: string }) {
+  const parts = inlineMarkup(text)
+  if (!parts) return <>{text}</>
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.kind === 'text' ? (
+          <span key={i}>{part.text}</span>
+        ) : part.kind === 'act' ? (
+          <span key={i} className="font-medium text-fd-primary underline underline-offset-2" title={`Inline action: choice ${part.id}`}>
+            {part.text ?? part.id}
+            <sup className="ms-0.5 text-[10px] text-fd-muted-foreground">{part.id}</sup>
+          </span>
+        ) : (
+          <span key={i} className="underline decoration-dotted underline-offset-2" title={`Tooltip: ${part.key}`}>
+            {part.text}
+          </span>
+        ),
+      )}
+    </>
+  )
 }

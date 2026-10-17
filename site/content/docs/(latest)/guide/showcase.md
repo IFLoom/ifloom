@@ -94,6 +94,10 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `intro` and `ava.river` in `town.ts`. The moving-day scene has `transition: { in: 'fade', out: 'fade', ms: 500 }`, so it fades in from the title page, and its second block has `reveal: { delay: 1200 }`, so the line about the cat comes a moment after the first. Its Unpack choice ends with `{ kind: 'transition', to: 'slide-up', ms: 400 }`, and the flat rises into view. By the river, the scene fades, and Ava's prose holds `[[reveal:1500|slide-up]]` before her answer. The rest of the town swaps screens at once. See [Transitions](/docs/guide/transitions).
 
+### Actions and tooltips in the text
+
+`prose.ts` and the flat in `town.ts`. The moving-day prose has `[[tip:intro.launderette|launderette]]`, a tooltip whose note is the prose line `intro.launderette`. The flat's body has a second block, `place.flat/text`, shown while Ava's text has come and hasn't been read. It says "Your phone buzzes on the sill: a message. [[act:read-text|Check it]].", and `read-text` is one of the flat's `actions`, with the command `openApp('texts')`. So Check it is a link in the line that opens the phone's messages, and it isn't a button under the text as well. See [Actions and tooltips in the text](/docs/guide/inline-actions).
+
 ### The calendar
 
 `src/game.ts`, `clock`. The town keeps time with the [calendar plugin](/docs/plugins/calendar), `export const clock = calendar({ start: { day: 0, period: 'night' } })`. It's listed first in `plugins`, so every other plugin sees the new day when a turn ends. A turn is a day, which is the calendar's default, and a new game starts on the night you move in, day 0, a Monday. The header, `Day 1 · Monday night · Your flat`, is the calendar's label followed by the places plugin's, at [`view.when`](/docs/reference/view#the-clock-and-the-player).

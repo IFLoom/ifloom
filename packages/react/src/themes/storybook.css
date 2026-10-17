@@ -273,3 +273,34 @@
 [data-part="notice-strip-item"] {
   border-radius: 999px;
 }
+
+/* Inline actions as soft highlighted words, and tooltips as a small bubble. */
+[data-part="inline-action"] {
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 0.35em;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 14%, transparent);
+}
+
+[data-part="inline-action"]:hover:not([data-disabled]) {
+  background: color-mix(in oklch, var(--primary) 24%, transparent);
+}
+
+[data-part="inline-action"][data-disabled] {
+  background: color-mix(in oklch, var(--muted-foreground) 12%, transparent);
+}
+
+[data-beat="say"][data-who="player"] [data-part="inline-action"],
+[data-beat="say"][data-who="player"] [data-part="tip"] {
+  color: inherit;
+}
+
+[data-part="tip-content"] {
+  border-radius: 1rem;
+  border-width: 0;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+}

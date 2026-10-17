@@ -499,6 +499,9 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `mail-header` | One header line of a letter (a `mail` beat). |
 | `mail-body` | A letter's body. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |
+| `inline-action` | An [inline action](/docs/react/components#inlineaction) in the prose, a button inside the line. Carries `data-choice`, and `data-disabled` while it's greyed out (it stays focusable, with `aria-disabled`). Each preset styles it as its own kind of link. |
+| `tip` | A [tooltip](/docs/react/components#tip)'s words in the prose, a button underlined with dots. |
+| `tip-content` | The bubble with a tooltip's note, or an inline action's reason. It's put in the page's `body`, with `role="tooltip"`, and carries `data-open` while it shows. |
 
 ### Pictures, videos and the stage
 

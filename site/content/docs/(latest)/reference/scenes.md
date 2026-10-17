@@ -111,6 +111,7 @@ type SceneChoice = {
   tags?: string[]
   irreversible?: string
   effects: Effect[]
+  command?: Command
 }
 ```
 
@@ -123,6 +124,7 @@ type SceneChoice = {
 | `tags` | Words the UI can style or filter the choice by, such as `['kind']` or `['risky']`. The engine gives them no meaning and passes them to the [`RenderedChoice`](/docs/reference/view#renderedchoice). |
 | `irreversible` | A warning the UI shows before the choice is taken. A [runner](/docs/reference/runner#historyoptions) with history on never undoes past it. |
 | `effects` | Applied in order when the player picks it. See [Effects](/docs/reference/effects). |
+| `command` | A command to run as well, before the effects. A data scene's [`Choice.command`](#choice) is passed through. |
 
 The view works out a choice's [price](/docs/reference/view#price) from its `effects`. That covers what it spends of any [spendable](/docs/reference/stats#statdef) stat, and what plugins note about it, such as the [calendar](/docs/plugins/calendar#price-notes)'s `until evening`. What a choice pays the player is never shown.
 
@@ -134,10 +136,10 @@ The `choose` command first asks [`whyNot`](/docs/reference/actions#whynot), whic
 2. A [plugin's guard](/docs/reference/plugins#guards-prices-and-labels) refuses it outright.
 3. The game has its own [`rules.commands.choose`](/docs/reference/rules#commands). It's called instead of steps 4 and 5, and a string it returns is the refusal. If it returns a state, that state is the result (after step 6), and the choice's effects don't run unless the rule runs them.
 4. No scene is open, or the scene has no choice with that id, or the choice's `visible` is `false`.
-5. The choice's `disabled` is set. The refusal is the disabled text.
+5. The choice's `disabled` is set. The refusal is the disabled text. Then, for a choice with a `command`, that command is asked as it would be on its own: a lock on it, a plugin's guard and its own `whyNot`. A `command` that is itself `choose` is refused.
 6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [`warningOf`](/docs/reference/actions#warningof)).
 
-Otherwise `choose` applies the choice's `effects` in order. If the scene itself no longer exists, `choose` just closes it. Use [`apply`](/docs/reference/commands#apply) rather than `dispatch` when you need to know which of these happened.
+Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` just closes it. Use [`apply`](/docs/reference/commands#apply) rather than `dispatch` when you need to know which of these happened.
 
 ## SceneCtx
 
@@ -353,6 +355,7 @@ type Choice = {
   tags?: string[]
   irreversible?: string
   effects: EffectRef[]
+  command?: Command
 }
 ```
 
@@ -365,6 +368,7 @@ type Choice = {
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to just its `scene` effects so it still navigates. `key` records it under a different name. | unlimited |
 | `tags`, `irreversible` | Passed through to [`SceneChoice`](#scenechoice). | |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
+| `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'activity', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
 **Label lookup order.** A drawn variant can carry its own reply. If a block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several). After that come the first matching `labels` entry, then `label`, then `` `${scene.id}#${choice.id}` ``. If none of those keys has prose, the button shows the bare choice id.
 
@@ -375,6 +379,13 @@ type Choice = {
   once: { per: 'turn', reason: 'You have asked today already.' },
   effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }],
 }
+```
+
+**In the text.** A choice the scene's prose names with `[[act:id]]` is drawn there, as a link inside the line, and left out of `view.scene.choices`. It's still a choice in every other way: the same `choose` command, `blocked` reasons, price and checks. See [Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips).
+
+```ts
+// prose: 'kitchen.phone': 'Your phone buzzes. [[act:answer|Pick it up]], or leave it.'
+{ id: 'answer', command: openApp('texts'), effects: [{ kind: 'kv', key: 'answered', to: true }] }
 ```
 
 **Gotchas.**

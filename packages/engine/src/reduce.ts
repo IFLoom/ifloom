@@ -1,5 +1,5 @@
 import { say } from './strings.ts'
-import { rendering, warningIn, whyNotIn } from './availability.ts'
+import { rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { screen } from './screen.ts'
@@ -112,8 +112,19 @@ function run(
   if (why) refuse(why)
   const warning = warningIn(rendered, current, game, command)
   if (warning) refuse(warning)
+  return runIn(rendered, current, game, command)
+}
+
+/**
+ * Run a command already allowed: the game's own handler for its type, else its
+ * entry's. Also how a choice runs the command it sends. Internal.
+ */
+export function runIn(rendered: Rendering, current: GameState, game: Game, command: Command): GameState {
   const custom = game.rules?.commands?.[command.type]
-  if (custom) return custom(current, command) as GameState
+  if (custom) {
+    const out = custom(current, command)
+    return typeof out === 'string' ? refuse(out) : out
+  }
   const entry = commandEntry(command)
   if (!entry) return refuse(say(game, 'notSupported'))
   return entry.run(current, command, game, commandContext(rendered))

@@ -10,7 +10,7 @@ import {
   customPanel,
   type EffectRef,
 } from './custom.ts'
-import type { Effect, GameState } from './types.ts'
+import type { Command, Effect, GameState } from './types.ts'
 
 /**
  * A scene, as data.
@@ -82,6 +82,14 @@ export type Choice = {
   irreversible?: string
   /** Literal effects, or `{ custom: name }` for the few that are computed. */
   effects: EffectRef[]
+  /**
+   * A command to send as well, such as a plugin's:
+   * `{ type: 'custom', name: 'devices/open', with: { id: 'messages' } }`. It
+   * runs first, then the effects. The choice is greyed out with that
+   * command's reason while it would be refused, and its price includes what
+   * the command spends. Any command but `choose`.
+   */
+  command?: Command
 }
 
 export type DataScene = StoryletFields & MinigameSceneFields & TransitionFields & {
@@ -264,6 +272,7 @@ export function renderScene(
       disabled: blocked?.reason ?? (already ? choice.once?.reason : undefined),
       tags: choice.tags,
       irreversible: choice.irreversible,
+      ...(choice.command ? { command: choice.command } : {}),
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already

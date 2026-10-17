@@ -1,4 +1,4 @@
-import { apply, buildEffects, pluginQuery, statDef, view, type Command, type Game, type GameState, type View } from '@ifloom/engine'
+import { apply, buildEffects, inlineChoices, pluginQuery, statDef, view, type Command, type Game, type GameState, type View } from '@ifloom/engine'
 
 /** Picks the next command from what is on screen, or null to stop. */
 export type Policy = (screen: View, state: GameState, game: Game) => Command | null
@@ -28,6 +28,7 @@ export function screenText(screen: View): string {
   const where = [`Turn ${screen.turn + 1}`, screen.when].filter(Boolean)
   const lines = [`== ${where.join(' · ')}`, `# ${screen.scene.title}`, screen.scene.body]
   const buttons = [
+    ...inlineChoices(screen.scene.beats),
     ...screen.scene.choices,
     ...screen.actions,
     // Say whose button it is: every person's reads "Talk".
@@ -117,7 +118,7 @@ export function explorer(): Policy {
     visited.set(state.turn, today)
     // In a scene: a choice not yet made in this playtest, so a second visit takes another branch.
     if (screen.scene.id) {
-      const open = screen.scene.choices.filter((choice) => !choice.disabled && !choice.warning)
+      const open = [...inlineChoices(screen.scene.beats), ...screen.scene.choices].filter((choice) => !choice.disabled && !choice.warning)
       const fresh = open.find((choice) => !chosen.has(`${screen.scene.id}/${choice.id}`)) ?? open[0]
       if (fresh) chosen.add(`${screen.scene.id}/${fresh.id}`)
       return fresh?.command ?? { type: 'leave' }

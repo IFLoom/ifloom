@@ -4,7 +4,7 @@
  */
 import { parseBeats, type SceneBeat } from '@ifloom/engine'
 
-export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'reveal'] as const
+export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'reveal', 'act', 'tip'] as const
 export type MarkupKind = (typeof MARKUP_KINDS)[number]
 
 export const MARKUP_LABELS: Record<MarkupKind, string> = {
@@ -17,7 +17,12 @@ export const MARKUP_LABELS: Record<MarkupKind, string> = {
   mono: 'Thought (mono)',
   pool: 'Pool picture',
   reveal: 'Pause, then reveal',
+  act: 'Inline action',
+  tip: 'Tooltip',
 }
+
+/** Kinds that go inside a line, at the cursor, rather than in a paragraph of their own. */
+export const INLINE_KINDS: ReadonlySet<MarkupKind> = new Set(['act', 'tip'])
 
 /** The fields each kind asks for, in order, with a sample value. */
 export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sample: string }[]> = {
@@ -52,6 +57,14 @@ export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sa
     { name: 'delay', label: 'Pause, in milliseconds', sample: '1000' },
     { name: 'as', label: 'Transition (fade, slide-up, slide-left, zoom, none)', sample: 'fade' },
   ],
+  act: [
+    { name: 'id', label: 'Choice id', sample: 'answer' },
+    { name: 'words', label: 'Words to show (the choice\'s label if empty)', sample: 'Pick it up' },
+  ],
+  tip: [
+    { name: 'key', label: 'Prose key of the tooltip', sample: 'market.stall' },
+    { name: 'words', label: 'Words to show', sample: 'the stall' },
+  ],
 }
 
 /** Alt text can't hold `|` or `]`, which the markup uses itself. */
@@ -80,7 +93,20 @@ export function markup(kind: MarkupKind, fields: Record<string, string>): string
       return f('tags') ? `[[img:@${f('pool')}|${f('tags').replace(/\s+/g, '')}]]` : `[[img:@${f('pool')}]]`
     case 'reveal':
       return `[[reveal${f('delay') ? `:${f('delay').replace(/\D/g, '')}` : ''}${f('as') ? `|${f('as')}` : ''}]]`
+    case 'act':
+      return f('words') ? `[[act:${f('id')}|${clean(f('words'))}]]` : `[[act:${f('id')}]]`
+    case 'tip':
+      return `[[tip:${f('key')}|${clean(f('words')) || f('key')}]]`
   }
+}
+
+/** Text with inline markup put in at a cursor position, with a space either side where it needs one. */
+export function insertInline(text: string, at: number, snippet: string): { text: string; cursor: number } {
+  const before = text.slice(0, at)
+  const after = text.slice(at)
+  const head = before && !/\s$/.test(before) ? `${before} ` : before
+  const tail = after && !/^[\s.,;:!?]/.test(after) ? ` ${after}` : after
+  return { text: `${head}${snippet}${tail}`, cursor: head.length + snippet.length }
 }
 
 /** The sample markup for a kind, for the toolbar. */

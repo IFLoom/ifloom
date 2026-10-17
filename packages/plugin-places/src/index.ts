@@ -252,6 +252,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
           id: place.id,
           refs: [
             { blocks: place.body },
+            // Its prose can hold its own actions and the game's inline: `[[act:id]]`.
+            { actionsIn: place.body, offers: [...(place.actions ?? []), ...(game.actions ?? [])].map((action) => action.id) },
             { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
             // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
             { stage: place.stage, choices: null },

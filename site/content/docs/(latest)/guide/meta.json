@@ -11,6 +11,7 @@
     "title-screen",
     "minigames",
     "transitions",
+    "inline-actions",
     "hud",
     "plugin-ui",
     "frameworks",

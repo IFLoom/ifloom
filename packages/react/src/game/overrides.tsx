@@ -12,6 +12,7 @@ import { cn } from '../lib/utils.ts'
 import type { Actions, Sidebar, Title } from './layout.tsx'
 import type { Clock, LocationPanel, PeoplePanel, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
+import type { InlineAction, Tip } from './inline.tsx'
 import type { Hotspot, Stage } from './stage.tsx'
 import type { Video } from './video.tsx'
 import type { MediaViewer } from './viewer.tsx'
@@ -50,6 +51,8 @@ export const PART_KEYS = [
   // Scenes
   'scene-transition', 'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
   'beat', 'reveal', 'mail-header', 'mail-body', 'voice-replay',
+  // Inline actions and tooltips in the prose
+  'inline-action', 'tip', 'tip-content',
   // Pictures, videos, the stage and the viewer
   'video', 'stage-picture', 'stage-layer', 'hotspot', 'hotspot-warning', 'viewer-open', 'viewer', 'viewer-close',
   // Choices and buttons
@@ -113,6 +116,8 @@ export type Components = Partial<{
   Actions: Override<PropsOf<typeof Actions>>
   SceneStage: Override<PropsOf<typeof SceneStage>>
   Beat: Override<PropsOf<typeof Beat>>
+  InlineAction: Override<PropsOf<typeof InlineAction>>
+  Tip: Override<PropsOf<typeof Tip>>
   ChoiceList: Override<PropsOf<typeof ChoiceList>>
   ChoiceButton: Override<PropsOf<typeof ChoiceButton>>
   PriceTag: Override<PropsOf<typeof PriceTag>>

@@ -409,3 +409,45 @@ body {
   border-radius: 0;
   text-transform: lowercase;
 }
+
+/* Inline actions as bracketed commands, lit up like the choices on hover. */
+[data-part="inline-action"] {
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+[data-part="inline-action"]::before {
+  content: "[";
+  color: var(--muted-foreground);
+}
+
+[data-part="inline-action"]::after {
+  content: "]";
+  color: var(--muted-foreground);
+}
+
+[data-part="inline-action"]:hover:not([data-disabled]),
+[data-part="inline-action"]:focus-visible {
+  background: var(--foreground);
+  color: var(--background);
+  text-shadow: none;
+}
+
+[data-part="inline-action"][data-disabled] {
+  opacity: 0.55;
+}
+
+[data-part="tip"] {
+  text-decoration-style: dashed;
+}
+
+[data-part="tip-content"] {
+  border-radius: 0;
+  font-family: var(--font-body);
+  box-shadow: none;
+}
+
+[data-part="tip-content"]::before {
+  content: "? ";
+  color: var(--muted-foreground);
+}

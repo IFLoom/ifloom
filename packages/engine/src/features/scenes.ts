@@ -9,7 +9,8 @@ import type { Game, Scene } from '../game.ts'
 import type { Reference } from '../references.ts'
 import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
-import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge } from './feature.ts'
+import { INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
+import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
 export type Patch =
@@ -139,7 +140,9 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
 /** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
 export function dataSceneReferences(scene: DataScene): Reference[] {
   const out: Reference[] = [{ blocks: scene.body }]
+  out.push({ actionsIn: scene.body, offers: scene.choices.map((choice) => choice.id) })
   for (const choice of scene.choices) {
+    if (choice.command) out.push({ within: `choice ${choice.id}`, refs: [{ command: choice.command }] })
     out.push({ prose: choice.label ?? `${scene.id}#${choice.id}` })
     for (const entry of choice.labels ?? []) out.push({ prose: entry.key }, { when: entry.when })
     out.push({ when: choice.when })
@@ -188,6 +191,75 @@ function merge(problem: (from: string, where: string, what: string) => void): Pa
     },
     from: (_list, id) => (id === undefined ? undefined : scenes.get(id)?.from),
   }
+}
+
+/**
+ * What is wrong with the inline actions in a body: one that names nothing in
+ * `offers`, one named twice in a line, and one named by two blocks that can
+ * show together (two blocks that both have a `when` may never do, so they
+ * pass). The members of one variants list are drawn one at a time, so they
+ * may each name the same one.
+ */
+function inlineActionProblems(game: Game, body: readonly Block[] | string | undefined, offers: readonly string[]): string[] {
+  if (body === undefined) return []
+  const lines: { text: string; block: number; gated: boolean }[] = []
+  if (typeof body === 'string') lines.push({ text: body, block: 0, gated: false })
+  else {
+    body.forEach((block, index) => {
+      const gated = block.when !== undefined
+      const keys = 'text' in block ? [block.text] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []
+      for (const key of keys) {
+        const text = game.prose?.line(key)
+        if (text !== undefined) lines.push({ text, block: index, gated })
+      }
+    })
+  }
+  const out: string[] = []
+  const known = new Set(offers)
+  const blocks = new Map<string, { block: number; gated: boolean }[]>()
+  for (const line of lines) {
+    const named = (inlineMarkup(line.text) ?? []).flatMap((part) => (part.kind === 'act' ? [part.id] : []))
+    const once = new Set<string>()
+    for (const id of named) {
+      if (once.has(id)) out.push(`[[act:${id}]] is in one line twice; only the first is drawn as an action`)
+      once.add(id)
+      const where = blocks.get(id) ?? []
+      if (!where.some((entry) => entry.block === line.block)) where.push({ block: line.block, gated: line.gated })
+      blocks.set(id, where)
+    }
+  }
+  for (const [id, where] of blocks) {
+    if (!known.has(id)) out.push(`[[act:${id}]] names no choice or action offered here`)
+    if (where.length > 1 && where.some((entry) => !entry.gated)) out.push(`[[act:${id}]] is in two blocks that can show together; only the first is drawn as an action`)
+  }
+  return [...new Set(out)]
+}
+
+/** Malformed inline markup in a line of prose, and tooltips whose prose key has no words. */
+function inlineMarkupProblems(text: string, where: string, tools: ResolveTools): string[] {
+  if (!text.includes('[[act') && !text.includes('[[tip')) return []
+  const out: string[] = []
+  let written = 0
+  for (const match of text.matchAll(INLINE_MARKUP)) {
+    written += 1
+    const id = match[2].trim()
+    const words = match[3]?.trim()
+    if (match[1] === 'act') {
+      if (!id) out.push('[[act]] needs the id of a choice: [[act:id]] or [[act:id|words]]')
+      else if (words === '') out.push(`[[act:${id}|]] has no words; leave out the "|" to use the choice's label`)
+    } else {
+      if (!id) out.push('[[tip]] needs a prose key: [[tip:key|words]]')
+      else if (!words) out.push(`[[tip:${id}]] needs the words to show: [[tip:${id}|words]]`)
+      else out.push(...tools.resolve([{ prose: id }], where).map((what) => `[[tip:${id}]]: ${what}`))
+    }
+  }
+  const opened = (text.match(/\[\[(act|tip)\b/g) ?? []).length
+  if (opened > written) out.push('[[act:…]] or [[tip:…]] is not closed with "]]", or is missing its ":"')
+  // Drawn in narration and spoken lines only.
+  for (const block of text.split('\n\n')) {
+    if (block.trim().startsWith('> ') && /\[\[(act|tip):/.test(block)) out.push('[[act]] and [[tip]] are shown as written in a "> " line; use them in narration or a spoken line')
+  }
+  return out
 }
 
 /** Whole turns since a scene was first entered, or null if it hasn't been. */
@@ -296,7 +368,10 @@ export const scenes = defineFeature<ScenesShape>({
         if (!cx.sceneById(game, state.sceneId)) return undefined
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)
         if (!choice || choice.visible === false) return say(game, 'notOnOffer')
-        return choice.disabled
+        if (choice.disabled) return choice.disabled
+        // The command it sends, asked as it would be on its own. A choice can't send a choice.
+        if (choice.command) return choice.command.type === 'choose' ? say(game, 'notOnOffer') : cx.whyNotCommand(state, game, choice.command)
+        return undefined
       },
       run: (state, command, game, cx) => {
         const scene = cx.sceneById(game, state.sceneId!)
@@ -304,11 +379,14 @@ export const scenes = defineFeature<ScenesShape>({
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)!
         const key = `${scene.id}/${choice.id}`
         const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
-        return cx.runEffects(marked, game, choice.effects, false)
+        // The command it sends first, then its effects.
+        const sent = choice.command ? cx.runCommand(marked, game, choice.command) : marked
+        return cx.runEffects(sent, game, choice.effects, false)
       },
-      effectsOf: (_state, command, _game, cx) => {
+      effectsOf: (state, command, game, cx) => {
         const choice = cx.rendered.scene()?.choices.find((entry) => entry.id === command.id)
-        return choice ? [...choice.effects] : []
+        if (!choice) return []
+        return choice.command && choice.command.type !== 'choose' ? [...choice.effects, ...cx.effectsOfCommand(state, game, choice.command)] : [...choice.effects]
       },
       references: () => [],
     },
@@ -335,6 +413,7 @@ export const scenes = defineFeature<ScenesShape>({
       for (const choice of scene.choices) {
         if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
         ids.add(choice.id)
+        if (choice.command?.type === 'choose') tools.problem(source, where, `choice ${choice.id}: a choice's command can't be another choice; put the effects on this one`)
       }
     }
     // Every scene's storylet fields.
@@ -371,6 +450,7 @@ export const scenes = defineFeature<ScenesShape>({
       }
       tools.check(source, where, [
         { markup: shown.body ?? '' },
+        { actionsIn: shown.body ?? '', offers: shown.choices.map((choice) => choice.id) },
         ...(shown.media ?? []).map((media) => ({ media })),
         ...Object.entries(shown.audio ?? {}).map(([channel, track]) => ({ channel, track })),
         { stage: shown.stage, choices: shown.choices.map((choice) => choice.id) },
@@ -399,8 +479,10 @@ export const scenes = defineFeature<ScenesShape>({
       },
       drawnFrom: (ref) => (drawnFrom.has(ref.drawnFrom) ? [] : [`draws from "${ref.drawnFrom}", but no scene is drawn from it`]),
       blocks: (ref, where) => tools.resolve(blockReferences(ref.blocks), where),
+      actionsIn: (ref) => inlineActionProblems(game, ref.actionsIn, ref.offers),
     }
   },
+  markup: (_game, text, where, tools) => inlineMarkupProblems(text, where, tools),
   view: (state) => ({ inScene: Boolean(state.sceneId) }),
   // A new showing is seen, and dated the first time. Straight after the triggers, so plugins' `after` hooks see it.
   afterCommand: { at: 'beforePlugins', run: witnessed },

@@ -3,8 +3,9 @@ import type { Game } from './game.ts'
 import type { StageView } from './features/media.ts'
 import type { SpeakerView } from './plugin.ts'
 import type { SceneBeat } from './sceneBody.ts'
+import type { RenderedChoice } from './screen.ts'
 import type { Flat, GameState } from './types.ts'
-import { screen, type RenderedChoice, type Screen, type ScreenChoice, type ViewOptions } from './screen.ts'
+import { renderedChoice, screen, type Screen, type ViewOptions } from './screen.ts'
 import { featureContext } from './core.ts'
 import { viewPieces, type FeatureView } from './features/registry.ts'
 
@@ -71,18 +72,14 @@ function viewOf(shown: Screen, state: GameState, game: Game): View {
   const base: ViewBase = {
     title: game.title,
     when: pluginLabel(game, state),
-    scene: { ...shown.scene, stage: shown.stage, choices: shown.choices.map(rendered) },
-    actions: shown.actions.map(rendered),
+    scene: { ...shown.scene, stage: shown.stage, choices: shown.choices.map(renderedChoice) },
+    actions: shown.actions.map(renderedChoice),
     plugins: shown.plugins,
   }
   // Each feature's piece: the stats, the settings, the audio.
   return Object.assign(base, ...viewPieces.map((piece) => piece(state, game, shown, cx))) as View
 }
 
-/** A screen's choice as the view shows it: without its effects. */
-function rendered({ effects: _effects, ...choice }: ScreenChoice): RenderedChoice {
-  return choice
-}
 
 
 

@@ -3,7 +3,7 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, entitiesOf, entityOf, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, checkGame, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { EffectsView } from '@ifloom/plugin-effects'
@@ -103,6 +103,14 @@ describe('Small Town', () => {
     expect(texts.threads[0].messages[0].text).toContain('Coffee’s on me')
     const devices = (view(state, game).plugins.devices as DevicesView).devices[0]
     expect(devices.badge).toBeGreaterThan(0)
+    // The flat's prose says so, with a link in the line that opens the phone's messages.
+    const flat = view(state, game)
+    expect(flat.scene.beats.at(-1)).toMatchObject({ kind: 'text', text: 'Your phone buzzes on the sill: a message. Check it.' })
+    const [check] = inlineChoices(flat.scene.beats)
+    expect(check).toMatchObject({ id: 'read-text', command: { type: 'custom', name: 'devices/open', with: { id: 'texts' } } })
+    expect(flat.actions.map((action) => action.id)).not.toContain('read-text')
+    const opened = run(state, check.command)
+    expect((view(opened, game).plugins.devices as DevicesView).devices[0].open?.id).toBe('texts')
     state = run(on(state, 2, 'evening'), call('ava'))
     expect(view(state, game).scene.title).toBe('Ava, on the phone')
   })

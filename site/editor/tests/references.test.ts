@@ -58,6 +58,13 @@ describe('renameChoice', () => {
     expect(next.pack.scenes[1].body[2].when).toEqual({ chose: 'market/treat' })
     expect(problemsOf(next)).toEqual([])
   })
+
+  it('moves the inline actions in the scene\'s prose that name it', () => {
+    const project = sampleProject()
+    project.pack.prose.market = `${project.pack.prose.market} [[act:buy|Buy one]] or [[act:buy]], not [[act:buyer]].`
+    const next = renameChoice(project, 'market', 'buy', 'treat')
+    expect(next.pack.prose.market).toContain('[[act:treat|Buy one]] or [[act:treat]], not [[act:buyer]].')
+  })
 })
 
 describe('problemTarget', () => {

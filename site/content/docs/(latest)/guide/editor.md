@@ -24,7 +24,9 @@ A cost is a stat the choice spends. It's kept as a [`stat` effect](/docs/referen
 
 ### Prose
 
-Each block's words live under a [prose key](/docs/reference/prose#prose-keys). The editor names keys after the scene and choice ids (`market`, `market/2`, `market#buy`), and you can change a block's key by editing it above the text. The toolbar inserts each kind of [markup](/docs/reference/prose#markup): pictures, video, sound, voice lines, speaker lines, thoughts, pool pictures and a pause before what follows (`[[reveal]]`). Beside the text, the editor shows the beats the engine reads from it.
+Each block's words live under a [prose key](/docs/reference/prose#prose-keys). The editor names keys after the scene and choice ids (`market`, `market/2`, `market#buy`), and you can change a block's key by editing it above the text. The toolbar inserts each kind of [markup](/docs/reference/prose#markup): pictures, video, sound, voice lines, speaker lines, thoughts, pool pictures, a pause before what follows (`[[reveal]]`), an inline action (`[[act:id|words]]`) and a tooltip (`[[tip:key|words]]`). The last two go in the line at the cursor, not in a paragraph of their own. Beside the text, the editor shows the beats the engine reads from it, with inline actions as links and tooltips underlined.
+
+A choice the body draws inline is marked "in the text" in the list of choices, and its form says which prose holds it. "Put it in the text" adds `[[act:id]]` to the end of the last text block. Under "More", a choice can send a command as well as its effects, written as JSON. Renaming a choice renames its `[[act:]]` in the scene's prose too. See [Actions and tooltips in the text](/docs/guide/inline-actions).
 
 A block's "Reveal it after a pause" box gives it a [`reveal`](/docs/reference/transitions#reveals): how long it waits and how it comes in. The scene's own fields have menus for how it comes in and goes out, and its effects can say how the next screen arrives. See [Transitions](/docs/guide/transitions).
 

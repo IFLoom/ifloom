@@ -247,3 +247,21 @@
   border-color: var(--border);
   background: var(--background);
 }
+
+/* Inline actions as accent links, and tooltips as a card. */
+[data-part="inline-action"] {
+  font-weight: 600;
+  text-decoration-thickness: 2px;
+  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
+}
+
+[data-part="inline-action"]:hover:not([data-disabled]) {
+  text-decoration-color: var(--primary);
+}
+
+[data-part="tip-content"] {
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-card);
+}

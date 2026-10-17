@@ -1,4 +1,5 @@
 import type { TransitionName } from './features/transitions.ts'
+import type { RenderedChoice } from './screen.ts'
 
 export type BeatSize = 'inline' | 'wide'
 
@@ -6,11 +7,30 @@ export type MailHeader = { key: string; value: string }
 
 export type PropFace = 'sticky' | 'clip' | 'diary'
 
-export type SceneBeat =
+/**
+ * A piece of a line of prose that holds inline markup, in order. `text` is
+ * words to show as they are. `action` is an inline action, from
+ * `[[act:id|words]]`: `text` is the words to draw as its link and `choice` is
+ * the choice (or, in a room, the action) it presses, with its availability,
+ * reason and price as the list would show them. `tip` is a tooltip, from
+ * `[[tip:key|words]]`: `text` is the words shown and `tip` the prose line
+ * `key`, filled in for this save.
+ */
+export type InlineSpan =
   | { kind: 'text'; text: string }
+  | { kind: 'action'; text: string; choice: RenderedChoice }
+  | { kind: 'tip'; text: string; tip: string }
+
+export type SceneBeat =
+  /**
+   * A paragraph. `spans` is there only when it holds inline actions or
+   * tooltips: the same words in pieces. `text` always has the words alone,
+   * for a UI that draws text and nothing else.
+   */
+  | { kind: 'text'; text: string; spans?: InlineSpan[] }
   | { kind: 'mono'; text: string }
-  /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. */
-  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string }
+  /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. `spans` as a text beat has them. */
+  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
   | { kind: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
   /**
    * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
@@ -215,6 +235,52 @@ function revealBeat(block: string): Extract<SceneBeat, { kind: 'reveal' }> | nul
   const match = block.match(/^\[\[reveal(?::\s*(\d*)\s*)?(?:\|\s*([a-z0-9-]*)\s*)?\]\]$/)
   if (!match) return null
   return { kind: 'reveal', delay: match[1] ? Number(match[1]) : DEFAULT_REVEAL_DELAY, as: match[2] || 'fade', at: 0 }
+}
+
+/**
+ * Inline actions and tooltips, as written: `[[act:id]]`, `[[act:id|words]]`
+ * and `[[tip:key|words]]`. Groups: the tag, the id or key, then the words.
+ */
+export const INLINE_MARKUP = /\[\[(act|tip):([^\]|]*)(?:\|([^\]]*))?\]\]/g
+
+/** A piece of a line, as `inlineMarkup` reads it: words, or an inline action or tooltip as written. */
+export type InlinePart =
+  | { kind: 'text'; text: string }
+  /** `[[act:id]]`, with the words to show if it gives them. */
+  | { kind: 'act'; id: string; text?: string; markup: string }
+  /** `[[tip:key|words]]`. */
+  | { kind: 'tip'; key: string; text: string; markup: string }
+
+/**
+ * A line of prose cut at its inline markup, or null when it has none. Markup
+ * with no id or key, or a tooltip with no words, is left in the words as
+ * written, so it shows on screen; the content checker reports it.
+ */
+export function inlineMarkup(text: string): InlinePart[] | null {
+  if (!text.includes('[[act:') && !text.includes('[[tip:')) return null
+  const parts: InlinePart[] = []
+  let last = 0
+  let found = false
+  const words = (until: number) => {
+    if (until <= last) return
+    const prev = parts.at(-1)
+    if (prev?.kind === 'text') prev.text += text.slice(last, until)
+    else parts.push({ kind: 'text', text: text.slice(last, until) })
+  }
+  for (const match of text.matchAll(INLINE_MARKUP)) {
+    const id = match[2].trim()
+    const shown = match[3]?.trim()
+    const ok = id !== '' && (match[1] === 'act' ? shown !== '' : Boolean(shown))
+    if (!ok) continue
+    words(match.index)
+    if (match[1] === 'act') parts.push({ kind: 'act', id, ...(shown !== undefined ? { text: shown } : {}), markup: match[0] })
+    else parts.push({ kind: 'tip', key: id, text: shown!, markup: match[0] })
+    last = match.index + match[0].length
+    found = true
+  }
+  if (!found) return null
+  words(text.length)
+  return parts
 }
 
 function parseBlocks(body: string): SceneBeat[] {

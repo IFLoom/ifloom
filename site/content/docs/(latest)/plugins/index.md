@@ -31,6 +31,8 @@ There's also one bundle:
 |---|---|---|
 | [Phone](/docs/plugins/phone) | `@ifloom/phone` | A smartphone in one call. It wires devices, messages and feed together, with apps for each channel and feed, contacts and a gallery. |
 
+Plugins other people have written are listed on [Community plugins](/docs/plugins/community), with how to get yours listed.
+
 ## How they are built
 
 - **Each is its own package.** A game that doesn't use one doesn't ship it.

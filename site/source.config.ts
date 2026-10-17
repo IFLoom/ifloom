@@ -4,14 +4,15 @@ import { defineConfig } from 'fumadocs-mdx/config'
 import { remarkDirectiveAdmonition, remarkMdxMermaid } from 'fumadocs-core/mdx-plugins'
 import remarkDirective from 'remark-directive'
 import rehypeRaw from 'rehype-raw'
-import { remarkDropTitle, remarkPlainDirectives } from './lib/remark'
+import { remarkCommunityPlugins, remarkDropTitle, remarkPlainDirectives } from './lib/remark'
 
 export default defineConfig({
   mdxOptions: {
-    // remark-directive gives `:::tip[Title]` and `::include[file]`.
+    // remark-directive gives `:::tip[Title]`, `::include[file]` and
+    // `::community-plugins[file]`, the community plugins page's table.
     // remarkMdxMermaid turns a ```mermaid block into <Mermaid chart="…" />;
     // the page's Markdown (llms.txt, copy as Markdown) keeps the code block.
-    remarkPlugins: [remarkDirective, remarkDirectiveAdmonition, remarkPlainDirectives, remarkDropTitle, remarkMdxMermaid],
+    remarkPlugins: [remarkDirective, remarkDirectiveAdmonition, remarkCommunityPlugins, remarkPlainDirectives, remarkDropTitle, remarkMdxMermaid],
     // The pages are plain Markdown, so `<details>` is raw HTML. rehype-raw
     // turns it into elements, and leaves MDX's own nodes alone.
     rehypePlugins: (plugins) => [

@@ -1,0 +1,80 @@
+name: Plugin submission
+description: Ask for your plugin to be listed on the Community plugins page.
+title: "Plugin: "
+labels: ["plugin submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for writing a plugin. Someone will read it and, if it meets the criteria on
+        https://ifloom.dev/docs/plugins/community#how-listing-works, add it to the list.
+  - type: input
+    id: name
+    attributes:
+      label: Plugin name
+      description: What it's called on the list, such as "Weather".
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Repository
+      description: The https URL of its source.
+      placeholder: https://github.com/you/ifloom-plugin-weather
+    validations:
+      required: true
+  - type: input
+    id: npm
+    attributes:
+      label: npm package
+      placeholder: ifloom-plugin-weather
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Author
+      description: The name or handle to show beside it.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What it adds
+      description: One or two sentences for the list.
+    validations:
+      required: true
+  - type: input
+    id: ifloom
+    attributes:
+      label: IFLoom versions
+      description: The @ifloom/engine range it works with, as in its peerDependencies.
+      placeholder: ^0.1.0
+    validations:
+      required: true
+  - type: input
+    id: licence
+    attributes:
+      label: Licence
+      placeholder: MIT
+    validations:
+      required: true
+  - type: checkboxes
+    id: criteria
+    attributes:
+      label: Criteria
+      options:
+        - label: It imports only the public API of @ifloom/engine, and reaches other plugins only by name (cooperates, conditions, effects, query).
+          required: true
+        - label: It needs no UI of its own. It gives a view, and works in a game with no UI package, such as one from the vanilla template.
+          required: true
+        - label: "@ifloom/engine is a peer dependency, named with ^ and a version."
+          required: true
+        - label: It has tests that play it in a small game, and they pass.
+          required: true
+        - label: Content it reads lives in a pack's data, and its conditions, effects and commands follow the naming rules.
+          required: true
+        - label: It has an open-source licence in its repository and package.json.
+          required: true
+        - label: It's published on npm, with a README that says what it adds and how to use it.
+          required: true

@@ -9,6 +9,7 @@
  * can add a room or change one.
  */
 import {
+  commandOf,
   definePlugin,
   holds,
   lockOn,
@@ -21,6 +22,7 @@ import {
   type Blocked,
   type Block,
   type Command,
+  type CommandRef,
   type Condition,
   type DefinedPlugin,
   type EffectRef,
@@ -74,13 +76,20 @@ export type LocationDef = {
    * `transitions.default` if left out. See `view.transition`.
    */
   transition?: Transition | TransitionName
+  /**
+   * What happens on the doorstep, after the player walks in by an exit (not
+   * after a `places/move`): someone catching you on the way in. Its effects
+   * apply while `when` holds, or always with no `when`.
+   */
+  arrive?: Arrival
 }
+
+/** What happens as the player walks into a place: effects, while `when` holds. */
+export type Arrival = { when?: Condition; effects: EffectRef[] }
 
 export type PlacesOptions = {
   /** Where a new game starts. Nowhere — no place at all — if left out. */
   start?: string
-  /** What happens on the doorstep, after travel by exit (not a `move`): someone catching you on the way in. */
-  arrive?: (state: GameState, game: Game) => GameState
 }
 
 /** The plugin's state: where the player is, or null. */
@@ -186,12 +195,14 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'places/go', with: { id } }`: walk through an exit to the place `id`. */
+      /** `{ 'places/go': { id } }`: walk through an exit to the place `id`, then its `arrive`. */
       go: {
         whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, ids(args.id)[0]),
-        run: (_state, args, { set, game }) => {
-          const arrived = set({ at: ids(args.id)[0] })
-          return options.arrive ? options.arrive(arrived, game) : arrived
+        run: (_state, args, { set, apply, game }) => {
+          const to = ids(args.id)[0]
+          const arrived = set({ at: to })
+          const arrive = locationById(game, to)?.arrive
+          return arrive && holds(arrived, arrive.when, game) ? apply(arrive.effects, arrived) : arrived
         },
       },
     },
@@ -219,7 +230,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
       for (const id of idle && place ? place.exits : []) {
         const dest = locationById(game, id)
         if (!dest) continue
-        const command = go(id)
+        const command = commandOf(go(id))
         if (lockOn(state, game, command)?.hide) continue
         if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
         const exit: ExitView = { id, name: dest.name, tag: dest.tag, kind: dest.kind, art: dest.art, command }
@@ -257,6 +268,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
             { stage: place.stage, choices: null },
             { transition: place.transition },
             ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
+            ...(place.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
             ...(place.actions ?? []).map((action) => ({
               within: `action ${action.id}`,
               refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
@@ -281,7 +293,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
 }
 
 /** The command that walks to a place by an exit. */
-export const go = (id: string): Command => ({ type: 'custom', name: `${ID}/go`, with: { id } })
+export const go = (id: string): CommandRef => ({ [`${ID}/go`]: { id } })
 /** True in any of these places. */
 export const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: places } })
 /** True in any of these places, or anywhere inside one. */

@@ -38,7 +38,7 @@ List the package in your game's `package.json`, beside the engine:
 
 Then add `calendar(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
-List the calendar first. At the end of a turn, plugins' `turn` hooks run in the order `game.plugins` lists them. The calendar's hook is what moves the clock on, so plugins listed after it see the new day and plugins listed before it see the old one. The showcase's list starts like this:
+List the calendar first. At the end of a turn, plugins' `onTurn` hooks run in the order `game.plugins` lists them. The calendar's hook is what moves the clock on, so plugins listed after it see the new day and plugins listed before it see the old one. The showcase's list starts like this:
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
@@ -133,7 +133,7 @@ With `turn: 'period'`, every period passed ends a turn, so `pass(3)` ends three.
 
 ### Ending a turn another way
 
-A turn ended any other way moves the clock to the start of the next unit. A [`{ kind: 'turn' }`](/docs/reference/effects#turn) effect on a choice or an activity runs the calendar's `turn` hook, which moves the clock:
+A turn ended any other way moves the clock to the start of the next unit. A [`{ kind: 'turn' }`](/docs/reference/effects#turn) effect on a choice or an activity runs the calendar's `onTurn` hook, which moves the clock:
 
 | `turn` | The clock goes to |
 |---|---|
@@ -156,7 +156,7 @@ From day 0 at any period, the `closeTheWeek` activity ends turn 0 and the clock 
 
 ### What the game's turn rules see
 
-`rules.turn` and `onTurn` see the clock as the turn ended. At the end of a turn, the engine asks [`rules.turn`](/docs/reference/rules#turn) first, then runs [`rules.onTurn`](/docs/reference/rules#onturn), then each plugin's `turn` hook. So the game's own rules see the clock before the calendar moves it. If the player goes to bed at night, `rules.turn` sees the clock at day 0, night, not day 1, morning. Plugins listed after the calendar see the new day.
+The game's `onTurn` sees the clock as the turn ended. At the end of a turn, the engine runs [`rules.onTurn`](/docs/reference/rules#onturn) first, then each plugin's `onTurn` hook. So the game's own rule sees the clock before the calendar moves it. If the player goes to bed at night, `rules.onTurn` sees the clock at day 0, night, not day 1, morning, in both its state and its `before`. Plugins listed after the calendar see the new day.
 
 When one pass ends several turns, the first turn's rules see the clock where the pass began. Each later turn's rules see the clock where the turn before left it, which is the start of the day (or period, or week) that turn ends.
 
@@ -275,7 +275,7 @@ You can use them anywhere a [condition](/docs/reference/conditions) goes: a bloc
 | `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
 | `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
-They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
+They work in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
 
 A count that isn't a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar doesn't have, and leaves the period as it was.
 
@@ -283,7 +283,7 @@ A count that isn't a number passes nothing, a fraction is rounded down, and a ne
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'calendar/sleep' }` | `sleep()` | Goes to bed. It passes time to the [`wake`](#calendaroptions) period of the next day, ending a turn as [`calendar/pass`](#effects) does. |
+| `{ 'calendar/sleep': true }` | `sleep()` | Goes to bed. It passes time to the [`wake`](#calendaroptions) period of the next day, ending a turn as [`calendar/pass`](#effects) does. |
 
 A calendar built with `sleep: false` has no `calendar/sleep` command at all. The engine treats it as any unknown command and refuses it with `There is no such thing to do.` ([`noSuchAction`](/docs/reference/strings#refusals)). With a sleep command, `calendar/sleep` is refused, in this order, with:
 
@@ -354,7 +354,7 @@ The calendar watches every command, not only its own, through the plugin fields 
 
 ### The turn hook
 
-Its [`turn` hook](/docs/reference/plugins#hooks) moves the clock to the start of the next unit, as described in [What a turn is](#what-a-turn-is). It runs on every turn, however the turn ended. When `calendar/pass` ended the turn, the pass then puts the clock exactly where it was sent.
+Its [`onTurn` hook](/docs/reference/plugins#hooks-and-providers) moves the clock to the start of the next unit, as described in [What a turn is](#what-a-turn-is). It runs on every turn, however the turn ended. When `calendar/pass` ended the turn, the pass then puts the clock exactly where it was sent.
 
 ### The guard
 
@@ -460,12 +460,12 @@ To set the clock by hand while testing, use the [debug plugin](/docs/plugins/deb
 
 ## For code
 
-The helpers write the content objects for you, typed. `sleep` returns a `Command`, `pass` an `EffectRef`, and the rest a `Condition`.
+The helpers write the content objects for you, typed. `sleep` returns a [`CommandRef`](/docs/reference/custom#commandref), in the short form, `pass` an `EffectRef`, and the rest a `Condition`.
 
 ### Helpers
 
 ```ts
-const sleep: () => Command
+const sleep: () => CommandRef
 const pass: (n?: number) => EffectRef          // n = 1
 const period: (...ids: string[]) => Condition
 const weekday: (...days: number[]) => Condition
@@ -493,12 +493,12 @@ base · options weekend · no day 9 in a week of 7
 
 ## Gotchas
 
-- **List the calendar first.** Other plugins' `turn` hooks then see the new day. If you list it after them, it moves the clock after they've run.
-- **The game's own turn rules see the old clock.** `rules.turn` and `onTurn` run before the calendar's `turn` hook. To act on the day that's just begun, work the day out from `rules.turn`'s `nextTurn` (see [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step)), do it in a plugin listed after the calendar, or read the clock in the next command.
-- **A pass inside a turn's end ends no turn.** In what `rules.turn` returns, or from another plugin's `turn` hook, `calendar/pass` still moves the clock. The turns it would end do nothing, as any [`turn` effect](/docs/reference/effects#turn) there does.
+- **List the calendar first.** Other plugins' `onTurn` hooks then see the new day. If you list it after them, it moves the clock after they've run.
+- **The game's own turn rule sees the old clock.** `rules.onTurn` runs before the calendar's `onTurn` hook. To act on the day that's just begun, work the day out from `state.turn` (see [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step)), do it in a plugin listed after the calendar, or read the clock in the next command.
+- **A pass inside a turn's end ends no turn.** Applied from `rules.onTurn`, or from another plugin's `onTurn` hook, `calendar/pass` still moves the clock. The turns it would end do nothing, as any [`turn` effect](/docs/reference/effects#turn) there does.
 - **`calendar/set` and `write` end no turn.** They put the clock somewhere, and `state.turn` stays where it was.
 - **The weekday counts from day 0, but a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs from Thursday to Wednesday.
-- **A long pass shows its turn rules the start of each day it crosses.** Only the first `rules.turn` of a pass that ends several turns sees the clock where the pass began. Each later one sees the clock at the start of the unit the turn before moved it to.
+- **A long pass shows its turn rules the start of each day it crosses.** Only the first `rules.onTurn` of a pass that ends several turns sees the clock where the pass began. Each later one sees the clock at the start of the unit the turn before moved it to.
 
 ## See it in an example
 

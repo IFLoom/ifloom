@@ -168,16 +168,16 @@ const firstParty: Plugin<any>[] = [
   calendar(),
   cast(),
   debug(),
-  devices({ devices: [{ id: 'phone', name: 'Phone' }] }),
+  devices(),
   effects(),
-  feed({ feeds: [{ id: 'fans', name: 'Fans' }] }),
+  feed(),
   generators(),
   jobs(),
-  messages({ channels: [{ id: 'texts', name: 'Texts' }] }),
+  messages(),
   places(),
   quests(),
   shop(),
-  wardrobe({ slots: [{ id: 'neck', label: 'Neck' }] }),
+  wardrobe(),
 ]
 
 /** The first-party plugins' sources, by path, for the arguments they read. */

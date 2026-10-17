@@ -118,11 +118,11 @@ describe('the files a game names', () => {
             'post.cafe': 'Cakes.\n\n[[wide:cafe/cakes]]',
           },
           data: {
-            feed: { posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }] },
+            feed: { feeds: [{ id: 'town', name: 'Town' }], posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }] },
           },
         },
       ],
-      { id: 'town', title: 'Town', introScene: 'knock', plugins: [feed({ feeds: [{ id: 'town', name: 'Town' }] })] },
+      { id: 'town', title: 'Town', introScene: 'knock', plugins: [feed()] },
     )
   const files = () => checkContent(game().game).files
 

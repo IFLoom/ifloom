@@ -308,7 +308,7 @@ newGamePlusButton.onclick = () => runner.newGame({ carry: runner.state })
 
 If the game declares [`finished`](/docs/reference/state#new-game), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
 
-After a command, the runner also gives each plugin with a [`profile.onCommand`](/docs/reference/plugins#the-profile) the chance to update its namespace.
+After a command, the runner also gives each plugin with a [`profile`](/docs/reference/plugins#the-profile) the chance to update its namespace.
 
 ## CommandLog
 

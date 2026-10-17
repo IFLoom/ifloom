@@ -10,8 +10,8 @@ Other people's posts are content, and each appears the first time its [condition
 
 ```ts
 import {
-  feed, postDefs, postTo, react, seeFeed, hasPosted,
-  type FeedDef, type FeedOptions, type PostDef, type OwnPost, type Comment, type FeedState,
+  feed, feedsOf, postDefs, postTo, react, seeFeed, hasPosted,
+  type FeedDef, type PostDef, type OwnPost, type Comment, type FeedState,
   type FeedsView, type FeedView, type PostView,
 } from '@ifloom/plugin-feed'
 ```
@@ -36,10 +36,10 @@ Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-
 ## feed
 
 ```ts
-function feed(options: FeedOptions): DefinedPlugin<FeedState>
+function feed(): DefinedPlugin<FeedState>
 ```
 
-Builds the plugin, with the id `feed`. Call it once, when you build the game, with the feeds the game has.
+Builds the plugin, with the id `feed`. Call it once, when you build the game. It takes no options: the feeds and the posts are content, in a pack's `data.feed`, so a mod can add either.
 
 ```ts
 import { loadGame, type Pack } from '@ifloom/engine'
@@ -58,27 +58,26 @@ const { game } = loadGame([town], {
     calendar(),
     places({ start: 'flat' }),
     cast(),
-    feed({
-      feeds: [
-        { id: 'social', name: 'Social' },
-        { id: 'board', name: 'Notice board' },
-      ],
-    }),
+    feed(),
   ],
 })
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a poster or commenter who is one of its characters is shown with their name, and a poster with their portrait too. The plugin gets these from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every poster is shown as written, with no portrait.
-
-### FeedOptions
+The feeds go in the pack beside the posts:
 
 ```ts
-type FeedOptions = { feeds: FeedDef[] }
+data: {
+  feed: {
+    feeds: [
+      { id: 'social', name: 'Social' },
+      { id: 'board', name: 'Notice board' },
+    ],
+    posts: [/* … */],
+  },
+}
 ```
 
-| Field | What it is |
-|---|---|
-| `feeds` | Every feed, in the order the view lists them. |
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a poster or commenter who is one of its characters is shown with their name, and a poster with their portrait too. The plugin gets these from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every poster is shown as written, with no portrait.
 
 ### FeedDef
 
@@ -91,7 +90,15 @@ type FeedDef = { id: string; name: string }
 | `id` | What posts name the feed by. It's also what the [value](#values) `feed/unseen` takes as `feed`. |
 | `name` | What the player reads. |
 
-The feeds are code, not content, so a mod can't add one.
+Feeds are content. List them in a pack's `data.feed.feeds`, in the order the view lists them. They're merged by id, so a mod can add a feed or rename one.
+
+### feedsOf
+
+```ts
+function feedsOf(game: Game): FeedDef[]
+```
+
+The game's feeds, merged from its packs, in order.
 
 ## Writing posts
 
@@ -174,7 +181,7 @@ import { SCHEMA, loadGame, roll, type Pack } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
 import { onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { feed, postTo, react } from '@ifloom/plugin-feed'
+import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', kind: 'street', art: '', exits, body: [{ text: `place.${id}` }] })
@@ -206,7 +213,7 @@ const town: Pack = {
         { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
         {
           ...place('high-street', 'High Street', ['flat', 'park']),
-          actions: [{ id: 'board', label: 'Read the notice board', command: { type: 'custom', name: 'feed/seen', with: { id: 'board' } } }],
+          actions: [{ id: 'board', label: 'Read the notice board', command: seeFeed('board') }],
         },
         place('park', 'Riverside Park', ['high-street']),
       ],
@@ -218,6 +225,7 @@ const town: Pack = {
       ],
     },
     feed: {
+      feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }],
       posts: [
         { id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ text: 'feed.ava-cake' }], likes: 14 },
         { id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ text: 'feed.sam-river' }], likes: 3 },
@@ -243,7 +251,7 @@ const { game } = loadGame([town], {
     calendar(),
     places({ start: 'flat' }),
     cast(),
-    feed({ feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }] }),
+    feed(),
   ],
 })
 ```
@@ -293,9 +301,9 @@ feeds(state).unseen     // 0
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'feed/appeared', with: { post } }` | | Someone else's post has appeared. |
-| `{ custom: 'feed/posted', with: { feed?, gte? } }` | `hasPosted(gte?, feed?)` | The player has made at least `gte` posts (1 if left out), to that feed or to any. |
-| `{ custom: 'feed/likes', with: { post, gte } }` | | A post, the player's own or someone else's, has at least `gte` likes (1 if left out). |
+| `{ 'feed/appeared': { post } }` | | Someone else's post has appeared. |
+| `{ 'feed/posted': { feed?, gte? } }` | `hasPosted(gte?, feed?)` | The player has made at least `gte` posts (1 if left out), to that feed or to any. |
+| `{ 'feed/likes': { post, gte } }` | | A post, the player's own or someone else's, has at least `gte` likes (1 if left out). |
 
 Each can also be written short, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)):
 
@@ -310,16 +318,16 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'feed/post', with: { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
-| `{ custom: 'feed/react', with: { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
+| `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
+| `{ 'feed/react': { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as an item's `use` or what `rules.turn` returns, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
+They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as an item's `use`, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'feed/seen', with: { id? } }` | `seeFeed(feed?)` | Marks the feed `id` as looked at, which clears its `unseen`. `seeFeed()`, with no feed, marks them all. |
+| `{ 'feed/seen': { id? } }` | `seeFeed(feed?)` | Marks the feed `id` as looked at, which clears its `unseen`. `seeFeed()`, with no feed, marks them all. |
 
 Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends it when the player opens a feed.
 
@@ -350,7 +358,7 @@ import { town } from './town.ts'
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [feed({ feeds: [{ id: 'social', name: 'Social' }] })],
+  plugins: [feed()],
   strings: { 'feed/you': 'Me' },
 })
 ```
@@ -367,7 +375,7 @@ type FeedsView = { feeds: FeedView[]; unseen: number }
 
 | Field | What it is |
 |---|---|
-| `feeds` | Every feed, in the order you gave them to `feed(...)`, including empty ones. |
+| `feeds` | Every feed, in the order `data.feed.feeds` lists them, including empty ones. |
 | `unseen` | Other people's posts not looked at, in every feed. |
 
 ### FeedView
@@ -465,14 +473,14 @@ A comment as the state keeps it. `from` is who wrote it, as written, and `text` 
 
 ## For code
 
-The helpers write the content objects for you, typed. `postTo` and `react` return an `EffectRef`, `hasPosted` returns a `Condition`, and `seeFeed` returns a `Command`.
+The helpers write the content objects for you, typed. `postTo` and `react` return an `EffectRef`, `hasPosted` returns a `Condition`, and `seeFeed` returns a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
 
 ### Helpers
 
 ```ts
 const postTo: (feedId: string, id: string, post?: { text?: string; image?: string; video?: string; likes?: number }) => EffectRef
 const react: (post: string, reaction: { likes?: number; from?: string; text?: string }) => EffectRef
-const seeFeed: (feedId?: string) => Command
+const seeFeed: (feedId?: string) => CommandRef
 const hasPosted: (gte?: number, feedId?: string) => Condition
 ```
 
@@ -488,12 +496,12 @@ The game's posts, merged from its packs: `game.data.feed.posts`.
 
 When the game loads, the plugin reports these problems against the pack each post came from, with `where` as `posts <id>`:
 
-- A feed the game wasn't given (`no feed called "…"`).
+- A feed the game doesn't have (`unknown feed "…"`).
 - Anything `when` names that the game doesn't have, such as `unknown storyline "…"`.
 - A body block with no prose (`no prose for "…"`), a `variants` block with no lines, a `{ media }` block's pool or flags, and anything the block's `when` names.
 
 ```text
-mod:summer-fete · posts fete.stalls · no feed called "newsletter"
+mod:summer-fete · posts fete.stalls · unknown feed "newsletter"
 ```
 
 A post's `image` and `video` are listed in the checker's [`files`](/docs/reference/checks#fileref), as paths from the page.
@@ -502,7 +510,7 @@ The player's own posts and reactions are made by effects, and those are checked 
 
 ## Gotchas
 
-- **Posts appear only after a command.** The plugin looks for new posts in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
+- **Posts appear only after a command.** The plugin looks for new posts in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
 - **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a kv key, a day (the calendar's `day({ gte: 2 })`) or a scene seen.
 - **A post appears once.** After that it stays, whatever `when` does.
 - **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unseen` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.

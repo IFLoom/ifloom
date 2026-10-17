@@ -13,13 +13,16 @@ import {
 } from '@ifloom/engine'
 import { slotFilled, takeOff, wardrobe, wear, wearing, type WardrobeView } from '../src/index.ts'
 
-const plugin = wardrobe({
-  slots: [
-    { id: 'coat', label: 'Coat' },
-    { id: 'feet', label: 'Feet' },
-  ],
-  start: { feet: 'boots' },
-})
+const plugin = wardrobe()
+/** The slots, as the base game's content: boots on from the start. */
+const slots = {
+  wardrobe: {
+    slots: [
+      { id: 'coat', label: 'Coat' },
+      { id: 'feet', label: 'Feet', start: 'boots' },
+    ],
+  },
+}
 
 function game(extra: Partial<Pack> = {}): Game {
   const town: Pack = {
@@ -43,7 +46,7 @@ function game(extra: Partial<Pack> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([town], { id: 'wet', title: 'Wet', plugins: [plugin] })
+  const loaded = loadGame([town], { id: 'wet', title: 'Wet', plugins: [plugin], data: slots })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -113,12 +116,12 @@ describe('the wardrobe', () => {
   it('reports clothes that are not items or name a slot the game does not have', () => {
     const loaded = loadGame(
       [{ id: 'mod', schema: SCHEMA, data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }],
-      { id: 'g', title: 'g', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin], data: slots },
     )
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'clothes cape', what: 'unknown item "cape"' },
-      { pack: 'mod', where: 'clothes cape', what: 'no slot called "back"' },
-      { pack: 'base', where: 'start feet', what: '"boots" is not clothing for this slot' },
+      { pack: 'mod', where: 'clothes cape', what: 'unknown slot "back"' },
+      { pack: 'base', where: 'slots feet', what: 'starts with "boots", which is not clothing for this slot' },
     ])
     const unowned = loadGame(
       [
@@ -129,8 +132,8 @@ describe('the wardrobe', () => {
           data: { wardrobe: { clothes: [{ id: 'boots', slot: 'feet' }] } },
         },
       ],
-      { id: 'g', title: 'g', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin], data: slots },
     )
-    expect(unowned.problems).toContainEqual({ pack: 'base', where: 'start feet', what: 'the player does not start with "boots"' })
+    expect(unowned.problems).toContainEqual({ pack: 'base', where: 'slots feet', what: 'starts with "boots", which the player does not start with' })
   })
 })

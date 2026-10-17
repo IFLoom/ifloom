@@ -73,13 +73,13 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'debug/stat', with: { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
-| `{ type: 'custom', name: 'debug/kv', with: { key, to } }` | `setKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ type: 'custom', name: 'debug/item', with: { item, to } }` | `setItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
-| `{ type: 'custom', name: 'debug/scene', with: { id } }` | `jumpTo(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
-| `{ type: 'custom', name: 'debug/time', with: { day?, period? } }` | `setTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
-| `{ type: 'custom', name: 'debug/turn', with: { to } }` | `setTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ type: 'custom', name: 'debug/go', with: { id } }` | `goTo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
+| `{ 'debug/stat': { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
+| `{ 'debug/kv': { key, to } }` | `setKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
+| `{ 'debug/item': { item, to } }` | `setItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
+| `{ 'debug/scene': { id } }` | `jumpTo(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
+| `{ 'debug/time': { day?, period? } }` | `setTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
+| `{ 'debug/turn': { to } }` | `setTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
+| `{ 'debug/go': { id } }` | `goTo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
 
 A command is refused, with a line from [Strings](#strings), when:
 
@@ -98,24 +98,24 @@ The commands set the state and nothing else, so you can get to the state you wan
 
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
-- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the places plugin's [`arrive`](/docs/plugins/places#placesoptions) option doesn't run.
-- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.turn`](/docs/reference/rules#turn), [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `turn` [hook](/docs/reference/plugins#hooks), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
+- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the place's [`arrive`](/docs/plugins/places#arrival) doesn't run.
+- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 
-They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `after` hook runs. Setting a kv key that a trigger watches fires that trigger.
+They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `onCommand` hook runs. Setting a kv key that a trigger watches fires that trigger.
 
 ### Helpers
 
 ```ts
-import type { Command, KvValue } from '@ifloom/engine'
+import type { CommandRef, KvValue } from '@ifloom/engine'
 
-const setStat: (stat: string, to: number, of?: string) => Command
-const setKv: (key: string, to: KvValue) => Command
-const setItem: (item: string, count: number) => Command
-const jumpTo: (scene?: string) => Command
-const setTime: (time: { day?: number; period?: string }) => Command
-const setTurn: (turn: number) => Command
-const goTo: (location: string) => Command
+const setStat: (stat: string, to: number, of?: string) => CommandRef
+const setKv: (key: string, to: KvValue) => CommandRef
+const setItem: (item: string, count: number) => CommandRef
+const jumpTo: (scene?: string) => CommandRef
+const setTime: (time: { day?: number; period?: string }) => CommandRef
+const setTurn: (turn: number) => CommandRef
+const goTo: (location: string) => CommandRef
 ```
 
 Each one builds the command above, ready for [`apply`](/docs/reference/commands#apply) or a [runner](/docs/reference/runner).
@@ -125,7 +125,7 @@ Each one builds the command above, ready for [`apply`](/docs/reference/commands#
 Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s café, a few days in, with money in the player's pocket and Ava already a friend, without playing moving day to get there:
 
 ```ts
-import { apply, startingState, type Command, type Game } from '@ifloom/engine'
+import { apply, startingState, type CommandRef, type Game } from '@ifloom/engine'
 import { where } from '@ifloom/plugin-places'
 import { goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv } from '@ifloom/plugin-debug'
 
@@ -133,7 +133,7 @@ declare const game: Game // the showcase, built with debug()
 
 let state = startingState(game) // moving day, behind a lock that denies '*'
 
-const set = (command: Command) => (state = apply(state, game, command).state)
+const set = (command: CommandRef) => (state = apply(state, game, command).state)
 set(setStat('coins', 40))
 set(setKv('catName', 'Biscuit'))
 set(setItem('sandwich', 2))

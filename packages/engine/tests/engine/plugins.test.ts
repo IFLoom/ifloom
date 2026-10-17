@@ -48,9 +48,7 @@ const shells = definePlugin<Tally>({
     },
   },
   values: { count: (_state, _args, { slice }) => slice.found.length },
-  hooks: {
-    turn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
-  },
+  onTurn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
   view: (_state, { slice }) => ({ count: slice.found.length }),
   references: {
     content: (game) => (game.data?.shells?.spots ?? []).map((spot) => ({ list: 'spots', id: spot.id, refs: [{ when: (spot as { id: string; when?: Condition }).when }] })),
@@ -183,8 +181,7 @@ describe('plugins', () => {
       actions: [{ id: 'drop', label: 'Drop', command: { type: 'custom' as const, name: 'shells/fling' } }],
     }
     expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
-    const night = { ...withShells(), rules: { turn: () => ({ effects: [{ kind: 'custom' as const, name: 'shells/polish' }] }) } }
-    const items = { ...night, items: [{ id: 'cloth', name: 'cloth', desc: '', kind: 'stuff' as const, use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
+    const items = { ...withShells(), items: [{ id: 'cloth', name: 'cloth', desc: '', kind: 'stuff' as const, use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
     expect(problemsOf(items)).toContain('item cloth: no plugin effect named "shells/polish"')
   })
 })

@@ -38,7 +38,7 @@ It never throws on bad content. It returns the problems in the order it found th
 
 **Gotchas:**
 - A hand-written `Scene` is a function, so the checker can't see inside it. Only its [storylet](/docs/reference/storylets) fields are checked, unless you give it probes.
-- It doesn't run your custom functions. A [custom effect](/docs/reference/custom#effects) that returns a broken effect, or a `rules.turn` that does, is only found in play.
+- It doesn't run your custom functions. A [custom effect](/docs/reference/custom#effects) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
 - A key a pack can't hold, such as `actions`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `a pack has no "actions", so it was left out`. A hand-built game has no packs, so `checkGame` has nothing to say about it.
 - It doesn't check the tokens in prose, such as `{{v:breadPrice}}`. An unknown one is left on screen as written, so you can see it.
 

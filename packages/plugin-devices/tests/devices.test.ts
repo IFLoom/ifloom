@@ -22,7 +22,7 @@ function game(): Game {
         custom: { panels: { inbox: () => ({ letters: 2 }) } },
       },
     ],
-    { id: 'desk', title: 'Desk', plugins: [devices({ devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps })] },
+    { id: 'desk', title: 'Desk', plugins: [devices()], data: { devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps } } },
   )
   expect(loaded.problems).toEqual([])
   return loaded.game
@@ -79,15 +79,15 @@ describe('devices', () => {
         sections: [{ collection: 'album' }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
       },
     ]
-    const loaded = loadGame([], { id: 'g', title: 'g', plugins: [devices({ devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad })] })
+    const loaded = loadGame([], { id: 'g', title: 'g', plugins: [devices()], data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } })
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
+      'unknown device "watch"',
       'no custom value named "nope/value"',
       'unknown collection "album"',
       'no custom panel named "nothing"',
       'no prose for "x.none"',
-      'no device called "watch"',
       'the game has no plugin named "radio"',
     ])
-    expect(appOpen('x')).toEqual({ custom: 'devices/open', with: { app: 'x' } })
+    expect(appOpen('x')).toEqual({ 'devices/open': { app: 'x' } })
   })
 })

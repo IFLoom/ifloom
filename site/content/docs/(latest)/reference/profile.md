@@ -56,7 +56,7 @@ Values must be plain JSON. The engine uses two namespaces itself, and each plugi
 |---|---|---|
 | `settings` | The player's last value for every [setting](/docs/reference/settings), play and ui alike, by id: `{ hints: false, textSize: 'large' }`. | The runner, when a [`setting`](/docs/reference/commands#setting) command takes and on [`setUiSetting`](/docs/reference/runner#setuisetting). |
 | `finished` | `{ at }`, when the game was first [finished](/docs/reference/state#new-game), in milliseconds. Unset until then. | The runner, the first time `game.finished` holds. |
-| a plugin's id | Whatever the plugin keeps, such as earned achievements. | The runner, from the plugin's [`profile.onCommand`](/docs/reference/plugins#the-profile). |
+| a plugin's id | Whatever the plugin keeps, such as earned achievements. | The runner, from the plugin's [`profile`](/docs/reference/plugins#the-profile). |
 
 Your own UI code can use any other name for its own things, such as the volume a music player last used.
 

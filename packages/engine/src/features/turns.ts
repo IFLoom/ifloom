@@ -44,23 +44,17 @@ export type TurnsShape = {
 }
 
 /**
- * The end of a turn: the counter moves on, `resets` are put back, `rules.turn`'s
- * effects apply, then the game's `onTurn` and every plugin's `turn` hook run.
- * `before` is the state the turn ended on, which `rules.turn` is asked about.
- * What runs here runs with `ending` set, so a `turn` effect among it (in the
- * rules, or applied by a plugin through its context) does nothing: a turn
- * ending inside a turn's end would ask `rules.turn` again, and again.
+ * The end of a turn: the counter moves on, `resets` are put back, then the
+ * game's `rules.onTurn` and every plugin's `onTurn` hook run. `before` is the
+ * state the turn ended on, which `rules.onTurn` is handed as `before`. What
+ * runs here runs with `ending` set, so a `turn` effect among it (applied by
+ * the game's hook or a plugin's through its context) does nothing: a turn
+ * ending inside a turn's end would end the turn again, and again.
  */
 export function endTurn(state: GameState, game: Game, cx: FeatureContext, before: GameState = state): GameState {
-  const next = state.turn + 1
-  const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
-  const begun = cx.runEffects(
-    { ...state, turn: next, kv: { ...state.kv, ...game.rules?.resets } },
-    game,
-    rule.effects,
-    true,
-  )
-  return cx.turnHooks(game.rules?.onTurn?.(begun) ?? begun, game)
+  const begun = { ...state, turn: state.turn + 1, kv: { ...state.kv, ...game.rules?.resets } }
+  const ruled = game.rules?.onTurn ? game.rules.onTurn(begun, cx.turnContext(begun, game, before)) : begun
+  return cx.turnHooks(ruled, game)
 }
 
 export const turns = defineFeature<TurnsShape>({

@@ -3,11 +3,14 @@ import { apply, applyEffects } from '../../src/reduce.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
 describe('the game’s hooks', () => {
-  it('ends the turn: resets put back, the turn rules and onTurn run', () => {
+  it('ends the turn: resets put back, then onTurn, with the state the turn ended on and effects in order', () => {
     const game = fixture({
       resets: { tidied: false },
-      turn: (_state, next) => ({ effects: [{ kind: 'kv', key: 'reached', to: next }] }),
-      onTurn: (state) => ({ ...state, kv: { ...state.kv, mornings: Number(state.kv.mornings ?? 0) + 1 } }),
+      onTurn: (state, { apply, before }) => {
+        // Effects apply one after another, each seeing the last.
+        const reached = apply([{ kind: 'kv', key: 'reached', to: state.turn }, { kind: 'kv', key: 'wasTidy', to: before.kv.tidied === true }])
+        return { ...reached, kv: { ...reached.kv, mornings: Number(reached.kv.mornings ?? 0) + 1 } }
+      },
     })
     const evening = begin(game, { kv: { tidied: true } })
     const next = apply(evening, game, { type: 'activity', id: 'rest' })
@@ -15,6 +18,7 @@ describe('the game’s hooks', () => {
     expect(next.state.turn).toBe(3)
     expect(next.state.kv.tidied).toBe(false)
     expect(next.state.kv.reached).toBe(3)
+    expect(next.state.kv.wasTidy).toBe(true)
     expect(next.state.kv.mornings).toBe(1)
   })
 
@@ -26,7 +30,7 @@ describe('the game’s hooks', () => {
   })
 
   it('ignores a turn ended by the turn rules themselves, rather than looping', () => {
-    const game = fixture({ turn: () => ({ effects: [{ kind: 'turn' }, { kind: 'kv', key: 'ran', by: 1 }] }) })
+    const game = fixture({ onTurn: (_state, { apply }) => apply([{ kind: 'turn' }, { kind: 'kv', key: 'ran', by: 1 }]) })
     const next = applyEffects(begin(game), game, [{ kind: 'turn' }])
     expect(next.turn).toBe(3)
     expect(next.kv.ran).toBe(1)

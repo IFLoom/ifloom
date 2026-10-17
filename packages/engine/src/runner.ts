@@ -222,9 +222,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       remember((profile) => profile.update('finished', (stored) => stored ?? { at }))
     }
     for (const plugin of game.plugins ?? []) {
-      const onCommand = plugin.profile?.onCommand
-      if (!onCommand) continue
-      remember((profile) => profile.update(plugin.id, (stored) => onCommand(after, before, stored, pluginContext(plugin, after, game))))
+      const keep = plugin.profile
+      if (!keep) continue
+      remember((profile) => profile.update(plugin.id, (stored) => keep(after, before, stored, pluginContext(plugin, after, game))))
     }
   }
 

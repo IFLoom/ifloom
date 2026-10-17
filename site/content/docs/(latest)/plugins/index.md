@@ -79,14 +79,14 @@ const { game, problems } = loadGame([town], {
 
 You choose plugins when you build the game. They're never loaded while it runs. A mod can bring content for a plugin the game already has, in its pack's [`data`](/docs/reference/loader#pack), but it can't add a plugin.
 
-Content names a plugin's conditions and effects by their full name, `<plugin>/<name>`, and you can write that in two forms. The pages below use the long one. The short one makes the name the only key:
+Content names a plugin's conditions and effects by their full name, `<plugin>/<name>`, and you can write that in two forms. The pages below and every plugin's helpers use the short one, which makes the name the only key and the arguments its value:
 
 ```ts
-{ custom: 'quests/done', with: { quest: 'settle' } }   // long
-{ 'quests/done': { quest: 'settle' } }                 // short, the same
+{ 'quests/done': { quest: 'settle' } }                 // short
+{ custom: 'quests/done', with: { quest: 'settle' } }   // long, the same
 ```
 
-Both work anywhere a [condition](/docs/reference/conditions) or a content effect goes. [Custom functions](/docs/reference/custom) explains what the short form's value becomes.
+Both work anywhere a [condition](/docs/reference/conditions), a content effect or a command goes. The short form's value is always an object of named arguments, or `true` for none. See [`PluginCall`](/docs/reference/custom#plugincall).
 
 ## Starting from a game that has them all
 

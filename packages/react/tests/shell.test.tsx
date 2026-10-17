@@ -48,6 +48,7 @@ function game(strings: Record<string, string> = {}): Game {
       introScene: 'intro',
       plugins: [calendar(), places({ start: 'house' }), ...kit.plugins, quests(), debug()],
       collections: kit.collections,
+      data: kit.data,
       actions: [
         { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
         { id: 'cake', label: 'Buy a cake', command: { type: 'activity', id: 'cake' } },

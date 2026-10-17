@@ -136,12 +136,10 @@ describe('the runner and the profile', () => {
     const reading = definePlugin({
       id: 'reading',
       version: 1,
-      profile: {
-        onCommand: (state, previous, stored) => {
-          const books = (stored as string[] | undefined) ?? []
-          if (state.stats.intelligence > previous.stats.intelligence && !books.includes(`turn${state.turn}`)) return [...books, `turn${state.turn}`]
-          return undefined
-        },
+      profile: (state, previous, stored) => {
+        const books = (stored as string[] | undefined) ?? []
+        if (state.stats.intelligence > previous.stats.intelligence && !books.includes(`turn${state.turn}`)) return [...books, `turn${state.turn}`]
+        return undefined
       },
     })
     const g = game({ plugins: [reading] })

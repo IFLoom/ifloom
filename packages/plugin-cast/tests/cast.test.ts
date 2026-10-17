@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Command, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { SCHEMA, apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack, type CommandRef } from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { call, cast, hasMet, here, isAt, person, talk, type CastView, type CharacterDef } from '../src/index.ts'
@@ -57,7 +57,7 @@ function game(withPlaces = true): { game: Game; clock: ReturnType<typeof calenda
   return { game, clock }
 }
 
-function run(g: Game, state: GameState, ...commands: Command[]): GameState {
+function run(g: Game, state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()

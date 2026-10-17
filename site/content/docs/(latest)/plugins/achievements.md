@@ -125,13 +125,13 @@ With both `when` and `progress`, `when` decides and the progress is only shown. 
 
 ## When they're earned
 
-The plugin checks every achievement not yet earned after each command that takes, in its `after` [hook](/docs/reference/plugins#hooks). Each one earned is recorded with the [turn](/docs/reference/state#turn), and raises a [notice](/docs/reference/notices) tagged `achievements` with the id `achievement.<id>` and the title `Achievement: <title>`.
+The plugin checks every achievement not yet earned after each command that takes, in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers). Each one earned is recorded with the [turn](/docs/reference/state#turn), and raises a [notice](/docs/reference/notices) tagged `achievements` with the id `achievement.<id>` and the title `Achievement: <title>`.
 
 A condition that holds only partway through a command, and not at its end, isn't seen.
 
 ## The profile
 
-After every command, the plugin's `profile.onCommand` adds anything newly earned to the player's profile, under the namespace `achievements`. Only a runner with a `profile` calls it, which the React UI's `mountGame` and [`browserRunner`](/docs/reference/runner#browserrunner) both have. [`apply`](/docs/reference/commands#apply) and [`replay`](/docs/reference/runner#replay) never write to it.
+After every command, the plugin's [`profile`](/docs/reference/plugins#the-profile) provider adds anything newly earned to the player's profile, under the namespace `achievements`. Only a runner with a `profile` asks it, which the React UI's `mountGame` and [`browserRunner`](/docs/reference/runner#browserrunner) both have. [`apply`](/docs/reference/commands#apply) and [`replay`](/docs/reference/runner#replay) never write to it.
 
 ### AchievementsProfile
 
@@ -149,7 +149,7 @@ The plugin's view reads it as [`context.profile`](/docs/reference/plugins#the-pr
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'achievements/earned', with: { achievement } }` | `achievementEarned(id)` | This save has earned the achievement. |
+| `{ 'achievements/earned': { achievement } }` | `achievementEarned(id)` | This save has earned the achievement. |
 
 It reads what this save has earned, not the profile, so a replay of a save always reads the same. An unknown achievement is never earned.
 
@@ -157,9 +157,9 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'achievements/grant', with: { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
+| `{ 'achievements/grant': { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
-In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
+In a plain-effect list (an item's use), write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
 
 ## Value
 

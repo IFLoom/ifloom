@@ -120,7 +120,7 @@ How many notices the state keeps. When a 51st is raised, the oldest goes, whethe
 - **Give a notice an `id` if it can be raised more than once.** Without one, a notice raised every turn adds a copy each time. With one, it replaces itself.
 - **A made-up id is only unique among the notices kept.** It's `notice.<turn>.<n>`, the first one not in the list, so once an old notice has gone its id can be handed out again. If you want to replace or dismiss a notice by id later, name it yourself.
 - **Notices don't stop anything.** They aren't prose in a scene. A notice raised while a scene is open waits in `view.notices` for the UI to show it.
-- **`dismiss` has no refusal of its own.** It works with a scene open and with nothing to dismiss. Only a [lock](/docs/reference/locks) that denies `'dismiss'` (or `'*'`) stops it. It counts as a command that took, so [triggers](/docs/reference/triggers) and plugins' `after` hooks run after it.
+- **`dismiss` has no refusal of its own.** It works with a scene open and with nothing to dismiss. Only a [lock](/docs/reference/locks) that denies `'dismiss'` (or `'*'`) stops it. It counts as a command that took, so [triggers](/docs/reference/triggers) and plugins' `onCommand` hooks run after it.
 
 ## See it in an example
 

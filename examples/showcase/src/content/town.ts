@@ -488,7 +488,11 @@ export const town: Pack = {
     effects: {
       effects: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
     },
-    wardrobe: { clothes: [{ id: 'raincoat', slot: 'coat' }, { id: 'scarf', slot: 'neck' }] },
+    wardrobe: {
+      // You arrive in your raincoat.
+      slots: [{ id: 'coat', label: 'Coat', start: 'raincoat' }, { id: 'neck', label: 'Neck' }],
+      clothes: [{ id: 'raincoat', slot: 'coat' }, { id: 'scarf', slot: 'neck' }],
+    },
     messages: {
       messages: [
         {

@@ -117,7 +117,7 @@ const files: Record<string, string> = {
  * work with one the game may have, list it in \`cooperates\` and ask it
  * through conditions, effects and \`query\`.
  */
-import { definePlugin, say, type Command, type Condition, type EffectRef, type Game, type PluginProblem } from '@ifloom/engine'
+import { definePlugin, say, type CommandRef, type Condition, type DefinedPlugin, type EffectRef, type Game, type PluginProblem } from '@ifloom/engine'
 
 const ID = '${name}'
 
@@ -143,23 +143,29 @@ export function ${camel}Entries(game: Game): ${Pascal}Entry[] {
   return (game.data?.[ID]?.entries ?? []) as ${Pascal}Entry[]
 }
 
+/** The entry a call names: a condition's or an effect's \`entry\`, a command's \`id\` (ADR 0008). */
 function entryId(args: Record<string, unknown>): string {
-  return String(args.entry ?? '')
+  return String(args.entry ?? args.id ?? '')
 }
 
-/** The plugin. Add it to the game's \`plugins\`, and put entries in a pack's \`data.${name}.entries\`. */
-export function ${camel}() {
+/**
+ * The plugin. Add it to the game's \`plugins\`, and put entries in a pack's
+ * \`data.${name}.entries\`. Anything a mod could add or change is content in
+ * \`data\`, never an option (ADR 0009). Hooks are flat members named \`onX\`
+ * (\`onTurn\`, \`onCommand\`); providers are nouns (\`view\`, \`label\`).
+ */
+export function ${camel}(): DefinedPlugin<${Pascal}State> {
   return definePlugin<${Pascal}State>({
     id: ID,
     version: 1,
     start: () => ({ marked: {} }),
     strings: { noSuchEntry: 'There is nothing like that.' },
     conditions: {
-      /** \`{ custom: '${name}/marked', with: { entry } }\`: the entry has been marked. */
+      /** \`{ '${name}/marked': { entry } }\`: the entry has been marked. */
       marked: (_state, args, { slice }) => slice.marked[entryId(args)] !== undefined,
     },
     effects: {
-      /** \`{ custom: '${name}/mark', with: { entry } }\`: mark the entry now. */
+      /** \`{ '${name}/mark': { entry } }\`: mark the entry now. */
       mark: (state, args, { slice, set, game }) => {
         const id = entryId(args)
         if (slice.marked[id] !== undefined || !${camel}Entries(game).some((entry) => entry.id === id)) return state
@@ -167,7 +173,7 @@ export function ${camel}() {
       },
     },
     commands: {
-      /** \`{ type: 'custom', name: '${name}/mark', with: { entry } }\`. */
+      /** \`{ '${name}/mark': { id } }\`: mark the entry \`id\`. */
       mark: {
         whyNot: (_state, args, { game }) => (${camel}Entries(game).some((entry) => entry.id === entryId(args)) ? undefined : say(game, '${name}/noSuchEntry')),
         run: (state, args, { slice, set }) => set({ ...slice, marked: { ...slice.marked, [entryId(args)]: state.turn } }),
@@ -178,7 +184,7 @@ export function ${camel}() {
     }),
     references: {
       // The entry a condition, effect or command names, for the content checker.
-      calls: (_kind, _name, args) => (args.entry === undefined ? [] : [{ entry: entryId(args), plugin: ID, list: 'entries', noun: 'entry' }]),
+      calls: (_kind, _name, args) => (entryId(args) === '' ? [] : [{ entry: entryId(args), plugin: ID, list: 'entries', noun: 'entry' }]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -193,11 +199,11 @@ export function ${camel}() {
 }
 
 /** A condition: the entry has been marked. */
-export const ${camel}Marked = (entry: string): Condition => ({ custom: '${name}/marked', with: { entry } })
+export const ${camel}Marked = (entry: string): Condition => ({ [\`\${ID}/marked\`]: { entry } })
 /** An effect: mark the entry. */
-export const mark${Pascal} = (entry: string): EffectRef => ({ custom: '${name}/mark', with: { entry } })
+export const mark${Pascal} = (entry: string): EffectRef => ({ [\`\${ID}/mark\`]: { entry } })
 /** A command: mark the entry. */
-export const mark${Pascal}Command = (entry: string): Command => ({ type: 'custom', name: '${name}/mark', with: { entry } })
+export const mark${Pascal}Command = (entry: string): CommandRef => ({ [\`\${ID}/mark\`]: { id: entry } })
 `,
 
   [`tests/${name}.test.ts`]: `import { describe, expect, it } from 'vitest'

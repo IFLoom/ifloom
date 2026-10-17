@@ -45,7 +45,7 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 6. **Seen.** If the player is now looking at a different scene than before, that scene's [`seen`](/docs/reference/state#seen) count goes up by one, and [`seenOn`](/docs/reference/state#seenon) records the current [turn](/docs/reference/state#turn) if it's the first time. A scene a trigger opened counts.
 7. **A scene's minigame.** If that new scene has a [`minigame`](/docs/reference/minigames#minigamescenefields), it starts.
 8. **The scene's sounds.** If a new scene was entered, [`state.audio.shown`](/docs/reference/audio#audiostate) goes up by one, so that scene's sounds get keys of their own and play. See [Sounds and voices](/docs/reference/audio#sounds-and-voices).
-9. **After hooks.** Each plugin's [`after` hook](/docs/reference/plugins#hooks) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
+9. **After hooks.** Each plugin's [`onCommand` hook](/docs/reference/plugins#hooks-and-providers) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
 10. **Level-ups.** Each of the player's stats that went up a level, and has a [`notice`](/docs/reference/stats#the-notice), raises one. This comes after the hooks, so a level a hook's reward reached is noticed too.
 11. **What the screen shows.** The engine draws the new state's [`screen`](/docs/reference/view#screen) once and records what the save doesn't hold yet: the [pool picks](/docs/reference/media#remembered-picks) on it, in a game with pools, and what each background channel is now playing, in [`state.audio.started`](/docs/reference/audio#audiostate), in a game with audio.
 

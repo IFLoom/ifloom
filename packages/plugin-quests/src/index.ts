@@ -13,8 +13,9 @@ import {
   definePlugin,
   holds,
   say,
-  type Command,
+  type CommandRef,
   type Condition,
+  type DefinedPlugin,
   type EffectRef,
   type Game,
   type GameState,
@@ -211,22 +212,22 @@ function questId(args: Record<string, unknown>): string {
  * The plugin. Add it to the game's `plugins`, and put quests in a pack's
  * `data.quests.quests`.
  */
-export function quests() {
+export function quests(): DefinedPlugin<QuestsState> {
   return definePlugin<QuestsState>({
     id: ID,
     version: 1,
     start: emptyState,
     strings: { notDoing: 'You are not doing that.' },
     conditions: {
-      /** `{ custom: 'quests/active', with: { quest } }`: started and not finished. */
+      /** `{ 'quests/active': { quest } }`: started and not finished. */
       active: (state, args, { slice, game }) => {
         const record = advance(slice, state, game)
         const id = questId(args)
         return record.started[id] !== undefined && record.done[id] === undefined
       },
-      /** `{ custom: 'quests/done', with: { quest } }`: finished. */
+      /** `{ 'quests/done': { quest } }`: finished. */
       done: (state, args, { slice, game }) => advance(slice, state, game).done[questId(args)] !== undefined,
-      /** `{ custom: 'quests/reached', with: { quest, stage } }`: that stage is done. */
+      /** `{ 'quests/reached': { quest, stage } }`: that stage is done. */
       reached: (state, args, { slice, game }) => {
         const quest = questDefs(game).find((entry) => entry.id === questId(args))
         const at = quest?.stages.findIndex((stage) => stage.id === args.stage) ?? -1
@@ -234,7 +235,7 @@ export function quests() {
       },
     },
     effects: {
-      /** `{ custom: 'quests/start', with: { quest } }`: start it now, if it has not started. */
+      /** `{ 'quests/start': { quest } }`: start it now, if it has not started. */
       start: (state, args, { slice, set, game }) => {
         const id = questId(args)
         if (slice.started[id] !== undefined || !questDefs(game).some((quest) => quest.id === id)) return state
@@ -242,7 +243,7 @@ export function quests() {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'quests/track', with: { id } }`: track the quest `id`; leave `id` out to stop tracking. */
+      /** `{ 'quests/track': { id } }`: track the quest `id`; leave `id` out to stop tracking. */
       track: {
         whyNot: (state, args, { slice, game }) => {
           const id = questId(args)
@@ -253,7 +254,7 @@ export function quests() {
         },
         run: (_state, args, { slice, set }) => set({ ...slice, tracked: questId(args) || null }),
       },
-      /** `{ type: 'custom', name: 'quests/seen', with: { id } }`: mark the quest `id` seen; leave `id` out to mark them all. */
+      /** `{ 'quests/seen': { id } }`: mark the quest `id` seen; leave `id` out to mark them all. */
       seen: {
         run: (state, args, { slice, set, game }) => {
           const record = advance(slice, state, game)
@@ -268,11 +269,9 @@ export function quests() {
       /** <code v-pre>{{v:quests/updates}}</code>: quests with news, for a badge. */
       updates: (state, _args, { slice, game }) => questsView(advance(slice, state, game), game).updates,
     },
-    hooks: {
-      after: (_before, after, { slice, set, game }) => {
-        const next = advance(slice, after, game)
-        return next === slice ? after : set(next)
-      },
+    onCommand: (_before, after, { slice, set, game }) => {
+      const next = advance(slice, after, game)
+      return next === slice ? after : set(next)
     },
     view: (state, { slice, game }) => questsView(advance(slice, state, game), game),
     references: {
@@ -306,17 +305,14 @@ export function quests() {
 }
 
 /** A condition: the quest is started and not finished. */
-export const questActive = (quest: string): Condition => ({ custom: 'quests/active', with: { quest } })
+export const questActive = (quest: string): Condition => ({ 'quests/active': { quest } })
 /** A condition: the quest is finished. */
-export const questDone = (quest: string): Condition => ({ custom: 'quests/done', with: { quest } })
+export const questDone = (quest: string): Condition => ({ 'quests/done': { quest } })
 /** A condition: this stage of the quest is done. */
-export const questReached = (quest: string, stage: string): Condition => ({
-  custom: 'quests/reached',
-  with: { quest, stage },
-})
+export const questReached = (quest: string, stage: string): Condition => ({ 'quests/reached': { quest, stage } })
 /** An effect: start the quest now. */
-export const startQuest = (quest: string): EffectRef => ({ custom: 'quests/start', with: { quest } })
+export const startQuest = (quest: string): EffectRef => ({ 'quests/start': { quest } })
 /** A command: pin this quest, or unpin with no argument. */
-export const trackQuest = (quest?: string): Command => ({ type: 'custom', name: 'quests/track', with: { id: quest } })
+export const trackQuest = (quest?: string): CommandRef => ({ 'quests/track': { id: quest } })
 /** A command: the player has looked at this quest, or at all of them. */
-export const seeQuests = (quest?: string): Command => ({ type: 'custom', name: 'quests/seen', with: { id: quest } })
+export const seeQuests = (quest?: string): CommandRef => ({ 'quests/seen': { id: quest } })

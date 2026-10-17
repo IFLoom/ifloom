@@ -63,6 +63,19 @@ export type CustomContext = {
   roll: (max: number, name: string) => number
 }
 
+/**
+ * What `rules.onTurn` is handed besides the state: a game function's context,
+ * the state as the turn ended, and `apply` for effects, as a plugin's
+ * context has it. A `turn` effect applied here does nothing: a turn's end
+ * can't end another turn.
+ */
+export type TurnContext = CustomContext & {
+  /** The state as the turn ended, before the counter moved on and `resets` were put back. */
+  before: GameState
+  /** Apply effects as content would, any custom or plugin effect included, to the state the hook was handed, or to `on`. */
+  apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+}
+
 /** The context a game's own function or a plugin's gets for this state. */
 export function customContext(state: GameState, game: Game): CustomContext {
   return {

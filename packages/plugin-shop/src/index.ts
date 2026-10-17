@@ -21,8 +21,9 @@ import {
   say,
   statDef,
   statValue,
-  type Command,
+  type CommandRef,
   type Condition,
+  type DefinedPlugin,
   type Effect,
   type Game,
   type GameState,
@@ -330,7 +331,7 @@ export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView 
  * The plugin. Add it to the game's `plugins`, and put vendors in a pack's
  * `data.shop.vendors`.
  */
-export function shop() {
+export function shop(): DefinedPlugin<ShopState> {
   return definePlugin<ShopState>({
     id: ID,
     version: 1,
@@ -345,12 +346,12 @@ export function shop() {
       notOwned: 'You don’t have that.',
     },
     conditions: {
-      /** `{ custom: 'shop/open', with: { vendor } }`: open now. Where the player is doesn't matter. */
+      /** `{ 'shop/open': { vendor } }`: open now. Where the player is doesn't matter. */
       open: (state, args, context) => {
         const vendor = vendorOf(context.game, args.vendor)
         return Boolean(vendor) && closedReason(state, vendor!, context) === undefined
       },
-      /** `{ custom: 'shop/inStock', with: { vendor, item } }`: offered now, and not sold out. */
+      /** `{ 'shop/inStock': { vendor, item } }`: offered now, and not sold out. */
       inStock: (state, args, context) => {
         const vendor = vendorOf(context.game, args.vendor)
         const good = vendor && goodOf(state, context.game, vendor, args.item)
@@ -360,7 +361,7 @@ export function shop() {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'shop/buy', with: { vendor, item, count? } }`. */
+      /** `{ 'shop/buy': { vendor, item, count? } }`. */
       buy: {
         whyNot: (state, args, context) => cantBuy(state, args, context.slice, context),
         effectsOf: (state, args, context) => buyEffects(state, args, context),
@@ -376,7 +377,7 @@ export function shop() {
           return recordSold(next, vendor, good, countOf(args), context)
         },
       },
-      /** `{ type: 'custom', name: 'shop/sell', with: { vendor, item, count? } }`. */
+      /** `{ 'shop/sell': { vendor, item, count? } }`. */
       sell: {
         whyNot: (state, args, context) => cantSell(state, args, context),
         effectsOf: (state, args, context) => sellEffects(state, args, context),
@@ -434,10 +435,10 @@ export function shop() {
 }
 
 /** A command: buy `count` (1 if left out) of an item from a vendor. */
-export const buy = (vendor: string, item: string, count?: number): Command => ({ type: 'custom', name: 'shop/buy', with: count === undefined ? { vendor, item } : { vendor, item, count } })
+export const buy = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/buy': count === undefined ? { vendor, item } : { vendor, item, count } })
 /** A command: sell `count` (1 if left out) of an item back to a vendor. */
-export const sell = (vendor: string, item: string, count?: number): Command => ({ type: 'custom', name: 'shop/sell', with: count === undefined ? { vendor, item } : { vendor, item, count } })
+export const sell = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/sell': count === undefined ? { vendor, item } : { vendor, item, count } })
 /** A condition: the vendor is open now. */
-export const vendorOpen = (vendor: string): Condition => ({ custom: 'shop/open', with: { vendor } })
+export const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
 /** A condition: the vendor offers the item now and has one left. */
-export const inStock = (vendor: string, item: string): Condition => ({ custom: 'shop/inStock', with: { vendor, item } })
+export const inStock = (vendor: string, item: string): Condition => ({ 'shop/inStock': { vendor, item } })

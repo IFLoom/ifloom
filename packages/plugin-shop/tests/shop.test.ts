@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
+  commandOf, SCHEMA,
   apply,
   createRunner,
   holds,
@@ -10,12 +10,11 @@ import {
   startingState,
   view,
   whyNot,
-  type Command,
+
   type Game,
   type GameState,
   type Pack,
-  type Plugin,
-} from '@ifloom/engine'
+  type Plugin, type CommandRef } from '@ifloom/engine'
 import { calendar, pass } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
 import { buy, inStock, sell, shop, vendorOpen, type ShopView, type VendorDef } from '../src/index.ts'
@@ -65,7 +64,7 @@ function game(...partners: Plugin[]): Game {
   return loaded.game
 }
 
-function run(state: GameState, g: Game, ...commands: Command[]): GameState {
+function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()
@@ -91,7 +90,7 @@ describe('the shop, on its own', () => {
     const poor = { ...fresh(g), stats: { coins: 2, energy: 50 } }
     expect(whyNot(poor, g, buy('counter', 'coffee'))).toBe('You need 3 coins.')
     const coffee = goods(poor, g).find((good) => good.item === 'coffee')!
-    expect(coffee.buy).toMatchObject({ label: 'coffee', disabled: 'You need 3 coins.', price: { stats: [{ id: 'coins', amount: 3, text: '3 coins' }] }, command: buy('counter', 'coffee') })
+    expect(coffee.buy).toMatchObject({ label: 'coffee', disabled: 'You need 3 coins.', price: { stats: [{ id: 'coins', amount: 3, text: '3 coins' }] }, command: commandOf(buy('counter', 'coffee')) })
   })
 
   it('runs out of limited stock, and gets it back each day', () => {

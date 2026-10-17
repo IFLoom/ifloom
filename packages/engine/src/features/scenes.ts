@@ -487,6 +487,6 @@ export const scenes = defineFeature<ScenesShape>({
   },
   markup: (_game, text, where, tools) => inlineMarkupProblems(text, where, tools),
   view: (state) => ({ inScene: Boolean(state.sceneId) }),
-  // A new showing is seen, and dated the first time. Straight after the triggers, so plugins' `after` hooks see it.
+  // A new showing is seen, and dated the first time. Straight after the triggers, so plugins' `onCommand` hooks see it.
   afterCommand: { at: 'beforePlugins', run: witnessed },
 })

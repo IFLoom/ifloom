@@ -594,7 +594,7 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 | A link that costs time, `<<set $time += 2>>` | [`pass(2)`](/docs/plugins/calendar#effects) in the choice's or activity's effects. The button shows `until noon` by itself. |
 | "Too late" once `$time` reaches night | The calendar's [curfew guard](/docs/plugins/calendar#the-guard), and `blocked` entries such as `{ when: period('night'), reason: 'Too late for that.' }`. |
 | A `Sleep` passage that only works late | The calendar's [`sleep()`](/docs/plugins/calendar#commands) command, with `sleep: { from: ['evening', 'night'] }`. |
-| `<<dayshift>>`: payday, rent, decay, mood, which morning passage to show | [`rules.turn`](/docs/reference/rules#a-days-end-step-by-step). It runs once per day, sees the state as the player went to bed, and returns effects in the order you write them, ending with the scene the morning opens on. |
+| `<<dayshift>>`: payday, rent, decay, mood, which morning passage to show | [`rules.onTurn`](/docs/reference/rules#a-days-end-step-by-step). It runs once per day, sees the state as the player went to bed as `before`, and applies effects in the order you write them, ending with the scene the morning opens on. |
 | Per-day flags reset in the widget, `<<set $talkedToday to false>>` | [`rules.resets`](/docs/reference/rules#resets). |
 | Opening hours, `<<if $weekday lte 5 and $time lte 1>>[[Office]]<</if>>` | A place's [`blocked`](/docs/plugins/places#opening-hours) entries. The exit stays on screen, greyed out with the reason. |
 | Where someone is, `$ava.location` set by a schedule widget | A [cast](/docs/plugins/cast#where-people-are) character's `schedule`. |
@@ -603,7 +603,7 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 | `<<goto "Game Over">>` | A scene with no choices, a phase and a lock. See [Endings](/docs/reference/scenes#endings). |
 | `Engine.restart()` | The player's menu: **Title screen**, then **New game**. Content can't restart the game. |
 
-The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.turn` returns a list of effects worked out against one state, so when a step depends on an earlier one (the rent comes out of the wages just paid) keep a running total in the function. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
+The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.onTurn` works the same way: each `apply` runs on the state the one before it left, so the rent can come out of the wages just paid. What the day held before the night's resets is in `before`. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
 
 ## Harlowe
 

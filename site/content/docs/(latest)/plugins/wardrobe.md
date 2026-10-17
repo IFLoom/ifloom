@@ -2,7 +2,7 @@
 title: "Wardrobe"
 description: "Slots the game declares, clothes that go in them, what the player has on, and the condition that reads it."
 ---
-`@ifloom/plugin-wardrobe` keeps track of what the player has on. Your game says which slots there are, such as a coat and a scarf, armour and a ring, or a uniform and a cap. Content says which item goes in which slot.
+`@ifloom/plugin-wardrobe` keeps track of what the player has on. Content says which slots there are, such as a coat and a scarf, armour and a ring, or a uniform and a cap, and which item goes in which slot.
 
 You'd want it when what the player wears matters to the story: a dress code at the office, a raincoat that people notice, armour that opens a door. If clothes are only flavour, ordinary [items](/docs/reference/game#itemdef) are enough.
 
@@ -11,7 +11,7 @@ Clothes are ordinary items. Wearing one doesn't change how many the player has, 
 ```ts
 import {
   wardrobe, wearing, slotFilled, wear, takeOff, clothes,
-  type WardrobeOptions, type WardrobeSlot, type ClothingDef, type WardrobeState, type WardrobeView,
+  type WardrobeSlot, type ClothingDef, type WardrobeState, type WardrobeView,
 } from '@ifloom/plugin-wardrobe'
 ```
 
@@ -28,54 +28,49 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `wardrobe(...)` to the game's `plugins`, with the slots your game has. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `wardrobe()` to the game's `plugins`, and put the slots and the clothes in a pack. [Adding one](/docs/plugins#adding-one) has the details.
 
 ## wardrobe
 
 ```ts
-function wardrobe(options: WardrobeOptions): DefinedPlugin<WardrobeState>
+function wardrobe(): DefinedPlugin<WardrobeState>
 ```
 
-Builds the plugin, with the id `wardrobe`. Call it once, when you build the game, with the slots the game has. This is the [showcase](/docs/guide/showcase)'s wardrobe, where the player starts in a raincoat:
+Builds the plugin, with the id `wardrobe`. Call it once, when you build the game. It takes no options: the slots and the clothes are content, in a pack's `data.wardrobe`, so a mod can add either. This is the [showcase](/docs/guide/showcase)'s, where the player starts in a raincoat:
 
 ```ts
-import { wardrobe } from '@ifloom/plugin-wardrobe'
-
-const clothing = wardrobe({
-  slots: [
-    { id: 'coat', label: 'Coat' },
-    { id: 'neck', label: 'Neck' },
-  ],
-  start: { coat: 'raincoat' },
-})
-```
-
-### WardrobeOptions
-
-```ts
-type WardrobeOptions = {
-  slots: WardrobeSlot[]
-  start?: Record<string, string>
+data: {
+  wardrobe: {
+    slots: [
+      { id: 'coat', label: 'Coat', start: 'raincoat' },
+      { id: 'neck', label: 'Neck' },
+    ],
+    clothes: [/* … */],
+  },
 }
 ```
-
-| Field | What it is |
-|---|---|
-| `slots` | Every slot, in the order the UI lists them. |
-| `start` | What the player has on in a new game, as an item id by slot id. A slot left out starts empty. The player must start owning each of these items (see [Checks](#checks)). |
 
 ### WardrobeSlot
 
 ```ts
-type WardrobeSlot = { id: string; label: string }
+type WardrobeSlot = { id: string; label: string; start?: string }
 ```
 
 | Field | What it is |
 |---|---|
 | `id` | What content and commands name the slot by. Unique among the slots. |
 | `label` | What the player reads. |
+| `start` | What the player has on in it in a new game, an item id. Empty if left out. The player must start owning the item (see [Checks](#checks)). |
 
-The slots are code, not content, so a mod can't add one.
+Slots are content. List them in a pack's `data.wardrobe.slots`, in the order the UI lists them. They're merged by id, so a mod can add a slot.
+
+### slotsOf
+
+```ts
+function slotsOf(game: Game): WardrobeSlot[]
+```
+
+The game's slots, merged from its packs, in order.
 
 ## Writing clothes
 
@@ -106,6 +101,10 @@ const town: Pack = {
   ],
   data: {
     wardrobe: {
+      slots: [
+        { id: 'coat', label: 'Coat', start: 'raincoat' },
+        { id: 'neck', label: 'Neck' },
+      ],
       clothes: [
         { id: 'raincoat', slot: 'coat' },
         { id: 'scarf', slot: 'neck' },
@@ -115,7 +114,7 @@ const town: Pack = {
 }
 ```
 
-The raincoat is `kind: 'gear'`, so the player starts with one, which `start: { coat: 'raincoat' }` needs.
+The raincoat is `kind: 'gear'`, so the player starts with one, which the coat slot's `start` needs.
 
 ## A worked example
 
@@ -161,6 +160,10 @@ const town: Pack = {
       ],
     },
     wardrobe: {
+      slots: [
+        { id: 'coat', label: 'Coat', start: 'raincoat' },
+        { id: 'neck', label: 'Neck' },
+      ],
       clothes: [
         { id: 'raincoat', slot: 'coat' },
         { id: 'scarf', slot: 'neck' },
@@ -182,7 +185,7 @@ const { game } = loadGame([town], {
   title: 'Small Town',
   plugins: [
     places({ start: 'high-street' }),
-    wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
+    wardrobe(),
   ],
 })
 
@@ -215,11 +218,11 @@ whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'wardrobe/wearing', with: { item } }` | `wearing(item)` | The item is on, in whichever slot. |
-| `{ custom: 'wardrobe/wearing', with: { item, slot } }` | `wearing(item, slot)` | That item is on in that slot. |
-| `{ custom: 'wardrobe/wearing', with: { slot } }` | `slotFilled(slot)` | Something is in that slot. |
+| `{ 'wardrobe/wearing': { item } }` | `wearing(item)` | The item is on, in whichever slot. |
+| `{ 'wardrobe/wearing': { item, slot } }` | `wearing(item, slot)` | That item is on in that slot. |
+| `{ 'wardrobe/wearing': { slot } }` | `slotFilled(slot)` | Something is in that slot. |
 
-You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. In the short form, with the full name as the only key, `{ 'wardrobe/wearing': { item: 'scarf' } }` is the same as the first row (see [plugin calls](/docs/reference/custom#plugincall)). With neither `item` nor `slot`, it's false. An unknown item, or a slot the save has nothing in, is false.
+You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. These are the short forms (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'wardrobe/wearing', with: { item: 'scarf' } }`. With neither `item` nor `slot`, it's false. An unknown item, or a slot the save has nothing in, is false.
 
 To ask whether the player has an item at all, worn or not, use the engine's [`{ item }`](/docs/reference/conditions#item).
 
@@ -227,8 +230,8 @@ To ask whether the player has an item at all, worn or not, use the engine's [`{ 
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'wardrobe/wear', with: { id } }` | `wear(item)` | Puts the item `id` on in its slot, in place of whatever was there. What comes off stays the player's. |
-| `{ type: 'custom', name: 'wardrobe/takeOff', with: { id } }` | `takeOff(slot)` | Empties the slot `id`. |
+| `{ 'wardrobe/wear': { id } }` | `wear(item)` | Puts the item `id` on in its slot, in place of whatever was there. What comes off stays the player's. |
+| `{ 'wardrobe/takeOff': { id } }` | `takeOff(slot)` | Empties the slot `id`. |
 
 `wardrobe/wear` is refused, in this order, with:
 
@@ -265,7 +268,7 @@ import { town } from './town.ts'
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [wardrobe({ slots: [{ id: 'coat', label: 'Coat' }] })],
+  plugins: [wardrobe()],
   strings: { 'wardrobe/alreadyWearing': 'The {item} is already on.' },
 })
 ```
@@ -302,15 +305,15 @@ What the plugin keeps in a save, at `state.plugins.wardrobe`: the item in each s
 
 ## For code
 
-The helpers above write the content objects for you, typed. `wearing` and `slotFilled` return a `Condition`, and `wear` and `takeOff` return a `Command`.
+The helpers above write the content objects for you, typed. `wearing` and `slotFilled` return a `Condition`, and `wear` and `takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
 
 ### Helpers
 
 ```ts
 const wearing: (item: string, slot?: string) => Condition
 const slotFilled: (slot: string) => Condition
-const wear: (item: string) => Command
-const takeOff: (slot: string) => Command
+const wear: (item: string) => CommandRef
+const takeOff: (slot: string) => CommandRef
 ```
 
 ### clothes
@@ -326,22 +329,21 @@ The game's clothes, merged from its packs: `game.data.wardrobe.clothes`.
 When the game loads, the plugin reports:
 
 - Clothing whose id isn't an item (`clothes <id>`, `unknown item "…"`).
-- Clothing for a slot the game doesn't have (`clothes <id>`, `no slot called "…"`).
-- A `start` slot the game doesn't have (`start <slot>`, `no slot by this name`).
-- A `start` item that isn't clothing for that slot (`start <slot>`, `"…" is not clothing for this slot`).
-- A `start` item the player doesn't start with (`start <slot>`, `the player does not start with "…"`).
+- Clothing for a slot the game doesn't have (`clothes <id>`, `unknown slot "…"`).
+- A slot's `start` that isn't clothing for that slot (`slots <slot>`, `starts with "…", which is not clothing for this slot`).
+- A slot's `start` the player doesn't start with (`slots <slot>`, `starts with "…", which the player does not start with`).
 
-Clothing problems are pinned on the pack that brought the entry. `start` problems are pinned on `base`. A `wardrobe/wearing` condition or a `wardrobe/wear` command naming an item the game doesn't have gives `unknown item "…"` where it's written.
+Each problem is pinned on the pack that brought the entry. A `wardrobe/wearing` condition or a `wardrobe/wear` command naming an item the game doesn't have gives `unknown item "…"` where it's written.
 
 ```text
-mod:winter · clothes gloves · no slot called "hands"
-base · start coat · the player does not start with "raincoat"
+mod:winter · clothes gloves · unknown slot "hands"
+town · slots coat · starts with "raincoat", which the player does not start with
 ```
 
 ## Gotchas
 
-- **The player has to start owning what they start wearing.** An item in `start` needs a `start` count above 0, or `kind: 'gear'`, which starts at 1. Otherwise the load reports it.
-- **Losing an item takes it off after the command.** Whether it's sold, used up or taken by an effect, once the player has none, the plugin's `after` [hook](/docs/reference/plugins#hooks) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
+- **The player has to start owning what they start wearing.** A slot's `start` item needs a `start` count above 0, or `kind: 'gear'`, which starts at 1. Otherwise the load reports it.
+- **Losing an item takes it off after the command.** Whether it's sold, used up or taken by an effect, once the player has none, the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that the player no longer has.
 - **`{ item }` counts worn items.** Worn clothes are still owned, so `{ item: 'raincoat' }` holds while it's on. To ask whether it's on, use `wearing`.
 - **Wearing doesn't check where the player is or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks an item id as on, not a count. A player with two scarves wears one, and selling one leaves it on.
@@ -349,4 +351,4 @@ base · start coat · the player does not start with "raincoat"
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe` with a coat and a neck slot and the raincoat on at the start. The clothes are in `data.wardrobe` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), and the café's body reads `wearing('raincoat')`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The coat and neck slots, the raincoat on at the start, and the clothes are in `data.wardrobe` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), and the café's body reads `wearing('raincoat')`.

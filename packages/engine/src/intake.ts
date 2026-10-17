@@ -203,10 +203,12 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     }
     let version = slice.version
     let inner = slice.state
+    // The same tools a game's step gets: the state as the engine carried it, filled from the game on request.
+    const tools: MigrationTools = { fill: (kinds) => fillDeclared(state, game, kinds) }
     while (version < plugin.version) {
       const step = plugin.migrations?.[version]
       if (!step) return say(game, 'pluginUnreadable', { plugin: plugin.id })
-      inner = step(inner)
+      inner = step(inner, tools)
       version += 1
     }
     plugins = { ...plugins, [plugin.id]: { version, state: inner } }

@@ -98,12 +98,13 @@ The component is a [`PluginSectionComponent`](/docs/react/components#pluginsecti
 Here's the [loyalty card plugin](/docs/reference/plugins#a-worked-example) as an app on the laptop:
 
 ```ts
-import { devices } from '@ifloom/plugin-devices'
-
-devices({
-  devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop', sidebar: true }],
-  apps: [{ id: 'card', name: 'Card', icon: 'card', on: 'laptop', sections: [{ plugin: 'loyalty' }] }],
-})
+// In a pack, with devices() in the game's plugins.
+data: {
+  devices: {
+    devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop', sidebar: true }],
+    apps: [{ id: 'card', name: 'Card', icon: 'card', on: 'laptop', sections: [{ plugin: 'loyalty' }] }],
+  },
+}
 ```
 
 ```tsx

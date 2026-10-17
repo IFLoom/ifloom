@@ -1,7 +1,7 @@
 /**
  * Triggers: effects that happen by themselves, the first time a condition
  * holds after a command. Firing them is the first step after every command
- * that took, before a new showing is counted and before the plugins' `after`
+ * that took, before a new showing is counted and before the plugins' `onCommand`
  * hooks, so both see what the triggers did.
  */
 import type { EffectRef } from '../custom.ts'

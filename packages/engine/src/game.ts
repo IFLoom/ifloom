@@ -1,7 +1,7 @@
 import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
-import type { Custom } from './custom.ts'
+import type { Custom, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
@@ -182,23 +182,22 @@ export type StorylineDef = {
  *
  * The engine calls these instead of importing the game, which is what lets it
  * leave this repo. Every field is optional; leave one out and the engine does
- * the plain thing.
+ * the plain thing. The hooks are named as a plugin's are (ADR 0009): `on` and
+ * the event, returning the next state.
  */
 export type GameRules = {
-  /**
-   * What the end of a turn brings: effects that apply, in order. Called with
-   * the state as the turn ended and the number of the turn about to begin.
-   */
-  turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
   /** What the player cannot do for now, and why. Checked in order. */
   locks?: readonly Lock[]
   /** kv keys put back at the start of each turn: what "once this turn" was counting. */
   resets?: Record<string, KvValue>
   /**
-   * The start of a new turn, after `turn`'s effects: anything it changes that
-   * is not an effect — a stretch ending, a debt coming due.
+   * A hook: the end of a turn. Called once the turn counter has moved on and
+   * `resets` are back, with the state then and a `TurnContext`, whose
+   * `before` is the state as the turn ended. Return the next state: apply
+   * effects with `context.apply`, in order, each seeing the ones before it.
+   * Runs before every plugin's `onTurn`.
    */
-  onTurn?: (state: GameState) => GameState
+  onTurn?: (state: GameState, context: TurnContext) => GameState
   /**
    * Commands the game handles itself, by type. Return the next state, or a
    * string to refuse with that reason.

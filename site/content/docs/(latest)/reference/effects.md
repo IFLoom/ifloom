@@ -101,7 +101,7 @@ With `of`, the stat belongs to an [entity](/docs/reference/entities). `of` is an
 #### Setting a stat
 
 ```ts
-// In rules.turn: wake up with a full tank, whatever the ceiling is today.
+// In rules.onTurn, through apply: wake up with a full tank, whatever the ceiling is today.
 effects: [{ kind: 'stat', stat: 'energy', to: 9999 }]
 ```
 
@@ -116,9 +116,9 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 
 Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [custom effects](/docs/reference/custom#effects), on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that neither the game nor its plugins has does nothing.
 
-In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one. Item uses and [`rules.turn`](/docs/reference/rules#turn) only take plain effects, so write the long form there.
+In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one. Item uses only take plain effects, so write the long form there.
 
-**Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. `rules.turn` is a function, so nothing checks a name it returns, and a typo there silently does nothing.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
 
 ### storylineKv
 
@@ -201,17 +201,17 @@ Closes a storyline until `turns` [turns](/docs/reference/state#turn) from now, b
 { kind: 'turn', by: 3 }
 ```
 
-Ends the turn `by` times, or once when `by` is left out. Each time, the [turn](/docs/reference/state#turn) counter goes up by one and [`rules.resets`](/docs/reference/rules#resets) are written. Then [`rules.turn`](/docs/reference/rules#turn)'s effects apply, then [`rules.onTurn`](/docs/reference/rules#onturn) runs, then each plugin's [`turn` hook](/docs/reference/plugins#hooks). See [The end of a turn](/docs/reference/rules#the-end-of-a-turn).
+Ends the turn `by` times, or once when `by` is left out. Each time, the [turn](/docs/reference/state#turn) counter goes up by one and [`rules.resets`](/docs/reference/rules#resets) are written. Then [`rules.onTurn`](/docs/reference/rules#onturn) runs, then each plugin's [`onTurn` hook](/docs/reference/plugins#hooks-and-providers). See [The end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
-The engine keeps no time of day, so this effect is how a turn ends, whether a turn is a chapter of a novel or a week of running the café. Put it on the choice that closes a chapter. A plugin can end turns the same way. The [calendar](/docs/plugins/calendar#what-a-turn-is)'s `pass` and `sleep` end one at each day they cross, and its `turn` hook moves its clock on when this effect ends one.
+The engine keeps no time of day, so this effect is how a turn ends, whether a turn is a chapter of a novel or a week of running the café. Put it on the choice that closes a chapter. A plugin can end turns the same way. The [calendar](/docs/plugins/calendar#what-a-turn-is)'s `pass` and `sleep` end one at each day they cross, and its `onTurn` hook moves its clock on when this effect ends one.
 
 ```ts
 { id: 'lock-up', effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'cafe.monday' }] }
 ```
 
 **Gotchas.**
-- Here `rules.turn` is asked with the state as the effect found it, not the state before the command.
-- A `turn` effect run while a turn is ending does nothing, so a turn's rules can never end another turn. That covers what [`rules.turn`](/docs/reference/rules#turn) returns, and anything `onTurn` or a plugin's `turn` hook applies.
+- Here `rules.onTurn`'s `before` is the state as the effect found it, not the state before the command.
+- A `turn` effect run while a turn is ending does nothing, so a turn's rules can never end another turn. That covers anything the game's [`rules.onTurn`](/docs/reference/rules#onturn) or a plugin's `onTurn` hook applies.
 - A `by` of 0 or less does nothing.
 
 ### collect
@@ -385,7 +385,7 @@ A custom effect runs in its turn. Its function is called with the state the effe
 You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
-- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places. Neither is an `Effect`, so item uses and `rules.turn` take plain effects.
+- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places. Neither is an `Effect`, so item uses take plain effects. `rules.onTurn`'s `apply` takes either.
 - A button's price, a guard and a lock see a custom effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
 - Custom effects that return custom effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.

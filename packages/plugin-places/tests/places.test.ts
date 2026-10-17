@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameRules, type GameState, type Pack } from '@ifloom/engine'
+import { commandOf, SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameRules, type GameState, type Pack } from '@ifloom/engine'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
 import { at, go, moveTo, onlyAt, places, where, within, type LocationDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
@@ -81,7 +81,7 @@ describe('places', () => {
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
       location: { id: 'house', name: 'House', tag: 'Town', kind: 'room', art: 'place/house', stage: null },
-      exits: [{ id: 'street', name: 'Street', tag: 'Town', kind: 'room', art: 'place/street', command: go('street') }],
+      exits: [{ id: 'street', name: 'Street', tag: 'Town', kind: 'room', art: 'place/street', command: commandOf(go('street')) }],
     })
   })
 
@@ -132,12 +132,25 @@ describe('places', () => {
     expect(where(state)).toBe('park')
   })
 
-  it('run the doorstep on arrival by exit', () => {
-    const { game: g } = game({
-      start: 'street',
-      arrive: (state) => (where(state) === 'park' ? { ...state, kv: { ...state.kv, ducks: true } } : state),
-    })
-    expect(walk(g, startingState(g), 'park').kv.ducks).toBe(true)
+  it('run the doorstep on arrival by exit, while its condition holds, and not on a move', () => {
+    const ducks: Pack = {
+      ...town,
+      data: {
+        places: {
+          locations: town.data!.places.locations.map((entry) =>
+            entry.id === 'park' ? { ...entry, arrive: { when: { not: { kv: 'ducks' } }, effects: [{ kind: 'kv', key: 'ducks', to: true }, { kind: 'kv', key: 'fed', by: 1 }] } } : entry,
+          ),
+        },
+      },
+    }
+    const { game: g, problems } = loadGame([ducks], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' })] })
+    expect(problems).toEqual([])
+    const there = walk(g, startingState(g), 'park')
+    expect(there.kv).toMatchObject({ ducks: true, fed: 1 })
+    // Once it no longer holds, nothing happens on the doorstep.
+    expect(walk(g, walk(g, there, 'street'), 'park').kv.fed).toBe(1)
+    const moved = apply(startingState(g), g, { type: 'activity', id: 'hop' }).state
+    expect(moved.kv.ducks).toBeUndefined()
   })
 
   it('leave a game nowhere with no start, and nothing on the screen but its buttons', () => {
@@ -285,7 +298,7 @@ describe('places', () => {
         hotspots: [
           { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
           // The back room is staff only: greyed out with the exit's own reason.
-          { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: go('back'), disabled: 'Staff only.' },
+          { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: commandOf(go('back')), disabled: 'Staff only.' },
         ],
       })
     })

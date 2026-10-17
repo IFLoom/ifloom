@@ -13,10 +13,11 @@ import {
   definePlugin,
   roll,
   weighted,
+  type DefinedPlugin,
   type EffectRef,
-  type KvValue,
   type Game,
   type GameState,
+  type KvValue,
   type PluginProblem,
   type Reference,
 } from '@ifloom/engine'
@@ -140,12 +141,12 @@ function rangeProblems(field: FieldDef | undefined): string[] {
  * The plugin. Add it to the game's `plugins`, and put pools and templates in
  * a pack's `data.generators.pools` and `data.generators.templates`.
  */
-export function generators() {
+export function generators(): DefinedPlugin<null> {
   return definePlugin({
     id: ID,
     version: 1,
     effects: {
-      /** `{ custom: 'generators/generate', with: { template, count? } }`: make `count` (1 if left out) entities from the template. */
+      /** `{ 'generators/generate': { template, count? } }`: make `count` (1 if left out) entities from the template. */
       generate: (state, args, { game, apply }) => {
         const template = templateDefs(game).find((entry) => entry.id === String(args.template ?? ''))
         if (!template) return state
@@ -198,4 +199,4 @@ export function generators() {
 }
 
 /** An effect: make `count` (1 if left out) new entities from the template. */
-export const generate = (template: string, count?: number): EffectRef => ({ custom: 'generators/generate', with: count === undefined ? { template } : { template, count } })
+export const generate = (template: string, count?: number): EffectRef => ({ 'generators/generate': count === undefined ? { template } : { template, count } })

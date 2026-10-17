@@ -117,7 +117,7 @@ describe('a plugin applying effects', () => {
   })
 
   it('cannot end a second turn from inside a turn’s end', () => {
-    const game = shore({ turn: () => ({ effects: [{ kind: 'custom', name: 'tide/rise', with: { by: 9 } }] }) })
+    const game = shore({ onTurn: (_state, { apply }) => apply([{ 'tide/rise': { by: 9 } }]) })
     const state = applyEffects(begin(game), game, [{ kind: 'turn' }])
     expect(state.turn).toBe(begin(game).turn + 1)
     expect(tide.read(state, game)).toEqual({ height: 0 })

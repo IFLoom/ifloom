@@ -21,7 +21,7 @@ Here's where each place-related part of a game comes from:
 import {
   places, go, at, within, moveTo, onlyAt, where, locationsOf, locationById,
   type PlacesOptions, type PlacesState, type PlacesView, type ExitView,
-  type LocationDef, type LocationKind,
+  type LocationDef, type LocationKind, type Arrival,
 } from '@ifloom/plugin-places'
 ```
 
@@ -79,28 +79,14 @@ map.read(startingState(game), game)   // { at: 'flat' }
 ```ts
 type PlacesOptions = {
   start?: string
-  arrive?: (state: GameState, game: Game) => GameState
 }
 ```
 
 | Field | What it is | If left out |
 |---|---|---|
 | `start` | The id of the place a new game starts in. | Nowhere: `{ at: null }`. Nothing is drawn but the game's title and its buttons, and `places/go` is refused until a [`places/move`](#effects) puts the player somewhere. |
-| `arrive` | What happens on the doorstep, such as someone catching you on the way in. It's called with the state just after the player walks in, and returns the state to keep. It runs after travel by exit ([`places/go`](#commands)) only, not after a `places/move`. | Nothing happens. |
 
-```ts
-import { places, where } from '@ifloom/plugin-places'
-
-places({
-  start: 'flat',
-  // The first time into the park, note it.
-  arrive: (state) => where(state) === 'park' && !state.kv.sawPark
-    ? { ...state, kv: { ...state.kv, sawPark: true } }
-    : state,
-})
-```
-
-The options are code, not content, so a mod can't change them.
+The options are code, not content, so a mod can't change them. Everything a mod could change, the places themselves and what happens as the player walks in (a place's [`arrive`](#arrival)), is content.
 
 ## Locations
 
@@ -121,6 +107,7 @@ type LocationDef = {
   actions?: ActionDef[]
   audio?: Record<string, string | null>
   transition?: Transition | TransitionName
+  arrive?: Arrival
 }
 ```
 
@@ -139,6 +126,26 @@ type LocationDef = {
 | `actions` | What there is to do here, as [`ActionDef`](/docs/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
 | `audio` | What plays on background [audio channels](/docs/reference/audio#channels) while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. `null` silences a channel. See [Audio](#audio). |
 | `transition` | How the room comes on screen and goes off while no scene is open: `'fade'`, or `{ in: 'slide-left', ms: 400 }`. The game's [default](/docs/reference/transitions#gametransitions) if left out. The view's [`transition.key`](/docs/reference/view#transition) is `room:<id>`, so walking to another place plays it. See [Transitions](/docs/reference/transitions). |
+| `arrive` | What happens on the doorstep as the player walks in by an exit. See [Arrival](#arrival). |
+
+### Arrival
+
+```ts
+type Arrival = { when?: Condition; effects: EffectRef[] }
+```
+
+What happens as the player walks into a place, such as someone catching them on the way in. After [`places/go`](#commands) puts the player there, the place's `arrive` effects apply, in order, while its `when` holds, or always with no `when`. They're [effects](/docs/reference/effects) as content writes them, so a scene to open, a kv key or a plugin's effect all work. It doesn't run after a [`places/move`](#effects).
+
+```ts
+// The first time into the park, the ducks come over.
+{
+  id: 'park',
+  // …
+  arrive: { when: { not: { kv: 'sawPark' } }, effects: [{ kind: 'kv', key: 'sawPark', to: true }, { kind: 'scene', scene: 'park.ducks' }] },
+}
+```
+
+The [content checker](/docs/reference/checks) checks its `when` and its effects as `locations park · arrive: …`.
 
 ### LocationKind
 
@@ -322,7 +329,7 @@ A UI reads the room at [`view.plugins.places`](#the-view), the description at `v
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }` | `go('cafe')` | Walks through an exit to that place, then runs the [`arrive`](#placesoptions) option. |
+| `{ 'places/go': { id: 'cafe' } }` | `go('cafe')` | Walks through an exit to that place, then applies its [`arrive`](#arrival). |
 
 `places/go` is refused, in this order, with:
 
@@ -342,9 +349,9 @@ A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*
 |---|---|---|
 | `{ 'places/move': { location: 'cafe' } }` | `moveTo('cafe')` | Puts the player there at once, and closes any open scene. |
 
-It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, what `rules.turn` returns, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
+It works in a data scene choice's effects and an activity's `effects`. In a plain-effect list (an item's use, or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does)), write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
 
-No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The [`arrive`](#placesoptions) option doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
+No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The place's [`arrive`](#arrival) doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
 
 ## Conditions
 
@@ -552,7 +559,7 @@ function locationsOf(game: Game): LocationDef[]
 function locationById(game: Game, id: string | null | undefined): LocationDef | undefined
 function where(state: GameState): string | null
 
-const go: (to: string) => Command
+const go: (to: string) => CommandRef
 const at: (...places: string[]) => Condition
 const within: (...places: string[]) => Condition
 const moveTo: (place: string) => EffectRef
@@ -607,7 +614,7 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 
 ## Gotchas
 
-- **`arrive` runs on `places/go` only.** A `places/move` puts the player somewhere with nothing on the doorstep. The engine has no arrival rule or hook of its own, so the `arrive` option is the only doorstep there is.
+- **`arrive` runs on `places/go` only.** A `places/move` puts the player somewhere with nothing on the doorstep. The engine has no arrival rule or hook of its own, so a place's `arrive` is the only doorstep there is. For something that should happen however the player got there, use a [trigger](/docs/reference/triggers) on `at(...)`.
 - **Exits are one-way.** List the way back on the other place.
 - **A game that starts nowhere can't walk anywhere.** `places/go` from nowhere is refused with `You cannot get there from here.` A `places/move`, from an intro scene's last choice say, puts the player on the map.
 - **`blocked` comes before the exits.** A locked place's reason is the refusal even when it isn't one step away.

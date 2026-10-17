@@ -6,12 +6,12 @@ description: "Devices such as a phone or a laptop, with apps declared as data, b
 
 You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery already wired up, use the [phone bundle](/docs/plugins/phone) instead, which is built on this plugin.
 
-To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices({ devices, apps })` to the game's `plugins`. [Install](#install) has the details.
+To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices()` to the game's `plugins`. The devices and their apps are content, in a pack's `data.devices`. [Install](#install) has the details.
 
 ```ts
 import {
-  devices, openApp, closeApp, appOpen,
-  type DeviceDef, type AppDef, type Section, type DevicesOptions, type DevicesState,
+  devices, devicesOf, appsOf, openApp, closeApp, appOpen,
+  type DeviceDef, type AppDef, type Section, type DevicesState,
   type DevicesView, type DeviceView, type AppView, type SectionView,
 } from '@ifloom/plugin-devices'
 ```
@@ -28,7 +28,7 @@ You build an app from sections, and each section is something the engine already
 
 ## Install
 
-Add the package beside the engine, then add `devices(...)` to the game's `plugins`. See [Adding one](/docs/plugins#adding-one).
+Add the package beside the engine, then add `devices()` to the game's `plugins`. See [Adding one](/docs/plugins#adding-one).
 
 ```json
 {
@@ -42,50 +42,39 @@ Add the package beside the engine, then add `devices(...)` to the game's `plugin
 ## devices
 
 ```ts
-function devices(options: DevicesOptions): DefinedPlugin<DevicesState>
+function devices(): DefinedPlugin<DevicesState>
 ```
 
-Builds the plugin, with the id `devices`. Call it once, when you build the game, with the devices the game has and the apps on them.
+Builds the plugin, with the id `devices`. Call it once, when you build the game. It takes no options: the devices and the apps on them are content, in a pack's `data.devices`, so a mod can add a device or an app.
 
 It lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/docs/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
 
-declare const town: Pack // your content
 declare const notes: AppDef, bank: AppDef, mail: AppDef
+
+const town: Pack = {
+  id: 'town',
+  schema: SCHEMA,
+  // … the rest of your content
+  data: {
+    devices: {
+      devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }],
+      apps: [notes, bank, mail],
+    },
+  },
+}
 
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
   introScene: 'intro',
-  plugins: [
-    places({ start: 'flat' }),
-    devices({
-      devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }],
-      apps: [notes, bank, mail],
-    }),
-  ],
+  plugins: [places({ start: 'flat' }), devices()],
 })
 ```
-
-### DevicesOptions
-
-```ts
-import type { AppDef, DeviceDef } from '@ifloom/plugin-devices'
-
-type DevicesOptions = {
-  devices: DeviceDef[]
-  apps?: AppDef[]
-}
-```
-
-| Field | What it is |
-|---|---|
-| `devices` | Every device, in the order the view lists them. |
-| `apps` | Apps built into the game. Packs can add more (see [Writing apps](#writing-apps)). |
 
 ### DeviceDef
 
@@ -107,11 +96,20 @@ type DeviceDef = {
 | `sidebar` | Whether to offer it from the sidebar. `false` if you leave it out. |
 | `wallpaper` | A picture behind the home screen, passed through to the UI. |
 
-Devices are code, not content, so a mod can't add one.
+Devices are content. List them in a pack's `data.devices.devices`, in the order the view lists them. They're merged by id, so a mod can add a device.
+
+### devicesOf and appsOf
+
+```ts
+function devicesOf(game: Game): DeviceDef[]
+function appsOf(game: Game): AppDef[]
+```
+
+The game's devices and apps, merged from its packs, in order.
 
 ## Writing apps
 
-Apps come from two places. The ones you pass to `devices({ apps })` are built into the game. A pack's [`data`](/docs/reference/loader#pack) can add more under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. An app in a pack with the same id as a built-in one replaces it.
+Apps are content, in a pack's [`data`](/docs/reference/loader#pack) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps given in the base game's `data`, as the [phone](/docs/plugins/phone) gives its stock apps, come first, and a pack's app with the same id replaces one.
 
 ### AppDef
 
@@ -271,13 +269,16 @@ const town: Pack = {
     values: { balance: (state) => `${state.stats.coins} coins` },
     panels: { inbox: (state) => ({ unread: state.kv.newMail ? 1 : 0 }) },
   },
-  data: { places: { locations } },
+  data: {
+    places: { locations },
+    devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps },
+  },
 }
 
 export const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [places({ start: 'flat' }), devices({ devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps })],
+  plugins: [places({ start: 'flat' }), devices()],
   rules: {
     locks: [{ when: { not: at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
   },
@@ -333,8 +334,8 @@ laptop(state).apps[0].disabled         // 'The laptop is at home.', and the same
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'devices/open', with: { app } }` | `appOpen(app)` | That app is open. |
-| `{ custom: 'devices/open', with: { device } }` | | Any app is open on that device. |
+| `{ 'devices/open': { app } }` | `appOpen(app)` | That app is open. |
+| `{ 'devices/open': { device } }` | | Any app is open on that device. |
 
 ```ts
 import type { Block } from '@ifloom/engine'
@@ -348,14 +349,14 @@ const body: Block[] = [
 ]
 ```
 
-In the short form, with the full name as the only key, it's `{ 'devices/open': { device: 'phone' } }` (see [plugin calls](/docs/reference/custom)).
+The first `when` is the long form. In the short form, with the full name as the only key, it's `{ 'devices/open': { device: 'phone' } }`, which is what `appOpen` writes (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'devices/open', with: { id } }` | `openApp(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
-| `{ type: 'custom', name: 'devices/close', with: { id } }` | `closeApp(device)` | Takes the device `id` back to its home screen. |
+| `{ 'devices/open': { id } }` | `openApp(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
+| `{ 'devices/close': { id } }` | `closeApp(device)` | Takes the device `id` back to its home screen. |
 
 Both are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
 
@@ -426,7 +427,7 @@ type DeviceView = {
 |---|---|
 | `frame` | The device's `frame`, or its `id`. |
 | `badge` | What the sidebar button shows. It's every app's count added up, plus one for each dot. |
-| `apps` | The installed apps, in order. Built-in ones come first, then the ones packs add. |
+| `apps` | The installed apps, in order: the base game's first, then the ones packs add. |
 | `open` | The app open on this device, with its sections filled in, or `null` for the home screen. |
 
 ### AppView
@@ -450,7 +451,7 @@ type AppView = {
 |---|---|
 | `badge` | A count, a dot (`true`, or `false` when the dot's condition doesn't hold), or `0` for an app with no badge. |
 | `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `blocked` reason that holds. It's left out if the app can be opened. |
-| `command` | The command that opens it, `openApp(id)`. |
+| `command` | The command that opens it, `openApp(id)` in the long form. |
 | `sections` | Only filled in for the open app. In `apps`, every app's `sections` is `[]`, so read them from `open`. |
 
 ### SectionView
@@ -486,15 +487,15 @@ This is what the plugin keeps in a save, at `state.plugins.devices`. It holds th
 
 ## For code
 
-The helpers build the content objects for you, typed. `openApp` and `closeApp` return a `Command`, and `appOpen` returns a `Condition`.
+The helpers build the content objects for you, typed, in the [short form](/docs/reference/custom#plugincall). `openApp` and `closeApp` return a [`CommandRef`](/docs/reference/custom#commandref), and `appOpen` returns a `Condition`.
 
 ### Helpers
 
 ```ts
-import type { Command, Condition } from '@ifloom/engine'
+import type { CommandRef, Condition } from '@ifloom/engine'
 
-const openApp: (app: string) => Command
-const closeApp: (device: string) => Command
+const openApp: (app: string) => CommandRef
+const closeApp: (device: string) => CommandRef
 const appOpen: (app: string) => Condition
 ```
 
@@ -502,7 +503,7 @@ const appOpen: (app: string) => Condition
 
 When the game loads, the plugin reports, with `where` as `apps <id>`:
 
-- an app on a device the plugin wasn't given (`no device called "…"`)
+- an app on a device the game doesn't have (`unknown device "…"`)
 - anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
 - a count badge naming a value no plugin and no custom function has (`no custom value named "…"`)
 - a collection the game doesn't declare (`unknown collection "…"`)
@@ -513,7 +514,7 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 The action check catches an unknown scene, activity or item, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
-A problem with an app from a pack is pinned on that pack. One with an app given to `devices(...)` is pinned on `base`.
+A problem with an app is pinned on the pack it came from, or on `base` for one in the base game's `data`.
 
 ```text
 base · apps mail · no custom value named "messages/unread"

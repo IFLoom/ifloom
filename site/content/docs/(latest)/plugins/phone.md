@@ -12,13 +12,13 @@ description: "A smartphone in one call, wiring devices, messages and feed togeth
 
 You'd want it in a game set in the present day, where the player gets texts, scrolls a feed and calls people, as in the [showcase](/docs/guide/showcase). If your game needs a device that isn't a phone, or a phone without messages or a feed, use the [devices](/docs/plugins/devices) plugin on its own.
 
-To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and spread both its `plugins` and its `collections` into the game, as [phone](#phone) shows.
+To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and pass on its `plugins`, its `collections` and its `data`, as [phone](#phone) shows.
 
 ```ts
 import { phone, type PhoneOptions, type PhoneKit } from '@ifloom/phone'
 ```
 
-It's a bundle, not a plugin. `phone()` returns the three plugins and the collection, ready to spread into the game. Everything else is content. Messages, posts and the game's own apps are data, built from the same [sections](/docs/plugins/devices#section) as any app.
+It's a bundle, not a plugin. `phone()` returns the three plugins, the collection and the content that sets the phone up (the device, its apps, the channels and the feeds), ready to pass to the game. Everything else is content too. Messages, posts and any apps a pack adds are data, built from the same [sections](/docs/plugins/devices#section) as any app.
 
 ## Install
 
@@ -42,7 +42,7 @@ The bundle needs the three plugins it wires together, beside the engine. See [Ad
 function phone(options?: PhoneOptions): PhoneKit
 ```
 
-Builds the phone. Call it once, when you build the game, and pass on both halves of what it returns:
+Builds the phone. Call it once, when you build the game, and pass on all three parts of what it returns:
 
 ```ts
 import { loadGame, type Pack } from '@ifloom/engine'
@@ -61,6 +61,7 @@ const { game } = loadGame([town], {
   introScene: 'intro',
   plugins: [calendar(), places({ start: 'flat' }), ...kit.plugins, quests()],
   collections: [...kit.collections],
+  data: kit.data,
 })
 ```
 
@@ -103,11 +104,12 @@ The device's `frame` is always `'phone'`.
 ### PhoneKit
 
 ```ts
-import type { CollectionDef, Plugin } from '@ifloom/engine'
+import type { CollectionDef, Plugin, PluginEntry } from '@ifloom/engine'
 
 type PhoneKit = {
   plugins: Plugin[]
   collections: CollectionDef[]
+  data: Record<string, Record<string, readonly PluginEntry[]>>
 }
 ```
 
@@ -115,6 +117,7 @@ type PhoneKit = {
 |---|---|
 | `plugins` | The devices, messages and feed plugins, in that order, for [`game.plugins`](/docs/reference/game#game). There's no feed plugin when `feeds` is `[]`. |
 | `collections` | The `gallery` [collection](/docs/reference/collections), named `Photos`, for `game.collections`. It's empty when `gallery` is `false`. |
+| `data` | The phone as content, for the base game's [`data`](/docs/reference/loader#loadgame): the device and its apps under `devices`, the channels under `messages` and the feeds under `feed`. If your base game has `data` of its own, merge them by plugin id: `{ ...kit.data, places: { locations } }`. |
 
 ### The stock apps
 
@@ -169,6 +172,7 @@ const { game } = loadGame([town], {
   introScene: 'intro',
   startPhase: 'arrival',
   collections: kit.collections,
+  data: kit.data,
   // The calendar first, so the phone's plugins see the new day.
   plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), cast(), ...kit.plugins],
   rules: {
@@ -359,6 +363,7 @@ apply(state, game, openApp('texts')).refused     // 'Not at work.'
 
 ## Gotchas
 
+- **Pass on `data` as well as `plugins`.** Without it, the phone has no device, no apps, no channels and no feeds, and every message and post is reported against a channel or feed the game doesn't have.
 - **Pass on `collections` as well as `plugins`.** The Gallery app lists the `gallery` collection. If the game doesn't declare it, the loader reports the app (`apps gallery · unknown collection "gallery"`) and every effect that collects into it (`activity photo-ava · unknown collection "gallery"`). Spread `kit.collections` into the game's `collections`, beside any of your own, or turn the gallery off with `gallery: false`.
 - **Don't add the plugins a second time.** The kit already has devices, messages and feed. Adding `messages(...)` again gives two plugins with one id, which the loader reports. For more channels or feeds, pass `channels` and `feeds` to `phone()`.
 - **Channels, feeds and apps share one list of ids.** Each one becomes an app with its own id, so a channel and a feed with the same id, or an app of yours called `contacts`, replace one another. Give each its own id.
@@ -373,4 +378,4 @@ apply(state, game, openApp('texts')).refused     // 'Not at work.'
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds its phone with `phone({ sidebar: true, apps: [...] })`, spreads `kit.plugins` into its `plugins`, and passes `kit.collections` as the game's `collections`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds its phone with `phone({ sidebar: true, apps: [...] })`, spreads `kit.plugins` into its `plugins`, and passes `kit.collections` as the game's `collections` and `kit.data` as its `data`.

@@ -108,12 +108,12 @@ describe('the calendar', () => {
     expect(daily.clock.read(run(daily.game, startingState(daily.game), act('nap'), act('rest')), daily.game)).toEqual({ day: 1, period: 'morning' })
   })
 
-  it('shows the turn rules the clock as the turn ended', () => {
+  it('shows the game’s onTurn the clock as the turn ended, as `before`', () => {
     const seen: string[] = []
     const { game, clock } = house({}, {
-      turn: (state, next) => {
-        seen.push(`${next}: ${JSON.stringify(clock.read(state, game))}`)
-        return { effects: [] }
+      onTurn: (state, { before }) => {
+        seen.push(`${state.turn}: ${JSON.stringify(clock.read(before, game))}`)
+        return state
       },
     })
     run(game, clock.write(startingState(game), { day: 0, period: 'night' }), sleep())

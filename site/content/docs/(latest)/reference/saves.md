@@ -438,6 +438,8 @@ type MigrationTools = {
 
 What a step gets besides the state. `fill(kinds)` returns the state the step was given with what the game declares and the save lacks filled in, for the kinds you name. Leave `kinds` out to fill every kind. Nothing the save already has is changed, so `fill` never resets a value the player has earned.
 
+A [plugin's migration](/docs/reference/plugins#state-and-migrations) step gets the same tools. There, `fill` gives the whole game state as the engine carried it, filled the same way, for a step that needs to read the game; the step still returns only the plugin's own state.
+
 ### FillKind
 
 ```ts

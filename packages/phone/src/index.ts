@@ -8,13 +8,16 @@
  *
  * ```ts
  * const kit = phone({ sidebar: true })
- * loadGame(packs, { ...base, plugins: [...kit.plugins, quests()], collections: [...kit.collections] })
+ * loadGame(packs, { ...base, plugins: [...kit.plugins, quests()], collections: [...kit.collections], data: kit.data })
  * ```
+ *
+ * The phone, its apps, channels and feeds are content (`data`), so a pack or a
+ * mod can add an app, a channel or a feed beside them.
  *
  * Anything more — a camera, a creator app, a bank — is an app the game adds
  * with `apps`, built from the same sections.
  */
-import type { CollectionDef, Plugin } from '@ifloom/engine'
+import type { CollectionDef, Plugin, PluginEntry } from '@ifloom/engine'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
 import { feed, type FeedDef } from '@ifloom/plugin-feed'
 import { messages, type Channel } from '@ifloom/plugin-messages'
@@ -43,6 +46,12 @@ export type PhoneKit = {
   plugins: Plugin[]
   /** The `gallery` collection, ready for `game.collections`; empty without a gallery. */
   collections: CollectionDef[]
+  /**
+   * The phone, its apps, the channels and the feeds, as plugin content, ready
+   * for the base game's `data` (`loadGame`'s second argument). A pack's
+   * `data.devices.apps` adds apps beside them, and replaces one by id.
+   */
+  data: Record<string, Record<string, readonly PluginEntry[]>>
 }
 
 export function phone(options: PhoneOptions = {}): PhoneKit {
@@ -70,15 +79,14 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
     ...(options.gallery === false ? [] : [{ id: 'gallery', name: 'Gallery', icon: 'gallery', on, sections: [{ collection: 'gallery' }] }]),
     ...(options.apps ?? []).map((app) => ({ ...app, on })),
   ]
+  const device = { id: on, name: options.name ?? 'Phone', frame: 'phone', sidebar: options.sidebar ?? true, ...(options.wallpaper !== undefined ? { wallpaper: options.wallpaper } : {}) }
   return {
-    plugins: [
-      devices({
-        devices: [{ id: on, name: options.name ?? 'Phone', frame: 'phone', sidebar: options.sidebar ?? true, wallpaper: options.wallpaper }],
-        apps,
-      }),
-      messages({ channels }),
-      ...(feeds.length ? [feed({ feeds })] : []),
-    ],
+    plugins: [devices(), messages(), ...(feeds.length ? [feed()] : [])],
     collections: options.gallery === false ? [] : [{ id: 'gallery', name: 'Photos' }],
+    data: {
+      devices: { devices: [device], apps },
+      messages: { channels },
+      ...(feeds.length ? { feed: { feeds } } : {}),
+    },
   }
 }

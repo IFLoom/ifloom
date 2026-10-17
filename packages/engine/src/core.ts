@@ -13,10 +13,10 @@
  */
 import { say } from './strings.ts'
 import { holds } from './condition.ts'
-import { buildEffects, customCall, customCondition, customEffect, customValue } from './custom.ts'
+import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
-import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runHooks } from './plugin.ts'
+import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runTurnHooks } from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
 import { roll, weighted } from './random.ts'
@@ -41,7 +41,12 @@ export function featureContext(): FeatureContext {
   return (context ??= {
     holds,
     runEffects,
-    turnHooks: (state, game) => runHooks(game, 'turn', state, true),
+    turnHooks: (state, game) => runTurnHooks(game, state),
+    turnContext: (state, game, before) => ({
+      ...customContext(state, game),
+      before,
+      apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), true),
+    }),
     buildEffects: (state, game, refs) => buildEffects(state, game, refs),
     effectsOf: (state, game, command) => effectsOf(state, game, command),
     weighted,

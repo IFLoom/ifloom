@@ -56,6 +56,8 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
     startPhase: 'arrival',
     custom,
     collections: kit.collections,
+    // The phone, its apps, the texts and the feed: content, so a mod can add an app.
+    data: kit.data,
     // The calendar first, so every other plugin sees the new day when one begins.
     plugins: [
       clock,
@@ -69,7 +71,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       shop(),
       jobs(),
       generators(),
-      wardrobe({ slots: [{ id: 'coat', label: 'Coat' }, { id: 'neck', label: 'Neck' }], start: { coat: 'raincoat' } }),
+      wardrobe(),
       ...(withDebug ? [debug()] : []),
     ],
     actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
@@ -78,7 +80,7 @@ export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}): { ga
       // A coffee and a post a day; each new day (a turn, here) resets them.
       resets: { hadCoffee: false, postedToday: false },
       // Energy back to full overnight.
-      turn: () => ({ effects: [{ kind: 'stat', stat: 'energy', to: 100 }] }),
+      onTurn: (_state, { apply }) => apply([{ kind: 'stat', stat: 'energy', to: 100 }]),
       locks: [
         // Moving day only moves through its scene.
         { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },

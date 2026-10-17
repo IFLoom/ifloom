@@ -27,7 +27,7 @@ function game(): Game {
         prose: { 'place.house': 'Home.', intro: 'Hi.', 'intro#go': 'Go in' },
         data: {
           places: { locations: [{ id: 'house', name: 'House', tag: 'Home', kind: 'room', exits: [], art: '', body: [{ text: 'place.house' }] }] },
-          wardrobe: { clothes: [{ id: 'coat', slot: 'back' }, { id: 'cape', slot: 'back' }] },
+          wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'coat' }], clothes: [{ id: 'coat', slot: 'back' }, { id: 'cape', slot: 'back' }] },
         },
       },
     ],
@@ -35,7 +35,7 @@ function game(): Game {
       id: 'screens',
       title: 'Screens',
       introScene: 'intro',
-      plugins: [places({ start: 'house' }), wardrobe({ slots: [{ id: 'back', label: 'Back' }], start: { back: 'coat' } })],
+      plugins: [places({ start: 'house' }), wardrobe()],
       actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
     },
   ).game

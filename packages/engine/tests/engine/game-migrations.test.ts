@@ -120,6 +120,18 @@ describe('the game’s own migrations', () => {
     expect(some.settings).toEqual({ hints: true })
     expect(some.items).not.toHaveProperty('umbrella')
 
+    // A plugin's step gets the same tools, so it can read what the game declares and the save lacks.
+    const counter = definePlugin({
+      id: 'counter',
+      version: 2,
+      start: () => ({ patience: 0 }),
+      migrations: { 1: (_state, tools) => ({ patience: tools.fill(['stats']).stats.patience }) },
+    })
+    const counted = grown({ version: 2, plugins: [counter] })
+    const withCounter = saves(counted, memoryDriver()).importText(fileOf(counted, { ...old, plugins: { counter: { version: 1, state: {} } } } as unknown as GameState))
+    if (typeof withCounter === 'string') throw new Error(withCounter)
+    expect(withCounter.state.plugins.counter).toEqual({ version: 2, state: { patience: 7 } })
+
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
     expect(all.stats.patience).toBe(7)
     expect(all.items.umbrella).toBe(1)

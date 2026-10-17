@@ -395,8 +395,8 @@ apply(friends, game, talk('ava')).state.sceneId                           // 'av
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'cast/talk', with: { id: 'ava' } }` | `talk('ava')` | Opens the first of their [`talk`](#talkoption) options whose `when` holds. |
-| `{ type: 'custom', name: 'cast/call', with: { id: 'ava' } }` | `call('ava')` | Opens their `call.scene`, or else their talk scene, from anywhere. |
+| `{ 'cast/talk': { id: 'ava' } }` | `talk('ava')` | Opens the first of their [`talk`](#talkoption) options whose `when` holds. |
+| `{ 'cast/call': { id: 'ava' } }` | `call('ava')` | Opens their `call.scene`, or else their talk scene, from anywhere. |
 
 `cast/talk` is refused, in this order, with:
 
@@ -551,8 +551,8 @@ Both commands also use the engine's own [`finishFirst`](/docs/reference/strings#
 function charactersOf(game: Game): CharacterDef[]
 function characterById(game: Game, id: string | undefined): CharacterDef | undefined
 
-const talk: (who: string) => Command
-const call: (who: string) => Command
+const talk: (who: string) => CommandRef
+const call: (who: string) => CommandRef
 const here: (...who: string[]) => Condition
 const isAt: (who: string, ...places: string[]) => Condition
 const hasMet: (...who: string[]) => Condition

@@ -16,7 +16,7 @@
  * plugin's context does. That keeps the registry free of import cycles. Core
  * features aren't plugins: see ADR 0007.
  */
-import type { EffectRef } from '../custom.ts'
+import type { EffectRef, TurnContext } from '../custom.ts'
 import type { CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
@@ -30,8 +30,10 @@ export type FeatureContext = {
   holds: (state: GameState, condition: Condition | undefined, game?: Game) => boolean
   /** Apply effects; while `ending` is true, a `turn` effect does nothing. */
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
-  /** Every plugin's `turn` hook, as a turn ends. */
+  /** Every plugin's `onTurn` hook, as a turn ends. */
   turnHooks: (state: GameState, game: Game) => GameState
+  /** What `rules.onTurn` is handed: `before` is the state as the turn ended, and its `apply` ends no turn. */
+  turnContext: (state: GameState, game: Game, before: GameState) => TurnContext
   /** What a command would apply, worked out before it runs, as `effectsOf` says. */
   effectsOf: (state: GameState, game: Game, command: Command) => Effect[]
   /** Effects as content writes them (custom calls among them) as the effects they stand for, read against `state`. */
@@ -155,7 +157,7 @@ export type PackMerge<G, P> = {
   from: (list: string, id: string | undefined) => string | undefined
 }
 
-/** Where an after-command step runs: before the plugins' `after` hooks, or after them. */
+/** Where an after-command step runs: before the plugins' `onCommand` hooks, or after them. */
 export type AfterSlot = 'beforePlugins' | 'afterPlugins'
 
 /** A state to render every scene against, for the content checker: `checkGame`'s `probes`. */

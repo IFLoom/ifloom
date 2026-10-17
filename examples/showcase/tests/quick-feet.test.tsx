@@ -5,14 +5,14 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { apply, createRunner, startingState, type Command, type GameState } from '@ifloom/engine'
+import { apply, createRunner, startingState, type GameState, type CommandRef } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { clock, smallTown } from '../src/game.ts'
 
 const { game } = smallTown()
 
-function run(state: GameState, ...commands: Command[]): GameState {
+function run(state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()

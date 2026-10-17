@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, startingState, view, whyNot, type Command, type Game, type GameState } from '@ifloom/engine'
+import { apply, startingState, view, whyNot, type Game, type GameState, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places, where } from '@ifloom/plugin-places'
 import { debug, goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv, type DebugView } from '../src/index.ts'
@@ -30,8 +30,8 @@ function game(): Game {
   }
 }
 
-const run = (state: GameState, g: Game, ...commands: Command[]) =>
-  commands.reduce((s, command) => {
+const run = (state: GameState, g: Game, ...commands: CommandRef[]) =>
+  commands.reduce<GameState>((s, command) => {
     const out = apply(s, g, command)
     expect(out.refused).toBeUndefined()
     return out.state

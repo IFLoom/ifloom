@@ -256,7 +256,7 @@ describe('media in places, messages and posts', () => {
           },
         },
       ],
-      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), ...kit.plugins], collections: kit.collections },
+      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), ...kit.plugins], collections: kit.collections, data: kit.data },
     ).game
   }
 

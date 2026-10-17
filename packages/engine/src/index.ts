@@ -42,6 +42,7 @@ export type {
   Custom,
   CustomCondition,
   CustomContext,
+  TurnContext,
   CustomEffect,
   CustomPanel,
   CustomValue,

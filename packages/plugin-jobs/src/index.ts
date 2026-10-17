@@ -24,8 +24,9 @@ import {
   statDef,
   statValue,
   type Blocked,
-  type Command,
+  type CommandRef,
   type Condition,
+  type DefinedPlugin,
   type Effect,
   type EffectRef,
   type Game,
@@ -173,7 +174,7 @@ function hasCalendar(game: Game): boolean {
 /** Is this day one the job has shifts on? Asked of the calendar's own weekday, on the clock moved to that day. */
 function shiftDay(job: JobDef, day: number, state: GameState, context: PluginContext<JobsState>): boolean {
   if (!job.days || !hasCalendar(context.game)) return true
-  const then = context.apply([{ custom: 'calendar/set', with: { day } }], state)
+  const then = context.apply([{ 'calendar/set': { day } }], state)
   return holds(then, { 'calendar/weekday': { day: job.days } }, context.game)
 }
 
@@ -353,7 +354,7 @@ function jobRef(job: unknown): Reference[] {
  * The plugin. Add it to the game's `plugins`, and put jobs in a pack's
  * `data.jobs.jobs`.
  */
-export function jobs() {
+export function jobs(): DefinedPlugin<JobsState> {
   return definePlugin<JobsState>({
     id: ID,
     version: 1,
@@ -372,40 +373,40 @@ export function jobs() {
       firedNotice: 'You’ve lost your job: {title}',
     },
     conditions: {
-      /** `{ custom: 'jobs/hired', with: { job, rank? } }`: holds the job, at that rank if asked. */
+      /** `{ 'jobs/hired': { job, rank? } }`: holds the job, at that rank if asked. */
       hired: (_state, args, { slice, game }) => {
         const job = jobOf(game, args.job)
         const held = job && slice.held[job.id]
         if (!job || !held) return false
         return args.rank === undefined || rankOf(job, held)?.id === String(args.rank)
       },
-      /** `{ custom: 'jobs/fired', with: { job } }`: was fired from it. */
+      /** `{ 'jobs/fired': { job } }`: was fired from it. */
       fired: (_state, args, { slice }) => slice.fired[String(args.job ?? '')] !== undefined,
-      /** `{ custom: 'jobs/shifts', with: { job, gte… } }`: shifts worked at a job held, in a range. */
+      /** `{ 'jobs/shifts': { job, gte… } }`: shifts worked at a job held, in a range. */
       shifts: (_state, args, { slice }) => {
         const held = slice.held[String(args.job ?? '')]
         return held !== undefined && inRange(held.shifts, args as Range)
       },
     },
     effects: {
-      /** `{ custom: 'jobs/hire', with: { job } }`: hired now, with no requirements asked. */
+      /** `{ 'jobs/hire': { job } }`: hired now, with no requirements asked. */
       hire: (state, args, context) => {
         const job = jobOf(context.game, args.job)
         return job ? hired(state, job, context) : state
       },
-      /** `{ custom: 'jobs/fire', with: { job } }`: fired now, with the notice. */
+      /** `{ 'jobs/fire': { job } }`: fired now, with the notice. */
       fire: (state, args, context) => {
         const job = jobOf(context.game, args.job)
         return job ? firedFrom(state, job, context) : state
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'jobs/apply', with: { id } }`: apply for the job `id`. */
+      /** `{ 'jobs/apply': { id } }`: apply for the job `id`. */
       apply: {
         whyNot: (state, args, context) => cantApply(state, args, context),
         run: (state, args, context) => hired(state, jobOf(context.game, args.id)!, context),
       },
-      /** `{ type: 'custom', name: 'jobs/work', with: { id } }`: work a shift at the job `id`. */
+      /** `{ 'jobs/work': { id } }`: work a shift at the job `id`. */
       work: {
         whyNot: (state, args, context) => cantWork(state, args, context),
         spends: (_state, args, { game }) => jobOf(game, args.id)?.shift.cost,
@@ -428,7 +429,7 @@ export function jobs() {
           return next
         },
       },
-      /** `{ type: 'custom', name: 'jobs/quit', with: { id } }`: leave the job `id`. The player can apply again. */
+      /** `{ 'jobs/quit': { id } }`: leave the job `id`. The player can apply again. */
       quit: {
         whyNot: (_state, args, { slice, game }) => (slice.held[String(args.id ?? '')] ? undefined : say(game, 'jobs/notHired')),
         run: (state, args, context) => {
@@ -438,7 +439,7 @@ export function jobs() {
         },
       },
     },
-    hooks: { after: review },
+    onCommand: review,
     view: (state, context) => jobsView(state, context),
     references: {
       calls: (kind, _name, args) => jobRef(kind === 'commands' ? args.id : args.job),
@@ -479,18 +480,18 @@ export function jobs() {
 }
 
 /** A command: apply for the job. */
-export const applyFor = (job: string): Command => ({ type: 'custom', name: 'jobs/apply', with: { id: job } })
+export const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
 /** A command: work a shift at the job. */
-export const work = (job: string): Command => ({ type: 'custom', name: 'jobs/work', with: { id: job } })
+export const work = (job: string): CommandRef => ({ 'jobs/work': { id: job } })
 /** A command: leave the job. */
-export const quit = (job: string): Command => ({ type: 'custom', name: 'jobs/quit', with: { id: job } })
+export const quit = (job: string): CommandRef => ({ 'jobs/quit': { id: job } })
 /** An effect: hire the player now, asking no requirements. */
-export const hire = (job: string): EffectRef => ({ custom: 'jobs/hire', with: { job } })
+export const hire = (job: string): EffectRef => ({ 'jobs/hire': { job } })
 /** An effect: fire the player from the job now. */
-export const fire = (job: string): EffectRef => ({ custom: 'jobs/fire', with: { job } })
+export const fire = (job: string): EffectRef => ({ 'jobs/fire': { job } })
 /** A condition: the player holds the job, at this rank if given. */
-export const hasJob = (job: string, rank?: string): Condition => ({ custom: 'jobs/hired', with: rank === undefined ? { job } : { job, rank } })
+export const hasJob = (job: string, rank?: string): Condition => ({ 'jobs/hired': rank === undefined ? { job } : { job, rank } })
 /** A condition: the player was fired from the job. */
-export const wasFired = (job: string): Condition => ({ custom: 'jobs/fired', with: { job } })
+export const wasFired = (job: string): Condition => ({ 'jobs/fired': { job } })
 /** A condition: shifts worked at a job the player holds, in this range. */
-export const shiftsWorked = (job: string, range: Range): Condition => ({ custom: 'jobs/shifts', with: { job, ...range } })
+export const shiftsWorked = (job: string, range: Range): Condition => ({ 'jobs/shifts': { job, ...range } })

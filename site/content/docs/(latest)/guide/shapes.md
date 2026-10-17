@@ -38,7 +38,7 @@ Your game decides how long a turn is. A turn ends when the [`turn` effect](/docs
 
 A game that keeps a [calendar](/docs/plugins/calendar) lets the calendar end turns. The calendar says whether a turn is a period, a day or a week, and ends one each time its clock passes that boundary, through the same effect. With a turn of a day, going to bed with its `sleep` command moves the clock to the next morning and ends the turn. Small Town works that way.
 
-Either way, the end of a turn runs the same steps. The counter goes up, the game's `resets` are put back, and its turn [rules](/docs/reference/rules) and the plugins' `turn` hooks run.
+Either way, the end of a turn runs the same steps. The counter goes up, the game's `resets` are put back, and its turn [rules](/docs/reference/rules) and the plugins' `onTurn` hooks run.
 
 ## A linear novel: The Letter
 

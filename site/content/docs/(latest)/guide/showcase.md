@@ -220,7 +220,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` declares the [wardrobe](/docs/plugins/wardrobe)'s two slots, `coat` and `neck`, and starts the player in the raincoat. `town.ts` has the clothes in `data.wardrobe`, and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/docs/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `town.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/docs/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed effects
 
@@ -254,7 +254,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### The phone kit, with its own apps
 
-`src/game.ts`, `kit`. [`phone`](/docs/plugins/phone#phone) builds the stock Messages, Social, Contacts and Gallery apps. It also builds two of the game's own, listed in `apps`: a Camera whose section is three buttons that send activities, and Notes, a section over the `notes` collection. The game passes on both halves of the kit, `kit.plugins` and `kit.collections`. `openCamera` is the [devices](/docs/plugins/devices) helper `openApp('camera')`, for tests.
+`src/game.ts`, `kit`. [`phone`](/docs/plugins/phone#phone) builds the stock Messages, Social, Contacts and Gallery apps. It also builds two of the game's own, listed in `apps`: a Camera whose section is three buttons that send activities, and Notes, a section over the `notes` collection. The game passes on all three parts of the kit: `kit.plugins`, `kit.collections`, and `kit.data`, which holds the phone, its apps, the texts channel and the social feed as content. `openCamera` is the [devices](/docs/plugins/devices) helper `openApp('camera')`, for tests.
 
 ### Calls
 
@@ -276,7 +276,7 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### The turn rule
 
-`src/game.ts`, `rules.turn`. [`turn`](/docs/reference/rules) returns an effect that puts `energy` back to 100 at the end of each turn, which is overnight here, since a turn is a day. It runs before the calendar's `turn` hook, so it sees the night, not the new morning.
+`src/game.ts`, `rules.onTurn`. [`onTurn`](/docs/reference/rules#onturn) applies an effect that puts `energy` back to 100 at the end of each turn, which is overnight here, since a turn is a day. It runs before the calendar's `onTurn` hook, so it sees the night, not the new morning.
 
 ### Stats
 

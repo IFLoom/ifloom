@@ -26,12 +26,12 @@ import {
   startingState,
   storylineOpen,
   whyNot,
-  type Command,
+  type CommandRef,
   type Condition,
   type DefinedPlugin,
-  type KvValue,
   type Game,
   type GameState,
+  type KvValue,
   type PluginContext,
   type PluginProblem,
   type RenderedChoice,
@@ -230,7 +230,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
       }),
     },
     commands: {
-      /** `{ type: 'custom', name: 'cast/talk', with: { id } }`: start a conversation with someone here. */
+      /** `{ 'cast/talk': { id } }`: start a conversation with someone here. */
       talk: {
         whyNot: (state, args, context) => talkBlocked(state, context, ids(args.id)[0]),
         run: (state, args, { game }) => {
@@ -238,7 +238,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
           return { ...state, sceneId: talkOption(state, game, def)!.scene }
         },
       },
-      /** `{ type: 'custom', name: 'cast/call', with: { id } }`: reach someone from anywhere. */
+      /** `{ 'cast/call': { id } }`: reach someone from anywhere. */
       call: {
         whyNot: (state, args, { game }) => callBlocked(state, game, ids(args.id)[0]),
         run: (state, args, { game }) => {
@@ -323,9 +323,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
 }
 
 /** The command that starts a conversation. */
-export const talk = (who: string): Command => ({ type: 'custom', name: `${ID}/talk`, with: { id: who } })
+export const talk = (who: string): CommandRef => ({ [`${ID}/talk`]: { id: who } })
 /** The command that calls someone. */
-export const call = (who: string): Command => ({ type: 'custom', name: `${ID}/call`, with: { id: who } })
+export const call = (who: string): CommandRef => ({ [`${ID}/call`]: { id: who } })
 /** True while any of these is in the room. */
 export const here = (...who: string[]): Condition => ({ [`${ID}/here`]: { character: who } })
 /** True while this one is in one of these places. */

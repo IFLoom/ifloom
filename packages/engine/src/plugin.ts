@@ -8,6 +8,7 @@ import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef } from './entities.ts'
 import type { Reference } from './references.ts'
 import type { Transition, TransitionName } from './features/transitions.ts'
+import type { MigrationTools } from './intake.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -73,6 +74,14 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * A system added to the engine: its own state, and the conditions, effects,
  * commands, hooks and view that work on it.
  *
+ * Its members follow one naming rule (ADR 0009). A hook runs at an event and
+ * returns the next state, and is named `on` and the event: `onTurn`,
+ * `onCommand`. A provider answers a question and never changes the state, and
+ * is named by the noun it gives: `guard`, `price`, `label`, `stage`,
+ * `buttons`, `speaker`, `audio`, `statModifiers`, `view`, `profile`. Tables of
+ * named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
+ * are plural nouns. Nothing is nested: there is no `hooks: {}`.
+ *
  * Content calls a plugin by name with its id in front — `{ custom: 'quests/done',
  * with: { quest: 'bakery' } }` as a condition or effect, `{ type: 'custom', name:
  * 'quests/track', with: { quest: 'bakery' } }` as a command — the same way it
@@ -95,8 +104,10 @@ export type Plugin<S = any> = {
   /**
    * One step per version, keyed by the version it upgrades *from*, as the
    * engine's own saves are. A save whose state has no route forward is refused.
+   * Each step gets the plugin's old state and the same `MigrationTools` a
+   * game's migration gets, and returns the plugin's new state.
    */
-  migrations?: Record<number, (state: unknown) => unknown>
+  migrations?: Record<number, (state: unknown, tools: MigrationTools) => unknown>
   /** Conditions content can test, by name, without the prefix. */
   conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
   /**
@@ -138,12 +149,13 @@ export type Plugin<S = any> = {
    * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
    */
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-  hooks?: {
-    /** At the start of each turn, after the game's own `onTurn`. */
-    turn?: (state: GameState, context: PluginContext<S>) => GameState
-    /** After every command that took, with the state it started from. The context is the state after. */
-    after?: (before: GameState, after: GameState, context: PluginContext<S>) => GameState
-  }
+  /** A hook: at the start of each turn, after the game's own `rules.onTurn`. Returns the next state. */
+  onTurn?: (state: GameState, context: PluginContext<S>) => GameState
+  /**
+   * A hook: after every command that took, with the state it started from and
+   * the state after. The context is the state after. Returns the next state.
+   */
+  onCommand?: (before: GameState, after: GameState, context: PluginContext<S>) => GameState
   /**
    * Whether a command may go ahead, given what it would do (`effectsOf`).
    * Asked of every command but the ones that ignore locks, after the locks.
@@ -190,14 +202,13 @@ export type Plugin<S = any> = {
   view?: (state: GameState, context: PluginContext<S>) => unknown
   /**
    * What the plugin keeps in the player's profile, which outlives saves and
-   * new games: earned achievements, a gallery of endings. The runner calls
-   * `onCommand` after every command that took, with what the plugin's profile
-   * namespace (its id) holds now. Return a new value to store, or undefined to
-   * leave it. Only a runner with a `profile` calls it; `apply` never does.
+   * new games: earned achievements, a gallery of endings. The runner asks it
+   * after every command that took, with the state after, the state before and
+   * what the plugin's profile namespace (its id) holds now. Return a new value
+   * to store, or undefined to leave it. Only a runner with a `profile` asks;
+   * `apply` never does.
    */
-  profile?: {
-    onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
-  }
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   /**
    * What this plugin's calls and content name, for the content checker to
    * resolve as it resolves the engine's own. See `PluginReferences`.
@@ -436,27 +447,20 @@ export function pluginValue(game: Game | undefined, name: string) {
   return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))
 }
 
-/** Run one hook on every plugin that has it, in the order the game lists them. `ending` while a turn is ending. */
-export function runHooks(
-  game: Game,
-  hook: 'turn',
-  state: GameState,
-  ending = false,
-): GameState {
+/** Every plugin's `onTurn` hook, in the order the game lists them, as a turn ends: an effect they apply can end no turn. */
+export function runTurnHooks(game: Game, state: GameState): GameState {
   let next = state
   for (const plugin of game.plugins ?? []) {
-    const fn = plugin.hooks?.[hook]
-    if (fn) next = fn(next, pluginContext(plugin, next, game, { ending }))
+    if (plugin.onTurn) next = plugin.onTurn(next, pluginContext(plugin, next, game, { ending: true }))
   }
   return next
 }
 
-/** Every plugin's `after` hook, in order. */
-export function runAfter(game: Game, before: GameState, after: GameState): GameState {
+/** Every plugin's `onCommand` hook, in order. */
+export function runCommandHooks(game: Game, before: GameState, after: GameState): GameState {
   let next = after
   for (const plugin of game.plugins ?? []) {
-    const fn = plugin.hooks?.after
-    if (fn) next = fn(before, next, pluginContext(plugin, next, game))
+    if (plugin.onCommand) next = plugin.onCommand(before, next, pluginContext(plugin, next, game))
   }
   return next
 }

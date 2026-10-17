@@ -13,6 +13,7 @@ import {
   applyEffects,
   buildEffects,
   defaultRuntime,
+  commandOf,
   definePlugin,
   holds,
   notify,
@@ -22,6 +23,8 @@ import {
   say,
   type Block,
   type Command,
+  type CommandRef,
+  type DefinedPlugin,
   type Condition,
   type EffectRef,
   type Game,
@@ -54,10 +57,6 @@ export type MessageDef = {
   body: Block[]
   /** What the player can send back; one, once. None if left out. */
   replies?: ReplyDef[]
-}
-
-export type MessagesOptions = {
-  channels: Channel[]
 }
 
 /** What the plugin keeps in a save. */
@@ -133,13 +132,17 @@ function offered(state: GameState, game: Game, record: MessagesState, message: M
   return (message.replies ?? []).filter((reply) => holds(state, reply.when, game))
 }
 
-/**
- * The plugin. Add it to the game's `plugins` with the channels the game has,
- * and put messages in a pack's `data.messages.messages`.
- */
-export function messages(options: MessagesOptions) {
-  const channelIds = new Set(options.channels.map((channel) => channel.id))
+/** The game's channels, in order: `data.messages.channels`, from its packs. */
+export function channelsOf(game: Game): Channel[] {
+  return (game.data?.[ID]?.channels ?? []) as Channel[]
+}
 
+/**
+ * The plugin. Add it to the game's `plugins`, and put the channels and the
+ * messages in a pack's `data.messages.channels` and `data.messages.messages`,
+ * so a mod can add either.
+ */
+export function messages(): DefinedPlugin<MessagesState> {
   function unreadIn(record: MessagesState, game: Game, channel?: string): number {
     return messageDefs(game).filter(
       (message) =>
@@ -161,18 +164,18 @@ export function messages(options: MessagesOptions) {
     },
     start: () => ({ arrived: {}, replied: {}, read: {} }),
     conditions: {
-      /** `{ custom: 'messages/arrived', with: { message } }`. */
+      /** `{ 'messages/arrived': { message } }`. */
       arrived: (_state, args, { slice }) => slice.arrived[String(args.message)] !== undefined,
-      /** `{ custom: 'messages/replied', with: { message, reply? } }`: any reply, or that one. */
+      /** `{ 'messages/replied': { message, reply? } }`: any reply, or that one. */
       replied: (_state, args, { slice }) => {
         const sent = slice.replied[String(args.message)]
         return args.reply === undefined ? sent !== undefined : sent === args.reply
       },
-      /** `{ custom: 'messages/read', with: { message } }`. */
+      /** `{ 'messages/read': { message } }`. */
       read: (_state, args, { slice }) => Boolean(slice.read[String(args.message)]),
     },
     commands: {
-      /** `{ type: 'custom', name: 'messages/reply', with: { message, reply } }`. */
+      /** `{ 'messages/reply': { message, reply } }`. */
       reply: {
         whyNot: (state, args, { slice, game }) => {
           const message = messageDefs(game).find((entry) => entry.id === args.message)
@@ -193,7 +196,7 @@ export function messages(options: MessagesOptions) {
           return applyRefs(next, game, reply.effects ?? [])
         },
       },
-      /** `{ type: 'custom', name: 'messages/read', with: { id?, channel? } }`: mark the thread `id` read; leave both out for everything. */
+      /** `{ 'messages/read': { id?, channel? } }`: mark the thread `id` read; leave both out for everything. */
       read: {
         run: (_state, args, { slice, set, game }) => {
           const read = { ...slice.read }
@@ -215,26 +218,24 @@ export function messages(options: MessagesOptions) {
        */
       unread: (_state, args, { slice, game }) => unreadIn(slice, game, args.channel === undefined ? undefined : String(args.channel)),
     },
-    hooks: {
-      // Deliver what has come due, and say so.
-      after: (_before, after, { slice, set, game }) => {
-        let arrived = slice.arrived
-        let next = after
-        for (const message of messageDefs(game)) {
-          if (arrived[message.id] !== undefined || !holds(after, message.when, game)) continue
-          arrived = { ...arrived, [message.id]: after.turn }
-          next = notify(next, {
-            id: `messages.${message.id}`,
-            title: personOf(game, after, message.from).name,
-            tag: message.channel,
-          })
-        }
-        return arrived === slice.arrived ? after : set({ ...slice, arrived }, next)
-      },
+    // Deliver what has come due, and say so.
+    onCommand: (_before, after, { slice, set, game }) => {
+      let arrived = slice.arrived
+      let next = after
+      for (const message of messageDefs(game)) {
+        if (arrived[message.id] !== undefined || !holds(after, message.when, game)) continue
+        arrived = { ...arrived, [message.id]: after.turn }
+        next = notify(next, {
+          id: `messages.${message.id}`,
+          title: personOf(game, after, message.from).name,
+          tag: message.channel,
+        })
+      }
+      return arrived === slice.arrived ? after : set({ ...slice, arrived }, next)
     },
     view: (state, { slice, game, picks }): MessagesView => {
       const runtime = defaultRuntime(game)
-      const channels = options.channels.map((channel): ChannelView => {
+      const channels = channelsOf(game).map((channel): ChannelView => {
         const threads = new Map<string, MessageView[]>()
         const latest = new Map<string, number>()
         messageDefs(game)
@@ -256,7 +257,7 @@ export function messages(options: MessagesOptions) {
               replies: offered(state, game, slice, message).map((reply) => ({
                 id: reply.id,
                 label: label(reply.id),
-                command: replyTo(message.id, reply.id),
+                command: commandOf(replyTo(message.id, reply.id)),
               })),
               replied: sent === undefined ? null : label(sent),
             }
@@ -286,6 +287,7 @@ export function messages(options: MessagesOptions) {
           list: 'messages',
           id: message.id,
           refs: [
+            { entry: message.channel, plugin: ID, list: 'channels', noun: 'channel' },
             { when: message.when },
             { blocks: message.body },
             ...(message.replies ?? []).flatMap((reply) => [
@@ -299,7 +301,6 @@ export function messages(options: MessagesOptions) {
       const problems: PluginProblem[] = []
       for (const message of messageDefs(game)) {
         const say = (what: string) => problems.push({ list: 'messages', id: message.id, what })
-        if (!channelIds.has(message.channel)) say(`no channel called "${message.channel}"`)
         const ids = new Set<string>()
         for (const reply of message.replies ?? []) {
           if (ids.has(reply.id)) say(`two replies are called "${reply.id}"`)
@@ -312,24 +313,17 @@ export function messages(options: MessagesOptions) {
   return plugin
 }
 
-/** Apply effect refs the way the engine does: plugin effects in turn, the game's worked out up front. */
+/** Apply effect refs the way the engine does: each in its turn. */
 function applyRefs(state: GameState, game: Game, refs: readonly EffectRef[]): GameState {
   return applyEffects(state, game, buildEffects(state, game, refs))
 }
 
 /** A command: send this reply to this message. */
-export const replyTo = (message: string, reply: string): Command => ({
-  type: 'custom',
-  name: 'messages/reply',
-  with: { message, reply },
-})
+export const replyTo = (message: string, reply: string): CommandRef => ({ [`${ID}/reply`]: { message, reply } })
 /** A command: mark a thread read, or every message with no thread given. */
-export const readThread = (thread?: string): Command => ({ type: 'custom', name: 'messages/read', with: { id: thread } })
+export const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: thread === undefined ? {} : { id: thread } })
 /** A condition: the message has arrived. */
-export const messageArrived = (message: string): Condition => ({ custom: 'messages/arrived', with: { message } })
+export const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
 /** A condition: the player replied to the message, or with that reply. */
-export const messageReplied = (message: string, reply?: string): Condition => ({
-  custom: 'messages/replied',
-  with: reply === undefined ? { message } : { message, reply },
-})
+export const messageReplied = (message: string, reply?: string): Condition => ({ [`${ID}/replied`]: reply === undefined ? { message } : { message, reply } })
 

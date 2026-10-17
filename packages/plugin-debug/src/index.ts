@@ -12,18 +12,19 @@
  */
 import {
   clampStat,
-  entityOf,
-  parseRef,
-  writeEntity,
   definePlugin,
+  entityOf,
   holds,
   itemById,
-  sceneById,
+  parseRef,
   say,
+  sceneById,
   statDef,
-  type Command,
-  type KvValue,
+  writeEntity,
+  type CommandRef,
+  type DefinedPlugin,
   type Game,
+  type KvValue,
   type PluginCommand,
 } from '@ifloom/engine'
 
@@ -47,7 +48,7 @@ function isKvValue(value: unknown): value is KvValue {
 }
 
 /** The plugin. Add it to `game.plugins` in development builds only. */
-export function debug() {
+export function debug(): DefinedPlugin<null> {
   return definePlugin<null>({
     id: 'debug',
     version: 1,
@@ -122,7 +123,7 @@ export function debug() {
           return ok ? undefined : sayDebug(game, 'badTime', undefined, periods.join(', '))
         },
         run: (_state, args, { apply }) =>
-          apply([{ custom: 'calendar/set', with: { ...(args.day === undefined ? {} : { day: Number(args.day) }), ...(args.period === undefined ? {} : { period: String(args.period) }) } }]),
+          apply([{ 'calendar/set': { ...(args.day === undefined ? {} : { day: Number(args.day) }), ...(args.period === undefined ? {} : { period: String(args.period) }) } }]),
       }),
       /** `{ name: 'debug/turn', with: { to } }`: set how many turns have passed. No turn's rules run. */
       turn: free({
@@ -159,16 +160,16 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 }
 
 /** A command: put a stat at a value. */
-export const setStat = (stat: string, to: number, of?: string): Command => ({ type: 'custom', name: 'debug/stat', with: { stat, to, ...(of === undefined ? {} : { of }) } })
+export const setStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
 /** A command: set a key in the kv store. */
-export const setKv = (key: string, to: KvValue): Command => ({ type: 'custom', name: 'debug/kv', with: { key, to } })
+export const setKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
 /** A command: set how many of an item the player has. */
-export const setItem = (item: string, to: number): Command => ({ type: 'custom', name: 'debug/item', with: { item, to } })
+export const setItem = (item: string, to: number): CommandRef => ({ 'debug/item': { item, to } })
 /** A command: put a scene on screen, or close it. */
-export const jumpTo = (scene?: string): Command => ({ type: 'custom', name: 'debug/scene', with: { id: scene } })
+export const jumpTo = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
 /** A command: set the clock. */
-export const setTime = (time: { day?: number; period?: string }): Command => ({ type: 'custom', name: 'debug/time', with: time })
+export const setTime = (time: { day?: number; period?: string }): CommandRef => ({ 'debug/time': time })
 /** A command: set how many turns have passed. */
-export const setTurn = (turn: number): Command => ({ type: 'custom', name: 'debug/turn', with: { to: turn } })
+export const setTurn = (turn: number): CommandRef => ({ 'debug/turn': { to: turn } })
 /** A command: be somewhere. */
-export const goTo = (location: string): Command => ({ type: 'custom', name: 'debug/go', with: { id: location } })
+export const goTo = (location: string): CommandRef => ({ 'debug/go': { id: location } })

@@ -14,8 +14,7 @@ import {
   type Game,
   type GameState,
   type Pack,
-  type Plugin,
-} from '@ifloom/engine'
+  type Plugin, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
 import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work, type JobDef, type JobsView } from '../src/index.ts'
@@ -73,7 +72,7 @@ function game(...partners: Plugin[]): Game {
   return loaded.game
 }
 
-function run(state: GameState, g: Game, ...commands: Command[]): GameState {
+function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()

@@ -142,8 +142,8 @@ Each day, `count` of the vendor's goods (1 if left out) are marked down by `off`
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'shop/buy', with: { vendor, item, count? } }` | `buy(vendor, item, count?)` | Pays today's price for `count` of the item (1 if left out) and gives them to the player. |
-| `{ type: 'custom', name: 'shop/sell', with: { vendor, item, count? } }` | `sell(vendor, item, count?)` | Takes `count` of the item from the player and pays the vendor's `buysBack` fraction of its full price, rounded down per item. A limited good goes back into stock. |
+| `{ 'shop/buy': { vendor, item, count? } }` | `buy(vendor, item, count?)` | Pays today's price for `count` of the item (1 if left out) and gives them to the player. |
+| `{ 'shop/sell': { vendor, item, count? } }` | `sell(vendor, item, count?)` | Takes `count` of the item from the player and pays the vendor's `buysBack` fraction of its full price, rounded down per item. A limited good goes back into stock. |
 
 Paying applies a [`stat`](/docs/reference/effects#stat) effect for each stat, so the game's `rules.onStat` sees it, then an [`item`](/docs/reference/effects#item) effect.
 
@@ -177,8 +177,8 @@ const actions: ActionDef[] = [
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'shop/open', with: { vendor } }` | `vendorOpen(vendor)` | The vendor is open now. Where the player is doesn't matter. |
-| `{ custom: 'shop/inStock', with: { vendor, item } }` | `inStock(vendor, item)` | The vendor offers the item now and has at least one left. |
+| `{ 'shop/open': { vendor } }` | `vendorOpen(vendor)` | The vendor is open now. Where the player is doesn't matter. |
+| `{ 'shop/inStock': { vendor, item } }` | `inStock(vendor, item)` | The vendor offers the item now and has at least one left. |
 
 An unknown vendor or item is false.
 
@@ -269,8 +269,8 @@ What the plugin keeps in a save, at `state.plugins.shop`. For each vendor and li
 ### Helpers
 
 ```ts
-const buy: (vendor: string, item: string, count?: number) => Command
-const sell: (vendor: string, item: string, count?: number) => Command
+const buy: (vendor: string, item: string, count?: number) => CommandRef
+const sell: (vendor: string, item: string, count?: number) => CommandRef
 const vendorOpen: (vendor: string) => Condition
 const inStock: (vendor: string, item: string) => Condition
 ```

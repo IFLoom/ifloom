@@ -181,7 +181,7 @@ After every command, the player is fired from a job whose `fire.missed` has been
 
 ### A weekly payday
 
-A rank's `pay` is paid at the end of each shift. For wages that come once a week, pay into a stat the player doesn't spend and pay that out on payday. Declare a hidden stat, pay the rank in it, and move it into coins from [`rules.turn`](/docs/reference/rules#a-days-end-step-by-step) on the right night:
+A rank's `pay` is paid at the end of each shift. For wages that come once a week, pay into a stat the player doesn't spend and pay that out on payday. Declare a hidden stat, pay the rank in it, and move it into coins from [`rules.onTurn`](/docs/reference/rules#a-days-end-step-by-step) on the right night:
 
 ```ts
 import type { GameRules, StatDef } from '@ifloom/engine'
@@ -192,15 +192,14 @@ const stats: StatDef[] = [{ id: 'owed', label: 'Wages owed', max: 9999, listed: 
 
 const rules: GameRules = {
   // Friday night, in a game whose turn is a day and starts on a Monday.
-  turn: (state, nextTurn) => ({
-    effects: (nextTurn - 1) % 7 === 4
-      ? [
+  onTurn: (state, { apply }) =>
+    (state.turn - 1) % 7 === 4
+      ? apply([
           { kind: 'stat', stat: 'coins', by: state.stats.owed ?? 0 },
           { kind: 'stat', stat: 'owed', to: 0 },
           { kind: 'notify', id: 'payday', title: 'Payday', tag: 'money' },
-        ]
-      : [],
-  }),
+        ])
+      : state,
 }
 ```
 
@@ -225,19 +224,19 @@ resets: { workedToday: false }
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'jobs/hired', with: { job, rank? } }` | `hasJob(job, rank?)` | The player holds the job, at that rank if given. |
-| `{ custom: 'jobs/fired', with: { job } }` | `wasFired(job)` | The player was fired from it and hasn't been hired again. |
-| `{ custom: 'jobs/shifts', with: { job, gte… } }` | `shiftsWorked(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
+| `{ 'jobs/hired': { job, rank? } }` | `hasJob(job, rank?)` | The player holds the job, at that rank if given. |
+| `{ 'jobs/fired': { job } }` | `wasFired(job)` | The player was fired from it and hasn't been hired again. |
+| `{ 'jobs/shifts': { job, gte… } }` | `shiftsWorked(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
 
 ## Commands and effects
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'jobs/apply', with: { id } }` | `applyFor(job)` | A command. Hires the player at the first rank of the job `id`, unless one of its `blocked` entries holds. Refused with `You already work there.` when they do. |
-| `{ type: 'custom', name: 'jobs/work', with: { id } }` | `work(job)` | A command. Works a shift at the job `id`: see [Shifts](#shifts). |
-| `{ type: 'custom', name: 'jobs/quit', with: { id } }` | `quit(job)` | A command. Leaves the job `id`. They can apply again. |
-| `{ custom: 'jobs/hire', with: { job } }` | `hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
-| `{ custom: 'jobs/fire', with: { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
+| `{ 'jobs/apply': { id } }` | `applyFor(job)` | A command. Hires the player at the first rank of the job `id`, unless one of its `blocked` entries holds. Refused with `You already work there.` when they do. |
+| `{ 'jobs/work': { id } }` | `work(job)` | A command. Works a shift at the job `id`: see [Shifts](#shifts). |
+| `{ 'jobs/quit': { id } }` | `quit(job)` | A command. Leaves the job `id`. They can apply again. |
+| `{ 'jobs/hire': { job } }` | `hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
+| `{ 'jobs/fire': { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
 
 ## Strings
 
@@ -316,9 +315,9 @@ What the plugin keeps in a save, at `state.plugins.jobs`: each job the player ho
 ### Helpers
 
 ```ts
-const applyFor: (job: string) => Command
-const work: (job: string) => Command
-const quit: (job: string) => Command
+const applyFor: (job: string) => CommandRef
+const work: (job: string) => CommandRef
+const quit: (job: string) => CommandRef
 const hire: (job: string) => EffectRef
 const fire: (job: string) => EffectRef
 const hasJob: (job: string, rank?: string) => Condition

@@ -600,6 +600,6 @@ export const stats = defineFeature<StatsShape>({
       .map((stat) => statView(state, game, stat, undefined, cx)),
     statsById: Object.fromEntries((game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, statView(state, game, stat, undefined, cx)])),
   }),
-  // After the plugins' `after` hooks, so a level a hook's reward reached is noticed too.
+  // After the plugins' `onCommand` hooks, so a level a hook's reward reached is noticed too.
   afterCommand: { at: 'afterPlugins', run: levelUps },
 })

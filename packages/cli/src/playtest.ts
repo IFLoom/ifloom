@@ -1,7 +1,7 @@
-import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type Game, type GameState, type View } from '@ifloom/engine'
+import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type CommandRef, type Game, type GameState, type View } from '@ifloom/engine'
 
 /** Picks the next command from what is on screen, or null to stop. */
-export type Policy = (screen: View, state: GameState, game: Game) => Command | null
+export type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
 
 export type PlaytestOptions = {
   /** Stop after this many turns have passed. 7 if left out. */
@@ -43,7 +43,7 @@ export function screenText(screen: View): string {
 }
 
 /** A place as the explorer walks it: its exits and its actions. */
-type Place = { id: string; exits: readonly string[]; actions?: readonly { command: Command }[] }
+type Place = { id: string; exits: readonly string[]; actions?: readonly { command: CommandRef }[] }
 
 /** The game's places, asked of the places plugin by name: none without it. */
 function placesIn(game: Game, state: GameState): Place[] {
@@ -189,8 +189,9 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
   for (let step = 0; step < limit && state.turn - start.turn < turns; step += 1) {
     const screen = view(state, game)
     lines.push(screenText(screen))
-    const command = policy(screen, state, game)
-    if (!command) break
+    const picked = policy(screen, state, game)
+    if (!picked) break
+    const command = commandOf(picked)
     lines.push(`> ${JSON.stringify(command)}`)
     const out = apply(state, game, command)
     if (!out.ok) {

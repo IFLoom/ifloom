@@ -10,8 +10,8 @@ A message is like a scene that arrives instead of one the player walks into. It 
 
 ```ts
 import {
-  messages, messageDefs, replyTo, readThread, messageArrived, messageReplied,
-  type Channel, type MessageDef, type ReplyDef, type MessagesOptions, type MessagesState,
+  messages, messageDefs, channelsOf, replyTo, readThread, messageArrived, messageReplied,
+  type Channel, type MessageDef, type ReplyDef, type MessagesState,
   type MessagesView, type ChannelView, type ThreadView, type MessageView,
 } from '@ifloom/plugin-messages'
 ```
@@ -31,15 +31,15 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `messages(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `messages()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
 ## messages
 
 ```ts
-function messages(options: MessagesOptions): DefinedPlugin<MessagesState>
+function messages(): DefinedPlugin<MessagesState>
 ```
 
-Builds the plugin, with the id `messages`. Call it once, when you build the game, with the channels the game has.
+Builds the plugin, with the id `messages`. Call it once, when you build the game. It takes no options: the channels and the messages are content, in a pack's `data.messages`, so a mod can add either.
 
 ```ts
 import { loadGame, type Pack } from '@ifloom/engine'
@@ -58,27 +58,26 @@ const { game } = loadGame([town], {
     calendar(),
     places({ start: 'flat' }),
     cast(),
-    messages({
-      channels: [
-        { id: 'texts', name: 'Texts' },
-        { id: 'letters', name: 'Letters' },
-      ],
-    }),
+    messages(),
   ],
 })
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a sender who is one of its characters is shown with their name and portrait, which the plugin gets from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every sender is shown as written.
-
-### MessagesOptions
+The channels go in the pack beside the messages:
 
 ```ts
-type MessagesOptions = { channels: Channel[] }
+data: {
+  messages: {
+    channels: [
+      { id: 'texts', name: 'Texts' },
+      { id: 'letters', name: 'Letters' },
+    ],
+    messages: [/* … */],
+  },
+}
 ```
 
-| Field | What it is |
-|---|---|
-| `channels` | Every channel, in the order the view lists them. |
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a sender who is one of its characters is shown with their name and portrait, which the plugin gets from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every sender is shown as written.
 
 ### Channel
 
@@ -91,7 +90,15 @@ type Channel = { id: string; name: string }
 | `id` | What messages name the channel by, and the `tag` on the notices they raise. It's also what the [value](#values) `messages/unread` takes as `channel`. |
 | `name` | What the player reads. |
 
-The channels are code, not content, so a mod can't add one.
+Channels are content. List them in a pack's `data.messages.channels`, in the order the view lists them. They're merged by id, so a mod can add a channel or rename one.
+
+### channelsOf
+
+```ts
+function channelsOf(game: Game): Channel[]
+```
+
+The game's channels, merged from its packs, in order.
 
 ## Writing messages
 
@@ -159,10 +166,10 @@ const text: MessageDef = {
 
 ### Messages that come again
 
-Each message arrives once. For a text that keeps coming, such as Sam checking in now and then, write a numbered run of messages and let a counter in the kv store release them one at a time. Something else raises the counter, such as a roll in [`rules.turn`](/docs/reference/rules#turn):
+Each message arrives once. For a text that keeps coming, such as Sam checking in now and then, write a numbered run of messages and let a counter in the kv store release them one at a time. Something else raises the counter, such as a roll in [`rules.onTurn`](/docs/reference/rules#onturn):
 
 ```ts
-import { chance, type GameRules } from '@ifloom/engine'
+import type { GameRules } from '@ifloom/engine'
 import type { MessageDef } from '@ifloom/plugin-messages'
 
 // Twelve check-ins, each arriving once the counter reaches its number.
@@ -177,9 +184,7 @@ const checkIns: MessageDef[] = Array.from({ length: 12 }, (_, n) => ({
 
 const rules: GameRules = {
   // Two mornings in five, Sam texts.
-  turn: (state, nextTurn) => ({
-    effects: chance(2, 5, state.seed, nextTurn, 'sam.checkin') ? [{ kind: 'kv', key: 'samTexts', by: 1 }] : [],
-  }),
+  onTurn: (state, { apply, roll }) => (roll(5, 'sam.checkin') < 2 ? apply([{ kind: 'kv', key: 'samTexts', by: 1 }]) : state),
 }
 ```
 
@@ -240,7 +245,7 @@ const town: Pack = {
           ...place('flat', 'Your flat', ['high-street']),
           actions: [
             { id: 'bed', label: 'Go to bed', command: sleep() },
-            { id: 'mat', label: 'Pick up the post', command: { type: 'custom', name: 'messages/read', with: { channel: 'letters' } } },
+            { id: 'mat', label: 'Pick up the post', command: { 'messages/read': { channel: 'letters' } } },
           ],
         },
         place('high-street', 'High Street', ['flat', 'cafe', 'park']),
@@ -250,6 +255,7 @@ const town: Pack = {
     },
     cast: { characters: [ava] },
     messages: {
+      channels: [{ id: 'texts', name: 'Texts' }, { id: 'letters', name: 'Letters' }],
       messages: [
         {
           id: 'ava.text',
@@ -285,7 +291,7 @@ const { game } = loadGame([town], {
     calendar(),
     places({ start: 'flat' }),
     cast(),
-    messages({ channels: [{ id: 'texts', name: 'Texts' }, { id: 'letters', name: 'Letters' }] }),
+    messages(),
   ],
 })
 ```
@@ -345,9 +351,9 @@ inbox(state).unread     // 0
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'messages/arrived', with: { message } }` | `messageArrived(message)` | The message has arrived. |
-| `{ custom: 'messages/replied', with: { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message. With `reply`, they sent that reply. |
-| `{ custom: 'messages/read', with: { message } }` | | The player has read the message. |
+| `{ 'messages/arrived': { message } }` | `messageArrived(message)` | The message has arrived. |
+| `{ 'messages/replied': { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message. With `reply`, they sent that reply. |
+| `{ 'messages/read': { message } }` | | The player has read the message. |
 
 You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each can also be written short, with the full name as the only key. `{ 'messages/arrived': { message: 'ava.text' } }` is the same as `{ custom: 'messages/arrived', with: { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
@@ -363,8 +369,8 @@ An unknown message is false.
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'messages/reply', with: { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the message replied and read, then runs the reply's effects. |
-| `{ type: 'custom', name: 'messages/read', with: { id?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
+| `{ 'messages/reply': { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the message replied and read, then runs the reply's effects. |
+| `{ 'messages/read': { id?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
 
 `messages/reply` is refused, in this order, with:
 
@@ -374,9 +380,9 @@ An unknown message is false.
 
 You can reword each line (see [Strings](#strings)).
 
-Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `readThread(thread)` when the player opens a thread. `readThread` only takes a thread, so to mark a whole channel read you write the long form with `channel`, as the flat's button does above.
+Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `readThread(thread)` when the player opens a thread. `readThread` only takes a thread, so to mark a whole channel read you write the command yourself with `channel`, as the flat's button does above.
 
-Both are commands like any other, so triggers run after them, and so does every plugin's `after` hook. If a reply's effects make another message's `when` true, that message arrives in the same command.
+Both are commands like any other, so triggers run after them, and so does every plugin's `onCommand` hook. If a reply's effects make another message's `when` true, that message arrives in the same command.
 
 ## Values
 
@@ -407,7 +413,7 @@ import { town } from './town.ts'
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  plugins: [messages({ channels: [{ id: 'texts', name: 'Texts' }] })],
+  plugins: [messages()],
   strings: { 'messages/alreadyReplied': 'You have said your piece.' },
 })
 ```
@@ -424,7 +430,7 @@ type MessagesView = { channels: ChannelView[]; unread: number }
 
 | Field | What it is |
 |---|---|
-| `channels` | Every channel, in the order you gave them to `messages(...)`, including empty ones. |
+| `channels` | Every channel, in the order `data.messages.channels` lists them, including empty ones. |
 | `unread` | Unread messages in every channel. |
 
 ### ChannelView
@@ -515,13 +521,13 @@ What the plugin keeps in a save, at `state.plugins.messages`. It holds the turn 
 
 ## For code
 
-The helpers write the content objects for you, typed. `messageArrived` and `messageReplied` return a `Condition`, and `replyTo` and `readThread` return a `Command`.
+The helpers write the content objects for you, typed. `messageArrived` and `messageReplied` return a `Condition`, and `replyTo` and `readThread` return a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
 
 ### Helpers
 
 ```ts
-const replyTo: (message: string, reply: string) => Command
-const readThread: (thread?: string) => Command
+const replyTo: (message: string, reply: string) => CommandRef
+const readThread: (thread?: string) => CommandRef
 const messageArrived: (message: string) => Condition
 const messageReplied: (message: string, reply?: string) => Condition
 ```
@@ -538,7 +544,7 @@ The game's messages, merged from its packs: `game.data.messages.messages`.
 
 When the game loads, the plugin reports these problems against the pack each message came from, with `where` as `messages <id>`:
 
-- A channel the game wasn't given (`no channel called "…"`).
+- A channel the game doesn't have (`unknown channel "…"`).
 - Anything `when` names that the game doesn't have, such as `unknown storyline "…"`.
 - A body block with no prose (`no prose for "…"`), and anything the block's `when` names.
 - Two replies with the same id (`two replies are called "…"`).
@@ -553,7 +559,7 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 
 ## Gotchas
 
-- **Messages arrive only after a command.** The plugin delivers them in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
+- **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
 - **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time. See [Messages that come again](#messages-that-come-again).
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.

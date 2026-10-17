@@ -8,20 +8,18 @@
  * by itself. The slots are the game's: a coat and boots, armour and a ring,
  * a uniform with a cap.
  */
-import { definePlugin, itemById, itemStart, say, type Command, type Condition, type Game, type PluginProblem } from '@ifloom/engine'
+import { definePlugin, itemById, itemStart, say, type CommandRef, type Condition, type DefinedPlugin, type Game, type PluginProblem } from '@ifloom/engine'
 
 /** A place on the body something can be worn. */
-export type WardrobeSlot = { id: string; label: string }
+export type WardrobeSlot = {
+  id: string
+  label: string
+  /** What the player has on in it at the start: an item they start with. Nothing if left out. */
+  start?: string
+}
 
 /** An item that can be worn, and where. */
 export type ClothingDef = { id: string; slot: string }
-
-export type WardrobeOptions = {
-  /** In the order the UI lists them. */
-  slots: WardrobeSlot[]
-  /** What the player has on at the start, by slot. The player has to start with each one. */
-  start?: Record<string, string>
-}
 
 /** What the plugin keeps in a save: what is in each slot. */
 export type WardrobeState = { worn: Record<string, string | null> }
@@ -54,12 +52,17 @@ function name(game: Game, id: string): string {
   return itemById(game, id)?.name ?? id
 }
 
+/** The game's slots, in the order the UI lists them: `data.wardrobe.slots`, from its packs. */
+export function slotsOf(game: Game): WardrobeSlot[] {
+  return (game.data?.[ID]?.slots ?? []) as WardrobeSlot[]
+}
+
 /**
- * The plugin. Add it to the game's `plugins` with the slots the game has, and
- * put clothes — which item goes in which slot — in a pack's `data.wardrobe.clothes`.
+ * The plugin. Add it to the game's `plugins`, and put the slots and the
+ * clothes (which item goes in which slot) in a pack's `data.wardrobe.slots`
+ * and `data.wardrobe.clothes`, so a mod can add either.
  */
-export function wardrobe(options: WardrobeOptions) {
-  const slotIds = new Set(options.slots.map((slot) => slot.id))
+export function wardrobe(): DefinedPlugin<WardrobeState> {
   return definePlugin<WardrobeState>({
     id: ID,
     version: 1,
@@ -68,15 +71,15 @@ export function wardrobe(options: WardrobeOptions) {
       alreadyWearing: 'You are already wearing the {item}.',
       nothingToTakeOff: 'There is nothing to take off.',
     },
-    start: () => ({
-      worn: Object.fromEntries(options.slots.map((slot) => [slot.id, options.start?.[slot.id] ?? null])),
+    start: (game) => ({
+      worn: Object.fromEntries(slotsOf(game).map((slot) => [slot.id, slot.start ?? null])),
     }),
     conditions: {
       /**
-       * `{ custom: 'wardrobe/wearing', with: { item } }`: the item is on.
+       * `{ 'wardrobe/wearing': { item } }`: the item is on.
        * With `slot` and no `item`: something is in that slot. With both: that item, in that slot.
        */
-      wearing: (_state, args, { slice }) => {
+      wearing: (_state, args, { slice, game }) => {
         const item = args.item === undefined ? undefined : String(args.item)
         const slot = args.slot === undefined ? undefined : String(args.slot)
         if (slot !== undefined) {
@@ -84,11 +87,11 @@ export function wardrobe(options: WardrobeOptions) {
           return item === undefined ? worn !== null : worn === item
         }
         // Only the slots the game has now: a save can still hold one that was taken out.
-        return item !== undefined && options.slots.some((entry) => slice.worn[entry.id] === item)
+        return item !== undefined && slotsOf(game).some((entry) => slice.worn[entry.id] === item)
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'wardrobe/wear', with: { id } }`: put on the item `id`. */
+      /** `{ 'wardrobe/wear': { id } }`: put on the item `id`. */
       wear: {
         whyNot: (state, args, { slice, game }) => {
           const id = String(args.id ?? '')
@@ -104,23 +107,21 @@ export function wardrobe(options: WardrobeOptions) {
           return set({ worn: { ...slice.worn, [slot]: id } })
         },
       },
-      /** `{ type: 'custom', name: 'wardrobe/takeOff', with: { id } }`: take off what is in the slot `id`. */
+      /** `{ 'wardrobe/takeOff': { id } }`: take off what is in the slot `id`. */
       takeOff: {
         whyNot: (_state, args, { slice, game }) =>
           slice.worn[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
         run: (_state, args, { slice, set }) => set({ worn: { ...slice.worn, [String(args.id)]: null } }),
       },
     },
-    hooks: {
-      // Sold, lost or used up: whatever the player no longer has comes off.
-      after: (_before, after, { slice, set }) => {
-        const gone = Object.entries(slice.worn).filter(([, item]) => item && (after.items[item] ?? 0) <= 0)
-        if (!gone.length) return after
-        return set({ worn: { ...slice.worn, ...Object.fromEntries(gone.map(([slot]) => [slot, null])) } })
-      },
+    // Sold, lost or used up: whatever the player no longer has comes off.
+    onCommand: (_before, after, { slice, set }) => {
+      const gone = Object.entries(slice.worn).filter(([, item]) => item && (after.items[item] ?? 0) <= 0)
+      if (!gone.length) return after
+      return set({ worn: { ...slice.worn, ...Object.fromEntries(gone.map(([slot]) => [slot, null])) } })
     },
     view: (state, { slice, game }): WardrobeView => ({
-      slots: options.slots.map((slot) => {
+      slots: slotsOf(game).map((slot) => {
         const item = slice.worn[slot.id] ?? null
         return { id: slot.id, label: slot.label, item, name: item ? name(game, item) : null }
       }),
@@ -134,20 +135,19 @@ export function wardrobe(options: WardrobeOptions) {
         const item = kind === 'commands' ? (name === 'wear' ? args.id : undefined) : args.item
         return item === undefined ? [] : [{ item: String(item) }]
       },
-      // A piece of clothing is an item, by its id.
-      content: (game) => clothes(game).map((entry) => ({ list: 'clothes', id: entry.id, refs: [{ item: entry.id }] })),
+      // A piece of clothing is an item, by its id, in a slot the game has.
+      content: (game) =>
+        clothes(game).map((entry) => ({ list: 'clothes', id: entry.id, refs: [{ item: entry.id }, { entry: entry.slot, plugin: ID, list: 'slots', noun: 'slot' }] })),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      for (const entry of clothes(game)) {
-        if (!slotIds.has(entry.slot)) problems.push({ list: 'clothes', id: entry.id, what: `no slot called "${entry.slot}"` })
-      }
-      for (const [slot, item] of Object.entries(options.start ?? {})) {
-        if (!slotIds.has(slot)) problems.push({ list: 'start', id: slot, what: 'no slot by this name' })
-        else if (clothing(game, item)?.slot !== slot) {
-          problems.push({ list: 'start', id: slot, what: `"${item}" is not clothing for this slot` })
+      for (const slot of slotsOf(game)) {
+        const item = slot.start
+        if (item === undefined) continue
+        if (clothing(game, item)?.slot !== slot.id) {
+          problems.push({ list: 'slots', id: slot.id, what: `starts with "${item}", which is not clothing for this slot` })
         } else if (startCount(game, item) <= 0) {
-          problems.push({ list: 'start', id: slot, what: `the player does not start with "${item}"` })
+          problems.push({ list: 'slots', id: slot.id, what: `starts with "${item}", which the player does not start with` })
         }
       }
       return problems
@@ -157,13 +157,10 @@ export function wardrobe(options: WardrobeOptions) {
 }
 
 /** A condition: the item is on, or, with a slot, on in that slot. */
-export const wearing = (item: string, slot?: string): Condition => ({
-  custom: 'wardrobe/wearing',
-  with: slot === undefined ? { item } : { item, slot },
-})
+export const wearing = (item: string, slot?: string): Condition => ({ [`${ID}/wearing`]: slot === undefined ? { item } : { item, slot } })
 /** A condition: something is in this slot. */
-export const slotFilled = (slot: string): Condition => ({ custom: 'wardrobe/wearing', with: { slot } })
+export const slotFilled = (slot: string): Condition => ({ [`${ID}/wearing`]: { slot } })
 /** A command: put this on. */
-export const wear = (item: string): Command => ({ type: 'custom', name: 'wardrobe/wear', with: { id: item } })
+export const wear = (item: string): CommandRef => ({ [`${ID}/wear`]: { id: item } })
 /** A command: take off whatever is in this slot. */
-export const takeOff = (slot: string): Command => ({ type: 'custom', name: 'wardrobe/takeOff', with: { id: slot } })
+export const takeOff = (slot: string): CommandRef => ({ [`${ID}/takeOff`]: { id: slot } })

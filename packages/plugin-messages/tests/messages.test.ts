@@ -17,7 +17,9 @@ import { calendar, pass, period } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
 
-const plugin = messages({ channels: [{ id: 'texts', name: 'Messages' }, { id: 'post', name: 'Post' }] })
+const plugin = messages()
+/** The channels, as the base game's content. */
+const channels = { messages: { channels: [{ id: 'texts', name: 'Messages' }, { id: 'post', name: 'Post' }] } }
 
 function game(extra: Partial<Pack> = {}): Game {
   const pack: Pack = {
@@ -49,7 +51,7 @@ function game(extra: Partial<Pack> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin] })
+  const loaded = loadGame([pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin], data: channels })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -121,11 +123,11 @@ describe('messages', () => {
           data: { messages: { messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }] } },
         },
       ],
-      { id: 'g', title: 'g', plugins: [plugin] },
+      { id: 'g', title: 'g', plugins: [plugin], data: channels },
     )
     expect(loaded.problems).toEqual(
       expect.arrayContaining([
-        { pack: 'mod', where: 'messages m', what: 'no channel called "fax"' },
+        { pack: 'mod', where: 'messages m', what: 'unknown channel "fax"' },
         { pack: 'mod', where: 'messages m', what: 'unknown storyline "ghost"' },
         { pack: 'mod', where: 'messages m', what: 'no prose for "m.none"' },
         { pack: 'mod', where: 'messages m', what: 'two replies are called "r"' },

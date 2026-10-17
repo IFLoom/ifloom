@@ -31,10 +31,10 @@ export const PLUGINS = {
   shop: { label: 'Shop', options: '' },
   jobs: { label: 'Jobs', options: '' },
   generators: { label: 'Generators', options: '' },
-  wardrobe: { label: 'Wardrobe', options: '{ "slots": [] }' },
-  messages: { label: 'Messages', options: '{ "channels": [] }' },
-  feed: { label: 'Feed', options: '{ "feeds": [] }' },
-  devices: { label: 'Devices', options: '{ "devices": [] }' },
+  wardrobe: { label: 'Wardrobe', options: '' },
+  messages: { label: 'Messages', options: '' },
+  feed: { label: 'Feed', options: '' },
+  devices: { label: 'Devices', options: '' },
   debug: { label: 'Debug', options: '' },
 } as const satisfies Record<string, { label: string; options: string }>
 export type PluginId = keyof typeof PLUGINS

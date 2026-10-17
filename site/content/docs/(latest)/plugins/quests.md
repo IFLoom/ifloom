@@ -216,9 +216,9 @@ The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ custom: 'quests/active', with: { quest } }` | `questActive(quest)` | The quest has started and isn't finished. |
-| `{ custom: 'quests/done', with: { quest } }` | `questDone(quest)` | The quest is finished. |
-| `{ custom: 'quests/reached', with: { quest, stage } }` | `questReached(quest, stage)` | That stage of the quest is done. |
+| `{ 'quests/active': { quest } }` | `questActive(quest)` | The quest has started and isn't finished. |
+| `{ 'quests/done': { quest } }` | `questDone(quest)` | The quest is finished. |
+| `{ 'quests/reached': { quest, stage } }` | `questReached(quest, stage)` | That stage of the quest is done. |
 
 You can use them anywhere a condition goes: a block's `when`, a choice, a lock or another quest's `starts`. Each can also be written short, with the full name as the only key, so `{ 'quests/done': { quest: 'settle' } }` is `{ custom: 'quests/done', with: { quest: 'settle' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
@@ -235,16 +235,16 @@ An unknown quest or stage is false.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ custom: 'quests/start', with: { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
+| `{ 'quests/start': { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
 
-It works in a data scene choice's effects and an activity's `effects`. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plain-effect list (an item's use, or what `rules.turn` returns), write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
+It works in a data scene choice's effects and an activity's `effects`. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plain-effect list (an item's use), write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ type: 'custom', name: 'quests/track', with: { id } }` | `trackQuest(quest)` | Pins the quest `id`, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
-| `{ type: 'custom', name: 'quests/seen', with: { id } }` | `seeQuests(quest)` | Marks the quest `id` as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
+| `{ 'quests/track': { id } }` | `trackQuest(quest)` | Pins the quest `id`, so it comes first in `active`. Only one is pinned at a time. `trackQuest()`, with no quest, unpins. |
+| `{ 'quests/seen': { id } }` | `seeQuests(quest)` | Marks the quest `id` as looked at, which clears its `updated`. `seeQuests()`, with no quest, marks them all. |
 
 `quests/track` is refused with `You are not doing that.` (the [`quests/notDoing`](#strings) string) for a quest that hasn't started or is finished. `quests/seen` is never refused, except by [locks](/docs/reference/locks). A UI usually sends `seeQuests()` when the player opens the quest list.
 
@@ -334,7 +334,7 @@ What the plugin keeps in a save, at `state.plugins.quests`. It holds the turn ea
 
 ## For code
 
-The helpers above write the content objects for you, typed. `questActive`, `questDone` and `questReached` return a `Condition`, `startQuest` returns an `EffectRef`, and `trackQuest` and `seeQuests` return a `Command`. The functions below are for code that works with quests directly, such as tests, tools or a custom UI.
+The helpers above write the content objects for you, typed. `questActive`, `questDone` and `questReached` return a `Condition`, `startQuest` returns an `EffectRef`, and `trackQuest` and `seeQuests` return a [`CommandRef`](/docs/reference/custom#commandref), in the short form. The functions below are for code that works with quests directly, such as tests, tools or a custom UI.
 
 ### Helpers
 
@@ -343,8 +343,8 @@ const questActive: (quest: string) => Condition
 const questDone: (quest: string) => Condition
 const questReached: (quest: string, stage: string) => Condition
 const startQuest: (quest: string) => EffectRef
-const trackQuest: (quest?: string) => Command
-const seeQuests: (quest?: string) => Command
+const trackQuest: (quest?: string) => CommandRef
+const seeQuests: (quest?: string) => CommandRef
 ```
 
 ### questDefs
@@ -392,7 +392,7 @@ A quest condition, effect or command that names a quest the game doesn't have gi
 - **Stages are done in order.** A later stage whose condition holds early doesn't count until every stage before it is done, and it only counts then if it still holds. In the example, if `hadCoffee` were somehow set before the player stepped out, the quest would still say "Step out onto the high street." Reaching the high street would then finish both stages at once.
 - **A quest with no `starts` only starts by effect.** Nothing in the state starts it, so put [`startQuest`](#effects) on the choice or activity that begins it.
 - **Progress latches.** Once a stage is done, it stays done even if its condition stops holding, and a finished quest stays finished. Write `done` for the moment something happens, such as `at('high-street')`, not for something that has to stay true.
-- **Progress is recorded after each command.** The record in the save moves on in the plugin's `after` [hook](/docs/reference/plugins#hooks), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
+- **Progress is recorded after each command.** The record in the save moves on in the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
 - **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
 - **Finishing the tracked quest unpins it.**
 

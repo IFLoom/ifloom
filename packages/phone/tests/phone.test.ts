@@ -5,7 +5,7 @@
  * effect that rolls how a post did.
  */
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, loadGame, startingState, view, type Command, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { SCHEMA, apply, loadGame, startingState, view, type Game, type GameState, type Pack, type CommandRef } from '@ifloom/engine'
 import { closeApp, openApp, type DevicesView } from '@ifloom/plugin-devices'
 import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
@@ -132,6 +132,7 @@ function game(): Game {
 
     plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
     collections: kit.collections,
+    data: kit.data,
     rules: {
       resets: { postedToday: false },
       // No phone at work.
@@ -145,7 +146,7 @@ function game(): Game {
 const begin = (g: Game): GameState => clock.write({ ...startingState(g), sceneId: null }, { day: 1, period: 'morning' })
 const phoneOf = (state: GameState, g: Game) => (view(state, g).plugins.devices as DevicesView).devices[0]
 
-function run(state: GameState, g: Game, ...commands: Command[]): GameState {
+function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, g, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()

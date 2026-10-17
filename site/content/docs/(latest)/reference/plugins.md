@@ -168,7 +168,7 @@ type Plugin<S = any> = {
   id: string
   version: number
   start?: (game: Game) => S
-  migrations?: Record<number, (state: unknown) => unknown>
+  migrations?: Record<number, (state: unknown, tools: MigrationTools) => unknown>
   conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
   effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
   commands?: Record<string, PluginCommand<S>>
@@ -177,10 +177,8 @@ type Plugin<S = any> = {
   cooperates?: string[]
   statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-  hooks?: {
-    turn?: (state: GameState, context: PluginContext<S>) => GameState
-    after?: (before: GameState, after: GameState, context: PluginContext<S>) => GameState
-  }
+  onTurn?: (state: GameState, context: PluginContext<S>) => GameState
+  onCommand?: (before: GameState, after: GameState, context: PluginContext<S>) => GameState
   guard?: (state: GameState, asked: Asked, context: PluginContext<S>) => Refusal | undefined
   price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
   label?: (state: GameState, context: PluginContext<S>) => string | undefined
@@ -191,16 +189,14 @@ type Plugin<S = any> = {
   entities?: (game: Game) => readonly EntityDef[]
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => unknown
-  profile?: {
-    onCommand?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
-  }
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
   argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
 }
 ```
 
-`S` is the shape of the plugin's own state. Every field but `id` and `version` is optional.
+`S` is the shape of the plugin's own state. Every field but `id` and `version` is optional. Every one is flat: there's no table of hooks and no table under `profile`.
 
 | Field | What it is |
 |---|---|
@@ -216,7 +212,8 @@ type Plugin<S = any> = {
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
 | `statModifiers` | Changes to what the player's stats read right now, such as a timed boost to energy. Nothing is written into the state. See [Stat modifiers](#stat-modifiers). |
 | `values` | Words and numbers that prose prints with `{{v:loyalty/stamps}}`, and a badge or a stat's ceiling reads as `{ value: 'loyalty/stamps', with }`. Asked with arguments, as a condition is. |
-| `hooks` | Code that runs at the end of each turn and after every command. See [Hooks](#hooks). |
+| `onTurn` | A hook: runs at the end of each turn. See [Hooks and providers](#hooks-and-providers). |
+| `onCommand` | A hook: runs after every command that took. See [Hooks and providers](#hooks-and-providers). |
 | `guard` | Whether a command may go ahead, given the effects it would apply. Returns a refusal, a warning or `undefined`. See [Guards](#guards). |
 | `price` | What a button costs that the engine can't say, in the plugin's words. See [Prices](#prices). |
 | `label` | Where the game is, in a few words, for [`view.when`](/docs/reference/view#the-clock-and-the-player). See [Labels](#labels). |
@@ -317,7 +314,7 @@ The reducer refuses with that reason, and the view greys out the button with it.
 
 ### Commands outside the story
 
-`ignoresLocks: true` takes a command out of the [locks](/docs/reference/locks). No lock stops it, whatever its `deny` says, and the view never greys out its button for one. No plugin's [guard](#guards) is asked about it either. Everything else still applies: the game's `rules.commands.custom` is still asked, the command's own `whyNot` still refuses, and `run` goes through [`apply`](/docs/reference/commands#apply) as usual, with triggers and every plugin's `after` hook.
+`ignoresLocks: true` takes a command out of the [locks](/docs/reference/locks). No lock stops it, whatever its `deny` says, and the view never greys out its button for one. No plugin's [guard](#guards) is asked about it either. Everything else still applies: the game's `rules.commands.custom` is still asked, the command's own `whyNot` still refuses, and `run` goes through [`apply`](/docs/reference/commands#apply) as usual, with triggers and every plugin's `onCommand` hook.
 
 It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/docs/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the game's stages.
 
@@ -443,7 +440,7 @@ type PluginSlice = { version: number; state: unknown }
 
 Each plugin's state lives in [`state.plugins`](/docs/reference/state#plugins), keyed by plugin id, along with the version of its shape. For the card, `state.plugins.loyalty` is `{ version: 2, state: { stamps: 0, free: 0 } }`. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. Like the rest of the [state](/docs/reference/state), it must be plain JSON.
 
-When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/docs/reference/saves#loadstate) follow the same rule.
+When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/docs/reference/saves#loadstate) follow the same rule. A step gets the plugin's old state and the same [`MigrationTools`](/docs/reference/saves#migrationtools) a game's own migration gets, and returns the plugin's new state.
 
 ```ts
 version: 2,
@@ -451,6 +448,8 @@ migrations: {
   1: (old) => ({ stamps: (old as { stamps: number }).stamps, free: 0 }),
 },
 ```
+
+`tools.fill()` gives the whole game state with what the game declares and the save lacks filled in, for a step that needs to read the game: a stat's start value, say.
 
 ### When a save loads
 
@@ -469,21 +468,29 @@ A save it can't carry forward is refused with one of these reasons:
 
 Both are the engine's [`pluginNewer` and `pluginUnreadable`](/docs/reference/strings#saves) strings, so a game can reword them. The [save store](/docs/reference/saves#saves), the runner and [`replay`](/docs/reference/runner#replay) all load through `loadState`, so a plugin never sees a state it couldn't read.
 
-## Hooks
+## Hooks and providers
+
+A plugin's members follow one naming rule, as the game's [rules](/docs/reference/rules) do:
+
+- **A hook** runs at an event and returns the next state. It's named `on` and the event: `onTurn`, `onCommand`.
+- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `speaker`, `audio`, `statModifiers`, `view`, `profile`, `kinds`, `entities`.
+- **A table** of named functions content calls is a plural noun: `conditions`, `effects`, `commands`, `queries`, `values`.
+
+Nothing is nested, so every hook sits beside the rest of the plugin.
 
 | Hook | When |
 |---|---|
-| `turn(state, context)` | At the end of each turn, after [`rules.turn`](/docs/reference/rules#turn)'s effects and the game's own [`rules.onTurn`](/docs/reference/rules#onturn). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
-| `after(before, after, context)` | After every command that took. `before` is the state the command started from, and the context belongs to `after`. |
+| `onTurn(state, context)` | At the end of each turn, after the game's own [`rules.onTurn`](/docs/reference/rules#onturn). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
+| `onCommand(before, after, context)` | After every command that took. `before` is the state the command started from, and the context belongs to `after`. |
 
-Those are the only two. Plugins' hooks run in the order `game.plugins` lists them, and each gets the state the one before it left. To notice the player moving, use `after` and ask `places/here`, as the example below does.
+Those are the only two hooks. Plugins' hooks run in the order `game.plugins` lists them, and each gets the state the one before it left. To notice the player moving, use `onCommand` and ask `places/here`, as the example below does.
 
 Within one command, the order is:
 
-1. the command runs, including the end of any turn it causes (the game's `onTurn`, then each plugin's `turn`);
+1. the command runs, including the end of any turn it causes (the game's `rules.onTurn`, then each plugin's `onTurn`);
 2. the game's [triggers](/docs/reference/triggers) fire;
 3. the scene left on screen is counted as [seen](/docs/reference/state#seen), its [minigame](/docs/reference/minigames) starts if it has one, and its sounds get [keys of their own](/docs/reference/audio#sounds-and-voices);
-4. each plugin's `after` runs. Triggers don't see what it changes until the next command;
+4. each plugin's `onCommand` runs. Triggers don't see what it changes until the next command;
 5. a stat that went up a level raises its [notice](/docs/reference/stats#the-notice), so a level a hook's reward reached is noticed too;
 6. the engine records the [pool picks](/docs/reference/media#remembered-picks) and background audio the new screen shows.
 
@@ -500,25 +507,23 @@ export const diary = definePlugin<Diary>({
   id: 'diary',
   version: 1,
   start: () => ({ days: 0, places: [], commands: 0 }),
-  hooks: {
-    turn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
-    after: (_before, _after, { slice, set, query }) => {
-      // Where the player is now, if the game has the places plugin.
-      const here = query<string | null>('places/here') ?? null
-      const places = here === null || slice.places.includes(here) ? slice.places : [...slice.places, here]
-      return set({ ...slice, places, commands: slice.commands + 1 })
-    },
+  onTurn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
+  onCommand: (_before, _after, { slice, set, query }) => {
+    // Where the player is now, if the game has the places plugin.
+    const here = query<string | null>('places/here') ?? null
+    const places = here === null || slice.places.includes(here) ? slice.places : [...slice.places, here]
+    return set({ ...slice, places, commands: slice.commands + 1 })
   },
 })
 ```
 
 **Gotchas.**
-- `after` only runs through [`apply`](/docs/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/docs/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/docs/plugins/quests) does, rather than rely on `after` having run.
+- `onCommand` only runs through [`apply`](/docs/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/docs/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/docs/plugins/quests) does, rather than rely on `onCommand` having run.
 - Return the state you were given when nothing changes. Calling `set` with an equal slice still makes a new state object.
 
 ## The profile
 
-Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/docs/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares `profile.onCommand`, and the [runner](/docs/reference/runner#finished) calls it after every command that takes:
+Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/docs/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares a `profile` provider, and the [runner](/docs/reference/runner#finished) asks it after every command that takes:
 
 ```ts
 import { definePlugin } from '@ifloom/engine'
@@ -527,13 +532,11 @@ import { definePlugin } from '@ifloom/engine'
 export const endings = definePlugin({
   id: 'endings',
   version: 1,
-  profile: {
-    onCommand: (state, previous, stored) => {
-      const reached = (stored as string[] | undefined) ?? []
-      const scene = state.sceneId
-      if (!scene?.startsWith('ending.') || scene === previous.sceneId || reached.includes(scene)) return undefined
-      return [...reached, scene]
-    },
+  profile: (state, previous, stored) => {
+    const reached = (stored as string[] | undefined) ?? []
+    const scene = state.sceneId
+    if (!scene?.startsWith('ending.') || scene === previous.sceneId || reached.includes(scene)) return undefined
+    return [...reached, scene]
   },
 })
 ```
@@ -549,9 +552,9 @@ view: (state, { profile }) => ({ reached: (profile as string[] | undefined) ?? [
 Only the view sees it, and only when a runner with a profile builds the view. The runner reads each plugin's namespace when it starts and follows every write after that, so `context.profile` is the value last read or written. When it changes, the runner's view becomes a new object, with that plugin's view built again, and the runner's listeners are told. See [The view cache](/docs/reference/runner#the-view-cache). Outside the runner, `view(state, game)` has no profile, and `context.profile` is `undefined`.
 
 **Gotchas.**
-- Only a runner with a `profile` calls `onCommand`. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
-- Conditions, effects, commands, hooks and `onCommand`'s own context never see `context.profile`. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
-- `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway; return a new value from `onCommand` instead.
+- Only a runner with a `profile` asks it. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
+- Conditions, effects, commands, hooks and the `profile` provider's own context never see `context.profile`. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
+- `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway; return a new value from `profile` instead.
 - Right after a runner starts, before the profile has been read, the view has no profile yet. `await runner.settled()` waits for the first read.
 
 ## Stat modifiers
@@ -746,7 +749,7 @@ apply: (effects: readonly EffectRef[], on?: GameState) => GameState
 
 On the [context](#plugincontext), `apply` applies a list of effects as content would and returns the next state. Anything content can write goes in the list: built-in effects, the game's [custom effects](/docs/reference/custom#effects) and plugins' effects (this plugin's own included), in the long form or [in short](/docs/reference/custom#plugincall). They apply in order, each on the state the one before it left. The list is built from `on`, which defaults to the state the function was handed.
 
-This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with `rules.turn`, `onTurn` and every plugin's `turn` hook.
+This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with the game's `rules.onTurn` and every plugin's `onTurn` hook.
 
 ```ts
 // Empty the sink first, so the turn's hooks see it empty.
@@ -755,8 +758,8 @@ wash: (_state, _args, { set, apply }) => apply([{ kind: 'turn' }], set({ dirty: 
 
 **Gotchas.**
 - As with `set`, without `on` it builds on the state the function was handed, not one you've changed since. Chain them by passing the result as `on`.
-- A `turn` effect applied while a turn is already ending does nothing. From a `turn` hook, or from an effect in what `rules.turn` returns, `apply([{ kind: 'turn' }])` leaves the turn as it is.
-- It applies effects and nothing more. Triggers and `after` hooks run once the command is done, as they do for any command.
+- A `turn` effect applied while a turn is already ending does nothing. From an `onTurn` hook, the game's or a plugin's, `apply([{ kind: 'turn' }])` leaves the turn as it is.
+- It applies effects and nothing more. Triggers and `onCommand` hooks run once the command is done, as they do for any command.
 
 ## The view
 
@@ -1165,7 +1168,7 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 - **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the activity a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
-- **A plain-effect list takes the long form.** Item uses and [`rules.turn`](/docs/reference/rules#turn) take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
+- **A plain-effect list takes the long form.** Item uses take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.
 
 ## See it in an example

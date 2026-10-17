@@ -6,7 +6,7 @@
  *
  * What a save has earned is in the plugin's state. Everything earned in any
  * save is also kept in the player's profile, which outlives saves, through
- * `profile.onCommand`, and the view, built by a runner with a profile, shows
+ * its `profile` provider, and the view, built by a runner with a profile, shows
  * both.
  */
 import {
@@ -17,6 +17,7 @@ import {
   say,
   statValue,
   type Condition,
+  type DefinedPlugin,
   type EffectRef,
   type Formula,
   type Game,
@@ -185,18 +186,18 @@ function profileIds(stored: unknown): string[] {
  * The plugin. Add it to the game's `plugins`, and put achievements in a
  * pack's `data.achievements.achievements`.
  */
-export function achievements() {
+export function achievements(): DefinedPlugin<AchievementsState> {
   return definePlugin<AchievementsState>({
     id: ID,
     version: 1,
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {
-      /** `{ custom: 'achievements/earned', with: { achievement } }`: earned in this save. */
+      /** `{ 'achievements/earned': { achievement } }`: earned in this save. */
       earned: (_state, args, { slice }) => slice.earned[String(args.achievement ?? '')] !== undefined,
     },
     effects: {
-      /** `{ custom: 'achievements/grant', with: { achievement } }`: earn it now, if it isn't earned. */
+      /** `{ 'achievements/grant': { achievement } }`: earn it now, if it isn't earned. */
       grant: (state, args, { slice, set, game }) => {
         const id = String(args.achievement ?? '')
         if (slice.earned[id] !== undefined || !achievementDefs(game).some((def) => def.id === id)) return state
@@ -207,22 +208,18 @@ export function achievements() {
       /** <code v-pre>{{v:achievements/earned}}</code>: how many this save has earned. */
       earned: (_state, _args, { slice }) => Object.keys(slice.earned).length,
     },
-    hooks: {
-      after: (_before, after, { slice, set, game }) => {
-        const ids = achievementDefs(game)
-          .filter((def) => slice.earned[def.id] === undefined && met(def, after, game))
-          .map((def) => def.id)
-        return earn(after, ids, game, set, slice)
-      },
+    onCommand: (_before, after, { slice, set, game }) => {
+      const ids = achievementDefs(game)
+        .filter((def) => slice.earned[def.id] === undefined && met(def, after, game))
+        .map((def) => def.id)
+      return earn(after, ids, game, set, slice)
     },
-    profile: {
-      onCommand: (_state, _previous, stored, { slice }) => {
-        const known = profileIds(stored)
-        const added = Object.keys(slice.earned)
-          .sort((a, b) => slice.earned[a] - slice.earned[b])
-          .filter((id) => !known.includes(id))
-        return added.length ? ({ earned: [...known, ...added] } satisfies AchievementsProfile) : undefined
-      },
+    profile: (_state, _previous, stored, { slice }) => {
+      const known = profileIds(stored)
+      const added = Object.keys(slice.earned)
+        .sort((a, b) => slice.earned[a] - slice.earned[b])
+        .filter((id) => !known.includes(id))
+      return added.length ? ({ earned: [...known, ...added] } satisfies AchievementsProfile) : undefined
     },
     view: (state, { slice, game, profile }) => achievementsView(slice, state, game, profile),
     references: {
@@ -267,6 +264,6 @@ function progressRefs(value: ProgressValue): Reference[] {
 }
 
 /** A condition: the achievement is earned in this save. */
-export const achievementEarned = (id: string): Condition => ({ custom: 'achievements/earned', with: { achievement: id } })
+export const achievementEarned = (id: string): Condition => ({ [`${ID}/earned`]: { achievement: id } })
 /** An effect: earn the achievement now. */
-export const grantAchievement = (id: string): EffectRef => ({ custom: 'achievements/grant', with: { achievement: id } })
+export const grantAchievement = (id: string): EffectRef => ({ [`${ID}/grant`]: { achievement: id } })

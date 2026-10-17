@@ -77,7 +77,7 @@ After every command that took, inside [`apply`](/docs/reference/commands#what-ha
 1. The command runs.
 2. The triggers are tested in the order the game lists them, each against the state the one before it left. A trigger that holds and is due records the current turn in `state.fired`, then its effects apply.
 3. The scene left on screen is counted as [seen](/docs/reference/state#seen), so a scene a trigger opens counts.
-4. Plugins' `after` hooks run, and see what the triggers did.
+4. Plugins' `onCommand` hooks run, and see what the triggers did.
 
 There's one pass per command. A trigger that an earlier trigger makes true fires in the same pass, because it's tested later. One that a later trigger makes true waits for the next command.
 

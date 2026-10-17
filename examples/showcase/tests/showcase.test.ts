@@ -3,7 +3,7 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
+import { commandOf, apply, checkGame, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState, type CommandRef } from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { EffectsView } from '@ifloom/plugin-effects'
@@ -23,7 +23,7 @@ const on = (state: GameState, day: number, period: string): GameState => clock.w
 
 const { game, problems } = smallTown()
 
-function run(state: GameState, ...commands: Command[]): GameState {
+function run(state: GameState, ...commands: CommandRef[]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
     expect(out.refused, JSON.stringify(command)).toBeUndefined()
@@ -77,7 +77,7 @@ describe('Small Town', () => {
     expect(cafe.stage).toEqual({
       aspect: '16/10',
       layers: [{ id: 'counter', src: 'art/photo/ava.svg' }],
-      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: commandOf(talk('ava')), layer: 'counter' }],
     })
 
     state = run(state, act('coffee'))

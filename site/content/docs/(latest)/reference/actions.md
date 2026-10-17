@@ -244,7 +244,7 @@ const town: Game = {
 }
 ```
 
-`places/go` only goes to an exit of where the player stands, so further away the button is greyed out with `You cannot get there from here.` For a button that works from anywhere, send an [activity](#activitydef) whose effects hold the plugin's [`moveTo('flat')`](/docs/plugins/places#effects). That doesn't run the plugin's [`arrive`](/docs/plugins/places#placesoptions) option.
+`places/go` only goes to an exit of where the player stands, so further away the button is greyed out with `You cannot get there from here.` For a button that works from anywhere, send an [activity](#activitydef) whose effects hold the plugin's [`moveTo('flat')`](/docs/plugins/places#effects). That doesn't run the place's [`arrive`](/docs/plugins/places#arrival).
 
 ### How a button and the reducer agree
 

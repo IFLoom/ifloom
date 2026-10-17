@@ -11,7 +11,7 @@ import {
   holds,
   inRange,
   say,
-  type Command,
+  type CommandRef,
   type Condition,
   type DefinedPlugin,
   type Effect,
@@ -202,16 +202,14 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       weekday: (_state, _args, context) => words(context, context.slice).weekday,
       period: (_state, _args, context) => words(context, context.slice).period,
     },
-    hooks: {
-      // A turn ended by anything else moves the clock to the start of the next one.
-      turn: (state, { slice, set }) => {
-        if (turn === false) return state
-        const now = absolute(slice)
-        if (turn === 'period') return set(fromAbsolute(now + 1))
-        if (turn === 'day') return set({ day: slice.day + 1, period: ids[0] })
-        const weekIndex = Math.floor((slice.day - startDay) / week)
-        return set({ day: startDay + (weekIndex + 1) * week, period: ids[0] })
-      },
+    // A turn ended by anything else moves the clock to the start of the next one.
+    onTurn: (state, { slice, set }) => {
+      if (turn === false) return state
+      const now = absolute(slice)
+      if (turn === 'period') return set(fromAbsolute(now + 1))
+      if (turn === 'day') return set({ day: slice.day + 1, period: ids[0] })
+      const weekIndex = Math.floor((slice.day - startDay) / week)
+      return set({ day: startDay + (weekIndex + 1) * week, period: ids[0] })
     },
     guard: (state, { command, effects }, context) => {
       // Sleep is the way past dawn, not something to be warned off.
@@ -270,7 +268,7 @@ function list(value: unknown): unknown[] {
 }
 
 /** The command that goes to bed. */
-export const sleep = (): Command => ({ type: 'custom', name: `${ID}/sleep` })
+export const sleep = (): CommandRef => ({ [`${ID}/sleep`]: true })
 /** Time going by: `n` periods. */
 export const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: { by: n } })
 /** True in any of these periods. */

@@ -17,12 +17,12 @@ import {
   renderScene,
   say,
   type Block,
-  type Command,
+  type CommandRef,
+  type DefinedPlugin,
   type Condition,
   type EffectRef,
   type Game,
   type GameState,
-  type PluginProblem,
   type Reference,
   type SceneBeat,
 } from '@ifloom/engine'
@@ -62,8 +62,6 @@ export type OwnPost = {
   likes: number
   comments: Comment[]
 }
-
-export type FeedOptions = { feeds: FeedDef[] }
 
 /** What the plugin keeps in a save. */
 export type FeedState = {
@@ -114,12 +112,18 @@ function personOf(game: Game, state: GameState, from: string): { name: string; p
   return known ?? { name: from, portrait: null }
 }
 
+/** The game's feeds, in order: `data.feed.feeds`, from its packs. */
+export function feedsOf(game: Game): FeedDef[] {
+  return (game.data?.[ID]?.feeds ?? []) as FeedDef[]
+}
+
 /**
- * The plugin. Add it to the game's `plugins` with the feeds the game has, and
- * put other people's posts in a pack's `data.feed.posts`.
+ * The plugin. Add it to the game's `plugins`, and put the feeds and other
+ * people's posts in a pack's `data.feed.feeds` and `data.feed.posts`, so a
+ * mod can add either.
  */
-export function feed(options: FeedOptions) {
-  const feedIds = new Set(options.feeds.map((entry) => entry.id))
+export function feed(): DefinedPlugin<FeedState> {
+  const feedIds = (game: Game) => new Set(feedsOf(game).map((entry) => entry.id))
 
   /** Posts in a feed the player hasn't looked at; never below nothing, whatever an older save counted. */
   function unseenIn(record: FeedState, game: Game, id: string): number {
@@ -149,12 +153,12 @@ export function feed(options: FeedOptions) {
     },
     start: () => ({ appeared: {}, own: [], reactions: {}, seen: {} }),
     conditions: {
-      /** `{ custom: 'feed/appeared', with: { post } }`. */
+      /** `{ 'feed/appeared': { post } }`. */
       appeared: (_state, args, { slice }) => slice.appeared[String(args.post)] !== undefined,
-      /** `{ custom: 'feed/posted', with: { feed?, gte? } }`: how many posts the player has made, there or anywhere. */
+      /** `{ 'feed/posted': { feed?, gte? } }`: how many posts the player has made, there or anywhere. */
       posted: (_state, args, { slice }) =>
         slice.own.filter((post) => args.feed === undefined || post.feed === args.feed).length >= Number(args.gte ?? 1),
-      /** `{ custom: 'feed/likes', with: { post, gte } }`: a post has at least this many likes. */
+      /** `{ 'feed/likes': { post, gte } }`: a post has at least this many likes. */
       likes: (_state, args, { slice, game }) => {
         const id = String(args.post)
         const own = slice.own.find((post) => post.id === id)
@@ -164,13 +168,13 @@ export function feed(options: FeedOptions) {
     },
     effects: {
       /**
-       * `{ custom: 'feed/post', with: { feed, post, text?, image?, video?, likes? } }`: the
+       * `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }`: the
        * player posts to `feed`, as the post with id `post`. An id already posted is left as it is.
        */
-      post: (state, args, { slice, set }) => {
+      post: (state, args, { slice, set, game }) => {
         const id = String(args.post)
         // A feed the game doesn't have would hold a post nobody can see.
-        if (slice.own.some((post) => post.id === id) || !feedIds.has(String(args.feed))) return state
+        if (slice.own.some((post) => post.id === id) || !feedIds(game).has(String(args.feed))) return state
         const post: OwnPost = {
           id,
           feed: String(args.feed),
@@ -183,7 +187,7 @@ export function feed(options: FeedOptions) {
         }
         return set({ ...slice, own: [...slice.own, post] })
       },
-      /** `{ custom: 'feed/react', with: { post, likes?, from?, text? } }`: likes, a comment, or both. */
+      /** `{ 'feed/react': { post, likes?, from?, text? } }`: likes, a comment, or both. */
       react: (state, args, { slice, set }) => {
         const id = String(args.post)
         const comment = args.text === undefined ? [] : [{ from: String(args.from ?? ''), text: String(args.text) }]
@@ -203,10 +207,10 @@ export function feed(options: FeedOptions) {
       },
     },
     commands: {
-      /** `{ type: 'custom', name: 'feed/seen', with: { id } }`: the player has looked at the feed `id`; leave `id` out for all. */
+      /** `{ 'feed/seen': { id } }`: the player has looked at the feed `id`; leave `id` out for all. */
       seen: {
         run: (_state, args, { slice, set, game }) => {
-          const ids = args.id === undefined ? [...feedIds] : [String(args.id)]
+          const ids = args.id === undefined ? [...feedIds(game)] : [String(args.id)]
           const seen = { ...slice.seen }
           for (const id of ids) seen[id] = count(slice, game, id)
           return set({ ...slice, seen })
@@ -220,25 +224,23 @@ export function feed(options: FeedOptions) {
        * badge's `{ value: 'feed/unseen', with: { feed: 'social' } }`.
        */
       unseen: (_state, args, { slice, game }) =>
-        options.feeds
+        feedsOf(game)
           .filter((entry) => args.feed === undefined || entry.id === String(args.feed))
           .reduce((sum, entry) => sum + unseenIn(slice, game, entry.id), 0),
     },
-    hooks: {
-      after: (_before, after, { slice, set, game }) => {
-        let appeared = slice.appeared
-        for (const post of postDefs(game)) {
-          if (appeared[post.id] !== undefined || !holds(after, post.when, game)) continue
-          appeared = { ...appeared, [post.id]: after.turn }
-        }
-        return appeared === slice.appeared ? after : set({ ...slice, appeared })
-      },
+    onCommand: (_before, after, { slice, set, game }) => {
+      let appeared = slice.appeared
+      for (const post of postDefs(game)) {
+        if (appeared[post.id] !== undefined || !holds(after, post.when, game)) continue
+        appeared = { ...appeared, [post.id]: after.turn }
+      }
+      return appeared === slice.appeared ? after : set({ ...slice, appeared })
     },
     view: (state, { slice, game, picks }): FeedsView => {
       const runtime = defaultRuntime(game)
       const words = (key: string | undefined) => (key ? (game.prose?.line(key, state) ?? '') : '')
       const comments = (list: Comment[]) => list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
-      const feeds = options.feeds.map((entry): FeedView => {
+      const feeds = feedsOf(game).map((entry): FeedView => {
         const theirs = postDefs(game)
           .filter((post) => post.feed === entry.id && slice.appeared[post.id] !== undefined)
           .map((post, order): PostView & { order: number } => ({
@@ -296,6 +298,7 @@ export function feed(options: FeedOptions) {
           list: 'posts',
           id: post.id,
           refs: [
+            { entry: post.feed, plugin: ID, list: 'feeds', noun: 'feed' },
             { when: post.when },
             { blocks: post.body },
             ...(post.image !== undefined ? [{ picture: post.image, asWritten: true }] : []),
@@ -303,30 +306,16 @@ export function feed(options: FeedOptions) {
           ],
         })),
     },
-    check: (game) => {
-      const problems: PluginProblem[] = []
-      for (const post of postDefs(game)) {
-        if (!feedIds.has(post.feed)) problems.push({ list: 'posts', id: post.id, what: `no feed called "${post.feed}"` })
-      }
-      return problems
-    },
   })
 }
 
 /** An effect: the player posts to a feed. `text` is a prose key. */
 export const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
-  custom: 'feed/post',
-  with: { feed: feedId, post: id, ...post },
+  [`${ID}/post`]: { feed: feedId, post: id, ...post },
 })
 /** An effect: likes, a comment, or both, on a post. */
-export const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({
-  custom: 'feed/react',
-  with: { post, ...reaction },
-})
+export const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({ [`${ID}/react`]: { post, ...reaction } })
 /** A command: the player has looked at a feed, or at every feed. */
-export const seeFeed = (feedId?: string): Command => ({ type: 'custom', name: 'feed/seen', with: { id: feedId } })
+export const seeFeed = (feedId?: string): CommandRef => ({ [`${ID}/seen`]: feedId === undefined ? {} : { id: feedId } })
 /** A condition: the player has posted at least `gte` times, to one feed or any. */
-export const hasPosted = (gte = 1, feedId?: string): Condition => ({
-  custom: 'feed/posted',
-  with: feedId === undefined ? { gte } : { gte, feed: feedId },
-})
+export const hasPosted = (gte = 1, feedId?: string): Condition => ({ [`${ID}/posted`]: feedId === undefined ? { gte } : { gte, feed: feedId } })

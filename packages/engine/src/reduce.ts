@@ -3,7 +3,7 @@ import { rendering, warningIn, whyNotIn, type Rendering } from './availability.t
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { screen } from './screen.ts'
-import { runAfter } from './plugin.ts'
+import { runCommandHooks } from './plugin.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 import { startingState } from './intake.ts'
 import { commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
@@ -52,7 +52,7 @@ function noteShown(state: GameState, game: Game): GameState {
 
 /**
  * The steps after a command took, in order: the features' steps that come
- * before the plugins' `after` hooks (the game's triggers fire, then a new
+ * before the plugins' `onCommand` hooks (the game's triggers fire, then a new
  * showing is seen), those hooks, the features' steps after them (a level
  * gained is noticed), then what the new state's screen shows.
  */
@@ -60,7 +60,7 @@ function after(before: GameState, ran: GameState, game: Game): GameState {
   const cx = featureContext()
   let next = ran
   for (const step of afterSteps.beforePlugins) next = step(before, next, game, cx)
-  next = runAfter(game, before, next)
+  next = runCommandHooks(game, before, next)
   for (const step of afterSteps.afterPlugins) next = step(before, next, game, cx)
   return noteShown(next, game)
 }

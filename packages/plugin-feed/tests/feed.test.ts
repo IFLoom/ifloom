@@ -5,7 +5,9 @@ import { calendar, pass, period, day } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
 
-const plugin = feed({ feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }] })
+const plugin = feed()
+/** The feeds, as the base game's content. */
+const feeds = { feed: { feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }] } }
 
 function game(): Game {
   const pack: Pack = {
@@ -37,7 +39,7 @@ function game(): Game {
       effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'comment.wow' })] },
     },
   }
-  const loaded = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
+  const loaded = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], data: feeds })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -92,7 +94,7 @@ describe('video on a post', () => {
       prose: { 'post.fete': 'Bunting going up.\n\n[[widevideo:fete|once]]', 'own.pond': 'Ducks.' },
       data: { feed: { posts: [{ id: 'fete', feed: 'board', from: 'Parish council', when: day({ gte: 1 }), body: [{ text: 'post.fete' }], image: 'art/fete.jpg', video: 'art/fete.webm' }] } },
     }
-    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
+    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], data: feeds })
     expect(problems).toEqual([])
     let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
     state = apply(state, g, { type: 'activity', id: 'film' }).state

@@ -15,6 +15,7 @@ import {
   customPanel,
   customValue,
   defaultRuntime,
+  commandOf,
   definePlugin,
   holds,
   pluginQuery,
@@ -25,6 +26,8 @@ import {
   type Block,
   type Blocked,
   type Command,
+  type CommandRef,
+  type DefinedPlugin,
   type Condition,
   type Game,
   type GameState,
@@ -84,12 +87,6 @@ export type AppDef = {
   sections: Section[]
 }
 
-export type DevicesOptions = {
-  devices: DeviceDef[]
-  /** Apps built into the game. Packs can add more in `data.devices.apps`. */
-  apps?: AppDef[]
-}
-
 /** What the plugin keeps in a save: the app open on each device. */
 export type DevicesState = { open: Record<string, string | null> }
 
@@ -133,19 +130,24 @@ export type DevicesView = { devices: DeviceView[] }
 
 const ID = 'devices'
 
-/**
- * The plugin. Add it to the game's `plugins` with the devices the game has,
- * and the apps on them.
- */
-export function devices(options: DevicesOptions) {
-  const deviceIds = new Set(options.devices.map((device) => device.id))
+/** The game's devices: `data.devices.devices`, from its packs. */
+export function devicesOf(game: Game): DeviceDef[] {
+  return (game.data?.[ID]?.devices ?? []) as DeviceDef[]
+}
 
-  function apps(game: Game): AppDef[] {
-    const byId = new Map<string, AppDef>()
-    for (const app of options.apps ?? []) byId.set(app.id, app)
-    for (const app of (game.data?.[ID]?.apps ?? []) as AppDef[]) byId.set(app.id, app)
-    return [...byId.values()]
-  }
+/** The game's apps, on every device: `data.devices.apps`, from its packs. */
+export function appsOf(game: Game): AppDef[] {
+  return (game.data?.[ID]?.apps ?? []) as AppDef[]
+}
+
+/**
+ * The plugin. Add it to the game's `plugins`, and put the devices and the
+ * apps on them in a pack's `data.devices.devices` and `data.devices.apps`, so
+ * a mod can add an app or a device.
+ */
+export function devices(): DefinedPlugin<DevicesState> {
+  const apps = appsOf
+  const known = (game: Game, id: string) => devicesOf(game).some((device) => device.id === id)
 
   function appById(game: Game, id: string): AppDef | undefined {
     return apps(game).find((app) => app.id === id)
@@ -218,7 +220,7 @@ export function devices(options: DevicesOptions) {
       badge: badgeOf(state, game, app),
       // The same answer opening it gets: the app's own `blocked`, and any lock on `devices/open`.
       disabled: whyNot(state, game, openApp(app.id)),
-      command: openApp(app.id),
+      command: commandOf(openApp(app.id)),
       sections: open ? app.sections.map((section, index) => sectionView(state, game, app, section, index)) : [],
     }
   }
@@ -234,16 +236,16 @@ export function devices(options: DevicesOptions) {
       noSuchDevice: 'There is no such device.',
       call: 'Call',
     },
-    start: () => ({ open: Object.fromEntries(options.devices.map((device) => [device.id, null])) }),
+    start: (game) => ({ open: Object.fromEntries(devicesOf(game).map((device) => [device.id, null])) }),
     conditions: {
-      /** `{ custom: 'devices/open', with: { app } }`: that app is open; with `device` instead, anything is. */
+      /** `{ 'devices/open': { app } }`: that app is open; with `device` instead, anything is. */
       open: (_state, args, { slice }) =>
         args.app !== undefined
           ? Object.values(slice.open).includes(String(args.app))
           : Boolean(slice.open[String(args.device)]),
     },
     commands: {
-      /** `{ type: 'custom', name: 'devices/open', with: { id } }`: open the app `id`. Free: no time passes. */
+      /** `{ 'devices/open': { id } }`: open the app `id`. Free: no time passes. */
       open: {
         whyNot: (state, args, { game }) => refusal(state, game, appById(game, String(args.id ?? ''))),
         run: (_state, args, { slice, set, game }) => {
@@ -251,25 +253,23 @@ export function devices(options: DevicesOptions) {
           return set({ ...slice, open: { ...slice.open, [app.on]: app.id } })
         },
       },
-      /** `{ type: 'custom', name: 'devices/close', with: { id } }`: the device `id` back to its home screen. */
+      /** `{ 'devices/close': { id } }`: the device `id` back to its home screen. */
       close: {
-        whyNot: (_state, args, { game }) => (deviceIds.has(String(args.id ?? '')) ? undefined : say(game, 'devices/noSuchDevice')),
+        whyNot: (_state, args, { game }) => (known(game, String(args.id ?? '')) ? undefined : say(game, 'devices/noSuchDevice')),
         run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.id)]: null } }),
       },
     },
-    hooks: {
-      // An app that could not be opened now — not installed, blocked, or a lock on
-      // the device (no phone at work) — closes, so its buttons are not left live.
-      after: (_before, after, { slice, set, game }) => {
-        let open = slice.open
-        for (const [device, id] of Object.entries(slice.open)) {
-          if (id && whyNot(after, game, openApp(id))) open = { ...open, [device]: null }
-        }
-        return open === slice.open ? after : set({ ...slice, open })
-      },
+    // An app that could not be opened now — not installed, blocked, or a lock on
+    // the device (no phone at work) — closes, so its buttons are not left live.
+    onCommand: (_before, after, { slice, set, game }) => {
+      let open = slice.open
+      for (const [device, id] of Object.entries(slice.open)) {
+        if (id && whyNot(after, game, openApp(id))) open = { ...open, [device]: null }
+      }
+      return open === slice.open ? after : set({ ...slice, open })
     },
     view: (state, { slice, game }): DevicesView => ({
-      devices: options.devices.map((device): DeviceView => {
+      devices: devicesOf(game).map((device): DeviceView => {
         const installed = apps(game).filter((app) => app.on === device.id && holds(state, app.when, game) && !hides(state, game, app.blocked))
         const shown = installed.map((app) => appView(state, game, app, false))
         const openId = slice.open[device.id] ?? null
@@ -292,6 +292,7 @@ export function devices(options: DevicesOptions) {
           list: 'apps',
           id: app.id,
           refs: [
+            { entry: app.on, plugin: ID, list: 'devices', noun: 'device' },
             { when: app.when },
             ...(app.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(app.badge && 'value' in app.badge ? [{ value: app.badge.value }] : []),
@@ -316,7 +317,6 @@ export function devices(options: DevicesOptions) {
       const pluginIds = new Set((game.plugins ?? []).map((plugin) => plugin.id))
       for (const app of apps(game)) {
         const say = (what: string) => problems.push({ list: 'apps', id: app.id, what })
-        if (!deviceIds.has(app.on)) say(`no device called "${app.on}"`)
         for (const section of app.sections) {
           if ('plugin' in section && !pluginIds.has(section.plugin)) say(`the game has no plugin named "${section.plugin}"`)
         }
@@ -327,8 +327,8 @@ export function devices(options: DevicesOptions) {
 }
 
 /** A command: open this app. */
-export const openApp = (app: string): Command => ({ type: 'custom', name: 'devices/open', with: { id: app } })
+export const openApp = (app: string): CommandRef => ({ [`${ID}/open`]: { id: app } })
 /** A command: back to this device's home screen. */
-export const closeApp = (device: string): Command => ({ type: 'custom', name: 'devices/close', with: { id: device } })
+export const closeApp = (device: string): CommandRef => ({ [`${ID}/close`]: { id: device } })
 /** A condition: this app is open. */
-export const appOpen = (app: string): Condition => ({ custom: 'devices/open', with: { app } })
+export const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })

@@ -2,7 +2,7 @@
 title: "The React UI"
 description: "The optional React UI: mountGame, GameShell, the layout in layout.tsx, pages such as the title screen, sound, pictures, theming and its words."
 ---
-`@ifloom/react` is the optional React UI. It draws an IFLoom game in the browser with React. It's a ready-made UI, but not the only way, and the engine doesn't need it: the engine has no framework of its own, and [Your own UI in any framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
+`@ifloom/react` is the optional React UI: a set of React components that draw an IFLoom game in the browser, built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart. It's one ready-made UI among others. The engine has no framework of its own, and [Your own UI in any framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM instead.
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -20,7 +20,7 @@ mountGame(game)
 
 Every component is listed, with its props, under [Components](/docs/react/components).
 
-The engine doesn't need this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would. A game that wants Vue, Svelte or a terminal leaves it out (see [Your own UI in any framework](/docs/guide/frameworks)).
+Nothing in the engine depends on this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would, so a game that wants Vue, Svelte or a terminal leaves it out.
 
 ## What it shows
 
@@ -57,7 +57,7 @@ The UI reads each plugin's view by its shape and imports no plugin package. If t
 
 [Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/react` the same way you add the engine.
 
-On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin. The [CLI's Vite preset](/docs/cli#the-vite-preset) wires up React and Tailwind for you. Like the engine, the UI ships TypeScript and TSX source with no build step, which Vite handles out of the box. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
+On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin. The [CLI's Vite preset](/docs/cli#the-vite-preset) wires up React and Tailwind for you. Like the engine, the UI ships TypeScript and TSX source with no build step, which Vite compiles with no extra setup. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
 
 Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide/installation), plus JSX, the DOM and Vite's client types:
 
@@ -168,7 +168,7 @@ const runner = await mountGame(game, {
 })
 ```
 
-When you need more control, build the runner yourself (with [`browserRunner`](/docs/reference/runner#browserrunner) or [`createRunner`](/docs/reference/runner#createrunner)) and render `GameShell` with React. [The Corner Café](/docs/guide/shapes) uses `mountGame`; [Small Town](/docs/guide/showcase#the-files)'s `src/main.tsx` does it by hand, because it loads the player's mods from IndexedDB before it makes the game:
+When you need more control, build the runner yourself (with [`browserRunner`](/docs/reference/runner#browserrunner) or [`createRunner`](/docs/reference/runner#createrunner)) and render `GameShell` with React. [The Corner Café](/docs/guide/shapes) uses `mountGame`. [Small Town](/docs/guide/showcase#the-files)'s `src/main.tsx` does it by hand, because it loads the player's mods from IndexedDB before it makes the game:
 
 ```tsx
 // src/main.tsx
@@ -217,7 +217,7 @@ type GameShellProps = {
 | `runner` | The game's [runner](/docs/reference/runner). |
 | `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
 | `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/docs/react/extending#plugin-sections). |
-| `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on **Mods** in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
+| `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
 | `unlocks` | Codes the player can enter, for the [unlocks plugin](/docs/plugins/unlocks): its `startUnlocks`, what couldn't be opened, and how to restart. It puts a code box on the settings page, or in the menu without pages. See [`UnlocksOption`](/docs/react/components#unlocksoption). |
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
@@ -320,9 +320,9 @@ mountGame(game, {
 
 `pages: true` gives the title screen with nothing extra. With `pages` off or left out, the game starts straight away, as before.
 
-In a game with the [achievements plugin](/docs/plugins/achievements), the title screen also has **Achievements**, which goes to a page listing them. Set `achievements: false` in `pages` to leave it out.
+In a game with the [achievements plugin](/docs/plugins/achievements), the title screen also has an Achievements button, which goes to a page listing them. Set `achievements: false` in `pages` to leave it out.
 
-The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains **Settings** and **Title screen**.
+The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains Settings and Title screen buttons.
 
 Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/reference/state#new-game) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
 
@@ -363,9 +363,9 @@ It returns the [player](/docs/browser/audio-player#audioplayer) once it has star
 
 The UI draws every picture and clip the engine puts in the view, with no setup:
 
-- `image` and `video` [beats](/docs/reference/prose#images) in a scene, a message or a post, through [`Beat`](/docs/react/components#beat);
-- a scene's or a place's [stage](/docs/reference/media#the-stage), a layered picture with hotspots, through [`Stage`](/docs/react/components#stage);
-- a post's `video`, through [`Video`](/docs/react/components#video).
+- `image` and `video` [beats](/docs/reference/prose#images) in a scene, a message or a post, through [`Beat`](/docs/react/components#beat)
+- a scene's or a place's [stage](/docs/reference/media#the-stage), a layered picture with hotspots, through [`Stage`](/docs/react/components#stage)
+- a post's `video`, through [`Video`](/docs/react/components#video)
 
 Clips play like GIFs unless their flags say otherwise. They load and start only when they scroll into view, and pause when they scroll out. A clip with sound follows the game's mute and volume settings, as the [`Video`](/docs/react/components#video) entry explains. Pictures load lazily too.
 
@@ -394,7 +394,7 @@ The look comes from a theme preset, CSS variables for the fonts, sizes and colou
 
 ## Words
 
-The UI's own words, such as **Quests**, **Track** and **Mark all seen**, come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. To reword any of them, set it in `game.strings`:
+The UI's own words, such as "Quests", "Track" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. To reword any of them, set it in `game.strings`:
 
 ```ts
 import { loadGame } from '@ifloom/engine'
@@ -550,7 +550,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 
 Which component uses which keys:
 
-- **[Debug card](/docs/react/components#debugcard)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
+- **[Debug card](/docs/react/components#debugcard)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the Why not tab says when no lock is on or nothing is greyed out.
 - **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug card), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
 - **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
@@ -565,7 +565,7 @@ Which component uses which keys:
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
 - **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
-- **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its **Delete** button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
+- **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its Delete button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
 - **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings`, `ui.achievements` and `ui.credits`.
 - **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
 - **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.

@@ -2,7 +2,7 @@
 title: "The title screen and settings"
 description: Open your game on a title screen, give the player settings, and offer New Game+ once they've finished.
 ---
-This page shows you how to open your game on a title screen, add settings the player can change, and offer New Game+ once they've finished. The [React UI](/docs/react) has all of these built in, and you turn them on with an option. A game drawn with plain DOM, Vue or Svelte builds the same screens from the [runner](/docs/reference/runner), the engine's [settings](/docs/reference/settings) and the player's [profile](/docs/reference/profile). Each code block has a tab for each.
+The [React UI](/docs/react) has a title screen, a settings page and New Game+ built in, and you turn them on with an option. A game drawn with plain DOM, Vue or Svelte builds the same screens from the [runner](/docs/reference/runner), the engine's [settings](/docs/reference/settings) and the player's [profile](/docs/reference/profile). Each code block has a tab for each.
 
 ## Turn on the title screen
 
@@ -163,11 +163,11 @@ The runner gives you what a title screen needs:
 
 - [`runner.saves.list()`](/docs/reference/saves#saves) lists the saves newest first, the autosave among them, then any that can't be read, as `{ slot, broken }`.
 - [`runner.newGame()`](/docs/reference/runner#newgame) starts afresh with the player's stored settings.
-- [`runner.load`](/docs/reference/runner#the-runners-members) loads a slot. It returns a string when a save can't be read, which is worth showing.
+- [`runner.load`](/docs/reference/runner#the-runners-members) loads a slot. It returns a string when a save can't be read, so show that to the player.
 
 A subtitle, a picture or credits are markup you add to your own screen.
 
-In the React UI, the page opens on a title screen with the game's title and a New game button. New game starts the story with `runner.newGame`, and the player's menu gains a **Title screen** button that goes back. Other buttons appear once there's something behind them:
+In the React UI, the page opens on a title screen with the game's title and a New game button. New game starts the story with `runner.newGame`, and the player's menu gains a Title screen button that goes back. Other buttons appear once there's something behind them:
 
 - **Continue** loads the newest save. It shows once the player has saved, or the game has autosaved.
 - **Load** opens a list of every save.
@@ -192,7 +192,7 @@ In the React UI, draw [`GameShell`](/docs/react#gameshell) with that runner and 
 
 ## Add settings
 
-Declare settings in your pack's `settings`. Here's one of each kind the [showcase](/docs/guide/showcase) uses:
+Declare settings in your pack's `settings`. This declares one of each kind the [showcase](/docs/guide/showcase) uses:
 
 ```ts
 const town: Pack = {
@@ -319,7 +319,7 @@ loadGame([letter], {
 })
 ```
 
-The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows **New Game+**. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
+The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows a New Game+ button. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 

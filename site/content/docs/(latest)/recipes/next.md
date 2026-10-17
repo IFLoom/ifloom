@@ -1,6 +1,6 @@
 ---
 title: "Next.js"
-description: "Run an IFLoom game in a Next.js app: transpilePackages for the TypeScript packages, Tailwind for the React UI's stylesheet, a client component that starts the game, ifloom check and playtest beside it, and why Next can't make the single offline file."
+description: "Run an IFLoom game in a Next.js app: the packages as they are, Tailwind or the prebuilt stylesheet for the React UI, a client component that starts the game, ifloom check and playtest beside it, and why Next can't make the single offline file."
 ---
 Use Next when your game lives on a website: a page of a site you already run on Next, or a game you host on Vercel or Netlify. `ifloom new --template next` starts a Next app with the game in it, or you can add a game to an app you have.
 
@@ -28,7 +28,7 @@ games/my-site/
 │   ├── game.ts        the game, as in every template
 │   ├── layout.tsx     the game's page: the side column, the story and its sections
 │   └── styles.css     the React UI's styles and a theme preset
-├── next.config.ts     transpilePackages for the @ifloom packages
+├── next.config.ts     Next's settings, empty to start with
 ├── postcss.config.mjs Tailwind, for the React UI's stylesheet
 ├── README.md
 └── AGENTS.md
@@ -36,35 +36,11 @@ games/my-site/
 
 Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` from the `ifloom` CLI, and `typecheck`. The rest of this page goes through each part, so you can do the same in an app of your own.
 
-## Compile the packages
+## Add the packages
 
-While IFLoom is pre-release, its packages ship TypeScript source rather than JavaScript. Next compiles packages from `node_modules` only when you list them in `transpilePackages`. List the engine, the UI packages, and each plugin your game uses:
+The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`. [Installation](/docs/guide/installation#a-game-beside-the-checkout) shows how to install them from a checkout.
 
-```ts
-// next.config.ts
-import type { NextConfig } from 'next'
-
-const config: NextConfig = {
-  transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', '@ifloom/browser', '@ifloom/plugin-places'],
-}
-
-export default config
-```
-
-Add the packages to the app: `@ifloom/engine` and `@ifloom/react`, any plugins, and `@ifloom/cli` as a dev dependency for `check` and `playtest`. [Installation](/docs/guide/installation#a-game-beside-the-checkout) shows how to link them from a checkout.
-
-**Linked from a checkout.** Next's bundler, Turbopack, reads no file outside its root folder, and a `file:` link points outside your app. Set the root to the folder that holds both your app and the checkout:
-
-```ts
-import path from 'node:path'
-
-const config: NextConfig = {
-  transpilePackages: [/* as above */],
-  turbopack: { root: path.resolve('..') },
-}
-```
-
-Inside the checkout, as the template is when `npm run new` makes it, Next finds the right root by itself.
+Inside the checkout, as the template is when `npm run new` makes it, run `npm run build` at the root of the checkout first. Next reads each package's built `dist/` folder, which the build makes.
 
 ## Styles
 
@@ -106,7 +82,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 `styles.css` brings Tailwind itself, so don't import `tailwindcss` again. If the app already has Tailwind v4 of its own, import `@ifloom/react/theme.css` after your `@import "tailwindcss"` instead (see [Bringing your own Tailwind](/docs/react/customising#bringing-your-own-tailwind)). The second line picks a [theme preset](/docs/react/customising#1-pick-a-theme-preset), and is optional.
 
-Without the React UI you need no Tailwind at all. Leave out the PostCSS config and style your own UI however the app already does.
+To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` from the root layout instead, and a preset as `@ifloom/react/themes/paper.min.css`, then leave out the PostCSS config. Without the React UI you need no Tailwind at all either. Style your own UI however the app already does.
 
 ## Start the game in a client component
 

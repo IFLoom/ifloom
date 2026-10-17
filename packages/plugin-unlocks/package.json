@@ -6,11 +6,20 @@
   "description": "Unlock codes for IFLoom: codes a player enters, checked against a slow hash, that open cheats and scenes, and content the build encrypts under the code.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   }

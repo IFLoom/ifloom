@@ -18,8 +18,7 @@ Next.js app. This file is for coding agents working on the game.
   conditions, effects, stats and prose. Prefer data over code.
 - The engine is deterministic and has no DOM. Randomness is seeded from the save.
 - Plugins (a calendar, places, a cast of characters…) are added to `plugins: [...]`
-  when the game is loaded, and their content goes under `data.<plugin>` in a pack,
-  and each plugin's package goes in `transpilePackages` in `next.config.ts`.
+  when the game is loaded, and their content goes under `data.<plugin>` in a pack.
 - `app/Game.tsx` draws the game with the React UI, in the browser only.
   `src/layout.tsx` is the game's page: the side column, the story and its sections.
   `app/page.tsx` is an ordinary Next page around it.

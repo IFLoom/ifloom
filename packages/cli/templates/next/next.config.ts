@@ -1,8 +1,6 @@
 import type { NextConfig } from 'next'
 
-const config: NextConfig = {
-  // The @ifloom packages ship TypeScript source, so Next compiles them with the app.
-  transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', '@ifloom/browser'],
-}
+// The @ifloom packages are compiled JavaScript with their types, so Next needs nothing special for them.
+const config: NextConfig = {}
 
 export default config

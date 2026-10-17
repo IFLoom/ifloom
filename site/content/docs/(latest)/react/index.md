@@ -57,7 +57,7 @@ The UI reads each plugin's view by its shape and imports no plugin package. If t
 
 [Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/react` the same way you add the engine.
 
-On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin. The [CLI's Vite preset](/docs/cli#the-vite-preset) wires up React and Tailwind for you. Like the engine, the UI ships TypeScript and TSX source with no build step, which Vite handles out of the box. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
+On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/react/customising#without-tailwind). The [CLI's Vite preset](/docs/cli#the-vite-preset) wires up React and Tailwind for you. Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
 
 Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide/installation), plus JSX, the DOM and Vite's client types:
 
@@ -71,7 +71,7 @@ Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide
 }
 ```
 
-`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types are a peer dependency of `@ifloom/react`, which npm installs with it. [Installation](/docs/guide/installation) shows the full file.
+`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types are a peer dependency of `@ifloom/react`. List `@types/react` and `@types/react-dom` in your dev dependencies, as the templates do, since your own `.tsx` files use them too. [Installation](/docs/guide/installation) shows the full file.
 
 ## Set it up
 
@@ -94,7 +94,7 @@ The [CLI's preset](/docs/cli#the-vite-preset) builds one HTML file that opens fr
 @import "@ifloom/react/themes/paper.css";
 ```
 
-The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so the first line is all the UI needs. Don't `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components. The second line is optional and picks a theme preset. See [Make it your own](/docs/react/customising) for the presets and everything else you can change.
+The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so the first line is all the UI needs. Don't `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components. The second line is optional and picks a theme preset. A game without Tailwind imports the prebuilt `@ifloom/react/styles.min.css` instead (see [Without Tailwind](/docs/react/customising#without-tailwind)). See [Make it your own](/docs/react/customising) for the presets and everything else you can change.
 
 ```ts
 // src/main.ts

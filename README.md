@@ -112,7 +112,9 @@ A few guarantees hold for every game:
 ## Getting started
 
 Until the packages are on npm, you work inside a clone of this repo. You'll
-need Node 22.18 or later (24 is recommended).
+need Node 22.18 or later (24 is recommended), because the checkout runs the
+packages' TypeScript source. The built packages, which a game beside the
+checkout installs with `npm run pack`, run on Node 20.19 or later.
 
 ```bash
 git clone https://github.com/IFLoom/ifloom.git

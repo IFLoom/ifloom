@@ -26,19 +26,7 @@ yarn add --dev vitest
 bun add --dev vitest
 ```
 
-Give it a `vitest.config.ts`, and a `test` script in `package.json` (`"test": "vitest run"`):
-
-```ts
-// vitest.config.ts
-import { defineConfig } from 'vitest/config'
-
-export default defineConfig({
-  test: {
-    // The @ifloom packages ship TypeScript, so Vitest compiles them rather than handing them to Node.
-    server: { deps: { inline: [/^@ifloom\//] } },
-  },
-})
-```
+Then add a `test` script to `package.json`: `"test": "vitest run"`. The @ifloom packages are compiled JavaScript, so Vitest needs no config for them.
 
 ## Play a route and check the result
 

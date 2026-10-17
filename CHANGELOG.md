@@ -8,6 +8,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- The packages are compiled JavaScript with type declarations and source maps, so a game installs them with npm, pnpm, yarn or bun, and any bundler uses them with no extra settings. Until they're on npm, `npm run pack` in the checkout packs them for a game beside it.
+- `@ifloom/react/styles.min.css` and `@ifloom/react/themes/<preset>.min.css`: the React UI's stylesheet and its presets already built, for a game without Tailwind.
 - An engine for any shape of game: a linear novel, a management game played a week at a time, or a life sim with a calendar, places and characters.
 - A small core that keeps the turn, scenes and choices, stats, entities, a kv store (keys with a true/false, number or text value), collections, storylines, triggers, notices, inputs and saves.
 - Plugins for the rest, each a package of its own: a calendar, places, a cast of characters, quests, a wardrobe, messages, feeds, devices, a ready-made phone, and debug commands that are left out of release builds.
@@ -84,6 +86,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- The `ifloom` command is compiled JavaScript and runs on Node 20.19 or later, or 22.12 or later. It no longer needs a Node that strips TypeScript.
+- A Next app needs no `transpilePackages` for the @ifloom packages, webpack no loader for them, and Vitest no `server.deps.inline`.
+- A game beside the checkout depends on the packed packages (`file:../ifloom/packs/ifloom-engine-0.0.0.tgz`) instead of linking the package folders, and the templates work there with npm, pnpm, yarn and bun.
+- The `react` template lists `@types/react` and `@types/react-dom`, which its own `src/layout.tsx` needs.
+- The `plugin` template builds the plugin into `dist/` with tsdown (`npm run build`), and publishes that rather than its TypeScript source.
 - `DEFAULT_LAYOUT` has the new parts: `'statuses'` and `'achievements'` in the sidebar under the stats and the menu, `'shop'` after the actions, and `'jobs'` on the stage after the quests. `READING_LAYOUT` has `'statuses'` and `'achievements'`. Each draws nothing in a game without its plugin.
 - Small Town's café has no buttons of its own for the counter or the weekend job any more; the React UI's shop button and job board draw them.
 - The guide page "Using another framework" is now "Your own UI in any framework", at the same address, and starts the UI track. "The loop" moved to "Running a game", and the introduction's diagram to "How the pieces fit".

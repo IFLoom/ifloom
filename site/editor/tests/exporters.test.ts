@@ -18,6 +18,7 @@ function typeErrors(source: string): string[] {
     lib: ['lib.es2023.d.ts'],
     module: ts.ModuleKind.ESNext,
     moduleResolution: ts.ModuleResolutionKind.Bundler,
+    customConditions: ['ifloom-source'],
     allowImportingTsExtensions: true,
     noEmit: true,
     strict: true,

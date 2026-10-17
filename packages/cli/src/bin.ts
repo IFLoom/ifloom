@@ -40,6 +40,7 @@ import { checkFiles, gameFrom } from './check.ts'
 import { checkUnlocks, codesFrom, leaks, linesOf, lockedFiles, packsOf, unlocksModule } from './unlocks.ts'
 import { explorer, metricsText, playtest, type Policy } from './playtest.ts'
 import { snapshot, type Probe } from './snapshot.ts'
+import { configLoader, sourcePlugin } from './source.ts'
 import { TEMPLATES, THEMES, newGame, type TemplateName, type ThemeName } from './new.ts'
 
 const [command = 'help', ...rest] = process.argv.slice(2)
@@ -55,7 +56,8 @@ async function withModule<T>(
   entry: string | undefined,
   use: (module: Record<string, unknown>, load: (path: string) => Promise<Record<string, unknown>>) => T | Promise<T>,
 ): Promise<T> {
-  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' })
+  // A game without a Vite config (a Next app) still reads the packages' source inside the checkout.
+  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error', configLoader: configLoader(), plugins: [sourcePlugin()] })
   try {
     const load = (path: string) => server.ssrLoadModule(path)
     return await use(await load(resolve(entry ?? 'src/game.ts')), load)
@@ -235,14 +237,14 @@ function create(name: string | undefined, template: string | undefined, theme: s
 async function main(): Promise<number> {
   switch (command) {
     case 'dev': {
-      const server = await createServer()
+      const server = await createServer({ configLoader: configLoader() })
       await server.listen()
       server.printUrls()
       return new Promise(() => {})
     }
     case 'build': {
       const out = flag('out') ?? 'dist'
-      await build({ build: { outDir: out, emptyOutDir: true } })
+      await build({ configLoader: configLoader(), build: { outDir: out, emptyOutDir: true } })
       if (rest.includes('--inline-assets')) {
         const inlined = inlineAssets(out)
         console.log(`Put ${inlined.files} file${inlined.files === 1 ? '' : 's'} from art/ into index.html.`)

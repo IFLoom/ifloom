@@ -44,4 +44,24 @@ describe('how the packages depend on each other', () => {
     )
     expect(wrong).toEqual([])
   })
+
+  it('builds each package to dist/, and names its source by the ifloom-source condition (ADR 0012)', () => {
+    const wrong = packages.flatMap(([dir, pkg]) => {
+      const manifest = pkg as Manifest & { exports?: Record<string, unknown>; files?: string[]; scripts?: Record<string, string> }
+      const problems: string[] = []
+      if (manifest.scripts?.build !== 'tsdown') problems.push(`${dir} doesn't build with tsdown`)
+      if (!existsSync(join(root, dir, 'tsdown.config.ts'))) problems.push(`${dir} has no tsdown.config.ts`)
+      if (!['dist', 'src'].every((folder) => manifest.files?.includes(folder))) problems.push(`${dir} doesn't publish dist and src`)
+      for (const [key, target] of Object.entries(manifest.exports ?? {})) {
+        // Stylesheets are files, and @ifloom/cli/client is types only.
+        if (typeof target === 'string' || !('import' in (target as object))) continue
+        const source = (target as Record<string, string>)['ifloom-source']
+        const built = source?.replace(/^\.\/src\//, './dist/').replace(/\.tsx?$/, '')
+        const expected = { 'ifloom-source': source, types: `${built}.d.ts`, import: `${built}.js`, default: `${built}.js` }
+        if (!source?.startsWith('./src/') || JSON.stringify(target) !== JSON.stringify(expected)) problems.push(`${dir} exports ${key} as ${JSON.stringify(target)}`)
+      }
+      return problems
+    })
+    expect(wrong).toEqual([])
+  })
 })

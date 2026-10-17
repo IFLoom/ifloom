@@ -6,9 +6,18 @@
   "description": "The IFLoom engine: state, commands, scenes, conditions and effects. No DOM, no genre.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
-  ]
+  ],
+  "scripts": {
+    "build": "tsdown"
+  }
 }

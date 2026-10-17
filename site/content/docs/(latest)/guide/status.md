@@ -6,10 +6,7 @@ IFLoom is pre-release. There's no stable API yet, so names, shapes and defaults 
 
 ## Not on npm yet
 
-None of the packages are published, and this docs site isn't public yet. You build games from a checkout of the repository, as [Installation](/docs/guide/installation) shows, and start one with [`npm run new`](/docs/cli#ifloom-new). Before the first release, the plan is to:
-
-- publish the packages under the `@ifloom` scope
-- build them to JavaScript, so they install and run without a Node that strips TypeScript types
+None of the packages are published, and this docs site isn't public yet. You build games from a checkout of the repository, as [Installation](/docs/guide/installation) shows, and start one with [`npm run new`](/docs/cli#ifloom-new). The packages already build to JavaScript with type declarations, as they'll be published, so a game beside the checkout installs them with npm, pnpm, yarn or bun. Before the first release, the plan is to publish them under the `@ifloom` scope.
 
 ## What the API is
 
@@ -23,7 +20,7 @@ Each [first-party plugin](/docs/plugins) is a package of its own, imported the s
 
 The engine has no DOM and no framework. The React UI is its own package, `@ifloom/react`, so that a UI for another framework can be a package of its own too. Until one exists, the `vue`, `svelte` and `vanilla` templates draw a game without it, and [Your own UI in any framework](/docs/guide/frameworks) walks through them.
 
-The engine has one entry point, `@ifloom/engine`. A deep path such as `@ifloom/engine/scene.ts` doesn't resolve: anything not exported from the entry is internal, isn't documented, and can change or vanish without notice.
+The engine has one entry point, `@ifloom/engine`. A deep path such as `@ifloom/engine/scene.ts` or `@ifloom/engine/dist/scene.js` doesn't resolve: anything not exported from the entry is internal, isn't documented, and can change or vanish without notice.
 
 ## What's settled and what isn't
 

@@ -6,11 +6,20 @@
   "description": "Timed statuses for IFLoom: a boost or a cold that lasts some turns, changes what stats read, and runs effects as it starts, each turn and as it ends.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   }

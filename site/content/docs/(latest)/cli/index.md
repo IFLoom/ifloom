@@ -45,7 +45,7 @@ Then add scripts to your `package.json`. These are Small Town's:
 }
 ```
 
-The `ifloom` command is a TypeScript file that Node runs directly, so you need a Node that strips types. Use Node 22.18 or later (24 recommended), where that's on by default. On Node 22.6 to 22.17, set `NODE_OPTIONS=--experimental-strip-types` before running `ifloom`. This works through a workspace or a `file:` link, because Node sees the file's real path in the checkout rather than a path under `node_modules`.
+The `ifloom` command is compiled JavaScript and needs Node 20.19 or later, or 22.12 or later, as Vite does. Node 24 is recommended. Inside the IFLoom checkout it runs the CLI's TypeScript source instead, which needs Node 22.18 or later (see [Working in the checkout](/docs/guide/installation#working-in-the-checkout)).
 
 ## ifloom new
 
@@ -457,7 +457,9 @@ It sets up three things, and knows no UI framework:
 - **`base: './'`**, so every path is relative and the folder opens from disk or from an itch.io subpath.
 - **Locked content.** In a game with `src/unlocks/`, it refuses any import of those files from the page, and encrypts them into the page's head, under `vite build` and `vite dev` alike (see [Locked content](#locked-content)). A game without the folder gets nothing from it.
 
-A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game linked to a checkout:
+Inside the IFLoom checkout, for a game whose folder is in it, it also reads the @ifloom packages' TypeScript source instead of their built files (see [Working in the checkout](/docs/guide/installation#working-in-the-checkout)). Anywhere else it does nothing more.
+
+A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game in the checkout's workspaces:
 
 ```ts
 // vite.config.ts

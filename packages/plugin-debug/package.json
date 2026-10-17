@@ -6,11 +6,20 @@
   "description": "Debug commands for IFLoom: set a stat or variable, jump to a scene, set the time, go anywhere. Leave it out of release builds.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   }

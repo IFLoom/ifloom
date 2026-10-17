@@ -106,13 +106,19 @@ const files: Record<string, string> = {
       license: 'MIT',
       description: `TODO(new-plugin): what @ifloom/plugin-${name} adds, in one sentence.`,
       type: 'module',
-      exports: { '.': './src/index.ts' },
-      files: ['src'],
+      exports: { '.': { 'ifloom-source': './src/index.ts', types: './dist/index.d.ts', import: './dist/index.js', default: './dist/index.js' } },
+      files: ['dist', 'src'],
+      scripts: { build: 'tsdown' },
       peerDependencies: { '@ifloom/engine': '^0.0.0' },
     },
     null,
     2,
   )}\n`,
+
+  'tsdown.config.ts': `import { define } from '../../tsdown.base.ts'
+
+export default define(['src/index.ts'])
+`,
 
   'tsconfig.json': `{
   "extends": "../../tsconfig.base.json",

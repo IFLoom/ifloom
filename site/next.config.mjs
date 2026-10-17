@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs'
 import { createMDX } from 'fumadocs-mdx/next'
 
 const withMDX = createMDX()
@@ -18,7 +19,12 @@ const MOVED = {
   'reference/audio-player': 'browser/audio-player',
 }
 
-const PLUGINS = ['achievements', 'calendar', 'cast', 'debug', 'devices', 'feed', 'generators', 'jobs', 'messages', 'places', 'quests', 'shop', 'statuses', 'wardrobe']
+/**
+ * The site reads the @ifloom packages' TypeScript source, as everything in the
+ * checkout does (ADR 0012). Turbopack has no setting for export conditions, so
+ * each package's entry is aliased to its src/index.ts, which Next compiles.
+ */
+const PACKAGES = readdirSync(new URL('../packages', import.meta.url)).filter((name) => name !== 'cli')
 
 /** @type {import('next').NextConfig} */
 const config = {
@@ -30,7 +36,8 @@ const config = {
   // cores and little memory runs out with one per core. Four is plenty.
   experimental: { cpus: 4 },
   // The editor uses the engine, the React UI and the plugins straight from the workspace, as TypeScript.
-  transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', ...PLUGINS.map((name) => `@ifloom/plugin-${name}`)],
+  transpilePackages: PACKAGES.map((name) => `@ifloom/${name}`),
+  turbopack: { resolveAlias: Object.fromEntries(PACKAGES.map((name) => [`@ifloom/${name}`, `../packages/${name}/src/index.ts`])) },
   // TODO(launch): remove, with app/robots.ts and metadata.robots in app/layout.tsx. See ROADMAP "Release readiness".
   async headers() {
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]

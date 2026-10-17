@@ -6,11 +6,20 @@
   "description": "The IFLoom audio player: plays what view.audio asks for in the browser, with no framework.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   }

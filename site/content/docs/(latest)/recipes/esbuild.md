@@ -1,8 +1,8 @@
 ---
 title: "esbuild"
-description: "Build an IFLoom game with esbuild: it compiles the TypeScript packages as they are, Tailwind's CLI builds the React UI's stylesheet or you go without, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
+description: "Build an IFLoom game with esbuild: no set-up for the packages, Tailwind's CLI or the prebuilt stylesheet for the React UI, a dev server, ifloom check and playtest beside it, and a short script for the single offline index.html."
 ---
-Use esbuild if you want the smallest build set-up you can read in one go. It compiles TypeScript and JSX itself, so the packages need no loader, and a script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
+Use esbuild if you want the smallest build set-up you can read in one go. It compiles TypeScript and JSX itself, so your game needs no loader, and a script of about twenty lines makes the one `index.html` that opens from disk. `ifloom check` and `ifloom playtest` work beside it.
 
 ## Install
 
@@ -14,9 +14,9 @@ npm install --save-dev esbuild
 
 For the React UI, also add `tailwindcss` and `@tailwindcss/cli`, and `react` and `react-dom` if npm hasn't installed them with `@ifloom/react`.
 
-## Compile the packages
+## TypeScript
 
-There's nothing to set up. While IFLoom is pre-release, its packages ship TypeScript source, and esbuild bundles `.ts` and `.tsx` files from `node_modules` like any others. Pass `--jsx=automatic` for the React UI's components.
+There's nothing to set up. The @ifloom packages are compiled JavaScript with type declarations, and esbuild compiles your own `.ts` and `.tsx` files itself. Pass `--jsx=automatic` if your own code has JSX, as the `react` template's `src/layout.tsx` does.
 
 ## Styles
 
@@ -31,6 +31,13 @@ The React UI's stylesheet is written for Tailwind CSS v4, which esbuild doesn't 
 
 ```sh
 npx tailwindcss -i src/styles.css -o tailwind.css
+```
+
+Or go without Tailwind: import the prebuilt stylesheet, and a preset if you like, from `main.ts` as plain CSS, and leave out the Tailwind steps below.
+
+```ts
+import '@ifloom/react/styles.min.css'
+import '@ifloom/react/themes/paper.min.css'
 ```
 
 ## The page and the dev server

@@ -38,6 +38,7 @@ A UI reads `view.plugins.__id__`, typed as `__Pascal__View`, or `__camel__().vie
 npm install
 npm test            # vitest
 npm run typecheck   # tsc --noEmit
+npm run build       # dist/, what npm publish packs
 ```
 
 [Writing a plugin](https://ifloom.dev/docs/reference/plugins) explains every part a plugin can have: hooks, guards, prices, the view, migrations, the profile and checks.

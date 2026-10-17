@@ -6,11 +6,20 @@
   "description": "Shops for IFLoom: vendors with prices in any spendable stat, limited stock that restocks, selling back, and seeded daily discounts.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "ifloom-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src"
   ],
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   }

@@ -43,8 +43,16 @@ A first-party plugin is a package of its own that imports only `@ifloom/engine` 
 
 - **An `@ifloom/*` package another one uses is its peer dependency, never a dependency.** A plugin peers on the engine, `@ifloom/phone` on the plugins it wires, and `@ifloom/react` on the engine, `@ifloom/audio`, `@ifloom/browser` and, as optional peers, the plugins whose view types it reads (ADR 0011). So a game has one copy of each, at the version it chose. npm 7 and later installs a required peer the game doesn't list.
 - **Every reference to an `@ifloom/*` package is `^` and its version**, `^0.0.0` for now: in peers and dev dependencies, the examples, the templates, the site and the docs' snippets. A caret on `0.0.x` matches that version only, on `0.x` the same minor, and from 1.0 the same major, so it accepts what semver calls compatible. A release bumps the versions and the ranges together.
-- **Other libraries:** what a package runs on its own (Radix, `clsx`) is a dependency. What the game's build or typecheck must share with it is a peer: `react`, `react-dom`, `tailwindcss` and React's types for `@ifloom/react`, which ships `.tsx` source a game's typecheck reads. A game lists its framework's Vite plugins itself.
-- `packages/cli/tests/contracts/packages.test.ts` holds the first two rules.
+- **Other libraries:** what a package runs on its own (Radix, `clsx`) is a dependency. What the game's build or typecheck must share with it is a peer: `react`, `react-dom`, `tailwindcss` and React's types for `@ifloom/react`, whose `.d.ts` files a game's typecheck reads. A game lists its framework's Vite plugins itself.
+- `packages/cli/tests/contracts/packages.test.ts` holds the first two rules, and the packaging below.
+
+## Packaging
+
+Every package builds with tsdown to `dist/` (ESM `.js`, `.d.ts`, declaration and source maps), and nothing in the checkout reads it (ADR 0012).
+
+- **Exports.** Each entry is `{ "ifloom-source": "./src/x.ts", "types": "./dist/x.d.ts", "import": "./dist/x.js", "default": "./dist/x.js" }`, and `files` is `["dist", "src"]`. A package has `"build": "tsdown"` and a `tsdown.config.ts` that calls `define([...entries])` from `tsdown.base.ts`. `@ifloom/react`'s build also writes `styles.min.css` and `themes/<preset>.min.css` with the Tailwind CLI. The CLI's `bin` is `bin.js`, which imports `#bin`: `src/bin.ts` under the condition, `dist/bin.js` otherwise.
+- **The source condition.** The checkout's tools resolve `ifloom-source`, so they run `src/` with no build: Vitest (`vitest.config.ts`), tsc (`customConditions` in `tsconfig.base.json` and `site/tsconfig.json`), the Vite preset for a game inside the checkout (`packages/cli/src/source.ts`, which also loads its `vite.config.ts` natively), Node through `.npmrc`'s `node-options`, and the site through `turbopack.resolveAlias` in `site/next.config.mjs`. A test that starts Vite on a fixture passes `configLoader: 'native'`. Anything outside the checkout gets `dist/`.
+- **Building.** `npm run build` builds every package in dependency order; `npm run pack` also packs each into `packs/` for a game beside the checkout. `scripts/try-dist.sh` builds, imports every export from `dist/` in plain Node and type-checks a consumer against the `.d.ts` files; run it when a package's entries, exports or build change.
 
 `packages/engine/tests/fixtures/` holds a small town game with no story; engine tests run against it. The showcase is `examples/showcase`.
 
@@ -100,7 +108,7 @@ npm run lint
 npm run docs:build   # checks the links, then builds the site (next build)
 ```
 
-`scripts/verify.sh` runs these and the examples' check, build and snapshot. `scripts/try-templates.sh` makes a game from each of the `react`, `vue`, `svelte`, `vanilla` and `next` templates in a temporary folder outside the checkout, linked to it, and runs its install, check, playtest, build and typecheck; run it when a template, the Vite preset or a package's dependencies change.
+`scripts/verify.sh` runs these and the examples' check, build and snapshot, all from `src/`. `scripts/try-dist.sh` checks the built packages (see Packaging). `scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all]` packs the packages, makes a game from each of the `react`, `vue`, `svelte`, `vanilla` and `next` templates (and a package from `plugin`) in a temporary folder outside the checkout, installs the tarballs with that package manager, and runs its check, playtest, build and typecheck; run it when a template, the Vite preset, the build or a package's dependencies change.
 
 ## Hosting
 
@@ -109,7 +117,7 @@ The site runs on Vercel at https://ifloom.dev, which builds `main` on every push
 - Root directory: `site`, with "Include files outside the root directory in the Build Step" on, because the site imports the packages and reads the theme CSS from `packages/react`.
 - Framework preset: Next.js. There's no `vercel.json`.
 - Install command: `cd .. && npm ci`. The packages are npm workspaces, so the install runs at the repo root.
-- Build command: `npm run build` (`next build` in `site/`).
+- Build command: `npm run build` (`next build` in `site/`). The site reads the packages' source, so it needs no package build first.
 - Node.js: 22.x, as in `.nvmrc` and `engines` in `site/package.json`.
 
 The site is public but not indexed until the engine is published: `site/app/robots.ts` disallows everything, the root layout sets `robots` to noindex, and `site/next.config.mjs` adds an `X-Robots-Tag` header. ROADMAP's release readiness step removes all three. CI is `.github/workflows/ci.yml`, which runs `scripts/verify.sh` by hand only while the repo is private.

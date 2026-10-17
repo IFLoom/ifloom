@@ -77,7 +77,7 @@ A UI does two things. It draws the view, and it sends a command when the player 
 
 ## The toolchain
 
-The packages ship TypeScript source, so whatever builds your page compiles them along with your game. The `ifloom` [CLI](/docs/cli) is the easiest way to do that, but you don't have to use it.
+The packages are compiled JavaScript with type declarations, so any bundler can build your page with them, with no special settings. The `ifloom` [CLI](/docs/cli) is the easiest way, but you don't have to use it.
 
 The CLI is a convenience built on Vite. `ifloom dev` serves the game while you edit, and `ifloom new` starts a game from a template. The main reason it exists is `ifloom build`, which makes the game into one `index.html` with relative paths and checks that it opens from disk with no server. A player can download that file and play it offline, which is what most interactive fiction is expected to do. See [Shipping a game](/docs/guide/shipping).
 

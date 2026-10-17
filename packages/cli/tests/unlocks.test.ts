@@ -37,7 +37,7 @@ function everything(dir: string): string {
 
 async function buildFixture(input = 'index.html'): Promise<string> {
   const dir = outDir()
-  await build({ root: ROOT, logLevel: 'silent', build: { outDir: dir, emptyOutDir: true, rollupOptions: { input: join(ROOT, input) } } })
+  await build({ root: ROOT, configLoader: 'native', logLevel: 'silent', build: { outDir: dir, emptyOutDir: true, rollupOptions: { input: join(ROOT, input) } } })
   return dir
 }
 
@@ -89,7 +89,7 @@ describe('locked content in a build', () => {
   })
 
   it('leaves the content out in dev without a code, and says so', async () => {
-    const server = await createServer({ root: ROOT, logLevel: 'silent', server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' })
+    const server = await createServer({ root: ROOT, configLoader: 'native', logLevel: 'silent', server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' })
     try {
       const load = (path: string) => server.ssrLoadModule(path)
       const html = await server.transformIndexHtml('/index.html', readFileSync(join(ROOT, 'index.html'), 'utf8'))
@@ -118,7 +118,7 @@ describe('locked content in a build', () => {
 
 describe('checking a game with locked content', () => {
   async function checked() {
-    const server = await createServer({ root: ROOT, logLevel: 'silent', server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' })
+    const server = await createServer({ root: ROOT, configLoader: 'native', logLevel: 'silent', server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom' })
     try {
       return await checkUnlocks({ root: ROOT, mode: 'production', game: fixtureGame().game, load: (path) => server.ssrLoadModule(path) })
     } finally {

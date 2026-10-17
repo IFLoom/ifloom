@@ -1,6 +1,6 @@
 ---
 title: "webpack"
-description: "Build an IFLoom game with webpack: a loader for the TypeScript packages, Tailwind through PostCSS for the React UI or no Tailwind at all, mounting the game, ifloom check and playtest beside it, and the single offline index.html with two plugins."
+description: "Build an IFLoom game with webpack: a loader for your own TypeScript, Tailwind through PostCSS or the prebuilt stylesheet for the React UI, mounting the game, ifloom check and playtest beside it, and the single offline index.html with two plugins."
 ---
 Use webpack if your project already builds with it. The game is the same `src/game.ts` as in any template, and webpack replaces only the `ifloom dev` and `ifloom build` steps. `ifloom check` and `ifloom playtest` still work beside it.
 
@@ -27,8 +27,8 @@ export default {
   resolve: { extensions: ['.ts', '.tsx', '.js'] },
   module: {
     rules: [
-      // The @ifloom packages ship TypeScript, so this rule must not skip node_modules.
-      { test: /\.tsx?$/, loader: 'esbuild-loader', options: { target: 'es2023', jsx: 'automatic' } },
+      // Your own TypeScript. The @ifloom packages are JavaScript already.
+      { test: /\.tsx?$/, exclude: /node_modules/, loader: 'esbuild-loader', options: { target: 'es2023', jsx: 'automatic' } },
       // Tailwind builds the React UI's stylesheet.
       { test: /\.css$/, use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'] },
     ],
@@ -44,9 +44,9 @@ export default { plugins: { '@tailwindcss/postcss': {} } }
 
 The config is an ES module, so the `package.json` has `"type": "module"`, as every template's does.
 
-**Compiling the packages.** While IFLoom is pre-release, its packages ship TypeScript source, and they import each other with `.ts` extensions. `esbuild-loader` compiles TypeScript and JSX quickly, and has no `exclude`, so it compiles the packages in `node_modules` along with your own code. `ts-loader` or `babel-loader` work too, as long as they don't skip `node_modules/@ifloom`. The engine's code needs ES2023, so don't set an older `target`.
+**TypeScript.** `esbuild-loader` compiles your game's TypeScript and JSX quickly. The @ifloom packages are compiled JavaScript with type declarations, so the rule skips `node_modules` as usual. `ts-loader` or `babel-loader` work too. The engine's code needs ES2023, so don't set an older `target`.
 
-**Styles.** The React UI's stylesheet is written for Tailwind CSS v4, which `postcss-loader` runs here. Without the React UI you don't need Tailwind: take `postcss-loader` out of the CSS rule and drop the PostCSS config.
+**Styles.** The React UI's stylesheet, `@ifloom/react/styles.css`, is written for Tailwind CSS v4, which `postcss-loader` runs here, so you can use Tailwind's classes in your own components too. To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` instead, and a preset as `@ifloom/react/themes/paper.min.css`, then take `postcss-loader` out of the CSS rule and drop the PostCSS config. Without the React UI you don't need either.
 
 `index.html` is the template's, with the `<script>` tag removed, since `HtmlWebpackPlugin` adds one:
 
@@ -159,7 +159,7 @@ export default {
   resolve: { extensions: ['.ts', '.tsx', '.js'] },
   module: {
     rules: [
-      { test: /\.tsx?$/, loader: 'esbuild-loader', options: { target: 'es2023', jsx: 'automatic' } },
+      { test: /\.tsx?$/, exclude: /node_modules/, loader: 'esbuild-loader', options: { target: 'es2023', jsx: 'automatic' } },
       { test: /\.css$/, use: ['style-loader', 'css-loader', 'postcss-loader'] },
     ],
   },

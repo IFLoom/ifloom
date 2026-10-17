@@ -8,11 +8,13 @@
  *   import { ifloom } from '@ifloom/cli/vite'
  *   export default ifloom()
  *
- * It also encrypts the game's locked content, if it has any in `src/unlocks/`,
+ * Inside the IFLoom checkout it reads the @ifloom packages' source (see
+ * `source.ts`). It also encrypts the game's locked content, if it has any in `src/unlocks/`,
  * into the page (see `unlocks.ts`).
  */
 import { createServer, type Plugin, type UserConfig, type ViteDevServer } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { configLoader, sourcePlugin } from './source.ts'
 import { UNLOCKS_DIR, isLockedModule, lockedFiles, lockedScript } from './unlocks.ts'
 
 export type IfloomViteOptions = {
@@ -29,7 +31,7 @@ export function ifloom(options: IfloomViteOptions = {}): UserConfig {
     // Relative paths, so the folder opens from disk or from an itch.io subpath.
     base: './',
     // The game's own plugins first, so the single-file step sees what they made.
-    plugins: [...(vite.plugins ?? []), unlocksPlugin(), ...(singleFile ? [viteSingleFile()] : [])],
+    plugins: [...(vite.plugins ?? []), sourcePlugin(), unlocksPlugin(), ...(singleFile ? [viteSingleFile()] : [])],
   }
 }
 
@@ -63,7 +65,7 @@ function unlocksPlugin(): Plugin {
     async transformIndexHtml(html) {
       if (!lockedFiles(root).length) return html
       // The game module and the locked packs are TypeScript: load them as `ifloom check` does.
-      const loader = server ?? (await createServer({ root, mode, server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom', logLevel: 'error' }))
+      const loader = server ?? (await createServer({ root, mode, configLoader: configLoader(root), server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom', logLevel: 'error' }))
       try {
         const made = await lockedScript({ root, mode, load: (path) => loader.ssrLoadModule(path), strict: building })
         if (made.problems.length) throw new Error(`Locked content:\n  ${made.problems.join('\n  ')}`)

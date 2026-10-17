@@ -10,20 +10,26 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
+    "build": "tsdown",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "@ifloom/engine": "^0.0.0"
   },
   "devDependencies": {
     "@ifloom/engine": "^0.0.0",
+    "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "^4.1.11"
   }

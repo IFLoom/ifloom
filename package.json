@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=22.18"
   },
   "workspaces": [
     "packages/*",
@@ -13,6 +13,8 @@
     "games/*"
   ],
   "scripts": {
+    "build": "node scripts/build.ts",
+    "pack": "node scripts/build.ts --pack",
     "new": "ifloom new",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p packages/engine && tsc --noEmit -p packages/plugin-calendar && tsc --noEmit -p packages/plugin-places && tsc --noEmit -p packages/plugin-cast && tsc --noEmit -p packages/plugin-quests && tsc --noEmit -p packages/plugin-statuses && tsc --noEmit -p packages/plugin-achievements && tsc --noEmit -p packages/plugin-shop && tsc --noEmit -p packages/plugin-jobs && tsc --noEmit -p packages/plugin-generators && tsc --noEmit -p packages/plugin-wardrobe && tsc --noEmit -p packages/plugin-messages && tsc --noEmit -p packages/plugin-feed && tsc --noEmit -p packages/plugin-devices && tsc --noEmit -p packages/plugin-cheats && tsc --noEmit -p packages/plugin-unlocks && tsc --noEmit -p packages/phone && tsc --noEmit -p packages/plugin-debug && tsc --noEmit -p packages/audio && tsc --noEmit -p packages/browser && tsc --noEmit -p packages/react && tsc --noEmit -p packages/cli && tsc --noEmit -p examples/showcase && tsc --noEmit -p examples/novel && tsc --noEmit -p examples/cafe && npm run typecheck -w @ifloom/site",
@@ -22,6 +24,7 @@
     "docs:links": "npm run links -w @ifloom/site"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
@@ -36,6 +39,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",
+    "tsdown": "0.23.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "vite-plugin-singlefile": "^2.3.3",

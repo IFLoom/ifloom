@@ -253,6 +253,18 @@ body {
 }
 ```
 
+### Without Tailwind
+
+The stylesheet also comes prebuilt. `@ifloom/react/styles.min.css` is `styles.css` already run through Tailwind and minified, and each preset has a prebuilt copy beside it, such as `@ifloom/react/themes/paper.min.css`. Import them in place of your `src/styles.css`, and take Tailwind's plugin out of `vite.config.ts` and `tailwindcss` and `@tailwindcss/vite` out of your dev dependencies:
+
+```ts
+// src/main.ts
+import '@ifloom/react/styles.min.css'
+import '@ifloom/react/themes/paper.min.css'
+```
+
+Variables, presets and `data-part` rules work as before, from a plain stylesheet of your own imported after them. The `classes` option only has the Tailwind classes the UI already uses, since nothing builds new ones, so restyle with CSS instead.
+
 ## 5. Rearrange the parts in layout.tsx
 
 The page is a component, the layout. The react and next templates start you with `src/layout.tsx`, a copy of the UI's own [`DefaultLayout`](/docs/react/components#defaultlayout), and pass it to `mountGame` as `layout`. Everything on the page is a component in it, so you rearrange the page by editing JSX:

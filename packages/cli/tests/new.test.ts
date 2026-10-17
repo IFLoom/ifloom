@@ -8,8 +8,8 @@ import { pluginNames } from '../src/new.ts'
 /** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
 const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
 const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
-  // The react template's own layout.tsx is JSX, so it lists React.
-  react: ['react', 'react-dom', ...REACT_DEPS, 'typescript'],
+  // The react template's own layout.tsx is JSX, so it lists React and React's types.
+  react: ['react', 'react-dom', '@tailwindcss/vite', '@types/react', '@types/react-dom', '@vitejs/plugin-react', 'tailwindcss', 'typescript'],
   novel: REACT_DEPS,
   cafe: REACT_DEPS,
   town: REACT_DEPS,
@@ -104,7 +104,7 @@ describe('ifloom new', () => {
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.scripts).toMatchObject({ dev: 'next dev', build: 'next build', check: 'ifloom check', typecheck: 'next typegen && tsc --noEmit' })
     expect(pkg.scripts.playtest).toMatch(/^ifloom playtest/)
-    expect(readFileSync(join(dir, 'next.config.ts'), 'utf8')).toContain("transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', '@ifloom/browser']")
+    expect(readFileSync(join(dir, 'next.config.ts'), 'utf8')).not.toContain('transpilePackages')
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toMatch(/^'use client'/)
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('browserRunner(loaded.game)')
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('layout={Layout}')
@@ -124,20 +124,22 @@ describe('ifloom new', () => {
   it('makes a plugin package from the plugin template, named for the plugin', () => {
     const { dir, files, theme } = newGame({ name: 'ifloom-plugin-rainy-day', template: 'plugin', into: fresh() })
     expect(theme).toBeNull()
-    expect(files.sort()).toEqual(['.gitignore', 'README.md', 'package.json', 'src/index.ts', 'tests/rainy-day.test.ts', 'tsconfig.json'])
+    expect(files.sort()).toEqual(['.gitignore', 'README.md', 'package.json', 'src/index.ts', 'tests/rainy-day.test.ts', 'tsconfig.json', 'tsdown.config.ts'])
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg).toMatchObject({
       name: 'ifloom-plugin-rainy-day',
       description: 'Rainy Day: a plugin for IFLoom.',
       license: 'MIT',
-      exports: { '.': './src/index.ts' },
-      scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
+      // Published compiled: ES modules and their types, built into dist/ before it's packed.
+      exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } },
+      files: ['dist'],
+      scripts: { build: 'tsdown', test: 'vitest run', typecheck: 'tsc --noEmit', prepublishOnly: 'npm run build' },
       // The engine is the game's: a caret peer, and a dev dependency for the plugin's own tests.
       peerDependencies: { '@ifloom/engine': '^0.0.0' },
     })
     expect(pkg.private).toBeUndefined()
     expect(pkg.dependencies).toBeUndefined()
-    expect(Object.keys(pkg.devDependencies)).toEqual(['@ifloom/engine', 'typescript', 'vitest'])
+    expect(Object.keys(pkg.devDependencies)).toEqual(['@ifloom/engine', 'tsdown', 'typescript', 'vitest'])
     // Standalone: the tsconfig extends nothing in the checkout.
     expect(JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')).extends).toBeUndefined()
     const source = readFileSync(join(dir, 'src/index.ts'), 'utf8')

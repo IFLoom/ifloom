@@ -24,5 +24,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # Tests, typecheck, lint, the docs' links and build, and the examples.
+      # Every package's dist/, as a game installed from npm gets it.
+      - run: npm run build
+      # Tests, typecheck, lint, the docs' links and build, and the examples, all from src/.
       - run: bash scripts/verify.sh
+      # The built packages, used as their users will: plain Node, and a type-check against the .d.ts files.
+      - run: bash scripts/try-dist.sh --no-build

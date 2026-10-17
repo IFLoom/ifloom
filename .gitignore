@@ -11,3 +11,6 @@ games/
 # Unlock codes and other secrets: never in git
 .env.local
 .env.*.local
+
+# npm run pack: the packages as tarballs, for a game beside the checkout
+/packs/

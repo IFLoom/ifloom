@@ -9,4 +9,8 @@
  *   [data-part="choice"] { border-radius: 0; }
  *
  * See "Make it your own" in the React UI docs.
+ *
+ * These are Tailwind source, built with your own classes. A game without
+ * Tailwind imports @ifloom/react's prebuilt styles.min.css instead, and a
+ * preset's .min.css. See "Without Tailwind" in the same docs.
  */

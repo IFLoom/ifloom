@@ -123,9 +123,38 @@ The example's `playtest` script is `ifloom playtest --turns 3 --out playtest/rea
 
 ### Drawing it: a page to read
 
-`src/main.ts` starts the game with [`mountGame`](/docs/react#mountgame), which makes a [runner](/docs/reference/runner) with undo, saves and autosave, and draws it with the React UI's reading layout:
+The example draws the story with the React UI. Its `src/main.ts` starts the game with [`mountGame`](/docs/react#mountgame), which makes a [runner](/docs/reference/runner) with undo, saves and autosave, and draws it in the React UI's reading layout. The other tabs draw the same page to read with plain DOM, Vue or Svelte, from the [templates](/docs/guide/frameworks) for each:
 
-```ts
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts
+import { browserRunner, type View } from '@ifloom/engine'
+import { theLetter } from './game.ts'
+import './styles.css'
+
+const runner = browserRunner(theLetter().game)
+const root = document.querySelector<HTMLElement>('#root')!
+
+/** One column, like a book's: the chapter, its words, then the buttons. */
+function draw(view: View): void {
+  const page = document.createElement('article')
+  page.append(Object.assign(document.createElement('h2'), { textContent: view.scene.title }))
+  for (const beat of view.scene.beats) {
+    if (beat.kind === 'text') page.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+  }
+  for (const choice of [...view.scene.choices, ...view.actions]) {
+    const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
+    button.onclick = () => runner.apply(choice.command)
+    page.append(button)
+  }
+  root.replaceChildren(page)
+}
+
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
+```
+
+```ts tab="React" tab-group="framework"
+// src/main.ts
 import { READING_LAYOUT, mountGame } from '@ifloom/react'
 import { theLetter } from './game.ts'
 import './styles.css'
@@ -133,9 +162,54 @@ import './styles.css'
 mountGame(theLetter(), { layout: READING_LAYOUT, pages: { subtitle: 'A novel in three chapters' } })
 ```
 
-With `pages` on, it opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` variable that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/guide/title-screen) covers how it works.
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue, with the vue template's src/runner.ts making its runner from theLetter().game -->
+<script setup lang="ts">
+import { runner, view } from './runner.ts'
+</script>
 
-[`READING_LAYOUT`](/docs/react#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
+<!-- One column, like a book's: the chapter, its words, then the buttons. -->
+<template>
+  <article>
+    <h2>{{ view.scene.title }}</h2>
+    <template v-for="(beat, at) in view.scene.beats" :key="at">
+      <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+    </template>
+    <button
+      v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
+      :key="at"
+      :disabled="Boolean(choice.disabled)"
+      @click="runner.apply(choice.command)"
+    >
+      {{ choice.label }}
+    </button>
+  </article>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte, with the svelte template's src/runner.ts making its runner from theLetter().game -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+</script>
+
+<!-- One column, like a book's: the chapter, its words, then the buttons. -->
+<article>
+  <h2>{$view.scene.title}</h2>
+  {#each $view.scene.beats as beat, at (at)}
+    {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+  {/each}
+  {#each [...$view.scene.choices, ...$view.actions] as choice, at (at)}
+    <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>
+  {/each}
+</article>
+```
+
+The page to read needs no clock, room or people, because the game has none. The name the reader types is an [input](/docs/guide/frameworks#inputs), drawn as in the templates.
+
+In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` variable that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/guide/title-screen) covers how it works.
+
+In React, [`READING_LAYOUT`](/docs/react#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
 
 ## A management game: The Corner Café
 
@@ -275,9 +349,50 @@ As with The Letter, `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest)
 
 ### Drawing it: the books on the stage
 
-In a management game the player mostly looks at the things being managed. So the café's `src/main.ts` puts its tables on the stage, under the scene and over the week's buttons, and keeps only the title, the coins and reputation, and the player's menu at the side:
+In a management game the player mostly looks at the things being managed. So the café draws its tables under the scene and over the week's buttons. Each kind of entity is in `view.entities`, with a row for each one and its stats, so a table for each kind is a loop in any framework. The example uses the React UI, and keeps only the title, the coins and reputation, and the player's menu at the side:
 
-```ts
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts
+import { browserRunner, type View } from '@ifloom/engine'
+import { cornerCafe } from './game.ts'
+import './styles.css'
+
+const runner = browserRunner(cornerCafe().game)
+const root = document.querySelector<HTMLElement>('#root')!
+
+/** A table for each kind, the staff and the menu: a row for each one, a cell for each stat. */
+function drawTables(view: View): HTMLElement[] {
+  return Object.values(view.entities).map((kind) => {
+    const table = document.createElement('table')
+    table.createCaption().textContent = kind.plural
+    for (const entity of kind.entries) {
+      const row = table.insertRow()
+      row.insertCell().textContent = entity.name
+      for (const stat of entity.stats) row.insertCell().textContent = `${stat.label}: ${stat.text}`
+    }
+    return table
+  })
+}
+
+function draw(view: View): void {
+  const scene = document.createElement('article')
+  for (const beat of view.scene.beats) {
+    if (beat.kind === 'text') scene.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+  }
+  const buttons = [...view.scene.choices, ...view.actions].map((choice) => {
+    const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
+    button.onclick = () => runner.apply(choice.command)
+    return button
+  })
+  root.replaceChildren(scene, ...drawTables(view), ...buttons)
+}
+
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
+```
+
+```ts tab="React" tab-group="framework"
+// src/main.ts
 import { mountGame } from '@ifloom/react'
 import { cornerCafe } from './game.ts'
 import './styles.css'
@@ -287,7 +402,70 @@ mountGame(cornerCafe(), {
 })
 ```
 
-`'entities'` is the [`EntityTable`](/docs/react/components#entitytable), with a table for the staff and one for the menu. `'actions'` is the game's own buttons, from Count the till and end the week to Put a card in the window. A layout lists only the parts the game uses, and any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar. Its stylesheet imports the `studio` [preset](/docs/react/customising#1-pick-a-theme-preset) in the café's green. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue, with the vue template's src/runner.ts making its runner from cornerCafe().game -->
+<script setup lang="ts">
+import { runner, view } from './runner.ts'
+</script>
+
+<template>
+  <article>
+    <template v-for="(beat, at) in view.scene.beats" :key="at">
+      <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+    </template>
+  </article>
+  <!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
+  <table v-for="(kind, id) in view.entities" :key="id">
+    <caption>{{ kind.plural }}</caption>
+    <tbody>
+      <tr v-for="entity in kind.entries" :key="entity.id">
+        <td>{{ entity.name }}</td>
+        <td v-for="stat in entity.stats" :key="stat.key">{{ stat.label }}: {{ stat.text }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <button
+    v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
+    :key="at"
+    :disabled="Boolean(choice.disabled)"
+    @click="runner.apply(choice.command)"
+  >
+    {{ choice.label }}
+  </button>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte, with the svelte template's src/runner.ts making its runner from cornerCafe().game -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+</script>
+
+<article>
+  {#each $view.scene.beats as beat, at (at)}
+    {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+  {/each}
+</article>
+<!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
+{#each Object.entries($view.entities) as [id, kind] (id)}
+  <table>
+    <caption>{kind.plural}</caption>
+    <tbody>
+      {#each kind.entries as entity (entity.id)}
+        <tr>
+          <td>{entity.name}</td>
+          {#each entity.stats as stat (stat.key)}<td>{stat.label}: {stat.text}</td>{/each}
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+{/each}
+{#each [...$view.scene.choices, ...$view.actions] as choice, at (at)}
+  <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>
+{/each}
+```
+
+In the React layout, `'entities'` is the [`EntityTable`](/docs/react/components#entitytable), with a table for the staff and one for the menu. `'actions'` is the game's own buttons, from Count the till and end the week to Put a card in the window. A layout lists only the parts the game uses, and any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar. Its stylesheet imports the `studio` [preset](/docs/react/customising#1-pick-a-theme-preset) in the café's green. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
 
 ### A calendar, if the game wants one
 

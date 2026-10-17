@@ -1,37 +1,69 @@
 ---
 title: "Building your own HUD"
-description: "Build your own HUD from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest, in the React UI, with the stat bar in Vue and Svelte too."
+description: "Build your own HUD from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest, in plain DOM, React, Vue or Svelte."
 ---
-The React UI's stat list, [`NoticeStrip`](/docs/react/components#noticestrip) and quest log are basic on purpose. Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
+Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
 
 - an energy bar that turns red as it runs low;
 - a strip of unread counts for notices and texts;
 - an objective line from the quest the player is tracking.
 
-Each is a small React component that reads the view with [`useGame`](/docs/react/components#usegame). The examples use Small Town's stats and plugins, but the pattern is the same for any game. [In Vue or Svelte](#in-vue-or-svelte) builds the stat bar in those.
+The view is the same whatever draws it, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
+
+- **Plain JS** pieces are functions that return an element, called from the `draw` function in the [`vanilla` template](/docs/guide/frameworks)'s `src/main.ts`.
+- **React** pieces are components that read the view with [`useGame`](/docs/react/components#usegame) from the [React UI](/docs/react), whose stat list, [`NoticeStrip`](/docs/react/components#noticestrip) and quest log are basic on purpose.
+- **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts`.
+
+The examples use Small Town's stats and plugins, but the pattern is the same for any game.
 
 ## A stat bar
 
-Every stat the game lists is in `view.stats` as a [`StatView`](/docs/reference/view#statview), with its `value`, its `min` and `max`, and its `text` as the game formats it:
+Every stat the game lists is in `view.stats` as a [`StatView`](/docs/reference/view#statview), with its `value`, its `min` and `max`, and its `text` as the game formats it. This bar takes the stat's key, so one piece draws a bar for any stat:
 
-```tsx
-// src/hud/EnergyBar.tsx
+```ts tab="Plain JS" tab-group="framework"
+// src/hud.ts
+import type { View } from '@ifloom/engine'
+
+/** A bar for one of the game's stats, by its key: statBar(view, 'energy'). */
+export function statBar(view: View, key: string): HTMLElement | null {
+  const stat = view.stats.find((entry) => entry.key === key)
+  if (!stat) return null
+  const range = stat.max - stat.min
+  const share = range > 0 ? (stat.value - stat.min) / range : 0
+  const meter = document.createElement('div')
+  meter.className = 'meter'
+  meter.setAttribute('role', 'meter')
+  meter.setAttribute('aria-label', stat.label)
+  meter.setAttribute('aria-valuemin', String(stat.min))
+  meter.setAttribute('aria-valuemax', String(stat.max))
+  meter.setAttribute('aria-valuenow', String(stat.value))
+  meter.setAttribute('aria-valuetext', stat.text)
+  const fill = meter.appendChild(document.createElement('div'))
+  fill.style.width = `${share * 100}%`
+  fill.style.background = share < 0.25 ? 'crimson' : 'seagreen'
+  return meter
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/hud/StatBar.tsx
 import { useGame } from '@ifloom/react'
 
-export function EnergyBar() {
+/** A bar for one of the game's stats, by its key: <StatBar stat="energy" />. */
+export function StatBar({ stat: key }: { stat: string }) {
   const { view } = useGame()
-  const energy = view.stats.find((stat) => stat.key === 'energy')
-  if (!energy) return null
-  const range = energy.max - energy.min
-  const share = range > 0 ? (energy.value - energy.min) / range : 0
+  const stat = view.stats.find((entry) => entry.key === key)
+  if (!stat) return null
+  const range = stat.max - stat.min
+  const share = range > 0 ? (stat.value - stat.min) / range : 0
   return (
     <div
       role="meter"
-      aria-label={energy.label}
-      aria-valuemin={energy.min}
-      aria-valuemax={energy.max}
-      aria-valuenow={energy.value}
-      aria-valuetext={energy.text}
+      aria-label={stat.label}
+      aria-valuemin={stat.min}
+      aria-valuemax={stat.max}
+      aria-valuenow={stat.value}
+      aria-valuetext={stat.text}
       className="h-3 overflow-hidden rounded-full bg-muted"
     >
       <div className="h-full transition-[width]" style={{ width: `${share * 100}%`, background: share < 0.25 ? 'crimson' : 'seagreen' }} />
@@ -40,105 +72,7 @@ export function EnergyBar() {
 }
 ```
 
-`max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
-
-If a plain bar is all you need, you don't have to write one. Set [`display: 'bar'`](/docs/reference/stats#statdef) or `'pips'` on the stat, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
-
-## A strip of unread counts
-
-Unseen notices are in `view.notices.unseen`. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/plugins/messages) plugin keeps an `unread` count:
-
-```tsx
-// src/hud/Unread.tsx
-import { useState } from 'react'
-import type { MessagesView } from '@ifloom/plugin-messages'
-import { DeviceDialog, Notices, useDevice, useGame } from '@ifloom/react'
-
-export function Unread() {
-  const { view } = useGame()
-  const phone = useDevice()
-  const [showNotices, setShowNotices] = useState(false)
-  const notices = view.notices.unseen.length
-  const texts = (view.plugins.messages as MessagesView | undefined)?.unread ?? 0
-  return (
-    <div className="flex gap-3 text-sm">
-      {notices ? <button onClick={() => setShowNotices(!showNotices)}>🔔 {notices}</button> : null}
-      {texts ? <button onClick={() => phone.open('phone')}>✉ {texts}</button> : null}
-      {showNotices ? <Notices limit={10} /> : null}
-      <DeviceDialog deviceId={phone.openId} onClose={phone.close} />
-    </div>
-  )
-}
-```
-
-Each count opens where the unread thing is. The texts button opens the phone with [`useDevice`](/docs/react/components#usedevice) and a [`DeviceDialog`](/docs/react/components#devicedialog), the same pair the built-in device buttons use. A count of 0 draws nothing.
-
-## An objective line
-
-The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
-
-```tsx
-// src/hud/Objective.tsx
-import type { QuestsView } from '@ifloom/plugin-quests'
-import { useGame } from '@ifloom/react'
-
-export function Objective() {
-  const { view } = useGame()
-  const quest = (view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked)
-  if (!quest) return null
-  return (
-    <p className="text-sm">
-      <strong>{quest.title}</strong>
-      {quest.hint ? <span className="text-muted-foreground"> · {quest.hint}</span> : null}
-    </p>
-  )
-}
-```
-
-The player picks which quest to track in the quest log, which sends `quests/track`. To show the newest quest when none is tracked, take `active[0]` instead.
-
-## Putting it on screen
-
-Your components can go in any list of the [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the stage, and take the place of the stat list at the side:
-
-```tsx
-// src/main.tsx
-import { DEFAULT_LAYOUT, mountGame } from '@ifloom/react'
-import { EnergyBar } from './hud/EnergyBar.tsx'
-import { Objective } from './hud/Objective.tsx'
-import { Unread } from './hud/Unread.tsx'
-import game from './game.ts'
-
-const hud = (
-  <div key="hud" className="flex flex-col gap-2 rounded-lg border p-3">
-    <div className="flex items-center justify-between gap-4">
-      <Objective />
-      <Unread />
-    </div>
-    <EnergyBar />
-  </div>
-)
-
-mountGame(game, {
-  layout: {
-    ...DEFAULT_LAYOUT,
-    sidebar: DEFAULT_LAYOUT.sidebar.filter((part) => part !== 'stats'),
-    stage: [hud, ...DEFAULT_LAYOUT.stage],
-  },
-})
-```
-
-Build the element once, outside any component, as here. The layout is only read when the page is drawn, and the components inside it redraw themselves as the view changes.
-
-To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/guide/plugin-ui).
-
-For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
-
-## In Vue or Svelte
-
-The view is the same whatever draws it, so a HUD in the [`vue` or `svelte` template](/docs/guide/frameworks) reads the same fields. Here is the stat bar as a component of each, reading the view from the template's `src/runner.ts`. It takes the stat's key, so one component draws a bar for any stat:
-
-```vue tab="Vue"
+```vue tab="Vue" tab-group="framework"
 <!-- src/StatBar.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -166,7 +100,7 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 </template>
 ```
 
-```svelte tab="Svelte"
+```svelte tab="Svelte" tab-group="framework"
 <!-- src/StatBar.svelte -->
 <script lang="ts">
   import { view } from './runner.ts'
@@ -192,4 +126,269 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 {/if}
 ```
 
-Put it in `App.vue` or `App.svelte` wherever the bar should go, as `<StatBar stat="energy" />`. The unread counts and the objective line read `view.notices.unseen`, `view.plugins.messages` and `view.plugins.quests` the same way, and a button sends a command with `runner.apply`.
+`max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
+
+If you use the React UI and a plain bar is all you need, you don't have to write one. Set [`display: 'bar'`](/docs/reference/stats#statdef) or `'pips'` on the stat, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
+
+## A strip of unread counts
+
+Unseen notices are in `view.notices.unseen`, newest first. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/plugins/messages) plugin keeps an `unread` count:
+
+```ts tab="Plain JS" tab-group="framework"
+// src/hud.ts
+import type { View } from '@ifloom/engine'
+import type { MessagesView } from '@ifloom/plugin-messages'
+
+let showNotices = false
+
+/** The unread counts. The bell shows the notices; `redraw` draws the page again with the list open or shut. */
+export function unread(view: View, redraw: () => void): HTMLElement {
+  const strip = document.createElement('div')
+  strip.className = 'unread'
+  const notices = view.notices.unseen
+  const texts = (view.plugins.messages as MessagesView | undefined)?.unread ?? 0
+  if (notices.length) {
+    const bell = strip.appendChild(document.createElement('button'))
+    bell.textContent = `🔔 ${notices.length}`
+    bell.onclick = () => {
+      showNotices = !showNotices
+      redraw()
+    }
+  }
+  if (texts) strip.appendChild(document.createElement('span')).textContent = `✉ ${texts}`
+  if (showNotices) {
+    const list = strip.appendChild(document.createElement('ul'))
+    for (const notice of notices.slice(0, 10)) list.appendChild(document.createElement('li')).textContent = notice.title
+  }
+  return strip
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/hud/Unread.tsx
+import { useState } from 'react'
+import type { MessagesView } from '@ifloom/plugin-messages'
+import { DeviceDialog, Notices, useDevice, useGame } from '@ifloom/react'
+
+export function Unread() {
+  const { view } = useGame()
+  const phone = useDevice()
+  const [showNotices, setShowNotices] = useState(false)
+  const notices = view.notices.unseen.length
+  const texts = (view.plugins.messages as MessagesView | undefined)?.unread ?? 0
+  return (
+    <div className="flex gap-3 text-sm">
+      {notices ? <button onClick={() => setShowNotices(!showNotices)}>🔔 {notices}</button> : null}
+      {texts ? <button onClick={() => phone.open('phone')}>✉ {texts}</button> : null}
+      {showNotices ? <Notices limit={10} /> : null}
+      <DeviceDialog deviceId={phone.openId} onClose={phone.close} />
+    </div>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/Unread.vue -->
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import type { MessagesView } from '@ifloom/plugin-messages'
+import { view } from './runner.ts'
+
+const showNotices = ref(false)
+const notices = computed(() => view.value.notices.unseen)
+const texts = computed(() => (view.value.plugins.messages as MessagesView | undefined)?.unread ?? 0)
+</script>
+
+<template>
+  <div class="unread">
+    <button v-if="notices.length" @click="showNotices = !showNotices">🔔 {{ notices.length }}</button>
+    <span v-if="texts">✉ {{ texts }}</span>
+    <ul v-if="showNotices">
+      <li v-for="notice in notices.slice(0, 10)" :key="notice.id">{{ notice.title }}</li>
+    </ul>
+  </div>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/Unread.svelte -->
+<script lang="ts">
+  import type { MessagesView } from '@ifloom/plugin-messages'
+  import { view } from './runner.ts'
+
+  let showNotices = $state(false)
+  const notices = $derived($view.notices.unseen)
+  const texts = $derived(($view.plugins.messages as MessagesView | undefined)?.unread ?? 0)
+</script>
+
+<div class="unread">
+  {#if notices.length}<button onclick={() => (showNotices = !showNotices)}>🔔 {notices.length}</button>{/if}
+  {#if texts}<span>✉ {texts}</span>{/if}
+  {#if showNotices}
+    <ul>
+      {#each notices.slice(0, 10) as notice (notice.id)}<li>{notice.title}</li>{/each}
+    </ul>
+  {/if}
+</div>
+```
+
+A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/react/components#usedevice) and a [`DeviceDialog`](/docs/react/components#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
+
+## An objective line
+
+The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
+
+```ts tab="Plain JS" tab-group="framework"
+// src/hud.ts
+import type { View } from '@ifloom/engine'
+import type { QuestsView } from '@ifloom/plugin-quests'
+
+/** The tracked quest's title and hint, or null when none is tracked. */
+export function objective(view: View): HTMLElement | null {
+  const quest = (view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked)
+  if (!quest) return null
+  const line = document.createElement('p')
+  line.className = 'objective'
+  line.appendChild(document.createElement('strong')).textContent = quest.title
+  if (quest.hint) line.append(` · ${quest.hint}`)
+  return line
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/hud/Objective.tsx
+import type { QuestsView } from '@ifloom/plugin-quests'
+import { useGame } from '@ifloom/react'
+
+export function Objective() {
+  const { view } = useGame()
+  const quest = (view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked)
+  if (!quest) return null
+  return (
+    <p className="text-sm">
+      <strong>{quest.title}</strong>
+      {quest.hint ? <span className="text-muted-foreground"> · {quest.hint}</span> : null}
+    </p>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/Objective.vue -->
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { QuestsView } from '@ifloom/plugin-quests'
+import { view } from './runner.ts'
+
+const quest = computed(() => (view.value.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked))
+</script>
+
+<template>
+  <p v-if="quest" class="objective">
+    <strong>{{ quest.title }}</strong>
+    <span v-if="quest.hint"> · {{ quest.hint }}</span>
+  </p>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/Objective.svelte -->
+<script lang="ts">
+  import type { QuestsView } from '@ifloom/plugin-quests'
+  import { view } from './runner.ts'
+
+  const quest = $derived(($view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked))
+</script>
+
+{#if quest}
+  <p class="objective">
+    <strong>{quest.title}</strong>
+    {#if quest.hint}<span> · {quest.hint}</span>{/if}
+  </p>
+{/if}
+```
+
+The player picks which quest to track, which sends the quests plugin's `quests/track` command. To show the newest quest when none is tracked, take `active[0]` instead.
+
+## Putting it on screen
+
+Put the three pieces together in a bar over the scene:
+
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in the vanilla template
+import { objective, statBar, unread } from './hud.ts'
+
+function draw(view: View): void {
+  root.replaceChildren()
+  const hud = add(root, 'div', '', 'hud')
+  hud.append(...[objective(view), unread(view, () => draw(runner.view())), statBar(view, 'energy')].filter((part) => part !== null))
+  // …then the title, the scene and its choices, as before.
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/main.tsx
+import { DEFAULT_LAYOUT, mountGame } from '@ifloom/react'
+import { StatBar } from './hud/StatBar.tsx'
+import { Objective } from './hud/Objective.tsx'
+import { Unread } from './hud/Unread.tsx'
+import game from './game.ts'
+
+const hud = (
+  <div key="hud" className="flex flex-col gap-2 rounded-lg border p-3">
+    <div className="flex items-center justify-between gap-4">
+      <Objective />
+      <Unread />
+    </div>
+    <StatBar stat="energy" />
+  </div>
+)
+
+mountGame(game, {
+  layout: {
+    ...DEFAULT_LAYOUT,
+    sidebar: DEFAULT_LAYOUT.sidebar.filter((part) => part !== 'stats'),
+    stage: [hud, ...DEFAULT_LAYOUT.stage],
+  },
+})
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue, in the vue template -->
+<script setup lang="ts">
+import StatBar from './StatBar.vue'
+import Objective from './Objective.vue'
+import Unread from './Unread.vue'
+</script>
+
+<template>
+  <div class="hud">
+    <Objective />
+    <Unread />
+    <StatBar stat="energy" />
+  </div>
+  <!-- …then the title, the scene and its choices, as before. -->
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte, in the svelte template -->
+<script lang="ts">
+  import StatBar from './StatBar.svelte'
+  import Objective from './Objective.svelte'
+  import Unread from './Unread.svelte'
+</script>
+
+<div class="hud">
+  <Objective />
+  <Unread />
+  <StatBar stat="energy" />
+</div>
+<!-- …then the title, the scene and its choices, as before. -->
+```
+
+In plain DOM, the pieces are drawn again with the rest of the page on every change. In Vue and Svelte, each component redraws itself when the view changes.
+
+In the React UI, your components can go in any list of the [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the stage, and take the place of the stat list at the side. Build the element once, outside any component, as here. The layout is only read when the page is drawn, and the components inside it redraw themselves as the view changes. For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
+
+To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/guide/plugin-ui).

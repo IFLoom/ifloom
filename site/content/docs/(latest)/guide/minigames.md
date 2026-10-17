@@ -1,10 +1,10 @@
 ---
 title: "Minigames"
-description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in React, Vue or Svelte.
+description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in plain DOM, React, Vue or Svelte.
 ---
-This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one, in React, Vue or Svelte.
+This page builds a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one, in plain DOM, React, Vue or Svelte.
 
-A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the React UI draws it and keeps its clock. Every field is in the [minigames reference](/docs/reference/minigames).
+A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the page draws it and keeps its clock. Every field is in the [minigames reference](/docs/reference/minigames).
 
 ## The rules
 
@@ -44,7 +44,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
 
 `after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`minigameVar`](/docs/reference/effects#minigamevar) effect.
 
-The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told.
+The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told. In the other templates, `startKeys` gives them the arrow keys.
 
 ## The rounds
 
@@ -135,17 +135,50 @@ A scene can also start one as it opens, with a `minigame` field. See [`MinigameS
 
 ## Playing it
 
-That's all the React UI needs. While the minigame runs, [`SceneStage`](/docs/react/components#scenestage) draws [`MinigamePanel`](/docs/react/components#minigamepanel) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
+That's all the page needs. Every template draws a running minigame for you:
 
-The engine has no clock of its own. The panel sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
+- In the React UI, [`SceneStage`](/docs/react/components#scenestage) draws [`MinigamePanel`](/docs/react/components#minigamepanel) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
+- In the `vanilla`, `vue` and `svelte` templates, the scene shows the minigame's words, and a [minigame panel](/docs/guide/frameworks#minigames) draws the timer and a button for each input. `src/minigame.ts` maps the arrow keys and space to the inputs.
+
+The engine has no clock of its own. The React UI's panel, or `startClock` in the other templates, sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
 
 While it runs, the player can't do anything else. Every other command is refused with `Finish this first.` until it ends.
 
 ## Your own panel
 
-The built-in panel is plain on purpose. To draw quick feet your own way, write a component that reads the minigame with [`useMinigame`](/docs/react/components#useminigame), and give it to `panels` under the minigame's id:
+The built-in panels are plain on purpose. To draw quick feet your own way, read the running minigame from `view.minigame` and send its inputs as `{ type: 'minigame', input }`. In the React UI, [`useMinigame`](/docs/react/components#useminigame) reads it and sends for you:
 
-```tsx
+```ts tab="Plain JS" tab-group="framework"
+// src/quickFeet.ts
+import type { MinigameView, Runner } from '@ifloom/engine'
+
+const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', right: '→' }
+
+export function quickFeet(minigame: MinigameView, runner: Runner): HTMLElement {
+  const section = document.createElement('section')
+  section.className = 'quick-feet'
+  section.appendChild(document.createElement('p')).textContent = `Round ${minigame.vars.round} of 5 · ${minigame.vars.score} right`
+  // The arrow states are named after their arrow, so the state says which to draw.
+  const arrow = section.appendChild(document.createElement('p'))
+  arrow.className = 'arrow'
+  arrow.setAttribute('aria-live', 'polite')
+  if (minigame.label) arrow.setAttribute('aria-label', minigame.label)
+  arrow.textContent = GLYPHS[minigame.state] ?? ''
+  if (minigame.timeLeft !== null && minigame.timeTotal) {
+    const timer = section.appendChild(document.createElement('div'))
+    timer.className = 'timer'
+    timer.appendChild(document.createElement('span')).style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
+  }
+  for (const input of minigame.inputs) {
+    const button = section.appendChild(document.createElement('button'))
+    button.textContent = GLYPHS[input] ?? input
+    button.onclick = () => runner.apply({ type: 'minigame', input })
+  }
+  return section
+}
+```
+
+```tsx tab="React" tab-group="framework"
 // src/QuickFeet.tsx
 import { buttonVariants, useMinigame, type PanelComponent } from '@ifloom/react'
 
@@ -180,30 +213,7 @@ export const QuickFeet: PanelComponent = () => {
 }
 ```
 
-```ts
-// src/main.ts
-import { mountGame } from '@ifloom/react'
-import { QuickFeet } from './QuickFeet.tsx'
-import game from './game.ts'
-
-mountGame(game, { panels: { arrows: QuickFeet } })
-```
-
-What it uses:
-
-- **`minigame`** is [`view.minigame`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
-- **`send(input)`** presses an input.
-- **`keys: true`** maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys.
-
-You don't have to run the clock. `SceneStage` runs it while a minigame is on screen, and `useMinigame` would run it too. There's only ever one clock per game, however many components ask.
-
-To change every minigame's panel at once rather than one by id, replace `MinigamePanel` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
-
-### In Vue or Svelte
-
-The [`vue` and `svelte` templates](/docs/guide/frameworks#minigames) draw any minigame with their `Minigame` component, and run the clock and the keys from `src/minigame.ts`. For a panel of your own, read `view.minigame` and send its inputs with `runner.apply`:
-
-```vue tab="Vue"
+```vue tab="Vue" tab-group="framework"
 <!-- src/QuickFeet.vue -->
 <script setup lang="ts">
 import { runner, view } from './runner.ts'
@@ -226,7 +236,7 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 </template>
 ```
 
-```svelte tab="Svelte"
+```svelte tab="Svelte" tab-group="framework"
 <!-- src/QuickFeet.svelte -->
 <script lang="ts">
   import { runner, view } from './runner.ts'
@@ -250,20 +260,43 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 {/if}
 ```
 
-Draw it in place of the template's panel when quick feet is running:
+Then draw it in place of the usual panel while quick feet is running. The React UI takes it in `panels`, under the minigame's id:
 
-```vue tab="Vue"
-<!-- src/App.vue -->
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in the vanilla template's draw()
+if (view.minigame?.id === 'arrows') root.append(quickFeet(view.minigame, runner))
+else if (view.minigame) drawMinigame(view.minigame)
+```
+
+```ts tab="React" tab-group="framework"
+// src/main.ts
+import { mountGame } from '@ifloom/react'
+import { QuickFeet } from './QuickFeet.tsx'
+import game from './game.ts'
+
+mountGame(game, { panels: { arrows: QuickFeet } })
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue, in the vue template -->
 <QuickFeet v-if="view.minigame?.id === 'arrows'" />
 <Minigame v-else-if="view.minigame" :minigame="view.minigame" />
 ```
 
-```svelte tab="Svelte"
-<!-- src/App.svelte -->
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte, in the svelte template -->
 {#if $view.minigame?.id === 'arrows'}<QuickFeet />{:else if $view.minigame}<Minigame minigame={$view.minigame} />{/if}
 ```
 
-The clock and the keys already run from the template's `src/runner.ts`, whatever panel draws the minigame.
+What the panels use:
+
+- **`view.minigame`** is a [`MinigameView`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
+- **`{ type: 'minigame', input }`** presses an input. `useMinigame`'s `send(input)` sends it for you.
+- **`keys: true`** in `useMinigame` maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys. In the other templates, `startKeys` in `src/minigame.ts` does that whatever panel is drawn.
+
+You don't have to run the clock in your panel. In the React UI, `SceneStage` runs it while a minigame is on screen, and `useMinigame` would run it too. There's only ever one clock per game, however many components ask. In the other templates, `startClock` runs beside the runner.
+
+To change every minigame's panel at once in the React UI, rather than one by id, replace `MinigamePanel` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
 
 ## Testing it
 

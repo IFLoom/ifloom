@@ -75,7 +75,7 @@ Build with `vite build`. Nothing then checks the folder for you, but [`checkBuil
 
 ## Saves
 
-A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`mountGame`](/docs/react#mountgame) from the React UI picks `localStorage` unless you pass another:
+A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/reference/runner#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/react#mountgame) calls it), picks `localStorage` unless you pass another:
 
 | Shipped as | Driver |
 |---|---|
@@ -92,14 +92,44 @@ const runner = createRunner(game, state, {
 })
 ```
 
-With `mountGame`, pass the same options as `runner`:
+The templates make their runner with [`browserRunner`](/docs/reference/runner#browserrunner), which takes the same options over its defaults. With the React UI's `mountGame`, pass them as `runner`:
 
-```ts
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts
+import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import loaded from './game.ts' // what loadGame returned: { game, problems }
+
+const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+```
+
+```ts tab="React" tab-group="framework"
+// src/main.ts
 import { indexedDbDriver, saves } from '@ifloom/engine'
 import { mountGame } from '@ifloom/react'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
 mountGame(loaded, { runner: { saves: saves(loaded.game, indexedDbDriver()) } })
+```
+
+```ts tab="Vue" tab-group="framework"
+// src/runner.ts
+import { shallowRef } from 'vue'
+import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import loaded from './game.ts' // what loadGame returned: { game, problems }
+
+export const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+export const view = shallowRef(runner.view())
+runner.subscribe(() => (view.value = runner.view()))
+```
+
+```ts tab="Svelte" tab-group="framework"
+// src/runner.ts
+import { readable } from 'svelte/store'
+import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import loaded from './game.ts' // what loadGame returned: { game, problems }
+
+export const runner = browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
 ```
 
 Every driver is asynchronous, so switching from one to another later changes this line and nothing else.

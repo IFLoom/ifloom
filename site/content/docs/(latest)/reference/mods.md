@@ -1,5 +1,6 @@
 ---
 title: "Mods"
+description: Mod files a player adds to a built game, the store that keeps them, and loading them at start-up, with a mod manager in plain DOM, React, Vue or Svelte.
 ---
 A mod is a [pack](/docs/reference/loader#pack) in a file that a player adds to a built game. It can bring new scenes and prose, more variants for a line, a choice patched into a scene, or a replacement location or character. The player picks the file, the game keeps it, and the next time the game starts the mod's pack is loaded over the game's own.
 
@@ -140,9 +141,75 @@ Mods use the same drivers and the same key scheme as [saves](/docs/reference/sav
 
 ## Loading mods at start-up
 
-A game builds itself once, when the page opens. It reads the mods that are on, loads them over the game's own pack, and makes the runner from the result. This is the showcase's `src/main.tsx` in full. It builds its runner by hand, with undo, a backlog and an autosave each turn, and draws `GameShell` inside React's `StrictMode`. The mod lines are the `modStore` and the `mods` passed to `smallTown` and `GameShell`, using a top-level `await`:
+A game builds itself once, when the page opens. It reads the mods that are on, loads them over the game's own pack, and makes the runner from the result. This part is the same whatever draws the game:
 
-```tsx
+```ts
+// src/runner.ts, or src/main.ts in the vanilla template
+import { browserRunner, indexedDbDriver, mods } from '@ifloom/engine'
+import { smallTown } from './game.ts'
+
+// The player's mods live in IndexedDB; they're loaded over the town at start-up.
+export const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
+export const { game, problems } = smallTown({ mods: await modStore.packs() })
+if (problems.length) console.warn(problems.join('\n'))
+
+export const runner = browserRunner(game)
+```
+
+`smallTown`, in `src/game.ts`, passes the packs to [`loadGame`](/docs/reference/loader#loadgame) after its own. Trimmed, it reads:
+
+```ts
+import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { town } from './content/town.ts'
+
+export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}) {
+  const { game, problems } = loadGame([town, ...mods], { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ })
+  return { game, problems: problems.map(describeProblem) }
+}
+```
+
+The player also needs somewhere to add a file and turn mods on and off. A change takes effect when the game is built again, so each one reloads the page. The React UI has a [mod manager](/docs/react/components#modmanager) for this. The React tab is the showcase's `src/main.tsx` in full, which builds its runner by hand, with undo, a backlog and an autosave each turn, and draws `GameShell` inside React's `StrictMode`. The other tabs draw a small manager of their own, with `modStore` and `problems` from the code above:
+
+```ts tab="Plain JS" tab-group="framework"
+// src/modManager.ts
+import type { Mods } from '@ifloom/engine'
+
+/** The installed mods with a checkbox each, any problems under the mod that caused them, and a file input to add one. */
+export async function modManager(store: Mods, problems: string[]): Promise<HTMLElement> {
+  const section = document.createElement('section')
+  section.appendChild(document.createElement('h2')).textContent = 'Mods'
+  for (const mod of await store.list()) {
+    const label = section.appendChild(document.createElement('label'))
+    const box = label.appendChild(document.createElement('input'))
+    box.type = 'checkbox'
+    box.checked = mod.enabled
+    box.onchange = async () => {
+      await store.setEnabled(mod.id, box.checked)
+      location.reload()
+    }
+    label.append(` ${mod.name}`)
+    for (const line of problems.filter((problem) => problem.startsWith(`mod:${mod.id} `))) {
+      section.appendChild(document.createElement('p')).textContent = line
+    }
+  }
+  const file = section.appendChild(document.createElement('input'))
+  file.type = 'file'
+  file.accept = '.json,application/json'
+  file.onchange = async () => {
+    const chosen = file.files?.[0]
+    if (!chosen) return
+    const added = await store.add(await chosen.text())
+    if (typeof added === 'string') alert(added) // why it isn't a mod for this game
+    else location.reload()
+  }
+  return section
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/main.tsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRunner, indexedDbDriver, localStorageDriver, mods, saves, startingState } from '@ifloom/engine'
@@ -170,21 +237,83 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-`smallTown`, in `src/game.ts`, passes the packs to [`loadGame`](/docs/reference/loader#loadgame) after its own. Trimmed, it reads:
+```vue tab="Vue" tab-group="framework"
+<!-- src/ModManager.vue -->
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import type { InstalledMod } from '@ifloom/engine'
+import { modStore, problems } from './runner.ts'
 
-```ts
-import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
-import { calendar } from '@ifloom/plugin-calendar'
-import { places } from '@ifloom/plugin-places'
-import { town } from './content/town.ts'
+const installed = ref<InstalledMod[]>([])
+const refused = ref('')
+onMounted(async () => {
+  installed.value = await modStore.list()
+})
 
-export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}) {
-  const { game, problems } = loadGame([town, ...mods], { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ })
-  return { game, problems: problems.map(describeProblem) }
+async function toggle(mod: InstalledMod) {
+  await modStore.setEnabled(mod.id, !mod.enabled)
+  location.reload()
 }
+
+async function addFile(event: Event) {
+  const chosen = (event.target as HTMLInputElement).files?.[0]
+  if (!chosen) return
+  const added = await modStore.add(await chosen.text())
+  if (typeof added === 'string') refused.value = added
+  else location.reload()
+}
+</script>
+
+<template>
+  <section>
+    <h2>Mods</h2>
+    <template v-for="mod in installed" :key="mod.id">
+      <label><input type="checkbox" :checked="mod.enabled" @change="toggle(mod)" /> {{ mod.name }}</label>
+      <p v-for="line in problems.filter((problem) => problem.startsWith(`mod:${mod.id} `))" :key="line">{{ line }}</p>
+    </template>
+    <input type="file" accept=".json,application/json" @change="addFile" />
+    <p v-if="refused">{{ refused }}</p>
+  </section>
+</template>
 ```
 
-`mods` on [`GameShell`](/docs/react#gameshell) adds Mods to the player's menu. That opens the [mod manager](/docs/react/components#modmanager), where the player adds a file, turns mods on and off, and restarts with the change. `onChange` is the restart, and reloading the page runs `main.tsx` again.
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/ModManager.svelte -->
+<script lang="ts">
+  import type { InstalledMod } from '@ifloom/engine'
+  import { modStore, problems } from './runner.ts'
+
+  const installed = modStore.list()
+  let refused = $state('')
+
+  async function toggle(mod: InstalledMod) {
+    await modStore.setEnabled(mod.id, !mod.enabled)
+    location.reload()
+  }
+
+  async function addFile(event: Event) {
+    const chosen = (event.currentTarget as HTMLInputElement).files?.[0]
+    if (!chosen) return
+    const added = await modStore.add(await chosen.text())
+    if (typeof added === 'string') refused = added
+    else location.reload()
+  }
+</script>
+
+<section>
+  <h2>Mods</h2>
+  {#await installed then mods}
+    {#each mods as mod (mod.id)}
+      <label><input type="checkbox" checked={mod.enabled} onchange={() => toggle(mod)} /> {mod.name}</label>
+      {#each problems.filter((problem) => problem.startsWith(`mod:${mod.id} `)) as line (line)}<p>{line}</p>{/each}
+    {/each}
+  {/await}
+  <input type="file" accept=".json,application/json" onchange={addFile} />
+  {#if refused}<p>{refused}</p>{/if}
+</section>
+```
+
+In the React UI, `mods` on [`GameShell`](/docs/react#gameshell) adds Mods to the player's menu. That opens the [mod manager](/docs/react/components#modmanager), where the player adds a file, turns mods on and off, and restarts with the change. `onChange` is the restart, and reloading the page runs `main.tsx` again. Each line of `problems` starting `mod:<id> ` is shown under that mod, as the other tabs do by hand.
 
 The first argument to `mods` must be the game's `id`, the same one the files name in `game`.
 
@@ -196,7 +325,7 @@ The loader reports every problem against the pack that brought it, and a mod's p
 mod:compliments · scene ava.hi · no prose for "ava.hi#coffee"
 ```
 
-The game decides what to do about problems. Loading never throws, so a mod with a broken reference still loads, and the game runs with whatever of it works. If you pass the problems to the mod manager as `problems`, each line starting `mod:<id> ` is shown under that mod, so the player can see which one to turn off.
+The game decides what to do about problems. Loading never throws, so a mod with a broken reference still loads, and the game runs with whatever of it works. Show each line starting `mod:<id> ` under that mod, as the managers above do, so the player can see which one to turn off.
 
 ### Saves made with mods
 
@@ -204,7 +333,7 @@ The game decides what to do about problems. Loading never throws, so a mod with 
 
 ## Gotchas
 
-- **A change takes effect when the game is built again.** The store changes at once, but the running game doesn't. A game is loaded once, so adding, removing or turning off a mod changes nothing until the page is reloaded (`onChange`). Until then the player plays on with the mods the game started with.
+- **A change takes effect when the game is built again.** The store changes at once, but the running game doesn't. A game is loaded once, so adding, removing or turning off a mod changes nothing until the page is reloaded (`onChange` in the React UI). Until then the player plays on with the mods the game started with.
 - **A mod can only do what a pack can.** It can add scenes, characters and the rest, replace any of them whole by id, replace prose by key, append members to a set of variants, add, drop or replace a choice with a [patch](/docs/reference/loader#patches), and add content for the game's plugins. It can't remove a variant, change one field of a scene or a location, add a plugin, or change the game's `rules`.
 - **No code mods.** A mod file is JSON, and nothing in it runs. A mod that needs a new [custom condition or effect](/docs/reference/custom) can only name ones the game already has. A game that wants code from its modders has to ship that code itself.
 - **Turning a mod off can break the saves that used it**, as any [missing pack](/docs/reference/saves#loadedsave) does. The save loads, but a scene, item or storyline that only the mod had isn't there, and the game may not play as it did. Warn the player before loading such a save, or turn the mod back on.

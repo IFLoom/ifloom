@@ -1,6 +1,8 @@
 ---
 title: "Extending the UI"
 ---
+This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Using another framework](/docs/guide/frameworks).
+
 The base UI draws everything the engine and the first-party plugins put in the view. It can't know about screens that are specific to your game, such as a scene with a screen of its own, an app's custom screen, or your own plugin's view. For those, you hand it components. And when you want a different arrangement altogether, you can build your own layout from the same parts.
 
 This page is about adding screens. To change how the built-in ones look, or to replace one, see [Make it your own](/docs/react/customising).

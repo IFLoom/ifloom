@@ -327,9 +327,26 @@ Entities are kept in the save, can be created and removed in play, and the check
 
 SugarCube draws the UI bar, and the special passages (StoryCaption, StoryMenu, PassageHeader, PassageFooter and StoryInterface) let you add to it or replace it. IFLoom's engine draws nothing. It hands a UI a [view](/docs/reference/view) of what to show.
 
-The [React UI](/docs/react) is the ready-made one, and its [layouts](/docs/react#layouts) name the parts of the screen and where they go. A layout is the closest thing to arranging the UI bar:
+With the `vanilla`, `vue` and `svelte` [templates](/docs/guide/frameworks), the page is yours, so you put each part where SugarCube's UI bar and passage would go. The [React UI](/docs/react) is the ready-made one, and its [layouts](/docs/react#layouts) name the parts of the screen and where they go:
 
-```ts
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in the vanilla template: a bar at the side and the passage beside it
+function draw(view: View): void {
+  const bar = document.createElement('aside')
+  add(bar, 'h1', view.title)
+  add(bar, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '), 'stats')
+  const passage = document.createElement('main')
+  for (const beat of view.scene.beats) if (beat.kind === 'text') add(passage, 'p', beat.text)
+  for (const choice of [...view.scene.choices, ...view.actions]) {
+    const button = add(passage, 'button', choice.label)
+    button.disabled = Boolean(choice.disabled)
+    button.onclick = () => runner.apply(choice.command)
+  }
+  root.replaceChildren(bar, passage)
+}
+```
+
+```ts tab="React" tab-group="framework"
 import { mountGame } from '@ifloom/react'
 import game from './game.ts'
 
@@ -339,11 +356,58 @@ mountGame(game, {
 })
 ```
 
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue, in the vue template: a bar at the side and the passage beside it -->
+<script setup lang="ts">
+import { runner, view } from './runner.ts'
+import Beat from './Beat.vue'
+</script>
+
+<template>
+  <aside>
+    <h1>{{ view.title }}</h1>
+    <p class="stats">{{ view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ') }}</p>
+  </aside>
+  <main>
+    <Beat v-for="(beat, at) in view.scene.beats" :key="at" :beat="beat" />
+    <button
+      v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
+      :key="at"
+      :disabled="Boolean(choice.disabled)"
+      @click="runner.apply(choice.command)"
+    >
+      {{ choice.label }}
+    </button>
+  </main>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte, in the svelte template: a bar at the side and the passage beside it -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+  import Beat from './Beat.svelte'
+</script>
+
+<aside>
+  <h1>{$view.title}</h1>
+  <p class="stats">{$view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
+</aside>
+<main>
+  {#each $view.scene.beats as beat, at (at)}<Beat {beat} />{/each}
+  {#each [...$view.scene.choices, ...$view.actions] as choice, at (at)}
+    <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>
+  {/each}
+</main>
+```
+
+In the React UI, a layout is the closest thing to arranging the UI bar:
+
 - **StoryCaption** is a part on the sidebar, such as `'stats'`, or a component of your own in the list. See [Parts of your own](/docs/react#parts-of-your-own).
 - **StoryMenu** is the player's menu, the `'menu'` part.
 - **PassageHeader and PassageFooter** are parts above and below `'scene'` on the stage.
-- **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/guide/title-screen) walks through them.
-- **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or a UI in another framework. See [Using another framework](/docs/guide/frameworks).
+- **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/guide/title-screen) walks through them, with a title screen of your own for the other templates.
+- **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Using another framework](/docs/guide/frameworks).
 
 ### The `Setting` API
 

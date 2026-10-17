@@ -2,6 +2,8 @@
 title: "Make it your own"
 description: Give an IFLoom game drawn with the React UI a look of its own, from a theme preset and a few CSS variables up to replacing components, the page frame or the whole root.
 ---
+This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Using another framework](/docs/guide/frameworks).
+
 You can change how the React UI looks at any depth, from swapping one colour to drawing every screen yourself. This page goes from the smallest change to the biggest. Start at the top and stop when the game looks the way you want.
 
 1. [Pick a theme preset](#1-pick-a-theme-preset)

@@ -19,6 +19,8 @@ To build it as you read, start a blank game from the root of the checkout:
 npm run new -- my-town
 ```
 
+That template draws the game with the [React UI](/docs/react). Add `--template vanilla`, `vue` or `svelte` to draw it with plain DOM, Vue or Svelte instead.
+
 Then add the three plugins to `games/my-town/package.json`, next to `@ifloom/engine`, and run `npm install` at the root:
 
 ```json
@@ -460,33 +462,128 @@ runner.redo()                                      // on the high street again
 
 Undo can't be used to re-roll anything. Every draw is seeded, so the same command from the same state gives the same result.
 
-To see it in a browser, use the [React UI](/docs/react), `@ifloom/react`. Its `mountGame` makes a runner like that one and draws the game into the page's `#root` element: the scene, the sidebar and every button, greyed out with its reason. In a game made with `npm run new`, put steps 1 to 5 in `src/game.ts` and change `src/main.ts` to this:
+To see it in a browser, put steps 1 to 5 in `src/game.ts` and export `game` from it. Put the runner in `src/runner.ts`, exported as `runner`. Then draw its view. Each tab below matches one of the templates:
 
-```ts
-import { mountGame } from '@ifloom/react'
-import { game, problems } from './game.ts'
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts
+import type { View } from '@ifloom/engine'
+import type { PlacesView } from '@ifloom/plugin-places'
+import { runner } from './runner.ts'
 import './styles.css'
 
-mountGame({ game, problems })
+const root = document.querySelector<HTMLElement>('#root')!
+
+function add<K extends keyof HTMLElementTagNameMap>(tag: K, text: string): HTMLElementTagNameMap[K] {
+  const element = root.appendChild(document.createElement(tag))
+  element.textContent = text
+  return element
+}
+
+function draw(view: View): void {
+  root.replaceChildren()
+  if (view.when) add('p', view.when)
+  add('h2', view.scene.title)
+  for (const beat of view.scene.beats) if (beat.kind === 'text') add('p', beat.text)
+
+  // The scene's choices, or the room's buttons and its exits when no scene is open.
+  const exits = (view.plugins.places as PlacesView | undefined)?.exits ?? []
+  for (const button of [...view.scene.choices, ...view.actions, ...exits]) {
+    const element = add('button', 'label' in button ? button.label : `Go to ${button.name}`)
+    element.disabled = Boolean(button.disabled)
+    element.title = button.disabled ?? ''
+    element.onclick = () => runner.apply(button.command)
+  }
+  add('p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '))
+}
+
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
 ```
 
-Then run `npm run dev -w my-town`. `mountGame` logs any of the loader's `problems` as warnings, and returns the runner. Its runner keeps 50 steps of undo, saves to `localStorage`, autosaves each turn and starts from a random seed. See [`mountGame`](/docs/react#mountgame) for the options.
-
-<details>
-<summary>The long way: a runner of your own and GameShell</summary>
-
-`mountGame` is a shortcut. When you want the runner exactly as you built it above, make it yourself and hand it to [`GameShell`](/docs/react#gameshell), the component `mountGame` draws:
-
-```tsx
+```tsx tab="React" tab-group="framework"
+// src/main.tsx
 import { createRoot } from 'react-dom/client'
 import { GameShell } from '@ifloom/react'
+import { runner } from './runner.ts'
+import './styles.css'
 
+// The whole React UI: the scene, the sidebar with the clock, the place and
+// who is here, and every button, greyed out with its reason.
 createRoot(document.getElementById('root')!).render(<GameShell runner={runner} />)
 ```
 
-JSX needs a `.tsx` file, so rename `src/main.ts` to `src/main.tsx` and change the `<script>` in `index.html` to match. Small Town's `src/main.tsx` works this way.
+```vue tab="Vue" tab-group="framework"
+<!-- src/App.vue -->
+<script setup lang="ts">
+import { computed, onUnmounted, shallowRef } from 'vue'
+import type { PlacesView } from '@ifloom/plugin-places'
+import { runner } from './runner.ts'
 
-</details>
+// The view, replaced whole after every change of state.
+const view = shallowRef(runner.view())
+onUnmounted(runner.subscribe(() => (view.value = runner.view())))
+
+// The room's exits, while no scene is open.
+const exits = computed(() => (view.value.plugins.places as PlacesView | undefined)?.exits ?? [])
+</script>
+
+<template>
+  <p v-if="view.when">{{ view.when }}</p>
+  <h2>{{ view.scene.title }}</h2>
+  <template v-for="(beat, at) in view.scene.beats" :key="at">
+    <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+  </template>
+  <button
+    v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
+    :key="at"
+    :disabled="Boolean(choice.disabled)"
+    :title="choice.disabled"
+    @click="runner.apply(choice.command)"
+  >
+    {{ choice.label }}
+  </button>
+  <button v-for="exit in exits" :key="exit.id" :disabled="Boolean(exit.disabled)" @click="runner.apply(exit.command)">
+    Go to {{ exit.name }}
+  </button>
+  <p>{{ view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ') }}</p>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/App.svelte -->
+<script lang="ts">
+  import type { PlacesView } from '@ifloom/plugin-places'
+  import { runner } from './runner.ts'
+
+  // The view, replaced whole after every change of state.
+  let view = $state.raw(runner.view())
+  $effect(() => runner.subscribe(() => (view = runner.view())))
+
+  // The room's exits, while no scene is open.
+  const exits = $derived((view.plugins.places as PlacesView | undefined)?.exits ?? [])
+</script>
+
+{#if view.when}<p>{view.when}</p>{/if}
+<h2>{view.scene.title}</h2>
+{#each view.scene.beats as beat, at (at)}
+  {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+{/each}
+{#each [...view.scene.choices, ...view.actions] as choice, at (at)}
+  <button disabled={Boolean(choice.disabled)} title={choice.disabled} onclick={() => runner.apply(choice.command)}>
+    {choice.label}
+  </button>
+{/each}
+{#each exits as exit (exit.id)}
+  <button disabled={Boolean(exit.disabled)} onclick={() => runner.apply(exit.command)}>Go to {exit.name}</button>
+{/each}
+<p>{view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
+```
+
+Then run `npm run dev -w my-town`. In the Vue and Svelte templates, `src/main.ts` already mounts `App` on `#root`. The React tab needs JSX, so rename `src/main.ts` to `src/main.tsx` and change the `<script>` in `index.html` to match. Small Town's `src/main.tsx` works this way.
+
+The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/guide/plugin-ui) draws them, and [Using another framework](/docs/guide/frameworks) draws the rest of the view.
+
+With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/reference/runner#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and returns the runner. The other templates call `browserRunner` themselves.
 
 Save to a slot of your own, and load it back. Slots are names you pick:
 

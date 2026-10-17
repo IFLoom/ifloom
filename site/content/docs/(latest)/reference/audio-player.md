@@ -136,9 +136,48 @@ player.play(audioSrc('voice/ava-hello.ogg'), 'voice')
 
 ### A button to hear a line again
 
-The React UI puts a button on each spoken line that has a voice. In the [`vue` and `svelte` templates](/docs/guide/frameworks), `src/runner.ts` exports the player as `player`, so a component can do the same:
+The React UI puts a button on each spoken line that has a voice. With the other [templates](/docs/guide/frameworks), keep the player `startAudio` returned and do the same. The `vue` and `svelte` templates' `src/runner.ts` exports it as `player`:
 
-```vue tab="Vue"
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in the vanilla template: keep the player
+import { audioSrc } from '@ifloom/engine'
+
+const player = startAudio(runner)
+
+/** A button that plays a spoken line's voice again. */
+function voiceReplay(voice: string): HTMLButtonElement {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.textContent = '▶'
+  button.setAttribute('aria-label', 'Hear it again')
+  button.onclick = () => {
+    const track = runner.game.audio?.tracks[voice]
+    if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
+  }
+  return button
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/VoiceReplay.tsx, for React by hand: export the player from src/runner.ts
+import { audioSrc } from '@ifloom/engine'
+import { player, runner } from './runner.ts'
+
+/** Plays a spoken line's voice again. */
+export function VoiceReplay({ voice }: { voice: string }) {
+  const replay = () => {
+    const track = runner.game.audio?.tracks[voice]
+    if (track && 'src' in track) player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
+  }
+  return (
+    <button type="button" aria-label="Hear it again" onClick={replay}>
+      ▶
+    </button>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
 <!-- src/VoiceReplay.vue -->
 <script setup lang="ts">
 import { audioSrc } from '@ifloom/engine'
@@ -158,7 +197,7 @@ function replay() {
 </template>
 ```
 
-```svelte tab="Svelte"
+```svelte tab="Svelte" tab-group="framework"
 <!-- src/VoiceReplay.svelte -->
 <script lang="ts">
   import { audioSrc } from '@ifloom/engine'
@@ -176,9 +215,30 @@ function replay() {
 <button type="button" aria-label="Hear it again" onclick={replay}>▶</button>
 ```
 
-Draw it inside the spoken line in `Beat.vue` or `Beat.svelte`, when the beat has a voice:
+Draw it inside the spoken line, when the beat has a voice:
 
-```vue tab="Vue"
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in drawBeat()
+case 'say': {
+  const line = add(root, 'p', beat.text, 'beat-say')
+  line.dataset.who = beat.who
+  if (beat.voice) line.append(voiceReplay(beat.voice))
+  break
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/Beat.tsx
+case 'say':
+  return (
+    <p className="beat-say" data-who={beat.who}>
+      {beat.text}
+      {beat.voice ? <VoiceReplay voice={beat.voice} /> : null}
+    </p>
+  )
+```
+
+```vue tab="Vue" tab-group="framework"
 <!-- src/Beat.vue -->
 <p v-else-if="beat.kind === 'say'" class="beat-say" :data-who="beat.who">
   {{ beat.text }}
@@ -186,7 +246,7 @@ Draw it inside the spoken line in `Beat.vue` or `Beat.svelte`, when the beat has
 </p>
 ```
 
-```svelte tab="Svelte"
+```svelte tab="Svelte" tab-group="framework"
 <!-- src/Beat.svelte -->
 <p class="beat-say" data-who={beat.who}>
   {beat.text}

@@ -1,6 +1,6 @@
 ---
 title: "Your first story"
-description: A step-by-step tutorial that builds a short linear story with no plugins, from one scene to a name input, a remembered choice, a counter and chapters as turns, then draws it with the React UI.
+description: A step-by-step tutorial that builds a short linear story with no plugins, from one scene to a name input, a remembered choice, a counter and chapters as turns, then draws it in the browser with plain DOM, React, Vue or Svelte.
 ---
 This page builds a short story in three chapters, called The Last Bus. You wait for the last bus in the rain with a stranger, find your bus pass has run out, and walk home. What you do at the stop changes what happens on the bus, and how you talk your way past the driver changes how the evening ends.
 
@@ -19,15 +19,35 @@ To try the same ideas without installing anything, open the [editor](/docs/guide
 
 ## Before you start
 
-Follow [Installation](/docs/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the blank template:
+Follow [Installation](/docs/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the template for the way you want to draw it:
 
-```sh
+```sh tab="Plain JS" tab-group="framework"
+npm run new -- my-story --template vanilla
+npm install
+npm run dev -w my-story
+```
+
+```sh tab="React" tab-group="framework"
 npm run new -- my-story
 npm install
 npm run dev -w my-story
 ```
 
-That gives you `games/my-story`, with a two-scene game in `src/game.ts` and a `src/main.ts` that draws it. Open the address Vite prints, and keep `npm run dev -w my-story` running in a terminal. The game reloads each time you save a file.
+```sh tab="Vue" tab-group="framework"
+npm run new -- my-story --template vue
+npm install
+npm run dev -w my-story
+```
+
+```sh tab="Svelte" tab-group="framework"
+npm run new -- my-story --template svelte
+npm install
+npm run dev -w my-story
+```
+
+The default `blank` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
+
+That gives you `games/my-story`, with a two-scene game in `src/game.ts` and the code that draws it. Open the address Vite prints, and keep `npm run dev -w my-story` running in a terminal. The game reloads each time you save a file.
 
 You'll replace `src/game.ts` as you go, and leave the other files as they are.
 
@@ -114,7 +134,7 @@ Sharing the umbrella raises it. Put the stat effect before the scene change:
 { id: 'share', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'scene', id: 'ch2.bus' }] },
 ```
 
-A stat stays between its `min` (0 unless you say) and its `max`. The [React UI](/docs/react) shows it under the story.
+A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it under the story.
 
 ## 4. A choice the story remembers
 
@@ -214,9 +234,37 @@ Now `state.turn` is the chapter the player has reached, counting from 0. Anythin
 
 ## 8. Draw it
 
-The engine has no UI of its own. The template's `src/main.ts` draws the game with the [React UI](/docs/react), and you don't need to change it:
+The engine has no UI of its own. Your template already has the code that draws the game, and you don't need to change it:
 
-```ts
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts in the vanilla template, cut down to the scene and its choices
+import { browserRunner, type View } from '@ifloom/engine'
+import loaded from './game.ts'
+import './styles.css'
+
+const runner = browserRunner(loaded.game)
+const root = document.querySelector<HTMLElement>('#root')!
+
+function draw(view: View): void {
+  root.replaceChildren()
+  for (const beat of view.scene.beats) {
+    if (beat.kind === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+  }
+  for (const choice of [...view.scene.choices, ...view.actions]) {
+    const button = document.createElement('button')
+    button.textContent = choice.label
+    button.disabled = Boolean(choice.disabled)
+    button.onclick = () => runner.apply(choice.command)
+    root.append(button)
+  }
+}
+
+// Draw again after every change of state.
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
+```
+
+```ts tab="React" tab-group="framework"
 // src/main.ts
 import { READING_LAYOUT, mountGame } from '@ifloom/react'
 import game from './game.ts'
@@ -227,17 +275,58 @@ import './styles.css'
 mountGame(game, { layout: READING_LAYOUT, pages: true })
 ```
 
-[`mountGame`](/docs/react#mountgame) takes what `loadGame` returns and logs any problems as warnings in the browser's console. Then it starts the game:
+```ts tab="Vue" tab-group="framework"
+// src/runner.ts
+import { shallowRef } from 'vue'
+import { browserRunner } from '@ifloom/engine'
+import loaded from './game.ts'
+
+export const runner = browserRunner(loaded.game)
+
+// The view as Vue state, replaced after every change of state.
+export const view = shallowRef(runner.view())
+runner.subscribe(() => {
+  view.value = runner.view()
+})
+
+// src/main.ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import './styles.css'
+
+createApp(App).mount('#root')
+```
+
+```ts tab="Svelte" tab-group="framework"
+// src/runner.ts
+import { readable } from 'svelte/store'
+import { browserRunner } from '@ifloom/engine'
+import loaded from './game.ts'
+
+export const runner = browserRunner(loaded.game)
+
+// The view as a store, set again after every change of state.
+export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+
+// src/main.ts
+import { mount } from 'svelte'
+import App from './App.svelte'
+import './styles.css'
+
+mount(App, { target: document.querySelector('#root')! })
+```
+
+Every template starts the game the same way, with [`browserRunner`](/docs/reference/runner#browserrunner) (React's [`mountGame`](/docs/react#mountgame) calls it for you):
 
 - It makes a new game with a random seed, so each playthrough's random draws are different.
 - It builds a [runner](/docs/reference/runner), which keeps the state and adds undo, 50 steps back.
 - It keeps saves in the browser's `localStorage`, under keys that start with the game's id, and autosaves to the `auto` slot each turn. In this story that's the start of each chapter.
-- It draws [`GameShell`](/docs/react#gameshell), the whole UI, into the element with the id `root` in `index.html`.
-- With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/guide/title-screen) shows what else it can do.
 
-[`READING_LAYOUT`](/docs/react#layouts) is a single column to read. It puts the title over the scene, then the name input, the game's actions, the stats and the menu under it. Without it you'd get the default layout, which has a side column for a game with a clock and a map.
+Then the page draws `runner.view()`, sends the command of each button the player presses with `runner.apply`, and draws again when the runner says the state changed. The vanilla, Vue and Svelte templates also draw the name input and the stats, and [Using another framework](/docs/guide/frameworks) goes through their code piece by piece.
 
-`src/styles.css` imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font. Change the preset there, or set your own fonts and colours under it. [Make it your own](/docs/react/customising) has the presets and everything else you can change.
+In the React template, `mountGame` also logs any problems `loadGame` found as warnings in the browser's console, and draws [`GameShell`](/docs/react#gameshell), the whole React UI, into the element with the id `root` in `index.html`. With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/guide/title-screen) shows what else it can do. [`READING_LAYOUT`](/docs/react#layouts) is a single column to read, with the title over the scene, then the name input, the game's actions, the stats and the menu under it.
+
+`src/styles.css` holds the page's look. In the React template it imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font, and [Make it your own](/docs/react/customising) has the rest. In the others it's a plain stylesheet you can change as you like.
 
 ## 9. Check it and playtest it
 

@@ -1,3 +1,4 @@
+import { nextSlot } from '@ifloom/browser'
 import type { BrokenSave, LoadedSave, Result, SaveMeta } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
@@ -67,7 +68,7 @@ export function useSaves(): SavesState {
     await refresh()
     return result.ok
   }
-  const next = String(slots.filter((meta) => /^\d+$/.test(meta.slot)).reduce((most, meta) => Math.max(most, Number(meta.slot)), 0) + 1)
+  const next = nextSlot([...slots, ...broken])
 
   return {
     available: Boolean(store),

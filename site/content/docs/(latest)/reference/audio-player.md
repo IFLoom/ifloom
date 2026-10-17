@@ -1,6 +1,6 @@
 ---
 title: "The audio player"
-description: Play a game's sound in the browser with @ifloom/audio. startAudio follows view.audio, crossfades music, plays each sound once, reads volumes from the profile and waits for the player's first click.
+description: Play a game's sound in the browser with @ifloom/audio. startAudio follows view.audio, crossfades music, plays each sound once, reads volumes from the runner's settings and waits for the player's first click.
 ---
 The engine works out what should be playing, in [`view.audio`](/docs/reference/audio#audioview), but plays nothing itself. `@ifloom/audio` does the playing in the browser. It follows a runner, and it doesn't need React or any other framework.
 
@@ -77,7 +77,7 @@ audio: {
 }
 ```
 
-A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the stored values from [`runner.profile`](/docs/reference/profile) and listens for changes, so moving a slider on the settings screen changes the volume at once. It reads each value with [`settingValue`](/docs/reference/settings#settingvalue), so until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, it uses the setting's `default`.
+A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the values from [`runner.settings()`](/docs/reference/runner#settings) and follows the runner, so moving a slider on the settings screen changes the volume at once. Until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, that's the setting's `default`. A play setting works too, read from the game in play.
 
 ## AudioOptions
 

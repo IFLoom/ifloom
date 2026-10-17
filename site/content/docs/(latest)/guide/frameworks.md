@@ -16,10 +16,9 @@ npm install
 npm run dev -w my-game
 ```
 
-Each plays the same two-scene game as the `blank` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). They share three files:
+Each plays the same two-scene game as the `blank` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/reference/browser) (see [Minigames](#minigames)). They share two files:
 
 - `src/game.ts`, the game.
-- `src/minigame.ts`, the clock and keys a minigame needs (see [Minigames](#minigames)).
 - `src/styles.css`, a plain stylesheet.
 
 The rest of this page goes through their code piece by piece, with a tab for each framework. The React tab shows React by hand, without the React UI, for when you want React but none of `@ifloom/react`. The tab you pick is remembered, and every other page of the docs shows the same one.
@@ -75,8 +74,8 @@ Each template makes the runner once, in a module of its own, and turns the view 
 // src/main.ts
 import { browserRunner, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 import './styles.css'
 
 const { game, problems } = loaded
@@ -87,7 +86,7 @@ const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)
-// Ticks a minigame's timers and maps the keyboard to its inputs.
+// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 
@@ -102,8 +101,8 @@ draw(runner.view())
 import { useSyncExternalStore } from 'react'
 import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 
 export const runner = await browserRunner(loaded.game)
 // Its `play` plays a file on demand, such as a voice line again.
@@ -124,8 +123,8 @@ export const useView = () => useSyncExternalStore(runner.subscribe, runner.view)
 import { shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 
 const { game, problems } = loaded
 if (problems.length) console.warn(problems)
@@ -143,7 +142,7 @@ runner.subscribe(() => {
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
-// Ticks a minigame's timers and maps the keyboard to its inputs.
+// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 ```
@@ -157,8 +156,8 @@ startKeys(runner)
 import { readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 
 const { game, problems } = loaded
 if (problems.length) console.warn(problems)
@@ -173,7 +172,7 @@ export const view = readable(runner.view(), (set) => runner.subscribe(() => set(
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
-// Ticks a minigame's timers and maps the keyboard to its inputs.
+// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 ```
@@ -266,7 +265,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom({ vite: { plugins: [svelte()] } })
 ```
 
-The preset adds React and Tailwind only when the game depends on `@ifloom/react`, `react` or `tailwindcss`, so in these templates the framework's plugin is the only one. React by hand needs no plugin of its own. Start from the `vanilla` template, which has `src/minigame.ts`, add `react` and `react-dom` to its `package.json`, and the preset adds React's plugin for you.
+The preset adds React and Tailwind only when the game depends on `@ifloom/react`, `react` or `tailwindcss`, so in these templates the framework's plugin is the only one. React by hand needs no plugin of its own. Start from the `vanilla` template, add `react` and `react-dom` to its `package.json`, and the preset adds React's plugin for you.
 
 ## Draw the scene and its choices
 
@@ -839,49 +838,12 @@ defineProps<{ minigame: MinigameView }>()
 </section>
 ```
 
-Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates do that, and map the keyboard to the inputs, in `src/minigame.ts`. It's plain DOM, so every framework uses the same file, and each starts both once beside the runner:
+Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/reference/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
 
-```ts
-// src/minigame.ts
-/**
- * What a minigame needs from the page that the engine can't do itself: a
- * clock and the keyboard. Both are plain DOM, so any framework can use them.
- * Start each once, beside the runner.
- */
-import type { Runner } from '@ifloom/engine'
+- [`startClock(runner)`](/docs/reference/browser#startclock) sends a `tick` about every 100 ms while a timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
+- [`startKeys(runner)`](/docs/reference/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
 
-/**
- * The engine has no clock. This sends a `tick` with the time that passed,
- * about ten times a second, while a minigame's timer runs and the page is
- * visible. Time while the page is hidden is dropped, so the round waits.
- */
-export function startClock(runner: Runner): () => void {
-  let last = performance.now()
-  const timer = setInterval(() => {
-    const ms = Math.floor(performance.now() - last)
-    last += ms
-    if (ms > 0 && !document.hidden && runner.view().minigame?.timeLeft != null) runner.apply({ type: 'tick', ms })
-  }, 100)
-  return () => clearInterval(timer)
-}
-
-/** The keys an input gets when the minigame gives it none. */
-const DEFAULT_KEYS: Record<string, string[]> = { up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'], space: [' '] }
-
-/** Presses a minigame's input when one of its keys goes down: the minigame's own `keys`, else the arrow keys and space. */
-export function startKeys(runner: Runner): () => void {
-  const onKey = (event: KeyboardEvent) => {
-    const minigame = runner.view().minigame
-    if (!minigame || event.repeat || (event.target as Element | null)?.closest?.('input, textarea, select')) return
-    const input = minigame.inputs.find((name) => (minigame.keys[name] ?? DEFAULT_KEYS[name] ?? []).includes(event.key))
-    if (input === undefined) return
-    event.preventDefault()
-    runner.apply({ type: 'minigame', input })
-  }
-  window.addEventListener('keydown', onKey)
-  return () => window.removeEventListener('keydown', onKey)
-}
-```
+They're plain DOM, so every framework uses them the same way, and the React UI runs the same code. Each returns a function that stops it.
 
 The [Minigames guide](/docs/guide/minigames#your-own-panel) draws a panel for one minigame by its id, in each framework.
 

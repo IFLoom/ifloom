@@ -11,8 +11,7 @@
  * or the player's system asking for reduced motion, it all shows at once.
  */
 import { Component, createRef, useEffect, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
-import type { SceneBeat } from '@ifloom/engine'
-import { ignoredKey } from './keys.tsx'
+import { startRevealSkip } from '@ifloom/browser'
 import { useMotionOption } from './overrides.tsx'
 
 const REDUCED = '(prefers-reduced-motion: reduce)'
@@ -132,22 +131,7 @@ export class SceneFrame extends Component<FrameProps> {
   }
 }
 
-type RevealBeat = Extract<SceneBeat, { kind: 'reveal' }>
-
-/** A scene's beats in groups: those shown with the scene, then each reveal and the beats after it. */
-export function revealGroups(beats: readonly SceneBeat[]): { reveal: RevealBeat | null; beats: { beat: SceneBeat; index: number }[] }[] {
-  const groups: { reveal: RevealBeat | null; beats: { beat: SceneBeat; index: number }[] }[] = [{ reveal: null, beats: [] }]
-  beats.forEach((beat, index) => {
-    if (beat.kind === 'reveal') groups.push({ reveal: beat, beats: [] })
-    else groups.at(-1)!.beats.push({ beat, index })
-  })
-  return groups
-}
-
-/** When the last reveal in these beats comes, in milliseconds from the scene coming on; 0 with none. */
-export function lastReveal(beats: readonly SceneBeat[]): number {
-  return beats.reduce((last, beat) => (beat.kind === 'reveal' ? Math.max(last, beat.at) : last), 0)
-}
+export { lastReveal, revealGroups } from '@ifloom/browser'
 
 /**
  * Show everything at once on the first key press while reveals are pending,
@@ -155,17 +139,7 @@ export function lastReveal(beats: readonly SceneBeat[]): number {
  * choice that isn't shown yet.
  */
 export function useSkipKey(pending: boolean, skip: () => void): void {
-  useEffect(() => {
-    if (!pending) return
-    const onKey = (event: KeyboardEvent) => {
-      if (ignoredKey(event)) return
-      event.stopImmediatePropagation()
-      event.preventDefault()
-      skip()
-    }
-    window.addEventListener('keydown', onKey, { capture: true })
-    return () => window.removeEventListener('keydown', onKey, { capture: true })
-  }, [pending, skip])
+  useEffect(() => (pending ? startRevealSkip(skip) : undefined), [pending, skip])
 }
 
 /** The style that times a reveal: `--ifloom-reveal-at`, from the scene coming on. */

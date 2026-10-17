@@ -5,8 +5,8 @@
  */
 import { browserRunner, type InlineSpan, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 import './styles.css'
 
 const { game, problems } = loaded
@@ -17,7 +17,7 @@ const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)
-// Ticks a minigame's timers and maps the keyboard to its inputs.
+// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 

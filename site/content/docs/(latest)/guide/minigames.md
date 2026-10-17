@@ -44,7 +44,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
 
 `after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`minigameVar`](/docs/reference/effects#minigamevar) effect.
 
-The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told. In the other templates, `startKeys` gives them the arrow keys.
+The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told. In the other templates, [`startKeys`](/docs/reference/browser#startkeys) gives them the arrow keys.
 
 ## The rounds
 
@@ -138,9 +138,9 @@ A scene can also start one as it opens, with a `minigame` field. See [`MinigameS
 That's all the page needs. Every template draws a running minigame for you:
 
 - In the React UI, [`SceneStage`](/docs/react/components#scenestage) draws [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
-- In the `vanilla`, `vue` and `svelte` templates, the scene shows the minigame's words, and a [minigame panel](/docs/guide/frameworks#minigames) draws the timer and a button for each input. `src/minigame.ts` maps the arrow keys and space to the inputs.
+- In the `vanilla`, `vue` and `svelte` templates, the scene shows the minigame's words, and a [minigame panel](/docs/guide/frameworks#minigames) draws the timer and a button for each input. `startKeys` from [`@ifloom/browser`](/docs/reference/browser) maps the arrow keys and space to the inputs.
 
-The engine has no clock of its own. The React UI's minigame card, or `startClock` in the other templates, sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
+The engine has no clock of its own. The React UI's minigame card, or [`startClock`](/docs/reference/browser#startclock) in the other templates, sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
 
 While it runs, the player can't do anything else. Every other command is refused with `Finish this first.` until it ends.
 
@@ -292,7 +292,7 @@ What the panels use:
 
 - **`view.minigame`** is a [`MinigameView`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
 - **`{ type: 'minigame', input }`** presses an input. `useMinigame`'s `send(input)` sends it for you.
-- **`keys: true`** in `useMinigame` maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys. In the other templates, `startKeys` in `src/minigame.ts` does that whatever panel is drawn.
+- **`keys: true`** in `useMinigame` maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys. In the other templates, `startKeys` from `@ifloom/browser` does that whatever panel is drawn.
 
 You don't have to run the clock in your panel. In the React UI, `SceneStage` runs it while a minigame is on screen, and `useMinigame` would run it too. There's only ever one clock per game, however many components ask. In the other templates, `startClock` runs beside the runner.
 

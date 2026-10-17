@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ifloom/audio": "0.0.0",
+    "@ifloom/browser": "0.0.0",
     "@ifloom/engine": "0.0.0"
   },
   "devDependencies": {

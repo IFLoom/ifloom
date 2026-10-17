@@ -60,11 +60,13 @@ describe('ifloom new', () => {
     const pkg = readFileSync(join(dir, 'package.json'), 'utf8')
     expect(pkg).not.toMatch(/react/)
     expect(pkg).toContain('@ifloom/audio')
-    expect(files).toEqual(expect.arrayContaining(['src/main.ts', 'src/game.ts', 'src/minigame.ts', 'src/styles.css']))
+    expect(pkg).toContain('@ifloom/browser')
+    expect(files).toEqual(expect.arrayContaining(['src/main.ts', 'src/game.ts', 'src/styles.css']))
+    expect(files).not.toContain('src/minigame.ts')
     expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
     // Each starts the audio player and the minigame clock beside its runner.
     const runner = readFileSync(join(dir, template === 'vanilla' ? 'src/main.ts' : 'src/runner.ts'), 'utf8')
-    for (const call of ['browserRunner(game)', 'startAudio(runner)', 'startClock(runner)', 'startKeys(runner)', 'runner.subscribe(']) expect(runner).toContain(call)
+    for (const call of ['await browserRunner(game)', "from '@ifloom/browser'", 'startAudio(runner)', 'startClock(runner)', 'startKeys(runner)', 'runner.subscribe(']) expect(runner).toContain(call)
   })
 
   it.each([

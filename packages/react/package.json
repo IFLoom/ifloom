@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@ifloom/audio": "0.0.0",
+    "@ifloom/browser": "0.0.0",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-scroll-area": "^1.2.18",
     "@radix-ui/react-separator": "^1.1.15",

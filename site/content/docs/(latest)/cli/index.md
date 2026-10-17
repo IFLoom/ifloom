@@ -65,7 +65,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |
 | `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
 
-The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts`, `src/styles.css` and `src/minigame.ts`, which runs a minigame's clock and keys. [Using another framework](/docs/guide/frameworks) walks through them.
+The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/reference/browser). [Using another framework](/docs/guide/frameworks) walks through them.
 
 `--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 

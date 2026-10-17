@@ -34,8 +34,8 @@ const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
 /** The files every blank template takes from `templates/shared/`. */
 const BLANK = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
-/** What the templates without React share: the plain game, the minigame clock and keys, and the stylesheet. */
-const PLAIN = [...BLANK, 'src/game.ts', 'src/minigame.ts', 'src/styles.css']
+/** What the templates without React share: the plain game and the stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
+const PLAIN = [...BLANK, 'src/game.ts', 'src/styles.css']
 
 /** Where each template's files come from. The blank ones add the shared files; the examples bring their own. */
 const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {

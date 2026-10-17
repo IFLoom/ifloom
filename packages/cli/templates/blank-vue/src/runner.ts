@@ -5,8 +5,8 @@
 import { shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
+import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
-import { startClock, startKeys } from './minigame.ts'
 
 const { game, problems } = loaded
 if (problems.length) console.warn(problems)
@@ -24,6 +24,6 @@ runner.subscribe(() => {
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
-// Ticks a minigame's timers and maps the keyboard to its inputs.
+// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)

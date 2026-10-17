@@ -336,7 +336,7 @@ A single activity, sent by the game's Count the till and end the week button, ru
 },
 ```
 
-Here's what it does, in order:
+It runs four steps, in order:
 
 1. **Takings and wages.** Two [custom effects](/docs/reference/effects#computed-effects) the game declares work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`entityOf`](/docs/reference/entities#entityof):
 
@@ -557,7 +557,7 @@ import { cast } from '@ifloom/plugin-cast'
 plugins: [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-A place keeps hours with its `blocked` list and the calendar's conditions. An activity that only happens in one place requires [`onlyAt(['cafe'])`](/docs/plugins/places#helpers). A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
+A place keeps hours with its `blocked` list and the calendar's conditions. An activity that only happens in one place lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: person('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 
@@ -569,7 +569,7 @@ The React UI's default layout is made for a life sim, so Small Town's `src/layou
 </Section>
 ```
 
-Out and about, the flat's **Open the wardrobe** action is the way to it: its activity's effect is `{ kind: 'panel', panel: 'wardrobe' }`, which opens the built-in wardrobe [panel](/docs/reference/panels). `src/main.tsx` passes the layout to `GameShell`:
+Out and about, you get to it with the flat's Open the wardrobe action. Its activity's effect is `{ kind: 'panel', panel: 'wardrobe' }`, which opens the built-in wardrobe [panel](/docs/reference/panels). `src/main.tsx` passes the layout to `GameShell`:
 
 ```tsx
 <GameShell runner={runner} layout={Layout} mods={{ store: modStore, problems, onChange: () => location.reload() }} />

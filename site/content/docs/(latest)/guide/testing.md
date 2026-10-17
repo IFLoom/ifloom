@@ -2,7 +2,7 @@
 title: "Testing your game"
 description: "Test an IFLoom game with Vitest and the engine, no browser needed: play a route and check the stats and the view, find out whether a scene can be reached, replay a player's bug from their save, and run playtests and snapshots in CI."
 ---
-The engine runs the same in Node as in a browser, so you can test a game the way you'd test any other code. A test plays commands and checks what came out. There's no page, no clicking and no waiting.
+The engine runs the same in Node as in a browser, so you can test a game the way you'd test any other code. A test plays some commands and checks what came out, without opening a page.
 
 This page uses [Vitest](https://vitest.dev) and the two-scene game `ifloom new` makes, but any test runner works.
 

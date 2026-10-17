@@ -2,9 +2,9 @@
 title: "Your first story"
 description: A step-by-step tutorial that builds a short linear story with no plugins, from one scene to a name input, a remembered choice, a counter and chapters as turns, then draws it in the browser with plain DOM, React, Vue or Svelte.
 ---
-This page builds a short story in three chapters, called The Last Bus. You wait for the last bus in the rain with a stranger, find your bus pass has run out, and walk home. What you do at the stop changes what happens on the bus, and how you talk your way past the driver changes how the evening ends.
+You'll build a short story in three chapters, called The Last Bus. You wait for the last bus in the rain with a stranger, find your bus pass has run out, and walk home. What you do at the stop changes what happens on the bus, and how you talk your way past the driver changes how the evening ends.
 
-It's the smallest shape of game IFLoom makes. It uses no plugins, so there's no map or clock to set up. Along the way you'll use:
+It's the smallest kind of game you can make with IFLoom. There are no plugins, so there's no map or clock to set up. Along the way you'll use:
 
 - scenes and choices, with their words kept apart by key
 - a stat

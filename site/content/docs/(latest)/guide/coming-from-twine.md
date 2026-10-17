@@ -8,7 +8,7 @@ This page maps each idea, with their version first and IFLoom's under it. The ex
 
 ## A whole passage, side by side
 
-Here's a café passage in SugarCube. It shows a line when the player is short of money, and offers a coffee that costs 3 coins:
+This café passage in SugarCube shows a line when the player is short of money, and offers a coffee that costs 3 coins:
 
 ```html
 :: Cafe
@@ -608,7 +608,7 @@ A scene with `minigame: 'kettle'` starts it when the player enters. The React UI
 
 ### A life sim: the clock, the day's end and game over
 
-Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a `<<timelink>>`-style widget, and run a long `<<dayshift>>` widget when the player sleeps. Each part has a home in IFLoom:
+Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a `<<timelink>>`-style widget, and run a long `<<dayshift>>` widget when the player sleeps. Each of those maps to a part of IFLoom:
 
 | SugarCube | IFLoom |
 |---|---|

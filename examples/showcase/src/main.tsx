@@ -32,9 +32,9 @@ function showTextSize(settings: unknown) {
   const size = (settings as Record<string, unknown> | undefined)?.textSize
   document.documentElement.dataset.textSize = size === 'large' ? 'large' : 'normal'
 }
-void stored.get('settings').then(showTextSize)
+void stored.get('core:settings').then(showTextSize)
 stored.subscribe((namespace, value) => {
-  if (namespace === 'settings') showTextSize(value)
+  if (namespace === 'core:settings') showTextSize(value)
 })
 
 const pages: PagesOptions = {

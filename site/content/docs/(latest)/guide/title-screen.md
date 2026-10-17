@@ -240,7 +240,7 @@ A save keeps the settings it was made with, so loading an old save brings its ow
 
 `textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/docs/reference/profile), and your own code applies it.
 
-Read it where you draw the story. It's in the profile's `settings`, and the profile tells its listeners when the player changes it. In the React UI, [`useSetting`](/docs/react/components#usesetting) does both and redraws the component:
+Read it where you draw the story. It's in the profile's `core:settings`, and the profile tells its listeners when the player changes it. In the React UI, [`useSetting`](/docs/react/components#usesetting) does both and redraws the component:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template
@@ -249,9 +249,9 @@ const readTextSize = (settings: unknown) => {
   textSize = (settings as Record<string, unknown> | undefined)?.textSize
   draw(runner.view())
 }
-void runner.profile?.get('settings').then(readTextSize)
+void runner.profile?.get('core:settings').then(readTextSize)
 runner.profile?.subscribe((namespace, value) => {
-  if (namespace === 'settings') readTextSize(value)
+  if (namespace === 'core:settings') readTextSize(value)
 })
 
 // In draw():
@@ -275,8 +275,8 @@ import { runner } from './runner.ts'
 
 const size = ref<unknown>()
 const read = (settings: unknown) => (size.value = (settings as Record<string, unknown> | undefined)?.textSize)
-void runner.profile?.get('settings').then(read)
-const stop = runner.profile?.subscribe((namespace, value) => namespace === 'settings' && read(value))
+void runner.profile?.get('core:settings').then(read)
+const stop = runner.profile?.subscribe((namespace, value) => namespace === 'core:settings' && read(value))
 onUnmounted(() => stop?.())
 </script>
 
@@ -294,8 +294,8 @@ onUnmounted(() => stop?.())
   let { children }: { children: Snippet } = $props()
   let size = $state<unknown>()
   const read = (settings: unknown) => (size = (settings as Record<string, unknown> | undefined)?.textSize)
-  void runner.profile?.get('settings').then(read)
-  $effect(() => runner.profile?.subscribe((namespace, value) => namespace === 'settings' && read(value)))
+  void runner.profile?.get('core:settings').then(read)
+  $effect(() => runner.profile?.subscribe((namespace, value) => namespace === 'core:settings' && read(value)))
 </script>
 
 <div class:large={size === 'large'}>{@render children()}</div>
@@ -309,9 +309,9 @@ function showTextSize(settings: unknown) {
   const size = (settings as Record<string, unknown> | undefined)?.textSize
   document.documentElement.dataset.textSize = size === 'large' ? 'large' : 'normal'
 }
-void stored.get('settings').then(showTextSize)
+void stored.get('core:settings').then(showTextSize)
 stored.subscribe((namespace, value) => {
-  if (namespace === 'settings') showTextSize(value)
+  if (namespace === 'core:settings') showTextSize(value)
 })
 ```
 
@@ -340,7 +340,7 @@ loadGame([letter], {
 })
 ```
 
-The first time `finished` holds, the runner records it in the profile's `finished`. From then on the React UI's title screen shows **New Game+**. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
+The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows **New Game+**. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
@@ -363,7 +363,7 @@ import type { Runner } from '@ifloom/engine'
 
 /** The notice, unless the player confirmed it before on this device. `next` draws the title screen. */
 export async function gate(root: HTMLElement, runner: Runner, next: () => void): Promise<void> {
-  if (await runner.profile?.get('gate')) return next()
+  if (await runner.profile?.get('ui:gate')) return next()
   root.replaceChildren()
   root.appendChild(document.createElement('h1')).textContent = 'Before you start'
   root.appendChild(document.createElement('p')).textContent = 'This story mentions a house fire.'
@@ -371,7 +371,7 @@ export async function gate(root: HTMLElement, runner: Runner, next: () => void):
   const confirm = root.appendChild(document.createElement('button'))
   confirm.textContent = 'Carry on'
   confirm.onclick = async () => {
-    await runner.profile?.set('gate', true)
+    await runner.profile?.set('ui:gate', true)
     next()
   }
   Object.assign(root.appendChild(document.createElement('a')), { href: 'https://example.com/', textContent: 'Not today' })
@@ -399,11 +399,11 @@ import { runner } from './runner.ts'
 
 const emit = defineEmits<{ done: [] }>()
 onMounted(async () => {
-  if (await runner.profile?.get('gate')) emit('done')
+  if (await runner.profile?.get('ui:gate')) emit('done')
 })
 
 async function confirm() {
-  await runner.profile?.set('gate', true)
+  await runner.profile?.set('ui:gate', true)
   emit('done')
 }
 </script>
@@ -425,11 +425,11 @@ async function confirm() {
 
   let { ondone }: { ondone: () => void } = $props()
   onMount(async () => {
-    if (await runner.profile?.get('gate')) ondone()
+    if (await runner.profile?.get('ui:gate')) ondone()
   })
 
   async function confirm() {
-    await runner.profile?.set('gate', true)
+    await runner.profile?.set('ui:gate', true)
     ondone()
   }
 </script>
@@ -447,7 +447,7 @@ In the React UI's `gate`, blank lines in `text` split it into paragraphs, and de
 
 ## Pages of your own
 
-A game can add a screen of its own, such as a gallery or a list of endings found. This one reads `finished`, which the runner writes to the profile the first time the game is finished. In the React UI, give `pages.pages` a component for each page, by id, and the title screen gets a button for it. With the other templates, show it from a button on your own title screen:
+A game can add a screen of its own, such as a gallery or a list of endings found. This one reads `core:finished`, which the runner writes to the profile the first time the game is finished. In the React UI, give `pages.pages` a component for each page, by id, and the title screen gets a button for it. With the other templates, show it from a button on your own title screen:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/endings.ts
@@ -455,7 +455,7 @@ import type { Runner } from '@ifloom/engine'
 
 /** The endings page. `back` draws the title screen again. */
 export async function endings(root: HTMLElement, runner: Runner, back: () => void): Promise<void> {
-  const finished = await runner.profile?.get<{ at: number }>('finished')
+  const finished = await runner.profile?.get<{ at: number }>('core:finished')
   root.replaceChildren()
   root.appendChild(document.createElement('h1')).textContent = 'Endings'
   root.appendChild(document.createElement('p')).textContent = finished ? 'You have reached an ending.' : 'No endings yet.'
@@ -470,7 +470,7 @@ import { mountGame, useProfile, usePage } from '@ifloom/react'
 
 function Endings() {
   const { back } = usePage()
-  const finished = useProfile<{ at: number }>('finished')
+  const finished = useProfile<{ at: number }>('core:finished')
   return (
     <section>
       <h1>Endings</h1>
@@ -494,7 +494,7 @@ import { runner } from './runner.ts'
 const emit = defineEmits<{ back: [] }>()
 const finished = ref<{ at: number }>()
 onMounted(async () => {
-  finished.value = await runner.profile?.get<{ at: number }>('finished')
+  finished.value = await runner.profile?.get<{ at: number }>('core:finished')
 })
 </script>
 
@@ -513,7 +513,7 @@ onMounted(async () => {
   import { runner } from './runner.ts'
 
   let { onback }: { onback: () => void } = $props()
-  const finished = runner.profile?.get<{ at: number }>('finished')
+  const finished = runner.profile?.get<{ at: number }>('core:finished')
 </script>
 
 <section>

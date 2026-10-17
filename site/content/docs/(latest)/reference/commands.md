@@ -103,7 +103,7 @@ See [Game state](/docs/reference/state) for the other starting values. The optio
 |---|---|---|
 | `seed` | The save's [seed](/docs/reference/state#seed), which fixes every random draw it makes. | A hash of `game.id`, so every new game deals the same way. |
 | `kv` | Keys written to the [kv store](/docs/reference/state#kv) before the first scene, such as a name asked for on a title screen. | None. |
-| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
+| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `core:settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
 | `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What `game.carryOver` lists is copied from it. | Nothing carried. |
 
 ```ts

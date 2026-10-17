@@ -8,8 +8,8 @@ The profile holds what should outlive a save: the player's settings, whether the
 import { profile, localStorageDriver, type Profile } from '@ifloom/engine'
 
 const stored = profile(game, localStorageDriver())
-await stored.set('settings', { hints: false, textSize: 'large' })
-await stored.get('settings') // { hints: false, textSize: 'large' }
+await stored.set('core:settings', { hints: false, textSize: 'large' })
+await stored.get('core:settings') // { hints: false, textSize: 'large' }
 ```
 
 [`browserRunner`](/docs/reference/runner#browserrunner) makes one for you in `localStorage`, and the runner exposes it as `runner.profile`.
@@ -45,20 +45,23 @@ type Profile = {
 Use `update` whenever the new value depends on the old one, so two writes at once don't lose each other:
 
 ```ts
-await stored.update<Record<string, unknown>>('settings', (current) => ({ ...current, textSize: 'large' }))
+await stored.update<Record<string, unknown>>('core:settings', (current) => ({ ...current, textSize: 'large' }))
 ```
 
 ## Namespaces
 
-Values must be plain JSON. The engine uses two namespaces itself, and each plugin can have one named after its id.
+Values must be plain JSON. A namespace's name says who owns it: the engine's start with `core:`, a UI's with `ui:`, and a plugin's is its bare id. A plugin id can't hold a `:` and can't be `core` or `ui`, so the three never clash. The [content checker](/docs/reference/checks) reports a plugin that tries.
 
 | Namespace | What it holds | Written by |
 |---|---|---|
-| `settings` | The player's last value for every [setting](/docs/reference/settings), play and ui alike, by id: `{ hints: false, textSize: 'large' }`. | The runner, when a [`setting`](/docs/reference/commands#setting) command takes and on [`setUiSetting`](/docs/reference/runner#setuisetting). |
-| `finished` | `{ at }`, when the game was first [finished](/docs/reference/state#new-game), in milliseconds. Unset until then. | The runner, the first time `game.finished` holds. |
+| `core:settings` | The player's last value for every [setting](/docs/reference/settings), play and ui alike, by id: `{ hints: false, textSize: 'large' }`. | The runner, when a [`setting`](/docs/reference/commands#setting) command takes and on [`setUiSetting`](/docs/reference/runner#setuisetting). |
+| `core:finished` | `{ at }`, when the game was first [finished](/docs/reference/state#new-game), in milliseconds. Unset until then. | The runner, the first time `game.finished` holds. |
+| `ui:gate` | `{ confirmedAt }`, when the player confirmed the React UI's [gate](/docs/react/components#gatepage). | The React UI. |
 | a plugin's id | Whatever the plugin keeps, such as earned achievements. | The runner, from the plugin's [`profile`](/docs/reference/plugins#the-profile). |
 
-Your own UI code can use any other name for its own things, such as the volume a music player last used.
+Your own UI code can keep its own things under a `ui:` name, such as `ui:volume` for the volume a music player last used.
+
+A profile stored before the prefixes had `settings`, `finished` and `gate`. The first read moves them to the new names and writes the profile back, once.
 
 **Gotchas.**
 - The profile is shared by every save of the game on that device. Clearing the browser's storage clears it with the saves.
@@ -66,4 +69,4 @@ Your own UI code can use any other name for its own things, such as the volume a
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) makes a profile with `profile(game, driver)`, gives it to the runner, and reads the `settings` namespace with `get` and `subscribe` to apply the text size.
+Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) makes a profile with `profile(game, driver)`, gives it to the runner, and reads the `core:settings` namespace with `get` and `subscribe` to apply the text size.

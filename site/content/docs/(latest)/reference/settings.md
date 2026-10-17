@@ -39,7 +39,7 @@ Each setting either changes the game or only changes how it looks:
 - **A `play` setting** (the default) is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), it's saved with the game, and conditions can read it. `hints` and `difficulty` above are play settings.
 - **A `ui` setting** never enters the state. It lives in the player's [profile](/docs/reference/profile), and only your UI reads it. `textSize` is one, and so is a volume.
 
-Whichever kind it is, the player's last choice is stored in the profile's `settings`, so it carries over to their next game.
+Whichever kind it is, the player's last choice is stored in the profile's `core:settings`, so it carries over to their next game.
 
 ## SettingDef
 
@@ -83,10 +83,10 @@ A UI reads every setting, play and ui alike, from [`view.settings`](/docs/refere
 function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined
 ```
 
-`settingValue` reads a setting from the player's stored settings, which are the profile's `settings`. It gives the stored value if the setting can still take it, and the setting's `default` otherwise. A stored value is checked the same way the `setting` command checks one, so a number outside the range or off the `step`, or an option you've since removed, falls back to the default. It returns `undefined` for an id the game doesn't declare.
+`settingValue` reads a setting from the player's stored settings, which are the profile's `core:settings`. It gives the stored value if the setting can still take it, and the setting's `default` otherwise. A stored value is checked the same way the `setting` command checks one, so a number outside the range or off the `step`, or an option you've since removed, falls back to the default. It returns `undefined` for an id the game doesn't declare.
 
 ```ts
-const stored = await runner.profile?.get<Record<string, unknown>>('settings')
+const stored = await runner.profile?.get<Record<string, unknown>>('core:settings')
 const size = settingValue(runner.game, stored, 'textSize')
 ```
 

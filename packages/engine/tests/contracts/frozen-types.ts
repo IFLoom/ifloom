@@ -357,7 +357,7 @@ export type FrozenGame = {
   saveName?: (state: FrozenGameState) => string | null
   /**
    * When the game counts as finished. The runner records the first time it
-   * holds in the profile's `finished`, so a title screen can offer New Game+.
+   * holds in the profile's `core:finished`, so a title screen can offer New Game+.
    */
   finished?: FrozenCondition
   /** The stretch a new game opens in. */

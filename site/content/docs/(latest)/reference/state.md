@@ -265,10 +265,10 @@ const { game } = loadGame([town], {
 })
 ```
 
-The [runner](/docs/reference/runner#finished) watches `finished`. After each command that takes, if the condition holds and the [profile](/docs/reference/profile) has no `finished` yet, it records `{ at }`, the time in milliseconds. A title screen checks it to decide whether to offer New Game+:
+The [runner](/docs/reference/runner#finished) watches `finished`. After each command that takes, if the condition holds and the [profile](/docs/reference/profile) has no `core:finished` yet, it records `{ at }`, the time in milliseconds. A title screen checks it to decide whether to offer New Game+:
 
 ```ts
-const done = await runner.profile?.get<{ at: number }>('finished')
+const done = await runner.profile?.get<{ at: number }>('core:finished')
 if (done) await runner.newGame({ carry: runner.state })
 ```
 

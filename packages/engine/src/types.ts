@@ -62,7 +62,7 @@ export type StartOptions = {
   kv?: Record<string, KvValue>
   /**
    * The player's stored values for the game's `play` settings, usually the
-   * profile's `settings`. A setting given no value, or one it doesn't take,
+   * profile's `core:settings`. A setting given no value, or one it doesn't take,
    * starts at its default; ids the game doesn't declare are ignored.
    */
   settings?: Record<string, unknown>

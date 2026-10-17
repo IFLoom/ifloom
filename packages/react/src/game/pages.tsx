@@ -109,7 +109,7 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
  */
 export function useSetting(id: string): KvValue | undefined {
   const { runner, view } = useGame()
-  const stored = useProfile<Record<string, unknown>>('settings')
+  const stored = useProfile<Record<string, unknown>>('core:settings')
   const setting = view.settings.find((entry) => entry.id === id)
   if (!setting) return undefined
   if (setting.affects === 'play') return setting.value ?? setting.default
@@ -127,7 +127,7 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
     let live = true
     const profile = runner.profile
     void (async () => {
-      const confirmed = profile ? await profile.get('gate') : undefined
+      const confirmed = profile ? await profile.get('ui:gate') : undefined
       if (live) setStack((now) => now ?? [confirmed ? 'title' : 'gate'])
     })()
     return () => {
@@ -201,7 +201,7 @@ function TitlePageImpl({ className }: { className?: string }) {
   const words = useWords()
   const { go, options } = usePage()
   const saves = useSaves()
-  const finished = useProfile('finished')
+  const finished = useProfile('core:finished')
   const section = usePageParts(className)
   const art = usePart('title-art', 'mx-auto max-h-80 w-full rounded-lg object-cover')
   const name = usePart('title-name', 'text-center font-heading text-5xl font-semibold tracking-tight')
@@ -323,7 +323,7 @@ function SettingsPageImpl({ className }: { className?: string }) {
   const { runner, view, send } = useGame()
   const words = useWords()
   const { from } = usePage()
-  const stored = useProfile<Record<string, unknown>>('settings')
+  const stored = useProfile<Record<string, unknown>>('core:settings')
   const section = usePageParts(className, 'settings-page')
   const list = usePart('settings', 'flex flex-col gap-4')
   const row = usePart('setting', 'flex flex-col gap-2 rounded-lg border p-3')
@@ -348,7 +348,7 @@ function SettingsPageImpl({ className }: { className?: string }) {
       send({ type: 'setting', id: setting.id, to: value })
       if (inGame) return
     } else {
-      void runner.profile.update<Record<string, unknown>>('settings', (now) => ({ ...now, [setting.id]: value }))
+      void runner.profile.update<Record<string, unknown>>('core:settings', (now) => ({ ...now, [setting.id]: value }))
     }
     setChanged((now) => ({ ...now, [setting.id]: value }))
   }
@@ -490,7 +490,7 @@ function GatePageImpl({ className }: { className?: string }) {
   if (!gate) return null
   const paragraphs = gate.text.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
   const agree = async () => {
-    await runner.profile?.set('gate', { confirmedAt: Date.now() })
+    await runner.profile?.set('ui:gate', { confirmedAt: Date.now() })
     go('title')
   }
   return (
@@ -523,7 +523,7 @@ function GatePageImpl({ className }: { className?: string }) {
 
 /**
  * A notice the player confirms before the title screen, from
- * `PagesOptions.gate`. Confirming is remembered in the profile's `gate`
+ * `PagesOptions.gate`. Confirming is remembered in the profile's `ui:gate`
  * namespace, so it shows once per device. Declining goes to its `href`, or
  * stays.
  */

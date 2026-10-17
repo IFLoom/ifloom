@@ -581,7 +581,7 @@ A [setting](/docs/reference/settings) as a settings screen draws it. `options` i
 `value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. Read it from the [profile](/docs/reference/profile) instead, falling back to `default`:
 
 ```ts
-const stored = (await runner.profile?.get<Record<string, KvValue>>('settings')) ?? {}
+const stored = (await runner.profile?.get<Record<string, KvValue>>('core:settings')) ?? {}
 for (const setting of runner.view().settings) {
   const value = setting.value ?? stored[setting.id] ?? setting.default
   drawSetting(setting, value)

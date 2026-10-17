@@ -219,7 +219,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     if (game.finished && !finishedRecorded && holds(after, game.finished, game)) {
       finishedRecorded = true
       const at = now()
-      remember((profile) => profile.update('finished', (stored) => stored ?? { at }))
+      remember((profile) => profile.update('core:finished', (stored) => stored ?? { at }))
     }
     for (const plugin of game.plugins ?? []) {
       const keep = plugin.profile
@@ -421,12 +421,12 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       if (!options.profile) throw new Error('This runner was given no profile to write settings to.')
       const refused = settingRefusal(game, id, value, 'ui')
       if (refused) return refused
-      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: value })))
       return undefined
     },
     /**
      * Start a new game in place: fresh history, backlog and log, no time
-     * played. Settings not given come from the profile's `settings`; the seed
+     * played. Settings not given come from the profile's `core:settings`; the seed
      * is random unless given. For New Game+, pass `carry: runner.state`.
      */
     async newGame(start: StartOptions = {}): Promise<GameState> {

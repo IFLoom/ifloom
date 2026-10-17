@@ -115,7 +115,7 @@ describe('the pages', () => {
     expect(hints.checked).toBe(true)
     await act(async () => fireEvent.click(hints))
     await runner.settled()
-    expect(await runner.profile!.get('settings')).toEqual({ hints: false })
+    expect(await runner.profile!.get('core:settings')).toEqual({ hints: false })
     expect(runner.state.settings.hints).toBe(true)
 
     fireEvent.click(screen.getByText('Back'))
@@ -155,7 +155,7 @@ describe('the pages', () => {
     fireEvent.click(screen.getByText('size'))
     await act(async () => fireEvent.click(screen.getByLabelText('Large')))
     await runner.settled()
-    expect(await runner.profile!.get('settings')).toEqual({ textSize: 'large' })
+    expect(await runner.profile!.get('core:settings')).toEqual({ textSize: 'large' })
     expect(runner.state.settings).not.toHaveProperty('textSize')
     fireEvent.click(screen.getByText('Back'))
     await waitFor(() => expect(document.querySelector('[data-size]')?.getAttribute('data-size')).toBe('large'))

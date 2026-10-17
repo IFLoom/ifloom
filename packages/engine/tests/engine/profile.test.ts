@@ -32,15 +32,15 @@ describe('the profile', () => {
   it('keeps namespaces as one JSON object at the game’s key', async () => {
     const driver = memoryDriver()
     const prof = profile(game(), driver)
-    expect(await prof.get('settings')).toBeUndefined()
-    await prof.set('settings', { hints: false })
-    await prof.set('finished', { at: 5 })
-    expect(await prof.get('settings')).toEqual({ hints: false })
-    expect(JSON.parse((await driver.get('fixture.profile'))!)).toEqual({ settings: { hints: false }, finished: { at: 5 } })
+    expect(await prof.get('core:settings')).toBeUndefined()
+    await prof.set('core:settings', { hints: false })
+    await prof.set('core:finished', { at: 5 })
+    expect(await prof.get('core:settings')).toEqual({ hints: false })
+    expect(JSON.parse((await driver.get('fixture.profile'))!)).toEqual({ 'core:settings': { hints: false }, 'core:finished': { at: 5 } })
     // A second profile on the same driver reads what the first wrote.
-    expect(await profile(game(), driver).get('finished')).toEqual({ at: 5 })
-    await prof.set('finished', undefined)
-    expect(await prof.get('finished')).toBeUndefined()
+    expect(await profile(game(), driver).get('core:finished')).toEqual({ at: 5 })
+    await prof.set('core:finished', undefined)
+    expect(await prof.get('core:finished')).toBeUndefined()
   })
 
   it('updates in order, and tells subscribers', async () => {
@@ -64,7 +64,22 @@ describe('the profile', () => {
   it('starts again empty when what is stored is not JSON', async () => {
     const driver = memoryDriver()
     await driver.set('fixture.profile', 'not json')
-    expect(await profile(game(), driver).get('settings')).toBeUndefined()
+    expect(await profile(game(), driver).get('core:settings')).toBeUndefined()
+  })
+
+  it('moves a profile stored before the core: and ui: prefixes, once', async () => {
+    const driver = memoryDriver()
+    const old = { settings: { hints: false }, finished: { at: 5 }, gate: { confirmedAt: 1 }, achievements: { earned: ['a'] } }
+    await driver.set('fixture.profile', JSON.stringify(old))
+    const prof = profile(game(), driver)
+    expect(await prof.get('core:settings')).toEqual({ hints: false })
+    expect(await prof.get('settings')).toBeUndefined()
+    expect(JSON.parse((await driver.get('fixture.profile'))!)).toEqual({
+      'core:settings': { hints: false },
+      'core:finished': { at: 5 },
+      'ui:gate': { confirmedAt: 1 },
+      achievements: { earned: ['a'] },
+    })
   })
 })
 
@@ -77,7 +92,7 @@ describe('the runner and the profile', () => {
     runner.apply({ type: 'setting', id: 'hints', to: false })
     runner.apply({ type: 'setting', id: 'hints', to: 'maybe' })
     await runner.settled()
-    expect(await prof.get('settings')).toEqual({ hints: false })
+    expect(await prof.get('core:settings')).toEqual({ hints: false })
   })
 
   it('writes a ui setting to the profile only, and refuses one it cannot take', async () => {
@@ -89,7 +104,7 @@ describe('the runner and the profile', () => {
     expect(runner.setUiSetting('textSize', 'huge')).toBe('That is not one of the options.')
     expect(runner.setUiSetting('hints', false)).toBe('That setting changes the game, so it is set with a command.')
     await runner.settled()
-    expect(await prof.get('settings')).toEqual({ textSize: 'large' })
+    expect(await prof.get('core:settings')).toEqual({ textSize: 'large' })
     expect(runner.state).toBe(before)
     expect(runner.log().commands).toEqual([])
     expect(() => createRunner(g, begin(g)).setUiSetting('textSize', 'large')).toThrow()
@@ -102,25 +117,25 @@ describe('the runner and the profile', () => {
     const runner = createRunner(g, begin(g), { profile: prof, now: () => clock })
     runner.apply({ type: 'activity', id: 'read' })
     await runner.settled()
-    expect(await prof.get('finished')).toBeUndefined()
+    expect(await prof.get('core:finished')).toBeUndefined()
     clock = 200
     runner.apply({ type: 'activity', id: 'read' })
     clock = 300
     runner.apply({ type: 'activity', id: 'read' })
     await runner.settled()
-    expect(await prof.get('finished')).toEqual({ at: 200 })
+    expect(await prof.get('core:finished')).toEqual({ at: 200 })
     // A later runner, a later game: still the first time.
     const again = createRunner(g, startingState(g, { carry: runner.state }), { profile: prof, now: () => 999 })
     again.apply({ type: 'activity', id: 'read' })
     again.apply({ type: 'activity', id: 'read' })
     await again.settled()
-    expect(await prof.get('finished')).toEqual({ at: 200 })
+    expect(await prof.get('core:finished')).toEqual({ at: 200 })
   })
 
   it('starts a new game with the profile’s settings, fresh log and history', async () => {
     const g = game()
     const prof = profile(g, memoryDriver())
-    await prof.set('settings', { hints: false, textSize: 'large' })
+    await prof.set('core:settings', { hints: false, textSize: 'large' })
     const runner = createRunner(g, begin(g), { profile: prof, history: true })
     runner.apply({ type: 'activity', id: 'read' })
     const fresh = await runner.newGame({ seed: 7 })
@@ -166,7 +181,7 @@ describe('the runner and the profile', () => {
     const g = game({ plugins: [shelf] })
     const prof = profile(g, memoryDriver())
     await prof.set('shelf', ['atlas'])
-    await prof.set('settings', { hints: false })
+    await prof.set('core:settings', { hints: false })
     const runner = createRunner(g, begin(g), { profile: prof })
     // Read when the runner starts: the view built before then has none.
     expect(runner.view().plugins.shelf).toEqual({ books: null })
@@ -189,7 +204,7 @@ describe('the runner and the profile', () => {
     expect(runner.view()).not.toBe(before)
     expect(runner.view().plugins.shelf).toEqual({ books: ['atlas', 'novel'] })
     // Another namespace changing tells nobody.
-    await prof.set('settings', { hints: true })
+    await prof.set('core:settings', { hints: true })
     expect(told).toBe(1)
   })
 

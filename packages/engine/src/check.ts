@@ -196,6 +196,8 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   const pluginIds = new Set<string>()
   for (const plugin of plugins) {
     if (!/^[a-z0-9-]+$/i.test(plugin.id)) say(undefined, `plugin ${plugin.id}`, 'a plugin id is letters, digits and "-" only')
+    // The profile's `core:` and `ui:` namespaces belong to the engine and the UI.
+    if (/^(core|ui)(:|$)/i.test(plugin.id)) say(undefined, `plugin ${plugin.id}`, '"core" and "ui" are reserved for the engine and the UI')
     if (pluginIds.has(plugin.id)) say(undefined, `plugin ${plugin.id}`, 'two plugins share this id')
     pluginIds.add(plugin.id)
   }

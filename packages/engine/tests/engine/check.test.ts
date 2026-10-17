@@ -19,6 +19,16 @@ describe('checkGame', () => {
     expect(checkGame(fixture()).problems).toEqual([])
   })
 
+  it('keeps the core and ui profile prefixes from plugin ids', () => {
+    const plugins = ['core', 'ui', 'core:x', 'uix'].map((id) => definePlugin({ id, version: 1 }))
+    expect(checkGame({ ...fixture(), plugins }).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'plugin core: "core" and "ui" are reserved for the engine and the UI',
+      'plugin ui: "core" and "ui" are reserved for the engine and the UI',
+      'plugin core:x: a plugin id is letters, digits and "-" only',
+      'plugin core:x: "core" and "ui" are reserved for the engine and the UI',
+    ])
+  })
+
   it('names the pack "game" for a hand-built game, and describes a problem as pack · where · what', () => {
     const game: Game = { ...fixture(), finished: { item: 'trophy' } }
     expect(checkGame(game).problems).toEqual([{ pack: 'game', where: 'finished', what: 'unknown item "trophy"' }])

@@ -1253,7 +1253,7 @@ The game's title (`view.title`), the `subtitle` and `art` if given, and a column
 
 - **Continue** (`ui.continue`, `continue`) loads the newest save, by `savedAt`. It shows only when there is one.
 - **New game** (`ui.newGame`, `new`) calls [`runner.newGame()`](/docs/reference/runner#newgame), which takes the player's stored settings from the profile.
-- **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/reference/state#new-game) and the profile's `finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
+- **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/reference/state#new-game) and the profile's `core:finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
 - **Load** (`ui.load`, `load`) when the runner has `saves`.
 - **Settings** (`ui.settings`, `settings`) when the game declares any setting.
 - A button for each of your own pages, by its id.
@@ -1275,7 +1275,7 @@ Where a change goes depends on the setting and on where the page was opened from
 
 - **A ui setting** goes through [`runner.setUiSetting`](/docs/reference/runner#setuisetting), which writes the profile.
 - **A play setting, opened from the game,** is sent as a [`setting`](/docs/reference/commands#setting) command, so it changes the game in play. The runner also writes it to the profile.
-- **A play setting, opened from the title screen,** is written straight to the profile's `settings`. The game in play doesn't change, and the next new game starts with it.
+- **A play setting, opened from the title screen,** is written straight to the profile's `core:settings`. The game in play doesn't change, and the next new game starts with it.
 
 Without a profile, a play setting is always sent as a command, and New game keeps the settings in play.
 
@@ -1322,7 +1322,7 @@ mountGame(game, {
 })
 ```
 
-Confirming stores `{ confirmedAt }` in the profile's `gate` namespace and goes to the title screen. After that, the gate isn't shown again on that device. Declining follows `href`, or does nothing if there's no `href`.
+Confirming stores `{ confirmedAt }` in the profile's `ui:gate` namespace and goes to the title screen. After that, the gate isn't shown again on that device. Declining follows `href`, or does nothing if there's no `href`.
 
 **Gotcha.** Without a profile, nothing is remembered, so the gate shows every time. [`mountGame`](/docs/react#mountgame) always has one.
 
@@ -1351,10 +1351,10 @@ function Story({ children }: { children: React.ReactNode }) {
 function useProfile<T = unknown>(namespace: string): T | undefined
 ```
 
-What the [profile](/docs/reference/profile) holds in a namespace, kept up to date as it's written. It's `undefined` before the first read and when the runner has no profile. The title screen uses `useProfile('finished')` to decide whether to offer New Game+.
+What the [profile](/docs/reference/profile) holds in a namespace, kept up to date as it's written. It's `undefined` before the first read and when the runner has no profile. The title screen uses `useProfile('core:finished')` to decide whether to offer New Game+.
 
 ```tsx
-const settings = useProfile<Record<string, unknown>>('settings')
+const settings = useProfile<Record<string, unknown>>('core:settings')
 ```
 
 ## Around the stage

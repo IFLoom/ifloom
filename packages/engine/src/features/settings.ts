@@ -107,7 +107,7 @@ export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'n
 
 /**
  * A setting's current value from the player's stored settings (the profile's
- * `settings`): the stored value if the setting can still take it, else the
+ * `core:settings`): the stored value if the setting can still take it, else the
  * setting's default. Undefined for a setting the game doesn't declare.
  */
 export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined {
@@ -289,8 +289,8 @@ export const settings = defineFeature<SettingsShape>({
     afterCommand: (command, remember) => {
       if (command.type !== 'setting') return
       const { id, to } = command
-      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: to })))
+      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: to })))
     },
-    newGame: async (start, profile) => ({ ...start, settings: start.settings ?? (await profile?.get<Record<string, unknown>>('settings')) }),
+    newGame: async (start, profile) => ({ ...start, settings: start.settings ?? (await profile?.get<Record<string, unknown>>('core:settings')) }),
   },
 })

@@ -389,14 +389,14 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   const profile = runner.profile
   let settingsHeard = false
   const stopProfile = profile?.subscribe((namespace, value) => {
-    if (namespace !== 'settings') return
+    if (namespace !== 'core:settings') return
     settingsHeard = true
     stored = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
     log(`settings changed${muted() ? ', muted' : ''}`)
     kick()
   })
   if (profile) {
-    void profile.get<Record<string, unknown>>('settings').then(
+    void profile.get<Record<string, unknown>>('core:settings').then(
       (value) => {
         // A write heard while this was being read is newer.
         if (stopped || settingsHeard) return

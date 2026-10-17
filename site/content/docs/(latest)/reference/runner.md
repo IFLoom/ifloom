@@ -76,7 +76,7 @@ draw(runner.view())
 import { browserRunner, localStorageDriver, profile } from '@ifloom/engine'
 
 const stored = profile(game, localStorageDriver())
-const runner = browserRunner(game, { profile: stored, settings: await stored.get('settings') })
+const runner = browserRunner(game, { profile: stored, settings: await stored.get('core:settings') })
 ```
 
 If you can't wait at that point, start the runner without `settings` and call [`await runner.newGame()`](#newgame) when the player presses New game. `newGame` reads the stored settings itself.
@@ -105,7 +105,7 @@ type RunnerOptions = {
 | `autosave` | Saves by itself after commands. Does nothing without `saves`. | off |
 | `now` | The clock for time played, and for when `finished` is recorded, in milliseconds. Tests pass their own. | `Date.now` |
 | `onSaveError` | Told when an autosave or a [profile](/docs/reference/profile) write fails. Later writes still run. | failures dropped |
-| `profile` | The [profile](/docs/reference/profile) the runner writes settings, [`finished`](#finished) and plugins' namespaces to. You need it for `setUiSetting`. | none |
+| `profile` | The [profile](/docs/reference/profile) the runner writes settings (`core:settings`), [`finished`](#finished) (`core:finished`) and plugins' namespaces to. You need it for `setUiSetting`. | none |
 
 ## HistoryOptions
 
@@ -280,7 +280,7 @@ A UI that redraws only when `runner.state` changes misses these. Compare `runner
 runner.setUiSetting(id: string, value: KvValue): string | undefined
 ```
 
-Changes a `ui` [setting](/docs/reference/settings), such as a text size, and writes it to the profile's `settings`. It never touches the state, so it adds nothing to the log or history and calls no listeners. It returns why the value was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command, or `undefined` when it took. A `play` setting is refused with `That setting changes the game, so it is set with a command.`
+Changes a `ui` [setting](/docs/reference/settings), such as a text size, and writes it to the profile's `core:settings`. It never touches the state, so it adds nothing to the log or history and calls no listeners. It returns why the value was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command, or `undefined` when it took. A `play` setting is refused with `That setting changes the game, so it is set with a command.`
 
 ```ts
 const refused = runner.setUiSetting('textSize', 'large')
@@ -289,7 +289,7 @@ if (!refused) document.body.dataset.textSize = 'large'
 
 The write happens in the background. Await `settled()` if you need it done. It throws if the runner has no `profile`.
 
-A `play` setting goes through `apply({ type: 'setting', id, to: value })` instead. When that takes, the runner writes the new value to the profile's `settings` too, so the next new game starts with it.
+A `play` setting goes through `apply({ type: 'setting', id, to: value })` instead. When that takes, the runner writes the new value to the profile's `core:settings` too, so the next new game starts with it.
 
 ### newGame
 
@@ -306,7 +306,7 @@ newGamePlusButton.onclick = () => runner.newGame({ carry: runner.state })
 
 ### finished
 
-If the game declares [`finished`](/docs/reference/state#new-game), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
+If the game declares [`finished`](/docs/reference/state#new-game), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `core:finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
 
 After a command, the runner also gives each plugin with a [`profile`](/docs/reference/plugins#the-profile) the chance to update its namespace.
 

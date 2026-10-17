@@ -6,9 +6,10 @@ import type { Game } from './game.ts'
  * game, and whatever plugins keep (achievements, say). One JSON object of
  * namespaces, kept at `<game id>.profile` in a save driver.
  *
- * Core uses two namespaces: `settings` (every setting's stored value, by id)
- * and `finished` (`{ at }`, when the game was first finished). A plugin uses
- * its own id.
+ * The engine uses two namespaces: `core:settings` (every setting's stored
+ * value, by id) and `core:finished` (`{ at }`, when the game was first
+ * finished). A UI uses `ui:` names (the React gate is `ui:gate`). A plugin
+ * uses its own bare id, which can't hold a `:`, so the prefixes are reserved.
  */
 export type Profile = {
   /** What a namespace holds, or undefined if nothing does. */
@@ -23,6 +24,25 @@ export type Profile = {
   update: <T = unknown>(namespace: string, change: (current: T | undefined) => T | undefined) => Promise<T | undefined>
   /** Hear about every write, with the namespace and its new value. Returns the way to stop. */
   subscribe: (listener: (namespace: string, value: unknown) => void) => () => void
+}
+
+/** Namespaces a profile stored before they took the `core:` and `ui:` prefixes, and their names now. */
+const RENAMED: Readonly<Record<string, string>> = { settings: 'core:settings', finished: 'core:finished', gate: 'ui:gate' }
+
+/**
+ * Move the namespaces of a profile stored under the old names to the new
+ * ones. Returns undefined when nothing needed moving. A new name already
+ * holding a value keeps it.
+ */
+function renamed(data: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!Object.keys(RENAMED).some((old) => old in data)) return undefined
+  const out = { ...data }
+  for (const [old, now] of Object.entries(RENAMED)) {
+    if (!(old in out)) continue
+    if (!(now in out)) out[now] = out[old]
+    delete out[old]
+  }
+  return out
 }
 
 /** A game's profile, kept wherever its driver keeps things. Reads and writes run one at a time, in order. */
@@ -48,7 +68,11 @@ export function profile(game: Game, driver: SaveDriver): Profile {
     } catch {
       // An unreadable profile starts again empty.
     }
-    data = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+    const stored = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {}
+    // A profile from before the prefixes is moved once, and written back moved.
+    const moved = renamed(stored)
+    if (moved) await driver.set(key, JSON.stringify(moved))
+    data = moved ?? stored
     return data
   }
 

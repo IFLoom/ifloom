@@ -121,7 +121,7 @@ describe('the registry', () => {
       activities: { conditions: [], effects: [], commands: ['activity'] },
       inputs: { conditions: [], effects: [], commands: ['input'] },
       settings: { conditions: ['setting'], effects: [], commands: ['setting'] },
-      stats: { conditions: ['stat', 'tier', 'level'], effects: ['stat'], commands: [] },
+      stats: { conditions: ['stat', 'level'], effects: ['stat'], commands: [] },
       audio: { conditions: [], effects: ['audio', 'sound'], commands: [] },
       media: { conditions: [], effects: [], commands: [] },
       transitions: { conditions: [], effects: ['transition'], commands: [] },

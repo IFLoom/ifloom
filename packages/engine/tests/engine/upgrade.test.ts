@@ -400,6 +400,27 @@ describe('content migrations', () => {
     })
   })
 
+  it('fold a stat’s bands into hidden levels and tier conditions into level at schema 11', () => {
+    const v10 = {
+      id: 'town',
+      schema: 10,
+      stats: [
+        { id: 'charm', label: 'Charm', bands: [10, 20, 30] },
+        { id: 'cooking', label: 'Cooking', bands: [5], levels: { at: [10, 30] } },
+      ],
+      activities: [{ id: 'flirt', blocked: [{ when: { not: { tier: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
+    }
+    expect(upgradePack(v10)).toEqual({
+      id: 'town',
+      schema: SCHEMA,
+      stats: [
+        { id: 'charm', label: 'Charm', levels: { at: [10, 20, 30], hidden: true } },
+        { id: 'cooking', label: 'Cooking', levels: { at: [10, 30] } },
+      ],
+      activities: [{ id: 'flirt', blocked: [{ when: { not: { level: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
+    })
+  })
+
   it('install a schema 5 mod with an activity that requires, and play it as blocked', async () => {
     const file = JSON.stringify({
       ifloomMod: 1,

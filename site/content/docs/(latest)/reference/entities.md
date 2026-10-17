@@ -308,7 +308,7 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 
 ## Gotchas
 
-- **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and bands by id alone.
+- **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and levels by id alone.
 - **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', stat: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.

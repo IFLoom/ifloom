@@ -588,7 +588,7 @@ type StatModifier = { stat: string; add?: number; multiply?: number }
 
 Every plugin's modifiers are gathered, in the order `game.plugins` lists them. For each stat, the adds are summed, then the total is multiplied by every multiplier, then the result is held to the stat's range. So with a kept value of 5, `{ add: 3 }`, `{ multiply: 2 }` and `{ add: 2, multiply: 1.5 }` read as `(5 + 3 + 2) × 2 × 1.5 = 30`.
 
-Everything that reads a stat sees the changed value: [`statValue`](/docs/reference/stats#statvalue), the `stat`, `tier` and `level` conditions, a [derived stat](/docs/reference/stats#derived-stats)'s formula, an activity's cost check and `view.stats`. A derived stat reads its inputs changed, then has its own modifiers applied.
+Everything that reads a stat sees the changed value: [`statValue`](/docs/reference/stats#statvalue), the `stat` and `level` conditions, a [derived stat](/docs/reference/stats#derived-stats)'s formula, an activity's cost check and `view.stats`. A derived stat reads its inputs changed, then has its own modifiers applied.
 
 **Gotchas.**
 - Modifiers are never written. A `stat` effect changes the kept value in `state.stats`, underneath. When the plugin stops returning a modifier, the stat reads its kept value again.

@@ -11,7 +11,7 @@
  *
  * A feature is a leaf. It imports types, other features, and at runtime only
  * modules that import nothing back (strings, entities, notices, storylines,
- * collections, context, tier, the scene body). What it needs from the core,
+ * collections, context, the scene body). What it needs from the core,
  * such as `holds` or `runEffects`, comes in a `FeatureContext` argument, as a
  * plugin's context does. That keeps the registry free of import cycles. Core
  * features aren't plugins: see ADR 0007.

@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 10
+export const SCHEMA = 11
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -84,6 +84,17 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   // Prose keys are the author's own names, which code can also hold, so they
   // are left as they are.
   9: (pack) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, toSchema10)])) as RawPack,
+  // 10 → 11: a stat's hidden `bands` are levels the player isn't shown, so
+  // one condition reads both: `bands: [10, 20]` is
+  // `levels: { at: [10, 20], hidden: true }`, and `{ tier: 'charm', gte: 2 }`
+  // is `{ level: 'charm', gte: 2 }`. A stat that had both keeps its levels.
+  10: (pack) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => {
+        if (key === 'stats' && Array.isArray(value)) value = value.map((stat) => (isRecord(stat) ? bandsToLevels(stat) : stat))
+        return [key, WORDS.has(key) ? value : deep(value, toSchema11)]
+      }),
+    ) as RawPack,
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -322,6 +333,20 @@ export function choiceKey(key: string): string {
 /** Schema 9 content in one object, as schema 10 writes it: a `chose` condition's key with `#`. */
 function toSchema10(value: Record<string, unknown>): Record<string, unknown> {
   return typeof value.chose === 'string' ? { ...value, chose: choiceKey(value.chose) } : value
+}
+
+/** A stat's schema 10 `bands` as hidden levels. */
+function bandsToLevels(stat: Record<string, unknown>): Record<string, unknown> {
+  if (!('bands' in stat)) return stat
+  const { bands, ...rest } = stat
+  return isRecord(rest.levels) || !Array.isArray(bands) ? rest : { ...rest, levels: { at: bands, hidden: true } }
+}
+
+/** Schema 10 content in one object, as schema 11 writes it: a `{ tier, gte }` condition as `{ level, gte }`. */
+function toSchema11(value: Record<string, unknown>): Record<string, unknown> {
+  if (typeof value.tier !== 'string' || 'level' in value) return value
+  const { tier, ...rest } = value
+  return { level: tier, ...rest }
 }
 
 /** The statuses plugin's calls, by the timed-effects plugin's names. */

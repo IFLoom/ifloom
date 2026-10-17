@@ -39,7 +39,7 @@ import { takeOff, wardrobe, wear, wearing } from '@ifloom/plugin-wardrobe'
 const BANNED = ['value', 'add', 'amount', 'delta', 'set', 'increment', 'change'] as const
 
 /** Targets: the nouns a condition or an effect names what it works on by. */
-const TARGETS = ['stat', 'item', 'entity', 'storyline', 'scene', 'collection', 'minigame', 'channel', 'track', 'key', 'kv', 'storylineKv', 'minigameVar', 'setting', 'chose', 'seen', 'since', 'count', 'tier', 'level', 'turn', 'phase'] as const
+const TARGETS = ['stat', 'item', 'entity', 'storyline', 'scene', 'collection', 'minigame', 'channel', 'track', 'key', 'kv', 'storylineKv', 'minigameVar', 'setting', 'chose', 'seen', 'since', 'count', 'level', 'turn', 'phase'] as const
 
 /** Qualifiers and details: who it belongs to, what it compares with, what it carries. */
 const DETAILS = [

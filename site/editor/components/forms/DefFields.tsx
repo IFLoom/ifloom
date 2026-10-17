@@ -51,9 +51,6 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
         <Field label="When short" hint="The refusal when a cost asks for more, with {n}.">
           <TextInput optional value={value.lacking} placeholder={`Not enough ${value.label.toLowerCase()}.`} onChange={(lacking) => set({ lacking })} />
         </Field>
-        <Field label="Bands" hint="Hidden thresholds for tier conditions, lowest first.">
-          <ListInput numbers value={value.bands} onChange={(bands) => set({ bands })} />
-        </Field>
         <Field label="Belongs to a kind" hint="An entity kind, such as staff. Empty for the player's own.">
           <TextInput optional mono value={value.of} onChange={(of) => set({ of })} />
         </Field>
@@ -70,6 +67,13 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
           <ListInput numbers value={value.levels?.at} placeholder="10, 30, 60" onChange={(at) => set({ levels: at ? { ...value.levels, at } : undefined })} />
           <TextInput optional value={value.levels?.notice} placeholder="{label} is now level {level}." onChange={(notice) => value.levels && set({ levels: { ...value.levels, notice } })} />
         </div>
+        {value.levels ? (
+          <Checkbox
+            checked={Boolean(value.levels.hidden)}
+            label="Hidden: conditions read the levels, the player never sees them"
+            onChange={(hidden) => value.levels && set({ levels: { ...value.levels, hidden: hidden || undefined } })}
+          />
+        ) : null}
       </Field>
       <Field label="Derived from a formula" hint={'Worked out from other stats, never kept: "baking", { "sum": [...] }, { "scale": "x", "by": 0.5 }.'}>
         {derived ? (

@@ -1,6 +1,6 @@
 ---
 title: "Conditions"
-description: "Every condition: kv, stats, levels, tiers, choices, scenes seen, items, counts, turns, phases, custom and plugin calls."
+description: "Every condition: kv, stats, levels, choices, scenes seen, items, counts, turns, phases, custom and plugin calls."
 ---
 A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/docs/reference/checks) can check every id in it.
 
@@ -19,7 +19,7 @@ const regularAtTheCafe: Condition = {
 ```
 
 ```ts
-import { holds, inRange, explain, explainText, tier, type Condition, type Range, type Explanation } from '@ifloom/engine'
+import { holds, inRange, explain, explainText, type Condition, type Range, type Explanation } from '@ifloom/engine'
 ```
 
 When a choice is greyed out or a line is missing and you can't see why, [`explain`](#explain) walks the condition and tells you which part failed and what it read.
@@ -68,7 +68,6 @@ type Condition =
   | ({ count: string; where?: Condition } & Range)
   | { entity: string }
   | ({ level: StatKey; of?: string } & Range)
-  | { tier: StatKey; gte: number }
   | { storyline: string; open?: boolean }
   | ({ item: string } & Range)
   | ({ collection: string; entry?: string } & Range)
@@ -235,7 +234,7 @@ The [entity](/docs/reference/entities) is in the game, which means it was declar
 { level: 'skill', of: 'staff:ana', gte: 2 } // an entity's level
 ```
 
-Tests the level a stat with [`levels`](/docs/reference/stats#levels) is at, against a [range](#range). The level is how many of the stat's `levels.at` thresholds its value has reached, as [`statLevel`](/docs/reference/stats#statlevel) works it out. A bare `{ level }` means level 1 or more.
+Tests the level a stat with [`levels`](/docs/reference/stats#levels) is at, against a [range](#range). The level is how many of the stat's `levels.at` thresholds its value has reached, as [`statLevel`](/docs/reference/stats#statlevel) works it out. A bare `{ level }` means level 1 or more. Levels declared with `hidden: true` are read the same way, so you can gate on thresholds the player never sees.
 
 With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }`](#stat) does. An entity that isn't there fails every range, `lt` included.
 
@@ -249,34 +248,6 @@ With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }
 - It needs the game to find the levels. [`holds`](#holds) without a game reads every level as 0.
 
 [`explain`](#explain) says `stat cooking is at level 1; wants 2 or more`, or `staff:ana stat skill is at level 2; wants 2 or more` with an `of`.
-
-### tier
-
-```ts
-{ tier: 'charm', gte: 2 }
-```
-
-True when the stat has reached at least `gte` of its declared [`bands`](/docs/reference/stats#statdef), the hidden thresholds you declare with the stat. Bands keep thresholds in one place and off the screen. A stat with no bands is always in band 0, so only `gte: 0` passes. There's no `lt`, so use `not`.
-
-**Gotcha.** `tier` needs the game to find the bands. [`holds`](#holds) without a game returns false for it, whatever `gte` is.
-
-The band comes from [`statBand`](/docs/reference/stats#statband), which uses the `tier()` helper. It's exported for your own use:
-
-```ts
-function tier(value: number, thresholds: readonly number[]): number
-```
-
-It returns how many thresholds `value` has reached, counting from the first and stopping at the first it hasn't reached. Give the thresholds in ascending order.
-
-```ts
-import { tier } from '@ifloom/engine'
-
-tier(4, [5, 10, 20])   // 0
-tier(12, [5, 10, 20])  // 2
-
-// declared with the stat:
-{ id: 'charm', label: 'Charm', bands: [10, 20, 30] }
-```
 
 ### storyline
 
@@ -415,7 +386,7 @@ holds(state, at('cafe'), town)                // a plugin's condition needs the 
 holds(state, here('ava'), town)               // so does the cast's
 ```
 
-**Gotcha.** `tier`, `custom` and a plugin's condition need `game`. Without it, they're all false. A `count`'s `where` is tested with the same `game`, or without one.
+**Gotcha.** `custom` and a plugin's condition need `game`. Without it, they're false, and `level` reads every level as 0. A `count`'s `where` is tested with the same `game`, or without one.
 
 ## inRange
 
@@ -460,7 +431,7 @@ import { at } from '@ifloom/plugin-places'
 const why = explain(state, {
   all: [
     { kv: 'metAva' },
-    { any: [{ stat: 'coins', gte: 5 }, { tier: 'charm', gte: 1 }] },
+    { any: [{ stat: 'coins', gte: 5 }, { level: 'charm', gte: 1 }] },
     { not: at('cafe') },
   ],
 }, town)
@@ -474,7 +445,7 @@ With no condition, it returns `{ holds: true, why: 'no condition' }`.
 
 **Gotchas.**
 - A `{ custom }` leaf can only say which function it called (`custom condition marketDay`), not what that function read.
-- Pass `game`, as with `holds`. Without it, the custom and plugin leaves fail, and so does `tier`, though its text says `band 0`.
+- Pass `game`, as with `holds`. Without it, the custom and plugin leaves fail, and `level` reads level 0.
 
 ### Explanation
 
@@ -502,7 +473,7 @@ console.log(explainText(why))
 //   ✓ kv metAva is true; wants set
 //   ✓ any of 2: 1 hold
 //     ✗ stat coins is 3; wants 5 or more
-//     ✓ stat charm is in band 1; wants band 1 or more
+//     ✓ stat charm is at level 1; wants 1 or more
 //   ✗ not: the part below holds
 //     ✓ custom condition places/at
 ```

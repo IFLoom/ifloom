@@ -1,11 +1,10 @@
 /**
  * Stats: the numbers a game keeps for the player and for entities, derived
- * stats worked out from others, levels, and hidden bands. The engine has no
+ * stats worked out from others, and levels, shown or hidden. The engine has no
  * stats of its own; a game declares every one it uses.
  */
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
-import { tier } from '../tier.ts'
 import { entityOf, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
@@ -42,6 +41,12 @@ export type StatLevels = {
    * No notice if left out.
    */
   notice?: string
+  /**
+   * Keep the levels from the player: the view gives the stat no `level`, so
+   * the thresholds are never shown, and `{ level }` conditions still read
+   * them. For a hidden rating such as how much a character trusts you.
+   */
+  hidden?: boolean
 }
 
 /**
@@ -86,12 +91,6 @@ export type StatDef = {
    * "Not enough" and the label.
    */
   lacking?: string
-  /**
-   * Hidden thresholds, lowest first. A `{ tier: id, gte: n }` condition asks
-   * whether the stat has passed `n` of them; the numbers themselves are never
-   * shown. No bands means every value is band 0.
-   */
-  bands?: readonly number[]
   /**
    * How the value is written for the player, with `{n}` for the number:
    * `'£{n}'`, `'{n} energy'`. Just the number if left out.
@@ -155,7 +154,6 @@ export type StatsShape = {
   conditions: {
     /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
     stat: { stat: StatKey; of?: string } & Range
-    tier: { tier: StatKey; gte: number }
     /**
      * The level a stat with `levels` is at: the player's, or with `of`, an
      * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat
@@ -269,10 +267,13 @@ function modified(state: GameState, game: Game, key: string, value: number, modi
   return named ? clampStat(state, game, key, (value + add) * multiply, cx) : value
 }
 
-/** Which level a value is at: how many of the thresholds it has reached. */
+/** Which level a value is at: how many of the thresholds, lowest first, it has reached. */
 export function levelAt(value: number, at: readonly number[]): number {
   let level = 0
-  for (const threshold of at) if (value >= threshold) level += 1
+  for (const threshold of at) {
+    if (value >= threshold) level += 1
+    else break
+  }
   return level
 }
 
@@ -388,12 +389,6 @@ export function lackingLine(def: StatDef | undefined, id: string, amount: number
   return say(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
 }
 
-/** Which of its hidden bands a stat has reached. */
-export function statBand(state: GameState, game: Game, id: string, cx: FeatureContext): number {
-  const bands = statDef(game, id)?.bands
-  return bands ? tier(statValue(state, game, id, undefined, cx), bands) : 0
-}
-
 /** A value as the player reads it, through the stat's `format`. */
 export function formatStat(def: StatDef | undefined, value: number): string {
   return def?.format ? def.format.replace('{n}', String(value)) : String(value)
@@ -402,7 +397,7 @@ export function formatStat(def: StatDef | undefined, value: number): string {
 /** One stat as the UI shows it: the player's, or with `of`, an entity's. */
 export function statView(state: GameState, game: Game, stat: StatDef, of: string | undefined, cx: FeatureContext): StatView {
   const value = statValue(state, game, stat.id, of, cx)
-  const level = statLevel(state, game, stat.id, of, cx)
+  const level = stat.levels?.hidden ? undefined : statLevel(state, game, stat.id, of, cx)
   return {
     key: stat.id,
     label: stat.label,
@@ -468,14 +463,6 @@ export const stats = defineFeature<StatsShape>({
         return `${condition.of} stat ${condition.stat} is ${read(condition.of)}; wants ${wanted(condition)}`
       },
       references: (condition) => [{ stat: condition.stat, of: condition.of }, ...ofKind(condition.of)],
-    },
-    tier: {
-      holds: (state, condition, game, cx) => (game ? statBand(state, game, condition.tier, cx) >= condition.gte : false),
-      explain: (state, condition, game, cx) => {
-        const band = game ? statBand(state, game, condition.tier, cx) : 0
-        return `stat ${condition.tier} is in band ${band}; wants band ${condition.gte} or more`
-      },
-      references: (condition) => [{ stat: condition.tier }],
     },
     level: {
       holds: (state, condition, game, cx) => {

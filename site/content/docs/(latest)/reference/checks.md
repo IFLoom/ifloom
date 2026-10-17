@@ -110,7 +110,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineKv` or `counter`. |
 | `unknown item "…"` | An item nobody declares, in an `item` condition or effect, or a `use` command. |
-| `unknown stat "…"` | A stat nobody declares, in `stat`, `level` or `tier`. |
+| `unknown stat "…"` | A stat nobody declares, in `stat` or `level`. |
 | `unknown collection "…"` | A collection nobody declares. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'` names no kind and isn't checked. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |

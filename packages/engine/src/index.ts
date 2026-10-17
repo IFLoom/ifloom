@@ -30,8 +30,8 @@ export {
   clampStat,
   formatStat,
   lackingLine,
+  levelAt,
   startingStats,
-  statBand,
   statDef,
   statLevel,
   statMax,
@@ -175,7 +175,6 @@ export {
 } from './progress.ts'
 export { markUsed, oncePerTurn, usedBlock, usedThisTurn } from './once.ts'
 export { chance, hash, pick, roll, weighted } from './random.ts'
-export { tier } from './tier.ts'
 
 // Loading, checking and saving
 export type { Loaded, Pack, Patch } from './loader.ts'

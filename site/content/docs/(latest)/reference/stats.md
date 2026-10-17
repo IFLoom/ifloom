@@ -1,6 +1,6 @@
 ---
 title: "Stats"
-description: "Declaring stats: ranges, moving ceilings, display, derived stats with formulas, levels, hidden bands, and stats kept on entities."
+description: "Declaring stats: ranges, moving ceilings, display, derived stats with formulas, levels shown or hidden, and stats kept on entities."
 ---
 A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/docs/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 
@@ -8,7 +8,7 @@ A stat is a number the game keeps for the player, such as coins, energy or charm
 import type { StatDef } from '@ifloom/engine'
 
 const stats: StatDef[] = [
-  { id: 'charm', label: 'Charm', start: 4, bands: [10, 20, 30] },
+  { id: 'charm', label: 'Charm', start: 4, levels: { at: [10, 20, 30], hidden: true } },
   { id: 'coins', label: 'Coins', start: 20, max: 9999, format: '{n}c', spendable: true },
   { id: 'baking', label: 'Baking', visible: { kv: 'joinedTheBakery' } },
 ]
@@ -36,7 +36,6 @@ type StatDef = {
   listed?: boolean
   spendable?: boolean
   lacking?: string
-  bands?: readonly number[]
   format?: string
   derive?: Formula
   levels?: StatLevels
@@ -60,10 +59,9 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
 | `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. See [`lackingLine`](#lackingline). |
-| `bands` | none | Hidden thresholds, lowest first, for [`{ tier }` conditions](/docs/reference/conditions#tier). The player never sees the numbers. |
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
-| `levels` | none | Thresholds the stat passes as it grows. See [`StatLevels`](#statlevels). |
+| `levels` | none | Thresholds the stat passes as it grows, shown to the player or hidden. See [`StatLevels`](#statlevels). |
 | `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/docs/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
 | `round` | `'none'` | Round the value as it's read: `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'` to read it as it is. The kept value is never rounded. See [Rounding](#rounding). |
 
@@ -119,7 +117,6 @@ The other fields work much as they do for the player's stats:
 | `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { kv: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
 | `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/docs/reference/view#price), and an activity's `cost` only spends the player's stats. |
-| `bands` | Ignored. [`{ tier }`](/docs/reference/conditions#tier) and [`statBand`](#statband) only read the player's value. |
 
 ### A purse and an energy gauge
 
@@ -226,21 +223,6 @@ lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
 
 `{n}` is the amount the cost asks for, not how far short the player is.
 
-## statBand
-
-```ts
-function statBand(state: GameState, game: Game, id: string): number
-```
-
-How many of the stat's `bands` its current value has reached. A [`{ tier: id, gte }`](/docs/reference/conditions#tier) condition compares against this number. It's 0 if the stat declares no bands.
-
-```ts
-import { statBand } from '@ifloom/engine'
-
-// bands: [10, 20, 30]
-statBand(state, game, 'charm') // charm 4 → 0, 12 → 1, 31 → 3
-```
-
 ## formatStat
 
 ```ts
@@ -273,7 +255,7 @@ The engine works a derived stat out from its [`Formula`](#formula) every time so
 
 Everything that reads stats reads a derived one the same way, through [`statValue`](#statvalue):
 
-- a [`{ stat }`](/docs/reference/conditions#stat) condition, a [`{ tier }`](/docs/reference/conditions#tier) condition and a [`{ level }`](/docs/reference/conditions#level) condition;
+- a [`{ stat }`](/docs/reference/conditions#stat) condition and a [`{ level }`](/docs/reference/conditions#level) condition;
 - an activity's [cost](/docs/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though);
 - the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats.
 
@@ -389,6 +371,7 @@ import type { StatLevels } from '@ifloom/engine'
 type StatLevels = {
   at: number[]
   notice?: string
+  hidden?: boolean
 }
 ```
 
@@ -396,6 +379,7 @@ type StatLevels = {
 |---|---|---|
 | `at` | | The value each level starts at, lowest first. Below the first is level 0. A value equal to a threshold is at that level. |
 | `notice` | none | A line to tell the player when a command takes the stat up a level, with `{label}` for the stat's label and `{level}` for the new level. No notice if left out. |
+| `hidden` | `false` | Keep the levels from the player. The view gives the stat no `level`, so a UI never shows the thresholds, but [`{ level }`](/docs/reference/conditions#level) conditions and [`statLevel`](#statlevel) read them as usual. Use it for a hidden rating, such as how far Ava trusts you: `levels: { at: [10, 20, 30], hidden: true }`. |
 
 ### What reads the level
 
@@ -462,6 +446,22 @@ import { statLevel } from '@ifloom/engine'
 
 // levels: { at: [10, 30, 60] }, cooking at 20
 statLevel(state, game, 'cooking') // { level: 1, next: 30, progress: 0.5 }
+```
+
+## levelAt
+
+```ts
+function levelAt(value: number, at: readonly number[]): number
+```
+
+Which level a value is at: how many of the thresholds, lowest first, it has reached. It's what `statLevel` and the [`{ level }`](/docs/reference/conditions#level) condition count with, exported for thresholds of your own.
+
+```ts
+import { levelAt } from '@ifloom/engine'
+
+levelAt(4, [5, 10, 20])   // 0
+levelAt(12, [5, 10, 20])  // 2
+levelAt(20, [5, 10, 20])  // 3
 ```
 
 ## See it in an example

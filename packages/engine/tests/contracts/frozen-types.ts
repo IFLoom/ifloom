@@ -21,7 +21,9 @@
  * condition's `entry`; `use` takes `id`, `setting` and `input` take `to`.
  * Gating: `Blocked`, and an activity's `blocked` in place of `requires`.
  * Transitions: the `transition` effect, `GameState.transition`,
- * `Game.transitions` and `View.transition`.
+ * `Game.transitions` and `View.transition`. R5: the `tier` condition folded
+ * into `level` (hidden bands are `levels.hidden`); `items`, `storylines` and
+ * `activities` optional on `Game`.
  */
 import type {
   ActionDef,
@@ -132,7 +134,6 @@ export type FrozenCondition =
   | ({ count: string; where?: FrozenCondition } & FrozenRange)
   /** An entity is in the game: `{ entity: 'staff:ana' }`. */
   | { entity: string }
-  | { tier: StatKey; gte: number }
   /**
    * The level a stat with `levels` is at: the player's, or with `of`, an
    * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat

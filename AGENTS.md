@@ -63,7 +63,7 @@ A core kind of condition, effect or command, or a field of the state, belongs to
 
 1. Add its type to the feature's shape (`SettingsShape`, say) and its entry to the matching table in the feature's `defineFeature`. The public `Condition`, `Effect`, `Command`, `GameState`, `Game`, `Pack` and `View` are built from the shapes, so there's nothing else to edit. A new kind of `Reference` gets its resolver in the feature's `resolve`.
 2. For a new feature, write the module with `defineFeature`, then add it to `FEATURES` and its shape to `Shapes` in `features/registry.ts`. Where it goes in `FEATURES` matters: its after-command steps, checks and fills run in that order.
-3. Keep the feature a leaf. Import only types, other features, `strings`, `entities`, `notices`, `storylines`, `collections`, `context`, `tier` and `sceneBody`; take everything else (`holds`, `runEffects`, `buildEffects`, `weighted` and the rest) from the `FeatureContext` argument. `tests/contracts/features.test.ts` fails otherwise.
+3. Keep the feature a leaf. Import only types, other features, `strings`, `entities`, `notices`, `storylines`, `collections`, `context` and `sceneBody`; take everything else (`holds`, `runEffects`, `buildEffects`, `weighted` and the rest) from the `FeatureContext` argument. `tests/contracts/features.test.ts` fails otherwise.
 4. A helper the engine exports that needs the core (`activityBlocked`, `lockedBy`, `fireTriggers`, `statValue`) stays in its module outside `features/` (`activity.ts`, `locks.ts`), which binds the core's context and calls the feature's version.
 5. `src/core.ts` keeps only the kinds that are no feature's: `all`, `any`, `not`, the custom calls and `start`.
 

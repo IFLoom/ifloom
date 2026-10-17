@@ -35,7 +35,7 @@ export function fixture(rules: Game['rules'] = {}): Game {
     startPhase: 'open',
     activities,
     stats: [
-      { id: 'intelligence', label: 'Intelligence', start: 5, bands: [10, 20] },
+      { id: 'intelligence', label: 'Intelligence', start: 5, levels: { at: [10, 20], hidden: true } },
       { id: 'coins', label: 'Coins', start: 3, max: 999, format: '{n}c' },
       { id: 'luck', label: 'Luck', visible: { kv: 'feelingLucky' } },
     ],

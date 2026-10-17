@@ -25,7 +25,6 @@ export const CONDITION_KEYS = [
   'stat',
   'count',
   'entity',
-  'tier',
   'level',
   'storyline',
   'item',

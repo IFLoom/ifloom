@@ -9,7 +9,7 @@ describe('explain', () => {
   const condition = {
     all: [
       { kv: 'metRosa' },
-      { any: [{ stat: 'coins', gte: 5 }, { tier: 'intelligence', gte: 1 }] },
+      { any: [{ stat: 'coins', gte: 5 }, { level: 'intelligence', gte: 1 }] },
       { not: { phase: ['open'] } },
     ],
   }
@@ -34,7 +34,7 @@ describe('explain', () => {
   it('says what each leaf read and what it wanted', () => {
     const [, either, notOpen] = explain(state, condition, game).parts ?? []
     expect(either.parts?.[0].why).toBe('stat coins is 3; wants 5 or more')
-    expect(either.parts?.[1].why).toBe('stat intelligence is in band 1; wants band 1 or more')
+    expect(either.parts?.[1].why).toBe('stat intelligence is at level 1; wants 1 or more')
     expect(notOpen.parts?.[0].why).toBe('phase is open; wants one of open')
   })
 

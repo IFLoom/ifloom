@@ -127,7 +127,7 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
       if (stat.derive !== undefined) stat.derive = renameFormula(stat.derive, from, to) as typeof stat.derive
     }
     visit.condition = (c) => {
-      for (const k of ['stat', 'tier', 'level'] as const) if (c[k] === from) c[k] = to
+      for (const k of ['stat', 'level'] as const) if (c[k] === from) c[k] = to
     }
     visit.effect = (e) => {
       if (e.kind === 'stat' && e.stat === from) e.stat = to

@@ -3,7 +3,7 @@ import { holds } from '../../src/condition.ts'
 import type { Game } from '../../src/game.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
-import { formatStat, statDef, statMax } from '../../src/stats.ts'
+import { formatStat, statDef, statLevel, statMax } from '../../src/stats.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -29,12 +29,14 @@ describe('stats', () => {
     expect(rich.stats.coins).toBe(999)
   })
 
-  it('answers tier conditions from the declared bands, never showing them', () => {
+  it('answers level conditions from hidden levels, never showing them', () => {
     const game = fixture()
     const sharp = begin(game, { stats: { intelligence: 12, coins: 0, luck: 0 } })
-    expect(holds(sharp, { tier: 'intelligence', gte: 1 }, game)).toBe(true)
-    expect(holds(sharp, { tier: 'intelligence', gte: 2 }, game)).toBe(false)
-    expect(holds(sharp, { tier: 'coins', gte: 1 }, game)).toBe(false)
+    expect(holds(sharp, { level: 'intelligence', gte: 1 }, game)).toBe(true)
+    expect(holds(sharp, { level: 'intelligence', gte: 2 }, game)).toBe(false)
+    expect(holds(sharp, { level: 'coins', gte: 1 }, game)).toBe(false)
+    expect(statLevel(sharp, game, 'intelligence')).toEqual({ level: 1, next: 20, progress: 0.2 })
+    expect(view(sharp, game).statsById.intelligence?.level).toBeUndefined()
   })
 
   it('shows the stats the player can see, in the declared order', () => {

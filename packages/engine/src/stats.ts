@@ -39,8 +39,3 @@ export function statMax(state: GameState, game: Game, id: string): number {
 export function clampStat(state: GameState, game: Game, id: string, value: number): number {
   return stats.clampStat(state, game, id, value, featureContext())
 }
-
-/** Which of its hidden bands a stat has reached. */
-export function statBand(state: GameState, game: Game, id: string): number {
-  return stats.statBand(state, game, id, featureContext())
-}

@@ -22,7 +22,7 @@ import { oncePerTurn } from '@ifloom/engine'
 function oncePerTurn(state: GameState, id: string, effects: readonly Effect[]): Effect[]
 ```
 
-Returns `effects` plus a flag recording that they were paid this [turn](/docs/reference/state#turn), or an empty list if `id` has already paid this turn. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day.
+Returns `effects` plus a `kv` effect recording that they were paid this [turn](/docs/reference/state#turn), or an empty list if `id` has already paid this turn. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day.
 
 ```ts
 import { oncePerTurn } from '@ifloom/engine'
@@ -63,9 +63,9 @@ function usedThisTurn(state: GameState, id: string): boolean
 function markUsed(state: GameState, id: string): Effect
 ```
 
-The two halves `oncePerTurn` is built from. `markUsed` is a `flag` effect that sets `turn:<id>` to the current turn number, and `usedThisTurn` checks that it equals the current turn. Nothing needs resetting at the end of a turn, because the next turn's number no longer matches.
+The two halves `oncePerTurn` is built from. `markUsed` is a `kv` effect that sets `turn:<id>` to the current turn number, and `usedThisTurn` checks that it equals the current turn. Nothing needs resetting at the end of a turn, because the next turn's number no longer matches.
 
-**Gotcha:** the flag lives in `state.flags` under `turn:<id>`, so don't use that prefix for your own variables.
+**Gotcha:** the record lives in the [kv store](/docs/reference/state#kv) under `turn:<id>`, so don't use that prefix for your own keys.
 
 ## Counters
 
@@ -77,7 +77,7 @@ function counted(storylineId: string, key: string, value: number): Effect
 function bumped(state: GameState, storylineId: string, key: string, by?: number): Effect
 ```
 
-A counter is a number kept as a storyline variable. `count` reads it, giving `0` if it's unset or not a number. `counted` is an effect that sets it. `bumped` is an effect that adds `by` (default `1`) to its current value.
+A counter is a number kept under a key in a storyline's own kv store. `count` reads it, giving `0` if it's unset or not a number. `counted` is an effect that sets it. `bumped` is an effect that adds `by` (default `1`) to its current value.
 
 ```ts
 effects: [bumped(state, 'ava', 'coffeesBought')]
@@ -114,20 +114,20 @@ import { stageOpen, stageDone, stagesDone, turnsSince, type Stages, type Stage }
 
 type Stages = {
   storylineId: string
-  scope?: 'storyline' | 'game'  // where the done-flags live; default 'storyline'
+  scope?: 'storyline' | 'game'  // whose kv store the stages' keys are in; default 'storyline'
   stages: readonly Stage[]
 }
 
 type Stage = {
   id: string
-  flag: string                  // set when the stage happens
+  key: string                   // the kv key set when the stage happens
   scene?: string                // the scene it plays in
   after?: number                // whole turns since the previous stage's scene was first seen
   needs?: Condition             // what it wants beyond the previous stage being done
 }
 ```
 
-An ordered run of stages on one storyline. Each stage names the variable that records it happened, and what it asks for on top of the stage before it. The player can't reach a stage by skipping one, however good their numbers are.
+An ordered run of stages on one storyline. Each stage names the kv key that records it happened, and what it asks for on top of the stage before it. The player can't reach a stage by skipping one, however good their numbers are.
 
 `after` sets the pace. The stage waits that many whole [turns](/docs/reference/state#turn) after the previous stage's scene was first entered, which is days in a game whose turn is a day. A stat alone is a poor clock, because it can rise faster than you planned, so a minimum number of turns keeps a friendship from happening in an afternoon.
 
@@ -137,10 +137,10 @@ import type { Stages } from '@ifloom/engine'
 const AVA: Stages = {
   storylineId: 'ava',
   stages: [
-    { id: 'name', flag: 'knowsName', scene: 'ava.name' },
-    { id: 'recipe', flag: 'sharedRecipe', scene: 'ava.recipe', after: 3,
+    { id: 'name', key: 'knowsName', scene: 'ava.name' },
+    { id: 'recipe', key: 'sharedRecipe', scene: 'ava.recipe', after: 3,
       needs: { counter: { storyline: 'ava', key: 'visits' }, gte: 5 } },
-    { id: 'river', flag: 'avaTrusts', scene: 'ava.river', after: 7 },
+    { id: 'river', key: 'avaTrusts', scene: 'ava.river', after: 7 },
   ],
 }
 ```
@@ -167,7 +167,7 @@ function stageDone(state: GameState, stages: Stages, id: string): boolean
 function stagesDone(state: GameState, stages: Stages): number
 ```
 
-`stageDone` says whether this stage's flag is set. `stagesDone` counts how many stages are done, starting from the first and stopping at the first that isn't.
+`stageDone` says whether this stage's key is set. `stagesDone` counts how many stages are done, starting from the first and stopping at the first that isn't.
 
 ### turnsSince
 

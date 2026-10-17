@@ -32,7 +32,7 @@ const counter: VendorDef = {
     { item: 'coffee', price: { coins: 3 } },
     { item: 'biscuit', price: { coins: 2 }, stock: 3, restock: 'day' },
     { item: 'sandwich', price: { coins: 5, energy: 1 } },
-    { item: 'cake', price: { coins: 6 }, when: { flag: 'birthday' } },
+    { item: 'cake', price: { coins: 6 }, when: { kv: 'birthday' } },
   ],
 }
 /** A market stall marking one thing a day down by half. */
@@ -127,7 +127,7 @@ describe('the shop, on its own', () => {
     const g = game()
     expect(goods(fresh(g), g).map((good) => good.item)).toEqual(['coffee', 'biscuit', 'sandwich'])
     expect(whyNot(fresh(g), g, buy('counter', 'cake'))).toBe('That isn’t for sale here.')
-    const birthday = { ...fresh(g), flags: { birthday: true } }
+    const birthday = { ...fresh(g), kv: { birthday: true } }
     expect(goods(birthday, g).map((good) => good.item)).toContain('cake')
   })
 

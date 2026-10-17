@@ -13,10 +13,10 @@ A project is one [pack](/docs/reference/loader#pack). The outline on the left li
 - **Scenes**, each a [data scene](/docs/reference/scenes#datascene). You give it a title, a speaker, tags and body blocks, and each block is prose or a picture with an optional condition. A scene with sets in "Drawn from" is a [storylet](/docs/reference/storylets), marked in the outline.
 - **Choices** in each scene. A choice has a label, a cost in stats, a condition for showing it, reasons to grey it out, and its effects.
 - **Stats**, with every field of a [`StatDef`](/docs/reference/stats#statdef), including levels, rounding, how it's displayed and a derived formula.
-- **Variables**. They need no declaration, so the editor only keeps a note of what each one is for. The note goes into the TypeScript export as a comment.
+- **Key–values (kv)**, the keys of the kv store. They need no declaration, so the editor only keeps a note of what each one is for. The note goes into the TypeScript export as a comment.
 - **Items**, with what using one does.
 
-Conditions and effects come from menus. Wherever a form asks for a scene, a stat, an item or a variable, it offers the ones that exist, and "Add new…" makes another. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`.
+Conditions and effects come from menus. Wherever a form asks for a scene, a stat, an item or a kv key, it offers the ones that exist, and "Add new…" makes another. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`.
 
 ### Choices with a cost
 
@@ -42,7 +42,7 @@ Project settings has a switch for each first-party plugin, with the options its 
 
 The buttons across the top export the project's pack:
 
-- **Export TS** downloads a module with `export const <name>: Pack = { … }`, formatted like the examples, with a note of the variables it uses and how to load it.
+- **Export TS** downloads a module with `export const <name>: Pack = { … }`, formatted like the examples, with a note of the kv keys it uses and how to load it.
 - **Export JSON** downloads the same pack as JSON, the format a [mod](/docs/reference/mods) uses.
 
 Import JSON opens a JSON pack as a new project and lists what `checkGame` makes of it. The editor can't read TypeScript you've written by hand, and it opens only data scenes.
@@ -71,6 +71,6 @@ Then run `npm run dev -w my-story`, and carry on from [Your first story](/docs/g
 
 ## What it doesn't do
 
-- **Only part of the engine has forms.** Scenes, choices, stats, variables and items do. Activities, triggers, inputs, collections, entities, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
+- **Only part of the engine has forms.** Scenes, choices, stats, kv keys and items do. Activities, triggers, inputs, collections, entities, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
 - **Drafts stay in this browser.** Clearing the site's data deletes them, and they don't follow you to another machine. Export anything you want to keep.
 - **One pack per project.** A game made of several packs is a project you build in code.

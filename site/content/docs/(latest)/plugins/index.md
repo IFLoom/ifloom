@@ -1,7 +1,7 @@
 ---
 title: "First-party plugins"
 ---
-The engine's core knows about turns, scenes, stats, entities, variables and the rest of the [core concepts](/docs/guide/concepts), but not about clocks, maps or people. Those come from plugins. A [plugin](/docs/reference/plugins) adds a whole system to a game, with its own state, conditions, effects, commands, hooks and view. The first-party plugins below live in the IFLoom repository beside the engine, and you add the ones your game needs.
+The engine's core knows about turns, scenes, stats, entities, the kv store and the rest of the [core concepts](/docs/guide/concepts), but not about clocks, maps or people. Those come from plugins. A [plugin](/docs/reference/plugins) adds a whole system to a game, with its own state, conditions, effects, commands, hooks and view. The first-party plugins below live in the IFLoom repository beside the engine, and you add the ones your game needs.
 
 A linear novel might use none of them. A life sim like the [showcase](/docs/guide/showcase) uses most: the calendar for days, places for the town, the cast for its people, and the phone for texts and a feed.
 
@@ -20,7 +20,7 @@ A linear novel might use none of them. A life sim like the [showcase](/docs/guid
 | [Messages](/docs/plugins/messages) | `@ifloom/plugin-messages` | Messages that arrive when the story allows, in channels and threads, with replies that work like choices. |
 | [Feed](/docs/plugins/feed) | `@ifloom/plugin-feed` | Timelines of other people's posts, the player's own posts, and the likes and comments they get. |
 | [Devices](/docs/plugins/devices) | `@ifloom/plugin-devices` | Devices with apps declared as data, badges, and opening an app without leaving the room. |
-| [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a variable, give the player an item (`debug/item`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
+| [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a kv key, give the player an item (`debug/item`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
 
 There's also one bundle:
 

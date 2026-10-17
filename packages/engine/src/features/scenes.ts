@@ -41,7 +41,7 @@ export type ScenesShape = {
     /**
      * How many times each scene has been entered. The engine's own record of what
      * the player has actually watched, so a chain can say "not until you have seen
-     * the rung before this one" without every link needing a hand-written flag.
+     * the rung before this one" without every link needing a hand-written kv key.
      *
      * Re-entering the scene you are already in — a hub redrawing itself after a
      * choice — is not a viewing and does not count.
@@ -56,7 +56,7 @@ export type ScenesShape = {
     /**
      * How many times each choice has been picked, by `scene/choice`. Kept for
      * every choice, so content can branch on an earlier decision without each one
-     * needing a flag of its own.
+     * needing a kv key of its own.
      */
     chosen: Record<string, number>
   }
@@ -197,14 +197,14 @@ function turnsSince(state: GameState, sceneId: string): number | null {
 /**
  * Open a scene drawn from a named set: one whose `drawnFrom` names it and
  * whose `when` holds, by weight. The draw is seeded by the save, the turn and
- * how many draws the set has had, which a variable `storylet:<name>` counts.
+ * how many draws the set has had, which the kv key `storylet:<name>` counts.
  */
 function drawStorylet(state: GameState, game: Game, from: string, otherwise: string | undefined, cx: FeatureContext): GameState {
   const key = `storylet:${from}`
-  const used = typeof state.flags[key] === 'number' ? (state.flags[key] as number) : 0
+  const used = typeof state.kv[key] === 'number' ? (state.kv[key] as number) : 0
   const eligible = game.scenes.filter((scene) => scene.drawnFrom?.includes(from) && cx.holds(state, scene.when, game))
   const drawn = cx.weighted(eligible, (scene) => scene.weight, 'storylet', from, state.seed, state.turn, used)
-  const counted = { ...state, flags: { ...state.flags, [key]: used + 1 } }
+  const counted = { ...state, kv: { ...state.kv, [key]: used + 1 } }
   if (drawn) return { ...counted, sceneId: drawn.id }
   return otherwise ? { ...counted, sceneId: otherwise } : counted
 }

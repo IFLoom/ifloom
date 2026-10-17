@@ -300,7 +300,7 @@ A [lock with `effect`](/docs/reference/locks#lock) stops every command that woul
 ```ts
 import { type Lock } from '@ifloom/engine'
 
-const locks: Lock[] = [{ when: { flag: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
+const locks: Lock[] = [{ when: { kv: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
 ```
 
 While `ill` is set, the jog button and the bed button are both greyed out with `You feel too ill.` The lock doesn't stop an activity whose only effect is `{ kind: 'turn' }`, since that activity passes no time in its own list. In the same way, `effect: 'turn'` doesn't stop `calendar/pass`, because the turns it ends are applied inside it rather than listed.
@@ -366,7 +366,7 @@ To let the player stay up, give a curfew that can stop holding:
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
 
-calendar({ curfew: { flag: 'nightOwl', is: false } })
+calendar({ curfew: { kv: 'nightOwl', is: false } })
 ```
 
 ### Price notes

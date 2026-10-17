@@ -81,7 +81,7 @@ function startingState(game: Game, options?: StartOptions): GameState
 
 type StartOptions = {
   seed?: number
-  flags?: Record<string, FlagValue>
+  kv?: Record<string, KvValue>
   settings?: Record<string, unknown>
   carry?: GameState
 }
@@ -101,7 +101,7 @@ See [Game state](/docs/reference/state) for the other starting values. The optio
 | Option | What it does | Default |
 |---|---|---|
 | `seed` | The save's [seed](/docs/reference/state#seed), which fixes every random draw it makes. | A hash of `game.id`, so every new game deals the same way. |
-| `flags` | [Variables](/docs/reference/state#flags) written before the first scene, such as a name asked for on a title screen. | None. |
+| `kv` | Keys written to the [kv store](/docs/reference/state#kv) before the first scene, such as a name asked for on a title screen. | None. |
 | `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
 | `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What `game.carryOver` lists is copied from it. | Nothing carried. |
 
@@ -109,31 +109,31 @@ See [Game state](/docs/reference/state) for the other starting values. The optio
 import { startingState } from '@ifloom/engine'
 
 // A UI starting a new game: a fresh seed, and the name from the title screen.
-let state = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31), flags: { playerName: 'Sam' } })
+let state = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31), kv: { playerName: 'Sam' } })
 
 // A test: the same seed every run.
 let fixed = startingState(game)
 ```
 
-`apply(null, game, { type: 'start', seed, flags })` does the same.
+`apply(null, game, { type: 'start', seed, kv })` does the same.
 
 **Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/random#roll). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
-The engine keeps no player name. A name is a variable like any other, so pass it in `flags` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.player`](/docs/reference/saves#savemeta) shows a `playerName` variable that is a string.
+The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.player`](/docs/reference/saves#savemeta) shows whatever the game's [`saveName`](/docs/reference/game#savename) makes of it.
 
 ## Command
 
 ```ts
 type Command =
-  | { type: 'start'; seed?: number; flags?: Record<string, FlagValue> }
+  | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   | { type: 'activity'; id: string }
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
   | { type: 'use'; itemId: string }
   | { type: 'dismiss'; id?: string }
-  | { type: 'input'; id: string; value?: FlagValue }
-  | { type: 'setting'; id: string; value: FlagValue }
+  | { type: 'input'; id: string; value?: KvValue }
+  | { type: 'setting'; id: string; value: KvValue }
   | { type: 'tick'; ms: number }
   | { type: 'minigame'; input: string }
   | { type: 'custom'; name: string; with?: Record<string, unknown> }
@@ -147,7 +147,7 @@ While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `m
 
 ### start
 
-Starts a new game, with this seed and these variables if given. It's never refused and isn't checked against locks. See [`startingState`](#startingstate).
+Starts a new game, with this seed and these kv keys if given. It's never refused and isn't checked against locks. See [`startingState`](#startingstate).
 
 ### activity
 
@@ -197,7 +197,7 @@ Marks one [notice](/docs/reference/notices), or every notice, as seen. It has no
 { type: 'input', id: 'catName', value: 'Biscuit' }
 ```
 
-Writes what the player typed or picked to the [input](/docs/reference/inputs)'s variable (its `variable`, or the input's id), with text trimmed. A button can carry the command without `value` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
+Writes what the player typed or picked to the [input](/docs/reference/inputs)'s kv key (its `key`, or the input's id), with text trimmed. A button can carry the command without `value` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
 
 After a lock, it's refused with the line from [`inputRefusal`](/docs/reference/inputs#inputrefusal): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
 

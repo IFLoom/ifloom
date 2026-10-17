@@ -92,7 +92,7 @@ The React UI draws a minigame with [`MinigamePanel`](/docs/react/components#mini
 - **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends.
 - **Transitions.** A transition runs its `effects`, then goes to `go`, or to a state drawn from `to`. Entering a state resets its clock to 0. A transition with neither stays where it is: an `on` entry keeps the clock running, and an `after` starts it again.
 - **Moving on by itself.** On entering a state, its first `always` entry whose `when` holds is taken straight away. Use it for a state that only decides where to go, such as counting rounds or checking a score.
-- **Ending.** Entering a state with `final` ends the minigame. Its `copy` is written to the game's variables, the minigame closes, and then its `effects` apply. They can be anything, such as a stat, a scene or a [`turn`](/docs/reference/effects#turn). If no final effect opens another scene, the scene that was open shows again with its choices.
+- **Ending.** Entering a state with `final` ends the minigame. Its `copy` is written to the game's [kv store](/docs/reference/state#kv), the minigame closes, and then its `effects` apply. They can be anything, such as a stat, a scene or a [`turn`](/docs/reference/effects#turn). If no final effect opens another scene, the scene that was open shows again with its choices.
 
 No more than 1,000 transitions are taken in one command. That keeps a timer with a tiny `ms`, or `always` entries that go round in a circle, from hanging the game.
 
@@ -104,7 +104,7 @@ Every variable a minigame uses has to be declared in its `vars`, and the checker
 
 ### Randomness
 
-A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in a variable `minigame:<id>`. You can read that with `{ flag: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
+A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in a variable `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
 
 ### In the runner
 
@@ -156,7 +156,7 @@ type MinigameStateDef = {
 | `after` | A timer. Once `ms` milliseconds of ticks have passed in this state, its transition is taken. |
 | `on` | What each input does here. The first entry for the input whose `when` holds is taken. Several entries can share an input, each with its own `when`. |
 | `always` | Taken as soon as the state is entered: the first entry whose `when` holds. |
-| `final` | Entering this state ends the minigame. `copy` maps minigame variables to game variables, as `{ score: 'arrows.best' }`. Then `effects` apply, with the minigame already closed. |
+| `final` | Entering this state ends the minigame. `copy` maps minigame variables to kv keys, as `{ score: 'arrows.best' }`. Then `effects` apply, with the minigame already closed. |
 
 ## MinigameTransition
 
@@ -271,7 +271,7 @@ The [content checker](/docs/reference/checks) reports:
 - **Ticks come from the UI.** The engine has no clock. Nothing happens to a timer until something sends `{ type: 'tick', ms }`, so a minigame with timers waits for ever in a UI that doesn't tick.
 - **Locks don't stop it.** `tick` and `minigame` ignore [locks](/docs/reference/locks) and plugin guards, because the minigame is already running. To keep the player out of one, gate what starts it.
 - **`{ minigameVar }` is false with no minigame running**, or for a variable the running one doesn't have, whatever the range, `lt` included.
-- **A variable is a number.** Use `copy` to keep one, and `{ flag }` to read it afterwards.
+- **A variable is a number.** Use `copy` to keep one in the kv store, and `{ kv }` to read it afterwards.
 
 ## See it in an example
 

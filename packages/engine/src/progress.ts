@@ -11,12 +11,12 @@ import type { Effect, GameState } from './types.ts'
 
 /** A number kept on a storyline: photos sent, heat, which stage of a life. */
 export function count(state: GameState, storylineId: string, key: string): number {
-  const value = storylineOf(state, storylineId).flags[key]
+  const value = storylineOf(state, storylineId).kv[key]
   return typeof value === 'number' ? value : 0
 }
 
 export function counted(storylineId: string, key: string, value: number): Effect {
-  return { kind: 'storylineFlag', id: storylineId, key, value }
+  return { kind: 'storylineKv', id: storylineId, key, to: value }
 }
 
 export function bumped(
@@ -43,14 +43,14 @@ export function stageNext<R>(stages: readonly R[], reached: number): R {
 /**
  * An ordered run of gates on one storyline — a hello before a coffee before a
  * first dinner.
- * Each stage names the flag that records it happening and what it asks for on
+ * Each stage names the kv key that records it happening and what it asks for on
  * top of the stage before it.
  */
 export type Stages = {
   storylineId: string
   /**
-   * Where the done-flags live. Storyline flags are the home for anything
-   * storyline-scoped; `game` marks flags still sitting in the global bag.
+   * Where the stages' kv keys live: the storyline's own kv store (the
+   * default), or with `game`, the game's kv store.
    */
   scope?: 'storyline' | 'game'
   stages: readonly Stage[]
@@ -58,8 +58,8 @@ export type Stages = {
 
 export type Stage = {
   id: string
-  /** Set when the stage actually happens. */
-  flag: string
+  /** The kv key set when the stage actually happens. */
+  key: string
   /**
    * The scene the stage plays in. Its first viewing dates the stage, which is
    * what the next stage's `after` is measured from.
@@ -96,16 +96,15 @@ function rested(state: GameState, stages: Stages, index: number): boolean {
   return turns !== null && turns >= stage.after
 }
 
-function flagged(state: GameState, stages: Stages, stage: Stage): boolean {
-  const flags =
-    stages.scope === 'game' ? state.flags : storylineOf(state, stages.storylineId).flags
-  return Boolean(flags[stage.flag])
+function happened(state: GameState, stages: Stages, stage: Stage): boolean {
+  const store = stages.scope === 'game' ? state.kv : storylineOf(state, stages.storylineId).kv
+  return Boolean(store[stage.key])
 }
 
 /** Has this stage already happened? */
 export function stageDone(state: GameState, stages: Stages, id: string): boolean {
   const stage = stages.stages.find((entry) => entry.id === id)
-  return stage ? flagged(state, stages, stage) : false
+  return stage ? happened(state, stages, stage) : false
 }
 
 /**
@@ -118,7 +117,7 @@ export function stageOpen(state: GameState, stages: Stages, id: string, game?: G
     if (stage.needs && !holds(state, stage.needs, game)) return false
     if (!rested(state, stages, index)) return false
     if (stage.id === id) return true
-    if (!flagged(state, stages, stage)) return false
+    if (!happened(state, stages, stage)) return false
   }
   return false
 }
@@ -127,7 +126,7 @@ export function stageOpen(state: GameState, stages: Stages, id: string, game?: G
 export function stagesDone(state: GameState, stages: Stages): number {
   let n = 0
   for (const stage of stages.stages) {
-    if (!flagged(state, stages, stage)) break
+    if (!happened(state, stages, stage)) break
     n += 1
   }
   return n

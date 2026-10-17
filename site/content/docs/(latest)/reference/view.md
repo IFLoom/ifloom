@@ -132,7 +132,7 @@ type ScreenScene = {
 
 The engine keeps no time of day, so the view has no day or period of its own. In a game with the [calendar plugin](/docs/plugins/calendar), the day, weekday, period and whether it's time for bed are at `view.plugins.calendar`, a [`CalendarView`](/docs/plugins/calendar#calendarview), and its words are in `when`.
 
-The view has no player name, because the engine doesn't keep one. A game that asks for a name keeps it in a variable. Read it from `state.flags.playerName`, or print it in prose with `{{playerName}}`.
+The view has no player name, because the engine doesn't keep one. A game that asks for a name keeps it in the [kv store](/docs/reference/state#kv). Read it from `state.kv.playerName`, or print it in prose with `{{playerName}}`.
 
 ### The idle screen
 
@@ -234,7 +234,7 @@ if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 
 | Field | Type | Meaning |
 |---|---|---|
-| `inputs` | `Record<string, `[`InputView`](#inputview)`>` | The [inputs](/docs/reference/inputs) on offer now (those whose `when` holds), by id, each with the value its variable holds. |
+| `inputs` | `Record<string, `[`InputView`](#inputview)`>` | The [inputs](/docs/reference/inputs) on offer now (those whose `when` holds), by id, each with the value its kv key holds. |
 
 ### settings
 
@@ -445,7 +445,7 @@ type CollectionView = {
     title: string
     text: string
     image: string | null
-    data: Record<string, FlagValue>
+    data: Record<string, KvValue>
     turn: number
   }[]
 }
@@ -467,7 +467,7 @@ type EntityView = {
   ref: string
   name: string
   stats: StatView[]
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 ```
 
@@ -479,7 +479,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 | `ref` | How content names it, such as `'staff:ana'`. It's what an effect's `of` or an [`{ entity }`](/docs/reference/conditions#entity) condition takes. |
 | `name` | Its name. |
 | `stats` | Its kind's `listed` stats whose `visible` holds with `'$'` bound to it, in the order the game declared them, as [`StatView`](#statview)s with its own values. |
-| `flags` | Its variables, as the state holds them. |
+| `kv` | Its kv store, as the state holds it. |
 
 **Gotcha.** Each entity's `stats` is decided on its own, so two entries of one kind can show different stats. The [React UI](/docs/react/components#entitytable)'s table makes a column for every stat any row shows, and leaves the other rows' cells blank.
 
@@ -513,12 +513,12 @@ type InputView = {
   maxLength: number | null
   min: number | null
   max: number | null
-  options: { value: FlagValue; label: string }[]
-  value: FlagValue | null
+  options: { value: KvValue; label: string }[]
+  value: KvValue | null
 }
 ```
 
-An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` is only set for text inputs, and is 40 if the input doesn't say. `min` and `max` are `null` when not declared. `options` is `[]` for anything but a choice. `value` is what the variable holds now, or `null` if it holds nothing yet. Send what the player enters as `{ type: 'input', id, value }`.
+An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` is only set for text inputs, and is 40 if the input doesn't say. `min` and `max` are `null` when not declared. `options` is `[]` for anything but a choice. `value` is what its kv key holds now, or `null` if it holds nothing yet. Send what the player enters as `{ type: 'input', id, value }`.
 
 ## SettingView
 
@@ -532,8 +532,8 @@ type SettingView = {
   min?: number
   max?: number
   step?: number
-  default: FlagValue
-  value: FlagValue | null
+  default: KvValue
+  value: KvValue | null
 }
 ```
 
@@ -542,7 +542,7 @@ A [setting](/docs/reference/settings) as a settings screen draws it. `options` i
 `value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. Read it from the [profile](/docs/reference/profile) instead, falling back to `default`:
 
 ```ts
-const stored = (await runner.profile?.get<Record<string, FlagValue>>('settings')) ?? {}
+const stored = (await runner.profile?.get<Record<string, KvValue>>('settings')) ?? {}
 for (const setting of runner.view().settings) {
   const value = setting.value ?? stored[setting.id] ?? setting.default
   drawSetting(setting, value)

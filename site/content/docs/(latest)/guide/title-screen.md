@@ -220,7 +220,7 @@ A setting is either part of the game or only part of how it looks. [Settings](/d
 
 ### A setting the story reads
 
-`hints` leaves out `affects`, so it's a play setting. Its value is in the game state and the save, and a condition reads it like a variable:
+`hints` leaves out `affects`, so it's a play setting. Its value is in the game state and the save, and a condition reads it like a kv key:
 
 ```ts
 body: [
@@ -336,7 +336,7 @@ loadGame([letter], {
   title: 'The Letter',
   introScene: 'ch1.mat',
   finished: { scene: ['end.kept', 'end.posted'] },
-  carryOver: { flags: ['readBefore'] },
+  carryOver: { kv: ['readBefore'] },
 })
 ```
 
@@ -345,11 +345,11 @@ The first time `finished` holds, the runner records it in the profile's `finishe
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
 ```ts
-{ id: 'post', effects: [{ kind: 'flag', key: 'readBefore', value: true }, { kind: 'scene', id: 'end.posted' }] }
+{ id: 'post', effects: [{ kind: 'kv', key: 'readBefore', to: true }, { kind: 'scene', id: 'end.posted' }] }
 
 body: [
   { text: 'ch1.mat' },
-  { text: 'ch1.mat/again', when: { flag: 'readBefore' } },
+  { text: 'ch1.mat/again', when: { kv: 'readBefore' } },
 ],
 ```
 

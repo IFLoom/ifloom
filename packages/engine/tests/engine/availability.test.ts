@@ -27,14 +27,14 @@ describe('one answer to "can I do this?"', () => {
       { id: 'ghost', label: 'Haunt', command: { type: 'activity', id: 'haunt' } },
     ],
   }
-  const closed = { rosa: { closedUntil: 9, flags: {} } }
+  const closed = { rosa: { closedUntil: 9, kv: {} } }
   const states: GameState[] = [
     begin(game),
     begin(game, { phase: 'night' }),
-    begin(game, { flags: { at: 'street' } }),
-    begin(game, { flags: { at: 'shop' }, turn: 5 }),
-    begin(game, { flags: { at: 'shop' }, storylines: closed }),
-    begin(game, { flags: { at: 'shop' }, sceneId: 'rosa.hello' }),
+    begin(game, { kv: { at: 'street' } }),
+    begin(game, { kv: { at: 'shop' }, turn: 5 }),
+    begin(game, { kv: { at: 'shop' }, storylines: closed }),
+    begin(game, { kv: { at: 'shop' }, sceneId: 'rosa.hello' }),
   ]
 
   it('gives every button the reason the reducer refuses with', () => {

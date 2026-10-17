@@ -38,7 +38,7 @@ function game(strings: Record<string, string> = {}): Game {
             ],
           },
           messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] },
-          quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: { flag: 'never' }, stages: [] }] },
+          quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: { kv: 'never' }, stages: [] }] },
         },
       },
     ],

@@ -9,7 +9,7 @@ import type { StatDef } from '@ifloom/engine'
 const stats: StatDef[] = [
   { id: 'charm', label: 'Charm', start: 4, bands: [10, 20, 30] },
   { id: 'coins', label: 'Coins', start: 20, max: 9999, format: '{n}c', spendable: true },
-  { id: 'baking', label: 'Baking', visible: { flag: 'joinedTheBakery' } },
+  { id: 'baking', label: 'Baking', visible: { kv: 'joinedTheBakery' } },
 ]
 
 const game = { /* … */, stats }
@@ -115,7 +115,7 @@ The other fields work much as they do for the player's stats:
 |---|---|
 | `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', key: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
 | `format` | How the value is written in the entity's [`StatView`](/docs/reference/view#statview). |
-| `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { flag: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
+| `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { kv: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
 | `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/docs/reference/view#price), and an activity's `cost` only spends the player's stats. |
 | `bands` | Ignored. [`{ tier }`](/docs/reference/conditions#tier) and [`statBand`](#statband) only read the player's value. |

@@ -49,7 +49,7 @@ const knock: DataScene = {
     aspect: '16/9',
     layers: [
       { id: 'hall', src: 'flat/hall' },
-      { id: 'rain', pool: 'window', tags: ['rain'], when: { flag: 'raining' } },
+      { id: 'rain', pool: 'window', tags: ['rain'], when: { kv: 'raining' } },
     ],
     hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
   },

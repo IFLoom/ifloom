@@ -59,7 +59,7 @@ framework, or let `@ifloom/react` draw it for you in React.
 
 ## How it is put together
 
-The **core** handles turns, scenes, stats, variables, entities, storylines,
+The **core** handles turns, scenes, stats, a kv store, entities, storylines,
 triggers, inputs and saves. It has no built-in idea of time or place, and no
 characters.
 

@@ -27,8 +27,8 @@ export function SelectedForm() {
       return <StatForm key={key} id={selection.id} />
     case 'item':
       return <ItemForm key={key} id={selection.id} />
-    case 'variable':
-      return <VariableForm key={key} id={selection.id} />
+    case 'kv':
+      return <KvForm key={key} id={selection.id} />
   }
 }
 
@@ -92,43 +92,43 @@ function ItemForm({ id }: { id: string }) {
   )
 }
 
-function VariableForm({ id }: { id: string }) {
+function KvForm({ id }: { id: string }) {
   const { project, update, replace, select, names } = useEditor()
-  const index = project.variables.findIndex((v) => v.name === id)
-  const variable = project.variables[index]
-  if (!variable) return <Missing noun="variable" id={id} />
+  const index = project.kv.findIndex((v) => v.name === id)
+  const entry = project.kv[index]
+  if (!entry) return <Missing noun="kv key" id={id} />
   // Where the pack reads or sets it.
   const uses: string[] = []
   for (const scene of project.pack.scenes) {
     const single = { ...project.pack, scenes: [scene], stats: [], items: [] }
     let used = false
     walkPack(single, {
-      condition: (c) => void (c.flag === id && (used = true)),
-      effect: (e) => void (e.kind === 'flag' && e.key === id && (used = true)),
+      condition: (c) => void (c.kv === id && (used = true)),
+      effect: (e) => void (e.kind === 'kv' && e.key === id && (used = true)),
     })
     if (used) uses.push(scene.id)
   }
   return (
     <div className="flex flex-col gap-3">
       <IdHeader
-        noun="variable"
-        id={variable.name}
-        taken={names.variables}
+        noun="kv key"
+        id={entry.name}
+        taken={names.kv}
         onRename={(to) => {
-          replace(rename(project, 'variable', variable.name, to))
-          select({ thing: 'variable', id: to })
+          replace(rename(project, 'kv', entry.name, to))
+          select({ thing: 'kv', id: to })
         }}
         onDelete={() => {
-          update((draft) => void draft.variables.splice(index, 1))
+          update((draft) => void draft.kv.splice(index, 1))
           select({ thing: 'project' })
         }}
       />
-      <Section title="Variable">
+      <Section title="kv key">
         <p className="text-xs text-fd-muted-foreground">
-          A variable needs no declaration: an effect sets it and a condition reads it. Unset, it reads as false, or 0 for a number. This note is for you and goes into the TypeScript export as a comment.
+          A key in the kv store needs no declaration: an effect sets it and a condition reads it. Unset, it reads as false, or 0 for a number. This note is for you and goes into the TypeScript export as a comment.
         </p>
         <Field label="Note">
-          <TextInput value={variable.note} placeholder="What it records, and its default" onChange={(note) => update((draft) => void (draft.variables[index].note = note ?? ''))} />
+          <TextInput value={entry.note} placeholder="What it records, and its default" onChange={(note) => update((draft) => void (draft.kv[index].note = note ?? ''))} />
         </Field>
         <div className="text-xs text-fd-muted-foreground">
           {uses.length ? (

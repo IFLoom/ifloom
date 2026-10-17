@@ -73,4 +73,82 @@ describe('content migrations', () => {
     const file = JSON.stringify({ ifloomMod: 1, id: 'later', name: 'Later', game: 'fixture', pack: { id: 'later', schema: SCHEMA + 1 } })
     expect(readMod(file, 'fixture')).toBe(`That mod was written for a version this game cannot read (schema ${SCHEMA + 1}).`)
   })
+
+  it('turn schema 4 flags into the kv store, however deep they sit', () => {
+    const v4 = {
+      id: 'evening',
+      schema: 4,
+      prose: { flag: 'A prose key called flag stays as it is.' },
+      inputs: [{ id: 'name', label: 'Name', kind: 'text', variable: 'playerName', when: { not: { flag: 'playerName' } } }],
+      entities: [{ id: 'ana', of: 'staff', name: 'Ana', flags: { role: 'cook' } }],
+      scenes: [
+        {
+          id: 'cafe.evening',
+          body: [{ text: 'cafe.evening/back', when: { all: [{ flag: 'visits', gte: 3 }, { storylineFlag: { storyline: 'rosa', key: 'met' } }] } }],
+          choices: [
+            {
+              id: 'stay',
+              blocked: [{ when: { any: [{ flag: 'role', of: 'staff:ana', is: 'cook' }] }, reason: 'Busy.' }],
+              effects: [
+                { kind: 'flag', key: 'metAva', value: true },
+                { kind: 'flag', key: 'visits', add: 1 },
+                { kind: 'storylineFlag', id: 'rosa', key: 'met', value: true },
+                { kind: 'create', of: 'staff', entity: { name: 'Bo', flags: { role: 'waiter' } } },
+              ],
+            },
+          ],
+        },
+      ],
+      data: { cast: { characters: [{ id: 'rosa', name: 'Rosa', flags: { mood: 'calm' } }] } },
+    }
+    const pack = upgradePack(v4) as unknown as Record<string, unknown>
+    expect(pack).toEqual({
+      id: 'evening',
+      schema: SCHEMA,
+      prose: { flag: 'A prose key called flag stays as it is.' },
+      inputs: [{ id: 'name', label: 'Name', kind: 'text', key: 'playerName', when: { not: { kv: 'playerName' } } }],
+      entities: [{ id: 'ana', of: 'staff', name: 'Ana', kv: { role: 'cook' } }],
+      scenes: [
+        {
+          id: 'cafe.evening',
+          body: [{ text: 'cafe.evening/back', when: { all: [{ kv: 'visits', gte: 3 }, { storylineKv: { storyline: 'rosa', key: 'met' } }] } }],
+          choices: [
+            {
+              id: 'stay',
+              blocked: [{ when: { any: [{ kv: 'role', of: 'staff:ana', is: 'cook' }] }, reason: 'Busy.' }],
+              effects: [
+                { kind: 'kv', key: 'metAva', to: true },
+                { kind: 'kv', key: 'visits', by: 1 },
+                { kind: 'storylineKv', id: 'rosa', key: 'met', to: true },
+                { kind: 'create', of: 'staff', entity: { name: 'Bo', kv: { role: 'waiter' } } },
+              ],
+            },
+          ],
+        },
+      ],
+      data: { cast: { characters: [{ id: 'rosa', name: 'Rosa', kv: { mood: 'calm' } }] } },
+    })
+    // The pack it was given is left alone.
+    expect(v4.entities[0].flags).toEqual({ role: 'cook' })
+  })
+
+  it('install a schema 4 mod that sets flags, and play it with the kv store', async () => {
+    const file = JSON.stringify({
+      ifloomMod: 1,
+      id: 'regulars',
+      name: 'Regulars',
+      game: 'fixture',
+      pack: {
+        id: 'regulars',
+        schema: 4,
+        triggers: [{ id: 'regular', when: { flag: 'visits', gte: 2 }, effects: [{ kind: 'flag', key: 'regular', value: true }] }],
+      },
+    })
+    const added = await mods('fixture', memoryDriver()).add(file)
+    expect(typeof added !== 'string' && added.pack).toEqual({
+      id: 'mod:regulars',
+      schema: SCHEMA,
+      triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kind: 'kv', key: 'regular', to: true }] }],
+    })
+  })
 })

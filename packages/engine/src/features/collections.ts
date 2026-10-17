@@ -3,7 +3,7 @@
  * notes written or a ledger. The helpers are in `collections.ts`.
  */
 import { collect, discard, type CollectionDef, type CollectionEntry, type CollectionItem } from '../collections.ts'
-import type { FlagValue, Range } from '../types.ts'
+import type { KvValue, Range } from '../types.ts'
 import { bounded, defineFeature, inRange, mergedById, wanted } from './feature.ts'
 
 export type CollectionView = {
@@ -14,7 +14,7 @@ export type CollectionView = {
     /** The entry's prose, filled in; empty if it has none. */
     text: string
     image: string | null
-    data: Record<string, FlagValue>
+    data: Record<string, KvValue>
     /** The turn it was collected. */
     turn: number
   }[]

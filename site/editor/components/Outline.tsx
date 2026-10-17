@@ -1,6 +1,6 @@
 'use client'
 /**
- * The left pane: the project's scenes (storylets marked), stats, variables
+ * The left pane: the project's scenes (storylets marked), stats, kv keys
  * and items, with a filter and a way to add each.
  */
 import { useState } from 'react'
@@ -13,7 +13,7 @@ type Entry = { id: string; title?: string; badge?: string }
 const SECTIONS: { thing: Thing; title: string; noun: string }[] = [
   { thing: 'scene', title: 'Scenes', noun: 'scene' },
   { thing: 'stat', title: 'Stats', noun: 'stat' },
-  { thing: 'variable', title: 'Variables', noun: 'variable' },
+  { thing: 'kv', title: 'Key–values (kv)', noun: 'kv key' },
   { thing: 'item', title: 'Items', noun: 'item' },
 ]
 
@@ -29,7 +29,7 @@ export function Outline() {
   const entries: Record<Thing, Entry[]> = {
     scene: project.pack.scenes.map((s) => ({ id: s.id, title: s.title, badge: s.drawnFrom?.length ? 'storylet' : s.id === project.intro ? 'intro' : undefined })),
     stat: project.pack.stats.map((s) => ({ id: s.id, title: s.label })),
-    variable: project.variables.map((v) => ({ id: v.name })),
+    kv: project.kv.map((v) => ({ id: v.name })),
     item: project.pack.items.map((i) => ({ id: i.id, title: i.name })),
   }
   const existing = (thing: Thing) => entries[thing].map((e) => e.id)

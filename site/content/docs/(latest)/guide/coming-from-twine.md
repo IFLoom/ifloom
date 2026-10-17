@@ -2,7 +2,7 @@
 title: "Coming from SugarCube or Harlowe"
 description: For authors who know Twine's SugarCube or Harlowe story formats. Maps passages, links, macros, variables, special passages, saves, audio and randomness to IFLoom's scenes, choices, conditions, effects and plugins, with side-by-side snippets.
 ---
-If you've written Twine stories in SugarCube or Harlowe, most of what you know carries over. A passage becomes a scene, a link becomes a choice, and a variable becomes a stat or a variable. What changes is where things are written. In Twine, a passage is text with macros mixed in. In IFLoom, a scene is data: its words live under prose keys, and its conditions and effects are plain objects beside them.
+If you've written Twine stories in SugarCube or Harlowe, most of what you know carries over. A passage becomes a scene, a link becomes a choice, and a variable becomes a stat or a key in the kv store. What changes is where things are written. In Twine, a passage is text with macros mixed in. In IFLoom, a scene is data: its words live under prose keys, and its conditions and effects are plain objects beside them.
 
 This page maps each idea, with their version first and IFLoom's under it. The examples come from the showcase's small town: Ava's café on the corner, and the coins in the player's pocket. If you haven't made a game yet, start with [Your first story](/docs/guide/first-story), then come back here as a phrasebook.
 
@@ -42,7 +42,7 @@ const cafe: Pack = {
         {
           id: 'coffee',
           blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3 coins.' }],
-          effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'flag', key: 'hadCoffee', value: true }, { kind: 'scene', id: 'street' }],
+          effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'kv', key: 'hadCoffee', to: true }, { kind: 'scene', id: 'street' }],
         },
         { id: 'leave', effects: [{ kind: 'scene', id: 'street' }] },
       ],
@@ -83,11 +83,11 @@ Each change is an [effect](/docs/reference/effects), and a choice runs its list 
 ```ts
 { kind: 'stat', key: 'coins', by: 2 }
 { kind: 'setStat', key: 'coins', to: 5 }
-{ kind: 'flag', key: 'metAva', value: true }
-{ kind: 'flag', key: 'visits', add: 1 }
+{ kind: 'kv', key: 'metAva', to: true }
+{ kind: 'kv', key: 'visits', by: 1 }
 ```
 
-Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else is a [variable](/docs/reference/state#flags), set with the `flag` effect. A variable that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [items](/docs/reference/game#itemdef): `{ kind: 'item', id: 'umbrella', by: 1 }`.
+Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [items](/docs/reference/game#itemdef): `{ kind: 'item', id: 'umbrella', by: 1 }`.
 
 There's no temporary `_variable`. A value you only need while a scene is on screen is usually a condition you can write where it's used.
 
@@ -103,8 +103,8 @@ A scene's body is a list of blocks, and each block can have a `when`. A block wh
 ```ts
 body: [
   { text: 'cafe' },
-  { text: 'cafe/regular', when: { flag: 'visits', gte: 3 } },
-  { text: 'cafe/new', when: { flag: 'visits', lt: 3 } },
+  { text: 'cafe/regular', when: { kv: 'visits', gte: 3 } },
+  { text: 'cafe/new', when: { kv: 'visits', lt: 3 } },
 ],
 ```
 
@@ -119,9 +119,9 @@ There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don'
 `and`, `or` and `not` are `all`, `any` and `not`:
 
 ```ts
-{ all: [{ stat: 'coins', gte: 3 }, { not: { flag: 'hadCoffee' } }] }
+{ all: [{ stat: 'coins', gte: 3 }, { not: { kv: 'hadCoffee' } }] }
 { any: [{ item: 'umbrella' }, { item: 'raincoat' }] }
-{ flag: 'errand', is: 'bread' }
+{ kv: 'errand', is: 'bread' }
 ```
 
 An `<<if>>` around a link becomes one of two things on the choice:
@@ -141,12 +141,12 @@ An `<<if>>` around a link becomes one of two things on the choice:
 A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usual|Order]]<<else>>[[Order|Order]]<</if>>`, is one choice with `labels`. The first entry whose `when` holds gives the label's prose key:
 
 ```ts
-{ id: 'order', labels: [{ when: { flag: 'visits', gte: 3 }, key: 'cafe#order-usual' }], effects: [/* ... */] }
+{ id: 'order', labels: [{ when: { kv: 'visits', gte: 3 }, key: 'cafe#order-usual' }], effects: [/* ... */] }
 ```
 
 An `<<if>>` that only exists to vary a line, so the player doesn't read the same words every visit, is a set of [variants](/docs/reference/prose#variantmember). The block `{ variants: 'cafe.chatter' }` shows one of the set each time, and rotates through them.
 
-The engine also remembers things you'd keep a variable for in Twine. `{ seen: 'ava.hi' }` asks whether the player has been to a scene, and `{ chose: 'cafe/coffee' }` asks whether they've ever picked that choice. `visited()` and the "did they pick this?" flag both become conditions you don't have to set up.
+The engine also remembers things you'd keep a variable for in Twine. `{ seen: 'ava.hi' }` asks whether the player has been to a scene, and `{ chose: 'cafe/coffee' }` asks whether they've ever picked that choice. `visited()` and the "did they pick this?" variable both become conditions you don't have to set up.
 
 ### Passages and links
 
@@ -183,7 +183,7 @@ Both are choices. A choice with a `scene` effect moves on, and one without stays
 
 ```ts
 { id: 'coffee', effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'scene', id: 'cafe' }] }
-{ id: 'tip', effects: [{ kind: 'stat', key: 'coins', by: -1 }, { kind: 'flag', key: 'tipped', value: true }] }
+{ id: 'tip', effects: [{ kind: 'stat', key: 'coins', by: -1 }, { kind: 'kv', key: 'tipped', to: true }] }
 ```
 
 A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open, and each sends one [command](/docs/reference/commands). When the button does something with a price, it usually runs an [activity](/docs/reference/actions#activitydef), which can refuse with a reason:
@@ -194,8 +194,8 @@ activities: [
   {
     id: 'coffee',
     cost: { stats: { coins: 3 } },
-    requires: [{ reason: 'One is enough for today.', when: { not: { flag: 'hadCoffee' } } }],
-    effects: [{ kind: 'flag', key: 'hadCoffee', value: true }],
+    requires: [{ reason: 'One is enough for today.', when: { not: { kv: 'hadCoffee' } } }],
+    effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
   },
 ],
 
@@ -247,7 +247,7 @@ custom: {
       const price = Number(args.price ?? 0)
       return [
         { kind: 'stat', key: 'coins', by: -price },
-        { kind: 'flag', key: 'spent', add: price },
+        { kind: 'kv', key: 'spent', by: price },
       ]
     },
   },
@@ -287,7 +287,7 @@ stats: [
 items: [{ id: 'umbrella', name: 'umbrella', desc: 'Big enough for two.', kind: 'gear' }],
 ```
 
-`gear` starts at 1 and `stuff` at 0, unless `start` says otherwise. Variables need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
+`gear` starts at 1 and `stuff` at 0, unless `start` says otherwise. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
 
 When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or an item (a thing they have). If it's neither, set it with an effect on the first scene's choices.
 
@@ -301,7 +301,7 @@ setup.dishes = {
 }
 ```
 
-In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, variables in `state.flags` and items in `state.items`. Content reads them with conditions, and only custom functions and your UI read the object itself.
+In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, the kv store in `state.kv` and items in `state.items`. Content reads them with conditions, and only custom functions and your UI read the object itself.
 
 Data in `setup` that never changes is content: it stays in your TypeScript, beside the scenes. When you'd keep several of something, each with numbers that change in play, declare a kind and its [entities](/docs/reference/entities):
 
@@ -444,12 +444,12 @@ In SugarCube, when an update renames a variable, you set a save version and patc
 import type { Game } from '@ifloom/engine'
 
 const base: Partial<Game> = {
-  // Version 1 kept the purse in a variable called money. Version 2 has a coins stat.
+  // Version 1 kept the purse in a kv key called money. Version 2 has a coins stat.
   version: 2,
   migrations: {
     1: (state) => {
-      const { money, ...flags } = state.flags
-      return money === undefined ? state : { ...state, flags, stats: { ...state.stats, coins: Number(money) } }
+      const { money, ...kv } = state.kv
+      return money === undefined ? state : { ...state, kv, stats: { ...state.stats, coins: Number(money) } }
     },
   },
 }
@@ -589,16 +589,16 @@ Harlowe's macros map to the same places as SugarCube's.
 | Harlowe | IFLoom |
 |---|---|
 | `(set: $coins to it + 2)` | `{ kind: 'stat', key: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
-| `(set: $metAva to true)` | `{ kind: 'flag', key: 'metAva', value: true }` |
+| `(set: $metAva to true)` | `{ kind: 'kv', key: 'metAva', to: true }` |
 | `(if: $coins >= 3)[…](else:)[…]` | A block or a choice with `when: { stat: 'coins', gte: 3 }`, and one with `lt: 3` for the else |
 | `(link-goto: "Go to the café", "Cafe")` | A choice with `{ kind: 'scene', id: 'cafe' }`, labelled by the prose key `street#cafe` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
 | `(display: "Menu")` | A prose key, `cafe.menu`, used as a block in each scene that shows it |
 | `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a custom value |
 | `(random: 1, 6)` | [`roll`](/docs/reference/random#roll) in a custom function, or `{ kind: 'minigameVar', key, random: [1, 6] }` in a minigame |
-| `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and variables |
+| `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and kv store |
 | `(a: "lemon", "carrot")` | A plain TypeScript array in your content, or a [collection](/docs/reference/collections) when the player gathers entries |
-| `\|order>[…]` with `(replace: ?order)[…]` | A choice that stays on the scene and sets a variable, and a block whose `when` reads it |
+| `\|order>[…]` with `(replace: ?order)[…]` | A choice that stays on the scene and sets a kv key, and a block whose `when` reads it |
 | `(live: 2s)[…]` | A [minigame](/docs/reference/minigames) timer |
 | `(dialog: "The café is closing.")` | A [notice](/docs/reference/notices), with the `notify` effect |
 | `(save-game: "Slot A")` | The React UI's save menu, or [`runner.save('a')`](/docs/reference/runner#the-runners-members) |
@@ -614,14 +614,14 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
 {
   id: 'cafe',
   body: [
-    { text: 'cafe/waiting', when: { not: { flag: 'askedUsual' } } },
-    { text: 'cafe/usual', when: { flag: 'askedUsual' } },
+    { text: 'cafe/waiting', when: { not: { kv: 'askedUsual' } } },
+    { text: 'cafe/usual', when: { kv: 'askedUsual' } },
   ],
-  choices: [{ id: 'usual', when: { not: { flag: 'askedUsual' } }, effects: [{ kind: 'flag', key: 'askedUsual', value: true }] }],
+  choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kind: 'kv', key: 'askedUsual', to: true }] }],
 }
 ```
 
-A datamap you'd keep in a variable becomes an entity when it's one of several things with numbers that change, such as dishes on a menu. Its fields are stats and variables, declared and checked. A datamap that never changes is plain TypeScript in your content.
+A datamap you'd keep in a variable becomes an entity when it's one of several things with numbers that change, such as dishes on a menu. Its fields are stats and kv keys. A datamap that never changes is plain TypeScript in your content.
 
 `(dialog:)` maps to a notice only loosely. A notice is news shown beside the story, such as a toast, not a box the player must close before going on. For a message the player must acknowledge, open a scene with one choice.
 
@@ -639,7 +639,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 - **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is a custom function.
 - **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files and [packs](/docs/reference/loader#pack) as you like.
-- **State is typed and declared.** Stats, items, kinds, settings and inputs are declared before they're used. Variables don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
+- **State is typed and declared.** Stats, items, kinds, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.
 - **Not into TypeScript?** The [editor](/docs/guide/editor) at `/editor` lets you write scenes, choices, stats and items from forms in your browser and play them as you go. When you're done, you export the pack as TypeScript or JSON and drop it into a game.
 

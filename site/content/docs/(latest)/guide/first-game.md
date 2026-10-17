@@ -232,7 +232,7 @@ const prose: Record<string, string> = {
 }
 ```
 
-The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the game's `playerName` variable when the line is shown. The name is a variable like any other, and step 6 sets it. The only special thing about `playerName` is that a save's [`SaveMeta`](/docs/reference/saves#savemeta) reads it into its `player` field, for a load screen. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
+The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the `playerName` key in the game's kv store when the line is shown. The name is a key like any other, and step 6 sets it. The only special thing about `playerName` is that a save's [`SaveMeta`](/docs/reference/saves#savemeta) reads it into its `player` field, for a load screen. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
 
 That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/docs/reference/scenes).
 
@@ -300,10 +300,10 @@ List the calendar first in `plugins`. It moves the clock on when a turn ends, an
 ```ts
 import { startingState } from '@ifloom/engine'
 
-let state = startingState(game, { flags: { playerName: 'Sam' } })
+let state = startingState(game, { kv: { playerName: 'Sam' } })
 ```
 
-`flags` are [variables](/docs/reference/state#flags) written before the first scene, so the intro already reads "The last box is in. Sam, you could sleep for a week." A real game would ask the player for a name instead, with an [input](/docs/reference/inputs) that writes `playerName`, as [Your first story](/docs/guide/first-story#6-a-name-the-player-types) does.
+`kv` holds keys written to the [kv store](/docs/reference/state#kv) before the first scene, so the intro already reads "The last box is in. Sam, you could sleep for a week." A real game would ask the player for a name instead, with an [input](/docs/reference/inputs) that writes `playerName`, as [Your first story](/docs/guide/first-story#6-a-name-the-player-types) does.
 
 The new game starts on turn 0, in the house (the places plugin's `start`). The calendar starts on day 0, a Monday, at night. The intro scene is open, and each stat is at its `start`, so `state.stats` is `{ coins: 5, energy: 50 }`. Random draws come from a [seed](/docs/reference/state#seed) made from the game's id, so a test plays the same way every time. A UI starting a new game passes a fresh `seed` of its own. See [Game state](/docs/reference/state).
 
@@ -431,7 +431,7 @@ Saves need somewhere to live. A driver says where, and the engine has no default
 ```ts
 import { createRunner, localStorageDriver, saves } from '@ifloom/engine'
 
-const runner = createRunner(game, startingState(game, { flags: { playerName: 'Sam' } }), {
+const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {
   saves: saves(game, localStorageDriver()),
   history: { stopAtNewTurn: true }, // undo, but never back into the last turn
   autosave: { every: 'scene' },     // to the 'auto' slot, whenever the scene changes
@@ -765,7 +765,7 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 console.assert(problems.length === 0)
 
-let state = startingState(game, { flags: { playerName: 'Sam' } })
+let state = startingState(game, { kv: { playerName: 'Sam' } })
 state = dispatch(state, game, { type: 'choose', id: 'bed' })
 state = dispatch(state, game, sleep())
 state = dispatch(state, game, go('high-street'))
@@ -786,7 +786,7 @@ console.log(state.stats) // { coins: 2, energy: 70 }
 console.log(apply(state, game, { type: 'activity', id: 'coffee' }).refused) // 'Not enough on you.'
 
 // Now through a runner, as a UI would. In a browser, use localStorageDriver() or indexedDbDriver().
-const runner = createRunner(game, startingState(game, { flags: { playerName: 'Sam' } }), {
+const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {
   saves: saves(game, memoryDriver()),
   history: { stopAtNewTurn: true },
   autosave: { every: 'scene' },

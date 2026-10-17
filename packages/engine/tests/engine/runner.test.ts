@@ -12,7 +12,7 @@ describe('the runner', () => {
     const game = fixture()
     const runner = createRunner(game, begin(game))
     const heard: string[] = []
-    runner.subscribe((state) => heard.push(String(state.flags.at)))
+    runner.subscribe((state) => heard.push(String(state.kv.at)))
     expect(runner.apply({ type: 'activity', id: 'go-street' }).ok).toBe(true)
     expect(heard).toEqual(['street'])
     expect(runner.canUndo).toBe(false)
@@ -28,10 +28,10 @@ describe('the runner', () => {
     runner.apply({ type: 'activity', id: 'go-street' })
     expect(runner.undo()).toBe(true)
     expect(runner.undo()).toBe(true)
-    expect(runner.state.flags.at).toBe('street')
+    expect(runner.state.kv.at).toBe('street')
     expect(runner.undo()).toBe(false)
     expect(runner.redo()).toBe(true)
-    expect(runner.state.flags.at).toBe('house')
+    expect(runner.state.kv.at).toBe('house')
     runner.apply({ type: 'activity', id: 'go-street' })
     expect(runner.canRedo).toBe(false)
   })
@@ -51,7 +51,7 @@ describe('the runner', () => {
     sworn.apply({ type: 'choose', id: 'swear' })
     expect(sworn.canUndo).toBe(false)
 
-    const marked = createRunner(game, begin(game), { history: { stopWhen: { flag: 'at', is: 'shop' } } })
+    const marked = createRunner(game, begin(game), { history: { stopWhen: { kv: 'at', is: 'shop' } } })
     marked.apply({ type: 'activity', id: 'go-street' })
     expect(marked.canUndo).toBe(true)
     marked.apply({ type: 'activity', id: 'go-shop' })
@@ -124,7 +124,7 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     runner.apply({ type: 'activity', id: 'go-house' })
     await runner.settled()
     const auto = await store.read('auto')
-    expect(auto && typeof auto !== 'string' && auto.state.flags.at).toBe('house')
+    expect(auto && typeof auto !== 'string' && auto.state.kv.at).toBe('house')
   })
 
   it('autosaves after an undo, as after a command', async () => {
@@ -135,18 +135,18 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     runner.undo()
     await runner.settled()
     const auto = await store.read('auto')
-    expect(auto && typeof auto !== 'string' && auto.state.flags.at).toBe('house')
+    expect(auto && typeof auto !== 'string' && auto.state.kv.at).toBe('house')
   })
 
   it('puts an imported save in play', async () => {
     const game = fixture()
     const elsewhere = saves(game, memoryDriver())
-    await elsewhere.write('1', begin(game, { flags: { at: 'shop' } }), { played: 9000 })
+    await elsewhere.write('1', begin(game, { kv: { at: 'shop' } }), { played: 9000 })
     const imported = elsewhere.importText((await elsewhere.exportSlot('1'))!)
     if (typeof imported === 'string') throw new Error(imported)
     const runner = createRunner(game, begin(game), { now: () => 0 })
     runner.restore(imported)
-    expect(runner.state.flags.at).toBe('shop')
+    expect(runner.state.kv.at).toBe('shop')
     expect(runner.played()).toBe(9000)
   })
 

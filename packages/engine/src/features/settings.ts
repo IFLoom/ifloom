@@ -5,7 +5,7 @@
  */
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
-import type { FlagValue, Range } from '../types.ts'
+import type { KvValue, Range } from '../types.ts'
 import { bounded, counted, defineFeature, inRange, wanted } from './feature.ts'
 
 /**
@@ -37,28 +37,28 @@ export type SettingView = {
   min?: number
   max?: number
   step?: number
-  default: FlagValue
+  default: KvValue
   /** A play setting's value in this game. Null for a ui setting, which the UI reads from the profile. */
-  value: FlagValue | null
+  value: KvValue | null
 }
 
 /** What the settings feature adds, as types. */
 export type SettingsShape = {
   state: {
     /** The value of each `play` setting the game declares, by id. */
-    settings: Record<string, FlagValue>
+    settings: Record<string, KvValue>
   }
   conditions: {
     /**
-     * A `play` setting, read as a variable is: bare, whether it is truthy
+     * A `play` setting, read as a kv key is: bare, whether it is truthy
      * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
      * whether its number is in it.
      */
-    setting: { setting: string; is?: FlagValue } & Range
+    setting: { setting: string; is?: KvValue } & Range
   }
   commands: {
     /** Change a `play` setting. Ignores locks, like a menu would. */
-    setting: { type: 'setting'; id: string; value: FlagValue }
+    setting: { type: 'setting'; id: string; value: KvValue }
   }
   game: {
     /** What the player can change from a settings screen. None if left out. */
@@ -110,11 +110,11 @@ export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'n
  * `settings`): the stored value if the setting can still take it, else the
  * setting's default. Undefined for a setting the game doesn't declare.
  */
-export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): FlagValue | undefined {
+export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined {
   const setting = settingById(game, id)
   if (!setting) return undefined
   const value = stored && Object.hasOwn(stored, id) ? stored[id] : undefined
-  return value !== undefined && !settingFault(setting, value) ? (value as FlagValue) : setting.default
+  return value !== undefined && !settingFault(setting, value) ? (value as KvValue) : setting.default
 }
 
 /**
@@ -146,12 +146,12 @@ export function settingRefusal(game: Game, id: string, value: unknown, affects: 
  * Every `play` setting's value for a new game: the one given, if the setting
  * takes it, else its default. Unknown ids and values that don't fit are dropped.
  */
-export function startingSettings(game: Game, given: Record<string, unknown> = {}): Record<string, FlagValue> {
-  const out: Record<string, FlagValue> = {}
+export function startingSettings(game: Game, given: Record<string, unknown> = {}): Record<string, KvValue> {
+  const out: Record<string, KvValue> = {}
   for (const setting of game.settings ?? []) {
     if (settingAffects(setting) !== 'play') continue
     const value = given[setting.id]
-    out[setting.id] = value !== undefined && !settingFault(setting, value) ? (value as FlagValue) : setting.default
+    out[setting.id] = value !== undefined && !settingFault(setting, value) ? (value as KvValue) : setting.default
   }
   return out
 }
@@ -173,7 +173,7 @@ export function settingProblems(setting: SettingDef): string[] {
 }
 
 /** What is wrong with a `{ setting }` condition, in the loader's words. */
-export function settingConditionProblems(game: Game, id: string, is: FlagValue | undefined): string[] {
+export function settingConditionProblems(game: Game, id: string, is: KvValue | undefined): string[] {
   const setting = settingById(game, id)
   if (!setting) return [`unknown setting "${id}"`]
   if (settingAffects(setting) === 'ui') return [`setting "${id}" is a ui setting; conditions read only play settings`]
@@ -197,7 +197,7 @@ function faultText(setting: SettingDef, fault: NonNullable<ReturnType<typeof set
 }
 
 /** Every setting the game declares, as a settings screen draws it. */
-function settingsView(settings: Record<string, FlagValue> | undefined, game: Game): SettingView[] {
+function settingsView(settings: Record<string, KvValue> | undefined, game: Game): SettingView[] {
   return (game.settings ?? []).map((setting) => {
     const affects = settingAffects(setting)
     return {
@@ -289,7 +289,7 @@ export const settings = defineFeature<SettingsShape>({
     afterCommand: (command, remember) => {
       if (command.type !== 'setting') return
       const { id, value } = command
-      remember((profile) => profile.update<Record<string, FlagValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: value })))
     },
     newGame: async (start, profile) => ({ ...start, settings: start.settings ?? (await profile?.get<Record<string, unknown>>('settings')) }),
   },

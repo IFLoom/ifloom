@@ -8,13 +8,13 @@ function withTriggers(): Game {
     ...fixture(),
     triggers: [
       // A note through the door the first time the player goes out.
-      { id: 'note', when: { flag: 'at', is: 'street' }, effects: [{ kind: 'notify', title: 'A note on the mat' }, { kind: 'flag', key: 'note', value: true }] },
+      { id: 'note', when: { kv: 'at', is: 'street' }, effects: [{ kind: 'notify', title: 'A note on the mat' }, { kind: 'kv', key: 'note', to: true }] },
       // Fires off the one before it, in the same pass.
-      { id: 'read', when: { flag: 'note' }, effects: [{ kind: 'stat', key: 'intelligence', by: 1 }] },
+      { id: 'read', when: { kv: 'note' }, effects: [{ kind: 'stat', key: 'intelligence', by: 1 }] },
       // Every turn the player is in the shop, once a turn.
-      { id: 'smell', once: 'turn', when: { flag: 'at', is: 'shop' }, effects: [{ kind: 'stat', key: 'luck', by: 1 }] },
+      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ kind: 'stat', key: 'luck', by: 1 }] },
       // Opens a scene, which counts as seen.
-      { id: 'rosa', when: { flag: 'callRosa' }, effects: [{ kind: 'scene', id: 'rosa.hello' }] },
+      { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ kind: 'scene', id: 'rosa.hello' }] },
     ],
   }
 }
@@ -32,7 +32,7 @@ describe('triggers', () => {
 
   it('can fire once a turn', () => {
     const game = withTriggers()
-    const shop = begin(game, { flags: { at: 'street' } })
+    const shop = begin(game, { kv: { at: 'street' } })
     let state = apply(shop, game, { type: 'activity', id: 'go-shop' }).state
     state = apply(state, game, { type: 'activity', id: 'read' }).state
     expect(state.stats.luck).toBe(1)
@@ -41,7 +41,7 @@ describe('triggers', () => {
   })
 
   it('count a scene they open as seen', () => {
-    const game = { ...withTriggers(), activities: [...fixture().activities, { id: 'ring', effects: [{ kind: 'flag' as const, key: 'callRosa', value: true }] }] }
+    const game = { ...withTriggers(), activities: [...fixture().activities, { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }] }
     const state = apply(begin(game), game, { type: 'activity', id: 'ring' }).state
     expect(state.sceneId).toBe('rosa.hello')
     expect(state.seen['rosa.hello']).toBe(1)

@@ -168,7 +168,7 @@ describe('Small Town', () => {
     state = run(state, { type: 'choose', id: 'leave' }, act('arrows'), { type: 'tick', ms: 10_000 })
     expect(state.minigame).toBeNull()
     expect(state.sceneId).toBe('park.arrows-lost')
-    expect(state.flags['minigame:arrows']).toBe(2)
+    expect(state.kv['minigame:arrows']).toBe(2)
   })
 
   it('leaves you caffeinated after a coffee, for the rest of the day and the next', () => {
@@ -245,7 +245,7 @@ describe('Small Town', () => {
     expect(visitors()).toHaveLength(2)
     for (const visitor of visitors()) {
       expect(['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit']).toContain(visitor.name)
-      expect(['alone', 'a dog', 'a pushchair']).toContain(visitor.flags.with)
+      expect(['alone', 'a dog', 'a pushchair']).toContain(visitor.kv.with)
     }
     expect(view(state, game).scene.body).toContain('A few people are out along the path')
     const first = visitors()

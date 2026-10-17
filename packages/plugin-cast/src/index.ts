@@ -29,7 +29,7 @@ import {
   type Command,
   type Condition,
   type DefinedPlugin,
-  type FlagValue,
+  type KvValue,
   type Game,
   type GameState,
   type PluginArgs,
@@ -69,8 +69,8 @@ export type CharacterDef = {
   met?: Condition
   /** Their stats at the start, where they differ from each stat's own `start`. */
   stats?: Record<string, number>
-  /** Their variables at the start. */
-  flags?: Record<string, FlagValue>
+  /** Their kv keys at the start. */
+  kv?: Record<string, KvValue>
 }
 
 export type CastOptions = {
@@ -214,7 +214,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
     },
     kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People' }],
     entities: (game) =>
-      charactersOf(game).map((def) => ({ id: def.id, of: kind, name: def.name, stats: def.stats, flags: def.flags })),
+      charactersOf(game).map((def) => ({ id: def.id, of: kind, name: def.name, stats: def.stats, kv: def.kv })),
     conditions: {
       /** `{ 'cast/here': 'ava' }`: in the room with the player; with a list, any of them. */
       here: (state, args, context) => ids(args).some((id) => {

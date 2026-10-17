@@ -11,8 +11,8 @@ const town: Game = {
   custom: {
     conditions: { marketDay: (state) => state.turn % 7 === 5 },
     effects: { tip: (state, args) => [{ kind: 'stat', key: 'coins', by: -Number(args.by ?? 1) }] },
-    values: { breadPrice: (state) => (state.flags.marketDay ? 4 : 5) },
-    panels: { stallPrices: (state) => ({ bread: state.flags.marketDay ? 4 : 5, jam: 3 }) },
+    values: { breadPrice: (state) => (state.kv.marketDay ? 4 : 5) },
+    panels: { stallPrices: (state) => ({ bread: state.kv.marketDay ? 4 : 5, jam: 3 }) },
   },
 }
 ```
@@ -79,8 +79,8 @@ Effects worked out from the state. A data scene choice's `effects` is a list of 
 custom: {
   effects: {
     bumpVisits: (state, args) => {
-      const now = Number(state.storylines.ava?.flags.visits ?? 0)
-      return [{ kind: 'storylineFlag', id: 'ava', key: 'visits', value: now + Number(args.by ?? 1) }]
+      const now = Number(state.storylines.ava?.kv.visits ?? 0)
+      return [{ kind: 'storylineKv', id: 'ava', key: 'visits', to: now + Number(args.by ?? 1) }]
     },
   },
 }
@@ -145,7 +145,7 @@ A number or a word the prose needs to print, such as a price that moves or today
 ```ts
 custom: {
   values: {
-    breadPrice: (state) => (state.flags.marketDay ? 4 : 5),
+    breadPrice: (state) => (state.kv.marketDay ? 4 : 5),
     energyCeiling: (state) => 80 + (state.stats.fitness ?? 0),
   },
 }
@@ -165,7 +165,7 @@ What a scene's custom panel needs. A data scene names one with `panelData`, and 
 
 ```ts
 custom: {
-  panels: { stallPrices: (state) => ({ bread: state.flags.marketDay ? 4 : 5, jam: 3 }) },
+  panels: { stallPrices: (state) => ({ bread: state.kv.marketDay ? 4 : 5, jam: 3 }) },
 }
 
 // DataScene: { id: 'market.stall', panel: 'StallPanel', panelData: 'stallPrices', ... }

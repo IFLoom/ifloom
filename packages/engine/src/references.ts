@@ -12,7 +12,7 @@ import type { SceneMedia } from './game.ts'
 import type { MediaStage } from './features/media.ts'
 import type { PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
-import type { Command, Condition, Effect, FlagValue } from './types.ts'
+import type { Command, Condition, Effect, KvValue } from './types.ts'
 import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 
 /**
@@ -38,7 +38,7 @@ export type Reference =
   | { storyline: string }
   | { collection: string }
   /** A `play` setting, and the value it is compared with or given. */
-  | { setting: string; is?: FlagValue }
+  | { setting: string; is?: KvValue }
   /** A kind of entity. */
   | { kind: string }
   | { activity: string }

@@ -9,7 +9,7 @@ describe('data scenes', () => {
   it('load with no runtime written by hand: prose, tokens and a drawn line', () => {
     const { game, problems } = withCafe()
     expect(problems).toEqual([])
-    const at = { ...begin(game), sceneId: 'cafe.counter', flags: { playerFirst: 'Sam' } }
+    const at = { ...begin(game), sceneId: 'cafe.counter', kv: { playerFirst: 'Sam' } }
     const shown = view(at, game).scene
     expect(shown.title).toBe('The counter')
     expect(shown.body).toContain('"Morning, Sam."')

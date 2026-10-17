@@ -33,7 +33,7 @@ describe('The Corner Café', () => {
     expect(view(state, game).scene.body).toContain('Wages are 12 a week already.')
     state = play(state, { type: 'choose', id: 'dev' }, act('interview'), { type: 'choose', id: 'fen' })
     expect(Object.keys(state.entities.staff)).toEqual(['ana', '#1', '#2'])
-    expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 }, flags: {} })
+    expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 }, kv: {} })
     expect(holds(state, { count: 'staff', gte: 3 }, game)).toBe(true)
     state = play(state, act('interview'), { type: 'choose', id: 'dev' })
     expect(apply(state, game, act('interview')).refused).toBe('There is no room behind the counter.')

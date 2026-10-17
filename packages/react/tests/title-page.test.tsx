@@ -30,9 +30,9 @@ function letter(): Game {
           {
             id: 'mat',
             title: 'The mat',
-            body: [{ text: 'mat' }, { when: { flag: 'readBefore' }, text: 'again' }],
+            body: [{ text: 'mat' }, { when: { kv: 'readBefore' }, text: 'again' }],
             choices: [
-              { id: 'open', effects: [{ kind: 'flag', key: 'readBefore', value: true }] },
+              { id: 'open', effects: [{ kind: 'kv', key: 'readBefore', to: true }] },
               { id: 'leave', effects: [{ kind: 'scene', id: null }] },
             ],
           },
@@ -40,7 +40,7 @@ function letter(): Game {
         prose: { mat: 'A letter on the mat.', again: 'You have read it before.', 'mat#open': 'Open it', 'mat#leave': 'Leave it' },
       },
     ],
-    { id: 'letter', title: 'The Letter', introScene: 'mat', carryOver: { flags: ['readBefore'] }, finished: { flag: 'readBefore' } },
+    { id: 'letter', title: 'The Letter', introScene: 'mat', carryOver: { kv: ['readBefore'] }, finished: { kv: 'readBefore' } },
   ).game
 }
 
@@ -105,7 +105,7 @@ describe('the pages', () => {
     await waitFor(() => expect(document.querySelector('[data-page="title"]')).toBeNull())
     // Slot 2 is the newer, saved after leaving the scene.
     expect(next.state.sceneId).toBeNull()
-    expect(next.state.flags.readBefore).toBe(true)
+    expect(next.state.kv.readBefore).toBe(true)
   })
 
   it('stores a play setting changed before a game, and the next new game uses it', async () => {
@@ -172,7 +172,7 @@ describe('the pages', () => {
     await waitFor(() => expect(titleButton('new-game-plus')).not.toBeNull())
     await act(async () => fireEvent.click(titleButton('new-game-plus')!))
     expect(await screen.findByText('You have read it before.')).toBeTruthy()
-    expect(runner.state.flags.readBefore).toBe(true)
+    expect(runner.state.kv.readBefore).toBe(true)
   })
 
   it('puts the pages a game adds on the title screen', async () => {

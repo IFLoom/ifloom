@@ -120,7 +120,7 @@ const settle: QuestDef = {
   starts: { phase: ['open'] },
   stages: [
     { id: 'out', hint: 'Step out onto the high street.', done: at('high-street') },
-    { id: 'coffee', hint: 'Buy a coffee at the café.', done: { flag: 'hadCoffee' } },
+    { id: 'coffee', hint: 'Buy a coffee at the café.', done: { kv: 'hadCoffee' } },
   ],
 }
 
@@ -142,7 +142,7 @@ const town: Pack = {
     { id: 'unpack', requires: [onlyAt(['flat'])], effects: [{ kind: 'phase', value: 'open' }] },
     { id: 'collar', requires: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },
     { id: 'buyScarf', requires: [onlyAt(['high-street'])], effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
-    { id: 'coffee', requires: [onlyAt(['cafe'])], effects: [{ kind: 'flag', key: 'hadCoffee', value: true }] },
+    { id: 'coffee', requires: [onlyAt(['cafe'])], effects: [{ kind: 'kv', key: 'hadCoffee', to: true }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',

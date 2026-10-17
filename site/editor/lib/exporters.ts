@@ -4,7 +4,7 @@
 import { SCHEMA, upgradePack, type DataScene, type Pack } from '@ifloom/engine'
 import { Raw, constName, formatTs, quote } from './format.ts'
 import { defaultPreview, newId, PLUGIN_IDS, PLUGINS, slug, type EditorPack, type PluginId, type Project } from './model.ts'
-import { variablesUsed } from './references.ts'
+import { kvUsed } from './references.ts'
 
 /** The pack as it goes out: the lists it has nothing in left out. */
 export function exportPack(project: Project): Pack {
@@ -33,16 +33,16 @@ function packBreaks(name: string | null, depth: number): boolean {
 
 /**
  * The pack as a TypeScript module: `export const <name>: Pack = { … }`, with a
- * note of the variables it uses and how to load it.
+ * note of the kv keys it uses and how to load it.
  */
 export function toTypeScript(project: Project): string {
   const pack = exportPack(project)
   const name = constName(pack.id)
   const body = formatTs({ ...pack, schema: new Raw('SCHEMA') }, { width: 120, alwaysBreak: packBreaks })
-  const notes = project.variables.length ? project.variables : variablesUsed(project.pack).map((n) => ({ name: n, note: '' }))
+  const notes = project.kv.length ? project.kv : kvUsed(project.pack).map((n) => ({ name: n, note: '' }))
   const lines = ['/**', ` * ${project.title}, made in the IFLoom editor.`]
   if (notes.length) {
-    lines.push(' *', ' * The variables it uses:')
+    lines.push(' *', ' * The kv keys it uses:')
     for (const v of notes) lines.push(` * - \`${v.name}\`${v.note ? `: ${v.note}` : ''}`)
   }
   lines.push(
@@ -100,7 +100,7 @@ export function fromJson(text: string, title?: string): Imported {
       title: title ?? raw.id.replace(/[-_.]+/g, ' ').replace(/^./, (c) => c.toUpperCase()),
       intro: first,
       pack,
-      variables: variablesUsed(pack).map((name) => ({ name, note: '' })),
+      kv: kvUsed(pack).map((name) => ({ name, note: '' })),
       preview,
       updated: Date.now(),
     },

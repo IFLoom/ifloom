@@ -8,9 +8,9 @@ import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
 /** The ids the pickers offer. */
-export type Names = { scenes: string[]; stats: string[]; items: string[]; variables: string[]; choices: string[]; sets: string[] }
+export type Names = { scenes: string[]; stats: string[]; items: string[]; kv: string[]; choices: string[]; sets: string[] }
 
-export const NO_NAMES: Names = { scenes: [], stats: [], items: [], variables: [], choices: [], sets: [] }
+export const NO_NAMES: Names = { scenes: [], stats: [], items: [], kv: [], choices: [], sets: [] }
 
 const isPluginCall = (value: object) => {
   const keys = Object.keys(value)
@@ -23,8 +23,8 @@ export function conditionForm(condition: Condition): ConditionForm {
   const keys = Object.keys(condition)
   const kind = (CONDITION_FORMS as readonly string[]).find((k) => k in condition) as ConditionForm | undefined
   if (!kind) return 'json'
-  // Only the keys a form shows: its kind, a range, and `is` for variables and settings.
-  const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'flag' || kind === 'setting' ? ['is'] : [])])
+  // Only the keys a form shows: its kind, a range, and `is` for kv keys and settings.
+  const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'kv' || kind === 'setting' ? ['is'] : [])])
   if (kind === 'all' || kind === 'any' || kind === 'not') return keys.length === 1 ? kind : 'json'
   if (keys.some((k) => !allowed.has(k))) return 'json'
   if (rangeOf(condition) === undefined) return 'json'
@@ -39,11 +39,11 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
     case 'any':
       return { any: [] }
     case 'not':
-      return { not: { flag: names.variables[0] ?? 'met' } }
+      return { not: { kv: names.kv[0] ?? 'met' } }
     case 'stat':
       return { stat: names.stats[0] ?? 'coins', gte: 1 }
-    case 'flag':
-      return { flag: names.variables[0] ?? 'met' }
+    case 'kv':
+      return { kv: names.kv[0] ?? 'met' }
     case 'item':
       return { item: names.items[0] ?? 'key', gte: 1 }
     case 'has':
@@ -63,7 +63,7 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
     case 'plugin':
       return { 'quests/done': { quest: 'errand' } }
     case 'json':
-      return { flag: 'met' }
+      return { kv: 'met' }
   }
 }
 
@@ -98,9 +98,9 @@ export function effectForm(effect: EffectRef): EffectForm {
     case 'stat':
     case 'setStat':
       return effect.of === undefined ? effect.kind : 'json'
-    case 'flag':
+    case 'kv':
       if (effect.of !== undefined) return 'json'
-      return 'add' in effect ? 'flagAdd' : 'flag'
+      return 'by' in effect ? 'kvBy' : 'kv'
     case 'scene':
       return 'from' in effect ? 'draw' : 'scene'
     case 'item':
@@ -121,10 +121,10 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'stat', key: names.stats[0] ?? 'coins', by: 1 }
     case 'setStat':
       return { kind: 'setStat', key: names.stats[0] ?? 'coins', to: 0 }
-    case 'flag':
-      return { kind: 'flag', key: names.variables[0] ?? 'met', value: true }
-    case 'flagAdd':
-      return { kind: 'flag', key: names.variables[0] ?? 'visits', add: 1 }
+    case 'kv':
+      return { kind: 'kv', key: names.kv[0] ?? 'met', to: true }
+    case 'kvBy':
+      return { kind: 'kv', key: names.kv[0] ?? 'visits', by: 1 }
     case 'item':
       return { kind: 'item', id: names.items[0] ?? 'key', by: 1 }
     case 'scene':

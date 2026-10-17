@@ -1,15 +1,15 @@
 /**
- * Inputs: what the player types or picks, each written to a variable. The
+ * Inputs: what the player types or picks, each written to a key in the kv store. The
  * engine checks the value against the declaration, so a UI can't put
  * anything else in.
  */
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
-import type { Condition, FlagValue, GameState } from '../types.ts'
+import type { Condition, KvValue, GameState } from '../types.ts'
 import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
 
 /**
- * Something the player types or picks, written to a variable: a name for a
+ * Something the player types or picks, written to a kv key: a name for a
  * pet, the time an alarm goes off, a note. The engine checks the value against
  * the declaration, so a UI can't put anything else in.
  */
@@ -18,8 +18,8 @@ export type InputDef = {
   /** What the field is called. */
   label: string
   kind: 'text' | 'number' | 'choice'
-  /** The variable it writes. The input's id if left out. */
-  variable?: string
+  /** The kv key it writes. The input's id if left out. */
+  key?: string
   /** Only on offer while this holds. */
   when?: Condition
   /** Text: the most characters, after trimming. 40 if left out. */
@@ -28,7 +28,7 @@ export type InputDef = {
   min?: number
   max?: number
   /** Choice: the values on offer, with what the player reads for each. */
-  options?: { value: FlagValue; label: string }[]
+  options?: { value: KvValue; label: string }[]
 }
 
 export type InputView = {
@@ -38,19 +38,19 @@ export type InputView = {
   maxLength: number | null
   min: number | null
   max: number | null
-  options: { value: FlagValue; label: string }[]
-  /** What the variable holds now, if anything. */
-  value: FlagValue | null
+  options: { value: KvValue; label: string }[]
+  /** What its key holds now, if anything. */
+  value: KvValue | null
 }
 
 /** What the inputs feature adds, as types. */
 export type InputsShape = {
   commands: {
     /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
-    input: { type: 'input'; id: string; value?: FlagValue }
+    input: { type: 'input'; id: string; value?: KvValue }
   }
   game: {
-    /** What the player can type or pick, and the variable each one writes. */
+    /** What the player can type or pick, and the kv key each one writes. */
     inputs?: InputDef[]
   }
   pack: {
@@ -68,12 +68,12 @@ export function inputById(game: Game, id: string): InputDef | undefined {
 }
 
 /** The value as it will be written: text trimmed. */
-export function inputValue(input: InputDef, value: FlagValue): FlagValue {
+export function inputValue(input: InputDef, value: KvValue): KvValue {
   return input.kind === 'text' && typeof value === 'string' ? value.trim() : value
 }
 
 /** Why this value can't be entered, as the player reads it; undefined if it can. */
-export function inputRefusal(state: GameState, game: Game, id: string, value: FlagValue | undefined, cx: FeatureContext): string | undefined {
+export function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined, cx: FeatureContext): string | undefined {
   const input = inputById(game, id)
   if (!input) return say(game, 'noSuchInput')
   if (!cx.holds(state, input.when, game)) return say(game, 'notNow')
@@ -104,8 +104,8 @@ export const inputs = defineFeature<InputsShape>({
       whyNot: (state, command, game, cx) => inputRefusal(state, game, command.id, command.value, cx),
       run: (state, command, game) => {
         const input = inputById(game, command.id)!
-        const key = input.variable ?? input.id
-        return { ...state, flags: { ...state.flags, [key]: inputValue(input, command.value!) } }
+        const key = input.key ?? input.id
+        return { ...state, kv: { ...state.kv, [key]: inputValue(input, command.value!) } }
       },
       references: (command) => [{ input: command.id }],
     },
@@ -142,7 +142,7 @@ export const inputs = defineFeature<InputsShape>({
             min: input.min ?? null,
             max: input.max ?? null,
             options: input.options ?? [],
-            value: state.flags[input.variable ?? input.id] ?? null,
+            value: state.kv[input.key ?? input.id] ?? null,
           },
         ]),
     ),

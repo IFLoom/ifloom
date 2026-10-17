@@ -43,7 +43,7 @@ function flat(extra: Partial<Pack> = {}): Game {
             },
             body: [{ text: 'evening' }],
             choices: [
-              { id: 'call', effects: [{ kind: 'flag', key: 'called', value: true }] },
+              { id: 'call', effects: [{ kind: 'kv', key: 'called', to: true }] },
               { id: 'out', effects: [{ kind: 'scene', id: null }] },
             ],
           },
@@ -84,7 +84,7 @@ describe('Video', () => {
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
   })
 
-  it('takes its flags: controls wait for the player, once does not loop, a poster shows first', () => {
+  it('takes its kv: controls wait for the player, once does not loop, a poster shows first', () => {
     const game = flat()
     const runner = createRunner(game, startingState(game))
     render(
@@ -176,7 +176,7 @@ describe('Stage', () => {
     expect(phoneSpot.style.left).toBe('10%')
     expect(phoneSpot.style.width).toBe('20%')
     act(() => void fireEvent.click(phoneSpot))
-    expect(runner.state.flags.called).toBe(true)
+    expect(runner.state.kv.called).toBe(true)
   })
 
   it('greys out a hotspot with its reason, and sends nothing', () => {

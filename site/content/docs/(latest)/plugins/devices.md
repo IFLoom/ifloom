@@ -171,13 +171,13 @@ import type { AppDef } from '@ifloom/plugin-devices'
 
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
-  locked: [{ when: { not: { flag: 'bankAccount' } }, reason: 'You have no account yet.' }],
+  locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
   sections: [{ prose: [{ text: 'bank.balance' }] }],   // 'You have {{v:balance}}.'
 }
 
 const mail: AppDef = {
   id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
-  when: { flag: 'emailSetUp' },
+  when: { kv: 'emailSetUp' },
   badge: { count: 'messages/unread-email' },
   sections: [{ plugin: 'messages', with: { channel: 'email' } }],
 }
@@ -228,13 +228,13 @@ const apps: AppDef[] = [
   },
   {
     id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
-    locked: [{ when: { not: { flag: 'bankAccount' } }, reason: 'You have no account yet.' }],
+    locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
     sections: [{ prose: [{ text: 'bank.balance' }] }],
   },
   {
     id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
-    when: { flag: 'emailSetUp' },
-    badge: { when: { flag: 'newMail' } },
+    when: { kv: 'emailSetUp' },
+    badge: { when: { kv: 'newMail' } },
     sections: [{ panel: 'inbox' }],
   },
 ]
@@ -257,7 +257,7 @@ const town: Pack = {
     { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'item', id: 'sandwich', by: 1 }] },
     { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'item', id: 'scarf', by: 1 }] },
     { id: 'jot', effects: [{ kind: 'collect', to: 'notes', entry: { id: 'shopping', title: 'Shopping', text: 'note.shopping' } }] },
-    { id: 'setUpMail', effects: [{ kind: 'flag', key: 'emailSetUp', value: true }, { kind: 'flag', key: 'newMail', value: true }] },
+    { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -268,7 +268,7 @@ const town: Pack = {
   },
   custom: {
     values: { balance: (state) => `${state.stats.coins} coins` },
-    panels: { inbox: (state) => ({ unread: state.flags.newMail ? 1 : 0 }) },
+    panels: { inbox: (state) => ({ unread: state.kv.newMail ? 1 : 0 }) },
   },
   data: { places: { locations } },
 }

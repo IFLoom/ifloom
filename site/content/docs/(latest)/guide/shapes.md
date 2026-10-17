@@ -8,7 +8,7 @@ IFLoom is one engine for several shapes of game. The repository has an example o
 - **A management game.** Money, and several of a thing (staff, dishes, rooms), each with numbers of its own, run a week at a time.
 - **A life sim.** People who keep their own hours, friendships that grow, and a town to wander.
 
-They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities, variables, collections, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/react) lays it out:
+They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities, the kv store, collections, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/react) lays it out:
 
 | Shape | The game | Plugins | Layout | Example |
 |---|---|---|---|---|
@@ -61,10 +61,10 @@ With no [places plugin](/docs/plugins/places) there's no map, so there are no ex
 An [input](/docs/reference/inputs) asks for a name, and only until one is given:
 
 ```ts
-inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { flag: 'playerName' } } }],
+inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
-The first chapter's choices wait on it with `when: { flag: 'playerName' }`, so the story doesn't move until the reader has typed something. The prose prints it as any variable, with `{{playerName}}`: "You turn it over, `{{playerName}}`. The flap is barely stuck."
+The first chapter's choices wait on it with `when: { kv: 'playerName' }`, so the story doesn't move until the reader has typed something. The prose prints it as any kv key, with `{{playerName}}`: "You turn it over, `{{playerName}}`. The flap is barely stuck."
 
 ### One stat
 
@@ -80,7 +80,7 @@ Opening the letter and telling the truth each pay `{ kind: 'stat', key: 'courage
 
 ### Choices the engine remembers
 
-The engine counts every choice taken, by `scene/choice`, so a later chapter can ask about an earlier one with [`{ chose }`](/docs/reference/conditions#chose). Nobody has to set a variable for it:
+The engine counts every choice taken, by `scene/choice`, so a later chapter can ask about an earlier one with [`{ chose }`](/docs/reference/conditions#chose). Nobody has to set a kv key for it:
 
 ```ts
 { text: 'ch2.stairs/opened', when: { chose: 'ch1.mat/open' } },
@@ -91,15 +91,15 @@ The same condition can hide a choice. `blame` ("Only something that came open in
 
 ### A count
 
-Each lie adds to a variable with `{ kind: 'flag', key: 'lies', add: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
+Each lie adds to a kv key with `{ kind: 'kv', key: 'lies', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
 
 ```ts
-{ text: 'ch3.door/honest', when: { flag: 'lies', lt: 1 } },
-{ text: 'ch3.door/fib', when: { flag: 'lies', is: 1 } },
-{ text: 'ch3.door/tangle', when: { flag: 'lies', gte: 2 } },
+{ text: 'ch3.door/honest', when: { kv: 'lies', lt: 1 } },
+{ text: 'ch3.door/fib', when: { kv: 'lies', is: 1 } },
+{ text: 'ch3.door/tangle', when: { kv: 'lies', gte: 2 } },
 ```
 
-A variable that was never set counts as 0, so the honest reader's line needs nothing written first.
+A kv key that was never set counts as 0, so the honest reader's line needs nothing written first.
 
 ### A chapter is a turn
 
@@ -116,7 +116,7 @@ So `state.turn` is the chapter the reader has reached, counting from 0. Anything
 The file's default export is the game, with the loader's problems, and `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
 
 ```ts
-export const start = (game: Game) => startingState(game, { flags: { playerName: 'Sam' } })
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
 ```
 
 The example's `playtest` script is `ifloom playtest --turns 3 --out playtest/read.txt`. With no plugin to say when or where, each screen in the transcript is headed by its turn alone.
@@ -207,7 +207,7 @@ import { runner, view } from './runner.ts'
 
 The page to read needs no clock, room or people, because the game has none. The name the reader types is an [input](/docs/guide/frameworks#inputs), drawn as in the templates.
 
-In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` variable that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/guide/title-screen) covers how it works.
+In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` kv key that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/guide/title-screen) covers how it works.
 
 In React, [`READING_LAYOUT`](/docs/react#layouts) has no side column, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
 

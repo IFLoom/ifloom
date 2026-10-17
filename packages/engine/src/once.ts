@@ -12,13 +12,13 @@ const PREFIX = 'turn:'
 
 /** Has the line with this id already landed this turn? */
 export function usedThisTurn(state: GameState, id: string): boolean {
-  const turn = state.flags[`${PREFIX}${id}`]
+  const turn = state.kv[`${PREFIX}${id}`]
   return typeof turn === 'number' && turn === state.turn
 }
 
 /** The effect that records the line as landed this turn. */
 export function markUsed(state: GameState, id: string): Effect {
-  return { kind: 'flag', key: `${PREFIX}${id}`, value: state.turn }
+  return { kind: 'kv', key: `${PREFIX}${id}`, to: state.turn }
 }
 
 /**

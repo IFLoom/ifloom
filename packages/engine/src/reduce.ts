@@ -75,7 +75,7 @@ export function apply(
 ): Applied {
   if (command.type === 'start') {
     return {
-      state: startingState(game, { seed: command.seed, flags: command.flags }),
+      state: startingState(game, { seed: command.seed, kv: command.kv }),
       ok: true,
     }
   }

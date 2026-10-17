@@ -13,7 +13,7 @@ import type {
   Command,
   Effect,
   Flat,
-  FlagValue,
+  KvValue,
   GameState,
   StatKey,
 } from './types.ts'
@@ -114,8 +114,8 @@ export type SceneView = {
 
 /** What a hand-built scene's `render` can read besides the state. */
 export type SceneCtx = {
-  flag: (key: string) => FlagValue | undefined
-  storylineFlag: (storylineId: string, key: string) => FlagValue | undefined
+  kv: (key: string) => KvValue | undefined
+  storylineKv: (storylineId: string, key: string) => KvValue | undefined
   /**
    * Where the render's new pool picks go, when the engine is drawing a screen
    * and wants them recorded. Pass it to `renderScene` when a hand-built scene
@@ -150,7 +150,7 @@ export type ProseStore = {
   keys?: () => string[]
 }
 
-/** A thread of the story, followed by its stages and flags, and closed for a while if need be. */
+/** A thread of the story, followed by its stages and kv, and closed for a while if need be. */
 export type StorylineDef = {
   id: string
   name: string
@@ -172,8 +172,8 @@ export type GameRules = {
   turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
   /** What the player cannot do for now, and why. Checked in order. */
   locks?: readonly Lock[]
-  /** Variables put back at the start of each turn: what "once this turn" was counting. */
-  resets?: Record<string, FlagValue>
+  /** kv keys put back at the start of each turn: what "once this turn" was counting. */
+  resets?: Record<string, KvValue>
   /**
    * The start of a new turn, after `turn`'s effects: anything it changes that
    * is not an effect — a stretch ending, a debt coming due.
@@ -191,11 +191,11 @@ export type GameRules = {
   onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
 }
 
-/** What a New Game+ takes from the game before: player stats, variables and items, by id. */
+/** What a New Game+ takes from the game before: player stats, kv keys and items, by id. */
 export type CarryOver = {
   stats?: string[]
-  /** Variables, by name. */
-  flags?: string[]
+  /** kv keys, by name. */
+  kv?: string[]
   /** Items by id, or `'all'` for every item the player has. */
   items?: string[] | 'all'
 }
@@ -220,6 +220,11 @@ type GameBase = {
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
   carryOver?: CarryOver
+  /**
+   * The name a save is listed under, such as the name the player typed, or
+   * null for none. Saves record it as `SaveMeta.player`. Left out, saves have no name.
+   */
+  saveName?: (state: GameState) => string | null
   /**
    * When the game counts as finished. The runner records the first time it
    * holds in the profile's `finished`, so a title screen can offer New Game+.

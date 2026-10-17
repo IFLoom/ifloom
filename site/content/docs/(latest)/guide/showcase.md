@@ -52,9 +52,9 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Inputs, and a value the prose prints
 
-`town.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `kind: 'text'`, `maxLength: 16`, offered only while `when: { phase: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the variable `catName`.
+`town.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `kind: 'text'`, `maxLength: 16`, offered only while `when: { phase: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
 
-`src/content/custom.ts` has a [custom value](/docs/reference/custom#values) of the same name. It reads the variable, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
+`src/content/custom.ts` has a [custom value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
 
 ### Items you use
 
@@ -228,7 +228,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Visitors in the park
 
-`town.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/docs/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` variable from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
+`town.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/docs/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` kv key from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
 
 ### Achievements
 

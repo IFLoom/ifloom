@@ -8,7 +8,7 @@ import type { Condition, Effect, StatDef } from '@ifloom/engine'
 /** The keys an object type can't leave out. */
 type RequiredKeys<T> = T extends unknown ? { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T] : never
 
-/** The key that names a condition's kind: `stat`, `flag`, `all` and the rest. A plugin call (`'quests/done'`) is not one. */
+/** The key that names a condition's kind: `stat`, `kv`, `all` and the rest. A plugin call (`'quests/done'`) is not one. */
 export type ConditionKey = Exclude<RequiredKeys<Condition>, `${string}/${string}` | 'gte'>
 
 /** Every kind of condition the engine has, in the order the docs list them. */
@@ -16,12 +16,12 @@ export const CONDITION_KEYS = [
   'all',
   'any',
   'not',
-  'flag',
+  'kv',
   'setting',
   'chose',
   'seen',
   'since',
-  'storylineFlag',
+  'storylineKv',
   'stat',
   'count',
   'entity',
@@ -43,8 +43,8 @@ export const CONDITION_KEYS = [
 export const EFFECT_KINDS = [
   'stat',
   'setStat',
-  'flag',
-  'storylineFlag',
+  'kv',
+  'storylineKv',
   'create',
   'remove',
   'each',
@@ -69,7 +69,7 @@ export const conditionKeysComplete: Missing<ConditionKey, (typeof CONDITION_KEYS
 export const effectKindsComplete: Missing<Effect['kind'], (typeof EFFECT_KINDS)[number]> = true
 
 /** The conditions the builder has a form for. Anything else is edited as JSON. */
-export const CONDITION_FORMS = ['all', 'any', 'not', 'stat', 'flag', 'item', 'has', 'chose', 'seen', 'since', 'setting', 'level', 'turn'] as const satisfies readonly ConditionKey[]
+export const CONDITION_FORMS = ['all', 'any', 'not', 'stat', 'kv', 'item', 'has', 'chose', 'seen', 'since', 'setting', 'level', 'turn'] as const satisfies readonly ConditionKey[]
 export type ConditionForm = (typeof CONDITION_FORMS)[number] | 'plugin' | 'json'
 
 export const CONDITION_LABELS: Record<ConditionForm, string> = {
@@ -77,7 +77,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   any: 'Any of',
   not: 'Not',
   stat: 'Stat',
-  flag: 'Variable',
+  kv: 'kv key',
   item: 'Item count',
   has: 'Has item',
   chose: 'Chose',
@@ -90,15 +90,15 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   json: 'Other (JSON)',
 }
 
-/** The effects the builder has a form for. `flagAdd` and `draw` are the `add` and `from` shapes of `flag` and `scene`. */
-export const EFFECT_FORMS = ['stat', 'setStat', 'flag', 'item', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
-export type EffectForm = (typeof EFFECT_FORMS)[number] | 'flagAdd' | 'draw' | 'plugin' | 'json'
+/** The effects the builder has a form for. `kvBy` and `draw` are the `by` and `from` shapes of `kv` and `scene`. */
+export const EFFECT_FORMS = ['stat', 'setStat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
+export type EffectForm = (typeof EFFECT_FORMS)[number] | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
   stat: 'Change a stat',
   setStat: 'Set a stat',
-  flag: 'Set a variable',
-  flagAdd: 'Add to a variable',
+  kv: 'Set a kv key',
+  kvBy: 'Change a kv key by',
   item: 'Give or take an item',
   scene: 'Go to a scene',
   draw: 'Draw a storylet',
@@ -111,10 +111,10 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
 }
 
 /** The effect builder's menu, in order. Every form is in it. */
-export const EFFECT_MENU = ['stat', 'setStat', 'flag', 'flagAdd', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
+export const EFFECT_MENU = ['stat', 'setStat', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'plugin', 'json'] as const satisfies readonly EffectForm[]
 export const effectMenuComplete: Missing<EffectForm, (typeof EFFECT_MENU)[number]> = true
 
-/** The comparisons a range offers. `is` is only for variables and settings. */
+/** The comparisons a range offers. `is` is only for kv keys and settings. */
 export const RANGE_OPS = ['gte', 'gt', 'lte', 'lt'] as const
 export type RangeOp = (typeof RANGE_OPS)[number]
 export const RANGE_LABELS: Record<RangeOp | 'is' | 'set', string> = {

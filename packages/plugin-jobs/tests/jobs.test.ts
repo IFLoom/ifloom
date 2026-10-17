@@ -29,7 +29,7 @@ const cafe: JobDef = {
   id: 'cafe',
   title: 'Weekend help',
   description: 'Saturdays at the Corner Café.',
-  requires: [{ reason: 'Ava needs to know you first.', when: { flag: 'metAva' } }],
+  requires: [{ reason: 'Ava needs to know you first.', when: { kv: 'metAva' } }],
   at: ['cafe'],
   days: [5],
   hours: ['morning'],
@@ -54,7 +54,7 @@ function game(...partners: Plugin[]): Game {
       { id: 'manner', label: 'Manner', start: 5 },
     ],
     activities: [
-      { id: 'meet', effects: [{ kind: 'flag', key: 'metAva', value: true }] },
+      { id: 'meet', effects: [{ kind: 'kv', key: 'metAva', to: true }] },
       { id: 'sleep', effects: [{ kind: 'turn' }] },
       { id: 'rest', effects: [{ kind: 'setStat', key: 'energy', to: 100 }] },
       { id: 'snap', effects: [{ kind: 'setStat', key: 'manner', to: 0 }] },

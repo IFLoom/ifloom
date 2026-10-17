@@ -270,8 +270,8 @@ describe('plugins that bring entities and speakers', () => {
     expect(problems).toEqual([])
     const state = startingState(game)
     expect(state.entities.singer).toEqual({
-      bea: { name: 'Bea the soloist', stats: { voice: 9 }, flags: {} },
-      ann: { name: 'Ann', stats: { voice: 3 }, flags: {} },
+      bea: { name: 'Bea the soloist', stats: { voice: 9 }, kv: {} },
+      ann: { name: 'Ann', stats: { voice: 3 }, kv: {} },
     })
     expect(view(state, game).entities.singer.plural).toBe('Choir')
   })

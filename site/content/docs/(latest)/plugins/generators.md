@@ -56,7 +56,7 @@ const visitor: TemplateDef = {
   id: 'visitor',
   of: 'visitor',
   name: { pool: 'first-names' },
-  flags: { with: { pool: 'company' }, laps: { between: [1, 3] } },
+  kv: { with: { pool: 'company' }, laps: { between: [1, 3] } },
 }
 
 const town: Pack = {
@@ -79,7 +79,7 @@ const town: Pack = {
 
 ```ts
 type PoolDef = { id: string; values: PoolEntry[] }
-type PoolEntry = FlagValue | { value: FlagValue; weight?: number }
+type PoolEntry = KvValue | { value: KvValue; weight?: number }
 ```
 
 | Field | What it is |
@@ -97,7 +97,7 @@ type TemplateDef = {
   of: string
   name: FieldDef
   stats?: Record<string, FieldDef>
-  flags?: Record<string, FieldDef>
+  kv?: Record<string, FieldDef>
 }
 ```
 
@@ -107,12 +107,12 @@ type TemplateDef = {
 | `of` | The [kind](/docs/reference/entities#kinddef) of entity it makes. |
 | `name` | Where the entity's name comes from. |
 | `stats` | Where its stats come from, by id. Each must be a stat the game declares for the kind (`of`). A stat left out starts at its `start`, as a `create` effect's does. |
-| `flags` | Where its variables come from, by name. |
+| `kv` | Where the keys of its kv store come from, by name. |
 
 ### FieldDef
 
 ```ts
-type FieldDef = FlagValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
+type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
 ```
 
 | Written | Gives |
@@ -152,7 +152,7 @@ const generate: (template: string, count?: number) => EffectRef
 
 ```ts
 function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity
-type GeneratedEntity = { name: string; stats: Record<string, number>; flags: Record<string, FlagValue> }
+type GeneratedEntity = { name: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
 
 What the template draws for the `n`th entity of its kind made in play, without making it. The effect passes the number the next one will get. Use it to preview a template, or in a test.

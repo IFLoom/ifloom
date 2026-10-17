@@ -21,7 +21,7 @@ export type EditorContextValue = {
   replace: (project: Project) => void
   selection: Selection
   select: (selection: Selection) => void
-  /** Make a scene, stat, item or variable that "Add new…" named. */
+  /** Make a scene, stat, item or kv key that "Add new…" named. */
   create: (thing: Thing, id: string) => void
   names: Names
   problems: Problem[]
@@ -39,14 +39,14 @@ export function useEditor(): EditorContextValue {
   return value
 }
 
-/** The pickers' ids, from the pack: scene ids, stats, items, variables, `scene/choice` pairs and storylet sets. */
+/** The pickers' ids, from the pack: scene ids, stats, items, kv keys, `scene/choice` pairs and storylet sets. */
 export function namesOf(project: Project): Names {
   const { pack } = project
   return {
     scenes: pack.scenes.map((s) => s.id),
     stats: pack.stats.map((s) => s.id),
     items: pack.items.map((i) => i.id),
-    variables: project.variables.map((v) => v.name),
+    kv: project.kv.map((v) => v.name),
     choices: pack.scenes.flatMap((s) => s.choices.map((c) => `${s.id}/${c.id}`)),
     sets: [...new Set(pack.scenes.flatMap((s) => s.drawnFrom ?? []))],
   }

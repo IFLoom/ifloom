@@ -1264,7 +1264,7 @@ Replaceable as `GatePage` in [`components`](#components). Parts: `gate-page`, `g
 ### useSetting
 
 ```ts
-function useSetting(id: string): FlagValue | undefined
+function useSetting(id: string): KvValue | undefined
 ```
 
 A setting's current value, for your own components. A play setting's comes from the view, so it's the game in play's. A ui setting's comes from the profile, and the component redraws when it changes. If the stored value doesn't suit the setting any more, you get its default. It's `undefined` for a setting the game doesn't declare.
@@ -1451,14 +1451,14 @@ A panel for the person testing the game, when the game has the [debug plugin](/d
 
 | Tab | What it has |
 |---|---|
-| **Set** | A form each for a stat, a variable, an item, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the variable form sends that value as itself. |
+| **Set** | A form each for a stat, a kv key, an item, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the variable form sends that value as itself. |
 | **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
 | **State** | The whole game state, as JSON. |
 | **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
 
 The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
 
-The heading, buttons, tabs, form rows (**Stat**, **Variable**, **Item**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
+The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Item**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
 
 **Gotchas.**
 

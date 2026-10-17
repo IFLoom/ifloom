@@ -24,7 +24,7 @@ const TOOLS = [
 type Tool = (typeof TOOLS)[number]['id']
 
 /** A few sample ids, so the pickers have something to offer. */
-const NAMES = { scenes: ['cafe.counter', 'street', 'home'], stats: ['coins', 'charm', 'energy'], items: ['umbrella', 'key'], variables: ['metAva', 'visits'], choices: ['cafe.counter/buy'], sets: ['cafe'] }
+const NAMES = { scenes: ['cafe.counter', 'street', 'home'], stats: ['coins', 'charm', 'energy'], items: ['umbrella', 'key'], kv: ['metAva', 'visits'], choices: ['cafe.counter/buy'], sets: ['cafe'] }
 
 export function Snippets() {
   const [tool, setTool] = useState<Tool>('condition')
@@ -74,7 +74,7 @@ function Split({ form, code, label }: { form: React.ReactNode; code: string; lab
 }
 
 function ConditionTool() {
-  const [value, setValue] = useState<Condition>({ all: [{ stat: 'coins', gte: 4 }, { not: { flag: 'metAva' } }] })
+  const [value, setValue] = useState<Condition>({ all: [{ stat: 'coins', gte: 4 }, { not: { kv: 'metAva' } }] })
   return <Split form={<ConditionBuilder value={value} names={NAMES} onChange={setValue} />} code={snippet(value)} />
 }
 

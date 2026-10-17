@@ -23,7 +23,7 @@ function cafe(scenes: DataScene[], extra: Partial<Pack> = {}) {
     activities: [
       { id: 'sit', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
       { id: 'linger', effects: [{ kind: 'scene', from: 'cafe' }] },
-      { id: 'tip', effects: [{ kind: 'flag', key: 'tipped', value: true }] },
+      { id: 'tip', effects: [{ kind: 'kv', key: 'tipped', to: true }] },
     ],
     ...extra,
   }
@@ -32,7 +32,7 @@ function cafe(scenes: DataScene[], extra: Partial<Pack> = {}) {
 
 const gossip = scene('cafe.gossip', { drawnFrom: ['cafe'], when: { not: { seen: 'cafe.gossip' } } })
 const busker = scene('cafe.busker', { drawnFrom: ['cafe', 'street'], weight: 3 })
-const regular = scene('cafe.regular', { drawnFrom: ['cafe'], when: { flag: 'tipped' } })
+const regular = scene('cafe.regular', { drawnFrom: ['cafe'], when: { kv: 'tipped' } })
 const quiet = scene('cafe.quiet')
 
 const seeds = Array.from({ length: 300 }, (_, n) => n)
@@ -88,7 +88,7 @@ describe('storylets', () => {
   })
 
   it('report a draw no scene is in, an unknown otherwise and a bad weight', () => {
-    const problems = cafe([scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { flag: 'x' } })], {
+    const problems = cafe([scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { kv: 'x' } })], {
       activities: [
         { id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] },
       ],

@@ -67,7 +67,7 @@ function shapeProblems(condition: Condition): string[] {
   const kinds = conditionKinds(condition)
   if (kinds.length === 1) return []
   const keys = Object.keys(condition)
-  if (!kinds.length) return [`a condition needs one kind, such as flag or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`]
+  if (!kinds.length) return [`a condition needs one kind, such as kv or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`]
   return [`a condition has one kind, but this one has ${kinds.length}: ${kinds.join(', ')}`]
 }
 

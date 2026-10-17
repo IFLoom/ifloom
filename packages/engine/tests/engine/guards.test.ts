@@ -109,10 +109,10 @@ describe('plugin prices and labels', () => {
 
 describe('a plugin applying effects', () => {
   it('can end a turn, and the turn rules run as for any other', () => {
-    const game = shore({ onTurn: (state) => ({ ...state, flags: { ...state.flags, turned: true } }) })
+    const game = shore({ onTurn: (state) => ({ ...state, kv: { ...state.kv, turned: true } }) })
     const state = applyEffects(at(game, 3), game, [{ kind: 'custom', name: 'tide/rise' }])
     expect(state.turn).toBe(begin(game).turn + 1)
-    expect(state.flags.turned).toBe(true)
+    expect(state.kv.turned).toBe(true)
     expect(tide.read(state, game)).toEqual({ height: 0 })
   })
 
@@ -126,23 +126,23 @@ describe('a plugin applying effects', () => {
 
 describe('locks by effect', () => {
   it('stop only the commands that would apply that effect', () => {
-    const game = shore({ locks: [{ when: { flag: 'storm' }, deny: ['*'], effect: 'tide/rise', reason: 'Not in a storm.' }] })
-    const stormy = { ...begin(game), flags: { storm: true } }
+    const game = shore({ locks: [{ when: { kv: 'storm' }, deny: ['*'], effect: 'tide/rise', reason: 'Not in a storm.' }] })
+    const stormy = { ...begin(game), kv: { storm: true } }
     expect(whyNot(stormy, game, { type: 'activity', id: 'dig' })).toBe('Not in a storm.')
     expect(whyNot(stormy, game, { type: 'custom', name: 'tide/paddle' })).toBe('Not in a storm.')
     expect(whyNot(stormy, game, { type: 'activity', id: 'read' })).toBeUndefined()
-    const built = fixture({ locks: [{ when: { flag: 'storm' }, deny: ['activity'], effect: 'turn', reason: 'Not yet.' }] })
+    const built = fixture({ locks: [{ when: { kv: 'storm' }, deny: ['activity'], effect: 'turn', reason: 'Not yet.' }] })
     const turning = { ...built, activities: [...built.activities, { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
-    expect(whyNot({ ...begin(turning), flags: { storm: true } }, turning, { type: 'activity', id: 'rest' })).toBe('Not yet.')
-    expect(whyNot({ ...begin(turning), flags: { storm: true } }, turning, { type: 'activity', id: 'read' })).toBeUndefined()
+    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'rest' })).toBe('Not yet.')
+    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'read' })).toBeUndefined()
   })
 })
 
 describe('scene choices', () => {
   it('are greyed out by a lock or a guard, as the reducer will refuse them', () => {
     const { game } = withCafe()
-    const locked = { ...game, rules: { ...game.rules, locks: [{ when: { flag: 'rush' }, deny: ['choose' as const], except: [], reason: 'Not in the rush.' }] } }
-    const state = { ...begin(locked), sceneId: 'cafe.counter', flags: { rush: true } }
+    const locked = { ...game, rules: { ...game.rules, locks: [{ when: { kv: 'rush' }, deny: ['choose' as const], except: [], reason: 'Not in the rush.' }] } }
+    const state = { ...begin(locked), sceneId: 'cafe.counter', kv: { rush: true } }
     const chat = view(state, locked).scene.choices.find((choice) => choice.id === 'chat')!
     expect(chat.disabled).toBe('Not in the rush.')
     expect(apply(state, locked, { type: 'choose', id: 'chat' }).refused).toBe('Not in the rush.')

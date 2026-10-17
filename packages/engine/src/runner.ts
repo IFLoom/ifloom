@@ -9,7 +9,7 @@ import { settingRefusal } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import type { SceneBeat } from './sceneBody.ts'
-import type { Command, FlagValue, GameState } from './types.ts'
+import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
 
 /**
@@ -411,11 +411,11 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
      * the profile, never to the state. Returns why it was refused, or
      * undefined. A `play` setting is changed with the `setting` command.
      */
-    setUiSetting(id: string, value: FlagValue): string | undefined {
+    setUiSetting(id: string, value: KvValue): string | undefined {
       if (!options.profile) throw new Error('This runner was given no profile to write settings to.')
       const refused = settingRefusal(game, id, value, 'ui')
       if (refused) return refused
-      remember((profile) => profile.update<Record<string, FlagValue>>('settings', (stored) => ({ ...stored, [id]: value })))
+      remember((profile) => profile.update<Record<string, KvValue>>('settings', (stored) => ({ ...stored, [id]: value })))
       return undefined
     },
     /**

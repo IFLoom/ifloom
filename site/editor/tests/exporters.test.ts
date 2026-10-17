@@ -86,7 +86,7 @@ describe('JSON', () => {
     if ('error' in back) throw new Error(back.error)
     expect(exportPack(back.project)).toEqual(exportPack(project))
     expect(back.project.intro).toBe('market')
-    expect(back.project.variables.map((v) => v.name)).toEqual(['heardBusker'])
+    expect(back.project.kv.map((v) => v.name)).toEqual(['heardBusker'])
   })
 
   it('leaves empty lists out', () => {
@@ -127,7 +127,7 @@ describe('TypeScript', () => {
   it('is formatted like the examples', () => {
     const source = toTypeScript(sampleProject())
     expect(source).toContain("  stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, format: '{n}p', spendable: true }],")
-    expect(source).toContain("        { id: 'listen', effects: [{ kind: 'flag', key: 'heardBusker', value: true }, { kind: 'scene', id: 'market' }] },")
+    expect(source).toContain("        { id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', id: 'market' }] },")
     expect(source).toContain("    { id: 'home', title: 'Home', body: [{ text: 'home' }, { text: 'home/bun', when: { has: 'bun' } }], choices: [] },")
     expect(source).toContain("    'market#buy': 'Buy an iced bun',")
     expect(source).toContain(" * - `heardBusker`: Set once you have listened to the busker.")

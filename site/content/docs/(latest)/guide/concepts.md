@@ -1,12 +1,12 @@
 ---
 title: "Core concepts"
-description: The ideas behind IFLoom in short sections, each linking to its reference page. The state, commands, effects and conditions, the game and its rules, the view, the turn, entities, variables, plugins, saves and more.
+description: The ideas behind IFLoom in short sections, each linking to its reference page. The state, commands, effects and conditions, the game and its rules, the view, the turn, entities, the kv store, plugins, saves and more.
 ---
 This page explains the ideas the engine is built on. Each section is short and links to the reference page with the details.
 
 ## The state is one plain object
 
-Everything about a game in progress lives in one `GameState`. It holds the turn, the scene on screen, the player's stats, variables and items, each entity's numbers, the storylines, and each plugin's own part, such as the calendar's day. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
+Everything about a game in progress lives in one `GameState`. It holds the turn, the scene on screen, the player's stats, kv store and items, each entity's numbers, the storylines, and each plugin's own part, such as the calendar's day. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
 
 The engine never changes a state in place. Every command returns a new one, so keeping the previous state is all an undo needs. The [runner](#the-runner-drives-the-game) keeps them for you.
 
@@ -70,7 +70,7 @@ See [The view](/docs/reference/view).
 
 The engine has one clock, the turn. `state.turn` is 0 in a new game. Your game decides how long a turn is: a chapter in a novel, a week in a management game, a day in a life sim. A turn ends when the `turn` effect, `{ kind: 'turn' }`, runs. Everything the engine dates is dated in turns, such as when a scene was first seen or when a trigger last fired.
 
-At the end of a turn the counter goes up by one, the variables the game lists in `resets` are put back, and the game's turn rules and each plugin's turn hook run. That's where a game that has energy fills it back up.
+At the end of a turn the counter goes up by one, the kv keys the game lists in `resets` are put back, and the game's turn rules and each plugin's turn hook run. That's where a game that has energy fills it back up.
 
 The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
 
@@ -92,17 +92,17 @@ The `create` and `remove` effects add and take away entities in play, and `each`
 
 See [Entities](/docs/reference/entities).
 
-## Variables
+## The kv store
 
-A variable is a named value the game keeps: a name the player typed, a count of lies told, whether a door has been opened. They live in `state.flags`, and the code calls them flags. The `flag` effect sets one or adds to it, and the `{ flag }` condition reads it. A variable that was never set counts as 0.
+The kv store holds keys with a true/false, number or text value: a name the player typed, a count of lies told, whether a door has been opened. It lives in `state.kv`. The `kv` effect sets a key `to` a value or changes its number `by` an amount, and the `{ kv }` condition reads it. A key that was never set counts as 0. Each storyline and each entity has a kv store of its own too.
 
-The engine also remembers which choices the player has taken, so `{ chose: 'ch1.mat/open' }` asks about an earlier choice without a variable.
+The engine also remembers which choices the player has taken, so `{ chose: 'ch1.mat/open' }` asks about an earlier choice without a kv key.
 
-See [Game state: flags](/docs/reference/state#flags) and [Conditions](/docs/reference/conditions).
+See [Game state: kv](/docs/reference/state#kv) and [Conditions](/docs/reference/conditions).
 
 ## Storylines
 
-A storyline is one thread of the story, such as a friendship with Ava. It has its own variables and can be closed for a number of turns. `{ storyline: 'ava' }` holds while it's open.
+A storyline is one thread of the story, such as a friendship with Ava. It has its own kv store and can be closed for a number of turns. `{ storyline: 'ava' }` holds while it's open.
 
 The engine records which scenes the player has seen, and on which turn. That lets a storyline's stages come in order ("not until the scene before this one") and at a pace ("not until three turns after it").
 
@@ -115,7 +115,7 @@ These are the parts a phone, a notice board or a journal is built from:
 - A [collection](/docs/reference/collections) is a named list the game keeps entries in, such as photos taken or letters found.
 - A [notice](/docs/reference/notices) is something the game tells the player outside a scene, shown as a toast or counted on a badge.
 - A [trigger](/docs/reference/triggers) is a list of effects that runs by itself the first time its condition holds, such as a note under the door the morning after the player first visits the café. It can also be set to fire at most once a turn.
-- An [input](/docs/reference/inputs) is something the player types or picks, written to a variable, such as their name.
+- An [input](/docs/reference/inputs) is something the player types or picks, written to a kv key, such as their name.
 
 ## Locks
 
@@ -180,7 +180,7 @@ The driver says where saves are kept: `localStorage`, IndexedDB, memory for test
 
 Each save carries a version. The format is at version 11 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
 
-Your game can do the same for its own content. Give it a `version`, and when an update renames a variable or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
+Your game can do the same for its own content. Give it a `version`, and when an update renames a kv key or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 
 See [Saves](/docs/reference/saves).
 

@@ -9,7 +9,7 @@ import type { Effect } from '@ifloom/engine'
 const effects: Effect[] = [
   { kind: 'stat', key: 'coins', by: -4 },
   { kind: 'item', id: 'sandwich', by: 1 },
-  { kind: 'storylineFlag', id: 'ava', key: 'boughtLunch', value: true },
+  { kind: 'storylineKv', id: 'ava', key: 'boughtLunch', to: true },
 ]
 ```
 
@@ -45,10 +45,10 @@ type Effect =
   | { kind: 'stat'; key: StatKey; by: number; of?: string }
   | { kind: 'custom'; name: string; with?: Record<string, unknown> }
   | { kind: 'setStat'; key: StatKey; to: number; of?: string }
-  | { kind: 'storylineFlag'; id: string; key: string; value: FlagValue }
-  | { kind: 'flag'; key: string; value: FlagValue; of?: string }
-  | { kind: 'flag'; key: string; add: number; of?: string }
-  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> } }
+  | { kind: 'storylineKv'; id: string; key: string; to: KvValue }
+  | { kind: 'kv'; key: string; to: KvValue; of?: string }
+  | { kind: 'kv'; key: string; by: number; of?: string }
+  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
   | { kind: 'remove'; of: string }
   | { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
   | { kind: 'scene'; id: string | null }
@@ -121,26 +121,26 @@ In a data scene choice, an activity or a trigger, write the short form, `{ custo
 
 **Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form, wherever the effect is data. `rules.turn` is a function, so nothing checks a name it returns, and a typo there silently does nothing.
 
-### storylineFlag
+### storylineKv
 
 ```ts
-{ kind: 'storylineFlag', id: 'ava', key: 'lentBook', value: true }
+{ kind: 'storylineKv', id: 'ava', key: 'lentBook', to: true }
 ```
 
-Sets a variable on a [storyline](/docs/reference/storylines). Use a number for anything [`{ counter }`](/docs/reference/conditions#counter) should read.
+Sets a key in a [storyline](/docs/reference/storylines)'s own kv store `to` a value. Use a number for anything [`{ counter }`](/docs/reference/conditions#counter) should read.
 
 A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }`.
 
-### flag
+### kv
 
 ```ts
-{ kind: 'flag', key: 'hadCoffee', value: true }
-{ kind: 'flag', key: 'coffeesBought', add: 1 }
+{ kind: 'kv', key: 'hadCoffee', to: true }
+{ kind: 'kv', key: 'coffeesBought', by: 1 }
 ```
 
-Sets a game [variable](/docs/reference/state#flags) to `value`, or with `add`, adds to its number. A variable that isn't a number yet (unset, text or `true`) counts as 0, so the first `add: 1` makes it 1. Test a count with a [range](/docs/reference/conditions#flag), such as `{ flag: 'coffeesBought', gte: 3 }`.
+Sets a key in the [kv store](/docs/reference/state#kv) `to` a value, or changes its number `by` an amount. A key that isn't a number yet (unset, text or `true`) counts as 0, so the first `by: 1` makes it 1. Test a count with a [range](/docs/reference/conditions#kv), such as `{ kv: 'coffeesBought', gte: 3 }`.
 
-With `of`, both forms set a variable on an [entity](/docs/reference/entities) instead, as in `{ kind: 'flag', key: 'role', value: 'cook', of: 'staff:ana' }`, or `of: '$'` inside an [`each`](#each). Read it back with [`{ flag, of }`](/docs/reference/conditions#flag). If the entity isn't there, the effect does nothing.
+With `of`, both forms set a key in an [entity](/docs/reference/entities)'s kv store instead, as in `{ kind: 'kv', key: 'role', to: 'cook', of: 'staff:ana' }`, or `of: '$'` inside an [`each`](#each). Read it back with [`{ kv, of }`](/docs/reference/conditions#kv). If the entity isn't there, the effect does nothing.
 
 **Gotcha.** `add` has no bounds. Unlike a [stat](#stat), the number isn't held to any range, and a negative `add` can take it below 0.
 
@@ -162,7 +162,7 @@ Puts a scene on screen, or closes it with `null`. The id isn't checked when the 
 
 With `from` instead of `id`, it draws a [storylet](/docs/reference/storylets): one of the scenes whose `drawnFrom` names `from` and whose `when` holds, picked by their `weight`, and puts it on screen. If none can be drawn, it puts `otherwise` on screen, and with no `otherwise` it leaves the screen as it was.
 
-The draw is seeded by the save, the turn and a count of draws from that set, kept in the variable `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
+The draw is seeded by the save, the turn and a count of draws from that set, kept in the kv key `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
 
 The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { value: 'park' } }`.
 
@@ -235,7 +235,7 @@ Takes one entry out of a collection by id. It does nothing if the entry isn't th
 { kind: 'create', of: 'staff', entity: { id: 'cleo', name: 'Cleo' } }
 ```
 
-Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. It gets every stat of its kind at that stat's `start`, overridden by `entity.stats`. Its variables are `entity.flags`, or none.
+Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. It gets every stat of its kind at that stat's `start`, overridden by `entity.stats`. Its kv store is `entity.kv`, or empty.
 
 Without `id`, it gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). A number is never given again, even once the entity that had it is [removed](#remove). With `id`, it gets that id, unless an entity of that kind already has it. In that case the effect does nothing, and the entity there keeps its name and numbers.
 
@@ -261,7 +261,7 @@ choices: [
 { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', of: '$' }] }
 ```
 
-Takes an [entity](/docs/reference/entities) out of the game, with its stats and variables. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
+Takes an [entity](/docs/reference/entities) out of the game, with its stats and its kv store. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
 
 An entity the game declares is also recorded in [`state.removed`](/docs/reference/state#removed). That keeps it gone, rather than being put back when the save [loads](/docs/reference/entities#entities-in-old-saves), which adds declared entities a save lacks. An entity created in play isn't recorded.
 
@@ -325,7 +325,7 @@ Plays a [track](/docs/reference/audio#trackdef) once, on its own channel (`sfx` 
 
 Starts a [minigame](/docs/reference/minigames) in its `start` state, with its variables at their starting values. A minigame already running is dropped. Until it ends, the view draws it over the scene or the room, and every command but its own (and `dismiss` and `setting`) is refused with `Finish this first.`
 
-It also adds 1 to the variable `minigame:<id>`, which counts how many times the minigame has started. The [content checker](/docs/reference/checks) reports an unknown minigame.
+It also adds 1 to the kv key `minigame:<id>`, which counts how many times the minigame has started. The [content checker](/docs/reference/checks) reports an unknown minigame.
 
 ### minigameVar
 
@@ -355,8 +355,8 @@ import type { Custom } from '@ifloom/engine'
 const custom: Custom = {
   effects: {
     bumpVisits: (state, args) => {
-      const now = Number(state.storylines.ava?.flags.visits ?? 0)
-      return [{ kind: 'storylineFlag', id: 'ava', key: 'visits', value: now + Number(args.by ?? 1) }]
+      const now = Number(state.storylines.ava?.kv.visits ?? 0)
+      return [{ kind: 'storylineKv', id: 'ava', key: 'visits', to: now + Number(args.by ?? 1) }]
     },
   },
 }
@@ -380,5 +380,5 @@ You write a [plugin](/docs/reference/plugins)'s effect the same way, with the pl
 ## See it in an example
 
 - The Corner Café: the `endWeek` activity in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) runs two custom effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ kind: 'turn' }`. The `hiring` scene's choices `create` new staff.
-- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ kind: 'flag', key: 'fibs', add: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
+- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ kind: 'kv', key: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
 - Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), the `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the `arrows` activity starts a minigame, and Ava's choices raise her friendship with `{ kind: 'stat', key: 'friendship', by: 5, of: person('ava') }`.

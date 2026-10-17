@@ -40,7 +40,7 @@ describe('stats', () => {
   it('shows the stats the player can see, in the declared order', () => {
     const game = fixture()
     expect(view(begin(game), game).stats.map((stat) => stat.key)).toEqual(['intelligence', 'coins'])
-    const lucky = begin(game, { flags: { feelingLucky: true } })
+    const lucky = begin(game, { kv: { feelingLucky: true } })
     expect(view(lucky, game).stats.map((stat) => stat.label)).toEqual(['Intelligence', 'Coins', 'Luck'])
   })
 

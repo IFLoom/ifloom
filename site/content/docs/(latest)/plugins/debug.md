@@ -1,7 +1,7 @@
 ---
 title: "Debug"
 ---
-`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a variable, give the player an item, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
+`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, give the player an item, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
 
 You'd want it while you build and test a game, so you can get straight to the state you want to look at without playing up to it. It's for you, not the player, so leave it out of release builds.
 
@@ -9,7 +9,7 @@ To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `de
 
 ```ts
 import {
-  debug, setStat, setVariable, setItem, jumpTo, setTime, setTurn, goTo,
+  debug, setStat, setKv, setItem, jumpTo, setTime, setTurn, goTo,
   type DebugView,
 } from '@ifloom/plugin-debug'
 ```
@@ -73,7 +73,7 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 | Command | Helper | Does |
 |---|---|---|
 | `{ type: 'custom', name: 'debug/stat', with: { stat, to, of? } }` | `setStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running the [`setStat`](/docs/reference/effects#setstat) effect. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
-| `{ type: 'custom', name: 'debug/variable', with: { key, value } }` | `setVariable(key, value)` | Sets a [variable](/docs/reference/state#flags) to `true`, `false`, a number or a word. |
+| `{ type: 'custom', name: 'debug/kv', with: { key, to } }` | `setKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
 | `{ type: 'custom', name: 'debug/item', with: { item, count } }` | `setItem(item, count)` | Sets how many of an item the player has. Below 0 counts as 0. |
 | `{ type: 'custom', name: 'debug/scene', with: { scene } }` | `jumpTo(scene?)` | Puts a scene on screen. With no `scene`, it closes the one that's open. |
 | `{ type: 'custom', name: 'debug/time', with: { day?, period? } }` | `setTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
@@ -85,7 +85,7 @@ A command is refused, with a line from [Strings](#strings), when:
 - the game has no such stat, item, scene or place;
 - `debug/stat`'s `of` names no entity in the game, or the stat isn't one the owner has (see [Gotchas](#gotchas));
 - the number given to `debug/stat` or `debug/item` isn't a finite number;
-- a variable's value isn't one a variable can hold;
+- a kv key's value isn't one the kv store can hold;
 - the turn isn't a whole number from 0;
 - the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/plugins/calendar#queries) query).
 
@@ -98,18 +98,18 @@ The commands set the state and nothing else, so you can get to the state you wan
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
 - **No exit for `debug/go`.** It ignores a place's [`locked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the places plugin's [`arrive`](/docs/plugins/places#placesoptions) option doesn't run.
-- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.turn`](/docs/reference/rules#turn), [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `turn` [hook](/docs/reference/plugins#hooks), and neither puts the [`resets`](/docs/reference/rules#resets) variables back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
+- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.turn`](/docs/reference/rules#turn), [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `turn` [hook](/docs/reference/plugins#hooks), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 
-They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `after` hook runs. Setting a variable that a trigger watches fires that trigger.
+They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `after` hook runs. Setting a kv key that a trigger watches fires that trigger.
 
 ### Helpers
 
 ```ts
-import type { Command, FlagValue } from '@ifloom/engine'
+import type { Command, KvValue } from '@ifloom/engine'
 
 const setStat: (stat: string, to: number, of?: string) => Command
-const setVariable: (key: string, value: FlagValue) => Command
+const setKv: (key: string, to: KvValue) => Command
 const setItem: (item: string, count: number) => Command
 const jumpTo: (scene?: string) => Command
 const setTime: (time: { day?: number; period?: string }) => Command
@@ -126,7 +126,7 @@ Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s c
 ```ts
 import { apply, startingState, type Command, type Game } from '@ifloom/engine'
 import { where } from '@ifloom/plugin-places'
-import { goTo, jumpTo, setItem, setStat, setTime, setTurn, setVariable } from '@ifloom/plugin-debug'
+import { goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv } from '@ifloom/plugin-debug'
 
 declare const game: Game // the showcase, built with debug()
 
@@ -134,7 +134,7 @@ let state = startingState(game) // moving day, behind a lock that denies '*'
 
 const set = (command: Command) => (state = apply(state, game, command).state)
 set(setStat('coins', 40))
-set(setVariable('catName', 'Biscuit'))
+set(setKv('catName', 'Biscuit'))
 set(setItem('sandwich', 2))
 set(setStat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
 set(setTurn(4))
@@ -175,7 +175,7 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `debug/noSuchPlace` | `There is no location called {id}.` |
 | `debug/noPlaces` | `This game has no places.` |
 | `debug/noSuchScene` | `There is no scene called {id}.` |
-| `debug/badValue` | `A variable holds true, false, a number or a word.` |
+| `debug/badValue` | `A kv key holds true, false, a number or a word.` |
 | `debug/notANumber` | `That needs a number.` |
 | `debug/badTime` | `A day is a whole number from 0, and a period one of {periods}.` |
 | `debug/noCalendar` | `This game has no calendar.` |
@@ -207,7 +207,7 @@ type DebugView = {
 - **A stat is held to its range** as the game declares it, so `setStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
 - **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through the `setStat` effect, so the game's [`rules.onStat`](/docs/reference/rules#onstat) never sees the change.
 - **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
-- **A variable's key isn't checked.** Any key is set, including a misspelt one.
+- **A kv key isn't checked.** Any key is set, including a misspelt one.
 - **A `custom` entry in [`rules.commands`](/docs/reference/rules#commands) takes over the debug commands too,** as it does every plugin command.
 - **Never give the player a way to send these.** A debug command in a scene's choices or a game action would work in any build that still lists the plugin. Keep the plugin out of release builds, and keep the commands out of content.
 

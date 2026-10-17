@@ -72,12 +72,12 @@ The game's other custom conditions, and its effects, values and panels, are left
 ## SCHEMA
 
 ```ts
-const SCHEMA = 4
+const SCHEMA = 5
 ```
 
 The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 5, this engine reads 4`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 6, this engine reads 5`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -87,12 +87,18 @@ function upgradePack(pack: { schema: number }): Pack | string
 
 Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says why it can't. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
 
+| Step | What it rewrites |
+|---|---|
+| 4 to 5 | Flags become the [kv store](/docs/reference/state#kv). `{ flag }` and `{ storylineKv }` conditions become `{ kv }` and `{ storylineKv }`. The `flag` effect becomes `kv`, with `value` as `to` and `add` as `by`, and `storylineKv` becomes `storylineKv` with `to`. A `kv` record on an entity, a character, a generator template or a `create` effect becomes `kv`, and an input's `variable` becomes `key`. Prose, strings, variants and custom functions are left alone. |
+
+Schema 4 is the oldest a pack can be.
+
 It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 5, this engine reads 4` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 1, too old for this engine to read (it reads 4)` |
+| `schema` is newer than `SCHEMA` | `written for schema 6, this engine reads 5` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 5)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 

@@ -13,12 +13,12 @@ import { problemTarget } from '../lib/references'
 
 afterEach(cleanup)
 
-const names = { scenes: ['market', 'home'], stats: ['coins'], items: ['bun'], variables: ['met'], choices: ['market/buy'], sets: ['market'] }
+const names = { scenes: ['market', 'home'], stats: ['coins'], items: ['bun'], kv: ['met'], choices: ['market/buy'], sets: ['market'] }
 
 describe('the condition builder', () => {
   it('switches kind and edits the fields of the new one', () => {
     const onChange = vi.fn()
-    const { rerender } = render(<ConditionBuilder value={{ flag: 'met' }} names={names} onChange={onChange} />)
+    const { rerender } = render(<ConditionBuilder value={{ kv: 'met' }} names={names} onChange={onChange} />)
     fireEvent.change(screen.getByLabelText('Kind of condition'), { target: { value: 'stat' } })
     expect(onChange).toHaveBeenLastCalledWith({ stat: 'coins', gte: 1 })
     rerender(<ConditionBuilder value={{ stat: 'coins', gte: 1 }} names={names} onChange={onChange} />)
@@ -41,7 +41,7 @@ describe('the condition builder', () => {
     render(<Harness />)
     fireEvent.click(screen.getByText('+ Add a part'))
     fireEvent.click(screen.getByText('+ Add a part'))
-    expect(JSON.parse(screen.getByTestId('out').textContent!)).toEqual({ all: [{ flag: 'met' }, { flag: 'met' }] })
+    expect(JSON.parse(screen.getByTestId('out').textContent!)).toEqual({ all: [{ kv: 'met' }, { kv: 'met' }] })
   })
 })
 

@@ -50,7 +50,7 @@ export function endTurn(state: GameState, game: Game, cx: FeatureContext, before
   const next = state.turn + 1
   const rule = game.rules?.turn?.(before, next) ?? { effects: [] }
   const begun = cx.runEffects(
-    { ...state, turn: next, flags: { ...state.flags, ...game.rules?.resets } },
+    { ...state, turn: next, kv: { ...state.kv, ...game.rules?.resets } },
     game,
     rule.effects,
     true,

@@ -23,8 +23,8 @@ const caffeinated: EffectDef = {
   label: 'Caffeinated',
   turns: 2,
   modifiers: [{ stat: 'energy', add: 10 }],
-  onStart: [{ kind: 'flag', key: 'buzzing', value: true }],
-  onEnd: [{ kind: 'flag', key: 'buzzing', value: false }],
+  onStart: [{ kind: 'kv', key: 'buzzing', to: true }],
+  onEnd: [{ kind: 'kv', key: 'buzzing', to: false }],
 }
 /** A cold: a stack per sneeze, at most three, each taking a fifth off energy and a coin a turn for tissues. */
 const cold: EffectDef = {
@@ -100,7 +100,7 @@ describe('timed effects', () => {
   it('run onStart, count down at the end of each turn, and run onEnd when they run out', () => {
     const g = game()
     let state = run(fresh(g), g, 'coffee')
-    expect(state.flags.buzzing).toBe(true)
+    expect(state.kv.buzzing).toBe(true)
     expect(shown(state, g).active).toEqual([
       { id: 'caffeinated', label: 'Caffeinated', summary: '', turnsLeft: 2, stacks: 1, modifiers: [{ stat: 'energy', add: 10 }] },
     ])
@@ -110,7 +110,7 @@ describe('timed effects', () => {
     state = run(state, g, 'rest')
     expect(shown(state, g).active).toEqual([])
     expect(holds(state, effectActive('caffeinated'), g)).toBe(false)
-    expect(state.flags.buzzing).toBe(false)
+    expect(state.kv.buzzing).toBe(false)
     expect(statValue(state, g, 'energy')).toBe(50)
   })
 

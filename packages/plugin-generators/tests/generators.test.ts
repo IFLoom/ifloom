@@ -27,7 +27,7 @@ const visitor: TemplateDef = {
   of: 'visitor',
   name: { join: [{ pool: 'first' }, { pool: 'last' }] },
   stats: { mood: { between: [1, 5] }, patience: 3 },
-  flags: { company: { pool: 'company' }, local: true },
+  kv: { company: { pool: 'company' }, local: true },
 }
 
 function game(): Game {
@@ -73,8 +73,8 @@ describe('generators', () => {
       expect(made.stats.mood).toBeGreaterThanOrEqual(1)
       expect(made.stats.mood).toBeLessThanOrEqual(5)
       expect(made.stats.patience).toBe(3)
-      expect(['none', 'dog', 'parrot']).toContain(made.flags.company)
-      expect(made.flags.local).toBe(true)
+      expect(['none', 'dog', 'parrot']).toContain(made.kv.company)
+      expect(made.kv.local).toBe(true)
     }
     expect(holds(state, { count: 'visitor', gte: 3 }, g)).toBe(true)
   })
@@ -94,7 +94,7 @@ describe('generators', () => {
   it('pick from a pool by weight', () => {
     const g = game()
     const template = templateDefs(g)[0]
-    const company = Array.from({ length: 400 }, (_, n) => drawEntity(template, fresh(g), g, n + 1).flags.company)
+    const company = Array.from({ length: 400 }, (_, n) => drawEntity(template, fresh(g), g, n + 1).kv.company)
     const dogs = company.filter((value) => value === 'dog').length
     const nobody = company.filter((value) => value === 'none').length
     expect(nobody).toBeGreaterThan(dogs)

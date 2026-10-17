@@ -20,7 +20,7 @@ Hooks are plain functions of the state. Don't mutate the state you're given. Ret
 type GameRules = {
   turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
   locks?: readonly Lock[]
-  resets?: Record<string, FlagValue>
+  resets?: Record<string, KvValue>
   onTurn?: (state: GameState) => GameState
   commands?: Partial<Record<Command['type'], (state: GameState, command: Command) => GameState | string>>
   onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
@@ -31,7 +31,7 @@ type GameRules = {
 
 A turn is the engine's one clock, [`state.turn`](/docs/reference/state#turn). A turn ends each time a [`turn`](/docs/reference/effects#turn) effect applies, whether a choice, an activity or a plugin applies it. The [calendar](/docs/plugins/calendar#what-a-turn-is), for example, ends one each time passing time crosses into a new day (or a new period or week, if you set it up that way). Each time a turn ends, these steps run in order:
 
-1. The turn counter goes up by one, and [`resets`](#resets) are written into the variables.
+1. The turn counter goes up by one, and [`resets`](#resets) are written into the kv store.
 2. [`turn`](#turn)'s effects apply, in order. It's asked about the state the turn ended on, as the effect found it. When the player goes to bed with the calendar, that's the state as they went to bed, with the clock still at night.
 3. [`onTurn`](#onturn) runs.
 4. Each [plugin](/docs/reference/plugins#hooks)'s `turn` hook runs, in the order `game.plugins` lists them.
@@ -52,10 +52,10 @@ turn?: (state: GameState, nextTurn: number) => { effects: Effect[] }
 turn: (state, nextTurn) => ({
   effects: [
     // A late coffee costs a fifth of the night's rest.
-    { kind: 'setStat', key: 'energy', to: state.flags.lateCoffee ? 80 : 100 },
-    { kind: 'flag', key: 'lateCoffee', value: false },
+    { kind: 'setStat', key: 'energy', to: state.kv.lateCoffee ? 80 : 100 },
+    { kind: 'kv', key: 'lateCoffee', to: false },
     // In this game a turn is a day, and market day comes every seventh.
-    { kind: 'flag', key: 'marketOpen', value: nextTurn % 7 === 5 },
+    { kind: 'kv', key: 'marketOpen', to: nextTurn % 7 === 5 },
   ],
 })
 ```
@@ -68,12 +68,12 @@ turn: (state, nextTurn) => ({
 ### resets
 
 ```ts
-resets?: Record<string, FlagValue>
+resets?: Record<string, KvValue>
 ```
 
 **When:** at the end of each turn, as the counter moves on and before [`turn`](#turn)'s effects.
 
-**Does:** writes each of these values into `state.flags`. Use it for the variables that count "once this turn".
+**Does:** writes each of these values into `state.kv`. Use it for the kv keys that count "once this turn".
 
 **Without it:** nothing is put back.
 
@@ -135,7 +135,7 @@ const rules: GameRules = {
   commands: {
     // Ava doesn't let the player walk off mid-order.
     leave: (state) =>
-      state.sceneId === 'ava.hi' && !state.flags.paid ? 'Ava is still making your coffee.' : { ...state, sceneId: null },
+      state.sceneId === 'ava.hi' && !state.kv.paid ? 'Ava is still making your coffee.' : { ...state, sceneId: null },
   },
 }
 ```
@@ -167,7 +167,7 @@ onStat: (before, after, key) =>
   key === 'charm' && (before.stats.energy ?? 0) < 10 ? before : after
 ```
 
-What the player is called, and what they're like, isn't a rule either. Keep it in [stats](/docs/reference/stats) and [variables](/docs/reference/state#flags), and print it in prose.
+What the player is called, and what they're like, isn't a rule either. Keep it in [stats](/docs/reference/stats) and the [kv store](/docs/reference/state#kv), and print it in prose.
 
 The core has no characters, so it has no hooks for them. Which scene talking to someone opens is the [cast](/docs/plugins/cast#talkoption)'s `talk` option.
 

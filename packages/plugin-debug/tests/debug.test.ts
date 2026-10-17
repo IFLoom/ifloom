@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { apply, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places, where } from '@ifloom/plugin-places'
-import { debug, goTo, jumpTo, setItem, setStat, setTime, setTurn, setVariable, type DebugView } from '../src/index.ts'
+import { debug, goTo, jumpTo, setItem, setStat, setTime, setTurn, setKv, type DebugView } from '../src/index.ts'
 
 const clock = calendar()
 
@@ -44,7 +44,7 @@ describe('the debugger', () => {
       startingState(g),
       g,
       setStat('luck', 50),
-      setVariable('metAva', true),
+      setKv('metAva', true),
       setItem('key', 2),
       setTime({ day: 6, period: 'evening' }),
       setTurn(9),
@@ -53,7 +53,7 @@ describe('the debugger', () => {
     )
     expect(state).toMatchObject({
       stats: { luck: 10 },
-      flags: { metAva: true },
+      kv: { metAva: true },
       items: { key: 2 },
       turn: 9,
       sceneId: 'ending',
@@ -79,7 +79,7 @@ describe('the debugger', () => {
     expect(whyNot(startingState(bare), bare, goTo('island'))).toBe('This game has no places.')
     expect(whyNot(state, g, setStat('luck', Number('lots')))).toBe('That needs a number.')
     expect(whyNot(state, g, setStat('luck', 1, 'character:nobody'))).toBe('There is nobody and nothing called character:nobody.')
-    const withAva = { ...state, entities: { character: { ava: { name: 'Ava', stats: {}, flags: {} } } } }
+    const withAva = { ...state, entities: { character: { ava: { name: 'Ava', stats: {}, kv: {} } } } }
     expect(whyNot(withAva, g, setStat('luck', 1, 'character:ava'))).toBe('That is not whose luck it is.')
     expect(whyNot(state, g, setItem('key', NaN))).toBe('That needs a number.')
   })

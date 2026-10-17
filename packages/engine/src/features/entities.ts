@@ -1,6 +1,6 @@
 /**
  * Entities and kinds: the things a game keeps several of, each with its own
- * stats and variables, such as a café's staff or the dishes on its menu. The
+ * stats and kv keys, such as a café's staff or the dishes on its menu. The
  * helpers are in `entities.ts`.
  */
 import {
@@ -20,7 +20,7 @@ import {
 } from '../entities.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
-import type { Condition, FlagValue, GameState, Range } from '../types.ts'
+import type { Condition, KvValue, GameState, Range } from '../types.ts'
 import { defineFeature, inRange, wanted, type FeatureContext, type PackMerge } from './feature.ts'
 import { statView, type StatView } from './stats.ts'
 
@@ -32,7 +32,7 @@ export type EntityView = {
   name: string
   /** Its kind's listed stats that the player can see on it, in declared order. */
   stats: StatView[]
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 
 export type EntitiesView = {
@@ -70,7 +70,7 @@ export type EntitiesShape = {
      * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
      * left out, never reused; an id already there is left as it is.
      */
-    create: { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> } }
+    create: { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
     /** Take an entity out of the game: `{ kind: 'remove', of: 'staff:ana' }`. */
     remove: { kind: 'remove'; of: string }
     /**
@@ -265,7 +265,7 @@ export const entities = defineFeature<EntitiesShape>({
             ref,
             name: entity.name,
             stats: stats.filter((stat) => cx.holds(state, bindCurrent(stat.visible, ref), game)).map((stat) => statView(state, game, stat, ref, cx)),
-            flags: entity.flags,
+            kv: entity.kv,
           }
         })
         return [kind.id, { label: kind.label, plural: kind.plural ?? kind.label, entries }]

@@ -65,7 +65,7 @@ export type Choice = {
   once?: {
     per: 'turn'
     reason: string
-    /** Override the flag it records under, to keep an existing save's caps. */
+    /** Override the kv key it records under, to keep an existing save's caps. */
     key?: string
   }
   /** Words the UI can style or filter the choice by. The engine gives them no meaning. */
@@ -306,15 +306,15 @@ export function drawVariant(
 ): { id: string; remember: Effect } {
   if (members.length === 0) throw new Error(`variants "${name}" has no members`)
   const key = `variants:${name}`
-  const used = Number(state.flags[key] ?? 0)
+  const used = Number(state.kv[key] ?? 0)
   // Weighted members are drawn at random by weight, each draw seeded by the save, the turn and the count.
   if (weightOf && members.some((member) => (weightOf(member) ?? 1) !== 1)) {
     const id = weighted(members, weightOf, 'variants', name, state.seed, state.turn, used) ?? members[0]
-    return { id, remember: { kind: 'flag', key, value: used + 1 } }
+    return { id, remember: { kind: 'kv', key, to: used + 1 } }
   }
   const offset = roll(members.length, name, state.seed, state.turn)
   const index = (((offset + used) % members.length) + members.length) % members.length
-  return { id: members[index], remember: { kind: 'flag', key, value: used + 1 } }
+  return { id: members[index], remember: { kind: 'kv', key, to: used + 1 } }
 }
 
 /**

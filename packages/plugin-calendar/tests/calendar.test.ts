@@ -12,7 +12,7 @@ function house(options: CalendarOptions = {}, rules: GameRules = {}): { game: Ga
         schema: SCHEMA,
         activities: [
           { id: 'nap', effects: [pass(1)] },
-          { id: 'outing', effects: [pass(2), { kind: 'flag', key: 'out', value: true }] },
+          { id: 'outing', effects: [pass(2), { kind: 'kv', key: 'out', to: true }] },
           { id: 'walk', effects: [pass(3)] },
           { id: 'rest', effects: [{ kind: 'turn' }] },
         ],
@@ -141,8 +141,8 @@ describe('the calendar', () => {
     expect(button(game, night, 'bed').warning).toBeUndefined()
     const late = clock.write(startingState(game), { day: 0, period: 'late' })
     expect((view(late, game).plugins.calendar as CalendarView).curfew).toBe(true)
-    const free = house({ curfew: { flag: 'nightOwl', is: false } })
-    const owl = { ...free.clock.write(startingState(free.game), { day: 0, period: 'night' }), flags: { nightOwl: true } }
+    const free = house({ curfew: { kv: 'nightOwl', is: false } })
+    const owl = { ...free.clock.write(startingState(free.game), { day: 0, period: 'night' }), kv: { nightOwl: true } }
     expect(apply(owl, free.game, act('walk')).ok).toBe(true)
   })
 
@@ -187,8 +187,8 @@ describe('the calendar', () => {
   })
 
   it('stops what passes time with a lock by effect', () => {
-    const { game } = house({}, { locks: [{ when: { flag: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }] })
-    const ill = { ...startingState(game), flags: { ill: true } }
+    const { game } = house({}, { locks: [{ when: { kv: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }] })
+    const ill = { ...startingState(game), kv: { ill: true } }
     expect(whyNot(ill, game, act('nap'))).toBe('You feel too ill.')
     expect(whyNot(ill, game, act('rest'))).toBeUndefined()
   })
@@ -197,7 +197,7 @@ describe('the calendar', () => {
     const { problems } = loadGame([], {
       id: 'bad',
       title: 'Bad',
-      plugins: [calendar({ periods: ['am', 'am'], start: { period: 'noon' }, sleep: { from: ['pm'] }, weekend: [9], curfew: { flag: 'x', of: 'pet:cat' } })],
+      plugins: [calendar({ periods: ['am', 'am'], start: { period: 'noon' }, sleep: { from: ['pm'] }, weekend: [9], curfew: { kv: 'x', of: 'pet:cat' } })],
     })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'options curfew: unknown kind "pet"',

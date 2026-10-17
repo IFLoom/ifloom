@@ -51,8 +51,8 @@ import { startingState } from '@ifloom/engine'
 
 const state = startingState(game)
 state.stats                  // { coins: 120, reputation: 20 }
-state.entities.staff.ana     // { name: 'Ana', stats: { skill: 5, morale: 60, wage: 12 }, flags: {} }
-state.entities.dish.soup     // { name: 'Soup of the day', stats: { price: 6, quality: 3 }, flags: {} }
+state.entities.staff.ana     // { name: 'Ana', stats: { skill: 5, morale: 60, wage: 12 }, kv: {} }
+state.entities.dish.soup     // { name: 'Soup of the day', stats: { price: 6, quality: 3 }, kv: {} }
 ```
 
 Ana's morale is the stat's `start`, 60. Her skill and wage come from her declaration. Content names her `'staff:ana'`:
@@ -90,7 +90,7 @@ type EntityDef = {
   of: string
   name: string
   stats?: Record<string, number>
-  flags?: Record<string, FlagValue>
+  kv?: Record<string, KvValue>
 }
 ```
 
@@ -102,7 +102,7 @@ One entity that exists from the start of the game.
 | `of` | Its kind's id. |
 | `name` | What the player reads, such as "Ana". |
 | `stats` | Starting values for any of its stats that differ from each stat's `start`. Only stats declared `of` its kind. |
-| `flags` | Its [variables](/docs/reference/state#flags) at the start. Read them with `{ flag, of }` and set them with the `flag` effect's `of`. |
+| `kv` | Its own [kv store](/docs/reference/state#kv) at the start. Read a key with `{ kv, of }` and set it with the `kv` effect's `of`. |
 
 Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in packs. They merge by kind and id (`'staff:ana'`), the base's first. A later pack's entity replaces an earlier one with the same kind and id, whole.
 
@@ -114,11 +114,11 @@ A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, m
 type EntityState = {
   name: string
   stats: Stats
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 ```
 
-One entity as the state keeps it, at [`state.entities[kind][id]`](/docs/reference/state#entities). `stats` has every stat declared `of` its kind, at that stat's `start` unless its declaration or its `create` effect gave another value. `flags` is `{}` when none were given.
+One entity as the state keeps it, at [`state.entities[kind][id]`](/docs/reference/state#entities). `stats` has every stat declared `of` its kind, at that stat's `start` unless its declaration or its `create` effect gave another value. `kv` is `{}` when none were given.
 
 ## EntityRef
 
@@ -142,7 +142,7 @@ A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner on
   kind: 'each',
   of: 'staff',
   where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } },
-  effects: [{ kind: 'flag', key: 'learning', value: true, of: '$' }],
+  effects: [{ kind: 'kv', key: 'learning', to: true, of: '$' }],
 }
 ```
 
@@ -150,7 +150,7 @@ A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner on
 
 ## Ids
 
-An entity the game declares has the id you give it. One [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created). A number is never given twice, even after the entity that had it is removed, so a reference saved in a variable never comes to mean someone else.
+An entity the game declares has the id you give it. One [created](/docs/reference/effects#create) without an id gets the next free number with a `#` in front (`#1`, `#2`), counted per kind in [`state.created`](/docs/reference/state#created). A number is never given twice, even after the entity that had it is removed, so a reference saved in a kv key never comes to mean someone else.
 
 **Why the `#`.** Entities keep the order they arrived in, declared ones first and then created ones. They're kept in an object, and JavaScript always puts keys that look like whole numbers first, in numeric order. The `#` avoids that, and it's also why the loader reports `an entity id must not be a whole number` for a declared one.
 
@@ -254,7 +254,7 @@ parseRef('$')          // undefined
 function writeEntity(state: GameState, ref: EntityRef, next: EntityState): GameState
 ```
 
-Returns the state with the entity `ref` names set to `next`, whole, including its name, stats and variables. If the entity isn't there, it's added after the rest of its kind. If `ref` isn't `kind:id`, the state comes back unchanged. Use it in a plugin effect or a custom effect that changes an entity in a way the built-in effects can't.
+Returns the state with the entity `ref` names set to `next`, whole, including its name, stats and kv store. If the entity isn't there, it's added after the rest of its kind. If `ref` isn't `kind:id`, the state comes back unchanged. Use it in a plugin effect or a custom effect that changes an entity in a way the built-in effects can't.
 
 ```ts
 import { entityOf, writeEntity } from '@ifloom/engine'

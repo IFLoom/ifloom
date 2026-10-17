@@ -470,7 +470,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.wearItem` | `Wear {item}` | `item` |
 | `ui.mailHeader` | `{key}: {value}` | `key`, `value` |
 | `ui.debugStat` | `Stat` | |
-| `ui.debugVariable` | `Variable` | |
+| `ui.debugKv` | `kv key` | |
 | `ui.debugItem` | `Item` | |
 | `ui.debugStatOf` | `Stat of` | |
 | `ui.debugGo` | `Go` | |

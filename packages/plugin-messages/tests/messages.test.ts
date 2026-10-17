@@ -26,7 +26,7 @@ function game(extra: Partial<Pack> = {}): Game {
     storylines: [{ id: 'ava', name: 'Ava' }],
     scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', id: null }] }] }],
     // Going out is all a message waits for here: no map needed.
-    activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'goOut', effects: [{ kind: 'flag', key: 'out', value: true }] }],
+    activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] }],
     prose: {
       'ava.hi': 'Hi.',
       'ava.hi#bye': 'Bye',
@@ -41,8 +41,8 @@ function game(extra: Partial<Pack> = {}): Game {
       cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
       messages: {
         messages: [
-          { id: 'msg.hey', channel: 'texts', from: 'ava', when: { flag: 'out' }, body: [{ text: 'msg.hey' }], replies: [{ id: 'yes', effects: [{ kind: 'flag', key: 'saidYes', value: true }] }, { id: 'no' }] },
-          { id: 'msg.later', channel: 'texts', from: 'ava', when: { flag: 'saidYes' }, body: [{ text: 'msg.later' }] },
+          { id: 'msg.hey', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ text: 'msg.hey' }], replies: [{ id: 'yes', effects: [{ kind: 'kv', key: 'saidYes', to: true }] }, { id: 'no' }] },
+          { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ text: 'msg.later' }] },
           { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ text: 'msg.bill' }] },
         ],
       },
@@ -54,7 +54,7 @@ function game(extra: Partial<Pack> = {}): Game {
   return loaded.game
 }
 
-const begin = (g: Game): GameState => clock.write({ ...startingState(g, { flags: { playerFirst: 'Sam' } }), sceneId: null }, { day: 1, period: 'morning' })
+const begin = (g: Game): GameState => clock.write({ ...startingState(g, { kv: { playerFirst: 'Sam' } }), sceneId: null }, { day: 1, period: 'morning' })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.messages as MessagesView
 
 describe('messages', () => {
@@ -148,7 +148,7 @@ describe('pictures and videos in a message', () => {
         cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
         messages: {
           messages: [
-            { id: 'msg.ducks', channel: 'texts', from: 'ava', when: { flag: 'out' }, body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }] },
+            { id: 'msg.ducks', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }] },
           ],
         },
       },

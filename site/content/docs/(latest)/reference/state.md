@@ -24,13 +24,13 @@ type GameState = {
   created: Record<string, number>
   removed: string[]
   storylines: Record<string, StorylineState>
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
   items: Record<string, number>
   collections: Record<string, CollectionEntry[]>
   notices: Notice[]
   fired: Record<string, number>
   plugins: Record<string, PluginSlice>
-  settings: Record<string, FlagValue>
+  settings: Record<string, KvValue>
   audio: AudioState
   media: MediaState
   minigame: MinigameState | null
@@ -38,10 +38,10 @@ type GameState = {
 }
 ```
 
-`FlagValue`, `StorylineState`, `Phase`, `Stats`, `EntityState`, `CollectionEntry` and `Notice` come from the package root too:
+`KvValue`, `StorylineState`, `Phase`, `Stats`, `EntityState`, `CollectionEntry` and `Notice` come from the package root too:
 
 ```ts
-import type { FlagValue, StorylineState } from '@ifloom/engine'
+import type { KvValue, StorylineState } from '@ifloom/engine'
 ```
 
 ### version
@@ -56,7 +56,7 @@ The game's own [version](/docs/reference/saves#the-games-own-migrations) the sta
 
 Fixed for the life of a save. A new game takes the `seed` given to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command. If none is given, it's a hash of the game's id, so every new game started without one deals the same. Every random draw mixes the seed in. Two playthroughs with different seeds deal different variants, while one save always deals the same. A UI should pass a fresh seed for each new game. See [Randomness](/docs/reference/random#the-seed).
 
-There is no player name in the state. A game that asks for one keeps it in a [variable](#flags), such as `playerName`.
+There is no player name in the state. A game that asks for one keeps it in the [kv store](#kv), under a key such as `playerName`, and names its saves after it with [`saveName`](/docs/reference/game#savename).
 
 ### phase
 
@@ -94,7 +94,7 @@ The [turn](#turn) each scene was first entered. It's never overwritten. The intr
 
 ### chosen
 
-How many times each choice has been picked, keyed `scene/choice`, as in `{ 'cafe.counter/buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a variable of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
+How many times each choice has been picked, keyed `scene/choice`, as in `{ 'cafe.counter/buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
 
 ### stats
 
@@ -113,11 +113,11 @@ A stat declared `of` a [kind](/docs/reference/entities) isn't here. Each entity 
 entities: Record<string, Record<string, EntityState>>
 ```
 
-The things the game keeps several of, by [kind](/docs/reference/entities) and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) holding its name, its stats and its variables. Within a kind they're in the order they arrived, declared ones first and then those [created](/docs/reference/effects#create) in play.
+The things the game keeps several of, by [kind](/docs/reference/entities) and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) holding its name, its stats and its own kv store. Within a kind they're in the order they arrived, declared ones first and then those [created](/docs/reference/effects#create) in play.
 
 A new game has an entry for every declared kind, empty if no entity of that kind is declared. Each declared entity starts with every stat declared `of` its kind at that stat's `start`, overridden by the declaration's `stats`.
 
-The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change it, as do `stat`, `setStat` and `flag` with `of`. Read it with [`{ count }`](/docs/reference/conditions#count), [`{ entity }`](/docs/reference/conditions#entity), `{ stat, of }` and `{ flag, of }`, or with [`entitiesOf`](/docs/reference/entities#entitiesof) and [`entityOf`](/docs/reference/entities#entityof). A save from before version 4 loads with `{}`.
+The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change it, as do `stat`, `setStat` and `kv` with `of`. Read it with [`{ count }`](/docs/reference/conditions#count), [`{ entity }`](/docs/reference/conditions#entity), `{ stat, of }` and `{ kv, of }`, or with [`entitiesOf`](/docs/reference/entities#entitiesof) and [`entityOf`](/docs/reference/entities#entityof). A save from before version 4 loads with `{}`.
 
 ### created
 
@@ -140,7 +140,7 @@ The declared [entities](/docs/reference/entities) that were [removed](/docs/refe
 ```ts
 type StorylineState = {
   closedUntil: number | null
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 ```
 
@@ -149,19 +149,23 @@ One entry per storyline declared in `game.storylines`.
 | Field | What it holds |
 |---|---|
 | `closedUntil` | A [turn](#turn). While `turn` is below this, the storyline is closed, and the [cast](/docs/plugins/cast) won't let the player talk to or call a character who belongs to it. `null` means open. Set by [`closeStoryline`](/docs/reference/effects#closestoryline). |
-| `flags` | Variables kept on this storyline. [`{ counter }`](/docs/reference/conditions#counter) reads the numbers here. |
+| `kv` | The storyline's own kv store. [`storylineKv`](/docs/reference/effects#storylinekv) sets its keys and [`{ storylineKv }`](/docs/reference/conditions#storylinekv) reads them. [`{ counter }`](/docs/reference/conditions#counter) reads the numbers here. |
 
 Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash. A storyline doesn't keep a number for how well the player is liked. A game keeps that as a [stat](/docs/reference/stats#entity-stats) on the cast's characters (see [Storylines](/docs/reference/storylines)).
 
-### flags
+### kv
 
 ```ts
-type FlagValue = boolean | number | string
+type KvValue = boolean | number | string
 ```
 
-The game's own variables. A new game starts with the `flags` given to [`startingState`](/docs/reference/commands#startingstate), or `{}`. The [`flag`](/docs/reference/effects#flag) effect and [inputs](/docs/reference/inputs) set them. [`{ flag }`](/docs/reference/conditions#flag) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. [`rules.resets`](/docs/reference/rules#resets) puts some back at the start of each turn.
+The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or an item. Keys need no declaring. A key nobody has set reads as unset, which a condition treats as false, or as 0 in a range.
 
-The engine writes two kinds of key here itself, so don't use these prefixes for your own variables:
+A new game starts with the `kv` given to [`startingState`](/docs/reference/commands#startingstate), or `{}`. The [`kv`](/docs/reference/effects#kv) effect and [inputs](/docs/reference/inputs) set keys. [`{ kv }`](/docs/reference/conditions#kv) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. [`rules.resets`](/docs/reference/rules#resets) puts some back at the start of each turn. Each [storyline](#storylines) and each [entity](#entities) has a kv store of its own too.
+
+Save version 12 renamed it from `flags`, and an older save's flags load here.
+
+The engine writes some keys here itself, so don't use these prefixes for your own:
 
 - `turn:` keys, used by [`oncePerTurn()`](/docs/reference/progress#onceperturn) and a data-scene choice's `once`
 - `variants:<name>` keys, which count how often a set of [variants](/docs/reference/prose) has been drawn
@@ -208,7 +212,7 @@ Read and write it through the plugin, not by hand. Inside the plugin, use its co
 ### settings
 
 ```ts
-settings: Record<string, FlagValue>
+settings: Record<string, KvValue>
 ```
 
 The value of each `play` [setting](/docs/reference/settings) the game declares, by id, such as `{ hints: true, difficulty: 'usual' }`. A `ui` setting is never here. A new game takes the values passed to [`startingState`](/docs/reference/commands#startingstate) as `settings`, and each setting given none starts at its default. The [`setting`](/docs/reference/commands#setting) command changes one, and [`{ setting }`](/docs/reference/conditions#setting) reads it. A save from before version 9 loads with each declared play setting at its default.
@@ -246,8 +250,8 @@ const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
   // Finished once the letter is read and the bakery's last scene has been seen.
-  finished: { all: [{ flag: 'readTheLetter' }, { seen: 'bakery.ending' }] },
-  carryOver: { stats: ['coins'], flags: ['readTheLetter'], items: ['umbrella'] },
+  finished: { all: [{ kv: 'readTheLetter' }, { seen: 'bakery.ending' }] },
+  carryOver: { stats: ['coins'], kv: ['readTheLetter'], items: ['umbrella'] },
 })
 ```
 
@@ -261,7 +265,7 @@ if (done) await runner.newGame({ carry: runner.state })
 ```ts
 type CarryOver = {
   stats?: string[]
-  flags?: string[]
+  kv?: string[]
   items?: string[] | 'all'
 }
 ```
@@ -269,10 +273,10 @@ type CarryOver = {
 `startingState(game, { carry })` builds the new game as usual, then copies from `carry`:
 
 - each player stat in `carryOver.stats`, held to its range
-- each [variable](#flags) in `carryOver.flags` that is set
+- each key of the [kv store](#kv) in `carryOver.kv` that is set
 - each item in `carryOver.items`, or every declared item with `items: 'all'`
 
-Nothing else comes across. The turn, scenes seen, storylines, entities and plugin states all start fresh. Variables passed in `flags` are written after the carried ones, so they win. A game with no `carryOver` carries nothing.
+Nothing else comes across. The turn, scenes seen, storylines, entities and plugin states all start fresh. Keys passed in `kv` are written after the carried ones, so they win. A game with no `carryOver` carries nothing.
 
 **Gotcha.** Carry from the state the player finished on. If you start the New Game+ from a title screen after a reload, load the save first, or keep that state yourself. The profile records only when the game was finished, not the state.
 
@@ -283,7 +287,7 @@ The [content checker](/docs/reference/checks) reports a stat or item in `carryOv
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 11
+const SAVE_VERSION = 12
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -292,7 +296,7 @@ The versions so far:
 
 | Version | Change |
 |---|---|
-| 2 | Moved the player's name into variables and added `chosen`. |
+| 2 | Moved the player's name into `flags` and added `chosen`. |
 | 3 | Added [`turn`](#turn) and dated everything in turns instead of days. |
 | 4 | Added [`entities`](#entities) and [`created`](#created). |
 | 5 | Moved the clock, `time`, into the [calendar plugin](/docs/plugins/calendar)'s state. |
@@ -302,10 +306,11 @@ The versions so far:
 | 9 | Added [`settings`](#settings). |
 | 10 | Added [`audio`](#audio). |
 | 11 | Added [`media`](#media). |
+| 12 | Renamed `flags` to [`kv`](#kv), on the state, on each storyline and on each entity. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 
 ## See it in an example
 
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { flags: ['readBefore'] }` for New Game+, and the first chapter has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
-- Small Town: `probes` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds states by hand, with `flags`, `entities`, `stats` and `plugins` filled in.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { kv: ['readBefore'] }` for New Game+, and the first chapter has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
+- Small Town: `probes` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds states by hand, with `kv`, `entities`, `stats` and `plugins` filled in.

@@ -27,10 +27,10 @@ import {
 
 /**
  * Where a progress count comes from: a formula over the player's stats (a
- * stat's id is the simplest), one stat of an entity, a variable, or a custom
+ * stat's id is the simplest), one stat of an entity, a key in the kv store, or a custom
  * value by name (the game's or a plugin's, such as `quests/updates`).
  */
-export type ProgressValue = Formula | { stat: string; of?: string } | { flag: string } | { value: string }
+export type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | { value: string }
 
 /** How far towards an achievement the player is: the value, out of `target`. */
 export type ProgressDef = { value: ProgressValue; target: number }
@@ -116,7 +116,7 @@ function evaluate(formula: Formula, state: GameState, game: Game): number {
 export function progressValue(value: ProgressValue, state: GameState, game: Game): number {
   let out: unknown
   if (typeof value === 'object' && 'stat' in value) out = statValue(state, game, value.stat, value.of)
-  else if (typeof value === 'object' && 'flag' in value) out = state.flags[value.flag]
+  else if (typeof value === 'object' && 'kv' in value) out = state.kv[value.kv]
   else if (typeof value === 'object' && 'value' in value) out = customValue(game, value.value)?.(state)
   else out = evaluate(value, state, game)
   return typeof out === 'number' && Number.isFinite(out) ? out : 0
@@ -252,7 +252,7 @@ function progressRefs(value: ProgressValue): Reference[] {
   if (typeof value === 'number') return []
   if (typeof value === 'string') return [{ stat: value }]
   if ('stat' in value) return [{ stat: value.stat, ...(value.of !== undefined ? { of: value.of } : {}) }]
-  if ('flag' in value) return []
+  if ('kv' in value) return []
   if ('value' in value) return [{ value: value.value }]
   const parts: Formula[] =
     'sum' in value ? value.sum

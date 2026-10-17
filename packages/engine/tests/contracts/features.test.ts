@@ -62,6 +62,7 @@ describe('core features are leaves', () => {
       'features/feature.ts',
       'features/inputs.ts',
       'features/items.ts',
+      'features/kv.ts',
       'features/locks.ts',
       'features/media.ts',
       'features/minigames.ts',
@@ -72,7 +73,6 @@ describe('core features are leaves', () => {
       'features/storylines.ts',
       'features/triggers.ts',
       'features/turns.ts',
-      'features/variables.ts',
     ])
     // The registry loads every feature, and a feature what it needs: audio needs settings.
     expect([...loads(REGISTRY)].filter((file) => file.startsWith(`${SRC}features/`)).sort()).toEqual(FEATURE_FILES.sort())
@@ -109,8 +109,8 @@ describe('the registry', () => {
     }
     expect(featureKinds).toEqual({
       turns: { conditions: ['turn', 'phase'], effects: ['phase', 'turn'], commands: [] },
-      variables: { conditions: ['flag', 'counter'], effects: ['flag'], commands: [] },
-      storylines: { conditions: ['storylineFlag', 'storyline'], effects: ['storylineFlag', 'closeStoryline'], commands: [] },
+      kv: { conditions: ['kv', 'counter'], effects: ['kv'], commands: [] },
+      storylines: { conditions: ['storylineKv', 'storyline'], effects: ['storylineKv', 'closeStoryline'], commands: [] },
       collections: { conditions: ['collection'], effects: ['collect', 'discard'], commands: [] },
       notices: { conditions: [], effects: ['notify'], commands: ['dismiss'] },
       triggers: { conditions: [], effects: [], commands: [] },

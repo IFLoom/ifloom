@@ -16,10 +16,10 @@ const cafe: Pack = {
     { id: 'coins', label: 'Coins', start: 50, max: 9999 },
     { id: 'morale', label: 'Morale', of: 'staff', start: 50 },
     { id: 'skill', label: 'Skill', of: 'staff', start: 1, max: 10 },
-    { id: 'quality', label: 'Quality', of: 'dish', start: 3, max: 5, visible: { flag: 'tasted', of: '$' } },
+    { id: 'quality', label: 'Quality', of: 'dish', start: 3, max: 5, visible: { kv: 'tasted', of: '$' } },
   ],
   entities: [
-    { id: 'ana', of: 'staff', name: 'Ana', stats: { skill: 4 }, flags: { role: 'cook' } },
+    { id: 'ana', of: 'staff', name: 'Ana', stats: { skill: 4 }, kv: { role: 'cook' } },
     { id: 'ben', of: 'staff', name: 'Ben' },
     { id: 'soup', of: 'dish', name: 'Soup of the day' },
   ],
@@ -39,10 +39,10 @@ describe('entities', () => {
     expect(state.stats).toEqual({ coins: 50 })
     expect(state.entities).toEqual({
       staff: {
-        ana: { name: 'Ana', stats: { morale: 50, skill: 4 }, flags: { role: 'cook' } },
-        ben: { name: 'Ben', stats: { morale: 50, skill: 1 }, flags: {} },
+        ana: { name: 'Ana', stats: { morale: 50, skill: 4 }, kv: { role: 'cook' } },
+        ben: { name: 'Ben', stats: { morale: 50, skill: 1 }, kv: {} },
       },
-      dish: { soup: { name: 'Soup of the day', stats: { quality: 3 }, flags: {} } },
+      dish: { soup: { name: 'Soup of the day', stats: { quality: 3 }, kv: {} } },
     })
   })
 
@@ -51,15 +51,15 @@ describe('entities', () => {
     const state = applyEffects(startingState(g), g, [
       { kind: 'stat', key: 'skill', by: 20, of: 'staff:ben' },
       { kind: 'setStat', key: 'morale', to: 80, of: 'staff:ana' },
-      { kind: 'flag', key: 'shifts', add: 2, of: 'staff:ben' },
+      { kind: 'kv', key: 'shifts', by: 2, of: 'staff:ben' },
       // Nobody called Cleo works here: nothing happens.
       { kind: 'stat', key: 'skill', by: 1, of: 'staff:cleo' },
     ])
     expect(state.entities.staff.ben.stats.skill).toBe(10)
     expect(state.entities.staff.ana.stats.morale).toBe(80)
     expect(holds(state, { stat: 'morale', of: 'staff:ana', gte: 75 }, g)).toBe(true)
-    expect(holds(state, { flag: 'shifts', of: 'staff:ben', gte: 2 }, g)).toBe(true)
-    expect(holds(state, { flag: 'role', of: 'staff:ana', is: 'cook' }, g)).toBe(true)
+    expect(holds(state, { kv: 'shifts', of: 'staff:ben', gte: 2 }, g)).toBe(true)
+    expect(holds(state, { kv: 'role', of: 'staff:ana', is: 'cook' }, g)).toBe(true)
     expect(holds(state, { stat: 'skill', of: 'staff:cleo', lt: 100 }, g)).toBe(false)
     expect(explain(state, { stat: 'morale', of: 'staff:ana', gte: 90 }, g).why).toBe('staff:ana stat morale is 80; wants 90 or more')
   })
@@ -72,7 +72,7 @@ describe('entities', () => {
       { kind: 'create', of: 'staff', entity: { id: 'ana', name: 'Another Ana' } },
     ])
     expect(Object.keys(state.entities.staff)).toEqual(['ana', 'ben', '#1', '#2'])
-    expect(state.entities.staff['#1']).toEqual({ name: 'Cleo', stats: { morale: 50, skill: 6 }, flags: {} })
+    expect(state.entities.staff['#1']).toEqual({ name: 'Cleo', stats: { morale: 50, skill: 6 }, kv: {} })
     expect(state.entities.staff.ana.name).toBe('Ana')
     state = applyEffects(state, g, [{ kind: 'remove', of: 'staff:#1' }, { kind: 'create', of: 'staff', entity: { name: 'Eve' } }])
     // Numbers are never reused, so a removed one's id never comes back as someone else.
@@ -115,16 +115,16 @@ describe('entities', () => {
         kind: 'each',
         of: 'staff',
         where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } },
-        effects: [{ kind: 'flag', key: 'learning', value: true, of: '$' }],
+        effects: [{ kind: 'kv', key: 'learning', to: true, of: '$' }],
       },
     ])
-    expect(after.entities.staff.ana.flags.learning).toBe(true)
-    expect(after.entities.staff.ben.flags.learning).toBe(true)
+    expect(after.entities.staff.ana.kv.learning).toBe(true)
+    expect(after.entities.staff.ben.kv.learning).toBe(true)
   })
 
   it('show in the view by kind, with each one’s visible stats', () => {
     const g = game()
-    const state = applyEffects(startingState(g), g, [{ kind: 'flag', key: 'tasted', value: true, of: 'dish:soup' }])
+    const state = applyEffects(startingState(g), g, [{ kind: 'kv', key: 'tasted', to: true, of: 'dish:soup' }])
     const shown = view(state, g)
     expect(shown.stats.map((stat) => stat.key)).toEqual(['coins'])
     expect(shown.entities.staff.plural).toBe('Staff')
@@ -136,15 +136,15 @@ describe('entities', () => {
     expect(view(startingState(g), g).entities.dish.entries[0].stats).toEqual([])
   })
 
-  it('read a missing one’s variable as no answer at all, and do not create one numbered like the rest', () => {
+  it('read a missing one’s kv key as no answer at all, and do not create one numbered like the rest', () => {
     const g = game()
     const state = startingState(g)
-    expect(holds(state, { flag: 'role', of: 'staff:ghost', lt: 1 }, g)).toBe(false)
-    expect(holds(state, { not: { flag: 'role', of: 'staff:ghost' } }, g)).toBe(true)
+    expect(holds(state, { kv: 'role', of: 'staff:ghost', lt: 1 }, g)).toBe(false)
+    expect(holds(state, { not: { kv: 'role', of: 'staff:ghost' } }, g)).toBe(true)
     expect(applyEffects(state, g, [{ kind: 'create', of: 'staff', entity: { id: '7', name: 'Seven' } }]).entities.staff['7']).toBeUndefined()
     // `'$'` stands for the one in hand wherever an entity is named.
-    const kept = applyEffects(state, g, [{ kind: 'each', of: 'staff', where: { entity: '$' }, effects: [{ kind: 'flag', key: 'seen', value: true, of: '$' }] }])
-    expect(kept.entities.staff.ben.flags.seen).toBe(true)
+    const kept = applyEffects(state, g, [{ kind: 'each', of: 'staff', where: { entity: '$' }, effects: [{ kind: 'kv', key: 'seen', to: true, of: '$' }] }])
+    expect(kept.entities.staff.ben.kv.seen).toBe(true)
   })
 
   it('are checked by the loader in scenes and activities too, inside `each`, with stats on their owners', () => {
@@ -160,7 +160,7 @@ describe('entities', () => {
               effects: [{ kind: 'each', of: 'staff', where: { stat: 'quality', of: '$', gte: 1 }, effects: [{ kind: 'stat', key: 'quality', by: 1, of: '$' }, { custom: 'nope' }] }],
             },
           ],
-          scenes: [{ id: 'yard', body: [], choices: [{ id: 'feed', effects: [{ kind: 'flag', key: 'fed', value: true, of: 'pig:x' }] }] }],
+          scenes: [{ id: 'yard', body: [], choices: [{ id: 'feed', effects: [{ kind: 'kv', key: 'fed', to: true, of: 'pig:x' }] }] }],
           prose: { 'yard#feed': 'Feed the pig' },
         },
       ],

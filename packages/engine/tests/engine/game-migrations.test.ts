@@ -63,10 +63,10 @@ describe('the game’s own migrations', () => {
         1: (state) => {
           // The engine has carried the save to its shape, and the plugin's state is up to date.
           ran.push(`1:${state.media ? 'media' : 'none'}:${JSON.stringify(state.plugins.clock)}`)
-          return { ...state, flags: { ...state.flags, one: true } }
+          return { ...state, kv: { ...state.kv, one: true } }
         },
         2: (state) => {
-          ran.push(`2:${String(state.flags.one)}`)
+          ran.push(`2:${String(state.kv.one)}`)
           return state
         },
       },
@@ -107,7 +107,7 @@ describe('the game’s own migrations', () => {
     expect(untouched.items).not.toHaveProperty('umbrella')
     expect(untouched.entities.staff).toBeUndefined()
     expect(untouched.settings).toEqual({})
-    expect(untouched.flags).not.toHaveProperty('tidied')
+    expect(untouched.kv).not.toHaveProperty('tidied')
     // Missing stats still read as their start.
     const game = grown({ version: 2 })
     const waited = apply(untouched, game, { type: 'activity', id: 'wait' }).state
@@ -123,9 +123,9 @@ describe('the game’s own migrations', () => {
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
     expect(all.stats.patience).toBe(7)
     expect(all.items.umbrella).toBe(1)
-    expect(all.entities.staff.ana).toEqual({ name: 'Ana', stats: {}, flags: {} })
+    expect(all.entities.staff.ana).toEqual({ name: 'Ana', stats: {}, kv: {} })
     expect(all.settings).toEqual({ hints: true })
-    expect(all.flags.tidied).toBe(false)
+    expect(all.kv.tidied).toBe(false)
   })
 
   it('leave a game with no version filling settings and entities by itself, as before', () => {

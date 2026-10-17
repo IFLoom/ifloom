@@ -70,7 +70,7 @@ The key in `panels` is the scene's `panel`. The scene's title and body are drawn
 An app's `{ panel: 'inbox' }` section names a custom panel. The UI draws the component with the same name, passing it what that custom panel returned:
 
 ```ts
-custom: { panels: { inbox: (state) => ({ unread: state.flags.newMail ? 1 : 0 }) } }
+custom: { panels: { inbox: (state) => ({ unread: state.kv.newMail ? 1 : 0 }) } }
 ```
 
 ```tsx

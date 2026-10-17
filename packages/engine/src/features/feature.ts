@@ -309,7 +309,7 @@ export function wanted(range: Range): string {
   return parts.length ? parts.join(' and ') : 'more than 0'
 }
 
-/** A value read as a number: a variable that is not a number counts as 0. */
+/** A value read as a number: a value that is not a number counts as 0. */
 export function counted(value: unknown): number {
   return typeof value === 'number' ? value : 0
 }

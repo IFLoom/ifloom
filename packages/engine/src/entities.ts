@@ -2,11 +2,11 @@ import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
 import type { Reference } from './references.ts'
-import type { FlagValue, GameState, Stats } from './types.ts'
+import type { KvValue, GameState, Stats } from './types.ts'
 
 /**
  * A kind of thing the game keeps several of, each with its own stats and
- * variables: the staff of a café, the dishes on its menu, the rooms of a
+ * kv keys: the staff of a café, the dishes on its menu, the rooms of a
  * house. A stat declared with `of: 'staff'` belongs to every member of staff
  * rather than to the player.
  */
@@ -28,15 +28,15 @@ export type EntityDef = {
   name: string
   /** Where its stats start, where they differ from each stat's `start`. */
   stats?: Record<string, number>
-  /** Its variables at the start. */
-  flags?: Record<string, FlagValue>
+  /** Its kv keys at the start. */
+  kv?: Record<string, KvValue>
 }
 
 /** One thing as the state keeps it. */
 export type EntityState = {
   name: string
   stats: Stats
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 
 /**
@@ -74,12 +74,12 @@ export function entitiesOf(state: GameState, kind: string): EntityRef[] {
 export function newEntity(
   game: Game,
   kind: string,
-  given: { name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> },
+  given: { name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> },
 ): EntityState {
   const stats: Stats = {}
   // A derived stat is worked out when it is read, so an entity keeps none.
   for (const stat of game.stats ?? []) if (stat.of === kind && stat.derive === undefined) stats[stat.id] = stat.start ?? 0
-  return { name: given.name, stats: { ...stats, ...given.stats }, flags: { ...given.flags } }
+  return { name: given.name, stats: { ...stats, ...given.stats }, kv: { ...given.kv } }
 }
 
 /** Every declared entity at its start, by kind and id. */

@@ -105,7 +105,7 @@ function DebugPanelImpl({ className }: { className?: string }) {
         </TabsList>
         <TabsContent value="set" {...setSection}>
           <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
-          <CommandForm label={words('debugVariable')} fields={['key', 'value']} build={([key, value]) => debug('variable', { key, value: parse(value) })} />
+          <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug('kv', { key, to: parse(to) })} />
           <CommandForm label={words('debugItem')} fields={['item', 'count']} build={([item, count]) => debug('item', { item, count: num(count) })} />
           <CommandForm
             label={words('debugStatOf')}

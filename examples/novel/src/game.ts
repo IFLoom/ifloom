@@ -3,19 +3,19 @@
  *
  * No plugins, no places, no characters, no clock. What it uses is what a
  * novel with light tracking needs: a name the player types, one stat, choices
- * the engine remembers on its own (`{ chose }`), a variable counted up
- * (`{ kind: 'flag', add }`), a chapter as a turn, and a migration step for
+ * the engine remembers on its own (`{ chose }`), a kv key counted up
+ * (`{ kind: 'kv', by }`), a chapter as a turn, and a migration step for
  * saves from the game's first version.
  */
 import { SCHEMA, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
 
-const readIt = { kind: 'flag', key: 'readBefore', value: true } as const
+const readIt = { kind: 'kv', key: 'readBefore', to: true } as const
 
 export const letter: Pack = {
   id: 'letter',
   schema: SCHEMA,
   stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
-  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { flag: 'playerName' } } }],
+  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
       id: 'ch1.mat',
@@ -23,12 +23,12 @@ export const letter: Pack = {
       body: [
         { text: 'ch1.mat' },
         // Only in a New Game+, which carries `readBefore` over from a finished read.
-        { text: 'ch1.mat/again', when: { flag: 'readBefore' } },
-        { text: 'ch1.mat/named', when: { flag: 'playerName' } },
+        { text: 'ch1.mat/again', when: { kv: 'readBefore' } },
+        { text: 'ch1.mat/named', when: { kv: 'playerName' } },
       ],
       choices: [
-        { id: 'open', when: { flag: 'playerName' }, effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
-        { id: 'shelf', when: { flag: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
+        { id: 'open', when: { kv: 'playerName' }, effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
+        { id: 'shelf', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.stairs' }] },
       ],
     },
     {
@@ -41,12 +41,12 @@ export const letter: Pack = {
       ],
       choices: [
         { id: 'truth', effects: [{ kind: 'stat', key: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
-        { id: 'deny', effects: [{ kind: 'flag', key: 'fibs', add: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
+        { id: 'deny', effects: [{ kind: 'kv', key: 'fibs', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }] },
         // A lie to cover a letter you opened is a second lie.
         {
           id: 'blame',
           when: { chose: 'ch1.mat/open' },
-          effects: [{ kind: 'flag', key: 'fibs', add: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }],
+          effects: [{ kind: 'kv', key: 'fibs', by: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.door' }],
         },
       ],
     },
@@ -55,9 +55,9 @@ export const letter: Pack = {
       title: 'Chapter three: the door',
       body: [
         { text: 'ch3.door' },
-        { text: 'ch3.door/honest', when: { flag: 'fibs', lt: 1 } },
-        { text: 'ch3.door/fib', when: { flag: 'fibs', is: 1 } },
-        { text: 'ch3.door/tangle', when: { flag: 'fibs', gte: 2 } },
+        { text: 'ch3.door/honest', when: { kv: 'fibs', lt: 1 } },
+        { text: 'ch3.door/fib', when: { kv: 'fibs', is: 1 } },
+        { text: 'ch3.door/tangle', when: { kv: 'fibs', gte: 2 } },
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
@@ -102,15 +102,17 @@ export function theLetter(): { game: Game; problems: string[] } {
     version: 2,
     migrations: {
       1: (state) => {
-        const { lies, ...flags } = state.flags
-        return lies === undefined ? state : { ...state, flags: { ...flags, fibs: lies } }
+        const { lies, ...kv } = state.kv
+        return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
       },
     },
     introScene: 'ch1.mat',
     // Reaching either ending finishes the game, and the title screen then offers New Game+.
     finished: { scene: ['end.kept', 'end.posted'] },
     // A New Game+ keeps only this: that the reader has been through it once.
-    carryOver: { flags: ['readBefore'] },
+    carryOver: { kv: ['readBefore'] },
+    // Saves are listed under the name the reader typed.
+    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
   })
   return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }
@@ -119,4 +121,4 @@ const built = theLetter()
 export default built
 
 /** Where `ifloom playtest` starts: a reader who has already typed a name. */
-export const start = (game: Game) => startingState(game, { flags: { playerName: 'Sam' } })
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })

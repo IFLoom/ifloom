@@ -1,25 +1,25 @@
 ---
 title: "Storylines"
 ---
-A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps its own variables and whether it's closed for a while.
+A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
 
 ```ts
 type StorylineDef = { id: string; name: string }
 
 type StorylineState = {
   closedUntil: number | null
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 ```
 
 `StorylineDef` is listed with the rest of the game on [The game](/docs/reference/game#storylinedef). This page is about how storylines behave.
 
-Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loader#pack)'s `storylines`. A new game starts each one open and with no variables. Its live state is `state.storylines[id]`:
+Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loader#pack)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
 
 | Field | Meaning |
 |---|---|
 | `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', id, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
-| `flags` | The storyline's variables. Set them with [`{ kind: 'storylineFlag' }`](/docs/reference/effects#storylineflag), read them with a [`{ storylineFlag }`](/docs/reference/conditions#storylineflag) condition, count them with [progress counters](/docs/reference/progress) and show them with the `{{n:storyline.key}}` token. |
+| `kv` | The storyline's own kv store. Set its keys with [`{ kind: 'storylineKv' }`](/docs/reference/effects#storylinekv), read them with a [`{ storylineKv }`](/docs/reference/conditions#storylinekv) condition, count them with [progress counters](/docs/reference/progress) and show them with the `{{n:storyline.key}}` token. |
 
 ```ts
 storylines: [{ id: 'ava', name: 'Ava' }]
@@ -50,10 +50,10 @@ function storylineOpen(state: GameState, id: string): boolean
 
 ```ts
 storylineOpen(state, 'ava')              // true on a new game
-storylineOf(state, 'ava').flags.met      // undefined until a storylineFlag sets it
+storylineOf(state, 'ava').kv.met      // undefined until a storylineKv sets it
 ```
 
-**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `storylineFlag` effect or a `closeStoryline` effect that names an unknown storyline.
+**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `storylineKv` effect or a `closeStoryline` effect that names an unknown storyline.
 
 ## emptyStoryline
 
@@ -63,8 +63,8 @@ import { emptyStoryline } from '@ifloom/engine'
 function emptyStoryline(): StorylineState
 ```
 
-A storyline as a new game has it: `{ closedUntil: null, flags: {} }`. [`startingState`](/docs/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/docs/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.
+A storyline as a new game has it: `{ closedUntil: null, kv: {} }`. [`startingState`](/docs/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/docs/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares a storyline each for Ava and Sam, names it on each character, and ties the `friend` quest to Ava's. No example uses storyline variables or closes a storyline yet.
+Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares a storyline each for Ava and Sam, names it on each character, and ties the `friend` quest to Ava's. No example uses a storyline's kv store or closes a storyline yet.

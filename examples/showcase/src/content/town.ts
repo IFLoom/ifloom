@@ -86,7 +86,7 @@ const locations: LocationDef[] = [
   },
 ]
 
-/** The four arrows of quick feet, in the order the `arrow` variable numbers them from 1. */
+/** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
 const ARROWS = ['up', 'down', 'left', 'right'] as const
 
 /** One arrow on screen: 1.5 seconds to press it. The right one scores; a wrong one or the time running out doesn't. */
@@ -215,10 +215,10 @@ export const town: Pack = {
     {
       id: 'coffee',
       cost: { stats: { coins: 3 } },
-      requires: [onlyAt(['cafe']), { reason: 'One is enough for today.', when: { not: { flag: 'hadCoffee' } } }],
+      requires: [onlyAt(['cafe']), { reason: 'One is enough for today.', when: { not: { kv: 'hadCoffee' } } }],
       effects: [
         { kind: 'stat', key: 'energy', by: 15 },
-        { kind: 'flag', key: 'hadCoffee', value: true },
+        { kind: 'kv', key: 'hadCoffee', to: true },
         // And a lift that lasts till tomorrow is out: 10 more energy, never written.
         applyEffect('caffeinated'),
       ],
@@ -246,9 +246,9 @@ export const town: Pack = {
       cost: { stats: { energy: 5 } },
       requires: [
         { reason: 'Take a photo first.', when: { collection: 'gallery' } },
-        { reason: 'You have posted today.', when: { not: { flag: 'postedToday' } } },
+        { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
       ],
-      effects: [{ custom: 'postLatest' }, { kind: 'flag', key: 'postedToday', value: true }],
+      effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
     },
   ],
   scenes: [
@@ -442,7 +442,7 @@ export const town: Pack = {
         // Most come alone; plenty bring a dog; now and then, a pushchair.
         { id: 'company', values: [{ value: 'alone', weight: 5 }, { value: 'a dog', weight: 4 }, { value: 'a pushchair', weight: 1 }] },
       ],
-      templates: [{ id: 'visitor', of: 'visitor', name: { pool: 'first-names' }, flags: { with: { pool: 'company' }, laps: { between: [1, 3] } } }],
+      templates: [{ id: 'visitor', of: 'visitor', name: { pool: 'first-names' }, kv: { with: { pool: 'company' }, laps: { between: [1, 3] } } }],
     },
     shop: {
       vendors: [

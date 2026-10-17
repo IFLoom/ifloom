@@ -48,7 +48,7 @@ describe('The Letter', () => {
   it('counts fibs and reads the count back as a range, with a chapter as a turn', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', value: 'Robin' })
     const tangled = read(named, choose('open'), choose('blame'))
-    expect(tangled.flags.fibs).toBe(2)
+    expect(tangled.kv.fibs).toBe(2)
     expect(tangled.turn).toBe(2)
     expect(view(tangled, game).scene.body).toContain('she has clearly been talking')
     const honest = read(named, choose('open'), choose('truth'))
@@ -72,8 +72,8 @@ describe('The Letter', () => {
     expect(holds(named, game.finished!, game)).toBe(false)
     expect(view(named, game).scene.body).not.toContain('stood here before')
     const again = startingState(game, { carry: ended })
-    expect(again.flags.readBefore).toBe(true)
-    expect(again.flags.fibs).toBeUndefined()
+    expect(again.kv.readBefore).toBe(true)
+    expect(again.kv.fibs).toBeUndefined()
     expect(view(again, game).scene.body).toContain('stood here before')
   })
 
@@ -84,7 +84,7 @@ describe('The Letter', () => {
       ...startingState(game),
       turn: 2,
       sceneId: 'ch3.door',
-      flags: { playerName: 'Robin', lies: 2 },
+      kv: { playerName: 'Robin', lies: 2 },
       chosen: { 'ch1.mat/open': 1, 'ch2.stairs/blame': 1 },
     } as Partial<GameState>
     delete state.gameVersion
@@ -100,8 +100,14 @@ describe('The Letter', () => {
       if (typeof loaded === 'string') throw new Error(loaded)
       expect(loaded.meta.gameVersion).toBe(1)
       expect(loaded.state.gameVersion).toBe(2)
-      expect(loaded.state.flags).toEqual({ playerName: 'Robin', fibs: 2 })
+      expect(loaded.state.kv).toEqual({ playerName: 'Robin', fibs: 2 })
       expect(view(loaded.state, game).scene.body).toContain('she has clearly been talking')
     }
+  })
+
+  it('lists a save under the name the reader typed', async () => {
+    const store = saves(game, memoryDriver())
+    expect((await store.write('1', startingState(game, { kv: { playerName: 'Robin' } }))).player).toBe('Robin')
+    expect((await store.write('2', startingState(game))).player).toBeNull()
   })
 })

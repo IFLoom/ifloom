@@ -93,8 +93,8 @@ import { places, where } from '@ifloom/plugin-places'
 places({
   start: 'flat',
   // The first time into the park, note it.
-  arrive: (state) => where(state) === 'park' && !state.flags.sawPark
-    ? { ...state, flags: { ...state.flags, sawPark: true } }
+  arrive: (state) => where(state) === 'park' && !state.kv.sawPark
+    ? { ...state, kv: { ...state.kv, sawPark: true } }
     : state,
 })
 ```
@@ -202,12 +202,12 @@ import { type LocationDef } from '@ifloom/plugin-places'
 
 const backRoom: LocationDef = {
   id: 'cafe.back', name: 'The back room', tag: 'Café', kind: 'room', parent: 'cafe', exits: ['cafe'], art: 'place/cafe-back',
-  locked: [{ when: { not: { flag: 'staff' } }, reason: 'Staff only.', hide: true }],
+  locked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
   body: [{ text: 'place.cafe.back' }],
 }
 ```
 
-Add `'cafe.back'` to the café's `exits` too. Until the `staff` variable is set, the café's exits show only the high street.
+Add `'cafe.back'` to the café's `exits` too. Until the `staff` kv key is set, the café's exits show only the high street.
 
 ### Opening hours
 
@@ -245,7 +245,7 @@ import { town } from './town.ts'
 const coffee: ActivityDef = {
   id: 'coffee',
   requires: [onlyAt(['cafe'], 'There is no coffee here.')],
-  effects: [{ kind: 'flag', key: 'hadCoffee', value: true }],
+  effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
 }
 
 const clock = calendar()
@@ -385,7 +385,7 @@ A place can give a `stage` as well as its `art`: layers of pictures or videos wi
     layers: [
       { id: 'room', src: 'place/cafe' },
       { id: 'counter', pool: 'counter', tags: ['day'] },
-      { id: 'lamp', src: 'place/cafe-lamp.png', when: { flag: 'evening' } },
+      { id: 'lamp', src: 'place/cafe-lamp.png', when: { kv: 'evening' } },
     ],
     hotspots: [
       { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },

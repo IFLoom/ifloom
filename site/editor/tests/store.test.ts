@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { IDBFactory } from 'fake-indexeddb'
+import { SCHEMA } from '@ifloom/engine'
 import { duplicateProject, newProject, sampleProject } from '../lib/model.ts'
 import { projectStore } from '../lib/store.ts'
 
@@ -37,5 +38,25 @@ describe('the project store', () => {
     const project = newProject()
     await projectStore(factory).put(project)
     expect((await projectStore(factory).list()).map((p) => p.id)).toEqual([project.id])
+  })
+
+  it('upgrades a project an older editor kept, with flags and variables', async () => {
+    const store = projectStore(new IDBFactory())
+    const { kv: _kv, ...current } = sampleProject()
+    const old = {
+      ...current,
+      variables: [{ name: 'heardBusker', note: 'Set once you have listened.' }],
+      pack: {
+        ...current.pack,
+        schema: 4,
+        scenes: [{ id: 'market', body: [{ text: 'market', when: { flag: 'heardBusker' } }], choices: [{ id: 'listen', effects: [{ kind: 'flag', key: 'heardBusker', value: true }] }] }],
+      },
+    }
+    await store.put(old as never)
+    const loaded = await store.get(old.id)
+    expect(loaded?.kv).toEqual([{ name: 'heardBusker', note: 'Set once you have listened.' }])
+    expect(loaded).not.toHaveProperty('variables')
+    expect(loaded?.pack.schema).toBe(SCHEMA)
+    expect(loaded?.pack.scenes[0]).toEqual({ id: 'market', body: [{ text: 'market', when: { kv: 'heardBusker' } }], choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }] }] })
   })
 })

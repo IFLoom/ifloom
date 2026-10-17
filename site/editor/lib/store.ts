@@ -3,7 +3,7 @@
  * the editor gives the browser's `indexedDB` and tests give fake-indexeddb.
  * Nothing here runs until it's called, so the static build never touches it.
  */
-import type { Project } from './model.ts'
+import { upgradeProject, type Project } from './model.ts'
 
 export type ProjectStore = {
   /** Every project, most recently changed first. */
@@ -37,10 +37,11 @@ export function projectStore(factory: IDBFactory, name = 'ifloom-editor'): Proje
   return {
     async list() {
       const all = (await done((await store('readonly')).getAll())) as Project[]
-      return all.sort((a, b) => b.updated - a.updated)
+      return all.map(upgradeProject).sort((a, b) => b.updated - a.updated)
     },
     async get(id) {
-      return (await done((await store('readonly')).get(id))) as Project | undefined
+      const project = (await done((await store('readonly')).get(id))) as Project | undefined
+      return project && upgradeProject(project)
     },
     async put(project) {
       await done((await store('readwrite')).put(project))

@@ -10,7 +10,10 @@
  * Updated on purpose since: minigames (phase 5) added the `minigameVar`
  * condition, the `minigame` and `minigameVar` effects, the `tick` and
  * `minigame` commands, `GameState.minigame`, `Game.minigames`,
- * `Pack.minigames` and `View.minigame`.
+ * `Pack.minigames` and `View.minigame`. The kv store renamed flags:
+ * `GameState.kv`, `KvValue`, the `kv` and `storylineKv` conditions and
+ * effects (`to` and `by`), `CarryOver.kv`, the start command's `kv`, an
+ * entity's `kv`, an input's `key`, and added `Game.saveName`.
  */
 import type {
   ActionDef,
@@ -28,7 +31,7 @@ import type {
   EntitiesView,
   EntityDef,
   EntityState,
-  FlagValue,
+  KvValue,
   GameAudio,
   GameMedia,
   GameRules,
@@ -75,18 +78,19 @@ export type FrozenCondition =
   | { any: FrozenCondition[] }
   | { not: FrozenCondition }
   /**
-   * A variable. Bare, it asks whether it is set to anything truthy; with `is`,
-   * whether it equals that; with a range, whether its number is in it (a
-   * variable that is not a number counts as 0): `{ flag: 'lies', gte: 3 }`.
-   * With `of`, an entity's variable: `{ flag: 'role', of: '$', is: 'cook' }`.
+   * A key in the kv store. Bare, it asks whether it is set to anything
+   * truthy; with `is`, whether it equals that; with a range, whether its
+   * number is in it (a value that is not a number counts as 0):
+   * `{ kv: 'lies', gte: 3 }`. With `of`, an entity's key:
+   * `{ kv: 'role', of: '$', is: 'cook' }`.
    */
-  | ({ flag: string; is?: FlagValue; of?: string } & FrozenRange)
+  | ({ kv: string; is?: KvValue; of?: string } & FrozenRange)
   /**
-   * A `play` setting, read as a variable is: bare, whether it is truthy
+   * A `play` setting, read as a kv key is: bare, whether it is truthy
    * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
    * whether its number is in it.
    */
-  | ({ setting: string; is?: FlagValue } & FrozenRange)
+  | ({ setting: string; is?: KvValue } & FrozenRange)
   /**
    * How many times a choice has been picked, by `scene/choice`. Bare, at least
    * once: `{ chose: 'bakery.counter/buy-bread' }`.
@@ -105,7 +109,7 @@ export type FrozenCondition =
    * since" is not true of something that has not happened.
    */
   | ({ since: string } & FrozenRange)
-  | { storylineFlag: { storyline: string; key: string; is?: FlagValue } }
+  | { storylineKv: { storyline: string; key: string; is?: KvValue } }
   /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
   | ({ stat: StatKey; of?: string } & FrozenRange)
   /**
@@ -170,7 +174,7 @@ export type FrozenGameState = {
   /**
    * How many times each scene has been entered. The engine's own record of what
    * the player has actually watched, so a chain can say "not until you have seen
-   * the rung before this one" without every link needing a hand-written flag.
+   * the rung before this one" without every link needing a hand-written kv key.
    *
    * Re-entering the scene you are already in — a hub redrawing itself after a
    * choice — is not a viewing and does not count.
@@ -185,7 +189,7 @@ export type FrozenGameState = {
   /**
    * How many times each choice has been picked, by `scene/choice`. Kept for
    * every choice, so content can branch on an earlier decision without each one
-   * needing a flag of its own.
+   * needing a kv key of its own.
    */
   chosen: Record<string, number>
   /** The player's stats. An entity's are on the entity. */
@@ -201,7 +205,7 @@ export type FrozenGameState = {
    */
   removed: string[]
   storylines: Record<string, StorylineState>
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
   items: Record<string, number>
   /** Each collection's entries, by collection id, oldest first. */
   collections: Record<string, CollectionEntry[]>
@@ -212,7 +216,7 @@ export type FrozenGameState = {
   /** Each plugin's own state, by plugin id. */
   plugins: Record<string, PluginSlice>
   /** The value of each `play` setting the game declares, by id. */
-  settings: Record<string, FlagValue>
+  settings: Record<string, KvValue>
   /** What effects have put on the audio channels, the last few sounds, and the count of scenes entered. */
   audio: AudioState
   /** The file each pool request was given, so a revisit and a reload show the same one. */
@@ -229,10 +233,10 @@ export type FrozenGameState = {
 export type FrozenCommand =
   /**
    * A new game. `seed` fixes its random draws (a UI passes a fresh one; left
-   * out, it comes from the game's id). `flags` are written before the first
+   * out, it comes from the game's id). `kv` are written before the first
    * scene: a name asked for on a title screen, a difficulty.
    */
-  | { type: 'start'; seed?: number; flags?: Record<string, FlagValue> }
+  | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   /** Anything the pack declares as an ActivityDef: paperwork, a jog, a drink. */
   | { type: 'activity'; id: string }
   | { type: 'scene'; id: string }
@@ -242,9 +246,9 @@ export type FrozenCommand =
   /** Mark one notice seen, or every one. */
   | { type: 'dismiss'; id?: string }
   /** Write what the player typed or picked. A button leaves `value` out and the UI asks. */
-  | { type: 'input'; id: string; value?: FlagValue }
+  | { type: 'input'; id: string; value?: KvValue }
   /** Change a `play` setting. Ignores locks, like a menu would. */
-  | { type: 'setting'; id: string; value: FlagValue }
+  | { type: 'setting'; id: string; value: KvValue }
   /** Time passing in the minigame being played. */
   | { type: 'tick'; ms: number }
   /** An input to the minigame being played, by name. */
@@ -259,18 +263,18 @@ export type FrozenEffect =
   | { kind: 'custom'; name: string; with?: Record<string, unknown> }
   /** Put a stat at a value, held to its range: energy back to full overnight. */
   | { kind: 'setStat'; key: StatKey; to: number; of?: string }
-  | { kind: 'storylineFlag'; id: string; key: string; value: FlagValue }
+  | { kind: 'storylineKv'; id: string; key: string; to: KvValue }
   /**
-   * Set a variable, or with `add`, add to its number (a variable that is not
-   * a number counts as 0). With `of`, the variable is an entity's.
+   * Set a key `to` a value, or change its number `by` an amount (a value
+   * that is not a number counts as 0). With `of`, the key is an entity's.
    */
-  | { kind: 'flag'; key: string; value: FlagValue; of?: string }
-  | { kind: 'flag'; key: string; add: number; of?: string }
+  | { kind: 'kv'; key: string; to: KvValue; of?: string }
+  | { kind: 'kv'; key: string; by: number; of?: string }
   /**
    * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
    * left out, never reused; an id already there is left as it is.
    */
-  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; flags?: Record<string, FlagValue> } }
+  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
   /** Take an entity out of the game: `{ kind: 'remove', of: 'staff:ana' }`. */
   | { kind: 'remove'; of: string }
   /**
@@ -332,6 +336,11 @@ export type FrozenGame = {
   /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
   carryOver?: CarryOver
   /**
+   * The name a save is listed under, such as the name the player typed, or
+   * null for none. Saves record it as `SaveMeta.player`. Left out, saves have no name.
+   */
+  saveName?: (state: FrozenGameState) => string | null
+  /**
    * When the game counts as finished. The runner records the first time it
    * holds in the profile's `finished`, so a title screen can offer New Game+.
    */
@@ -372,7 +381,7 @@ export type FrozenGame = {
   collections?: CollectionDef[]
   /** Effects that happen by themselves the first time a condition holds. */
   triggers?: TriggerDef[]
-  /** What the player can type or pick, and the variable each one writes. */
+  /** What the player can type or pick, and the kv key each one writes. */
   inputs?: InputDef[]
   /** The plugins the game is built with, in the order their hooks run. */
   plugins?: readonly Plugin<any>[]

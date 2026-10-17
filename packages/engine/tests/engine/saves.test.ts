@@ -39,6 +39,14 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     expect(await store.read('empty')).toBeNull()
   })
 
+  it('name a save with game.saveName, and leave it unnamed without one', async () => {
+    const { game } = withCafe()
+    const named = { ...game, saveName: (state: { kv: Record<string, unknown> }) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null) }
+    const state = { ...startingState(game), kv: { playerName: 'Robin' } }
+    expect((await saves(named, driver()).write('1', state)).player).toBe('Robin')
+    expect((await saves(game, driver()).write('1', state)).player).toBeNull()
+  })
+
   it('lists every save newest first, and forgets a removed one', async () => {
     const { game } = withCafe()
     const store = saves(game, driver())

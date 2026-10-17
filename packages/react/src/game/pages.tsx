@@ -4,7 +4,7 @@
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
-import { settingValue, type FlagValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
+import { settingValue, type KvValue, type GameState, type SaveMeta, type SettingView } from '@ifloom/engine'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -107,7 +107,7 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
  * view); a ui setting's from the profile, live as it changes. Undefined for a
  * setting the game doesn't declare.
  */
-export function useSetting(id: string): FlagValue | undefined {
+export function useSetting(id: string): KvValue | undefined {
   const { runner, view } = useGame()
   const stored = useProfile<Record<string, unknown>>('settings')
   const setting = view.settings.find((entry) => entry.id === id)
@@ -278,7 +278,7 @@ function TitlePageImpl({ className }: { className?: string }) {
  */
 export const TitlePage = overridable('TitlePage', TitlePageImpl)
 
-function SettingControl({ setting, value, change }: { setting: SettingView; value: FlagValue; change: (value: FlagValue) => void }) {
+function SettingControl({ setting, value, change }: { setting: SettingView; value: KvValue; change: (value: KvValue) => void }) {
   const control = usePart('setting-control', 'flex flex-wrap items-center gap-3')
   const shown = usePart('setting-value', 'min-w-8 text-sm text-muted-foreground tabular-nums')
   const id = `setting-${setting.id}`
@@ -330,16 +330,16 @@ function SettingsPageImpl({ className }: { className?: string }) {
   const label = usePart('setting-label', 'font-medium')
   const empty = usePart('settings-empty', 'text-muted-foreground')
   // Optimistic values, shown until the profile says what it stored.
-  const [changed, setChanged] = useState<Record<string, FlagValue>>({})
+  const [changed, setChanged] = useState<Record<string, KvValue>>({})
   // Opened from a game in play, a play setting changes that game; from the title screen, the next one.
   const inGame = from === 'game'
 
-  const valueOf = (setting: SettingView): FlagValue => {
+  const valueOf = (setting: SettingView): KvValue => {
     if (setting.affects === 'play' && inGame) return setting.value ?? setting.default
     if (setting.id in changed) return changed[setting.id]
     return settingValue(runner.game, stored, setting.id) ?? setting.default
   }
-  const change = (setting: SettingView, value: FlagValue) => {
+  const change = (setting: SettingView, value: KvValue) => {
     if (setting.affects === 'ui') {
       if (!runner.profile) return
       if (runner.setUiSetting(setting.id, value)) return

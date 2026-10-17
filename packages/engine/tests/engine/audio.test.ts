@@ -12,11 +12,11 @@ import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
 
-/** Somewhere to stand in for places: the street hums while the `at` variable says you're there. */
+/** Somewhere to stand in for places: the street hums while the `at` kv key says you're there. */
 const street = definePlugin({
   id: 'street',
   version: 1,
-  audio: (state) => (state.flags.at === 'street' ? { ambience: 'traffic', music: null } : undefined),
+  audio: (state) => (state.kv.at === 'street' ? { ambience: 'traffic', music: null } : undefined),
 })
 
 const audio: GameAudio = {
@@ -143,10 +143,10 @@ describe('audio', () => {
   describe('chooses each background channel', () => {
     it('by the open scene first, then an effect, then a plugin, then the game’s default', () => {
       const { game: g } = game()
-      let state: GameState = { ...startingState(g), flags: { at: 'house' } }
+      let state: GameState = { ...startingState(g), kv: { at: 'house' } }
       expect(music(state, g)).toBe('calm')
       // A plugin: the street silences the music and hums.
-      state = { ...state, flags: { at: 'street' } }
+      state = { ...state, kv: { at: 'street' } }
       expect(music(state, g)).toBeNull()
       expect(view(state, g).audio.channels.ambience.track).toBe('traffic')
       // An effect wins over the plugin.
@@ -161,7 +161,7 @@ describe('audio', () => {
 
     it('with null as silence at any level, and a channel the scene leaves out passed down', () => {
       const { game: g } = game()
-      const state = { ...startingState(g), flags: { at: 'house' } }
+      const state = { ...startingState(g), kv: { at: 'house' } }
       expect(music(play(state, g, { type: 'scene', id: 'quiet' }), g)).toBeNull()
       // The storm's scene names only the ambience; the music is still the default.
       const storm = play(state, g, { type: 'scene', id: 'storm' })
@@ -180,7 +180,7 @@ describe('audio', () => {
   describe('effects', () => {
     it('keep a sound as a cue with a running count, the last 20 only', () => {
       const { game: g } = game()
-      let state: GameState = { ...startingState(g), flags: { at: 'house' } }
+      let state: GameState = { ...startingState(g), kv: { at: 'house' } }
       state = play(state, g, { type: 'activity', id: 'buzz' })
       expect(state.audio.cues).toEqual([{ seq: 1, track: 'buzz' }])
       expect(view(state, g).audio.cues).toEqual([
@@ -212,7 +212,7 @@ describe('audio', () => {
   describe('cue keys', () => {
     it('give a scene’s sound and voice beats, in beat order, voices on the voice channel', () => {
       const { game: g } = game()
-      const state = play({ ...startingState(g), flags: { at: 'house' } }, g, { type: 'scene', id: 'door' })
+      const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'scene', id: 'door' })
       const { cues } = view(state, g).audio
       expect(cues).toEqual([
         { key: `scene:${state.seed}:1:1:knock`, channel: 'sfx', track: 'knock', src: 'audio/knock.ogg', volume: 1 },
@@ -222,7 +222,7 @@ describe('audio', () => {
 
     it('are the same across view calls, a choice that stays in the scene, and a reload', () => {
       const { game: g } = game()
-      const state = play({ ...startingState(g), flags: { at: 'house' } }, g, { type: 'scene', id: 'door' })
+      const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'scene', id: 'door' })
       const keys = (s: GameState) => view(s, g).audio.cues.map((cue) => cue.key)
       expect(keys(state)).toEqual(keys(state))
       const again = play(state, g, { type: 'choose', id: 'again' })
@@ -233,7 +233,7 @@ describe('audio', () => {
 
     it('are new each time the scene is entered', () => {
       const { game: g } = game()
-      const first = play({ ...startingState(g), flags: { at: 'house' } }, g, { type: 'scene', id: 'door' })
+      const first = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'scene', id: 'door' })
       const second = play(first, g, { type: 'choose', id: 'open' }, { type: 'scene', id: 'door' })
       const keys = (s: GameState) => view(s, g).audio.cues.map((cue) => cue.key)
       expect(keys(second)).toHaveLength(2)
@@ -252,7 +252,7 @@ describe('audio', () => {
         playlist: { tracks: ['a', 'b'], srcs: ['audio/a.ogg', 'audio/b.ogg'], volumes: [1, 1], order: 'inOrder' },
       })
 
-      const start = { ...startingState(g, { seed: 7 }), flags: { at: 'house' } }
+      const start = { ...startingState(g, { seed: 7 }), kv: { at: 'house' } }
       const commands = [{ type: 'activity', id: 'rest' }, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'rest' }] as const
       const played = play(start, g, ...commands)
       const order = view(played, g).audio.channels.music.playlist!
@@ -345,7 +345,7 @@ describe('audio', () => {
 
     it('keep the effects’ channels and cues', () => {
       const { game: g } = game()
-      const state = play({ ...startingState(g), flags: { at: 'house' } }, g, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'buzz' })
+      const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'buzz' })
       expect((loadState(JSON.parse(JSON.stringify(state)), g) as GameState).audio).toEqual(state.audio)
     })
   })

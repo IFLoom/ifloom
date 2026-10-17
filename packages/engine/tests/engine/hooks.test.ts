@@ -6,43 +6,43 @@ describe('the game’s hooks', () => {
   it('ends the turn: resets put back, the turn rules and onTurn run', () => {
     const game = fixture({
       resets: { tidied: false },
-      turn: (_state, next) => ({ effects: [{ kind: 'flag', key: 'reached', value: next }] }),
-      onTurn: (state) => ({ ...state, flags: { ...state.flags, mornings: Number(state.flags.mornings ?? 0) + 1 } }),
+      turn: (_state, next) => ({ effects: [{ kind: 'kv', key: 'reached', to: next }] }),
+      onTurn: (state) => ({ ...state, kv: { ...state.kv, mornings: Number(state.kv.mornings ?? 0) + 1 } }),
     })
-    const evening = begin(game, { flags: { tidied: true } })
+    const evening = begin(game, { kv: { tidied: true } })
     const next = apply(evening, game, { type: 'activity', id: 'rest' })
     expect(next.ok).toBe(true)
     expect(next.state.turn).toBe(3)
-    expect(next.state.flags.tidied).toBe(false)
-    expect(next.state.flags.reached).toBe(3)
-    expect(next.state.flags.mornings).toBe(1)
+    expect(next.state.kv.tidied).toBe(false)
+    expect(next.state.kv.reached).toBe(3)
+    expect(next.state.kv.mornings).toBe(1)
   })
 
   it('ends several turns by effect', () => {
-    const game = fixture({ onTurn: (state) => ({ ...state, flags: { ...state.flags, turns: Number(state.flags.turns ?? 0) + 1 } }) })
+    const game = fixture({ onTurn: (state) => ({ ...state, kv: { ...state.kv, turns: Number(state.kv.turns ?? 0) + 1 } }) })
     const next = applyEffects(begin(game), game, [{ kind: 'turn', by: 3 }])
     expect(next.turn).toBe(5)
-    expect(next.flags.turns).toBe(3)
+    expect(next.kv.turns).toBe(3)
   })
 
   it('ignores a turn ended by the turn rules themselves, rather than looping', () => {
-    const game = fixture({ turn: () => ({ effects: [{ kind: 'turn' }, { kind: 'flag', key: 'ran', add: 1 }] }) })
+    const game = fixture({ turn: () => ({ effects: [{ kind: 'turn' }, { kind: 'kv', key: 'ran', by: 1 }] }) })
     const next = applyEffects(begin(game), game, [{ kind: 'turn' }])
     expect(next.turn).toBe(3)
-    expect(next.flags.ran).toBe(1)
+    expect(next.kv.ran).toBe(1)
   })
 
   it('lets the game take a command over, and refuse it in its own words', () => {
     const game = fixture({
       commands: {
-        leave: (state) => (state.sceneId === null ? 'Nothing to leave.' : { ...state, sceneId: null, flags: { ...state.flags, at: 'house' } }),
+        leave: (state) => (state.sceneId === null ? 'Nothing to leave.' : { ...state, sceneId: null, kv: { ...state.kv, at: 'house' } }),
       },
     })
     const refused = apply(begin(game), game, { type: 'leave' })
     expect(refused.ok).toBe(false)
     expect(refused.refused).toBe('Nothing to leave.')
-    const home = apply(begin(game, { flags: { at: 'shop' }, sceneId: 'rosa.hello' }), game, { type: 'leave' })
-    expect(home.state.flags.at).toBe('house')
+    const home = apply(begin(game, { kv: { at: 'shop' }, sceneId: 'rosa.hello' }), game, { type: 'leave' })
+    expect(home.state.kv.at).toBe('house')
   })
 
   it('lets the game veto a stat change, or add to it', () => {
@@ -52,9 +52,9 @@ describe('the game’s hooks', () => {
       state.stats.intelligence,
     )
     const noted = fixture({
-      onStat: (_before, after, key, by) => ({ ...after, flags: { ...after.flags, [`${key}+`]: by } }),
+      onStat: (_before, after, key, by) => ({ ...after, kv: { ...after.kv, [`${key}+`]: by } }),
     })
     const read = apply(begin(noted), noted, { type: 'activity', id: 'read' }).state
-    expect(read.flags['intelligence+']).toBe(2)
+    expect(read.kv['intelligence+']).toBe(2)
   })
 })

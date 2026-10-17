@@ -31,32 +31,32 @@ const bread: QuestDef = {
   id: 'bread',
   title: 'Bread for breakfast',
   summary: 'There is nothing in the house.',
-  starts: { flag: 'hungry' },
+  starts: { kv: 'hungry' },
   stages: [
-    { id: 'out', hint: 'Go out to the street.', done: { flag: 'out' } },
-    { id: 'buy', hint: 'Buy a loaf.', done: { flag: 'loaf' } },
+    { id: 'out', hint: 'Go out to the street.', done: { kv: 'out' } },
+    { id: 'buy', hint: 'Buy a loaf.', done: { kv: 'loaf' } },
   ],
 }
 const letter: QuestDef = {
   id: 'letter',
   title: 'The letter',
-  stages: [{ id: 'post', hint: 'Post it.', done: { flag: 'posted' } }],
+  stages: [{ id: 'post', hint: 'Post it.', done: { kv: 'posted' } }],
 }
-const secret: QuestDef = { id: 'secret', title: 'A secret', secret: true, starts: { flag: 'never' }, stages: [{ id: 'x', hint: '', done: { flag: 'never' } }] }
+const secret: QuestDef = { id: 'secret', title: 'A secret', secret: true, starts: { kv: 'never' }, stages: [{ id: 'x', hint: '', done: { kv: 'never' } }] }
 
 function game(extra: QuestDef[] = []): Game {
   const town: Pack = {
     id: 'town',
     schema: SCHEMA,
     activities: [
-      { id: 'getHungry', effects: [{ kind: 'flag', key: 'hungry', value: true }] },
+      { id: 'getHungry', effects: [{ kind: 'kv', key: 'hungry', to: true }] },
       // Out and in again: all the quest asks of where the player is.
-      { id: 'goOut', effects: [{ kind: 'flag', key: 'out', value: true }] },
-      { id: 'goIn', effects: [{ kind: 'flag', key: 'out', value: false }] },
-      { id: 'buyLoaf', effects: [{ kind: 'flag', key: 'loaf', value: true }] },
+      { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
+      { id: 'goIn', effects: [{ kind: 'kv', key: 'out', to: false }] },
+      { id: 'buyLoaf', effects: [{ kind: 'kv', key: 'loaf', to: true }] },
       { id: 'findLetter', effects: [startQuest('letter')] },
-      { id: 'post', effects: [{ kind: 'flag', key: 'posted', value: true }] },
-      { id: 'eat', effects: [{ kind: 'flag', key: 'loaf', value: false }] },
+      { id: 'post', effects: [{ kind: 'kv', key: 'posted', to: true }] },
+      { id: 'eat', effects: [{ kind: 'kv', key: 'loaf', to: false }] },
     ],
     data: { quests: { quests: [bread, letter, secret, ...extra] } },
   }
@@ -152,7 +152,7 @@ describe('quests', () => {
       starts: { custom: 'quests/nope' },
       stages: [
         { id: 'a', hint: '', done: { item: 'moonstone' } },
-        { id: 'a', hint: '', done: { flag: 'x' } },
+        { id: 'a', hint: '', done: { kv: 'x' } },
       ],
     }
     const loaded = loadGame(
@@ -168,7 +168,7 @@ describe('quests', () => {
   })
 
   it('can start off another quest, in the same command', () => {
-    const errand: QuestDef = { id: 'errand', title: 'An errand', starts: questActive('bread'), stages: [{ id: 'go', hint: 'Go.', done: { flag: 'never' } }] }
+    const errand: QuestDef = { id: 'errand', title: 'An errand', starts: questActive('bread'), stages: [{ id: 'go', hint: 'Go.', done: { kv: 'never' } }] }
     const g = game([errand])
     const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'))
     expect(shown(state, g).active.map((quest) => quest.id)).toEqual(['bread', 'errand'])

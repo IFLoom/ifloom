@@ -10,20 +10,20 @@ function withInputs(): Game {
     ...fixture(),
     inputs: [
       { id: 'petName', label: 'Name the cat', kind: 'text', maxLength: 12 },
-      { id: 'alarm', label: 'Alarm', kind: 'number', min: 5, max: 10, variable: 'wakeAt' },
+      { id: 'alarm', label: 'Alarm', kind: 'number', min: 5, max: 10, key: 'wakeAt' },
       { id: 'tea', label: 'Tea or coffee', kind: 'choice', options: [{ value: 'tea', label: 'Tea' }, { value: 'coffee', label: 'Coffee' }] },
-      { id: 'secret', label: 'Password', kind: 'text', when: { flag: 'knowsDoor' } },
+      { id: 'secret', label: 'Password', kind: 'text', when: { kv: 'knowsDoor' } },
     ],
   }
 }
 
 describe('inputs', () => {
-  it('write what the player typed or picked, trimmed, to the variable', () => {
+  it('write what the player typed or picked, trimmed, to its kv key', () => {
     const game = withInputs()
     let state = apply(begin(game), game, { type: 'input', id: 'petName', value: '  Biscuit ' }).state
     state = apply(state, game, { type: 'input', id: 'alarm', value: 7 }).state
     state = apply(state, game, { type: 'input', id: 'tea', value: 'coffee' }).state
-    expect(state.flags).toMatchObject({ petName: 'Biscuit', wakeAt: 7, tea: 'coffee' })
+    expect(state.kv).toMatchObject({ petName: 'Biscuit', wakeAt: 7, tea: 'coffee' })
     expect(view(state, game).inputs.alarm).toMatchObject({ kind: 'number', min: 5, max: 10, value: 7 })
   })
 
@@ -44,6 +44,6 @@ describe('inputs', () => {
   it('are only offered in the view while they apply', () => {
     const game = withInputs()
     expect(Object.keys(view(begin(game), game).inputs)).toEqual(['petName', 'alarm', 'tea'])
-    expect(Object.keys(view(begin(game, { flags: { knowsDoor: true } }), game).inputs)).toContain('secret')
+    expect(Object.keys(view(begin(game, { kv: { knowsDoor: true } }), game).inputs)).toContain('secret')
   })
 })

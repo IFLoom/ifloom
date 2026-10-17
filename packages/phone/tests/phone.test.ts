@@ -65,12 +65,12 @@ const town: Pack = {
       cost: { stats: { energy: 10 } },
       requires: [
         { reason: 'Nothing to post yet.', when: { collection: 'gallery' } },
-        { reason: 'You have posted today.', when: { not: { flag: 'postedToday' } } },
+        { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
       ],
       effects: [
         pass(1),
         postTo('fans', 'fans.ava-cafe', { text: 'fans.ava-cafe', image: 'art/ava-cafe.jpg' }),
-        { kind: 'flag', key: 'postedToday', value: true },
+        { kind: 'kv', key: 'postedToday', to: true },
         { custom: 'fanReaction' },
       ],
     },

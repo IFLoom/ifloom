@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { problemsOf } from '../lib/game.ts'
 import { sampleProject } from '../lib/model.ts'
-import { problemTarget, rename, renameChoice, variablesUsed } from '../lib/references.ts'
+import { problemTarget, rename, renameChoice, kvUsed } from '../lib/references.ts'
 import { hashOf, selectionFromHash } from '../lib/selection.ts'
 
 describe('rename', () => {
@@ -12,7 +12,7 @@ describe('rename', () => {
     const next = rename(project, 'scene', 'market', 'square')
     expect(next.intro).toBe('square')
     expect(next.pack.scenes[0].id).toBe('square')
-    expect(next.pack.scenes[0].body).toEqual([{ text: 'square' }, { text: 'square/busker', when: { flag: 'heardBusker' } }])
+    expect(next.pack.scenes[0].body).toEqual([{ text: 'square' }, { text: 'square/busker', when: { kv: 'heardBusker' } }])
     expect(next.pack.prose['square#buy']).toBe('Buy an iced bun')
     expect(next.pack.prose.market).toBeUndefined()
     // A storylet named market.busker isn't the market scene's key: it keeps its name.
@@ -36,12 +36,12 @@ describe('rename', () => {
     expect(problemsOf(next)).toEqual([])
   })
 
-  it('moves an item and a variable', () => {
+  it('moves an item and a kv key', () => {
     const items = rename(sampleProject(), 'item', 'bun', 'roll')
     expect(items.pack.scenes[1].body[1].when).toEqual({ has: 'roll' })
-    const vars = rename(sampleProject(), 'variable', 'heardBusker', 'heardFiddle')
-    expect(vars.variables[0].name).toBe('heardFiddle')
-    expect(variablesUsed(vars.pack)).toEqual(['heardFiddle'])
+    const vars = rename(sampleProject(), 'kv', 'heardBusker', 'heardFiddle')
+    expect(vars.kv[0].name).toBe('heardFiddle')
+    expect(kvUsed(vars.pack)).toEqual(['heardFiddle'])
     expect(problemsOf(vars)).toEqual([])
   })
 })

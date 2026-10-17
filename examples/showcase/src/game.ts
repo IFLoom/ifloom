@@ -118,7 +118,7 @@ export function probes(game: Game) {
         ...clock.write(first, { day: 7, period: 'afternoon' }),
         turn: 7,
         seen: { ...first.seen, 'ava.hi': 4 },
-        flags: { catName: 'Biscuit' },
+        kv: { catName: 'Biscuit' },
         entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
         stats: { ...first.stats, charm: 5 },
         plugins: {

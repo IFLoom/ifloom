@@ -57,8 +57,8 @@ describe('a plugin’s buttons', () => {
   })
 
   it('are left off the screen, like any button, by a lock that hides', () => {
-    const { game: g } = game({ locks: [{ when: { flag: 'rain' }, deny: ['stall/*'], hide: true, reason: 'Packed up.' }] })
-    const raining = { ...startingState(g), flags: { rain: true } }
+    const { game: g } = game({ locks: [{ when: { kv: 'rain' }, deny: ['stall/*'], hide: true, reason: 'Packed up.' }] })
+    const raining = { ...startingState(g), kv: { rain: true } }
     expect(view(raining, g).actions.map((action) => action.id)).toEqual(['buy'])
   })
 })

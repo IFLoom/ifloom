@@ -8,9 +8,10 @@ import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState }
  * An added field doesn't: it declares a load default in `FIELDS` or in its
  * feature's `state`, and older saves get that default when they load.
  */
-export const SAVE_VERSION = 11 as const
+export const SAVE_VERSION = 12 as const
 
-export type FlagValue = boolean | number | string
+/** A value in the kv store: true/false, a number or text. */
+export type KvValue = boolean | number | string
 
 /**
  * Which stretch of the game the player is in, named by the game: an intro, a
@@ -27,7 +28,7 @@ export type Stats = Record<StatKey, number>
 export type StorylineState = {
   /** The turn it opens again, or null while it is open. */
   closedUntil: number | null
-  flags: Record<string, FlagValue>
+  kv: Record<string, KvValue>
 }
 
 /** One object type from an intersection of pieces, so it reads as one in an editor. */
@@ -57,8 +58,8 @@ export type GameState = Flat<CoreState & FeatureState>
 export type StartOptions = {
   /** Fixes the save's random draws. Left out, it is hashed from the game's id, so tests deal the same cards. */
   seed?: number
-  /** Variables to write before the first scene: a name from a title screen, a difficulty. */
-  flags?: Record<string, FlagValue>
+  /** Keys to write to the kv store before the first scene: a name from a title screen, a difficulty. */
+  kv?: Record<string, KvValue>
   /**
    * The player's stored values for the game's `play` settings, usually the
    * profile's `settings`. A setting given no value, or one it doesn't take,
@@ -66,7 +67,7 @@ export type StartOptions = {
    */
   settings?: Record<string, unknown>
   /**
-   * The state a finished game ended on, for a New Game+: the stats, variables
+   * The state a finished game ended on, for a New Game+: the stats, kv keys
    * and items the game's `carryOver` lists are copied from it.
    */
   carry?: GameState
@@ -122,10 +123,10 @@ export type Effect = EffectMap[keyof EffectMap]
 export type CoreCommands = {
   /**
    * A new game. `seed` fixes its random draws (a UI passes a fresh one; left
-   * out, it comes from the game's id). `flags` are written before the first
+   * out, it comes from the game's id). `kv` is written to the kv store before the first
    * scene: a name asked for on a title screen, a difficulty.
    */
-  start: { type: 'start'; seed?: number; flags?: Record<string, FlagValue> }
+  start: { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { quest: 'bakery' } }`. */
   custom: { type: 'custom'; name: string; with?: Record<string, unknown> }
 }

@@ -6,8 +6,8 @@ import type { GameState } from './types.ts'
 /**
  * Fill the tokens a line of prose may carry:
  *
- * - `{{name}}` — a variable the game set (a name the player typed is a
- *   variable like any other: `{{playerName}}`);
+ * - `{{name}}` — a key in the kv store (a name the player typed is a
+ *   key like any other: `{{playerName}}`);
  * - `{{n:storyline.key}}` — a counter on a storyline;
  * - `{{v:name}}` — one of the game's custom values.
  *
@@ -24,9 +24,9 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
       const fn = customValue(game, name)
       return fn ? String(fn(state)) : match
     })
-    // Variables last: a value the player typed is shown as typed, never read as a token.
+    // kv keys last: a value the player typed is shown as typed, never read as a token.
     .replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (match, key) => {
-      const value = state.flags[key]
+      const value = state.kv[key]
       return typeof value === 'string' || typeof value === 'number' ? String(value) : match
     })
 }

@@ -20,7 +20,7 @@ export type SaveMeta = {
   turn: number
   /** When and where the game was, in plugins' words ("Day 3 · Wednesday morning · The café"), or null if none says. */
   when: string | null
-  /** The `playerName` variable, when the game asked for one. */
+  /** What `game.saveName` gave for the state, or null. */
   player: string | null
   /** The packs the game was loaded from; a missing one is reported on load. */
   packs: string[]
@@ -73,7 +73,7 @@ export function saves(game: Game, driver: SaveDriver) {
       played: extra.played ?? 0,
       turn: state.turn,
       when,
-      player: typeof state.flags.playerName === 'string' ? state.flags.playerName : null,
+      player: game.saveName?.(state) ?? null,
       packs: game.packs ?? [],
       plugins: Object.fromEntries((game.plugins ?? []).map((plugin) => [plugin.id, plugin.version])),
       version: state.version,

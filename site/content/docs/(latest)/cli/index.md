@@ -237,7 +237,7 @@ The same exports as [`check`](#what-the-module-exports), plus two that `playtest
 // src/game.ts
 import { startingState, type Game } from '@ifloom/engine'
 
-export const start = (game: Game) => startingState(game, { flags: { playerName: 'Robin' } })
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Robin' } })
 ```
 
 **Gotchas.**
@@ -274,7 +274,7 @@ Commit the file. A difference is either a bug or a change you meant. Read the di
 
 The same exports as [`check`](#what-the-module-exports), plus `probes` if it's there. `probes` is a function that takes the game and returns a list of [`Probe`](#probe)s, `{ name, state }`. Without it, the one probe is `start`, the same [`start`](#what-playtest-reads) state `playtest` uses.
 
-Pick probes that differ in what the content looks at: the first screen, an ordinary day, and a state well along, with variables set, a friendship grown and scenes seen. Small Town's three are `moving-day`, `first-morning` and `a-week-in`:
+Pick probes that differ in what the content looks at: the first screen, an ordinary day, and a state well along, with kv keys set, a friendship grown and scenes seen. Small Town's three are `moving-day`, `first-morning` and `a-week-in`:
 
 ```ts
 // src/game.ts, after Small Town's `clock` and `start`
@@ -292,7 +292,7 @@ export function probes(game: Game) {
         ...clock.write(first, { day: 7, period: 'afternoon' }),
         turn: 7,
         seen: { ...first.seen, 'ava.hi': 4 },
-        flags: { catName: 'Biscuit' },
+        kv: { catName: 'Biscuit' },
         // Ava's friendship, a stat of the cast's `character` kind, kept on her entity.
         entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
         stats: { ...first.stats, charm: 5 },

@@ -64,7 +64,7 @@ type SettingDef = {
 
 ## Reading a setting
 
-Content reads a play setting with the [`{ setting }`](/docs/reference/conditions#setting) condition, which works like `{ flag }`:
+Content reads a play setting with the [`{ setting }`](/docs/reference/conditions#setting) condition, which works like `{ kv }`:
 
 ```ts
 // Rosa offers a hint only to players who keep hints on.
@@ -79,7 +79,7 @@ A UI reads every setting, play and ui alike, from [`view.settings`](/docs/refere
 ### settingValue
 
 ```ts
-function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): FlagValue | undefined
+function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined
 ```
 
 `settingValue` reads a setting from the player's stored settings, which are the profile's `settings`. It gives the stored value if the setting can still take it, and the setting's `default` otherwise. A stored value is checked the same way the `setting` command checks one, so a number outside the range or off the `step`, or an option you've since removed, falls back to the default. It returns `undefined` for an id the game doesn't declare.

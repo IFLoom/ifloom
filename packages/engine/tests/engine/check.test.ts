@@ -43,7 +43,7 @@ describe('checkGame', () => {
     const game = {
       ...town,
       // Each of these holds nowhere, does nothing or is refused at runtime, as it always has; now the checker says so.
-      finished: { flag: 'done', setting: 'hints' },
+      finished: { kv: 'done', setting: 'hints' },
       actions: [
         ...(town.actions ?? []),
         { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
@@ -54,10 +54,10 @@ describe('checkGame', () => {
     expect(problemsOf(game)).toEqual([
       'item kite: unknown effect kind "fly"',
       'item kite: an effect needs a kind, or a custom call by name',
-      'action blank: a condition needs one kind, such as flag or stat; this one has nothing in it',
+      'action blank: a condition needs one kind, such as kv or stat; this one has nothing in it',
       'action blank: unknown command type "dance"',
       // Its parts aren't looked into: the engine wouldn't know which one it means.
-      'finished: a condition has one kind, but this one has 2: flag, setting',
+      'finished: a condition has one kind, but this one has 2: kv, setting',
     ])
   })
 
@@ -65,7 +65,7 @@ describe('checkGame', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      items: [{ id: 'map', name: 'Map', desc: '', kind: 'gear', use: { label: 'Read', effects: [{ kind: 'scene', id: 'missing' }, { kind: 'storylineFlag', id: 'nobody', key: 'k', value: true }] } }],
+      items: [{ id: 'map', name: 'Map', desc: '', kind: 'gear', use: { label: 'Read', effects: [{ kind: 'scene', id: 'missing' }, { kind: 'storylineKv', id: 'nobody', key: 'k', to: true }] } }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual([
       'town · item map · goes to unknown scene "missing"',

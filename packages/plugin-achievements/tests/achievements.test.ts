@@ -25,9 +25,9 @@ import {
 } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
-  { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { flag: 'coffees' }, target: 10 } },
-  { id: 'saver', title: 'Nest egg', progress: { value: 'coins', target: 50 }, when: { flag: 'bank' } },
-  { id: 'river', title: 'Dusk by the river', description: 'Sit by the river at dusk.', secret: true, when: { flag: 'dusk' } },
+  { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
+  { id: 'saver', title: 'Nest egg', progress: { value: 'coins', target: 50 }, when: { kv: 'bank' } },
+  { id: 'river', title: 'Dusk by the river', description: 'Sit by the river at dusk.', secret: true, when: { kv: 'dusk' } },
   { id: 'kind', title: 'A kind word', description: 'Given by a scene.' },
 ]
 
@@ -41,8 +41,8 @@ function game(extra: Partial<Pack> = {}): Game {
     ],
     activities: [
       { id: 'earn', effects: [{ kind: 'stat', key: 'coins', by: 30 }] },
-      { id: 'bank', effects: [{ kind: 'flag', key: 'bank', value: true }] },
-      { id: 'dusk', effects: [{ kind: 'flag', key: 'dusk', value: true }] },
+      { id: 'bank', effects: [{ kind: 'kv', key: 'bank', to: true }] },
+      { id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] },
       { id: 'kindness', effects: [grantAchievement('kind')] },
     ],
     data: { achievements: { achievements: defs } },
@@ -64,7 +64,7 @@ function run(state: GameState, g: Game, ...ids: string[]): GameState {
 
 const fresh = (g: Game) => ({ ...startingState(g), sceneId: null })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.achievements as AchievementsView
-const coffees = (state: GameState, n: number): GameState => ({ ...state, flags: { ...state.flags, coffees: n } })
+const coffees = (state: GameState, n: number): GameState => ({ ...state, kv: { ...state.kv, coffees: n } })
 
 describe('achievements', () => {
   it('list every achievement, secret ones as ??? until earned', () => {
@@ -102,13 +102,13 @@ describe('achievements', () => {
     expect(shown(state, g).achievements[1]).toMatchObject({ earned: true, progress: { value: 50, target: 50 } })
   })
 
-  it('read progress from a stat, a formula, an entity’s stat, a variable or a custom value', () => {
+  it('read progress from a stat, a formula, an entity’s stat, a kv key or a custom value', () => {
     const g = game()
-    const state = { ...fresh(g), flags: { coffees: 3, mood: 'fine' } }
+    const state = { ...fresh(g), kv: { coffees: 3, mood: 'fine' } }
     expect(progressValue('coins', state, g)).toBe(10)
     expect(progressValue({ sum: ['coins', { scale: 'charm', by: 5 }] }, state, g)).toBe(20)
-    expect(progressValue({ flag: 'coffees' }, state, g)).toBe(3)
-    expect(progressValue({ flag: 'mood' }, state, g)).toBe(0)
+    expect(progressValue({ kv: 'coffees' }, state, g)).toBe(3)
+    expect(progressValue({ kv: 'mood' }, state, g)).toBe(0)
     expect(progressValue({ value: 'achievements/earned' }, state, g)).toBe(0)
     expect(progressValue({ stat: 'coins' }, state, g)).toBe(10)
   })

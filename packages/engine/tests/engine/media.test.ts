@@ -14,7 +14,7 @@ import type { DataScene } from '../../src/scene.ts'
 const video = { autoplay: true, loop: true, muted: true, controls: false }
 
 describe('picture and video markup', () => {
-  it('plays a video like a GIF unless its flags say otherwise', () => {
+  it('plays a video like a GIF unless its kv say otherwise', () => {
     expect(parseBeats('[[video:clips/kettle]]')).toEqual([{ kind: 'video', src: 'art/clips/kettle.mp4', size: 'inline', ...video }])
     expect(parseBeats('[[widevideo:clips/rain.webm|controls|once|sound|poster=clips/rain-still|Rain on the window]]')).toEqual([
       {
@@ -85,7 +85,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}) {
     },
     activities: [
       { id: 'nap' },
-      { id: 'jog', requires: [{ when: { flag: 'rested' }, reason: 'Too tired.' }] },
+      { id: 'jog', requires: [{ when: { kv: 'rested' }, reason: 'Too tired.' }] },
     ],
     scenes,
     ...extra,
@@ -111,7 +111,7 @@ describe('media in a data scene’s body', () => {
       { media: { src: 'flat/kettle.mp4', alt: 'The kettle', size: 'wide' } },
       { text: 'flat.kettle' },
       { media: { src: 'flat/mug', at: 'end' } },
-      { media: { src: 'flat/cat' }, when: { flag: 'cat' } },
+      { media: { src: 'flat/cat' }, when: { kv: 'cat' } },
     ],
     choices: [{ id: 'leave', effects: [{ kind: 'scene', id: null }] }],
   }
@@ -134,11 +134,11 @@ describe('media in a data scene’s body', () => {
 
   it('leaves out a block whose condition fails', () => {
     const g = game([flat])
-    const state = { ...open(g, 'flat'), flags: { cat: true } }
+    const state = { ...open(g, 'flat'), kv: { cat: true } }
     expect(view(state, g).scene.beats.at(-2)).toEqual({ kind: 'image', src: 'art/flat/cat.jpg', size: 'inline' })
   })
 
-  it('takes video flags on a block', () => {
+  it('takes video kv on a block', () => {
     const g = game([{ id: 'flat', body: [{ media: { src: 'flat/kettle', video: true, controls: true, poster: 'flat/kettle-still' } }], choices: [] }])
     expect(view(open(g, 'flat'), g).scene.beats).toEqual([
       { kind: 'video', src: 'art/flat/kettle.mp4', poster: 'art/flat/kettle-still.jpg', size: 'inline', autoplay: false, loop: true, muted: true, controls: true },
@@ -238,21 +238,21 @@ describe('the stage', () => {
       aspect: '4/3',
       layers: [
         { id: 'room', src: 'flat/room' },
-        { id: 'rain', pool: 'window', when: { flag: 'raining' } },
-        { id: 'phone', src: 'flat/phone.png', when: { flag: 'ringing' } },
+        { id: 'rain', pool: 'window', when: { kv: 'raining' } },
+        { id: 'phone', src: 'flat/phone.png', when: { kv: 'ringing' } },
       ],
       hotspots: [
         { id: 'door', rect: [80, 20, 20, 80], label: 'The front door', choice: 'leave' },
         { id: 'kettle', rect: [10, 50, 10, 15], label: 'The kettle', choice: 'tea' },
         { id: 'phone', rect: [40, 60, 10, 10], label: 'The phone', choice: 'phone', layer: 'phone' },
         { id: 'jog', rect: [0, 0, 10, 10], label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
-        { id: 'nap', rect: [0, 90, 10, 10], label: 'Nap', command: { type: 'activity', id: 'nap' }, when: { flag: 'tired' } },
+        { id: 'nap', rect: [0, 90, 10, 10], label: 'Nap', command: { type: 'activity', id: 'nap' }, when: { kv: 'tired' } },
       ],
     },
     body: [{ text: 'flat.wake' }],
     choices: [
-      { id: 'leave', blocked: [{ when: { not: { flag: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ kind: 'scene', id: null }] },
-      { id: 'tea', when: { flag: 'kettle' }, effects: [] },
+      { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ kind: 'scene', id: null }] },
+      { id: 'tea', when: { kv: 'kettle' }, effects: [] },
       { id: 'phone', effects: [] },
     ],
   }
@@ -273,7 +273,7 @@ describe('the stage', () => {
 
   it('shows a layer and the hotspot tied to it once both can be', () => {
     const g = game([flat])
-    const state = { ...open(g, 'flat'), flags: { raining: true, ringing: true, kettle: true, dressed: true } }
+    const state = { ...open(g, 'flat'), kv: { raining: true, ringing: true, kettle: true, dressed: true } }
     const stage = view(state, g).scene.stage!
     expect(stage.layers).toEqual([
       { id: 'room', src: 'art/flat/room.jpg' },
@@ -316,7 +316,7 @@ describe('media checks', () => {
     ])
   })
 
-  it('report unknown flags and video flags on a picture in markup', () => {
+  it('report unknown kv and video kv on a picture in markup', () => {
     const loaded = town([], {
       prose: {
         'flat.a': '[[video:clips/rain|contols|Rain]]',
@@ -350,7 +350,7 @@ describe('media checks', () => {
             { id: 'door', rect: [80, 20, 30, 80], label: 'Door', choice: 'leave', command: { type: 'activity', id: 'nap' } },
             { id: 'door', rect: [0, 0, 10, 10], label: 'Door again', choice: 'sing' },
             { id: 'rug', rect: [0, 0, 10, 10], label: 'Rug' },
-            { id: 'cat', rect: [-5, 0, 10, 10], label: 'Cat', command: { type: 'activity', id: 'stroke' }, layer: 'cat', when: { flag: 'cat' } },
+            { id: 'cat', rect: [-5, 0, 10, 10], label: 'Cat', command: { type: 'activity', id: 'stroke' }, layer: 'cat', when: { kv: 'cat' } },
           ],
         },
         body: [],
@@ -395,7 +395,7 @@ describe('saves', () => {
   it('carry a version-10 save forward with nothing picked', () => {
     const g = game([])
     const { media: _media, ...now } = startingState(g)
-    expect(SAVE_VERSION).toBe(11)
-    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: 11, media: { picks: {} } })
+    expect(SAVE_VERSION).toBe(12)
+    expect(loadState({ ...now, version: 10 }, g)).toEqual({ ...now, version: 12, media: { picks: {} } })
   })
 })

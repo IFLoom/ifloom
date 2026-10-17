@@ -254,7 +254,7 @@ const kites = definePlugin({
   commands: {
     fly: {
       whyNot: (state, args, { game }) =>
-        state.flags.windy ? undefined : say(game, 'kites/noWind', { kite: String(args.kite) }),
+        state.kv.windy ? undefined : say(game, 'kites/noWind', { kite: String(args.kite) }),
       run: (state) => state,
     },
   },

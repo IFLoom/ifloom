@@ -86,7 +86,7 @@ const OLDEST = 1
  * step that reshapes the previous version in the same change.
  */
 const STEPS: Record<number, (state: Saved) => Saved> = {
-  // 1 → 2: the player's name moves into variables, and choices start being remembered.
+  // 1 → 2: the player's name moves into flags (the kv store since 12), and choices start being remembered.
   1: ({ playerName, playerFirst, playerLast, ...state }) => ({
     ...state,
     flags: { playerName, playerFirst, playerLast, ...(state.flags as object) },
@@ -143,6 +143,21 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
     ),
   }),
   // 8 → 9: settings, 9 → 10: audio, 10 → 11: media, all from their load defaults.
+  // 11 → 12: flags become the kv store: the game's, each storyline's and each entity's.
+  11: ({ flags, ...state }) => {
+    const moved = <T extends { flags?: unknown; kv?: unknown }>({ flags: own, ...rest }: T) => ({ ...rest, kv: own ?? rest.kv ?? {} })
+    return {
+      ...state,
+      kv: flags ?? state.kv ?? {},
+      storylines: Object.fromEntries(Object.entries((state.storylines ?? {}) as Record<string, { flags?: unknown }>).map(([id, storyline]) => [id, moved(storyline)])),
+      entities: Object.fromEntries(
+        Object.entries((state.entities ?? {}) as Record<string, Record<string, { flags?: unknown }>>).map(([kind, byId]) => [
+          kind,
+          Object.fromEntries(Object.entries(byId).map(([id, entity]) => [id, moved(entity)])),
+        ]),
+      ),
+    }
+  },
 }
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */
@@ -203,7 +218,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 /**
  * What `MigrationTools.fill` can fill, each named by the feature that fills
  * it: the player's stats and each entity's (start values), items (start
- * counts), variables the game resets each turn (`rules.resets`), play
+ * counts), kv keys the game resets each turn (`rules.resets`), play
  * settings (defaults) and declared entities.
  */
 export type FillKind = FeatureFill

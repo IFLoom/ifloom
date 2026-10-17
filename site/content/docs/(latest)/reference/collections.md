@@ -72,7 +72,7 @@ type CollectionItem = {
   title?: string
   text?: string
   image?: string
-  data?: Record<string, FlagValue>
+  data?: Record<string, KvValue>
 }
 ```
 

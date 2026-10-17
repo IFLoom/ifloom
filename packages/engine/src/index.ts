@@ -88,7 +88,7 @@ export { sceneContext } from './context.ts'
 export type {
   Command,
   Effect,
-  FlagValue,
+  KvValue,
   GameState,
   Phase,
   StatKey,

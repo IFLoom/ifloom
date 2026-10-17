@@ -9,7 +9,7 @@ import { postTo, react } from '@ifloom/plugin-feed'
 export const custom: Custom = {
   values: {
     // The cat's name as the player typed it, or a cat with no name yet.
-    catName: (state) => (typeof state.flags.catName === 'string' ? state.flags.catName : 'The cat'),
+    catName: (state) => (typeof state.kv.catName === 'string' ? state.kv.catName : 'The cat'),
   },
   effects: {
     // Post the newest photo, and roll how it does.

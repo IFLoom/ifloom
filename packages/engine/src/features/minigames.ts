@@ -182,7 +182,7 @@ function playsKey(id: string): string {
 }
 
 function plays(state: GameState, id: string): number {
-  const value = state.flags[playsKey(id)]
+  const value = state.kv[playsKey(id)]
   return typeof value === 'number' ? value : 0
 }
 
@@ -213,7 +213,7 @@ export function startMinigame(state: GameState, game: Game, id: string, cx: Feat
   if (!def) return state
   const started: GameState = {
     ...state,
-    flags: { ...state.flags, [playsKey(id)]: plays(state, id) + 1 },
+    kv: { ...state.kv, [playsKey(id)]: plays(state, id) + 1 },
     minigame: { id, state: def.start, elapsed: 0, vars: { ...def.vars }, steps: 0 },
   }
   return enter(started, game, def.start, cx, 0)
@@ -228,8 +228,8 @@ function enter(state: GameState, game: Game, target: string, cx: FeatureContext,
   if (!entered) return { ...state, minigame: null }
   const next: GameState = { ...state, minigame: { ...running, state: target, elapsed: 0 } }
   if (entered.final) {
-    const copied = Object.entries(entered.final.copy ?? {}).map(([key, flag]) => [flag, running.vars[key] ?? 0])
-    const closed: GameState = { ...next, minigame: null, flags: { ...next.flags, ...Object.fromEntries(copied) } }
+    const copied = Object.entries(entered.final.copy ?? {}).map(([key, into]) => [into, running.vars[key] ?? 0])
+    const closed: GameState = { ...next, minigame: null, kv: { ...next.kv, ...Object.fromEntries(copied) } }
     return cx.runEffects(closed, game, cx.buildEffects(closed, game, entered.final.effects ?? []), false)
   }
   const moving = entered.always?.find((entry) => cx.holds(next, entry.when, game))

@@ -4,7 +4,7 @@
  * nesting for all, any and not, and JSON for anything else.
  */
 import { useState } from 'react'
-import type { Condition, FlagValue } from '@ifloom/engine'
+import type { Condition, KvValue } from '@ifloom/engine'
 import { conditionForm, newCondition, rangeOf, withRange, NO_NAMES, type Names, type RangeForm } from '../lib/builders'
 import { CONDITION_FORMS, CONDITION_LABELS, RANGE_LABELS, RANGE_OPS, type ConditionForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
@@ -23,7 +23,7 @@ export function OptionalCondition({ value, onChange, add = 'Add a condition', ..
   if (!value) {
     return (
       <div>
-        <Button size="xs" onClick={() => onChange(newCondition('flag', props.names))}>
+        <Button size="xs" onClick={() => onChange(newCondition('kv', props.names))}>
           + {add}
         </Button>
       </div>
@@ -59,7 +59,7 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
             />
           ))}
           <div>
-            <Button size="xs" onClick={() => onChange({ [form]: [...list, newCondition('flag', names)] } as Condition)}>
+            <Button size="xs" onClick={() => onChange({ [form]: [...list, newCondition('kv', names)] } as Condition)}>
               + Add a part
             </Button>
           </div>
@@ -83,10 +83,10 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
         </>
       )
       break
-    case 'flag':
+    case 'kv':
       fields = (
         <>
-          <IdPicker noun="variable" aria-label="Variable" value={c.flag as string} options={names.variables} onChange={(id) => set({ flag: id })} onCreate={create('variable')} />
+          <IdPicker noun="kv key" aria-label="kv key" value={c.kv as string} options={names.kv} onChange={(id) => set({ kv: id })} onCreate={create('kv')} />
           <RangeEditor value={value} onChange={onChange} ops={['set', 'is', ...RANGE_OPS]} />
         </>
       )
@@ -158,7 +158,7 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
 }
 
 /** A value typed for `is`: true, false, a number, or text. */
-export function parseFlag(text: string): FlagValue {
+export function parseKvValue(text: string): KvValue {
   if (text === 'true') return true
   if (text === 'false') return false
   if (text.trim() !== '' && !Number.isNaN(Number(text))) return Number(text)
@@ -176,7 +176,7 @@ function RangeEditor({ value, onChange, ops }: { value: Condition; onChange: (va
         onChange={(op) => onChange(withRange(value, { op, value: op === 'is' ? (typeof range.value === 'number' ? range.value : true) : typeof range.value === 'number' ? range.value : 1 }))}
       />
       {range.op === 'is' ? (
-        <TextInput aria-label="Value" className="w-28" value={String(range.value)} onChange={(text) => onChange(withRange(value, { op: 'is', value: parseFlag(text ?? '') }))} />
+        <TextInput aria-label="Value" className="w-28" value={String(range.value)} onChange={(text) => onChange(withRange(value, { op: 'is', value: parseKvValue(text ?? '') }))} />
       ) : range.op !== 'set' ? (
         <NumberInput aria-label="Number" value={range.value as number} onChange={(n) => onChange(withRange(value, { op: range.op, value: n ?? 0 }))} />
       ) : null}

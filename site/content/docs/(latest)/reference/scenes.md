@@ -144,17 +144,17 @@ Otherwise `choose` applies the choice's `effects` in order. If the scene itself 
 import type { SceneCtx } from '@ifloom/engine'
 
 type SceneCtx = {
-  flag: (key: string) => FlagValue | undefined
-  storylineFlag: (storylineId: string, key: string) => FlagValue | undefined
+  kv: (key: string) => KvValue | undefined
+  storylineKv: (storylineId: string, key: string) => KvValue | undefined
   picks?: Record<string, string>
 }
 ```
 
-The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `flag(key)` is the player's [variable](/docs/reference/state#flags), and `storylineFlag(id, key)` is a [storyline](/docs/reference/storylines)'s. Both are `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
+The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the game's [kv store](/docs/reference/state#kv), and `storylineKv(id, key)` one in a [storyline](/docs/reference/storylines)'s. Both are `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
 
 ```ts
 render: (state, ctx) => {
-  const body = ctx.storylineFlag('ava', 'knowsYou') ? 'Ava waves you in.' : 'Ava nods, busy at the till.'
+  const body = ctx.storylineKv('ava', 'knowsYou') ? 'Ava waves you in.' : 'Ava nods, busy at the till.'
   // ...
 }
 ```
@@ -308,7 +308,7 @@ const flat: DataScene = {
     aspect: '16/9',
     layers: [
       { id: 'room', src: 'scene/flat' },
-      { id: 'lamp', src: 'scene/flat-lamp.png', when: { flag: 'evening' } },
+      { id: 'lamp', src: 'scene/flat-lamp.png', when: { kv: 'evening' } },
       { id: 'rain', pool: 'window', tags: ['rain'] },
     ],
     hotspots: [
@@ -374,7 +374,7 @@ type Choice = {
 ```
 
 **Gotchas.**
-- With the [default runtime](#defaultruntime), `per: 'turn'` is recorded with [`markUsed`](/docs/reference/progress#usedthisturn-and-markused) as the variable `turn:scene.choice` (or `turn:<once.key>`). The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't.
+- With the [default runtime](#defaultruntime), `per: 'turn'` is recorded with [`markUsed`](/docs/reference/progress#usedthisturn-and-markused) as the kv key `turn:scene.choice` (or `turn:<once.key>`). The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't.
 - For a once-a-turn limit outside a `DataScene`, see [`oncePerTurn`](/docs/reference/progress#onceperturn).
 
 ### panelData
@@ -386,7 +386,7 @@ import type { Custom } from '@ifloom/engine'
 
 // goes on the game as `custom`
 const custom: Custom = {
-  panels: { menuPrices: (state) => ({ coffee: 3, sandwich: state.flags.hadCoffee ? 3 : 4 }) },
+  panels: { menuPrices: (state) => ({ coffee: 3, sandwich: state.kv.hadCoffee ? 3 : 4 }) },
 }
 // DataScene: { id: 'cafe.menu', panel: 'MenuPanel', panelData: 'menuPrices', ... }
 ```
@@ -469,8 +469,8 @@ import { defaultRuntime, type SceneRuntime } from '@ifloom/engine'
 
 const runtime: SceneRuntime = {
   ...defaultRuntime(game),
-  spent: (state, scene, choice) => Boolean(state.flags[`once:${scene}.${choice}`]),
-  spend: (state, scene, choice) => [{ kind: 'flag', key: `once:${scene}.${choice}`, value: true }],
+  spent: (state, scene, choice) => Boolean(state.kv[`once:${scene}.${choice}`]),
+  spend: (state, scene, choice) => [{ kind: 'kv', key: `once:${scene}.${choice}`, to: true }],
 }
 ```
 
@@ -485,7 +485,7 @@ function drawVariant(
 ): { id: string; remember: Effect }
 ```
 
-Returns the member of a set of variants this state gets, and the effect that records the draw. The [turn](/docs/reference/state#turn) picks a starting offset through its own [hash](/docs/reference/random), mixed with the save's seed, as `roll(members.length, name, seed, turn)`. The count of draws so far, kept in the variable `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines.
+Returns the member of a set of variants this state gets, and the effect that records the draw. The [turn](/docs/reference/state#turn) picks a starting offset through its own [hash](/docs/reference/random), mixed with the save's seed, as `roll(members.length, name, seed, turn)`. The count of draws so far, kept in the kv key `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines.
 
 With `weightOf`, and any member weighing something other than 1, it draws by weight instead, with [`weighted`](/docs/reference/random#weighted) seeded by the name, the save's seed, the turn and the count. A weight `weightOf` leaves out counts as 1. The count still goes up, so the next draw is a fresh one. The [default runtime](#defaultruntime) passes the weights from `game.prose`.
 
@@ -493,7 +493,7 @@ With `weightOf`, and any member weighing something other than 1, it draws by wei
 import { drawVariant } from '@ifloom/engine'
 
 const { id, remember } = drawVariant(state, 'street.weather', ['street.weather/drizzle', 'street.weather/sun', 'street.weather/wind'])
-// id: one of the three; remember: { kind: 'flag', key: 'variants:street.weather', value: 1 }
+// id: one of the three; remember: { kind: 'kv', key: 'variants:street.weather', to: 1 }
 ```
 
 **Gotchas.**

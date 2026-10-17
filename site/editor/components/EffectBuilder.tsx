@@ -8,7 +8,7 @@ import type { EffectRef } from '@ifloom/engine'
 import { effectForm, newEffect, NO_NAMES } from '../lib/builders'
 import { EFFECT_LABELS, EFFECT_MENU, type EffectForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
-import { parseFlag, type BuilderProps } from './ConditionBuilder'
+import { parseKvValue, type BuilderProps } from './ConditionBuilder'
 import { Button, IdPicker, JsonField, NumberInput, RowTools, Select, TextInput, move } from './ui'
 
 const FORMS: { value: EffectForm; label: string }[] = EFFECT_MENU.map((value) => ({ value, label: EFFECT_LABELS[value] }))
@@ -69,21 +69,21 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
         </>
       )
       break
-    case 'flag':
+    case 'kv':
       fields = (
         <>
-          <IdPicker noun="variable" aria-label="Variable" value={e.key} options={names.variables} onChange={(key) => set({ key })} onCreate={create('variable')} />
+          <IdPicker noun="kv key" aria-label="kv key" value={e.key} options={names.kv} onChange={(key) => set({ key })} onCreate={create('kv')} />
           <span className="text-xs text-fd-muted-foreground">to</span>
-          <TextInput aria-label="Value" className="w-28" value={String(e.value)} onChange={(text) => set({ value: parseFlag(text ?? '') })} />
+          <TextInput aria-label="To" className="w-28" value={String(e.to)} onChange={(text) => set({ to: parseKvValue(text ?? '') })} />
         </>
       )
       break
-    case 'flagAdd':
+    case 'kvBy':
       fields = (
         <>
-          <IdPicker noun="variable" aria-label="Variable" value={e.key} options={names.variables} onChange={(key) => set({ key })} onCreate={create('variable')} />
-          <span className="text-xs text-fd-muted-foreground">add</span>
-          <NumberInput aria-label="Add" value={e.add} onChange={(add) => set({ add: add ?? 0 })} />
+          <IdPicker noun="kv key" aria-label="kv key" value={e.key} options={names.kv} onChange={(key) => set({ key })} onCreate={create('kv')} />
+          <span className="text-xs text-fd-muted-foreground">by</span>
+          <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
         </>
       )
       break

@@ -93,18 +93,18 @@ A line of prose can carry tokens, which are filled in for the save when the line
 
 | Token | Becomes |
 |---|---|
-| `{{playerName}}` | The game's [variable](/docs/reference/state#flags) `playerName`, when it's a string or a number. Any name works the same way, so `{{catName}}` is `state.flags.catName`. |
+| `{{playerName}}` | The key `playerName` in the game's [kv store](/docs/reference/state#kv), when it's a string or a number. Any name works the same way, so `{{catName}}` is `state.kv.catName`. |
 | `{{n:ava.visits}}` | The counter `visits` on storyline `ava` ([`count`](/docs/reference/progress#counters)), or 0 if unset. |
 | `{{v:coffeePrice}}` | The game's [custom value](/docs/reference/custom#values) `coffeePrice`, as text. |
 | `{{v:quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. |
 
 `A coffee is {{v:coffeePrice}} today, {{playerName}}.`
 
-The engine has no player name of its own. A game that wants one sets a variable, with an [input](/docs/reference/inputs) or in the `flags` passed to [`startingState`](/docs/reference/commands#startingstate), and prose reads it like any other.
+The engine has no player name of its own. A game that wants one sets a kv key, with an [input](/docs/reference/inputs) or in the `kv` passed to [`startingState`](/docs/reference/commands#startingstate), and prose reads it like any other.
 
 **Gotchas:**
-- A `{{name}}` whose variable is unset, or is `true` or `false`, is left in place, braces and all. Set the variable before the line is shown, or keep the line behind a [`{ flag }`](/docs/reference/conditions#flag) condition.
-- A variable name in a token is letters, digits and `_`, and can't start with a digit. A variable named `cat-name` can be set but can't be printed this way.
+- A `{{name}}` whose key is unset, or is `true` or `false`, is left in place, braces and all. Set the key before the line is shown, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
+- A key in a token is letters, digits and `_`, and can't start with a digit. A key named `cat-name` can be set but can't be printed this way.
 - A `{{v:…}}` naming a value the game doesn't declare is left in place, so the missing name shows on screen instead of vanishing.
 - In `{{n:storyline.key}}`, the storyline id is letters, digits, `_` and `-`, and the key is letters, digits and `_`.
 - A `{{v:…}}` name is letters, digits, `_` and `-`. A plugin value is the plugin's id (letters, digits and `-`), a `/`, and such a name, so `{{v:messages/unread-texts}}` prints. Anything else isn't a token and is left as written.

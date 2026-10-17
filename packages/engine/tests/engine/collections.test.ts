@@ -28,7 +28,7 @@ const act = (id: string) => ({ type: 'activity' as const, id })
 describe('collections', () => {
   it('keep what is collected, with the turn, and show it with its words filled in', () => {
     const game = withGallery()
-    const state = apply(begin(game, { flags: { playerFirst: 'Sam' } }), game, act('snapHouse')).state
+    const state = apply(begin(game, { kv: { playerFirst: 'Sam' } }), game, act('snapHouse')).state
     expect(state.collections.gallery).toEqual([
       { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg', turn: 2 },
     ])

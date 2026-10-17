@@ -5,10 +5,10 @@ import { begin, fixture } from '../fixtures/town.ts'
 
 describe('explain', () => {
   const game = fixture()
-  const state = begin(game, { flags: { metRosa: true }, stats: { intelligence: 12, coins: 3, luck: 0 } })
+  const state = begin(game, { kv: { metRosa: true }, stats: { intelligence: 12, coins: 3, luck: 0 } })
   const condition = {
     all: [
-      { flag: 'metRosa' },
+      { kv: 'metRosa' },
       { any: [{ stat: 'coins', gte: 5 }, { tier: 'intelligence', gte: 1 }] },
       { not: { phase: ['open'] } },
     ],
@@ -23,11 +23,11 @@ describe('explain', () => {
   })
 
   it('holds nowhere for a condition with two kinds, rather than picking one, and says why', () => {
-    // Before core features registered, `flag` was asked first here and the condition held.
-    const two = { flag: 'metRosa', phase: ['open'] } as never
+    // Before core features registered, `flag` (now `kv`) was asked first here and the condition held.
+    const two = { kv: 'metRosa', phase: ['open'] } as never
     expect(holds(state, two, game)).toBe(false)
-    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (flag, phase); wants one' })
-    const both = { all: [{ flag: 'metRosa' }], not: { flag: 'metRosa' } } as never
+    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (kv, phase); wants one' })
+    const both = { all: [{ kv: 'metRosa' }], not: { kv: 'metRosa' } } as never
     expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (all, not); wants one' })
   })
 

@@ -128,7 +128,7 @@ A barrier is a command that undo can't go back past: the irreversible choice its
 
 ```ts
 // No taking anything back once the rent is paid.
-history: { stopWhen: { flag: 'rentPaid' } }
+history: { stopWhen: { kv: 'rentPaid' } }
 ```
 
 A [`tick`](/docs/reference/commands#tick) is no step of its own. One undo goes back to before the last command that wasn't a tick, so a minigame's clock doesn't fill the history. A tick that crosses a barrier, such as a timer whose final state ends a turn, still clears it.
@@ -276,7 +276,7 @@ A UI that redraws only when `runner.state` changes misses these. Compare `runner
 ### setUiSetting
 
 ```ts
-runner.setUiSetting(id: string, value: FlagValue): string | undefined
+runner.setUiSetting(id: string, value: KvValue): string | undefined
 ```
 
 Changes a `ui` [setting](/docs/reference/settings), such as a text size, and writes it to the profile's `settings`. It never touches the state, so it adds nothing to the log or history and calls no listeners. It returns why the value was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command, or `undefined` when it took. A `play` setting is refused with `That setting changes the game, so it is set with a command.`

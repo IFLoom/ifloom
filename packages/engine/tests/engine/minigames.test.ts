@@ -57,8 +57,8 @@ const toss: MinigameDef = {
   start: 'air',
   states: {
     air: { after: { ms: 100, to: ['heads', { state: 'tails', weight: 3 }] } },
-    heads: { final: { effects: [{ kind: 'flag', key: 'side', value: 'heads' }] } },
-    tails: { final: { effects: [{ kind: 'flag', key: 'side', value: 'tails' }] } },
+    heads: { final: { effects: [{ kind: 'kv', key: 'side', to: 'heads' }] } },
+    tails: { final: { effects: [{ kind: 'kv', key: 'side', to: 'tails' }] } },
   },
 }
 
@@ -97,7 +97,7 @@ describe('minigames', () => {
     const game = withMinigames()
     const state = run(begin(game), game, { type: 'activity', id: 'play' })
     expect(state.minigame).toMatchObject({ id: 'arrows', state: 'show', elapsed: 0, vars: { round: 1, score: 0 } })
-    expect(state.flags['minigame:arrows']).toBe(1)
+    expect(state.kv['minigame:arrows']).toBe(1)
     const shown = view(state, game)
     expect(shown.minigame).toEqual({
       id: 'arrows',
@@ -175,7 +175,7 @@ describe('minigames', () => {
     for (let round = 0; round < 3; round += 1) state = run(state, game, right(state))
     expect(state.minigame).toBeNull()
     expect(state.stats.coins).toBe(8)
-    expect(state.flags.bestScore).toBe(3)
+    expect(state.kv.bestScore).toBe(3)
     expect(state.sceneId).toBe('rosa.hello')
     expect(state.seen['rosa.hello']).toBe(1)
   })
@@ -186,7 +186,7 @@ describe('minigames', () => {
     for (let round = 0; round < 3; round += 1) state = run(state, game, wrong(state))
     expect(state.minigame).toBeNull()
     expect(state.turn).toBe(3)
-    expect(state.flags.bestScore).toBeUndefined()
+    expect(state.kv.bestScore).toBeUndefined()
   })
 
   it('draw random variables and states from the seed, the same every time', () => {
@@ -204,7 +204,7 @@ describe('minigames', () => {
     const drawn = new Set(Array.from({ length: 12 }, (_, seed) => arrowsOf(seed)))
     expect(drawn.size).toBeGreaterThan(1)
     // A second play in the same save draws afresh.
-    const sides = Array.from({ length: 200 }, (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'flip' }, { type: 'tick', ms: 100 }).flags.side)
+    const sides = Array.from({ length: 200 }, (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'flip' }, { type: 'tick', ms: 100 }).kv.side)
     expect(new Set(sides)).toEqual(new Set(['heads', 'tails']))
     expect(sides.filter((side) => side === 'tails').length).toBeGreaterThan(sides.filter((side) => side === 'heads').length)
   })

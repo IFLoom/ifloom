@@ -1,5 +1,5 @@
 import type { Game } from './game.ts'
-import type { FlagValue, GameState } from './types.ts'
+import type { KvValue, GameState } from './types.ts'
 
 /**
  * A named list the game keeps entries in: photos taken, notes written, letters
@@ -24,7 +24,7 @@ export type CollectionItem = {
   text?: string
   image?: string
   /** Anything else the game wants to keep with it. */
-  data?: Record<string, FlagValue>
+  data?: Record<string, KvValue>
 }
 
 /** An entry as the state keeps it: what was collected, and the turn it was. */

@@ -258,12 +258,12 @@ Every plugin function gets this alongside the game state:
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
 
 ```ts
-// Wrong: the flag is lost, because set builds on `state`.
-const moved = { ...state, flags: { ...state.flags, stamped: true } }
+// Wrong: the kv key is lost, because set builds on `state`.
+const moved = { ...state, kv: { ...state.kv, stamped: true } }
 return set({ ...slice, stamps: slice.stamps + 1 })
 
 // Right.
-const moved = { ...state, flags: { ...state.flags, stamped: true } }
+const moved = { ...state, kv: { ...state.kv, stamped: true } }
 return set({ ...slice, stamps: slice.stamps + 1 }, moved)
 ```
 
@@ -861,7 +861,7 @@ What the plugin puts on background [audio channels](/docs/reference/audio#channe
 
 ```ts
 // The stall rings its bell while the market is on.
-audio: (state) => (state.flags.marketOpen ? { ambience: 'market.bell' } : undefined),
+audio: (state) => (state.kv.marketOpen ? { ambience: 'market.bell' } : undefined),
 ```
 
 It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. When several plugins name the same channel, the first in `game.plugins` wins. `null` silences a channel, and a channel you leave out goes to the next plugin, then the default.
@@ -945,7 +945,7 @@ kinds?: readonly KindDef[]
 entities?: (game: Game) => readonly EntityDef[]
 ```
 
-A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and variables that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
+A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
 - **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in a pack, replaces the plugin's. That's how a game renames one.
 - **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
@@ -970,8 +970,8 @@ data: { regulars: { people: [{ id: 'mo', name: 'Mo' }, { id: 'sal', name: 'Sal' 
 
 ```ts
 startingState(game).entities.regular
-// { mo: { name: 'Mo from next door', stats: { fondness: 8 }, flags: {} },
-//   sal: { name: 'Sal', stats: { fondness: 3 }, flags: {} } }
+// { mo: { name: 'Mo from next door', stats: { fondness: 8 }, kv: {} },
+//   sal: { name: 'Sal', stats: { fondness: 3 }, kv: {} } }
 ```
 
 The pack's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.

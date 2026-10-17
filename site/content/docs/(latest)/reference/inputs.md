@@ -1,7 +1,7 @@
 ---
 title: "Inputs"
 ---
-An input is something the player types or picks, which the engine writes to a [variable](/docs/reference/state#flags). It might be a name for the cat, the hour the alarm goes off, or their usual order at the café. The game declares each input with what it accepts, and the [`input`](/docs/reference/commands#input) command writes it. The engine checks the value against the declaration, so a UI can't put anything else in.
+An input is something the player types or picks, which the engine writes to a key in the [kv store](/docs/reference/state#kv). It might be a name for the cat, the hour the alarm goes off, or their usual order at the café. The game declares each input with what it accepts, and the [`input`](/docs/reference/commands#input) command writes it. The engine checks the value against the declaration, so a UI can't put anything else in.
 
 ```ts
 import { inputById, inputRefusal, inputValue, type InputDef } from '@ifloom/engine'
@@ -18,7 +18,7 @@ const town: Pack = {
   inputs: [
     // The showcase asks for this on moving day.
     { id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } },
-    { id: 'alarm', label: 'Wake at', kind: 'number', min: 5, max: 10, variable: 'wakeAt' },
+    { id: 'alarm', label: 'Wake at', kind: 'number', min: 5, max: 10, key: 'wakeAt' },
     {
       id: 'order',
       label: 'Your usual',
@@ -41,10 +41,10 @@ view(state, game).inputs.alarm
 state = apply(state, game, { type: 'input', id: 'alarm', value: 7 }).state
 state = apply(state, game, { type: 'input', id: 'catName', value: '  Biscuit ' }).state
 
-state.flags  // { wakeAt: 7, catName: 'Biscuit', ... }
+state.kv  // { wakeAt: 7, catName: 'Biscuit', ... }
 ```
 
-Prose reads the value back like any variable, and conditions test it with [`{ flag }`](/docs/reference/conditions#flag), such as `{ flag: 'order', is: 'tea' }`.
+Prose reads the value back like any kv key, and conditions test it with [`{ kv }`](/docs/reference/conditions#kv), such as `{ kv: 'order', is: 'tea' }`.
 
 A button can send the command with no `value`, as `{ type: 'input', id: 'catName' }`, and the UI asks for the value when it's pressed. If the command arrives without one, it's refused with `Enter something first.`, so the UI must fill the value in before passing it on.
 
@@ -55,12 +55,12 @@ type InputDef = {
   id: string
   label: string
   kind: 'text' | 'number' | 'choice'
-  variable?: string
+  key?: string
   when?: Condition
   maxLength?: number
   min?: number
   max?: number
-  options?: { value: FlagValue; label: string }[]
+  options?: { value: KvValue; label: string }[]
 }
 ```
 
@@ -69,7 +69,7 @@ type InputDef = {
 | `id` | What the `input` command names. |
 | `label` | What the field is called, for the UI. |
 | `kind` | `'text'`, `'number'` or `'choice'`. |
-| `variable` | The variable it writes. The input's `id` if left out. |
+| `key` | The kv key it writes. The input's `id` if left out. |
 | `when` | The input is only on offer while this [condition](/docs/reference/conditions) holds. Otherwise it's left out of the view, and refused with `Not now.` |
 | `maxLength` | Text only. The most characters, after trimming. 40 if left out. |
 | `min`, `max` | Number only. The range, inclusive. Either may be left out. |
@@ -80,7 +80,7 @@ Declare inputs in [`Game.inputs`](/docs/reference/game#game), either on the base
 ## inputRefusal
 
 ```ts
-function inputRefusal(state: GameState, game: Game, id: string, value: FlagValue | undefined): string | undefined
+function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined): string | undefined
 ```
 
 Why this value can't be entered, as the player reads it, or `undefined` if it can. [`whyNot`](/docs/reference/actions#whynot) gives this line for an `input` command, after the [locks](/docs/reference/locks) and any hard plugin [guard](/docs/reference/plugins#guards) have had their say. A guard's soft warning still refuses the command when it runs. A game that handles `input` itself in [`rules.commands`](/docs/reference/rules#commands) skips it. These are the lines, in the order they're checked:
@@ -105,7 +105,7 @@ inputRefusal(state, game, 'alarm', 11)  // 'Between 5 and 10.'
 ## inputValue
 
 ```ts
-function inputValue(input: InputDef, value: FlagValue): FlagValue
+function inputValue(input: InputDef, value: KvValue): KvValue
 ```
 
 The value as it will be written. Text is trimmed, and anything else is left as it is.
@@ -122,7 +122,7 @@ The declaration with that id, or `undefined`.
 
 - **A number must be sent as a number.** An HTML field gives a string, and `'7'` is refused with `Enter a number.`, so convert it before sending.
 - **Choice values are compared exactly.** `1` and `'1'` are different options.
-- **An input writes a game variable, not a stat.** To let the player set a number that effects spend, have a choice or activity read the variable through a [custom effect](/docs/reference/effects#computed-effects).
+- **An input writes a kv key, not a stat.** To let the player set a number that effects spend, have a choice or activity read the key through a [custom effect](/docs/reference/effects#computed-effects).
 - **It works with a scene open.** Inputs aren't refused with `Finish this first.`, so a scene can ask for a name halfway through. To keep an input to one scene, use `when` (for example `{ scene: ['intro'] }`) or a [lock](/docs/reference/locks) that denies `'input'`.
 - **The loader checks the declaration.** It reports a `'choice'` input with no options and a `min` above `max`. See [Checking content](/docs/reference/checks).
 

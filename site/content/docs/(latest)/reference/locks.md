@@ -148,7 +148,7 @@ Every exit shows greyed out with `Stay in tonight.` To keep the player out of th
 A lock's `hide` leaves any button off the screen, not only exits. With this lock, late at night every activity button, such as Buy a coffee, is gone rather than greyed out, while the exits home still show:
 
 ```ts
-{ when: { flag: 'lateNight' }, deny: ['activity'], hide: true, reason: 'Everything is shut.' }
+{ when: { kv: 'lateNight' }, deny: ['activity'], hide: true, reason: 'Everything is shut.' }
 ```
 
 ### Nothing that ends the turn
@@ -157,7 +157,7 @@ While the café is short-staffed, the player can't do anything in the room that 
 
 ```ts
 locks: [
-  { when: { flag: 'shortStaffed' }, deny: ['activity', 'custom'], effect: 'turn', reason: 'Not while the café is this busy.' },
+  { when: { kv: 'shortStaffed' }, deny: ['activity', 'custom'], effect: 'turn', reason: 'Not while the café is this busy.' },
 ]
 ```
 

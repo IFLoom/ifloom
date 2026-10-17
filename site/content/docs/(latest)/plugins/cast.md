@@ -126,7 +126,7 @@ type CharacterDef = {
   storyline?: string
   met?: Condition
   stats?: Record<string, number>
-  flags?: Record<string, FlagValue>
+  kv?: Record<string, KvValue>
 }
 ```
 
@@ -147,7 +147,7 @@ type CharacterDef = {
 | `storyline` | The id of their [storyline](/docs/reference/storylines). While it's closed, they won't talk or pick up. | Never closed. |
 | `met` | Whether the player has met them, as a [condition](/docs/reference/conditions). | Having seen one of their `talk` or `call` scenes. |
 | `stats` | Their [entity](/docs/reference/entities#entitydef)'s stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
-| `flags` | Their entity's variables at the start. | `{}` |
+| `kv` | Their entity's kv store at the start. | `{}` |
 
 Inside a character's own conditions, `'$'` stands for them. Every `when` in `schedule`, `talk` and `call`, and `met` itself, is run with `'$'` bound to the character's entity (by [`bindCurrent`](/docs/reference/entities#bindcurrent)). So `{ stat: 'friendship', of: '$', gte: 25 }` in Ava's `talk` is Ava's friendship. Anywhere else, name them in full with `of: person('ava')`.
 
@@ -251,7 +251,7 @@ The [loader](/docs/reference/loader#pack) merges characters by id, as it merges 
 
 ### Each one is an entity
 
-The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kinds-and-entities)) and one entity of it per character (through `entities`). Each entity is named by the character's `name` and starts with their `stats` and `flags`. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
+The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kinds-and-entities)) and one entity of it per character (through `entities`). Each entity is named by the character's `name` and starts with their `stats` and `kv`. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
 
 ```ts
 import { startingState, type Condition, type Effect, type Game } from '@ifloom/engine'
@@ -260,8 +260,8 @@ import { person } from '@ifloom/plugin-cast'
 declare const game: Game   // built from the pack above
 
 startingState(game).entities.character
-// { ava: { name: 'Ava', stats: { friendship: 0 }, flags: {} },
-//   sam: { name: 'Sam', stats: { friendship: 0 }, flags: {} } }
+// { ava: { name: 'Ava', stats: { friendship: 0 }, kv: {} },
+//   sam: { name: 'Sam', stats: { friendship: 0 }, kv: {} } }
 
 const isFriend: Condition = { stat: 'friendship', of: person('ava'), gte: 25 }
 const warmer: Effect = { kind: 'stat', key: 'friendship', by: 10, of: person('ava') }
@@ -337,7 +337,7 @@ A character is met while their `met` condition holds, with `'$'` as them. With n
 ```ts
 import { type CharacterDef } from '@ifloom/plugin-cast'
 
-const met: CharacterDef['met'] = { flag: 'introduced', of: '$' }   // met once a scene sets their flag
+const met: CharacterDef['met'] = { kv: 'introduced', of: '$' }   // met once a scene sets their kv key
 ```
 
 Met people are listed in the view's [`people`](#castview), and only met people who can be called are [contacts](#queries).

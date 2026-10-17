@@ -201,7 +201,7 @@ export function Home() {
             <Card kind="checked">
               <span className={s.tag}>04</span>
               <h3 className={s.h3}>Tools that catch it before players do</h3>
-              <p className={s.p}>Your content is typed, so your editor autocompletes ids and flags a typo as you make it. The rest is a command away.</p>
+              <p className={s.p}>Your content is typed, so your editor autocompletes ids and kv a typo as you make it. The rest is a command away.</p>
               <ul className={s['tool-list']}>
                 {tools.map((tool) => (
                   <li key={tool.name}>

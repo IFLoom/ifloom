@@ -4,8 +4,8 @@ import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src
 
 const apps: AppDef[] = [
   { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ text: 'notes.intro' }] }] },
-  { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', locked: [{ when: { not: { flag: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
-  { id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop', when: { flag: 'emailSetUp' }, badge: { when: { flag: 'newMail' } }, sections: [{ panel: 'inbox' }] },
+  { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', locked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
+  { id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop', when: { kv: 'emailSetUp' }, badge: { when: { kv: 'newMail' } }, sections: [{ panel: 'inbox' }] },
 ]
 
 function game(): Game {
@@ -15,8 +15,8 @@ function game(): Game {
         id: 'office',
         schema: SCHEMA,
         activities: [
-          { id: 'setUpMail', effects: [{ kind: 'flag', key: 'emailSetUp', value: true }, { kind: 'flag', key: 'newMail', value: true }] },
-          { id: 'uninstall', effects: [{ kind: 'flag', key: 'emailSetUp', value: false }] },
+          { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
+          { id: 'uninstall', effects: [{ kind: 'kv', key: 'emailSetUp', to: false }] },
         ],
         prose: { 'notes.intro': 'Nothing written yet.' },
         custom: { panels: { inbox: () => ({ letters: 2 }) } },

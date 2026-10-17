@@ -37,7 +37,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
         body: 'The porch.\n\n[[img:@door|red]]',
         audio: { music: 'calm' },
         choices: [
-          { id: 'knock', label: 'Knock', effects: [{ kind: 'flag', key: 'knocked', add: 1 }] },
+          { id: 'knock', label: 'Knock', effects: [{ kind: 'kv', key: 'knocked', by: 1 }] },
           { id: 'wade', label: 'Wade in', effects: [{ kind: 'custom', name: 'tide/rise' }] },
           { id: 'in', label: 'Go in', effects: [{ kind: 'scene', id: 'hall' }] },
         ],
@@ -53,7 +53,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
   }
   const town = fixture({
     // Never stops anything, but asks every choice what it would apply.
-    locks: [{ when: { flag: 'at', is: 'house' }, deny: ['choose'], effect: 'tide/ebb', reason: 'The tide is out.' }],
+    locks: [{ when: { kv: 'at', is: 'house' }, deny: ['choose'], effect: 'tide/ebb', reason: 'The tide is out.' }],
   })
   const game: Game = {
     ...town,

@@ -26,12 +26,12 @@ describe('locks', () => {
         { when: { phase: ['intro'] }, deny: ['*'], except: ['choose'], reason: 'Not yet.' },
       ],
     })
-    const intro = begin(game, { phase: 'intro', flags: { at: 'shop' } })
+    const intro = begin(game, { phase: 'intro', kv: { at: 'shop' } })
     expect(lockedOut(intro, game)).toBe(true)
     expect(lockedBy(intro, game, { type: 'activity', id: 'rest' })).toBe('Not yet.')
     expect(lockedBy(intro, game, { type: 'choose', id: 'x' })).toBeUndefined()
     expect(view(intro, game).actions).toEqual([])
-    expect(view(begin(game, { flags: { at: 'shop' } }), game).actions.length).toBeGreaterThan(0)
+    expect(view(begin(game, { kv: { at: 'shop' } }), game).actions.length).toBeGreaterThan(0)
   })
 
   it('greys a button out, or with `hide` leaves it off the screen', () => {

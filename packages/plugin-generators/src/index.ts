@@ -4,7 +4,7 @@
  *
  * The plugin knows nothing about people or anything else. A pool is any list
  * of values the game names, with optional weights, and a template says, for
- * an entity's name, stats and variables, whether to pick from a pool, draw a
+ * an entity's name, stats and kv keys, whether to pick from a pool, draw a
  * number between two others, or use a fixed value. Every draw is seeded by the
  * save, the template and how many of the kind have been made, so a replay
  * makes the same entities.
@@ -14,7 +14,7 @@ import {
   roll,
   weighted,
   type EffectRef,
-  type FlagValue,
+  type KvValue,
   type Game,
   type GameState,
   type PluginProblem,
@@ -22,7 +22,7 @@ import {
 } from '@ifloom/engine'
 
 /** One value in a pool: the value, or the value with a weight (1 if left out). */
-export type PoolEntry = FlagValue | { value: FlagValue; weight?: number }
+export type PoolEntry = KvValue | { value: KvValue; weight?: number }
 
 /** A named list of values to pick from. */
 export type PoolDef = { id: string; values: PoolEntry[] }
@@ -35,7 +35,7 @@ export type PoolDef = { id: string; values: PoolEntry[] }
  * - `{ between: [1, 5] }`, a whole number from the first to the second, both included;
  * - `{ join: [...], with?: ' ' }`, several fields drawn and joined into one string.
  */
-export type FieldDef = FlagValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
+export type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
 
 /** How to make one entity of a kind. */
 export type TemplateDef = {
@@ -46,12 +46,12 @@ export type TemplateDef = {
   name: FieldDef
   /** Its stats, by id: stats the game declares for the kind. Left out, a stat starts at its `start`. */
   stats?: Record<string, FieldDef>
-  /** Its variables, by name. */
-  flags?: Record<string, FieldDef>
+  /** Its kv keys, by name. */
+  kv?: Record<string, FieldDef>
 }
 
 /** What a template draws for one entity, as the engine's `create` effect takes it. */
-export type GeneratedEntity = { name: string; stats: Record<string, number>; flags: Record<string, FlagValue> }
+export type GeneratedEntity = { name: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 
 const ID = 'generators'
 
@@ -65,7 +65,7 @@ export function templateDefs(game: Game): TemplateDef[] {
   return (game.data?.[ID]?.templates ?? []) as TemplateDef[]
 }
 
-function entryValue(entry: PoolEntry): FlagValue {
+function entryValue(entry: PoolEntry): KvValue {
   return typeof entry === 'object' && entry !== null ? entry.value : entry
 }
 
@@ -74,7 +74,7 @@ function entryWeight(entry: PoolEntry): number | undefined {
 }
 
 /** One field drawn: from the parts that seed it, plus where it is in the template. */
-function draw(field: FieldDef, game: Game, parts: (string | number)[]): FlagValue {
+function draw(field: FieldDef, game: Game, parts: (string | number)[]): KvValue {
   if (typeof field !== 'object' || field === null) return field
   if ('pool' in field) {
     const pool = poolDefs(game).find((entry) => entry.id === field.pool)
@@ -102,9 +102,10 @@ export function drawEntity(template: TemplateDef, state: GameState, game: Game, 
     const value = Number(draw(field, game, parts(`stat:${id}`)))
     if (Number.isFinite(value)) stats[id] = value
   }
-  const flags: Record<string, FlagValue> = {}
-  for (const [id, field] of Object.entries(template.flags ?? {})) flags[id] = draw(field, game, parts(`flag:${id}`))
-  return { name: String(draw(template.name, game, parts('name'))), stats, flags }
+  const kv: Record<string, KvValue> = {}
+  // Drawn under `flag:<id>`, the name from before the kv store, so a seed deals the same values it always has.
+  for (const [id, field] of Object.entries(template.kv ?? {})) kv[id] = draw(field, game, parts(`flag:${id}`))
+  return { name: String(draw(template.name, game, parts('name'))), stats, kv }
 }
 
 /** The pools a field names. */
@@ -119,7 +120,7 @@ function fields(template: TemplateDef): { where: string; field: FieldDef }[] {
   return [
     { where: 'name', field: template.name },
     ...Object.entries(template.stats ?? {}).map(([id, field]) => ({ where: `stat ${id}`, field })),
-    ...Object.entries(template.flags ?? {}).map(([id, field]) => ({ where: `flag ${id}`, field })),
+    ...Object.entries(template.kv ?? {}).map(([id, field]) => ({ where: `kv ${id}`, field })),
   ]
 }
 

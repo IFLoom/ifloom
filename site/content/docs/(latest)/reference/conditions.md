@@ -12,7 +12,7 @@ const regularAtTheCafe: Condition = {
     at('cafe'),
     { stat: 'coins', gte: 4 },
     { seen: 'ava.hi' },
-    { not: { flag: 'owesAva' } },
+    { not: { kv: 'owesAva' } },
   ],
 }
 ```
@@ -57,12 +57,12 @@ type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
   | { not: Condition }
-  | ({ flag: string; is?: FlagValue; of?: string } & Range)
-  | ({ setting: string; is?: FlagValue } & Range)
+  | ({ kv: string; is?: KvValue; of?: string } & Range)
+  | ({ setting: string; is?: KvValue } & Range)
   | ({ chose: string } & Range)
   | ({ seen: string } & Range)
   | ({ since: string } & Range)
-  | { storylineFlag: { storyline: string; key: string; is?: FlagValue } }
+  | { storylineKv: { storyline: string; key: string; is?: KvValue } }
   | ({ stat: StatKey; of?: string } & Range)
   | ({ count: string; where?: Condition } & Range)
   | { entity: string }
@@ -81,37 +81,37 @@ type Condition =
   | PluginCall
 ```
 
-**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ flag: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
+**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', has: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
 
 ### all, any, not
 
 ```ts
-{ all: [{ flag: 'marketDay' }, { has: 'scarf' }] }   // on market day, with a scarf
+{ all: [{ kv: 'marketDay' }, { has: 'scarf' }] }   // on market day, with a scarf
 { any: [{ has: 'scarf' }, { has: 'raincoat' }] }
 { not: { phase: ['arrival'] } }
 ```
 
 `{ all: [] }` is true and `{ any: [] }` is false.
 
-### flag
+### kv
 
 ```ts
-{ flag: 'marketOpen' }             // set to anything truthy
-{ flag: 'errand', is: 'bread' }    // exactly this value
-{ flag: 'coffeesBought', gte: 3 }  // a number, 3 or more
+{ kv: 'marketOpen' }             // set to anything truthy
+{ kv: 'errand', is: 'bread' }    // exactly this value
+{ kv: 'coffeesBought', gte: 3 }  // a number, 3 or more
 ```
 
-Tests a game [variable](/docs/reference/state#flags). What it tests depends on what you give:
+Tests a key in the [kv store](/docs/reference/state#kv), the game's keys with a true/false, number or text value. What it tests depends on what you give:
 
 - **`is`** tests strict equality, so `1` and `'1'` differ. Any range bound beside it is ignored.
-- **A [range](#range) bound** (`gte`, `gt`, `lte` or `lt`) tests whether the variable's number is in the range. A variable that isn't a number (unset, text or `true`) counts as 0.
-- **Neither** tests whether the variable is truthy. `0`, `''` and `false` aren't.
+- **A [range](#range) bound** (`gte`, `gt`, `lte` or `lt`) tests whether the key's number is in the range. A value that isn't a number (unset, text or `true`) counts as 0.
+- **Neither** tests whether the key is truthy. `0`, `''` and `false` aren't.
 
-To count something, use the [`flag`](/docs/reference/effects#flag) effect's `add` form, and test the count with a range.
+To count something, use the [`kv`](/docs/reference/effects#kv) effect's `by` form, and test the count with a range.
 
-With `of`, it tests an [entity](/docs/reference/entities)'s variable, as in `{ flag: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
+With `of`, it tests a key in an [entity](/docs/reference/entities)'s kv store, as in `{ kv: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
 
-**Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ flag: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something is *not* set on an entity that may have gone, write `{ not: { flag: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
+**Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ kv: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something is *not* set on an entity that may have gone, write `{ not: { kv: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
 
 ### setting
 
@@ -121,7 +121,7 @@ With `of`, it tests an [entity](/docs/reference/entities)'s variable, as in `{ f
 { setting: 'patience', gte: 6 }         // a range, 6 or more
 ```
 
-Tests a `play` [setting](/docs/reference/settings), the value in [`state.settings`](/docs/reference/state#settings). It reads the same way as [`flag`](#flag): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
+Tests a `play` [setting](/docs/reference/settings), the value in [`state.settings`](/docs/reference/state#settings). It reads the same way as [`kv`](#kv): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
 
 ```ts
 // A hint only for players who keep hints on.
@@ -138,7 +138,7 @@ Tests a `play` [setting](/docs/reference/settings), the value in [`state.setting
 { chose: 'ava.hi/compliment', lt: 1 }   // never
 ```
 
-How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a variable.
+How many times the player has picked a choice. The key is the scene's id, a slash and the choice's id (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a kv key.
 
 **Gotcha.** The [content checker](/docs/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
 
@@ -165,14 +165,14 @@ Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [
 - A scene the player hasn't seen yet fails every range, `lt` included.
 - A bare `{ since: 'x' }` means at least one turn since, so it's false in the same turn.
 
-### storylineFlag
+### storylineKv
 
 ```ts
-{ storylineFlag: { storyline: 'ava', key: 'lentBook' } }
-{ storylineFlag: { storyline: 'ava', key: 'favourite', is: 'poetry' } }
+{ storylineKv: { storyline: 'ava', key: 'lentBook' } }
+{ storylineKv: { storyline: 'ava', key: 'favourite', is: 'poetry' } }
 ```
 
-Works like [`flag`](#flag) without a range, on a [storyline](/docs/reference/storylines)'s variables. Bare, it asks whether the variable is truthy. With `is`, it tests strict equality.
+Works like [`kv`](#kv) without a range, on a [storyline](/docs/reference/storylines)'s own kv store. Bare, it asks whether the key is truthy. With `is`, it tests strict equality.
 
 ### stat
 
@@ -292,7 +292,7 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 { counter: { storyline: 'ava', key: 'visits' }, gte: 3 }
 ```
 
-Tests a storyline variable's number against a range. A variable that's missing or isn't a number counts as 0.
+Tests the number under a key in a storyline's kv store against a range. A key that's missing or isn't a number counts as 0.
 
 ### minigameVar
 
@@ -389,7 +389,7 @@ const town: Game = {
   // ...
   custom: {
     conditions: {
-      marketDay: (state) => state.turn % 7 === 5 && !state.flags.rainedOff,
+      marketDay: (state) => state.turn % 7 === 5 && !state.kv.rainedOff,
     },
   },
 }
@@ -470,7 +470,7 @@ import { at } from '@ifloom/plugin-places'
 
 const why = explain(state, {
   all: [
-    { flag: 'metAva' },
+    { kv: 'metAva' },
     { any: [{ stat: 'coins', gte: 5 }, { tier: 'charm', gte: 1 }] },
     { not: at('cafe') },
   ],
@@ -510,7 +510,7 @@ import { explainText } from '@ifloom/engine'
 
 console.log(explainText(why))
 // ✗ all of 3: 1 fail
-//   ✓ flag metAva is true; wants set
+//   ✓ kv metAva is true; wants set
 //   ✓ any of 2: 1 hold
 //     ✗ stat coins is 3; wants 5 or more
 //     ✓ stat charm is in band 1; wants band 1 or more
@@ -520,6 +520,6 @@ console.log(explainText(why))
 
 ## See it in an example
 
-- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat/open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` variable with `lt`, `is` and `gte`.
+- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat/open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
 - Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) uses `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
 - The Corner Café: the `review` trigger in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

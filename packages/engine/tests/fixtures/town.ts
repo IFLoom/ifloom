@@ -10,20 +10,20 @@ import type { GameState } from '../../src/types.ts'
  * game, so they say what the engine does with nothing but its own rules.
  *
  * The engine has no places. Where the player is, as far as these tests need
- * one, is the variable `at`, moved by the `go-*` activities.
+ * one, is the kv key `at`, moved by the `go-*` activities.
  */
 
 export const activities: ActivityDef[] = [
   { id: 'wait' },
   // The turn ends, as a night's sleep or the end of a week would end it.
   { id: 'rest', effects: [{ kind: 'turn' }] },
-  { id: 'tidy', requires: [{ when: { flag: 'at', is: 'house' }, reason: 'Not here.' }] },
+  { id: 'tidy', requires: [{ when: { kv: 'at', is: 'house' }, reason: 'Not here.' }] },
   { id: 'read', effects: [{ kind: 'stat', key: 'intelligence', by: 2 }] },
   // Going somewhere, as far as the engine's tests need to: the stand-in reads `at`.
   ...['house', 'street', 'shop'].map((place) => ({
     id: `go-${place}`,
-    requires: [{ when: { not: { flag: 'at', is: place } }, reason: 'You are already here.' }],
-    effects: [{ kind: 'flag' as const, key: 'at', value: place }],
+    requires: [{ when: { not: { kv: 'at', is: place } }, reason: 'You are already here.' }],
+    effects: [{ kind: 'kv' as const, key: 'at', to: place }],
   })),
 ]
 
@@ -37,7 +37,7 @@ export function fixture(rules: Game['rules'] = {}): Game {
     stats: [
       { id: 'intelligence', label: 'Intelligence', start: 5, bands: [10, 20] },
       { id: 'coins', label: 'Coins', start: 3, max: 999, format: '{n}c' },
-      { id: 'luck', label: 'Luck', visible: { flag: 'feelingLucky' } },
+      { id: 'luck', label: 'Luck', visible: { kv: 'feelingLucky' } },
     ],
     items: [],
     scenes: [
@@ -70,9 +70,9 @@ export function begin(game: Game, patch: Partial<GameState> = {}): GameState {
     sceneId: null,
     turn: 2,
     ...patch,
-    flags: { at: 'house', ...patch.flags },
+    kv: { at: 'house', ...patch.kv },
   }
 }
 
 /** Be somewhere, as the stand-in for places reads it. */
-export const standAt = (state: GameState, place: string): GameState => ({ ...state, flags: { ...state.flags, at: place } })
+export const standAt = (state: GameState, place: string): GameState => ({ ...state, kv: { ...state.kv, at: place } })

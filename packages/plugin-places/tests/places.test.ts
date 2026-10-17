@@ -26,7 +26,7 @@ const town: Pack = {
     'place.park': 'Ducks.',
   },
   activities: [
-    { id: 'coffee', requires: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'flag', key: 'coffee', value: true }] },
+    { id: 'coffee', requires: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'kv', key: 'coffee', to: true }] },
     { id: 'nap', effects: [pass(1)] },
     { id: 'hop', effects: [moveTo('park')] },
   ],
@@ -40,7 +40,7 @@ const town: Pack = {
           locked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
           actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
         }),
-        place('back', ['cafe'], { parent: 'cafe', locked: [{ when: { not: { flag: 'staff' } }, reason: 'Staff only.', hide: true }] }),
+        place('back', ['cafe'], { parent: 'cafe', locked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }] }),
         place('park', ['street']),
       ],
     },
@@ -90,7 +90,7 @@ describe('places', () => {
     const state = walk(g, startingState(g), 'street', 'cafe')
     expect(where(state)).toBe('cafe')
     expect(view(state, g).actions.map((action) => action.id)).toEqual(['coffee', 'nap'])
-    expect(apply(state, g, { type: 'activity', id: 'coffee' }).state.flags.coffee).toBe(true)
+    expect(apply(state, g, { type: 'activity', id: 'coffee' }).state.kv.coffee).toBe(true)
     expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'activity', id: 'coffee' })).toBe('There is no coffee here.')
   })
 
@@ -110,15 +110,15 @@ describe('places', () => {
     const { game: g } = game()
     const cafe = walk(g, startingState(g), 'street', 'cafe')
     expect(shown(cafe, g).exits.map((exit) => exit.id)).toEqual(['street'])
-    const staff = { ...cafe, flags: { staff: true } }
+    const staff = { ...cafe, kv: { staff: true } }
     expect(shown(staff, g).exits.map((exit) => exit.id)).toEqual(['street', 'back'])
-    const locked = game({ start: 'house' }, { locks: [{ when: { flag: 'grounded' }, deny: ['places/go'], hide: true, reason: 'Grounded.' }] }).game
-    expect(shown({ ...startingState(locked), flags: { grounded: true } }, locked).exits).toEqual([])
+    const locked = game({ start: 'house' }, { locks: [{ when: { kv: 'grounded' }, deny: ['places/go'], hide: true, reason: 'Grounded.' }] }).game
+    expect(shown({ ...startingState(locked), kv: { grounded: true } }, locked).exits).toEqual([])
   })
 
   it('answer `at` and `within`, following a place’s parent', () => {
     const { game: g } = game()
-    const back = walk(g, { ...startingState(g), flags: { staff: true } }, 'street', 'cafe', 'back')
+    const back = walk(g, { ...startingState(g), kv: { staff: true } }, 'street', 'cafe', 'back')
     expect(holds(back, at('back'), g)).toBe(true)
     expect(holds(back, at('cafe'), g)).toBe(false)
     expect(holds(back, within('cafe'), g)).toBe(true)
@@ -135,9 +135,9 @@ describe('places', () => {
   it('run the doorstep on arrival by exit', () => {
     const { game: g } = game({
       start: 'street',
-      arrive: (state) => (where(state) === 'park' ? { ...state, flags: { ...state.flags, ducks: true } } : state),
+      arrive: (state) => (where(state) === 'park' ? { ...state, kv: { ...state.kv, ducks: true } } : state),
     })
-    expect(walk(g, startingState(g), 'park').flags.ducks).toBe(true)
+    expect(walk(g, startingState(g), 'park').kv.ducks).toBe(true)
   })
 
   it('leave a game nowhere with no start, and nothing on the screen but its buttons', () => {
@@ -249,7 +249,7 @@ describe('places', () => {
       layers: [
         { id: 'room', src: 'cafe/room' },
         { id: 'counter', pool: 'counter', tags: ['day'] },
-        { id: 'lamp', src: 'cafe/lamp.png', when: { flag: 'evening' } },
+        { id: 'lamp', src: 'cafe/lamp.png', when: { kv: 'evening' } },
       ],
       hotspots: [
         { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
@@ -279,7 +279,7 @@ describe('places', () => {
 
     it('shows a layer and its hotspot once the layer’s condition holds', () => {
       const { g } = withStage(stage)
-      const evening = { ...startingState(g), flags: { evening: true } }
+      const evening = { ...startingState(g), kv: { evening: true } }
       const location = shown(evening, g).location!
       expect(location.stage!.layers.map((layer) => layer.id)).toEqual(['room', 'counter', 'lamp'])
       expect(location.stage!.hotspots.map((hotspot) => hotspot.id)).toEqual(['menu', 'lamp', 'door'])

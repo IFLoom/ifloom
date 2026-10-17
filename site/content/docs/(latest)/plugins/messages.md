@@ -465,7 +465,7 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 
 ```ts
 // prose 'ava.ducks': 'Look who turned up at the pond!\n\n[[video:clips/ducks|Two ducks on the pond]]'
-{ id: 'ava.ducks', channel: 'texts', from: 'ava', when: { flag: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
+{ id: 'ava.ducks', channel: 'texts', from: 'ava', when: { kv: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
 ```
 
 The React UI's [`MessagesSection`](/docs/react/components#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
@@ -525,7 +525,7 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 ## Gotchas
 
 - **Messages arrive only after a command.** The plugin delivers them in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
-- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a flag, a day (`day({ gte: 2 })`) or a scene seen.
+- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
 - **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time.
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.

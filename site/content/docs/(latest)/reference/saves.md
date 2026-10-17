@@ -239,7 +239,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `played` | Time played, in milliseconds, as the [runner](/docs/reference/runner) counted it. |
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
-| `player` | The game's `playerName` [variable](/docs/reference/state#flags) when it's a string, else `null`. The engine keeps no name of its own, so a game that stores the player's name under that variable gets it on its load screen. |
+| `player` | What [`game.saveName`](/docs/reference/game#savename) returns for the state, or `null` when the game has no `saveName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
 | `packs` | The ids of the packs the game was loaded from ([`game.packs`](/docs/reference/game)). |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
@@ -312,8 +312,8 @@ A state already in today's shape comes back equal to what went in, apart from an
 
 These are the changes to the save format so far, with what loading a save from before each one does:
 
-- **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into [variables](/docs/reference/state#flags) of the same names, so `{{playerName}}` still fills in, and adds an empty [`chosen`](/docs/reference/state#chosen).
-- **2 → 3** brings in the [turn](/docs/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: variables named `day:<id>` (the [once-a-turn](/docs/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/docs/reference/state#storylines), and each [collection](/docs/reference/collections) entry's and [notice](/docs/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
+- **1 → 2** moves the player's name out of the top level (`playerName`, `playerFirst`, `playerLast`) into flags (now the [kv store](/docs/reference/state#kv)) of the same names, so `{{playerName}}` still fills in, and adds an empty [`chosen`](/docs/reference/state#chosen).
+- **2 → 3** brings in the [turn](/docs/reference/state#turn). Before it, a day was the only turn there was, so `turn` is set to `time.day` (0 if the save has no `time`), and everything stamped with a day is stamped with that turn: flags named `day:<id>` (the [once-a-turn](/docs/reference/progress#onceperturn) records) become `turn:<id>`, each storyline's `closedUntilDay` becomes [`closedUntil`](/docs/reference/state#storylines), and each [collection](/docs/reference/collections) entry's and [notice](/docs/reference/notices)'s `day` becomes `turn`. `seenOn` and `fired` keep their numbers, which now read as turns.
 - **3 → 4** brings in [entities](/docs/reference/entities): the save gets an empty [`entities`](/docs/reference/state#entities) and an empty [`created`](/docs/reference/state#created), The game's declared entities are added in step 5, or by the game's own steps in a game with a `version`.
 - **4 → 5** takes the clock out of the engine. The save's `time: { day, period }` moves into the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, `plugins.calendar = { version: 1, state: { day, period } }`, with the old last period `'sleep'` renamed `'late'`, the calendar's word for it. A save that already has a `plugins.calendar` keeps it. A game without the calendar keeps the entry unused, as it keeps the state of any plugin it doesn't have.
 - **5 → 6** takes places out of the engine. The save's `locationId` is dropped from the top level and moves into the [places plugin](/docs/plugins/places#placesstate)'s state, `plugins.places = { version: 1, state: { at: locationId } }`. A save that already has a `plugins.places` keeps it, and one whose `locationId` was `null` gets no entry. A game with the places plugin then starts that save at the plugin's [`start`](/docs/plugins/places#placesoptions), because a plugin missing from a save gets its starting state when it loads. A game without the places plugin keeps the entry unused.
@@ -322,6 +322,7 @@ These are the changes to the save format so far, with what loading a save from b
 - **8 → 9** brings in [`settings`](/docs/reference/state#settings), empty on an older save. Step 5 then gives each `play` [setting](/docs/reference/settings) the game declares its default, so an old save plays with the defaults rather than the player's stored choices.
 - **9 → 10** adds [`audio`](/docs/reference/audio#audiostate): `{ channels: {}, cues: [], seq: 0, shown: 0, started: {} }`. No `audio` effect had run, so every channel plays the place's audio or the game's default, and the count of scenes entered starts again from 0.
 - **10 → 11** adds [`media`](/docs/reference/media#mediastate): `{ picks: {} }`. Nothing had been picked from a pool, so the next view picks as it always would, and the next command records the picks.
+- **11 → 12** renames `flags` to [`kv`](/docs/reference/state#kv) at the top level, on every [storyline](/docs/reference/state#storylines) and on every [entity](/docs/reference/state#entities). The keys and values are kept as they are.
 
 A save from version 0 doesn't load.
 
@@ -330,20 +331,20 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 11
+const SAVE_VERSION: 12
 ```
 
 The current save format. Every new state carries it in `state.version`.
 
 It only goes up when something an existing save already has changes shape, such as a field that's renamed, moved or holds a different kind of value. That bump ships with a step that reshapes the old field, which [`loadState`](#loadstate) runs on older saves.
 
-A field added to `GameState` doesn't bump it. The engine declares the new field's load default next to its new-game value, and a save that lacks the field gets the default when it loads, whatever its version. [`minigame`](/docs/reference/state#minigame) was added this way, so a save from before minigames loads with `null` and the version stayed at 11.
+A field added to `GameState` doesn't bump it. The engine declares the new field's load default next to its new-game value, and a save that lacks the field gets the default when it loads, whatever its version. [`minigame`](/docs/reference/state#minigame) was added this way, so a save from before minigames loads with `null` and the version stayed at 11. Version 12 renamed a field, so it has a step.
 
 Versions 4, 7, 9, 10 and 11 only added fields. They're from before this rule and have no step of their own, so loading an older save gives those fields their defaults too.
 
 ## The game's own migrations
 
-When an update to your game changes its content in a way old saves need to know about, such as a variable renamed or a stat added, give the game a `version` and a step that carries older saves forward. The Letter, the novel in `examples/novel`, renamed its count of lies to `fibs` in version 2:
+When an update to your game changes its content in a way old saves need to know about, such as a kv key renamed or a stat added, give the game a `version` and a step that carries older saves forward. The Letter, the novel in `examples/novel`, renamed its count of lies to `fibs` in version 2:
 
 ```ts
 const { game, problems } = loadGame([letter], {
@@ -354,8 +355,8 @@ const { game, problems } = loadGame([letter], {
   version: 2,
   migrations: {
     1: (state) => {
-      const { lies, ...flags } = state.flags
-      return lies === undefined ? state : { ...state, flags: { ...flags, fibs: lies } }
+      const { lies, ...kv } = state.kv
+      return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
     },
   },
   introScene: 'ch1.mat',
@@ -388,9 +389,9 @@ A save made with a newer version of the game than the one loading it is refused 
 
 ### Filling new content
 
-Once a game declares a `version`, the engine stops filling newly declared content into old saves by itself. Nothing new is filled in unless one of your steps calls `tools.fill()`. That covers stats, items, variables, play settings and entities.
+Once a game declares a `version`, the engine stops filling newly declared content into old saves by itself. Nothing new is filled in unless one of your steps calls `tools.fill()`. That covers stats, items, kv keys, play settings and entities.
 
-A game with no `version` keeps the engine's old behaviour, so a game that existed before versions doesn't change. Every time a save loads, it gets the default of each `play` setting it lacks and each declared entity it doesn't have. It doesn't fill stats, items or variables.
+A game with no `version` keeps the engine's old behaviour, so a game that existed before versions doesn't change. Every time a save loads, it gets the default of each `play` setting it lacks and each declared entity it doesn't have. It doesn't fill stats, items or kv keys.
 
 So when you set `version` for the first time, even `version: 1`, loading stops adding settings and entities. When an update declares a new setting, entity or stat, raise the version and fill it in the step:
 
@@ -401,8 +402,8 @@ const base: Partial<Game> = {
   version: 3,
   migrations: {
     1: (state) => {
-      const { lies, ...flags } = state.flags
-      return lies === undefined ? state : { ...state, flags: { ...flags, fibs: lies } }
+      const { lies, ...kv } = state.kv
+      return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
     },
     // 2 → 3: version 3 adds a patience stat and Cleo, a new member of staff.
     2: (_state, tools) => tools.fill(['stats', 'entities']),
@@ -415,7 +416,7 @@ const base: Partial<Game> = {
 ```ts
 2: (_state, tools) => {
   const filled = tools.fill(['stats'])
-  return { ...filled, flags: { ...filled.flags, metCleo: false } }
+  return { ...filled, kv: { ...filled.kv, metCleo: false } }
 },
 ```
 
@@ -441,14 +442,14 @@ What a step gets besides the state. `fill(kinds)` returns the state the step was
 ```ts
 import type { FillKind } from '@ifloom/engine'
 
-type FillKind = 'stats' | 'items' | 'variables' | 'settings' | 'entities'
+type FillKind = 'stats' | 'items' | 'kv' | 'settings' | 'entities'
 ```
 
 | Kind | What `fill` adds |
 |---|---|
 | `stats` | Each of the player's stats the save lacks, at its `start`, and each entity stat an entity in the save lacks, at its `start`. Not [derived stats](/docs/reference/stats#derived-stats), which are never kept. |
 | `items` | Each item the save lacks, at its `start`, or 1 for gear and 0 for anything else if it gives none. |
-| `variables` | Each variable in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other variables have no declared value, so set them in the step yourself. |
+| `kv` | Each key in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other keys have no declared value, so set them in the step yourself. |
 | `settings` | Each `play` [setting](/docs/reference/settings) the save lacks, at its default. |
 | `entities` | Each declared [entity](/docs/reference/entities) the save doesn't have, at its start, unless [`state.removed`](/docs/reference/state#removed) says it was removed in play. |
 
@@ -459,4 +460,4 @@ The [content checker](/docs/reference/checks) reports a `version` that isn't a w
 ## See it in an example
 
 - Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) keeps saves with `saves(game, driver)` on `localStorageDriver(window.localStorage)`.
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) is at `version: 2` and has a migration that renames the `lies` variable to `fibs`. The test `reads a save from version 1` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) imports an old save through `saves(game, memoryDriver())`.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) is at `version: 2` and has a migration that renames the `lies` key to `fibs`. The test `reads a save from version 1` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) imports an old save through `saves(game, memoryDriver())`.

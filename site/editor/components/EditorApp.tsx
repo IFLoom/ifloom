@@ -128,7 +128,7 @@ export function EditorApp() {
         }
         if (thing === 'stat' && !draft.pack.stats.some((s) => s.id === id)) draft.pack.stats.push(newStat(id))
         if (thing === 'item' && !draft.pack.items.some((i) => i.id === id)) draft.pack.items.push(newItem(id))
-        if (thing === 'variable' && !draft.variables.some((v) => v.name === id)) draft.variables.push({ name: id, note: '' })
+        if (thing === 'kv' && !draft.kv.some((v) => v.name === id)) draft.kv.push({ name: id, note: '' })
       }),
     [update],
   )

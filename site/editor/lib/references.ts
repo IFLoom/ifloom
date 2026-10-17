@@ -1,12 +1,12 @@
 /**
  * What a pack names, and renaming it. The editor walks every condition and
- * effect in a pack, so renaming a scene, a stat, an item or a variable moves
+ * effect in a pack, so renaming a scene, a stat, an item or a kv key moves
  * every reference to it, and the prose keys that follow the scene's id.
  */
 import type { Condition, DataScene, EffectRef, Problem } from '@ifloom/engine'
 import type { EditorPack, Project } from './model.ts'
 
-export type Thing = 'scene' | 'stat' | 'item' | 'variable'
+export type Thing = 'scene' | 'stat' | 'item' | 'kv'
 
 type Visit = {
   condition?: (condition: Record<string, unknown>) => void
@@ -54,15 +54,15 @@ export function walkPack(pack: EditorPack, visit: Visit) {
   for (const item of pack.items) walkEffects(item.use?.effects, visit)
 }
 
-/** The variables a pack sets or reads, in the order it first names them. */
-export function variablesUsed(pack: EditorPack): string[] {
+/** The kv keys a pack sets or reads, in the order it first names them. */
+export function kvUsed(pack: EditorPack): string[] {
   const names = new Set<string>()
   walkPack(pack, {
     condition: (c) => {
-      if (typeof c.flag === 'string' && c.of === undefined) names.add(c.flag)
+      if (typeof c.kv === 'string' && c.of === undefined) names.add(c.kv)
     },
     effect: (e) => {
-      if (e.kind === 'flag' && typeof e.key === 'string' && e.of === undefined) names.add(e.key)
+      if (e.kind === 'kv' && typeof e.key === 'string' && e.of === undefined) names.add(e.key)
     },
   })
   return [...names]
@@ -85,7 +85,7 @@ function renameFormula(formula: unknown, from: string, to: string): unknown {
 }
 
 /**
- * The project with one scene, stat, item or variable renamed everywhere it is
+ * The project with one scene, stat, item or kv key renamed everywhere it is
  * named. A scene's prose keys (`id`, `id/…`, `id#…`) move with it.
  */
 export function rename(project: Project, thing: Thing, from: string, to: string): Project {
@@ -138,12 +138,12 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
       if (e.kind === 'item' && e.id === from) e.id = to
     }
   } else {
-    for (const variable of next.variables) if (variable.name === from) variable.name = to
+    for (const entry of next.kv) if (entry.name === from) entry.name = to
     visit.condition = (c) => {
-      if (c.flag === from && c.of === undefined) c.flag = to
+      if (c.kv === from && c.of === undefined) c.kv = to
     }
     visit.effect = (e) => {
-      if (e.kind === 'flag' && e.key === from && e.of === undefined) e.key = to
+      if (e.kind === 'kv' && e.key === from && e.of === undefined) e.key = to
     }
   }
   walkPack(pack, visit)

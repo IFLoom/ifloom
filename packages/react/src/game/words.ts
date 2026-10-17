@@ -35,7 +35,7 @@ export const UI_STRINGS = {
   closeScene: 'Close the scene',
   // debug
   debugStat: 'Stat',
-  debugVariable: 'Variable',
+  debugKv: 'kv key',
   debugItem: 'Item',
   debugStatOf: 'Stat of',
   debugGo: 'Go',

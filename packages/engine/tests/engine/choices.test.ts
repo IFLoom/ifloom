@@ -53,33 +53,33 @@ describe('choices the player made', () => {
   })
 })
 
-describe('variables as counters', () => {
+describe('kv keys as counters', () => {
   it('add, starting from nothing, and range-test', () => {
     const game = fixture()
-    let state = applyEffects(begin(game), game, [{ kind: 'flag', key: 'lies', add: 1 }])
-    state = applyEffects(state, game, [{ kind: 'flag', key: 'lies', add: 2 }])
-    expect(state.flags.lies).toBe(3)
-    expect(holds(state, { flag: 'lies', gte: 3 }, game)).toBe(true)
-    expect(holds(state, { flag: 'lies', gt: 3 }, game)).toBe(false)
-    expect(holds(state, { flag: 'lies', lte: 3 }, game)).toBe(true)
-    expect(holds(state, { flag: 'lies', lt: 3 }, game)).toBe(false)
-    expect(explain(state, { flag: 'lies', gte: 1, lte: 2 }, game).why).toBe('flag lies is 3; wants 1 or more and 2 or less')
-    // A variable that is not a number counts as 0 in a range.
-    const named = applyEffects(state, game, [{ kind: 'flag', key: 'pet', value: 'Biscuit' }])
-    expect(holds(named, { flag: 'pet', lte: 0 }, game)).toBe(true)
-    expect(holds(named, { flag: 'pet' }, game)).toBe(true)
+    let state = applyEffects(begin(game), game, [{ kind: 'kv', key: 'lies', by: 1 }])
+    state = applyEffects(state, game, [{ kind: 'kv', key: 'lies', by: 2 }])
+    expect(state.kv.lies).toBe(3)
+    expect(holds(state, { kv: 'lies', gte: 3 }, game)).toBe(true)
+    expect(holds(state, { kv: 'lies', gt: 3 }, game)).toBe(false)
+    expect(holds(state, { kv: 'lies', lte: 3 }, game)).toBe(true)
+    expect(holds(state, { kv: 'lies', lt: 3 }, game)).toBe(false)
+    expect(explain(state, { kv: 'lies', gte: 1, lte: 2 }, game).why).toBe('kv lies is 3; wants 1 or more and 2 or less')
+    // A value that is not a number counts as 0 in a range.
+    const named = applyEffects(state, game, [{ kind: 'kv', key: 'pet', to: 'Biscuit' }])
+    expect(holds(named, { kv: 'pet', lte: 0 }, game)).toBe(true)
+    expect(holds(named, { kv: 'pet' }, game)).toBe(true)
   })
 })
 
 describe('a new game', () => {
-  it('has no name unless the game gives one, and its words read variables', () => {
+  it('has no name unless the game gives one, and its words read the kv store', () => {
     const game = fixture()
     const state = startingState(game)
-    expect(state.flags).toEqual({})
-    expect(startingState(game, { flags: { playerName: 'Robin' } }).flags.playerName).toBe('Robin')
+    expect(state.kv).toEqual({})
+    expect(startingState(game, { kv: { playerName: 'Robin' } }).kv.playerName).toBe('Robin')
     const words = proseStore(game, { hello: 'Hello, {{playerName}}. Day {{visits}}.' })
-    expect(words.line('hello', { ...state, flags: { playerName: 'Robin', visits: 3 } })).toBe('Hello, Robin. Day 3.')
-    // A variable the save does not have shows as written, so the gap is visible.
+    expect(words.line('hello', { ...state, kv: { playerName: 'Robin', visits: 3 } })).toBe('Hello, Robin. Day 3.')
+    // A key the save does not have shows as written, so the gap is visible.
     expect(words.line('hello', state)).toBe('Hello, {{playerName}}. Day {{visits}}.')
   })
 
@@ -93,24 +93,24 @@ describe('a new game', () => {
   it('shows a typed value as typed, never reading it as a token', () => {
     const game = fixture()
     const words = proseStore(game, { hello: 'Hello, {{playerName}}.' })
-    expect(words.line('hello', { ...startingState(game), flags: { playerName: '{{v:nothing}}' } })).toBe('Hello, {{v:nothing}}.')
+    expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{v:nothing}}' } })).toBe('Hello, {{v:nothing}}.')
   })
 
-  it('carries a version-1 save’s name into variables', () => {
+  it('carries a version-1 save’s name into the kv store', () => {
     const game = fixture()
-    const { chosen: _chosen, ...now } = startingState(game)
+    const { chosen: _chosen, kv: _kv, ...now } = startingState(game)
     const old = { ...now, version: 1, playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', flags: { tidy: true } }
     expect(loadState(old, game)).toMatchObject({
       version: SAVE_VERSION,
       chosen: {},
-      flags: { playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', tidy: true },
+      kv: { playerName: 'Robin Hale', playerFirst: 'Robin', playerLast: 'Hale', tidy: true },
     })
     expect(loadState(old, game)).not.toHaveProperty('playerName')
   })
 
   it('carries a version-2 save onto turns: the day is the turn, and day stamps become turn stamps', () => {
     const game = fixture()
-    const { turn: _turn, ...now } = startingState(game)
+    const { turn: _turn, kv: _kv, ...now } = startingState(game)
     const old = {
       ...now,
       version: 2,
@@ -123,8 +123,8 @@ describe('a new game', () => {
     expect(loadState(old, game)).toMatchObject({
       version: SAVE_VERSION,
       turn: 4,
-      flags: { 'turn:cafe.counter.chat': 4, tidy: true },
-      storylines: { rosa: { closedUntil: 6, flags: {} } },
+      kv: { 'turn:cafe.counter.chat': 4, tidy: true },
+      storylines: { rosa: { closedUntil: 6, kv: {} } },
       collections: { gallery: [{ id: 'house', turn: 2 }] },
       notices: [{ id: 'n', title: 'Rent', turn: 3, seen: false }],
     })
@@ -153,7 +153,7 @@ describe('a new game', () => {
     const game = fixture()
     const now = startingState(game)
     const moved = loadState({ ...now, version: 7, storylines: { rosa: { standing: 40, rapport: 3, closedUntil: null, flags: { met: true } } } }, game) as GameState
-    expect(moved.storylines.rosa).toEqual({ closedUntil: null, flags: { met: true } })
+    expect(moved.storylines.rosa).toEqual({ closedUntil: null, kv: { met: true } })
   })
 
   it('saves and loads without a player name', () => {

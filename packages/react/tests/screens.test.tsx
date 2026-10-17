@@ -18,7 +18,7 @@ function game(): Game {
           { id: 'coat', name: 'coat', desc: '', kind: 'gear' },
           { id: 'cape', name: 'cape', desc: '', kind: 'gear' },
         ],
-        activities: [{ id: 'wait', effects: [{ kind: 'flag', key: 'waited', add: 1 }] }],
+        activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
         scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', id: null }] }] }],
         inputs: [
           { id: 'catName', label: 'Name the cat', kind: 'text', maxLength: 8 },
@@ -70,7 +70,7 @@ describe('the React UI’s screens', () => {
     act(() => void fireEvent.change(within(field).getByLabelText('Name the cat'), { target: { value: 'Biscuit' } }))
     click(within(field).getByRole('button', { name: 'Enter' }))
     click(screen.getByRole('button', { name: 'Coffee' }))
-    expect(runner.state.flags).toMatchObject({ catName: 'Biscuit', tea: 'coffee' })
+    expect(runner.state.kv).toMatchObject({ catName: 'Biscuit', tea: 'coffee' })
   })
 
   it('offers undo and the backlog only when the game turns them on', () => {
@@ -80,7 +80,7 @@ describe('the React UI’s screens', () => {
     const runner = play({ history: true, backlog: { limit: 20 } })
     click(screen.getByRole('button', { name: /Go in/ }))
     click(screen.getByRole('button', { name: /Wait a while/ }))
-    expect(runner.state.flags.waited).toBe(1)
+    expect(runner.state.kv.waited).toBe(1)
     click(screen.getByRole('button', { name: 'Undo' }))
     expect(runner.canRedo).toBe(true)
     click(screen.getByRole('button', { name: 'Backlog' }))
@@ -102,7 +102,7 @@ describe('the React UI’s screens', () => {
     click(screen.getByRole('button', { name: 'Saves' }))
     await waitFor(() => expect(document.querySelector('[data-save-slot="1"]')).toBeTruthy())
     await act(async () => void fireEvent.click(within(document.querySelector('[data-save-slot="1"]') as HTMLElement).getByRole('button', { name: 'Load' })))
-    await waitFor(() => expect(runner.state.flags).toEqual(saved.flags))
+    await waitFor(() => expect(runner.state.kv).toEqual(saved.kv))
   })
 })
 

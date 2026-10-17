@@ -1,8 +1,8 @@
 import type { GameState, StorylineState } from './types.ts'
 
-/** A storyline as a new game has it: open, with no flags set. */
+/** A storyline as a new game has it: open, with nothing in its kv store. */
 export function emptyStoryline(): StorylineState {
-  return { closedUntil: null, flags: {} }
+  return { closedUntil: null, kv: {} }
 }
 
 /** A storyline's state, or an empty one if the save has none. */

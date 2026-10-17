@@ -39,14 +39,14 @@ import { onlyAt } from '@ifloom/plugin-places'
 const coffee: ActivityDef = {
   id: 'coffee',
   cost: { stats: { coins: 3 }, reasons: { coins: 'Not even for a small one.' } },
-  requires: [onlyAt(['cafe']), { reason: 'One is enough for today.', when: { not: { flag: 'hadCoffee' } } }],
-  effects: [{ kind: 'stat', key: 'energy', by: 15 }, { kind: 'flag', key: 'hadCoffee', value: true }, { custom: 'countCoffee' }],
+  requires: [onlyAt(['cafe']), { reason: 'One is enough for today.', when: { not: { kv: 'hadCoffee' } } }],
+  effects: [{ kind: 'stat', key: 'energy', by: 15 }, { kind: 'kv', key: 'hadCoffee', to: true }, { custom: 'countCoffee' }],
 }
 
 // goes on the game as `custom`
 const custom: Custom = {
   effects: {
-    countCoffee: () => [{ kind: 'flag', key: 'coffees', add: 1 }],
+    countCoffee: () => [{ kind: 'kv', key: 'coffees', by: 1 }],
   },
 }
 ```

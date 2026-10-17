@@ -73,8 +73,8 @@ describe('the cast', () => {
     const { game: g } = game()
     const state = startingState(g)
     expect(state.entities.character).toEqual({
-      ava: { name: 'Ava', stats: { friendship: 0 }, flags: {} },
-      sam: { name: 'Sam', stats: { friendship: 5 }, flags: {} },
+      ava: { name: 'Ava', stats: { friendship: 0 }, kv: {} },
+      sam: { name: 'Sam', stats: { friendship: 5 }, kv: {} },
     })
     expect(view(state, g).entities.character.plural).toBe('People')
   })

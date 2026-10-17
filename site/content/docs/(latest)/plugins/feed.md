@@ -337,7 +337,7 @@ The feed never refuses anything, and has one line of its own in the [strings tab
 
 | Key | English |
 |---|---|
-| `feed/you` | `You`. The name on the player's own posts when the game has no `playerName` variable. |
+| `feed/you` | `You`. The name on the player's own posts when the game has no `playerName` key in its kv store. |
 
 To reword it in your game, put it in the base's `strings`:
 
@@ -402,7 +402,7 @@ type PostView = {
 | Field | What it is |
 |---|---|
 | `from` | The poster, as written. `''` for the player's own. |
-| `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the game's `playerName` [variable](/docs/reference/state#flags) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
+| `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
 | `portrait` | A cast character's portrait (their `portrait`, or `art/character/<id>.jpg`), or `null`. Always `null` for the player's own. |
 | `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
 | `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. |
@@ -502,13 +502,13 @@ The player's own posts and reactions are made by effects, and those are checked 
 ## Gotchas
 
 - **Posts appear only after a command.** The plugin looks for new posts in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
-- **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a flag, a day (the calendar's `day({ gte: 2 })`) or a scene seen.
+- **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a kv key, a day (the calendar's `day({ gte: 2 })`) or a scene seen.
 - **A post appears once.** After that it stays, whatever `when` does.
 - **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unseen-<feed>`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
 - **`feed/unseen-<feed>` names come from your feeds.** A feed called `social` gives `feed/unseen-social`. If you rename the feed, every badge that names the old value stops counting.
 - **Own-post and comment prose keys are checked where they're written.** A `text` key that a [custom effect](/docs/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
-- **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` variable.
+- **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` kv key.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.
 - **A feed doesn't need a device.** You can show `view.plugins.feed` anywhere, such as the notice board in the example. The [devices](/docs/plugins/devices) plugin is one way to show a feed, not a requirement.
 

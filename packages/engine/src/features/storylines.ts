@@ -1,10 +1,10 @@
 /**
- * Storylines: threads of the story, each with flags of its own, that can be
+ * Storylines: threads of the story, each with a kv store of its own, that can be
  * closed for a while. The helpers are in `storylines.ts`.
  */
 import { emptyStoryline, storylineOf, storylineOpen } from '../storylines.ts'
 import type { StorylineDef } from '../game.ts'
-import type { FlagValue, StorylineState } from '../types.ts'
+import type { KvValue, StorylineState } from '../types.ts'
 import { defineFeature, mergedById } from './feature.ts'
 
 /** What the storylines feature adds, as types. */
@@ -13,7 +13,7 @@ export type StorylinesShape = {
     storylines: Record<string, StorylineState>
   }
   conditions: {
-    storylineFlag: { storylineFlag: { storyline: string; key: string; is?: FlagValue } }
+    storylineKv: { storylineKv: { storyline: string; key: string; is?: KvValue } }
     /**
      * A storyline is open (`open: true`, the default): not closed, or closed
      * until a turn that has come. With `open: false`, that it is closed for now.
@@ -21,7 +21,7 @@ export type StorylinesShape = {
     storyline: { storyline: string; open?: boolean }
   }
   effects: {
-    storylineFlag: { kind: 'storylineFlag'; id: string; key: string; value: FlagValue }
+    storylineKv: { kind: 'storylineKv'; id: string; key: string; to: KvValue }
     closeStoryline: { kind: 'closeStoryline'; id: string; turns: number }
   }
   game: {
@@ -40,19 +40,19 @@ export const storylines = defineFeature<StorylinesShape>({
     storylines: { start: (game) => Object.fromEntries(game.storylines.map((storyline) => [storyline.id, emptyStoryline()])) },
   },
   conditions: {
-    storylineFlag: {
+    storylineKv: {
       holds: (state, condition) => {
-        const { storyline, key, is } = condition.storylineFlag
-        const value = storylineOf(state, storyline).flags[key]
+        const { storyline, key, is } = condition.storylineKv
+        const value = storylineOf(state, storyline).kv[key]
         return is === undefined ? Boolean(value) : value === is
       },
       explain: (state, condition) => {
-        const { storyline, key, is } = condition.storylineFlag
-        const value = storylineOf(state, storyline).flags[key]
+        const { storyline, key, is } = condition.storylineKv
+        const value = storylineOf(state, storyline).kv[key]
         const want = is === undefined ? 'set' : `= ${JSON.stringify(is)}`
-        return `storyline ${storyline} flag ${key} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
+        return `storyline ${storyline} kv ${key} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
       },
-      references: (condition) => [{ storyline: condition.storylineFlag.storyline }],
+      references: (condition) => [{ storyline: condition.storylineKv.storyline }],
     },
     storyline: {
       holds: (state, condition) => storylineOpen(state, condition.storyline) === (condition.open ?? true),
@@ -64,10 +64,10 @@ export const storylines = defineFeature<StorylinesShape>({
     },
   },
   effects: {
-    storylineFlag: {
+    storylineKv: {
       apply: (state, effect) => {
         const cur = storylineOf(state, effect.id)
-        return { ...state, storylines: { ...state.storylines, [effect.id]: { ...cur, flags: { ...cur.flags, [effect.key]: effect.value } } } }
+        return { ...state, storylines: { ...state.storylines, [effect.id]: { ...cur, kv: { ...cur.kv, [effect.key]: effect.to } } } }
       },
       references: (effect) => [{ storyline: effect.id }],
     },

@@ -350,7 +350,7 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
                 </div>
               ))}
               <div>
-                <Button size="xs" onClick={() => set({ blocked: [...(choice.blocked ?? []), { when: { flag: names.variables[0] ?? 'busy' }, reason: 'Not now.' }] })}>
+                <Button size="xs" onClick={() => set({ blocked: [...(choice.blocked ?? []), { when: { kv: names.kv[0] ?? 'busy' }, reason: 'Not now.' }] })}>
                   + Add a reason
                 </Button>
               </div>

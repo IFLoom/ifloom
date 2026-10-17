@@ -21,6 +21,7 @@ type Game = {
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   settings?: SettingDef[]
   carryOver?: CarryOver
+  saveName?: (state: GameState) => string | null
   finished?: Condition
   startPhase?: string
   stats?: StatDef[]
@@ -55,7 +56,8 @@ type Game = {
 | `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with `migrations`. Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings and entities into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `migrations` | Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from: step 1 takes a version-1 save to version 2. Each is `(state, tools) => GameState`, and `tools.fill()` fills in content the save lacks. They run when an older save loads. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/docs/reference/settings). |
-| `carryOver` | What a New Game+ takes from the game before: `{ stats?, flags?, items? }`, each a list of ids, and `items` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
+| `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, items? }`, each a list of ids or keys, and `items` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
+| `saveName` | The name a save is listed under, worked out from the state. See [`saveName`](#savename). |
 | `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
 | `startPhase` | The stage a new game opens in. Default `''`. See [`phase`](/docs/reference/state#phase). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
@@ -70,7 +72,7 @@ type Game = {
 | `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the base's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
 | `collections` | Named lists the game keeps entries in, such as letters, photos or a ledger. See [Collections](/docs/reference/collections). |
 | `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/docs/reference/triggers). |
-| `inputs` | What the player can type or pick, and the variable each one writes. See [Inputs](/docs/reference/inputs). |
+| `inputs` | What the player can type or pick, and the kv key each one writes. See [Inputs](/docs/reference/inputs). |
 | `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
 | `custom` | The game's [custom functions](/docs/reference/custom): conditions, effects, values and panels that content calls by name. |
 | `actions` | The game's own buttons, such as waiting or checking a map. Each is an [`ActionDef`](/docs/reference/actions#actiondef). They're offered while no scene is open, after every [plugin's buttons](/docs/reference/plugins#buttons) (the [places plugin](/docs/plugins/places#the-buttons)'s room actions among them). They're also hidden while a [lock](/docs/reference/locks) that denies `'*'` is on. The engine adds no button of its own, so a game with no `actions` has none. |
@@ -84,6 +86,25 @@ type Game = {
 A new game starts at turn 0 with `introScene` open. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/docs/reference/commands#startingstate).
 
 **The idle screen.** When no scene is open, the screen shows the [`stage`](/docs/reference/plugins#stage) of the first plugin that has one at the moment. With the places plugin, that's the room the player is in. With no stage, it shows a scene titled with `game.title` and an empty body. Under it come the plugins' buttons and then the game's own `actions`, unless a lock denying `'*'` is on. See [The idle screen](/docs/reference/view#the-idle-screen).
+
+### saveName
+
+```ts
+saveName?: (state: GameState) => string | null
+```
+
+The name a save is listed under, usually the name the player typed. Each save records what it returns as [`SaveMeta.player`](/docs/reference/saves#savemeta), so a load screen can show whose save it is. Return `null` for no name. Leave `saveName` out and every save's `player` is `null`.
+
+```ts
+const { game } = loadGame([letter], {
+  id: 'the-letter',
+  title: 'The Letter',
+  introScene: 'ch1.mat',
+  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+})
+```
+
+The engine doesn't keep a player name of its own. The usual place is a `playerName` key in the [kv store](/docs/reference/state#kv), written by an [input](/docs/reference/inputs), and The Letter reads it from there. A name kept anywhere else works just as well, because `saveName` can read any part of the state.
 
 **A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story passes only `introScene`, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
 
@@ -166,7 +187,7 @@ A scene is anything with an id and a `render` function. If you write it as data,
 type StorylineDef = { id: string; name: string }
 ```
 
-A storyline is a thread of the story. It's followed by its variables and stages, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#characterdef) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
+A storyline is a thread of the story. It's followed by its kv store and stages, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#characterdef) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
 
 ```ts
 storylines: [

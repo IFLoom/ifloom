@@ -103,13 +103,13 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 
 | Problem | When the condition names |
 |---|---|
-| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ flag, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
-| `a condition needs one kind, such as flag or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
-| `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineFlag` or `counter`. |
+| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
+| `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
+| `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineKv` or `counter`. |
 | `unknown item "…"` | An item nobody declares, in `item` or `has`. |
 | `unknown stat "…"` | A stat nobody declares, in `stat`, `level` or `tier`. |
 | `unknown collection "…"` | A collection nobody declares. |
-| `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `flag`. `'$'` names no kind and isn't checked. |
+| `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'` names no kind and isn't checked. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
 | `gated on a choice in unknown scene "…"` | A `chose` key whose scene doesn't exist. |
 | `gated on unknown choice "…"` | A `chose` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
@@ -133,9 +133,9 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | A stat owner problem | A `stat` or `setStat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
 | `stat "…" is derived: it is worked out, never written` | A `stat` or `setStat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
 | `no <kind> stat named "…"` | A `create` effect gives its entity a stat that isn't declared `of` its kind. |
-| `unknown kind "…"` | A `create`'s or `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `flag` or `remove` effect. |
+| `unknown kind "…"` | A `create`'s or `each`'s `of`, or the kind in the `of` of a `stat`, `setStat`, `kv` or `remove` effect. |
 | `unknown item "…"` | An `item` effect. |
-| `unknown storyline "…"` | A `storylineFlag` or `closeStoryline` effect. |
+| `unknown storyline "…"` | A `storylineKv` or `closeStoryline` effect. |
 | `unknown collection "…"` | A `collect` or `discard`. |
 | `no prose for "…"` | A `notify`'s `text`, or a `collect` entry's `text`. |
 | `goes to unknown scene "…"` | A `scene` effect, or a [storylet](/docs/reference/storylets) draw's `otherwise`. |
@@ -278,7 +278,7 @@ type Reference =
   | { item: string }
   | { storyline: string }
   | { collection: string }
-  | { setting: string; is?: FlagValue }
+  | { setting: string; is?: KvValue }
   | { kind: string }
   | { activity: string }
   | { input: string }

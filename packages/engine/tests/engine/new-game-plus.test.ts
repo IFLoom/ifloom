@@ -19,24 +19,24 @@ function game(carryOver: Game['carryOver']): Game {
   }
 }
 
-/** A game played for a while: stats up, variables set, things bought. */
+/** A game played for a while: stats up, kv keys set, things bought. */
 function played(g: Game) {
   const state = startingState(g)
   return {
     ...state,
     stats: { ...state.stats, intelligence: 40, coins: 2000, luck: 7 },
-    flags: { ...state.flags, readTheLetter: true, metRosa: 'twice', at: 'shop' },
+    kv: { ...state.kv, readTheLetter: true, metRosa: 'twice', at: 'shop' },
     items: { umbrella: 0, bun: 3 },
     turn: 12,
   }
 }
 
 describe('New Game+', () => {
-  it('copies only the stats, variables and items carryOver lists', () => {
-    const g = game({ stats: ['intelligence'], flags: ['readTheLetter'], items: ['bun'] })
+  it('copies only the stats, kv keys and items carryOver lists', () => {
+    const g = game({ stats: ['intelligence'], kv: ['readTheLetter'], items: ['bun'] })
     const plus = startingState(g, { carry: played(g) })
     expect(plus.stats).toEqual({ intelligence: 40, coins: 3, luck: 0 })
-    expect(plus.flags).toEqual({ readTheLetter: true })
+    expect(plus.kv).toEqual({ readTheLetter: true })
     expect(plus.items).toEqual({ umbrella: 1, bun: 3 })
     expect(plus.turn).toBe(0)
   })
@@ -48,10 +48,10 @@ describe('New Game+', () => {
     expect(plus.items).toEqual({ umbrella: 0, bun: 3 })
   })
 
-  it('copies nothing from a game with no carryOver, and lets given variables win', () => {
-    expect(startingState(game(undefined), { carry: played(game(undefined)) }).flags).toEqual({})
-    const g = game({ flags: ['metRosa'] })
-    expect(startingState(g, { carry: played(g), flags: { metRosa: 'never' } }).flags).toEqual({ metRosa: 'never' })
+  it('copies nothing from a game with no carryOver, and lets given kv keys win', () => {
+    expect(startingState(game(undefined), { carry: played(game(undefined)) }).kv).toEqual({})
+    const g = game({ kv: ['metRosa'] })
+    expect(startingState(g, { carry: played(g), kv: { metRosa: 'never' } }).kv).toEqual({ metRosa: 'never' })
   })
 
   it('is checked by the loader: unknown stats and items, and stats that are not the player’s', () => {

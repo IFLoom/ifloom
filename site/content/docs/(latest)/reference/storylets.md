@@ -51,11 +51,11 @@ This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place
 
 If no scene is eligible, it opens `otherwise`. If you gave no `otherwise`, the effect leaves the scene on screen as it was. `otherwise` can be any scene, and doesn't need a `drawnFrom` of its own.
 
-`when` is tested against the state as the effect finds it, so an effect earlier in the same list counts. A storylet whose `when` reads a variable that the same choice sets will see the new value.
+`when` is tested against the state as the effect finds it, so an effect earlier in the same list counts. A storylet whose `when` reads a kv key that the same choice sets will see the new value.
 
 ## How the draw is seeded
 
-A draw is worked out from the save's [seed](/docs/reference/random#the-seed), the [turn](/docs/reference/state#turn), the name of the set, and how many draws the set has had so far. That count is kept in the variable `storylet:<name>`, such as `storylet:cafe`, and goes up by one on every draw, including one that found nothing to draw.
+A draw is worked out from the save's [seed](/docs/reference/random#the-seed), the [turn](/docs/reference/state#turn), the name of the set, and how many draws the set has had so far. That count is kept in the kv key `storylet:<name>`, such as `storylet:cafe`, and goes up by one on every draw, including one that found nothing to draw.
 
 So:
 
@@ -67,7 +67,7 @@ So:
 **Gotchas.**
 - The draw walks the eligible scenes in the order they sit in `game.scenes`. A pack or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
 - The count is per set, not per place. Two activities that both draw from `'cafe'` share one count.
-- The engine writes `storylet:` variables itself, so don't use that prefix for your own. See [flags](/docs/reference/state#flags).
+- The engine writes `storylet:` keys itself, so don't use that prefix for your own. See [the kv store](/docs/reference/state#kv).
 
 ## Once, at most, and only while
 
@@ -80,7 +80,7 @@ when: here('ava')                                  // only while Ava is in the c
 when: { stat: 'friendship', of: person('ava'), gte: 25 }  // only once you know her
 ```
 
-For once a turn, set a variable in the storylet's choice, list that variable in [`rules.resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
+For once a turn, set a kv key in the storylet's choice, list that key in [`rules.resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
 
 ## Adding to a set
 

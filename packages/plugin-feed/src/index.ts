@@ -144,7 +144,7 @@ export function feed(options: FeedOptions) {
       },
     },
     strings: {
-      /** The name on the player's own posts when the game has no `playerName` variable. */
+      /** The name on the player's own posts when the game has no `playerName` key in its kv store. */
       you: 'You',
     },
     start: () => ({ appeared: {}, own: [], reactions: {}, seen: {} }),
@@ -262,7 +262,7 @@ export function feed(options: FeedOptions) {
           .map((post, order): PostView & { order: number } => ({
             id: post.id,
             from: '',
-            name: typeof state.flags.playerName === 'string' ? state.flags.playerName : say(game, 'feed/you'),
+            name: typeof state.kv.playerName === 'string' ? state.kv.playerName : say(game, 'feed/you'),
             portrait: null,
             text: words(post.text),
             beats: [],

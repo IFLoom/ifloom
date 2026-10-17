@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 11, each in the
+ * A save of every format version the engine has had, 1 to 12, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -117,6 +117,15 @@ const v10 = { ...v9, version: 10, audio: { channels: { music: 'calm' }, cues: []
 
 const v11 = { ...v10, version: 11, media: { picks: { 'door||start|0': 'door/red.jpg' } } }
 
+const { flags: v11Flags, ...unflagged } = v11
+const v12 = {
+  ...unflagged,
+  version: 12,
+  kv: v11Flags,
+  storylines: { rosa: { closedUntil: 6, kv: { met: true } } },
+  entities: { staff: { ana: { name: 'Ana', stats: { skill: 4 }, kv: {} } } },
+}
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -130,4 +139,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   9: v9,
   10: v10,
   11: v11,
+  12: v12,
 }

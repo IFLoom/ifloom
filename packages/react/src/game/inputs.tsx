@@ -1,4 +1,4 @@
-import type { FlagValue, InputView } from '@ifloom/engine'
+import type { KvValue, InputView } from '@ifloom/engine'
 import { useEffect, useState, type FormEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -20,7 +20,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
   // Follow the value when something else changes it: an undo, a load.
   useEffect(() => setText(input.value === null ? '' : String(input.value)), [input.value])
   const [said, setSaid] = useState<string | null>(null)
-  const enter = (value: FlagValue | undefined) => {
+  const enter = (value: KvValue | undefined) => {
     const out = send({ type: 'input', id: input.id, value })
     setSaid(out.ok ? null : (out.refused ?? null))
   }

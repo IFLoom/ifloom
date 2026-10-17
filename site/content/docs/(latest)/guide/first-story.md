@@ -138,7 +138,7 @@ A stat stays between its `min` (0 unless you say) and its `max`. Every template 
 
 ## 4. A choice the story remembers
 
-The engine counts every choice the player takes, by `scene/choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/docs/reference/conditions#chose) condition, so you don't need to set a variable for it.
+The engine counts every choice the player takes, by `scene/choice`. A later scene can ask about an earlier choice with the [`{ chose }`](/docs/reference/conditions#chose) condition, so you don't need to record it yourself.
 
 Give the second chapter a line for each choice at the stop. A block with a `when` only shows while its condition holds:
 
@@ -159,16 +159,16 @@ A choice can have a `when` too. A choice whose condition doesn't hold isn't offe
 
 ## 5. A counter
 
-Now the driver. The player can pay, make an excuse, or, if they shared the umbrella, claim the stranger is paying. Each excuse adds to a variable called `excuses`. Variables are the game's own named values, kept in `state.flags`. The `flag` effect sets one, or with `add`, adds to its number:
+Now the driver. The player can pay, make an excuse, or, if they shared the umbrella, claim the stranger is paying. Each excuse adds to a count called `excuses`, kept in the kv store: keys with a true/false, number or text value, in `state.kv`. The `kv` effect sets a key `to` a value, or changes its number `by` an amount:
 
 ```ts
 choices: [
   { id: 'pay', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'scene', id: 'ch3.home' }] },
-  { id: 'excuse', effects: [{ kind: 'flag', key: 'excuses', add: 1 }, { kind: 'scene', id: 'ch3.home' }] },
+  { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'scene', id: 'ch3.home' }] },
   {
     id: 'blame',
     when: { chose: 'ch1.stop/share' },
-    effects: [{ kind: 'flag', key: 'excuses', add: 2 }, { kind: 'scene', id: 'ch3.home' }],
+    effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'scene', id: 'ch3.home' }],
   },
 ],
 ```
@@ -181,9 +181,9 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
   title: 'Chapter three: home',
   body: [
     { text: 'ch3.home' },
-    { text: 'ch3.home/none', when: { flag: 'excuses', lt: 1 } },
-    { text: 'ch3.home/one', when: { flag: 'excuses', is: 1 } },
-    { text: 'ch3.home/more', when: { flag: 'excuses', gte: 2 } },
+    { text: 'ch3.home/none', when: { kv: 'excuses', lt: 1 } },
+    { text: 'ch3.home/one', when: { kv: 'excuses', is: 1 } },
+    { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
   ],
   choices: [
     { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', id: 'end.wave' }] },
@@ -194,17 +194,17 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
 { id: 'end.door', title: 'The end', body: [{ text: 'end.door' }], choices: [] },
 ```
 
-A variable that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
+A key that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
 
 ## 6. A name the player types
 
-An [input](/docs/reference/inputs) asks the player for a value and writes it to a variable. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
+An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
 
 ```ts
-inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { flag: 'playerName' } } }],
+inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
-`{ flag: 'playerName' }` holds once the variable has a value, so `{ not: … }` hides the input after that. The prose prints any variable by name with a token, `{{playerName}}`:
+`{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. The prose prints any key by name with a token, `{{playerName}}`:
 
 ```ts
 'ch1.stop/named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
@@ -213,21 +213,30 @@ inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, wh
 Show that line, and hold the first chapter's choices back, until the name is in:
 
 ```ts
-body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { flag: 'playerName' } }],
+body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { kv: 'playerName' } }],
 choices: [
-  { id: 'share', when: { flag: 'playerName' }, effects: [/* … */] },
-  { id: 'keep', when: { flag: 'playerName' }, effects: [/* … */] },
+  { id: 'share', when: { kv: 'playerName' }, effects: [/* … */] },
+  { id: 'keep', when: { kv: 'playerName' }, effects: [/* … */] },
 ],
 ```
 
-Saves use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field, read from that variable, for a load screen to show.
+Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `loadGame`:
+
+```ts
+export default loadGame([story], {
+  id: 'last-bus',
+  title: 'The Last Bus',
+  introScene: 'ch1.stop',
+  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+})
+```
 
 ## 7. A chapter is a turn
 
 The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ kind: 'turn' }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'keep', when: { flag: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
+{ id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
 ```
 
 Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. The saves menu names each save by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
@@ -341,7 +350,7 @@ A playtest plays the game with no one at the keyboard. It needs somewhere to sta
 ```ts
 import { startingState, type Game } from '@ifloom/engine'
 
-export const start = (game: Game) => startingState(game, { flags: { playerName: 'Sam' } })
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
 ```
 
 Then run it:
@@ -366,19 +375,19 @@ const story: Pack = {
   id: 'story',
   schema: SCHEMA,
   stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
-  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { flag: 'playerName' } } }],
+  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { flag: 'playerName' } }],
+      body: [{ text: 'ch1.stop' }, { text: 'ch1.stop/named', when: { kv: 'playerName' } }],
       choices: [
         {
           id: 'share',
-          when: { flag: 'playerName' },
+          when: { kv: 'playerName' },
           effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }],
         },
-        { id: 'keep', when: { flag: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
+        { id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', id: 'ch2.bus' }] },
       ],
     },
     {
@@ -391,11 +400,11 @@ const story: Pack = {
       ],
       choices: [
         { id: 'pay', effects: [{ kind: 'stat', key: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }] },
-        { id: 'excuse', effects: [{ kind: 'flag', key: 'excuses', add: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }] },
+        { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }] },
         {
           id: 'blame',
           when: { chose: 'ch1.stop/share' },
-          effects: [{ kind: 'flag', key: 'excuses', add: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }],
+          effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'turn' }, { kind: 'scene', id: 'ch3.home' }],
         },
       ],
     },
@@ -404,9 +413,9 @@ const story: Pack = {
       title: 'Chapter three: home',
       body: [
         { text: 'ch3.home' },
-        { text: 'ch3.home/none', when: { flag: 'excuses', lt: 1 } },
-        { text: 'ch3.home/one', when: { flag: 'excuses', is: 1 } },
-        { text: 'ch3.home/more', when: { flag: 'excuses', gte: 2 } },
+        { text: 'ch3.home/none', when: { kv: 'excuses', lt: 1 } },
+        { text: 'ch3.home/one', when: { kv: 'excuses', is: 1 } },
+        { text: 'ch3.home/more', when: { kv: 'excuses', gte: 2 } },
       ],
       choices: [
         { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', id: 'end.wave' }] },
@@ -438,10 +447,15 @@ const story: Pack = {
   },
 }
 
-export default loadGame([story], { id: 'last-bus', title: 'The Last Bus', introScene: 'ch1.stop' })
+export default loadGame([story], {
+  id: 'last-bus',
+  title: 'The Last Bus',
+  introScene: 'ch1.stop',
+  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+})
 
 /** Where `ifloom playtest` starts: a player who has already typed a name. */
-export const start = (game: Game) => startingState(game, { flags: { playerName: 'Sam' } })
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
 ```
 
 ## Where next

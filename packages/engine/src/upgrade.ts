@@ -7,7 +7,7 @@
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 4
+export const SCHEMA = 5
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -21,7 +21,52 @@ export type RawPack = Record<string, unknown> & { schema: number }
  * reshapes the previous schema in the same change. A step returns a new pack
  * and never changes the one it was given; the schema number is set for it.
  */
-export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {}
+export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
+  // 4 → 5: flags become the kv store, wherever content can hold them.
+  // Words and code (prose, strings, variants, custom) are left as they are.
+  4: (pack) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => {
+        if (WORDS.has(key)) return [key, value]
+        // An input's `variable` is its `key`.
+        if (key === 'inputs' && Array.isArray(value)) value = value.map((input) => (isRecord(input) ? renamed(input, { variable: 'key' }) : input))
+        return [key, deep(value, flagsToKv)]
+      }),
+    ) as RawPack,
+}
+
+/** The pack keys that hold words or code, not content a step rewrites. */
+const WORDS = new Set(['prose', 'strings', 'variants', 'custom'])
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/** An object with some of its keys renamed, in the same order. */
+function renamed(value: Record<string, unknown>, names: Record<string, string>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(value).map(([key, inner]) => [names[key] ?? key, inner]))
+}
+
+/** Every object in a value rewritten by `rewrite`, from the innermost out. */
+function deep(value: unknown, rewrite: (value: Record<string, unknown>) => Record<string, unknown>): unknown {
+  if (Array.isArray(value)) return value.map((inner) => deep(inner, rewrite))
+  if (!isRecord(value)) return value
+  return rewrite(Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, deep(inner, rewrite)])))
+}
+
+/**
+ * Schema 4's flags in one object of content, as schema 5's kv store: the
+ * `{ flag }` and `{ storylineFlag }` conditions, the `flag` effect (`value`
+ * is `to`, `add` is `by`), the `storylineFlag` effect, and a `flags` record
+ * on an entity, a character, a template or a start command.
+ */
+function flagsToKv(value: Record<string, unknown>): Record<string, unknown> {
+  if (value.kind === 'flag') return renamed({ ...value, kind: 'kv' }, { value: 'to', add: 'by' })
+  if (value.kind === 'storylineFlag') return renamed({ ...value, kind: 'storylineKv' }, { value: 'to' })
+  const names: Record<string, string> = {}
+  if (typeof value.flag === 'string') names.flag = 'kv'
+  if (isRecord(value.storylineFlag)) names.storylineFlag = 'storylineKv'
+  if (isRecord(value.flags)) names.flags = 'kv'
+  return Object.keys(names).length ? renamed(value, names) : value
+}
 
 /**
  * A pack brought up to `SCHEMA`, step by step, or why it can't be: it was

@@ -1,6 +1,6 @@
 /**
  * @ifloom/plugin-debug — commands for testing a game while it runs: set a stat
- * (an entity's too) or a variable, give an item, jump to a scene, set the
+ * (an entity's too) or a kv key, give an item, jump to a scene, set the
  * clock, go anywhere.
  *
  * Every command here ignores locks, needs no exit and pays no cost: it is a
@@ -22,7 +22,7 @@ import {
   say,
   statDef,
   type Command,
-  type FlagValue,
+  type KvValue,
   type Game,
   type PluginCommand,
 } from '@ifloom/engine'
@@ -42,7 +42,7 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function isFlagValue(value: unknown): value is FlagValue {
+function isKvValue(value: unknown): value is KvValue {
   return typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string'
 }
 
@@ -61,7 +61,7 @@ export function debug() {
       noSuchPlace: 'There is no location called {id}.',
       noPlaces: 'This game has no places.',
       noSuchScene: 'There is no scene called {id}.',
-      badValue: 'A variable holds true, false, a number or a word.',
+      badValue: 'A kv key holds true, false, a number or a word.',
       notANumber: 'That needs a number.',
       badTime: 'A day is a whole number from 0, and a period one of {periods}.',
       noCalendar: 'This game has no calendar.',
@@ -89,10 +89,10 @@ export function debug() {
           return writeEntity(state, ref, { ...entity, stats: { ...entity.stats, [key]: to } })
         },
       }),
-      /** `{ name: 'debug/variable', with: { key, value } }`: set a variable. */
-      variable: free({
-        whyNot: (_state, args, { game }) => (isFlagValue(args.value) ? undefined : sayDebug(game, 'badValue')),
-        run: (state, args) => ({ ...state, flags: { ...state.flags, [String(args.key)]: args.value as FlagValue } }),
+      /** `{ name: 'debug/kv', with: { key, to } }`: set a key in the kv store. */
+      kv: free({
+        whyNot: (_state, args, { game }) => (isKvValue(args.to) ? undefined : sayDebug(game, 'badValue')),
+        run: (state, args) => ({ ...state, kv: { ...state.kv, [String(args.key)]: args.to as KvValue } }),
       }),
       /** `{ name: 'debug/item', with: { item, count } }`: set how many of an item the player has. */
       item: free({
@@ -160,8 +160,8 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 
 /** A command: put a stat at a value. */
 export const setStat = (stat: string, to: number, of?: string): Command => ({ type: 'custom', name: 'debug/stat', with: { stat, to, ...(of === undefined ? {} : { of }) } })
-/** A command: set a variable. */
-export const setVariable = (key: string, value: FlagValue): Command => ({ type: 'custom', name: 'debug/variable', with: { key, value } })
+/** A command: set a key in the kv store. */
+export const setKv = (key: string, to: KvValue): Command => ({ type: 'custom', name: 'debug/kv', with: { key, to } })
 /** A command: set how many of an item the player has. */
 export const setItem = (item: string, count: number): Command => ({ type: 'custom', name: 'debug/item', with: { item, count } })
 /** A command: put a scene on screen, or close it. */

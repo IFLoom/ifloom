@@ -22,7 +22,7 @@ Start with the four arrows. Each one is a state that shows its words, starts a 1
 ```ts
 import type { MinigameDef, MinigameStateDef } from '@ifloom/engine'
 
-/** The four arrows of quick feet, in the order the `arrow` variable numbers them from 1. */
+/** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
 const ARROWS = ['up', 'down', 'left', 'right'] as const
 
 /** One arrow on screen: 1.5 seconds to press it. The right one scores; a wrong one or the time running out doesn't. */

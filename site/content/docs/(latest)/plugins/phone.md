@@ -207,10 +207,10 @@ const activities: ActivityDef[] = [
     cost: { stats: { energy: 5 } },
     requires: [
       { reason: 'Take a photo first.', when: { collection: 'gallery' } },
-      { reason: 'You have posted today.', when: { not: { flag: 'postedToday' } } },
+      { reason: 'You have posted today.', when: { not: { kv: 'postedToday' } } },
     ],
     // postLatest is a custom effect that posts the photo and rolls its likes.
-    effects: [{ custom: 'postLatest' }, { kind: 'flag', key: 'postedToday', value: true }],
+    effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
   },
 ]
 

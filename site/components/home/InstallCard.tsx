@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import s from './InstallCard.module.css'
 
 // npm keeps the flags after `--` for the create script; the others pass them on as they are.
+// `dev` is how each one runs the new game's dev script: `bun dev` and `yarn dev` would do too, but `bun build` and `yarn check` are their own commands, so the docs always write `run`.
 const managers = [
-  { id: 'npm', command: 'npm create ifloom@latest my-game', pass: '--' },
-  { id: 'bun', command: 'bun create ifloom my-game', pass: '' },
-  { id: 'pnpm', command: 'pnpm create ifloom my-game', pass: '' },
-  { id: 'yarn', command: 'yarn create ifloom my-game', pass: '' },
+  { id: 'npm', command: 'npm create ifloom@latest my-game', pass: '--', dev: 'npm run dev' },
+  { id: 'bun', command: 'bun create ifloom my-game', pass: '', dev: 'bun run dev' },
+  { id: 'pnpm', command: 'pnpm create ifloom my-game', pass: '', dev: 'pnpm dev' },
+  { id: 'yarn', command: 'yarn create ifloom my-game', pass: '', dev: 'yarn run dev' },
 ] as const
 type Manager = (typeof managers)[number]['id']
 
@@ -194,7 +195,7 @@ export function InstallCard() {
           </button>
         </div>
         <p className={s.note}>
-          It makes a new game in <code>my-game</code>, ready for <code>npm run dev</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
+          It makes a new game in <code>my-game</code>, ready for <code>{managers.find((m) => m.id === chosen)!.dev}</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
           templates and options.
         </p>
         <p className={s.note}>

@@ -14,7 +14,12 @@ const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
   vanilla: ['typescript'],
   vue: ['vue', '@vitejs/plugin-vue', 'typescript', 'vue-tsc'],
   svelte: ['svelte', '@sveltejs/vite-plugin-svelte', 'svelte-check', 'typescript'],
+  next: ['next', 'react', 'react-dom', '@tailwindcss/postcss', '@types/node', '@types/react', '@types/react-dom', 'postcss', 'tailwindcss', 'typescript'],
 }
+
+/** The files a template's game has besides src/game.ts, AGENTS.md, .gitignore and tsconfig.json: a page and a Vite config, or Next's own. */
+const PAGE_FILES = (template: (typeof TEMPLATES)[number]) =>
+  template === 'next' ? ['app/layout.tsx', 'app/page.tsx', 'app/Game.tsx', 'next.config.ts', 'postcss.config.mjs', 'README.md'] : ['index.html', 'vite.config.ts']
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
 
@@ -26,7 +31,8 @@ describe('ifloom new', () => {
     // A game lists IFLoom's packages, and the framework it draws with and that framework's Vite plugin.
     const own = FRAMEWORK_DEPS[template] ?? []
     expect(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((dep) => !dep.startsWith('@ifloom/'))).toEqual(own)
-    expect(files).toEqual(expect.arrayContaining(['src/game.ts', 'index.html', 'AGENTS.md', '.gitignore', 'vite.config.ts', 'tsconfig.json']))
+    expect(files).toEqual(expect.arrayContaining(['src/game.ts', 'AGENTS.md', '.gitignore', 'tsconfig.json', ...PAGE_FILES(template)]))
+    expect(files).not.toContain('gitignore')
     expect(files.some((file) => file.startsWith('tests/') || file.startsWith('dist/') || file.startsWith('node_modules/'))).toBe(false)
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
   })
@@ -83,6 +89,23 @@ describe('ifloom new', () => {
     const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}]`)
     expect(files).toEqual(expect.arrayContaining([...components]))
+  })
+
+  it('makes the next template a Next app that draws the game with the React UI, and has no Vite config', () => {
+    const { dir, files, theme } = newGame({ name: 'the-door', template: 'next', into: fresh() })
+    expect(THEMES).toContain(theme)
+    expect(files).not.toContain('vite.config.ts')
+    expect(files).not.toContain('index.html')
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+    expect(pkg.scripts).toMatchObject({ dev: 'next dev', build: 'next build', check: 'ifloom check', typecheck: 'next typegen && tsc --noEmit' })
+    expect(pkg.scripts.playtest).toMatch(/^ifloom playtest/)
+    expect(readFileSync(join(dir, 'next.config.ts'), 'utf8')).toContain("transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', '@ifloom/browser']")
+    expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toMatch(/^'use client'/)
+    expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('browserRunner(loaded.game)')
+    expect(readFileSync(join(dir, 'app/layout.tsx'), 'utf8')).toContain("title: 'The Door'")
+    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
+    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toContain('# The Door')
+    expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toContain('.next')
   })
 
   it('gives the vanilla template the preset alone', () => {

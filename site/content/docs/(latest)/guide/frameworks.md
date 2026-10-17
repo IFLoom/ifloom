@@ -1,8 +1,8 @@
 ---
-title: "Using another framework"
-description: Draw an IFLoom game with Vue, Svelte, plain DOM or React by hand. The vue, svelte and vanilla templates each draw the scene, choices, inputs, stats and minigames and play sound; this page shows their code side by side.
+title: "Your own UI in any framework"
+description: Draw an IFLoom game yourself in plain JS, React by hand, Vue or Svelte. The vanilla, vue and svelte templates each draw the scene, choices, inputs, stats and minigames and play sound; this page shows their code side by side.
 ---
-The engine has no DOM and no framework. The [React UI](/docs/react) is the ready-made way to draw a game, but you can draw one with Vue, Svelte, plain DOM or anything else that can show text and buttons. Three templates do it for you:
+The engine has no DOM and no framework, so you can draw a game with Vue, Svelte, plain DOM or anything else that can show text and buttons. The [React UI](/docs/react) is one ready-made way, and this page is the other: a UI of your own on the [runner](/docs/guide/running-a-game). Three templates start you off:
 
 | Template | Draws with | Type-check |
 |---|---|---|
@@ -21,11 +21,11 @@ Each plays the same two-scene game as the `react` template, with no React. Each 
 - `src/game.ts`, the game.
 - `src/styles.css`, a plain stylesheet.
 
-The rest of this page goes through their code piece by piece, with a tab for each framework. The React tab shows React by hand, without the React UI, for when you want React but none of `@ifloom/react`. The tab you pick is remembered, and every other page of the docs shows the same one.
+The rest of this page goes through their code piece by piece, with a tab for each framework. The React tab shows React by hand, without the React UI, for when you want React but none of `@ifloom/react`. The tab you pick is remembered, and every other page of the docs shows the same one. [A UI from scratch](/docs/guide/ui-from-scratch) explains the plain JS version in more detail, if you want to know what each part is for.
 
 ## The loop
 
-A UI talks to the engine through a [runner](/docs/reference/runner). You need three things from it:
+A UI talks to the engine through a [runner](/docs/reference/runner). You need three things from it, and [Running a game](/docs/guide/running-a-game#the-loop) goes through them in full:
 
 ```ts
 import { browserRunner } from '@ifloom/engine'
@@ -37,34 +37,7 @@ runner.apply(command)      // run a command, such as a choice the player pressed
 runner.subscribe(listener) // call listener after every change of state; returns a function that stops it
 ```
 
-The loop is the same in every framework:
-
-1. Draw `runner.view()`.
-2. When the player presses something, send its `command` with `runner.apply`.
-3. When the runner calls your listener, draw `runner.view()` again.
-
-```mermaid
-sequenceDiagram
-  participant UI as Your UI
-  participant R as runner
-  UI->>R: subscribe(listener)
-  UI->>R: view()
-  R-->>UI: View
-  Note over UI: draw it
-  UI->>R: apply(command)
-  alt the command took
-    R->>UI: listener(state)
-    UI->>R: view()
-    R-->>UI: the next View
-    Note over UI: draw it again
-  else it was refused
-    R-->>UI: ok false, and the reason
-  end
-```
-
-`subscribe` hears about every change, not only your own commands. Undo, redo and loading a save all call it too, so you don't need to redraw after each of those yourself.
-
-`runner.view()` returns the same object until the state changes (see [the view cache](/docs/reference/runner#the-view-cache)). So you can call it as often as you like, and a framework that compares values to decide what to redraw sees a new view exactly when there's something new to draw.
+Draw `runner.view()`, send the `command` of whatever the player presses with `runner.apply`, and draw again when the runner calls your listener. `subscribe` hears undo, redo and loading a save too, and `runner.view()` returns the same object until the state changes, so a framework that compares values redraws exactly when there's something new.
 
 ## Start the runner
 

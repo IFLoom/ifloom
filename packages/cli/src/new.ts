@@ -1,13 +1,13 @@
 /**
  * `ifloom new`: a new game from a template, ready to run. The `react`,
- * `vanilla`, `vue` and `svelte` templates live beside this file; the others are the example games, copied from the
+ * `vanilla`, `vue`, `svelte` and `next` templates live beside this file; the others are the example games, copied from the
  * checkout so there is only one of each to keep working.
  */
-import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'novel', 'cafe', 'town'] as const
+export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town'] as const
 export type TemplateName = (typeof TEMPLATES)[number]
 
 /** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
@@ -22,7 +22,7 @@ export type NewGameOptions = {
   /** Where to put it. `games/<name>` in the IFLoom checkout if left out. */
   into?: string
   /**
-   * The React UI preset to start from. Left out, a `react` game gets one at
+   * The React UI preset to start from. Left out, a `react` or `next` game gets one at
    * random, so two new games don't start out looking alike, and a copied
    * example keeps its own. `'none'` leaves the preset out, for the React UI's
    * plain default look. The vanilla, vue and svelte templates have no React UI and ignore it.
@@ -44,6 +44,8 @@ const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
   vanilla: { dir: here('../templates/vanilla'), shared: [...PLAIN, 'vite.config.ts'] },
   vue: { dir: here('../templates/vue'), shared: PLAIN },
   svelte: { dir: here('../templates/svelte'), shared: PLAIN },
+  // A Next app: its own config, tsconfig, AGENTS.md and .gitignore, and no index.html or Vite config.
+  next: { dir: here('../templates/next'), shared: [] },
   novel: { dir: here('../../../examples/novel'), shared: ['AGENTS.md', 'gitignore'] },
   cafe: { dir: here('../../../examples/cafe'), shared: ['AGENTS.md', 'gitignore'] },
   town: { dir: here('../../../examples/showcase'), shared: ['AGENTS.md', 'gitignore'] },
@@ -91,6 +93,8 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   for (const file of source.shared) {
     cpSync(here(`../templates/shared/${file}`), join(dir, file === 'gitignore' ? '.gitignore' : file))
   }
+  // npm leaves a .gitignore out of a published package, so a template keeps its own as `gitignore`.
+  if (existsSync(join(dir, 'gitignore'))) renameSync(join(dir, 'gitignore'), join(dir, '.gitignore'))
 
   const title = titleOf(name)
   const files = filesUnder(dir)
@@ -113,7 +117,7 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   let theme: ThemeName | null = null
   if (!NO_REACT.has(template) && existsSync(styles)) {
     const css = readFileSync(styles, 'utf8')
-    const chosen = options.theme ?? (template === 'react' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
+    const chosen = options.theme ?? (template === 'react' || template === 'next' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
     if (chosen === 'none') {
       writeFileSync(styles, css.replace(/@import "@ifloom\/react\/themes\/[\w-]+\.css";\n?/, ''))
     } else if (chosen) {

@@ -13,6 +13,9 @@ import { describe, expect, it } from 'vitest'
  * - is a `vue` or `svelte` block.
  *
  * Pages under `react/` document the optional React UI, so they stay React.
+ * Two more pages are about one framework by design: the guide's worked
+ * example of a UI in plain JS (`guide/ui-from-scratch`), whose other
+ * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
  */
 const PAGES = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
   query: '?raw',
@@ -25,7 +28,7 @@ const TABS = ['Plain JS', 'React', 'Vue', 'Svelte']
 const GROUP = 'framework'
 
 /** Pages that may show a UI snippet in one framework only. */
-const ALLOWED = [/\/react\//]
+const ALLOWED = [/\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/]
 
 const IMPORTS_UI = /from\s+['"](?:@ifloom\/react|react|react-dom|vue|svelte)(?:\/[^'"]*)?['"]/
 const CALLS_UI = /\bmountGame\(|\bdocument\.(?:createElement|querySelector|getElementById)\b/

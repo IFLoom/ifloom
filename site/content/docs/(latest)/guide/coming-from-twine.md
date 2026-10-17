@@ -407,7 +407,7 @@ In the React UI, a layout is the closest thing to arranging the UI bar:
 - **StoryMenu** is the player's menu, the `'menu'` part.
 - **PassageHeader and PassageFooter** are parts above and below `'scene'` on the stage.
 - **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
-- **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Using another framework](/docs/guide/frameworks).
+- **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
 
 ### The `Setting` API
 

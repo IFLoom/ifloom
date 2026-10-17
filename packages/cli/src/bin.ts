@@ -3,7 +3,7 @@
  * ifloom — the command line.
  *
  *   ifloom new <name> [--template react]
- *                            a new game in games/<name>, from react, vanilla, vue, svelte, novel, cafe or town;
+ *                            a new game in games/<name>, from react, vanilla, vue, svelte, next, novel, cafe or town;
  *                            --theme paper|terminal|studio|storybook picks the React UI's preset, or none for its plain look
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]

@@ -10,7 +10,7 @@ import { startAudio } from '@ifloom/audio'
 const player = startAudio(runner)
 ```
 
-That's all most games need. The [React UI](/docs/react#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner. The `vanilla`, `vue` and `svelte` templates already do (see [Using another framework](/docs/guide/frameworks#sound)).
+That's all most games need. The [React UI](/docs/react#sound) starts it for you when the game has any tracks. With plain DOM, Vue or Svelte you call it yourself, once, after making the runner. The `vanilla`, `vue` and `svelte` templates already do (see [Your own UI in any framework](/docs/guide/frameworks#sound)).
 
 ```ts
 import { startAudio, type AudioLike, type AudioOptions, type AudioPlayer } from '@ifloom/audio'

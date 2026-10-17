@@ -11,7 +11,7 @@ The engine has no UI of its own. It hands your UI one object, a `View`, that say
 
 Every button in a `View` already carries its command and its price. If it can't be pressed, it also carries the reason, worded for the player. The reducer refuses with the same reasons, so the screen and the rules can't disagree. Show greyed-out buttons with their reason rather than hiding them.
 
-Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Using another framework](/docs/guide/frameworks). Read on if you want to write your own UI.
+Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). Read on if you want to write your own UI.
 
 ```ts
 import { renderAction, screen, view, type View } from '@ifloom/engine'

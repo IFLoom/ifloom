@@ -217,8 +217,8 @@ export function Home() {
               <span className={s.tag}>03</span>
               <h3 className={s.h3}>Your look, your framework</h3>
               <p className={s.p}>
-                The engine gives your UI a view: what to show and what each button does. Draw it with React, Vue, Svelte or plain DOM. With the React UI, restyle any part with plain CSS, swap its classes, start unstyled, or replace any component, down to the page itself. Nothing gives away
-                which engine the game runs on.
+                The engine is a library with no UI. It gives your UI a view: what to show and what each button does. Draw it with React, Vue, Svelte or plain DOM. Or take the ready-made React UI and restyle any part with plain CSS, swap its classes, start unstyled, or replace any
+                component, down to the page itself. Nothing gives away which engine the game runs on.
               </p>
               <div className={cx(s.term, s.snippet)} aria-label="Restyling a part with plain CSS">
                 <span>
@@ -234,6 +234,9 @@ export function Home() {
                     {name}
                   </span>
                 ))}
+                <Link className={cx(s.mark, s.link)} href="/docs/guide/how-it-fits">
+                  How the pieces fit
+                </Link>
               </div>
             </Card>
 

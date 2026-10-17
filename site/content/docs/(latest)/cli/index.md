@@ -15,6 +15,8 @@ description: "The ifloom command: new, dev, build, check, playtest and snapshot,
 
 Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
 
+`check`, `playtest` and `snapshot` load the game module with the CLI's own Vite and need no `vite.config.ts`, so they work the same in a game built with [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) or [esbuild](/docs/recipes/esbuild). `dev` and `build` are the parts those tools replace.
+
 ## Install
 
 [Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/cli` as a dev dependency the same way.
@@ -61,15 +63,16 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
 | `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
+| `next` | The same game in a Next.js app (the App Router), drawn with the React UI from a client component, for a game hosted on the web. It builds with Next, not Vite, so it has no `vite.config.ts` or `index.html` and can't make the single offline file. See [Next.js](/docs/recipes/next). |
 | `novel` | A copy of The Letter, `examples/novel`. |
 | `cafe` | A copy of The Corner Café, `examples/cafe`. |
 | `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
 
-The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Using another framework](/docs/guide/frameworks) walks through them.
+The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Your own UI in any framework](/docs/guide/frameworks) walks through them.
 
-`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
+`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
-Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends on `@ifloom/*` packages and on the Vite plugins its UI needs (React's and Tailwind's for `react` and the examples; for `vue` and `svelte`, the framework, its Vite plugin and its type checker), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
+Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends on `@ifloom/*` packages and on the Vite plugins its UI needs (React's and Tailwind's for `react` and the examples; for `vue` and `svelte`, the framework, its Vite plugin and its type checker; for `next`, Next, React and Tailwind's PostCSS plugin, with `dev` and `build` running Next and `check` and `playtest` running `ifloom`), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
 
 The name has to work as an npm package name: lower-case letters, digits and dashes. `ifloom new` refuses a folder that already exists and isn't empty.
 

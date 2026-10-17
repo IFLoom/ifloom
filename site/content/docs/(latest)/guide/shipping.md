@@ -35,7 +35,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Using another framework](/docs/guide/frameworks)). Then build:
+It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Your own UI in any framework](/docs/guide/frameworks)). Then build:
 
 ```sh
 ifloom build
@@ -73,6 +73,8 @@ export default defineConfig({
 ```
 
 Build with `vite build`. Nothing then checks the folder for you, but [`checkBuild`](/docs/cli#checkbuild) from `@ifloom/cli` runs the same check from a script of your own.
+
+Other bundlers can make the same single file. The [esbuild](/docs/recipes/esbuild#the-single-offline-file) and [webpack](/docs/recipes/webpack#the-single-offline-file) recipes show how. [Next.js](/docs/recipes/next) can't, so a game built with Next is played on its website.
 
 ## Saves
 

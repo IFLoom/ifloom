@@ -13,13 +13,25 @@ Follow [Installation](/docs/guide/installation) first. The game uses the engine,
 - [`@ifloom/plugin-places`](/docs/plugins/places) keeps the map and where the player is.
 - [`@ifloom/plugin-cast`](/docs/plugins/cast) keeps the people.
 
-To build it as you read, start a new game from the root of the checkout:
+To build it as you read, start a new game from the root of the checkout, with the template for the way you draw it:
 
-```sh
+```sh tab="Plain JS" tab-group="framework"
+npm run new -- my-town --template vanilla
+```
+
+```sh tab="React" tab-group="framework"
 npm run new -- my-town
 ```
 
-That template draws the game with the [React UI](/docs/react). Add `--template vanilla`, `vue` or `svelte` to draw it with plain DOM, Vue or Svelte instead.
+```sh tab="Vue" tab-group="framework"
+npm run new -- my-town --template vue
+```
+
+```sh tab="Svelte" tab-group="framework"
+npm run new -- my-town --template svelte
+```
+
+The React tab's template draws the game with the [React UI](/docs/react). The others draw it themselves, with no React. Most of this page is the engine on its own, which is the same in all four.
 
 Then add the three plugins to `games/my-town/package.json`, next to `@ifloom/engine`, and run `npm install` at the root:
 
@@ -578,7 +590,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
 
 Then run `npm run dev -w my-town`. In the Vue and Svelte templates, `src/main.ts` already mounts `App` on `#root`. The React tab needs JSX, so rename `src/main.ts` to `src/main.tsx` and change the `<script>` in `index.html` to match. Small Town's `src/main.tsx` works this way.
 
-The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/recipes/plugin-ui) draws them, and [Using another framework](/docs/guide/frameworks) draws the rest of the view.
+The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/recipes/plugin-ui) draws them, and [Your own UI in any framework](/docs/guide/frameworks) draws the rest of the view.
 
 With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/reference/runner#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and resolves to the runner. The other templates call `browserRunner` themselves.
 

@@ -49,6 +49,7 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3. |
 | `svelte` | The same game drawn with Svelte 5. |
+| `next` | The same game in a Next.js app, drawn with the React UI, for a game hosted on the web. See [Next.js](/docs/recipes/next). |
 | `novel` | A copy of The Letter. |
 | `cafe` | A copy of The Corner Café. |
 | `town` | A copy of Small Town, with every plugin. |
@@ -57,7 +58,9 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 npm run new -- my-cafe --template cafe
 ```
 
-The `vanilla`, `vue` and `svelte` templates draw the scene, choices, inputs, stats and minigames themselves and play the game's sound, with no React. [Using another framework](/docs/guide/frameworks) walks through their code, and is the place to start for any other framework.
+The `vanilla`, `vue` and `svelte` templates draw the scene, choices, inputs, stats and minigames themselves and play the game's sound, with no React. [Your own UI in any framework](/docs/guide/frameworks) walks through their code, and is the place to start for any other framework. [Choosing a UI](/docs/guide/choosing-a-ui) compares them with the React UI.
+
+The `next` template builds with Next.js rather than the `ifloom` CLI, so it can't make the single offline `index.html` the others can. Its `check` and `playtest` scripts still use the CLI.
 
 A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A `react` game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, leave it out with `--theme none` for the plain default look, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
 
@@ -91,6 +94,20 @@ npm run check -w my-game      # check its content; prints "No problems." when th
 npm run playtest -w my-game   # play 5 turns with no one at the keyboard; writes playtest/run.txt
 npm run build -w my-game      # build it into games/my-game/dist/
 ```
+
+### With pnpm, yarn or bun
+
+The checkout's workspaces are npm's, so use npm for the commands above. For a game in a folder of its own (see [below](#a-game-beside-the-checkout)), npm is the tested route while IFLoom is pre-release. pnpm works too if you write `link:` where this page writes `file:`, because pnpm copies a `file:` folder into `node_modules`, and Node won't run the CLI's TypeScript from there. yarn and bun don't work with a linked checkout yet.
+
+Once the packages are on npm, a game's scripts are the same with any of the four. Only the way you run them changes:
+
+| npm | pnpm | yarn | bun |
+|---|---|---|---|
+| `npm install` | `pnpm install` | `yarn install` | `bun install` |
+| `npm run dev` | `pnpm dev` | `yarn run dev` | `bun run dev` |
+| `npm run check` | `pnpm check` | `yarn run check` | `bun run check` |
+
+Use `yarn run check` rather than `yarn check`, which is a command of yarn 1's own, and `bun run build` rather than `bun build`, which is bun's bundler.
 
 ## Check it works
 
@@ -178,6 +195,14 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
    npm run check      # No problems.
    npm run dev
    ```
+
+A game from the `next` template has its own complete `tsconfig.json`, so leave that one as it is. Next's bundler, Turbopack, reads no file outside a root folder, and the linked packages are in the checkout. Set the root to the folder holding both, in `next.config.ts`:
+
+```ts
+turbopack: { root: path.resolve('..') },
+```
+
+with `import path from 'node:path'` at the top. A game that installs the packages from npm doesn't need it.
 
 The `ifloom` command works through a `file:` link, because Node sees the CLI's real path in the checkout. React, Vite and the rest resolve from the checkout too, so your game folder needs nothing but the three links. The [Vite preset](/docs/cli#the-vite-preset) dedupes React, so the page bundles one copy.
 

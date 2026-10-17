@@ -239,7 +239,7 @@ The engine dates things in turns. `state.turn` starts at 0, and the `turn` effec
 { id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }] },
 ```
 
-Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. The saves menu names each save by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
+Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, such as `Turn 2`, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
 
 ## 8. Draw it
 
@@ -331,7 +331,7 @@ Every template starts the game the same way, with [`browserRunner`](/docs/refere
 - It builds a [runner](/docs/reference/runner), which keeps the state and adds undo, 50 steps back.
 - It keeps saves in the browser's `localStorage`, under keys that start with the game's id, and autosaves to the `auto` slot each turn. In this story that's the start of each chapter.
 
-Then the page draws `runner.view()`, sends the command of each button the player presses with `runner.apply`, and draws again when the runner says the state changed. The vanilla, Vue and Svelte templates also draw the name input and the stats, and [Using another framework](/docs/guide/frameworks) goes through their code piece by piece.
+Then the page draws `runner.view()`, sends the command of each button the player presses with `runner.apply`, and draws again when the runner says the state changed. The vanilla, Vue and Svelte templates also draw the name input and the stats, and [Your own UI in any framework](/docs/guide/frameworks) goes through their code piece by piece.
 
 In the React template, `mountGame` also logs any problems `loadGame` found as warnings in the browser's console, and draws [`GameShell`](/docs/react#gameshell), the whole React UI, into the element with the id `root` in `index.html`. With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/recipes/title-screen) shows what else it can do. [`READING_LAYOUT`](/docs/react#layouts) is a single column to read, with the title over the scene, then the name input, the game's actions, the stats and the menu under it.
 
@@ -363,7 +363,7 @@ The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/
 
 When you're happy with it, `npm run build -w my-story` makes one HTML file in `games/my-story/dist/` that opens from disk. See [Shipping a game](/docs/guide/shipping).
 
-To test the story in code, see `examples/novel/tests/novel.test.ts`. It plays The Letter with `apply` and checks the state and the view.
+To test the story in code, see [Testing your game](/docs/guide/testing). `examples/novel/tests/novel.test.ts` tests The Letter the same way.
 
 ## The whole thing
 
@@ -459,6 +459,8 @@ export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sa
 ```
 
 ## Where next
+
+The guide splits here. The Engine track starts at [Core concepts](/docs/guide/concepts) and works with the engine directly, which is the same whatever draws your game. The UI track starts at [Choosing a UI](/docs/guide/choosing-a-ui). You can read them in either order.
 
 - [The editor](/docs/guide/editor) builds scenes like these from forms in the browser, with the game playing beside them.
 - [Shapes of game](/docs/guide/shapes) walks through The Letter, then a management game built on [entities](/docs/reference/entities).

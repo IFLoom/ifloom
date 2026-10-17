@@ -2,7 +2,7 @@
 title: "The React UI"
 description: "The optional React UI: mountGame, GameShell, layouts, pages such as the title screen, sound, pictures, theming and its words."
 ---
-`@ifloom/react` is the optional React UI. It draws an IFLoom game in the browser with React. It's a ready-made UI, but not the only way, and the engine doesn't need it: the engine has no framework of its own, and [Using another framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
+`@ifloom/react` is the optional React UI. It draws an IFLoom game in the browser with React. It's a ready-made UI, but not the only way, and the engine doesn't need it: the engine has no framework of its own, and [Your own UI in any framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -20,7 +20,7 @@ mountGame(game)
 
 Every component is listed, with its props, under [Components](/docs/react/components).
 
-The engine doesn't need this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would. A game that wants Vue, Svelte or a terminal leaves it out (see [Using another framework](/docs/guide/frameworks)).
+The engine doesn't need this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would. A game that wants Vue, Svelte or a terminal leaves it out (see [Your own UI in any framework](/docs/guide/frameworks)).
 
 ## What it shows
 

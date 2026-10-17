@@ -1,0 +1,12 @@
+@import "@ifloom/react/styles.css";
+@import "@ifloom/react/themes/paper.css";
+
+/*
+ * Make it yours. Set any colour or token here, or style any part of the page
+ * by its data-part attribute, for example:
+ *
+ *   :root { --font-body: Georgia, serif; --primary: oklch(0.5 0.15 30); }
+ *   [data-part="choice"] { border-radius: 0; }
+ *
+ * See "Make it your own" in the React UI docs.
+ */

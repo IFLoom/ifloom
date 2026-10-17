@@ -2,7 +2,7 @@
 title: "Core concepts"
 description: The ideas behind IFLoom in short sections, each linking to its reference page. The state, commands, effects and conditions, the game and its rules, the view, the turn, entities, the kv store, plugins, saves and more.
 ---
-This page explains the ideas the engine is built on. Each section is short and links to the reference page with the details.
+This page starts the Engine track. It explains the ideas the engine is built on, in short sections that link to the reference page with the details. The pages after it put them to work: [Running a game](/docs/guide/running-a-game), [Saves and settings](/docs/guide/saves-and-settings), [A game with a world](/docs/guide/first-game), [A UI from scratch](/docs/guide/ui-from-scratch) and [Testing your game](/docs/guide/testing).
 
 ## The state is one plain object
 
@@ -152,7 +152,7 @@ See [Plugins](/docs/plugins) for the first-party ones, and [Writing a plugin](/d
 
 ## The UI is separate
 
-The engine has no DOM and no framework. It hands out a view and takes commands, so any UI can draw a game. [`@ifloom/react`](/docs/react) is a ready-made one in React, and `mountGame` from it starts a game in a page with one call. To use Vue, Svelte, plain DOM or anything else, see [Using another framework](/docs/guide/frameworks).
+The engine has no DOM and no framework. It hands out a view and takes commands, so any UI can draw a game, and a test or a script can play one with no UI at all. [`@ifloom/react`](/docs/react) is a ready-made UI in React, and `mountGame` from it starts a game in a page with one call. To use Vue, Svelte, plain DOM or anything else, see [Choosing a UI](/docs/guide/choosing-a-ui). [How the pieces fit](/docs/guide/how-it-fits) shows where each package sits.
 
 ## Randomness is seeded
 
@@ -170,7 +170,7 @@ See [Randomness](/docs/reference/random).
 
 Undo, the backlog and autosave are off until the game turns them on. Undo never goes back past a barrier the game sets, such as a new turn. The command log is always kept, and because the engine is deterministic, the start state and the commands replay to the same state every time.
 
-See [The runner](/docs/reference/runner).
+See [Running a game](/docs/guide/running-a-game) for the loop, and [The runner](/docs/reference/runner) for every option.
 
 ## Saves and migrations
 
@@ -182,7 +182,7 @@ Each save carries a version. The format is at version 14 (`SAVE_VERSION`). When 
 
 Your game can do the same for its own content. Give it a `version`, and when an update renames a kv key or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 
-See [Saves](/docs/reference/saves).
+See [Saves and settings](/docs/guide/saves-and-settings), and [Saves](/docs/reference/saves) for the details.
 
 ## Packs and mods
 

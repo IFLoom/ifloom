@@ -1,13 +1,18 @@
 {
   "title": "Recipes",
-  "description": "How to build the common pieces of a game",
+  "description": "How to build the common pieces of a game, and how to build it with another bundler",
   "root": true,
   "pages": [
+    "---Pieces of a game---",
     "title-screen",
     "hud",
     "plugin-ui",
     "minigames",
     "transitions",
-    "inline-actions"
+    "inline-actions",
+    "---Other bundlers---",
+    "next",
+    "webpack",
+    "esbuild"
   ]
 }

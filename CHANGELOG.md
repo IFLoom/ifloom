@@ -58,9 +58,14 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - The docs are at https://ifloom.dev, with an MCP server at `https://ifloom.dev/api/mcp` that an agent can use to search them and read single pages, and an Open menu on each page that opens it in ChatGPT, Claude or Cursor, or as Markdown.
 - Old packs and mods keep loading. A pack written for an older `SCHEMA` is upgraded step by step as `loadGame` loads it, as a mod file is when a player adds it, and as the editor opens it. `upgradePack` does the same for a pack you read yourself. Only a pack from a newer engine is refused.
 - `ifloom new --theme none` starts a React UI game with no theme preset, in the UI's plain default look. It works for a copied example too.
+- `ifloom new --template next`: the game in a Next.js app, drawn with the React UI from a client component, for a game hosted on the web. Its `check` and `playtest` scripts still run the `ifloom` CLI. Next can't make the single offline `index.html`, and its README says so.
+- The guide teaches the engine as a library first. "How the pieces fit" shows the engine, plugins, the UI and the toolchain, and which ones you need. An Engine track follows, with new pages on running a game (the runner loop and the view), saves and settings, a whole UI from scratch in plain JS, and testing your game with Vitest. Then a UI track: choosing between the React UI and your own, and your own in any framework.
+- Recipes for building with Next.js, webpack and esbuild: compiling the TypeScript packages, Tailwind for the React UI or none, mounting the game, `ifloom check` and `playtest` beside them, and the single offline file from webpack and esbuild.
+- The docs show pnpm, yarn and bun beside npm where it matters, and say which work with a game linked from a checkout while IFLoom is pre-release.
 
 ### Changed
 
+- The guide page "Using another framework" is now "Your own UI in any framework", at the same address, and starts the UI track. "The loop" moved to "Running a game", and the introduction's diagram to "How the pieces fit".
 - The React UI package is now `@ifloom/react` (it was `@ifloom/ui`), and React and Tailwind are only added to games that use them.
 - The pages around the game in the React UI (title, settings, load, credits and the gate) are now called pages: `pages`, `usePage`, `TitlePage` and the rest.
 - `ifloom check` and `ifloom build` now look for exactly the files the content checker lists.

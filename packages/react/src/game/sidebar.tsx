@@ -146,11 +146,8 @@ function LocationCardImpl() {
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
-  const list = usePart('exits', 'flex flex-wrap gap-1.5')
-  const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
   // A game without the places plugin has nothing to show here.
   const location = places?.location
-  const exits = places?.exits ?? []
   if (!location) return null
   return (
     <section {...section}>
@@ -159,47 +156,57 @@ function LocationCardImpl() {
         <h3 {...name}>{location.name}</h3>
         <p {...tag}>{location.tag}</p>
       </div>
-      {exits.length ? (
-        <div {...list}>
-          {exits.map((exit) => (
-            <button
-              key={exit.id}
-              {...button}
-              disabled={Boolean(exit.disabled)}
-              title={exit.disabled ?? exit.warning}
-              onClick={() => places!.go(exit.id)}
-              data-exit={exit.id}
-            >
-              {exit.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </section>
   )
 }
 
 /**
- * Where the player is, and the exits from it: each a button, greyed out with its
- * reason. A place with a stage shows it above its name, hotspots and all. A
- * thin default on `usePlaces`.
+ * Where the player is: the place's name and tag, with its stage above them,
+ * hotspots and all. The exits are `Exits`. A thin default on `usePlaces`.
  */
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
+function ExitsImpl({ className }: { className?: string }) {
+  const places = usePlaces()
+  const list = usePart('exits', 'flex flex-wrap gap-1.5', className)
+  const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const exits = places?.exits ?? []
+  if (!places?.location || !exits.length) return null
+  return (
+    <nav {...list}>
+      {exits.map((exit) => (
+        <button
+          key={exit.id}
+          type="button"
+          {...button}
+          disabled={Boolean(exit.disabled)}
+          title={exit.disabled ?? exit.warning}
+          onClick={() => places.go(exit.id)}
+          data-exit={exit.id}
+        >
+          {exit.label}
+        </button>
+      ))}
+    </nav>
+  )
+}
 
-/** The cast plugin's view: who is here (`present`, each with their buttons) and everyone met (`people`), or null in a game without the plugin. `PeopleCard` is drawn from it. */
+/** The exits from where the player is, each a button, greyed out with its reason. Nothing without the places plugin. A thin default on `usePlaces`. */
+export const Exits = overridable('Exits', ExitsImpl)
+
+/** The cast plugin's view: who is here (`present`, each with their buttons) and everyone met (`people`), or null in a game without the plugin. `PeopleHere` and `Relationships` are drawn from it. */
 export function usePeople(): CastView | null {
   const { view } = useGame()
   return (view.plugins.cast as CastView | undefined) ?? null
 }
 
-function PeopleCardImpl() {
-  const section = usePart('people', 'flex flex-col gap-2')
+function PeopleHereImpl({ className }: { className?: string }) {
+  const section = usePart('people', 'flex flex-col gap-2', className)
   const card = usePart('person', 'flex flex-col gap-1.5')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
   const role = usePart('person-role', 'text-xs text-muted-foreground')
-  const actions = usePart('person-actions', 'flex flex-col gap-1.5')
+  const actions = usePart('person-actions', 'flex flex-wrap gap-1.5')
   const people = usePeople()?.present ?? []
   if (!people.length) return null
   return (
@@ -227,4 +234,58 @@ function PeopleCardImpl() {
 }
 
 /** Who is here, with what the player can do with each of them: the cast plugin's. Nothing without it. A thin default on `usePeople`. */
-export const PeopleCard = overridable('PeopleCard', PeopleCardImpl)
+export const PeopleHere = overridable('PeopleHere', PeopleHereImpl)
+
+function RelationshipsImpl({ className }: { className?: string }) {
+  const { view } = useGame()
+  const list = usePart('relationships', 'flex flex-col gap-3 text-sm', className)
+  const card = usePart('relationship', 'flex flex-col gap-1')
+  const head = usePart('relationship-header', 'flex items-center gap-2')
+  const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
+  const name = usePart('person-name', 'text-sm font-medium')
+  const role = usePart('person-role', 'text-xs text-muted-foreground')
+  const stats = usePart('relationship-stats', 'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1')
+  const label = usePart('stat-label', 'text-muted-foreground')
+  const value = usePart('stat-value', 'text-right font-medium tabular-nums')
+  const people = (usePeople()?.people ?? []).filter((person) => person.met)
+  if (!people.length) return null
+  // Each character is an entity: the stats the player can see on it are its relationship.
+  const entries = Object.values(view.entities).flatMap((kind) => kind.entries)
+  return (
+    <div {...list}>
+      {people.map((person) => {
+        const shown = entries.find((entry) => entry.ref === person.ref)?.stats ?? []
+        return (
+          <section key={person.id} {...card} data-person={person.id}>
+            <div {...head}>
+              {person.portrait ? <Picture {...portrait} src={person.portrait} alt="" /> : null}
+              <div className="flex-1">
+                <p {...name}>{person.name}</p>
+                {person.role ? <p {...role}>{person.role}</p> : null}
+              </div>
+            </div>
+            {shown.length ? (
+              <dl {...stats}>
+                {shown.map((stat) => (
+                  <div key={stat.key} className="contents" data-stat={stat.key}>
+                    <dt {...label}>{stat.label}</dt>
+                    <dd {...value}>{stat.text}</dd>
+                    {stat.display === 'bar' || stat.display === 'pips' ? <StatGauge stat={stat} /> : null}
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Everyone the player has met, from the cast plugin, with the stats the
+ * player can see on each of them (friendship, say), as the game declares them
+ * on the cast's kind of entity. Nothing without the plugin, or before anyone
+ * is met. A thin default on `usePeople`.
+ */
+export const Relationships = overridable('Relationships', RelationshipsImpl)

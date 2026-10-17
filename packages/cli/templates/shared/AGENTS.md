@@ -18,7 +18,10 @@ for coding agents working on the game.
 - The engine is deterministic and has no DOM. Randomness is seeded from the save.
 - Plugins (a calendar, places, a cast of characters…) are added to `plugins: [...]`
   when the game is loaded, and their content goes under `data.<plugin>` in a pack.
-- `src/main.ts` draws the game in the browser.
+- `src/main.ts` draws the game in the browser. The page's layout, the side
+  column, the story and its sections, is `src/layout.tsx` with React,
+  `src/Layout.vue` with Vue, `src/Layout.svelte` with Svelte and `src/layout.ts`
+  in plain JS.
 
 ## After every change
 

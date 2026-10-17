@@ -165,7 +165,7 @@ const REVEAL_MS = 400
  * for nothing.
  */
 function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
-  const list = usePart('beats', 'flex flex-col gap-(--gap-beats)')
+  const list = usePart('beats', 'flex max-w-(--width-prose) flex-col gap-(--gap-beats)')
   const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
   return (
     <div {...list}>

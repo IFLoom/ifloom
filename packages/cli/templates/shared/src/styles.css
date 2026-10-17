@@ -1,8 +1,78 @@
 body {
-  max-width: 40rem;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  margin: 0;
   font: 1.05rem/1.6 Georgia, serif;
+}
+
+/*
+ * The page: the side column and the story side by side on a wide screen,
+ * one above the other on a phone. The prose keeps to a readable measure.
+ */
+.page {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .page {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    padding: 1.5rem;
+  }
+}
+
+.sidebar h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.clock {
+  margin: 0.25rem 0 0;
+  color: #666;
+}
+
+/* A section that folds: a <details> with its title in the <summary>. */
+.section {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ddd;
+}
+
+.section > summary {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+}
+
+.stats dd {
+  margin: 0;
+  text-align: right;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.story h2 {
+  margin: 0;
+}
+
+.prose {
+  max-width: 70ch;
+}
+
+/* The bottom of the story: the buttons for where you are. */
+.bottom {
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
 }
 
 .beat-mono {
@@ -105,10 +175,6 @@ body {
   background: #4a3b8f;
   transform-origin: left;
   transition: transform 100ms linear;
-}
-
-.stats {
-  color: #666;
 }
 
 /* A panel content opened, over the page. */

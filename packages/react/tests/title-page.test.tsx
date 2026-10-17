@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, memoryDriver, profile, saves, startingState, type Game } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT, usePage, useSetting, type PagesOptions } from '../src/index.ts'
+import { GameShell, usePage, useSetting, type PagesOptions } from '../src/index.ts'
+import { Reading, storyOf } from './layouts.tsx'
 
 afterEach(cleanup)
 
@@ -50,7 +51,7 @@ function play(pages: boolean | PagesOptions = true, driver = memoryDriver()) {
     saves: saves(game, driver),
     profile: profile(game, driver),
   })
-  const view = render(<GameShell runner={runner} layout={READING_LAYOUT} pages={pages} />)
+  const view = render(<GameShell runner={runner} layout={Reading} pages={pages} />)
   return { runner, driver, view }
 }
 
@@ -165,7 +166,7 @@ describe('the pages', () => {
         </p>
       )
     }
-    render(<GameShell runner={runner} layout={{ stage: [<Size key="size" />] }} pages />)
+    render(<GameShell runner={runner} layout={storyOf(<Size />)} pages />)
     await act(async () => fireEvent.click(titleButton('new')!))
     expect(document.querySelector('[data-size]')?.getAttribute('data-size')).toBe('normal')
     fireEvent.click(screen.getByText('size'))

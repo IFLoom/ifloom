@@ -17,7 +17,7 @@ import pkg from '../../package.json' with { type: 'json' }
 const DEFAULTS: Record<string, { component: string; hook: string; panel?: string }> = {
   calendar: { component: 'Clock', hook: 'useClock' },
   places: { component: 'LocationCard', hook: 'usePlaces' },
-  cast: { component: 'PeopleCard', hook: 'usePeople' },
+  cast: { component: 'PeopleHere', hook: 'usePeople' },
   quests: { component: 'QuestLog', hook: 'useQuests' },
   statuses: { component: 'StatusList', hook: 'useStatuses' },
   achievements: { component: 'AchievementList', hook: 'useAchievements' },

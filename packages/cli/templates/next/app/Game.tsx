@@ -6,8 +6,9 @@
  */
 import { useEffect, useState } from 'react'
 import { browserRunner, type Runner } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT, useAudio } from '@ifloom/react'
+import { GameShell, useAudio } from '@ifloom/react'
 import loaded from '../src/game.ts'
+import { Layout } from '../src/layout.tsx'
 
 export function Game() {
   const [runner, setRunner] = useState<Runner | null>(null)
@@ -30,7 +31,8 @@ export function Game() {
 function Playing({ runner }: { runner: Runner }) {
   // Plays what the game's `audio` asks for, from the first click or key press.
   useAudio({ runner })
-  // `pages` opens on a title screen with New game, Continue, Load and
-  // Settings. Leave it out to start straight in the story.
-  return <GameShell runner={runner} layout={READING_LAYOUT} pages />
+  // `layout` is the page, in `src/layout.tsx`. `pages` opens on a title
+  // screen with New game, Continue, Load and Settings. Leave it out to start
+  // straight in the story.
+  return <GameShell runner={runner} layout={Layout} pages />
 }

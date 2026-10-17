@@ -10,9 +10,9 @@ You can change how the React UI looks at any depth, from swapping one colour to 
 2. [Set tokens and colours](#2-set-tokens-and-colours)
 3. [Style parts with plain CSS](#3-style-parts-with-plain-css)
 4. [Change the built-in classes](#4-change-the-built-in-classes)
-5. [Rearrange the parts](#5-rearrange-the-parts)
+5. [Rearrange the parts in layout.tsx](#5-rearrange-the-parts-in-layouttsx)
 6. [Replace a component](#6-replace-a-component)
-7. [Replace the frame](#7-replace-the-frame)
+7. [Change the shape of the page](#7-change-the-shape-of-the-page)
 8. [Write your own root](#8-write-your-own-root)
 9. [Use another framework](#9-use-another-framework)
 
@@ -67,11 +67,11 @@ These are the design tokens:
 | `--text-scene-title` | The size of a scene's title. | `1.5rem` |
 | `--leading-prose` | The line height of a scene's text. | `1.625` |
 | `--shadow-card` | The shadow under notices. The presets use it for their cards too. | A soft drop shadow |
-| `--width-page` | How wide the page grows with a side column. | `72rem` |
-| `--width-reading` | How wide the page grows without one. | `42rem` |
+| `--width-prose` | The measure of a scene's text: how long a line of prose gets. Pictures, choices and the bottom of the story use the whole column. | `70ch` |
+| `--width-reading` | How wide the page grows without a side column. With one, the page is as wide as the window. | `42rem` |
 | `--width-sidebar` | The side column's width on a wide screen. | `18rem` |
 | `--width-notice` | The width of the notices in the bottom corner. | `20rem` |
-| `--gap-page` | The space between the side column and the stage, and between parts on the stage. | `1.5rem` |
+| `--gap-page` | The space between the side column and the story, and between parts in the story. | `1.5rem` |
 | `--gap-beats` | The space between the paragraphs and lines of a scene. | `0.75rem` |
 
 And these are the colours. They're shadcn/ui's, plus three of the UI's own at the end:
@@ -253,28 +253,48 @@ body {
 }
 ```
 
-## 5. Rearrange the parts
+## 5. Rearrange the parts in layout.tsx
 
-The page has three regions: the side column, the stage and an overlay that floats at the bottom of the window and sits after the content at the end of the page. `layout` says which parts go in each, in order:
+The page is a component, the layout. The react and next templates start you with `src/layout.tsx`, a copy of the UI's own [`DefaultLayout`](/docs/react/components#defaultlayout), and pass it to `mountGame` as `layout`. Everything on the page is a component in it, so you rearrange the page by editing JSX:
 
-```ts
-import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+```tsx
+// src/layout.tsx
+import { Clock, Exits, Game, GameMenu, Inventory, Notices, Overlay, PanelHost, PeopleHere, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
 
-mountGame(game, {
-  layout: {
-    sidebar: ['title', 'stats', 'menu', 'devices', 'location', 'people', 'actions'],
-    stage: ['notices', 'scene', 'inputs', 'quests'],
-    overlay: [],
-  },
-})
+export function Layout() {
+  return (
+    <Game>
+      <Sidebar>
+        <Title />
+        <Clock />
+        <StatList />
+        <GameMenu />
+      </Sidebar>
+      <Story>
+        <Notices />
+        <SceneStage />
+        <Exits />
+        <RoomActions />
+        <PeopleHere />
+        <Section id="inventory" title="In your bag" collapsible open={false}>
+          <Inventory title={false} />
+        </Section>
+      </Story>
+      <PanelHost />
+    </Game>
+  )
+}
 ```
 
-This puts the notices at the top of the stage instead of in the bottom corner, and leaves the inventory and the wardrobe out. The parts and the default lists are on [The React UI](/docs/react#layouts). Your own components can go in any list too.
+This puts the notices at the top of the story instead of in the bottom corner, moves the inventory under the story in a section that starts folded, and leaves the quests and the wardrobe out. The regions and the default layout are on [The React UI](/docs/react#layouts). Your own components go anywhere among the built-in ones.
 
-**Gotcha.** A list you leave out keeps its default, except `sidebar`, which becomes no side column. The default overlay is `['notices']`, so moving `'notices'` to the stage without `overlay: []` draws them twice.
+**Gotchas.**
 
-`layout` decides what goes where, not the shape of the page. To put the side column on the right, use CSS (`studio` does it with an `order` and a grid template on `[data-part="page"][data-has-sidebar]`). For a header bar or another shape entirely, [replace the frame](#7-replace-the-frame).
+- **Moving a part means deleting it where it was.** A component written twice is drawn twice.
+- **No `Overlay`, no corner.** Without one, nothing floats over the page, so put `Notices` somewhere else or the player won't see them.
+- **Keep `PanelHost`** if content opens [panels](/docs/reference/panels).
+
+The layout decides what goes where. To put the side column on the right, use CSS: `studio` does it with an `order` on the side column and a grid template on `[data-part="page"][data-has-sidebar]`.
 
 ## 6. Replace a component
 
@@ -314,7 +334,7 @@ const components: Components = { Beat: TownBeat }
 mountGame(game, { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationCard`, `PeopleCard`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture` and `Icon`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture` and `Icon`.
 
 A replacement applies wherever the UI draws that component, not just in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's **Use** buttons.
 
@@ -336,44 +356,52 @@ const components: Components = {
 - **Define `components` once**, outside any component, as with `panels`. A new object on every render redraws everything under the provider.
 - **Don't draw the built-in one by importing it.** Inside your `Beat`, importing `Beat` from `@ifloom/react` gives you your own replacement again, and it calls itself forever. Use `Default`.
 
-## 7. Replace the frame
+## 7. Change the shape of the page
 
-The frame is the page's skeleton: where the side column, the stage and the overlay go. [`Frame`](/docs/react/components#frame) gets each region already drawn, so a new frame only arranges them. This one is a header bar over a single reading column:
+The regions are components too, so the shape of the page is yours. [`Game`](/docs/react/components#game) draws the `page` part, a grid with the side column and the story when it has a `Sidebar`, and passes `className` on. Anything inside it is drawn in order, so a header bar is a `<header>` before the story:
 
 ```tsx
-import { mountGame, usePart, type Components, type FrameProps } from '@ifloom/react'
-import game from './game.ts'
-import './styles.css'
+// src/layout.tsx
+import { Clock, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
 
-function TopBarFrame({ sidebar, stage, overlay, className }: FrameProps) {
-  const page = usePart('page', 'flex min-h-screen flex-col font-body', className)
-  const main = usePart('stage', 'mx-auto flex w-full max-w-(--width-reading) flex-col gap-(--gap-page) p-4')
-  const over = usePart('overlay', 'fixed top-4 right-4 z-40 w-(--width-notice)')
+export function Layout() {
   return (
-    <div {...page} data-has-sidebar={sidebar ? '' : undefined}>
-      {sidebar ? <header className="border-b bg-card px-4 py-2">{sidebar}</header> : null}
-      <main {...main}>{stage}</main>
-      {overlay ? <div {...over}>{overlay}</div> : null}
-    </div>
+    <Game className="max-w-(--width-reading)">
+      <header className="flex flex-wrap items-center gap-4 border-b pb-2">
+        <Title />
+        <Clock />
+        <StatList />
+        <GameMenu />
+      </header>
+      <Story>
+        <SceneStage />
+        <InputFields />
+        <RoomActions />
+      </Story>
+      <PanelHost />
+      <Overlay className="fixed top-4 right-4 bottom-auto">
+        <Notices />
+      </Overlay>
+    </Game>
   )
 }
-
-const components: Components = { Frame: TopBarFrame }
-
-mountGame(game, {
-  components,
-  classes: { sidebar: () => 'flex flex-wrap items-center gap-4' },
-  layout: { sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'inputs', 'actions'] },
-})
 ```
 
-The `classes` turn the side column's own `<aside>` into a row, and the layout puts only a few short parts in it.
+With no `Sidebar`, `Game` is one centred column, so the header sits over the story. Every region takes `className`, merged over its own classes, and `classes` reaches them by their parts (`page`, `sidebar`, `story`, `overlay`), as it reaches any other.
 
-`sidebar` is `null` when the layout has no side column, and `overlay` is `null` when the overlay list is empty. `className` is what was passed to `GameShell`.
+**On a phone** (below Tailwind's `md`, 48rem), `Sidebar` draws a slim `top-bar` with the title, the clock and a `drawer-button`. The button opens the side column as a `drawer`, a dialog that slides in from the left. Focus stays inside it, Escape closes it, and it closes by itself after the player picks something, unless a dialog it opened (a phone, a section's dialog) is still open. Style it with those parts. To keep the side column as a column on phones too, leave `Sidebar` out and draw your own `<aside>` with the parts in it.
+
+**Sections** are how the side column stays short. [`Section`](/docs/react/components#section) is a titled block with three ways to show:
+
+- **As it is.** A heading and its children.
+- **`collapsible`.** A button on its title folds it in place. The player's choice is remembered per `id` in the profile, so a folded section stays folded next time. `open={false}` starts it folded.
+- **`dialog`.** A button, with an optional `badge`, that opens the children in a dialog.
+
+A section hides itself when nothing in it draws anything, and `when` shows it only while a condition holds. [Layouts: sections, drawers and showing things in some rooms](/docs/recipes/layouts) has examples.
 
 ## 8. Write your own root
 
-For a page that isn't a side column and a stage at all, give `mountGame` your own root component as `app`. It's drawn inside the game's provider, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
+For a page that isn't a side column and a story at all, give `mountGame` your own root component as `app`. It's drawn inside the game's provider, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
 
 ```tsx
 // src/main.tsx
@@ -406,7 +434,7 @@ function TownApp() {
 mountGame(game, { app: TownApp })
 ```
 
-`layout` and `className` are ignored when you pass `app`, since there's no `GameShell` to use them.
+`layout` is ignored when you pass `app`, since there's no `GameShell` to use it. An `app` is a layout too: it can use `Game`, `Sidebar` and `Story` like any other.
 
 The menus have hooks that give you their state and actions without their look, so your own screens don't have to talk to the runner directly:
 
@@ -433,7 +461,7 @@ What makes a game look like itself is mostly shape and type:
 
 - **Pick a preset that fits the game**, or make your own from one. A preset is a short stylesheet, and copying one into your `src/styles.css` and changing it is a fine way to start.
 - **Change the fonts.** A serif, a rounded face or a monospace changes the feel more than any colour. Bundle a font file if no system font fits.
-- **Change the layout.** Move the side column, drop it, put the stats under the scene, or move the notices. A different [frame](#7-replace-the-frame) changes the whole silhouette of the page.
+- **Change the layout.** Move the side column, drop it, put the stats under the scene, or move the notices. A different [shape of page](#7-change-the-shape-of-the-page) changes the whole silhouette.
 - **Change how choices look.** They're what the player looks at most. Lines of text, numbered prompts, cards and pills each make a different game.
 - **Replace one or two components** that matter to your story, such as `Beat` for the way people talk, or `Notice` for news.
 
@@ -445,12 +473,22 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `page` | The whole page, drawn by [`Frame`](/docs/react/components#frame). Carries `data-has-sidebar` when there's a side column. |
-| `sidebar` | The side column, an `<aside>`. |
-| `stage` | The `<main>` that holds the stage's parts. |
-| `overlay` | The box after the stage that sticks to the bottom of the window, holding the notices by default. It's hidden while it's empty. |
+| `page` | The whole page, drawn by [`Game`](/docs/react/components#game). Carries `data-has-sidebar` when there's a side column. |
+| `sidebar` | The side column, an `<aside>`. On a phone it's inside the `drawer`. |
+| `story` | The `<main>` that holds the story's parts. |
+| `overlay` | The box after the story that sticks to the bottom of the window, holding the notices by default. It's hidden while it's empty. |
 | `title` | The game's title. |
-| `clock` | Where the game is in time, under the title. |
+| `clock` | Where the game is in time. |
+| `section` | A [`Section`](/docs/react/components#section). Carries `data-section` with its id, `data-open` (`true` or `false`) when it folds, and `data-dialog` when it opens in a dialog. |
+| `section-title` | A section's title. |
+| `section-toggle` | The button that folds a section (with `aria-expanded`), or opens its dialog. |
+| `section-body` | What's in a section. It has `hidden` while the section is folded. |
+| `section-badge` | The section's `badge`, after its title. |
+| `top-bar` | On a phone, the bar across the top with the title, the clock and the drawer button. |
+| `top-bar-title` | The game's title in the top bar. |
+| `drawer-button` | The button in the top bar that opens the drawer. |
+| `drawer` | The side column on a phone, a dialog that slides in from the left. |
+| `drawer-overlay` | The shade behind the drawer. |
 
 ### Stats
 
@@ -470,18 +508,22 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `location` | The location card. |
+| `location` | The location card: the place's picture, name and tag. |
 | `location-name` | The location's name. |
 | `location-text` | The location's tag, under its name. |
 | `exits` | The row of exit buttons. |
 | `exit` | One exit button. Carries `data-exit`. |
 | `people` | The list of people here. |
-| `people-title` | A heading for the people list. The built-in card doesn't draw one, so it's there for a replacement `PeopleCard` to use. |
+| `people-title` | A heading for the people list. The built-in list doesn't draw one, so it's there for a replacement `PeopleHere` to use. |
 | `person` | One person. Carries `data-person`. |
 | `person-portrait` | Their portrait. |
 | `person-name` | Their name. |
 | `person-role` | Their role, under the name. |
 | `person-actions` | Their buttons. |
+| `relationships` | Everyone the player has met, in [`Relationships`](/docs/react/components#relationships). |
+| `relationship` | One of them. Carries `data-person`. Their portrait, name and role use the `person-` parts. |
+| `relationship-header` | The row with their portrait, name and role. |
+| `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
 
 ### Scenes
 

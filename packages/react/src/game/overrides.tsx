@@ -9,8 +9,9 @@
  */
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
 import { cn } from '../lib/utils.ts'
-import type { Actions, Sidebar, Title } from './layout.tsx'
-import type { Clock, LocationCard, PeopleCard, StatList } from './sidebar.tsx'
+import type { RoomActions, Title } from './layout.tsx'
+import type { Game, Overlay, Section, Sidebar, Story, When } from './regions.tsx'
+import type { Clock, Exits, LocationCard, PeopleHere, Relationships, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
 import type { InlineAction, Tip } from './inline.tsx'
 import type { Hotspot, Stage } from './stage.tsx'
@@ -31,7 +32,6 @@ import type { Backlog } from './backlog.tsx'
 import type { SavesMenu } from './saves.tsx'
 import type { GameMenu } from './menu.tsx'
 import type { ModManager } from './mods.tsx'
-import type { Frame } from './shell.tsx'
 import type { Icon } from './icon.tsx'
 import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
 import type { MinigameCard } from './minigame.tsx'
@@ -48,13 +48,17 @@ import type { StatusList } from './statuses.tsx'
 /** Every `data-part` the React UI draws, which is also every key `classes` takes. */
 export const PART_KEYS = [
   // The page
-  'page', 'sidebar', 'stage', 'overlay',
+  'page', 'sidebar', 'story', 'overlay',
   'title', 'clock',
+  // Sections, and the side column as a drawer on phones
+  'section', 'section-title', 'section-toggle', 'section-body', 'section-badge',
+  'top-bar', 'top-bar-title', 'drawer-button', 'drawer', 'drawer-overlay',
   // Stats
   'stats', 'stat', 'stat-label', 'stat-value', 'stat-level', 'stat-progress', 'stat-bar', 'stat-pips', 'stat-pip',
   // Where you are, and who's there
   'location', 'location-name', 'location-text', 'exits', 'exit',
   'people', 'people-title', 'person', 'person-portrait', 'person-name', 'person-role', 'person-actions',
+  'relationships', 'relationship', 'relationship-header', 'relationship-stats',
   // Scenes
   'scene-transition', 'scene', 'scene-header', 'scene-portrait', 'scene-title', 'stage-image', 'beats',
   'beat', 'reveal', 'mail-header', 'mail-body', 'voice-replay',
@@ -120,14 +124,20 @@ type PropsOf<T> = T extends ComponentType<infer P> ? P : never
 
 /** The built-in components a game can replace, by name. */
 export type Components = Partial<{
-  Frame: Override<PropsOf<typeof Frame>>
+  Game: Override<PropsOf<typeof Game>>
   Sidebar: Override<PropsOf<typeof Sidebar>>
+  Story: Override<PropsOf<typeof Story>>
+  Overlay: Override<PropsOf<typeof Overlay>>
+  Section: Override<PropsOf<typeof Section>>
+  When: Override<PropsOf<typeof When>>
   Title: Override<PropsOf<typeof Title>>
   Clock: Override<PropsOf<typeof Clock>>
   StatList: Override<PropsOf<typeof StatList>>
   LocationCard: Override<PropsOf<typeof LocationCard>>
-  PeopleCard: Override<PropsOf<typeof PeopleCard>>
-  Actions: Override<PropsOf<typeof Actions>>
+  Exits: Override<PropsOf<typeof Exits>>
+  PeopleHere: Override<PropsOf<typeof PeopleHere>>
+  Relationships: Override<PropsOf<typeof Relationships>>
+  RoomActions: Override<PropsOf<typeof RoomActions>>
   SceneStage: Override<PropsOf<typeof SceneStage>>
   Beat: Override<PropsOf<typeof Beat>>
   InlineAction: Override<PropsOf<typeof InlineAction>>

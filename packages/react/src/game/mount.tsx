@@ -4,7 +4,8 @@ import type { AudioOptions } from '@ifloom/audio'
 import { browserRunner, describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
 import { hasAudio, startPlayer } from './audio.ts'
 import { GameProvider } from './context.tsx'
-import { GameShell, WithPages, type GameShellProps } from './shell.tsx'
+import { WithPages } from './pages.tsx'
+import { GameShell, type GameShellProps } from './shell.tsx'
 
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
   /** Where to draw it: an element, or a selector for one. `'#root'` if left out. */
@@ -51,7 +52,7 @@ export async function mountGame(loaded: Game | { game: Game; problems?: readonly
 
   const runner = await browserRunner(game, { start, ...runnerOptions })
   if (audio !== false && hasAudio(game)) startPlayer(runner, audio)
-  const { layout: _layout, className: _className, pages, ...provider } = shell
+  const { layout: _layout, pages, ...provider } = shell
   createRoot(element).render(
     <StrictMode>
       {App ? (

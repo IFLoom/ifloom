@@ -3,10 +3,11 @@
  * runner for the view, draw it, send a command when a button is pressed, and
  * draw again when the state changes. Any framework can do the same.
  */
-import { browserRunner, type InlineSpan, type InputView, type MinigameView, type OpenPanel, type SceneBeat, type View } from '@ifloom/engine'
+import { browserRunner, type InlineSpan, type InputView, type MinigameView, type OpenPanel, type RenderedChoice, type SceneBeat, type View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
+import { layout, section } from './layout.ts'
 import './styles.css'
 
 const { game, problems } = loaded
@@ -31,52 +32,70 @@ function add<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K,
   return element
 }
 
+/** The story's region, where the scene is drawn. */
+let story = root
+
 function draw(view: View): void {
-  root.replaceChildren()
-  add(root, 'h1', view.title)
+  const regions = layout(root)
+  story = regions.story
 
-  // While a minigame runs, the scene's title and beats are the minigame's.
-  if (view.scene.title) add(root, 'h2', view.scene.title)
-  for (const beat of view.scene.beats) drawBeat(beat)
-  if (view.minigame) drawMinigame(view.minigame)
-
-  const inputs = add(root, 'div', '', 'inputs')
-  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
-
-  const choices = add(root, 'div', '', 'choices')
-  // A scene's choices, or the game's own buttons when no scene is open.
-  for (const choice of [...view.scene.choices, ...view.actions]) {
-    const button = add(choices, 'button', choice.label)
-    button.disabled = Boolean(choice.disabled)
-    if (choice.disabled) button.title = choice.disabled
-    button.onclick = () => runner.apply(choice.command)
-    // Why it can't be pressed, such as "You need 4 coins."
-    if (choice.disabled) add(choices, 'p', choice.disabled, 'reason')
+  // The side column: the title, the time if a plugin says, and the stats in a section that folds.
+  add(regions.sidebar, 'h1', view.title)
+  if (view.when) add(regions.sidebar, 'p', view.when, 'clock')
+  if (view.stats.length) {
+    const stats = add(section(regions.sidebar, 'stats', 'Stats'), 'dl', '', 'stats')
+    for (const stat of view.stats) {
+      add(stats, 'dt', stat.label)
+      add(stats, 'dd', stat.text)
+    }
   }
 
-  add(root, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '), 'stats')
+  // While a minigame runs, the scene's title and beats are the minigame's.
+  if (view.scene.title) add(story, 'h2', view.scene.title)
+  const prose = add(story, 'div', '', 'prose')
+  for (const beat of view.scene.beats) drawBeat(prose, beat)
+  if (view.minigame) drawMinigame(view.minigame)
+
+  const inputs = add(story, 'div', '', 'inputs')
+  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
+
+  drawChoices(add(story, 'div', '', 'choices'), view.scene.choices)
+  // The bottom of the story: the game's own buttons and its plugins', such as a place's exits and things to do.
+  if (view.actions.length) drawChoices(story.appendChild(regions.bottom), view.actions)
 
   // A panel content opened, such as a shop's counter, over everything else.
   if (view.panel) drawPanel(view.panel)
 }
 
+/** Buttons that send their commands, each greyed out with its reason when it can't be pressed. */
+function drawChoices(parent: HTMLElement, choices: RenderedChoice[]): void {
+  for (const choice of choices) {
+    const button = add(parent, 'button', choice.label)
+    button.disabled = Boolean(choice.disabled)
+    if (choice.disabled) button.title = choice.disabled
+    button.onclick = () => runner.apply(choice.command)
+    // Why it can't be pressed, such as "You need 4 coins."
+    if (choice.disabled) add(parent, 'p', choice.disabled, 'reason')
+  }
+}
+
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
-function drawBeat(beat: SceneBeat): void {
+function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
   switch (beat.kind) {
     case 'text':
-      drawLine(add(root, 'p'), beat.text, beat.spans)
+      drawLine(add(parent, 'p'), beat.text, beat.spans)
       break
     case 'mono':
-      add(root, 'p', beat.text, 'beat-mono')
+      add(parent, 'p', beat.text, 'beat-mono')
       break
     case 'say':
-      drawLine(add(root, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
+      drawLine(add(parent, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
       break
     case 'image':
-      Object.assign(add(root, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
+      Object.assign(add(parent, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
       break
     case 'video':
-      Object.assign(add(root, 'video', '', 'beat-image'), {
+      Object.assign(add(parent, 'video', '', 'beat-image'), {
         src: beat.src,
         poster: beat.poster ?? '',
         autoplay: beat.autoplay,
@@ -87,13 +106,13 @@ function drawBeat(beat: SceneBeat): void {
       })
       break
     case 'mail': {
-      const mail = add(root, 'div', '', 'beat-prop')
+      const mail = add(parent, 'div', '', 'beat-prop')
       for (const line of beat.headers) add(mail, 'p', `${line.key}: ${line.value}`)
       add(mail, 'p', beat.body)
       break
     }
     case 'prop':
-      add(root, 'div', beat.text, 'beat-prop')
+      add(parent, 'div', beat.text, 'beat-prop')
       break
   }
 }
@@ -159,15 +178,15 @@ function drawInput(parent: HTMLElement, input: InputView): void {
 
 /** The minigame being played: a bar counting down its timer, and a button for each input that does something now. */
 function drawMinigame(minigame: MinigameView): void {
-  const section = add(root, 'section', '', 'minigame')
-  section.dataset.state = minigame.state
+  const box = add(story, 'section', '', 'minigame')
+  box.dataset.state = minigame.state
   if (minigame.timeLeft !== null && minigame.timeTotal) {
-    const timer = add(section, 'div', '', 'timer')
+    const timer = add(box, 'div', '', 'timer')
     timer.setAttribute('role', 'progressbar')
     timer.setAttribute('aria-label', 'Time left')
     add(timer, 'span').style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
   }
-  const inputs = add(section, 'div', '', 'choices')
+  const inputs = add(box, 'div', '', 'choices')
   for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
 }
 

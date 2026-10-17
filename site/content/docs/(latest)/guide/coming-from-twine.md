@@ -346,14 +346,36 @@ function draw(view: View): void {
 }
 ```
 
+```tsx tab="React" tab-group="framework"
+// src/layout.tsx: a bar at the side and the passage beside it
+import { Game, GameMenu, InputFields, Inventory, RoomActions, SceneStage, Sidebar, StatList, Story, Title } from '@ifloom/react'
+
+export function Layout() {
+  return (
+    <Game>
+      <Sidebar>
+        <Title />
+        <StatList />
+        <GameMenu />
+        <Inventory />
+      </Sidebar>
+      <Story>
+        <SceneStage />
+        <InputFields />
+        <RoomActions />
+      </Story>
+    </Game>
+  )
+}
+```
+
 ```ts tab="React" tab-group="framework"
+// src/main.ts
 import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 
-mountGame(game, {
-  layout: { sidebar: ['title', 'stats', 'menu', 'inventory'], stage: ['scene', 'inputs', 'actions'] },
-  pages: { subtitle: 'A week at the corner café' },
-})
+mountGame(game, { layout: Layout, pages: { subtitle: 'A week at the corner café' } })
 ```
 
 ```vue tab="Vue" tab-group="framework"
@@ -401,11 +423,11 @@ import Beat from './Beat.vue'
 </main>
 ```
 
-In the React UI, a layout is the closest thing to arranging the UI bar:
+In the React UI, the layout in `src/layout.tsx` is the closest thing to arranging the UI bar:
 
-- **StoryCaption** is a part on the sidebar, such as `'stats'`, or a component of your own in the list. See [Parts of your own](/docs/react#parts-of-your-own).
-- **StoryMenu** is the player's menu, the `'menu'` part.
-- **PassageHeader and PassageFooter** are parts above and below `'scene'` on the stage.
+- **StoryCaption** is a part in the `Sidebar`, such as `StatList`, or a component of your own beside it. See [Layouts](/docs/react#layouts).
+- **StoryMenu** is the player's menu, `GameMenu`.
+- **PassageHeader and PassageFooter** are parts above and below `SceneStage` in the `Story`.
 - **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
 - **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
 

@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, notify, startingState, type Game, type SceneBeat } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT, mountGame, useGame, type Components, type FrameProps } from '../src/index.ts'
+import { GameShell, mountGame, useGame, type Components, SceneStage } from '../src/index.ts'
+import { Reading } from './layouts.tsx'
 
 afterEach(() => {
   cleanup()
@@ -36,7 +37,7 @@ function letter(): Game {
 function show(props: Partial<Parameters<typeof GameShell>[0]> = {}) {
   const game = letter()
   const runner = createRunner(game, startingState(game))
-  render(<GameShell runner={runner} layout={READING_LAYOUT} {...props} />)
+  render(<GameShell runner={runner} layout={Reading} {...props} />)
   return runner
 }
 
@@ -54,15 +55,14 @@ describe('replacing components', () => {
     expect(screen.getByText('A letter on the mat.').getAttribute('data-beat')).toBe('text')
   })
 
-  it('replaces the page skeleton and the icons, and turns the overlay off', () => {
-    const Frame = ({ stage, overlay }: FrameProps) => (
+  it('takes a layout of its own in place of the page, with no overlay', () => {
+    const Layout = () => (
       <div data-my-frame>
         <header>My game</header>
-        {stage}
-        {overlay}
+        <SceneStage />
       </div>
     )
-    show({ components: { Frame }, layout: { ...READING_LAYOUT, overlay: [] } })
+    show({ layout: Layout })
     expect(document.querySelector('[data-my-frame] header')?.textContent).toBe('My game')
     expect(document.querySelector('[data-part="page"]')).toBeNull()
     expect(document.querySelector('[data-part="notices"]')).toBeNull()
@@ -74,10 +74,10 @@ describe('replacing components', () => {
     expect(document.querySelector('[data-part="overlay"] [data-part="notice"]')?.textContent).toContain('Hello')
   })
 
-  it('puts the overlay after the stage, sticky at the bottom rather than fixed, and empty with no notices', () => {
+  it('puts the overlay after the story, sticky at the bottom rather than fixed, and empty with no notices', () => {
     show()
     const overlay = document.querySelector('[data-part="overlay"]')!
-    expect(overlay.previousElementSibling?.getAttribute('data-part')).toBe('stage')
+    expect(overlay.previousElementSibling?.getAttribute('data-part')).toBe('story')
     expect(overlay.className).toMatch(/\bsticky\b/)
     expect(overlay.className).not.toMatch(/\bfixed\b/)
     expect(overlay.childElementCount).toBe(0)
@@ -88,7 +88,7 @@ describe('replacing components', () => {
     let state = startingState(game)
     state = notify(state, { title: 'A letter came' })
     state = notify(state, { title: 'The café is open late' })
-    render(<GameShell runner={createRunner(game, state)} layout={READING_LAYOUT} />)
+    render(<GameShell runner={createRunner(game, state)} layout={Reading} />)
     const list = document.querySelector('[data-part="notices"]')!
     expect(list.hasAttribute('data-collapsed')).toBe(true)
     const more = document.querySelector('[data-part="notices-more"]') as HTMLButtonElement
@@ -105,7 +105,7 @@ describe('classes and data-part', () => {
   it('names every part it draws', () => {
     const runner = show()
     act(() => void runner.apply({ type: 'choose', id: 'shelf' }))
-    for (const part of ['page', 'stage', 'overlay', 'title', 'scene', 'scene-title', 'beats', 'beat', 'choices', 'choice', 'choice-label', 'notice']) {
+    for (const part of ['page', 'story', 'overlay', 'title', 'scene', 'scene-title', 'beats', 'beat', 'choices', 'choice', 'choice-label', 'notice']) {
       expect(document.querySelector(`[data-part="${part}"]`), part).not.toBeNull()
     }
   })

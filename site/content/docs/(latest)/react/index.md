@@ -1,6 +1,6 @@
 ---
 title: "The React UI"
-description: "The optional React UI: mountGame, GameShell, layouts, pages such as the title screen, sound, pictures, theming and its words."
+description: "The optional React UI: mountGame, GameShell, the layout in layout.tsx, pages such as the title screen, sound, pictures, theming and its words."
 ---
 `@ifloom/react` is the optional React UI. It draws an IFLoom game in the browser with React. It's a ready-made UI, but not the only way, and the engine doesn't need it: the engine has no framework of its own, and [Your own UI in any framework](/docs/guide/frameworks) shows a game drawn with Vue, Svelte or plain DOM. This package is a set of React components built on [shadcn/ui](https://ui.shadcn.com) ([Radix](https://www.radix-ui.com) primitives styled with [Tailwind CSS](https://tailwindcss.com) v4). You can use it as it is, restyle it, or take it apart.
 
@@ -16,7 +16,7 @@ mountGame(game)
 - **Use it as it is**, with your own words. That's this page.
 - **Give it a look of its own**, from a theme preset and a few CSS variables up to replacing any component. See [Make it your own](/docs/react/customising).
 - **Add your own screens**, such as a scene's bespoke panel, an app's screen or a plugin's view. See [Extending](/docs/react/extending).
-- **Lay it out your own way**, by naming the parts for the side column and the stage ([Layouts](#layouts)), or build a different page from the same parts ([Your own layout](/docs/react/extending#your-own-layout)).
+- **Lay it out your own way** in a `layout.tsx`: the side column, the story and its sections, written as JSX ([Layouts](#layouts)), or a different page altogether from the same parts ([Your own layout](/docs/react/extending#your-own-layout)).
 
 Every component is listed, with its props, under [Components](/docs/react/components).
 
@@ -24,24 +24,30 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 
 ## What it shows
 
-- **The stage.** The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's). It draws the pictures, the spoken lines and the choices.
-- **The sidebar.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is. Then the stats, the player's menu, the device buttons, where the player is and the exits (with the [places](/docs/plugins/places) plugin), who is here and what you can do with them, the room's and the game's actions, what the player carries, and what they're wearing.
+The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it.
+
+- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose keeps to a readable measure (`--width-prose`).
+- **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
+- **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:
+  - **Stats**, which folds, with the active statuses (the [statuses plugin](/docs/plugins/statuses)) and the turns each has left.
+  - **Quests**, a button that opens the [quest](/docs/plugins/quests) log in a dialog, with a count of quests with news.
+  - **People**, a button that opens everyone the player has met (the [cast](/docs/plugins/cast)), with the stats the game keeps on each of them, such as friendship.
+  - **Carrying**, which folds, with the player's items.
+  - **Wearing**, which folds, with the [wardrobe](/docs/plugins/wardrobe).
+  - Buttons for the [achievements](/docs/plugins/achievements), the [cheats](/docs/plugins/cheats) and the [devices](/docs/plugins/devices).
+- **On a phone**, the side column becomes a drawer. A slim bar across the top holds the title, the clock and a button that slides the column in.
 - **Notices**, in the bottom corner (the layout's overlay), each with a button to dismiss it. On a phone only the newest shows, with a button for the rest.
+- **Panels**, in a dialog, when content opens one with the [`panel` effect](/docs/reference/panels), such as a shop's counter from a place or the job board from a newspaper.
 - **A title screen**, if you turn on [`pages`](#pages): the title, New game, Continue, Load, Settings and Credits, before the game itself.
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/docs/reference/mods), each on, off or removed, with a button to restart the game with the change.
-- **Quests**, under the stage, when the game has the [quests plugin](/docs/plugins/quests).
 - **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices) or the [phone](/docs/plugins/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
-- **A debug card**, under the stage, when the game has the [debug plugin](/docs/plugins/debug).
-- **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/docs/plugins/wardrobe).
-- **Active statuses**, under the stats, when the game has the [statuses plugin](/docs/plugins/statuses) and one is active, with the turns each has left.
-- **Achievements**, from a button under the menu, when the game has the [achievements plugin](/docs/plugins/achievements): a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
+- **A debug card**, at the foot of the story, when the game has the [debug plugin](/docs/plugins/debug).
+- **Achievements**: a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
 - **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks) and you pass `unlocks`. It lists the unlocks, and a code that opens new content offers to restart.
-- **Cheats**, from a button under the menu, when the game has the [cheats plugin](/docs/plugins/cheats) and at least one cheat the player can see. It opens a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
-- **The shop**, when the game has the [shop plugin](/docs/plugins/shop): a button for each vendor where the player is, opening a dialog with the goods, prices, stock and greyed-out reasons, to buy and sell back.
-- **A job board**, under the stage, when the game has the [jobs plugin](/docs/plugins/jobs): each job with its pay, rank, next shift and the reason applying is refused, and buttons to apply, work a shift and quit.
+- **Cheats**, in a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
 
-That's where [`DEFAULT_LAYOUT`](#layouts) puts each one. A [layout](#layouts) of your own can move any of them, or drop the side column.
+A [layout](#layouts) of your own can move, fold or drop any of them, or show one only in some rooms.
 
 When a choice or action is greyed out, the button shows the reason under its label, so the player doesn't have to hover to find out. Its price is on the button too.
 
@@ -92,14 +98,15 @@ The UI's stylesheet imports Tailwind itself and tells it to scan the UI's compon
 
 ```ts
 // src/main.ts
-import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: READING_LAYOUT })
+mountGame(game, { layout: Layout })
 ```
 
-Here `src/game.ts` exports what [`loadGame`](/docs/reference/loader#loadgame) returned, `{ game, problems }`. `mountGame` logs any problems as warnings.
+Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` exports what [`loadGame`](/docs/reference/loader#loadgame) returned, `{ game, problems }`. `mountGame` logs any problems as warnings.
 
 ```html
 <!-- index.html -->
@@ -148,15 +155,16 @@ It sets up what most games want:
 | `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
 | `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
 
-Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` and `className` are ignored, and the rest go to the provider.
+Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` is ignored, and the rest go to the provider.
 
 ```ts
 import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 
 const runner = await mountGame(game, {
   runner: { backlog: { limit: 200 } },
-  layout: { sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'entities', 'actions'] },
+  layout: Layout,
 })
 ```
 
@@ -199,8 +207,7 @@ type GameShellProps = {
   unstyled?: boolean
   viewer?: boolean
   keys?: boolean | KeyOptions
-  className?: string
-  layout?: Layout
+  layout?: ComponentType
   pages?: boolean | PagesOptions
 }
 ```
@@ -215,120 +222,95 @@ type GameShellProps = {
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
 | `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
-| `className` | Classes on the page, merged over its own. |
-| `layout` | Which parts go in the side column, on the stage and in the overlay, in order. If you leave it out, you get [`DEFAULT_LAYOUT`](/docs/react/components#default_layout). See [Layouts](#layouts). |
-| `pages` | The title screen and the pages around the game. Off if you leave it out. See [Pages](#pages). |
-
-The page is drawn by a [`Frame`](/docs/react/components#frame). With a side column, it's a two-column grid on wide screens, with the column on the left (`--width-sidebar` wide) and the stage on the right, up to `--width-page` in all. It stacks on narrow screens. Without a side column, the page is a single column, up to `--width-reading` wide, holding the stage. The overlay, with the notices, comes after everything else and sticks to the bottom right of the window (across its width on a phone). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it.
+| `layout` | The page, as a component: your `layout.tsx`. If you leave it out, you get [`DefaultLayout`](/docs/react/components#defaultlayout). See [Layouts](#layouts). |
+| `pages` | The title screen and the pages around the game. Off if you leave it out. The layout's [`Game`](/docs/react/components#game) draws them. See [Pages](#pages). |
 
 ### Layouts
 
-A layout names the parts of the screen, in order, for the side column, the stage and the overlay that floats at the bottom of the window:
-
-```ts
-type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
-type Part = PartName | ReactNode
-type PartName =
-  | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
-  | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
-  | 'notice-strip' | 'statuses' | 'achievements' | 'cheats' | 'shop' | 'jobs'
-```
-
-| Part | What it draws |
-|---|---|
-| `'title'` | The game's title and the [`Clock`](/docs/react/components#clock): [`Title`](/docs/react/components#title). |
-| `'stats'` | [`StatList`](/docs/react/components#statlist). |
-| `'entities'` | [`EntityTable`](/docs/react/components#entitytable), every kind. |
-| `'menu'` | The player's menu, [`GameMenu`](/docs/react/components#gamemenu). |
-| `'devices'` | [`DeviceButtons`](/docs/react/components#devicebuttons). |
-| `'separator'` | A [`Separator`](/docs/react/components#separator) line. |
-| `'location'` | [`LocationCard`](/docs/react/components#locationcard): where the player is and the exits. |
-| `'people'` | [`PeopleCard`](/docs/react/components#peoplecard). |
-| `'actions'` | The room's and the game's buttons, [`Actions`](/docs/react/components#actions). |
-| `'inventory'` | [`Inventory`](/docs/react/components#inventory). |
-| `'wardrobe'` | [`WardrobeCard`](/docs/react/components#wardrobecard). |
-| `'scene'` | [`SceneStage`](/docs/react/components#scenestage). |
-| `'inputs'` | [`InputFields`](/docs/react/components#inputfields). |
-| `'quests'` | [`QuestLog`](/docs/react/components#questlog). |
-| `'debug'` | [`DebugCard`](/docs/react/components#debugcard). |
-| `'notices'` | [`Notices`](/docs/react/components#notices), the unseen notices. |
-| `'notice-strip'` | [`NoticeStrip`](/docs/react/components#noticestrip), a row of unread counts. No built-in layout includes it. |
-| `'statuses'` | [`StatusList`](/docs/react/components#statuslist), the active statuses. |
-| `'achievements'` | [`AchievementsButton`](/docs/react/components#achievementsbutton), which opens the achievements. |
-| `'cheats'` | [`CheatsButton`](/docs/react/components#cheatsbutton), which opens the cheats. |
-| `'panel'` | [`PanelHost`](/docs/react/components#panelhost), the [panel](/docs/reference/panels) content opened, such as a shop's counter or the job board, in a dialog. |
-
-Shops and job boards aren't parts. Content opens them in a [panel](/docs/reference/panels) from a place, a person, an item or an app, and the `'panel'` part draws it.
-
-Each built-in part draws nothing when the game has nothing for it. A game without a calendar shows no clock, and one without the cast shows no people. So a layout can safely list parts a game doesn't use. Two layouts are exported:
-
-```ts
-const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'cheats', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
-  stage: ['scene', 'inputs', 'quests', 'debug'],
-  overlay: ['notices', 'panel'],
-}
-
-const READING_LAYOUT = {
-  sidebar: [],
-  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements', 'cheats'],
-  overlay: ['notices', 'panel'],
-}
-```
-
-`DEFAULT_LAYOUT` is what a `GameShell` with no `layout` draws. Everything goes at the side and the scene goes on the stage, which suits a game with a map and people. `READING_LAYOUT` is a page to read, for a novel. It has no side column, puts the title over the scene, and puts the buttons and the stats under it. Both put the notices in the overlay.
-
-A management game puts what it manages on the stage, where the eye goes. The Corner Café puts its tables of staff and dishes under the scene, above the week's buttons:
+The layout is the page, written as JSX: what goes in the side column, what goes in the story, and what floats over them. The react and next templates give you a copy of the default one in `src/layout.tsx`, passed to `mountGame` (or `GameShell`) as `layout`:
 
 ```tsx
-import { GameShell, READING_LAYOUT } from '@ifloom/react'
+// src/layout.tsx
+import { Clock, Exits, Game, GameMenu, Inventory, LocationCard, Notices, Overlay, PanelHost, PeopleHere, QuestLog, Relationships, RoomActions, SceneStage, Section, Sidebar, StatList, StatusList, Story, Title, useWords } from '@ifloom/react'
 
-<GameShell runner={runner} layout={READING_LAYOUT} />
-
-<GameShell runner={runner} layout={{ sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'entities', 'actions', 'inputs'] }} />
+export function Layout() {
+  const words = useWords()
+  return (
+    <Game>
+      <Sidebar>
+        <Title />
+        <Clock />
+        <GameMenu />
+        <Section id="stats" title={words('stats')} collapsible open>
+          <StatList />
+          <StatusList />
+        </Section>
+        <Section id="quests" title={words('quests')} dialog>
+          <QuestLog title={false} />
+        </Section>
+        <Section id="people" title={words('people')} dialog>
+          <Relationships />
+        </Section>
+        <Section id="inventory" title={words('inventory')} collapsible>
+          <Inventory title={false} />
+        </Section>
+      </Sidebar>
+      <Story>
+        <SceneStage />
+        <LocationCard />
+        <Exits />
+        <RoomActions />
+        <PeopleHere />
+      </Story>
+      <PanelHost />
+      <Overlay>
+        <Notices />
+      </Overlay>
+    </Game>
+  )
+}
 ```
 
-See each shape's layout in [Shapes of game](/docs/guide/shapes).
+```ts
+// src/main.ts
+import { mountGame } from '@ifloom/react'
+import game from './game.ts'
+import { Layout } from './layout.tsx'
 
-#### Parts of your own
-
-Anything in the list that isn't a part's name is drawn as it is, in its place, so your own components can sit among the built-in ones. They're inside the shell's [`GameProvider`](/docs/react/components#gameprovider), so they can read the view and send commands with [`useGame`](/docs/react/components#usegame). To keep the default layout and add something, spread `DEFAULT_LAYOUT` and change one list:
-
-```tsx
-import { Button, DEFAULT_LAYOUT, GameShell, useGame } from '@ifloom/react'
-
-function SaveButton() {
-  const { runner } = useGame()
-  return <Button variant="outline" onClick={() => runner.save('1', 'Quick save')}>Save</Button>
-}
-
-function Purse() {
-  const { view } = useGame()
-  return <p className="text-sm">In your pocket: {view.statsById.coins.text}</p>
-}
-
-const [title, ...rest] = DEFAULT_LAYOUT.sidebar
-
-<GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, sidebar: [title, <Purse key="purse" />, ...rest, <SaveButton key="save" />] }} />
+mountGame(game, { layout: Layout, pages: true })
 ```
+
+The regions are components:
+
+- [`Game`](/docs/react/components#game) is the page. With a `Sidebar` in it, it's a grid: the side column `--width-sidebar` wide and the story filling the rest of the window, however wide. Without one it's a single column, up to `--width-reading` wide, centred.
+- [`Sidebar`](/docs/react/components#sidebar) is the side column. Below 48rem it becomes a drawer behind a slim top bar.
+- [`Story`](/docs/react/components#story) is the main column.
+- [`Overlay`](/docs/react/components#overlay) comes after everything else and sticks to the bottom right of the window (across its width on a phone). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it.
+- [`Section`](/docs/react/components#section) is a titled part that folds (`collapsible`) or opens in a dialog (`dialog`), and shows only while its `when` condition holds.
+- [`PanelHost`](/docs/react/components#panelhost) draws the [panel](/docs/reference/panels) content opened, such as a shop's counter, in a dialog. Keep one in any layout whose content opens panels.
+
+Each built-in part draws nothing when the game has nothing for it, and a `Section` with nothing in it hides itself. So a game without a calendar shows no clock, and one without the cast has no People button. The same layout suits a novel and a town.
+
+The layout is a React component inside the game's [`GameProvider`](/docs/react/components#gameprovider), so it can use [`useGame`](/docs/react/components#usegame) and every hook, and hold components of your own beside the built-in ones. [Layouts: sections, drawers and showing things in some rooms](/docs/recipes/layouts) shows the common changes. Each example's layout is in [Shapes of game](/docs/guide/shapes).
 
 **Gotchas.**
 
-- **A layout replaces each list whole.** If your layout leaves out `stage` or `overlay`, you get the default one. If it leaves out `sidebar`, you get no side column at all, not the default one. So `layout={{ stage: ['scene'] }}` is a single column with the scene, and the notices in the bottom corner. Spread `DEFAULT_LAYOUT` to keep its side column.
-- **Move the notices, don't copy them.** To put `'notices'` on the stage, also set `overlay: []`, or they're drawn in both places. An empty overlay draws nothing over the page.
-- **Give your own nodes a `key`.** They're drawn from a list, so React asks for one.
-- **Leave out `'inputs'` only if the game has no [inputs](/docs/reference/inputs).** Nothing else sends `input`, so without it the player can't give the value. The same goes for `'actions'` in a game whose buttons are its only way forward, as the café's are.
+- **Keep `InputFields`** unless the game has no [inputs](/docs/reference/inputs). Nothing else sends `input`, so without it the player can't give the value. The same goes for `RoomActions` in a game whose buttons are its only way forward, as the café's are.
+- **Keep a `PanelHost`** if any content opens a panel. Without one, a `panel` effect opens nothing on screen.
+- **Put a part in one place.** Two `Notices` draw every notice twice.
+- **A `Section`'s `id` is how the player's folding is remembered**, in the profile's `ui:sections`. Give each section its own.
 
 ## Pages
 
 Turn on `pages` and the game opens on a title screen, with the game's title and the buttons New game, Continue, Load, Settings and Credits:
 
 ```ts
-import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 
 mountGame(game, {
-  layout: READING_LAYOUT,
+  layout: Layout,
   pages: {
     subtitle: 'A novel in three chapters',
     credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],

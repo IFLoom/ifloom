@@ -73,7 +73,7 @@ export const InputField = overridable('InputField', InputFieldImpl)
 
 function InputFieldsImpl({ className }: { className?: string }) {
   const { view } = useGame()
-  const list = usePart('inputs', 'flex flex-col gap-3', className)
+  const list = usePart('inputs', 'flex max-w-(--width-prose) flex-col gap-3', className)
   const inputs = Object.values(view.inputs)
   if (!inputs.length) return null
   return (

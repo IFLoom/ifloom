@@ -101,11 +101,12 @@ const root = document.querySelector<HTMLElement>('#root')!
 
 ```ts tab="React" tab-group="framework"
 // src/main.ts: the react template's
-import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: READING_LAYOUT, pages: true })
+mountGame(game, { layout: Layout, pages: true })
 ```
 
 ```ts tab="Vue" tab-group="framework"

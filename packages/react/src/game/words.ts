@@ -89,6 +89,7 @@ export const UI_STRINGS = {
   zoom: 'Enlarge',
   closeViewer: 'Close',
   menu: 'Menu',
+  openSidebar: 'Open the side panel',
   timeLeft: 'Time left',
   minigameUp: 'Up',
   minigameDown: 'Down',

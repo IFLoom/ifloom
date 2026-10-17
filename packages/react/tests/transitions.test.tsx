@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT } from '../src/index.ts'
+import { GameShell } from '../src/index.ts'
+import { Reading } from './layouts.tsx'
 
 afterEach(() => {
   cleanup()
@@ -50,7 +51,7 @@ function house(): Game {
 function play(props: Partial<Parameters<typeof GameShell>[0]> = {}) {
   const game = house()
   const runner = createRunner(game, startingState(game))
-  render(<GameShell runner={runner} layout={READING_LAYOUT} {...props} />)
+  render(<GameShell runner={runner} layout={Reading} {...props} />)
   return runner
 }
 

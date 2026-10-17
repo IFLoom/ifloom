@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, startingState } from '@ifloom/engine'
-import { GameShell } from '../src/index.ts'
+import { EntityTable, GameShell } from '../src/index.ts'
+import { storyOf } from './layouts.tsx'
 
 afterEach(cleanup)
 
@@ -35,7 +36,7 @@ describe('EntityTable', () => {
   it('draws a table per kind, a row each, and a row for one hired in play', () => {
     const game = cafe()
     const runner = createRunner(game, startingState(game))
-    render(<GameShell runner={runner} />)
+    render(<GameShell runner={runner} layout={storyOf(<EntityTable />)} />)
     const staff = document.querySelector('[data-kind="staff"]') as HTMLElement
     expect(within(staff).getByText('Staff')).toBeTruthy()
     const rows = () => [...staff.querySelectorAll('tbody tr')].map((row) => [...row.querySelectorAll('td')].map((cell) => cell.textContent))

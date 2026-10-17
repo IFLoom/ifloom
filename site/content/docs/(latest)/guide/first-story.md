@@ -275,13 +275,15 @@ draw(runner.view())
 
 ```ts tab="React" tab-group="framework"
 // src/main.ts
-import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
-// `pages` opens on a title screen with New game, Continue, Load and
-// Settings. Leave it out to start straight in the story.
-mountGame(game, { layout: READING_LAYOUT, pages: true })
+// `layout` is the page, in `layout.tsx`. `pages` opens on a title screen
+// with New game, Continue, Load and Settings. Leave it out to start straight
+// in the story.
+mountGame(game, { layout: Layout, pages: true })
 ```
 
 ```ts tab="Vue" tab-group="framework"
@@ -333,7 +335,7 @@ Every template starts the game the same way, with [`browserRunner`](/docs/refere
 
 Then the page draws `runner.view()`, sends the command of each button the player presses with `runner.apply`, and draws again when the runner says the state changed. The vanilla, Vue and Svelte templates also draw the name input and the stats, and [Your own UI in any framework](/docs/guide/frameworks) goes through their code piece by piece.
 
-In the React template, `mountGame` also logs any problems `loadGame` found as warnings in the browser's console, and draws [`GameShell`](/docs/react#gameshell), the whole React UI, into the element with the id `root` in `index.html`. With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/recipes/title-screen) shows what else it can do. [`READING_LAYOUT`](/docs/react#layouts) is a single column to read, with the title over the scene, then the name input, the game's actions, the stats and the menu under it.
+In the React template, `mountGame` also logs any problems `loadGame` found as warnings in the browser's console, and draws [`GameShell`](/docs/react#gameshell), the whole React UI, into the element with the id `root` in `index.html`. With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/recipes/title-screen) shows what else it can do. `src/layout.tsx` is the page, a copy of the [default layout](/docs/react#layouts): the title, the clock, the stats and the menu in a side column, and the scene, the name input and the game's actions in the story beside it. On a phone the side column folds away behind a menu button.
 
 `src/styles.css` holds the page's look. In the React template it imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font, and [Make it your own](/docs/react/customising) has the rest. In the others it's a plain stylesheet you can change as you like.
 

@@ -26,6 +26,7 @@ games/my-site/
 │   └── Game.tsx       a client component that starts the game
 ├── src/
 │   ├── game.ts        the game, as in every template
+│   ├── layout.tsx     the game's page: the side column, the story and its sections
 │   └── styles.css     the React UI's styles and a theme preset
 ├── next.config.ts     transpilePackages for the @ifloom packages
 ├── postcss.config.mjs Tailwind, for the React UI's stylesheet
@@ -116,8 +117,9 @@ The game runs in the browser only. Its runner reads saves and settings from `loc
 'use client'
 import { useEffect, useState } from 'react'
 import { browserRunner, type Runner } from '@ifloom/engine'
-import { GameShell, READING_LAYOUT, useAudio } from '@ifloom/react'
+import { GameShell, useAudio } from '@ifloom/react'
 import loaded from '../src/game.ts'
+import { Layout } from '../src/layout.tsx'
 
 export function Game() {
   const [runner, setRunner] = useState<Runner | null>(null)
@@ -138,7 +140,7 @@ export function Game() {
 
 function Playing({ runner }: { runner: Runner }) {
   useAudio({ runner })
-  return <GameShell runner={runner} layout={READING_LAYOUT} pages />
+  return <GameShell runner={runner} layout={Layout} pages />
 }
 ```
 

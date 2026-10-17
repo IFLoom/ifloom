@@ -4,7 +4,7 @@ import { createRunner, indexedDbDriver, localStorageDriver, mods, profile, saves
 import { GameShell, type PagesOptions } from '@ifloom/react'
 import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { smallTown } from './game.ts'
-import { layout } from './layout.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
 const driver = localStorageDriver(window.localStorage)
@@ -49,7 +49,7 @@ createRoot(document.getElementById('root')!).render(
     <GameShell
       runner={runner}
       pages={pages}
-      layout={layout}
+      layout={Layout}
       keys
       mods={{ store: modStore, problems, onChange: () => location.reload() }}
       unlocks={{ start: startUnlocks, problems: unlocked.problems, onChange: () => location.reload() }}

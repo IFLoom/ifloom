@@ -154,6 +154,22 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
   return <PagesContext.Provider value={value}>{children}</PagesContext.Provider>
 }
 
+const NO_PAGES: PagesOptions = {}
+
+/**
+ * The game, or with `pages` on, the pages around it: the game shows
+ * only on the `game` page. Used inside a `GameProvider`; a layout's `Game`
+ * uses it, so a layout needn't.
+ */
+export function WithPages({ pages, children }: { pages?: boolean | PagesOptions; children: ReactNode }) {
+  if (!pages) return <>{children}</>
+  return (
+    <PagesProvider options={pages === true ? NO_PAGES : pages}>
+      <Pages game={children} />
+    </PagesProvider>
+  )
+}
+
 /** The page showing: `game` draws what it's given, every other page its own component. */
 export function Pages({ game }: { game: ReactNode }) {
   const { page, options } = usePage()

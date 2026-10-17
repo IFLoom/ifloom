@@ -7,7 +7,7 @@ import { JobBoard } from './jobs.tsx'
 import { overridable } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { ShopCounter, useShop } from './shop.tsx'
-import { PeopleCard, StatList } from './sidebar.tsx'
+import { Relationships, StatList } from './sidebar.tsx'
 import { StatusList } from './statuses.tsx'
 import { WardrobeCard } from './wardrobe.tsx'
 import { useWords, type UiStringKey } from './words.ts'
@@ -35,7 +35,7 @@ function JobsPanel({ data }: { data: unknown }) {
  * - `shop`: the `ShopCounter` of `data.vendor`.
  * - `jobs`: the `JobBoard`, only the jobs `data.job` lists if it lists any.
  * - `wardrobe`, `inventory`, `quests`, `people`, `achievements`, `statuses`
- *   and `stats`: `WardrobeCard`, `Inventory`, `QuestLog`, `PeopleCard`,
+ *   and `stats`: `WardrobeCard`, `Inventory`, `QuestLog`, `Relationships`,
  *   `AchievementList`, `StatusList` and `StatList`.
  */
 export const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>> = {
@@ -44,7 +44,7 @@ export const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>> = {
   wardrobe: () => <WardrobeCard title={false} />,
   inventory: () => <Inventory title={false} />,
   quests: () => <QuestLog title={false} />,
-  people: () => <PeopleCard />,
+  people: () => <Relationships />,
   achievements: () => <AchievementList title={false} />,
   statuses: () => <StatusList title={false} />,
   stats: () => <StatList />,

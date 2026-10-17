@@ -396,6 +396,8 @@ Every button the player can press is a [`RenderedChoice`](/docs/reference/view#r
 
 `view.scene.choices` are the open scene's choices. When no scene is open, the game's own buttons are in `view.actions` instead, so drawing both covers either case.
 
+The templates lay this out as a page in one file of its own: `src/Layout.vue`, `src/Layout.svelte`, or `src/layout.ts` in plain JS, as the React UI has `src/layout.tsx`. It has a side column with the title, the clock and the stats in a `<details>` that folds, the story with the scene and its choices, and the bottom of the story with `view.actions`. On a phone the side column sits above the story. [Layouts](/docs/recipes/layouts) shows the changes most games make to it.
+
 ## Beats
 
 A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture, a video, a letter or a prop such as a sticky note. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.

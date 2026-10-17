@@ -131,7 +131,7 @@ To draw messages or a feed your own way, register a renderer under `messages` or
 Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/docs/react#layouts):
 
 ```tsx
-import { Badge, DEFAULT_LAYOUT, GameShell, useGame } from '@ifloom/react'
+import { Badge, Sidebar, Title, useGame } from '@ifloom/react'
 
 function StampCount() {
   const { view } = useGame()
@@ -139,36 +139,65 @@ function StampCount() {
   return card ? <Badge variant="outline">{card.stamps} stamps</Badge> : null
 }
 
-const [title, ...rest] = DEFAULT_LAYOUT.sidebar
-
-<GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, sidebar: [title, <StampCount key="stamps" />, ...rest] }} />
+// In src/layout.tsx, under the title:
+<Sidebar>
+  <Title />
+  <StampCount />
+  {/* …the rest of the side column */}
+</Sidebar>
 ```
 
 The UI reads the first-party plugins the same way: by the shape of their views, without importing them. If your components do the same, your UI works whether or not the game has the plugin.
 
 ## Your own layout
 
-Most arrangements don't need any code of your own. [`GameShell`](/docs/react#gameshell)'s `layout` names the parts for the side column and the stage, in order, and your own components can go among them (see [Layouts](/docs/react#layouts)). For example, this puts the stats above the scene and drops the quest list:
+The layout is a component of yours, `src/layout.tsx` in the react and next templates. It starts as a copy of [`DefaultLayout`](/docs/react/components#defaultlayout), and you pass it to `mountGame` or `GameShell` as `layout` (see [Layouts](/docs/react#layouts)). This one puts the stats above the scene, keeps the quests in the story in a section that folds, and drops the side column:
 
 ```tsx
-import { GameShell } from '@ifloom/react'
+// src/layout.tsx
+import { Game, InputFields, Notices, Overlay, PanelHost, QuestLog, RoomActions, SceneStage, Section, StatList, Story, Title } from '@ifloom/react'
 
-<GameShell runner={runner} layout={{ sidebar: ['title', 'menu', 'location', 'people', 'actions'], stage: ['stats', 'scene', 'inputs'] }} />
+export function Layout() {
+  return (
+    <Game>
+      <Story>
+        <Title />
+        <StatList />
+        <SceneStage />
+        <InputFields />
+        <RoomActions />
+        <Section id="quests" title="Journal" collapsible open={false}>
+          <QuestLog title={false} />
+        </Section>
+      </Story>
+      <PanelHost />
+      <Overlay>
+        <Notices />
+      </Overlay>
+    </Game>
+  )
+}
 ```
 
-When you want a page `GameShell` can't draw, such as two columns of parts or a header bar, you have three ways to go. The side column on the right is only CSS (see [Rearrange the parts](/docs/react/customising#5-rearrange-the-parts)). A different shape of page is a replacement [`Frame`](/docs/react/customising#7-replace-the-frame). And a page that isn't a column and a stage at all is your own root, passed to `mountGame` as [`app`](/docs/react/customising#8-write-your-own-root), or written as your own shell from the exported parts, like this. Wrap it in a [`GameProvider`](/docs/react/components#gameprovider), and add a [`TooltipProvider`](/docs/react/components#tooltip) if anything in it uses tooltips. [`Parts`](/docs/react/components#parts) draws a list of parts by name, as `GameShell` does, and [`Sidebar`](/docs/react/components#sidebar) is the side column on its own:
+A layout is a React component inside the game's provider, so it can hold anything: your own components, hooks, JSX conditionals. The side column on the right is only CSS (see [Rearrange the parts in layout.tsx](/docs/react/customising#5-rearrange-the-parts-in-layouttsx)), and a header bar or another shape of page is plain markup between the regions (see [Change the shape of the page](/docs/react/customising#7-change-the-shape-of-the-page)).
+
+You don't have to use the regions at all. Without `GameShell`, wrap your page in a [`GameProvider`](/docs/react/components#gameprovider), and add a [`TooltipProvider`](/docs/react/components#tooltip) if anything in it uses tooltips:
 
 ```tsx
 import { createRoot } from 'react-dom/client'
-import { GameProvider, Notices, Parts, QuestLog, Sidebar, TooltipProvider } from '@ifloom/react'
+import { GameProvider, InputFields, Notices, QuestLog, SceneStage, StatList, TooltipProvider } from '@ifloom/react'
 
-function MyLayout() {
+function MyPage() {
   return (
     <div className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-[1fr_16rem]">
       <main className="flex flex-col gap-4">
-        <Parts parts={['scene', 'inputs', <QuestLog key="quests" title="Journal" />, 'debug']} />
+        <SceneStage />
+        <InputFields />
+        <QuestLog title="Journal" />
       </main>
-      <Sidebar className="gap-3" />
+      <aside className="flex flex-col gap-3">
+        <StatList />
+      </aside>
       <Notices className="fixed right-4 bottom-4 w-80" />
     </div>
   )
@@ -177,13 +206,13 @@ function MyLayout() {
 createRoot(document.getElementById('root')!).render(
   <GameProvider runner={runner} panels={panels} sections={sections}>
     <TooltipProvider>
-      <MyLayout />
+      <MyPage />
     </TooltipProvider>
   </GameProvider>,
 )
 ```
 
-Every part is also a component, such as [`SceneStage`](/docs/react/components#scenestage), [`StatList`](/docs/react/components#statlist), [`Title`](/docs/react/components#title) and [`Actions`](/docs/react/components#actions). Use the component when a part needs props, like the quest list's `title` above, or when you don't want a list at all.
+Every part is also a component, such as [`SceneStage`](/docs/react/components#scenestage), [`StatList`](/docs/react/components#statlist), [`Title`](/docs/react/components#title) and [`RoomActions`](/docs/react/components#roomactions). Most take a `className`, and a card takes `title`, like the quest list's above.
 
 Each part reads the view itself, so you can leave any part out or use one twice. A part that belongs to a plugin draws nothing without that plugin. A part with nothing to show also draws nothing. For example, `InputFields` draws nothing when no input is on offer, `Inventory` when the player carries nothing, and `GameMenu` when the runner has no saves, undo or backlog and the provider has no `mods`.
 

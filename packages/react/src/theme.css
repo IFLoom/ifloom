@@ -28,7 +28,7 @@
 }
 
 :root {
-  --width-page: 72rem;
+  --width-prose: 70ch;
   --width-reading: 42rem;
   --width-sidebar: 18rem;
   --width-notice: 20rem;

@@ -327,30 +327,37 @@ function draw(view: View): void {
 ```
 
 ```tsx tab="React" tab-group="framework"
-// src/main.tsx
-import { DEFAULT_LAYOUT, mountGame } from '@ifloom/react'
+// src/layout.tsx: the react template's, with the HUD over the story and no stat list at the side
+import { Game, GameMenu, Notices, Overlay, PanelHost, RoomActions, SceneStage, Sidebar, Story, Title } from '@ifloom/react'
 import { StatBar } from './hud/StatBar.tsx'
 import { Objective } from './hud/Objective.tsx'
 import { Unread } from './hud/Unread.tsx'
-import game from './game.ts'
 
-const hud = (
-  <div key="hud" className="flex flex-col gap-2 rounded-lg border p-3">
-    <div className="flex items-center justify-between gap-4">
-      <Objective />
-      <Unread />
-    </div>
-    <StatBar stat="energy" />
-  </div>
-)
-
-mountGame(game, {
-  layout: {
-    ...DEFAULT_LAYOUT,
-    sidebar: DEFAULT_LAYOUT.sidebar.filter((part) => part !== 'stats'),
-    stage: [hud, ...DEFAULT_LAYOUT.stage],
-  },
-})
+export function Layout() {
+  return (
+    <Game>
+      <Sidebar>
+        <Title />
+        <GameMenu />
+      </Sidebar>
+      <Story>
+        <div className="flex flex-col gap-2 rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-4">
+            <Objective />
+            <Unread />
+          </div>
+          <StatBar stat="energy" />
+        </div>
+        <SceneStage />
+        <RoomActions />
+      </Story>
+      <PanelHost />
+      <Overlay>
+        <Notices />
+      </Overlay>
+    </Game>
+  )
+}
 ```
 
 ```vue tab="Vue" tab-group="framework"
@@ -389,6 +396,6 @@ import Unread from './Unread.vue'
 
 In plain DOM, the pieces are drawn again with the rest of the page on every change. In Vue and Svelte, each component redraws itself when the view changes.
 
-In the React UI, your components can go in any list of the [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the stage, and take the place of the stat list at the side. Build the element once, outside any component, as here. The layout is only read when the page is drawn, and the components inside it redraw themselves as the view changes. For a HUD in a different place altogether, such as a bar fixed across the top of the window, replace the [`Frame`](/docs/react/customising#7-replace-the-frame) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
+In the React UI, your components go anywhere in your [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the story, and take the place of the stat list at the side. For a HUD in a different place altogether, such as a bar fixed across the top of the window, change the [shape of the page](/docs/react/customising#7-change-the-shape-of-the-page) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
 
 To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/recipes/plugin-ui).

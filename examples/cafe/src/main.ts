@@ -1,6 +1,7 @@
 import { mountGame } from '@ifloom/react'
 import { cornerCafe } from './game.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
-// The books on the stage, where the eye goes: the staff and the menu over the week's buttons.
-mountGame(cornerCafe(), { layout: { sidebar: ['title', 'stats', 'menu'], stage: ['scene', 'entities', 'actions', 'inputs'] } })
+// The café's own layout puts the books on the story: see layout.tsx.
+mountGame(cornerCafe(), { layout: Layout })

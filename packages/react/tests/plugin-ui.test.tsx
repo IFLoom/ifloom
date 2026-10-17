@@ -9,11 +9,12 @@ import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
 import { applyStatus, statuses } from '@ifloom/plugin-statuses'
 import {
   AchievementList,
-  DEFAULT_LAYOUT,
   GameProvider,
   GameShell,
   JobBoard,
   PanelHost,
+  RoomActions,
+  SceneStage,
   ShopCounter,
   StatusList,
   useAchievements,
@@ -22,6 +23,7 @@ import {
   useStatuses,
   type Components,
 } from '../src/index.ts'
+import { storyOf } from './layouts.tsx'
 
 afterEach(() => {
   cleanup()
@@ -295,8 +297,7 @@ describe('the defaults, wired', () => {
   })
 
   it('go when their part is left out of the layout', () => {
-    const drop = new Set(['achievements', 'panel'])
-    play({ layout: { ...DEFAULT_LAYOUT, sidebar: DEFAULT_LAYOUT.sidebar.filter((name) => !drop.has(name)), overlay: DEFAULT_LAYOUT.overlay.filter((name) => !drop.has(name)) } })
+    play({ layout: storyOf(<><SceneStage /><RoomActions /></>) })
     expect(part('achievements-button')).toBeNull()
     press('Go to the counter')
     expect(screen.queryByRole('dialog')).toBeNull()

@@ -72,7 +72,7 @@ function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; class
 export const ChoiceButton = overridable('ChoiceButton', ChoiceButtonImpl)
 
 function ChoiceListImpl({ choices, className, part = 'choices' }: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }) {
-  const attrs = usePart(part, 'flex flex-col gap-2', className)
+  const attrs = usePart(part, 'flex max-w-(--width-prose) flex-col gap-2', className)
   if (!choices.length) return null
   return (
     <div {...attrs}>

@@ -13,7 +13,6 @@
   --text-scene-title: 1.9rem;
   --leading-prose: 1.8;
   --width-reading: 36rem;
-  --width-page: 60rem;
   --gap-page: 2.25rem;
   --gap-beats: 1.1rem;
   --radius: 0;
@@ -448,4 +447,78 @@
 
 [data-part="unlock-text"] {
   font-style: italic;
+}
+
+/*
+ * The layout: the story is the page of the book, its prose a printed
+ * measure in the middle of the column; the side column is a quiet margin.
+ */
+[data-part="story"] > *,
+[data-part="story"] [data-part="beats"],
+[data-part="story"] [data-part="choices"],
+[data-part="story"] [data-part="stage-picture"] {
+  width: 100%;
+  max-width: var(--width-prose);
+  margin-inline: auto;
+}
+
+[data-part="sidebar"] {
+  padding-right: 1.5rem;
+  border-right: 1px solid var(--border);
+}
+
+[data-part="section"] {
+  gap: 0.6rem;
+}
+
+[data-part="section-toggle"],
+[data-part="section-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"] {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"]:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"]:focus-visible {
+  outline: 1px solid var(--primary);
+  outline-offset: 3px;
+}
+
+[data-part="section-badge"] {
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 400;
+}
+
+[data-part="top-bar"] {
+  border-color: var(--border);
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+}
+
+[data-part="drawer"] {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+[data-part="drawer"] [data-part="sidebar"] {
+  border-right: 0;
 }

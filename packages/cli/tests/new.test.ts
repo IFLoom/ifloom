@@ -8,7 +8,8 @@ import { pluginNames } from '../src/new.ts'
 /** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
 const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
 const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
-  react: [...REACT_DEPS, 'typescript'],
+  // The react template's own layout.tsx is JSX, so it lists React.
+  react: ['react', 'react-dom', ...REACT_DEPS, 'typescript'],
   novel: REACT_DEPS,
   cafe: REACT_DEPS,
   town: REACT_DEPS,
@@ -86,9 +87,9 @@ describe('ifloom new', () => {
   })
 
   it.each([
-    ['react', 'react(), tailwindcss()', ['src/main.ts', 'src/styles.css']],
-    ['vue', 'vue()', ['src/App.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue', 'src/Panel.vue']],
-    ['svelte', 'svelte()', ['src/App.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte', 'src/Panel.svelte']],
+    ['react', 'react(), tailwindcss()', ['src/main.ts', 'src/layout.tsx', 'src/styles.css']],
+    ['vue', 'vue()', ['src/App.vue', 'src/Layout.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue', 'src/Panel.vue']],
+    ['svelte', 'svelte()', ['src/App.svelte', 'src/Layout.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte', 'src/Panel.svelte']],
   ] as const)('gives the %s template its framework\'s Vite plugin and components', (template, plugin, components) => {
     const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}]`)
@@ -106,6 +107,8 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'next.config.ts'), 'utf8')).toContain("transpilePackages: ['@ifloom/engine', '@ifloom/react', '@ifloom/audio', '@ifloom/browser']")
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toMatch(/^'use client'/)
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('browserRunner(loaded.game)')
+    expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('layout={Layout}')
+    expect(readFileSync(join(dir, 'src/layout.tsx'), 'utf8')).toContain('<Sidebar>')
     expect(readFileSync(join(dir, 'app/layout.tsx'), 'utf8')).toContain("title: 'The Door'")
     expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toContain('# The Door')
@@ -113,8 +116,9 @@ describe('ifloom new', () => {
   })
 
   it('gives the vanilla template the preset alone', () => {
-    const { dir } = newGame({ name: 'plain', template: 'vanilla', into: fresh() })
+    const { dir, files } = newGame({ name: 'plain', template: 'vanilla', into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain('export default ifloom()')
+    expect(files).toContain('src/layout.ts')
   })
 
   it('makes a plugin package from the plugin template, named for the plugin', () => {

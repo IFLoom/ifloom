@@ -21,6 +21,7 @@ Next.js app. This file is for coding agents working on the game.
   when the game is loaded, and their content goes under `data.<plugin>` in a pack,
   and each plugin's package goes in `transpilePackages` in `next.config.ts`.
 - `app/Game.tsx` draws the game with the React UI, in the browser only.
+  `src/layout.tsx` is the game's page: the side column, the story and its sections.
   `app/page.tsx` is an ordinary Next page around it.
 - Pictures and sound go in `public/`, as for any Next app.
 

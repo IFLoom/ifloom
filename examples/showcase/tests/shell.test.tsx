@@ -6,7 +6,7 @@ import { apply, createRunner, notify, startingState, type Command, type CommandR
 import { go } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { clock, smallTown } from '../src/game.ts'
-import { layout } from '../src/layout.ts'
+import { Layout } from '../src/layout.tsx'
 
 const { game } = smallTown()
 
@@ -16,7 +16,7 @@ describe('the showcase shell', () => {
   it('shows unseen notices in the strip and numbers the choices', () => {
     const unpacked = apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state
     const runner = createRunner(game, notify(unpacked, { title: 'A letter came for you' }))
-    render(<GameShell runner={runner} layout={layout} keys />)
+    render(<GameShell runner={runner} layout={Layout} keys />)
 
     const strip = document.querySelector('main [data-part="notice-strip"]')
     expect(strip?.textContent).toMatch(/Notices/)
@@ -26,7 +26,7 @@ describe('the showcase shell', () => {
 
   it('shows each choice its number key', () => {
     const runner = createRunner(game, apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state)
-    render(<GameShell runner={runner} layout={layout} keys />)
+    render(<GameShell runner={runner} layout={Layout} keys />)
     const keys = [...document.querySelectorAll('[data-part="choice-key"]')].map((key) => key.textContent)
     expect(keys.slice(0, 2)).toEqual(['1', '2'])
   })
@@ -36,7 +36,7 @@ describe('the showcase shell', () => {
     const unpacked = run(startingState(game), { type: 'choose', id: 'unpack' })
     const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'activity', id: 'coffee' })
     const runner = createRunner(game, cafe)
-    render(<GameShell runner={runner} layout={layout} />)
+    render(<GameShell runner={runner} layout={Layout} />)
     expect(document.querySelector('[data-status="caffeinated"]')?.textContent).toContain('Caffeinated')
     expect(screen.getByRole('button', { name: /Achievements/ }).textContent).toContain('of 2')
     // Nothing about the shop or the jobs is on screen until content opens it.
@@ -56,9 +56,21 @@ describe('the showcase shell', () => {
 
   it('opens the newspaper\'s job ads from the inventory: the board, with only the paper\'s jobs', () => {
     const runner = createRunner(game, apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state)
-    render(<GameShell runner={runner} layout={layout} />)
+    render(<GameShell runner={runner} layout={Layout} />)
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Read the job ads/ })))
     const board = screen.getByRole('dialog', { name: 'Jobs' })
     expect([...board.querySelectorAll('[data-job]')].map((job) => job.getAttribute('data-job'))).toEqual(['dogs'])
+  })
+
+  it('shows what you are wearing at home only, and the flat’s wardrobe opens it as a panel', () => {
+    const unpacked = apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state
+    const runner = createRunner(game, unpacked)
+    render(<GameShell runner={runner} layout={Layout} />)
+    expect(document.querySelector('[data-section="wardrobe"]')).not.toBeNull()
+    act(() => void fireEvent.click(screen.getByRole('button', { name: /Open the wardrobe/ })))
+    expect(screen.getByRole('dialog', { name: 'Wearing' }).querySelector('[data-part="wardrobe"]')).not.toBeNull()
+    act(() => void fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' }))
+    act(() => void runner.apply(go('high-street')))
+    expect(document.querySelector('[data-section="wardrobe"]')).toBeNull()
   })
 })

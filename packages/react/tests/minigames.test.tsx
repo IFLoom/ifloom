@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { SCHEMA, createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
-import { GameShell, useGame, useMinigame } from '../src/index.ts'
+import { Game as Page, GameShell, NoticeStrip, RoomActions, SceneStage, Sidebar, Story, useGame, useMinigame } from '../src/index.ts'
+import { storyOf } from './layouts.tsx'
 
 /** Catch: wait for the throw, then press space within a second. Left drops it. */
 const catchBall: MinigameDef = {
@@ -149,7 +150,7 @@ describe('useMinigame', () => {
       return null
     }
     render(
-      <GameShell runner={runner} layout={{ stage: ['scene', <Extra key="a" />, <Extra key="b" />] }} />,
+      <GameShell runner={runner} layout={storyOf(<><SceneStage /><Extra /><Extra /></>)} />,
     )
     click(/Join in/)
     click('Space')
@@ -357,7 +358,7 @@ describe('the stat display', () => {
 describe('the notice strip', () => {
   it('counts the unseen notices, and opens them', () => {
     const runner = runnerFor()
-    render(<GameShell runner={runner} layout={{ sidebar: ['notice-strip'], stage: ['scene', 'actions'], overlay: [] }} />)
+    render(<GameShell runner={runner} layout={() => (<Page><Sidebar><NoticeStrip /></Sidebar><Story><SceneStage /><RoomActions /></Story></Page>)} />)
     expect(document.querySelector('[data-part="notice-strip"]')).toBeNull()
     click(/Walk on/)
     click('Wave')
@@ -390,7 +391,7 @@ describe('the notice strip, with a phone', () => {
     )
     expect(problems).toEqual([])
     const runner = createRunner(g, startingState(g))
-    render(<GameShell runner={runner} layout={{ stage: ['notice-strip', 'scene'] }} />)
+    render(<GameShell runner={runner} layout={storyOf(<><NoticeStrip /><SceneStage /></>)} />)
     expect(document.querySelector('[data-part="notice-strip"]')).toBeNull()
     // A message arrives after the first command.
     click('Wait')

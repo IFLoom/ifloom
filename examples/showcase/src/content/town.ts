@@ -36,6 +36,8 @@ const locations: LocationDef[] = [
     body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
     actions: [
       { id: 'bed', label: 'Go to bed', command: sleep() },
+      // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
+      { id: 'wardrobe', label: 'Open the wardrobe', command: { type: 'activity', id: 'openWardrobe' } },
       // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
       { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
     ],
@@ -238,6 +240,7 @@ export const town: Pack = {
     },
     { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
     { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
+    { id: 'openWardrobe', blocked: [onlyAt(['flat'])], effects: [{ kind: 'panel', panel: 'wardrobe' }] },
     { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
     { id: 'work', cost: { stats: { energy: 30 } }, blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },

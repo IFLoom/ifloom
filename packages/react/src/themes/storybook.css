@@ -362,3 +362,58 @@
 [data-part="unlock-form"] [data-part="button"] {
   border-radius: 999px;
 }
+
+/* The layout: sections as soft tabs on the side card, a cheerful top bar on phones. */
+[data-part="story"] {
+  gap: 1.5rem;
+}
+
+[data-part="section"] {
+  padding-top: 0.75rem;
+  border-top: 3px dotted var(--secondary);
+}
+
+[data-part="section-toggle"] {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"] {
+  border-radius: 999px;
+  border-width: 0;
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="section-badge"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+[data-part="top-bar"] {
+  border-width: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="top-bar-title"] {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+[data-part="drawer-button"] {
+  border-radius: 999px;
+}
+
+[data-part="drawer"] {
+  border-width: 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--background);
+}
+
+[data-part="drawer"] [data-part="sidebar"] {
+  margin: 0.75rem;
+}

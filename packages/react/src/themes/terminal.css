@@ -14,7 +14,6 @@
   --text-scene-title: 1rem;
   --leading-prose: 1.6;
   --width-reading: 46rem;
-  --width-page: 70rem;
   --width-sidebar: 16rem;
   --width-notice: 46rem;
   --gap-page: 1.25rem;
@@ -593,4 +592,73 @@ body {
 
 [data-part="unlock-state"] {
   border-radius: 0;
+}
+
+/* The layout: sections as `[-]` / `[+]` folds, a prompt line for the top bar on phones. */
+[data-part="section-toggle"] {
+  justify-content: flex-start;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+
+[data-part="section-toggle"] > svg {
+  display: none;
+}
+
+[data-part="section-toggle"][aria-expanded]::before {
+  content: "[-] ";
+  color: var(--muted-foreground);
+}
+
+[data-part="section-toggle"][aria-expanded="false"]::before {
+  content: "[+] ";
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"] {
+  border-radius: 0;
+  justify-content: flex-start;
+  text-transform: lowercase;
+}
+
+[data-part="section"][data-dialog] [data-part="section-toggle"]::before {
+  content: "> ";
+  color: var(--muted-foreground);
+}
+
+[data-part="section-badge"] {
+  border-radius: 0;
+  background: transparent;
+  color: var(--speech);
+}
+
+[data-part="section-badge"]::before {
+  content: "(";
+}
+
+[data-part="section-badge"]::after {
+  content: ")";
+}
+
+[data-part="story"] {
+  gap: 1.25rem;
+}
+
+[data-part="top-bar"] {
+  border-color: var(--border);
+  text-transform: lowercase;
+}
+
+[data-part="top-bar-title"]::before {
+  content: "$ ";
+  color: var(--muted-foreground);
+}
+
+[data-part="drawer-button"] {
+  border-radius: 0;
+}
+
+[data-part="drawer"] {
+  border-color: var(--border);
+  background: var(--background);
+  box-shadow: none;
 }

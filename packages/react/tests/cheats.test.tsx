@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@te
 import type { ReactNode } from 'react'
 import { SCHEMA, createRunner, definePlugin, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { cheats } from '@ifloom/plugin-cheats'
-import { CheatPanel, DEFAULT_LAYOUT, GameProvider, GameShell, useCheats, type Components } from '../src/index.ts'
+import { CheatPanel, GameMenu, GameProvider, SceneStage, GameShell, useCheats, type Components } from '../src/index.ts'
+import { storyOf } from './layouts.tsx'
 
 afterEach(() => {
   cleanup()
@@ -106,7 +107,7 @@ describe('the cheat panel', () => {
   })
 
   it('goes when its part is left out of the layout', () => {
-    play({ layout: { ...DEFAULT_LAYOUT, sidebar: DEFAULT_LAYOUT.sidebar.filter((name) => name !== 'cheats') } })
+    play({ layout: storyOf(<><SceneStage /><GameMenu /></>) })
     expect(part('cheats-button')).toBeNull()
   })
 

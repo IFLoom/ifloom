@@ -11,10 +11,10 @@ Every game component on this page can be replaced by its name in [`components`](
 ```ts
 import {
   // the game
-  GameShell, GameProvider, useGame, Frame, Icon,
-  DEFAULT_LAYOUT, READING_LAYOUT, Parts, Title, Actions,
+  GameShell, GameProvider, useGame, Icon, WithPages,
+  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions,
   SceneStage, Beat, InlineAction, Tip, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
-  Sidebar, Clock, StatList, EntityTable, LocationCard, PeopleCard, Inventory, WardrobeCard,
+  Clock, StatList, EntityTable, LocationCard, Exits, PeopleHere, Relationships, Inventory, WardrobeCard,
   useClock, usePlaces, usePeople, useWardrobe,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -28,8 +28,8 @@ import {
   useAudio,
   UI_STRINGS, uiSay, useWords,
   PART_KEYS, UiProvider, usePart, overridable,
-  type GameShellProps, type Layout, type Part, type PartName, type GameProviderProps, type GameContextValue, type ModsOption, type UnlocksOption,
-  type PanelComponent, type PluginSectionComponent, type SidebarProps, type UiStringKey, type FrameProps, type IconName,
+  type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption, type UnlocksOption,
+  type PanelComponent, type PluginSectionComponent, type UiStringKey, type IconName,
   type SavesState, type ModsState, type DevicesState, type DeviceState,
   type ClockState, type PlacesControls, type QuestsControls, type WardrobeControls, type WardrobeSlotControls,
   type MessagesControls, type FeedControls, type DebugControls, type ShopControls, type JobsControls,
@@ -57,7 +57,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | `data-sidebar` | The side column ([`Sidebar`](#sidebar)). |
 | `data-scene` | The stage ([`SceneStage`](#scenestage)). |
 | `data-choice` | Each choice or action button. |
-| `data-exit`, `data-person` | Each exit and each person in the sidebar. |
+| `data-exit`, `data-person` | Each exit, and each person here or met. |
 | `data-stat`, `data-kind`, `data-entity` | Each stat row, entity table and entity row. |
 | `data-item`, `data-slot-id` | Each item carried and each wardrobe slot. |
 | `data-input` | Each input field. |
@@ -83,76 +83,158 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 function GameShell(props: GameShellProps): JSX.Element
 ```
 
-The whole UI. It's a [`GameProvider`](#gameprovider) around a [`Frame`](#frame), which places a side column, a stage and an overlay. The side column is a [`Sidebar`](#sidebar), and the stage and the overlay are drawn with [`Parts`](#parts). All three come from `layout`, or from [`DEFAULT_LAYOUT`](#default_layout) if you leave it out. There's no side column when the layout has no `sidebar` or an empty one, and nothing over the page when the overlay is empty. The props, `GameShellProps`, and the layouts are described on [The React UI](/docs/react#gameshell).
-
-It takes [`components`](#components), [`classes`](#classes) and `unstyled` like the provider, and passes them on.
+The whole UI. It's a [`GameProvider`](#gameprovider) around the `layout` component, or [`DefaultLayout`](#defaultlayout) if you leave it out. The props, `GameShellProps`, are described on [The React UI](/docs/react#gameshell). It passes `pages` to the layout's [`Game`](#game), and [`components`](#components), [`classes`](#classes) and `unstyled` to the provider.
 
 ```tsx
-import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
+import { GameShell } from '@ifloom/react'
+import { Layout } from './layout.tsx'
 
-<GameShell runner={runner} panels={panels} layout={{ ...DEFAULT_LAYOUT, stage: [<WeatherBanner key="w" />, ...DEFAULT_LAYOUT.stage] }} />
+<GameShell runner={runner} panels={panels} layout={Layout} pages />
 ```
 
-### Layout
+## Layouts
 
-```ts
-type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overlay?: readonly Part[] }
-type Part = PartName | ReactNode
-type PartName =
-  | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
-  | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
-  | 'notice-strip' | 'statuses' | 'achievements' | 'cheats' | 'panel'
+A layout is a component that draws the page from these regions and the parts below. [The React UI](/docs/react#layouts) shows one whole, and [Layouts: sections, drawers and showing things in some rooms](/docs/recipes/layouts) the common changes.
+
+### DefaultLayout
+
+```tsx
+function DefaultLayout(): JSX.Element
 ```
 
-What [`GameShell`](#gameshell)'s `layout` takes: the parts of the side column, the stage and the overlay, in order. A `PartName` is a built-in part, and each draws nothing when the game has nothing for it. Anything else is drawn as it is. The table of which component each name draws is on [The React UI](/docs/react#layouts).
+The React UI's own layout, which a `GameShell` with no `layout` draws, and which the react and next templates copy into `src/layout.tsx`:
 
-When you give a layout, a missing `stage` or `overlay` means `DEFAULT_LAYOUT`'s, but a missing `sidebar` means no side column.
+- **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock) and the [`GameMenu`](#gamemenu), then these [sections](#section), each titled with a UI word:
+  - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist) and the [`StatusList`](#statuslist);
+  - `quests` (`ui.quests`), a dialog with the [`QuestLog`](#questlog) and a badge counting the quests with news;
+  - `people` (`ui.people`), a dialog with [`Relationships`](#relationships);
+  - `inventory` (`ui.inventory`) and `wardrobe` (`ui.wardrobe`), collapsible, with the [`Inventory`](#inventory) and the [`WardrobeCard`](#wardrobecard).
+  Then the [`AchievementsButton`](#achievementsbutton), the [`CheatsButton`](#cheatsbutton) and the [`DeviceButtons`](#devicebuttons).
+- **A [`Story`](#story)** with the [`SceneStage`](#scenestage) and the [`InputFields`](#inputfields), then the bottom of the story: the [`LocationCard`](#locationcard), the [`Exits`](#exits), the [`RoomActions`](#roomactions) and [`PeopleHere`](#peoplehere). The [`DebugCard`](#debugcard) is last.
+- **A [`PanelHost`](#panelhost)**, and **an [`Overlay`](#overlay)** with the [`Notices`](#notices).
 
-### DEFAULT_LAYOUT
+Every part draws nothing when the game has nothing for it, and every section with nothing in it hides, so it suits any game.
 
-```ts
-const DEFAULT_LAYOUT: {
-  sidebar: readonly ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe']
-  stage: readonly ['scene', 'inputs', 'quests', 'debug']
-  overlay: readonly ['notices', 'panel']
+### Game
+
+```tsx
+function Game(props: GameProps): JSX.Element
+
+type GameProps = { className?: string; pages?: boolean | PagesOptions; children?: ReactNode }
+```
+
+The page: a layout's root, inside the game's provider. With a [`Sidebar`](#sidebar) anywhere inside it, it's a grid, the side column `--width-sidebar` wide beside the story, which fills the rest of the window, and it carries `data-has-sidebar`. Without one, it's a single column up to `--width-reading` wide, centred. Its children are drawn in order.
+
+With `pages` on, it's drawn on the `game` page and the title screen, settings and the rest in its place. `pages` comes from `GameShell` or `mountGame` if you leave it out here.
+
+Replaceable as `Game` in [`components`](#components). Parts: `page` (with `data-has-sidebar`).
+
+### Sidebar
+
+```tsx
+function Sidebar(props: SidebarProps): JSX.Element
+
+type SidebarProps = { className?: string; children?: ReactNode }
+```
+
+The side column: an `<aside>` carrying `data-part="sidebar"` and `data-sidebar`, with its children in order.
+
+Below Tailwind's `md` breakpoint (48rem) it becomes a drawer. A slim `top-bar` holds the game's title, the [`Clock`](#clock) and a `drawer-button`, labelled with `ui.openSidebar`. The button opens the column as a `drawer`, a dialog from the left: focus stays inside it, Escape closes it, and so does the player picking something (the state moving on), unless a dialog it opened is still open on top, such as a phone. Window width is read with `matchMedia`; with none, as on the server, it's a column.
+
+Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`, `top-bar`, `top-bar-title`, `drawer-button`, `drawer` and `drawer-overlay`.
+
+### Story
+
+```tsx
+function Story(props: StoryProps): JSX.Element
+
+type StoryProps = { className?: string; children?: ReactNode }
+```
+
+The main column, a `<main>`, with its children in order. It's as wide as the side column leaves. The scene's prose keeps to `--width-prose`, while pictures, choices and the parts under the scene use the whole column.
+
+Replaceable as `Story` in [`components`](#components). Parts: `story`.
+
+### Overlay
+
+```tsx
+function Overlay(props: { className?: string; children?: ReactNode }): JSX.Element
+```
+
+What floats over the page: a box after everything else, across the page, that sticks to the bottom right of the window (across its width on a phone, `--width-notice` wide from `md`). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it. It's hidden while it's empty. The default layout puts the [`Notices`](#notices) in it.
+
+Replaceable as `Overlay` in [`components`](#components). Parts: `overlay`.
+
+### Section
+
+```tsx
+function Section(props: SectionProps): JSX.Element | null
+
+type SectionProps = {
+  id: string
+  title: string
+  collapsible?: boolean
+  dialog?: boolean
+  open?: boolean
+  when?: Condition
+  badge?: ReactNode
+  className?: string
+  children?: ReactNode
 }
 ```
 
-The React UI's own layout, which a `GameShell` with no `layout` draws. Everything goes at the side and the scene goes on the stage. Spread it to change one list and keep the other:
+A titled part of a layout, in the side column or the story. It hides itself when its children draw nothing, so a section for a plugin the game doesn't have takes no room.
+
+- **`collapsible`** puts a button on its title that folds it. Each player's choice is kept in the [profile](/docs/reference/profile)'s `ui:sections`, by `id`, so it's the same next time. `open` is how it starts before the player has chosen, `true` if you leave it out. Without a profile, as with a bare [`createRunner`](/docs/reference/runner#createrunner), it's remembered until the page closes.
+- **`dialog`** draws a button instead, with `badge` after the title, that opens the children in a [`PartDialog`](#partdialog) titled `title`.
+- **`when`** is a [condition](/docs/reference/conditions): the section shows only while it holds, as [`When`](#when) does.
 
 ```tsx
-import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
+import { Section, WardrobeCard } from '@ifloom/react'
+import { at } from '@ifloom/plugin-places'
 
-<GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, stage: [<WeatherBanner key="w" />, ...DEFAULT_LAYOUT.stage] }} />
+<Section id="wardrobe" title="Wearing" collapsible when={at('flat')}>
+  <WardrobeCard title={false} />
+</Section>
 ```
 
-### READING_LAYOUT
+**Gotcha.** The cards inside have titles of their own. Pass `title={false}` to [`QuestLog`](#questlog), [`Inventory`](#inventory), [`WardrobeCard`](#wardrobecard) and the rest, or the title is there twice.
+
+Replaceable as `Section` in [`components`](#components). Parts: `section` (with `data-section`, `data-open` when it folds and `data-dialog` when it opens a dialog), `section-title`, `section-toggle`, `section-body` and `section-badge`.
+
+### When
+
+```tsx
+function When(props: { condition: Condition; children?: ReactNode }): JSX.Element | null
+```
+
+Its children while `condition` holds, and nothing otherwise. Any [condition](/docs/reference/conditions) works, a plugin's too, such as `{ 'places/at': { location: 'flat' } }`. It's checked against the game's state each time the view changes. It only reads, so it changes nothing in a save or a replay.
+
+Replaceable as `When` in [`components`](#components).
+
+### useHolds
 
 ```ts
-const READING_LAYOUT: {
-  sidebar: readonly []
-  stage: readonly ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements']
-  overlay: readonly ['notices']
+function useHolds(condition: Condition | undefined): boolean
+```
+
+Whether `condition` holds now, with the engine's [`holds`](/docs/reference/conditions#holds) on the runner's state. No condition always holds. [`When`](#when) and `Section`'s `when` use it.
+
+```tsx
+import { useHolds } from '@ifloom/react'
+
+function RainBanner() {
+  return useHolds({ kv: 'raining' }) ? <p>It's raining.</p> : null
 }
 ```
 
-A page to read, for a novel. With no side column, the page is a single narrow column: the title over the scene, then the inputs, the buttons, the stats and the player's menu. The statuses and the achievements button show only in a game with those plugins. The Letter uses it: `<GameShell runner={runner} layout={READING_LAYOUT} />`.
-
-### Parts
+### WithPages
 
 ```tsx
-function Parts(props: { parts: readonly Part[] }): JSX.Element
+function WithPages(props: { pages?: boolean | PagesOptions; children: ReactNode }): JSX.Element | null
 ```
 
-Draws `parts` in order. Each [`PartName`](#layout) becomes its built-in component, and anything else is drawn as it is. `GameShell` draws its stage and overlay with it, and [`Sidebar`](#sidebar) its column. It doesn't wrap anything around them, so you can use it inside an element of your own:
-
-```tsx
-import { Parts } from '@ifloom/react'
-
-<section className="flex flex-col gap-3">
-  <Parts parts={['stats', 'entities', <Purse key="purse" />]} />
-</section>
-```
+Its children, or with `pages` on, the [pages](#pages) around them: the children show only on the `game` page. [`Game`](#game) uses it, so a layout doesn't need to. Use it for a page of your own that doesn't use `Game`.
 
 ### GameProvider
 
@@ -322,7 +404,7 @@ type KeyOptions = {
 
 Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an object to add your own:
 
-- **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`Actions`](#actions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing. [Inline actions](#inlineaction) in the prose have no number: they're reached with Tab, like a link.
+- **1 to 9** pick the choices on screen in order: the open scene's choices, or the room's buttons ([`RoomActions`](#roomactions)) when no scene is open. Each numbered [`ChoiceButton`](#choicebutton) shows its number in a small `choice-key` part and carries `data-choice-key` and `aria-keyshortcuts`. A greyed-out choice keeps its number, and its key does nothing. [Inline actions](#inlineaction) in the prose have no number: they're reached with Tab, like a link.
 - **Escape** opens the [`GameMenu`](#gamemenu)'s buttons in a dialog, if the menu is on screen. With no menu, the key is left to the page.
 - **`map`** sends a [command](/docs/reference/commands) for each key you list, by its [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) name. Your keys come first, so mapping `'1'` or `'Escape'` replaces what it does.
 
@@ -344,13 +426,13 @@ While a [minigame](#minigamecard) runs, its own keys come first, and they work w
 
 ```ts
 type Components = Partial<{
-  Frame: Override<FrameProps>
+  Section: Override<SectionProps>
   Beat: Override<{ beat: SceneBeat }>
   // … one for each name below
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationCard`, `PeopleCard`, `Actions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `StatusList`, `AchievementList`, `AchievementsButton`, `AchievementsPage`, `PanelHost`, `ShopDialog`, `ShopCounter`, `JobBoard`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `StatusList`, `AchievementList`, `AchievementsButton`, `AchievementsPage`, `PanelHost`, `ShopDialog`, `ShopCounter`, `JobBoard`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -396,7 +478,7 @@ const classes: Classes = {
 
 ```ts
 const PART_KEYS: readonly PartKey[]
-type PartKey = 'page' | 'sidebar' | 'stage' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'debug-log'
+type PartKey = 'page' | 'sidebar' | 'story' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'debug-log'
 ```
 
 Every `data-part` the UI draws, which is also every key [`Classes`](#classes) takes. `PartKey` is one of them. [The data-part reference](/docs/react/customising#the-data-part-reference) says what each one is.
@@ -443,34 +525,15 @@ function overridable<P extends object>(name: keyof Components, Default: Componen
 
 Wraps a component so a game can replace it by `name` in [`components`](#components). Every built-in component is made with it. `name` has to be one of the [`Components`](#components) keys. See [Your own components in the system](/docs/react/extending#your-own-components-in-the-system).
 
-### Frame
-
-```tsx
-function Frame(props: FrameProps): JSX.Element
-
-type FrameProps = {
-  sidebar: ReactNode
-  stage: ReactNode
-  overlay: ReactNode
-  className?: string
-}
-```
-
-The page's skeleton: where the side column, the stage and the overlay go. [`GameShell`](#gameshell) draws each region from the layout and hands them to `Frame` already drawn. `sidebar` is `null` when the layout has no side column, and `overlay` is `null` when the overlay is empty. `className` is `GameShell`'s.
-
-The built-in frame is a grid: the side column on the left of the stage on wide screens, stacked on narrow ones, with the overlay last, across the page, sticking to the bottom right of the window. Replace it in `components` for a top bar, a column on the right, a full-screen stage or any other shape of page. See [Replace the frame](/docs/react/customising#7-replace-the-frame).
-
-Parts: `page` (with `data-has-sidebar` when there's a side column), `stage` and `overlay`.
-
 ### Icon
 
 ```tsx
 function Icon(props: { name: IconName; label?: string }): JSX.Element
 
-type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom'
+type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chevron'
 ```
 
-One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, and `zoom` for enlarging a picture. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
+One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, `zoom` for enlarging a picture, `menu` on the button that opens the side column on a phone, and `chevron` on a folding section. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
 
 ## The stage
 
@@ -763,7 +826,7 @@ Replaceable as `ChoiceButton` in [`components`](#components). Parts: `choice` (w
 function ChoiceList(props: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }): JSX.Element | null
 ```
 
-A column of [`ChoiceButton`](#choicebutton)s. It draws nothing for an empty list. `part` names the list for styling: `'choices'` (the default), or `'actions'` for the room's buttons, as [`Actions`](#actions) passes.
+A column of [`ChoiceButton`](#choicebutton)s. It draws nothing for an empty list. `part` names the list for styling: `'choices'` (the default), or `'actions'` for the room's buttons, as [`RoomActions`](#roomactions) passes.
 
 ```tsx
 import { ChoiceList, useGame } from '@ifloom/react'
@@ -786,47 +849,27 @@ A [`Price`](/docs/reference/view#price) as the engine wrote it, in `--price`. It
 
 Replaceable as `PriceTag` in [`components`](#components). Parts: `choice-price`.
 
-## The sidebar
-
-### Sidebar
-
-```tsx
-function Sidebar(props: SidebarProps): JSX.Element
-
-type SidebarProps = { className?: string; parts?: readonly Part[] }
-```
-
-The side column: an `<aside>` carrying `data-part="sidebar"` and `data-sidebar`, with its `parts` drawn by [`Parts`](#parts). [`GameShell`](#gameshell) draws its side column with it, passing the layout's `sidebar` list. Use it on its own in a page of your own.
-
-If you leave out `parts`, you get [`DEFAULT_LAYOUT`](#default_layout)`.sidebar`: [`Title`](#title), [`StatList`](#statlist), [`EntityTable`](#entitytable), [`GameMenu`](#gamemenu), [`DeviceButtons`](#devicebuttons), a [`Separator`](#separator), [`LocationCard`](#locationcard), [`PeopleCard`](#peoplecard), [`Actions`](#actions), [`Inventory`](#inventory) and [`WardrobeCard`](#wardrobecard).
-
-```tsx
-import { Sidebar } from '@ifloom/react'
-
-<Sidebar className="order-last" parts={['title', 'stats', 'menu']} />
-```
-
-Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`.
+## Stats, places and people
 
 ### Title
 
 ```tsx
-function Title(): JSX.Element
+function Title(props: { className?: string }): JSX.Element
 ```
 
-The game's title, `view.title`, as a heading, with the [`Clock`](#clock) under it. This is the `'title'` part.
+The game's title, `view.title`, as a heading. The [`Clock`](#clock) is its own component.
 
 Replaceable as `Title` in [`components`](#components). Parts: `title`.
 
-### Actions
+### RoomActions
 
 ```tsx
-function Actions(): JSX.Element
+function RoomActions(props: { className?: string }): JSX.Element | null
 ```
 
-The buttons offered while no scene is open, `view.actions`, as a [`ChoiceList`](#choicelist). They include the room's buttons, the game's own and its plugins'. This is the `'actions'` part.
+The buttons offered while no scene is open, `view.actions`, as a [`ChoiceList`](#choicelist). They include the room's buttons, the game's own and its plugins'. The default layout puts them at the bottom of the story.
 
-Replaceable as `Actions` in [`components`](#components). Parts: `actions`.
+Replaceable as `RoomActions` in [`components`](#components). Parts: `actions`.
 
 ### Clock
 
@@ -896,12 +939,12 @@ The things the game keeps several of, from [`view.entities`](/docs/reference/vie
 
 The columns are every stat any row shows, in the order they first appear. A row that doesn't show a stat (because its `visible` doesn't hold for that entity) has a blank cell. Each section carries `data-kind` with the kind's id, and each row carries `data-entity` with its reference, such as `staff:ana`.
 
-`kinds` limits it to those kinds. Without it, every kind is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The `'entities'` [part](#layout) draws it with every kind.
+`kinds` limits it to those kinds. Without it, every kind is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The default layout leaves it out; the café's layout puts it in the story.
 
 ```tsx
 import { EntityTable } from '@ifloom/react'
 
-// The café's menu on its own, beside the stage:
+// The café's menu on its own, in the story:
 <EntityTable kinds={['dish']} className="border-t pt-4" />
 ```
 
@@ -913,15 +956,25 @@ Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, 
 function LocationCard(): JSX.Element | null
 ```
 
-Where the player is, with its name and tag, and an outline button for each exit. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code. Each button shows the exit's `label`, sends its own [`command`](/docs/plugins/places#exitview) and carries `data-exit`. An exit the player can't take is greyed out.
+Where the player is: the place's name and tag. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
 
 A place with a [stage](/docs/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
 
-It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). So a novel's sidebar has no empty box.
+It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). The exits are [`Exits`](#exits).
+
+Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name` and `location-text`.
+
+### Exits
+
+```tsx
+function Exits(props: { className?: string }): JSX.Element | null
+```
+
+An outline button for each exit from where the player is. Each shows the exit's `label`, sends its own [`command`](/docs/plugins/places#exitview) and carries `data-exit`. An exit the player can't take is greyed out. It draws nothing without the places plugin, or with no exits, as while a scene is open.
 
 **Gotcha.** An exit's reason, or its warning, is in the button's `title` and shows on hover. It isn't printed on the button as a choice's is. An exit that a lock hides isn't in the view at all.
 
-Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `exits` and `exit` (with `data-exit`).
+Replaceable as `Exits` in [`components`](#components). Parts: `exits` and `exit` (with `data-exit`).
 
 ### usePlaces
 
@@ -931,7 +984,7 @@ function usePlaces(): PlacesControls | null
 type PlacesControls = PlacesView & { go: (exit: string) => Result<GameState> }
 ```
 
-The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location` and `exits`) with a way to travel, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. [`LocationCard`](#locationcard) is drawn from it.
+The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location` and `exits`) with a way to travel, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. [`LocationCard`](#locationcard) and [`Exits`](#exits) are drawn from it.
 
 ```tsx
 import { usePlaces } from '@ifloom/react'
@@ -951,15 +1004,25 @@ function ExitList() {
 }
 ```
 
-### PeopleCard
+### PeopleHere
 
 ```tsx
-function PeopleCard(): JSX.Element | null
+function PeopleHere(props: { className?: string }): JSX.Element | null
 ```
 
 Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and role (when they have them) and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
 
-Replaceable as `PeopleCard` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
+Replaceable as `PeopleHere` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
+
+### Relationships
+
+```tsx
+function Relationships(props: { className?: string }): JSX.Element | null
+```
+
+Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and role, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](#built_in_panels).
+
+Replaceable as `Relationships` in [`components`](#components). Parts: `relationships`, `relationship` (with `data-person`), `relationship-header`, `relationship-stats`, and the `person-` and `stat-` parts inside.
 
 ### usePeople
 
@@ -967,7 +1030,7 @@ Replaceable as `PeopleCard` in [`components`](#components). Parts: `people`, `pe
 function usePeople(): CastView | null
 ```
 
-The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their buttons as [`RenderedChoice`](/docs/reference/view#renderedchoice)s, and `people`, everyone the player has met. `null` in a game without the plugin. Send a button's `command` with [`useGame`](#usegame)'s `send`, or draw it with [`ChoiceButton`](#choicebutton). [`PeopleCard`](#peoplecard) is drawn from it.
+The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their buttons as [`RenderedChoice`](/docs/reference/view#renderedchoice)s, and `people`, everyone the player has met. `null` in a game without the plugin. Send a button's `command` with [`useGame`](#usegame)'s `send`, or draw it with [`ChoiceButton`](#choicebutton). [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) are drawn from it.
 
 ### Inventory
 
@@ -1474,7 +1537,7 @@ What the [profile](/docs/reference/profile) holds in a namespace, kept up to dat
 const settings = useProfile<Record<string, unknown>>('core:settings')
 ```
 
-## Around the stage
+## Around the story
 
 ### Notices
 
@@ -1525,12 +1588,13 @@ A row of counts for what's waiting for the player, each a button that opens wher
 - **Notices** (`ui.notices`) with the number of unseen [notices](/docs/reference/notices). It opens them all in a dialog, each a [`Notice`](#notice), with a **Mark all seen** button (`ui.allSeen`) that sends [`dismiss`](/docs/reference/commands#dismiss) with no id.
 - Each app with a badge on any of the game's [devices](/docs/plugins/devices), such as the phone's Messages, with its count (or an empty badge for a badge that's only on or off). It opens the device in a [`DeviceDialog`](#devicedialog) and sends the app's command, so the device opens on that app. A greyed-out app isn't listed.
 
-It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread. It's the `'notice-strip'` part, which no built-in layout includes, so add it where you want it:
+It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread. The default layout doesn't include it, so add it to your layout where you want it, such as at the top of the story:
 
 ```tsx
-import { DEFAULT_LAYOUT, GameShell } from '@ifloom/react'
-
-<GameShell runner={runner} layout={{ ...DEFAULT_LAYOUT, stage: ['notice-strip', ...DEFAULT_LAYOUT.stage] }} />
+<Story>
+  <NoticeStrip />
+  <SceneStage />
+</Story>
 ```
 
 Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/recipes/hud) shows how to write your own from the view.
@@ -1695,46 +1759,45 @@ The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired
 
 ## Plugins' defaults
 
-Every first-party plugin that has something for the player has a default here, which `GameShell` draws when the game has the plugin, and a hook that gives the same data and actions with no markup. The default is a thin layer on its hook. So you can keep the default, restyle it with its parts, replace it by name in [`components`](#components), take its part out of the [layout](#layout), or draw your own from the hook.
+Every first-party plugin that has something for the player has a default here, which `GameShell` draws when the game has the plugin, and a hook that gives the same data and actions with no markup. The default is a thin layer on its hook. So you can keep the default, restyle it with its parts, replace it by name in [`components`](#components), take it out of your [layout](/docs/react#layouts), or draw your own from the hook.
 
-| Plugin | Default | Hook | Where `DEFAULT_LAYOUT` puts it |
+| Plugin | Default | Hook | Where `DefaultLayout` puts it |
 |---|---|---|---|
 | [calendar](/docs/plugins/calendar) | [`Clock`](#clock) | [`useClock`](#useclock) | Under the title. |
-| [places](/docs/plugins/places) | [`LocationCard`](#locationcard) | [`usePlaces`](#useplaces) | Sidebar, `'location'`. |
-| [cast](/docs/plugins/cast) | [`PeopleCard`](#peoplecard) | [`usePeople`](#usepeople) | Sidebar, `'people'`. |
-| [wardrobe](/docs/plugins/wardrobe) | [`WardrobeCard`](#wardrobecard) | [`useWardrobe`](#usewardrobe) | Sidebar, `'wardrobe'`. |
-| [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | Sidebar, `'statuses'`, under the stats. |
-| [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | Sidebar, `'achievements'`: a button under the menu. |
-| [cheats](/docs/plugins/cheats) | [`CheatPanel`](#cheatpanel), in a dialog | [`useCheats`](#usecheats) | Sidebar, `'cheats'`: a button under the achievements. |
+| [places](/docs/plugins/places) | [`LocationCard`](#locationcard) and [`Exits`](#exits) | [`usePlaces`](#useplaces) | The bottom of the story. |
+| [cast](/docs/plugins/cast) | [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) | [`usePeople`](#usepeople) | Who is here at the bottom of the story; everyone met in the People section. |
+| [wardrobe](/docs/plugins/wardrobe) | [`WardrobeCard`](#wardrobecard) | [`useWardrobe`](#usewardrobe) | The side column's Wearing section. |
+| [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | The Stats section, under the stats. |
+| [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | A button in the side column. |
+| [cheats](/docs/plugins/cheats) | [`CheatPanel`](#cheatpanel), in a dialog | [`useCheats`](#usecheats) | A button in the side column, under the achievements. |
 | [unlocks](/docs/plugins/unlocks) | [`UnlocksPanel`](#unlockspanel) | [`useUnlocks`](#useunlocks) | The settings page, or the menu without pages, when the provider has [`unlocks`](#unlocksoption). |
 | [shop](/docs/plugins/shop) | [`ShopCounter`](#shopcounter), in a dialog | [`useShop`](#useshop) | The `shop` panel, which content opens with `openShop`. |
 | [jobs](/docs/plugins/jobs) | [`JobBoard`](#jobboard), in a dialog | [`useJobs`](#usejobs) | The `jobs` panel, which content opens with `openJobs`. |
-| [quests](/docs/plugins/quests) | [`QuestLog`](#questlog) | [`useQuests`](#usequests) | Stage, `'quests'`. |
-| [devices](/docs/plugins/devices) | [`DeviceButtons`](#devicebuttons) | [`useDevices`](#usedevices) | Sidebar, `'devices'`. |
+| [quests](/docs/plugins/quests) | [`QuestLog`](#questlog) | [`useQuests`](#usequests) | The Quests section, a dialog. |
+| [devices](/docs/plugins/devices) | [`DeviceButtons`](#devicebuttons) | [`useDevices`](#usedevices) | Buttons in the side column. |
 | [messages](/docs/plugins/messages) | [`MessagesSection`](#messagessection) | [`useMessages`](#usemessages) | In an app. |
 | [feed](/docs/plugins/feed) | [`FeedSection`](#feedsection) | [`useFeed`](#usefeed) | In an app. |
-| [debug](/docs/plugins/debug) | [`DebugCard`](#debugcard) | [`useDebug`](#usedebug) | Stage, `'debug'`. |
+| [debug](/docs/plugins/debug) | [`DebugCard`](#debugcard) | [`useDebug`](#usedebug) | The foot of the story. |
 
 The [generators](/docs/plugins/generators) plugin has nothing for the player, so it has no default. A contract test in `packages/react` fails if a first-party plugin with a view has neither a default and a hook nor a reason in its list.
 
 Each hook returns `null` in a game without its plugin (`useDevices` returns `[]`, and `useClock` always returns its object). A hook that has commands returns them as functions, each giving back what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. Buttons the plugin's view already carries, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s, have their price and the reason they're greyed out: draw them with [`ChoiceButton`](#choicebutton), or send their `command`.
 
-To turn one off, leave its part out of the layout. To replace one, name your own in `components`:
+To turn one off, delete it from your layout. To replace one, name your own in `components`:
 
 ```tsx
-import { DEFAULT_LAYOUT, GameShell, useJobs, type Components } from '@ifloom/react'
+import { GameShell, useJobs, type Components } from '@ifloom/react'
+import { Layout } from './layout.tsx'
 
-// No quest log; your own line about jobs, and a border round every shop counter.
-const layout = { ...DEFAULT_LAYOUT, stage: DEFAULT_LAYOUT.stage.filter((part) => part !== 'quests') }
-
-function Shifts() {
+// Your own line about jobs, which goes in your layout, and a border round every shop counter.
+export function Shifts() {
   const jobs = useJobs()
   return <p className="text-sm">Jobs held: {jobs?.held.length ?? 0}</p>
 }
 
 const components: Components = { ShopCounter: ({ Default, ...props }) => <div className="border-t pt-2"><Default {...props} /></div> }
 
-<GameShell runner={runner} layout={{ ...layout, sidebar: [...layout.sidebar, <Shifts key="shifts" />] }} components={components} />
+<GameShell runner={runner} layout={Layout} components={components} />
 ```
 
 In Vue, Svelte or plain JS, read the same slice from `view.plugins.<id>` by the type the plugin exports. [Building UI for plugins](/docs/recipes/plugin-ui) shows each in every framework.
@@ -1747,7 +1810,7 @@ function StatusList(props: { className?: string; title?: string | false }): JSX.
 
 The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its label, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
 
-It draws nothing while no status is active, so the sidebar has no empty box most of the time, and nothing in a game without the plugin.
+It draws nothing while no status is active, so the side column has no empty box most of the time, and nothing in a game without the plugin.
 
 Replaceable as `StatusList` in [`components`](#components). Parts: `statuses`, `statuses-title`, `status` (with `data-status`), `status-label`, `status-stacks`, `status-turns`, `status-summary` and `status-modifiers`.
 
@@ -1964,7 +2027,7 @@ The panels [`PanelHost`](#panelhost) draws by name. A game's own `panels` of the
 | `wardrobe` | [`WardrobeCard`](#wardrobecard) | |
 | `inventory` | [`Inventory`](#inventory) | |
 | `quests` | [`QuestLog`](#questlog) | |
-| `people` | [`PeopleCard`](#peoplecard), who is here | |
+| `people` | [`Relationships`](#relationships), everyone met | |
 | `achievements` | [`AchievementList`](#achievementlist) | |
 | `statuses` | [`StatusList`](#statuslist) | |
 | `stats` | [`StatList`](#statlist) | |

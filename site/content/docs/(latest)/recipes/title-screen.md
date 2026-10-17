@@ -45,17 +45,18 @@ void titleScreen(root, runner, () => {
 
 ```ts tab="React" tab-group="framework"
 // src/main.ts
-import { READING_LAYOUT, mountGame } from '@ifloom/react'
+import { mountGame } from '@ifloom/react'
 import game from './game.ts'
+import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: READING_LAYOUT, pages: true })
+mountGame(game, { layout: Layout, pages: true })
 ```
 
 ```ts tab="React" tab-group="framework"
 // Or, instead of `true`, a subtitle, a picture and credits:
 mountGame(game, {
-  layout: READING_LAYOUT,
+  layout: Layout,
   pages: {
     subtitle: 'A new flat, a new town, and a cat with no name.',
     art: 'art/title.jpg',

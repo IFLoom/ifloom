@@ -44,6 +44,12 @@ if (tsconfig.extends) {
   delete tsconfig.extends
   tsconfig.include = ['src']
   tsconfig.compilerOptions = { ...base.compilerOptions, ...tsconfig.compilerOptions }
+  // The react template's own layout.tsx is JSX. Linked, the checkout's sources see the checkout's React types,
+  // so the game's JSX must see the same copy; a published install has only one.
+  if (template === 'react') {
+    const types = join(checkout, 'node_modules/@types')
+    tsconfig.compilerOptions.paths = { react: [join(types, 'react')], 'react/*': [join(types, 'react/*')], 'react-dom': [join(types, 'react-dom')], 'react-dom/*': [join(types, 'react-dom/*')] }
+  }
   writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2) + '\n')
 }
 // Turbopack reads no file outside its root, and the linked packages are in the checkout: the root is the folder holding both.

@@ -492,22 +492,39 @@ function draw(view: View): void {
 ```
 
 ```tsx tab="React" tab-group="framework"
-// src/main.tsx
-import { DEFAULT_LAYOUT, mountGame, type Part } from '@ifloom/react'
-import { Achievements } from './pages/Achievements.tsx'
+// src/layout.tsx: the react template's, with the counter under the story and the board in the side column
+import { Game, Sidebar, Story, SceneStage, RoomActions, Section, Title } from '@ifloom/react'
 import { Counter } from './hud/Counter.tsx'
 import { JobBoard } from './hud/JobBoard.tsx'
+
+export function Layout() {
+  return (
+    <Game>
+      <Sidebar>
+        <Title />
+        <Section id="jobs" title="Jobs" collapsible>
+          <JobBoard />
+        </Section>
+      </Sidebar>
+      <Story>
+        <SceneStage />
+        <RoomActions />
+        <Counter />
+      </Story>
+    </Game>
+  )
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// src/main.tsx
+import { mountGame } from '@ifloom/react'
+import { Achievements } from './pages/Achievements.tsx'
+import { Layout } from './layout.tsx'
 import game from './game.ts'
 
-// Leave out the built-in shop button and job board, so they don't show beside yours.
-const without = (parts: readonly Part[]) => parts.filter((part) => part !== 'shop' && part !== 'jobs')
-
 mountGame(game, {
-  layout: {
-    ...DEFAULT_LAYOUT,
-    stage: [...without(DEFAULT_LAYOUT.stage), <Counter key="counter" />],
-    sidebar: [...without(DEFAULT_LAYOUT.sidebar), <JobBoard key="jobs" />],
-  },
+  layout: Layout,
   // A page with the id `achievements` takes the built-in one's place, title-screen button and all.
   pages: { pages: { achievements: { label: 'Achievements', component: Achievements } } },
 })
@@ -555,7 +572,7 @@ const showAchievements = ref(false)
 {/if}
 ```
 
-In the React UI, the counter and the board go in lists of the [layout](/docs/react#layouts), in place of the built-in `'shop'` and `'jobs'` parts, and the achievements page is one of the [pages](/docs/recipes/title-screen#pages-of-your-own), so the title screen gets an Achievements button. The sidebar's `'achievements'` button then goes to your page. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
+In the React UI, the counter and the board go in your [layout](/docs/react#layouts), where you want them, and the achievements page is one of the [pages](/docs/recipes/title-screen#pages-of-your-own), so the title screen gets an Achievements button. The side column's achievements button then goes to your page. Leave out the layout's `PanelHost` if your counter and board replace the built-in panels. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
 
 ## The same for any plugin
 

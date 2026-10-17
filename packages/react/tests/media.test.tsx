@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Pack } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
 import { at, go, places } from '@ifloom/plugin-places'
-import { GameShell, READING_LAYOUT, Video } from '../src/index.ts'
+import { GameShell, LocationCard, Video } from '../src/index.ts'
+import { Reading, storyOf } from './layouts.tsx'
 
 afterEach(() => {
   cleanup()
@@ -62,7 +63,7 @@ function flat(extra: Partial<Pack> = {}): Game {
 
 function play(game: Game, props: Partial<Parameters<typeof GameShell>[0]> = {}, runnerOptions = {}) {
   const runner = createRunner(game, startingState(game), runnerOptions)
-  render(<GameShell runner={runner} layout={READING_LAYOUT} {...props} />)
+  render(<GameShell runner={runner} layout={Reading} {...props} />)
   return runner
 }
 
@@ -90,10 +91,7 @@ describe('Video', () => {
     render(
       <GameShell
         runner={runner}
-        layout={{ stage: [] }}
-        components={{
-          Frame: () => <Video src="art/flat/rain.webm" poster="art/flat/rain.jpg" autoplay={false} loop={false} muted={false} controls />,
-        }}
+        layout={() => <Video src="art/flat/rain.webm" poster="art/flat/rain.jpg" autoplay={false} loop={false} muted={false} controls />}
       />,
     )
     const video = document.querySelector('video') as HTMLVideoElement
@@ -261,7 +259,7 @@ describe('media in places, messages and posts', () => {
 
   it('draws the place’s stage in the location panel, with its hotspots', () => {
     const runner = createRunner(town(), startingState(town()))
-    render(<GameShell runner={runner} />)
+    render(<GameShell runner={runner} layout={storyOf(<LocationCard />)} />)
     const panel = document.querySelector('[data-part="location"]') as HTMLElement
     expect(panel.querySelector('[data-part="stage-layer"]')?.getAttribute('src')).toBe('art/flat/room.svg')
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'The front door' })))

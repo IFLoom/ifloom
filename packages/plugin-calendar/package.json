@@ -12,6 +12,6 @@
     "src"
   ],
   "peerDependencies": {
-    "@ifloom/engine": "0.0.0"
+    "@ifloom/engine": "^0.0.0"
   }
 }

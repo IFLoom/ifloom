@@ -37,6 +37,13 @@ from disk. Pre-release; nothing here is a stable API yet.
 
 A first-party plugin is a package of its own that imports only `@ifloom/engine` (its `tests/contracts/boundary.test.ts` holds it to that) and requires no other plugin. It may work with others when the game has them, by name only: it lists them in `cooperates` and asks them through conditions, effects and `query`. It is documented under `site/content/docs/(latest)/plugins/`, and a docs contract fails on any export the page does not name.
 
+## How packages depend on each other
+
+- **An `@ifloom/*` package another one uses is its peer dependency, never a dependency.** A plugin peers on the engine, `@ifloom/phone` on the plugins it wires, and `@ifloom/react` on the engine, `@ifloom/audio`, `@ifloom/browser` and, as optional peers, the plugins whose view types it reads (ADR 0011). So a game has one copy of each, at the version it chose. npm 7 and later installs a required peer the game doesn't list.
+- **Every reference to an `@ifloom/*` package is `^` and its version**, `^0.0.0` for now: in peers and dev dependencies, the examples, the templates, the site and the docs' snippets. A caret on `0.0.x` matches that version only, on `0.x` the same minor, and from 1.0 the same major, so it accepts what semver calls compatible. A release bumps the versions and the ranges together.
+- **Other libraries:** what a package runs on its own (Radix, `clsx`) is a dependency. What the game's build or typecheck must share with it is a peer: `react`, `react-dom`, `tailwindcss` and React's types for `@ifloom/react`, which ships `.tsx` source a game's typecheck reads. A game lists its framework's Vite plugins itself.
+- `packages/cli/tests/contracts/packages.test.ts` holds the first two rules.
+
 `packages/engine/tests/fixtures/` holds a small town game with no story; engine tests run against it. The showcase is `examples/showcase`.
 
 ## Rules the engine keeps
@@ -91,7 +98,7 @@ npm run lint
 npm run docs:build   # checks the links, then builds the site (next build)
 ```
 
-`scripts/verify.sh` runs these and the examples' check, build and snapshot.
+`scripts/verify.sh` runs these and the examples' check, build and snapshot. `scripts/try-templates.sh` makes a game from each of the `react`, `vue`, `svelte` and `vanilla` templates in a temporary folder outside the checkout, linked to it, and runs its install, check, build and typecheck; run it when a template, the Vite preset or a package's dependencies change.
 
 ## Hosting
 

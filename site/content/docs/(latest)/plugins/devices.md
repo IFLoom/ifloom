@@ -33,8 +33,8 @@ Add the package beside the engine, then add `devices()` to the game's `plugins`.
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/plugin-devices": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-devices": "^0.0.0"
   }
 }
 ```

@@ -7,16 +7,18 @@
     "dev": "ifloom dev",
     "build": "ifloom build",
     "check": "ifloom check",
+    "typecheck": "tsc --noEmit",
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/react": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/react": "^0.0.0"
   },
   "devDependencies": {
-    "@ifloom/cli": "0.0.0",
+    "@ifloom/cli": "^0.0.0",
     "@tailwindcss/vite": "4.3.3",
     "@vitejs/plugin-react": "6.1.1",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3"
   }
 }

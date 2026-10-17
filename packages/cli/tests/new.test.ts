@@ -7,12 +7,13 @@ import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
 /** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
 const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
 const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
-  react: REACT_DEPS,
+  react: [...REACT_DEPS, 'typescript'],
   novel: REACT_DEPS,
   cafe: REACT_DEPS,
   town: REACT_DEPS,
-  vue: ['vue', '@vitejs/plugin-vue', 'vue-tsc'],
-  svelte: ['svelte', '@sveltejs/vite-plugin-svelte', 'svelte-check'],
+  vanilla: ['typescript'],
+  vue: ['vue', '@vitejs/plugin-vue', 'typescript', 'vue-tsc'],
+  svelte: ['svelte', '@sveltejs/vite-plugin-svelte', 'svelte-check', 'typescript'],
 }
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')

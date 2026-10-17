@@ -25,8 +25,8 @@ List the package in your game's `package.json`, beside the engine:
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/plugin-achievements": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-achievements": "^0.0.0"
   }
 }
 ```

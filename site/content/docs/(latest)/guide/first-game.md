@@ -24,9 +24,9 @@ That template draws the game with the [React UI](/docs/react). Add `--template v
 Then add the three plugins to `games/my-town/package.json`, next to `@ifloom/engine`, and run `npm install` at the root:
 
 ```json
-"@ifloom/plugin-calendar": "0.0.0",
-"@ifloom/plugin-places": "0.0.0",
-"@ifloom/plugin-cast": "0.0.0"
+"@ifloom/plugin-calendar": "^0.0.0",
+"@ifloom/plugin-places": "^0.0.0",
+"@ifloom/plugin-cast": "^0.0.0"
 ```
 
 In a game beside the checkout, add them as `file:` links instead, as [Installation](/docs/guide/installation#plugins) shows. If you'd rather see a finished game of this shape first, `npm run new -- my-town --template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/cli#ifloom-new).

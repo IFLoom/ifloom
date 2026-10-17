@@ -32,7 +32,7 @@ There's also one bundle:
 ## How they are built
 
 - **Each is its own package.** A game that doesn't use one doesn't ship it.
-- **The engine is a peer dependency.** A plugin uses the game's own copy of `@ifloom/engine`, so a game only ever has one engine.
+- **The engine is a peer dependency.** A plugin uses the game's own copy of `@ifloom/engine`, so a game only ever has one engine. Every `@ifloom` package names another it uses the same way, by the range `^` and its version.
 - **They only use the engine's public API.** A first-party plugin imports nothing but `@ifloom/engine`, the same API your own plugins use, so anything one of them does, a plugin of yours can do too.
 - **None requires another.** You can add any of them, in any combination. A plugin that works with others lists them in its `cooperates`, and uses them only when the game has them:
   - The cast cooperates with places and the calendar. It asks places where the player is, and its schedules usually use the calendar's conditions. Without places, nobody is ever in the room, but calls still work.
@@ -51,13 +51,13 @@ List the plugin's package in your game's `package.json`, beside the engine, then
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/plugin-quests": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-quests": "^0.0.0"
   }
 }
 ```
 
-The version is `0.0.0` because a game inside the checkout uses the checkout's own packages. [Installation](/docs/guide/installation) covers a game kept somewhere else.
+The range `^0.0.0` matches the checkout's own packages, which a game inside the checkout uses. [Installation](/docs/guide/installation) covers a game kept somewhere else.
 
 Then add it to the game's `plugins`, on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). This is a cut-down version of the showcase's own setup:
 

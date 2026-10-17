@@ -140,7 +140,7 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
    }
    ```
 
-   Leave the `name`, the `scripts` and the other dev dependencies (the Vite plugins) as they are. You don't list React or Vite yourself. React is a peer dependency of `@ifloom/react`, which npm 7 and later installs for you.
+   Leave the `name`, the `scripts` and the other dev dependencies (the Vite plugins) as they are. You don't list React or Vite yourself. React, its types, `@ifloom/audio` and `@ifloom/browser` are peer dependencies of `@ifloom/react`, which npm 7 and later installs for you, and which a linked `@ifloom/react` finds in the checkout.
 
 4. Replace `my-game/tsconfig.json`. The template's extends `../../tsconfig.base.json`, which isn't there outside the checkout, so write the settings out in full:
 

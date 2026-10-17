@@ -27,11 +27,11 @@ The bundle needs the three plugins it wires together, beside the engine. See [Ad
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/plugin-devices": "0.0.0",
-    "@ifloom/plugin-messages": "0.0.0",
-    "@ifloom/plugin-feed": "0.0.0",
-    "@ifloom/phone": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-devices": "^0.0.0",
+    "@ifloom/plugin-messages": "^0.0.0",
+    "@ifloom/plugin-feed": "^0.0.0",
+    "@ifloom/phone": "^0.0.0"
   }
 }
 ```

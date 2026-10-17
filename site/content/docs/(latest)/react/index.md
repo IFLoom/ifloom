@@ -59,7 +59,7 @@ Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide
 }
 ```
 
-`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types come with `@ifloom/react`. [Installation](/docs/guide/installation) shows the full file.
+`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types are a peer dependency of `@ifloom/react`, which npm installs with it. [Installation](/docs/guide/installation) shows the full file.
 
 ## Set it up
 

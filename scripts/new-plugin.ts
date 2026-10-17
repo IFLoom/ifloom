@@ -95,7 +95,7 @@ const files: Record<string, string> = {
       type: 'module',
       exports: { '.': './src/index.ts' },
       files: ['src'],
-      peerDependencies: { '@ifloom/engine': '0.0.0' },
+      peerDependencies: { '@ifloom/engine': '^0.0.0' },
     },
     null,
     2,

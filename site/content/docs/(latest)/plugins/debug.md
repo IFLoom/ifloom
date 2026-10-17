@@ -24,8 +24,8 @@ Add the package beside the engine. See [Adding one](/docs/plugins#adding-one).
 ```json
 {
   "dependencies": {
-    "@ifloom/engine": "0.0.0",
-    "@ifloom/plugin-debug": "0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-debug": "^0.0.0"
   }
 }
 ```

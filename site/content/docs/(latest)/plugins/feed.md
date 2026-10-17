@@ -1,5 +1,6 @@
 ---
 title: "Feed"
+description: "Social feeds of other people's posts, the player's own posts, and the likes and comments they get."
 ---
 `@ifloom/plugin-feed` keeps timelines of posts, like a social app or a notice board. Other people's posts appear when the story allows. The player's own go up through an effect, usually on an action with a cost, and collect likes and comments.
 

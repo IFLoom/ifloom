@@ -1,5 +1,6 @@
 ---
 title: "Phone"
+description: "A smartphone in one call, wiring devices, messages and feed together with messages, social, contacts and gallery apps."
 ---
 `@ifloom/phone` puts a smartphone in a game in one call. It wires together the [devices](/docs/plugins/devices), [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins and puts the usual apps on the phone:
 

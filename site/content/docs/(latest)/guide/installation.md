@@ -197,4 +197,21 @@ A calendar, places, characters, quests, a wardrobe and a phone each come as a pl
 }
 ```
 
+Each plugin's folder is `packages/` and the part of its name after `@ifloom/`, so `@ifloom/plugin-jobs` is `packages/plugin-jobs`. The [phone](/docs/plugins/phone) is a bundle rather than a plugin, at `packages/phone`, and it needs the three plugins it wires together beside it:
+
+```json
+{
+  "dependencies": {
+    "@ifloom/phone": "file:../ifloom/packages/phone",
+    "@ifloom/plugin-devices": "file:../ifloom/packages/plugin-devices",
+    "@ifloom/plugin-messages": "file:../ifloom/packages/plugin-messages",
+    "@ifloom/plugin-feed": "file:../ifloom/packages/plugin-feed"
+  }
+}
+```
+
 [Plugins](/docs/plugins) lists them all.
+
+### Type-checking scripts that use the CLI
+
+The tsconfig above covers code that runs in the browser. A file that imports `@ifloom/cli`, such as a [playtest policy](/docs/cli#policy), pulls in the CLI's own source, which uses Node's modules, so `tsc` reports `Cannot find name 'node:fs'`. Either keep such files out of `include` (in a `tools/` folder, say), or add `@types/node` to your dev dependencies and `"node"` to `types`.

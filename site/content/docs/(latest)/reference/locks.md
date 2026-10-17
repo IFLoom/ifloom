@@ -1,5 +1,6 @@
 ---
 title: "Locks"
+description: "Locks that refuse commands while a condition holds, with one line the player reads, for intros, curfews and places off limits."
 ---
 A lock stops the player doing something for a while, and says why. Use one for a stretch of the game with its own limits, such as an intro that only moves through its scenes, or a first night that keeps the player at home. Each lock is data: what it stops, while what holds, and the line the player reads.
 

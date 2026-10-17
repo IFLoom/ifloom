@@ -1,5 +1,6 @@
 ---
 title: "Randomness"
+description: "Seeded randomness: the save's seed, and roll, pick, chance and weighted for draws that replay the same."
 ---
 To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
 

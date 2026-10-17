@@ -1,5 +1,6 @@
 ---
 title: "Effects"
+description: "Every effect: stats, kv, items, scenes and storylet draws, entities, each, turns, notices, audio, minigames, and custom effects."
 ---
 An effect is one change to the [state](/docs/reference/state), written as data. Choices, activities, item uses, triggers and the end of a turn all carry lists of them.
 

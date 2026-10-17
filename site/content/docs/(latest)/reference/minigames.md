@@ -1,5 +1,6 @@
 ---
 title: "Minigames"
+description: "Minigames as data: states, inputs, timers and variables, for quick-time events and small games inside a story."
 ---
 A minigame is a small game inside the story, such as a quick-time event, a lock to pick or a round of snap. You declare it as data: a few states, the inputs each one listens for, timers that move it on, and number variables it keeps while it runs. The engine runs it, and the UI draws it from [`view.minigame`](/docs/reference/view#minigame) and sends what the player presses.
 

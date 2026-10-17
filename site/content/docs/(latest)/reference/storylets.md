@@ -1,5 +1,6 @@
 ---
 title: "Storylets"
+description: "Scenes drawn at random from a named set by weight and condition, with once, at-most and cooldown recipes."
 ---
 A storylet is a scene drawn at random from a named set. You mark the scenes that can come up with the name of the set, give each a weight and its own `when`, and an effect draws one of the eligible ones. Use them for the small things that happen while the player sits in a café or waits at a bus stop, without keeping a list of those things anywhere.
 
@@ -81,6 +82,51 @@ when: { stat: 'friendship', of: person('ava'), gte: 25 }  // only once you know 
 ```
 
 For once a turn, set a kv key in the storylet's choice, list that key in [`rules.resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
+
+### A cooldown
+
+`{ since }` counts from the first time a scene was seen, so it can't say "not within three days of the last time". For a cooldown, have the storylet's choice write the turn into a kv key, and test it with a small custom condition:
+
+```ts
+import type { Custom, DataScene } from '@ifloom/engine'
+
+// goes on the game as `custom`
+const custom: Custom = {
+  conditions: {
+    // True when the key was never written, or at least `turns` turns ago.
+    cooledDown: (state, args) => {
+      const last = state.kv[String(args.key)]
+      return typeof last !== 'number' || state.turn - last >= Number(args.turns ?? 1)
+    },
+  },
+  effects: {
+    stamp: (state, args) => [{ kind: 'kv', key: String(args.key), to: state.turn }],
+  },
+}
+
+const samAtTheCafe: DataScene = {
+  id: 'cafe.sam',
+  drawnFrom: ['cafe'],
+  when: { custom: 'cooledDown', with: { key: 'cafe.sam.last', turns: 3 } },
+  body: [{ text: 'cafe.sam' }],
+  choices: [{ id: 'leave', effects: [{ custom: 'stamp', with: { key: 'cafe.sam.last' } }, { kind: 'scene', scene: null }] }],
+}
+```
+
+Sam turns up at most once every three days. Stamp the key in every way out of the scene, or in the effect that opens it, so a player who leaves another way still starts the wait.
+
+### A chance that it happens at all
+
+A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in a [custom effect](/docs/reference/custom#effects) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
+
+```ts
+import { chance, type CustomEffect } from '@ifloom/engine'
+
+const maybeSomething: CustomEffect = (state, args) =>
+  chance(20 + 8 * Number(args.rank ?? 0), 100, state.seed, state.turn, 'cafe.event')
+    ? [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }]
+    : []
+```
 
 ## Adding to a set
 

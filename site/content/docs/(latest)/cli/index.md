@@ -1,5 +1,6 @@
 ---
 title: "The CLI"
+description: "The ifloom command: new, dev, build, check, playtest and snapshot, the Vite preset, and the functions behind them for scripts."
 ---
 `@ifloom/cli` runs your game while you write it and builds it into a folder that opens from disk. It also checks the game for the problems the loader can find, plays it unattended, and records how every scene reads. It also starts new games. It has six commands and a Vite preset:
 
@@ -240,11 +241,26 @@ import { startingState, type Game } from '@ifloom/engine'
 export const start = (game: Game) => startingState(game, { kv: { playerName: 'Robin' } })
 ```
 
+A policy imports from `@ifloom/cli`, which runs in Node. Keep it out of the module your page imports, or the browser build pulls the CLI in with it. Give it a module of its own that re-exports the game, and name that module on the command line:
+
+```ts
+// tools/playtest.ts
+import { explorer, type Policy } from '@ifloom/cli'
+export { default } from '../src/game.ts'
+
+export const policy: Policy = explorer()
+```
+
+```sh
+ifloom playtest tools/playtest.ts --turns 14
+```
+
 **Gotchas.**
 
 - **The explorer is curious, not clever.** It knows nothing about your game, so it shows what a player poking at every button meets, not a route through the story. To reach a scene that needs good choices, write a policy of your own.
 - **There's one row per turn played.** A `--turns 7` run that plays them all has seven rows, each taken as that turn ended. A run that stops early ends with a row for the turn it stopped in, which may have only just begun. A run stops early when the policy gives up, at the step limit, or in a refusal loop.
 - **A turn only ends when the game ends one.** The count moves on with a [`turn`](/docs/reference/effects#turn) effect, which the [calendar](/docs/plugins/calendar#what-a-turn-is) applies as time passes and when the player goes to bed. In a game that never ends a turn, the run never reaches its turns. It stops at the policy or the step limit instead.
+- **The transcript shows screens, not news.** Notices raised along the way (a payday, a promotion, rent taken) aren't in it, and nor are inputs or the stat list. Read the `.metrics` file for the numbers, or check the notices in a test with [`view(state, game).notices`](/docs/reference/notices).
 - **A policy that keeps getting refused stops the run.** When the same command is refused on two steps in a row, with nothing in between, the play ends there rather than looping to the step limit. The same command refused twice with other steps in between isn't a loop, so the run goes on. Both refusals are still listed, and the exit code is still `1`.
 
 ## ifloom snapshot
@@ -661,7 +677,7 @@ It takes on Dev, then Fen, then turns the next applicant away, taking a differen
 
 - **"Once a turn" is per action id and per person, not per place.** A `wait` done on the high street counts as done in the café too. That memory resets each turn, while the choices made in scenes are remembered for the whole playtest.
 - **Trying a button runs it.** Each action's command is applied once to see whether it ends the turn, so a game's [custom functions](/docs/reference/custom) run for buttons that are never pressed. A custom function that only reads the state and returns, as [`apply`](/docs/reference/commands#apply) expects, won't notice. One that logs or counts its calls outside the state will see the extra runs.
-- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses an item, opens a device or answers a message. In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
+- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses an item, opens a device, answers a message or types into an [input](/docs/reference/inputs). An intro that won't go on until the player types a name stops the run there, so give the input a fallback (a [custom value](/docs/reference/custom#values) that prints a default name) or set the name in [`start`](#what-playtest-reads). In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
 
 ### screenText
 

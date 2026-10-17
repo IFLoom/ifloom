@@ -1,5 +1,6 @@
 ---
 title: "Progress and limits"
+description: "Once-a-turn limits, counters, ladders and stages gated on what's been seen, and the helpers behind them."
 ---
 These are two small toolkits for shaping a storyline over time:
 

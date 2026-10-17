@@ -1,5 +1,6 @@
 ---
 title: "The view"
+description: "What view() hands a UI: the scene and its beats, choices and buttons with prices and reasons, stats, notices and plugins' parts."
 ---
 The engine has no UI of its own. It hands your UI one object, a `View`, that says everything there is to draw, and takes back [commands](/docs/reference/commands). A UI's loop is:
 

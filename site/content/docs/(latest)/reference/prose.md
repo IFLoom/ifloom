@@ -1,5 +1,6 @@
 ---
 title: "Prose and markup"
+description: "Prose keys, tokens such as {{playerName}}, markup for speech, pictures, video, sound, inline actions and tooltips, and variants."
 ---
 A game keeps its words apart from its logic, under prose keys. A scene names keys, a prose store turns each key into text, and the view parses that text into beats a UI can draw. This page covers all three. For the scenes that name keys, see [Scenes](/docs/reference/scenes).
 
@@ -167,6 +168,8 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[reveal]]`, `[[reveal:1500]]`, `[[reveal:1500\|slide-up]]` | `{ kind: 'reveal', delay, as, at }`. Nothing to draw: what follows waits. |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
+
+There's no markup for emphasis or for styling a line. `**bold**` and `*italic*` are left as written, and a paragraph can't carry a class. A line that should stand out, such as a warning that work is due, is a block of its own with a `when`, and your UI decides how it looks. For news the player shouldn't miss, raise a [notice](/docs/reference/notices) instead. Inside the line, a [tooltip](#inline-actions-and-tooltips) can carry the detail.
 
 ### Speech
 

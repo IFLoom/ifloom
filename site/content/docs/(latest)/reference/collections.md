@@ -1,5 +1,6 @@
 ---
 title: "Collections"
+description: "Named lists the game keeps entries in, such as notes, photos or letters, with a limit and conditions that read them."
 ---
 A collection is a named list the game keeps entries in, such as notes found, photos taken or a ledger of wages. You declare each one. Effects add entries with [`collect`](/docs/reference/effects#collect) and take them out with [`discard`](/docs/reference/effects#discard), and the [`{ collection }`](/docs/reference/conditions#collection) condition asks what's in one. The [view](/docs/reference/view#collections) hands every declared collection to the UI with its words filled in.
 

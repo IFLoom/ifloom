@@ -1,5 +1,6 @@
 ---
 title: "Game state"
+description: "GameState field by field: the turn, phase, scene, stats, kv store, items, entities, plugins' state, seen and chosen."
 ---
 `GameState` is the whole save, as a plain object you can serialise to JSON. Commands take one and return the next, and nothing else in the engine holds state. Treat it as read-only, and change it only through [commands](/docs/reference/commands) and [effects](/docs/reference/effects).
 

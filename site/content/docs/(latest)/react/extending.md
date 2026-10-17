@@ -1,5 +1,6 @@
 ---
 title: "Extending the UI"
+description: "Add your own panels, plugin sections and components to the React UI, or build your own layout from its parts."
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Using another framework](/docs/guide/frameworks).
 

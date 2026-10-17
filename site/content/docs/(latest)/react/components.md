@@ -1,5 +1,6 @@
 ---
 title: "Components"
+description: "Every component and hook @ifloom/react exports, from GameShell down to a single button, with its parts and props."
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Using another framework](/docs/guide/frameworks).
 

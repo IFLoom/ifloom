@@ -1,5 +1,6 @@
 ---
 title: "Custom functions"
+description: "Custom conditions, effects, values and panels: code a game declares by name and content calls, and what they're given."
 ---
 Most content is data, such as conditions, effects and prose, which a tool can read, a mod can ship and the [content checker](/docs/reference/checks) can check. When something has to be worked out in code, such as whether it's market day or what a loaf costs today, you declare a custom function on `game.custom` and content calls it by name.
 
@@ -27,6 +28,29 @@ const town: Game = {
 A [plugin](/docs/reference/plugins)'s conditions, effects and values are called the same way, with the plugin's id and a `/` in front, as in `{ custom: 'quests/done', with: { quest: 'bread' } }` or `{{v:quests/updates}}`. You can also write a plugin's condition or effect [in short](#plugincall), with its name as the key: `{ 'quests/done': { quest: 'bread' } }`. A name with a `/` is looked up among the plugins first, so keep `/` out of your game's own names. A plugin's commands are sent as [`{ type: 'custom', name }`](/docs/reference/commands#custom).
 
 There's no global registry. Each game owns its own functions, so two games on one page, or a test next to a game, never see each other's. Everything that reads a custom function takes the game, and finds nothing without it.
+
+## What a custom function is given
+
+A custom condition, effect or value gets the state, and a condition or effect gets its `with` as `args`. That's all. It doesn't get the game, so it can't call [`holds`](/docs/reference/conditions#holds) on a plugin's condition, ask a plugin's [query](/docs/reference/plugins#queries) or read a [derived stat](/docs/reference/stats#derived-stats) through `statValue`.
+
+When a custom function needs an answer a plugin keeps, you have three ways round it:
+
+- **Let content ask instead.** Return a storylet draw or put the plugin's condition in a `blocked` or `when` beside the custom effect, so the engine tests it with the game in hand.
+- **Read the plugin's state.** Each plugin keeps its part of the save at `state.plugins.<id>.state`, with the shape its page documents under "The state". The jobs plugin's is [`JobsState`](/docs/plugins/jobs#jobsstate), so a custom effect can read the rank the player holds:
+
+  ```ts
+  import type { CustomEffect } from '@ifloom/engine'
+  import type { JobsState } from '@ifloom/plugin-jobs'
+
+  const tips: CustomEffect = (state) => {
+    const jobs = state.plugins.jobs?.state as JobsState | undefined
+    const rank = jobs?.held.weekend?.rank ?? 0   // 0 for the first rank
+    return [{ kind: 'stat', stat: 'coins', by: 2 + rank }]
+  }
+  ```
+
+  The slice is missing in a save from before the plugin was added, so allow for `undefined`. It's read-only here: change it through the plugin's own effects.
+- **Write a plugin of your own.** A plugin's conditions and effects get a [context](/docs/reference/plugins#plugincontext) with the game, `query` and the rest.
 
 ## Custom
 

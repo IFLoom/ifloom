@@ -1,5 +1,6 @@
 ---
 title: "Scenes"
+description: "Data scenes and hand-written scenes: blocks, choices, labels, once a turn, prices, speakers, endings and rendering."
 ---
 A scene is one screen of story: some prose, and the choices under it. The engine runs every scene the same way, as an object with a `render` function that turns the current state into a [`SceneView`](#sceneview). You can write a scene in either of two ways, and list both kinds side by side in `game.scenes`:
 
@@ -407,6 +408,25 @@ const custom: Custom = {
 ```
 
 **Gotcha.** An unknown name gives `panelData: undefined`, not an error. The [content checker](/docs/reference/checks) reports a data scene's unknown one as `no custom panel named "…"`, but can't see a hand-written scene's.
+
+### Endings
+
+A scene with `choices: []` is an ending. Nothing moves the story on from it: the view has no choices, and while a scene is open no actions, exits or people are offered either. What the player does next is the UI's business.
+
+- **In the React UI** with [`pages`](/docs/react#pages) on, the player's menu has **Title screen**, which leads to **New game**, **Continue** and **Load**. Without `pages`, they can still load a save from the menu. Say so in the ending's words if the player might not know.
+- **In a UI of your own,** draw a "Start again" button when `view.scene.id` is set and the scene has no choices, and call [`runner.newGame()`](/docs/reference/runner#newgame) from it.
+
+There's no command that starts a new game from content, so a "Start again" choice inside the story isn't possible. For a game over that the rest of the game should respect too, set a [phase](/docs/reference/state#phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
+
+```ts
+// in the effects that end the game
+[{ kind: 'phase', to: 'over' }, { kind: 'scene', scene: 'ending.evicted' }]
+
+// in rules.locks
+{ when: { phase: ['over'] }, deny: ['*'], reason: 'The story is over.' }
+```
+
+Give the game a [`finished`](/docs/reference/state#new-game) condition only for endings that count as finishing it, since that's what offers New Game+.
 
 ## StoryletFields
 

@@ -1,5 +1,6 @@
 ---
 title: "Debug"
+description: "Commands for testing that ignore locks: set a stat, a kv key, an item, the scene, the turn, the clock or the place."
 ---
 `@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, give the player an item, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
 

@@ -1,5 +1,6 @@
 ---
 title: "Activities and buttons"
+description: "Activities with costs and blocked reasons, game buttons, the order refusals come in, whyNot, warnings and effectsOf."
 ---
 This page covers two things that work together:
 
@@ -155,7 +156,27 @@ Why the player can't do this activity right now, or `undefined` if they can. It 
 3. Each entry in `blocked`, in order, whose `when` holds: its `reason`. The places plugin's [`onlyAt`](/docs/plugins/places#helpers) is one, with `Not here.`
 4. Each stat in `cost.stats`, in the order written, that the player has less of than the cost: `cost.reasons[id]`, or the stat's [`lackingLine`](/docs/reference/stats#lackingline).
 
-The [`activity`](/docs/reference/commands#activity) command refuses with this line, and the view uses it as the button's disabled text. You can reword the engine's own lines here (`finishFirst` and `notEnough`) in the [strings table](/docs/reference/strings#refusals). A lock's and a `blocked` entry's `reason` are already your game's words.
+The [`activity`](/docs/reference/commands#activity) command refuses with this line, and the view uses it as the button's disabled text.
+
+Because `blocked` comes before `cost`, a player short of energy is told `Too late for that.` before `Not enough energy.` when both hold. To have the energy line come first, give it a `blocked` entry of its own, ahead of the others, and keep the cost for spending it:
+
+```ts
+import type { ActivityDef } from '@ifloom/engine'
+import { pass, period } from '@ifloom/plugin-calendar'
+
+const jog: ActivityDef = {
+  id: 'jog',
+  cost: { stats: { energy: 10 } },
+  blocked: [
+    { when: { stat: 'energy', lt: 10 }, reason: 'Too tired.' },
+    { when: period('night'), reason: 'Too late for that.' },
+    { when: { kv: 'jogged' }, reason: 'Once a day is plenty.' },
+  ],
+  effects: [pass(1), { kind: 'kv', key: 'jogged', to: true }],
+}
+```
+
+If the activity also costs coins, that's still checked last, so the player hears that they can't afford it only once nothing else stands in the way. You can reword the engine's own lines here (`finishFirst` and `notEnough`) in the [strings table](/docs/reference/strings#refusals). A lock's and a `blocked` entry's `reason` are already your game's words.
 
 **Gotcha.** A plugin guard's soft refusal isn't in this list. An activity a plugin warns against, such as one the [calendar](/docs/plugins/calendar#the-guard) says `That would run past dawn.` about, isn't blocked. Its button stays pressable with the line as its `warning`, and the command is refused with it. See [`warningOf`](#warningof).
 

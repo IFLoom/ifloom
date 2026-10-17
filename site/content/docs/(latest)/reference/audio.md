@@ -1,5 +1,6 @@
 ---
 title: "Audio"
+description: "Tracks, playlists and channels, what plays on a background channel, sounds and voices, and the volume settings."
 ---
 You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/docs/reference/effects#audio) and [`sound`](/docs/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/docs/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/docs/reference/view#audio). The [audio player](/docs/reference/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/docs/react#sound) starts it for you.
 

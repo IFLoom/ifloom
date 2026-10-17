@@ -179,6 +179,48 @@ Days that pass outside a command, such as a test moving the clock with [`write`]
 
 After every command, the player is fired from a job whose `fire.missed` has been reached or whose `fire.when` holds. They lose the job, a notice is raised, and `jobs/apply` refuses them with `They won’t have you back.` The [`jobs/hire`](#commands-and-effects) effect can still take them on again.
 
+### A weekly payday
+
+A rank's `pay` is paid at the end of each shift. For wages that come once a week, pay into a stat the player doesn't spend and pay that out on payday. Declare a hidden stat, pay the rank in it, and move it into coins from [`rules.turn`](/docs/reference/rules#a-days-end-step-by-step) on the right night:
+
+```ts
+import type { GameRules, StatDef } from '@ifloom/engine'
+
+const stats: StatDef[] = [{ id: 'owed', label: 'Wages owed', max: 9999, listed: false }]
+
+// in the job: ranks: [{ id: 'help', title: 'Weekend help', pay: { owed: 12 } }]
+
+const rules: GameRules = {
+  // Friday night, in a game whose turn is a day and starts on a Monday.
+  turn: (state, nextTurn) => ({
+    effects: (nextTurn - 1) % 7 === 4
+      ? [
+          { kind: 'stat', stat: 'coins', by: state.stats.owed ?? 0 },
+          { kind: 'stat', stat: 'owed', to: 0 },
+          { kind: 'notify', id: 'payday', title: 'Payday', tag: 'money' },
+        ]
+      : [],
+  }),
+}
+```
+
+Days missed simply add nothing to `owed`, so the week's pay is the wage times the days worked.
+
+### "Worked today"
+
+The plugin has no condition for whether today's shift is done. `shiftsWorked` counts every shift. For a reminder such as "Work is due" on every screen, set a kv key in the shift's `effects` and put it back each day with [`rules.resets`](/docs/reference/rules#resets):
+
+```ts
+// in the job
+shift: { cost: { energy: 25 }, passes: 1, effects: [{ kind: 'kv', key: 'workedToday', to: true }] }
+
+// in the game's rules
+resets: { workedToday: false }
+
+// a line in a place's body
+{ text: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: { kv: 'workedToday' } }] } }
+```
+
 ## Conditions
 
 | Content writes | Helper | Holds when |

@@ -1,5 +1,6 @@
 ---
 title: "Inputs"
+description: "Inputs the player types or picks, such as a name, checked against their declaration and written to a kv key."
 ---
 An input is something the player types or picks, which the engine writes to a key in the [kv store](/docs/reference/state#kv). It might be a name for the cat, the hour the alarm goes off, or their usual order at the café. The game declares each input with what it accepts, and the [`input`](/docs/reference/commands#input) command writes it. The engine checks the value against the declaration, so a UI can't put anything else in.
 

@@ -1,5 +1,6 @@
 ---
 title: "First-party plugins"
+description: "The first-party plugins and the phone bundle, what each adds, how they work together, and how to add one to a game."
 ---
 The engine's core knows about turns, scenes, stats, entities, the kv store and the rest of the [core concepts](/docs/guide/concepts), but not about clocks, maps or people. Those come from plugins. A [plugin](/docs/reference/plugins) adds a whole system to a game, with its own state, conditions, effects, commands, hooks and view. The first-party plugins below live in the IFLoom repository beside the engine, and you add the ones your game needs.
 

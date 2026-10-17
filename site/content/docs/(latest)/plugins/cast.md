@@ -1,5 +1,6 @@
 ---
 title: "Cast"
+description: "Characters with schedules, who is in the room, talking and calling, and stats kept on each person such as a friendship."
 ---
 `@ifloom/plugin-cast` gives a game its people. Characters keep their own hours, so the plugin knows who's in the room with the player. The player can talk to them and call them, and the game can keep stats about each one, such as a friendship.
 
@@ -599,6 +600,8 @@ The places in `cast/at` aren't checked. A `portrait` the game gives is listed in
 - **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and the speaker hook still work.
 - **`'$'` is only bound in a character's own conditions.** In a scene, an activity or a trigger, write `of: person('ava')`.
 - **The first entry wins.** A schedule entry or talk option with no `when` always holds, so nothing below it is reached.
+- **A name is content, not a token.** `name` is fixed when the game loads, so a name the player types for someone, such as the cat they name on moving day, can't reach the **Talk** button, the refusals or a message's sender. Print the typed name in prose with `{{catName}}`, and give the character a `name` that reads well on buttons, such as `Your cat`.
+- **A portrait you name must exist.** `ifloom check` reports `no file public/art/character/ava.jpg` for a `portrait` whose file isn't there. Leave `portrait` out while the art is still to come. The default path isn't checked, and the React UI leaves out a picture whose file is missing.
 - **Met is by scene unless you say otherwise.** Without `met`, someone whose talk scene the player has never opened isn't met, even if they've spoken in another scene as its `speaker`. Give them a `met` condition if they should be.
 - **A call needs somewhere to go.** A character with a `call` but no `call.scene` and no `talk` is reported when the game loads.
 

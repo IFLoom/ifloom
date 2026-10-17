@@ -1,5 +1,6 @@
 ---
 title: "Checking content"
+description: "What the content checker reports, where each problem is pinned, and how to run checkGame and describeProblem yourself."
 ---
 `checkGame` reads through a game's content once, reports everything it names that the game doesn't have, and lists the files it names. [`loadGame`](/docs/reference/loader#loadgame) runs it on the game it merges. A game you build by hand calls it itself, usually from a test.
 

@@ -1,5 +1,6 @@
 ---
 title: "The runner"
+description: "The runner: undo, backlog, command log, saving, loading, autosave, new games, and browserRunner for the browser."
 ---
 The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/commands#apply) with the things every game's UI would otherwise build for itself: undo and redo, a backlog of what was shown, a command log, saving, loading and autosave. It also tells listeners when the state changes.
 

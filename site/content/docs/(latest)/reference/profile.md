@@ -1,5 +1,6 @@
 ---
 title: "The profile"
+description: "The player's profile: settings, a finished flag and other records kept outside any save, in namespaces."
 ---
 The profile holds what should outlive a save: the player's settings, whether they've finished the game, and whatever plugins keep across games, such as achievements. A new game, or a different save, still sees it.
 

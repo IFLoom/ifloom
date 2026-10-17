@@ -1,5 +1,6 @@
 ---
 title: "Packs and loading"
+description: "Packs and loadGame: what a pack can hold, how packs merge, patches, schema upgrades and what the loader adds."
 ---
 `loadGame` takes your content as a list of packs, merges them in order into one game, and checks the result. Every broken reference comes back as a problem that names the pack it came from.
 
@@ -52,6 +53,8 @@ type Pack = {
 | `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/docs/plugins/places#in-a-pack) and `data.cast.characters` for the [cast](/docs/plugins/cast#in-a-pack). |
 | `audio` | [Audio](/docs/reference/audio#gameaudio), over the base's own `audio`. `tracks` merge by id, and a later pack's track replaces an earlier one. `channels` merge by id too, field by field. A later pack's `mute` wins, and its `default` wins channel by channel. |
 | `media` | [Media](/docs/reference/media#gamemedia), over the base's own `media`. `pools` merge by id, and a later pack's pool replaces an earlier one with the same id as a whole. To add a file to a pool, a mod redeclares the pool with every file. |
+
+Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `transitions`. A pack that has one of them anyway loads without it, and the loader doesn't say so. TypeScript does, because they aren't in the `Pack` type, so type-check your packs.
 
 ### How packs merge
 

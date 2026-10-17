@@ -1,5 +1,6 @@
 ---
 title: "Shipping a game"
+description: "Ship a game as a folder that opens from disk: why that's hard, the rules that make it work, ifloom build, and saves."
 ---
 An IFLoom game ships as a static folder: one `index.html` and the game's pictures beside it. The player double-clicks `index.html` and it runs. The same folder, zipped, uploads to itch.io as an HTML game.
 

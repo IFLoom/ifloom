@@ -32,7 +32,7 @@ import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
 const cafe: Pack = {
   id: 'cafe',
   schema: SCHEMA,
-  stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true }],
+  stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins' }],
   scenes: [
     {
       id: 'cafe',
@@ -52,7 +52,7 @@ const cafe: Pack = {
   prose: {
     cafe: 'Ava looks up from the till. "The usual?"',
     'cafe/broke': 'Your pockets feel light.',
-    'cafe#coffee': 'Buy a coffee (3 coins)',
+    'cafe#coffee': 'Buy a coffee',
     'cafe#leave': 'Head back out',
     street: 'The high street, busy with the market.',
   },
@@ -64,7 +64,7 @@ export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café', 
 It's longer, and it does a few things the passage doesn't:
 
 - The coffee button stays on screen when the player can't afford it, greyed out, with `You need 3 coins.` on it. You wrote the rule once and the reason comes with it.
-- `coins` is declared, with a start, a range and a label, so the UI lists it and the button shows its price.
+- `coins` is declared, with a start, a range and a label, so the UI lists it. Because it's `spendable`, the button works its price out from the choice's effects and shows `Buy a coffee (3 coins)` by itself. Leave the price out of the label, or it shows twice.
 - `npm run check` fails if `street` is misspelt anywhere, or a choice has no words.
 
 ## SugarCube
@@ -459,6 +459,8 @@ The engine runs every step from the save's version up to the game's when the sav
 
 Saving itself needs no setup. [`mountGame`](/docs/react#mountgame) keeps saves in the browser's `localStorage` and autosaves to the `auto` slot each turn. The React UI's menu saves and loads, and undo goes 50 steps back. To change any of that, pass [`RunnerOptions`](/docs/reference/runner#runneroptions) as `runner`. What should outlive a save, such as the player's settings or that they've finished the game once, goes in the [profile](/docs/reference/profile).
 
+There's no `Config.saves.isAllowed`. The engine can't stop the player saving during an intro or a cutscene, and the React UI's save menu is always there. Autosave only writes when its moment comes, so with `autosave: { every: 'turn' }` (the default) the first autosave is the first morning, after the intro is done. A game that must not be saved mid-intro keeps the intro short, or puts it before the game starts, on a title page of its own.
+
 ### `<<audio>>`
 
 ```html
@@ -581,6 +583,27 @@ minigames: [
 ```
 
 A scene with `minigame: 'kettle'` starts it when the player enters. The React UI runs the clock, so the timer counts down on screen. A `<<timed>>` that only reveals text after a pause, with nothing for the player to do, has no direct equivalent. Make the reveal a choice ("Wait"), or animate it in your UI.
+
+### A life sim: the clock, the day's end and game over
+
+Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a `<<timelink>>`-style widget, and run a long `<<dayshift>>` widget when the player sleeps. Each part has a home in IFLoom:
+
+| SugarCube | IFLoom |
+|---|---|
+| `$time` as a number of periods, `$weekday`, `$gameDay` | The [calendar plugin](/docs/plugins/calendar), with your periods: `calendar({ periods: [{ id: 'early', label: 'early morning' }, ...] })`. The header reads them, and conditions test them with `period('evening')` and `weekday(5, 6)`. |
+| A link that costs time, `<<set $time += 2>>` | [`pass(2)`](/docs/plugins/calendar#effects) in the choice's or activity's effects. The button shows `until noon` by itself. |
+| "Too late" once `$time` reaches night | The calendar's [curfew guard](/docs/plugins/calendar#the-guard), and `blocked` entries such as `{ when: period('night'), reason: 'Too late for that.' }`. |
+| A `Sleep` passage that only works late | The calendar's [`sleep()`](/docs/plugins/calendar#commands) command, with `sleep: { from: ['evening', 'night'] }`. |
+| `<<dayshift>>`: payday, rent, decay, mood, which morning passage to show | [`rules.turn`](/docs/reference/rules#a-days-end-step-by-step). It runs once per day, sees the state as the player went to bed, and returns effects in the order you write them, ending with the scene the morning opens on. |
+| Per-day flags reset in the widget, `<<set $talkedToday to false>>` | [`rules.resets`](/docs/reference/rules#resets). |
+| Opening hours, `<<if $weekday lte 5 and $time lte 1>>[[Office]]<</if>>` | A place's [`blocked`](/docs/plugins/places#opening-hours) entries. The exit stays on screen, greyed out with the reason. |
+| Where someone is, `$ava.location` set by a schedule widget | A [cast](/docs/plugins/cast#where-people-are) character's `schedule`. |
+| Warnings in StoryCaption, such as "Rent due tomorrow" | Blocks with a `when` in each place's body. See [Lines on every place](/docs/plugins/places#lines-on-every-place). |
+| One-off feedback, "You got paid" | A [notice](/docs/reference/notices) from the `notify` effect. |
+| `<<goto "Game Over">>` | A scene with no choices, a phase and a lock. See [Endings](/docs/reference/scenes#endings). |
+| `Engine.restart()` | The player's menu: **Title screen**, then **New game**. Content can't restart the game. |
+
+The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.turn` returns a list of effects worked out against one state, so when a step depends on an earlier one (the rent comes out of the wages just paid) keep a running total in the function. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
 
 ## Harlowe
 

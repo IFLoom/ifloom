@@ -1,5 +1,6 @@
 ---
 title: "Strings"
+description: "The engine's and plugins' own lines by key, such as refusals and labels, and how a game or a translation rewords them."
 ---
 Everything the engine says to the player in its own words, such as a refusal, a button label or a save's name, comes from one table, by key. The table is in English. Your game can replace any line with its own, and so can a pack, which means a translation can ship as a [mod](/docs/reference/loader).
 

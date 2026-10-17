@@ -1,5 +1,6 @@
 ---
 title: "Storylines"
+description: "Storylines: threads of the story with their own kv store, closed for some turns and opened again."
 ---
 A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
 

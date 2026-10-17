@@ -1,5 +1,6 @@
 ---
 title: "Stats"
+description: "Declaring stats: ranges, moving ceilings, display, derived stats with formulas, levels, hidden bands, and stats kept on entities."
 ---
 A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/docs/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 

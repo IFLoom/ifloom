@@ -1,5 +1,6 @@
 ---
 title: "Conditions"
+description: "Every condition: kv, stats, levels, tiers, choices, scenes seen, items, counts, turns, phases, custom and plugin calls."
 ---
 A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/docs/reference/checks) can check every id in it.
 

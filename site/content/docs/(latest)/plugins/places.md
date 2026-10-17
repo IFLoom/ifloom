@@ -1,5 +1,6 @@
 ---
 title: "Places"
+description: "Locations with exits, walking between them, where the player is, opening hours, room actions and the picture stage."
 ---
 `@ifloom/plugin-places` gives a game a map. You declare locations with exits between them and things to do in each, and the plugin keeps track of where the player is and lets them walk from one place to the next.
 
@@ -233,6 +234,42 @@ const office: LocationDef = {
 The first entry that holds gives the reason, so put the most particular first. On a Friday evening the player reads `Closed. Back on Monday.`, and on a Tuesday evening `Closed. Opens tomorrow morning.` The exit is greyed out with the same line.
 
 `blocked` only stops the player walking in. A player who's already inside when it starts to hold stays there. If they should leave, send them out with a [`moveTo`](#effects) effect from a [trigger](/docs/reference/triggers).
+
+### Lines on every place
+
+There's no header or footer that the plugin adds to every place. For a line that should show wherever the player is, such as a warning that rent is due tomorrow, write the blocks once and add them to each place's `body` with a small helper:
+
+```ts
+import type { Block } from '@ifloom/engine'
+import { weekday } from '@ifloom/plugin-calendar'
+import { type LocationDef } from '@ifloom/plugin-places'
+
+// Shown under every place's own words while they hold.
+const warnings: Block[] = [
+  { text: 'warn.rent', when: weekday(5) },
+  { text: 'warn.tired', when: { stat: 'energy', lt: 10 } },
+]
+
+const place = (def: Omit<LocationDef, 'body'>, text: string): LocationDef => ({ ...def, body: [{ text }, ...warnings] })
+```
+
+Prose has no styling of its own, so a warning reads like any other line. Make it stand out in your UI if you need to, or show it as a [notice](/docs/reference/notices) instead.
+
+### Who's where
+
+An exit carries the place it leads to, not who is there. To tell the player that Ava is in the café before they walk in, add a block per place with the [cast](/docs/plugins/cast#conditions)'s `isAt` condition:
+
+```ts
+import { isAt } from '@ifloom/plugin-cast'
+
+// On the high street: a line for each place Ava might be.
+body: [
+  { text: 'place.high-street' },
+  { text: 'where.ava.cafe', when: isAt('ava', 'cafe') },
+  { text: 'where.ava.park', when: isAt('ava', 'park') },
+]
+```
+
 
 ## A worked example
 

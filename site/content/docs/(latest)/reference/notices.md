@@ -1,5 +1,6 @@
 ---
 title: "Notices"
+description: "Notices: news shown beside the story as a toast or a badge, raised by the notify effect and marked seen with dismiss."
 ---
 A notice is something the game tells the player outside a scene, such as a note under the door or the rent going out. The [`notify`](/docs/reference/effects#notify) effect raises one. The UI reads [`view.notices`](/docs/reference/view#notices) to show it as a toast or count it on a badge, and the [`dismiss`](/docs/reference/commands#dismiss) command marks it seen.
 

@@ -1,5 +1,6 @@
 ---
 title: "Media"
+description: "Pools of pictures and videos picked by tags, and the stage: layered pictures with hotspots on a scene or a place."
 ---
 Pictures and videos reach the screen in three ways. You write them into prose as [markup](/docs/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/docs/reference/scenes#scenemedia), or build a [stage](/docs/reference/scenes#the-stage), a layered picture with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the stage's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/docs/reference/view#the-scene) and the stage in `view.scene.stage`, and the [React UI](/docs/react#pictures-and-video) draws them: beats with [`Beat`](/docs/react/components#beat) and [`Video`](/docs/react/components#video), the stage with [`Stage`](/docs/react/components#stage) and its [`Hotspot`](/docs/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/docs/react/components#mediaviewer).
 

@@ -1,5 +1,6 @@
 ---
 title: "Wardrobe"
+description: "Slots the game declares, clothes that go in them, what the player has on, and the condition that reads it."
 ---
 `@ifloom/plugin-wardrobe` keeps track of what the player has on. Your game says which slots there are, such as a coat and a scarf, armour and a ring, or a uniform and a cap. Content says which item goes in which slot.
 

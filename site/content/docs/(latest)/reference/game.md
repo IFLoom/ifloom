@@ -1,5 +1,6 @@
 ---
 title: "The game"
+description: "The Game object: every key a game can have, items, storylines, the idle screen, saveName, and the helpers that look things up."
 ---
 A game is one `Game` object. It holds every item, scene and storyline, plus the rules the engine calls when it needs to know something about your game. Every engine function takes the game as an argument, and nothing is registered globally. Even the game's own [custom functions](/docs/reference/custom) live on the game.
 

@@ -1,5 +1,6 @@
 ---
 title: "Entities"
+description: "Kinds and entities: several of a thing, such as staff or dishes, each with its own stats and kv store, created and removed in play."
 ---
 Use entities when your game keeps several of a thing, each with numbers of its own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`) and an entity is one of them (Ana, the soup). A [stat](/docs/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
 

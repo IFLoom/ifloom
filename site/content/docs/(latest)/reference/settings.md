@@ -1,5 +1,6 @@
 ---
 title: "Settings"
+description: "Settings the player can change: play settings in the state that conditions read, and ui settings kept in the profile."
 ---
 Settings are what the player can change from a settings screen, such as whether hints are shown or how large the text is. The engine has none of its own, so you declare every one your game offers in `game.settings` or a pack's `settings`.
 

@@ -1,5 +1,6 @@
 ---
 title: "Saves"
+description: "Save stores and drivers, slots, loading old saves, save versions and the game's own migrations."
 ---
 To save a game, you write its whole [`GameState`](/docs/reference/state) to a slot, along with a few details for a load screen. Nothing else needs storing, because the same state in the same game gives the same draws (see [Randomness](/docs/reference/random)).
 

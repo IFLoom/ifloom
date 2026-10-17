@@ -1,5 +1,6 @@
 ---
 title: "Calendar"
+description: "Periods of the day, weekdays, bed and a curfew, passing time with pass(), and whether a turn is a period, a day or a week."
 ---
 `@ifloom/plugin-calendar` gives a game days and times of day. It splits a day into periods (morning, afternoon and so on), counts days into weeks, adds a bed to go to and an optional curfew, and decides what a [turn](/docs/reference/state#turn) is in your game: one period, one day or one week.
 
@@ -493,7 +494,7 @@ base · options weekend · no day 9 in a week of 7
 ## Gotchas
 
 - **List the calendar first.** Other plugins' `turn` hooks then see the new day. If you list it after them, it moves the clock after they've run.
-- **The game's own turn rules see the old clock.** `rules.turn` and `onTurn` run before the calendar's `turn` hook. To act on the day that's just begun, do it in a plugin listed after the calendar, or read the clock in the next command.
+- **The game's own turn rules see the old clock.** `rules.turn` and `onTurn` run before the calendar's `turn` hook. To act on the day that's just begun, work the day out from `rules.turn`'s `nextTurn` (see [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step)), do it in a plugin listed after the calendar, or read the clock in the next command.
 - **A pass inside a turn's end ends no turn.** In what `rules.turn` returns, or from another plugin's `turn` hook, `calendar/pass` still moves the clock. The turns it would end do nothing, as any [`turn` effect](/docs/reference/effects#turn) there does.
 - **`calendar/set` and `write` end no turn.** They put the clock somewhere, and `state.turn` stays where it was.
 - **The weekday counts from day 0, but a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs from Thursday to Wednesday.

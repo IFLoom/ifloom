@@ -1,5 +1,6 @@
 ---
 title: "Messages"
+description: "Texts, emails and letters that arrive when a condition holds, kept in channels and threads, with replies that work like choices."
 ---
 `@ifloom/plugin-messages` delivers messages to the player when the story allows: texts, emails, letters on the mat. Messages are kept in threads, and the player answers with replies that work like choices.
 
@@ -155,6 +156,34 @@ const text: MessageDef = {
 }
 // prose: 'ava.text', 'ava.text#yes', 'ava.text#later'
 ```
+
+### Messages that come again
+
+Each message arrives once. For a text that keeps coming, such as Sam checking in now and then, write a numbered run of messages and let a counter in the kv store release them one at a time. Something else raises the counter, such as a roll in [`rules.turn`](/docs/reference/rules#turn):
+
+```ts
+import { chance, type GameRules } from '@ifloom/engine'
+import type { MessageDef } from '@ifloom/plugin-messages'
+
+// Twelve check-ins, each arriving once the counter reaches its number.
+const checkIns: MessageDef[] = Array.from({ length: 12 }, (_, n) => ({
+  id: `sam.checkin.${n + 1}`,
+  channel: 'texts',
+  from: 'sam',
+  when: { kv: 'samTexts', gte: n + 1 },
+  body: [{ variants: 'sam.checkin' }],
+  replies: [{ id: 'reply' }],
+}))
+
+const rules: GameRules = {
+  // Two mornings in five, Sam texts.
+  turn: (state, nextTurn) => ({
+    effects: chance(2, 5, state.seed, nextTurn, 'sam.checkin') ? [{ kind: 'kv', key: 'samTexts', by: 1 }] : [],
+  }),
+}
+```
+
+The body is a [variants](/docs/reference/prose#variantmember) block, so the words rotate rather than repeating the last text. Each message needs its reply label too (`sam.checkin.1#reply` and so on), which a loop over `checkIns` can write into `prose`. Once the run is used up, nothing more arrives, so make it long enough for the game.
 
 ## A worked example
 
@@ -526,7 +555,7 @@ A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `mes
 
 - **Messages arrive only after a command.** The plugin delivers them in its `after` [hook](/docs/reference/plugins#hooks), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
-- **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time.
+- **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time. See [Messages that come again](#messages-that-come-again).
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **`messages/unread-<channel>` names come from your channels.** A channel called `texts` gives `messages/unread-texts`. If you rename the channel, every badge that names the old value stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.

@@ -1,5 +1,6 @@
 ---
 title: "Commands"
+description: "apply, dispatch and startingState, every command the player can send, and what each one refuses with."
 ---
 A command is one thing the player does, such as picking a choice, using an item or starting an activity. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
 

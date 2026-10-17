@@ -1,5 +1,6 @@
 ---
 title: "Devices"
+description: "Devices such as a phone or a laptop, with apps declared as data, badges, and opening an app without leaving the room."
 ---
 `@ifloom/plugin-devices` gives the player devices, such as a phone, a laptop or a radio, with apps on them that the game declares as data. Each app can show a badge, and opening one doesn't take the player out of the room.
 

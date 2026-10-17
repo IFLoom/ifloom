@@ -1,5 +1,6 @@
 ---
 title: "Triggers"
+description: "Effects that run by themselves after a command once a condition holds, once a game or once a turn."
 ---
 A trigger is a list of effects that happens by itself. The first time its condition holds after a command, its effects apply, without the player pressing anything. Use one for a note under the door the first time the player steps out, a bill that comes due, or a scene that interrupts the walk home.
 

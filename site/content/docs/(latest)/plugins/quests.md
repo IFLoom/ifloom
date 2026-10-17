@@ -1,5 +1,6 @@
 ---
 title: "Quests"
+description: "Quests as stages that are done by conditions, with a hint for the current stage, a tracked quest, and the quest list in the view."
 ---
 `@ifloom/plugin-quests` keeps track of what the player is doing, how far they've got, and a hint for what comes next.
 

@@ -32,6 +32,9 @@
     "@ifloom/react": "0.0.0"
   },
   "devDependencies": {
-    "@ifloom/cli": "0.0.0"
+    "@ifloom/cli": "0.0.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "tailwindcss": "4.3.3"
   }
 }

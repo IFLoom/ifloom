@@ -13,7 +13,7 @@ Follow [Installation](/docs/guide/installation) first. The game uses the engine,
 - [`@ifloom/plugin-places`](/docs/plugins/places) keeps the map and where the player is.
 - [`@ifloom/plugin-cast`](/docs/plugins/cast) keeps the people.
 
-To build it as you read, start a blank game from the root of the checkout:
+To build it as you read, start a new game from the root of the checkout:
 
 ```sh
 npm run new -- my-town

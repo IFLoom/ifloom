@@ -1,5 +1,5 @@
 import { ifloom } from '@ifloom/cli/vite'
 
-// React and Tailwind are added when the game uses the React UI. For another
-// framework, add its Vite plugin: ifloom({ vite: { plugins: [vue()] } }).
+// No framework: the preset builds the game into one HTML file. A framework's
+// Vite plugin goes in `vite.plugins`: ifloom({ vite: { plugins: [vue()] } }).
 export default ifloom()

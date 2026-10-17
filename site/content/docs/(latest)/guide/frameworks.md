@@ -16,7 +16,7 @@ npm install
 npm run dev -w my-game
 ```
 
-Each plays the same two-scene game as the `blank` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/reference/browser) (see [Minigames](#minigames)). They share two files:
+Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/reference/browser) (see [Minigames](#minigames)). They share two files:
 
 - `src/game.ts`, the game.
 - `src/styles.css`, a plain stylesheet.
@@ -229,7 +229,7 @@ mount(App, { target: document.querySelector('#root')! })
 
 ## Add the framework's Vite plugin
 
-Vue and Svelte each need their Vite plugin, which goes in the [Vite preset](/docs/cli#the-vite-preset)'s `vite.plugins`. The templates do this already:
+The [Vite preset](/docs/cli#the-vite-preset) knows no framework. React, Vue and Svelte each need their Vite plugin, which goes in its `vite.plugins`. The templates do this already:
 
 ```ts tab="Plain JS" tab-group="framework"
 // vite.config.ts
@@ -241,10 +241,10 @@ export default ifloom()
 
 ```ts tab="React" tab-group="framework"
 // vite.config.ts
+import react from '@vitejs/plugin-react'
 import { ifloom } from '@ifloom/cli/vite'
 
-// The preset adds React's plugin itself once `react` is in package.json.
-export default ifloom()
+export default ifloom({ vite: { plugins: [react()] } })
 ```
 
 ```ts tab="Vue" tab-group="framework"
@@ -252,7 +252,7 @@ export default ifloom()
 import vue from '@vitejs/plugin-vue'
 import { ifloom } from '@ifloom/cli/vite'
 
-// The preset adds React and Tailwind only for a game that uses them, so Vue's plugin is the only one.
+// The preset knows no framework, so the game adds Vue's plugin.
 export default ifloom({ vite: { plugins: [vue()] } })
 ```
 
@@ -261,11 +261,11 @@ export default ifloom({ vite: { plugins: [vue()] } })
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { ifloom } from '@ifloom/cli/vite'
 
-// The preset adds React and Tailwind only for a game that uses them, so Svelte's plugin is the only one.
+// The preset knows no framework, so the game adds Svelte's plugin.
 export default ifloom({ vite: { plugins: [svelte()] } })
 ```
 
-The preset adds React and Tailwind only when the game depends on `@ifloom/react`, `react` or `tailwindcss`, so in these templates the framework's plugin is the only one. React by hand needs no plugin of its own. Start from the `vanilla` template, add `react` and `react-dom` to its `package.json`, and the preset adds React's plugin for you.
+React by hand starts from the `vanilla` template: add `react`, `react-dom` and `@vitejs/plugin-react` to its `package.json`, and React's plugin to `vite.plugins`. The [React UI](/docs/react) also needs Tailwind's plugin, as the `react` template has.
 
 ## Draw the scene and its choices
 

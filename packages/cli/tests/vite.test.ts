@@ -1,42 +1,27 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import type { Plugin, PluginOption } from 'vite'
 import { describe, expect, it } from 'vitest'
 import { ifloom } from '../src/vite.ts'
-
-/** A game folder whose package.json depends on these. */
-function gameDir(dependencies: Record<string, string>): string {
-  const dir = mkdtempSync(join(tmpdir(), 'ifloom-preset-'))
-  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'game', dependencies }))
-  return dir
-}
 
 function names(plugins: PluginOption[] | undefined): string[] {
   return (plugins ?? []).flat(Infinity as 1).flatMap((plugin) => (plugin && typeof plugin === 'object' && 'name' in plugin ? [(plugin as Plugin).name] : []))
 }
 
 describe('the Vite preset', () => {
-  it('adds React and Tailwind for a game on the React UI', () => {
-    const config = ifloom({ vite: { root: gameDir({ '@ifloom/engine': '0.0.0', '@ifloom/react': '0.0.0' }) } })
-    expect(names(config.plugins).some((name) => name.includes('react'))).toBe(true)
-    expect(names(config.plugins).some((name) => name.includes('tailwind'))).toBe(true)
-    expect(config.resolve?.dedupe).toEqual(['react', 'react-dom'])
-  })
-
-  it('adds neither for a game on the engine alone', () => {
-    const config = ifloom({ vite: { root: gameDir({ '@ifloom/engine': '0.0.0' }) } })
-    expect(names(config.plugins).some((name) => name.includes('react') || name.includes('tailwind'))).toBe(false)
-    expect(config.resolve?.dedupe).toEqual([])
+  it('knows no framework: one HTML file with relative paths, and nothing else', () => {
+    const config = ifloom()
     expect(config.base).toBe('./')
+    expect(names(config.plugins)).toEqual(['vite:singlefile'])
+    expect(config.resolve).toBeUndefined()
   })
 
-  it('lets the game say otherwise, and adds its own plugins last', () => {
+  it("puts the game's own plugins first, and keeps the rest of its config", () => {
     const own: Plugin = { name: 'my-framework' }
-    const config = ifloom({ react: false, tailwind: true, vite: { root: gameDir({ '@ifloom/react': '0.0.0' }), plugins: [own] } })
-    const listed = names(config.plugins)
-    expect(listed.some((name) => name.includes('react'))).toBe(false)
-    expect(listed.some((name) => name.includes('tailwind'))).toBe(true)
-    expect(listed.at(-1)).toBe('my-framework')
+    const config = ifloom({ vite: { plugins: [own], resolve: { dedupe: ['react'] } } })
+    expect(names(config.plugins)).toEqual(['my-framework', 'vite:singlefile'])
+    expect(config.resolve?.dedupe).toEqual(['react'])
+  })
+
+  it('leaves the JS and CSS beside the page when asked', () => {
+    expect(names(ifloom({ singleFile: false }).plugins)).toEqual([])
   })
 })

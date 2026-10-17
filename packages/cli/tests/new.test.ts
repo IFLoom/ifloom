@@ -4,8 +4,13 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
 
-/** The packages each framework template adds, in the order its package.json lists them. */
+/** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
+const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
 const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
+  react: REACT_DEPS,
+  novel: REACT_DEPS,
+  cafe: REACT_DEPS,
+  town: REACT_DEPS,
   vue: ['vue', '@vitejs/plugin-vue', 'vue-tsc'],
   svelte: ['svelte', '@sveltejs/vite-plugin-svelte', 'svelte-check'],
 }
@@ -17,7 +22,7 @@ describe('ifloom new', () => {
     const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.name).toBe('my-story')
-    // A game lists only IFLoom's packages, and the framework it draws with when that isn't React.
+    // A game lists IFLoom's packages, and the framework it draws with and that framework's Vite plugin.
     const own = FRAMEWORK_DEPS[template] ?? []
     expect(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((dep) => !dep.startsWith('@ifloom/'))).toEqual(own)
     expect(files).toEqual(expect.arrayContaining(['src/game.ts', 'index.html', 'AGENTS.md', '.gitignore', 'vite.config.ts', 'tsconfig.json']))
@@ -25,13 +30,13 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
   })
 
-  it('fills in the blank game with its name and title', () => {
+  it('fills in the react game with its name and title', () => {
     const { dir } = newGame({ name: 'the-door', into: fresh() })
     expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
     expect(readFileSync(join(dir, 'index.html'), 'utf8')).toContain('<title>The Door</title>')
   })
 
-  it('starts a game with the theme asked for, a random one for a blank game, and an example with its own', () => {
+  it('starts a game with the theme asked for, a random one for a react game, and an example with its own', () => {
     for (const theme of THEMES) {
       const { dir, theme: got } = newGame({ name: 'styled', theme, into: fresh() })
       expect(got).toBe(theme)
@@ -46,7 +51,7 @@ describe('ifloom new', () => {
     expect(() => newGame({ name: 'odd', theme: 'neon' as never, into: fresh() })).toThrow(/no theme "neon"/)
   })
 
-  it.each(['blank', 'novel'] as const)('leaves the preset out of the %s template with theme none', (template) => {
+  it.each(['react', 'novel'] as const)('leaves the preset out of the %s template with theme none', (template) => {
     const { dir, theme } = newGame({ name: 'plain-look', template, theme: 'none', into: fresh() })
     expect(theme).toBeNull()
     const css = readFileSync(join(dir, 'src/styles.css'), 'utf8')
@@ -54,7 +59,7 @@ describe('ifloom new', () => {
     expect(css).not.toMatch(/@ifloom\/react\/themes\//)
   })
 
-  it.each(['vanilla', 'vue', 'svelte'] as const)('uses no React in the %s template, and draws the plain blank game', (template) => {
+  it.each(['vanilla', 'vue', 'svelte'] as const)('uses no React in the %s template, and draws the plain game', (template) => {
     const { dir, files, theme } = newGame({ name: 'the-door', template, into: fresh() })
     expect(theme).toBeNull()
     const pkg = readFileSync(join(dir, 'package.json'), 'utf8')
@@ -70,12 +75,18 @@ describe('ifloom new', () => {
   })
 
   it.each([
+    ['react', 'react(), tailwindcss()', ['src/main.ts', 'src/styles.css']],
     ['vue', 'vue()', ['src/App.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue']],
     ['svelte', 'svelte()', ['src/App.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte']],
   ] as const)('gives the %s template its framework\'s Vite plugin and components', (template, plugin, components) => {
     const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
-    expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}] } })`)
+    expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}]`)
     expect(files).toEqual(expect.arrayContaining([...components]))
+  })
+
+  it('gives the vanilla template the preset alone', () => {
+    const { dir } = newGame({ name: 'plain', template: 'vanilla', into: fresh() })
+    expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain('export default ifloom()')
   })
 
   it('refuses a bad name, an unknown template, and a folder already in use', () => {

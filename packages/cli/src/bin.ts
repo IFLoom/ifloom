@@ -2,8 +2,8 @@
 /**
  * ifloom — the command line.
  *
- *   ifloom new <name> [--template blank]
- *                            a new game in games/<name>, from blank, vanilla, vue, svelte, novel, cafe or town;
+ *   ifloom new <name> [--template react]
+ *                            a new game in games/<name>, from react, vanilla, vue, svelte, novel, cafe or town;
  *                            --theme paper|terminal|studio|storybook picks the React UI's preset, or none for its plain look
  *   ifloom dev               the game in a browser, reloading as you edit
  *   ifloom build [--out dir] [--inline-assets]
@@ -142,7 +142,7 @@ function create(name: string | undefined, template: string | undefined, theme: s
   try {
     const made = newGame({ name, template: template as TemplateName | undefined, theme: theme as ThemeName | 'none' | undefined })
     const look = made.theme ? `, with the ${made.theme} theme` : theme === 'none' ? ', with no theme preset' : ''
-    console.log(`Made ${name} in ${relative(process.cwd(), made.dir) || '.'} from the ${template ?? 'blank'} template${look}. Next:\n`)
+    console.log(`Made ${name} in ${relative(process.cwd(), made.dir) || '.'} from the ${template ?? 'react'} template${look}. Next:\n`)
     console.log('  npm install')
     console.log(`  npm run dev -w ${name}`)
     return 0

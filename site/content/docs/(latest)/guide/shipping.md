@@ -35,7 +35,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. When your game depends on the [React UI](/docs/react), `@ifloom/react`, it also adds the React and Tailwind CSS plugins. A game drawn with another framework adds that framework's plugin through the preset's `vite` option (see [Using another framework](/docs/guide/frameworks)). Then build:
+It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Using another framework](/docs/guide/frameworks)). Then build:
 
 ```sh
 ifloom build

@@ -1,13 +1,13 @@
 /**
- * `ifloom new`: a new game from a template, ready to run. The blank templates
- * live beside this file; the others are the example games, copied from the
+ * `ifloom new`: a new game from a template, ready to run. The `react`,
+ * `vanilla`, `vue` and `svelte` templates live beside this file; the others are the example games, copied from the
  * checkout so there is only one of each to keep working.
  */
 import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const TEMPLATES = ['blank', 'vanilla', 'vue', 'svelte', 'novel', 'cafe', 'town'] as const
+export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'novel', 'cafe', 'town'] as const
 export type TemplateName = (typeof TEMPLATES)[number]
 
 /** The React UI's theme presets, which `@ifloom/react/themes/<name>.css` provides. */
@@ -17,12 +17,12 @@ export type ThemeName = (typeof THEMES)[number]
 export type NewGameOptions = {
   /** The game's package name, which is also its folder's: `my-story`. */
   name: string
-  /** What to start from. `blank` if left out. */
+  /** What to start from. `react` if left out. */
   template?: TemplateName
   /** Where to put it. `games/<name>` in the IFLoom checkout if left out. */
   into?: string
   /**
-   * The React UI preset to start from. Left out, a blank game gets one at
+   * The React UI preset to start from. Left out, a `react` game gets one at
    * random, so two new games don't start out looking alike, and a copied
    * example keeps its own. `'none'` leaves the preset out, for the React UI's
    * plain default look. The vanilla, vue and svelte templates have no React UI and ignore it.
@@ -32,18 +32,18 @@ export type NewGameOptions = {
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
-/** The files every blank template takes from `templates/shared/`. */
-const BLANK = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
+/** The files every template of our own takes from `templates/shared/`. */
+const BASE = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
 /** What the templates without React share: the plain game and the stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
-const PLAIN = [...BLANK, 'src/game.ts', 'src/styles.css']
+const PLAIN = [...BASE, 'src/game.ts', 'src/styles.css']
 
-/** Where each template's files come from. The blank ones add the shared files; the examples bring their own. */
+/** Where each template's files come from. Ours add the shared files; the examples bring their own. */
 const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
-  blank: { dir: here('../templates/blank-react'), shared: [...BLANK, 'vite.config.ts'] },
-  vanilla: { dir: here('../templates/blank-vanilla'), shared: [...PLAIN, 'vite.config.ts'] },
-  // Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
-  vue: { dir: here('../templates/blank-vue'), shared: PLAIN },
-  svelte: { dir: here('../templates/blank-svelte'), shared: PLAIN },
+  // React, Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
+  react: { dir: here('../templates/react'), shared: BASE },
+  vanilla: { dir: here('../templates/vanilla'), shared: [...PLAIN, 'vite.config.ts'] },
+  vue: { dir: here('../templates/vue'), shared: PLAIN },
+  svelte: { dir: here('../templates/svelte'), shared: PLAIN },
   novel: { dir: here('../../../examples/novel'), shared: ['AGENTS.md', 'gitignore'] },
   cafe: { dir: here('../../../examples/cafe'), shared: ['AGENTS.md', 'gitignore'] },
   town: { dir: here('../../../examples/showcase'), shared: ['AGENTS.md', 'gitignore'] },
@@ -75,7 +75,7 @@ function filesUnder(dir: string, base = dir): string[] {
 
 /** Make a new game. Returns its folder and the files written there. Installs nothing. */
 export function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null } {
-  const { name, template = 'blank' } = options
+  const { name, template = 'react' } = options
   if (!VALID_NAME.test(name) || name.length > 214) {
     throw new Error(`"${name}" can't be a package name: use lower-case letters, digits and dashes, like my-story.`)
   }
@@ -108,12 +108,12 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   delete pkg.description
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
-  // The preset: the one asked for (none takes it out), a random one for a blank game, or the example's own.
+  // The preset: the one asked for (none takes it out), a random one for a `react` game, or the example's own.
   const styles = join(dir, 'src/styles.css')
   let theme: ThemeName | null = null
   if (!NO_REACT.has(template) && existsSync(styles)) {
     const css = readFileSync(styles, 'utf8')
-    const chosen = options.theme ?? (template === 'blank' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
+    const chosen = options.theme ?? (template === 'react' ? THEMES[Math.floor(Math.random() * THEMES.length)] : undefined)
     if (chosen === 'none') {
       writeFileSync(styles, css.replace(/@import "@ifloom\/react\/themes\/[\w-]+\.css";\n?/, ''))
     } else if (chosen) {

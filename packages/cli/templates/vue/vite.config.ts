@@ -1,5 +1,5 @@
 import vue from '@vitejs/plugin-vue'
 import { ifloom } from '@ifloom/cli/vite'
 
-// The preset adds React and Tailwind only for a game that uses them, so Vue's plugin is the only one.
+// The preset knows no framework, so the game adds Vue's plugin.
 export default ifloom({ vite: { plugins: [vue()] } })

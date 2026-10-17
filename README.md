@@ -134,16 +134,16 @@ That gives you a small two-scene game drawn with the React UI. Add
 
 | Template | What you get |
 |---|---|
-| `blank` | The default: two scenes, drawn with the React UI. |
+| `react` | The default: two scenes, drawn with the React UI. |
 | `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte and the rest. |
 | `novel`, `cafe`, `town` | A copy of one of the examples. |
 
 A React game also gets a theme preset (`paper`, `terminal`, `studio` or
-`storybook`), picked at random for a blank game. Choose one with `--theme`:
+`storybook`), picked at random for a `react` game. Choose one with `--theme`:
 `npm run new -- my-story --theme paper`.
 
-Your game's `package.json` lists only `@ifloom/*` packages; the build tools come
-with `@ifloom/cli`. The [installation guide](site/content/docs/(latest)/guide/installation.md) also
+Your game's `package.json` lists the `@ifloom/*` packages it uses and its UI's
+Vite plugins; Vite itself comes with `@ifloom/cli`. The [installation guide](site/content/docs/(latest)/guide/installation.md) also
 covers keeping your game in its own folder outside the checkout.
 
 ## Documentation

@@ -67,12 +67,14 @@ The quickest start is `ifloom new`, which writes all of this for you (see [Insta
 
 ```ts
 // vite.config.ts
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 import { ifloom } from '@ifloom/cli/vite'
 
-export default ifloom()
+export default ifloom({ vite: { plugins: [react(), tailwindcss()], resolve: { dedupe: ['react', 'react-dom'] } } })
 ```
 
-The [CLI's preset](/docs/cli#the-vite-preset) adds React and Tailwind when your game depends on `@ifloom/react`, and builds one HTML file that opens from disk. Run the game with `ifloom dev` and build it with `ifloom build`. Without the CLI, use `react()` and `tailwindcss()` as your Vite plugins, and see [Shipping a game](/docs/guide/shipping#without-the-cli) for the rest.
+The [CLI's preset](/docs/cli#the-vite-preset) builds one HTML file that opens from disk. The React UI needs React's Vite plugin, and Tailwind's for its stylesheet, so list `@vitejs/plugin-react`, `@tailwindcss/vite` and `tailwindcss` in your `devDependencies`. `dedupe` keeps one React when `@ifloom/react` is linked from a checkout. Run the game with `ifloom dev` and build it with `ifloom build`. Without the CLI, see [Shipping a game](/docs/guide/shipping#without-the-cli).
 
 ```css
 /* src/styles.css */

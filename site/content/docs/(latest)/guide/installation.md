@@ -45,7 +45,7 @@ The default template is a small game drawn with the [React UI](/docs/react). Pic
 
 | Template | What you get |
 |---|---|
-| `blank` | Two scenes and a stat, drawn with the React UI. The default. |
+| `react` | Two scenes and a stat, drawn with the React UI. The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3. |
 | `svelte` | The same game drawn with Svelte 5. |
@@ -59,13 +59,13 @@ npm run new -- my-cafe --template cafe
 
 The `vanilla`, `vue` and `svelte` templates draw the scene, choices, inputs, stats and minigames themselves and play the game's sound, with no React. [Using another framework](/docs/guide/frameworks) walks through their code, and is the place to start for any other framework.
 
-A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A blank game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, leave it out with `--theme none` for the plain default look, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
+A game drawn with the React UI also gets a theme preset, which sets its fonts, colours and the shape of the page. A `react` game gets one at random, and a copied example keeps its own. Pick one with `--theme paper`, `terminal`, `studio` or `storybook`, leave it out with `--theme none` for the plain default look, or change it later in `src/styles.css` (see [Make it your own](/docs/react/customising)).
 
 [`ifloom new`](/docs/cli#ifloom-new) has the details.
 
 ### What's in the new game
 
-A game made from the `blank` template looks like this:
+A game made from the `react` template looks like this:
 
 ```
 games/my-game/
@@ -73,7 +73,7 @@ games/my-game/
 ├── index.html        the page, with the #root element the game draws into
 ├── package.json      the scripts, and the @ifloom packages it depends on
 ├── tsconfig.json     TypeScript settings, extending the checkout's tsconfig.base.json
-├── vite.config.ts    the Vite preset from @ifloom/cli/vite
+├── vite.config.ts    the Vite preset from @ifloom/cli/vite, with React's and Tailwind's plugins
 ├── .gitignore        leaves out node_modules, dist and playtest
 └── src/
     ├── game.ts       the game: scenes, choices, a stat and the words
@@ -83,7 +83,7 @@ games/my-game/
 
 You'll spend most of your time in `src/game.ts`. [Your first story](/docs/guide/first-story) starts from this file and grows it into a short novel. `src/main.ts` is three lines that hand the game to [`mountGame`](/docs/react#mountgame), which starts it with undo, saves and an autosave each chapter.
 
-The `package.json` lists only IFLoom's own packages: `@ifloom/engine`, `@ifloom/react` and, as a dev dependency, `@ifloom/cli`. The CLI brings Vite and its plugins, and the React UI brings React. Its scripts run the [CLI](/docs/cli):
+The `package.json` lists `@ifloom/engine` and `@ifloom/react`, and as dev dependencies `@ifloom/cli` and the Vite plugins the React UI needs: `@vitejs/plugin-react`, `@tailwindcss/vite` and `tailwindcss`. The CLI brings Vite, and the React UI brings React. Its scripts run the [CLI](/docs/cli):
 
 ```sh
 npm run dev -w my-game        # play it in a browser, reloading as you edit
@@ -116,7 +116,7 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
 
 1. Run `npm install` inside `ifloom/` first, so the packages have their own dependencies.
 
-2. Make the game from the blank template and move it out of the checkout:
+2. Make the game from the `react` template and move it out of the checkout:
 
    ```sh
    cd ifloom
@@ -140,7 +140,7 @@ Your game depends on the packages in the checkout through `file:` links. npm lin
    }
    ```
 
-   Leave the `name` and `scripts` as they are. You don't list React, Vite or Tailwind yourself. React is a peer dependency of `@ifloom/react`, which npm 7 and later installs for you.
+   Leave the `name`, the `scripts` and the other dev dependencies (the Vite plugins) as they are. You don't list React or Vite yourself. React is a peer dependency of `@ifloom/react`, which npm 7 and later installs for you.
 
 4. Replace `my-game/tsconfig.json`. The template's extends `../../tsconfig.base.json`, which isn't there outside the checkout, so write the settings out in full:
 

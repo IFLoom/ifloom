@@ -45,7 +45,7 @@ npm install
 npm run dev -w my-story
 ```
 
-The default `blank` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
+The default `react` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
 
 That gives you `games/my-story`, with a two-scene game in `src/game.ts` and the code that draws it. Open the address Vite prints, and keep `npm run dev -w my-story` running in a terminal. The game reloads each time you save a file.
 

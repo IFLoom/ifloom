@@ -19,7 +19,7 @@ Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others fro
 
 [Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/cli` as a dev dependency the same way.
 
-`@ifloom/cli` brings its own build tools: Vite, the React and Tailwind Vite plugins, Tailwind CSS and `vite-plugin-singlefile` are its dependencies, so your game's `package.json` only needs `@ifloom/*` packages.
+`@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
 
 If you want a different version of one of those tools, there are three cases:
 
@@ -57,7 +57,7 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 
 | Template | What you get |
 |---|---|
-| `blank` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/guide/title-screen). The default. |
+| `react` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/guide/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
 | `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
@@ -67,9 +67,9 @@ Makes a new game in `games/<name>` from a template and tells you what to run nex
 
 The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share `src/game.ts` and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/reference/browser). [Using another framework](/docs/guide/frameworks) walks through them.
 
-`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `blank` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
+`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
-Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends only on `@ifloom/*` packages (and, for `vue` and `svelte`, the framework, its Vite plugin and its type checker), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
+Every new game has the scripts `dev`, `build`, `check` and `playtest`, a `package.json` that depends on `@ifloom/*` packages and on the Vite plugins its UI needs (React's and Tailwind's for `react` and the examples; for `vue` and `svelte`, the framework, its Vite plugin and its type checker), and an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). The copies of the examples leave out their tests, builds and recorded runs.
 
 The name has to work as an npm package name: lower-case letters, digits and dashes. `ifloom new` refuses a folder that already exists and isn't empty.
 
@@ -331,8 +331,6 @@ function ifloom(options?: IfloomViteOptions): UserConfig
 
 type IfloomViteOptions = {
   singleFile?: boolean
-  react?: boolean
-  tailwind?: boolean
   vite?: UserConfig
 }
 ```
@@ -346,19 +344,26 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It sets up:
+It sets up two things, and knows no UI framework:
 
-- **React** (`@vitejs/plugin-react`) and **Tailwind CSS** (`@tailwindcss/vite`), but only when the game uses them. The preset reads the game's `package.json`: a game that depends on `@ifloom/react` gets both, `react` alone turns on React, and `tailwindcss` alone turns on Tailwind. A game on the engine alone gets neither.
 - **One file.** `vite-plugin-singlefile` puts the script and the stylesheet inside `index.html`.
 - **`base: './'`**, so every path is relative and the folder opens from disk or from an itch.io subpath.
-- **One copy of React.** When React is on, it dedupes `react` and `react-dom`, so a game linked to a checkout bundles one React even when the checkout has its own `node_modules`.
+
+A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game linked to a checkout:
+
+```ts
+// vite.config.ts
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { ifloom } from '@ifloom/cli/vite'
+
+export default ifloom({ vite: { plugins: [react(), tailwindcss()], resolve: { dedupe: ['react', 'react-dom'] } } })
+```
 
 | Option | What it does | Default |
 |---|---|---|
 | `singleFile` | Puts the script and stylesheet inside `index.html`. `false` leaves them as files beside it. | `true` |
-| `react` | Adds React's Vite plugin. | On if the game depends on `@ifloom/react` or `react` |
-| `tailwind` | Adds Tailwind's Vite plugin. | On if the game depends on `@ifloom/react` or `tailwindcss` |
-| `vite` | Any other Vite config, merged under the preset. Its `plugins` are added after the preset's, and its `resolve.dedupe` after `react` and `react-dom`. Another framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`, as the `vue` and `svelte` templates do. | `{}` |
+| `vite` | Any other Vite config, merged under the preset. Its `plugins` come before the preset's single-file step. A framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`, as the `react`, `vue` and `svelte` templates do. | `{}` |
 
 ```ts
 import { ifloom } from '@ifloom/cli/vite'
@@ -368,7 +373,7 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 
 **Gotchas.**
 
-- **`ifloom` doesn't apply the preset itself.** `dev`, `build`, `check`, `playtest` and `snapshot` all read the game's `vite.config.ts`. A game with no config gets plain Vite, with no React and no inlining.
+- **`ifloom` doesn't apply the preset itself.** `dev`, `build`, `check`, `playtest` and `snapshot` all read the game's `vite.config.ts`. A game with no config gets plain Vite, with no inlining.
 - **The preset's `base` always wins.** A `base` in `vite` is overwritten with `'./'`.
 - **`--out` wins over `build.outDir`.** `ifloom build` always passes an output folder (`dist` if you give none), so an `outDir` in the config is ignored. Use `--out`.
 - **`singleFile: false` won't open from disk.** The script and stylesheet are then loaded from files beside the page, which a browser refuses on a `file://` address (see [Shipping a game](/docs/guide/shipping#why-a-folder-that-opens-from-disk-is-hard)). Such a folder works when served over the web, as itch.io does. But `ifloom build`'s check reports its module script, so the build exits with `1`.
@@ -394,7 +399,7 @@ type NewGameOptions = {
   theme?: ThemeName | 'none'
 }
 
-type TemplateName = 'blank' | 'vanilla' | 'vue' | 'svelte' | 'novel' | 'cafe' | 'town'
+type TemplateName = 'react' | 'vanilla' | 'vue' | 'svelte' | 'novel' | 'cafe' | 'town'
 const TEMPLATES: readonly TemplateName[]
 
 type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
@@ -403,7 +408,7 @@ const THEMES: readonly ThemeName[]
 
 What `ifloom new` runs. It copies a template into `into` (`games/<name>` in the checkout if left out), sets the package name, fills in the title, and returns the folder and the files it wrote. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
 
-`theme` is the React UI's preset, written into `src/styles.css`. Left out, a `blank` game gets one from `THEMES` at random and a copied example keeps its own. `'none'` takes the preset out. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla`, `vue` and `svelte` templates (which ignore `theme`) and for a game whose stylesheet imports no preset.
+`theme` is the React UI's preset, written into `src/styles.css`. Left out, a `react` game gets one from `THEMES` at random and a copied example keeps its own. `'none'` takes the preset out. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla`, `vue` and `svelte` templates (which ignore `theme`) and for a game whose stylesheet imports no preset.
 
 ```ts
 import { newGame } from '@ifloom/cli'

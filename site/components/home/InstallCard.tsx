@@ -12,7 +12,7 @@ const managers = [
 ] as const
 type Manager = (typeof managers)[number]['id']
 
-// The UIs `ifloom new` has a template for. The React UI is the default, blank, template.
+// The UIs `ifloom new` has a template for. The React UI is the default template, `react`, so it needs no flag.
 const uis = [
   { id: 'react', label: 'React UI', template: null },
   { id: 'vue', label: 'Vue', template: 'vue' },

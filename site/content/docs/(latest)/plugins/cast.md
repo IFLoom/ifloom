@@ -77,7 +77,7 @@ Where the player is comes from a [query](/docs/reference/plugins#queries) asked 
 ## cast
 
 ```ts
-function cast(options?: CastOptions): DefinedPlugin<null>
+function cast(options?: CastOptions): DefinedPlugin<null, CastView>
 ```
 
 Builds the plugin, with the id `cast`. Call it once, when you build the game. It keeps nothing in the save, so its state is `null`.
@@ -495,7 +495,7 @@ type PersonView = {
   fullName: string
   role: string | null
   hue: number | null
-  portrait: string
+  portrait: string | null
   here: boolean
   closed: boolean
   met: boolean
@@ -509,7 +509,7 @@ type PersonView = {
 | `ref` | How content names their entity, such as `'character:ava'`, with the plugin's `kind`. |
 | `fullName` | Their `fullName`, or `name`. |
 | `role` | Their `role`, or `null`. |
-| `portrait` | Their `portrait`, or `art/character/<id>.jpg`. |
+| `portrait` | Their `portrait`, or `art/character/<id>.jpg`. Typed `string | null` like every plugin's portrait, though the cast always gives one. |
 | `here` | They're in the room with the player. |
 | `closed` | Their storyline is closed for now. |
 | `met` | The player has [met](#meeting-people) them. |

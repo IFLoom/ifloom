@@ -33,7 +33,7 @@ Then add `wardrobe()` to the game's `plugins`, and put the slots and the clothes
 ## wardrobe
 
 ```ts
-function wardrobe(): DefinedPlugin<WardrobeState>
+function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView>
 ```
 
 Builds the plugin, with the id `wardrobe`. Call it once, when you build the game. It takes no options: the slots and the clothes are content, in a pack's `data.wardrobe`, so a mod can add either. This is the [showcase](/docs/guide/showcase)'s, where the player starts in a raincoat:

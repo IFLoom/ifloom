@@ -33,7 +33,7 @@ Then add `statuses()` to the game's `plugins`. [Adding one](/docs/plugins#adding
 ## statuses
 
 ```ts
-function statuses(): DefinedPlugin<StatusesState>
+function statuses(): DefinedPlugin<StatusesState, StatusesView>
 ```
 
 Builds the plugin, with the id `statuses`. Nothing is active in a new game.

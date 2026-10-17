@@ -20,7 +20,7 @@ import { begin, fixture } from '../fixtures/town.ts'
  */
 type Tally = { found: string[]; days: number }
 
-const shells = definePlugin<Tally>({
+const shells = definePlugin<Tally, { count: number }>({
   id: 'shells',
   version: 2,
   start: () => ({ found: [], days: 0 }),
@@ -67,6 +67,16 @@ function withShells(): Game {
 }
 
 describe('plugins', () => {
+  it('read their own slice of a view back, typed', () => {
+    const game = withShells()
+    const shown = shells.viewIn(view(begin(game), game))
+    expect(shown).toEqual({ count: 0 })
+    // The type comes with it: a number, not unknown.
+    expect(shown!.count + 1).toBe(1)
+    const without = fixture()
+    expect(shells.viewIn(view(begin(without), without))).toBeUndefined()
+  })
+
   it('start with their own state in a new game', () => {
     const game = withShells()
     expect(startingState(game).plugins.shells).toEqual({ version: 2, state: { found: [], days: 0 } })

@@ -28,7 +28,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `packages/plugin-debug` (`@ifloom/plugin-debug`) | Debug commands that ignore locks; left out of release builds. |
 | `packages/audio` (`@ifloom/audio`) | The audio player: `startAudio(runner)` plays `view.audio` in the browser with plain `HTMLAudioElement`s. Imports only the engine; any UI can use it. |
 | `packages/browser` (`@ifloom/browser`) | Browser helpers in plain DOM for any UI: the minigame clock (`startClock`), keyboard shortcuts (`startKeys`, `startMinigameKeys`), the number for a new save slot (`nextSlot`) and reveal timing. Imports only the engine; the React UI and the templates use it. |
-| `packages/react` (`@ifloom/react`) | The React UI: React and shadcn/ui (Radix, Tailwind v4), and `mountGame`. Reads plugins' views by shape and depends on no plugin. One UI among possible others: nothing else depends on it. |
+| `packages/react` (`@ifloom/react`) | The React UI: React and shadcn/ui (Radix, Tailwind v4), and `mountGame`. Reads plugins' views by their exported types, with `import type` only and the plugins as optional peers, so it bundles no plugin (ADR 0011). One UI among possible others: nothing else depends on it. |
 | `packages/cli` (`@ifloom/cli`) | `ifloom new`, `dev`, `build`, `check`, `playtest`, `snapshot`, and the Vite preset `@ifloom/cli/vite`. Owns the build tools (Vite, Tailwind, the plugins) as dependencies, so a game lists only `@ifloom/*`. Templates in `templates/`; `ifloom new` also copies the examples. |
 | `examples/showcase` | Small Town: the game that uses every feature. Its tests play it; the docs point at its source. |
 | `examples/novel` | The Letter: a linear novel with no plugins, places or clock, the smallest shape of game. |

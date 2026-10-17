@@ -153,7 +153,7 @@ function press(runner: Runner, choice: RenderedChoice, label: string): HTMLButto
 export function counter(view: View, runner: Runner): HTMLElement | null {
   const vendor = (view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here)
   if (!vendor) return null
-  if (!vendor.open) return Object.assign(document.createElement('p'), { textContent: `${vendor.name}: ${vendor.closed}` })
+  if (vendor.closed) return Object.assign(document.createElement('p'), { textContent: `${vendor.name}: ${vendor.closed}` })
   const section = document.createElement('section')
   section.appendChild(document.createElement('h2')).textContent = vendor.name
   const list = section.appendChild(document.createElement('ul'))
@@ -182,7 +182,7 @@ export function Counter() {
   const shop = view.plugins.shop as ShopView | undefined
   const vendor = shop?.vendors.find((entry) => entry.here)
   if (!vendor) return null
-  if (!vendor.open) return <p className="text-sm text-muted-foreground">{vendor.name}: {vendor.closed}</p>
+  if (vendor.closed) return <p className="text-sm text-muted-foreground">{vendor.name}: {vendor.closed}</p>
   return (
     <section className="rounded-lg border p-3">
       <h2 className="font-semibold">{vendor.name}</h2>
@@ -223,7 +223,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
 </script>
 
 <template>
-  <p v-if="vendor && !vendor.open">{{ vendor.name }}: {{ vendor.closed }}</p>
+  <p v-if="vendor?.closed">{{ vendor.name }}: {{ vendor.closed }}</p>
   <section v-else-if="vendor">
     <h2>{{ vendor.name }}</h2>
     <ul>
@@ -259,7 +259,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
   const vendor = $derived(($view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
 </script>
 
-{#if vendor && !vendor.open}
+{#if vendor?.closed}
   <p>{vendor.name}: {vendor.closed}</p>
 {:else if vendor}
   <section>

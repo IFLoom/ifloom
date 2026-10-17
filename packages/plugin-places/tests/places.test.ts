@@ -79,7 +79,7 @@ describe('places', () => {
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
       location: { id: 'house', name: 'House', tag: 'Town', tags: [], art: 'place/house', stage: null },
-      exits: [{ id: 'street', name: 'Street', tag: 'Town', tags: ['outdoors'], art: 'place/street', command: commandOf(go('street')) }],
+      exits: [{ id: 'street', label: 'Street', tag: 'Town', tags: ['outdoors'], art: 'place/street', command: commandOf(go('street')) }],
     })
   })
 

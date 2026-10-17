@@ -51,12 +51,12 @@ describe('feeds', () => {
   it('show other people’s posts once they appear, counted until the player looks', () => {
     const g = game()
     let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
-    expect(shown(state, g).feeds.map((entry) => [entry.id, entry.posts.map((post) => post.text), entry.unseen])).toEqual([
+    expect(shown(state, g).feeds.map((entry) => [entry.id, entry.posts.map((post) => post.text), entry.unread])).toEqual([
       ['social', ['Baked a cake!'], 1],
       ['board', ['Village fete on Saturday.'], 1],
     ])
     state = apply(state, g, seeFeed('social')).state
-    expect(shown(state, g).unseen).toBe(1)
+    expect(shown(state, g).unread).toBe(1)
   })
 
   it('take the player’s own posts, newest first, with the reactions they get', () => {

@@ -1,4 +1,4 @@
-import type { Command, RenderedChoice } from '@ifloom/engine'
+import type { DevicesView, DeviceView, SectionView } from '@ifloom/plugin-devices'
 import { useState } from 'react'
 import { badgeVariants } from '../components/ui/badge.tsx'
 import { buttonVariants } from '../components/ui/button.tsx'
@@ -11,23 +11,13 @@ import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 import { Picture } from './picture.tsx'
 
-/** The devices plugin's view, as the UI reads it. */
-type SectionView =
-  | { kind: 'prose'; text: string }
-  | { kind: 'actions'; actions: RenderedChoice[] }
-  | { kind: 'list'; entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[] }
-  | { kind: 'plugin'; plugin: string; with: Record<string, unknown> }
-  | { kind: 'panel'; panel: string; data: unknown }
-type AppView = { id: string; name: string; icon: string; badge: number | boolean; disabled?: string; command: Command; sections: SectionView[] }
-type DeviceView = { id: string; name: string; frame: string; sidebar: boolean; wallpaper: string | null; badge: number; apps: AppView[]; open: AppView | null }
-
 /** The devices in the view (an empty list when the game has no devices plugin). */
 export type DevicesState = DeviceView[]
 
 /** The devices in the view, if the game has the devices plugin. */
 export function useDevices(): DevicesState {
   const { view } = useGame()
-  return (view.plugins.devices as { devices: DeviceView[] } | undefined)?.devices ?? []
+  return (view.plugins.devices as DevicesView | undefined)?.devices ?? []
 }
 
 /** Which device is open in a dialog, if any, and how to open and close one. */

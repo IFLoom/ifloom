@@ -540,7 +540,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
     {{ choice.label }}
   </button>
   <button v-for="exit in exits" :key="exit.id" :disabled="Boolean(exit.disabled)" @click="runner.apply(exit.command)">
-    Go to {{ exit.name }}
+    Go to {{ exit.label }}
   </button>
   <p>{{ view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ') }}</p>
 </template>
@@ -571,7 +571,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
   </button>
 {/each}
 {#each exits as exit (exit.id)}
-  <button disabled={Boolean(exit.disabled)} onclick={() => runner.apply(exit.command)}>Go to {exit.name}</button>
+  <button disabled={Boolean(exit.disabled)} onclick={() => runner.apply(exit.command)}>Go to {exit.label}</button>
 {/each}
 <p>{view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
 ```

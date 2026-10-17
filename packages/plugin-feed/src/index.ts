@@ -95,9 +95,10 @@ export type PostView = {
   mine: boolean
 }
 
-export type FeedView = { id: string; name: string; posts: PostView[]; unseen: number }
+/** One feed, newest post first, with how many posts the player hasn't seen: `unread`, as messages count theirs. */
+export type FeedView = { id: string; name: string; posts: PostView[]; unread: number }
 
-export type FeedsView = { feeds: FeedView[]; unseen: number }
+export type FeedsView = { feeds: FeedView[]; unread: number }
 
 const ID = 'feed'
 
@@ -122,7 +123,7 @@ export function feedsOf(game: Game): FeedDef[] {
  * people's posts in a pack's `data.feed.feeds` and `data.feed.posts`, so a
  * mod can add either.
  */
-export function feed(): DefinedPlugin<FeedState> {
+export function feed(): DefinedPlugin<FeedState, FeedsView> {
   const feedIds = (game: Game) => new Set(feedsOf(game).map((entry) => entry.id))
 
   /** Posts in a feed the player hasn't looked at; never below nothing, whatever an older save counted. */
@@ -135,7 +136,7 @@ export function feed(): DefinedPlugin<FeedState> {
     return postDefs(game).filter((post) => post.feed === id && record.appeared[post.id] !== undefined).length
   }
 
-  return definePlugin<FeedState>({
+  return definePlugin<FeedState, FeedsView>({
     id: ID,
     version: 2,
     // Posters are the cast's characters when the game has the cast: a name and a face.
@@ -278,9 +279,9 @@ export function feed(): DefinedPlugin<FeedState> {
         const posts = [...theirs, ...mine]
           .sort((a, b) => b.turn - a.turn || b.order - a.order)
           .map(({ order: _order, ...post }) => ({ ...post, beats: parseBeats(post.text) }))
-        return { id: entry.id, name: entry.name, posts, unseen: unseenIn(slice, game, entry.id) }
+        return { id: entry.id, name: entry.name, posts, unread: unseenIn(slice, game, entry.id) }
       })
-      return { feeds, unseen: feeds.reduce((sum, entry) => sum + entry.unseen, 0) }
+      return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }
     },
     references: {
       calls: (kind, name, args) => {

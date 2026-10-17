@@ -15,13 +15,11 @@ import {
   lockOn,
   lockedOut,
   say,
+  renderAction,
   stageView,
-  warningOf,
-  whyNot,
   type ActionDef,
   type Blocked,
   type Block,
-  type Command,
   type CommandRef,
   type Condition,
   type DefinedPlugin,
@@ -30,6 +28,7 @@ import {
   type GameState,
   type MediaStage,
   type PluginProblem,
+  type RenderedChoice,
   type Reference,
   type StageView,
   type Transition,
@@ -94,18 +93,19 @@ export type PlacesOptions = {
 /** The plugin's state: where the player is, or null. */
 export type PlacesState = { at: string | null }
 
-/** One way out of the current place, as the UI draws it. Send `command` to take it. */
-export type ExitView = {
-  id: string
-  name: string
+/**
+ * One way out of the current place, as the UI draws it: a button like any
+ * other (`RenderedChoice`), whose `label` is the place's name, `disabled` why
+ * it can't be taken now, `warning` a plugin's soft refusal, and `price` what
+ * going costs. Send `command` to take it. The rest describes where it leads.
+ */
+export type ExitView = RenderedChoice & {
+  /** The place's line under its name. */
   tag: string
+  /** The place's tags. */
   tags: string[]
+  /** The place's picture. */
   art: string
-  /** Why it cannot be taken now, if it cannot. */
-  disabled?: string
-  /** Pressable, but a plugin warns against it; the reducer refuses it. */
-  warning?: string
-  command: Command
 }
 
 /** What the UI reads at `view.plugins.places`. */
@@ -147,7 +147,7 @@ function ids(value: unknown): string[] {
 }
 
 /** Build the plugin. */
-export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> {
+export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, PlacesView> {
   const ancestors = (game: Game, id: string): string[] => {
     const out: string[] = []
     for (let at = locationById(game, id)?.parent; at && !out.includes(at); at = locationById(game, at)?.parent) out.push(at)
@@ -166,7 +166,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
     return undefined
   }
 
-  return definePlugin<PlacesState>({
+  return definePlugin<PlacesState, PlacesView>({
     id: ID,
     version: 1,
     strings: {
@@ -232,12 +232,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState> 
         const command = commandOf(go(id))
         if (lockOn(state, game, command)?.hide) continue
         if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
-        const exit: ExitView = { id, name: dest.name, tag: dest.tag, tags: dest.tags ?? [], art: dest.art, command }
-        const disabled = whyNot(state, game, command)
-        if (disabled) exit.disabled = disabled
-        const warning = warningOf(state, game, command)
-        if (warning) exit.warning = warning
-        exits.push(exit)
+        exits.push({ ...renderAction(state, game, { id, label: dest.name, command }), tag: dest.tag, tags: dest.tags ?? [], art: dest.art })
       }
       const stage = place ? stageView(state, game, place.stage, place.id, null, picks) : null
       return {

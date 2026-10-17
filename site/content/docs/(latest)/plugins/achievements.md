@@ -36,7 +36,7 @@ Then add `achievements()` to the game's `plugins`. [Adding one](/docs/plugins#ad
 ## achievements
 
 ```ts
-function achievements(): DefinedPlugin<AchievementsState>
+function achievements(): DefinedPlugin<AchievementsState, AchievementsView>
 ```
 
 Builds the plugin, with the id `achievements`. Nothing is earned in a new game.

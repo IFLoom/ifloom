@@ -91,7 +91,7 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * Plugins are chosen when the game is built (`game.plugins`), never loaded while
  * it runs.
  */
-export type Plugin<S = any> = {
+export type Plugin<S = any, V = unknown> = {
   /** Its name, and the prefix on everything it adds. Letters, digits and `-`. */
   id: string
   /**
@@ -198,8 +198,8 @@ export type Plugin<S = any> = {
    * the default's. The first plugin that names a channel wins it.
    */
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
-  /** What the UI needs from this plugin, at `view.plugins[id]`. */
-  view?: (state: GameState, context: PluginContext<S>) => unknown
+  /** What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type, which `viewIn` reads back. */
+  view?: (state: GameState, context: PluginContext<S>) => V
   /**
    * What the plugin keeps in the player's profile, which outlives saves and
    * new games: earned achievements, a gallery of endings. The runner asks it
@@ -325,11 +325,17 @@ export type PluginCommand<S = any> = {
 export type PluginSlice = { version: number; state: unknown }
 
 /** A plugin, plus typed access to its own state. */
-export type DefinedPlugin<S> = Plugin<S> & {
+export type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   /** This plugin's state, or its starting state if the save has none yet. */
   read(state: GameState, game: Game): S
   /** The game state with this plugin's state replaced. */
   write(state: GameState, next: S): GameState
+  /**
+   * This plugin's slice of a view, `view.plugins[id]`, typed as its `view`
+   * returns it. Undefined when the view has none: a game without the plugin,
+   * or a plugin with no `view`.
+   */
+  viewIn(view: { readonly plugins: Readonly<Record<string, unknown>> }): V | undefined
 }
 
 function readSlice<S>(plugin: Plugin<S>, state: GameState, game: Game): S {
@@ -376,14 +382,17 @@ export function absentPartner(game: Game | undefined, name: string): boolean {
 }
 
 /**
- * Declare a plugin. Returns it with `read` and `write` for its own state, for
- * code outside the plugin — tests, a UI — that needs it typed.
+ * Declare a plugin. Returns it with `read` and `write` for its own state, and
+ * `viewIn` for its slice of a view, for code outside the plugin (tests, a UI)
+ * that needs them typed. Name both types, `definePlugin<State, View>`, so the
+ * view's type is kept.
  */
-export function definePlugin<S>(plugin: Plugin<S>): DefinedPlugin<S> {
+export function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugin<S, V> {
   return {
     ...plugin,
     read: (state, game) => readSlice(plugin, state, game),
     write: (state, next) => writeSlice(plugin, state, next),
+    viewIn: (view) => view.plugins[plugin.id] as V | undefined,
   }
 }
 

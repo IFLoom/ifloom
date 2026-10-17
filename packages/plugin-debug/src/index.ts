@@ -48,8 +48,8 @@ function isKvValue(value: unknown): value is KvValue {
 }
 
 /** The plugin. Add it to `game.plugins` in development builds only. */
-export function debug(): DefinedPlugin<null> {
-  return definePlugin<null>({
+export function debug(): DefinedPlugin<null, DebugView> {
+  return definePlugin<null, DebugView>({
     id: 'debug',
     version: 1,
     // The clock is the calendar's and the map is the places plugin's: debug/time and debug/go set them when the game has them.

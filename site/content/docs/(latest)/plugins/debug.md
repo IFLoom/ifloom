@@ -62,7 +62,7 @@ A save made with the plugin loads in a build without it. The plugin keeps no sta
 ## debug
 
 ```ts
-function debug(): DefinedPlugin<null>
+function debug(): DefinedPlugin<null, DebugView>
 ```
 
 The plugin, with the id `debug`. It has no state of its own. Call it once, when you build the game.

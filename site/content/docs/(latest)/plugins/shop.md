@@ -40,7 +40,7 @@ Without the calendar, a vendor with `hours` is always open and a day is a turn. 
 ## shop
 
 ```ts
-function shop(): DefinedPlugin<ShopState>
+function shop(): DefinedPlugin<ShopState, ShopView>
 ```
 
 Builds the plugin, with the id `shop`. Nothing has been sold in a new game.
@@ -212,7 +212,6 @@ type VendorView = {
   id: string
   name: string
   here: boolean
-  open: boolean
   closed: string | null
   buysBack: boolean
   goods: GoodView[]
@@ -222,7 +221,7 @@ type VendorView = {
 | Field | What it is |
 |---|---|
 | `here` | The player is at one of its `at`, or it has none, or the game has no places plugin. |
-| `open`, `closed` | Whether it's open, and if not, why, in the words `shop/buy` would be refused with. |
+| `closed` | Why it's closed, in the words `shop/buy` would be refused with, or `null` while it's open. |
 | `buysBack` | It takes things back. |
 | `goods` | The goods on offer now. A good whose `when` doesn't hold isn't listed. |
 

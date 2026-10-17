@@ -1,4 +1,4 @@
-import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type CommandRef, type Game, type GameState, type View } from '@ifloom/engine'
+import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type CommandRef, type Game, type GameState, type RenderedChoice, type View } from '@ifloom/engine'
 
 /** Picks the next command from what is on screen, or null to stop. */
 export type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
@@ -38,7 +38,7 @@ export function screenText(screen: View): string {
     const price = [...(button.price?.stats ?? []).map((stat) => stat.text), ...(button.price?.notes ?? [])]
     lines.push(`  [${button.disabled ? ' ' : '>'}] ${button.label}${price.length ? ` (${price.join(', ')})` : ''}${button.disabled ? ` — ${button.disabled}` : ''}`)
   }
-  for (const exit of exitsOn(screen)) lines.push(`  -> ${exit.name}${exit.disabled ? ` — ${exit.disabled}` : ''}`)
+  for (const exit of exitsOn(screen)) lines.push(`  -> ${exit.label}${exit.disabled ? ` — ${exit.disabled}` : ''}`)
   return lines.join('\n')
 }
 
@@ -61,8 +61,8 @@ function peopleOn(screen: View): { name: string; actions: View['actions'] }[] {
 }
 
 /** The exits on screen, from the places plugin's view, each with the command that takes it. */
-function exitsOn(screen: View): { id: string; name: string; disabled?: string; command: Command }[] {
-  return (screen.plugins.places as { exits?: { id: string; name: string; disabled?: string; command: Command }[] } | undefined)?.exits ?? []
+function exitsOn(screen: View): RenderedChoice[] {
+  return (screen.plugins.places as { exits?: RenderedChoice[] } | undefined)?.exits ?? []
 }
 
 /** A command that goes to bed: the calendar's, asked for by name so nothing needs importing. */

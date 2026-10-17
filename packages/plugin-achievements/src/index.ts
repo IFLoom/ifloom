@@ -186,8 +186,8 @@ function profileIds(stored: unknown): string[] {
  * The plugin. Add it to the game's `plugins`, and put achievements in a
  * pack's `data.achievements.achievements`.
  */
-export function achievements(): DefinedPlugin<AchievementsState> {
-  return definePlugin<AchievementsState>({
+export function achievements(): DefinedPlugin<AchievementsState, AchievementsView> {
+  return definePlugin<AchievementsState, AchievementsView>({
     id: ID,
     version: 1,
     start: emptyState,

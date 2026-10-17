@@ -157,7 +157,7 @@ The engine keeps no places, so the view has no location or exits of its own. Wit
 import type { PlacesView } from '@ifloom/plugin-places'
 
 const room = shown.plugins.places as PlacesView | undefined
-for (const exit of room?.exits ?? []) addButton(exit.name, exit.disabled, exit.command)
+for (const exit of room?.exits ?? []) addButton(exit.label, exit.disabled, exit.command)
 ```
 
 The engine keeps no characters either, so the view has no people of its own. With the [cast plugin](/docs/plugins/cast), who's in the room is at `view.plugins.cast`, a [`CastView`](/docs/plugins/cast#castview). Each of its `present` is a [`PersonView`](/docs/plugins/cast#personview) with a Talk button in its `actions`. Like the view's `actions`, these are empty while a scene is open or a lock stops everything.

@@ -1,4 +1,6 @@
-import type { Command, SceneBeat } from '@ifloom/engine'
+import type { SceneBeat } from '@ifloom/engine'
+import type { FeedsView } from '@ifloom/plugin-feed'
+import type { MessagesView } from '@ifloom/plugin-messages'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -7,43 +9,6 @@ import { useWords } from './words.ts'
 import { Picture } from './picture.tsx'
 import { Beat } from './scene.tsx'
 import { Video } from './video.tsx'
-
-/** The messages plugin's view, as the UI reads it. */
-type MessagesData = {
-  channels: {
-    id: string
-    name: string
-    unread: number
-    threads: {
-      id: string
-      name: string
-      portrait: string | null
-      unread: number
-      messages: { id: string; text: string; beats?: SceneBeat[]; read: boolean; replies: { id: string; label: string; command: Command }[]; replied: string | null }[]
-    }[]
-  }[]
-}
-
-/** The feed plugin's view, as the UI reads it. */
-type FeedData = {
-  feeds: {
-    id: string
-    name: string
-    unseen: number
-    posts: {
-      id: string
-      name: string
-      portrait: string | null
-      text: string
-      beats?: SceneBeat[]
-      image: string | null
-      video?: string | null
-      likes: number
-      comments: { name: string; text: string }[]
-      mine: boolean
-    }[]
-  }[]
-}
 
 type SectionProps = { data: unknown; with: Record<string, unknown> }
 
@@ -70,7 +35,7 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
   const message = usePart('message', 'flex flex-col gap-1')
   const theirs = usePart('bubble', 'flex max-w-[85%] flex-col gap-2 rounded-2xl rounded-tl-sm bg-secondary px-3 py-2 text-sm')
   const mine = usePart('bubble', 'max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground')
-  const channel = (data as MessagesData | undefined)?.channels.find((entry) => entry.id === options.channel)
+  const channel = (data as MessagesView | undefined)?.channels.find((entry) => entry.id === options.channel)
   if (!channel) return null
   return (
     <div {...box} data-channel={channel.id}>
@@ -128,11 +93,11 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   const meta = usePart('post-meta', 'text-xs text-muted-foreground')
   const comment = usePart('post-comment', 'text-xs')
   const commenter = usePart('post-comment-name', 'font-medium')
-  const feed = (data as FeedData | undefined)?.feeds.find((entry) => entry.id === options.feed)
+  const feed = (data as FeedsView | undefined)?.feeds.find((entry) => entry.id === options.feed)
   if (!feed) return null
   return (
     <div {...box} data-feed={feed.id}>
-      {feed.unseen ? (
+      {feed.unread ? (
         <button type="button" {...seenAll} onClick={() => send({ type: 'custom', name: 'feed/seen', with: { id: feed.id } })}>
           {words('allSeen')}
         </button>

@@ -22,7 +22,6 @@ import {
   renderScene,
   say,
   type Block,
-  type Command,
   type CommandRef,
   type DefinedPlugin,
   type Condition,
@@ -30,6 +29,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type RenderedChoice,
   type SceneBeat,
 } from '@ifloom/engine'
 
@@ -84,8 +84,8 @@ export type MessageView = {
   /** The turn it arrived. */
   turn: number
   read: boolean
-  /** Replies on offer, until one is sent. */
-  replies: { id: string; label: string; command: Command }[]
+  /** Replies on offer, until one is sent: buttons like any other, each sending its `command`. */
+  replies: RenderedChoice[]
   /** The label of the reply sent, if one was. */
   replied: string | null
 }
@@ -142,7 +142,7 @@ export function channelsOf(game: Game): Channel[] {
  * messages in a pack's `data.messages.channels` and `data.messages.messages`,
  * so a mod can add either.
  */
-export function messages(): DefinedPlugin<MessagesState> {
+export function messages(): DefinedPlugin<MessagesState, MessagesView> {
   function unreadIn(record: MessagesState, game: Game, channel?: string): number {
     return messageDefs(game).filter(
       (message) =>
@@ -152,7 +152,7 @@ export function messages(): DefinedPlugin<MessagesState> {
     ).length
   }
 
-  const plugin = definePlugin<MessagesState>({
+  const plugin = definePlugin<MessagesState, MessagesView>({
     id: ID,
     version: 1,
     // Senders are the cast's characters when the game has the cast: a name and a face.

@@ -354,8 +354,8 @@ function jobRef(job: unknown): Reference[] {
  * The plugin. Add it to the game's `plugins`, and put jobs in a pack's
  * `data.jobs.jobs`.
  */
-export function jobs(): DefinedPlugin<JobsState> {
-  return definePlugin<JobsState>({
+export function jobs(): DefinedPlugin<JobsState, JobsView> {
+  return definePlugin<JobsState, JobsView>({
     id: ID,
     version: 1,
     start: emptyState,

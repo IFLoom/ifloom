@@ -90,7 +90,8 @@ export type PersonView = {
   fullName: string
   role: string | null
   hue: number | null
-  portrait: string
+  /** The portrait's path: the character's `portrait`, else `character/<id>`. Typed as every plugin's portrait is, though the cast always gives one. */
+  portrait: string | null
   /** In the room with the player. */
   here: boolean
   /** Their storyline is closed for now. */
@@ -129,7 +130,7 @@ function ids(value: unknown): string[] {
 }
 
 /** Build the plugin. It asks the places plugin where the player is, by name, wherever each is listed. */
-export function cast(options: CastOptions = {}): DefinedPlugin<null> {
+export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? 'character'
   const refOf = (id: string) => `${kind}:${id}`
   /** A character's own condition, with `'$'` as them. */
@@ -195,7 +196,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null> {
     }
   }
 
-  return definePlugin<null>({
+  return definePlugin<null, CastView>({
     id: ID,
     version: 1,
     // Where the player is comes from places; a schedule may ask the calendar.

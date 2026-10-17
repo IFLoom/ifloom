@@ -40,7 +40,7 @@ Without the calendar, every day has a shift, a day is a turn, and a shift takes 
 ## jobs
 
 ```ts
-function jobs(): DefinedPlugin<JobsState>
+function jobs(): DefinedPlugin<JobsState, JobsView>
 ```
 
 Builds the plugin, with the id `jobs`. The player holds no job in a new game.

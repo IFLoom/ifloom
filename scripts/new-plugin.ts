@@ -154,8 +154,8 @@ function entryId(args: Record<string, unknown>): string {
  * \`data\`, never an option (ADR 0009). Hooks are flat members named \`onX\`
  * (\`onTurn\`, \`onCommand\`); providers are nouns (\`view\`, \`label\`).
  */
-export function ${camel}(): DefinedPlugin<${Pascal}State> {
-  return definePlugin<${Pascal}State>({
+export function ${camel}(): DefinedPlugin<${Pascal}State, ${Pascal}View> {
+  return definePlugin<${Pascal}State, ${Pascal}View>({
     id: ID,
     version: 1,
     start: () => ({ marked: {} }),
@@ -208,7 +208,7 @@ export const mark${Pascal}Command = (entry: string): CommandRef => ({ [\`\${ID}/
 
   [`tests/${name}.test.ts`]: `import { describe, expect, it } from 'vitest'
 import { SCHEMA, apply, checkGame, holds, loadGame, startingState, view, type Game, type Pack } from '@ifloom/engine'
-import { ${camel}, ${camel}Marked, mark${Pascal}, mark${Pascal}Command, type ${Pascal}Entry, type ${Pascal}View } from '../src/index.ts'
+import { ${camel}, ${camel}Marked, mark${Pascal}, mark${Pascal}Command, type ${Pascal}Entry } from '../src/index.ts'
 
 const entries: ${Pascal}Entry[] = [
   { id: 'bread', label: 'A loaf of bread' },
@@ -228,7 +228,7 @@ function game(extra: Partial<Pack> = {}): Game {
   return loaded.game
 }
 
-const shown = (g: Game, state = startingState(g)) => view(state, g).plugins[${JSON.stringify(name)}] as ${Pascal}View
+const shown = (g: Game, state = startingState(g)) => ${camel}().viewIn(view(state, g))!
 
 // TODO(new-plugin): replace these with the plugin's real behaviour, and add a describe block
 // for each plugin it cooperates with: the game with the partner, and without it.

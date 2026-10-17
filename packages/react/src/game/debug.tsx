@@ -1,4 +1,6 @@
 import type { Command } from '@ifloom/engine'
+import type { CastView } from '@ifloom/plugin-cast'
+import type { DebugView } from '@ifloom/plugin-debug'
 import { useState, type FormEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ScrollArea } from '../components/ui/scroll-area.tsx'
@@ -6,9 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
-
-/** The debug plugin's view, as the UI reads it. */
-type DebugData = { locks: { reason: string; deny: string[] }[]; fired: Record<string, number>; seed: number }
 
 /** A one-line form that sends a debug command built from what was typed. */
 function CommandForm({ label, fields, build }: { label: string; fields: string[]; build: (values: string[]) => Command }) {
@@ -74,13 +73,13 @@ function DebugCardImpl({ className }: { className?: string }) {
   const list = usePart('debug-list', 'list-disc pl-5')
   const state = usePart('debug-state', 'text-xs')
   const log = usePart('debug-log', 'list-decimal pl-5 font-mono text-xs')
-  const data = view.plugins.debug as DebugData | undefined
+  const data = view.plugins.debug as DebugView | undefined
   if (!data) return null
   const debug = (name: string, args: Record<string, unknown>): Command => ({ type: 'custom', name: `debug/${name}`, with: args })
   const greyed = [
     ...view.actions,
     ...view.scene.choices,
-    ...((view.plugins.cast as { present?: { actions: typeof view.actions }[] } | undefined)?.present ?? []).flatMap((person) => person.actions),
+    ...((view.plugins.cast as CastView | undefined)?.present ?? []).flatMap((person) => person.actions),
   ].filter((choice) => choice.disabled)
   return (
     <section {...panel} data-debug>

@@ -62,8 +62,8 @@ export function slotsOf(game: Game): WardrobeSlot[] {
  * clothes (which item goes in which slot) in a pack's `data.wardrobe.slots`
  * and `data.wardrobe.clothes`, so a mod can add either.
  */
-export function wardrobe(): DefinedPlugin<WardrobeState> {
-  return definePlugin<WardrobeState>({
+export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
+  return definePlugin<WardrobeState, WardrobeView>({
     id: ID,
     version: 1,
     strings: {

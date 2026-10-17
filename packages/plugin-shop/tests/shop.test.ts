@@ -153,7 +153,7 @@ describe('the shop, on its own', () => {
   it('is open everywhere and always without the calendar and places', () => {
     const g = game()
     expect(holds(fresh(g), vendorOpen('counter'), g)).toBe(true)
-    expect(shown(fresh(g), g).vendors[0]).toMatchObject({ here: true, open: true, closed: null })
+    expect(shown(fresh(g), g).vendors[0]).toMatchObject({ here: true, closed: null })
   })
 
   it('replays exactly, and an old save with no state for the plugin loads', () => {
@@ -222,7 +222,7 @@ describe('the shop with the calendar', () => {
     // The evening: closed, in the vendor's words.
     state = run(state, g, { type: 'activity', id: 'wait' })
     expect(whyNot(state, g, buy('counter', 'coffee'))).toBe('The shutter is down.')
-    expect(shown(state, g).vendors[0]).toMatchObject({ open: false, closed: 'The shutter is down.' })
+    expect(shown(state, g).vendors[0]).toMatchObject({ closed: 'The shutter is down.' })
     // The next morning: open, and stocked again.
     state = clock.write(state, { day: 1, period: 'morning' })
     expect(goods(state, g).find((good) => good.item === 'biscuit')).toMatchObject({ stock: 3, buy: { disabled: undefined } })

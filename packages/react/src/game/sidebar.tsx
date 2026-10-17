@@ -1,4 +1,6 @@
-import type { Command, RenderedChoice, StageView, StatView } from '@ifloom/engine'
+import type { StatView } from '@ifloom/engine'
+import type { CastView } from '@ifloom/plugin-cast'
+import type { PlacesView } from '@ifloom/plugin-places'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceButton } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -103,11 +105,6 @@ function StatListImpl() {
  */
 export const StatList = overridable('StatList', StatListImpl)
 
-/** The places plugin's view, read by its shape: the UI depends on no plugin. */
-type PlacesShape = {
-  location: { id: string; name: string; tag: string; stage?: StageView | null } | null
-  exits: { id: string; name: string; disabled?: string; warning?: string; command: Command }[]
-}
 
 function LocationCardImpl() {
   const { view, send } = useGame()
@@ -116,7 +113,7 @@ function LocationCardImpl() {
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
   const list = usePart('exits', 'flex flex-wrap gap-1.5')
   const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
-  const places = view.plugins.places as PlacesShape | undefined
+  const places = view.plugins.places as PlacesView | undefined
   // A game without the places plugin has nothing to show here.
   const location = places?.location
   const exits = places?.exits ?? []
@@ -139,7 +136,7 @@ function LocationCardImpl() {
               onClick={() => send(exit.command)}
               data-exit={exit.id}
             >
-              {exit.name}
+              {exit.label}
             </button>
           ))}
         </div>
@@ -154,8 +151,6 @@ function LocationCardImpl() {
  */
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
-/** The cast plugin's view of who is here, read by its shape: the UI depends on no plugin. */
-type PeopleShape = { present: { id: string; name: string; role: string | null; portrait: string | null; actions: RenderedChoice[] }[] }
 
 function PeopleCardImpl() {
   const { view } = useGame()
@@ -165,7 +160,7 @@ function PeopleCardImpl() {
   const name = usePart('person-name', 'text-sm font-medium')
   const role = usePart('person-role', 'text-xs text-muted-foreground')
   const actions = usePart('person-actions', 'flex flex-col gap-1.5')
-  const people = (view.plugins.cast as PeopleShape | undefined)?.present ?? []
+  const people = (view.plugins.cast as CastView | undefined)?.present ?? []
   if (!people.length) return null
   return (
     <section {...section}>

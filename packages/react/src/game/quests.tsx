@@ -1,12 +1,10 @@
+import type { QuestsView } from '@ifloom/plugin-quests'
 import { badgeVariants } from '../components/ui/badge.tsx'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-/** The quests plugin's view, as the UI reads it. */
-type Quest = { id: string; title: string; summary: string; hint: string; stage: number; stages: number; tracked: boolean; updated: boolean }
-type QuestsData = { active: Quest[]; done: Quest[]; toFind: number; updates: number }
 
 function QuestLogImpl({ className, title }: { className?: string; title?: string }) {
   const { view, send } = useGame()
@@ -25,7 +23,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   const doneList = usePart('quests-done', 'text-sm text-muted-foreground')
   const done = usePart('quest-done', 'line-through')
   const seen = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
-  const quests = view.plugins.quests as QuestsData | undefined
+  const quests = view.plugins.quests as QuestsView | undefined
   if (!quests) return null
   return (
     <section {...log} data-quests>

@@ -42,7 +42,7 @@ Add the package beside the engine, then add `devices()` to the game's `plugins`.
 ## devices
 
 ```ts
-function devices(): DefinedPlugin<DevicesState>
+function devices(): DefinedPlugin<DevicesState, DevicesView>
 ```
 
 Builds the plugin, with the id `devices`. Call it once, when you build the game. It takes no options: the devices and the apps on them are content, in a pack's `data.devices`, so a mod can add a device or an app.

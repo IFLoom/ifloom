@@ -36,7 +36,7 @@ Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-
 ## feed
 
 ```ts
-function feed(): DefinedPlugin<FeedState>
+function feed(): DefinedPlugin<FeedState, FeedsView>
 ```
 
 Builds the plugin, with the id `feed`. Call it once, when you build the game. It takes no options: the feeds and the posts are content, in a pack's `data.feed`, so a mod can add either.
@@ -274,7 +274,7 @@ state = apply(state, game, { type: 'activity', id: 'photoRiver' }).state   // af
 feeds(state).feeds[0].posts
 // [{ id: 'river', mine: true, from: '', name: 'You', portrait: null, text: 'The river at dusk.',
 //    image: 'art/photo/river.svg', turn: 0, likes: 3 to 12, comments: [{ from: 'ava', name: 'Ava', text: 'Lovely!' }] }]
-feeds(state).unseen                                                          // 0: your own posts aren't news
+feeds(state).unread                                                          // 0: your own posts aren't news
 holds(state, hasPosted(), game)                                              // true
 holds(state, { custom: 'feed/likes', with: { post: 'river', gte: 3 } }, game)   // true
 
@@ -286,15 +286,15 @@ state = apply(state, game, sleep()).state    // Day 2 · Tuesday morning, turn 1
 feeds(state).feeds[0].posts
 // [{ id: 'ava.cake', mine: false, name: 'Ava', portrait: 'art/character/ava.svg', turn: 1, likes: 14, ... },
 //  { id: 'river', mine: true, turn: 0, ... }]
-feeds(state).unseen     // 2: Ava's post and the council's notice
+feeds(state).unread     // 2: Ava's post and the council's notice
 
 state = apply(state, game, seeFeed('social')).state    // the player looked at the feed
-feeds(state).unseen     // 1: the notice board
+feeds(state).unread     // 1: the notice board
 
 // The high street's button reads the board
 state = apply(state, game, go('high-street')).state
 state = apply(state, game, { type: 'custom', name: 'feed/seen', with: { id: 'board' } }).state
-feeds(state).unseen     // 0
+feeds(state).unread     // 0
 ```
 
 ## Conditions
@@ -327,7 +327,7 @@ They work in a data scene choice's effects, an activity's `effects`, a message r
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'feed/seen': { id? } }` | `seeFeed(feed?)` | Marks the feed `id` as looked at, which clears its `unseen`. `seeFeed()`, with no feed, marks them all. |
+| `{ 'feed/seen': { id? } }` | `seeFeed(feed?)` | Marks the feed `id` as looked at, which clears its `unread` count. `seeFeed()`, with no feed, marks them all. |
 
 Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends it when the player opens a feed.
 
@@ -370,24 +370,24 @@ const { game } = loadGame([town], {
 ### FeedsView
 
 ```ts
-type FeedsView = { feeds: FeedView[]; unseen: number }
+type FeedsView = { feeds: FeedView[]; unread: number }
 ```
 
 | Field | What it is |
 |---|---|
 | `feeds` | Every feed, in the order `data.feed.feeds` lists them, including empty ones. |
-| `unseen` | Other people's posts not looked at, in every feed. |
+| `unread` | Other people's posts not looked at, in every feed. Messages count theirs under the same name. |
 
 ### FeedView
 
 ```ts
-type FeedView = { id: string; name: string; posts: PostView[]; unseen: number }
+type FeedView = { id: string; name: string; posts: PostView[]; unread: number }
 ```
 
 | Field | What it is |
 |---|---|
 | `posts` | Newest turn first. Within a turn, the player's own come first, latest first, then other people's, in reverse of the order the content lists them. |
-| `unseen` | Other people's posts that have appeared in this feed since the player last sent `feed/seen` for it. The player's own aren't counted. |
+| `unread` | Other people's posts that have appeared in this feed since the player last sent `feed/seen` for it. The player's own aren't counted. |
 
 ### PostView
 

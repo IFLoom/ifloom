@@ -119,8 +119,7 @@ export type VendorView = {
   name: string
   /** At the player's location, or everywhere. */
   here: boolean
-  open: boolean
-  /** Why it's closed, or null. */
+  /** Why it's closed, in the words `shop/buy` is refused with, or null while it's open. */
   closed: string | null
   /** Takes things back. */
   buysBack: boolean
@@ -322,7 +321,7 @@ export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView 
           sellFor: sellable ? priceView(game, sellPrice(vendor, good)) : null,
         }
       })
-    return { id: vendor.id, name: vendor.name, here: isHere(vendor, cx), open: closed === null, closed, buysBack: vendor.buysBack !== undefined, goods }
+    return { id: vendor.id, name: vendor.name, here: isHere(vendor, cx), closed, buysBack: vendor.buysBack !== undefined, goods }
   })
   return { vendors }
 }
@@ -331,8 +330,8 @@ export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView 
  * The plugin. Add it to the game's `plugins`, and put vendors in a pack's
  * `data.shop.vendors`.
  */
-export function shop(): DefinedPlugin<ShopState> {
-  return definePlugin<ShopState>({
+export function shop(): DefinedPlugin<ShopState, ShopView> {
+  return definePlugin<ShopState, ShopView>({
     id: ID,
     version: 1,
     start: emptyState,

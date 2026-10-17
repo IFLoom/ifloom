@@ -1,14 +1,10 @@
 import { whyNot, type Command } from '@ifloom/engine'
+import type { WardrobeView } from '@ifloom/plugin-wardrobe'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
 
-/** The wardrobe plugin's view, as the UI reads it. */
-type WardrobeData = {
-  slots: { id: string; label: string; item: string | null; name: string | null }[]
-  spare: { id: string; name: string; slot: string }[]
-}
 
 function WardrobeCardImpl({ className }: { className?: string }) {
   const { view, runner, send } = useGame()
@@ -19,7 +15,7 @@ function WardrobeCardImpl({ className }: { className?: string }) {
   const slotName = usePart('wardrobe-slot-name', 'w-16 text-muted-foreground')
   const worn = usePart('wardrobe-worn', 'flex-1')
   const buttonAttrs = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
-  const data = view.plugins.wardrobe as WardrobeData | undefined
+  const data = view.plugins.wardrobe as WardrobeView | undefined
   if (!data) return null
   const button = (label: string, command: Command, key: string) => {
     const reason = whyNot(runner.state, runner.game, command)

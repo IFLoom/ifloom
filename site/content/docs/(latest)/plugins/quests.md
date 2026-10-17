@@ -47,7 +47,7 @@ The plugin works on its own. Its stages often use other plugins' conditions, suc
 ## quests
 
 ```ts
-function quests(): DefinedPlugin<QuestsState>
+function quests(): DefinedPlugin<QuestsState, QuestsView>
 ```
 
 Builds the plugin, with the id `quests`. Its state starts empty. Call it once, when you build the game.

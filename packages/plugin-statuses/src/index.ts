@@ -211,8 +211,8 @@ function stacksOf(args: PluginArgs): Range | undefined {
  * The plugin. Add it to the game's `plugins`, and put statuses in a pack's
  * `data.statuses.statuses`.
  */
-export function statuses(): DefinedPlugin<StatusesState> {
-  return definePlugin<StatusesState>({
+export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
+  return definePlugin<StatusesState, StatusesView>({
     id: ID,
     version: 1,
     start: emptyState,

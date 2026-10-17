@@ -98,7 +98,7 @@ function periodsIn(args: Record<string, unknown>): number {
 }
 
 /** Build a calendar. List it before other plugins, so theirs see the new day when a turn ends. */
-export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarState> {
+export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarState, CalendarView> {
   const periods = (options.periods ?? DEFAULT_PERIODS).map((entry) => (typeof entry === 'string' ? { id: entry } : entry))
   const ids = periods.map((entry) => entry.id)
   const P = ids.length
@@ -150,7 +150,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
     period: say(context.game, `${ID}/period.${clock.period}`),
   })
 
-  return definePlugin<CalendarState>({
+  return definePlugin<CalendarState, CalendarView>({
     id: ID,
     version: 1,
     strings,

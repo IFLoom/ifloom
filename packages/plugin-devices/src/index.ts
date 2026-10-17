@@ -39,7 +39,7 @@ import {
 } from '@ifloom/engine'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
-type Contact = { id: string; name: string; role: string | null; portrait: string; command: Command }
+type Contact = { id: string; name: string; role: string | null; portrait: string | null; command: Command }
 
 export type DeviceDef = {
   id: string
@@ -145,7 +145,7 @@ export function appsOf(game: Game): AppDef[] {
  * apps on them in a pack's `data.devices.devices` and `data.devices.apps`, so
  * a mod can add an app or a device.
  */
-export function devices(): DefinedPlugin<DevicesState> {
+export function devices(): DefinedPlugin<DevicesState, DevicesView> {
   const apps = appsOf
   const known = (game: Game, id: string) => devicesOf(game).some((device) => device.id === id)
 
@@ -225,7 +225,7 @@ export function devices(): DefinedPlugin<DevicesState> {
     }
   }
 
-  return definePlugin<DevicesState>({
+  return definePlugin<DevicesState, DevicesView>({
     id: ID,
     version: 1,
     // The contacts section lists the cast's characters when the game has the cast.

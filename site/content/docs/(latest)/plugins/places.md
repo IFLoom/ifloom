@@ -54,7 +54,7 @@ const plugins = [calendar(), places({ start: 'flat' })]
 ## places
 
 ```ts
-function places(options?: PlacesOptions): DefinedPlugin<PlacesState>
+function places(options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
 ```
 
 Builds the plugin, with the id `places`. Call it once, when you build the game. With no options, a new game starts nowhere.
@@ -488,23 +488,23 @@ Any other exit is shown, greyed out with its refusal if it can't be taken.
 ### ExitView
 
 ```ts
-type ExitView = {
-  id: string
-  name: string
+type ExitView = RenderedChoice & {
   tag: string
   tags: string[]
   art: string
-  disabled?: string
-  warning?: string
-  command: Command
 }
 ```
 
+An exit is a button like any other, a [`RenderedChoice`](/docs/reference/view#renderedchoice), as [`renderAction`](/docs/reference/view#renderaction) draws one, so the code that draws a scene's choices draws exits too.
+
 | Field | What it is |
 |---|---|
-| `id`, `name`, `tag`, `tags`, `art` | The destination's, from its [`LocationDef`](#locationdef). `tags` is `[]` when it has none. |
+| `id` | The destination's id. |
+| `label` | The destination's `name`. |
+| `tag`, `tags`, `art` | The destination's, from its [`LocationDef`](#locationdef). `tags` is `[]` when it has none. |
 | `disabled` | Why it can't be taken now: what [`whyNot`](/docs/reference/actions#whynot) says for its command. A closed café's exit reads `Closed. Opens tomorrow morning.` |
 | `warning` | Set when the exit can be pressed but a plugin [guard](/docs/reference/plugins#guards) warns against it. The reducer refuses it. |
+| `price` | What going costs, when a plugin says, such as the time it takes. |
 | `command` | What to send to take it: `go(id)`. |
 
 On a new game in the flat:
@@ -512,7 +512,7 @@ On a new game in the flat:
 ```ts
 {
   location: { id: 'flat', name: 'Your flat', tag: 'Home', tags: [], art: 'place/flat', stage: null },
-  exits: [{ id: 'high-street', name: 'High Street', tag: 'Small Town', tags: ['outdoors'], art: 'place/high-street', command: go('high-street') }],
+  exits: [{ id: 'high-street', label: 'High Street', tag: 'Small Town', tags: ['outdoors'], art: 'place/high-street', command: go('high-street') }],
 }
 ```
 

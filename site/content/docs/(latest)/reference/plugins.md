@@ -1130,24 +1130,28 @@ A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#s
 ```ts
 import { definePlugin } from '@ifloom/engine'
 
-function definePlugin<S>(plugin: Plugin<S>): DefinedPlugin<S>
+function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugin<S, V>
 
-type DefinedPlugin<S> = Plugin<S> & {
+type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   read(state: GameState, game: Game): S
   write(state: GameState, next: S): GameState
+  viewIn(view: { plugins: Record<string, unknown> }): V | undefined
 }
 ```
 
-Declares a plugin, and returns it with typed `read` and `write` for its own state. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice` and `set`.
+Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice` and `set`. `S` is the plugin's state and `V` what its `view` returns. Name both, `definePlugin<LoyaltyState, LoyaltyView>(...)`, since TypeScript can't work out one when you give the other.
 
 `read` returns the plugin's state, or its starting state if the save has none yet. `write` returns the game state with the plugin's state replaced, labelled with the plugin's current version.
+
+`viewIn` returns `view.plugins[id]`, typed as `V`, or `undefined` when the view has none: a game without the plugin, or a plugin with no `view`.
 
 ```ts
 loyalty.read(state, game).stamps
 const full = loyalty.write(state, { stamps: 0, free: 1 }) // a test that starts with a free coffee
+loyalty.viewIn(runner.view())?.stamps                       // a number, typed, in a UI or a test
 ```
 
-A plugin is a plain object, so `definePlugin` is optional, but it types `S` throughout and gives you `read` and `write`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
+A plugin is a plain object, so `definePlugin` is optional, but it types `S` and `V` throughout and gives you `read`, `write` and `viewIn`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
 
 ## pluginById
 

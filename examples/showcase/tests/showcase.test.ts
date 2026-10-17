@@ -212,7 +212,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     const counter = () => (view(state, game).plugins.shop as ShopView).vendors[0]
-    expect(counter()).toMatchObject({ id: 'counter', here: true, open: true })
+    expect(counter()).toMatchObject({ id: 'counter', here: true, closed: null })
     expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
     // The café's own button shows the counter's price, as the shop's view does.
     const button = view(state, game).actions.find((action) => action.id === 'flapjack')!

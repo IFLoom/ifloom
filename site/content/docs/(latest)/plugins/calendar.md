@@ -51,7 +51,7 @@ const plugins = [calendar({ start: { day: 0, period: 'night' } }), places({ star
 ## calendar
 
 ```ts
-function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState>
+function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState, CalendarView>
 ```
 
 Builds the plugin, with the id `calendar`. Call it once, when you build the game. With no options, a day has five periods, a week has seven days, a turn is a day, and the game starts on Monday morning.

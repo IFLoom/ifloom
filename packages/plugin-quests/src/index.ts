@@ -212,8 +212,8 @@ function questId(args: Record<string, unknown>): string {
  * The plugin. Add it to the game's `plugins`, and put quests in a pack's
  * `data.quests.quests`.
  */
-export function quests(): DefinedPlugin<QuestsState> {
-  return definePlugin<QuestsState>({
+export function quests(): DefinedPlugin<QuestsState, QuestsView> {
+  return definePlugin<QuestsState, QuestsView>({
     id: ID,
     version: 1,
     start: emptyState,

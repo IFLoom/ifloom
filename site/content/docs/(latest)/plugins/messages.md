@@ -36,7 +36,7 @@ Then add `messages()` to the game's `plugins`. [Adding one](/docs/plugins#adding
 ## messages
 
 ```ts
-function messages(): DefinedPlugin<MessagesState>
+function messages(): DefinedPlugin<MessagesState, MessagesView>
 ```
 
 Builds the plugin, with the id `messages`. Call it once, when you build the game. It takes no options: the channels and the messages are content, in a pack's `data.messages`, so a mod can add either.
@@ -480,7 +480,7 @@ type MessageView = {
   beats: SceneBeat[]
   turn: number
   read: boolean
-  replies: { id: string; label: string; command: Command }[]
+  replies: RenderedChoice[]
   replied: string | null
 }
 ```
@@ -493,7 +493,7 @@ type MessageView = {
 | `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
 | `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
-| `replies` | The replies on offer now, each with its label and the command that sends it. Empty once one is sent. |
+| `replies` | The replies on offer now, each a button like a scene's choices ([`RenderedChoice`](/docs/reference/view#renderedchoice)) with its `label` and the `command` that sends it. Empty once one is sent. |
 | `replied` | The label of the reply sent, or `null`. |
 
 A message has no picture field of its own. Put pictures and videos in its body, where they sit in order with the words:

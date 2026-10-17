@@ -10,7 +10,7 @@ import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
 import { Video } from './video.tsx'
 import { MediaViewer, type ViewerMedia } from './viewer.tsx'
-import { MinigamePanel, useMinigame } from './minigame.tsx'
+import { MinigameCard, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
 import { InlineSpans } from './inline.tsx'
 import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
@@ -146,13 +146,13 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
  */
 export const Beat = overridable('Beat', BeatImpl)
 
-/** The minigame being played: the game's own panel for it if `panels` has one by its id, else `MinigamePanel`. Its clock runs while it's here. */
+/** The minigame being played: the game's own panel for it if `panels` has one by its id, else `MinigameCard`. Its clock runs while it's here. */
 function MinigameSlot() {
   const { panels } = useGame()
   const { minigame } = useMinigame()
   if (!minigame) return null
   const Panel = panels[minigame.id]
-  return Panel ? <Panel data={minigame} /> : <MinigamePanel />
+  return Panel ? <Panel data={minigame} /> : <MinigameCard />
 }
 
 /** How long a reveal takes to come in, as `--ifloom-reveal-ms` sets it in the base styles. Only for when to stop listening for a skip. */
@@ -254,11 +254,11 @@ function SceneStageImpl({ className }: { className?: string }) {
 }
 
 /**
- * The main panel: the scene on screen, or the room when none is. Its stage (the
+ * The main column: the scene on screen, or the room when none is. Its stage (the
  * layered `Stage` when the scene has one, else its `stageImage`), its body, then
  * either the game's own panel for it or its choices. While a minigame runs, it
  * draws that instead: the game's panel named by the minigame's id, else
- * `MinigamePanel`.
+ * `MinigameCard`.
  *
  * It plays `view.transition` when the screen changes, in a `scene-transition`
  * part that keeps a copy of the scene before for its `out`, and reveals the

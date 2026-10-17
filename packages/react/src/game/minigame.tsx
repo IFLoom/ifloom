@@ -1,6 +1,6 @@
 /**
  * Minigames in the React UI: `useMinigame` for the one being played and the
- * clock that drives its timers, and `MinigamePanel`, the basic panel that
+ * clock that drives its timers, and `MinigameCard`, the basic card that
  * draws it.
  */
 import { useEffect, useRef } from 'react'
@@ -114,7 +114,7 @@ export type MinigameControls = {
  * The minigame being played, and a way to press its inputs. While it's
  * mounted it also runs the game's clock: a `tick` about every 100 ms while a
  * timer runs, with the real time that passed. With `keys: true` it also maps
- * the keyboard to the inputs, as `MinigamePanel` does.
+ * the keyboard to the inputs, as `MinigameCard` does.
  */
 export function useMinigame({ keys = false }: { keys?: boolean } = {}): MinigameControls {
   const { view, runner } = useGame()
@@ -150,7 +150,7 @@ const INPUT_WORDS: Record<string, UiStringKey> = {
   space: 'minigameSpace',
 }
 
-function MinigamePanelImpl({ className }: { className?: string }) {
+function MinigameCardImpl({ className }: { className?: string }) {
   const { minigame, send } = useMinigame({ keys: true })
   const { runner } = useGame()
   const words = useWords()
@@ -201,4 +201,4 @@ function MinigamePanelImpl({ className }: { className?: string }) {
  * presses inputs too: the minigame's `keys`, else the arrows and space.
  * `SceneStage` draws it in place of the scene while a minigame runs.
  */
-export const MinigamePanel = overridable('MinigamePanel', MinigamePanelImpl)
+export const MinigameCard = overridable('MinigameCard', MinigameCardImpl)

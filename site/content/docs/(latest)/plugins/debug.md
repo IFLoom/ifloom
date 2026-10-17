@@ -15,7 +15,7 @@ import {
 } from '@ifloom/plugin-debug'
 ```
 
-Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. The [React UI](/docs/react) draws a [debug panel](/docs/react/components#debugpanel) for it when the game has it.
+Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. The [React UI](/docs/react) draws a [debug card](/docs/react/components#debugcard) for it when the game has it.
 
 ## Install
 
@@ -161,7 +161,7 @@ apply(state, game, debugTurn(-1)).refused            // 'A turn is a whole numbe
 
 The debug commands don't change the [phase](/docs/reference/state#phase), so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from `{ ...startingState(game), phase: 'open', sceneId: null }` instead, as the showcase's own `probes` do.
 
-A test does the same to start a scene from the state it needs. In the [React UI](/docs/react), the debug panel sends these commands from a form.
+A test does the same to start a scene from the state it needs. In the [React UI](/docs/react), the debug card sends these commands from a form.
 
 ## Strings
 

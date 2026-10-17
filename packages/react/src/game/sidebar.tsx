@@ -109,7 +109,7 @@ type PlacesShape = {
   exits: { id: string; name: string; disabled?: string; warning?: string; command: Command }[]
 }
 
-function LocationPanelImpl() {
+function LocationCardImpl() {
   const { view, send } = useGame()
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
@@ -152,12 +152,12 @@ function LocationPanelImpl() {
  * Where the player is, and the exits from it: each a button, greyed out with its
  * reason. A place with a stage shows it above its name, hotspots and all.
  */
-export const LocationPanel = overridable('LocationPanel', LocationPanelImpl)
+export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
 /** The cast plugin's view of who is here, read by its shape: the UI depends on no plugin. */
 type PeopleShape = { present: { id: string; name: string; role: string | null; portrait: string | null; actions: RenderedChoice[] }[] }
 
-function PeoplePanelImpl() {
+function PeopleCardImpl() {
   const { view } = useGame()
   const section = usePart('people', 'flex flex-col gap-2')
   const card = usePart('person', 'flex flex-col gap-1.5')
@@ -192,4 +192,4 @@ function PeoplePanelImpl() {
 }
 
 /** Who is here, with what the player can do with each of them: the cast plugin's. Nothing without it. */
-export const PeoplePanel = overridable('PeoplePanel', PeoplePanelImpl)
+export const PeopleCard = overridable('PeopleCard', PeopleCardImpl)

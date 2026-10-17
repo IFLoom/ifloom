@@ -62,7 +62,7 @@ These are the design tokens:
 | Token | What it sets | Default |
 |---|---|---|
 | `--font-body` | The font for everything. The UI's `font-body` class. | The system sans-serif |
-| `--font-heading` | The game's title, scene titles and panel headings. | `var(--font-body)` |
+| `--font-heading` | The game's title, scene titles and card headings. | `var(--font-body)` |
 | `--text-title` | The size of the game's title. | `1.125rem` |
 | `--text-scene-title` | The size of a scene's title. | `1.5rem` |
 | `--leading-prose` | The line height of a scene's text. | `1.625` |
@@ -314,7 +314,7 @@ const components: Components = { Beat: TownBeat }
 mountGame(game, { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture` and `Icon`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationCard`, `PeopleCard`, `Actions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture` and `Icon`.
 
 A replacement applies wherever the UI draws that component, not just in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's **Use** buttons.
 
@@ -470,13 +470,13 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `location` | The location panel. |
+| `location` | The location card. |
 | `location-name` | The location's name. |
 | `location-text` | The location's tag, under its name. |
 | `exits` | The row of exit buttons. |
 | `exit` | One exit button. Carries `data-exit`. |
 | `people` | The list of people here. |
-| `people-title` | A heading for the people list. The built-in panel doesn't draw one, so it's there for a replacement `PeoplePanel` to use. |
+| `people-title` | A heading for the people list. The built-in card doesn't draw one, so it's there for a replacement `PeopleCard` to use. |
 | `person` | One person. Carries `data-person`. |
 | `person-portrait` | Their portrait. |
 | `person-name` | Their name. |
@@ -529,7 +529,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `choice-price` | What the choice costs. |
 | `choice-irreversible` | The line that says a choice can't be undone. |
 | `choice-reason` | Why a button is greyed out. |
-| `button` | Any other button: in the saves menu, the mod manager, the quest log, the wardrobe, inputs, message threads, feeds and the debug panel. |
+| `button` | Any other button: in the saves menu, the mod manager, the quest log, the wardrobe, inputs, message threads, feeds and the debug card. |
 | `badge` | A count or a **New** badge in the quest log, or a count in the notice strip. |
 
 ### Notices
@@ -550,7 +550,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `minigame` | The [`MinigamePanel`](/docs/react/components#minigamepanel), a `<section>`. Carries `data-minigame` and `data-state`. |
+| `minigame` | The [`MinigameCard`](/docs/react/components#minigamecard), a `<section>`. Carries `data-minigame` and `data-state`. |
 | `minigame-title` | The minigame's title. |
 | `minigame-state` | The running state's words. |
 | `minigame-timer` | The countdown bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Only while the state has a timer. |
@@ -609,7 +609,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `item-name` | Its name. |
 | `item-count` | How many, when there's more than one. |
 | `item-text` | Its description. |
-| `wardrobe` | The wardrobe panel. |
+| `wardrobe` | The wardrobe card. |
 | `wardrobe-title` | Its heading. |
 | `wardrobe-slot` | One slot. Carries `data-slot-id`. |
 | `wardrobe-slot-name` | The slot's label. |
@@ -668,11 +668,11 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `post-comment` | One comment. |
 | `post-comment-name` | The commenter's name. |
 
-### The debug panel
+### The debug card
 
 | Part | What it is |
 |---|---|
-| `debug` | The whole panel. |
+| `debug` | The whole card. |
 | `debug-header` | The row with the heading, the seed and the undo buttons. |
 | `debug-title` | The heading. |
 | `debug-seed` | The seed. |

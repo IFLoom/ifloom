@@ -10,7 +10,7 @@
 import { createContext, useContext, type ComponentType, type ReactNode } from 'react'
 import { cn } from '../lib/utils.ts'
 import type { Actions, Sidebar, Title } from './layout.tsx'
-import type { Clock, LocationPanel, PeoplePanel, StatList } from './sidebar.tsx'
+import type { Clock, LocationCard, PeopleCard, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
 import type { InlineAction, Tip } from './inline.tsx'
 import type { Hotspot, Stage } from './stage.tsx'
@@ -21,9 +21,9 @@ import type { Notice, Notices } from './notices.tsx'
 import type { QuestLog } from './quests.tsx'
 import type { AppSection, DeviceButtons, DeviceDialog, DeviceScreen } from './device.tsx'
 import type { FeedSection, MessagesSection } from './sections.tsx'
-import type { DebugPanel } from './debug.tsx'
+import type { DebugCard } from './debug.tsx'
 import type { Picture } from './picture.tsx'
-import type { WardrobePanel } from './wardrobe.tsx'
+import type { WardrobeCard } from './wardrobe.tsx'
 import type { Inventory } from './inventory.tsx'
 import type { EntityTable } from './entities.tsx'
 import type { InputField, InputFields } from './inputs.tsx'
@@ -34,7 +34,7 @@ import type { ModManager } from './mods.tsx'
 import type { Frame } from './shell.tsx'
 import type { Icon } from './icon.tsx'
 import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
-import type { MinigamePanel } from './minigame.tsx'
+import type { MinigameCard } from './minigame.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
 
@@ -79,7 +79,7 @@ export const PART_KEYS = [
   'app-launcher', 'app-button', 'app-icon', 'app-badge', 'app-prose', 'app-entries', 'app-entry', 'app-entry-image', 'app-entry-title', 'app-entry-text',
   'channel', 'thread', 'thread-title', 'thread-portrait', 'message', 'bubble',
   'feed', 'post', 'post-author', 'post-portrait', 'post-image', 'post-text', 'post-meta', 'post-comment', 'post-comment-name',
-  // The debug panel
+  // The debug card
   'debug', 'debug-header', 'debug-title', 'debug-seed', 'debug-form', 'debug-label', 'debug-field', 'debug-error',
   'debug-section', 'debug-heading', 'debug-list', 'debug-state', 'debug-log',
   // The pages around the game
@@ -111,8 +111,8 @@ export type Components = Partial<{
   Title: Override<PropsOf<typeof Title>>
   Clock: Override<PropsOf<typeof Clock>>
   StatList: Override<PropsOf<typeof StatList>>
-  LocationPanel: Override<PropsOf<typeof LocationPanel>>
-  PeoplePanel: Override<PropsOf<typeof PeoplePanel>>
+  LocationCard: Override<PropsOf<typeof LocationCard>>
+  PeopleCard: Override<PropsOf<typeof PeopleCard>>
   Actions: Override<PropsOf<typeof Actions>>
   SceneStage: Override<PropsOf<typeof SceneStage>>
   Beat: Override<PropsOf<typeof Beat>>
@@ -124,14 +124,14 @@ export type Components = Partial<{
   Notices: Override<PropsOf<typeof Notices>>
   Notice: Override<PropsOf<typeof Notice>>
   NoticeStrip: Override<PropsOf<typeof NoticeStrip>>
-  MinigamePanel: Override<PropsOf<typeof MinigamePanel>>
+  MinigameCard: Override<PropsOf<typeof MinigameCard>>
   GameMenu: Override<PropsOf<typeof GameMenu>>
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>
   ModManager: Override<PropsOf<typeof ModManager>>
   QuestLog: Override<PropsOf<typeof QuestLog>>
   Inventory: Override<PropsOf<typeof Inventory>>
-  WardrobePanel: Override<PropsOf<typeof WardrobePanel>>
+  WardrobeCard: Override<PropsOf<typeof WardrobeCard>>
   EntityTable: Override<PropsOf<typeof EntityTable>>
   InputFields: Override<PropsOf<typeof InputFields>>
   InputField: Override<PropsOf<typeof InputField>>
@@ -141,7 +141,7 @@ export type Components = Partial<{
   AppSection: Override<PropsOf<typeof AppSection>>
   MessagesSection: Override<PropsOf<typeof MessagesSection>>
   FeedSection: Override<PropsOf<typeof FeedSection>>
-  DebugPanel: Override<PropsOf<typeof DebugPanel>>
+  DebugCard: Override<PropsOf<typeof DebugCard>>
   Picture: Override<PropsOf<typeof Picture>>
   Video: Override<PropsOf<typeof Video>>
   Stage: Override<PropsOf<typeof Stage>>

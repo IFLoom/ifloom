@@ -434,7 +434,7 @@ A place can give a `stage` as well as its `art`: layers of pictures or videos wi
 }
 ```
 
-The plugin draws it into its view as `location.stage`, next to `art`, with the engine's [`stageView`](/docs/reference/view#stageview). A hotspot is greyed out with the same reason as the button for its command, so the back door reads `Staff only.` until the player works there. A pool's pick is kept under the place's id, so the counter looks the same every time the player comes in. The React UI's [`LocationPanel`](/docs/react/components#locationpanel) draws the stage above the place's name with [`Stage`](/docs/react/components#stage).
+The plugin draws it into its view as `location.stage`, next to `art`, with the engine's [`stageView`](/docs/reference/view#stageview). A hotspot is greyed out with the same reason as the button for its command, so the back door reads `Staff only.` until the player works there. A pool's pick is kept under the place's id, so the counter looks the same every time the player comes in. The React UI's [`LocationCard`](/docs/react/components#locationcard) draws the stage above the place's name with [`Stage`](/docs/react/components#stage).
 
 **Gotchas.**
 - The hotspots are left out while a scene is open, or while a lock stops everything, as the exits are. The layers stay.

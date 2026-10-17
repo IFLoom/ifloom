@@ -13,7 +13,7 @@ To start a game of your own from a copy of it, run `npm run new -- my-town --tem
 From the root of the IFLoom checkout, after `npm install`:
 
 ```sh
-npm run dev -w @ifloom/showcase     # play it in a browser, with the debug panel
+npm run dev -w @ifloom/showcase     # play it in a browser, with the debug card
 npm run build -w @ifloom/showcase   # build examples/showcase/dist/index.html
 npm run check -w @ifloom/showcase   # list any problem in its content
 npm run playtest -w @ifloom/showcase  # play a week unattended, into playtest/week.txt
@@ -106,7 +106,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationPanel`](/docs/react/components#locationpanel) sends from each exit.
+Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
 
 `town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -140,7 +140,7 @@ stage: {
 },
 ```
 
-The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationPanel`](/docs/react/components#locationpanel) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
+The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationCard`](/docs/react/components#locationcard) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
 
 ### People and schedules
 
@@ -220,7 +220,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `town.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobePanel`](/docs/react/components#wardrobepanel), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `town.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed statuses
 

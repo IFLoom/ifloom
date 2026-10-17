@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react'
 import { Separator } from '../components/ui/separator.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
-import { DebugPanel } from './debug.tsx'
+import { DebugCard } from './debug.tsx'
 import { DeviceButtons } from './device.tsx'
 import { EntityTable } from './entities.tsx'
 import { InputFields } from './inputs.tsx'
@@ -13,8 +13,8 @@ import { NoticeStrip } from './strip.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { SceneStage } from './scene.tsx'
-import { Clock, LocationPanel, PeoplePanel, StatList } from './sidebar.tsx'
-import { WardrobePanel } from './wardrobe.tsx'
+import { Clock, LocationCard, PeopleCard, StatList } from './sidebar.tsx'
+import { WardrobeCard } from './wardrobe.tsx'
 
 /**
  * A built-in part of the screen, by name. Each draws nothing when the game
@@ -92,15 +92,15 @@ const PARTS: Record<PartName, () => ReactNode> = {
   menu: () => <GameMenu />,
   devices: () => <DeviceButtons />,
   separator: () => <Separator />,
-  location: () => <LocationPanel />,
-  people: () => <PeoplePanel />,
+  location: () => <LocationCard />,
+  people: () => <PeopleCard />,
   actions: () => <Actions />,
   inventory: () => <Inventory />,
-  wardrobe: () => <WardrobePanel />,
+  wardrobe: () => <WardrobeCard />,
   scene: () => <SceneStage />,
   inputs: () => <InputFields />,
   quests: () => <QuestLog />,
-  debug: () => <DebugPanel />,
+  debug: () => <DebugCard />,
   notices: () => <Notices />,
   'notice-strip': () => <NoticeStrip />,
 }

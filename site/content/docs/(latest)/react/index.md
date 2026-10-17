@@ -32,14 +32,14 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/docs/reference/mods), each on, off or removed, with a button to restart the game with the change.
 - **Quests**, under the stage, when the game has the [quests plugin](/docs/plugins/quests).
 - **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices) or the [phone](/docs/plugins/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
-- **A debug panel**, under the stage, when the game has the [debug plugin](/docs/plugins/debug).
+- **A debug card**, under the stage, when the game has the [debug plugin](/docs/plugins/debug).
 - **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/docs/plugins/wardrobe).
 
 That's where [`DEFAULT_LAYOUT`](#layouts) puts each one. A [layout](#layouts) of your own can move any of them, or drop the side column.
 
 When a choice or action is greyed out, the button shows the reason under its label, so the player doesn't have to hover to find out. Its price is on the button too.
 
-The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no panel for it.
+The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no card for it.
 
 ## Install
 
@@ -232,15 +232,15 @@ type PartName =
 | `'menu'` | The player's menu, [`GameMenu`](/docs/react/components#gamemenu). |
 | `'devices'` | [`DeviceButtons`](/docs/react/components#devicebuttons). |
 | `'separator'` | A [`Separator`](/docs/react/components#separator) line. |
-| `'location'` | [`LocationPanel`](/docs/react/components#locationpanel): where the player is and the exits. |
-| `'people'` | [`PeoplePanel`](/docs/react/components#peoplepanel). |
+| `'location'` | [`LocationCard`](/docs/react/components#locationcard): where the player is and the exits. |
+| `'people'` | [`PeopleCard`](/docs/react/components#peoplecard). |
 | `'actions'` | The room's and the game's buttons, [`Actions`](/docs/react/components#actions). |
 | `'inventory'` | [`Inventory`](/docs/react/components#inventory). |
-| `'wardrobe'` | [`WardrobePanel`](/docs/react/components#wardrobepanel). |
+| `'wardrobe'` | [`WardrobeCard`](/docs/react/components#wardrobecard). |
 | `'scene'` | [`SceneStage`](/docs/react/components#scenestage). |
 | `'inputs'` | [`InputFields`](/docs/react/components#inputfields). |
 | `'quests'` | [`QuestLog`](/docs/react/components#questlog). |
-| `'debug'` | [`DebugPanel`](/docs/react/components#debugpanel). |
+| `'debug'` | [`DebugCard`](/docs/react/components#debugcard). |
 | `'notices'` | [`Notices`](/docs/react/components#notices), the unseen notices. |
 | `'notice-strip'` | [`NoticeStrip`](/docs/react/components#noticestrip), a row of unread counts. No built-in layout includes it. |
 
@@ -502,9 +502,9 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 
 Which component uses which keys:
 
-- **[Debug panel](/docs/react/components#debugpanel)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
-- **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug panel), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
-- **[Wardrobe panel](/docs/react/components#wardrobepanel)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
+- **[Debug card](/docs/react/components#debugcard)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the **Why not** tab says when no lock is on or nothing is greyed out.
+- **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug card), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
+- **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
 - **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
@@ -512,7 +512,7 @@ Which component uses which keys:
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
 - **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
-- **[Minigame panel](/docs/react/components#minigamepanel)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
+- **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
 - **[Devices](/docs/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
@@ -525,7 +525,7 @@ Everything else on screen comes from the view, in the game's own words: titles, 
 
 In code, [`UI_STRINGS`](/docs/react/components#ui_strings) is this table in English, [`uiSay`](/docs/react/components#uisay) reads a word for a game, and [`useWords`](/docs/react/components#usewords) does the same inside a component.
 
-**Gotcha.** The debug panel's placeholders (`stat`, `value` and the rest) are always in English and aren't in the table. The panel is a tool for the person building the game, not for the player.
+**Gotcha.** The debug card's placeholders (`stat`, `value` and the rest) are always in English and aren't in the table. The card is a tool for the person building the game, not for the player.
 
 ## Next
 

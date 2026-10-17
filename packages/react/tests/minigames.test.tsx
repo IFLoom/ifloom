@@ -243,7 +243,7 @@ describe('the minigame panel', () => {
       const { minigame } = useGame().view
       return <p>Playing {minigame?.title}</p>
     }
-    render(<GameShell runner={runner} components={{ MinigamePanel: Plain }} />)
+    render(<GameShell runner={runner} components={{ MinigameCard: Plain }} />)
     click(/Join in/)
     expect(screen.getByText('Playing Catch the ball')).toBeTruthy()
   })

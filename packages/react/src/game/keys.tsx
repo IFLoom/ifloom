@@ -2,7 +2,7 @@
  * Keyboard shortcuts for the game, off unless the game turns them on with
  * `keys`: the number keys pick the choices or actions on screen, Escape opens
  * the in-game menu, and a game can add keys of its own. A minigame's keys are
- * the minigame panel's, and work whether this is on or not.
+ * the minigame card's, and work whether this is on or not.
  */
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import type { Command, RenderedChoice, View } from '@ifloom/engine'

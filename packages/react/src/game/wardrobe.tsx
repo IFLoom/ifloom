@@ -10,7 +10,7 @@ type WardrobeData = {
   spare: { id: string; name: string; slot: string }[]
 }
 
-function WardrobePanelImpl({ className }: { className?: string }) {
+function WardrobeCardImpl({ className }: { className?: string }) {
   const { view, runner, send } = useGame()
   const words = useWords()
   const section = usePart('wardrobe', 'flex flex-col gap-2 text-sm', className)
@@ -51,4 +51,4 @@ function WardrobePanelImpl({ className }: { className?: string }) {
  * button is greyed out with the engine's own reason when it can't be done.
  * Draws nothing in a game without the wardrobe plugin.
  */
-export const WardrobePanel = overridable('WardrobePanel', WardrobePanelImpl)
+export const WardrobeCard = overridable('WardrobeCard', WardrobeCardImpl)

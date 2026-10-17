@@ -58,7 +58,7 @@ function parse(value: string): string | number | boolean {
   return value.trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : value
 }
 
-function DebugPanelImpl({ className }: { className?: string }) {
+function DebugCardImpl({ className }: { className?: string }) {
   const { runner, view, send } = useGame()
   const words = useWords()
   const panel = usePart('debug', 'flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)
@@ -156,9 +156,9 @@ function DebugPanelImpl({ className }: { className?: string }) {
 }
 
 /**
- * The debug panel, for a game built with `@ifloom/plugin-debug`: set things by
+ * The debug card, for a game built with `@ifloom/plugin-debug`: set things by
  * hand, see the locks that are on and every greyed-out button's reason, read
  * the state and the command log, step back and forward. Draws nothing in a
  * game built without the plugin.
  */
-export const DebugPanel = overridable('DebugPanel', DebugPanelImpl)
+export const DebugCard = overridable('DebugCard', DebugCardImpl)

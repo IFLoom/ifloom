@@ -14,13 +14,13 @@ import {
   GameShell, GameProvider, useGame, Frame, Icon,
   DEFAULT_LAYOUT, READING_LAYOUT, Parts, Title, Actions,
   SceneStage, Beat, InlineAction, Tip, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
-  Sidebar, Clock, StatList, EntityTable, LocationPanel, PeoplePanel, Inventory, WardrobePanel,
+  Sidebar, Clock, StatList, EntityTable, LocationCard, PeopleCard, Inventory, WardrobeCard,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
   TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, usePage, useSetting, useProfile,
-  Notices, NoticeStrip, QuestLog, MinigamePanel, useMinigame,
+  Notices, NoticeStrip, QuestLog, MinigameCard, useMinigame,
   DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
-  MessagesSection, FeedSection, DebugPanel,
+  MessagesSection, FeedSection, DebugCard,
   useAudio,
   UI_STRINGS, uiSay, useWords,
   PART_KEYS, UiProvider, usePart, overridable,
@@ -300,7 +300,7 @@ mountGame(game, {
 
 The keys never fire while the player is typing in an input, a textarea or a select, while Ctrl, Alt, Meta or Shift is held, or while a dialog is open. A number key presses the button that's drawn with that number, so it works with any layout that draws the choices with [`ChoiceButton`](#choicebutton), and does nothing on the title page.
 
-While a [minigame](#minigamepanel) runs, its own keys come first, and they work whether `keys` is on or not.
+While a [minigame](#minigamecard) runs, its own keys come first, and they work whether `keys` is on or not.
 
 **Gotcha.** Like `panels`, define `keys` once outside your component. A new `map` object on each render re-registers the listener every time.
 
@@ -314,7 +314,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationPanel`, `PeoplePanel`, `Actions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigamePanel`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobePanel`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugPanel`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Frame`, `Sidebar`, `Title`, `Clock`, `StatList`, `LocationCard`, `PeopleCard`, `Actions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -444,7 +444,7 @@ One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` 
 function SceneStage(props: { className?: string }): JSX.Element
 ```
 
-The main panel. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
+The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
 
 From top to bottom, it draws:
 
@@ -454,7 +454,7 @@ From top to bottom, it draws:
 - each [`Beat`](#beat) of the body, with the beats after each [reveal](/docs/reference/transitions#reveals) in a `reveal` part that waits for it;
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
-While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigamePanel`](#minigamepanel). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
+While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
 The `<article>` carries `data-scene` with the scene's id, or `stage` when no scene is open.
 
@@ -624,7 +624,7 @@ Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video
 function Stage(props: { stage: StageView; className?: string }): JSX.Element
 ```
 
-A layered picture with hotspots, from a [`StageView`](/docs/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationPanel`](#locationpanel) draws a place's `location.stage`.
+A layered picture with hotspots, from a [`StageView`](/docs/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationCard`](#locationcard) draws a place's `location.stage`.
 
 ```tsx
 import { Stage, useGame } from '@ifloom/react'
@@ -762,7 +762,7 @@ type SidebarProps = { className?: string; parts?: readonly Part[] }
 
 The side column: an `<aside>` carrying `data-part="sidebar"` and `data-sidebar`, with its `parts` drawn by [`Parts`](#parts). [`GameShell`](#gameshell) draws its side column with it, passing the layout's `sidebar` list. Use it on its own in a page of your own.
 
-If you leave out `parts`, you get [`DEFAULT_LAYOUT`](#default_layout)`.sidebar`: [`Title`](#title), [`StatList`](#statlist), [`EntityTable`](#entitytable), [`GameMenu`](#gamemenu), [`DeviceButtons`](#devicebuttons), a [`Separator`](#separator), [`LocationPanel`](#locationpanel), [`PeoplePanel`](#peoplepanel), [`Actions`](#actions), [`Inventory`](#inventory) and [`WardrobePanel`](#wardrobepanel).
+If you leave out `parts`, you get [`DEFAULT_LAYOUT`](#default_layout)`.sidebar`: [`Title`](#title), [`StatList`](#statlist), [`EntityTable`](#entitytable), [`GameMenu`](#gamemenu), [`DeviceButtons`](#devicebuttons), a [`Separator`](#separator), [`LocationCard`](#locationcard), [`PeopleCard`](#peoplecard), [`Actions`](#actions), [`Inventory`](#inventory) and [`WardrobeCard`](#wardrobecard).
 
 ```tsx
 import { Sidebar } from '@ifloom/react'
@@ -852,10 +852,10 @@ import { EntityTable } from '@ifloom/react'
 
 Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name` and `entity-value`.
 
-### LocationPanel
+### LocationCard
 
 ```tsx
-function LocationPanel(): JSX.Element | null
+function LocationCard(): JSX.Element | null
 ```
 
 Where the player is, with its name and tag, and an outline button for each exit. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), by its shape, without importing the plugin. Each button sends the exit's own [`command`](/docs/plugins/places#exitview) and carries `data-exit`. An exit the player can't take is greyed out.
@@ -866,17 +866,17 @@ It draws nothing in a game without the places plugin, or while the plugin's `loc
 
 **Gotcha.** An exit's reason, or its warning, is in the button's `title` and shows on hover. It isn't printed on the button as a choice's is. An exit that a lock hides isn't in the view at all.
 
-Replaceable as `LocationPanel` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `exits` and `exit` (with `data-exit`).
+Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `exits` and `exit` (with `data-exit`).
 
-### PeoplePanel
+### PeopleCard
 
 ```tsx
-function PeoplePanel(): JSX.Element | null
+function PeopleCard(): JSX.Element | null
 ```
 
 Who is here, read by its shape from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and role (when they have them) and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
 
-Replaceable as `PeoplePanel` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
+Replaceable as `PeopleCard` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
 
 ### Inventory
 
@@ -897,10 +897,10 @@ import { Inventory } from '@ifloom/react'
 
 Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `item` (with `data-item`), `item-name`, `item-count` and `item-text`.
 
-### WardrobePanel
+### WardrobeCard
 
 ```tsx
-function WardrobePanel(props: { className?: string }): JSX.Element | null
+function WardrobeCard(props: { className?: string }): JSX.Element | null
 ```
 
 The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare piece of clothing for that slot gets a **Wear …** button (`ui.wearItem`, with the item's name as `item`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
@@ -909,7 +909,7 @@ A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/a
 
 **Gotcha.** As with an exit, the reason is in the `title` and shows on hover. It isn't printed on the button.
 
-Replaceable as `WardrobePanel` in [`components`](#components). Parts: `wardrobe`, `wardrobe-title`, `wardrobe-slot` (with `data-slot-id`), `wardrobe-slot-name`, `wardrobe-worn` and `button`.
+Replaceable as `WardrobeCard` in [`components`](#components). Parts: `wardrobe`, `wardrobe-title`, `wardrobe-slot` (with `data-slot-id`), `wardrobe-slot-name`, `wardrobe-worn` and `button`.
 
 ## Inputs
 
@@ -1422,10 +1422,10 @@ Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-stri
 
 ## Minigames
 
-### MinigamePanel
+### MinigameCard
 
 ```tsx
-function MinigamePanel(props: { className?: string }): JSX.Element | null
+function MinigameCard(props: { className?: string }): JSX.Element | null
 ```
 
 The [minigame](/docs/reference/minigames) being played, from [`view.minigame`](/docs/reference/minigames#minigameview). [`SceneStage`](#scenestage) draws it in place of the scene while one runs. From top to bottom, it shows:
@@ -1442,14 +1442,14 @@ The `<section>` carries `data-minigame` with the minigame's id and `data-state` 
 There are two ways to draw a minigame your own way:
 
 - **One minigame.** Put a component in `panels` under the minigame's id. [`SceneStage`](#scenestage) draws it instead, given the [`MinigameView`](/docs/reference/minigames#minigameview) as `data`, and runs the clock for it. Call `useMinigame()` in it for `send`.
-- **Every minigame.** Replace `MinigamePanel` in [`components`](#components).
+- **Every minigame.** Replace `MinigameCard` in [`components`](#components).
 
 ```tsx
 import { GameShell, type Components, type PanelComponent } from '@ifloom/react'
 
 const Coconuts: PanelComponent = () => <CoconutShy />   // just the coconut shy
 const components: Components = {
-  MinigamePanel: ({ Default }) => <div className="rounded-xl border-4 p-4"><Default /></div>,  // every other minigame
+  MinigameCard: ({ Default }) => <div className="rounded-xl border-4 p-4"><Default /></div>,  // every other minigame
 }
 
 <GameShell runner={runner} panels={{ coconut: Coconuts }} components={components} />
@@ -1457,7 +1457,7 @@ const components: Components = {
 
 The [Minigames guide](/docs/guide/minigames#your-own-panel) builds a panel of your own.
 
-Replaceable as `MinigamePanel` in [`components`](#components). Parts: `minigame` (with `data-minigame` and `data-state`), `minigame-title`, `minigame-state`, `minigame-timer`, `minigame-inputs` and `minigame-input` (with `data-input`).
+Replaceable as `MinigameCard` in [`components`](#components). Parts: `minigame` (with `data-minigame` and `data-state`), `minigame-title`, `minigame-state`, `minigame-timer`, `minigame-inputs` and `minigame-input` (with `data-input`).
 
 ### useMinigame
 
@@ -1470,7 +1470,7 @@ type MinigameControls = {
 }
 ```
 
-The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/docs/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigamePanel`](#minigamepanel) does. Only inside a [`GameProvider`](#gameprovider).
+The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/docs/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigameCard`](#minigamecard) does. Only inside a [`GameProvider`](#gameprovider).
 
 While any component that calls it is on screen, it runs the minigame's clock. Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`), it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when the minigame ends or its state has no timer, and starts again when one does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
 
@@ -1508,10 +1508,10 @@ The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest
 
 Replaceable as `QuestLog` in [`components`](#components). Parts: `quests`, `quests-title`, `quest` (with `data-quest`), `quest-title`, `quest-summary`, `quest-hint`, `quest-stage`, `quests-done`, `quest-done`, `badge` and `button`.
 
-### DebugPanel
+### DebugCard
 
 ```tsx
-function DebugPanel(props: { className?: string }): JSX.Element | null
+function DebugCard(props: { className?: string }): JSX.Element | null
 ```
 
 A panel for the person testing the game, when the game has the [debug plugin](/docs/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/plugins/debug#leave-it-out-of-release-builds) shows no panel.
@@ -1532,7 +1532,7 @@ The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Item**, **Stat of
 - **The placeholders are in English.** Each form's placeholders (`stat`, `value`, `key` and the rest) aren't in the strings table.
 - **A number box needs a number.** An empty box, or words that aren't a number, are refused with `debug/notANumber` rather than set to 0.
 
-Replaceable as `DebugPanel` in [`components`](#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
+Replaceable as `DebugCard` in [`components`](#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
 
 ## Devices
 

@@ -171,7 +171,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 
 ### The scene
 
-`scene` is what fills the main panel. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, frame `'stage'`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks go through the same [renderer](/docs/reference/scenes#renderscene) as a data scene, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
+`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, frame `'stage'`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks go through the same [renderer](/docs/reference/scenes#renderscene) as a data scene, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -264,7 +264,7 @@ if (game) {
 }
 ```
 
-While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` isn't `null`. The React UI draws it with [`MinigamePanel`](/docs/react/components#minigamepanel) and runs the clock for you.
+While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` isn't `null`. The React UI draws it with [`MinigameCard`](/docs/react/components#minigamecard) and runs the clock for you.
 
 ### audio
 

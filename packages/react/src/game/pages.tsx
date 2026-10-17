@@ -10,7 +10,7 @@ import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
-import { useSaves } from './saves.tsx'
+import { BrokenSlot, useSaves } from './saves.tsx'
 import { useWords } from './words.ts'
 
 /** A page by name: a built-in one, or the id of one in `PagesOptions.pages`. */
@@ -413,7 +413,7 @@ function LoadPageImpl({ className }: { className?: string }) {
     <section {...section} data-page="load">
       <Heading>{words('load')}</Heading>
       {saves.message ? <p {...said}>{saves.message}</p> : null}
-      {sorted.length ? (
+      {sorted.length || saves.broken.length ? (
         <ul {...list}>
           {sorted.map((meta) => (
             <li key={meta.slot} {...slot} data-save-slot={meta.slot}>
@@ -425,6 +425,9 @@ function LoadPageImpl({ className }: { className?: string }) {
                 {words('load')}
               </button>
             </li>
+          ))}
+          {saves.broken.map((save) => (
+            <BrokenSlot key={save.slot} save={save} onRemove={(slot) => void saves.remove(slot)} />
           ))}
         </ul>
       ) : (
@@ -441,7 +444,7 @@ function LoadPageImpl({ className }: { className?: string }) {
   )
 }
 
-/** The load page: every save, newest first, to load; and importing a save file. Needs the runner made with `saves`. */
+/** The load page: every save, newest first, to load; any that can't be read, to delete; and importing a save file. Needs the runner made with `saves`. */
 export const LoadPage = overridable('LoadPage', LoadPageImpl)
 
 function CreditsPageImpl({ className }: { className?: string }) {

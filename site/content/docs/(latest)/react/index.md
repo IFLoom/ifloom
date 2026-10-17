@@ -453,6 +453,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.exportSave` | `Export` | |
 | `ui.importSave` | `Import a save file` | |
 | `ui.noSaves` | `No saves yet.` | |
+| `ui.brokenSave` | `A save that can’t be read` | |
 | `ui.missingPacks` | `This save was made with packs this game doesn’t have: {packs}.` | `packs` |
 | `ui.missingPlugins` | `This save was made with plugins this game doesn’t have: {plugins}.` | `plugins` |
 | `ui.backlog` | `Backlog` | |
@@ -519,7 +520,7 @@ Which component uses which keys:
 - **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
 - **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.applyMods`, plus `ui.remove` from the saves menu for its **Delete** button.
 - **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`.
-- **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves` and `ui.importSave`.
+- **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/docs/reference/strings) and its plugins' strings.
 

@@ -1,4 +1,4 @@
-import type { LoadedSave, SaveMeta } from '@ifloom/engine'
+import type { BrokenSave, LoadedSave, SaveMeta } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -9,8 +9,10 @@ import { useWords } from './words.ts'
 export type SavesState = {
   /** False when the runner was made without `saves`: there is nothing to list. */
   available: boolean
-  /** Every slot, as the store lists them. */
+  /** Every save that can be read, newest first. */
   slots: SaveMeta[]
+  /** Saves that are there but can't be read, with why. They can only be deleted. */
+  broken: BrokenSave[]
   /** Read the slots again. */
   refresh: () => Promise<void>
   /** Save in a new slot (the next free number), with the player's `name` for it if given. */
@@ -40,10 +42,14 @@ export type SavesState = {
 export function useSaves(): SavesState {
   const { runner, view } = useGame()
   const store = runner.saves
-  const [slots, setSlots] = useState<SaveMeta[]>([])
+  const [listed, setListed] = useState<{ slots: SaveMeta[]; broken: BrokenSave[] }>({ slots: [], broken: [] })
+  const { slots, broken } = listed
   const [message, setMessage] = useState<string | null>(null)
   const [missing, setMissing] = useState<{ packs: string[]; plugins: string[] }>({ packs: [], plugins: [] })
-  const refresh = useCallback(async () => setSlots(store ? await store.list() : []), [store])
+  const refresh = useCallback(async () => {
+    const all = store ? await store.list() : []
+    setListed({ slots: all.filter((entry): entry is SaveMeta => !('broken' in entry)), broken: all.filter((entry): entry is BrokenSave => 'broken' in entry) })
+  }, [store])
   useEffect(() => {
     void refresh()
   }, [refresh, view])
@@ -61,6 +67,7 @@ export function useSaves(): SavesState {
   return {
     available: Boolean(store),
     slots,
+    broken,
     refresh,
     async save(name) {
       await runner.save(next, name)
@@ -156,7 +163,7 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
         </label>
       </div>
       {notes.length ? <p {...said}>{notes.join(' ')}</p> : null}
-      {saves.slots.length ? (
+      {saves.slots.length || saves.broken.length ? (
         <ul className="flex flex-col gap-2">
           {saves.slots.map((meta) => (
             <li key={meta.slot} {...slot} data-save-slot={meta.slot}>
@@ -178,6 +185,9 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
               </button>
             </li>
           ))}
+          {saves.broken.map((save) => (
+            <BrokenSlot key={save.slot} save={save} onRemove={(slot) => void saves.remove(slot)} />
+          ))}
         </ul>
       ) : (
         <p {...empty}>{words('noSaves')}</p>
@@ -186,9 +196,29 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
   )
 }
 
+/** A save that can't be read: what's wrong with it, and a button to delete it. */
+export function BrokenSlot({ save, onRemove }: { save: BrokenSave; onRemove: (slot: string) => void }) {
+  const words = useWords()
+  const slot = usePart('save-slot', 'flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-2')
+  const name = usePart('save-name', 'font-medium')
+  const details = usePart('save-details', 'text-xs text-muted-foreground')
+  const ghostButton = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
+  return (
+    <li {...slot} data-save-slot={save.slot} data-broken>
+      <div className="flex-1">
+        <p {...name}>{words('brokenSave')}</p>
+        <p {...details}>{save.broken}</p>
+      </div>
+      <button {...ghostButton} onClick={() => onRemove(save.slot)}>
+        {words('remove')}
+      </button>
+    </li>
+  )
+}
+
 /**
  * The save and load menu: every slot newest first, to load, overwrite, delete
- * or export as a file; a new slot; and importing a file a player kept. Needs
+ * or export as a file; a save that can't be read, to delete; a new slot; and importing a file a player kept. Needs
  * the runner made with `saves`. Says plainly when a save was made with packs or
  * plugins this game doesn't have. `useSaves` is the same without the look.
  */

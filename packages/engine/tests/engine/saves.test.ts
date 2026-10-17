@@ -52,9 +52,24 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     const store = saves(game, driver())
     await store.write('a', startingState(game), { savedAt: 1 })
     await store.write('b', startingState(game), { savedAt: 2, name: 'Before the market' })
-    expect((await store.list()).map((meta) => meta.name)).toEqual(['Before the market', expect.any(String)])
+    expect((await store.list()).map((meta) => ('name' in meta ? meta.name : meta.broken))).toEqual(['Before the market', expect.any(String)])
     await store.remove('b')
     expect((await store.list()).map((meta) => meta.slot)).toEqual(['a'])
+  })
+
+  it('lists a save it can’t read last, marked broken, so it can be deleted', async () => {
+    const { game } = withCafe()
+    const store = saves(game, driver())
+    await store.write('2', startingState(game), { savedAt: 1 })
+    await store.driver.set(`${game.id}.save.1`, '{ half a save')
+    await store.driver.set(`${game.id}.save.9`, JSON.stringify({ ifloom: 1, meta: { game: game.id }, state: { version: 999 } }))
+    expect(await store.list()).toEqual([
+      expect.objectContaining({ slot: '2', savedAt: 1 }),
+      { slot: '1', broken: 'That is not a save file.' },
+      { slot: '9', broken: 'That save is from a version this game cannot read.' },
+    ])
+    await store.remove('1')
+    expect((await store.list()).map((entry) => entry.slot)).toEqual(['2', '9'])
   })
 })
 

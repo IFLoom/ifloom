@@ -991,7 +991,7 @@ The save and load screen, over [`runner.saves`](/docs/reference/runner#the-runne
 
 - **Save in a new slot** (`ui.saveNew`) writes the next numbered slot. That's one more than the highest slot named with a number, so `1`, `2`, `3`.
 - **Import a save file** (`ui.importSave`) reads a `.json` file through [`importText`](/docs/reference/saves#saves) and plays on from it with [`runner.restore`](/docs/reference/runner#the-runners-members).
-- Every slot is listed newest first (`data-save-slot`), with its name and when it was saved. Each has buttons to **Load** it (`ui.load`), **Save** over it (`ui.save`), **Export** it (`ui.exportSave`) and **Delete** it (`ui.remove`). Export downloads a file named `<game>-<slot>.json`. With no slots, it shows `ui.noSaves`.
+- Every slot is listed newest first (`data-save-slot`), with its name and when it was saved. Each has buttons to **Load** it (`ui.load`), **Save** over it (`ui.save`), **Export** it (`ui.exportSave`) and **Delete** it (`ui.remove`). Export downloads a file named `<game>-<slot>.json`. A save that can't be read is listed last, marked `data-broken`, as `ui.brokenSave` with the reason and a **Delete** button. With no slots, it shows `ui.noSaves`.
 
 If a save can't be read, the menu shows why. A save made with packs or plugins this game doesn't have still loads, with a line naming them (`ui.missingPacks`, `ui.missingPlugins`). `onLoaded` is called after a load or an import. The menu carries `data-saves`. It draws nothing when the runner has no `saves`.
 
@@ -1024,6 +1024,7 @@ function useSaves(): SavesState
 type SavesState = {
   available: boolean
   slots: SaveMeta[]
+  broken: BrokenSave[]
   refresh: () => Promise<void>
   save: (name?: string) => Promise<void>
   overwrite: (slot: string) => Promise<void>
@@ -1042,7 +1043,8 @@ The [`SavesMenu`](#savesmenu) without its look: the slots, and everything the me
 | Field | What it is |
 |---|---|
 | `available` | `false` when the runner was made without `saves`. Everything else then does nothing. |
-| `slots` | Every slot, as the store lists them, as [`SaveMeta`](/docs/reference/saves#savemeta). Read again whenever the view changes. |
+| `slots` | Every save that can be read, newest first, as [`SaveMeta`](/docs/reference/saves#savemeta). Read again whenever the view changes. |
+| `broken` | Saves that are there but can't be read, as [`BrokenSave`](/docs/reference/saves#savelisting)s with why. They can only be deleted, with `remove`. |
 | `refresh` | Reads the slots again. |
 | `save` | Saves in a new slot, the next free number, with `name` if you give one. |
 | `overwrite` | Saves over a slot, with the default name. |
@@ -1287,7 +1289,7 @@ Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-p
 function LoadPage(props: { className?: string }): JSX.Element
 ```
 
-Every save, newest first, each with a Load button, and a button to import a save file. Loading or importing goes to the game. It's built on [`useSaves`](#usesaves), and unlike [`SavesMenu`](#savesmenu) it can't save, since there may be no game in play to save.
+Every save, newest first, each with a Load button, any that can't be read with a Delete button, and a button to import a save file. Loading or importing goes to the game. It's built on [`useSaves`](#usesaves), and unlike [`SavesMenu`](#savesmenu) it can't save, since there may be no game in play to save.
 
 Replaceable as `LoadPage` in [`components`](#components). Parts: `load-page`, `page-heading`, `saves`, `save-slot`, `save-name`, `save-details`, `saves-message`, `saves-empty`, `file-button`, `button` and `page-back`.
 

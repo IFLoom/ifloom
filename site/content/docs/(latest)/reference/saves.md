@@ -13,7 +13,7 @@ Saving has two parts:
 import {
   saves, memoryDriver, localStorageDriver, indexedDbDriver,
   loadState, SAVE_VERSION,
-  type Saves, type SaveDriver, type SaveFile, type SaveMeta, type LoadedSave,
+  type Saves, type SaveDriver, type SaveFile, type SaveMeta, type LoadedSave, type SaveListing, type BrokenSave,
   type StorageLike, type IndexedDbLike,
 } from '@ifloom/engine'
 
@@ -155,15 +155,16 @@ Slots are names your game picks, such as `'auto'` for the runner's autosave, `'q
 | `driver` | The driver it was given. |
 | `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is `{ name?, played?, savedAt? }`. |
 | `read(slot)` | The slot read back as a [`LoadedSave`](#loadedsave). `null` if the slot is empty, or a string saying why if it couldn't be read. |
-| `list()` | The `SaveMeta` of every readable save this game has, newest first by `savedAt`. Unreadable ones are left out. |
+| `list()` | Every save this game has, as [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |
 | `remove(slot)` | Empties a slot. |
 | `exportSlot(slot)` | The save as text, for the player to keep as a file. `null` if the slot is empty. |
 | `importText(text)` | Reads text from a file the player picked, with the same checks as `read`. Synchronous, and writes nothing. |
 
 ```ts
-// A load screen.
-for (const meta of await store.list()) {
-  addRow(meta.name, new Date(meta.savedAt), meta.played)
+// A load screen. A save that can't be read can still be deleted.
+for (const entry of await store.list()) {
+  if ('broken' in entry) addBrokenRow(entry.broken, () => store.remove(entry.slot))
+  else addRow(entry.name, new Date(entry.savedAt), entry.played)
 }
 
 // The player's own copy, and back again.
@@ -209,6 +210,15 @@ type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 ```
 
 A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and the state. This is the text `exportSlot` returns.
+
+## SaveListing
+
+```ts
+type SaveListing = SaveMeta | BrokenSave
+type BrokenSave = { slot: string; broken: string }
+```
+
+One entry of [`list()`](#saves). A save that's there but can't be read, because it isn't valid JSON, belongs to another game or is from a newer engine, is a `BrokenSave`: its slot, and why, in the words `read` gives. List it so the player can delete it with `remove(slot)`. Tell the two apart with `'broken' in entry`.
 
 ## SaveMeta
 

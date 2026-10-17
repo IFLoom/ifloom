@@ -108,6 +108,22 @@ describe('the pages', () => {
     expect(next.state.kv.readBefore).toBe(true)
   })
 
+  it('lists a save that can’t be read on the load page, and deletes it', async () => {
+    const driver = memoryDriver()
+    await driver.set('letter.save.3', '{ half a save')
+    play(true, driver)
+    await screen.findByText('The Letter')
+    // A broken save is never the one Continue loads.
+    expect(titleButton('continue')).toBeNull()
+    await act(async () => fireEvent.click(titleButton('load')!))
+    const broken = await waitFor(() => document.querySelector('[data-save-slot="3"][data-broken]') as HTMLElement)
+    expect(broken.textContent).toContain('A save that can’t be read')
+    expect(broken.textContent).toContain('That is not a save file.')
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Delete' })))
+    await waitFor(() => expect(document.querySelector('[data-save-slot="3"]')).toBeNull())
+    expect(await driver.get('letter.save.3')).toBeNull()
+  })
+
   it('stores a play setting changed before a game, and the next new game uses it', async () => {
     const { runner } = play()
     fireEvent.click(await screen.findByText('Settings'))

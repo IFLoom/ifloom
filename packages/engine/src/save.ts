@@ -32,6 +32,15 @@ export type SaveMeta = {
   gameVersion: number
 }
 
+/**
+ * A save that is there but can't be read, as `list()` gives it: its slot, and
+ * why, in the words `read` would give. Listed so the player can delete it.
+ */
+export type BrokenSave = { slot: string; broken: string }
+
+/** One entry of a game's saves, as `list()` gives them: a save's meta, or a save that can't be read. */
+export type SaveListing = SaveMeta | BrokenSave
+
 /** A save as it is written: the state, and what it says about itself. */
 export type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 
@@ -118,15 +127,22 @@ export function saves(game: Game, driver: SaveDriver) {
       const text = await driver.get(key(slot))
       return text === null ? null : read(text)
     },
-    /** Every save this game has, newest first. Unreadable ones are left out. */
-    async list(): Promise<SaveMeta[]> {
+    /**
+     * Every save this game has, newest first, then any that can't be read, as
+     * `{ slot, broken }` with the reason, by slot. Tell them apart with
+     * `'broken' in entry`; a broken one can still be removed.
+     */
+    async list(): Promise<SaveListing[]> {
       const out: SaveMeta[] = []
+      const broken: BrokenSave[] = []
       for (const k of await driver.keys(prefix)) {
         const text = await driver.get(k)
-        const loaded = text === null ? null : read(text)
-        if (loaded && typeof loaded !== 'string') out.push(loaded.meta)
+        if (text === null) continue
+        const loaded = read(text)
+        if (typeof loaded === 'string') broken.push({ slot: k.slice(prefix.length), broken: loaded })
+        else out.push(loaded.meta)
       }
-      return out.sort((a, b) => b.savedAt - a.savedAt)
+      return [...out.sort((a, b) => b.savedAt - a.savedAt), ...broken.sort((a, b) => a.slot.localeCompare(b.slot))]
     },
     async remove(slot: string): Promise<void> {
       await driver.remove(key(slot))

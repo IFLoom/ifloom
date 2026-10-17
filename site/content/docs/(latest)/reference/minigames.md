@@ -99,13 +99,13 @@ No more than 1,000 transitions are taken in one command. That keeps a timer with
 
 ### Its variables
 
-A minigame keeps its own numbers in `vars`, such as a score, a round or a streak. Transitions change them with the [`minigameVar` effect](/docs/reference/effects#minigamevar), which sets a value, adds to it or draws a whole number at random. Conditions read them with [`{ minigameVar }`](/docs/reference/conditions#minigamevar), which works like `{ flag }` with a range. They're gone when the minigame ends, unless the final state's `copy` writes them to game variables.
+A minigame keeps its own numbers in `vars`, such as a score, a round or a streak. Transitions change them with the [`minigameVar` effect](/docs/reference/effects#minigamevar), which sets a value, adds to it or draws a whole number at random. Conditions read them with [`{ minigameVar }`](/docs/reference/conditions#minigamevar), which works like `{ kv }` with a range. They're gone when the minigame ends, unless the final state's `copy` writes them to the [kv store](/docs/reference/state#kv).
 
 Every variable a minigame uses has to be declared in its `vars`, and the checker reports one that isn't.
 
 ### Randomness
 
-A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in a variable `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
+A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in the kv key `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
 
 ### In the runner
 

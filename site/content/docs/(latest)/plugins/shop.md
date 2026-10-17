@@ -341,11 +341,11 @@ A command that names a vendor or item the game doesn't have gives `unknown vendo
 
 ## Gotchas
 
-- **The calendar's `hours` and the places map's opening hours are separate.** A location's [`blocked`](/docs/plugins/places#locationdef) stops the player getting in; a vendor's `hours` stops it selling. The showcase sets both, so the café and its counter close together.
+- **The calendar's `hours` and the places map's opening hours are separate.** A location's [`blocked`](/docs/plugins/places#locationdef) stops the player getting in, and a vendor's `hours` stops it selling. The showcase sets both, so the café and its counter close together.
 - **A vendor's `hours` are asked of the calendar.** They're period ids, not a condition. For days of the week, add `open: weekday(…)`.
 - **The price on a button is today's.** A discount drawn for today changes the price on the button, and tomorrow it may be back to full.
 - **Selling back pays from the full price,** not today's discounted one.
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café's **Go to the counter** action opens it with `openShop('counter')`, and the counter also sells the newspaper whose job ads open the jobs panel.
+Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café's "Go to the counter" action opens it with `openShop('counter')`, and the counter also sells the newspaper whose job ads open the jobs panel.

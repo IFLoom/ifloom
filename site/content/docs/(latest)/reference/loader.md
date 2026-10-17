@@ -8,7 +8,7 @@ description: "Packs and loadGame: what a pack can hold, how packs merge, patches
 import { loadGame, SCHEMA, upgradePack, type Pack, type Patch, type Loaded } from '@ifloom/engine'
 ```
 
-Your game's own content is simply the first pack. Any later pack, such as a mod, is laid over it by id. This page covers the merge and which pack a problem is pinned on. The checks themselves are on [Checking content](/docs/reference/checks). [Mods](/docs/reference/mods) covers the other half: the packs a player installs into a built game, the file they come in, the store that keeps them and how the game loads them at start-up.
+Your game's own content is the first pack. Any later pack, such as a mod, is laid over it by id. This page covers the merge and which pack a problem is pinned on. The checks themselves are on [Checking content](/docs/reference/checks). [Mods](/docs/reference/mods) covers the other half: the packs a player installs into a built game, the file they come in, the store that keeps them and how the game loads them at start-up.
 
 ## Pack
 
@@ -54,11 +54,11 @@ type Pack = {
 | `audio` | [Audio](/docs/reference/audio#gameaudio), over the base's own `audio`. `tracks` merge by id, and a later pack's track replaces an earlier one. `channels` merge by id too, field by field. A later pack's `mute` wins, and its `default` wins channel by channel. |
 | `media` | [Media](/docs/reference/media#gamemedia), over the base's own `media`. `pools` merge by id, and a later pack's pool replaces an earlier one with the same id as a whole. To add a file to a pool, a mod redeclares the pool with every file. |
 
-Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `transitions`. A pack that has one of them anyway loads without it, and the loader doesn't say so. TypeScript does, because they aren't in the `Pack` type, so type-check your packs.
+Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `transitions`. A pack that has one of them anyway loads without it, with the problem `a pack has no "…", so it was left out`. TypeScript catches it sooner, because they aren't in the `Pack` type, so type-check your packs.
 
 ### How packs merge
 
-Everything a pack declares is keyed, whether by id, prose key, variants name or custom function name, and a later pack wins on any key it repeats. So a mod that changes one custom condition ships just that one:
+Everything a pack declares is keyed, whether by id, prose key, variants name or custom function name, and a later pack wins on any key it repeats. So a mod that changes one custom condition ships only that one:
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -80,7 +80,7 @@ const SCHEMA = 12
 
 The content format this engine reads. Write `schema: SCHEMA` in your own packs so they always match.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 12, this engine reads 11`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 13, this engine reads 12`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -108,7 +108,7 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 | When | Returns |
 |---|---|
 | `schema` is newer than `SCHEMA` | `written for schema 13, this engine reads 12` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 11)` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 12)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 

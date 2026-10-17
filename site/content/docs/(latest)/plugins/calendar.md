@@ -8,7 +8,7 @@ You'd want it when time matters to the story: shops with opening hours, people w
 
 The engine's only clock is the turn, `state.turn`, and it dates everything in turns. It has no days, periods or weekdays of its own. The calendar keeps a day and a period of its own, moves them on whenever a turn ends, and ends turns itself when content passes time with `calendar/pass`.
 
-Here's where each time-related part of a game comes from:
+These are the parts of a game that deal with time, and where each one comes from:
 
 - **Time passing** is the [`calendar/pass`](#effects) effect, on an activity or a choice.
 - **Bed** is the [`sleep()`](#commands) command, usually on a room's action.
@@ -216,7 +216,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-Here's how it plays. `button` finds an idle-screen button by id, and `walk` takes several exits in turn:
+Played through, the Monday goes like this. `button` finds an idle-screen button by id, and `walk` takes several exits in turn:
 
 ```ts
 let state: GameState = startingState(game)

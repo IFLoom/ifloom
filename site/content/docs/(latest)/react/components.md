@@ -105,9 +105,9 @@ function DefaultLayout(): JSX.Element
 The React UI's own layout, which a `GameShell` with no `layout` draws, and which the react and next templates copy into `src/layout.tsx`:
 
 - **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock) and the [`GameMenu`](#gamemenu), then these [sections](#section), each titled with a UI word:
-  - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist) and the [`StatusList`](#statuslist);
-  - `quests` (`ui.quests`), a dialog with the [`QuestLog`](#questlog) and a badge counting the quests with news;
-  - `people` (`ui.people`), a dialog with [`Relationships`](#relationships);
+  - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist) and the [`StatusList`](#statuslist)
+  - `quests` (`ui.quests`), a dialog with the [`QuestLog`](#questlog) and a badge counting the quests with news
+  - `people` (`ui.people`), a dialog with [`Relationships`](#relationships)
   - `inventory` (`ui.inventory`) and `wardrobe` (`ui.wardrobe`), collapsible, with the [`Inventory`](#inventory) and the [`WardrobeCard`](#wardrobecard).
   Then the [`AchievementsButton`](#achievementsbutton), the [`CheatsButton`](#cheatsbutton) and the [`DeviceButtons`](#devicebuttons).
 - **A [`Story`](#story)** with the [`SceneStage`](#scenestage) and the [`InputFields`](#inputfields), then the bottom of the story: the [`LocationCard`](#locationcard), the [`Exits`](#exits), the [`RoomActions`](#roomactions) and [`PeopleHere`](#peoplehere). The [`DebugCard`](#debugcard) is last.
@@ -139,7 +139,7 @@ type SidebarProps = { className?: string; children?: ReactNode }
 
 The side column: an `<aside>` carrying `data-part="sidebar"` and `data-sidebar`, with its children in order.
 
-Below Tailwind's `md` breakpoint (48rem) it becomes a drawer. A slim `top-bar` holds the game's title, the [`Clock`](#clock) and a `drawer-button`, labelled with `ui.openSidebar`. The button opens the column as a `drawer`, a dialog from the left: focus stays inside it, Escape closes it, and so does the player picking something (the state moving on), unless a dialog it opened is still open on top, such as a phone. Window width is read with `matchMedia`; with none, as on the server, it's a column.
+Below Tailwind's `md` breakpoint (48rem) it becomes a drawer. A slim `top-bar` holds the game's title, the [`Clock`](#clock) and a `drawer-button`, labelled with `ui.openSidebar`. The button opens the column as a `drawer`, a dialog from the left: focus stays inside it, Escape closes it, and so does the player picking something (the state moving on), unless a dialog it opened is still open on top, such as a phone. Window width is read with `matchMedia`. Where there's none, as on the server, it's a column.
 
 Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`, `top-bar`, `top-bar-title`, `drawer-button`, `drawer` and `drawer-overlay`.
 
@@ -547,10 +547,10 @@ The main column. It shows the scene on screen, or the room when no scene is open
 
 From top to bottom, it draws:
 
-- the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`;
-- the title;
-- the scene's [`Stage`](#stage) when [`view.scene.stage`](/docs/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape;
-- each [`Beat`](#beat) of the body, with the beats after each [reveal](/docs/reference/transitions#reveals) in a `reveal` part that waits for it;
+- the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`
+- the title
+- the scene's [`Stage`](#stage) when [`view.scene.stage`](/docs/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape
+- each [`Beat`](#beat) of the body, with the beats after each [reveal](/docs/reference/transitions#reveals) in a `reveal` part that waits for it
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
@@ -707,8 +707,8 @@ It loads nothing until it scrolls into view. Until then it has `preload="none"`.
 
 **Sound.** A clip with `muted: false` follows the game's [audio settings](/docs/reference/audio), as the audio player does:
 
-- it's muted while the ui setting named by [`view.audio.muteSetting`](/docs/reference/audio#audioview) is on;
-- its volume is the volume setting of the game's `video` channel, if the game declares one, or else of its `sfx` channel, scaled from the setting's `min` to its `max`;
+- it's muted while the ui setting named by [`view.audio.muteSetting`](/docs/reference/audio#audioview) is on
+- its volume is the volume setting of the game's `video` channel, if the game declares one, or else of its `sfx` channel, scaled from the setting's `min` to its `max`
 - with neither setting, it plays at full volume.
 
 The values are read with [`useSetting`](#usesetting), so a change on the settings page applies at once.
@@ -809,11 +809,11 @@ function ChoiceButton(props: { choice: RenderedChoice; className?: string }): JS
 
 Draws a [`RenderedChoice`](/docs/reference/view#renderedchoice) as a full-width button that sends its `command`. It's used for a scene's choices, a room's actions and a person's buttons. The button shows:
 
-- the label;
-- a warning icon when the choice carries a `warning`, labelled with the warning for screen readers. A warning means the button can be pressed but the game would refuse it, as with the calendar's `That would run past dawn.`;
-- its price, as a [`PriceTag`](#pricetag);
-- its `irreversible` line, the warning that this can't be undone, in the destructive colour (`--destructive`);
-- the reason it's greyed out, when it is. The button is then disabled;
+- the label
+- a warning icon when the choice carries a `warning`, labelled with the warning for screen readers. A warning means the button can be pressed but the game would refuse it, as with the calendar's `That would run past dawn.`
+- its price, as a [`PriceTag`](#pricetag)
+- its `irreversible` line, the warning that this can't be undone, in the destructive colour (`--destructive`)
+- the reason it's greyed out, when it is. The button is then disabled
 - the warning text, when it isn't greyed out and carries a `warning`, so the player reads it before pressing.
 
 The button carries `data-choice` with the choice's id. With [`keys`](#keyoptions) on, a choice that a number key picks shows the number first, in a `<kbd>` hidden from screen readers, and the button carries `data-choice-key` and `aria-keyshortcuts` with it. A choice's `tags` aren't drawn. To style by them, write a component of your own.
@@ -939,7 +939,7 @@ The things the game keeps several of, from [`view.entities`](/docs/reference/vie
 
 The columns are every stat any row shows, in the order they first appear. A row that doesn't show a stat (because its `visible` doesn't hold for that entity) has a blank cell. Each section carries `data-kind` with the kind's id, and each row carries `data-entity` with its reference, such as `staff:ana`.
 
-`kinds` limits it to those kinds. Without it, every kind is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The default layout leaves it out; the café's layout puts it in the story.
+`kinds` limits it to those kinds. Without it, every kind is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The default layout leaves it out, and the café's layout puts it in the story.
 
 ```tsx
 import { EntityTable } from '@ifloom/react'
@@ -1093,7 +1093,7 @@ function InputField(props: { input: InputView }): JSX.Element
 
 One of the game's [inputs](/docs/reference/inputs), an [`InputView`](/docs/reference/view#inputview) from `view.inputs`. It shows the input's label, then:
 
-- for `kind: 'text'` or `'number'`, a box and an **Enter** button (`ui.enter`) that sends [`input`](/docs/reference/commands#input) with what was typed. The box honours `maxLength`, `min` and `max`;
+- for `kind: 'text'` or `'number'`, a box and an **Enter** button (`ui.enter`) that sends [`input`](/docs/reference/commands#input) with what was typed. The box honours `maxLength`, `min` and `max`
 - for `kind: 'choice'`, a button for each option, with the one already picked filled in. Each sends its value.
 
 If the engine refuses the value, its reason shows under the field (`Keep it to 8 characters.`, say) until a value is accepted. The box follows the input's value when something else changes it, such as an undo or a load, so it always shows what the game holds. It carries `data-input` with the input's id.
@@ -1129,9 +1129,9 @@ function GameMenu(props: { className?: string }): JSX.Element | null
 
 A row of buttons for what the runner offers:
 
-- **Saves** (`ui.saves`) when the runner was made with `saves`;
-- **Backlog** (`ui.backlog`) when [`runner.offers`](/docs/reference/runner#the-runners-members)`.backlog` is on;
-- **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption);
+- **Saves** (`ui.saves`) when the runner was made with `saves`
+- **Backlog** (`ui.backlog`) when [`runner.offers`](/docs/reference/runner#the-runners-members)`.backlog` is on
+- **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption)
 - **Enter a code** (`ui.enterCode`) when the provider was given [`unlocks`](#unlocksoption), the game has the unlocks plugin and `pages` is off. With pages on, codes are entered on the settings page instead.
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
 - **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), takes codes or has mods.
@@ -1332,11 +1332,11 @@ The [`ModManager`](#modmanager) without its look. It needs [`mods`](#modsoption)
 
 With `pages` on (see [mountGame](/docs/react#mountgame)), the game opens on a title screen instead of going straight into the story. The in-game shell is one page among several:
 
-- `gate`, a notice the player confirms once, if you give one;
-- `title`, the title screen;
-- `game`, the shell with the story;
-- `load`, `settings` and `credits`;
-- `achievements`, the [`AchievementsPage`](#achievementspage), in a game with the [achievements plugin](/docs/plugins/achievements);
+- `gate`, a notice the player confirms once, if you give one
+- `title`, the title screen
+- `game`, the shell with the story
+- `load`, `settings` and `credits`
+- `achievements`, the [`AchievementsPage`](#achievementspage), in a game with the [achievements plugin](/docs/plugins/achievements)
 - any page you add in `PagesOptions.pages`, by its id.
 
 The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/docs/recipes/title-screen) walks through setting it up.
@@ -1611,9 +1611,9 @@ function MinigameCard(props: { className?: string }): JSX.Element | null
 
 The [minigame](/docs/reference/minigames) being played, from [`view.minigame`](/docs/reference/minigames#minigameview). [`SceneStage`](#scenestage) draws it in place of the scene while one runs. From top to bottom, it shows:
 
-- the minigame's `title`, as a heading;
-- the running state's words (`label`), in a polite live region so a screen reader reads each new one;
-- a bar counting down the state's timer, when it has one. It's a `progressbar` labelled `ui.timeLeft`, from 0 to `timeTotal`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks;
+- the minigame's `title`, as a heading
+- the running state's words (`label`), in a polite live region so a screen reader reads each new one
+- a bar counting down the state's timer, when it has one. It's a `progressbar` labelled `ui.timeLeft`, from 0 to `timeTotal`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks
 - a button for each live input, which sends [`{ type: 'minigame', input }`](/docs/reference/commands#minigame). The inputs `up`, `down`, `left`, `right` and `space` are labelled with `ui.minigameUp` and the rest. Any other input is labelled with the game's `ui.minigame.<input>` string, or its own name with a capital.
 
 It runs the clock through [`useMinigame`](#useminigame), and maps the keyboard to the inputs. Each input takes the keys the minigame lists in its [`keys`](/docs/reference/minigames#minigamedef). An input it doesn't list takes the arrow keys for `up`, `down`, `left` and `right`, the space bar for `space`, and its own letter for a one-letter input. A key held down doesn't repeat. These keys work whether the game's [`keys`](#keyoptions) are on or not, and they come before them. The keys follow the same rules as the hotkeys: nothing while typing, with a modifier held or with a dialog open.
@@ -1722,7 +1722,7 @@ A panel for the person testing the game, when the game has the [debug plugin](/d
 
 | Tab | What it has |
 |---|---|
-| **Set** | A form each for a stat, a kv key, an item, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the variable form sends that value as itself. |
+| **Set** | A form each for a stat, a kv key, an item, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
 | **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
 | **State** | The whole game state, as JSON. |
 | **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
@@ -1765,7 +1765,7 @@ Every first-party plugin that has something for the player has a default here, w
 |---|---|---|---|
 | [calendar](/docs/plugins/calendar) | [`Clock`](#clock) | [`useClock`](#useclock) | Under the title. |
 | [places](/docs/plugins/places) | [`LocationCard`](#locationcard) and [`Exits`](#exits) | [`usePlaces`](#useplaces) | The bottom of the story. |
-| [cast](/docs/plugins/cast) | [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) | [`usePeople`](#usepeople) | Who is here at the bottom of the story; everyone met in the People section. |
+| [cast](/docs/plugins/cast) | [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) | [`usePeople`](#usepeople) | Who is here, at the bottom of the story, and everyone met, in the People section. |
 | [wardrobe](/docs/plugins/wardrobe) | [`WardrobeCard`](#wardrobecard) | [`useWardrobe`](#usewardrobe) | The side column's Wearing section. |
 | [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | The Stats section, under the stats. |
 | [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | A button in the side column. |
@@ -2134,10 +2134,10 @@ function JobBoard(props: { className?: string; title?: string | false; jobs?: re
 
 Every [job](/docs/plugins/jobs), held or not, from [`JobView`](/docs/plugins/jobs#jobview)s, under the heading `ui.jobs` or `title` (`false` leaves it out). `jobs` shows only those, by id, as the `jobs` panel does for `with.job`. Each job (`data-job`, with `data-hired` while it's held and `data-fired` once the player was fired) shows its title, the rank held on a badge (unless it has the job's own title), its description, and:
 
-- what a shift pays (`ui.jobPay`, `Pays 12 coins a shift`);
-- the next shift (`ui.shiftToday`, `ui.shiftTomorrow` or `ui.shiftInDays`), for a job held;
-- the next rank and how many more shifts it needs (`ui.jobNextRank`, `ui.jobNextRankOne`, or `ui.jobNextRankSoon` when shifts aren't what's missing);
-- the shifts worked and missed (`ui.jobShifts`, `ui.jobMissed`);
+- what a shift pays (`ui.jobPay`, `Pays 12 coins a shift`)
+- the next shift (`ui.shiftToday`, `ui.shiftTomorrow` or `ui.shiftInDays`), for a job held
+- the next rank and how many more shifts it needs (`ui.jobNextRank`, `ui.jobNextRankOne`, or `ui.jobNextRankSoon` when shifts aren't what's missing)
+- the shifts worked and missed (`ui.jobShifts`, `ui.jobMissed`)
 - **Let go** (`ui.jobFired`) on a job the player was fired from.
 
 A job not held has **Apply** (`ui.applyJob`), a [`ChoiceButton`](#choicebutton) from the job's `apply` button, greyed out with the reason of its first `blocked` entry that holds. A job held has **Work a shift** (`ui.workShift`), with the shift's cost as its price and the reason it can't be worked now, such as `No shift today.`, and a **Quit** button (`ui.quitJob`) that sends `jobs/quit`.
@@ -2315,7 +2315,7 @@ function useMessages(): MessagesControls | null
 type MessagesControls = MessagesView & { read: (channel: string) => Result<GameState> }
 ```
 
-The [messages](/docs/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`; send it with [`useGame`](#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
+The [messages](/docs/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`. Send it with [`useGame`](#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
 
 ### FeedSection
 
@@ -2347,7 +2347,7 @@ The [feed](/docs/plugins/feed) plugin's view (its feeds, each with posts and an 
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-Plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner; outside one, pass `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/docs/react#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/docs/react#sound).
+Plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner. Outside one, pass `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/docs/react#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/docs/react#sound).
 
 ```tsx
 function App() {

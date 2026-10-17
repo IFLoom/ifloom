@@ -2,7 +2,7 @@
 title: "Using IFLoom with an AI agent"
 description: Work on an IFLoom game with a coding agent. Where the docs are as llms.txt, llms-full.txt and an MCP server, the AGENTS.md every new game comes with, and how to have the agent check its own work.
 ---
-A coding agent can write and change an IFLoom game well, as long as it can read the docs and check what it did. This page covers where an agent finds the docs, what a new game tells it, and how to keep it honest.
+A coding agent can write and change an IFLoom game well, as long as it can read the docs and check what it did. Give it the docs below, let the `AGENTS.md` in a new game brief it, and have it run the game's checks after each change.
 
 ## Give it the docs
 

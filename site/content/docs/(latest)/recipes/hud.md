@@ -4,9 +4,9 @@ description: "Build your own HUD from the view: a stat bar, a strip of unread co
 ---
 Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
 
-- an energy bar that turns red as it runs low;
-- a strip of unread counts for notices and texts;
-- an objective line from the quest the player is tracking.
+- an energy bar that turns red as it runs low
+- a strip of unread counts for notices and texts
+- an objective line from the quest the player is tracking
 
 The view is the same whatever draws it, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
 

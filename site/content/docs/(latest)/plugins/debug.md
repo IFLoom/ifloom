@@ -59,7 +59,7 @@ const { game } = loadGame([town], {
 
 The [showcase](/docs/guide/showcase) does the same with a `withDebug` option on the function that builds its game.
 
-A save made with the plugin loads in a build without it. The plugin keeps no state, so nothing in the save depends on it. Its version is still recorded in the save's [`meta.plugins`](/docs/reference/saves#savemeta), so a release build lists `debug` in [`missingPlugins`](/docs/reference/saves#loadedsave) for a save made in development. Anything you set by hand is still in the save, of course.
+A save made with the plugin loads in a build without it. The plugin keeps no state, so nothing in the save depends on it. Its version is still recorded in the save's [`meta.plugins`](/docs/reference/saves#savemeta), so a release build lists `debug` in [`missingPlugins`](/docs/reference/saves#loadedsave) for a save made in development. Anything you set by hand is still in the save.
 
 ## debug
 
@@ -85,12 +85,12 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 A command is refused, with a line from [Strings](#strings), when:
 
-- the game has no such stat, item, scene or place;
-- `debug/stat`'s `of` names no entity in the game, or the stat isn't one the owner has (see [Gotchas](#gotchas));
-- the number given to `debug/stat` or `debug/item` isn't a finite number;
-- a kv key's value isn't one the kv store can hold;
-- the turn isn't a whole number from 0;
-- the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/plugins/calendar#queries) query).
+- the game has no such stat, item, scene or place
+- `debug/stat`'s `of` names no entity in the game, or the stat isn't one the owner has (see [Gotchas](#gotchas))
+- the number given to `debug/stat` or `debug/item` isn't a finite number
+- a kv key's value isn't one the kv store can hold
+- the turn isn't a whole number from 0
+- the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/plugins/calendar#queries) query)
 
 In a game with no calendar, `debug/time` is refused with `This game has no calendar.` In a game without the places plugin, `debug/go` is refused with `This game has no places.` Whether a place exists is asked of the places plugin's [`places/known`](/docs/plugins/places#queries) query.
 

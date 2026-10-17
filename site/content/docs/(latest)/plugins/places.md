@@ -8,7 +8,7 @@ You'd want it for any game where the player moves around a world: a town in a li
 
 The plugin keeps the player's location in its own state, `{ at }`. While no scene is open, it fills the screen with the room's description, offers the room's actions as buttons, and hands the UI the exits. Locations are content, in a pack's `data.places.locations`, so a mod can add a room or change one.
 
-Here's where each place-related part of a game comes from:
+These are the parts of a game that deal with places, and where each one comes from:
 
 - **The map** is a list of [`LocationDef`](#locationdef)s, each naming its `exits`.
 - **Walking** is the [`go()`](#commands) command, which the view hands the UI on each [exit](#exitview).
@@ -294,7 +294,7 @@ const { game } = loadGame([{ ...town, activities: [coffee] }], {
 })
 ```
 
-Here's how it plays:
+Walking it through:
 
 ```ts
 let state = startingState(game)
@@ -413,7 +413,7 @@ The first plugin that has a stage fills the screen. While the player is nowhere,
 
 ### The picture stage
 
-A place can give a `stage` as well as its `art`: layers of pictures or videos with hotspots on them. The café in the showcase has the room, the counter from a pool, and a lamp that comes on in the evening:
+A place can give a `stage` as well as its `art`: layers of pictures or videos with hotspots on them. This café has the room, the counter from a pool, and a lamp that comes on in the evening. Small Town's own café stage is simpler, with one layer, Ava's photo, and a hotspot on her.
 
 ```ts
 {
@@ -451,7 +451,7 @@ The place's `name`, which the view joins into [`view.when`](/docs/reference/view
 
 ### Audio
 
-The place the player is at supplies its `audio` through the plugin's [`audio` hook](/docs/reference/plugins#audio). In the showcase, the café has its murmur and the music carries on from the game's default:
+The place the player is at supplies its `audio` through the plugin's [`audio` provider](/docs/reference/plugins#audio). Here a café has its own murmur, and the music carries on from the game's default:
 
 ```ts
 place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'], audio: { ambience: 'cafe.murmur' } })
@@ -616,4 +616,4 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 
 ## See it in an example
 
-Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `blocked` opening hours on the café and the office, a `stage` in the café, and activities that require a place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.
+Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `blocked` opening hours on the café and the office, a `stage` in the café, and activities kept to one place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

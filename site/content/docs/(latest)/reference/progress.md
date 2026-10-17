@@ -39,7 +39,7 @@ import { person } from '@ifloom/plugin-cast'
 }
 ```
 
-**Gotcha:** keep effects that don't pay (like moving to the next scene) outside `oncePerTurn`. Otherwise the choice stops working, rather than just stopping paying.
+**Gotcha:** keep effects that don't pay (like moving to the next scene) outside `oncePerTurn`. Otherwise the choice stops working altogether, instead of only no longer paying.
 
 ## usedBlock
 
@@ -157,7 +157,7 @@ Whether this stage can happen now. It walks the stages from the start. Every sta
 `needs` is a [condition](/docs/reference/conditions). Pass `game` when one of them uses `{ custom }` or a plugin's condition, such as the [cast](/docs/plugins/cast#conditions)'s `here`, because those find nothing without it.
 
 **Gotchas:**
-- Earlier stages' `needs` must still hold, not just have held once.
+- Earlier stages' `needs` must still hold, not only have held once.
 - A stage with `after` whose previous stage has no `scene` throws, because there's nothing to measure from.
 - `stageOpen` is still `true` once the stage is done. Test `stageDone` too if it shouldn't repeat.
 

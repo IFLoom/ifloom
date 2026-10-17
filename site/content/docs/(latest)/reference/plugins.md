@@ -309,11 +309,11 @@ A command a button can send as `{ type: 'custom', name: 'loyalty/redeem', with: 
 
 The engine's [`whyNot`](/docs/reference/actions#whynot) asks these in order, and the first answer wins:
 
-1. the [locks](/docs/reference/locks), as for every command, unless the command sets `ignoresLocks`;
-2. every plugin's [guard](#guards), unless the command sets `ignoresLocks`;
-3. the game's own [`rules.commands.custom`](/docs/reference/rules#commands), if it has one. If it does, its answer is final and the next two steps never run;
-4. `There is no such thing to do.` (the [`noSuchAction`](/docs/reference/strings#refusals) string) if no plugin has a command by that name;
-5. the plugin's `whyNot`.
+1. The [locks](/docs/reference/locks), as for every command, unless the command sets `ignoresLocks`.
+2. Every plugin's [guard](#guards), unless the command sets `ignoresLocks`.
+3. The game's own [`rules.commands.custom`](/docs/reference/rules#commands), if it has one. Its answer is then final, and the next two steps never run.
+4. `There is no such thing to do.` (the [`noSuchAction`](/docs/reference/strings#refusals) string) if no plugin has a command by that name.
+5. The plugin's `whyNot`.
 
 The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/docs/reference/strings#plugins-strings) and return `say(game, 'loyalty/notFull')`, so a game can reword it.
 
@@ -465,9 +465,9 @@ migrations: {
 
 [`loadState`](/docs/reference/saves#loadstate) brings every plugin's state up to the version the game has. It runs after the engine's own steps and before the game's [migrations](/docs/reference/saves#the-games-own-migrations):
 
-- a plugin added since the save was made starts fresh from `start`;
-- an older state is carried forward one step at a time;
-- the state of a plugin the game no longer has is kept as it is, unused.
+- A plugin added since the save was made starts fresh from `start`.
+- An older state is carried forward one step at a time.
+- The state of a plugin the game no longer has is kept as it is, unused.
 
 A save it can't carry forward is refused with one of these reasons:
 
@@ -497,12 +497,12 @@ Those are the only two hooks. Plugins' hooks run in the order `game.plugins` lis
 
 Within one command, the order is:
 
-1. the command runs, including the end of any turn it causes (the game's `rules.onTurn`, then each plugin's `onTurn`);
-2. the game's [triggers](/docs/reference/triggers) fire;
-3. the scene left on screen is counted as [seen](/docs/reference/state#seen), its [minigame](/docs/reference/minigames) starts if it has one, and its sounds get [keys of their own](/docs/reference/audio#sounds-and-voices);
-4. each plugin's `onCommand` runs. Triggers don't see what it changes until the next command;
-5. a stat that went up a level raises its [notice](/docs/reference/stats#the-notice), so a level a hook's reward reached is noticed too;
-6. the engine records the [pool picks](/docs/reference/media#remembered-picks) and background audio the new screen shows.
+1. The command runs, including the end of any turn it causes (the game's `rules.onTurn`, then each plugin's `onTurn`).
+2. The game's [triggers](/docs/reference/triggers) fire.
+3. The scene left on screen is counted as [seen](/docs/reference/state#seen), its [minigame](/docs/reference/minigames) starts if it has one, and its sounds get [keys of their own](/docs/reference/audio#sounds-and-voices).
+4. Each plugin's `onCommand` runs. Triggers don't see what it changes until the next command.
+5. A stat that went up a level raises its [notice](/docs/reference/stats#the-notice), so a level a hook's reward reached is noticed too.
+6. The engine records the [pool picks](/docs/reference/media#remembered-picks) and background audio the new screen shows.
 
 The full list, with the checks before a command runs, is in [What happens, in order](/docs/reference/commands#what-happens-in-order).
 
@@ -564,7 +564,7 @@ Only the view sees it, and only when a runner with a profile builds the view. Th
 **Gotchas.**
 - Only a runner with a `profile` asks it. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
 - Conditions, effects, commands, hooks and the `profile` provider's own context never see `context.profile`. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
-- `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway; return a new value from `profile` instead.
+- `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway. Return a new value from `profile` instead.
 - Right after a runner starts, before the profile has been read, the view has no profile yet. `await runner.settled()` waits for the first read.
 
 ## Stat modifiers
@@ -609,7 +609,7 @@ Everything that reads a stat sees the changed value: [`statValue`](/docs/referen
 
 ## Guards, prices and labels
 
-Three more fields let a plugin watch every command, not just its own. A guard says whether a command may go ahead, a price adds to what a button says it costs, and a label says where the game is. A guard and a price are both handed the effects the command would apply, worked out before it runs by [`effectsOf`](/docs/reference/actions#effectsof).
+Three more fields let a plugin watch every command, not only its own. A guard says whether a command may go ahead, a price adds to what a button says it costs, and a label says where the game is. A guard and a price are both handed the effects the command would apply, worked out before it runs by [`effectsOf`](/docs/reference/actions#effectsof).
 
 As an example, take a sink of dirty dishes in the flat. Cooking and baking add to it, and washing up takes the rest of the turn.
 
@@ -703,7 +703,7 @@ Whether a command may go ahead. `asked.command` is the [command](/docs/reference
 - A string to refuse it, as a [lock](/docs/reference/locks) does. [`whyNot`](/docs/reference/actions#whynot) returns the line, so the view greys the button out with it and the reducer refuses with it.
 - `{ reason, soft: true }` for a warning. The button can still be pressed and carries `reason` as its [`warning`](/docs/reference/view#renderedchoice), but the reducer refuses the command with `reason` all the same. The [calendar](/docs/plugins/calendar#the-guard)'s past-dawn warning works this way: the UI shows the warning and offers something else, here washing up.
 
-Every plugin's guard is asked about every command, in the order `game.plugins` lists them, except a plugin command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before the game's own [`rules.commands`](/docs/reference/rules#commands) and what the command itself needs, such as an activity's `requires` and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/docs/reference/actions#warningof).
+Every plugin's guard is asked about every command, in the order `game.plugins` lists them, except a plugin command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before the game's own [`rules.commands`](/docs/reference/rules#commands) and what the command itself needs, such as an activity's `blocked` entries and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/docs/reference/actions#warningof).
 
 **Gotchas.**
 - `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.

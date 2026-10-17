@@ -2,7 +2,7 @@
 title: "Saves and settings"
 description: "Add saving, loading and a settings screen to a game run on the engine directly: save stores and drivers, slots, autosave, a load list, play and ui settings, runner.settings() and setSetting, all without a UI package."
 ---
-[Running a game](/docs/guide/running-a-game) drew the view and sent commands. A game also needs to remember where the player got to, and to let them change a few things, such as the text size. The runner does both, with no UI package involved. This page adds them to the loop.
+[Running a game](/docs/guide/running-a-game) drew the view and sent commands. A game also needs to remember where the player got to, and to let them change a few things, such as the text size. The runner handles both without a UI package, and this page adds them to that loop.
 
 ## Where saves go
 

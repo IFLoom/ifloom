@@ -250,7 +250,7 @@ The [minigame](/docs/reference/minigames) being played, or `null`. See [`Minigam
 transition: { to: TransitionName; ms?: number } | null
 ```
 
-How the screen after the last command comes in, as a [`transition` effect](/docs/reference/effects#transition) set it, or `null`. It lasts one command: the next command that doesn't set it again clears it. [`view.transition`](/docs/reference/view#transition) reads it. A save from before transitions loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
+How the screen after the last command comes in, as a [`transition` effect](/docs/reference/effects#transition) set it, or `null`. It lasts one command: the next command that doesn't set it again clears it. [`view.transition`](/docs/reference/view#transition) reads it. A save from before transitions loads with `null`. Like `minigame`, the field came with a load default and no new save version.
 
 ### panel
 
@@ -258,7 +258,7 @@ How the screen after the last command comes in, as a [`transition` effect](/docs
 panel: OpenPanel | null   // { panel: 'shop', with: { vendor: 'counter' } }
 ```
 
-The [panel](/docs/reference/panels) open over the story, with what it was opened with, or `null`. A [`panel` effect](/docs/reference/effects#panel) sets it and the [`closePanel`](/docs/reference/commands#closepanel) command clears it. [`view.panel`](/docs/reference/view#panel) reads it. A save from before panels loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
+The [panel](/docs/reference/panels) open over the story, with what it was opened with, or `null`. A [`panel` effect](/docs/reference/effects#panel) sets it and the [`closePanel`](/docs/reference/commands#closepanel) command clears it. [`view.panel`](/docs/reference/view#panel) reads it. A save from before panels loads with `null`. Like `minigame`, the field came with a load default and no new save version.
 
 ## New Game+
 
@@ -326,6 +326,8 @@ The versions so far:
 | 10 | Added [`audio`](#audio). |
 | 11 | Added [`media`](#media). |
 | 12 | Renamed `flags` to [`kv`](#kv), on the state, on each storyline and on each entity. |
+| 13 | Moved the timed-effects plugin's state from `plugins.effects` to `plugins.statuses`, its new name. |
+| 14 | Keyed [`chosen`](#chosen) by `scene#choice`. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

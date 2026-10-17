@@ -2,7 +2,7 @@
 title: "Activities and buttons"
 description: "Activities with costs and blocked reasons, game buttons, the order refusals come in, whyNot, warnings and effectsOf."
 ---
-This page covers two things that work together:
+Activities and buttons work together:
 
 - An activity is something the player does, such as buying a coffee, doing a shift or going for a jog. It's an [`ActivityDef`](#activitydef) in `game.activities`, with a cost, the reasons it's refused, and effects. The [`activity`](/docs/reference/commands#activity) command runs it.
 - An action is a button. It's an [`ActionDef`](#actiondef) with a label and one [command](/docs/reference/commands) to send when it's pressed. The command is often `{ type: 'activity', id }`, but it can be any command, such as opening a scene or walking somewhere.

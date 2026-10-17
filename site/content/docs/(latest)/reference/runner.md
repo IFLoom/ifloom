@@ -250,7 +250,7 @@ if (!loaded.ok) showMessage(loaded.reason)
 else if (loaded.value.missingPacks.length) showMessage(`Made with mods you don't have: ${loaded.value.missingPacks.join(', ')}`)
 ```
 
-**Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or simply `log()`, whose `start` is that state.
+**Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or only `log()`, whose `start` is that state.
 
 ### The view cache
 
@@ -290,7 +290,7 @@ const { textSize, hints } = runner.settings()
 document.body.dataset.textSize = String(textSize)
 ```
 
-It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default; await `settled()` to be sure it has. [`browserRunner`](#browserrunner) waits for that read before it returns.
+It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default. Await `settled()` to be sure it has. [`browserRunner`](#browserrunner) waits for that read before it returns.
 
 ### setSetting
 

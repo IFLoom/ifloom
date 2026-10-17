@@ -166,7 +166,7 @@ An activity whose effects hold `{ kind: 'turn' }` is greyed out with the line, a
 
 ### Stopping what passes time
 
-On the first morning, the player should get to work, not spend the morning jogging. Activities that take no time are still allowed. With the [calendar](/docs/plugins/calendar), time passes through its [`calendar/pass`](/docs/plugins/calendar#effects) effect, so a lock on that effect stops just the activities that pass time:
+On the first morning, the player should get to work, not spend the morning jogging. Activities that take no time are still allowed. With the [calendar](/docs/plugins/calendar), time passes through its [`calendar/pass`](/docs/plugins/calendar#effects) effect, so a lock on that effect stops only the activities that pass time:
 
 ```ts
 import { period } from '@ifloom/plugin-calendar'

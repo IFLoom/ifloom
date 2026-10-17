@@ -107,7 +107,7 @@ const { game } = loadGame([letter], {
 })
 ```
 
-The engine doesn't keep a player name of its own. The usual place is a `playerName` key in the [kv store](/docs/reference/state#kv), written by an [input](/docs/reference/inputs), and The Letter reads it from there. A name kept anywhere else works just as well, because `saveName` can read any part of the state.
+The engine doesn't keep a player name of its own. The usual place is a `playerName` key in the [kv store](/docs/reference/state#kv), written by an [input](/docs/reference/inputs), and The Letter reads it from there. A name kept anywhere else works too, because `saveName` can read any part of the state.
 
 **A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story passes only `introScene`, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
 

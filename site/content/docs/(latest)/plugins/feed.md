@@ -256,7 +256,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-Here's how it plays. A new game starts in the flat on Monday morning, turn 0:
+A new game starts in the flat on Monday morning, turn 0. Played through:
 
 ```ts
 import { apply, holds, startingState, view, type GameState } from '@ifloom/engine'
@@ -321,7 +321,7 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 | `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ 'feed/react': { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in a data scene choice's effects, an activity's `effects`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as an item's `use`, write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
+They work in a data scene choice's effects, an activity's `effects`, an item's `use`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
 
 ## Commands
 
@@ -519,7 +519,7 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **A feed the game doesn't have counts nothing.** `feed/unread` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
 - **Own-post and comment prose keys are checked where they're written.** A `text` key that a [custom effect](/docs/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
-- **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a requirement, as the showcase does with its `postedToday` kv key.
+- **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a `blocked` entry, as the showcase does with its `postedToday` kv key.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.
 - **A feed doesn't need a device.** You can show `view.plugins.feed` anywhere, such as the notice board in the example. The [devices](/docs/plugins/devices) plugin is one way to show a feed, not a requirement.
 

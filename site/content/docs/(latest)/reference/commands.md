@@ -18,7 +18,7 @@ type Applied =
   | { ok: false; state: GameState; reason: string }
 ```
 
-Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides; the runner's `apply` gives a plain `Result` with the new state as its `value`.
+Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides. The runner's `apply` gives a plain `Result` with the new state as its `value`.
 
 ```ts
 import { apply } from '@ifloom/engine'

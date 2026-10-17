@@ -108,7 +108,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-Activities that belong somewhere require it with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
+An activity that belongs somewhere is blocked everywhere else with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
 
 `town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -156,7 +156,7 @@ Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Mond
 
 The rest of the time she's at her `home`, the park. The first entry whose `when` holds says where she is. Sam is on the high street every morning, `{ location: 'high-street', when: period('morning') }`.
 
-The café's body has a line that only shows while Ava is there, `{ text: 'place.cafe.ava', when: here('ava') }`, with the cast's [`here()`](/docs/plugins/cast#conditions). The camera's `photo-ava` and `photo-sam` activities require the person to be here the same way.
+The café's body has a line that only shows while Ava is there, `{ text: 'place.cafe.ava', when: here('ava') }`, with the cast's [`here()`](/docs/plugins/cast#conditions). The camera's `photo-ava` and `photo-sam` activities use the same condition, in a `blocked` entry that refuses the photo while the person isn't here.
 
 ### Data scenes, variants and once-a-turn choices
 
@@ -230,13 +230,13 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### The café counter
 
-`town.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's **Go to the counter** action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
+`town.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Go to the counter" action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
 
 ### A job at the café
 
-`town.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing **Ask about weekend work** closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's **Apply** button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a **Work a shift** button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
+`town.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
 
-You start with a newspaper. Its `use`, **Read the job ads**, opens the board with only the paper's ad on it, `openJobs(['dogs'])`. Reading it spends it, and the counter sells another. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
+You start with a newspaper. Its `use`, "Read the job ads", opens the board with only the paper's ad on it, `openJobs(['dogs'])`. Reading it spends it, and the counter sells another. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
 
 ### Visitors in the park
 
@@ -244,7 +244,7 @@ You start with a newspaper. Its `use`, **Read the job ads**, opens the board wit
 
 ### Achievements
 
-`town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's **Achievements** button open the React UI's [achievements page](/docs/react/components#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
+`town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's Achievements button open the React UI's [achievements page](/docs/react/components#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
 
 ### Triggers and notices
 
@@ -254,7 +254,7 @@ You start with a newspaper. Its `use`, **Read the job ads**, opens the board wit
 
 ### Collections
 
-`town.ts` declares `notes`, and the phone kit declares `gallery`. The camera's `photo-ava` and `photo-sam` activities [`collect`](/docs/reference/effects#collect) a photo into the gallery, and each `requires` the person to be here. `post` needs a photo first, with the [condition](/docs/reference/conditions#collection) `{ collection: 'gallery' }`. See [Collections](/docs/reference/collections).
+`town.ts` declares `notes`, and the phone kit declares `gallery`. The camera's `photo-ava` and `photo-sam` activities [`collect`](/docs/reference/effects#collect) a photo into the gallery, and each is blocked while that person isn't here. `post` needs a photo first, with the [condition](/docs/reference/conditions#collection) `{ collection: 'gallery' }`. See [Collections](/docs/reference/collections).
 
 ### The phone kit, with its own apps
 
@@ -276,7 +276,7 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### Resets each turn
 
-`src/game.ts`, `rules.resets`. `hadCoffee` and `postedToday` go back to `false` at the end of each turn ([`resets`](/docs/reference/rules)). In this game that's each day, when the player goes to bed. The `coffee` and `post` activities require them to be unset, so each works once a day, and a second coffee is refused with `One is enough for today.`
+`src/game.ts`, `rules.resets`. `hadCoffee` and `postedToday` go back to `false` at the end of each turn ([`resets`](/docs/reference/rules)). In this game that's each day, when the player goes to bed. The `coffee` and `post` activities are blocked while they're set, so each works once a day, and a second coffee is refused with `One is enough for today.`
 
 ### The turn rule
 
@@ -296,9 +296,9 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### Cheats and the supporter code
 
-`town.ts`, `data.cheats` and `data.unlocks`, and `cheats()` and `unlocks()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). **+20 coins** is free for everyone. **Full energy**, under the group **Supporters**, is refused with `For supporters.` until the [unlock](/docs/plugins/unlocks) `supporter` is recorded. The sidebar's **Cheats** button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded` checks that a cheat works during moving day's lock and passes no time.
+`town.ts`, `data.cheats` and `data.unlocks`, and `cheats()` and `unlocks()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). "+20 coins" is free for everyone. "Full energy", in the Supporters group, is refused with `For supporters.` until the [unlock](/docs/plugins/unlocks) `supporter` is recorded. The sidebar's Cheats button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded` checks that a cheat works during moving day's lock and passes no time.
 
-The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env` and public on purpose. Its content, `src/unlocks/supporter.ts`, is one more of the café's storylets, **The back room**. `ifloom build` encrypts it into the page, and `src/main.tsx` opens it with `unlockedPacks` once the player has the code. Enter the code on the settings page: the cheat opens at once, and **Restart to add it** reloads the page with the scene, which **Sit a while** at the café can then draw. The test `unlocks the supporter edition with the code in .env` plays that, and replays it exactly. [Supporter content and cheats](/docs/recipes/supporter-content) explains what this protects and what it doesn't.
+The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env` and public on purpose. Its content, `src/unlocks/supporter.ts`, is one more of the café's storylets, "The back room". `ifloom build` encrypts it into the page, and `src/main.tsx` opens it with `unlockedPacks` once the player has the code. Enter the code on the settings page: the cheat opens at once, and "Restart to add it" reloads the page with the scene, which "Sit a while" at the café can then draw. The test `unlocks the supporter edition with the code in .env` plays that, and replays it exactly. [Supporter content and cheats](/docs/recipes/supporter-content) explains what this protects and what it doesn't.
 
 ### Debug, in development only
 

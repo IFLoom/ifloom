@@ -65,7 +65,7 @@ characters.
 
 **Plugins** add those things when a game needs them. Each plugin is its own
 package, and a game includes only the ones it uses. A novel needs no plugins at
-all; a life sim might use the calendar, places and cast.
+all, and a life sim might use the calendar, places and cast.
 
 A few guarantees hold for every game:
 
@@ -76,7 +76,7 @@ A few guarantees hold for every game:
   so it still works when opened from a file.
 - **The engine is headless.** It has no DOM and no UI framework, and runs the
   same in a browser, in Node or in a test. The React UI is one way to draw a
-  game; plain DOM, Vue or Svelte work just as well.
+  game, and the templates also draw one with plain DOM, Vue or Svelte.
 
 ## Packages
 
@@ -99,7 +99,11 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-messages` | Message threads whose replies are choices. |
 | `@ifloom/plugin-feed` | Social feeds, the player's posts and the reactions to them. |
 | `@ifloom/phone` | A ready-made smartphone combining devices, messages and feeds. |
+| `@ifloom/plugin-cheats` | Cheats for the player, free or kept for supporters, with a log of each use. |
+| `@ifloom/plugin-unlocks` | Codes the player enters to unlock cheats and encrypted content. |
 | `@ifloom/plugin-debug` | Commands for testing: set stats, jump to scenes, move time. |
+| `@ifloom/browser` | Browser helpers for any UI: the minigame clock, keyboard shortcuts and save slots. |
+| `@ifloom/audio` | The audio player: plays a game's music and sounds in the browser. |
 
 ## Examples
 
@@ -137,7 +141,9 @@ That gives you a small two-scene game drawn with the React UI. Add
 | Template | What you get |
 |---|---|
 | `react` | The default: two scenes, drawn with the React UI. |
-| `vanilla` | The same game drawn with plain DOM and no framework. Start here for Vue, Svelte and the rest. |
+| `vanilla` | The same game drawn with plain DOM and no framework. |
+| `vue`, `svelte` | The same game drawn with Vue or Svelte. |
+| `next` | The same game drawn with the React UI, in a Next.js app. |
 | `novel`, `cafe`, `town` | A copy of one of the examples. |
 
 A React game also gets a theme preset (`paper`, `terminal`, `studio` or
@@ -145,7 +151,7 @@ A React game also gets a theme preset (`paper`, `terminal`, `studio` or
 `npm run new -- my-story --theme paper`.
 
 Your game's `package.json` lists the `@ifloom/*` packages it uses and its UI's
-Vite plugins; Vite itself comes with `@ifloom/cli`. The [installation guide](site/content/docs/(latest)/guide/installation.md) also
+Vite plugins. Vite itself comes with `@ifloom/cli`. The [installation guide](site/content/docs/(latest)/guide/installation.md) also
 covers keeping your game in its own folder outside the checkout.
 
 ## Documentation

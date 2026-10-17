@@ -348,7 +348,7 @@ mountGame(game, { components })
 
 The names you can replace are the keys of [`Components`](/docs/react/components#components): `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture` and `Icon`.
 
-A replacement applies wherever the UI draws that component, not just in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's **Use** buttons.
+A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's Use buttons.
 
 [`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws the close, back and warning icons, so one component swaps the UI's whole icon set:
 
@@ -467,7 +467,7 @@ If React isn't what you want, leave this package out. The engine has no framewor
 
 ## Not looking like every other IFLoom game
 
-Players notice when games share a look. A dozen games on the same engine with the same buttons and the same side column start to feel like one game with different words. Changing `--primary` isn't enough to stop that. Colour is the first thing people change and the last thing they remember.
+Players notice when games share a look. A dozen games on the same engine with the same buttons and the same side column start to feel like one game with different words. Changing `--primary` isn't enough to stop that, because a new colour on the same shapes still looks like the same game.
 
 What makes a game look like itself is mostly shape and type:
 

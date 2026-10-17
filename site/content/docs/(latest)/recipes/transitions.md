@@ -162,7 +162,7 @@ export function withReveals(beats: readonly SceneBeat[]): { beat: SceneBeat; rev
 }
 ```
 
-Then the scene, in each framework. Each draws the title and the words; add your choices and pictures as your UI already does.
+Then the scene, in each framework. Each draws the title and the words. Add your choices and pictures as your UI already does.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/scene.ts: call drawScene(stage, view) from draw(), with a <div> that stays in the page.

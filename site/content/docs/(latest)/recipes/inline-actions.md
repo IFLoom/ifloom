@@ -69,11 +69,11 @@ Because the note is a prose line, a translation or a mod can change it like any 
 
 `ifloom check` and the loader report:
 
-- `[[act:id]]` naming a choice the scene doesn't have, or a button the room doesn't have;
-- one choice drawn inline twice in one line, or in two blocks that can show together;
-- `[[tip:key|…]]` whose key has no prose, and `[[tip:key]]` with no words;
-- markup that isn't closed, or has no id;
-- a choice whose `command` is another `choose`.
+- `[[act:id]]` naming a choice the scene doesn't have, or a button the room doesn't have
+- one choice drawn inline twice in one line, or in two blocks that can show together
+- `[[tip:key|…]]` whose key has no prose, and `[[tip:key]]` with no words
+- markup that isn't closed, or has no id
+- a choice whose `command` is another `choose`
 
 ## What the view gives a UI
 

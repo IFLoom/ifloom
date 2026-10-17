@@ -111,7 +111,7 @@ To count something, use the [`kv`](/docs/reference/effects#kv) effect's `by` for
 
 With `of`, it tests a key in an [entity](/docs/reference/entities)'s kv store, as in `{ kv: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
 
-**Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ kv: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something is *not* set on an entity that may have gone, write `{ not: { kv: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
+**Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ kv: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something isn't set on an entity that may have gone, write `{ not: { kv: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
 
 ### setting
 

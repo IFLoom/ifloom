@@ -1,6 +1,6 @@
 ---
 title: Transitions
-description: How a scene or a room comes on screen and goes off, and prose revealed a step at a time. The engine names them; the UI draws them.
+description: How a scene or a room comes on screen and goes off, and prose revealed a step at a time. The engine names them and the UI draws them.
 ---
 
 A scene can fade in, a room can slide in from the side, and a paragraph can wait a moment before it appears. The engine never animates anything. It names the transition in the [view](/docs/reference/view#transition), as it names the music in `view.audio`, and the UI decides how to draw it. The React UI draws the built-in names with CSS. With another framework, the [Transitions recipe](/docs/recipes/transitions) shows how to apply them.
@@ -153,12 +153,12 @@ The beats after a reveal are in `view.scene.beats` from the start. A UI should p
 
 The [content checker](/docs/reference/checks) reports:
 
-- `unknown transition "…"` for a name that isn't in `TRANSITIONS` or `transitions.names`, on a scene, a place, the game's default, a `transition` effect, a block's `reveal` or `[[reveal]]` markup;
-- `a transition's ms must be 0 or more`;
-- `a reveal's delay must be whole milliseconds, 0 or more`, for a block's `reveal`;
-- `[[reveal]] has a delay of "…"; it is whole milliseconds`, for markup;
-- `[[reveal]] goes on a line of its own, with a blank line before and after`, for markup inside a paragraph, which would be shown as written;
-- `transition name "…" is not lower-case letters, digits and "-"`, for an entry in `transitions.names`.
+- `unknown transition "…"` for a name that isn't in `TRANSITIONS` or `transitions.names`, on a scene, a place, the game's default, a `transition` effect, a block's `reveal` or `[[reveal]]` markup
+- `a transition's ms must be 0 or more`
+- `a reveal's delay must be whole milliseconds, 0 or more`, for a block's `reveal`
+- `[[reveal]] has a delay of "…"; it is whole milliseconds`, for markup
+- `[[reveal]] goes on a line of its own, with a blank line before and after`, for markup inside a paragraph, which would be shown as written
+- `transition name "…" is not lower-case letters, digits and "-"`, for an entry in `transitions.names`
 
 ## See it in an example
 

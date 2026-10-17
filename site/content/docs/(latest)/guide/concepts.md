@@ -2,7 +2,7 @@
 title: "Core concepts"
 description: The ideas behind IFLoom in short sections, each linking to its reference page. The state, commands, effects and conditions, the game and its rules, the view, the turn, entities, the kv store, plugins, saves and more.
 ---
-This page starts the Engine track. It explains the ideas the engine is built on, in short sections that link to the reference page with the details. The pages after it put them to work: [Running a game](/docs/guide/running-a-game), [Saves and settings](/docs/guide/saves-and-settings), [A game with a world](/docs/guide/first-game), [A UI from scratch](/docs/guide/ui-from-scratch) and [Testing your game](/docs/guide/testing).
+These are the ideas the engine is built on, one short section each, with a link to the reference page that has the details. The rest of the Engine track puts them to work: [Running a game](/docs/guide/running-a-game), [Saves and settings](/docs/guide/saves-and-settings), [A game with a world](/docs/guide/first-game), [A UI from scratch](/docs/guide/ui-from-scratch) and [Testing your game](/docs/guide/testing).
 
 ## The state is one plain object
 
@@ -32,7 +32,7 @@ What a choice does is a list of effects. When something applies is a condition. 
 { all: [{ 'places/at': { location: 'cafe' } }, { 'cast/here': { character: 'ava' } }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
 ```
 
-Because they're data rather than functions, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/docs/reference/custom) the game declares.
+Because they're data, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/docs/reference/custom) the game declares.
 
 See [Effects](/docs/reference/effects) and [Conditions](/docs/reference/conditions).
 
@@ -52,7 +52,7 @@ The game is your content. It can hold:
 - named custom functions that conditions, effects and prose can call (`custom`)
 - the plugins it uses, and their content under `data`
 
-The engine knows none of these by name. It reads them from the game.
+The engine doesn't know any of these by name. It reads them all from the game.
 
 Some of a game is logic rather than content, such as what happens at the end of a turn, or what the player can't do yet. Those are rules, on `game.rules`. Most are optional hooks that the engine calls at fixed moments, and leaving one out means the engine does the plain thing. The game's locks are kept there too.
 
@@ -166,7 +166,7 @@ See [Randomness](/docs/reference/random).
 
 ## The runner drives the game
 
-`apply`, `view` and the state are all a game needs, but every UI ends up wanting the same things around them: undo, a backlog of what was said, saving and autosave, and a log to replay a bug from. `createRunner(game, state, options)` puts them in one object. The UI sends commands to `runner.apply`, draws `runner.view()`, and subscribes to hear when to draw again.
+`apply`, `view` and the state are enough to play a game, but every UI ends up wanting the same extras: undo, a backlog of what was said, saving and autosave, and a log to replay a bug from. `createRunner(game, state, options)` puts them in one object. The UI sends commands to `runner.apply`, draws `runner.view()`, and subscribes to hear when to draw again.
 
 Undo, the backlog and autosave are off until the game turns them on. Undo never goes back past a barrier the game sets, such as a new turn. The command log is always kept, and because the engine is deterministic, the start state and the commands replay to the same state every time.
 

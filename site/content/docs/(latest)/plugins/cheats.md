@@ -2,7 +2,7 @@
 title: "Cheats"
 description: "Cheats for the player: effects they can use at any time, free for everyone or refused until a condition such as a supporter unlock holds, with a log of what was used."
 ---
-`@ifloom/plugin-cheats` gives the player a panel of cheats, such as **+20 coins** or **Skip to chapter 3**. Each cheat is a list of effects that runs when the player presses it. It works in any scene and through any lock, costs nothing, and ends no turn unless its effects do.
+`@ifloom/plugin-cheats` gives the player a panel of cheats, such as "+20 coins" or "Skip to chapter 3". Each cheat is a list of effects that runs when the player presses it. It works in any scene and through any lock, costs nothing, and ends no turn unless its effects do.
 
 A cheat can be free for everyone, or refused with a reason (or hidden) while a condition holds. That's how you offer some cheats only to supporters, after the game is finished, or once a kv key is set. The plugin keeps a log of every use, so a replay shows them and your content can react, for example by refusing an achievement to a save that cheated.
 
@@ -174,7 +174,7 @@ const honest = {
 
 ## The view
 
-`runner.view().plugins.cheats` is a `CheatsView`. The [React UI](/docs/react) draws it with [`CheatPanel`](/docs/react/components#cheatpanel), in a dialog opened from a **Cheats** button in the sidebar, and [`useCheats`](/docs/react/components#usecheats) gives this view with no markup.
+`runner.view().plugins.cheats` is a `CheatsView`. The [React UI](/docs/react) draws it with [`CheatPanel`](/docs/react/components#cheatpanel), in a dialog opened from a Cheats button in the sidebar, and [`useCheats`](/docs/react/components#usecheats) gives this view with no markup.
 
 ### CheatsView
 
@@ -213,7 +213,7 @@ type CheatView = {
 
 ### Drawing it yourself
 
-Every framework reads the same slice. Here's a panel with the cheats under their groups:
+Every framework reads the same slice. This panel lists the cheats under their groups:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/cheats.ts
@@ -375,4 +375,4 @@ A `cheats/use` command or `cheats/used` condition that names a cheat the game do
 
 ## See it in an example
 
-Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the unlock `supporter` is recorded, which the code `SMALL-TOWN-SUPPORTER` does. The sidebar's **Cheats** button opens them.
+Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the unlock `supporter` is recorded, which the code `SMALL-TOWN-SUPPORTER` does. The sidebar's Cheats button opens them.

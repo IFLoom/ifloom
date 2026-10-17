@@ -4,15 +4,15 @@ description: "Add your own panels, plugin sections and components to the React U
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
-The base UI draws everything the engine and the first-party plugins put in the view. It can't know about screens that are specific to your game, such as a scene with a screen of its own, an app's custom screen, or your own plugin's view. For those, you hand it components. And when you want a different arrangement altogether, you can build your own layout from the same parts.
+The base UI draws everything the engine and the first-party plugins put in the view. It can't know about screens that are specific to your game, such as a scene with a screen of its own, an app's custom screen, or your own plugin's view. For those, you hand it components. When you want a different arrangement altogether, you can build your own layout from the same parts.
 
-This page is about adding screens. To change how the built-in ones look, or to replace one, see [Make it your own](/docs/react/customising).
+To change how the built-in screens look, or to replace one, see [Make it your own](/docs/react/customising).
 
 ## Panels
 
 A panel is a screen your game draws itself, in place of the usual one. There are three places a panel can go:
 
-- **A scene's panel** is drawn instead of the scene's choices. Think of a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/scenes#sceneview).
+- **A scene's panel** is drawn instead of the scene's choices, for a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/scenes#sceneview).
 - **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
 - **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built_in_panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
 
@@ -96,7 +96,7 @@ An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view ins
 
 The component is a [`PluginSectionComponent`](/docs/react/components#pluginsectioncomponent). It gets `data`, the plugin's whole view at [`view.plugins[id]`](/docs/reference/view#plugins), and `with`, the section's `with`, which says which part to show.
 
-Here's the [loyalty card plugin](/docs/reference/plugins#a-worked-example) as an app on the laptop:
+This puts the [loyalty card plugin](/docs/reference/plugins#a-worked-example) in an app on the laptop:
 
 ```ts
 // In a pack, with devices() in the game's plugins.

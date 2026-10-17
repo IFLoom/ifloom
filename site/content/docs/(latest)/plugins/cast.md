@@ -30,12 +30,12 @@ const chat: Effect = { kind: 'stat', stat: 'friendship', by: 5, of: person('ava'
 
 The plugin keeps no state of its own. Where people are is worked out from their schedules each time, and what the game keeps about them lives in their entities.
 
-Here's where each people-related part of a game comes from:
+These are the parts of a game that deal with people, and where each one comes from:
 
 - **The people** are a list of [`CharacterDef`](#characterdef)s.
 - **Their hours** are each one's `schedule`, written with the [calendar](/docs/plugins/calendar)'s conditions, such as `schedule: [{ location: 'high-street', when: period('morning') }]`.
 - **Who's in the room** is worked out from those schedules and where the [places](/docs/plugins/places) plugin says the player is. It's shown at [`view.plugins.cast`](#the-view).
-- **Talking** is the [`talk()`](#commands) command, which the view hands the UI as each person's **Talk** button.
+- **Talking** is the [`talk()`](#commands) command, which the view hands the UI as each person's Talk button.
 - **A phone call** is the [`call()`](#commands) command, which works from anywhere.
 - **A relationship** is a stat declared `of: 'character'`, as above.
 - **"Only when Ava is here"** is the [`here()`](#conditions) condition.
@@ -143,7 +143,7 @@ type CharacterDef = {
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
 | `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/docs/plugins/places#locations). | [`OFFSTAGE`](#offstage), meaning nowhere. |
 | `schedule` | Where they are while each `when` holds. See [Where people are](#where-people-are). | Always at `home`. |
-| `talk` | The scene that talking to them opens, or a list of [`TalkOption`](#talkoption)s, of which the first whose `when` holds is used. | They can't be talked to, and have no **Talk** button. |
+| `talk` | The scene that talking to them opens, or a list of [`TalkOption`](#talkoption)s, of which the first whose `when` holds is used. | They can't be talked to, and have no Talk button. |
 | `call` | Whether they can be reached from anywhere. See [Calls](#calls). | They can't be called. |
 | `storyline` | The id of their [storyline](/docs/reference/storylines). While it's closed, they won't talk or pick up. | Never closed. |
 | `met` | Whether the player has met them, as a [condition](/docs/reference/conditions). | Having seen one of their `talk` or `call` scenes. |
@@ -158,7 +158,7 @@ Inside a character's own conditions, `'$'` stands for them. Every `when` in `sch
 type TalkOption = { scene: string; when?: Condition; label?: string }
 ```
 
-One way a conversation can open. It opens `scene` while `when` holds (always, if you leave `when` out), and `label` goes on the **Talk** button (the [`cast/talk`](#strings) string, `Talk`, if left out). [`cast/talk`](#commands) opens the first option in the list whose `when` holds, so put the particular ones first and a plain one last. This is the showcase's Ava, with a label added:
+One way a conversation can open. It opens `scene` while `when` holds (always, if you leave `when` out), and `label` goes on the Talk button (the [`cast/talk`](#strings) string, `Talk`, if left out). [`cast/talk`](#commands) opens the first option in the list whose `when` holds, so put the particular ones first and a plain one last. This is the showcase's Ava, with a label added:
 
 ```ts
 import { at } from '@ifloom/plugin-places'
@@ -174,7 +174,7 @@ const talk: TalkOption[] = [
 
 ### In a pack
 
-Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/content/town.ts`), in a cut-down town with just enough places and scenes for the [worked example](#a-worked-example):
+Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/content/town.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
 
 ```ts
 import { SCHEMA, type DataScene, type Pack } from '@ifloom/engine'
@@ -284,7 +284,7 @@ A character is here when that place is the one the places plugin's [`places/here
 
 With the [pack above](#in-a-pack), on a Monday morning Sam is on the high street and Ava is in the café. In the evening, both are in the park.
 
-Put exceptions above the rule they break, such as a Sunday entry above the every-day one. A person whose storyline is closed is still here. It's talking to them that's refused, and their **Talk** button says why.
+Put exceptions above the rule they break, such as a Sunday entry above the every-day one. A person whose storyline is closed is still here. It's talking to them that's refused, and their Talk button says why.
 
 ### OFFSTAGE
 
@@ -362,7 +362,7 @@ const { game } = loadGame([town], {
 const people = (state: GameState) => view(state, game).plugins.cast as CastView
 ```
 
-Here's how it plays:
+In play:
 
 ```ts
 let state = startingState(game)
@@ -434,7 +434,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 
 | Query | Answers |
 |---|---|
-| `cast/person` | `{ id, name, hue, portrait }` for that character, as the [speaker hook](#speakers) gives it, or `undefined`. |
+| `cast/person` | `{ id, name, hue, portrait }` for that character, as the [`speaker` provider](#speakers) gives it, or `undefined`. |
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
 | `cast/where` | Where that character is: a place id or `OFFSTAGE`. `undefined` for one the game doesn't have. |
 | `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, role, portrait, command, disabled }`. `role` is `null` when they have none, `command` is `call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
@@ -457,7 +457,7 @@ const contacts = definePlugin<null>({
 
 ## Speakers
 
-A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [speaker hook](/docs/reference/plugins#speakers) answers with their `name`, `hue` and portrait (`art/character/<id>.jpg` if they have none), which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
+A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [`speaker` provider](/docs/reference/plugins#speakers) answers with their `name`, `hue` and portrait (`art/character/<id>.jpg` if they have none), which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -465,7 +465,7 @@ import { view } from '@ifloom/engine'
 view(state, game).scene.speaker   // { id: 'ava', name: 'Ava', hue: 20, portrait: 'art/character/ava.svg' }
 ```
 
-Talking to someone doesn't set the speaker, because a scene names its own. An id the cast doesn't have is left to the next plugin that has a speaker hook. When no plugin knows it, `view.scene.speaker` is `null` and the scene shows no speaker.
+Talking to someone doesn't set the speaker, because a scene names its own. An id the cast doesn't have is left to the next plugin that has a `speaker` provider. When no plugin knows it, `view.scene.speaker` is `null` and the scene shows no speaker.
 
 ## The view
 
@@ -515,7 +515,7 @@ type PersonView = {
 | `here` | They're in the room with the player. |
 | `closed` | Their storyline is closed for now. |
 | `met` | The player has [met](#meeting-people) them. |
-| `actions` | The **Talk** button, as a [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `talk(id)`. Its label comes from the talk option that would open (its `label`, or else the [`cast/talk`](#strings) string), and it's greyed out with its [refusal](#commands). Empty for someone with no `talk`. |
+| `actions` | The Talk button, as a [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `talk(id)`. Its label comes from the talk option that would open (its `label`, or else the [`cast/talk`](#strings) string), and it's greyed out with its [refusal](#commands). Empty for someone with no `talk`. |
 
 In the café on Monday morning, Ava's card is:
 
@@ -599,10 +599,10 @@ The places in `cast/at` aren't checked. A `portrait` the game gives is listed in
 
 ## Gotchas
 
-- **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and the speaker hook still work.
+- **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and the `speaker` provider still work.
 - **`'$'` is only bound in a character's own conditions.** In a scene, an activity or a trigger, write `of: person('ava')`.
 - **The first entry wins.** A schedule entry or talk option with no `when` always holds, so nothing below it is reached.
-- **A name is content, not a token.** `name` is fixed when the game loads, so a name the player types for someone, such as the cat they name on moving day, can't reach the **Talk** button, the refusals or a message's sender. Print the typed name in prose with `{{catName}}`, and give the character a `name` that reads well on buttons, such as `Your cat`.
+- **A name is content, not a token.** `name` is fixed when the game loads, so a name the player types for someone, such as the cat they name on moving day, can't reach the Talk button, the refusals or a message's sender. Print the typed name in prose with `{{catName}}`, and give the character a `name` that reads well on buttons, such as `Your cat`.
 - **A portrait you name must exist.** `ifloom check` reports `no file public/art/character/ava.jpg` for a `portrait` whose file isn't there. Leave `portrait` out while the art is still to come. The default path isn't checked, and the React UI leaves out a picture whose file is missing.
 - **Met is by scene unless you say otherwise.** Without `met`, someone whose talk scene the player has never opened isn't met, even if they've spoken in another scene as its `speaker`. Give them a `met` condition if they should be.
 - **A call needs somewhere to go.** A character with a `call` but no `call.scene` and no `talk` is reported when the game loads.

@@ -20,7 +20,7 @@ Pictures are different. An `<img>` or `<video>` may load from a neighbouring fol
 ## The rules
 
 1. **Nothing loads at runtime.** Don't use `fetch()` or a dynamic `import()`. The engine keeps this rule itself, and a test enforces it. Your game has to keep it too. Import your content statically so the bundler includes it.
-2. **Bundle everything into one script.** No code splitting, no lazy chunks.
+2. **Bundle everything into one script.** Turn off code splitting and lazy chunks.
 3. **Inline the script and the stylesheet into `index.html`.** Then there is nothing to load.
 4. **Use relative paths.** Build with `base: './'`, and refer to pictures as `art/…`, never `/art/…`. A leading slash points at the root of the drive, or the root of the host on itch.io, instead of beside `index.html`.
 

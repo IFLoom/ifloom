@@ -53,7 +53,7 @@ checkGame(game, { probes: [{ name: 'day five', state: later }] })
 
 For each probe the checker renders every scene and reports, against `scene <id> (<name>)`:
 
-- `render threw: …` when a scene's `render` throws;
+- `render threw: …` when a scene's `render` throws
 - for a hand-written scene, `two choices share the id "…"`, and everything its rendered body, media, audio and stage name, and each rendered choice's effects, after `choice <id>:`.
 
 A data scene's content is checked already, so a probe only renders it to see that it doesn't throw.
@@ -84,11 +84,11 @@ type FileRef = { path: string; kind: 'picture' | 'video' | 'audio'; where: strin
 
 The list covers:
 
-- every track in `game.audio.tracks` (a playlist names tracks, not files);
-- every file in a [pool](/docs/reference/media#pools);
-- a `{ media }` block's `src` and `poster`, and a stage layer's;
-- the files in picture and video markup in any prose, posters included;
-- the `image` of a `notify` effect and of a `collect` entry, used as written (a URL is left out);
+- every track in `game.audio.tracks` (a playlist names tracks, not files)
+- every file in a [pool](/docs/reference/media#pools)
+- a `{ media }` block's `src` and `poster`, and a stage layer's
+- the files in picture and video markup in any prose, posters included
+- the `image` of a `notify` effect and of a `collect` entry, used as written (a URL is left out)
 - whatever a plugin's [references](#plugin-references) name, such as a post's picture or a character's `portrait`.
 
 A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. A place's `art` isn't listed, because no UI draws it.
@@ -106,9 +106,9 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | Problem | When the condition names |
 |---|---|
 | `"…" takes its arguments as an object, …` | A [short plugin call](/docs/reference/custom#plugincall) whose value isn't an object or `true`, such as `{ 'places/at': ['cafe'] }`. It's asked with no arguments. The same problem is reported for an effect or a command written that way. |
-| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds; combine them with `all`. Its parts aren't looked into. |
+| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds, so combine them with `all`. Its parts aren't looked into. |
 | `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
-| `unknown storyline "…"` | A storyline nobody declares, in `storyline`, `storylineKv` or `counter`. |
+| `unknown storyline "…"` | A storyline nobody declares, in `storyline` or `storylineKv`. |
 | `unknown item "…"` | An item nobody declares, in an `item` condition or effect, or a `use` command. |
 | `unknown stat "…"` | A stat nobody declares, in `stat` or `level`. |
 | `unknown collection "…"` | A collection nobody declares. |
@@ -176,7 +176,7 @@ A stat is either the player's or belongs to a [kind](/docs/reference/entities). 
 
 ### Absent partners
 
-A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/docs/reference/plugins#cooperates). That holds for every form: a condition, a short or long effect, and a command. In play it simply isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
+A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/docs/reference/plugins#cooperates). That holds for every form: a condition, a short or long effect, and a command. In play it isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
 
 ## Where each check runs
 
@@ -300,7 +300,7 @@ A choice's `command` is checked as any command is, under `choice <id>:`.
 
 A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with two functions, both optional:
 
-- `calls(kind, name, args, game)` says what one call to its conditions, effects or commands names, from the `with` that content passes;
+- `calls(kind, name, args, game)` says what one call to its conditions, effects or commands names, from the `with` that content passes.
 - `content(game)` says what each entry of its content names, as `{ list, id, refs }`.
 
 Each returns a list of `Reference`s:

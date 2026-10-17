@@ -21,7 +21,7 @@ import {
 
 ## A worked example
 
-In the showcase, calm music plays by default, the café has its own murmur, someone knocks when you get back to the flat, and Ava's first line is read aloud.
+Say you gave the showcase's town sound: calm music by default, a murmur of its own in the café, a knock when you get back to the flat, and Ava's first line read aloud. (Small Town itself has no audio yet.)
 
 ```ts
 import type { Game } from '@ifloom/engine'
@@ -204,10 +204,10 @@ channels: {
 
 Each background channel plays the first of these that names it:
 
-1. the open scene's [`audio`](/docs/reference/scenes#datascene);
-2. an [`audio` effect](/docs/reference/effects#audio), kept in the save;
-3. a plugin's [`audio` hook](/docs/reference/plugins#audio), such as the place the player is at;
-4. the game's `default`.
+1. The open scene's [`audio`](/docs/reference/scenes#datascene).
+2. An [`audio` effect](/docs/reference/effects#audio), kept in the save.
+3. A plugin's [`audio` provider](/docs/reference/plugins#audio), such as the place the player is at.
+4. The game's `default`.
 
 `null` at any of these levels is silence, and nothing below it is asked. A scene that sets `{ music: null }` stops the music while it's open, and the music comes back when it closes. A level that doesn't name a channel passes it down.
 
@@ -336,4 +336,4 @@ The [content checker](/docs/reference/checks) checks everything audio names. The
 
 ## See it in an example
 
-None of the examples uses this yet. No example declares tracks, playlists or channels.
+None of the examples declares tracks, playlists or channels yet.

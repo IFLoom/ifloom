@@ -8,14 +8,14 @@ If you use the React UI, you don't have to build any of this. It draws a default
 
 This page builds three pieces:
 
-- an achievements page, with secret ones and progress bars;
-- a shop counter beside the room, with prices, discounts and greyed-out buttons;
-- a job board with each job's rank, pay and next shift.
+- an achievements page, with secret ones and progress bars
+- a shop counter beside the room, with prices, discounts and greyed-out buttons
+- a job board with each job's rank, pay and next shift
 
 A plugin's slice is plain data, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
 
 - **Plain JS** pieces are functions that return an element, called from the `draw` function in the [`vanilla` template](/docs/guide/frameworks)'s `src/main.ts`, which passes its `runner`.
-- **React** pieces are components of the [React UI](/docs/react) that read the view with [`useGame`](/docs/react/components#usegame) and send commands with its `send`. The hooks (`useAchievements`, `useShop`, `useJobs`) would save a line or two; these read the view directly so they look like the other tabs.
+- **React** pieces are components of the [React UI](/docs/react) that read the view with [`useGame`](/docs/react/components#usegame) and send commands with its `send`. The hooks (`useAchievements`, `useShop`, `useJobs`) would save a line or two, but these read the view directly so they look like the other tabs.
 - **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts` and send commands with `runner.apply`.
 
 Add each plugin's package to the game's `package.json` for its types. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game.

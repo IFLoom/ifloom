@@ -471,6 +471,8 @@ Talking to someone doesn't set the speaker, because a scene names its own. An id
 
 `view(state, game).plugins.cast` is a `CastView`.
 
+The [React UI](/docs/react) draws who's here with [`PeopleCard`](/docs/react/components#peoplecard), and [`usePeople`](/docs/react/components#usepeople) gives this view with no markup.
+
 ### CastView
 
 ```ts

@@ -1,6 +1,6 @@
 /**
  * The pages around the game: an optional gate, the title screen, settings,
- * loading, credits and any page a game or plugin adds. A small state
+ * loading, credits, the achievements (with that plugin) and any page a game adds. A small state
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
@@ -11,10 +11,11 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { BrokenSlot, useSaves } from './saves.tsx'
+import { AchievementsPage } from './achievements.tsx'
 import { useWords } from './words.ts'
 
 /** A page by name: a built-in one, or the id of one in `PagesOptions.pages`. */
-export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
+export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | 'achievements' | (string & {})
 
 /** A page a game or plugin adds, with the title screen's button for it. */
 export type PageDef = {
@@ -50,8 +51,14 @@ export type PagesOptions = {
   credits?: Credit[]
   /** A notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
-  /** Pages a game or plugin adds, by id. */
+  /** Pages a game or plugin adds, by id. One with the id `achievements` replaces the built-in achievements page. */
   pages?: Record<string, PageDef>
+  /**
+   * The achievements page and its title-screen button, in a game with the
+   * achievements plugin. On unless set false; the `'achievements'` part's
+   * button then opens them in a dialog instead.
+   */
+  achievements?: boolean
 }
 
 /** Where the player is among the pages, and how to move. */
@@ -162,6 +169,7 @@ export function Pages({ game }: { game: ReactNode }) {
     case 'credits':
       return <CreditsPage />
     default: {
+      if (page === 'achievements' && !options.pages?.achievements && options.achievements !== false) return <AchievementsPage />
       const Added = options.pages?.[page]?.component
       return Added ? <Added /> : <TitlePage />
     }
@@ -173,11 +181,16 @@ function newest(slots: SaveMeta[]): SaveMeta | undefined {
   return slots.reduce<SaveMeta | undefined>((best, meta) => (!best || meta.savedAt > best.savedAt ? meta : best), undefined)
 }
 
-function usePageParts(className?: string, part: 'title-page' | 'gate-page' | 'settings-page' | 'load-page' | 'credits-page' = 'title-page') {
+/** The attributes for a page's outer section. Internal: every page uses it. */
+export function usePageParts(
+  className?: string,
+  part: 'title-page' | 'gate-page' | 'settings-page' | 'load-page' | 'credits-page' | 'achievements-page' = 'title-page',
+) {
   return usePart(part, 'mx-auto flex min-h-screen w-full max-w-(--width-reading) flex-col justify-center gap-6 p-6 font-body', className)
 }
 
-function BackButton() {
+/** The page's Back button. Internal. */
+export function BackButton() {
   const words = useWords()
   const { back } = usePage()
   const button = usePart('page-back', buttonVariants({ variant: 'outline' }))
@@ -188,7 +201,8 @@ function BackButton() {
   )
 }
 
-function Heading({ children }: { children: ReactNode }) {
+/** A page's heading. Internal. */
+export function Heading({ children }: { children: ReactNode }) {
   return <h1 {...usePart('page-heading', 'font-heading text-scene-title font-semibold')}>{children}</h1>
 }
 
@@ -218,6 +232,7 @@ function TitlePageImpl({ className }: { className?: string }) {
     return runner.newGame({ carry })
   }
   const added = Object.entries(options.pages ?? {}).filter(([, page]) => page.showOnTitle !== false)
+  const achievements = Boolean(view.plugins.achievements) && options.achievements !== false && !options.pages?.achievements
 
   return (
     <section {...section} data-page="title">
@@ -250,6 +265,11 @@ function TitlePageImpl({ className }: { className?: string }) {
             {words('settings')}
           </button>
         ) : null}
+        {achievements ? (
+          <button {...button} data-title-button="achievements" onClick={() => go('achievements')}>
+            {words('achievements')}
+          </button>
+        ) : null}
         {added.map(([id, page]) => (
           <button key={id} {...button} data-title-button={id} onClick={() => go(id)}>
             {page.label}
@@ -269,7 +289,8 @@ function TitlePageImpl({ className }: { className?: string }) {
  * The title screen: the game's title, the subtitle and art if given, and the
  * buttons Continue (the newest save), New game, New Game+ (once the game has
  * been finished, if it carries anything over), Load, Settings (if the game has
- * any), the pages a game or plugin adds, and Credits (if given).
+ * any), Achievements (with that plugin), the pages a game adds, and Credits
+ * (if given).
  */
 export const TitlePage = overridable('TitlePage', TitlePageImpl)
 

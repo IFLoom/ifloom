@@ -37,6 +37,10 @@ import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from '.
 import type { MinigameCard } from './minigame.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
+import type { AchievementList, AchievementsButton, AchievementsPage } from './achievements.tsx'
+import type { ShopButtons, ShopCounter, ShopDialog } from './shop.tsx'
+import type { JobBoard } from './jobs.tsx'
+import type { StatusList } from './statuses.tsx'
 
 /** Every `data-part` the React UI draws, which is also every key `classes` takes. */
 export const PART_KEYS = [
@@ -68,10 +72,16 @@ export const PART_KEYS = [
   'saves', 'saves-actions', 'save-slot', 'save-name', 'save-details', 'saves-message', 'saves-empty', 'file-button',
   'backlog', 'backlog-entry', 'backlog-title', 'backlog-choice', 'backlog-empty',
   'mods', 'mod', 'mod-name', 'mod-version', 'mod-state', 'mod-text', 'mod-problem', 'mods-message', 'mods-empty',
-  // Plugins' panels
+  // Plugins' cards
   'quests', 'quests-title', 'quest', 'quest-title', 'quest-stage', 'quest-summary', 'quest-hint', 'quests-done', 'quest-done',
   'inventory', 'inventory-title', 'item', 'item-name', 'item-count', 'item-text',
   'wardrobe', 'wardrobe-title', 'wardrobe-slot', 'wardrobe-slot-name', 'wardrobe-worn',
+  'statuses', 'statuses-title', 'status', 'status-label', 'status-stacks', 'status-turns', 'status-summary', 'status-modifiers',
+  'achievements-button', 'achievements', 'achievements-title', 'achievements-count', 'achievements-empty',
+  'achievement', 'achievement-image', 'achievement-title', 'achievement-text', 'achievement-progress', 'achievement-progress-text',
+  'vendors', 'vendor-button', 'vendor-closed',
+  'shop', 'shop-closed', 'shop-empty', 'goods', 'good', 'good-name', 'good-details', 'good-off', 'good-full-price', 'good-stock', 'good-owned', 'good-actions',
+  'jobs', 'jobs-title', 'job', 'job-title', 'job-rank', 'job-fired', 'job-text', 'job-details', 'job-pay', 'job-shift', 'job-next', 'job-record', 'job-actions',
   'entities', 'entity-table', 'entity-heading', 'entity-columns', 'entity-column', 'entity-row', 'entity-name', 'entity-value',
   'inputs', 'input', 'input-label', 'input-field', 'input-options', 'input-submit', 'input-error',
   // Devices, apps, messages and feeds
@@ -86,7 +96,7 @@ export const PART_KEYS = [
   'title-page', 'title-art', 'title-name', 'title-subtitle', 'title-buttons', 'title-button',
   'page-heading', 'page-back',
   'settings-page', 'settings', 'setting', 'setting-label', 'setting-control', 'setting-value', 'settings-empty', 'settings-message',
-  'load-page', 'credits-page', 'credits', 'credit', 'credit-link',
+  'load-page', 'credits-page', 'credits', 'credit', 'credit-link', 'achievements-page',
   'gate-page', 'gate-title', 'gate-text', 'gate-buttons', 'gate-confirm', 'gate-decline',
 ] as const
 
@@ -132,6 +142,14 @@ export type Components = Partial<{
   QuestLog: Override<PropsOf<typeof QuestLog>>
   Inventory: Override<PropsOf<typeof Inventory>>
   WardrobeCard: Override<PropsOf<typeof WardrobeCard>>
+  StatusList: Override<PropsOf<typeof StatusList>>
+  AchievementList: Override<PropsOf<typeof AchievementList>>
+  AchievementsButton: Override<PropsOf<typeof AchievementsButton>>
+  AchievementsPage: Override<PropsOf<typeof AchievementsPage>>
+  ShopButtons: Override<PropsOf<typeof ShopButtons>>
+  ShopDialog: Override<PropsOf<typeof ShopDialog>>
+  ShopCounter: Override<PropsOf<typeof ShopCounter>>
+  JobBoard: Override<PropsOf<typeof JobBoard>>
   EntityTable: Override<PropsOf<typeof EntityTable>>
   InputFields: Override<PropsOf<typeof InputFields>>
   InputField: Override<PropsOf<typeof InputField>>

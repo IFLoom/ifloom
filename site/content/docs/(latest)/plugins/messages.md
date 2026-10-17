@@ -422,6 +422,8 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.messages` is a `MessagesView`.
 
+The [React UI](/docs/react) draws a channel with [`MessagesSection`](/docs/react/components#messagessection) in an app, and [`useMessages`](/docs/react/components#usemessages) gives this view and the read command with no markup.
+
 ### MessagesView
 
 ```ts

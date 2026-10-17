@@ -197,6 +197,8 @@ An unknown vendor or item is false.
 
 `view(state, game).plugins.shop` is a `ShopView`. Each good carries ready-made buttons, built with the engine's [`renderAction`](/docs/reference/view#renderaction), so a UI draws them like any other button.
 
+The [React UI](/docs/react) draws it with [`ShopButtons`](/docs/react/components#shopbuttons), a button for each vendor where the player is, opening a [`ShopCounter`](/docs/react/components#shopcounter) in a dialog. [`useShop`](/docs/react/components#useshop) gives the same data and the buy and sell commands with no markup.
+
 ### ShopView
 
 ```ts
@@ -313,4 +315,4 @@ A command that names a vendor or item the game doesn't have gives `unknown vendo
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. Its buttons use `buy('counter', 'sandwich')`.
+Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café has no buttons of its own for it: the React UI's **Shop at The counter** button opens the counter.

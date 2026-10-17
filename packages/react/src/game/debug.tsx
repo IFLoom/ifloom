@@ -1,4 +1,4 @@
-import type { Command } from '@ifloom/engine'
+import type { Command, GameState, RenderedChoice, Result } from '@ifloom/engine'
 import type { CastView } from '@ifloom/plugin-cast'
 import type { DebugView } from '@ifloom/plugin-debug'
 import { useState, type FormEvent } from 'react'
@@ -8,6 +8,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords } from './words.ts'
+
+/** What `useDebug` returns: the debug plugin's view, what's greyed out, the state and the log, and the commands. */
+export type DebugControls = DebugView & {
+  /** Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. */
+  greyed: RenderedChoice[]
+  /** The whole game state. */
+  state: GameState
+  /** The commands run since the start, in order. */
+  log: Command[]
+  canUndo: boolean
+  canRedo: boolean
+  undo: () => void
+  redo: () => void
+  /** Send a debug command: `run('stat', { stat: 'coins', to: 50 })` sends `debug/stat`. */
+  run: (name: string, args?: Record<string, unknown>) => Result<GameState>
+}
+
+/** The debug plugin's view with its commands, or null in a game without the plugin. `DebugCard` is drawn from it. */
+export function useDebug(): DebugControls | null {
+  const { runner, view, send } = useGame()
+  const data = view.plugins.debug as DebugView | undefined
+  if (!data) return null
+  const greyed = [
+    ...view.actions,
+    ...view.scene.choices,
+    ...((view.plugins.cast as CastView | undefined)?.present ?? []).flatMap((person) => person.actions),
+  ].filter((choice) => choice.disabled)
+  return {
+    ...data,
+    greyed,
+    state: runner.state,
+    log: runner.log().commands,
+    canUndo: runner.canUndo,
+    canRedo: runner.canRedo,
+    undo: () => runner.undo(),
+    redo: () => runner.redo(),
+    run: (name, args = {}) => send(debugCommand(name, args)),
+  }
+}
+
+const debugCommand = (name: string, args: Record<string, unknown>): Command => ({ type: 'custom', name: `debug/${name}`, with: args })
 
 /** A one-line form that sends a debug command built from what was typed. */
 function CommandForm({ label, fields, build }: { label: string; fields: string[]; build: (values: string[]) => Command }) {
@@ -58,7 +99,7 @@ function parse(value: string): string | number | boolean {
 }
 
 function DebugCardImpl({ className }: { className?: string }) {
-  const { runner, view, send } = useGame()
+  const { view } = useGame()
   const words = useWords()
   const panel = usePart('debug', 'flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)
   const header = usePart('debug-header', 'flex items-center gap-2')
@@ -73,24 +114,20 @@ function DebugCardImpl({ className }: { className?: string }) {
   const list = usePart('debug-list', 'list-disc pl-5')
   const state = usePart('debug-state', 'text-xs')
   const log = usePart('debug-log', 'list-decimal pl-5 font-mono text-xs')
-  const data = view.plugins.debug as DebugView | undefined
+  const data = useDebug()
   if (!data) return null
-  const debug = (name: string, args: Record<string, unknown>): Command => ({ type: 'custom', name: `debug/${name}`, with: args })
-  const greyed = [
-    ...view.actions,
-    ...view.scene.choices,
-    ...((view.plugins.cast as CastView | undefined)?.present ?? []).flatMap((person) => person.actions),
-  ].filter((choice) => choice.disabled)
+  const debug = debugCommand
+  const greyed = data.greyed
   return (
     <section {...panel} data-debug>
       <div {...header}>
         <h3 {...title}>{words('debug')}</h3>
         <span {...seed}>{words('seed', { seed: data.seed })}</span>
         <div className="ml-auto flex gap-1">
-          <button type="button" {...step} disabled={!runner.canUndo} onClick={() => runner.undo()}>
+          <button type="button" {...step} disabled={!data.canUndo} onClick={data.undo}>
             {words('undo')}
           </button>
-          <button type="button" {...step} disabled={!runner.canRedo} onClick={() => runner.redo()}>
+          <button type="button" {...step} disabled={!data.canRedo} onClick={data.redo}>
             {words('redo')}
           </button>
         </div>
@@ -121,7 +158,7 @@ function DebugCardImpl({ className }: { className?: string }) {
             />
           ) : null}
           <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug('turn', { turn: num(turn) })} />
-          <button type="button" {...closeScene} onClick={() => send(debug('scene', {}))}>
+          <button type="button" {...closeScene} onClick={() => data.run('scene')}>
             {words('closeScene')}
           </button>
         </TabsContent>
@@ -137,13 +174,13 @@ function DebugCardImpl({ className }: { className?: string }) {
         </TabsContent>
         <TabsContent value="state" {...section}>
           <ScrollArea className="h-64">
-            <pre {...state}>{JSON.stringify(runner.state, null, 2)}</pre>
+            <pre {...state}>{JSON.stringify(data.state, null, 2)}</pre>
           </ScrollArea>
         </TabsContent>
         <TabsContent value="log" {...section}>
           <ScrollArea className="h-64">
             <ol {...log}>
-              {runner.log().commands.map((command, index) => (
+              {data.log.map((command, index) => (
                 <li key={index}>{JSON.stringify(command)}</li>
               ))}
             </ol>
@@ -158,6 +195,6 @@ function DebugCardImpl({ className }: { className?: string }) {
  * The debug card, for a game built with `@ifloom/plugin-debug`: set things by
  * hand, see the locks that are on and every greyed-out button's reason, read
  * the state and the command log, step back and forward. Draws nothing in a
- * game built without the plugin.
+ * game built without the plugin. A thin default on `useDebug`.
  */
 export const DebugCard = overridable('DebugCard', DebugCardImpl)

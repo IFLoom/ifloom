@@ -451,3 +451,73 @@ body {
   content: "? ";
   color: var(--muted-foreground);
 }
+
+/* The plugins' defaults: plain listings, as a text adventure prints them. */
+[data-part="achievement"],
+[data-part="good"],
+[data-part="job"] {
+  border-style: dashed;
+  padding: 0.5rem;
+}
+
+[data-part="achievements-title"],
+[data-part="jobs-title"],
+[data-part="statuses-title"] {
+  text-transform: uppercase;
+}
+
+[data-part="achievement-title"]::before {
+  content: "[ ] ";
+  color: var(--muted-foreground);
+}
+
+[data-part="achievement"][data-earned] [data-part="achievement-title"]::before {
+  content: "[x] ";
+  color: inherit;
+}
+
+[data-part="achievement-progress"] {
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: none;
+}
+
+[data-part="achievement-progress"] > span {
+  background: currentColor;
+}
+
+/* A counter's and a board's buttons are commands, not numbered choices. */
+[data-part="good-actions"],
+[data-part="job-actions"] {
+  counter-reset: choice;
+}
+
+[data-part="good-actions"] [data-part="choice"] [data-part="choice-label"]::before,
+[data-part="job-actions"] [data-part="choice"] [data-part="choice-label"]::before {
+  content: "> ";
+}
+
+[data-part="status"] {
+  gap: 0;
+}
+
+[data-part="status-label"]::before {
+  content: "* ";
+  color: var(--muted-foreground);
+}
+
+[data-part="vendor-button"],
+[data-part="achievements-button"] {
+  border-radius: 0;
+  text-transform: lowercase;
+}
+
+[data-part="vendor-button"]::before,
+[data-part="achievements-button"]::before {
+  content: "[";
+}
+
+[data-part="vendor-button"]::after,
+[data-part="achievements-button"]::after {
+  content: "]";
+}

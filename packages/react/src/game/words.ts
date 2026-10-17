@@ -94,6 +94,43 @@ export const UI_STRINGS = {
   noticesMore: '+{n} more',
   noticesFewer: 'Show fewer',
   unread: 'Unread',
+  // achievements
+  achievements: 'Achievements',
+  achievementsCount: '{earned} of {total}',
+  achievementEarned: 'Earned',
+  achievementProgress: '{value} of {target}',
+  noAchievements: 'No achievements yet.',
+  // the shop
+  shopAt: 'Shop at {vendor}',
+  vendorClosed: 'Closed',
+  buy: 'Buy',
+  sellFor: 'Sell for {price}',
+  stockLeft: '{n} left',
+  owned: 'You have {n}',
+  percentOff: '{percent}% off',
+  noGoods: 'Nothing for sale.',
+  // jobs
+  jobs: 'Jobs',
+  applyJob: 'Apply',
+  workShift: 'Work a shift',
+  quitJob: 'Quit',
+  jobPay: 'Pays {pay} a shift',
+  jobNextRank: 'Next: {title}, after {n} more shifts',
+  jobNextRankOne: 'Next: {title}, after 1 more shift',
+  jobNextRankSoon: 'Next: {title}',
+  shiftToday: 'Next shift: today',
+  shiftTomorrow: 'Next shift: tomorrow',
+  shiftInDays: 'Next shift: in {n} days',
+  jobShifts: 'Shifts worked: {n}',
+  jobMissed: 'Missed: {n}',
+  jobFired: 'Let go',
+  // statuses
+  statuses: 'Statuses',
+  turnsLeft: '{n} turns left',
+  turnLeft: '1 turn left',
+  statusStacks: '×{n}',
+  modifierAdd: '{n} {stat}',
+  modifierMultiply: '×{n} {stat}',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS

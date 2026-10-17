@@ -7,8 +7,6 @@
 import { SCHEMA, type Condition, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
-import { buy } from '@ifloom/plugin-shop'
-import { applyFor, work } from '@ifloom/plugin-jobs'
 import { generate } from '@ifloom/plugin-generators'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { wearing } from '@ifloom/plugin-wardrobe'
@@ -52,13 +50,9 @@ const locations: LocationDef[] = [
     actions: [
       { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
       // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
+      // The counter (the shop plugin's vendor) and the weekend job need no buttons here: the React UI's
+      // shop button and job board draw them from the plugins' views.
       { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
-      // The counter is the shop plugin's vendor: its price, stock and today's offer show on the button.
-      { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'sandwich') },
-      { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'flapjack') },
-      // Saturday mornings behind the counter, once Ava knows you: the jobs plugin's job.
-      { id: 'ask-work', label: 'Ask Ava about weekend work', command: applyFor('weekend') },
-      { id: 'shift', label: 'Work the Saturday shift', command: work('weekend') },
       // Something small happens while you sit: one of the café's storylets, drawn at random.
       { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
     ],

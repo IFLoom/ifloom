@@ -265,3 +265,28 @@
   color: var(--foreground);
   box-shadow: var(--shadow-card);
 }
+
+/* The plugins' defaults: cards like the rest of the app. */
+[data-part="achievement"],
+[data-part="good"],
+[data-part="job"] {
+  border-color: var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="achievement"][data-earned] {
+  border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+}
+
+[data-part="status"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--card);
+}
+
+[data-part="good-actions"] [data-part="choice"],
+[data-part="job-actions"] [data-part="choice"] {
+  padding-block: 0.4rem;
+}

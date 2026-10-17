@@ -178,6 +178,8 @@ It works in any effect list, an item's use included. In a plugin's [`effectsOf`]
 
 `runner.view().plugins.achievements` is an `AchievementsView`. With a runner that has a profile, an achievement counts as earned if this save earned it or any save did. Without one, as in `view(state, game)`, only this save's count.
 
+The [React UI](/docs/react) draws it with [`AchievementList`](/docs/react/components#achievementlist), on a page or in a dialog opened from the sidebar, and [`useAchievements`](/docs/react/components#useachievements) gives this view with no markup.
+
 ### AchievementsView
 
 ```ts
@@ -296,4 +298,4 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 
 ## See it in an example
 
-Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition.
+Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition. With pages on, the title screen and the sidebar's **Achievements** button open the React UI's achievements page.

@@ -259,6 +259,8 @@ The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`
 
 `view(state, game).plugins.jobs` is a `JobsView`.
 
+The [React UI](/docs/react) draws it with [`JobBoard`](/docs/react/components#jobboard), and [`useJobs`](/docs/react/components#usejobs) gives the same data and the apply, work and quit commands with no markup.
+
 ### JobsView
 
 ```ts
@@ -362,4 +364,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. The café's buttons use `applyFor('weekend')` and `work('weekend')`.
+Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. The café has no buttons of its own for it: the React UI's job board, under the stage, applies and works the shifts.

@@ -369,3 +369,42 @@
 [data-part="inline-action"] [data-part="choice-price"] {
   padding-left: 0;
 }
+
+/* The plugins' defaults: ruled entries, as in a book's index, rather than boxes. */
+[data-part="achievement"],
+[data-part="good"],
+[data-part="job"] {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+[data-part="achievements-title"],
+[data-part="jobs-title"],
+[data-part="statuses-title"] {
+  font-variant: small-caps;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+[data-part="achievement"][data-secret] [data-part="achievement-title"],
+[data-part="status-summary"],
+[data-part="status-turns"],
+[data-part="job-next"] {
+  font-style: italic;
+}
+
+[data-part="achievement-progress"] {
+  height: 2px;
+  border-radius: 0;
+}
+
+[data-part="good-actions"] [data-part="choice"],
+[data-part="job-actions"] [data-part="choice"] {
+  padding-block: 0.15rem;
+}
+
+[data-part="status"] {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--primary);
+}

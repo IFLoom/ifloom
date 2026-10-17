@@ -196,6 +196,8 @@ Use them for a button the player presses, such as "Shake it off".
 
 `view(state, game).plugins.statuses` is a `StatusesView`.
 
+The [React UI](/docs/react) lists the active statuses under the stats with [`StatusList`](/docs/react/components#statuslist), and [`useStatuses`](/docs/react/components#usestatuses) gives this view with no markup.
+
 ### StatusesView
 
 ```ts
@@ -284,4 +286,4 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 
 ## See it in an example
 
-Small Town: `caffeinated` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`.
+Small Town: `caffeinated` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.

@@ -414,6 +414,8 @@ const strings = {
 
 `view(state, game).plugins.calendar` is a `CalendarView`.
 
+The [React UI](/docs/react) shows `view.when`, the calendar's label, with [`Clock`](/docs/react/components#clock) under the title. [`useClock`](/docs/react/components#useclock) gives this view with no markup, for a clock of your own.
+
 ### CalendarView
 
 ```ts

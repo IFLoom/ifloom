@@ -270,6 +270,8 @@ const strings = { 'quests/notDoing': 'That one is not on your list.' }
 
 `view(state, game).plugins.quests` is a `QuestsView`.
 
+The [React UI](/docs/react) draws it with [`QuestLog`](/docs/react/components#questlog), and [`useQuests`](/docs/react/components#usequests) gives the same data and the track and seen commands with no markup.
+
 ### QuestsView
 
 ```ts

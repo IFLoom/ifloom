@@ -304,3 +304,32 @@
   box-shadow: var(--shadow-card);
   font-weight: 600;
 }
+
+/* The plugins' defaults: soft cards that sit on the page like stickers. */
+[data-part="achievement"],
+[data-part="good"],
+[data-part="job"] {
+  border: none;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="achievement"][data-earned] {
+  background: color-mix(in oklch, var(--secondary) 55%, var(--card));
+}
+
+[data-part="achievement-progress"] {
+  height: 0.6rem;
+}
+
+[data-part="status"] {
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius);
+  background: var(--secondary);
+}
+
+[data-part="vendor-button"],
+[data-part="achievements-button"] {
+  border-radius: 999px;
+}

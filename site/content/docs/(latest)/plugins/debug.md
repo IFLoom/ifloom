@@ -186,6 +186,8 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 
 `view(state, game).plugins.debug` is a `DebugView`, with what a debugger wants on screen.
 
+The [React UI](/docs/react) draws it with [`DebugCard`](/docs/react/components#debugcard), and [`useDebug`](/docs/react/components#usedebug) gives the same data and the debug commands with no markup.
+
 ### DebugView
 
 ```ts

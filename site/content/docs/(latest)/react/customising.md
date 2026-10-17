@@ -590,7 +590,9 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `mods-message` | Why a mod file couldn't be added. |
 | `mods-empty` | The line shown when no mods are added. |
 
-### Plugins' panels
+### Plugins' cards
+
+These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each draws nothing in a game without its plugin.
 
 | Part | What it is |
 |---|---|
@@ -614,6 +616,53 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `wardrobe-slot` | One slot. Carries `data-slot-id`. |
 | `wardrobe-slot-name` | The slot's label. |
 | `wardrobe-worn` | What's in the slot. |
+| `statuses` | The list of active statuses. |
+| `statuses-title` | Its heading. |
+| `status` | One status. Carries `data-status`. |
+| `status-label` | Its label, with the stacks and the turns left. |
+| `status-stacks` | How many stacks (`×2`), when there's more than one. |
+| `status-turns` | The turns left. |
+| `status-summary` | Its summary. |
+| `status-modifiers` | What it does to the stats (`+10 Energy`). |
+| `achievements-button` | The sidebar's **Achievements** button, with the count on a `badge`. |
+| `achievements` | The achievement list, in the page or the dialog. |
+| `achievements-title` | Its heading, when it has one. |
+| `achievements-count` | How many are earned, in the heading. |
+| `achievements-empty` | What it says when the game has none. |
+| `achievement` | One achievement. Carries `data-achievement`, and `data-earned` or `data-secret`. |
+| `achievement-image` | Its picture. |
+| `achievement-title` | Its title, or `???`, with the **Earned** `badge`. |
+| `achievement-text` | Its description. |
+| `achievement-progress` | The progress bar. Fill it with `> span`. |
+| `achievement-progress-text` | The count under it (`5 of 20`). |
+| `vendors` | The row of buttons for the vendors here. |
+| `vendor-button` | One vendor's button. Carries `data-vendor`. |
+| `vendor-closed` | The **Closed** badge on it. |
+| `shop` | A vendor's counter, in its dialog. Carries `data-vendor`, and `data-closed` while it's closed. |
+| `shop-closed` | Why it's closed. |
+| `shop-empty` | What it says when nothing is on offer. |
+| `goods` | The list of goods. |
+| `good` | One good. Carries `data-good`. |
+| `good-name` | Its name. |
+| `good-details` | The line under it: the discount, the full price, the stock and how many the player has. |
+| `good-off` | Today's discount (`50% off`). |
+| `good-full-price` | The price before it, struck out. |
+| `good-stock` | How many are left. |
+| `good-owned` | How many the player has. |
+| `good-actions` | The **Buy** and **Sell** buttons, each a `choice`. |
+| `jobs` | The job board. |
+| `jobs-title` | Its heading. |
+| `job` | One job. Carries `data-job`, and `data-hired` or `data-fired`. |
+| `job-title` | Its title, with the rank and **Let go** badges. |
+| `job-rank` | The rank held. |
+| `job-fired` | The **Let go** badge. |
+| `job-text` | Its description. |
+| `job-details` | The lines about pay, the next shift and the next rank. |
+| `job-pay` | What a shift pays. |
+| `job-shift` | When the next shift is. |
+| `job-next` | The next rank, and how far off it is. |
+| `job-record` | The shifts worked and missed. |
+| `job-actions` | The **Apply** or **Work a shift** button (a `choice`) and **Quit** (a `button`). |
 | `entities` | The entity tables, all kinds. |
 | `entity-table` | One kind's table. |
 | `entity-heading` | The kind's heading. |
@@ -697,8 +746,8 @@ These are drawn only when `pages` is on. See [Pages](/docs/react/components#page
 | `title-name` | The game's title. |
 | `title-subtitle` | The line under it, when `subtitle` is given. |
 | `title-buttons` | The column of buttons. |
-| `title-button` | Each button in it. Carries `data-title-button` with what it does: `continue`, `new`, `new-game-plus`, `load`, `settings`, `credits`, or the id of a page of your own. |
-| `page-heading` | The heading of the settings, load and credits pages. |
+| `title-button` | Each button in it. Carries `data-title-button` with what it does: `continue`, `new`, `new-game-plus`, `load`, `settings`, `achievements`, `credits`, or the id of a page of your own. |
+| `page-heading` | The heading of the settings, load, credits and achievements pages. |
 | `page-back` | Their Back button. |
 | `settings-page` | The settings page. |
 | `settings` | Its list of settings. |
@@ -713,6 +762,7 @@ These are drawn only when `pages` is on. See [Pages](/docs/react/components#page
 | `credits` | Its list. |
 | `credit` | One line of it. |
 | `credit-link` | A line that is a link. |
+| `achievements-page` | The achievements page, in a game with the achievements plugin. Its list uses the `achievements` parts. |
 | `gate-page` | The gate, before the title screen. |
 | `gate-title` | Its title. |
 | `gate-text` | Its paragraphs. |

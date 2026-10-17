@@ -277,6 +277,8 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.wardrobe` is a `WardrobeView`.
 
+The [React UI](/docs/react) draws it with [`WardrobeCard`](/docs/react/components#wardrobecard), and [`useWardrobe`](/docs/react/components#usewardrobe) gives the same data with a button for each thing the player can do, with no markup.
+
 ### WardrobeView
 
 ```ts

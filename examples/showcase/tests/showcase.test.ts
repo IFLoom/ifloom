@@ -197,7 +197,9 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     const labels = view(state, game).actions.map((action) => action.label)
-    expect(labels).toEqual(expect.arrayContaining(['Buy a sandwich', 'Buy a sandwich for later']))
+    expect(labels).toEqual(expect.arrayContaining(['Buy a sandwich']))
+    // The counter sells one too, from the shop's view, which the React UI draws as the counter's dialog.
+    expect((view(state, game).plugins.shop as ShopView).vendors[0].goods.map((good) => good.item)).toContain('sandwich')
     const button = view(state, game).actions.find((action) => action.id === 'buy-sandwich')!
     expect(button.price?.stats).toEqual([{ id: 'coins', amount: 4, text: '4 coins' }])
     const coins = state.stats.coins
@@ -214,12 +216,12 @@ describe('Small Town', () => {
     const counter = () => (view(state, game).plugins.shop as ShopView).vendors[0]
     expect(counter()).toMatchObject({ id: 'counter', here: true, closed: null })
     expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
-    // The café's own button shows the counter's price, as the shop's view does.
-    const button = view(state, game).actions.find((action) => action.id === 'flapjack')!
-    expect(button.price?.stats?.[0].id).toBe('coins')
+    // Each good's buy button carries today's price, and greys out with the reason.
+    const flapjack = () => counter().goods.find((good) => good.item === 'flapjack')!
+    expect(flapjack().buy.price?.stats?.[0].id).toBe('coins')
     state = run(state, buy('counter', 'flapjack'), buy('counter', 'flapjack'))
     expect(apply(state, game, buy('counter', 'flapjack')).reason).toBe('Sold out.')
-    expect(view(state, game).actions.find((action) => action.id === 'flapjack')!.disabled).toBe('Sold out.')
+    expect(flapjack().buy.disabled).toBe('Sold out.')
     const coins = state.stats.coins
     state = run(state, buy('counter', 'sandwich'), { type: 'custom', name: 'shop/sell', with: { vendor: 'counter', item: 'sandwich' } })
     expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)

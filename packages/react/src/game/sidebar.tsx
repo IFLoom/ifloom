@@ -1,6 +1,7 @@
-import type { StatView } from '@ifloom/engine'
+import type { GameState, Result, StatView } from '@ifloom/engine'
+import type { CalendarView } from '@ifloom/plugin-calendar'
 import type { CastView } from '@ifloom/plugin-cast'
-import type { PlacesView } from '@ifloom/plugin-places'
+import type { ExitView, PlacesView } from '@ifloom/plugin-places'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ChoiceButton } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -9,14 +10,28 @@ import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
 import { useWords } from './words.ts'
 
-function ClockImpl() {
-  const { view } = useGame()
-  const attrs = usePart('clock', 'text-sm text-muted-foreground')
-  if (!view.when) return null
-  return <p {...attrs}>{view.when}</p>
+/** What `useClock` returns: where the game is in time. */
+export type ClockState = {
+  /** The line the plugins wrote (`view.when`), such as "Day 3 · Wednesday morning", or null when none says. */
+  when: string | null
+  /** The calendar plugin's view, piece by piece, or null in a game without it. */
+  calendar: CalendarView | null
 }
 
-/** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. */
+/** Where the game is in time: the whole line and, with the calendar plugin, its parts. `Clock` is drawn from it. */
+export function useClock(): ClockState {
+  const { view } = useGame()
+  return { when: view.when || null, calendar: (view.plugins.calendar as CalendarView | undefined) ?? null }
+}
+
+function ClockImpl() {
+  const { when } = useClock()
+  const attrs = usePart('clock', 'text-sm text-muted-foreground')
+  if (!when) return null
+  return <p {...attrs}>{when}</p>
+}
+
+/** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. A thin default on `useClock`. */
 export const Clock = overridable('Clock', ClockImpl)
 
 /** The most pips drawn; a wider range is drawn as a bar. */
@@ -106,14 +121,33 @@ function StatListImpl() {
 export const StatList = overridable('StatList', StatListImpl)
 
 
-function LocationCardImpl() {
+/** What `usePlaces` returns: the places plugin's view, and how to take an exit. */
+export type PlacesControls = PlacesView & {
+  /** Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. */
+  go: (exit: string) => Result<GameState>
+}
+
+/** The places plugin's view with a way to travel, or null in a game without the plugin. `LocationCard` is drawn from it. */
+export function usePlaces(): PlacesControls | null {
   const { view, send } = useGame()
+  const places = view.plugins.places as PlacesView | undefined
+  if (!places) return null
+  return {
+    ...places,
+    go: (exit) => {
+      const found: ExitView | undefined = places.exits.find((entry) => entry.id === exit)
+      return found ? send(found.command) : send({ type: 'custom', name: 'places/go', with: { id: exit } })
+    },
+  }
+}
+
+function LocationCardImpl() {
+  const places = usePlaces()
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
   const list = usePart('exits', 'flex flex-wrap gap-1.5')
   const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
-  const places = view.plugins.places as PlacesView | undefined
   // A game without the places plugin has nothing to show here.
   const location = places?.location
   const exits = places?.exits ?? []
@@ -133,7 +167,7 @@ function LocationCardImpl() {
               {...button}
               disabled={Boolean(exit.disabled)}
               title={exit.disabled ?? exit.warning}
-              onClick={() => send(exit.command)}
+              onClick={() => places!.go(exit.id)}
               data-exit={exit.id}
             >
               {exit.label}
@@ -147,20 +181,26 @@ function LocationCardImpl() {
 
 /**
  * Where the player is, and the exits from it: each a button, greyed out with its
- * reason. A place with a stage shows it above its name, hotspots and all.
+ * reason. A place with a stage shows it above its name, hotspots and all. A
+ * thin default on `usePlaces`.
  */
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
 
-function PeopleCardImpl() {
+/** The cast plugin's view: who is here (`present`, each with their buttons) and everyone met (`people`), or null in a game without the plugin. `PeopleCard` is drawn from it. */
+export function usePeople(): CastView | null {
   const { view } = useGame()
+  return (view.plugins.cast as CastView | undefined) ?? null
+}
+
+function PeopleCardImpl() {
   const section = usePart('people', 'flex flex-col gap-2')
   const card = usePart('person', 'flex flex-col gap-1.5')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
   const role = usePart('person-role', 'text-xs text-muted-foreground')
   const actions = usePart('person-actions', 'flex flex-col gap-1.5')
-  const people = (view.plugins.cast as CastView | undefined)?.present ?? []
+  const people = usePeople()?.present ?? []
   if (!people.length) return null
   return (
     <section {...section}>
@@ -186,5 +226,5 @@ function PeopleCardImpl() {
   )
 }
 
-/** Who is here, with what the player can do with each of them: the cast plugin's. Nothing without it. */
+/** Who is here, with what the player can do with each of them: the cast plugin's. Nothing without it. A thin default on `usePeople`. */
 export const PeopleCard = overridable('PeopleCard', PeopleCardImpl)

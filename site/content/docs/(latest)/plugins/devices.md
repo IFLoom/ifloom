@@ -396,6 +396,8 @@ App and device names aren't strings. They're the game's own, given in each [`App
 
 `view(state, game).plugins.devices` is a `DevicesView`.
 
+The [React UI](/docs/react) draws it with [`DeviceButtons`](/docs/react/components#devicebuttons) and a [`DeviceDialog`](/docs/react/components#devicedialog), and [`useDevices`](/docs/react/components#usedevices) gives the devices with no markup.
+
 ### DevicesView
 
 ```ts

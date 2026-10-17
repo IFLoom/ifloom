@@ -34,12 +34,16 @@ The engine doesn't need this package. The UI only reads the [view](/docs/referen
 - **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices) or the [phone](/docs/plugins/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
 - **A debug card**, under the stage, when the game has the [debug plugin](/docs/plugins/debug).
 - **The wardrobe**, at the foot of the sidebar, when the game has the [wardrobe plugin](/docs/plugins/wardrobe).
+- **Active statuses**, under the stats, when the game has the [statuses plugin](/docs/plugins/statuses) and one is active, with the turns each has left.
+- **Achievements**, from a button under the menu, when the game has the [achievements plugin](/docs/plugins/achievements): a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
+- **The shop**, when the game has the [shop plugin](/docs/plugins/shop): a button for each vendor where the player is, opening a dialog with the goods, prices, stock and greyed-out reasons, to buy and sell back.
+- **A job board**, under the stage, when the game has the [jobs plugin](/docs/plugins/jobs): each job with its pay, rank, next shift and the reason applying is refused, and buttons to apply, work a shift and quit.
 
 That's where [`DEFAULT_LAYOUT`](#layouts) puts each one. A [layout](#layouts) of your own can move any of them, or drop the side column.
 
 When a choice or action is greyed out, the button shows the reason under its label, so the player doesn't have to hover to find out. Its price is on the button too.
 
-The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no card for it.
+The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no card for it. Each plugin's card is a default built on a hook, such as [`useShop`](/docs/react/components#useshop), which gives the same data and actions with no markup, so you can draw your own instead. [Plugins' defaults](/docs/react/components#plugins-defaults) lists them all.
 
 ## Install
 
@@ -223,7 +227,7 @@ type Part = PartName | ReactNode
 type PartName =
   | 'title' | 'stats' | 'entities' | 'menu' | 'devices' | 'separator' | 'location' | 'people'
   | 'actions' | 'inventory' | 'wardrobe' | 'scene' | 'inputs' | 'quests' | 'debug' | 'notices'
-  | 'notice-strip'
+  | 'notice-strip' | 'statuses' | 'achievements' | 'shop' | 'jobs'
 ```
 
 | Part | What it draws |
@@ -245,19 +249,23 @@ type PartName =
 | `'debug'` | [`DebugCard`](/docs/react/components#debugcard). |
 | `'notices'` | [`Notices`](/docs/react/components#notices), the unseen notices. |
 | `'notice-strip'` | [`NoticeStrip`](/docs/react/components#noticestrip), a row of unread counts. No built-in layout includes it. |
+| `'statuses'` | [`StatusList`](/docs/react/components#statuslist), the active statuses. |
+| `'achievements'` | [`AchievementsButton`](/docs/react/components#achievementsbutton), which opens the achievements. |
+| `'shop'` | [`ShopButtons`](/docs/react/components#shopbuttons), a button for each vendor here. |
+| `'jobs'` | [`JobBoard`](/docs/react/components#jobboard). |
 
 Each built-in part draws nothing when the game has nothing for it. A game without a calendar shows no clock, and one without the cast shows no people. So a layout can safely list parts a game doesn't use. Two layouts are exported:
 
 ```ts
 const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'entities', 'menu', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
-  stage: ['scene', 'inputs', 'quests', 'debug'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
+  stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
   overlay: ['notices'],
 }
 
 const READING_LAYOUT = {
   sidebar: [],
-  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'menu'],
+  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements'],
   overlay: ['notices'],
 }
 ```
@@ -323,6 +331,8 @@ mountGame(game, {
 ```
 
 `pages: true` gives the title screen with nothing extra. With `pages` off or left out, the game starts straight away, as before.
+
+In a game with the [achievements plugin](/docs/plugins/achievements), the title screen also has **Achievements**, which goes to a page listing them. Set `achievements: false` in `pages` to leave it out.
 
 The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains **Settings** and **Title screen**.
 
@@ -502,6 +512,39 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.noticesMore` | `+{n} more` | `n`: the notices hidden on a phone |
 | `ui.noticesFewer` | `Show fewer` | |
 | `ui.unread` | `Unread` | |
+| `ui.achievements` | `Achievements` | |
+| `ui.achievementsCount` | `{earned} of {total}` | `earned`, `total` |
+| `ui.achievementEarned` | `Earned` | |
+| `ui.achievementProgress` | `{value} of {target}` | `value`, `target` |
+| `ui.noAchievements` | `No achievements yet.` | |
+| `ui.shopAt` | `Shop at {vendor}` | `vendor`: its name |
+| `ui.vendorClosed` | `Closed` | |
+| `ui.buy` | `Buy` | |
+| `ui.sellFor` | `Sell for {price}` | `price`: what selling one pays |
+| `ui.stockLeft` | `{n} left` | `n` |
+| `ui.owned` | `You have {n}` | `n` |
+| `ui.percentOff` | `{percent}% off` | `percent` |
+| `ui.noGoods` | `Nothing for sale.` | |
+| `ui.jobs` | `Jobs` | |
+| `ui.applyJob` | `Apply` | |
+| `ui.workShift` | `Work a shift` | |
+| `ui.quitJob` | `Quit` | |
+| `ui.jobPay` | `Pays {pay} a shift` | `pay` |
+| `ui.jobNextRank` | `Next: {title}, after {n} more shifts` | `title`, `n` |
+| `ui.jobNextRankOne` | `Next: {title}, after 1 more shift` | `title` |
+| `ui.jobNextRankSoon` | `Next: {title}` | `title` |
+| `ui.shiftToday` | `Next shift: today` | |
+| `ui.shiftTomorrow` | `Next shift: tomorrow` | |
+| `ui.shiftInDays` | `Next shift: in {n} days` | `n` |
+| `ui.jobShifts` | `Shifts worked: {n}` | `n` |
+| `ui.jobMissed` | `Missed: {n}` | `n` |
+| `ui.jobFired` | `Let go` | |
+| `ui.statuses` | `Statuses` | |
+| `ui.turnsLeft` | `{n} turns left` | `n` |
+| `ui.turnLeft` | `1 turn left` | |
+| `ui.statusStacks` | `×{n}` | `n` |
+| `ui.modifierAdd` | `{n} {stat}` | `n` with its sign, `stat`: its label |
+| `ui.modifierMultiply` | `×{n} {stat}` | `n`, `stat` |
 
 Which component uses which keys:
 
@@ -521,7 +564,11 @@ Which component uses which keys:
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
 - **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
 - **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.applyMods`, plus `ui.remove` from the saves menu for its **Delete** button.
-- **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`.
+- **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings`, `ui.achievements` and `ui.credits`.
+- **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
+- **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.
+- **[Shop](/docs/react/components#shopcounter)**: `ui.shopAt` to `ui.noGoods`.
+- **[Job board](/docs/react/components#jobboard)**: `ui.jobs` to `ui.jobFired`.
 - **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/docs/reference/strings) and its plugins' strings.

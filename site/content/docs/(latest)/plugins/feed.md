@@ -367,6 +367,8 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.feed` is a `FeedsView`.
 
+The [React UI](/docs/react) draws a feed with [`FeedSection`](/docs/react/components#feedsection) in an app, and [`useFeed`](/docs/react/components#usefeed) gives this view and the seen command with no markup.
+
 ### FeedsView
 
 ```ts

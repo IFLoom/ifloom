@@ -2,7 +2,11 @@
 title: "Building UI for plugins"
 description: "Draw the achievements, shop and jobs plugins from the view: an achievements page, a shop counter and a job board, in plain DOM, React, Vue or Svelte."
 ---
-The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [jobs](/docs/plugins/jobs) plugins ship no UI. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks. This page builds three pieces:
+The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [jobs](/docs/plugins/jobs) plugins are UI-free. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks.
+
+If you use the React UI, you don't have to build any of this. It draws a default for each of these plugins when the game has it: an [achievements page](/docs/react/components#achievementlist), a [shop dialog](/docs/react/components#shopcounter), a [job board](/docs/react/components#jobboard) and the [active statuses](/docs/react/components#statuslist). Each comes with a hook, such as [`useShop`](/docs/react/components#useshop), that gives the same data and actions with no markup. [Plugins' defaults](/docs/react/components#plugins-defaults) lists them all. Read on to build your own: for Vue, Svelte or plain JS, or for a React game that wants a different shape.
+
+This page builds three pieces:
 
 - an achievements page, with secret ones and progress bars;
 - a shop counter beside the room, with prices, discounts and greyed-out buttons;
@@ -11,7 +15,7 @@ The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [
 A plugin's slice is plain data, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
 
 - **Plain JS** pieces are functions that return an element, called from the `draw` function in the [`vanilla` template](/docs/guide/frameworks)'s `src/main.ts`, which passes its `runner`.
-- **React** pieces are components of the [React UI](/docs/react) that read the view with [`useGame`](/docs/react/components#usegame) and send commands with its `send`.
+- **React** pieces are components of the [React UI](/docs/react) that read the view with [`useGame`](/docs/react/components#usegame) and send commands with its `send`. The hooks (`useAchievements`, `useShop`, `useJobs`) would save a line or two; these read the view directly so they look like the other tabs.
 - **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts` and send commands with `runner.apply`.
 
 Add each plugin's package to the game's `package.json` for its types. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game.
@@ -288,7 +292,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
 
 `fullPrice` is only there on the day a good is marked down, so the struck-out price shows only then. A greyed-out button keeps its reason in `title`, so the player can see why.
 
-You don't need a counter for a simple shop. A location's actions can send [`buy`](/docs/plugins/shop#helpers) directly, and they come in `view.actions` with the price and the greyed-out reason like any button. That's what Small Town's café does.
+You don't need a counter for a simple shop. A location's actions can send [`buy`](/docs/plugins/shop#helpers) directly, and they come in `view.actions` with the price and the greyed-out reason like any button. Small Town's café uses the React UI's own counter instead.
 
 ## A job board
 
@@ -489,19 +493,22 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/main.tsx
-import { DEFAULT_LAYOUT, mountGame } from '@ifloom/react'
+import { DEFAULT_LAYOUT, mountGame, type Part } from '@ifloom/react'
 import { Achievements } from './pages/Achievements.tsx'
 import { Counter } from './hud/Counter.tsx'
 import { JobBoard } from './hud/JobBoard.tsx'
 import game from './game.ts'
 
+// Leave out the built-in shop button and job board, so they don't show beside yours.
+const without = (parts: readonly Part[]) => parts.filter((part) => part !== 'shop' && part !== 'jobs')
+
 mountGame(game, {
   layout: {
     ...DEFAULT_LAYOUT,
-    stage: [...DEFAULT_LAYOUT.stage, <Counter key="counter" />],
-    sidebar: [...DEFAULT_LAYOUT.sidebar, <JobBoard key="jobs" />],
+    stage: [...without(DEFAULT_LAYOUT.stage), <Counter key="counter" />],
+    sidebar: [...without(DEFAULT_LAYOUT.sidebar), <JobBoard key="jobs" />],
   },
-  // The title screen gets an Achievements button.
+  // A page with the id `achievements` takes the built-in one's place, title-screen button and all.
   pages: { pages: { achievements: { label: 'Achievements', component: Achievements } } },
 })
 ```
@@ -548,7 +555,7 @@ const showAchievements = ref(false)
 {/if}
 ```
 
-In the React UI, the counter and the board go in lists of the [layout](/docs/react#layouts), and the achievements page is one of the [pages](/docs/recipes/title-screen#pages-of-your-own), so the title screen gets an Achievements button. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
+In the React UI, the counter and the board go in lists of the [layout](/docs/react#layouts), in place of the built-in `'shop'` and `'jobs'` parts, and the achievements page is one of the [pages](/docs/recipes/title-screen#pages-of-your-own), so the title screen gets an Achievements button. The sidebar's `'achievements'` button then goes to your page. On the title screen, the progress counts come from whatever state the runner holds at the time. To open the page during the game too, send the player there with `usePage().go('achievements')`. The board could also go in a phone app.
 
 ## The same for any plugin
 

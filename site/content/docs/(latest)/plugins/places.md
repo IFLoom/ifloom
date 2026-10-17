@@ -463,6 +463,8 @@ Walk back out to the high street and the ambience stops, because the street name
 
 `view(state, game).plugins.places` is a `PlacesView`.
 
+The [React UI](/docs/react) draws it with [`LocationCard`](/docs/react/components#locationcard), and [`usePlaces`](/docs/react/components#useplaces) gives the same data and a way to take an exit with no markup, for a map of your own.
+
 ### PlacesView
 
 ```ts

@@ -1,11 +1,13 @@
 import { Fragment, type ReactNode } from 'react'
 import { Separator } from '../components/ui/separator.tsx'
+import { AchievementsButton } from './achievements.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
 import { DebugCard } from './debug.tsx'
 import { DeviceButtons } from './device.tsx'
 import { EntityTable } from './entities.tsx'
 import { InputFields } from './inputs.tsx'
+import { JobBoard } from './jobs.tsx'
 import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
 import { Notices } from './notices.tsx'
@@ -13,6 +15,8 @@ import { NoticeStrip } from './strip.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { QuestLog } from './quests.tsx'
 import { SceneStage } from './scene.tsx'
+import { ShopButtons } from './shop.tsx'
+import { StatusList } from './statuses.tsx'
 import { Clock, LocationCard, PeopleCard, StatList } from './sidebar.tsx'
 import { WardrobeCard } from './wardrobe.tsx'
 
@@ -39,6 +43,10 @@ export type PartName =
   | 'debug'
   | 'notices'
   | 'notice-strip'
+  | 'statuses'
+  | 'achievements'
+  | 'shop'
+  | 'jobs'
 
 /** A part of a layout: a built-in one by name, or anything of the game's own. */
 export type Part = PartName | ReactNode
@@ -52,15 +60,15 @@ export type Layout = { sidebar?: readonly Part[]; stage?: readonly Part[]; overl
 
 /** The React UI's own layout: everything at the side, the scene on the stage. */
 export const DEFAULT_LAYOUT = {
-  sidebar: ['title', 'stats', 'entities', 'menu', 'devices', 'separator', 'location', 'people', 'actions', 'inventory', 'wardrobe'],
-  stage: ['scene', 'inputs', 'quests', 'debug'],
+  sidebar: ['title', 'stats', 'statuses', 'entities', 'menu', 'achievements', 'devices', 'separator', 'location', 'people', 'actions', 'shop', 'inventory', 'wardrobe'],
+  stage: ['scene', 'inputs', 'quests', 'jobs', 'debug'],
   overlay: ['notices'],
 } as const satisfies Required<Layout>
 
 /** A page to read, as a novel is: the scene, then what to type and the buttons, under the title. */
 export const READING_LAYOUT = {
   sidebar: [],
-  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'menu'],
+  stage: ['title', 'scene', 'inputs', 'actions', 'stats', 'statuses', 'menu', 'achievements'],
   overlay: ['notices'],
 } as const satisfies Required<Layout>
 
@@ -103,6 +111,10 @@ const PARTS: Record<PartName, () => ReactNode> = {
   debug: () => <DebugCard />,
   notices: () => <Notices />,
   'notice-strip': () => <NoticeStrip />,
+  statuses: () => <StatusList />,
+  achievements: () => <AchievementsButton />,
+  shop: () => <ShopButtons />,
+  jobs: () => <JobBoard />,
 }
 
 function isPartName(part: Part): part is PartName {

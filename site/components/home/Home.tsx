@@ -1,6 +1,22 @@
 'use client'
 // The homepage at /. It's always dark, whatever the docs' theme says:
 // every colour is set here rather than taken from Fumadocs.
+// One file per icon, so the page carries only these.
+import { CalendarBlankIcon } from '@phosphor-icons/react/dist/csr/CalendarBlank'
+import { MapPinIcon } from '@phosphor-icons/react/dist/csr/MapPin'
+import { UsersIcon } from '@phosphor-icons/react/dist/csr/Users'
+import { StorefrontIcon } from '@phosphor-icons/react/dist/csr/Storefront'
+import { TShirtIcon } from '@phosphor-icons/react/dist/csr/TShirt'
+import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag'
+import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy'
+import { BriefcaseIcon } from '@phosphor-icons/react/dist/csr/Briefcase'
+import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle'
+import { ChatCircleIcon } from '@phosphor-icons/react/dist/csr/ChatCircle'
+import { RssIcon } from '@phosphor-icons/react/dist/csr/Rss'
+import { DeviceMobileIcon } from '@phosphor-icons/react/dist/csr/DeviceMobile'
+import { BugIcon } from '@phosphor-icons/react/dist/csr/Bug'
+import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle'
+import type { Icon } from '@phosphor-icons/react/dist/lib/types'
 import Link from 'next/link'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { HeroDemo } from './HeroDemo'
@@ -14,6 +30,23 @@ const shapes = [
   { name: 'The Corner Café', shape: 'A management game', detail: 'A turn is a week, staff are entities' },
   { name: 'Small Town', shape: 'A life sim', detail: 'Calendar, places, cast and a phone' },
 ]
+
+const pluginIcons: Record<string, Icon> = {
+  calendar: CalendarBlankIcon,
+  places: MapPinIcon,
+  cast: UsersIcon,
+  shop: StorefrontIcon,
+  wardrobe: TShirtIcon,
+  quests: FlagIcon,
+  achievements: TrophyIcon,
+  jobs: BriefcaseIcon,
+  effects: SparkleIcon,
+  messages: ChatCircleIcon,
+  feed: RssIcon,
+  devices: DeviceMobileIcon,
+  debug: BugIcon,
+  generators: ShuffleIcon,
+}
 
 const pluginGroups = [
   { name: 'World', plugins: ['calendar', 'places', 'cast', 'shop', 'wardrobe'] },
@@ -165,9 +198,15 @@ export function Home() {
                   <div key={group.name} className={s.group}>
                     <span className={s['group-name']}>{group.name}</span>
                     <ul className={s.chips}>
-                      {group.plugins.map((plugin) => (
-                        <li key={plugin}>{plugin}</li>
-                      ))}
+                      {group.plugins.map((plugin) => {
+                        const PluginIcon = pluginIcons[plugin]
+                        return (
+                          <li key={plugin}>
+                            <PluginIcon size={14} weight="light" aria-hidden="true" />
+                            {plugin}
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 ))}

@@ -370,6 +370,18 @@
   margin: 0;
 }
 
+.group .chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 10px;
+}
+
+.group .chips svg {
+  flex: none;
+  color: var(--ink-2);
+}
+
 .tool-list {
   display: flex;
   flex-direction: column;

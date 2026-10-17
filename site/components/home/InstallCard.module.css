@@ -47,6 +47,57 @@
   color: var(--ember-2);
 }
 
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.optionLabel {
+  flex: none;
+  width: 52px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toggles button {
+  padding: 5px 12px;
+  border: 1px solid var(--hair-2);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-2);
+  transition: color 0.4s var(--ease), background-color 0.4s var(--ease), border-color 0.4s var(--ease);
+}
+
+.toggles button:hover:not(:disabled) {
+  border-color: var(--hair);
+  color: var(--ink);
+}
+
+.toggles button.on {
+  border-color: rgba(255, 166, 87, 0.3);
+  background: rgba(255, 150, 60, 0.14);
+  color: var(--ember-2);
+}
+
+.toggles button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .line {
   display: flex;
@@ -67,6 +118,10 @@
   color: var(--ink);
   white-space: nowrap;
   scrollbar-width: none;
+}
+
+.nowrap {
+  white-space: nowrap;
 }
 
 .prompt {
@@ -146,6 +201,16 @@
 
   .tabs button {
     padding: 7px 12px;
+  }
+
+  .option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .optionLabel {
+    width: auto;
   }
 
   .line {

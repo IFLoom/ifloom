@@ -3,21 +3,97 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import s from './InstallCard.module.css'
 
+// npm keeps the flags after `--` for the create script; the others pass them on as they are.
 const managers = [
-  { id: 'npm', command: 'npm create ifloom@latest my-game' },
-  { id: 'bun', command: 'bun create ifloom my-game' },
-  { id: 'pnpm', command: 'pnpm create ifloom my-game' },
-  { id: 'yarn', command: 'yarn create ifloom my-game' },
+  { id: 'npm', command: 'npm create ifloom@latest my-game', pass: '--' },
+  { id: 'bun', command: 'bun create ifloom my-game', pass: '' },
+  { id: 'pnpm', command: 'pnpm create ifloom my-game', pass: '' },
+  { id: 'yarn', command: 'yarn create ifloom my-game', pass: '' },
 ] as const
 type Manager = (typeof managers)[number]['id']
+
+// The UIs `ifloom new` has a template for. The React UI is the default, blank, template.
+const uis = [
+  { id: 'react', label: 'React UI', template: null },
+  { id: 'vue', label: 'Vue', template: 'vue' },
+  { id: 'svelte', label: 'Svelte', template: 'svelte' },
+  { id: 'vanilla', label: 'Plain JS', template: 'vanilla' },
+] as const
+type Ui = (typeof uis)[number]['id']
+
+// The examples are drawn with the React UI, so they come only with it.
+const starts = [
+  { id: 'blank', label: 'Blank' },
+  { id: 'novel', label: 'Novel' },
+  { id: 'cafe', label: 'Café' },
+  { id: 'town', label: 'Town' },
+] as const
+type Start = (typeof starts)[number]['id']
+
+// The React UI's presets. `default` passes no flag: a blank game gets one at random, an example keeps its own.
+const themes = ['default', 'paper', 'terminal', 'studio', 'storybook', 'none'] as const
+type Theme = (typeof themes)[number]
+
+/** The command as words, each flag with its value as one, so a narrow screen wraps between them. */
+function commandFor(manager: Manager, ui: Ui, start: Start, theme: Theme): string[] {
+  const m = managers.find((x) => x.id === manager)!
+  const flags: string[] = []
+  const template = ui === 'react' ? (start === 'blank' ? null : start) : uis.find((x) => x.id === ui)!.template
+  if (template) flags.push(`--template ${template}`)
+  if (ui === 'react' && theme !== 'default') flags.push(`--theme ${theme}`)
+  if (!flags.length) return [m.command]
+  return m.pass ? [m.command, m.pass, ...flags] : [m.command, ...flags]
+}
+
+type Option<T> = { id: T; label: string; disabled?: boolean }
+
+function Toggle<T extends string>({ label, options, value, onChange, note }: { label: string; options: readonly Option<T>[]; value: T; onChange: (id: T) => void; note?: string }) {
+  return (
+    <div className={s.option}>
+      <span className={s.optionLabel} id={`install-${label}`}>
+        {label}
+      </span>
+      <div className={s.toggles} role="radiogroup" aria-labelledby={`install-${label}`} title={note}>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={value === o.id}
+            disabled={o.disabled}
+            className={value === o.id ? s.on : undefined}
+            onClick={() => onChange(o.id)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 const KEY = 'ifloom.packageManager'
 
 export function InstallCard() {
   const [chosen, setChosen] = useState<Manager>('npm')
+  const [ui, setUi] = useState<Ui>('react')
+  const [start, setStart] = useState<Start>('blank')
+  const [theme, setTheme] = useState<Theme>('default')
   const [copied, setCopied] = useState(false)
   const reset = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const command = managers.find((m) => m.id === chosen)!.command
+  const react = ui === 'react'
+  const words = commandFor(chosen, ui, react ? start : 'blank', theme)
+  const command = words.join(' ')
+
+  function pickUi(id: Ui) {
+    setUi(id)
+    setCopied(false)
+    // Only the React UI has examples and presets to keep.
+    if (id !== 'react') {
+      setStart('blank')
+      setTheme('default')
+    }
+  }
 
   useEffect(() => {
     try {
@@ -62,12 +138,44 @@ export function InstallCard() {
             ))}
           </div>
         </div>
+        <div className={s.options}>
+          <Toggle label="UI" options={uis} value={ui} onChange={pickUi} />
+          <Toggle
+            label="Start"
+            options={starts.map((o) => ({ ...o, disabled: !react && o.id !== 'blank' }))}
+            value={react ? start : 'blank'}
+            onChange={(id) => {
+              setStart(id)
+              setCopied(false)
+            }}
+            note={react ? undefined : 'The examples are drawn with the React UI.'}
+          />
+          <Toggle
+            label="Theme"
+            options={themes.map((id) => ({ id, label: id === 'default' ? (start === 'blank' ? 'random' : 'its own') : id, disabled: !react }))}
+            value={react ? theme : 'default'}
+            onChange={(id) => {
+              setTheme(id)
+              setCopied(false)
+            }}
+            note={react ? undefined : 'Theme presets are for the React UI.'}
+          />
+        </div>
         <div className={s.line}>
           <code>
             <span className={s.prompt} aria-hidden="true">
               $
             </span>
-            {command}
+            {words.map((word, at) =>
+              at ? (
+                <span key={at}>
+                  {' '}
+                  <span className={s.nowrap}>{word}</span>
+                </span>
+              ) : (
+                word
+              ),
+            )}
           </code>
           <button type="button" className={s.copy} aria-label={copied ? 'Copied' : 'Copy the command'} onClick={copy}>
             <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -86,7 +194,7 @@ export function InstallCard() {
           </button>
         </div>
         <p className={s.note}>
-          It makes a new game in <code>my-game</code> with a first scene, ready for <code>npm run dev</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
+          It makes a new game in <code>my-game</code>, ready for <code>npm run dev</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
           templates and options.
         </p>
         <p className={s.note}>

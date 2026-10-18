@@ -31,7 +31,7 @@ function cafe() {
   return { base, own }
 }
 
-const oldPack = { id: 'evening', schema: OLD, lines: { 'cafe.counter': 'Lanterns over the counter tonight.' } }
+const oldPack = { id: 'mod:evening', schema: OLD, lines: { 'cafe.counter': 'Lanterns over the counter tonight.' } }
 
 describe('content migrations', () => {
   it('bring an old pack up to this schema, step by step, without changing it', () => {

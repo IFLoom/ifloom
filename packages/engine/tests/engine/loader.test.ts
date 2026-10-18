@@ -82,3 +82,50 @@ describe('the loader', () => {
     )
   })
 })
+
+describe('two of the game’s own packs declaring one thing', () => {
+  /** The problems about clashes, as lines, from loading these packs over the town's base with a plugin `notes`. */
+  const clashes = (...packs: Pack[]) =>
+    loadGame(packs, { ...baseOf(), plugins: [{ id: 'notes', version: 1 }] })
+      .problems.map(describeProblem)
+      .filter((line) => line.includes(' is in both '))
+  const pack = (id: string, rest: Partial<Pack>): Pack => ({ id, schema: SCHEMA, ...rest })
+  const scene = (id: string) => ({ id, body: [{ text: 'cafe.counter' }], choices: [] })
+  const stat = (id: string) => ({ id, label: id, min: 0, max: 10, start: 0 })
+
+  // Each kind of key a pack declares, written by two packs.
+  const cases: [string, Partial<Pack>, string][] = [
+    ['scenes', { scenes: [scene('cafe.counter')] }, 'scene "cafe.counter"'],
+    ['prose keys', { prose: { 'cafe.counter': 'The counter.' } }, 'prose "cafe.counter"'],
+    ['strings', { strings: { 'turn.next': 'Next' } }, 'string "turn.next"'],
+    ['stats', { stats: [stat('coins')] }, 'stat "coins"'],
+    ['items', { items: [{ id: 'key', name: 'Key', desc: 'A key.' }] }, 'item "key"'],
+    ['kinds', { kinds: [{ id: 'staff', label: 'Staff' }] }, 'kind "staff"'],
+    ['entities', { kinds: [], entities: [{ of: 'staff', id: 'ana', name: 'Ana' }] }, 'entity "staff:ana"'],
+    ['storylines', { storylines: [{ id: 'ava', name: 'Ava' }] }, 'storyline "ava"'],
+    ['custom functions', { custom: { conditions: { open: () => true } } }, 'custom condition "open"'],
+    ['the same line in a variants name', { variants: { 'street.weather': ['cafe.counter'] } }, 'variants "street.weather" line "cafe.counter"'],
+    ['plugin content', { data: { notes: { notes: [{ id: 'first' }] } } }, 'notes/notes "first"'],
+  ]
+  for (const [name, content, what] of cases) {
+    it(`names both packs for ${name}`, () => {
+      expect(clashes(pack('story.cafe', content), pack('story.town', content))).toEqual([`story.town · pack · ${what} is in both story.cafe and story.town`])
+    })
+  }
+
+  it('lets packs add different lines to one variants name', () => {
+    expect(clashes(pack('story.cafe', { variants: { murmur: ['a'] } }), pack('story.park', { variants: { murmur: ['b'] } }))).toEqual([])
+  })
+
+  it('keeps quiet about a mod, a patch and a pack that overrides on purpose', () => {
+    const own = pack('story.cafe', { scenes: [scene('cafe.counter')], prose: { 'cafe.counter': 'The counter.' } })
+    const mod = pack('mod:evening', { scenes: [scene('cafe.counter')], prose: { 'cafe.counter': 'Lanterns.' } })
+    const patch = pack('story.patch', { patches: [{ scene: 'cafe.counter', dropChoice: 'nothing' }] })
+    const meant = pack('story.late', { overrides: true, prose: { 'cafe.counter': 'Late.' } })
+    expect(clashes(own, mod, patch, meant)).toEqual([])
+    // A later pack that doesn't say so is still reported against the first.
+    expect(clashes(own, meant, pack('story.again', { prose: { 'cafe.counter': 'Again.' } }))).toEqual([
+      'story.again · pack · prose "cafe.counter" is in both story.cafe and story.again',
+    ])
+  })
+})

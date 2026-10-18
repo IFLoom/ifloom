@@ -219,6 +219,7 @@ describe('places', () => {
       const sounds: Pack = {
         id: 'sounds',
         schema: SCHEMA,
+        overrides: true,
         audio: {
           tracks: {
             calm: { src: 'calm.ogg', channel: 'music' },
@@ -277,6 +278,7 @@ describe('places', () => {
       const pictures: Pack = {
         id: 'pictures',
         schema: SCHEMA,
+        overrides: true,
         media: {
           pools: {
             counter: [

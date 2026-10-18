@@ -199,7 +199,7 @@ describe('the loader’s settings checks', () => {
     const twice = loadGame(
       [
         { id: 'core', schema: SCHEMA, settings: [toggle] },
-        { id: 'mod', schema: SCHEMA, settings: [{ ...toggle, default: false }] },
+        { id: 'mod:hints', schema: SCHEMA, settings: [{ ...toggle, default: false }] },
       ],
       rest,
     )

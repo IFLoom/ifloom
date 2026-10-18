@@ -16,6 +16,7 @@ Your game's own content is the first pack. Any later pack, such as a mod, is lai
 type Pack = {
   id: string
   schema: number
+  overrides?: boolean
   scenes?: (Scene | DataScene)[]
   items?: ItemDef[]
   storylines?: StorylineDef[]
@@ -43,6 +44,7 @@ type Pack = {
 |---|---|
 | `id` | Names the pack in problems, such as `'town'` or `'mod:sunday-market'`. |
 | `schema` | The [`SCHEMA`](#schema) it was written for. An older pack is [upgraded](#upgradepack) as it loads. A newer one is skipped whole, with a problem. |
+| `overrides` | Set it to `true` on one of your game's own packs when it replaces something an earlier pack declared on purpose. Without it, the loader reports the clash. See [Two packs with one key](#two-packs-with-one-key). |
 | `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `minigames`, `settings` | By `id`. A later pack's entry replaces an earlier one with the same id as a whole, so fields aren't merged. The order is first appearance. Any `kinds`, `collections`, `triggers`, `inputs`, `minigames` and `settings` on `loadGame`'s `base` come before every pack's. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. A later pack's entity replaces an earlier one with the same kind and id. The order is first appearance, and the base's come first. See [Entities](/docs/reference/entities). |
 | `strings` | By key. A later pack wins, and every pack wins over the base's `strings`. A pack of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
@@ -71,6 +73,33 @@ const longerMarket: Pack = {
 ```
 
 The game's other custom conditions, and its effects, values and panels, are left alone.
+
+### Two packs with one key
+
+A game split into several packs can end up declaring the same thing twice by mistake: a scene copied into a second file, or a stat declared in both `world/stats.ts` and a chapter. The later pack would win without a word, so `loadGame` reports it instead, naming both packs:
+
+```text
+story.town · pack · scene "cafe.counter" is in both story.cafe and story.town
+```
+
+It looks at everything a pack declares by a key: scenes (storylets too), prose keys, strings, stats, items, kinds, entities, storylines, activities, collections, triggers, inputs, minigames, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Packs append to a variants name, so two packs adding lines to one name is fine; only the same line listed by both is reported.
+
+Some packs are meant to replace what came before:
+
+- **A mod.** A pack whose id starts with `mod:` is never reported, and neither is anything it replaces.
+- **Patches.** A pack's `patches` change an earlier pack's scene on purpose, so they're never a clash.
+- **A pack of your own that overrides on purpose**, such as a holiday edition laid over the usual café. Give it `overrides: true` and it's not reported. A pack after it that repeats one of its keys without saying so still is.
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const winterCafe: Pack = {
+  id: 'story.cafe-winter',
+  schema: SCHEMA,
+  overrides: true,
+  prose: { 'cafe.counter': 'Frost on the window. The counter smells of cinnamon.' },
+}
+```
 
 ## SCHEMA
 
@@ -217,7 +246,8 @@ It also reports what is wrong with the packs themselves, which the merged game n
 |---|---|
 | `pack` | `written for schema …, this engine reads …`, or `… too old for this engine to read …`: the pack's `schema` is newer than [`SCHEMA`](#schema), or older than any [upgrade step](#upgradepack). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
-| `setting <id>` | `two settings share this id`: twice in one pack's list, or the base's. A later pack redeclaring one is fine. |
+| `pack` | `<what> is in both <pack> and <pack>`: two of your game's own packs declare the same key. See [Two packs with one key](#two-packs-with-one-key). |
+| `setting <id>` | `two settings share this id`: twice in one pack's list, or the base's. |
 | `variants <name>` | `"…" has a weight of …; a weight must be above 0`, for a [variants member](/docs/reference/prose#variantmember) with a weight of 0 or less. |
 | `data <plugin>` | `the game has no plugin named "<plugin>"`: a pack carries content for a plugin the game wasn't built with. That content is skipped. |
 

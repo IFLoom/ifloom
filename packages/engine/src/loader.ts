@@ -42,6 +42,12 @@ type PackBase = {
    * one's by id, as scenes do.
    */
   data?: Record<string, Record<string, readonly PluginEntry[]>>
+  /**
+   * This pack replaces what an earlier pack of the game declared, on purpose.
+   * Without it, `loadGame` reports each key two of the game's own packs both
+   * declare. A mod's pack (`mod:<id>`) never needs it.
+   */
+  overrides?: boolean
 }
 
 /** A pack of content: what the core merges, and each feature's pack key. */
@@ -61,6 +67,7 @@ const PACK_KEYS: { [K in keyof Pack]-?: true } = {
   variants: true,
   custom: true,
   data: true,
+  overrides: true,
   scenes: true,
   patches: true,
   items: true,
@@ -77,6 +84,66 @@ const PACK_KEYS: { [K in keyof Pack]-?: true } = {
   kinds: true,
   entities: true,
 }
+
+/** One thing a pack declares, as a problem names it: `scene "cafe.counter"`. */
+type Declared = string
+
+/** Ids of a list by id, worded with their noun. */
+const byId =
+  (noun: string, list: (pack: Pack) => readonly { id: string }[] | undefined) =>
+  (pack: Pack): Declared[] =>
+    (list(pack) ?? []).map((entry) => `${noun} "${entry.id}"`)
+
+/** Keys of a record, worded with their noun. */
+const byKey =
+  (noun: string, record: (pack: Pack) => object | undefined) =>
+  (pack: Pack): Declared[] =>
+    Object.keys(record(pack) ?? {}).map((key) => `${noun} "${key}"`)
+
+const CUSTOM_NOUNS = { conditions: 'custom condition', effects: 'custom effect', values: 'custom value', panels: 'custom panel' } as const
+
+/**
+ * What each pack key declares, for the report of two of the game's own packs
+ * declaring the same thing. Typed complete, so a new pack key has to say. Null
+ * for what isn't a declaration: the pack's id and schema, its patches (which
+ * change an earlier pack's scene on purpose), and `overrides` itself.
+ */
+const DECLARES: { [K in keyof Pack]-?: ((pack: Pack) => Declared[]) | null } = {
+  id: null,
+  schema: null,
+  overrides: null,
+  patches: null,
+  strings: byKey('string', (pack) => pack.strings),
+  prose: byKey('prose', (pack) => pack.prose),
+  // Packs append to a variants name, so only the same line listed twice is a clash.
+  variants: (pack) =>
+    Object.entries(pack.variants ?? {}).flatMap(([name, members]) => members.map((member) => `variants "${name}" line "${memberKey(member)}"`)),
+  custom: (pack) =>
+    (Object.keys(CUSTOM_NOUNS) as (keyof typeof CUSTOM_NOUNS)[]).flatMap((kind) =>
+      Object.keys(pack.custom?.[kind] ?? {}).map((name) => `${CUSTOM_NOUNS[kind]} "${name}"`),
+    ),
+  data: (pack) =>
+    Object.entries(pack.data ?? {}).flatMap(([plugin, lists]) =>
+      Object.entries(lists).flatMap(([list, entries]) => entries.map((entry) => `${plugin}/${list} "${entry.id}"`)),
+    ),
+  scenes: byId('scene', (pack) => pack.scenes),
+  items: byId('item', (pack) => pack.items),
+  storylines: byId('storyline', (pack) => pack.storylines),
+  activities: byId('activity', (pack) => pack.activities),
+  collections: byId('collection', (pack) => pack.collections),
+  triggers: byId('trigger', (pack) => pack.triggers),
+  inputs: byId('input', (pack) => pack.inputs),
+  settings: byId('setting', (pack) => pack.settings),
+  stats: byId('stat', (pack) => pack.stats),
+  minigames: byId('minigame', (pack) => pack.minigames),
+  kinds: byId('kind', (pack) => pack.kinds),
+  entities: (pack) => (pack.entities ?? []).map((entity) => `entity "${entity.of}:${entity.id}"`),
+  audio: byKey('track', (pack) => pack.audio?.tracks),
+  media: byKey('pool', (pack) => pack.media?.pools),
+}
+
+/** Whether a pack is a mod's, which is there to change the game, so its keys go over the game's without a word. */
+const isMod = (pack: Pack) => pack.id.startsWith('mod:')
 
 export type Loaded = {
   game: Game
@@ -132,6 +199,20 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     }
   }
   addData('base', base.data)
+  /** Which of the game's own packs declared each thing first, to report a second one. */
+  const declaredBy = new Map<Declared, string>()
+  const clashes = (pack: Pack) => {
+    if (isMod(pack)) return
+    for (const read of Object.values(DECLARES)) {
+      for (const what of new Set(read?.(pack) ?? [])) {
+        const first = declaredBy.get(what)
+        if (first === undefined) declaredBy.set(what, pack.id)
+        else if (first !== pack.id && !pack.overrides) {
+          problems.push({ pack: pack.id, where: 'pack', what: `${what} is in both ${first} and ${pack.id}` })
+        }
+      }
+    }
+  }
   for (const written of packs) {
     // An older pack is carried forward to this schema; one that can't be is skipped whole.
     const upgraded = upgradePack(written)
@@ -143,6 +224,7 @@ export function loadGame(packs: Pack[], base: Omit<Game, 'scenes' | 'items' | 's
     for (const key of Object.keys(pack)) {
       if (!Object.hasOwn(PACK_KEYS, key)) problems.push({ pack: pack.id, where: 'pack', what: `a pack has no "${key}", so it was left out` })
     }
+    clashes(pack)
     for (const merge of merges.values()) merge.add(pack, pack.id)
     Object.assign(prose, pack.prose ?? {})
     for (const key of Object.keys(pack.prose ?? {})) proseFrom.set(key, pack.id)

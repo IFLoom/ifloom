@@ -26,7 +26,7 @@
  * `activities` optional on `Game`. Panels: the `panel` effect, the
  * `closePanel` command, `GameState.panel` and `View.panel`. Last-time
  * records: `GameState.lastSeenOn`, `chosenOn` and `lastChosenOn`, and the
- * `since` condition's `last`.
+ * `since` condition's `last`. Organising a game: `Pack.overrides`.
  */
 import type {
   ActionDef,
@@ -440,6 +440,8 @@ export type FrozenPack = {
   id: string
   /** Schema this pack was written against. Refused if it is not ours. */
   schema: number
+  /** Replaces what an earlier pack of the game declared, on purpose. */
+  overrides?: boolean
   scenes?: (Scene | DataScene)[]
   items?: ItemDef[]
   storylines?: StorylineDef[]

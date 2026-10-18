@@ -8,6 +8,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- `loadGame` reports when two of your game's own packs declare the same scene, prose key, stat, item, entity, custom function or plugin entry, naming both packs, so a game split into files can't lose one by accident. Mods (`mod:` packs) and patches still replace quietly, and a pack with `overrides: true` says it replaces on purpose.
 - `npm create ifloom@latest my-game` (also `pnpm create ifloom`, `yarn create ifloom` and `bun create ifloom`), from the new `create-ifloom` package: a new game in the folder `my-game`, with the same `--template` and `--theme` as `ifloom new`, and the next steps written for the package manager you ran it with. With yarn 2 or later it also sets yarn to install into `node_modules`, which Vite needs.
 - The packages are compiled JavaScript with type declarations and source maps, so a game installs them with npm, pnpm, yarn or bun, and any bundler uses them with no extra settings. Until they're on npm, `npm run pack` in the checkout packs them for a game beside it.
 - `@ifloom/react/styles.min.css` and `@ifloom/react/themes/<preset>.min.css`: the React UI's stylesheet and its presets already built, for a game without Tailwind.

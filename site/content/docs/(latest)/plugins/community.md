@@ -28,4 +28,4 @@ Open a [plugin submission](https://github.com/IFLoom/ifloom/issues/new?template=
 
 ## Writing one
 
-`ifloom new --template plugin` starts a plugin package with the engine as a peer dependency, a condition, an effect and a command, a test, and a README with these criteria. See [A plugin package](/docs/cli#a-plugin-package). [Writing a plugin](/docs/reference/plugins) explains every part a plugin can have.
+`npm create ifloom@latest ifloom-plugin-<name> -- --template plugin` starts a plugin package with the engine as a peer dependency, a condition, an effect and a command, a test, and a README with these criteria. See [A plugin package](/docs/reference/plugins#a-plugin-package). [Writing a plugin](/docs/reference/plugins) explains every part a plugin can have.

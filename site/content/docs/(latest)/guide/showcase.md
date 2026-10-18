@@ -6,22 +6,22 @@ Small Town is the game in `examples/showcase` of the IFLoom repository. It's a f
 
 When a page in these docs says "see it in the showcase", this is the source it means. Its tests play it through every system it uses.
 
-To start a game of your own from a copy of it, run `npm run new -- my-town --template town` from the root of the checkout (see [`ifloom new`](/docs/cli#ifloom-new)).
+To start a game of your own from a copy of it, run `npm create ifloom@latest my-town -- --template town` (see [`ifloom new`](/docs/cli#ifloom-new)).
 
 ## Run it
 
-From the root of the IFLoom checkout, after `npm install`:
+In a copy made with `--template town`, or in `examples/showcase` of a [clone of the repository](/docs/guide/from-the-repository):
 
 ```sh
-npm run dev -w @ifloom/showcase     # play it in a browser, with the debug card
-npm run build -w @ifloom/showcase   # build examples/showcase/dist/index.html
-npm run check -w @ifloom/showcase   # list any problem in its content
-npm run playtest -w @ifloom/showcase  # play a week unattended, into playtest/week.txt
-npm run snapshot -w @ifloom/showcase  # compare every scene with snapshots/scenes.txt
-npm run build:one-file -w @ifloom/showcase  # build dist-one/index.html, the pictures inside it
+npm run dev               # play it in a browser, with the debug card
+npm run build             # build dist/index.html
+npm run check             # list any problem in its content
+npm run playtest          # play a week unattended, into playtest/week.txt
+npm run snapshot          # compare every scene with snapshots/scenes.txt
+npm run build:one-file    # build dist-one/index.html, the pictures inside it
 ```
 
-These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `playtest` and `snapshot`, run from the showcase's folder. Open the built `dist/index.html` straight from disk. It's one file beside an `art/` folder, and it runs with no server. `dist-one/index.html` is the same game with its pictures inside it and nothing beside it.
+These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `playtest` and `snapshot`. A copy leaves out the tests, the recorded snapshots and the example mod, so its first `snapshot` records the scenes afresh. Open the built `dist/index.html` straight from disk. It's one file beside an `art/` folder, and it runs with no server. `dist-one/index.html` is the same game with its pictures inside it and nothing beside it.
 
 ## The files
 

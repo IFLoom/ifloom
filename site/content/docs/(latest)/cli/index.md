@@ -6,7 +6,7 @@ description: "The ifloom command: new, dev, build, check, playtest, snapshot and
 
 | Command | Does |
 |---|---|
-| `ifloom new <name> [--template t] [--theme t]` | Makes a new game in `games/<name>` of the IFLoom checkout, ready to run, or a plugin package with `--template plugin`. |
+| `ifloom new <name> [--template t] [--theme t]` | Makes a new game in a folder named `<name>`, ready to run, or a plugin package with `--template plugin`. `npm create ifloom` runs it. |
 | `ifloom dev` | Serves the game in a browser, reloading as you edit. |
 | `ifloom build [--out dir] [--inline-assets]` | Builds the game into one `index.html` with its pictures, videos and sound beside it (or the pictures inside it), then checks the folder opens from disk. |
 | `ifloom check [module]` | Loads the game and lists every problem the [content checker](/docs/reference/checks) finds, once, and every sound, picture and video file missing from `public/`. |
@@ -14,13 +14,29 @@ description: "The ifloom command: new, dev, build, check, playtest, snapshot and
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
 | `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/plugins/unlocks), without printing the code. |
 
-Run `ifloom new` from the checkout (`npm run new -- my-game`) and the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
+Start a game with `npm create ifloom`, which runs `ifloom new`, and run the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
 
 `check`, `playtest` and `snapshot` load the game module with the CLI's own Vite and need no `vite.config.ts`, so they work the same in a game built with [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) or [esbuild](/docs/recipes/esbuild). `dev` and `build` are the parts those tools replace.
 
 ## Install
 
-[Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies on the packed packages. Add `@ifloom/cli` as a dev dependency the same way.
+A game made with `npm create ifloom` already has it as a dev dependency. To add it to another project:
+
+```sh tab="npm" tab-group="package-manager"
+npm install --save-dev @ifloom/cli
+```
+
+```sh tab="pnpm" tab-group="package-manager"
+pnpm add --save-dev @ifloom/cli
+```
+
+```sh tab="yarn" tab-group="package-manager"
+yarn add --dev @ifloom/cli
+```
+
+```sh tab="bun" tab-group="package-manager"
+bun add --dev @ifloom/cli
+```
 
 `@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
 
@@ -46,19 +62,23 @@ Then add scripts to your `package.json`. These are Small Town's:
 }
 ```
 
-The `ifloom` command is compiled JavaScript and needs Node 20.19 or later, or 22.12 or later, as Vite does. Node 24 is recommended. Inside the IFLoom checkout it runs the CLI's TypeScript source instead, which needs Node 22.18 or later (see [Working in the checkout](/docs/guide/installation#working-in-the-checkout)).
+The `ifloom` command is compiled JavaScript and needs Node 20.19 or later, or 22.12 or later, as Vite does. Node 24 is recommended. Inside a clone of the IFLoom repository it runs the CLI's TypeScript source instead, which needs Node 22.18 or later (see [Working from the repository](/docs/guide/from-the-repository)).
+
+### Type-checking scripts that use the CLI
+
+A game's `tsconfig.json` covers code that runs in the browser. A file that imports `@ifloom/cli`, such as a [playtest policy](#policy), pulls in the CLI's types, which use Node's modules, so `tsc` reports `Cannot find name 'node:fs'`. Either keep such files out of `include` (in a `tools/` folder, say), or add `@types/node` to your dev dependencies and `"node"` to `types`.
 
 ## ifloom new
 
 ```sh
-npm run new -- my-story                    # from the root of the checkout
-npm run new -- my-cafe --template cafe
-npm run new -- my-tale --theme storybook
-npm run new -- my-game --template vue
-npm run new -- ifloom-plugin-weather --template plugin
+npm create ifloom@latest my-story
+npm create ifloom@latest my-cafe -- --template cafe
+npm create ifloom@latest my-tale -- --theme storybook
+npm create ifloom@latest my-game -- --template vue
+npm create ifloom@latest ifloom-plugin-weather -- --template plugin
 ```
 
-Makes a new game in `games/<name>` from a template and tells you what to run next: `npm install` at the root, then `npm run dev -w <name>`. The `games/` folder is an npm workspace that git ignores, so your game installs alongside the engine and stays out of the engine's history.
+`npm create ifloom` (or `pnpm create ifloom`, `yarn create ifloom` and `bun create ifloom`) runs `ifloom new` without installing anything first. It makes a new game from a template in a folder named for it, and tells you what to run next with the package manager you used: into the folder, install, then the `dev` script. With yarn 2 or later it also writes a `.yarnrc.yml` that installs into `node_modules`, which Vite needs. Inside a clone of the IFLoom repository, `npm run new -- my-story` makes the game in `games/` instead, as a workspace (see [Working from the repository](/docs/guide/from-the-repository)).
 
 | Template | What you get |
 |---|---|
@@ -76,9 +96,9 @@ The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the
 
 `--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
-Every new game has the scripts `dev`, `build`, `check` and `playtest`. It also has an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). Its `package.json` depends on the `@ifloom/*` packages and on what its UI needs:
+Every new game has the scripts `dev`, `build`, `check`, `playtest` and `typecheck`. It also has an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). Its `package.json` depends on the `@ifloom/*` packages and on what its UI needs:
 
-- `react` and the examples: React's and Tailwind's Vite plugins.
+- `react` and the examples: React, React's types, TypeScript, and React's and Tailwind's Vite plugins.
 - `vue` and `svelte`: the framework, its Vite plugin and its type checker.
 - `next`: Next, React and Tailwind's PostCSS plugin. Its `dev` and `build` run Next, and its `check` and `playtest` run `ifloom`.
 
@@ -89,9 +109,10 @@ The name has to work as an npm package name: lower-case letters, digits and dash
 ### A plugin package
 
 ```sh
-npm run new -- ifloom-plugin-weather --template plugin
+npm create ifloom@latest ifloom-plugin-weather -- --template plugin
+cd ifloom-plugin-weather
 npm install
-npm test -w ifloom-plugin-weather
+npm test
 ```
 
 `--template plugin` makes a plugin as a package of its own, ready to test, type-check and publish. The name is the package's, and the plugin's id is that name without `ifloom-plugin-` or `plugin-` in front, so `ifloom-plugin-weather` makes the plugin `weather`. The id has to start with a letter and use only lower-case letters, digits and dashes.
@@ -101,12 +122,12 @@ npm test -w ifloom-plugin-weather
 | `package.json` | `@ifloom/engine` as a caret peer dependency, and as a dev dependency for the tests, with Vitest and TypeScript. The scripts are `test` (`vitest run`) and `typecheck` (`tsc --noEmit`). |
 | `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in a pack's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, a reference for the [content checker](/docs/reference/checks) and a check. Each has a typed helper, such as `markWeather('bread')`. |
 | `tests/weather.test.ts` | Vitest tests that play the plugin in a small game: the effect, the command and its refusal, the view, and the checker's problems. |
-| `tsconfig.json` | Complete, extending nothing, so the folder works outside the checkout. |
+| `tsconfig.json` | Complete, extending nothing. |
 | `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/plugins/community) needs before it lists it. |
 
 The names follow the [naming rules](/docs/reference/plugins#naming), and the `TODO` comments mark what to replace with your plugin's own behaviour. The package has no UI. A UI draws its view from `view.plugins.weather`.
 
-Inside the checkout it's a workspace like a game. To keep it in a repository of its own, see [A plugin beside the checkout](/docs/guide/installation#a-plugin-beside-the-checkout).
+[A plugin package](/docs/reference/plugins#a-plugin-package) in Writing a plugin covers testing, building and publishing it.
 
 ## ifloom dev
 
@@ -464,7 +485,7 @@ It sets up three things, and knows no UI framework:
 - **`base: './'`**, so every path is relative and the folder opens from disk or from an itch.io subpath.
 - **Locked content.** In a game with `src/unlocks/`, it refuses any import of those files from the page, and encrypts them into the page's head, under `vite build` and `vite dev` alike (see [Locked content](#locked-content)). A game without the folder gets nothing from it.
 
-Inside the IFLoom checkout, for a game whose folder is in it, it also reads the @ifloom packages' TypeScript source instead of their built files (see [Working in the checkout](/docs/guide/installation#working-in-the-checkout)). Anywhere else it does nothing more.
+Inside the IFLoom checkout, for a game whose folder is in it, it also reads the @ifloom packages' TypeScript source instead of their built files (see [Working from the repository](/docs/guide/from-the-repository)). Anywhere else it does nothing more.
 
 A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game in the checkout's workspaces:
 
@@ -523,7 +544,7 @@ type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
 const THEMES: readonly ThemeName[]
 ```
 
-What `ifloom new` runs. It copies a template into `into` (`games/<name>` in the checkout if left out), sets the package name, fills in the title (for `plugin`, the plugin's id and names too), and returns the folder and the files it wrote. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
+What `ifloom new` runs. It copies a template into `into` (a folder named `name` in the current folder if left out, or `games/<name>` inside a clone of the IFLoom repository), sets the package name, fills in the title (for `plugin`, the plugin's id and names too), and returns the folder and the files it wrote. Inside a clone of the repository the game's `tsconfig.json` extends the repository's `tsconfig.base.json`, and anywhere else it has those settings written out in full. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
 
 `theme` is the React UI's preset, written into `src/styles.css`. Left out, a `react` game gets one from `THEMES` at random and a copied example keeps its own. `'none'` takes the preset out. The returned `theme` is the preset the game ended up with, or `null` for the `vanilla`, `vue`, `svelte` and `plugin` templates (which ignore `theme`) and for a game whose stylesheet imports no preset.
 

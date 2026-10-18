@@ -8,12 +8,13 @@ The engine has no DOM and no framework, so you can draw a game with Vue, Svelte,
 |---|---|---|
 | `vue` | Vue 3 single-file components | `vue-tsc`, as `npm run typecheck` |
 | `svelte` | Svelte 5 components | `svelte-check`, as `npm run typecheck` |
-| `vanilla` | Plain DOM, no framework | `npx tsc --noEmit` |
+| `vanilla` | Plain DOM, no framework | `tsc`, as `npm run typecheck` |
 
 ```sh
-npm run new -- my-game --template vue
+npm create ifloom@latest my-game -- --template vue
+cd my-game
 npm install
-npm run dev -w my-game
+npm run dev
 ```
 
 Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share two files:

@@ -16,17 +16,17 @@ They all use the same core: the turn, scenes and choices, conditions and effects
 | A management game | the core, with [entities](/docs/reference/entities) | none, or [`calendar({ turn: 'week' })`](/docs/plugins/calendar) for days and weeks | its own: the tables in the story | [The Corner Café](#a-management-game-the-corner-café), `examples/cafe` |
 | A life sim | the core | [calendar](/docs/plugins/calendar), [places](/docs/plugins/places) and the [cast](/docs/plugins/cast) | [`DefaultLayout`](/docs/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
 
-Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)). From the root of the checkout, run them with `-w`, as in `npm run dev -w @ifloom/example-novel`.
+Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
 
-Each has a `src/game.ts` with the game, and tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
+Each has a `src/game.ts` with the game, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
 
-To start a game of your own from one of them, run `npm run new` from the root of the checkout with `--template novel`, `cafe` or `town`:
+To start a game of your own from one of them, use `--template novel`, `cafe` or `town`:
 
 ```sh
-npm run new -- my-cafe --template cafe
+npm create ifloom@latest my-cafe -- --template cafe
 ```
 
-That copies the example into `games/my-cafe`, without its tests. See [`ifloom new`](/docs/cli#ifloom-new).
+That copies the example into `my-cafe`, without its tests. See [`ifloom new`](/docs/cli#ifloom-new).
 
 This page walks through the smallest shape first, then a management game, then a life sim.
 

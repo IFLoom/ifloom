@@ -51,18 +51,23 @@ Plugins other people have written are listed on [Community plugins](/docs/plugin
 
 ## Adding one
 
-List the plugin's package in your game's `package.json`, beside the engine, then run `npm install` at the root of the checkout:
+Install the plugin's package beside the engine:
 
-```json
-{
-  "dependencies": {
-    "@ifloom/engine": "^0.0.0",
-    "@ifloom/plugin-quests": "^0.0.0"
-  }
-}
+```sh tab="npm" tab-group="package-manager"
+npm install @ifloom/plugin-quests
 ```
 
-The range `^0.0.0` matches the checkout's own packages, which a game inside the checkout uses. [Installation](/docs/guide/installation) covers a game kept somewhere else.
+```sh tab="pnpm" tab-group="package-manager"
+pnpm add @ifloom/plugin-quests
+```
+
+```sh tab="yarn" tab-group="package-manager"
+yarn add @ifloom/plugin-quests
+```
+
+```sh tab="bun" tab-group="package-manager"
+bun add @ifloom/plugin-quests
+```
 
 Then add it to the game's `plugins`, on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). This is a cut-down version of the showcase's own setup:
 
@@ -98,10 +103,10 @@ Both work anywhere a [condition](/docs/reference/conditions), a content effect o
 To see every plugin wired up in a game of your own, start from the showcase:
 
 ```sh
-npm run new -- my-town --template town
+npm create ifloom@latest my-town -- --template town
 ```
 
-That writes `games/my-town`, a copy of Small Town. See [`ifloom new`](/docs/cli#ifloom-new) for the other templates.
+That writes `my-town`, a copy of Small Town. See [`ifloom new`](/docs/cli#ifloom-new) for the other templates.
 
 ## See it in an example
 

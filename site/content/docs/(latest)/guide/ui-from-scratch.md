@@ -14,12 +14,13 @@ The same UI in React, Vue and Svelte is in [Your own UI in any framework](/docs/
 ## Start from the template
 
 ```sh
-npm run new -- my-game --template vanilla
+npm create ifloom@latest my-game -- --template vanilla
+cd my-game
 npm install
-npm run dev -w my-game
+npm run dev
 ```
 
-`games/my-game` has the game in `src/game.ts`, a plain stylesheet in `src/styles.css`, an `index.html` with an empty `<div id="root">`, and the UI in `src/main.ts`. Open `src/main.ts` beside this page.
+`my-game` has the game in `src/game.ts`, a plain stylesheet in `src/styles.css`, an `index.html` with an empty `<div id="root">`, and the UI in `src/main.ts`. Open `src/main.ts` beside this page.
 
 ## 1. The runner and the helpers
 

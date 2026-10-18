@@ -8,13 +8,43 @@ You choose a game's plugins when you build it, in [`game.plugins`](/docs/referen
 
 Do you need a plugin or a custom function? A custom function gives one computed answer, such as whether it's market day or what a sandwich costs. Write a plugin when the system needs a memory of its own: state that has to be saved, carried forward when its shape changes, and shown to the player.
 
-A plugin can live in your game's own source, as the loyalty card below does, or in a package of its own that any game can install. To start a package, run:
+A plugin can live in your game's own source, as the loyalty card below does, or in [a package of its own](#a-plugin-package) that any game can install. Plugins written by others are on [Community plugins](/docs/plugins/community), which also says how to get yours listed.
 
-```sh
-npm run new -- ifloom-plugin-loyalty --template plugin
+## A plugin package
+
+A plugin you mean to publish lives in its own folder and repository. Start one from the `plugin` template:
+
+```sh tab="npm" tab-group="package-manager"
+npm create ifloom@latest ifloom-plugin-loyalty -- --template plugin
+cd ifloom-plugin-loyalty
+npm install
+npm test
 ```
 
-That makes a plugin with a condition, an effect, a command and a view, a Vitest test, a complete `tsconfig.json` and a README. [A plugin package](/docs/cli#a-plugin-package) lists what's in it. Plugins written by others are on [Community plugins](/docs/plugins/community), which also says how to get yours listed.
+```sh tab="pnpm" tab-group="package-manager"
+pnpm create ifloom ifloom-plugin-loyalty --template plugin
+cd ifloom-plugin-loyalty
+pnpm install
+pnpm test
+```
+
+```sh tab="yarn" tab-group="package-manager"
+yarn create ifloom ifloom-plugin-loyalty --template plugin
+cd ifloom-plugin-loyalty
+yarn install
+yarn run test
+```
+
+```sh tab="bun" tab-group="package-manager"
+bun create ifloom ifloom-plugin-loyalty --template plugin
+cd ifloom-plugin-loyalty
+bun install
+bun run test
+```
+
+That makes the plugin `loyalty` with a condition, an effect, a command and a view, a Vitest test, a complete `tsconfig.json` and a README. [A plugin package](/docs/cli#a-plugin-package) lists what's in it. The engine is a caret peer dependency, so a game brings its own copy, and a dev dependency for the tests.
+
+The scripts are `test`, `typecheck` and `build`. `build` compiles `src/` into `dist/` with [tsdown](https://tsdown.dev), as JavaScript with type declarations like IFLoom's own packages, and `npm publish` runs it first.
 
 ## Your first plugin
 

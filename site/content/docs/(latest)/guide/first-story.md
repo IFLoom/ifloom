@@ -13,41 +13,45 @@ It's the smallest kind of game you can make with IFLoom. There are no plugins, s
 - a name the player types
 - a turn for each chapter
 
-The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter), in `examples/novel`, is a slightly longer story built the same way.
+The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter) is a slightly longer story built the same way, and `--template novel` starts a copy of it.
 
 To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a pack you can bring back to this page.
 
 ## Before you start
 
-Follow [Installation](/docs/guide/installation) as far as cloning the repository and running `npm install`. Then, from the root of the checkout, make a new game from the template for the way you want to draw it:
+Make a new game from the template for the way you want to draw it (see [Installation](/docs/guide/installation) for pnpm, yarn and bun):
 
 ```sh tab="Plain JS" tab-group="framework"
-npm run new -- my-story --template vanilla
+npm create ifloom@latest my-story -- --template vanilla
+cd my-story
 npm install
-npm run dev -w my-story
+npm run dev
 ```
 
 ```sh tab="React" tab-group="framework"
-npm run new -- my-story
+npm create ifloom@latest my-story
+cd my-story
 npm install
-npm run dev -w my-story
+npm run dev
 ```
 
 ```sh tab="Vue" tab-group="framework"
-npm run new -- my-story --template vue
+npm create ifloom@latest my-story -- --template vue
+cd my-story
 npm install
-npm run dev -w my-story
+npm run dev
 ```
 
 ```sh tab="Svelte" tab-group="framework"
-npm run new -- my-story --template svelte
+npm create ifloom@latest my-story -- --template svelte
+cd my-story
 npm install
-npm run dev -w my-story
+npm run dev
 ```
 
 The default `react` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
 
-That gives you `games/my-story`, with a two-scene game in `src/game.ts` and the code that draws it. Open the address Vite prints, and keep `npm run dev -w my-story` running in a terminal. The game reloads each time you save a file.
+That gives you a folder `my-story` with a two-scene game in `src/game.ts` and the code that draws it. Open the address Vite prints, and keep `npm run dev` running in a terminal. The game reloads each time you save a file.
 
 You'll replace `src/game.ts` as you go, and leave the other files as they are.
 
@@ -80,9 +84,11 @@ export default loadGame([story], { id: 'last-bus', title: 'The Last Bus', introS
 
 The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
 
+Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
+
 `loadGame` takes the packs and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts. `schema: SCHEMA` says which version of the pack format you wrote against.
 
-The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check -w my-story` prints each problem, or `No problems.` when there are none.
+The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check` prints each problem, or `No problems.` when there are none.
 
 ## 2. Choices
 
@@ -118,7 +124,7 @@ prose: {
 
 A choice's label is the prose under `scene#choice`, so `ch1.stop#share` labels the `share` choice. A scene with no choices left is an ending, so the player sees the second chapter and nothing more for now.
 
-If you misspell a scene id or forget a label, `npm run check -w my-story` says which scene and which key. The full list is under [the checks](/docs/reference/checks).
+If you misspell a scene id or forget a label, `npm run check` says which scene and which key. The full list is under [the checks](/docs/reference/checks).
 
 ## 3. A stat
 
@@ -134,7 +140,7 @@ Sharing the umbrella raises it. Put the stat effect before the scene change:
 { id: 'share', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch2.bus' }] },
 ```
 
-A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it under the story.
+A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it in the side column, beside the story.
 
 ## 4. A choice the story remembers
 
@@ -327,22 +333,12 @@ import './styles.css'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game the same way, with [`browserRunner`](/docs/reference/runner#browserrunner) (React's [`mountGame`](/docs/react#mountgame) calls it for you):
-
-- It makes a new game with a random seed, so each playthrough's random draws are different.
-- It builds a [runner](/docs/reference/runner), which keeps the state and adds undo, 50 steps back.
-- It keeps saves in the browser's `localStorage`, under keys that start with the game's id, and autosaves to the `auto` slot each turn. In this story that's the start of each chapter.
-
-Then the page draws `runner.view()`, sends the command of each button the player presses with `runner.apply`, and draws again when the runner says the state changed. The vanilla, Vue and Svelte templates also draw the name input and the stats, and [Your own UI in any framework](/docs/guide/frameworks) goes through their code piece by piece.
-
-In the React template, `mountGame` also logs any problems `loadGame` found as warnings in the browser's console, and draws [`GameShell`](/docs/react#gameshell), the whole React UI, into the element with the id `root` in `index.html`. With `pages: true`, the page opens on a title screen. New game starts the story, and Continue appears once there's a save. [The title screen and settings](/docs/recipes/title-screen) shows what else it can do. `src/layout.tsx` is the page, a copy of the [default layout](/docs/react#layouts): the title, the clock, the stats and the menu in a side column, and the scene, the name input and the game's actions in the story beside it. On a phone the side column folds away behind a menu button.
-
-`src/styles.css` holds the page's look. In the React template it imports the React UI's styles and one of its theme presets, such as `paper`, a printed page with a serif font, and [Make it your own](/docs/react/customising) has the rest. In the others it's a plain stylesheet you can change as you like.
+Every template starts the game with [`browserRunner`](/docs/reference/runner#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
 
 ## 9. Check it and playtest it
 
 ```sh
-npm run check -w my-story   # No problems.
+npm run check   # No problems.
 ```
 
 If you misspelled a key or a scene id along the way, `check` names it.
@@ -358,14 +354,14 @@ export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sa
 Then run it:
 
 ```sh
-npm run playtest -w my-story
+npm run playtest
 ```
 
-The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `games/my-story/playtest/run.txt`. It has every screen the [explorer](/docs/cli#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
+The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `playtest/run.txt`. It has every screen the [explorer](/docs/cli#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
 
-When you're happy with it, `npm run build -w my-story` makes one HTML file in `games/my-story/dist/` that opens from disk. See [Shipping a game](/docs/guide/shipping).
+When you're happy with it, `npm run build` makes one HTML file in `dist/` that opens from disk. See [Shipping a game](/docs/guide/shipping).
 
-To test the story in code, see [Testing your game](/docs/guide/testing). `examples/novel/tests/novel.test.ts` tests The Letter the same way.
+To test the story in code, see [Testing your game](/docs/guide/testing).
 
 ## The whole thing
 
@@ -462,10 +458,6 @@ export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sa
 
 ## Where next
 
-The guide splits here. The Engine track starts at [Core concepts](/docs/guide/concepts) and works with the engine directly, which is the same whatever draws your game. The UI track starts at [Choosing a UI](/docs/guide/choosing-a-ui). You can read them in either order.
-
-- [The editor](/docs/guide/editor) builds scenes like these from forms in the browser, with the game playing beside them.
-- [Shapes of game](/docs/guide/shapes) walks through The Letter, then a management game built on [entities](/docs/reference/entities).
-- [A game with a world](/docs/guide/first-game) is the second tutorial. It adds a calendar, places and a character with the first-party plugins.
-- [Core concepts](/docs/guide/concepts) explains the ideas behind what you just used.
+- [How the pieces fit](/docs/guide/how-it-fits) shows what you just used: the engine, the UI and the CLI.
+- [A game with a world](/docs/guide/first-game), the second tutorial, adds a calendar, places and a character with plugins.
 - [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

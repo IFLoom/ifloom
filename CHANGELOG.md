@@ -8,6 +8,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- `npm create ifloom@latest my-game` (also `pnpm create ifloom`, `yarn create ifloom` and `bun create ifloom`), from the new `create-ifloom` package: a new game in the folder `my-game`, with the same `--template` and `--theme` as `ifloom new`, and the next steps written for the package manager you ran it with. With yarn 2 or later it also sets yarn to install into `node_modules`, which Vite needs.
 - The packages are compiled JavaScript with type declarations and source maps, so a game installs them with npm, pnpm, yarn or bun, and any bundler uses them with no extra settings. Until they're on npm, `npm run pack` in the checkout packs them for a game beside it.
 - `@ifloom/react/styles.min.css` and `@ifloom/react/themes/<preset>.min.css`: the React UI's stylesheet and its presets already built, for a game without Tailwind.
 - An engine for any shape of game: a linear novel, a management game played a week at a time, or a life sim with a calendar, places and characters.
@@ -94,6 +95,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- `ifloom new` outside a clone of the IFLoom repository makes the game in a folder named for it in the current folder, with every TypeScript setting written into its `tsconfig.json`, so it no longer needs fixing by hand. A copy of an example (`novel`, `cafe` or `town`) now lists React, its types and TypeScript and has a `typecheck` script, as the `react` template does, so it installs and type-checks on its own.
+- The docs start with `npm create ifloom` or adding IFLoom to a project you already have, and the guide now reads Introduction, Installation, Your first story, then How the pieces fit. Trying unreleased code from a clone of the repository has its own page, Working from the repository, and setting up a plugin package moved to Writing a plugin. The docs' version menu calls the latest docs "Latest".
 - On a wide screen the React UI centres the story's text in the story: the scene's title and prose, the choices, the inputs, the exits and the people here, in a column `--width-prose` wide. Pictures and panels still use the whole width. `<Story align="start">` keeps the column to the start, and so does the new `--margin-prose` token (`0 auto`), which a preset or your stylesheet can set without touching the layout.
 
 - `**bold**` and `*italic*` in a paragraph are no longer shown with their stars. Write `\*` for a star you want to keep.

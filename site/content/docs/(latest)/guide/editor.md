@@ -55,7 +55,7 @@ Import JSON opens a JSON pack as a new project and lists what `checkGame` makes 
 
 When you want a world with places and a clock, hand-written scenes or your own UI, move the pack into a game:
 
-1. Follow [Installation](/docs/guide/installation), then make a game with `npm run new -- my-story` and run `npm install`.
+1. Make a game with `npm create ifloom@latest my-story`, as [Installation](/docs/guide/installation) shows, and run `npm install` in its folder.
 2. Export the project as TypeScript, and save the file in the game's `src/` folder, say as `src/market-day.ts`.
 3. Load it in `src/game.ts`, with the title and intro scene the export's comment gives:
 
@@ -67,7 +67,7 @@ import { marketDay } from './market-day.ts'
 export default loadGame([marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })
 ```
 
-Then run `npm run dev -w my-story`, and carry on from [Your first story](/docs/guide/first-story). Plugins you used in the preview go in the base game's `plugins`, as [A game with a world](/docs/guide/first-game) shows.
+Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-story). Plugins you used in the preview go in the base game's `plugins`, as [A game with a world](/docs/guide/first-game) shows.
 
 ## Snippets
 

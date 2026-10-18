@@ -55,11 +55,27 @@ The UI reads each plugin's view by its shape and imports no plugin package. If t
 
 ## Install
 
-[Installation](/docs/guide/installation) covers the two ways to depend on IFLoom while it's pre-release: as a workspace inside a clone of the repository, or from a separate folder with `file:` dependencies. Add `@ifloom/react` the same way you add the engine.
+A game made with `npm create ifloom` from the `react` template has it already. To add it to a project of your own, install it beside the engine:
+
+```sh tab="npm" tab-group="package-manager"
+npm install @ifloom/react
+```
+
+```sh tab="pnpm" tab-group="package-manager"
+pnpm add @ifloom/react
+```
+
+```sh tab="yarn" tab-group="package-manager"
+yarn add @ifloom/react
+```
+
+```sh tab="bun" tab-group="package-manager"
+bun add @ifloom/react
+```
 
 On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/react/customising#without-tailwind). The `react` template's `vite.config.ts` adds React's and Tailwind's Vite plugins beside the [CLI's preset](/docs/cli#the-vite-preset). Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
 
-Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide/installation), plus JSX, the DOM and Vite's client types:
+Your `tsconfig.json` needs JSX, the DOM and Vite's client types, beside the settings the [`react` template](/docs/guide/installation#whats-in-the-new-game) starts with:
 
 ```json
 {
@@ -71,11 +87,11 @@ Your `tsconfig.json` needs the engine's settings from [Installation](/docs/guide
 }
 ```
 
-`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types are a peer dependency of `@ifloom/react`. List `@types/react` and `@types/react-dom` in your dev dependencies, as the templates do, since your own `.tsx` files use them too. [Installation](/docs/guide/installation) shows the full file.
+`@ifloom/cli/client` is Vite's browser types, which let TypeScript accept `import './styles.css'` and `import.meta.env`. React's types are a peer dependency of `@ifloom/react`. List `@types/react` and `@types/react-dom` in your dev dependencies, as the templates do, since your own `.tsx` files use them too.
 
 ## Set it up
 
-The quickest start is `ifloom new`, which writes all of this for you (see [Installation](/docs/guide/installation)). By hand, you need four files: the Vite config, a stylesheet, the entry and an `index.html`.
+The quickest start is `npm create ifloom`, which writes all of this for you (see [Installation](/docs/guide/installation)). By hand, you need four files: the Vite config, a stylesheet, the entry and an `index.html`.
 
 ```ts
 // vite.config.ts

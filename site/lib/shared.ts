@@ -8,7 +8,7 @@ export const docsContentRoute = '/llms.mdx/docs'
 export const repoUrl = 'https://github.com/IFLoom/ifloom'
 
 /** What the version dropdown calls the docs in `content/docs/(latest)/`. */
-export const latestTitle = 'Latest (pre-release)'
+export const latestTitle = 'Latest'
 
 const getContentUrl = createGetUrl(docsContentRoute)
 

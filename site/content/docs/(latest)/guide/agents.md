@@ -15,7 +15,7 @@ Every page is also published as plain Markdown, such as `https://ifloom.dev/llms
 
 `llms-full.txt` is the simplest thing to hand an agent. For an agent with a small context, give it `llms.txt` instead and let it fetch the pages it needs.
 
-The same docs are in the `site/content/docs/` folder of your IFLoom checkout, as Markdown. An agent working in a game inside the checkout can read them there without going online.
+The same docs are in the `site/content/docs/` folder of the [IFLoom repository](https://github.com/IFLoom/ifloom), as Markdown, for an agent that works offline in a clone of it.
 
 ## Connect it to the MCP server
 
@@ -37,7 +37,7 @@ The file and its name depend on the agent, such as `.mcp.json` for Claude Code o
 
 ## The AGENTS.md in every new game
 
-`npm run new` puts an `AGENTS.md` in every game it makes, whichever template you pick. Many coding agents read a file of that name on their own when they start work in a folder. For a game called `my-game`, it reads:
+`npm create ifloom` puts an `AGENTS.md` in every game it makes, whichever template you pick. Many coding agents read a file of that name on their own when they start work in a folder. For a game called `my-game`, it reads:
 
 ```md
 # My Game
@@ -48,10 +48,9 @@ for coding agents working on the game.
 ## Learn the engine
 
 - The docs, in one file: https://ifloom.dev/llms-full.txt
-  (offline, read `site/content/docs/` in the IFLoom checkout this game sits in).
 - The docs' MCP server, to search them and fetch single pages: https://ifloom.dev/api/mcp
 - Working games to copy patterns from: `examples/novel`, `examples/cafe` and
-  `examples/showcase` in the checkout.
+  `examples/showcase` in the IFLoom repository, https://github.com/IFLoom/ifloom.
 
 ## How the game is put together
 
@@ -60,7 +59,10 @@ for coding agents working on the game.
 - The engine is deterministic and has no DOM. Randomness is seeded from the save.
 - Plugins (a calendar, places, a cast of characters…) are added to `plugins: [...]`
   when the game is loaded, and their content goes under `data.<plugin>` in a pack.
-- `src/main.ts` draws the game in the browser.
+- `src/main.ts` draws the game in the browser. The page's layout, the side
+  column, the story and its sections, is `src/layout.tsx` with React,
+  `src/Layout.vue` with Vue, `src/Layout.svelte` with Svelte and `src/layout.ts`
+  in plain JS.
 
 ## After every change
 
@@ -73,8 +75,8 @@ It's yours to edit. Add your game's own conventions to it, such as how you name 
 
 ## Tips
 
-- **Point it at an example.** The three examples are whole, working games. Ask the agent to follow `examples/novel` for a story in chapters, `examples/cafe` for a game built on [entities](/docs/reference/entities), or `examples/showcase` for places, characters and a calendar.
-- **Have it run `npm run check`** after every change. It loads the game and lists every problem the loader finds, such as a scene, prose key or id that the content names but nothing declares. It prints `No problems.` when there are none, and exits with an error when there are some, so an agent can tell the difference. Inside the checkout, that's `npm run check -w my-game` from the root.
+- **Point it at an example.** The three examples in the repository are whole, working games. Ask the agent to follow `examples/novel` for a story in chapters, `examples/cafe` for a game built on [entities](/docs/reference/entities), or `examples/showcase` for places, characters and a calendar.
+- **Have it run `npm run check`** after every change. It loads the game and lists every problem the loader finds, such as a scene, prose key or id that the content names but nothing declares. It prints `No problems.` when there are none, and exits with an error when there are some, so an agent can tell the difference.
 - **Have it run `npm run playtest`** to see the game played. The [playtest](/docs/cli#ifloom-playtest) plays a few turns with no one at the keyboard and writes every screen and every command to a text file. An agent can read that file to find a scene that never shows up, a choice that's always greyed out, or a number that never moves.
 - **Ask for content as data.** Scenes, conditions and effects are plain objects that `check` can read. A rule written as code is harder for the agent, and for `check`, to verify.
 

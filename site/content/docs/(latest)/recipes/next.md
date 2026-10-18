@@ -2,7 +2,7 @@
 title: "Next.js"
 description: "Run an IFLoom game in a Next.js app: the packages as they are, Tailwind or the prebuilt stylesheet for the React UI, a client component that starts the game, ifloom check and playtest beside it, and why Next can't make the single offline file."
 ---
-Use Next when your game lives on a website: a page of a site you already run on Next, or a game you host on Vercel or Netlify. `ifloom new --template next` starts a Next app with the game in it, or you can add a game to an app you have.
+Use Next when your game lives on a website: a page of a site you already run on Next, or a game you host on Vercel or Netlify. `npm create ifloom@latest my-site -- --template next` starts a Next app with the game in it, or you can add a game to an app you have.
 
 Next builds a website for a server to host. It can't make the single `index.html` that opens from disk, which [`ifloom build`](/docs/cli#ifloom-build) makes for a game players download. Even a static export (`output: 'export'`) loads its scripts in chunks from absolute paths, so it needs a web server. If you want both, keep the game in its own package with the CLI, and import it into the site too.
 
@@ -11,15 +11,16 @@ Next is React, so everything below uses React, either the [React UI](/docs/react
 ## Start from the template
 
 ```sh
-npm run new -- my-site --template next
+npm create ifloom@latest my-site -- --template next
+cd my-site
 npm install
-npm run dev -w my-site
+npm run dev
 ```
 
 That gives you a Next app (the App Router) with the same two-scene game as the other templates, drawn with the React UI:
 
 ```
-games/my-site/
+my-site/
 ├── app/
 │   ├── layout.tsx     the page around everything, which imports src/styles.css
 │   ├── page.tsx       the home page, which draws <Game />
@@ -38,9 +39,27 @@ Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` fro
 
 ## Add the packages
 
-The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`. [Installation](/docs/guide/installation#a-game-beside-the-checkout) shows how to install them from a checkout.
+The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`:
 
-Inside the checkout, as the template is when `npm run new` makes it, run `npm run build` at the root of the checkout first. Next reads each package's built `dist/` folder, which the build makes.
+```sh tab="npm" tab-group="package-manager"
+npm install @ifloom/engine @ifloom/react
+npm install --save-dev @ifloom/cli
+```
+
+```sh tab="pnpm" tab-group="package-manager"
+pnpm add @ifloom/engine @ifloom/react
+pnpm add --save-dev @ifloom/cli
+```
+
+```sh tab="yarn" tab-group="package-manager"
+yarn add @ifloom/engine @ifloom/react
+yarn add --dev @ifloom/cli
+```
+
+```sh tab="bun" tab-group="package-manager"
+bun add @ifloom/engine @ifloom/react
+bun add --dev @ifloom/cli
+```
 
 ## Styles
 

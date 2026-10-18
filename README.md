@@ -8,8 +8,8 @@ You write the game in TypeScript and the engine runs it. A finished game builds
 to a single `index.html` that opens straight from disk or uploads to itch.io as
 it is.
 
-> **Pre-release.** Nothing here is a stable API yet, and the packages aren't on
-> npm. See [API status](https://ifloom.dev/docs/guide/status).
+IFLoom hasn't reached 1.0, so its API can still change. See
+[API status](https://ifloom.dev/docs/guide/status).
 
 **Docs:** in [`site/content/docs/`](site/content/docs); run `npm run docs:dev` to
 read them in a browser. They're published at https://ifloom.dev/docs, with
@@ -85,6 +85,7 @@ A few guarantees hold for every game:
 | `@ifloom/engine` | The core: state, commands, scenes, conditions, effects and saves. |
 | `@ifloom/react` | The React UI: components that draw a game's screen, and `mountGame` to start one in a line. It comes with four theme presets, and every part of it can be restyled or replaced. |
 | `@ifloom/cli` | `ifloom new`, `dev`, `build`, `check`, `playtest` and `snapshot`, and the Vite preset. |
+| `create-ifloom` | `npm create ifloom`: a new game from a template, in a folder of its own. |
 | `@ifloom/plugin-calendar` | Days, times of day, weeks, sleep and a curfew. |
 | `@ifloom/plugin-places` | Locations with exits, and travel between them. |
 | `@ifloom/plugin-cast` | Characters with schedules, conversations, calls and relationship stats. |
@@ -115,28 +116,22 @@ A few guarantees hold for every game:
 
 ## Getting started
 
-Until the packages are on npm, you work inside a clone of this repo. You'll
-need Node 22.18 or later (24 is recommended), because the checkout runs the
-packages' TypeScript source. The built packages, which a game beside the
-checkout installs with `npm run pack`, run on Node 20.19 or later.
+You'll need Node 20.19 or later, or 22.12 or later (24 is recommended).
+
+### Start a new game
 
 ```bash
-git clone https://github.com/IFLoom/ifloom.git
-cd ifloom
+npm create ifloom@latest my-game
+cd my-game
 npm install
-npm run dev -w @ifloom/example-novel   # play The Letter in your browser
+npm run dev
 ```
 
-To start your own game:
-
-```bash
-npm run new -- my-story    # makes games/my-story, which git ignores
-npm install
-npm run dev -w my-story
-```
+With pnpm, yarn or bun, it's `pnpm create ifloom my-game`, `yarn create ifloom my-game` or `bun create ifloom my-game`.
 
 That gives you a small two-scene game drawn with the React UI. Add
-`--template` to start from something else:
+`--template` to start from something else (after `--` with npm, as in
+`npm create ifloom@latest my-game -- --template vue`):
 
 | Template | What you get |
 |---|---|
@@ -145,22 +140,45 @@ That gives you a small two-scene game drawn with the React UI. Add
 | `vue`, `svelte` | The same game drawn with Vue or Svelte. |
 | `next` | The same game drawn with the React UI, in a Next.js app. |
 | `novel`, `cafe`, `town` | A copy of one of the examples. |
+| `plugin` | A plugin package of your own, with a test. |
 
 A React game also gets a theme preset (`paper`, `terminal`, `studio` or
-`storybook`), picked at random for a `react` game. Choose one with `--theme`:
-`npm run new -- my-story --theme paper`.
+`storybook`), picked at random unless you choose one with `--theme`.
 
-Your game's `package.json` lists the `@ifloom/*` packages it uses and its UI's
-Vite plugins. Vite itself comes with `@ifloom/cli`. The [installation guide](site/content/docs/(latest)/guide/installation.md) also
-covers keeping your game in its own folder outside the checkout.
+### Add IFLoom to an existing project
+
+```bash
+npm install @ifloom/engine
+npm install --save-dev @ifloom/cli
+```
+
+Add `@ifloom/react` for the ready-made React UI, or draw the game yourself with
+any framework. The [installation guide](https://ifloom.dev/docs/guide/installation)
+shows a game and the code that mounts it in plain JS, React, Vue and Svelte.
+
+### From this repository
+
+To try unreleased code, clone the repo and work inside it. That needs Node 22.18
+or later, because the checkout runs the packages' TypeScript source.
+
+```bash
+git clone https://github.com/IFLoom/ifloom.git
+cd ifloom
+npm install
+npm run dev -w @ifloom/example-novel   # play The Letter in your browser
+npm run new -- my-story                # makes games/my-story, which git ignores
+```
+
+[Working from the repository](https://ifloom.dev/docs/guide/from-the-repository)
+covers games inside the checkout and beside it.
 
 ## Documentation
 
 The docs are Markdown pages in [`site/content/docs/`](site/content/docs), and the
 website that shows them, with the homepage, is the Next.js app in [`site/`](site).
 Run `npm run docs:dev` to browse them locally at http://localhost:3000/. A
-good order for a first read is the introduction, *Your first story*, then
-*Shapes of game*.
+good order for a first read is the introduction, *Installation*, *Your first
+story*, then *How the pieces fit*.
 
 ## Working on the engine
 

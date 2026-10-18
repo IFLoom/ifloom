@@ -13,35 +13,35 @@ Follow [Installation](/docs/guide/installation) first. The game uses the engine,
 - [`@ifloom/plugin-places`](/docs/plugins/places) keeps the map and where the player is.
 - [`@ifloom/plugin-cast`](/docs/plugins/cast) keeps the people.
 
-To build it as you read, start a new game from the root of the checkout, with the template for the way you draw it:
+To build it as you read, start a new game with the template for the way you draw it, then add the three plugins:
 
 ```sh tab="Plain JS" tab-group="framework"
-npm run new -- my-town --template vanilla
+npm create ifloom@latest my-town -- --template vanilla
+cd my-town
+npm install @ifloom/plugin-calendar @ifloom/plugin-places @ifloom/plugin-cast
 ```
 
 ```sh tab="React" tab-group="framework"
-npm run new -- my-town
+npm create ifloom@latest my-town
+cd my-town
+npm install @ifloom/plugin-calendar @ifloom/plugin-places @ifloom/plugin-cast
 ```
 
 ```sh tab="Vue" tab-group="framework"
-npm run new -- my-town --template vue
+npm create ifloom@latest my-town -- --template vue
+cd my-town
+npm install @ifloom/plugin-calendar @ifloom/plugin-places @ifloom/plugin-cast
 ```
 
 ```sh tab="Svelte" tab-group="framework"
-npm run new -- my-town --template svelte
+npm create ifloom@latest my-town -- --template svelte
+cd my-town
+npm install @ifloom/plugin-calendar @ifloom/plugin-places @ifloom/plugin-cast
 ```
 
-The React tab's template draws the game with the [React UI](/docs/react). The others draw it themselves, with no React. Most of this page is the engine on its own, which is the same in all four.
+The React tab's template draws the game with the [React UI](/docs/react). The others draw it themselves, with no React. Most of this page is the engine on its own, which is the same in all four. [Installation](/docs/guide/installation) has the same commands for pnpm, yarn and bun.
 
-Then add the three plugins to `games/my-town/package.json`, next to `@ifloom/engine`, and run `npm install` at the root:
-
-```json
-"@ifloom/plugin-calendar": "^0.0.0",
-"@ifloom/plugin-places": "^0.0.0",
-"@ifloom/plugin-cast": "^0.0.0"
-```
-
-In a game beside the checkout, add them as `file:` links instead, as [Installation](/docs/guide/installation#plugins) shows. If you'd rather see a finished game of this shape first, `npm run new -- my-town --template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/cli#ifloom-new).
+If you'd rather see a finished game of this shape first, `--template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/cli#ifloom-new).
 :::
 
 ## 1. Places
@@ -588,7 +588,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
 <p>{view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · ')}</p>
 ```
 
-Then run `npm run dev -w my-town`. In the Vue and Svelte templates, `src/main.ts` already mounts `App` on `#root`. The React tab needs JSX, so rename `src/main.ts` to `src/main.tsx` and change the `<script>` in `index.html` to match. Small Town's `src/main.tsx` works this way.
+Then run `npm run dev`. In the Vue and Svelte templates, `src/main.ts` already mounts `App` on `#root`. The React tab needs JSX, so rename `src/main.ts` to `src/main.tsx` and change the `<script>` in `index.html` to match. Small Town's `src/main.tsx` works this way.
 
 The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/recipes/plugin-ui) draws them, and [Your own UI in any framework](/docs/guide/frameworks) draws the rest of the view.
 

@@ -1,12 +1,8 @@
 ---
 title: "API status"
-description: What you can rely on in pre-release IFLoom, what isn't published yet, and the renames still planned.
+description: What you can rely on in IFLoom before 1.0, what the API is, and the renames still planned.
 ---
-IFLoom is pre-release, so there's no stable API yet. Names, shapes and defaults can change between commits. Saves and packs are already built to carry old data forward, and a few renames are planned.
-
-## Not on npm yet
-
-None of the packages are published, and this docs site isn't public yet. You build games from a checkout of the repository, as [Installation](/docs/guide/installation) shows, and start one with [`npm run new`](/docs/cli#ifloom-new). The packages already build to JavaScript with type declarations, as they'll be published, so a game beside the checkout installs them with npm, pnpm, yarn or bun. Before the first release, the plan is to publish them under the `@ifloom` scope.
+IFLoom hasn't reached 1.0, so there's no stable API yet. Names, shapes and defaults can change between releases, and the [changelog](/docs/changelog) says what changed. Saves and packs are already built to carry old data forward, and a few renames are planned.
 
 ## What the API is
 
@@ -24,7 +20,7 @@ The engine has one entry point, `@ifloom/engine`. A deep path such as `@ifloom/e
 
 ## What's settled and what isn't
 
-Nothing is promised until the first release, but two parts already handle change for you:
+Nothing is promised until 1.0, but two parts already handle change for you:
 
 - **Saves carry their version.** The format is at version 14 (`SAVE_VERSION`). When the format changes, an older save is carried forward a step at a time when it's loaded, so a player's saves survive an engine update. Plugins version their own state the same way. See [Saves](/docs/reference/saves).
 - **Packs carry their schema.** A pack says which version of the content format it was written for with `schema: SCHEMA`. The loader upgrades a pack written for an older version, so old packs and mod files keep loading. It leaves out a pack written for a newer version and reports a problem, so it never misreads one. See [Packs and loading](/docs/reference/loader).

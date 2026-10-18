@@ -26,7 +26,7 @@ Pictures are different. An `<img>` or `<video>` may load from a neighbouring fol
 
 ## Build it with `ifloom build`
 
-The [CLI](/docs/cli) keeps these rules for you. A game made with [`npm run new`](/docs/cli#ifloom-new) already has the [Vite preset](/docs/cli#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
+The [CLI](/docs/cli) keeps these rules for you. A game made with [`npm create ifloom`](/docs/cli#ifloom-new) already has the [Vite preset](/docs/cli#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
 
 ```ts
 // vite.config.ts

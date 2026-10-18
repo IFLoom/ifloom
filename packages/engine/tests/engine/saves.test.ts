@@ -86,14 +86,15 @@ describe('save files', () => {
     expect(other.importText(text)).toEqual({ ok: false, reason: 'That save belongs to another game (fixture).' })
   })
 
-  it('names the packs a save was made with that this game no longer has', async () => {
+  it('names the mods a save was made with that this game no longer has', async () => {
     const { game } = withCafe()
-    const store = saves(game, memoryDriver())
+    const store = saves({ ...game, packs: [...(game.packs ?? []), 'mod:naps'] }, memoryDriver())
     await store.write('1', startingState(game))
     const text = (await store.exportSlot('1'))!
     const without = saves({ ...game, packs: ['town'] }, memoryDriver())
     const read = without.importText(text)
-    expect(read.ok && read.value.missingPacks).toEqual(['cafe'])
+    // The game's own pack `cafe` is gone too, but only the mod is the player's to fix.
+    expect(read.ok && read.value.missingPacks).toEqual(['mod:naps'])
   })
 
   it('keeps each game to its own keys in a shared driver', async () => {

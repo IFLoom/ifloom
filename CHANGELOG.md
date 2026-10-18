@@ -97,6 +97,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- A save now warns only about missing mods. `LoadedSave.missingPacks` lists packs whose id starts with `mod:`, so renaming or splitting a game's own packs never shows players a warning, and the React UI's line says "mods".
+
 - The examples are organised the same way. Small Town's one big content file is now a pack per kind in `src/world/` and a pack per place or arc in `src/story/` (moving day, Ava, the flat, the high street, the café, the park, the office and Sam), with its rules in `src/rules.ts`. The Letter has a file per chapter, and The Corner Café keeps its staff, menu, activities and triggers in `src/world/`. A copy made with `--template novel`, `cafe` or `town` starts this way too.
 - A new game from any template is laid out the way the docs teach: `src/game.ts` only puts the game together, `src/world/stats.ts` holds the stats the whole game shares, and `src/story/opening.ts` holds the first scenes with their prose. Each file is a pack, and the game's `AGENTS.md` says where new content goes.
 - `ifloom new` outside a clone of the IFLoom repository makes the game in a folder named for it in the current folder, with every TypeScript setting written into its `tsconfig.json`, so it no longer needs fixing by hand. A copy of an example (`novel`, `cafe` or `town`) now lists React, its types and TypeScript and has a `typecheck` script, as the `react` template does, so it installs and type-checks on its own.

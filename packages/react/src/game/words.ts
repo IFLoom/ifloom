@@ -59,7 +59,7 @@ export const UI_STRINGS = {
   importSave: 'Import a save file',
   noSaves: 'No saves yet.',
   brokenSave: 'A save that can’t be read',
-  missingPacks: 'This save was made with packs this game doesn’t have: {packs}.',
+  missingPacks: 'This save was made with mods this game doesn’t have: {packs}.',
   missingPlugins: 'This save was made with plugins this game doesn’t have: {plugins}.',
   backlog: 'Backlog',
   backlogEmpty: 'Nothing yet.',

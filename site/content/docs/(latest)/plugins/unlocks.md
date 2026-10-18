@@ -530,7 +530,7 @@ An `unlocks/has` condition or `unlocks/record` command that names an unlock the 
 ## Gotchas
 
 - **New codes, new hashes.** Change a code and the old proof no longer matches. A player who entered the old code sees the unlock as locked, and its content is listed in `unlockedPacks`'s problems until they enter the new one.
-- **A save made with locked content** names its packs, like any save. Loaded in a game without them, it's flagged as made with packs this game doesn’t have, in [`missingPacks`](/docs/reference/saves#loadedsave).
+- **A save made with locked content** loads in a game without it, and isn't flagged: [`missingPacks`](/docs/reference/saves#loadedsave) lists only mods. If the save sits in a locked scene, check `unlocks/has` in your own load handling and say so.
 - **Pictures, sound and video aren't encrypted.** Only the packs are. A file in `public/` ships as it is, even if only locked content names it.
 - **No server.** Codes are checked on the player's machine, so nothing stops a code being shared, and nothing can take an unlock back.
 

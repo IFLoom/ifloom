@@ -1181,7 +1181,7 @@ The save and load screen, over [`runner.saves`](/docs/reference/runner#the-runne
 
 While the game's [`saveable`](/docs/reference/game#saveable) refuses saving, **Save in a new slot** and each slot's **Save** are greyed out, with the reason under the buttons (part `saves-blocked`) and on hover. The menu then carries `data-saving="blocked"`. An entry with `hide` leaves the Save buttons off instead. Loading, exporting and importing still work. The reason comes from [`view.saving`](/docs/reference/view#saving).
 
-If a save can't be read, the menu shows why. A save made with packs or plugins this game doesn't have still loads, with a line naming them (`ui.missingPacks`, `ui.missingPlugins`). `onLoaded` is called after a load or an import. The menu carries `data-saves`. It draws nothing when the runner has no `saves`.
+If a save can't be read, the menu shows why. A save made with mods or plugins this game doesn't have still loads, with a line naming them (`ui.missingPacks`, `ui.missingPlugins`). `onLoaded` is called after a load or an import. The menu carries `data-saves`. It draws nothing when the runner has no `saves`.
 
 ```tsx
 import { useState } from 'react'

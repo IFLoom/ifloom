@@ -472,7 +472,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.importSave` | `Import a save file` | |
 | `ui.noSaves` | `No saves yet.` | |
 | `ui.brokenSave` | `A save that can’t be read` | |
-| `ui.missingPacks` | `This save was made with packs this game doesn’t have: {packs}.` | `packs` |
+| `ui.missingPacks` | `This save was made with mods this game doesn’t have: {packs}.` | `packs` |
 | `ui.missingPlugins` | `This save was made with plugins this game doesn’t have: {plugins}.` | `plugins` |
 | `ui.backlog` | `Backlog` | |
 | `ui.backlogEmpty` | `Nothing yet.` | |

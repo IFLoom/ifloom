@@ -139,7 +139,8 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     const loaded = loadState(data.state, game)
     if (!loaded.ok) return loaded
     const state = loaded.value
-    const missingPacks = (data.meta.packs ?? []).filter((id) => !(game.packs ?? []).includes(id))
+    // Only mods: the game's own packs are its files, and renaming one is not something the player can fix.
+    const missingPacks = (data.meta.packs ?? []).filter((id) => id.startsWith('mod:') && !(game.packs ?? []).includes(id))
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion

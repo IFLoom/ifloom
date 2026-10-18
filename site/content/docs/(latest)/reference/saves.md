@@ -269,7 +269,7 @@ type LoadedSave = {
 
 A save read back: its details, and the state carried forward to the current version.
 
-`missingPacks` names packs the save was made with that this game wasn't loaded from, such as a mod the player has since removed. The save still loads, and your game decides whether to warn, refuse or carry on. A state that refers to scenes, items or storylines from a missing pack may not play as it did.
+`missingPacks` names the mods (packs whose id starts with `mod:`) the save was made with that this game wasn't loaded with, such as one the player has since turned off or removed. The game's own packs aren't listed, so renaming or splitting your files never warns players. The save still loads, and your game decides whether to warn, refuse or carry on. A state that refers to scenes, items or storylines from a missing mod may not play as it did.
 
 `missingPlugins` names [plugins](/docs/reference/plugins) the save was made with that this game doesn't have. The save still loads, and the plugin's state is kept in `state.plugins`, unused, so it comes back if a later build adds the plugin again.
 

@@ -81,7 +81,7 @@ Name each pack after its file: `world.stats`, `story.cafe`, `story.moving-day`. 
 story.cafe · scene cafe.window · no prose for "cafe.window.rain"
 ```
 
-A [save](/docs/reference/saves#savemeta) records the ids of the packs the game was loaded from, and a save made with a pack the game no longer has lists it in [`missingPacks`](/docs/reference/saves#loadedsave). The save still loads. So once players have saves, renaming or merging your packs makes their saves name the old ids, and a UI that warns about missing packs will warn about those too. Settle on your files before you release.
+A [save](/docs/reference/saves#savemeta) records the ids of the packs the game was loaded from, but only missing mods are reported in [`missingPacks`](/docs/reference/saves#loadedsave). So you can rename, split or merge your own packs after release without players seeing a warning. What still matters is the content inside them: a save that sits in a scene you renamed or removed won't play as it did, so keep scene, item and storyline ids stable once players have saves.
 
 ## How the packs merge
 

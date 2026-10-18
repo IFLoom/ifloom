@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { audioSrc, type SceneBeat } from '@ifloom/engine'
-import { cn } from '../lib/utils.ts'
+import { cn, PROSE } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
@@ -182,7 +182,7 @@ const REVEAL_MS = 400
  * for nothing.
  */
 function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
-  const list = usePart('beats', 'flex max-w-(--width-prose) flex-col gap-(--gap-beats)')
+  const list = usePart('beats', cn(PROSE, 'flex flex-col gap-(--gap-beats)'))
   const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
   return (
     <div {...list}>
@@ -207,7 +207,7 @@ function SceneArticle({ className, motion }: { className?: string; motion: boole
   const scene = view.scene
   const Panel = scene.panel ? panels[scene.panel] : undefined
   const article = usePart('scene', 'flex flex-col gap-4', className)
-  const header = usePart('scene-header', 'flex items-center gap-3')
+  const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
   const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
   const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')

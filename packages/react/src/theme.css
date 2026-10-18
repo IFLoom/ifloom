@@ -29,11 +29,21 @@
 
 :root {
   --width-prose: 70ch;
+  /* Where the reading column sits in a wider story: `auto` centres it, `0 auto` keeps it to the start. */
+  --margin-prose: auto;
   --width-reading: 42rem;
   --width-sidebar: 18rem;
   --width-notice: 20rem;
   --gap-page: 1.5rem;
   --gap-beats: 0.75rem;
+}
+
+/* `<Story align>` wins over the token, wherever a preset or the game set it. */
+[data-part="story"][data-align="center"] {
+  --margin-prose: auto;
+}
+[data-part="story"][data-align="start"] {
+  --margin-prose: 0 auto;
 }
 
 :root {

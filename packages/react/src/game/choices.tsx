@@ -4,6 +4,7 @@ import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
 import { useChoiceKey } from './keys.tsx'
 import { overridable, usePart } from './overrides.tsx'
+import { cn, PROSE } from '../lib/utils.ts'
 import { useWords } from './words.ts'
 
 function PriceTagImpl({ price, className }: { price: Price; className?: string }) {
@@ -72,7 +73,7 @@ function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; class
 export const ChoiceButton = overridable('ChoiceButton', ChoiceButtonImpl)
 
 function ChoiceListImpl({ choices, className, part = 'choices' }: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }) {
-  const attrs = usePart(part, 'flex max-w-(--width-prose) flex-col gap-2', className)
+  const attrs = usePart(part, cn(PROSE, 'flex flex-col gap-2'), className)
   if (!choices.length) return null
   return (
     <div {...attrs}>

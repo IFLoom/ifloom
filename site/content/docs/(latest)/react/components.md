@@ -148,10 +148,21 @@ Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`, `top-
 ```tsx
 function Story(props: StoryProps): JSX.Element
 
-type StoryProps = { className?: string; children?: ReactNode }
+type StoryProps = { align?: 'center' | 'start'; className?: string; children?: ReactNode }
 ```
 
-The main column, a `<main>`, with its children in order. It's as wide as the side column leaves. The scene's prose keeps to `--width-prose`, while pictures, choices and the parts under the scene use the whole column.
+The main column, a `<main>`, with its children in order. It's as wide as the side column leaves.
+
+The scene's title, its prose, the choices, the inputs, the place's name, the exits, the room's actions and the people here form a reading column `--width-prose` wide. On a wide screen that column sits in the middle of the story. Pictures, a place's stage, panels and minigames use the whole width.
+
+- `align` places the reading column: `'center'` or `'start'`. It's written to the `<main>` as `data-align` and wins over the stylesheet.
+- Left out, the [`--margin-prose`](/docs/react/customising#2-set-tokens-and-colours) token decides. It centres the column unless a preset or your stylesheet changes it.
+
+```tsx
+<Story align="start">
+  <SceneStage />
+</Story>
+```
 
 Replaceable as `Story` in [`components`](#components). Parts: `story`.
 

@@ -196,18 +196,33 @@ function SidebarImpl({ className, children }: SidebarProps) {
  */
 export const Sidebar = overridable('Sidebar', SidebarImpl)
 
-export type StoryProps = { className?: string; children?: ReactNode }
+export type StoryProps = {
+  /**
+   * Where the reading column sits when the story is wider than `--width-prose`:
+   * `'center'` or `'start'`. Left out, the `--margin-prose` token decides, which
+   * centres it unless a preset or the game's stylesheet says otherwise.
+   */
+  align?: 'center' | 'start'
+  className?: string
+  children?: ReactNode
+}
 
-function StoryImpl({ className, children }: StoryProps) {
+function StoryImpl({ align, className, children }: StoryProps) {
   const main = usePart('story', 'flex min-w-0 flex-col gap-(--gap-page)', className)
-  return <main {...main}>{children}</main>
+  return (
+    <main {...main} data-align={align}>
+      {children}
+    </main>
+  )
 }
 
 /**
  * The main column, with what you put in it: the scene, then the bottom area
  * (exits, the room's actions, the people here) in the default layout. It
- * fills the width the side column leaves; the scene's prose keeps to
- * `--width-prose`.
+ * fills the width the side column leaves. The scene's title, prose, choices,
+ * inputs, exits and the people here keep to `--width-prose`, a reading column
+ * centred in the story unless `align` or `--margin-prose` says otherwise;
+ * pictures and panels keep the whole width.
  */
 export const Story = overridable('Story', StoryImpl)
 

@@ -136,6 +136,40 @@ describe('the regions', () => {
     expect(part('page')!.className).toContain('our-page')
     expect(section('stats')!.className).toContain('our-section')
   })
+
+  it('place the reading column by align, or leave it to --margin-prose', () => {
+    play({ layout: storyOf(<SceneStage />) })
+    expect(part('story')!.hasAttribute('data-align')).toBe(false)
+    // The scene's title and prose keep to --width-prose and take their margins from the token.
+    for (const name of ['scene-header', 'beats']) {
+      expect(part(name)!.className).toContain('max-w-(--width-prose)')
+      expect(part(name)!.className).toContain('mx-(--margin-prose)')
+    }
+    expect(part('scene')!.className).not.toContain('--margin-prose')
+    cleanup()
+    play({
+      layout: () => (
+        <Page>
+          <Story align="start">
+            <SceneStage />
+          </Story>
+        </Page>
+      ),
+    })
+    expect(part('story')!.getAttribute('data-align')).toBe('start')
+  })
+
+  it('centre the reading column by default, and let align win over the token', async () => {
+    // Read as text from disk, as the transitions test reads paper's: a stylesheet imported in a test comes back empty.
+    // oxlint-disable-next-line typescript/no-unnecessary-template-expression -- a plain 'node:fs' would make tsc look for Node's types
+    const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync: (path: string, encoding: string) => string }
+    const url = new URL('../src/theme.css', import.meta.url)
+    const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd()
+    const css = fs.readFileSync(decodeURIComponent(url.protocol === 'file:' ? url.pathname : cwd + url.pathname), 'utf8')
+    expect(css).toMatch(/--margin-prose: auto;/)
+    expect(css).toMatch(/\[data-part="story"\]\[data-align="start"\] \{\s*--margin-prose: 0 auto;/)
+    expect(css).toMatch(/\[data-part="story"\]\[data-align="center"\] \{\s*--margin-prose: auto;/)
+  })
 })
 
 describe('sections', () => {

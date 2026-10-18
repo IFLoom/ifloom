@@ -8,6 +8,7 @@ import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
+import { cn, PROSE } from '../lib/utils.ts'
 import { useWords } from './words.ts'
 
 /** What `useClock` returns: where the game is in time. */
@@ -155,7 +156,7 @@ function LocationCardImpl() {
   return (
     <section {...section}>
       {location.stage?.layers.length ? <Stage stage={location.stage} /> : null}
-      <div>
+      <div className={PROSE}>
         <h3 {...name}>{location.name}</h3>
         <p {...tag}>{location.tag}</p>
       </div>
@@ -171,7 +172,7 @@ export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
 function ExitsImpl({ className }: { className?: string }) {
   const places = usePlaces()
-  const list = usePart('exits', 'flex flex-wrap gap-1.5', className)
+  const list = usePart('exits', cn(PROSE, 'flex flex-wrap gap-1.5'), className)
   const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
   const exits = places?.exits ?? []
   if (!places?.location || !exits.length) return null
@@ -204,7 +205,7 @@ export function usePeople(): CastView | null {
 }
 
 function PeopleHereImpl({ className }: { className?: string }) {
-  const section = usePart('people', 'flex flex-col gap-2', className)
+  const section = usePart('people', cn(PROSE, 'flex flex-col gap-2'), className)
   const card = usePart('person', 'flex flex-col gap-1.5')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')

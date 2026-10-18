@@ -3,6 +3,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
+import { cn, PROSE } from '../lib/utils.ts'
 import { useWords } from './words.ts'
 
 function InputFieldImpl({ input }: { input: InputView }) {
@@ -68,7 +69,7 @@ export const InputField = overridable('InputField', InputFieldImpl)
 
 function InputFieldsImpl({ className }: { className?: string }) {
   const { view } = useGame()
-  const list = usePart('inputs', 'flex max-w-(--width-prose) flex-col gap-3', className)
+  const list = usePart('inputs', cn(PROSE, 'flex flex-col gap-3'), className)
   const inputs = Object.values(view.inputs)
   if (!inputs.length) return null
   return (

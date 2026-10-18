@@ -94,6 +94,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- On a wide screen the React UI centres the story's text in the story: the scene's title and prose, the choices, the inputs, the exits and the people here, in a column `--width-prose` wide. Pictures and panels still use the whole width. `<Story align="start">` keeps the column to the start, and so does the new `--margin-prose` token (`0 auto`), which a preset or your stylesheet can set without touching the layout.
+
 - `**bold**` and `*italic*` in a paragraph are no longer shown with their stars. Write `\*` for a star you want to keep.
 - The messages plugin keeps a list of arrivals, `{ key, message, turn, day }`, instead of a turn by message id, and its replies and reads by the arrival's key. Saves from before load with each message's arrival keyed by its id, so nothing is lost. `messages/reply` names the arrival's key, which is still the message's id for one that arrives once, and `MessageView` gains `key`. `messages/replied` and `messages/read` ask about a message's latest arrival.
 - The `ifloom` command is compiled JavaScript and runs on Node 20.19 or later, or 22.12 or later. It no longer needs a Node that strips TypeScript.

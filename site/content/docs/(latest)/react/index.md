@@ -26,7 +26,7 @@ Nothing in the engine depends on this package. The UI only reads the [view](/doc
 
 The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it.
 
-- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose keeps to a readable measure (`--width-prose`).
+- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
 - **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
 - **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:

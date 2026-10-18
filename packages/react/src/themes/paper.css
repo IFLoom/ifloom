@@ -451,7 +451,9 @@
 
 /*
  * The layout: the story is the page of the book, its prose a printed
- * measure in the middle of the column; the side column is a quiet margin.
+ * measure in the middle of the column (or at its start, with
+ * `--margin-prose: 0 auto` or `<Story align="start">`); the side column is
+ * a quiet margin.
  */
 [data-part="story"] > *,
 [data-part="story"] [data-part="beats"],
@@ -459,7 +461,7 @@
 [data-part="story"] [data-part="stage-picture"] {
   width: 100%;
   max-width: var(--width-prose);
-  margin-inline: auto;
+  margin-inline: var(--margin-prose);
 }
 
 [data-part="sidebar"] {

@@ -67,7 +67,8 @@ These are the design tokens:
 | `--text-scene-title` | The size of a scene's title. | `1.5rem` |
 | `--leading-prose` | The line height of a scene's text. | `1.625` |
 | `--shadow-card` | The shadow under notices. The presets use it for their cards too. | A soft drop shadow |
-| `--width-prose` | The measure of a scene's text: how long a line of prose gets. Pictures, choices and the bottom of the story use the whole column. | `70ch` |
+| `--width-prose` | The width of the story's reading column: the scene's title and prose, the choices, the inputs, the exits and the people here. Pictures and panels use the whole column. | `70ch` |
+| `--margin-prose` | Where the reading column sits when the story is wider than it, as `margin-inline`. `auto` centres it, `0 auto` keeps it to the start. [`Story`'s `align`](/docs/react/components#story) wins over it. | `auto` |
 | `--width-reading` | How wide the page grows without a side column. With one, the page is as wide as the window. | `42rem` |
 | `--width-sidebar` | The side column's width on a wide screen. | `18rem` |
 | `--width-notice` | The width of the notices in the bottom corner. | `20rem` |
@@ -487,7 +488,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 |---|---|
 | `page` | The whole page, drawn by [`Game`](/docs/react/components#game). Carries `data-has-sidebar` when there's a side column. |
 | `sidebar` | The side column, an `<aside>`. On a phone it's inside the `drawer`. |
-| `story` | The `<main>` that holds the story's parts. |
+| `story` | The `<main>` that holds the story's parts. It carries `data-align` when `Story` has `align`. |
 | `overlay` | The box after the story that sticks to the bottom of the window, holding the notices by default. It's hidden while it's empty. |
 | `title` | The game's title. |
 | `clock` | Where the game is in time. |

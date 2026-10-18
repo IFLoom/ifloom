@@ -6,10 +6,9 @@ Next.js app. This file is for coding agents working on the game.
 ## Learn the engine
 
 - The docs, in one file: https://ifloom.dev/llms-full.txt
-  (offline, read `site/content/docs/` in the IFLoom checkout this game sits in).
 - The docs' MCP server, to search them and fetch single pages: https://ifloom.dev/api/mcp
 - Working games to copy patterns from: `examples/novel`, `examples/cafe` and
-  `examples/showcase` in the checkout.
+  `examples/showcase` in the IFLoom repository, https://github.com/IFLoom/ifloom.
 - How a game runs in Next: https://ifloom.dev/docs/recipes/next
 
 ## How the game is put together

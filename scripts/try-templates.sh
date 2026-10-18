@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 # Make a game from each of ifloom new's own templates in a folder outside the
-# checkout, as "A game beside the checkout" in the installation guide does, and
-# install it with a package manager the way a game installs the packages from
-# npm: each @ifloom package is packed (`npm pack`, so only its `files`, with
-# the built dist/) and the game depends on the tarball. Then it runs the
-# game's check, playtest, build and typecheck. The plugin template makes a
-# plugin package, not a game, so it gets install, build, test and typecheck.
+# checkout, as "Working from the repository" in the docs does, and install it
+# with a package manager the way a game installs the packages from npm: each
+# @ifloom package is packed (`npm pack`, so only its `files`, with the built
+# dist/) and the game depends on the tarball. Then it runs the game's check,
+# playtest, build and typecheck. The plugin template makes a plugin package,
+# not a game, so it gets install, build, test and typecheck.
+#
+# With each package manager it also makes one game as `npm create ifloom`
+# does: create-ifloom's bin, run with plain Node from its tarball (it isn't on
+# npm yet) and that package manager's npm_config_user_agent. It checks the bin
+# names the package manager in its next steps, then installs and checks the
+# game like the others. `--create <template>` picks its template, `react` if
+# left out.
 #
 # It builds the packages first (npm run build). Slower than verify.sh's steps
 # (an install per template and package manager), so run it when a template, the
 # Vite preset, the build or a package's dependencies change, not on every commit.
 #
-#   scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all] [template...]
+#   scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all] [--create template] [template...]
 #
 # npm if no --pm; react vue svelte vanilla next plugin if no template is named.
 set -euo pipefail
@@ -23,6 +30,11 @@ unset NODE_OPTIONS
 managers=(npm)
 if [[ "${1:-}" == "--pm" ]]; then
   [[ "${2:-}" == all ]] && managers=(npm pnpm yarn bun) || managers=("${2:?--pm takes npm, pnpm, yarn, bun or all}")
+  shift 2
+fi
+create=react
+if [[ "${1:-}" == "--create" ]]; then
+  create="${2:?--create takes a template}"
   shift 2
 fi
 templates=("$@")
@@ -44,17 +56,45 @@ printf '\n== npm run pack\n'
 node scripts/pack.ts "$out/packs" >/dev/null
 echo "Built and packed every package."
 
+# create-ifloom's tarball, unpacked: its bin bundles what it needs, so nothing is installed for it.
+mkdir -p "$out/create-ifloom"
+tar xzf "$out/packs/create-ifloom-0.0.0.tgz" -C "$out/create-ifloom"
+
 failed=()
 for pm in "${managers[@]}"; do
-  for template in "${templates[@]}"; do
-    dir="$out/$pm/try-$template"
-    printf '\n== %s with %s in %s\n' "$template" "$pm" "$dir"
-    node --input-type=module - "$checkout" "$template" "$dir" "$out/packs" "$pm" <<'EOF'
+  for template in "${templates[@]}" "create:$create"; do
+    if [[ $template == create:* ]]; then
+      template=${template#create:}
+      name="try-create-$template"
+      label="npm create ifloom --template $template"
+    else
+      name="try-$template"
+      label=$template
+    fi
+    dir="$out/$pm/$name"
+    printf '\n== %s with %s in %s\n' "$label" "$pm" "$dir"
+    mkdir -p "$out/$pm"
+    if [[ $name == try-create-* ]]; then
+      agent="$pm/$($pm --version) npm/? node/$(node --version) $(uname -s | tr '[:upper:]' '[:lower:]')"
+      if ! said=$(cd "$out/$pm" && npm_config_user_agent=$agent node "$out/create-ifloom/package/bin.js" "$name" --template "$template"); then
+        failed+=("$label ($pm)")
+        continue
+      fi
+      echo "$said"
+      if ! grep -qx "  $pm install" <<<"$said"; then
+        echo "create-ifloom's next steps don't say \"$pm install\"." >&2
+        failed+=("$label ($pm)")
+        continue
+      fi
+    else
+      node --input-type=module -e 'const { newGame } = await import(process.argv[1]); newGame({ name: process.argv[2], template: process.argv[3], into: process.argv[4] })' \
+        "$checkout/packages/cli/dist/index.js" "$name" "$template" "$dir"
+    fi
+
+    node --input-type=module - "$checkout" "$dir" "$out/packs" "$pm" <<'EOF'
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-const [checkout, template, dir, packs, pm] = process.argv.slice(2)
-const { newGame } = await import(join(checkout, 'packages/cli/dist/index.js'))
-newGame({ name: `try-${template}`, template, into: dir })
+const [checkout, dir, packs, pm] = process.argv.slice(2)
 
 // Each @ifloom package the game lists, from its tarball. Until they're on npm, a
 // required peer the game doesn't list (the React UI's @ifloom/audio, say) is
@@ -79,37 +119,28 @@ for (const name of wanted) {
 // Bun looks up a package's @ifloom peers on the registry even when the game lists them, so it's told where they are.
 if (pm === 'bun') pkg.overrides = Object.fromEntries(wanted.map((name) => [name, tarball(name)]))
 writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n')
-
-// The shared tsconfig extends the checkout's base, as a game in games/ does. Beside it, written out in full,
-// without the checkout's `ifloom-source` condition, so the typecheck reads the packages' .d.ts files.
-const tsconfig = JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8'))
-if (tsconfig.extends) {
-  const base = JSON.parse(readFileSync(join(checkout, 'tsconfig.base.json'), 'utf8'))
-  delete base.compilerOptions.customConditions
-  delete tsconfig.extends
-  tsconfig.compilerOptions = { ...base.compilerOptions, ...tsconfig.compilerOptions }
-  writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2) + '\n')
-}
+// The tsconfig stays as newGame wrote it: outside the checkout, with the base settings written out in full.
 EOF
     case $pm in
       npm) install='npm install --no-audit --no-fund --loglevel=error' ;;
       pnpm) install='pnpm install --reporter=append-only --config.strict-dep-builds=false' ;;
-      # Yarn 1, or Yarn 2 and later with node_modules, as the installation guide says, since Vite doesn't support Plug'n'Play.
-      yarn) [[ $(yarn --version) == 1.* ]] && install='yarn install --non-interactive --silent' || install='echo "nodeLinker: node-modules" > .yarnrc.yml && yarn install' ;;
+      # Yarn 1, or Yarn 2 and later with node_modules (create-ifloom writes the .yarnrc.yml itself), since Vite doesn't support Plug'n'Play.
+      # Yarn 1 caches a tarball by name and version, so it gets a fresh cache: the packs are all 0.0.0, whatever they hold.
+      yarn) [[ $(yarn --version) == 1.* ]] && install="yarn install --non-interactive --silent --cache-folder $out/yarn-cache" || install='echo "nodeLinker: node-modules" > .yarnrc.yml && yarn install' ;;
       bun) install='bun install' ;;
     esac
     run="$pm run"
     if [[ $template == plugin ]]; then
       steps="$install && $run build && $run test && $run typecheck"
-      said='installs, builds, tests and typechecks'
+      result='installs, builds, tests and typechecks'
     else
       steps="$install && $run check && $run playtest && $run build && $run typecheck"
-      said='installs, checks, playtests, builds and typechecks'
+      result='installs, checks, playtests, builds and typechecks'
     fi
     if (cd "$dir" && eval "$steps"); then
-      echo "-- $template with $pm: $said"
+      echo "-- $label with $pm: $result"
     else
-      failed+=("$template ($pm)")
+      failed+=("$label ($pm)")
     fi
   done
 done

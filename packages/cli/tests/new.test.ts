@@ -1,15 +1,16 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES, THEMES, newGame } from '../src/index.ts'
-import { pluginNames } from '../src/new.ts'
+import { BASE_COMPILER_OPTIONS, pluginNames } from '../src/new.ts'
 
 /** The packages each template adds besides IFLoom's, in the order its package.json lists them. */
-const REACT_DEPS = ['@tailwindcss/vite', '@vitejs/plugin-react', 'tailwindcss']
+// The react template's own layout.tsx is JSX, so it lists React and React's types. A copied example lists the same.
+const REACT_DEPS = ['react', 'react-dom', '@tailwindcss/vite', '@types/react', '@types/react-dom', '@vitejs/plugin-react', 'tailwindcss', 'typescript']
 const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
-  // The react template's own layout.tsx is JSX, so it lists React and React's types.
-  react: ['react', 'react-dom', '@tailwindcss/vite', '@types/react', '@types/react-dom', '@vitejs/plugin-react', 'tailwindcss', 'typescript'],
+  react: REACT_DEPS,
   novel: REACT_DEPS,
   cafe: REACT_DEPS,
   town: REACT_DEPS,
@@ -42,6 +43,33 @@ describe('ifloom new', () => {
     expect(files).not.toContain('gitignore')
     expect(files.some((file) => file.startsWith('tests/') || file.startsWith('dist/') || file.startsWith('node_modules/'))).toBe(false)
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
+  })
+
+  it.each(GAMES)('writes the %s game a tsconfig that works outside the checkout, and a typecheck script', (template) => {
+    const { dir } = newGame({ name: 'my-story', template, into: fresh() })
+    const tsconfig = JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8'))
+    expect(tsconfig.extends).toBeUndefined()
+    expect(tsconfig.compilerOptions.customConditions).toBeUndefined()
+    if (template !== 'next') expect(tsconfig.compilerOptions).toMatchObject({ ...BASE_COMPILER_OPTIONS, lib: expect.arrayContaining(['DOM']) })
+    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).scripts.typecheck).toBeDefined()
+  })
+
+  it("keeps the checkout's tsconfig.base.json for a game inside the checkout, by its path from there", () => {
+    const root = fileURLToPath(new URL('../../../', import.meta.url))
+    const scratch = join(root, 'node_modules/.cache', `ifloom-new-${process.pid}`)
+    mkdirSync(scratch, { recursive: true })
+    try {
+      const { dir } = newGame({ name: 'inside', into: join(scratch, 'inside') })
+      expect(JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')).extends).toBe('../../../../tsconfig.base.json')
+    } finally {
+      rmSync(scratch, { recursive: true, force: true })
+    }
+  })
+
+  it("writes out the checkout's base settings, without its source condition", () => {
+    const base = JSON.parse(readFileSync(new URL('../../../tsconfig.base.json', import.meta.url), 'utf8'))
+    delete base.compilerOptions.customConditions
+    expect(BASE_COMPILER_OPTIONS).toEqual(base.compilerOptions)
   })
 
   it('fills in the react game with its name and title', () => {

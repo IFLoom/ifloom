@@ -2,7 +2,7 @@
  * Your game. It's plain data: scenes, the choices in them, a stat, and the
  * words, kept apart from the scenes in `prose` so they're easy to edit.
  *
- * The docs: https://ifloom.dev/docs/ (or `site/content/docs/` in the IFLoom checkout).
+ * The docs: https://ifloom.dev/docs/
  */
 import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
 

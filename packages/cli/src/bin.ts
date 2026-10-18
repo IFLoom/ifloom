@@ -3,7 +3,8 @@
  * ifloom — the command line.
  *
  *   ifloom new <name> [--template react]
- *                            a new game in games/<name>, from react, vanilla, vue, svelte, next, novel, cafe or town,
+ *                            a new game in games/<name> of the checkout (or <name> anywhere else),
+ *                            from react, vanilla, vue, svelte, next, novel, cafe or town,
  *                            or a plugin package of its own from plugin;
  *                            --theme paper|terminal|studio|storybook picks the React UI's preset, or none for its plain look
  *   ifloom dev               the game in a browser, reloading as you edit
@@ -32,7 +33,7 @@
  * function as `{ unlocked }`.
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, relative, resolve } from 'node:path'
+import { basename, dirname, relative, resolve } from 'node:path'
 import { startingState, type FileRef, type Game, type GameState } from '@ifloom/engine'
 import { build, createServer } from 'vite'
 import { buildFiles, checkBuild, inlineAssets } from './build.ts'
@@ -41,7 +42,7 @@ import { checkUnlocks, codesFrom, leaks, linesOf, lockedFiles, packsOf, unlocksM
 import { explorer, metricsText, playtest, type Policy } from './playtest.ts'
 import { snapshot, type Probe } from './snapshot.ts'
 import { configLoader, sourcePlugin } from './source.ts'
-import { TEMPLATES, THEMES, newGame, type TemplateName, type ThemeName } from './new.ts'
+import { TEMPLATES, THEMES, inCheckout, newGame, type TemplateName, type ThemeName } from './new.ts'
 
 const [command = 'help', ...rest] = process.argv.slice(2)
 /** The first argument that is neither a flag nor a flag's value. */
@@ -222,7 +223,7 @@ async function snap(entry?: string): Promise<number> {
   })
 }
 
-/** A new game in games/<name>, and what to type next. */
+/** A new game in games/<name> of the checkout, or in <name> anywhere else, and what to type next. */
 function create(name: string | undefined, template: string | undefined, theme: string | undefined): number {
   if (!name) {
     console.error(`Give the new game a name: ifloom new my-story [--template ${TEMPLATES.join('|')}]`)
@@ -232,11 +233,14 @@ function create(name: string | undefined, template: string | undefined, theme: s
     const made = newGame({ name, template: template as TemplateName | undefined, theme: theme as ThemeName | 'none' | undefined })
     const look = made.theme ? `, with the ${made.theme} theme` : theme === 'none' ? ', with no theme preset' : ''
     console.log(`Made ${name} in ${relative(process.cwd(), made.dir) || '.'} from the ${template ?? 'react'} template${look}. Next:\n`)
+    // In the checkout the game is a workspace, installed from the root. Anywhere else it's a folder of its own.
+    const workspace = inCheckout(made.dir) && basename(dirname(made.dir)) === 'games'
+    if (!workspace) console.log(`  cd ${relative(process.cwd(), made.dir) || '.'}`)
     console.log('  npm install')
     if (template === 'plugin') {
-      console.log(`  npm test -w ${name}`)
+      console.log(workspace ? `  npm test -w ${name}` : '  npm test')
     } else {
-      console.log(`  npm run dev -w ${name}`)
+      console.log(workspace ? `  npm run dev -w ${name}` : '  npm run dev')
     }
     return 0
   } catch (error) {

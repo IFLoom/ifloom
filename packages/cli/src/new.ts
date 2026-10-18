@@ -5,7 +5,7 @@
  * is not a game: it's a plugin package of its own, with a test, to publish on npm.
  */
 import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town', 'plugin'] as const
@@ -25,7 +25,7 @@ export type NewGameOptions = {
   name: string
   /** What to start from. `react` if left out. */
   template?: TemplateName
-  /** Where to put it. `games/<name>` in the IFLoom checkout if left out. */
+  /** Where to put it. Left out, `games/<name>` in the IFLoom checkout, or a folder named `<name>` in the current folder anywhere else. */
   into?: string
   /**
    * The React UI preset to start from. Left out, a `react` or `next` game gets one at
@@ -38,29 +38,60 @@ export type NewGameOptions = {
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
+/**
+ * Where the templates and the example games are. In the CLI's package the
+ * templates are `templates/` beside `src/` and `dist/`, and the examples are in
+ * the IFLoom checkout. create-ifloom bundles this module into its `dist/`
+ * with copies of both beside it, so it looks there first.
+ */
+const TEMPLATE_DIR = [here('./templates'), here('../templates')].find((dir) => existsSync(dir)) ?? here('../templates')
+const EXAMPLE_DIR = [here('./examples'), here('../../../examples')].find((dir) => existsSync(dir))
+
+/** The IFLoom checkout this module is in, if it is: the root with `tsconfig.base.json`, which a game inside it extends. */
+const CHECKOUT = [here('../../../')].find((dir) => existsSync(join(dir, 'tsconfig.base.json')) && existsSync(join(dir, 'packages/cli/package.json')))
+
+/**
+ * The checkout's `tsconfig.base.json` without its `ifloom-source` condition: what a
+ * game outside the checkout gets in its `tsconfig.json` in place of `extends`.
+ * A test holds it to the file.
+ */
+export const BASE_COMPILER_OPTIONS = {
+  target: 'es2023',
+  lib: ['ES2023'],
+  module: 'esnext',
+  moduleResolution: 'bundler',
+  allowImportingTsExtensions: true,
+  verbatimModuleSyntax: true,
+  moduleDetection: 'force',
+  erasableSyntaxOnly: true,
+  noEmit: true,
+  strict: true,
+  skipLibCheck: true,
+  noUnusedLocals: true,
+  noUnusedParameters: true,
+  noFallthroughCasesInSwitch: true,
+}
+
 /** The files every template of our own takes from `templates/shared/`. */
 const BASE = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
 /** What the templates without React share: the plain game and the stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
 const PLAIN = [...BASE, 'src/game.ts', 'src/styles.css']
 
-/** Where each template's files come from. Ours add the shared files; the examples bring their own. */
-const SOURCES: Record<TemplateName, { dir: string; shared: string[] }> = {
+/** Where each template's files come from, under the templates' folder or the examples'. Ours add the shared files; the examples bring their own. */
+const SOURCES: Record<TemplateName, { dir: string; example?: true; shared: string[] }> = {
   // React, Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
-  react: { dir: here('../templates/react'), shared: BASE },
-  vanilla: { dir: here('../templates/vanilla'), shared: [...PLAIN, 'vite.config.ts'] },
-  vue: { dir: here('../templates/vue'), shared: PLAIN },
-  svelte: { dir: here('../templates/svelte'), shared: PLAIN },
+  react: { dir: 'react', shared: BASE },
+  vanilla: { dir: 'vanilla', shared: [...PLAIN, 'vite.config.ts'] },
+  vue: { dir: 'vue', shared: PLAIN },
+  svelte: { dir: 'svelte', shared: PLAIN },
   // A Next app: its own config, tsconfig, AGENTS.md and .gitignore, and no index.html or Vite config.
-  next: { dir: here('../templates/next'), shared: [] },
-  novel: { dir: here('../../../examples/novel'), shared: ['AGENTS.md', 'gitignore'] },
-  cafe: { dir: here('../../../examples/cafe'), shared: ['AGENTS.md', 'gitignore'] },
-  town: { dir: here('../../../examples/showcase'), shared: ['AGENTS.md', 'gitignore'] },
+  next: { dir: 'next', shared: [] },
+  novel: { dir: 'novel', example: true, shared: ['AGENTS.md', 'gitignore'] },
+  cafe: { dir: 'cafe', example: true, shared: ['AGENTS.md', 'gitignore'] },
+  town: { dir: 'showcase', example: true, shared: ['AGENTS.md', 'gitignore'] },
   // A plugin package: its own tsconfig, test and README, and no page.
-  plugin: { dir: here('../templates/plugin'), shared: [] },
+  plugin: { dir: 'plugin', shared: [] },
 }
-
-/** The templates that copy an example game, which keeps its title and leaves its tests behind. */
-const EXAMPLES = new Set<TemplateName>(['novel', 'cafe', 'town'])
 
 /** What an example has that a new game should not: its build, its tests, its recorded runs. */
 const LEFT_OUT = new Set(['node_modules', 'dist', 'dist-one', 'tests', 'snapshots', 'playtest', 'mods'])
@@ -110,6 +141,49 @@ function filesUnder(dir: string, base = dir): string[] {
   )
 }
 
+type Manifest = { name?: string; description?: string; license?: string } & Partial<
+  Record<'scripts' | 'dependencies' | 'devDependencies', Record<string, string>>
+>
+
+/**
+ * An example in the checkout leans on the workspace for React, its types and
+ * TypeScript. As a game of its own it lists them as the `react` template does,
+ * with the same versions, and gets the template's `typecheck` script.
+ */
+function withReactTemplate(pkg: Manifest): void {
+  const react = JSON.parse(readFileSync(join(TEMPLATE_DIR, 'react/package.json'), 'utf8')) as Manifest
+  const sorted = (deps: Record<string, string>) => Object.fromEntries(Object.entries(deps).sort(([a], [b]) => (a < b ? -1 : 1)))
+  const missing = (field: 'dependencies' | 'devDependencies') =>
+    Object.fromEntries(Object.entries(react[field] ?? {}).filter(([dep]) => !dep.startsWith('@ifloom/') && !pkg[field]?.[dep]))
+  pkg.scripts = { ...pkg.scripts, typecheck: pkg.scripts?.typecheck ?? react.scripts!.typecheck }
+  pkg.dependencies = sorted({ ...pkg.dependencies, ...missing('dependencies') })
+  pkg.devDependencies = sorted({ ...pkg.devDependencies, ...missing('devDependencies') })
+}
+
+/**
+ * A template's tsconfig extends the checkout's `tsconfig.base.json`. Inside
+ * the checkout it keeps that, by the right path from the game's folder; anywhere
+ * else the settings are written out in full, without the checkout's condition.
+ */
+/** Whether a folder is inside the IFLoom checkout this module is in. */
+export function inCheckout(dir: string): boolean {
+  return CHECKOUT !== undefined && (resolve(dir) + sep).startsWith(resolve(CHECKOUT) + sep)
+}
+
+function standaloneTsconfig(dir: string): void {
+  const path = join(dir, 'tsconfig.json')
+  if (!existsSync(path)) return
+  const tsconfig = JSON.parse(readFileSync(path, 'utf8')) as { extends?: string; compilerOptions?: Record<string, unknown> }
+  if (tsconfig.extends !== '../../tsconfig.base.json') return
+  if (CHECKOUT && inCheckout(dir)) {
+    tsconfig.extends = relative(dir, join(CHECKOUT, 'tsconfig.base.json')).split(sep).join('/')
+  } else {
+    delete tsconfig.extends
+    tsconfig.compilerOptions = { ...BASE_COMPILER_OPTIONS, ...tsconfig.compilerOptions }
+  }
+  writeFileSync(path, `${JSON.stringify(tsconfig, null, 2)}\n`)
+}
+
 /** Make a new game. Returns its folder and the files written there. Installs nothing. */
 export function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null } {
   const { name, template = 'react' } = options
@@ -121,14 +195,16 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   if (options.theme && options.theme !== 'none' && !THEMES.includes(options.theme)) {
     throw new Error(`There is no theme "${options.theme}". Pick one of: ${THEMES.join(', ')}, or none.`)
   }
-  const dir = options.into ?? here(`../../../games/${name}`)
+  const dir = resolve(options.into ?? (CHECKOUT ? join(CHECKOUT, 'games', name) : name))
   if (existsSync(dir) && readdirSync(dir).length > 0) throw new Error(`${dir} already exists and isn't empty.`)
 
   const plugin = template === 'plugin' ? pluginNames(name) : null
-  const example = EXAMPLES.has(template)
-  cpSync(source.dir, dir, { recursive: true, filter: (path) => !(example ? LEFT_OUT : BUILT).has(relative(source.dir, path).split(/[\\/]/)[0]) })
+  const example = source.example === true
+  if (example && !EXAMPLE_DIR) throw new Error(`The ${template} template copies an example from the IFLoom repository. Use npm create ifloom to start from it.`)
+  const from = join(example ? EXAMPLE_DIR! : TEMPLATE_DIR, source.dir)
+  cpSync(from, dir, { recursive: true, filter: (path) => !(example ? LEFT_OUT : BUILT).has(relative(from, path).split(/[\\/]/)[0]) })
   for (const file of source.shared) {
-    cpSync(here(`../templates/shared/${file}`), join(dir, file === 'gitignore' ? '.gitignore' : file))
+    cpSync(join(TEMPLATE_DIR, 'shared', file), join(dir, file === 'gitignore' ? '.gitignore' : file))
   }
   // npm leaves a .gitignore out of a published package, so a template keeps its own as `gitignore`.
   if (existsSync(join(dir, 'gitignore'))) renameSync(join(dir, 'gitignore'), join(dir, '.gitignore'))
@@ -148,10 +224,15 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
 
   // An example keeps its own title, but the package is the new game's.
   const pkgPath = join(dir, 'package.json')
-  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Manifest
   pkg.name = name
-  if (example) delete pkg.description
+  if (example) {
+    delete pkg.description
+    delete pkg.license
+    withReactTemplate(pkg)
+  }
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
+  standaloneTsconfig(dir)
 
   // The preset: the one asked for (none takes it out), a random one for a `react` game, or the example's own.
   const styles = join(dir, 'src/styles.css')

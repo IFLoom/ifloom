@@ -124,6 +124,7 @@ The declaration with that id, or `undefined`.
 - **A number must be sent as a number.** An HTML field gives a string, and `'7'` is refused with `Enter a number.`, so convert it before sending.
 - **Choice values are compared exactly.** `1` and `'1'` are different options.
 - **An input writes a kv key, not a stat.** To let the player set a number that effects spend, have a choice or activity read the key through a [custom effect](/docs/reference/effects#computed-effects).
+- **A typed name can name a character.** The [cast plugin](/docs/plugins/cast#a-name-the-player-chooses) fills tokens in a character's `name`, so `name: '{{friendName}}'` shows what the player typed.
 - **It works with a scene open.** Inputs aren't refused with `Finish this first.`, so a scene can ask for a name halfway through. To keep an input to one scene, use `when` (for example `{ scene: ['intro'] }`) or a [lock](/docs/reference/locks) that denies `'input'`.
 - **The loader checks the declaration.** It reports a `'choice'` input with no options and a `min` above `max`. See [Checking content](/docs/reference/checks).
 

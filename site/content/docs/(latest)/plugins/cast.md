@@ -134,8 +134,8 @@ type CharacterDef = {
 | Field | What it is | If left out |
 |---|---|---|
 | `id` | What content names them by, as in `talk('ava')`, `here('ava')` or `person('ava')`. It's also their entity's id and their [speaker](#speakers) id. Unique among the characters. | Required. |
-| `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` It's also their entity's `name`. | Required. |
-| `fullName` | Their whole name, for the UI. | `name` |
+| `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` It's also their entity's `name`. [Prose tokens](/docs/reference/prose) in it are filled for the save wherever the plugin shows it, so `'{{friendName}}'` is the name the player typed (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
+| `fullName` | Their whole name, for the UI. Tokens are filled as in `name`. | `name` |
 | `role` | A word or two about them, such as `Runs the café`. | `null` in the view. |
 | `pronouns` | For prose that needs them, such as `{ they: 'she', them: 'her' }`. The plugin gives them no meaning and doesn't pass them to the view. | None. |
 | `hue` | A colour for their lines, as a hue from 0 to 360. | `null`, which leaves it to the UI. |
@@ -151,6 +151,30 @@ type CharacterDef = {
 | `kv` | Their entity's kv store at the start. | `{}` |
 
 Inside a character's own conditions, `'$'` stands for them. Every `when` in `schedule`, `talk` and `call`, and `met` itself, is run with `'$'` bound to the character's entity (by [`bindCurrent`](/docs/reference/entities#bindcurrent)). So `{ stat: 'friendship', of: '$', gte: 25 }` in Ava's `talk` is Ava's friendship. Anywhere else, name them in full with `of: person('ava')`.
+
+### A name the player chooses
+
+To let the player name someone, ask for the name with an [input](/docs/reference/inputs) and give the character a `name` that reads the input's kv key:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+const town: Pack = {
+  id: 'town',
+  schema: SCHEMA,
+  inputs: [{ id: 'friendName', label: 'Your oldest friend is called', kind: 'text', maxLength: 16 }],
+  data: {
+    cast: {
+      characters: [{ id: 'sam', name: '{{friendName}}', home: 'park', talk: 'sam.hi' }],
+    },
+  },
+  // ...
+}
+```
+
+Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/person` and `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the token shows as written, so ask for the name before the player can meet them.
+
+The entity keeps the `name` as written, because entities are made before there's a save to read. Read the name from the plugin's view or `cast/person`, not from `state.entities`.
 
 ### TalkOption
 

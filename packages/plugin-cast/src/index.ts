@@ -18,6 +18,7 @@ import {
   artSrc,
   bindCurrent,
   definePlugin,
+  fillTokens,
   holds,
   lockedOut,
   pluginQuery,
@@ -43,6 +44,7 @@ export type TalkOption = { scene: string; when?: Condition; label?: string }
 /** A character, as content declares it in `data.cast.characters`. */
 export type CharacterDef = {
   id: string
+  /** Prose tokens fill in every save: `'{{partnerName}}'` shows the name the player typed. */
   name: string
   fullName?: string
   /** A word or two about them: "Runs the café". */
@@ -154,15 +156,18 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       ? holdsFor(state, game, def, def.met)
       : [...talkOptions(def).map((option) => option.scene), def.call?.scene].some((scene) => scene && (state.seen?.[scene] ?? 0) > 0)
   const portraitOf = (def: CharacterDef) => artSrc(def.portrait ?? `character/${def.id}`)
+  /** A name as this save shows it: its tokens filled, so `'{{partnerName}}'` is what the player typed. */
+  const nameOf = (state: GameState, game: Game, def: CharacterDef) => fillTokens(def.name, state, game)
+  const fullNameOf = (state: GameState, game: Game, def: CharacterDef) => fillTokens(def.fullName ?? def.name, state, game)
 
   function talkBlocked(state: GameState, context: PluginContext<null>, who: string): string | undefined {
     const { game } = context
     if (state.sceneId) return say(game, 'finishFirst')
     const def = characterById(game, who)
     if (!def) return say(game, `${ID}/noSuchPerson`)
-    if (!isHere(state, context, def)) return say(game, `${ID}/notHere`, { name: def.name })
-    if (closed(state, def)) return say(game, `${ID}/notTaking`, { name: def.name })
-    if (!talkOption(state, game, def)) return say(game, `${ID}/nothingToSay`, { name: def.name })
+    if (!isHere(state, context, def)) return say(game, `${ID}/notHere`, { name: nameOf(state, game, def) })
+    if (closed(state, def)) return say(game, `${ID}/notTaking`, { name: nameOf(state, game, def) })
+    if (!talkOption(state, game, def)) return say(game, `${ID}/nothingToSay`, { name: nameOf(state, game, def) })
     return undefined
   }
 
@@ -170,9 +175,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     if (state.sceneId) return say(game, 'finishFirst')
     const def = characterById(game, who)
     if (!def) return say(game, `${ID}/noSuchPerson`)
-    if (!def.call) return say(game, `${ID}/cannotCall`, { name: def.name })
-    if (closed(state, def)) return say(game, `${ID}/notTaking`, { name: def.name })
-    if (!holdsFor(state, game, def, def.call.when)) return def.call.busy ?? say(game, `${ID}/notPickingUp`, { name: def.name })
+    if (!def.call) return say(game, `${ID}/cannotCall`, { name: nameOf(state, game, def) })
+    if (closed(state, def)) return say(game, `${ID}/notTaking`, { name: nameOf(state, game, def) })
+    if (!holdsFor(state, game, def, def.call.when)) return def.call.busy ?? say(game, `${ID}/notPickingUp`, { name: nameOf(state, game, def) })
     return undefined
   }
 
@@ -182,8 +187,8 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     return {
       id: def.id,
       ref: refOf(def.id),
-      name: def.name,
-      fullName: def.fullName ?? def.name,
+      name: nameOf(state, game, def),
+      fullName: fullNameOf(state, game, def),
       role: def.role ?? null,
       hue: def.hue ?? null,
       portrait: portraitOf(def),
@@ -250,9 +255,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     },
     queries: {
       /** `{ id, name, hue, portrait }` of someone (`{ character }`), or undefined. */
-      person: (_state, args, { game }) => {
+      person: (state, args, { game }) => {
         const def = characterById(game, ids(args.character)[0])
-        return def ? { id: def.id, name: def.name, hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
+        return def ? { id: def.id, name: nameOf(state, game, def), hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
       },
       /** The ids of everyone in the room. */
       present: (state, _args, context) => charactersOf(context.game).filter((def) => isHere(state, context, def)).map((def) => def.id),
@@ -265,11 +270,11 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       contacts: (state, _args, { game }) =>
         charactersOf(game)
           .filter((def) => def.call && met(state, game, def))
-          .map((def) => ({ id: def.id, name: def.name, role: def.role ?? null, portrait: portraitOf(def), command: call(def.id), disabled: whyNot(state, game, call(def.id)) })),
+          .map((def) => ({ id: def.id, name: nameOf(state, game, def), role: def.role ?? null, portrait: portraitOf(def), command: call(def.id), disabled: whyNot(state, game, call(def.id)) })),
     },
-    speaker: (id, _state, { game }) => {
+    speaker: (id, state, { game }) => {
       const def = characterById(game, id)
-      return def ? { id: def.id, name: def.name, hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
+      return def ? { id: def.id, name: nameOf(state, game, def), hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
     },
     view: (state, context): CastView => {
       const { game } = context

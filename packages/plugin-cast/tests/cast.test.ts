@@ -146,6 +146,22 @@ describe('the cast', () => {
     expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', name: 'Ava', hue: 20, portrait: 'art/character/ava.jpg' })
   })
 
+  it('fill prose tokens in a name wherever it is shown, so the player can name someone', () => {
+    // Sam is whoever the player says: an input sets the kv key, the name reads it.
+    const named: Pack = { ...town, data: { ...town.data, cast: { characters: [ava, { ...sam, name: '{{friendName}}', fullName: '{{friendName}} Reed' }] } } }
+    const { game: g, problems } = loadGame([named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
+    expect(problems).toEqual([])
+    const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'sam.hi' ? { ...entry, speaker: 'sam' } : entry)) }
+    const start = startingState(withSpeaker)
+    const state = { ...start, kv: { ...start.kv, friendName: 'Robin' } }
+    expect(shown(state, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Robin', fullName: 'Robin Reed' })
+    expect(whyNot(state, withSpeaker, call('sam'))).toBe('You cannot reach Robin from here.')
+    expect(pluginQuery(withSpeaker, 'cast/person')!(state, { character: 'sam' })).toMatchObject({ name: 'Robin' })
+    expect(view(run(withSpeaker, state, talk('sam')), withSpeaker).scene.speaker).toMatchObject({ name: 'Robin' })
+    // Before the player names them, the token shows as written.
+    expect(shown(start, withSpeaker).present.find((person) => person.id === 'sam')?.name).toBe('{{friendName}}')
+  })
+
   it('are never in the room without places, but still answer the phone', () => {
     const { game: g, clock } = game(false)
     const state = clock.write(startingState(g), { day: 0, period: 'evening' })

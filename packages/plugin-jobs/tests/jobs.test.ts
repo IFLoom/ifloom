@@ -217,6 +217,8 @@ describe('jobs with the calendar', () => {
     state = run(state, g, work('cafe'))
     // The shift took the morning, and was the work's price note.
     expect(clock.read(state, g)).toEqual({ day: 5, period: 'afternoon' })
+    // Done for the day says so, not that the hours are over.
+    expect(whyNot(state, g, work('cafe'))).toBe('You’ve done today’s shift.')
     expect(board(state, g)).toMatchObject({ shifts: 1, missed: 0, nextShift: { day: 12, inDays: 7 } })
     // A whole week passes in one go: one Saturday missed, the weekdays not counted.
     state = run(state, g, act('week'))

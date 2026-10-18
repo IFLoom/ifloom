@@ -166,5 +166,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - Every dialog in the React UI (the menu's, saves, backlog, mods, codes, a device, the notice strip's, the shop, cheats and achievements) is drawn the same way: in the preset's body font and colours, with a gap at the sides on a phone, and no taller than the window, scrolling inside. Tooltips take the preset's font too.
 - Checkboxes, radio buttons and sliders in the React UI take the preset's colour instead of the browser's blue, and the terminal preset tells the browser it's dark, so native controls draw dark.
 - While a dialog is open, the React UI's notices wait behind it, so on a phone they no longer show under the bottom of a long dialog.
+- A job whose shift is done for the day says `You’ve done today’s shift.` instead of `Not a time for a shift.` or `No shift today.`, because the shift itself moved the clock on.
+- The cast plugin fills prose tokens in a character's `name` and `fullName` wherever it shows them (their card, a scene's speaker, `cast/person`, `cast/contacts` and its refusals), so `name: '{{friendName}}'` shows the name the player typed into an input.
 
 [Unreleased]: https://github.com/IFLoom/ifloom/commits/main

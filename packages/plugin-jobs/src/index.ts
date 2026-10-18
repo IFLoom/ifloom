@@ -222,12 +222,14 @@ function cantWork(state: GameState, args: PluginArgs, context: PluginContext<Job
   if (!held) return say(game, 'jobs/notHired')
   if (!atWork(job, context)) return say(game, 'jobs/notHere')
   const today = dayOf(state, game)
+  // A finished shift says so first: once worked, the shift's day and hours
+  // have usually moved on, and "not today" would hide why.
+  if (held.lastWorked === today) return say(game, 'jobs/workedToday')
   if (!shiftDay(job, today, state, context)) return say(game, 'jobs/noShiftToday')
   if (job.hours) {
     const period = context.query<{ period: string }>('calendar/now')?.period
     if (period !== undefined && !job.hours.includes(period)) return say(game, 'jobs/notNow')
   }
-  if (held.lastWorked === today) return say(game, 'jobs/workedToday')
   for (const [stat, amount] of Object.entries(job.shift.cost ?? {})) {
     if (amount > 0 && statValue(state, game, stat) < amount) return lackingLine(statDef(game, stat), stat, amount, game)
   }

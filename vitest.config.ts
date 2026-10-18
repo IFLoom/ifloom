@@ -9,6 +9,7 @@ export default defineConfig({
   ssr: { resolve: { conditions: [source, ...defaultServerConditions] } },
   test: {
     environment: 'node',
+    fsModuleCache: true,
     include: ['packages/*/tests/**/*.test.{ts,tsx}', 'examples/*/tests/**/*.test.{ts,tsx}', 'site/editor/tests/**/*.test.{ts,tsx}'],
   },
 })

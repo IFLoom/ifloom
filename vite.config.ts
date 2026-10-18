@@ -62,7 +62,7 @@ tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', depends
 // Test: one Vitest run over every package, example and the site's editor (vitest.config.ts).
 tasks['test:all'] = {
   command: 'vitest run',
-  cache: { input: [{ auto: true }, '!**/dist/**', '!node_modules/.vite/**', '!node_modules/.vite-temp/**'], output: [] },
+  cache: { input: [{ auto: true }, '!**/dist/**', '!node_modules/.vite/**', '!node_modules/.vite-temp/**', '!node_modules/.vitest-cache/**'], output: [] },
 }
 
 export default defineConfig({

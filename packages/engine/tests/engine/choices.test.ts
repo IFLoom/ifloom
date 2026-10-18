@@ -39,10 +39,11 @@ describe('choices the player made', () => {
                 { id: 'knock', effects: [] },
                 { id: 'thanks', when: { chose: 'ch1.door#kick' }, effects: [] },
                 { id: 'later', when: { chose: 'ch9.end#leave' }, effects: [] },
+                { id: 'again', when: { since: 'ch1.door#shout', last: true, gte: 2 }, effects: [] },
               ],
             },
           ],
-          prose: { 'ch1.door': 'A door.', 'ch1.door#knock': 'Knock', 'ch1.door#thanks': 'Thanks', 'ch1.door#later': 'Later' },
+          prose: { 'ch1.door': 'A door.', 'ch1.door#knock': 'Knock', 'ch1.door#thanks': 'Thanks', 'ch1.door#later': 'Later', 'ch1.door#again': 'Again' },
         },
       ],
       { id, title },
@@ -50,6 +51,7 @@ describe('choices the player made', () => {
     expect(problems.map((problem) => problem.what)).toEqual([
       'gated on unknown choice "ch1.door#kick"',
       'gated on a choice in unknown scene "ch9.end#leave"',
+      'gated on unknown choice "ch1.door#shout"',
     ])
   })
 })

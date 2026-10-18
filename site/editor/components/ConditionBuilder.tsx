@@ -8,7 +8,7 @@ import type { Condition, KvValue } from '@ifloom/engine'
 import { conditionForm, newCondition, rangeOf, withRange, NO_NAMES, type Names, type RangeForm } from '../lib/builders'
 import { CONDITION_FORMS, CONDITION_LABELS, RANGE_LABELS, RANGE_OPS, type ConditionForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
-import { Button, IdPicker, JsonField, NumberInput, Select, TextInput, cx } from './ui'
+import { Button, Checkbox, IdPicker, JsonField, NumberInput, Select, TextInput, cx } from './ui'
 
 export type BuilderProps = {
   names?: Names
@@ -121,6 +121,16 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
         <>
           <IdPicker noun="scene" aria-label="Scene" value={c[form] as string} options={names.scenes} onChange={(id) => set({ [form]: id })} onCreate={create('scene')} />
           <RangeEditor value={value} onChange={onChange} ops={form === 'seen' ? ['set', ...RANGE_OPS] : [...RANGE_OPS]} />
+          {form === 'since' ? (
+            <Checkbox
+              label="From the latest time"
+              checked={c.last === true}
+              onChange={(last) => {
+                const { last: _old, ...rest } = c
+                onChange((last ? { ...rest, last: true } : rest) as Condition)
+              }}
+            />
+          ) : null}
         </>
       )
       break

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import { withCafe } from '../fixtures/cafe.ts'
-import { begin } from '../fixtures/town.ts'
+import { begin, fixture } from '../fixtures/town.ts'
+import { holds } from '../../src/condition.ts'
+import { explain } from '../../src/explain.ts'
 import type { GameState } from '../../src/types.ts'
 
 describe('data scenes', () => {
@@ -45,5 +47,42 @@ describe('data scenes', () => {
     expect(view(regular, game).scene.body).toContain('your cup out')
     const stranger = { ...begin(game), sceneId: 'cafe.counter', seen: {} }
     expect(view(stranger, game).scene.body).not.toContain('your cup out')
+  })
+})
+
+describe('the first and last time', () => {
+  it('counts `since` from the first visit, or with `last` from the latest, for scenes and choices', () => {
+    const game = fixture()
+    const visit = (state: GameState) => {
+      const opened = apply(state, game, { type: 'scene', id: 'rosa.hello' })
+      expect(opened.ok).toBe(true)
+      return apply(opened.state, game, { type: 'choose', id: 'bye' }).state
+    }
+    const rest = (state: GameState) => apply(state, game, { type: 'activity', id: 'rest' }).state
+    // Turn 2: first visit. Turn 5: the second. Then turn 6.
+    let state = visit(begin(game))
+    state = visit(rest(rest(rest(state))))
+    state = rest(state)
+    expect(state.turn).toBe(6)
+    expect(state).toMatchObject({
+      seenOn: { 'rosa.hello': 2 },
+      lastSeenOn: { 'rosa.hello': 5 },
+      chosenOn: { 'rosa.hello#bye': 2 },
+      lastChosenOn: { 'rosa.hello#bye': 5 },
+    })
+    expect(holds(state, { since: 'rosa.hello', gte: 4 }, game)).toBe(true)
+    expect(holds(state, { since: 'rosa.hello', last: true, gte: 2 }, game)).toBe(false)
+    expect(holds(state, { since: 'rosa.hello', last: true, lt: 2 }, game)).toBe(true)
+    expect(holds(state, { since: 'rosa.hello#bye', gte: 4 }, game)).toBe(true)
+    expect(holds(state, { since: 'rosa.hello#bye', last: true, gte: 2 }, game)).toBe(false)
+    // Never picked fails every range, `lt` included.
+    expect(holds(state, { since: 'rosa.hello#stay', last: true, lt: 99 }, game)).toBe(false)
+    expect(explain(state, { since: 'rosa.hello', last: true, gte: 2 }, game).why).toContain('scene rosa.hello last seen 1 turns ago')
+  })
+
+  it('reads the first time when a save from before kept no latest one', () => {
+    const game = fixture()
+    const old = { ...begin(game), turn: 9, seenOn: { 'rosa.hello': 4 }, lastSeenOn: {} }
+    expect(holds(old, { since: 'rosa.hello', last: true, gte: 5 }, game)).toBe(true)
   })
 })

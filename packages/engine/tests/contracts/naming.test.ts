@@ -49,6 +49,8 @@ const DETAILS = [
   'of',
   // the comparisons
   'is', 'gte', 'gt', 'lte', 'lt', 'open', 'where',
+  // which time `since` counts from: the latest, not the first
+  'last',
   // a change
   'by', 'to', 'random', 'turns',
   // how long a transition takes

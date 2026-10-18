@@ -62,7 +62,7 @@ type Condition =
   | ({ setting: string; is?: KvValue } & Range)
   | ({ chose: string } & Range)
   | ({ seen: string } & Range)
-  | ({ since: string } & Range)
+  | ({ since: string; last?: boolean } & Range)
   | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & Range)
   | ({ stat: StatKey; of?: string } & Range)
   | ({ count: string; where?: Condition } & Range)
@@ -155,15 +155,33 @@ How many times the player has entered a scene (see [`seen`](/docs/reference/stat
 ### since
 
 ```ts
-{ since: 'ava.river', gte: 3 }   // three or more whole turns after first seeing it
-{ since: 'ava.river', lt: 2 }    // within two turns of it
+{ since: 'ava.river', gte: 3 }               // three or more whole turns after first seeing it
+{ since: 'ava.river', lt: 2 }                // within two turns of it
+{ since: 'ava.river', last: true, gte: 3 }   // three or more turns after the latest visit
+{ since: 'cafe.counter#chat', last: true, gte: 1 }   // picked before, but not this turn
 ```
 
-Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [`seenOn`](/docs/reference/state#seenon)). With the [calendar](/docs/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
+Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [`seenOn`](/docs/reference/state#seenon)), or since a choice was first picked when the id is `scene#choice` (see [`chosenOn`](/docs/reference/state#chosenon)). With the [calendar](/docs/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
+
+With `last: true` it counts from the latest time instead (see [`lastSeenOn`](/docs/reference/state#lastseenon) and [`lastChosenOn`](/docs/reference/state#lastchosenon)). That's a cooldown: something that can happen again, but not too often.
+
+**A cooldown.** The bench by the river can be visited again three days after the last time. Put it on whatever opens the scene, here an activity:
+
+```ts
+{
+  id: 'sit-by-the-river',
+  blocked: [{ when: { since: 'river.bench', last: true, lt: 3 }, reason: 'You sat there only recently.' }],
+  effects: [{ kind: 'scene', scene: 'river.bench' }],
+}
+```
+
+Before the first visit, `since` fails every range, so the `blocked` entry doesn't hold and the bench is open. For a choice the player can pick only every other turn, block it with `{ since: 'cafe.counter#chat', last: true, lt: 2 }` (the turn it was picked counts as 0).
 
 **Gotchas.**
-- A scene the player hasn't seen yet fails every range, `lt` included.
+- A scene the player hasn't seen yet, or a choice they haven't picked, fails every range, `lt` included. So write a cooldown as a `blocked` entry that holds while it's too soon, not as a condition that holds once it's long enough.
 - A bare `{ since: 'x' }` means at least one turn since, so it's false in the same turn.
+- A save from before the latest times were kept has only the first. Until the scene is entered again, `last: true` counts from the first visit. For a choice, it has no record at all until the choice is picked again.
+- Without `last`, a choice picked before the record was kept fails as "not picked yet". Use [`{ chose }`](#chose) to ask whether it was ever picked.
 
 ### storylineKv
 

@@ -1,6 +1,6 @@
 ---
 title: "Game state"
-description: "GameState field by field: the turn, phase, scene, stats, kv store, items, entities, plugins' state, seen and chosen."
+description: "GameState field by field: the turn, phase, scene, stats, kv store, items, entities, plugins' state, and what was seen and chosen when."
 ---
 `GameState` is the whole save, as a plain object you can serialise to JSON. Commands take one and return the next, and nothing else in the engine holds state. Treat it as read-only, and change it only through [commands](/docs/reference/commands) and [effects](/docs/reference/effects).
 
@@ -19,7 +19,10 @@ type GameState = {
   sceneId: string | null
   seen: Record<string, number>
   seenOn: Record<string, number>
+  lastSeenOn: Record<string, number>
   chosen: Record<string, number>
+  chosenOn: Record<string, number>
+  lastChosenOn: Record<string, number>
   stats: Stats
   entities: Record<string, Record<string, EntityState>>
   created: Record<string, number>
@@ -77,7 +80,7 @@ turn: number
 
 How many turns have passed. This is the engine's only clock, and a new game starts at 0. Your game decides how long a turn is, whether that's a day, a chapter or a week. The engine moves the counter on when a turn ends, which is when a [`turn`](/docs/reference/effects#turn) effect runs, from a choice, an activity or a plugin. The [calendar plugin](/docs/plugins/calendar#what-a-turn-is) ends turns this way when time passes and when the player sleeps, so with it a turn is a day, a period or a week.
 
-Everything the engine dates is dated in turns: [`seenOn`](#seenon), [`fired`](#fired), [collection](#collections) entries, [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
+Everything the engine dates is dated in turns: [`seenOn`](#seenon) and [`lastSeenOn`](#lastseenon), [`chosenOn`](#chosenon) and [`lastChosenOn`](#lastchosenon), [`fired`](#fired), [collection](#collections) entries, [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
 **There's no time of day in the state.** A game with days and periods keeps them in the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, at `state.plugins.calendar`.
 
@@ -95,9 +98,21 @@ How many times the player has entered each scene, by id. It's counted once per c
 
 The [turn](#turn) each scene was first entered. It's never overwritten. The intro scene is recorded at turn 0. Read it with [`{ since }`](/docs/reference/conditions#since).
 
+### lastSeenOn
+
+The [turn](#turn) each scene was last entered, written each time [`seen`](#seen) counts a viewing. The intro scene starts at turn 0. Read it with [`{ since, last: true }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, and `since` reads `seenOn` for a scene it lacks. The field was added with a load default and no new save version.
+
 ### chosen
 
 How many times each choice has been picked, keyed `scene#choice`, as in `{ 'cafe.counter#buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
+
+### chosenOn
+
+The [turn](#turn) each choice was first picked, keyed `scene#choice` like [`chosen`](#chosen), and never overwritten. It's the turn the choice was picked on, before any turn its effects end. Read it with [`{ since: 'scene#choice' }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, since there's no telling when an earlier choice was picked. Added with a load default and no new save version.
+
+### lastChosenOn
+
+The [turn](#turn) each choice was last picked, keyed `scene#choice`. Read it with [`{ since: 'scene#choice', last: true }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, and `since` with `last` falls back to `chosenOn`. Added with a load default and no new save version.
 
 ### stats
 

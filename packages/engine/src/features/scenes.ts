@@ -57,11 +57,20 @@ export type ScenesShape = {
      */
     seenOn: Record<string, number>
     /**
+     * The turn each scene was last entered: `since` with `last: true` counts
+     * from it, for a cooldown. A save from before it was kept reads `seenOn`.
+     */
+    lastSeenOn: Record<string, number>
+    /**
      * How many times each choice has been picked, by `scene#choice`. Kept for
      * every choice, so content can branch on an earlier decision without each one
      * needing a kv key of its own.
      */
     chosen: Record<string, number>
+    /** The turn each choice was first picked, by `scene#choice`. */
+    chosenOn: Record<string, number>
+    /** The turn each choice was last picked, by `scene#choice`. */
+    lastChosenOn: Record<string, number>
   }
   conditions: {
     /**
@@ -76,12 +85,15 @@ export type ScenesShape = {
      */
     seen: { seen: string } & Range
     /**
-     * Whole turns since a scene was first entered. The pace half of a gate:
+     * Whole turns since a scene was first entered, or a choice (`scene#choice`)
+     * first picked. The pace half of a gate:
      * `{ since: 'baker.first-coffee', gte: 5 }` holds from five turns after
-     * the first coffee. A scene not yet seen fails every range, `lt` included — "not long
+     * the first coffee. With `last: true` it counts from the latest time
+     * instead, for a cooldown: `{ since: 'park.bench', last: true, gte: 3 }`.
+     * Something not yet seen or picked fails every range, `lt` included — "not long
      * since" is not true of something that has not happened.
      */
-    since: { since: string } & Range
+    since: { since: string; last?: boolean } & Range
     /** The scene on screen is one of these. */
     scene: { scene: string[] }
   }
@@ -264,9 +276,16 @@ function inlineMarkupProblems(text: string, where: string, tools: ResolveTools):
   return out
 }
 
-/** Whole turns since a scene was first entered, or null if it hasn't been. */
-function turnsSince(state: GameState, sceneId: string): number | null {
-  const turn = state.seenOn?.[sceneId]
+/**
+ * Whole turns since a scene was entered, or a choice (`scene#choice`) picked,
+ * first or `last`; null if it hasn't been. A save from before the latest
+ * times were kept has only the first, which is the best it knows.
+ */
+function turnsSince(state: GameState, id: string, last = false): number | null {
+  const choice = id.includes('#')
+  const first = choice ? state.chosenOn?.[id] : state.seenOn?.[id]
+  const latest = last ? (choice ? state.lastChosenOn?.[id] : state.lastSeenOn?.[id]) : undefined
+  const turn = latest ?? first
   return typeof turn === 'number' ? state.turn - turn : null
 }
 
@@ -298,8 +317,9 @@ function witnessed(before: GameState, after: GameState): GameState {
   const id = after.sceneId
   if (!id || id === before.sceneId) return after
   const seen = { ...after.seen, [id]: (after.seen[id] ?? 0) + 1 }
-  if (after.seenOn?.[id] !== undefined) return { ...after, seen }
-  return { ...after, seen, seenOn: { ...after.seenOn, [id]: after.turn } }
+  const lastSeenOn = { ...after.lastSeenOn, [id]: after.turn }
+  if (after.seenOn?.[id] !== undefined) return { ...after, seen, lastSeenOn }
+  return { ...after, seen, lastSeenOn, seenOn: { ...after.seenOn, [id]: after.turn } }
 }
 
 export const scenes = defineFeature<ScenesShape>({
@@ -310,7 +330,11 @@ export const scenes = defineFeature<ScenesShape>({
     // without a command ever having been run.
     seen: { start: (game) => (game.introScene ? { [game.introScene]: 1 } : {}), load: () => ({}) },
     seenOn: { start: (game) => (game.introScene ? { [game.introScene]: 0 } : {}), load: () => ({}) },
+    // Added without a save step: an older save reads `seenOn` until the scene is entered again.
+    lastSeenOn: { start: (game) => (game.introScene ? { [game.introScene]: 0 } : {}), load: () => ({}) },
     chosen: { start: () => ({}), load: () => ({}) },
+    chosenOn: { start: () => ({}), load: () => ({}) },
+    lastChosenOn: { start: () => ({}), load: () => ({}) },
   },
   conditions: {
     chose: {
@@ -325,16 +349,18 @@ export const scenes = defineFeature<ScenesShape>({
     },
     since: {
       holds: (state, condition) => {
-        const turns = turnsSince(state, condition.since)
+        const turns = turnsSince(state, condition.since, condition.last)
         return turns !== null && inRange(turns, condition)
       },
       explain: (state, condition) => {
-        const turns = turnsSince(state, condition.since)
+        const turns = turnsSince(state, condition.since, condition.last)
+        const choice = condition.since.includes('#')
+        const what = choice ? `choice ${condition.since}` : `scene ${condition.since}`
         return turns === null
-          ? `scene ${condition.since} not seen yet; wants ${wanted(condition)} turns since`
-          : `scene ${condition.since} first seen ${turns} turns ago; wants ${wanted(condition)}`
+          ? `${what} not ${choice ? 'picked' : 'seen'} yet; wants ${wanted(condition)} turns since`
+          : `${what} ${condition.last ? 'last' : 'first'} ${choice ? 'picked' : 'seen'} ${turns} turns ago; wants ${wanted(condition)}`
       },
-      references: (condition) => [{ scene: condition.since, as: 'gate' }],
+      references: (condition) => (condition.since.includes('#') ? [{ choice: condition.since }] : [{ scene: condition.since, as: 'gate' }]),
     },
     scene: {
       holds: (state, condition) => state.sceneId !== null && condition.scene.includes(state.sceneId),
@@ -381,7 +407,12 @@ export const scenes = defineFeature<ScenesShape>({
         if (!scene) return { ...state, sceneId: null }
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)!
         const key = `${scene.id}#${choice.id}`
-        const marked = { ...state, chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 } }
+        const marked = {
+          ...state,
+          chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 },
+          chosenOn: state.chosenOn?.[key] !== undefined ? state.chosenOn : { ...state.chosenOn, [key]: state.turn },
+          lastChosenOn: { ...state.lastChosenOn, [key]: state.turn },
+        }
         // The command it sends first, then its effects.
         const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
         return cx.runEffects(sent, game, choice.effects, false)

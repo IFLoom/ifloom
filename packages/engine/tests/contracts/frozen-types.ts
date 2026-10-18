@@ -24,7 +24,9 @@
  * `Game.transitions` and `View.transition`. R5: the `tier` condition folded
  * into `level` (hidden bands are `levels.hidden`); `items`, `storylines` and
  * `activities` optional on `Game`. Panels: the `panel` effect, the
- * `closePanel` command, `GameState.panel` and `View.panel`.
+ * `closePanel` command, `GameState.panel` and `View.panel`. Last-time
+ * records: `GameState.lastSeenOn`, `chosenOn` and `lastChosenOn`, and the
+ * `since` condition's `last`.
  */
 import type {
   ActionDef,
@@ -123,7 +125,7 @@ export type FrozenCondition =
    * the first coffee. A scene not yet seen fails every range, `lt` included — "not long
    * since" is not true of something that has not happened.
    */
-  | ({ since: string } & FrozenRange)
+  | ({ since: string; last?: boolean } & FrozenRange)
   /** A key in a storyline's kv store, read as `kv` reads one. */
   | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & FrozenRange)
   /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
@@ -199,12 +201,18 @@ export type FrozenGameState = {
    * ask for a few turns to have passed however fast the stat behind it came in.
    */
   seenOn: Record<string, number>
+  /** The turn each scene was last entered. */
+  lastSeenOn: Record<string, number>
   /**
    * How many times each choice has been picked, by `scene/choice`. Kept for
    * every choice, so content can branch on an earlier decision without each one
    * needing a kv key of its own.
    */
   chosen: Record<string, number>
+  /** The turn each choice was first picked. */
+  chosenOn: Record<string, number>
+  /** The turn each choice was last picked. */
+  lastChosenOn: Record<string, number>
   /** The player's stats. An entity's are on the entity. */
   stats: Stats
   /** The things the game keeps several of, by kind and id: `entities.staff.ana`. */

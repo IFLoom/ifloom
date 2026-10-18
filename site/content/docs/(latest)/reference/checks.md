@@ -114,8 +114,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown collection "…"` | A collection nobody declares. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'` names no kind and isn't checked. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
-| `gated on a choice in unknown scene "…"` | A `chose` key whose scene doesn't exist. |
-| `gated on unknown choice "…"` | A `chose` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
+| `gated on a choice in unknown scene "…"` | A `chose` key, or a `since` naming a `scene#choice`, whose scene doesn't exist. |
+| `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
 | `no custom condition named "…"` | A custom condition that neither the game nor a plugin declares, as `{ custom }` or a [short plugin call](/docs/reference/custom#plugincall). |
 | A stat owner problem | See [Stat owners](#stat-owners). |
 | `minigame variable "…" is not in any minigame's vars` | A `minigameVar` no [minigame](/docs/reference/minigames) declares. |
@@ -344,7 +344,7 @@ type Reference =
 | Reference | Checked as |
 |---|---|
 | `{ scene, as }` | A scene that has to exist. `as` words the problem: `gated on…` for a condition, `opens…` for a button, `goes to…` (the default) for an effect. |
-| `{ choice }` | A `scene#choice` key, as `chose` checks it. |
+| `{ choice }` | A `scene#choice` key, as `chose` and `since` check it. |
 | `{ stat, of, writes }` | A stat read, or with `writes`, written, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
 | `{ item }`, `{ storyline }`, `{ collection }`, `{ kind }`, `{ activity }`, `{ input }` | An id that has to be declared. |

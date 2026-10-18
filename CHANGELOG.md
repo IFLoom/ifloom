@@ -84,6 +84,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A recipe, Layouts: sections, drawers and showing things in some rooms.
 - The `--width-prose` token (`70ch`) keeps a scene's text to a readable line length while the page grows.
 - `rules.onTurnDone`, a hook that runs at the end of a turn after every plugin's `onTurn`, with the same `before` and `apply` as `rules.onTurn`. It sees what the plugins did, such as the calendar's new day, so "each new day" is a few lines in your rules. The rules page shows how.
+- Cooldowns: `{ since: 'river.bench', last: true, lt: 3 }` counts from the latest visit instead of the first, and `since` also takes a choice, `scene#choice`, counting from when it was picked. The save keeps `lastSeenOn`, `chosenOn` and `lastChosenOn` beside `seenOn`, and older saves load without them. The editor's "Turns since scene" has a "From the latest time" box.
 
 ### Changed
 

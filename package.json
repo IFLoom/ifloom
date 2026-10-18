@@ -13,11 +13,11 @@
     "games/*"
   ],
   "scripts": {
-    "build": "node scripts/build.ts",
-    "pack": "node scripts/build.ts --pack",
+    "build": "vp run build:all",
+    "pack": "node scripts/pack.ts",
     "new": "ifloom new",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit -p packages/engine && tsc --noEmit -p packages/plugin-calendar && tsc --noEmit -p packages/plugin-places && tsc --noEmit -p packages/plugin-cast && tsc --noEmit -p packages/plugin-quests && tsc --noEmit -p packages/plugin-statuses && tsc --noEmit -p packages/plugin-achievements && tsc --noEmit -p packages/plugin-shop && tsc --noEmit -p packages/plugin-jobs && tsc --noEmit -p packages/plugin-generators && tsc --noEmit -p packages/plugin-wardrobe && tsc --noEmit -p packages/plugin-messages && tsc --noEmit -p packages/plugin-feed && tsc --noEmit -p packages/plugin-devices && tsc --noEmit -p packages/plugin-cheats && tsc --noEmit -p packages/plugin-unlocks && tsc --noEmit -p packages/phone && tsc --noEmit -p packages/plugin-debug && tsc --noEmit -p packages/audio && tsc --noEmit -p packages/browser && tsc --noEmit -p packages/react && tsc --noEmit -p packages/cli && tsc --noEmit -p examples/showcase && tsc --noEmit -p examples/novel && tsc --noEmit -p examples/cafe && npm run typecheck -w @ifloom/site",
+    "test": "vp run test:all",
+    "typecheck": "vp run typecheck:all",
     "lint": "oxlint",
     "docs:dev": "npm run dev -w @ifloom/site",
     "docs:build": "npm run docs:links && npm run build -w @ifloom/site",
@@ -43,6 +43,7 @@
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
     "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^4.1.11"
+    "vite-plus": "1.0.0",
+    "vitest": "5.0.1"
   }
 }

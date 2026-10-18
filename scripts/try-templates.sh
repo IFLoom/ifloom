@@ -41,7 +41,7 @@ trap 'rm -rf "$out"' EXIT
 # Each package built and packed as npm would publish it, a tarball of its `files`, as `npm run pack` makes them.
 # A fresh folder each run, so no package manager's cache hands back an older tarball of the same name.
 printf '\n== npm run pack\n'
-node scripts/build.ts --pack "$out/packs" >/dev/null
+node scripts/pack.ts "$out/packs" >/dev/null
 echo "Built and packed every package."
 
 failed=()

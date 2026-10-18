@@ -167,8 +167,7 @@ good order for a first read is the introduction, *Your first story*, then
 ```bash
 npm install
 npm test
-npm run typecheck
-npm run lint
+npm run check        # the format, lint and typecheck
 npm run docs:build   # checks the docs' links, then builds the site
 ```
 

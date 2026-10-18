@@ -52,7 +52,7 @@ Every package builds with tsdown to `dist/` (ESM `.js`, `.d.ts`, declaration and
 
 - **Exports.** Each entry is `{ "ifloom-source": "./src/x.ts", "types": "./dist/x.d.ts", "import": "./dist/x.js", "default": "./dist/x.js" }`, and `files` is `["dist", "src"]`. A package has `"build": "tsdown"` and a `tsdown.config.ts` that calls `define([...entries])` from `tsdown.base.ts`. `@ifloom/react`'s build also writes `styles.min.css` and `themes/<preset>.min.css` with the Tailwind CLI. The CLI's `bin` is `bin.js`, which imports `#bin`: `src/bin.ts` under the condition, `dist/bin.js` otherwise.
 - **The source condition.** The checkout's tools resolve `ifloom-source`, so they run `src/` with no build: Vitest (`vitest.config.ts`), tsc (`customConditions` in `tsconfig.base.json` and `site/tsconfig.json`), the Vite preset for a game inside the checkout (`packages/cli/src/source.ts`, which also loads its `vite.config.ts` natively), Node through `.npmrc`'s `node-options`, and the site through `turbopack.resolveAlias` in `site/next.config.mjs`. A test that starts Vite on a fixture passes `configLoader: 'native'`. Anything outside the checkout gets `dist/`.
-- **Building.** `npm run build` builds every package in dependency order; `npm run pack` also packs each into `packs/` for a game beside the checkout. `scripts/try-dist.sh` builds, imports every export from `dist/` in plain Node and type-checks a consumer against the `.d.ts` files; run it when a package's entries, exports or build change.
+- **Building.** `npm run build` builds every package, each after the @ifloom packages it uses; `npm run pack` also packs each into `packs/` for a game beside the checkout (`scripts/pack.ts`). `scripts/try-dist.sh` builds, imports every export from `dist/` in plain Node and type-checks a consumer against the `.d.ts` files; run it when a package's entries, exports or build change.
 
 `packages/engine/tests/fixtures/` holds a small town game with no story; engine tests run against it. The showcase is `examples/showcase`.
 
@@ -95,9 +95,12 @@ The docs are versioned: `site/content/docs/(latest)/` holds the latest docs, and
 
 ```bash
 npm test             # engine tests, boundary rules, docs coverage
-npm run typecheck    # strict
-npm run lint
+npm run check        # the format and lint (vp check), then npm run typecheck
+npm run typecheck    # strict: tsc on each package, example and the site
+npm run format       # rewrites the code in the repo's format (Oxfmt)
 npm run docs:build   # checks the links, then builds the site (next build)
 ```
 
-`scripts/verify.sh` runs these and the examples' check, build and snapshot, all from `src/`. `scripts/try-dist.sh` checks the built packages (see Packaging). `scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all]` packs the packages, makes a game from each of the `react`, `vue`, `svelte`, `vanilla` and `next` templates (and a package from `plugin`) in a temporary folder outside the checkout, installs the tarballs with that package manager, and runs its check, playtest, build and typecheck; run it when a template, the Vite preset, the build or a package's dependencies change.
+The checkout's own tools run through [Vite+](https://viteplus.dev) (`vite-plus`, a dev dependency of the root only): the task runner `vp run`, Oxfmt and Oxlint. The root `vite.config.ts` holds their settings and the tasks: `build:<package>`, `typecheck:<project>` and `test:all`, run by `npm run build`, `npm run typecheck` and `npm test`. A task is cached by the files it read, so it runs again only when one of them changes, and a cached build puts `dist/` back; `npx vp run typecheck:plugin-shop` runs one, and `npx vp cache clean` empties the cache. The format is the code only, at 160 columns: Markdown, JSON, CSS, HTML and YAML keep their hand-made shape. Nothing a game, a template or a package's user gets depends on Vite+; the CLI builds games with plain Vite.
+
+`scripts/verify.sh` runs `npm test`, `npm run check`, the docs build, and the examples' check, build and snapshot, all from `src/`. `scripts/try-dist.sh` checks the built packages (see Packaging). `scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all]` packs the packages, makes a game from each of the `react`, `vue`, `svelte`, `vanilla` and `next` templates (and a package from `plugin`) in a temporary folder outside the checkout, installs the tarballs with that package manager, and runs its check, playtest, build and typecheck; run it when a template, the Vite preset, the build or a package's dependencies change.

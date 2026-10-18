@@ -1,7 +1,8 @@
 // Scaffolds a first-party plugin, packages/plugin-<name>, modelled on
 // plugin-quests, with its code and test from the CLI's plugin template
-// (packages/cli/templates/plugin), and wires it into the root typecheck and the docs
-// navigation (the plugins folder's meta.json).
+// (packages/cli/templates/plugin), and adds it to the docs navigation (the plugins
+// folder's meta.json). The root vite.config.ts finds it for npm run build and
+// npm run typecheck by itself.
 // What needs words (the AGENTS.md row, the plugins index, the CHANGELOG, the
 // showcase) is left to you: `git grep "TODO(new-plugin)"` lists the stubs.
 //
@@ -28,8 +29,6 @@ const at = (path: string) => relative(root, path)
 const docsDir = join(root, 'site', 'content', 'docs', '(latest)', 'plugins')
 const nav = join(docsDir, 'meta.json')
 const page = join(docsDir, `${name}.md`)
-const pkgJson = join(root, 'package.json')
-const typecheckEntry = ` && tsc --noEmit -p packages/plugin-${name}`
 
 function edit(path: string, change: (text: string) => string): void {
   const before = readFileSync(path, 'utf8')
@@ -52,25 +51,11 @@ function editNav(): void {
   })
 }
 
-function editTypecheck(): void {
-  edit(pkgJson, (text) => {
-    const pkg = JSON.parse(text) as { scripts: Record<string, string> }
-    let script = pkg.scripts.typecheck.replace(typecheckEntry, '')
-    if (!remove) {
-      const phone = script.indexOf(' && tsc --noEmit -p packages/phone')
-      script = phone >= 0 ? script.slice(0, phone) + typecheckEntry + script.slice(phone) : script + typecheckEntry
-    }
-    pkg.scripts.typecheck = script
-    return `${JSON.stringify(pkg, null, 2)}\n`
-  })
-}
-
 if (remove) {
   rmSync(pkgDir, { recursive: true, force: true })
   rmSync(page, { force: true })
   console.log(`Removed ${at(pkgDir)} and ${at(page)}`)
   editNav()
-  editTypecheck()
   console.log('Run npm install to drop the workspace link.')
   process.exit(0)
 }
@@ -224,12 +209,11 @@ import type { ${Pascal}Entry, ${Pascal}State, ${Pascal}View } from '@ifloom/plug
 )
 console.log(`Made ${at(page)}`)
 editNav()
-editTypecheck()
 
 console.log(`
 Next:
   npm install                     link the new workspace
   npx vitest run packages/plugin-${name}
-  tsc --noEmit -p packages/plugin-${name}
+  npx vp run typecheck:plugin-${name}
   git grep -n "TODO(new-plugin)"  the stubs left to write
 Then work through the ifloom-plugin skill's checklist.`)

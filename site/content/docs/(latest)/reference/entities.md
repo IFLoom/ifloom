@@ -18,7 +18,7 @@ import { anyOf, bindCurrent, entitiesOf, entityOf, kindById, parseRef, writeEnti
 
 ## A worked example
 
-The Corner Café (`examples/cafe/src/game.ts` in the IFLoom repository) keeps staff and dishes. The player has coins and a reputation. Each member of staff has a skill, a morale and a wage, and each dish has a price and a quality.
+The Corner Café (`examples/cafe` in the IFLoom repository) keeps staff and dishes. The player has coins and a reputation. Each member of staff has a skill, a morale and a wage, and each dish has a price and a quality.
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
@@ -315,5 +315,5 @@ Anything else is copied as it is, `undefined` included. A nested `each`'s `effec
 
 ## See it in an example
 
-- The Corner Café: [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) declares the kinds `staff` and `dish`, starts with Ana, cheese on toast and soup as entities, and adds up a stat over a kind with `entitiesOf` and `entityOf` in its `total` helper. The `improveSoup` activity names one entity as `'dish:soup'`.
-- Small Town: the park's visitors in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are entities of the kind `visitor`, made by the generators plugin and cleared each day with `each` and `remove`.
+- The Corner Café: [`examples/cafe/src/world/staff.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/staff.ts) and [`examples/cafe/src/world/menu.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/menu.ts) declare the kinds `staff` and `dish` and start with Ana, cheese on toast and soup as entities. [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) adds up a stat over a kind with `entitiesOf` and `entityOf` in its `total` helper. The `improveSoup` activity names one entity as `'dish:soup'`.
+- Small Town: the park's visitors in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) are entities of the kind `visitor`, made by the generators plugin and cleared each day with `each` and `remove`.

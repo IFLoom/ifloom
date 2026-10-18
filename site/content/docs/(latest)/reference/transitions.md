@@ -162,4 +162,4 @@ The [content checker](/docs/reference/checks) reports:
 
 ## See it in an example
 
-The showcase's moving-day scene (`intro` in `examples/showcase/src/content/town.ts`) fades in, reveals its second paragraph after a pause, and its Unpack choice brings the flat in with a `transition` effect. `ava.river` fades, and its prose holds `[[reveal:1500|slide-up]]`.
+The showcase's moving-day scene (`intro` in `examples/showcase/src/story/moving-day.ts`) fades in, reveals its second paragraph after a pause, and its Unpack choice brings the flat in with a `transition` effect. `ava.river`, in `story/ava.ts`, fades, and its prose holds `[[reveal:1500|slide-up]]`.

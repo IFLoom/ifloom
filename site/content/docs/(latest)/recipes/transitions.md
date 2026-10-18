@@ -375,4 +375,4 @@ To let a key show everything too, listen for `keydown` on the window while the s
 
 ## See it in the showcase
 
-Small Town's moving-day scene fades in from the title page and reveals its second paragraph after a pause. Its Unpack choice brings the flat in with `slide-up`. By the river, Ava's scene fades, and her answer comes a moment after the narration. The content is in `examples/showcase/src/content/town.ts` and `prose.ts`.
+Small Town's moving-day scene fades in from the title page and reveals its second paragraph after a pause. Its Unpack choice brings the flat in with `slide-up`. By the river, Ava's scene fades, and her answer comes a moment after the narration. The content is in `examples/showcase/src/story/moving-day.ts`, and in `story/ava.ts` with its prose in `story/ava.prose.ts`.

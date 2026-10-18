@@ -213,7 +213,7 @@ Add `'cafe.back'` to the café's `exits` too. Until the `staff` kv key is set, t
 
 ### Opening hours
 
-The engine has no opening hours of its own, so a place's `blocked` list does the job. Each entry is a [condition](/docs/reference/conditions) and the line the player reads while it holds. With the [calendar](/docs/plugins/calendar#conditions), the conditions can read the time of day and the day of the week. This is the showcase's office, open in the day on weekdays only (from `examples/showcase/src/content/town.ts`):
+The engine has no opening hours of its own, so a place's `blocked` list does the job. Each entry is a [condition](/docs/reference/conditions) and the line the player reads while it holds. With the [calendar](/docs/plugins/calendar#conditions), the conditions can read the time of day and the day of the week. This is the showcase's office, open in the day on weekdays only (from `examples/showcase/src/story/office.ts`):
 
 ```ts
 import { period, weekday } from '@ifloom/plugin-calendar'
@@ -616,4 +616,4 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 
 ## See it in an example
 
-Small Town: the `locations` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are the town, with `blocked` opening hours on the café and the office, a `stage` in the café, and activities kept to one place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.
+Small Town: the `locations` are the town, one in each place's file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), with `blocked` opening hours on the café and the office, a `stage` in the café, and activities kept to one place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

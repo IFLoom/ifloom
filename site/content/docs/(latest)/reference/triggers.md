@@ -110,5 +110,5 @@ const next = fireTriggers(state, game, (state, effects) => applyEffects(state, g
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has three triggers. `visitors` runs `once: 'turn'`, `welcome` runs once, and `rent` charges 30 coins on Sundays.
-- The Corner Café: [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) watches the till and the staff with `overdrawn`, `empty` and `review`.
+- Small Town: the park's `visitors` trigger in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) runs `once: 'turn'`, `welcome` in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) runs once, and `rent` in [`examples/showcase/src/story/flat.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/flat.ts) charges 30 coins on Sundays.
+- The Corner Café: [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) watches the till and the staff with `overdrawn`, `empty` and `review`.

@@ -2,7 +2,7 @@
 title: "Minigames"
 description: Build a quick-time minigame from data, the way Small Town's park does, then draw it with a panel of your own in plain DOM, React, Vue or Svelte.
 ---
-You'll build a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/content/town.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one, in plain DOM, React, Vue or Svelte.
+You'll build a small quick-time game: an arrow appears, and the player has a second and a half to press it. It's the game of quick feet in [Small Town](/docs/guide/showcase)'s park, so you can play it there and read its source in `examples/showcase/src/story/park.ts`. Then it draws the same minigame with a panel of your own instead of the built-in one, in plain DOM, React, Vue or Svelte.
 
 A minigame is data, like a scene. You declare its states, what each input does in each state, the timers that move it on, and a few numbers it keeps while it runs. The engine runs it, and the page draws it and keeps its clock. Every field is in the [minigames reference](/docs/reference/minigames).
 

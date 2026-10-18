@@ -81,7 +81,7 @@ state = apply(state, game, { type: 'tick', ms: 400 }).state           // time pa
 state = apply(state, game, { type: 'minigame', input: 'left' }).state // the player pressed left
 ```
 
-The full example is in the showcase's `src/content/town.ts`, and its test plays it through with ticks and inputs.
+The full example is in the showcase's `src/story/park.ts`, and its test plays it through with ticks and inputs.
 
 The React UI draws a minigame with [`MinigameCard`](/docs/react/components#minigamecard), which sends the ticks and maps the keys, and you can replace it with your own panel by minigame id. The [Minigames recipe](/docs/recipes/minigames) walks through both. Any other UI draws `view.minigame` itself.
 
@@ -276,4 +276,4 @@ The [content checker](/docs/reference/checks) reports:
 
 ## See it in an example
 
-Small Town: quick feet, `quickFeet` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), is five rounds of arrows to press in time, started by the park's `arrows` activity. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.
+Small Town: quick feet, `quickFeet` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts), is five rounds of arrows to press in time, started by the park's `arrows` activity. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.

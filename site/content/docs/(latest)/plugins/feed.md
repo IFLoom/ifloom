@@ -168,7 +168,7 @@ react('river', { from: 'ava', text: 'comment.nice' })   // text is a prose key
 react('ava.cake', { likes: 1 })                        // the player likes Ava's post
 ```
 
-How a post does is usually rolled. Put the roll in a game [custom effect](/docs/reference/custom) that returns `react(...)`. A custom effect is worked out before the list runs, but the plugin effects it returns run in their turn, after the `feed/post` before them. See [Effects run in order](/docs/reference/plugins#effects-run-in-order). The showcase's `postLatest` effect, in `examples/showcase/src/content/custom.ts`, does this.
+How a post does is usually rolled. Put the roll in a game [custom effect](/docs/reference/custom) that returns `react(...)`. A custom effect is worked out before the list runs, but the plugin effects it returns run in their turn, after the `feed/post` before them. See [Effects run in order](/docs/reference/plugins#effects-run-in-order). The showcase's `postLatest` effect, in `examples/showcase/src/rules.ts`, does this.
 
 ## A worked example
 
@@ -525,4 +525,4 @@ The player's own posts and reactions are made by effects, and those are checked 
 
 ## See it in an example
 
-Small Town: `data.feed.posts` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has a post each from Ava and Sam. [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) posts the player's photo with `postTo` and adds likes and a comment with `react`, and the `settle` quest waits on `feed/posted`.
+Small Town: Ava's post is in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and Sam's in [`examples/showcase/src/story/sam.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/sam.ts). [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) posts the player's photo with `postTo` and adds likes and a comment with `react`, and the `settle` quest waits on `feed/posted`.

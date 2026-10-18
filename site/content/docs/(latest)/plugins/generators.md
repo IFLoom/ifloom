@@ -184,4 +184,4 @@ A call that names a template the game doesn't have gives `unknown template "…"
 
 ## See it in an example
 
-Small Town: `data.generators` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has two pools and a `visitor` template, and the park's `visitors` trigger makes two a day with `generate('visitor', 2)`.
+Small Town: `data.generators` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) has two pools and a `visitor` template, and the park's `visitors` trigger makes two a day with `generate('visitor', 2)`.

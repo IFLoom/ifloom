@@ -504,4 +504,4 @@ base · options weekend · no day 9 in a week of 7
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) makes the clock with `calendar({ start: { day: 0, period: 'night' } })` and lists it first. [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) passes time with `pass`, goes to bed with `sleep()`, and keeps hours with `period`, `weekday` and `day`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) makes the clock with `calendar({ start: { day: 0, period: 'night' } })` and lists it first. The packs in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) pass time with `pass`, go to bed with `sleep()`, and keep hours with `period`, `weekday` and `day`.

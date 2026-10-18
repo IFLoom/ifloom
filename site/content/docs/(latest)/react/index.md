@@ -414,9 +414,9 @@ The UI's own words, such as "Quests", "Track" and "Mark all seen", come from the
 
 ```ts
 import { loadGame } from '@ifloom/engine'
-import { town } from './content/town.ts'
+import { packs } from './packs.ts'
 
-const { game } = loadGame([town], {
+const { game } = loadGame(packs, {
   id: 'small-town',
   title: 'Small Town',
   introScene: 'intro',

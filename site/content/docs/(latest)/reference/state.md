@@ -348,5 +348,5 @@ The versions that only added a field (4, 7, 9, 10 and 11) are from before the ru
 
 ## See it in an example
 
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { kv: ['readBefore'] }` for New Game+, and the first chapter has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
+- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { kv: ['readBefore'] }` for New Game+, and the first chapter, [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts), has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
 - Small Town: `probes` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds states by hand, with `kv`, `entities`, `stats` and `plugins` filled in.

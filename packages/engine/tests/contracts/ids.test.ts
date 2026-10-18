@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { Pack } from '../../src/loader.ts'
 import { offences, proseOffences } from './ids-rule.ts'
-import { smallTown } from '../../../../examples/showcase/src/game.ts'
-import { town } from '../../../../examples/showcase/src/content/town.ts'
-import { letter } from '../../../../examples/novel/src/game.ts'
-import { corner } from '../../../../examples/cafe/src/game.ts'
+import { smallTown, packs as town } from '../../../../examples/showcase/src/game.ts'
+import { packs as letter } from '../../../../examples/novel/src/game.ts'
+import { packs as corner } from '../../../../examples/cafe/src/game.ts'
 import fogSeason from '../../../../examples/showcase/mods/fog-season.json'
 
 describe('ids and separators (ADR 0010)', () => {
   it('holds the examples’ packs and the showcase’s mod to the rule', () => {
-    const packs = [town, letter, corner, fogSeason.pack as unknown as Pack]
+    const packs = [...town, ...letter, ...corner, fogSeason.pack as unknown as Pack]
     expect(packs.flatMap((pack) => [...offences(pack, pack.id), ...proseOffences(pack)])).toEqual([])
   })
 

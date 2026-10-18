@@ -166,4 +166,4 @@ The engine draws with it wherever content has weights:
 
 ## See it in an example
 
-Small Town: `postLatest` in [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) rolls a post's likes with `roll(10, state.seed, state.turn, 'likes')`.
+Small Town: `postLatest` in [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) rolls a post's likes with `roll(10, state.seed, state.turn, 'likes')`.

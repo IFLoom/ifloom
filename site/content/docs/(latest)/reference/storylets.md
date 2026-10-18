@@ -228,4 +228,4 @@ The effect is checked wherever it is, in item uses and activities too. It says `
 
 ## See it in an example
 
-Small Town: the `sit` activity and the `cafe.*` scenes in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.
+Small Town: the `sit` activity and the `cafe.*` scenes in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.

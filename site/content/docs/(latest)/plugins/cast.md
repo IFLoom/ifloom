@@ -198,7 +198,7 @@ const talk: TalkOption[] = [
 
 ### In a pack
 
-Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/content/town.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
+Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/world/cast.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
 
 ```ts
 import { SCHEMA, type DataScene, type Pack } from '@ifloom/engine'
@@ -633,4 +633,4 @@ The places in `cast/at` aren't checked. A `portrait` the game gives is listed in
 
 ## See it in an example
 
-Small Town: Ava and Sam are the `characters` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), with schedules, `talk` options and, for Ava, a `call`. The café's body and stage use `here('ava')`.
+Small Town: Ava and Sam are the `characters` in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts), with schedules, `talk` options and, for Ava, a `call`. The café's body and stage use `here('ava')`.

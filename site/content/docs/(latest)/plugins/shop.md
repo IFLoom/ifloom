@@ -348,4 +348,4 @@ A command that names a vendor or item the game doesn't have gives `unknown vendo
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café's "Go to the counter" action opens it with `openShop('counter')`, and the counter also sells the newspaper whose job ads open the jobs panel.
+Small Town: the café's `counter` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) sells sandwiches and two flapjacks a day, buys back at half, and has a daily discount. The café's "Go to the counter" action opens it with `openShop('counter')`, and the counter also sells the newspaper whose job ads open the jobs panel.

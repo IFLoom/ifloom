@@ -466,6 +466,6 @@ levelAt(20, [5, 10, 20])  // 3
 
 ## See it in an example
 
-- Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), `coins` and `energy` are spendable with a `format` and a `lacking` line, energy has `round`, and `friendship` is a stat `of: 'character'`, one for each person.
-- The Corner Café: [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) gives staff `skill`, `morale` and `wage`, and dishes `price` and `quality`. Its `reputation` has `levels`, with a notice when it goes up.
+- Small Town: in [`examples/showcase/src/world/stats.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/stats.ts), `coins` and `energy` are spendable with a `format` and a `lacking` line, energy has `round`, and `friendship` is a stat `of: 'character'`, one for each person.
+- The Corner Café: [`examples/cafe/src/world/staff.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/staff.ts) gives staff `skill`, `morale` and `wage`, and [`examples/cafe/src/world/menu.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/menu.ts) gives dishes `price` and `quality`. Its `reputation`, in [`examples/cafe/src/world/stats.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/stats.ts), has `levels`, with a notice when it goes up.
 - No example has a derived stat yet.

@@ -612,4 +612,4 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 
 ## See it in an example
 
-Small Town: `ava.text` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) arrives the day after you meet Ava, with two replies. Once you've answered it, the trigger `ava.chat` draws a line of her small talk from the pool `ava.chat` each day, never the same one twice within three days. Their labels are in [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts).
+Small Town: `ava.text` in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) arrives the day after you meet Ava, with two replies. Once you've answered it, the trigger `ava.chat` draws a line of her small talk from the pool `ava.chat` each day, never the same one twice within three days. Their labels are in [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts).

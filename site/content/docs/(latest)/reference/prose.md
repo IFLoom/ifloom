@@ -503,6 +503,6 @@ mediaKind('place/cafe.webp')  // 'image'
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts) holds every line by key, with choice labels as `<scene>#<choice>`. Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
+- Small Town: each pack in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
 - Small Town's intro has a tooltip on "launderette", and the flat's `place.flat.text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
-- The Letter: the `prose` in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) prints the reader's name with `{{playerName}}`.
+- The Letter: the `prose` in [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts) prints the reader's name with `{{playerName}}`.

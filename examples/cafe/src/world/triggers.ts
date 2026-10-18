@@ -1,0 +1,20 @@
+/** What the game watches for after every command: the till, the staff and a good review. */
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const triggers: Pack = {
+  id: 'world.triggers',
+  schema: SCHEMA,
+  triggers: [
+    { id: 'overdrawn', once: 'turn', when: { stat: 'coins', lt: 0 }, effects: [{ kind: 'notify', title: 'The bank has written.', tag: 'money' }] },
+    { id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ kind: 'notify', title: 'Nobody to open up tomorrow.', tag: 'staff' }] },
+    // A happy team is a good review: once, the first week two of them are glad to be there.
+    {
+      id: 'review',
+      when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
+      effects: [
+        { kind: 'stat', stat: 'reputation', by: 10 },
+        { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' },
+      ],
+    },
+  ],
+}

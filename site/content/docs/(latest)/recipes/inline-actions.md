@@ -280,4 +280,4 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
 
 ## See it in the showcase
 
-Small Town's moving-day scene has a tooltip on "launderette". In the flat, once Ava's text has come, the room's prose says "Your phone buzzes on the sill: a message. Check it." and Check it opens the phone's messages. The content is in `examples/showcase/src/content/town.ts` and `prose.ts`.
+Small Town's moving-day scene has a tooltip on "launderette". In the flat, once Ava's text has come, the room's prose says "Your phone buzzes on the sill: a message. Check it." and Check it opens the phone's messages. The content is in `examples/showcase/src/story/moving-day.ts` and `story/flat.ts`.

@@ -124,5 +124,5 @@ How many notices the state keeps. When a 51st is raised, the oldest goes, whethe
 
 ## See it in an example
 
-- Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), the `welcome` trigger raises a notice tagged `post`, and the `rent` trigger one with an `id`.
-- The Corner Café: the `overdrawn`, `empty` and `review` triggers in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) each raise one, and its `reputation` stat raises a level notice.
+- Small Town: the `welcome` trigger in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) raises a notice tagged `post`, and the `rent` trigger in [`examples/showcase/src/story/flat.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/flat.ts) one with an `id`.
+- The Corner Café: the `overdrawn`, `empty` and `review` triggers in [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) each raise one, and its `reputation` stat in [`examples/cafe/src/world/stats.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/stats.ts) raises a level notice.

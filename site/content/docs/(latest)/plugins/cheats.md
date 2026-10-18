@@ -375,4 +375,4 @@ A `cheats/use` command or `cheats/used` condition that names a cheat the game do
 
 ## See it in an example
 
-Small Town: `data.cheats` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `coins`, free for everyone, and `energy`, refused until the unlock `supporter` is recorded, which the code `SMALL-TOWN-SUPPORTER` does. The sidebar's Cheats button opens them.
+Small Town: `data.cheats` in [`examples/showcase/src/world/cheats.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cheats.ts) has `coins`, free for everyone, and `energy`, refused until the unlock `supporter` is recorded, which the code `SMALL-TOWN-SUPPORTER` does. The sidebar's Cheats button opens them.

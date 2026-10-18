@@ -186,7 +186,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-The rest is content in the town's pack. These are the parts the phone uses (the full pack is in `examples/showcase/src/content/town.ts`):
+The rest is content in the town's pack. These are the parts the phone uses (the full packs are in `examples/showcase/src/story/ava.ts` and `story/sam.ts`):
 
 ```ts
 import { type ActivityDef } from '@ifloom/engine'

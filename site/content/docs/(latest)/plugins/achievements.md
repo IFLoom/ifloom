@@ -298,4 +298,4 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 
 ## See it in an example
 
-Small Town: `data.achievements` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `nest-egg`, a progress count of coins out of 100, and `river`, a secret one earned by a condition. With pages on, the title screen and the sidebar's Achievements button open the React UI's achievements page.
+Small Town: `nest-egg` in [`examples/showcase/src/world/achievements.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/achievements.ts) is a progress count of coins out of 100, and `river` in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) is a secret one earned by a condition. With pages on, the title screen and the sidebar's Achievements button open the React UI's achievements page.

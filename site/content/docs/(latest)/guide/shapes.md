@@ -18,7 +18,7 @@ They all use the same core: the turn, scenes and choices, conditions and effects
 
 Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
 
-Each has a `src/game.ts` with the game, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
+Each has a `src/game.ts` that puts the game together from its packs in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
 
 To start a game of your own from one of them, use `--template novel`, `cafe` or `town`:
 
@@ -42,7 +42,7 @@ Either way, the end of a turn runs the same steps. The counter goes up, the game
 
 ## A linear novel: The Letter
 
-`examples/novel/src/game.ts` in the IFLoom repository is a whole game in one file. The Letter has three chapters and two endings. A letter for the last tenant lands on your mat, and what you do with it, and what you tell the neighbour downstairs, decides how the third chapter goes.
+`examples/novel` in the IFLoom repository is the smallest whole game: `src/world/stats.ts` holds its one stat, and `src/story/` a file for each chapter. The Letter has three chapters and two endings. A letter for the last tenant lands on your mat, and what you do with it, and what you tell the neighbour downstairs, decides how the third chapter goes.
 
 It declares no plugins, places, characters or clock. Its tests, `examples/novel/tests/novel.test.ts`, read it through. [Your first story](/docs/guide/first-story) builds a game of the same shape step by step.
 
@@ -51,7 +51,7 @@ It declares no plugins, places, characters or clock. Its tests, `examples/novel/
 The base handed to [`loadGame`](/docs/reference/loader) needs only an `id` and a `title`. The Letter adds its first scene and nothing else:
 
 ```ts
-loadGame([letter], { id: 'the-letter', title: 'The Letter', introScene: 'ch1.mat' })
+loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', introScene: 'ch1.mat' })
 ```
 
 With no [places plugin](/docs/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
@@ -113,7 +113,7 @@ So `state.turn` is the chapter the reader has reached, counting from 0. Anything
 
 ### Playing it
 
-The file's default export is the game, with the loader's problems, and `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
+`src/game.ts`'s default export is the game, with the loader's problems, and `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
 
 ```ts
 export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
@@ -240,7 +240,7 @@ In React, the novel's [layout](/docs/react#layouts) has no `Sidebar`, so the pag
 
 ## A management game: The Corner Café
 
-`examples/cafe/src/game.ts` is the second whole game in one file. In The Corner Café the player runs a café a week at a time. Each week the till is counted, the staff are paid, and everyone gets a little more tired. Look after them and they stay, and a happy team gets a good review in the local paper. Its tests, `examples/cafe/tests/cafe.test.ts`, play it for a few weeks.
+`examples/cafe` is the second whole game. It's mostly data, so most of it is in `src/world/`, a file per kind (stats, staff, the menu, activities and triggers), with its two scenes in `src/story/` and its sums in `src/rules.ts`. In The Corner Café the player runs a café a week at a time. Each week the till is counted, the staff are paid, and everyone gets a little more tired. Look after them and they stay, and a happy team gets a good review in the local paper. Its tests, `examples/cafe/tests/cafe.test.ts`, play it for a few weeks.
 
 Like The Letter, it has no places, characters or clock. What it adds is [entities](/docs/reference/entities), the things the game keeps several of, each with numbers of its own.
 

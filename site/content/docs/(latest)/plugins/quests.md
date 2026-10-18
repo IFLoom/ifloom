@@ -210,7 +210,7 @@ state = run(state, 'coffee')
 holds(state, questDone('settle'), game)          // true
 ```
 
-The showcase's own quests are in `examples/showcase/src/content/town.ts`. [Small Town](/docs/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
+The showcase's own quests are in `examples/showcase/src/story/moving-day.ts` and `story/ava.ts`. [Small Town](/docs/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
 
 ## Conditions
 
@@ -400,4 +400,4 @@ A quest condition, effect or command that names a quest the game doesn't have gi
 
 ## See it in an example
 
-Small Town: `data.quests` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has `settle`, three stages to find your feet, and `friend`, which starts with `questActive('settle')` and is tied to Ava's storyline.
+Small Town: `settle` in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) has three stages to find your feet, and `friend` in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) which starts with `questActive('settle')` and is tied to Ava's storyline.

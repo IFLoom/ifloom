@@ -593,5 +593,5 @@ What a custom runtime supplies. You only need one if [`defaultRuntime`](#default
 
 ## See it in an example
 
-- Small Town: `ava.hi` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is a data scene with a `variants` block, a line with a `when`, a `speaker` and a choice limited to once a turn.
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) is three chapter scenes and two endings with `choices: []`.
+- Small Town: `ava.hi` in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) is a data scene with a `variants` block, a line with a `when`, a `speaker` and a choice limited to once a turn.
+- The Letter: [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story) is three chapter scenes and two endings, a file for each chapter, with `choices: []`.

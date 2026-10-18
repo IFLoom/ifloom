@@ -309,4 +309,4 @@ The [content checker](/docs/reference/checks) reports unknown pools, tags no fil
 
 ## See it in an example
 
-Small Town: the café's `stage` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `talk('ava')`. No example uses picture pools or video yet.
+Small Town: the café's `stage` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `talk('ava')`. No example uses picture pools or video yet.

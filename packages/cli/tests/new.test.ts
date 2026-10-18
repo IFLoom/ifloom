@@ -45,16 +45,17 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
   })
 
-  it.each(GAMES.filter((template) => !['novel', 'cafe', 'town'].includes(template)))(
-    'lays the %s game out as world/ and story/ packs that game.ts assembles',
-    (template) => {
-      const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
-      expect(files).toEqual(expect.arrayContaining(['src/game.ts', 'src/world/stats.ts', 'src/story/start.ts']))
+  it.each(GAMES)('lays the %s game out as world/ and story/ packs that game.ts assembles', (template) => {
+    const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
+    expect(files.some((file) => file.startsWith('src/world/'))).toBe(true)
+    expect(files.some((file) => file.startsWith('src/story/'))).toBe(true)
+    expect(readFileSync(join(dir, 'src/world/stats.ts'), 'utf8')).toContain("id: 'world.stats'")
+    // The templates of our own start with one area of story; the examples have their own.
+    if (!['novel', 'cafe', 'town'].includes(template)) {
       expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain('loadGame([stats, start]')
-      expect(readFileSync(join(dir, 'src/world/stats.ts'), 'utf8')).toContain("id: 'world.stats'")
       expect(readFileSync(join(dir, 'src/story/start.ts'), 'utf8')).toContain("id: 'story.start'")
-    },
-  )
+    }
+  })
 
   it.each(GAMES)('writes the %s game a tsconfig that works outside the checkout, and a typecheck script', (template) => {
     const { dir } = newGame({ name: 'my-story', template, into: fresh() })

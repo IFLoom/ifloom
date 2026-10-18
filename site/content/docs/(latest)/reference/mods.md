@@ -162,10 +162,10 @@ export const runner = await browserRunner(game)
 import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
-import { town } from './content/town.ts'
+import { packs } from './packs.ts'
 
 export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}) {
-  const { game, problems } = loadGame([town, ...mods], { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ })
+  const { game, problems } = loadGame([...packs, ...mods], { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ })
   return { game, problems: problems.map(describeProblem) }
 }
 ```

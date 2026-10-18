@@ -1,11 +1,14 @@
 /**
- * Small Town, put together: the content pack over a base that says how the
- * game runs — where it starts, its rules, its plugins.
+ * Small Town, put together: the packs over a base that says how the game
+ * runs, with where it starts, its rules and its plugins. This file only
+ * assembles. What the whole town shares is in `world/`, one file per kind,
+ * and the story is in `story/`, one file per place or arc, its prose beside
+ * it. The rules and custom functions are in `rules.ts`.
  */
 import { applyEffects, describeProblem, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
-import { at, places } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
@@ -18,8 +21,45 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
-import { custom } from './content/custom.ts'
-import { town } from './content/town.ts'
+import { custom, rules } from './rules.ts'
+import { stats } from './world/stats.ts'
+import { items } from './world/items.ts'
+import { cast as castPack } from './world/cast.ts'
+import { settings } from './world/settings.ts'
+import { activities } from './world/activities.ts'
+import { achievements as achievementsPack } from './world/achievements.ts'
+import { cheats as cheatsPack } from './world/cheats.ts'
+import { movingDay } from './story/moving-day.ts'
+import { ava } from './story/ava.ts'
+import { flat } from './story/flat.ts'
+import { highStreet } from './story/high-street.ts'
+import { cafe } from './story/cafe.ts'
+import { park } from './story/park.ts'
+import { office } from './story/office.ts'
+import { sam } from './story/sam.ts'
+
+/**
+ * The town's packs, in order: what it all shares, then the story by arc and
+ * place. The order matters where a list's order does: triggers fire in it,
+ * and the quest log, the job board and the places list in it.
+ */
+export const packs: Pack[] = [
+  stats,
+  items,
+  castPack,
+  settings,
+  activities,
+  achievementsPack,
+  cheatsPack,
+  movingDay,
+  ava,
+  flat,
+  highStreet,
+  cafe,
+  park,
+  office,
+  sam,
+]
 
 /** The town's calendar: a turn is a day, and a new game starts on the night you move in. */
 export const clock = calendar({ start: { day: 0, period: 'night' } })
@@ -50,10 +90,10 @@ const kit = phone({
  * Build the game. `withDebug` adds the debugger; leave it off in a release
  * build. `unlocked` are the supporter packs the player's codes have opened
  * (from `unlockedPacks`), and `mods` the packs of the player's mods, loaded
- * over the town in that order.
+ * over the town's own in that order.
  */
 export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame([town, ...unlocked, ...mods], {
+  const { game, problems } = loadGame([...packs, ...unlocked, ...mods], {
     id: 'small-town',
     title: 'Small Town',
     introScene: 'intro',
@@ -84,18 +124,7 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
     ],
     actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
     strings: { 'ui.quests': 'To do' },
-    rules: {
-      // A coffee and a post a day; each new day (a turn, here) resets them.
-      resets: { hadCoffee: false, postedToday: false },
-      // Energy back to full overnight.
-      onTurn: (_state, { apply }) => apply([{ kind: 'stat', stat: 'energy', to: 100 }]),
-      locks: [
-        // Moving day only moves through its scene.
-        { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
-        // No phone at work.
-        { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
-      ],
-    },
+    rules,
   })
   return { game, problems: problems.map(describeProblem) }
 }

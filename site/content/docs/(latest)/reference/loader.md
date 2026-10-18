@@ -179,11 +179,15 @@ import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { custom } from './content/custom.ts'
-import { town } from './content/town.ts'
+import { custom } from './rules.ts'
+import { stats } from './world/stats.ts'
+import { movingDay } from './story/moving-day.ts'
+import { cafe } from './story/cafe.ts'
+
+const packs: Pack[] = [stats, movingDay, cafe]
 
 export function smallTown({ mods = [] as Pack[] } = {}) {
-  const { game, problems } = loadGame([town, ...mods], {
+  const { game, problems } = loadGame([...packs, ...mods], {
     id: 'small-town',
     title: 'Small Town',
     introScene: 'intro',
@@ -195,7 +199,7 @@ export function smallTown({ mods = [] as Pack[] } = {}) {
 }
 ```
 
-The real file is `examples/showcase/src/game.ts`. It also adds the phone, quests, wardrobe and debug plugins, a start phase, strings and rules. Its `main.tsx` logs the problems as warnings and starts the game anyway.
+The real file is `examples/showcase/src/game.ts`, which lists all fifteen of the town's packs from `world/` and `story/`. It also adds the phone, quests, wardrobe and debug plugins, a start phase, strings and rules. Its `main.tsx` logs the problems as warnings and starts the game anyway.
 
 **Gotchas:**
 - `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.
@@ -264,5 +268,5 @@ town · stat service · derive goes round in a cycle: service → mood → servi
 
 ## See it in an example
 
-- All three examples build their game with `loadGame` over a pack with `schema: SCHEMA`. Small Town's [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) loads its `town` pack with the player's mods after it, `loadGame([town, ...mods], { ... })`.
+- All three examples build their game with `loadGame` over a pack with `schema: SCHEMA`. Small Town's [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) loads its own packs with the player's mods after them, `loadGame([...packs, ...unlocked, ...mods], { ... })`.
 - [`examples/showcase/mods/fog-season.json`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/mods/fog-season.json) is a pack that adds to the high street's `street.weather` variants and replaces the park's prose, which shows how a later pack merges.

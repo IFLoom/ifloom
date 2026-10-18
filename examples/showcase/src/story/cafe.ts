@@ -1,0 +1,166 @@
+/**
+ * The Corner Café: coffee, the counter, its storylets when you sit a while,
+ * and weekend work. Its words are in `cafe.prose.ts`.
+ */
+import { SCHEMA, type Pack } from '@ifloom/engine'
+import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
+import { wearing } from '@ifloom/plugin-wardrobe'
+import { period } from '@ifloom/plugin-calendar'
+import { onlyAt } from '@ifloom/plugin-places'
+import { here, person, talk } from '@ifloom/plugin-cast'
+import { openShop } from '@ifloom/plugin-shop'
+import { place } from '../place.ts'
+import { prose } from './cafe.prose.ts'
+
+export const cafe: Pack = {
+  id: 'story.cafe',
+  schema: SCHEMA,
+  activities: [
+    {
+      id: 'coffee',
+      cost: { stats: { coins: 3 } },
+      blocked: [onlyAt(['cafe']), { when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
+      effects: [
+        { kind: 'stat', stat: 'energy', by: 15 },
+        { kind: 'kv', key: 'hadCoffee', to: true },
+        // And a lift that lasts till tomorrow is out: 10 more energy, never written.
+        applyStatus('caffeinated'),
+      ],
+    },
+    { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
+    { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
+    { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
+  ],
+  scenes: [
+    // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
+    {
+      id: 'cafe.window',
+      title: 'The window seat',
+      drawnFrom: ['cafe'],
+      weight: 3,
+      when: { not: { seen: 'cafe.window', gte: 2 } },
+      body: [{ text: 'cafe.window' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+    },
+    {
+      id: 'cafe.crossword',
+      title: 'Seven down',
+      drawnFrom: ['cafe'],
+      when: { not: { seen: 'cafe.crossword' } },
+      body: [{ text: 'cafe.crossword' }],
+      choices: [
+        {
+          id: 'leave',
+          effects: [
+            { kind: 'stat', stat: 'charm', by: 1 },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'cafe.break',
+      title: 'Ava’s break',
+      speaker: 'ava',
+      drawnFrom: ['cafe'],
+      weight: 2,
+      when: here('ava'),
+      body: [{ text: 'cafe.break' }],
+      choices: [
+        {
+          id: 'leave',
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 2, of: person('ava') },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
+    },
+    // When none of them can happen.
+    {
+      id: 'cafe.quiet',
+      title: 'A quiet table',
+      body: [{ text: 'cafe.quiet' }],
+      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+    },
+  ],
+  data: {
+    places: {
+      locations: [
+        {
+          ...place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'] }),
+          // Open in the day; the door says when it opens again.
+          blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+          actions: [
+            { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+            // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
+            { id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } },
+            // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
+            { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
+            // Something small happens while you sit: one of the café's storylets, drawn at random.
+            { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
+          ],
+          // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
+          stage: {
+            aspect: '16/10',
+            layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
+            hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+          },
+          body: [
+            { text: 'place.cafe' },
+            { text: 'place.cafe.ava', when: here('ava') },
+            { text: 'place.cafe.raincoat', when: wearing('raincoat') },
+            { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
+          ],
+        },
+      ],
+    },
+    shop: {
+      vendors: [
+        {
+          id: 'counter',
+          name: 'The counter',
+          at: ['cafe'],
+          hours: ['morning', 'afternoon'],
+          // Ava will take an unopened sandwich back for half.
+          buysBack: 0.5,
+          // One thing on the board is half price each day.
+          discounts: { off: 0.5 },
+          goods: [
+            { item: 'sandwich', price: { coins: 4 } },
+            // Two a day, baked each morning.
+            { item: 'flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
+            { item: 'paper', price: { coins: 2 } },
+          ],
+        },
+      ],
+    },
+    jobs: {
+      jobs: [
+        {
+          id: 'weekend',
+          title: 'Weekend help',
+          description: 'Saturday mornings behind the counter at the Corner Café.',
+          blocked: [{ when: { not: { stat: 'friendship', of: person('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
+          at: ['cafe'],
+          // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
+          days: [5],
+          hours: ['morning'],
+          shift: { cost: { energy: 25 }, passes: 1 },
+          ranks: [
+            { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
+            { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+          ],
+          // Miss two Saturdays and Ava finds someone else.
+          fire: { missed: 2 },
+        },
+      ],
+    },
+    statuses: {
+      statuses: [
+        { id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] },
+      ],
+    },
+  },
+  prose,
+}

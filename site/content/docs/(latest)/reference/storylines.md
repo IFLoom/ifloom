@@ -68,4 +68,4 @@ A storyline as a new game has it: `{ closedUntil: null, kv: {} }`. [`startingSta
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) declares a storyline each for Ava and Sam, names it on each character, and ties the `friend` quest to Ava's. No example uses a storyline's kv store or closes a storyline yet.
+Small Town: [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) declares a storyline each for Ava and Sam and names it on each character, and [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) ties the `friend` quest to Ava's. No example uses a storyline's kv store or closes a storyline yet.

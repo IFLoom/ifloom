@@ -136,16 +136,16 @@ const { game } = loadGame([letter], {
 
 **A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story passes only `introScene`, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
 
-This is the showcase's base, trimmed. The content comes from a pack through [`loadGame`](/docs/reference/loader#loadgame):
+This is the showcase's base, trimmed. The content comes from the game's packs through [`loadGame`](/docs/reference/loader#loadgame):
 
 ```ts
 import { loadGame } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { town } from './content/town.ts'
+import { packs } from './packs.ts'
 
-const { game, problems } = loadGame([town], {
+const { game, problems } = loadGame(packs, {
   id: 'small-town',
   title: 'Small Town',
   introScene: 'intro',
@@ -290,5 +290,5 @@ itemById(game, 'sandwich')?.tags   // ['food']
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `introScene`, `startPhase`, `custom`, `plugins`, `actions`, `strings` and `rules` to `loadGame`. The `items` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) are `ItemDef`s, and the sandwich and flapjack have a `use`. Its `storylines` are Ava's and Sam's.
+- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `introScene`, `startPhase`, `custom`, `plugins`, `actions`, `strings` and `rules` to `loadGame`. The `items` in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts) are `ItemDef`s, and the sandwich and flapjack have a `use`. The `storylines` in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) are Ava's and Sam's.
 - The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) sets `version`, `migrations`, `finished` and `carryOver`.

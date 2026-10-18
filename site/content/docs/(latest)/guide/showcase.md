@@ -27,10 +27,11 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 
 | File | What's in it |
 |---|---|
-| `src/content/town.ts` | All the content, as one [pack](/docs/reference/loader#pack): places, people, stats, items, activities, scenes, triggers, quests, clothes, messages and posts. All of it is data. |
-| `src/content/prose.ts` | Every word the player reads, by key. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. |
-| `src/content/custom.ts` | The only code in the content: an effect worked out from the state, and a value the prose prints. |
-| `src/game.ts` | The game put together: the pack, the plugins, the phone, the rules, the locks and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
+| `src/world/` | What the whole town shares, one [pack](/docs/reference/loader#pack) per kind: `stats.ts`, `items.ts` (with the clothes), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
+| `src/story/` | The story, one pack per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its activities, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
+| `src/rules.ts` | The only code in the content: the rules and locks, an effect worked out from the state, and a value the prose prints. |
+| `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
+| `src/game.ts` | The game put together: the packs in order, the plugins, the phone and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
 | `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
 | `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
 | `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/react)'s `GameShell`, its title screen, its mod manager and its code box. |
@@ -54,13 +55,13 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Inputs, and a value the prose prints
 
-`town.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `kind: 'text'`, `maxLength: 16`, offered only while `when: { phase: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
+`story/moving-day.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `kind: 'text'`, `maxLength: 16`, offered only while `when: { phase: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
 
-`src/content/custom.ts` has a [custom value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
+`src/rules.ts` has a [custom value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
 
 ### Items you use
 
-`town.ts`, the `sandwich` item, the café's `buySandwich` activity and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`world/items.ts`, the `sandwich` item, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
 
 ### Mods
 
@@ -74,7 +75,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 `public/art/`. Ava and Sam have portraits, `art/character/ava.svg` and `art/character/sam.svg`, and the camera's two photos are `art/photo/ava.svg` and `art/photo/sam.svg`. Each is their initials on a coloured disc, with no face. Vite copies `public/` into the build, so they sit in `dist/art/` beside the page. `npm run build:one-file` puts them inside it instead.
 
-Each character's `portrait` in `town.ts` names its `.svg` file. If it were left out, the [cast](/docs/plugins/cast#characterdef) would draw `art/character/ava.jpg`, because [`artSrc`](/docs/reference/prose#artsrc) adds `.jpg` to a path with no extension, and there's no such file. The photos name their `.svg` the same way.
+Each character's `portrait` in `world/cast.ts` names its `.svg` file. If it were left out, the [cast](/docs/plugins/cast#characterdef) would draw `art/character/ava.jpg`, because [`artSrc`](/docs/reference/prose#artsrc) adds `.jpg` to a path with no extension, and there's no such file. The photos name their `.svg` the same way.
 
 ### Saves, the backlog and undo
 
@@ -88,17 +89,17 @@ None of it needs any change to the game's content.
 
 ### The title screen and settings
 
-`src/main.tsx` and the `settings` in `town.ts`. `GameShell` gets `pages` with a subtitle and two lines of credits, so the game opens on a title screen. The runner gets a [profile](/docs/reference/profile), which keeps the player's settings between games.
+`src/main.tsx` and the `settings` in `world/settings.ts`. `GameShell` gets `pages` with a subtitle and two lines of credits, so the game opens on a title screen. The runner gets a [profile](/docs/reference/profile), which keeps the player's settings between games.
 
 The town declares two [settings](/docs/reference/settings). `hints` is a play setting, on by default, and the high street shows a hint line only `when: { setting: 'hints' }`. `textSize` is a ui setting with the options `normal` and `large`. `main.tsx` copies it from the profile to `data-text-size` on the page's `<html>`, now and whenever it changes, and `styles.css` makes the root font bigger for `large`. [The title screen and settings](/docs/recipes/title-screen) explains both.
 
 ### Transitions and reveals
 
-`intro` and `ava.river` in `town.ts`. The moving-day scene has `transition: { in: 'fade', out: 'fade', ms: 500 }`, so it fades in from the title page, and its second block has `reveal: { delay: 1200 }`, so the line about the cat comes a moment after the first. Its Unpack choice ends with `{ kind: 'transition', to: 'slide-up', ms: 400 }`, and the flat rises into view. By the river, the scene fades, and Ava's prose holds `[[reveal:1500|slide-up]]` before her answer. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
+`intro` in `story/moving-day.ts` and `ava.river` in `story/ava.ts`. The moving-day scene has `transition: { in: 'fade', out: 'fade', ms: 500 }`, so it fades in from the title page, and its second block has `reveal: { delay: 1200 }`, so the line about the cat comes a moment after the first. Its Unpack choice ends with `{ kind: 'transition', to: 'slide-up', ms: 400 }`, and the flat rises into view. By the river, the scene fades, and Ava's prose holds `[[reveal:1500|slide-up]]` before her answer. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
 
 ### Actions and tooltips in the text
 
-`prose.ts` and the flat in `town.ts`. The moving-day prose has `[[tip:intro.launderette|launderette]]`, a tooltip whose note is the prose line `intro.launderette`. The flat's body has a second block, `place.flat.text`, shown while Ava's text has come and hasn't been read. It says "Your phone buzzes on the sill: a message. [[act:read-text|Check it]].", and `read-text` is one of the flat's `actions`, with the command `openApp('texts')`. So Check it is a link in the line that opens the phone's messages, and it isn't a button under the text as well. See [Actions and tooltips in the text](/docs/recipes/inline-actions).
+`story/moving-day.ts` and `story/flat.ts`. The moving-day prose has `[[tip:intro.launderette|launderette]]`, a tooltip whose note is the prose line `intro.launderette`. The flat's body has a second block, `place.flat.text`, shown while Ava's text has come and hasn't been read. It says "Your phone buzzes on the sill: a message. [[act:read-text|Check it]].", and `read-text` is one of the flat's `actions`, with the command `openApp('texts')`. So Check it is a link in the line that opens the phone's messages, and it isn't a button under the text as well. See [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ### The calendar
 
@@ -106,11 +107,11 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 ### Places
 
-`src/game.ts` and the `locations` in `town.ts`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in the pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
+`src/game.ts` and the `locations`, one in each place's file in `story/`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in each pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
 An activity that belongs somewhere is blocked everywhere else with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
 
-`town.ts` passes time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
+The packs in `story/` pass time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
 - Wait a while is `effects: [pass(1)]`.
 - A shift at the office passes two periods with `pass(2)`, and a jog passes one.
@@ -120,7 +121,7 @@ Buying a coffee or a sandwich takes no time. A button that passes time carries t
 
 ### Opening hours
 
-`town.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`blocked`](/docs/plugins/places#locationdef) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+`story/cafe.ts` and `story/office.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`blocked`](/docs/plugins/places#locationdef) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 
 The office's list is checked in order, so the most particular reason comes first:
 
@@ -132,7 +133,7 @@ Any kind of location can be locked this way.
 
 ### A stage with a hotspot
 
-`town.ts`, the `cafe` location's `stage`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [stage](/docs/plugins/places#the-picture-stage) layer, with a hotspot on her that sends the cast's `talk('ava')`:
+`story/cafe.ts`, the `cafe` location's `stage`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [stage](/docs/plugins/places#the-picture-stage) layer, with a hotspot on her that sends the cast's `talk('ava')`:
 
 ```ts
 stage: {
@@ -146,7 +147,7 @@ The layer has a `when`, and the hotspot names the layer, so both go when Ava doe
 
 ### People and schedules
 
-`town.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, in the pack's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
+`world/cast.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, in that pack's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
 
 Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Monday to Saturday, mornings and afternoons:
 
@@ -160,7 +161,7 @@ The café's body has a line that only shows while Ava is there, `{ text: 'place.
 
 ### Data scenes, variants and once-a-turn choices
 
-`town.ts`, the scene `ava.hi`, and its words in `prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the pack's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
+`story/ava.ts`, the scene `ava.hi`, and its words in `story/ava.prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the pack's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
 
 Its [choices](/docs/reference/scenes#choice) are:
 
@@ -170,17 +171,17 @@ Its [choices](/docs/reference/scenes#choice) are:
 
 Talking to Ava opens it, because it's the last of her [`talk`](/docs/plugins/cast#talkoption) options, the one with no `when`.
 
-Ava's greeting is two paragraphs in `prose.ts`, the narration and then her line in quotes. A paragraph that starts and ends with a quote is drawn as [speech](/docs/reference/prose#speech), so the narration has to be a paragraph of its own.
+Ava's greeting is two paragraphs in `story/ava.prose.ts`, the narration and then her line in quotes. A paragraph that starts and ends with a quote is drawn as [speech](/docs/reference/prose#speech), so the narration has to be a paragraph of its own.
 
 Her small talk comes straight after that line, so each of the three lines is a named line, such as `Ava: "Rain later. The ducks know before the forecast does."`. A bare quote after a character's line is read as the player's answer, so written that way, Ava's small talk would come out in the player's voice.
 
 ### Place variants
 
-`town.ts`, the `high-street` place. Its body is the street's line, then `{ variants: 'street.weather' }`, which is one of three lines about the weather from the pack's `variants`, like Ava's small talk. A room has no choices to record a draw, so the line is picked from the save's seed and the turn alone. It's dealt afresh each turn (each day, here), and it's the same every time the player looks in that day. Two days running can deal the same line. See the [`variants` block](/docs/reference/scenes#block).
+`story/high-street.ts`, the `high-street` place. Its body is the street's line, then `{ variants: 'street.weather' }`, which is one of three lines about the weather from the pack's `variants`, like Ava's small talk. A room has no choices to record a draw, so the line is picked from the save's seed and the turn alone. It's dealt afresh each turn (each day, here), and it's the same every time the player looks in that day. Two days running can deal the same line. See the [`variants` block](/docs/reference/scenes#block).
 
 ### Sit a while at the café
 
-`town.ts`, the `sit` activity and the four `cafe.*` scenes after the rest, with their words in `prose.ts`. The café has a "Sit a while" button, a room action that runs the activity `sit`. Its one effect draws a [storylet](/docs/reference/storylets):
+`story/cafe.ts`, the `sit` activity and the four `cafe.*` scenes, with their words in `story/cafe.prose.ts`. The café has a "Sit a while" button, a room action that runs the activity `sit`. Its one effect draws a [storylet](/docs/reference/storylets):
 
 ```ts
 { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] }
@@ -198,19 +199,19 @@ The test `draws something to happen when you sit a while at the café, and a qui
 
 ### Quests
 
-`town.ts`, `data.quests`, and the [quests plugin](/docs/plugins/quests) in `src/game.ts`. `settle` starts when the phase is `open` and has three stages. The last is done by the feed plugin's condition `{ custom: 'feed/posted', with: { gte: 1 } }`.
+`story/moving-day.ts` and `story/ava.ts`, `data.quests`, and the [quests plugin](/docs/plugins/quests) in `src/game.ts`. `settle` starts when the phase is `open` and has three stages. The last is done by the feed plugin's condition `{ custom: 'feed/posted', with: { gte: 1 } }`.
 
 `friend` starts once the other is active, with `questActive('settle')`, and is tied to Ava's storyline. Its first stage, `close`, is done when she's a friend, `{ stat: 'friendship', of: person('ava'), gte: 25 }`. The UI calls the quest list "To do", from the game's strings.
 
 ### A stage that waits turns
 
-`town.ts`, the `friend` quest's second stage, `river`. It's done by `{ all: [{ since: 'ava.hi', gte: 3 }, { seen: 'ava.river' }] }`. That's three whole turns or more since the player first met Ava (days, in this game), and the evening by the river seen.
+`story/ava.ts`, the `friend` quest's second stage, `river`. It's done by `{ all: [{ since: 'ava.hi', gte: 3 }, { seen: 'ava.river' }] }`. That's three whole turns or more since the player first met Ava (days, in this game), and the evening by the river seen.
 
 Friendship says how well the player knows her, and [`since`](/docs/reference/conditions#since) says for how long, so chatting ten times on the first afternoon doesn't make a friend by teatime. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` plays it to the end.
 
 ### Friendship, and who you talk to where
 
-`town.ts`, `stats` and Ava's `talk`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
+`world/stats.ts` and Ava's `talk` in `world/cast.ts`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
 
 Talking to Ava opens the first of her [`talk`](/docs/plugins/cast#talkoption) options whose `when` holds. The first one is:
 
@@ -222,39 +223,39 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `town.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/items.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed statuses
 
-`town.ts`, the `coffee` activity and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/react/components#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ text: 'place.cafe.caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+`story/cafe.ts`, the `coffee` activity and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/react/components#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ text: 'place.cafe.caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
 
 ### The café counter
 
-`town.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Go to the counter" action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
+`story/cafe.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Go to the counter" action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
 
 ### A job at the café
 
-`town.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
+`story/cafe.ts` and `story/park.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
 
 You start with a newspaper. Its `use`, "Read the job ads", opens the board with only the paper's ad on it, `openJobs(['dogs'])`. Reading it spends it, and the counter sells another. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
 
 ### Visitors in the park
 
-`town.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/docs/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` kv key from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
+`story/park.ts`, `kinds`, the `visitors` trigger, `data.generators`, and `generators()` in `src/game.ts`. The park has visitors, entities of the game's own kind `visitor`, made by the [generators](/docs/plugins/generators) plugin. The first time each day the player is in the park, the trigger removes yesterday's visitors with an `each` and makes two more with `generate('visitor', 2)`. Each one's name is picked from the `first-names` pool, and its `with` kv key from `company`, where a dog is four times as likely as a pushchair. The park has an extra line while any visitor is about, `{ count: 'visitor', gte: 1 }`. The test `fills the park with two new visitors each day, drawn from the town’s pools` plays two days.
 
 ### Achievements
 
-`town.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's Achievements button open the React UI's [achievements page](/docs/react/components#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
+`world/achievements.ts` and `story/ava.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's Achievements button open the React UI's [achievements page](/docs/react/components#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
 
 ### Triggers and notices
 
-`town.ts`, `triggers`. `welcome` [fires](/docs/reference/triggers) the first time the player is on the high street. It raises a [notice](/docs/reference/notices), a note under the door, and files the note in the `notes` collection.
+`story/moving-day.ts`, `triggers`. `welcome` [fires](/docs/reference/triggers) the first time the player is on the high street. It raises a [notice](/docs/reference/notices), a note under the door, and files the note in the `notes` collection.
 
 `rent` repeats, because it's `once: 'turn'`. Its condition is Sunday from day 6 on, `{ all: [weekday(6), day({ gte: 6 })] }` with the calendar's conditions, so it fires on the first command of every Sunday. It takes 30 coins and raises the notice `Rent paid: 30 coins` with the fixed id `rent`, so each week's notice replaces the last one rather than piling up. It's the town's one bill, so the coins the player earns have somewhere to go.
 
 ### Collections
 
-`town.ts` declares `notes`, and the phone kit declares `gallery`. The camera's `photo-ava` and `photo-sam` activities [`collect`](/docs/reference/effects#collect) a photo into the gallery, and each is blocked while that person isn't here. `post` needs a photo first, with the [condition](/docs/reference/conditions#collection) `{ collection: 'gallery' }`. See [Collections](/docs/reference/collections).
+`story/moving-day.ts` declares `notes`, and the phone kit declares `gallery`. The camera's `photo-ava` and `photo-sam` activities, in `world/activities.ts`, [`collect`](/docs/reference/effects#collect) a photo into the gallery, and each is blocked while that person isn't here. `post` needs a photo first, with the [condition](/docs/reference/conditions#collection) `{ collection: 'gallery' }`. See [Collections](/docs/reference/collections).
 
 ### The phone kit, with its own apps
 
@@ -262,17 +263,17 @@ You start with a newspaper. Its `use`, "Read the job ads", opens the board with 
 
 ### Calls
 
-`town.ts`, Ava's `call`. The player can [call](/docs/plugins/cast#calls) her from anywhere, but only in the evening or at night, `when: period('evening', 'night')`. In the day the call is refused with her `busy` line. It opens the scene `ava.call`.
+`world/cast.ts`, Ava's `call`. The player can [call](/docs/plugins/cast#calls) her from anywhere, but only in the evening or at night, `when: period('evening', 'night')`. In the day the call is refused with her `busy` line. It opens the scene `ava.call`.
 
 ### Messages
 
-`town.ts`, `data.messages`. Ava's text arrives in the `texts` channel a turn (a day, here) after you first meet her, with `{ all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] }`. Its two replies are [choices](/docs/plugins/messages#replydef), and one adds 5 to her friendship.
+`story/ava.ts`, `data.messages`. Ava's text arrives in the `texts` channel a turn (a day, here) after you first meet her, with `{ all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] }`. Its two replies are [choices](/docs/plugins/messages#replydef), and one adds 5 to her friendship.
 
 ### Feeds, and an effect worked out in code
 
-`town.ts`, `data.feed`, has Ava's and Sam's posts. They appear from days 1 and 2 (`when: day({ gte: 1 })`, with the calendar's day counting from 0).
+`story/ava.ts` and `story/sam.ts`, `data.feed`, have Ava's and Sam's posts. They appear from days 1 and 2 (`when: day({ gte: 1 })`, with the calendar's day counting from 0).
 
-The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` effect is a [custom effect](/docs/reference/custom#effects) in `src/content/custom.ts`. It takes the newest photo, posts it with the feed plugin's `postTo`, rolls the likes with [`roll`](/docs/reference/random#roll) from the save's seed, and has Ava `react`. It returns plain effects, including plugin effects, so the same save always gets the same likes.
+The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` effect is a [custom effect](/docs/reference/custom#effects) in `src/rules.ts`. It takes the newest photo, posts it with the feed plugin's `postTo`, rolls the likes with [`roll`](/docs/reference/random#roll) from the save's seed, and has Ava `react`. It returns plain effects, including plugin effects, so the same save always gets the same likes.
 
 ### Resets each turn
 
@@ -284,7 +285,7 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### Stats
 
-`town.ts`, `stats`. There are four [declared stats](/docs/reference/stats):
+`world/stats.ts`, `stats`. There are four [declared stats](/docs/reference/stats):
 
 - `friendship`, which each character keeps (see above)
 - `coins` and `energy`, which are `spendable`, with a `format` and a `lacking` line, and pay for activities through `cost`
@@ -296,7 +297,7 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### Cheats and the supporter code
 
-`town.ts`, `data.cheats` and `data.unlocks`, and `cheats()` and `unlocks()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). "+20 coins" is free for everyone. "Full energy", in the Supporters group, is refused with `For supporters.` until the [unlock](/docs/plugins/unlocks) `supporter` is recorded. The sidebar's Cheats button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded` checks that a cheat works during moving day's lock and passes no time.
+`world/cheats.ts`, `data.cheats` and `data.unlocks`, and `cheats()` and `unlocks()` in `src/game.ts`. The town has two [cheats](/docs/plugins/cheats). "+20 coins" is free for everyone. "Full energy", in the Supporters group, is refused with `For supporters.` until the [unlock](/docs/plugins/unlocks) `supporter` is recorded. The sidebar's Cheats button opens them. The test `offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded` checks that a cheat works during moving day's lock and passes no time.
 
 The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env` and public on purpose. Its content, `src/unlocks/supporter.ts`, is one more of the café's storylets, "The back room". `ifloom build` encrypts it into the page, and `src/main.tsx` opens it with `unlockedPacks` once the player has the code. Enter the code on the settings page: the cheat opens at once, and "Restart to add it" reloads the page with the scene, which "Sit a while" at the café can then draw. The test `unlocks the supporter edition with the code in .env` plays that, and replays it exactly. [Supporter content and cheats](/docs/recipes/supporter-content) explains what this protects and what it doesn't.
 

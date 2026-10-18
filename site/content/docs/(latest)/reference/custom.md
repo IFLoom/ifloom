@@ -314,5 +314,5 @@ previewEffects(state, town, [{ kind: 'custom', name: 'tip', with: { by: 2 } }])
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/content/custom.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/custom.ts) has a value, `catName`, that the flat's prose prints as `{{v:catName}}`, and an effect, `postLatest`, which the `post` activity in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) runs as `{ custom: 'postLatest' }`.
-- The Corner Café: `custom` in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) works out the week's `takings` and `wages` as effects, and `payroll` as a value the hiring scene prints.
+- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{v:catName}}`, and an effect, `postLatest`, which the `post` activity in [`examples/showcase/src/world/activities.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/activities.ts) runs as `{ custom: 'postLatest' }`.
+- The Corner Café: `custom` in [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) works out the week's `takings` and `wages` as effects, and `payroll` as a value the hiring scene prints.

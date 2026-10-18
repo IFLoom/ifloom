@@ -385,4 +385,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings, is in the newspaper's ads, whose `use` opens the board with only that job.
+Small Town: `weekend` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings ([`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts)), is in the newspaper's ads, whose `use` opens the board with only that job.

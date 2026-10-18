@@ -353,4 +353,4 @@ town · slots coat · starts with "raincoat", which the player does not start wi
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The coat and neck slots, the raincoat on at the start, and the clothes are in `data.wardrobe` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), and the café's body reads `wearing('raincoat')`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The coat and neck slots, the raincoat on at the start, and the clothes are in `data.wardrobe` in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts), and the café's body reads `wearing('raincoat')`.

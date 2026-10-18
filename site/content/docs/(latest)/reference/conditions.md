@@ -498,6 +498,6 @@ console.log(explainText(why))
 
 ## See it in an example
 
-- The Letter: in [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts), `{ chose: 'ch1.mat#open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
-- Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) uses `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
-- The Corner Café: the `review` trigger in [`examples/cafe/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/game.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.
+- The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ chose: 'ch1.mat#open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
+- Small Town: the packs in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) use `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
+- The Corner Café: the `review` trigger in [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

@@ -286,4 +286,4 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 
 ## See it in an example
 
-Small Town: `caffeinated` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.
+Small Town: `caffeinated` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.

@@ -130,5 +130,5 @@ The declaration with that id, or `undefined`.
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) asks for the cat's name with the `catName` input, offered only on moving day with `when: { phase: ['arrival'] }`.
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) asks for the reader's name with `playerName` until one is typed, and the first chapter's choices wait for it.
+- Small Town: [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) asks for the cat's name with the `catName` input, offered only on moving day with `when: { phase: ['arrival'] }`.
+- The Letter: [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts) asks for the reader's name with `playerName` until one is typed, and the first chapter's choices wait for it.

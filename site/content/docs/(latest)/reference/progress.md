@@ -186,4 +186,4 @@ In data, the same tests are the `{ seen }` and `{ since }` [conditions](/docs/re
 
 ## See it in an example
 
-Small Town: in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), Ava's `chat` choice pays once a turn with `once: { per: 'turn', reason: 'She has a queue.' }`, and the `friend` quest's `river` stage waits with `{ since: 'ava.hi', gte: 3 }`. No example calls the functions on this page, or keeps counters or ladders.
+Small Town: in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts), Ava's `chat` choice pays once a turn with `once: { per: 'turn', reason: 'She has a queue.' }`, and the `friend` quest's `river` stage waits with `{ since: 'ava.hi', gte: 3 }`. No example calls the functions on this page, or keeps counters or ladders.

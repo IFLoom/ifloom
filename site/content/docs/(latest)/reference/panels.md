@@ -160,4 +160,4 @@ The [content checker](/docs/reference/checks#in-an-effect) allows any panel name
 
 ## See it in an example
 
-The showcase's café counter, Ava's choice and the newspaper are in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts), and [`examples/showcase/tests/shell.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/shell.test.tsx) opens each in the React UI.
+The showcase's café counter is in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts), Ava's choice in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and the newspaper in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts), and [`examples/showcase/tests/shell.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/shell.test.tsx) opens each in the React UI.

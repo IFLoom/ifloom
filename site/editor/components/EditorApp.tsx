@@ -5,8 +5,8 @@
  * Projects live in IndexedDB, opened only once the page is in a browser.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { fileName, fromJson, toJson, toTypeScript } from '../lib/exporters'
-import { problemsOf } from '../lib/game'
+import { fileName, toJson, toTypeScript } from '../lib/exporters'
+import { importJson, problemsOf } from '../lib/game'
 import { duplicateProject, newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model'
 import { problemTarget, type Thing } from '../lib/references'
 import { hashOf, selectionFromHash } from '../lib/selection'
@@ -173,14 +173,7 @@ export function EditorApp() {
 
   const importer = useRef<HTMLInputElement>(null)
   async function importFile(file: File) {
-    const result = fromJson(await file.text())
-    if ('error' in result) {
-      setMessage(`${file.name}: ${result.error}`)
-      return
-    }
-    await switchTo(result.project)
-    const count = problemsOf(result.project).length
-    setMessage(count ? `Imported ${file.name}. checkGame found ${count} problem${count === 1 ? '' : 's'}: see Problems.` : `Imported ${file.name}.`)
+    setMessage(await importJson(file, switchTo))
   }
 
   if (!context || !project) return <div className="p-8 text-sm text-fd-muted-foreground">Opening the editor…</div>

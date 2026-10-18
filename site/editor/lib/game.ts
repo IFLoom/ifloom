@@ -3,7 +3,7 @@
  * intro scene and the plugins. The problems list and the preview both use it.
  */
 import { loadGame, type Loaded, type Plugin, type Problem } from '@ifloom/engine'
-import { exportPack } from './exporters.ts'
+import { exportPack, fromJson } from './exporters.ts'
 import type { Project } from './model.ts'
 import { makePlugins } from './plugins.ts'
 
@@ -28,4 +28,21 @@ export function problemsOf(project: Project): Problem[] {
   const built = buildGame(project)
   if ('error' in built) return [{ pack: 'preview', where: 'plugins', what: built.error }]
   return built.problems
+}
+
+/**
+ * Import a JSON file as a new project and keep it with `keep`. It answers
+ * what to tell the player, and never throws: a file that can't be read, a pack
+ * that won't open and a draft the browser won't keep each end as a message.
+ */
+export async function importJson(file: Pick<File, 'name' | 'text'>, keep: (project: Project) => Promise<void>): Promise<string> {
+  try {
+    const result = fromJson(await file.text())
+    if ('error' in result) return `${file.name}: ${result.error}`
+    await keep(result.project)
+    const count = problemsOf(result.project).length
+    return count ? `Imported ${file.name}. checkGame found ${count} problem${count === 1 ? '' : 's'}: see Problems.` : `Imported ${file.name}.`
+  } catch (error) {
+    return `${file.name} couldn't be imported: ${error instanceof Error ? error.message : String(error)}`
+  }
 }

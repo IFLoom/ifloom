@@ -172,6 +172,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- In the editor, a JSON import that fails while reading the file or keeping the new project now says why in the message bar, instead of doing nothing.
 - In the React UI with `keys` on, Escape is left to the page again when there's no menu on screen, instead of being swallowed. `startKeys`'s `escape` can return `false` to let the key through the same way.
 - On a phone, the React UI no longer leaves a gap between the side column and the scene. The page's rows now start at the top instead of stretching to fill the window.
 - The terminal preset's status line of notices no longer covers the top of the page. It's now the first row of the page and pushes everything else down, so the scene title, the notice strip and a minigame stay in view. On wide screens it sticks to the top as you scroll.

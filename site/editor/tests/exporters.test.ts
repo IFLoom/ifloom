@@ -5,7 +5,7 @@ import ts from 'typescript'
 import { SCHEMA, checkGame } from '@ifloom/engine'
 import { fromJson, toJson, toTypeScript, exportPack } from '../lib/exporters.ts'
 import { constName, formatTs, Raw } from '../lib/format.ts'
-import { buildGame, problemsOf } from '../lib/game.ts'
+import { buildGame, importJson, problemsOf } from '../lib/game.ts'
 import { newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model.ts'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -113,6 +113,33 @@ describe('JSON', () => {
   ])('refuses %s', (text, why) => {
     const result = fromJson(text)
     expect('error' in result && result.error).toMatch(why)
+  })
+})
+
+describe('importing a file', () => {
+  const file = (text: string | Error) => ({
+    name: 'market.json',
+    text: () => (text instanceof Error ? Promise.reject(text) : Promise.resolve(text)),
+  })
+  const kept: Project[] = []
+  const keep = (project: Project) => {
+    kept.push(project)
+    return Promise.resolve()
+  }
+
+  it('keeps the project and says so', async () => {
+    expect(await importJson(file(toJson(sampleProject())), keep)).toBe('Imported market.json.')
+    expect(kept.at(-1)?.pack.id).toBe(sampleProject().pack.id)
+  })
+
+  it('says what is wrong with a pack that will not open', async () => {
+    expect(await importJson(file('not json'), keep)).toMatch(/^market\.json: That isn't JSON/)
+  })
+
+  it('turns a file that cannot be read, or a draft that cannot be kept, into a message instead of a rejection', async () => {
+    expect(await importJson(file(new Error('The file was moved.')), keep)).toBe("market.json couldn't be imported: The file was moved.")
+    const full = () => Promise.reject(new DOMException('The quota has been exceeded.', 'QuotaExceededError'))
+    expect(await importJson(file(toJson(sampleProject())), full)).toBe("market.json couldn't be imported: The quota has been exceeded.")
   })
 })
 

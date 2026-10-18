@@ -25,6 +25,7 @@ type Game = {
   saveName?: (state: GameState) => string | null
   finished?: Condition
   startPhase?: string
+  saveable?: Blocked[]
   stats?: StatDef[]
   kinds?: KindDef[]
   entities?: EntityDef[]
@@ -62,6 +63,7 @@ type Game = {
 | `saveName` | The name a save is listed under, worked out from the state. See [`saveName`](#savename). |
 | `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
 | `startPhase` | The stage a new game opens in. Default `''`. See [`phase`](/docs/reference/state#phase). |
+| `saveable` | When saving is refused, and why. Saving is always allowed if left out. See [`saveable`](#saveable). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
 | `kinds` | The kinds of thing the game keeps several of, such as staff or dishes, each with stats of its own. See [Entities](/docs/reference/entities). |
@@ -108,6 +110,29 @@ const { game } = loadGame([letter], {
 ```
 
 The engine doesn't keep a player name of its own. The usual place is a `playerName` key in the [kv store](/docs/reference/state#kv), written by an [input](/docs/reference/inputs), and The Letter reads it from there. A name kept anywhere else works too, because `saveName` can read any part of the state.
+
+### saveable
+
+```ts
+saveable?: Blocked[]   // { when: Condition; reason: string; hide?: boolean }[]
+```
+
+When the player can't save, as [`Blocked`](/docs/reference/actions#blocked) entries: saving is refused while an entry's `when` holds, with its `reason`. The first entry that holds gives the reason. Leave it out and saving is always allowed.
+
+```ts
+const { game } = loadGame([letter], {
+  id: 'the-letter',
+  title: 'The Letter',
+  introScene: 'ch1.mat',
+  // No saving on the first page until the reader has typed a name.
+  saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
+})
+```
+
+- **The runner refuses.** [`runner.save`](/docs/reference/runner#the-runners-members) fails with the reason, and an [autosave](/docs/reference/runner#autosaveoptions) that's due is skipped. Loading is never refused.
+- **The view says so first.** [`view.saving`](/docs/reference/view#saving) is `{ allowed, reason, visible }`, so a UI can grey out its Save button with the reason, or leave it off while an entry with `hide` holds. The React UI's [saves menu](/docs/react/components#savesmenu) does this.
+- **It's the game's, not a pack's.** A pack can't set it.
+- The [content checker](/docs/reference/checks) checks each `when` as it checks any condition, and reports problems at `saveable`.
 
 **A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story passes only `introScene`, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
 

@@ -162,7 +162,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
 | `custom`, or a plugin's command in short | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
 
-`start`, `choose`, `leave`, `dismiss`, `tick`, `minigame` and `closePanel` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
+`start`, `newGame`, `choose`, `leave`, `dismiss`, `tick`, `minigame` and `closePanel` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
 ### Stat owners
 

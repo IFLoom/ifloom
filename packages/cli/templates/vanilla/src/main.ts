@@ -49,6 +49,7 @@ function draw(view: View): void {
       add(stats, 'dd', stat.text)
     }
   }
+  drawSaves(section(regions.sidebar, 'saves', 'Saves'), view)
 
   // While a minigame runs, the scene's title and beats are the minigame's.
   if (view.scene.title) add(story, 'h2', view.scene.title)
@@ -65,6 +66,33 @@ function draw(view: View): void {
 
   // A panel content opened, such as a shop's counter, over everything else.
   if (view.panel) drawPanel(view.panel)
+}
+
+/** What happened the last time the save slot was used. */
+let said = ''
+
+/** One save slot. While the game's `saveable` refuses saving, Save is greyed out with why (`hide` leaves it off). */
+function drawSaves(parent: HTMLElement, view: View): void {
+  const row = add(parent, 'div', '', 'saves')
+  const { allowed, reason, visible } = view.saving
+  if (visible) {
+    const save = add(row, 'button', 'Save')
+    save.disabled = !allowed
+    if (reason) save.title = reason
+    save.onclick = async () => {
+      const saved = await runner.save('quick')
+      said = saved.ok ? 'Saved.' : saved.reason
+      draw(runner.view())
+    }
+    if (reason) add(parent, 'p', reason, 'reason')
+  }
+  add(row, 'button', 'Load').onclick = async () => {
+    const loaded = await runner.load('quick')
+    said = loaded.ok ? 'Loaded.' : loaded.reason
+    // A load draws again by itself; a refusal doesn't.
+    if (!loaded.ok) draw(runner.view())
+  }
+  if (said) add(parent, 'p', said, 'said')
 }
 
 /** Buttons that send their commands, each greyed out with its reason when it can't be pressed. */

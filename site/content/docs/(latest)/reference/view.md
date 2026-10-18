@@ -310,6 +310,81 @@ The reveal beats in `scene.beats` time the prose within a scene. See [Transition
 
 Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
 
+### saving
+
+| Field | Type | Meaning |
+|---|---|---|
+| `saving` | `SavingView` | Whether the player can save now, by the game's [`saveable`](/docs/reference/game#saveable). |
+
+```ts
+type SavingView = {
+  allowed: boolean        // false while a `saveable` entry holds
+  reason: string | null   // that entry's reason, or null when allowed
+  visible: boolean        // false while that entry has `hide`
+}
+```
+
+Grey out your Save button with `reason` while `allowed` is `false`, and leave it off while `visible` is `false`. [`runner.save`](/docs/reference/runner#the-runners-members) refuses with the same reason, so the view only saves the player a press. Loading is always allowed.
+
+```ts tab="Plain JS" tab-group="framework"
+// src/main.ts, in the vanilla template: in draw(view), for the side column
+const { allowed, reason, visible } = view.saving
+if (visible) {
+  const save = add(sidebar, 'button', 'Save')
+  save.disabled = !allowed
+  if (reason) {
+    save.title = reason
+    add(sidebar, 'p', reason, 'reason')
+  }
+  save.onclick = () => runner.save('quick')
+}
+```
+
+```tsx tab="React" tab-group="framework"
+// The React UI's saves menu greys its Save buttons out for you. A button of your own:
+import { useGame } from '@ifloom/react'
+
+export function QuickSave() {
+  const { runner, view } = useGame()
+  const { allowed, reason, visible } = view.saving
+  if (!visible) return null
+  return (
+    <>
+      <button disabled={!allowed} title={reason ?? undefined} onClick={() => void runner.save('quick')}>Save</button>
+      {reason ? <p className="reason">{reason}</p> : null}
+    </>
+  )
+}
+```
+
+```vue tab="Vue" tab-group="framework"
+<!-- src/Layout.vue, in the vue template: in the side column -->
+<script setup lang="ts">
+import { runner, view } from './runner.ts'
+</script>
+
+<template>
+  <template v-if="view.saving.visible">
+    <button :disabled="!view.saving.allowed" :title="view.saving.reason ?? undefined" @click="runner.save('quick')">Save</button>
+    <p v-if="view.saving.reason" class="reason">{{ view.saving.reason }}</p>
+  </template>
+</template>
+```
+
+```svelte tab="Svelte" tab-group="framework"
+<!-- src/Layout.svelte, in the svelte template: in the side column -->
+<script lang="ts">
+  import { runner, view } from './runner.ts'
+</script>
+
+{#if $view.saving.visible}
+  <button disabled={!$view.saving.allowed} title={$view.saving.reason ?? undefined} onclick={() => runner.save('quick')}>Save</button>
+  {#if $view.saving.reason}<p class="reason">{$view.saving.reason}</p>{/if}
+{/if}
+```
+
+The vanilla, Vue and Svelte templates have a Save and a Load button like these in a Saves section of the side column.
+
 ### plugins
 
 | Field | Type | Meaning |

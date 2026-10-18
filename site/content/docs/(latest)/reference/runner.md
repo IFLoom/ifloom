@@ -186,6 +186,8 @@ type AutosaveOptions = {
 | `'scene'` | a command that opened, changed or closed the scene. |
 | `'turn'` | a command that started a new [turn](/docs/reference/state#turn), such as going to bed in a game with the [calendar](/docs/plugins/calendar). |
 
+While the game's [`saveable`](/docs/reference/game#saveable) refuses saving, an autosave that's due is skipped. The next one due after saving is allowed again writes the slot, so with `every: 'turn'` a game that blocks saving through its opening scenes autosaves first at the end of the first turn after them.
+
 A tick saves under `'scene'` or `'turn'` only when it changed the scene or the turn, such as a minigame's timer running out into a final state that ends the turn.
 
 `slot` defaults to `'auto'`. Autosaves are written in the background, in order. Await [`settled()`](#the-runners-members) before reading the slot back.
@@ -218,7 +220,7 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 | `game` | The game it plays. |
 | `state` | The current [`GameState`](/docs/reference/state). It's read-only, so change it through `apply`. |
 | `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state, with the plugins' views shown the profile. See [The view cache](#the-view-cache). |
-| `apply(command)` | Runs a command. Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. |
+| `apply(command)` | Runs a command. Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. A [`newGame`](/docs/reference/commands#newgame) command, on its own or sent by a choice, starts a new game as [`newGame()`](#newgame) does (see [Starting over from content](#starting-over-from-content)). |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `canUndo` / `canRedo` | Whether there's anything to undo or redo, for greying out the buttons. Always `false` with history off. |
 | `backlog()` | The backlog, oldest first. Empty with the backlog off. Undo takes it back to where it was. |
@@ -226,7 +228,7 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 | `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`. A save menu lists, exports and imports through it. |
 | `offers` | `{ undo: boolean, backlog: boolean }`: whether the game turned on `history` and `backlog`, so a menu shows only what's on offer. |
 | `played()` | Time played in milliseconds, counting from the time recorded in any save loaded. |
-| `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to a [`Result`](#result) with its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where. It fails with `This game keeps no saves.` without `saves`, and with `The game could not be saved.` when the driver throws, which `onSaveError` hears about too. |
+| `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to a [`Result`](#result) with its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where. It fails with `This game keeps no saves.` without `saves`, with the reason from the game's [`saveable`](/docs/reference/game#saveable) while that refuses saving (check [`view().saving`](/docs/reference/view#saving) first to grey the button out), and with `The game could not be saved.` when the driver throws, which `onSaveError` hears about too. |
 | `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to a [`Result`](#result) with the [`LoadedSave`](/docs/reference/saves#loadedsave). It fails with `Nothing is saved there.` for an empty slot, `This game keeps no saves.` without `saves`, or the reason the save can't be read. On a failure the runner is unchanged. |
 | `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/docs/reference/saves), exactly as `load` would. The [`LoadedSave`](/docs/reference/saves#loadedsave) has already been through `loadState`. |
 | `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, and the profile has been read for the settings and the plugins' views. |
@@ -321,6 +323,21 @@ newGameButton.onclick = () => runner.newGame()
 newGamePlusButton.onclick = () => runner.newGame({ carry: runner.state })
 ```
 
+### Starting over from content
+
+A choice can start a new game itself by sending the [`newGame`](/docs/reference/commands#newgame) command, such as an ending's "Play again":
+
+```ts
+{ id: 'again', command: { type: 'newGame' }, effects: [] }
+```
+
+`runner.apply` sees that the command asked for a new game and starts one in place, as `newGame()` would with no options: the player's play settings, a random seed, and a fresh history, backlog and log. The profile isn't touched, so settings, `core:finished`, unlocks and achievements carry on. The settings are the profile's as the runner last read them, because `apply` doesn't wait. A runner made by [`browserRunner`](#browserrunner) has read them before the first frame.
+
+- **The command log starts again.** The new log's `start` is the new game, and the `newGame` command isn't in either log. A bug report made after a restart replays the new run only.
+- **Nothing after it runs.** The choice's effects, triggers and plugins' hooks are for the run that ended, so they don't run, and the choice isn't counted in [`chosen`](/docs/reference/state#chosen).
+- **It's not New Game+.** Nothing is carried over. To carry over, give the player a button that calls `runner.newGame({ carry: runner.state })`.
+- **Undo can't go back.** The history is fresh, as after `newGame()`.
+
 ### finished
 
 If the game declares [`finished`](/docs/reference/state#new-game), the runner tests it after every command that takes. The first time it holds, and only if the profile has no `core:finished` yet, the runner writes `{ at }` there, the time from its `now` clock. It never writes it again, in this game or a later one. A runner without a profile doesn't record it.
@@ -357,6 +374,8 @@ if (played.ok) console.log(played.value.turn)
 const before = replay(oldGame, report)
 const after = replay(newGame, report)
 ```
+
+A [`newGame`](/docs/reference/commands#newgame) in a log replays as [`apply`](/docs/reference/commands#apply) runs it: a new game with a seed drawn from the state before, the same every time. A runner's own log never holds one, because a runner starts a new log at each new game.
 
 A command the game refuses is skipped, as it would have been at the time. Against a changed game, that means a log can go its own way after the first command that no longer takes. Compare the states to find where.
 

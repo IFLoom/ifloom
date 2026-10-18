@@ -132,6 +132,14 @@ export type CoreCommands = {
    * scene: a name asked for on a title screen, a difficulty.
    */
   start: { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
+  /**
+   * Start over: a new game in place of this one, as a game-over choice
+   * sends it. A runner starts it as `runner.newGame()` does, keeping the
+   * player's profile and settings. On its own, `apply` makes the new game
+   * from the state's play settings and a seed drawn from this one, and says
+   * so with `newGame: true`.
+   */
+  newGame: { type: 'newGame' }
   /** A plugin's command, by its full name: `{ type: 'custom', name: 'quests/track', with: { id: 'bakery' } }`. */
   custom: { type: 'custom'; name: string; with?: Record<string, unknown> }
 }

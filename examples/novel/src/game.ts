@@ -4,8 +4,9 @@
  * No plugins, no places, no characters, no clock. What it uses is what a
  * novel with light tracking needs: a name the player types, one stat, choices
  * the engine remembers on its own (`{ chose }`), a kv key counted up
- * (`{ kind: 'kv', by }`), a chapter as a turn, and a migration step for
- * saves from the game's first version.
+ * (`{ kind: 'kv', by }`), a chapter as a turn, a migration step for
+ * saves from the game's first version, no saving until the reader has typed
+ * a name, and endings that start the story over with `newGame`.
  */
 import { SCHEMA, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
 
@@ -65,8 +66,9 @@ export const letter: Pack = {
         { id: 'post', effects: [readIt, { kind: 'scene', scene: 'end.posted' }] },
       ],
     },
-    { id: 'end.kept', title: 'The end', body: [{ text: 'end.kept' }], choices: [] },
-    { id: 'end.posted', title: 'The end', body: [{ text: 'end.posted' }], choices: [] },
+    // Each ending offers the story again: `newGame` starts it over, keeping the reader's settings.
+    { id: 'end.kept', title: 'The end', body: [{ text: 'end.kept' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }] },
+    { id: 'end.posted', title: 'The end', body: [{ text: 'end.posted' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }] },
   ],
   prose: {
     'ch1.mat':
@@ -89,6 +91,8 @@ export const letter: Pack = {
     'ch3.door#post': 'Say you’ll send it on',
     'end.kept': 'She reads it on your doorstep and laughs, then cries a bit, then asks if you want a biscuit. You do.',
     'end.posted': 'You write the address she gives you on a fresh envelope. It goes in the postbox on the corner, and that is that.',
+    'end.kept#again': 'Read it again',
+    'end.posted#again': 'Read it again',
   },
 }
 
@@ -111,6 +115,8 @@ export function theLetter(): { game: Game; problems: string[] } {
     finished: { scene: ['end.kept', 'end.posted'] },
     // A New Game+ keeps only this: that the reader has been through it once.
     carryOver: { kv: ['readBefore'] },
+    // No saving on the first page until the reader has typed a name, so every save has one.
+    saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
     // Saves are listed under the name the reader typed.
     saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
   })

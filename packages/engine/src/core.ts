@@ -145,11 +145,33 @@ const effects: { [K in keyof CoreEffects]: EffectEntry<CoreEffects[K]> } = {
   },
 }
 
+/**
+ * Thrown by `newGame`'s run, from wherever it runs (on its own, or sent by a
+ * choice), and caught by `apply`, which makes the new game. Internal.
+ */
+export class StartOver extends Error {
+  constructor() {
+    super('newGame')
+    this.name = 'StartOver'
+  }
+}
+
 /** The core's commands. `start` is handled by `apply` before any of these are asked. */
 const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
   start: {
     whyNot: (_state, _command, game) => say(game, 'notSupported'),
     run: (state) => state,
+    references: none,
+  },
+  newGame: {
+    // Always offered: the game decides where, by the choices and buttons that send it.
+    whyNot: () => undefined,
+    // The run in play ends here, so nothing after it in a choice runs; `apply` starts the next.
+    run: () => {
+      throw new StartOver()
+    },
+    // No lock keeps a player in a run that's over.
+    ignoresLocks: () => true,
     references: none,
   },
   custom: {

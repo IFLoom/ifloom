@@ -42,6 +42,18 @@ body {
   cursor: pointer;
 }
 
+/* The save slot's buttons, and what the last save or load said. */
+.saves {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.said {
+  margin: 0.25rem 0 0;
+  color: #666;
+}
+
 .stats {
   display: grid;
   grid-template-columns: 1fr auto;

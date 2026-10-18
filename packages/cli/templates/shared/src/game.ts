@@ -25,7 +25,8 @@ const story: Pack = {
       title: 'Inside',
       // The engine remembers every choice, so a later scene can ask about one.
       body: [{ text: 'inside' }, { text: 'inside.knocked', when: { chose: 'start#knock' } }],
-      choices: [{ id: 'again', effects: [{ kind: 'scene', scene: 'start' }] }],
+      // An ending's way back: `newGame` starts the story over, keeping the player's settings.
+      choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }],
     },
   ],
   prose: {

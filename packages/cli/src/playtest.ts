@@ -165,7 +165,7 @@ export function explorer(): Policy {
   }
 }
 
-/** Play from `start` with `policy` until the turns are up, the policy stops, or the step limit is hit. */
+/** Play from `start` with `policy` until the turns are up, the policy stops, the game starts over, or the step limit is hit. */
 export function playtest(game: Game, start: GameState, policy: Policy = explorer(), options: PlaytestOptions = {}): Playtest {
   const turns = options.turns ?? 7
   const limit = options.steps ?? 2000
@@ -204,6 +204,11 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
       continue
     }
     refusedLast = false
+    // The game started over (a `newGame`, say from an ending's choice): the run played is done.
+    if (out.newGame) {
+      lines.push('  a new game: the playtest stops here')
+      break
+    }
     if (out.state.sceneId && out.state.sceneId !== state.sceneId) scenes.push(out.state.sceneId)
     if (out.state.turn !== state.turn) close(state.turn)
     state = out.state

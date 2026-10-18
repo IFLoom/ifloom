@@ -275,7 +275,7 @@ ifloom playtest --turns 30 --out playtest/month.txt
 ifloom playtest src/release.ts                   # another module
 ```
 
-Loads the module as `check` does, then plays the game from its start for `--turns` [turns](/docs/reference/state) (default 7). At each step a [policy](#policy) looks at the screen and picks the next command. In Small Town a turn is a day, so seven turns is a week.
+Loads the module as `check` does, then plays the game from its start for `--turns` [turns](/docs/reference/state) (default 7). At each step a [policy](#policy) looks at the screen and picks the next command. In Small Town a turn is a day, so seven turns is a week. A game that starts over with [`newGame`](/docs/reference/commands#newgame) ends the playtest there.
 
 It writes two files:
 
@@ -674,6 +674,7 @@ What `ifloom playtest` runs. It plays `game` from `start`, asking `policy` (defa
 - the policy returning `null`
 - `steps` commands, refused ones included, as a guard against a policy going round in circles
 - the same command refused on two steps in a row
+- a [`newGame`](/docs/reference/commands#newgame) command, such as an ending's "Play again" choice, since the run it was playing is over
 
 ```ts
 import { expect, it } from 'vitest'

@@ -76,7 +76,7 @@ export const PART_KEYS = [
   'minigame', 'minigame-title', 'minigame-state', 'minigame-timer', 'minigame-inputs', 'minigame-input',
   // The menu and its dialogs
   'menu', 'menu-button', 'dialog', 'dialog-overlay', 'dialog-title', 'dialog-close',
-  'saves', 'saves-actions', 'save-slot', 'save-name', 'save-details', 'saves-message', 'saves-empty', 'file-button',
+  'saves', 'saves-actions', 'save-slot', 'save-name', 'save-details', 'saves-message', 'saves-blocked', 'saves-empty', 'file-button',
   'backlog', 'backlog-entry', 'backlog-title', 'backlog-choice', 'backlog-empty',
   'mods', 'mod', 'mod-name', 'mod-version', 'mod-state', 'mod-text', 'mod-problem', 'mods-message', 'mods-empty', 'mods-restart', 'mods-changed',
   // Plugins' cards

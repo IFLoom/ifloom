@@ -627,6 +627,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `save-name` | The slot's name. |
 | `save-details` | When it was saved. |
 | `saves-message` | Why a load or an import failed, or which packs and plugins a save was missing. |
+| `saves-blocked` | Why saving is refused now, under the greyed-out Save buttons. |
 | `saves-empty` | The line shown when there are no saves. |
 | `file-button` | The label that opens a file picker, in the saves menu and the mod manager. |
 | `backlog` | The backlog's scrolling list. |

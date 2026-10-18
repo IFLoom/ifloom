@@ -48,6 +48,16 @@ if (!loaded.ok) showMessage(loaded.reason) // 'Nothing is saved there.'
 
 Both are async and answer with a [`Result`](/docs/reference/runner#result) rather than throwing. A load that works replaces the game in play and calls your listener, so the screen redraws by itself. A save made by an older version of your game still loads: the engine and your game's [migrations](/docs/reference/saves#the-games-own-migrations) carry it forward, or `reason` says why they can't.
 
+### When saving isn't allowed
+
+A game can refuse saving for a while, such as until the player has typed a name, with [`saveable`](/docs/reference/game#saveable). `runner.save` then fails with the game's reason, and autosave waits. [`view.saving`](/docs/reference/view#saving) says so before the player presses anything, so grey the button out with it:
+
+```ts
+const { allowed, reason } = runner.view().saving
+saveButton.disabled = !allowed
+saveButton.title = reason ?? ''
+```
+
 ## A load screen
 
 [`runner.saves`](/docs/reference/runner#the-runners-members) is the store the runner was made with. Its `list()` gives every save, newest first, with the details a load screen shows. A save that can't be read is still listed, as `{ slot, broken }`, so the player can delete it.

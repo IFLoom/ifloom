@@ -8,6 +8,8 @@ import { saves } from '../../src/save.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
+import { apply } from '../../src/reduce.ts'
+import { checkGame } from '../../src/check.ts'
 
 describe('the runner', () => {
   it('runs commands and tells listeners, with nothing else on by default', () => {
@@ -195,5 +197,89 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     })
     expect(await broken.save('1')).toEqual({ ok: false, reason: 'The game could not be saved.' })
     expect(heard).toEqual(new Error('full'))
+  })
+})
+
+describe('the game’s say in saving', () => {
+  // No saving in Rosa's scene: the reason is the player's to read.
+  const policed = (): Game => ({
+    ...fixture(),
+    saveable: [
+      { when: { scene: ['rosa.hello'] }, reason: 'Finish talking to Rosa first.' },
+      { when: { kv: 'at', is: 'shop' }, reason: 'Not in the shop.', hide: true },
+    ],
+  })
+
+  it('refuses a save with the reason, and shows it in the view first', async () => {
+    const game = policed()
+    const store = saves(game, memoryDriver())
+    const runner = createRunner(game, begin(game, { sceneId: 'rosa.hello' }), { saves: store })
+    expect(runner.view().saving).toEqual({ allowed: false, reason: 'Finish talking to Rosa first.', visible: true })
+    expect(await runner.save('one')).toEqual({ ok: false, reason: 'Finish talking to Rosa first.' })
+    expect(await store.read('one')).toEqual({ ok: true, value: null })
+    runner.apply({ type: 'choose', id: 'bye' })
+    expect(runner.view().saving).toEqual({ allowed: true, reason: null, visible: true })
+    expect((await runner.save('one')).ok).toBe(true)
+    runner.apply({ type: 'activity', id: 'go-shop' })
+    expect(runner.view().saving).toEqual({ allowed: false, reason: 'Not in the shop.', visible: false })
+  })
+
+  it('skips an autosave while saving is refused, and saves at the next one due', async () => {
+    const game = policed()
+    const store = saves(game, memoryDriver())
+    const runner = createRunner(game, begin(game), { saves: store, autosave: { every: 'command' } })
+    runner.apply({ type: 'scene', id: 'rosa.hello' })
+    await runner.settled()
+    expect(await store.read('auto')).toEqual({ ok: true, value: null })
+    runner.apply({ type: 'choose', id: 'bye' })
+    await runner.settled()
+    const auto = await store.read('auto')
+    expect(auto.ok && auto.value?.state.sceneId).toBe(null)
+  })
+
+  it('reports a condition in saveable that names what the game does not have', () => {
+    const game: Game = { ...fixture(), saveable: [{ when: { seen: 'nowhere' }, reason: 'No.' }] }
+    expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toContain('saveable: gated on unknown scene "nowhere"')
+  })
+})
+
+describe('starting over from content', () => {
+  // The end: a choice that starts a new game, after an effect that would otherwise apply.
+  const ending = (): Game => {
+    const game: Game = {
+      ...fixture(),
+      scenes: [
+        ...fixture().scenes,
+        { id: 'end', body: [{ text: 'end' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [{ kind: 'kv', key: 'after', to: true }] }] },
+      ],
+    }
+    game.prose = proseStore(game, { end: 'The end.', 'end#again': 'Play again' })
+    return game
+  }
+
+  it('starts a new game in a runner, from a choice or on its own, keeping the settings and a fresh log', async () => {
+    const game = ending()
+    const runner = createRunner(game, begin(game, { sceneId: 'end', turn: 9 }), { history: true, backlog: true })
+    expect(runner.view().scene.choices[0]).toMatchObject({ label: 'Play again', disabled: undefined })
+    const started = runner.apply({ type: 'choose', id: 'again' })
+    expect(started.ok).toBe(true)
+    expect(runner.state).toMatchObject({ turn: 0, sceneId: 'start' })
+    expect(runner.state.kv.after).toBeUndefined()
+    expect(runner.log()).toEqual({ game: game.id, start: runner.state, commands: [] })
+    expect(runner.canUndo).toBe(false)
+    expect(runner.backlog()).toEqual([])
+    runner.apply({ type: 'activity', id: 'read' })
+    expect(runner.apply({ type: 'newGame' }).ok).toBe(true)
+    expect(runner.state.stats.intelligence).toBe(5)
+  })
+
+  it('makes the new game itself in apply, the same each time, and says so', () => {
+    const game = ending()
+    const at = begin(game, { sceneId: 'end', turn: 9 })
+    const first = apply(at, game, { type: 'choose', id: 'again' })
+    expect(first).toMatchObject({ ok: true, newGame: true, state: { turn: 0, sceneId: 'start' } })
+    expect(first.state.seen).toEqual({ start: 1 })
+    expect(apply(at, game, { type: 'choose', id: 'again' }).state).toEqual(first.state)
+    expect(first.state.seed).not.toBe(at.seed)
   })
 })

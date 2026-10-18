@@ -622,8 +622,9 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 | Where someone is, `$ava.location` set by a schedule widget | A [cast](/docs/plugins/cast#where-people-are) character's `schedule`. |
 | Warnings in StoryCaption, such as "Rent due tomorrow" | Blocks with a `when` in each place's body. See [Lines on every place](/docs/plugins/places#lines-on-every-place). |
 | One-off feedback, "You got paid" | A [notice](/docs/reference/notices) from the `notify` effect. |
-| `<<goto "Game Over">>` | A scene with no choices, a phase and a lock. See [Endings](/docs/reference/scenes#endings). |
-| `Engine.restart()` | The player's menu: **Title screen**, then **New game**. Content can't restart the game. |
+| `<<goto "Game Over">>` | A scene with a "Play again" choice, or no choices, a phase and a lock. See [Endings](/docs/reference/scenes#endings). |
+| `Engine.restart()` | A choice that sends [`{ type: 'newGame' }`](/docs/reference/commands#newgame). The runner starts a new game and keeps the player's settings. |
+| `Config.saves.isAllowed` | The game's [`saveable`](/docs/reference/game#saveable): `blocked` entries, refused while `when` holds, with the reason on the greyed-out Save button. |
 
 The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.onTurn` works the same way: each `apply` runs on the state the one before it left, so the rent can come out of the wages just paid. What the day held before the night's resets is in `before`. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
 

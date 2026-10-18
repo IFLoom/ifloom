@@ -57,6 +57,8 @@ import type {
   MinigameView,
   MediaState,
   OpenPanel,
+  SavingView,
+  Blocked,
   MigrationTools,
   Notice,
   NoticesView,
@@ -262,6 +264,7 @@ export type FrozenCommand =
    * scene: a name asked for on a title screen, a difficulty.
    */
   | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
+  | { type: 'newGame' }
   /** Anything the pack declares as an ActivityDef: paperwork, a jog, a drink. */
   | { type: 'activity'; id: string }
   | { type: 'scene'; id: string }
@@ -379,6 +382,8 @@ export type FrozenGame = {
   finished?: FrozenCondition
   /** The stretch a new game opens in. */
   startPhase?: string
+  /** When saving is refused, and why. Always allowed if left out. */
+  saveable?: Blocked[]
   /** Every stat the game keeps. The engine has none of its own. */
   stats?: StatDef[]
   /** The kinds of thing the game keeps several of, each with its own stats. */
@@ -539,4 +544,6 @@ export type FrozenView = {
   transition: TransitionView
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
+  /** Whether the player can save now. */
+  saving: SavingView
 }

@@ -411,12 +411,26 @@ const custom: Custom = {
 
 ### Endings
 
-A scene with `choices: []` is an ending. Nothing moves the story on from it: the view has no choices, and while a scene is open no actions, exits or people are offered either. What the player does next is the UI's business.
+An ending is a scene the story doesn't move on from. Give it a choice that starts over with the [`newGame`](/docs/reference/commands#newgame) command, and every UI draws it like any other choice:
+
+```ts
+{
+  id: 'end.posted',
+  title: 'The end',
+  body: [{ text: 'end.posted' }],
+  // prose: 'end.posted#again': 'Read it again'
+  choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }],
+}
+```
+
+In a [runner](/docs/reference/runner#starting-over-from-content), the choice starts a new game with the player's settings and a fresh command log, and keeps the profile. The Letter's two endings work this way.
+
+A scene with `choices: []` is an ending too, with nothing on it to press. While a scene is open no actions, exits or people are offered either, so what the player does next is the UI's business:
 
 - **In the React UI** with [`pages`](/docs/react#pages) on, the player's menu has Title screen, which leads to New game, Continue and Load. Without `pages`, they can still load a save from the menu. Say so in the ending's words if the player might not know.
 - **In a UI of your own,** draw a "Start again" button when `view.scene.id` is set and the scene has no choices, and call [`runner.newGame()`](/docs/reference/runner#newgame) from it.
 
-There's no command that starts a new game from content, so a "Start again" choice inside the story isn't possible. For a game over that the rest of the game should respect too, set a [phase](/docs/reference/state#phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
+For a game over that the rest of the game should respect too, set a [phase](/docs/reference/state#phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
 
 ```ts
 // in the effects that end the game

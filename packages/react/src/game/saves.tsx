@@ -1,5 +1,5 @@
 import { nextSlot } from '@ifloom/browser'
-import type { BrokenSave, LoadedSave, Result, SaveMeta } from '@ifloom/engine'
+import type { BrokenSave, LoadedSave, Result, SaveMeta, SavingView } from '@ifloom/engine'
 import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -10,6 +10,8 @@ import { useWords } from './words.ts'
 export type SavesState = {
   /** False when the runner was made without `saves`: there is nothing to list. */
   available: boolean
+  /** Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. */
+  saving: SavingView
   /** Every save that can be read, newest first. */
   slots: SaveMeta[]
   /** Saves that are there but can't be read, with why. They can only be deleted. */
@@ -72,6 +74,7 @@ export function useSaves(): SavesState {
 
   return {
     available: Boolean(store),
+    saving: view.saving,
     slots,
     broken,
     refresh,
@@ -132,6 +135,7 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
   const newButton = usePart('button', buttonVariants({ size: 'sm' }))
   const fileButton = usePart('file-button', 'inline-flex cursor-pointer items-center rounded-md border px-3 text-xs')
   const said = usePart('saves-message', 'text-destructive')
+  const blocked = usePart('saves-blocked', 'text-muted-foreground')
   const slot = usePart('save-slot', 'flex flex-wrap items-center gap-2 rounded-lg border p-2')
   const name = usePart('save-name', 'font-medium')
   const details = usePart('save-details', 'text-xs text-muted-foreground')
@@ -154,17 +158,24 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
     ...(saves.missingPlugins.length ? [words('missingPlugins', { plugins: saves.missingPlugins.join(', ') })] : []),
   ]
 
+  // While the game refuses saving, Save is greyed out with its reason, or left off with `hide`.
+  const { allowed, reason, visible } = saves.saving
+  const why = allowed ? undefined : (reason ?? undefined)
+
   return (
-    <section {...section} data-saves>
+    <section {...section} data-saves data-saving={allowed ? undefined : 'blocked'}>
       <div {...actions}>
-        <button {...newButton} onClick={() => void saves.save()}>
-          {words('saveNew')}
-        </button>
+        {visible ? (
+          <button {...newButton} disabled={!allowed} title={why} onClick={() => void saves.save()}>
+            {words('saveNew')}
+          </button>
+        ) : null}
         <label {...fileButton}>
           {words('importSave')}
           <input type="file" accept="application/json,.json" className="sr-only" onChange={importFile} />
         </label>
       </div>
+      {why && visible ? <p {...blocked}>{why}</p> : null}
       {notes.length ? <p {...said}>{notes.join(' ')}</p> : null}
       {saves.slots.length || saves.broken.length ? (
         <ul className="flex flex-col gap-2">
@@ -177,9 +188,11 @@ function SavesMenuImpl({ className, onLoaded }: { className?: string; onLoaded?:
               <button {...loadButton} onClick={() => void load(meta.slot)}>
                 {words('load')}
               </button>
-              <button {...outlineButton} onClick={() => void saves.overwrite(meta.slot)}>
-                {words('save')}
-              </button>
+              {visible ? (
+                <button {...outlineButton} disabled={!allowed} title={why} onClick={() => void saves.overwrite(meta.slot)}>
+                  {words('save')}
+                </button>
+              ) : null}
               <button {...outlineButton} onClick={() => void saves.exportFile(meta.slot)}>
                 {words('exportSave')}
               </button>
@@ -221,7 +234,8 @@ export function BrokenSlot({ save, onRemove }: { save: BrokenSave; onRemove: (sl
 
 /**
  * The save and load menu: every slot newest first, to load, overwrite, delete
- * or export as a file; a save that can't be read, to delete; a new slot; and importing a file a player kept. Needs
+ * or export as a file; a save that can't be read, to delete; a new slot; and importing a file a player kept.
+ * While the game's `saveable` refuses saving, the Save buttons are greyed out with the reason. Needs
  * the runner made with `saves`. Says plainly when a save was made with packs or
  * plugins this game doesn't have. `useSaves` is the same without the look.
  */

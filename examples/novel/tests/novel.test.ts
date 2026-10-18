@@ -77,6 +77,17 @@ describe('The Letter', () => {
     expect(view(again, game).scene.body).toContain('stood here before')
   })
 
+  it('saves only once the reader has a name, and starts over from an ending', () => {
+    const fresh = startingState(game)
+    expect(view(fresh, game).saving).toEqual({ allowed: false, reason: 'Type your name first.', visible: true })
+    const named = read(fresh, { type: 'input', id: 'playerName', to: 'Robin' })
+    expect(view(named, game).saving.allowed).toBe(true)
+    const ended = read(named, choose('shelf'), choose('deny'), choose('post'))
+    const again = apply(ended, game, choose('again'))
+    expect(again).toMatchObject({ ok: true, newGame: true, state: { sceneId: 'ch1.mat', turn: 0 } })
+    expect(again.state.kv.playerName).toBeUndefined()
+  })
+
   it('reads a save from version 1, when the count was called lies', () => {
     // A version-1 save of a reader at the door after two lies, as that build wrote it: no game version
     // in it at all, or, for a save that recorded one, version 1.

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { runner, view } from './runner.ts'
 import Beat from './Beat.vue'
 import InputField from './InputField.vue'
@@ -7,6 +8,17 @@ import Minigame from './Minigame.vue'
 // The page, in three parts: the side column, the story, and the bottom of the
 // story with the buttons for where you are. Move, add or remove anything; a
 // section is a <details>, so it folds without any code.
+
+// One save slot, and what happened the last time it was used.
+const said = ref('')
+async function save() {
+  const saved = await runner.save('quick')
+  said.value = saved.ok ? 'Saved.' : saved.reason
+}
+async function load() {
+  const loaded = await runner.load('quick')
+  said.value = loaded.ok ? 'Loaded.' : loaded.reason
+}
 </script>
 
 <template>
@@ -23,6 +35,16 @@ import Minigame from './Minigame.vue'
             <dd>{{ stat.text }}</dd>
           </template>
         </dl>
+      </details>
+      <!-- Saving. While the game's `saveable` refuses it, Save is greyed out with why (`hide` leaves it off). -->
+      <details class="section" open>
+        <summary>Saves</summary>
+        <div class="saves">
+          <button v-if="view.saving.visible" :disabled="!view.saving.allowed" :title="view.saving.reason ?? undefined" @click="save">Save</button>
+          <button @click="load">Load</button>
+        </div>
+        <p v-if="view.saving.visible && view.saving.reason" class="reason">{{ view.saving.reason }}</p>
+        <p v-if="said" class="said">{{ said }}</p>
       </details>
     </aside>
 

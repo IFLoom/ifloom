@@ -1166,6 +1166,8 @@ The save and load screen, over [`runner.saves`](/docs/reference/runner#the-runne
 - **Import a save file** (`ui.importSave`) reads a `.json` file through [`importText`](/docs/reference/saves#saves) and plays on from it with [`runner.restore`](/docs/reference/runner#the-runners-members).
 - Every slot is listed newest first (`data-save-slot`), with its name and when it was saved. Each has buttons to **Load** it (`ui.load`), **Save** over it (`ui.save`), **Export** it (`ui.exportSave`) and **Delete** it (`ui.remove`). Export downloads a file named `<game>-<slot>.json`. A save that can't be read is listed last, marked `data-broken`, as `ui.brokenSave` with the reason and a **Delete** button. With no slots, it shows `ui.noSaves`.
 
+While the game's [`saveable`](/docs/reference/game#saveable) refuses saving, **Save in a new slot** and each slot's **Save** are greyed out, with the reason under the buttons (part `saves-blocked`) and on hover. The menu then carries `data-saving="blocked"`. An entry with `hide` leaves the Save buttons off instead. Loading, exporting and importing still work. The reason comes from [`view.saving`](/docs/reference/view#saving).
+
 If a save can't be read, the menu shows why. A save made with packs or plugins this game doesn't have still loads, with a line naming them (`ui.missingPacks`, `ui.missingPlugins`). `onLoaded` is called after a load or an import. The menu carries `data-saves`. It draws nothing when the runner has no `saves`.
 
 ```tsx
@@ -1187,7 +1189,7 @@ function SavesDialog() {
 
 **Gotcha.** Saving over a slot replaces its name with the default one. That's [`meta.when`](/docs/reference/saves#savemeta) (the day, period and place in the plugins' words), or `Turn N` when no plugin says.
 
-Replaceable as `SavesMenu` in [`components`](#components). Parts: `saves`, `saves-actions`, `save-slot` (with `data-save-slot`), `save-name`, `save-details`, `saves-message`, `saves-empty`, `file-button` and `button`.
+Replaceable as `SavesMenu` in [`components`](#components). Parts: `saves`, `saves-actions`, `save-slot` (with `data-save-slot`), `save-name`, `save-details`, `saves-message`, `saves-blocked`, `saves-empty`, `file-button` and `button`.
 
 ### useSaves
 
@@ -1196,6 +1198,7 @@ function useSaves(): SavesState
 
 type SavesState = {
   available: boolean
+  saving: SavingView
   slots: SaveMeta[]
   broken: BrokenSave[]
   refresh: () => Promise<void>
@@ -1216,6 +1219,7 @@ The [`SavesMenu`](#savesmenu) without its look: the slots, and everything the me
 | Field | What it is |
 |---|---|
 | `available` | `false` when the runner was made without `saves`. Everything else then does nothing. |
+| `saving` | Whether the game lets the player save now, and why not, as [`view.saving`](/docs/reference/view#saving) has it. While `allowed` is `false`, `save` and `overwrite` are refused with the reason, which `message` then holds. |
 | `slots` | Every save that can be read, newest first, as [`SaveMeta`](/docs/reference/saves#savemeta). Read again whenever the view changes. |
 | `broken` | Saves that are there but can't be read, as [`BrokenSave`](/docs/reference/saves#savelisting)s with why. They can only be deleted, with `remove`. |
 | `refresh` | Reads the slots again. |
@@ -1233,8 +1237,12 @@ import { useSaves } from '@ifloom/react'
 
 function QuickSave() {
   const saves = useSaves()
-  if (!saves.available) return null
-  return <button onClick={() => void saves.save('Before the park')}>Quick save</button>
+  if (!saves.available || !saves.saving.visible) return null
+  return (
+    <button disabled={!saves.saving.allowed} title={saves.saving.reason ?? undefined} onClick={() => void saves.save('Before the park')}>
+      Quick save
+    </button>
+  )
 }
 ```
 

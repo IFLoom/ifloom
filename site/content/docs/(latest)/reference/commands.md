@@ -14,7 +14,7 @@ import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
 function apply(state: GameState | null, game: Game, command: CommandRef): Applied
 
 type Applied =
-  | { ok: true; state: GameState }
+  | { ok: true; state: GameState; newGame?: true }
   | { ok: false; state: GameState; reason: string }
 ```
 
@@ -35,7 +35,7 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 
 ### What happens, in order
 
-1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run.
+1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run. A [`newGame`](#newgame) command, on its own or sent by a choice, also stops at the point it runs, and `apply` returns a new game with `newGame: true`.
 2. **Can it be done?** [`whyNot`](/docs/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/docs/reference/locks) first, then a plugin's [guard](/docs/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
 3. **A warning?** If [`warningOf`](/docs/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
 4. **Run it.** If [`rules.commands`](/docs/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
@@ -125,6 +125,7 @@ The engine keeps no player name. A name is a key in the kv store like any other,
 ```ts
 type Command =
   | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
+  | { type: 'newGame' }
   | { type: 'activity'; id: string }
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
@@ -150,6 +151,29 @@ While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `m
 ### start
 
 Starts a new game, with this seed and these kv keys if given. It's never refused and isn't checked against locks. See [`startingState`](#startingstate).
+
+### newGame
+
+```ts
+{ type: 'newGame' }
+```
+
+Starts over: a new game in place of the one in play. Content sends it from a choice, such as an ending's "Play again":
+
+```ts
+{ id: 'again', command: { type: 'newGame' }, effects: [] }
+```
+
+It's never refused, and no lock or plugin guard stops it. Where it's offered is up to you, by the choices and buttons that send it.
+
+Who makes the new game depends on who runs the command:
+
+- **In a [runner](/docs/reference/runner#starting-over-from-content)**, `runner.apply` starts it as [`runner.newGame()`](/docs/reference/runner#newgame) does: the player's play settings from the profile, a random seed, and a fresh history, backlog and command log. The profile is kept. This is what a game in a browser does.
+- **In `apply` on its own**, such as in a test or a playtest, the result is `{ ok: true, newGame: true, state }`, where `state` is [`startingState`](#startingstate) with the play [settings](/docs/reference/state#settings) of the run that ended and a seed drawn from its seed and turn. The same state and command always give the same new game, so a [replay](/docs/reference/runner#replay) is exact.
+
+The engine can't make the runner's new game itself, because the player's profile and a fresh seed come from outside the state. So `apply` makes the plain one and says so with `newGame: true`, and the runner, which has the profile, makes its own in its place.
+
+When a choice sends it, the run ends there: the choice isn't counted in [`chosen`](/docs/reference/state#chosen), its effects don't run, and no trigger or plugin hook runs after it. Nothing is carried over, so it isn't a New Game+. [`ifloom playtest`](/docs/cli#playtest) stops when it meets one.
 
 ### activity
 

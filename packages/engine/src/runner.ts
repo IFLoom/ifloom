@@ -7,6 +7,7 @@ import { pluginContext, pluginView } from './plugin.ts'
 import { profile as makeProfile, type Profile } from './profile.ts'
 import { settingAffects, settingById, settingRefusal, settingValue } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
+import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
 import { say } from './strings.ts'
@@ -42,7 +43,7 @@ export type BacklogOptions = {
 export type AutosaveOptions = {
   /** The slot it writes to. `'auto'` if left out. */
   slot?: string
-  /** After every command, or only when the scene or the turn changes. */
+  /** After every command, or only when the scene or the turn changes. Skipped while the game's `saveable` refuses saving. */
   every: 'command' | 'scene' | 'turn'
 }
 
@@ -127,7 +128,9 @@ export interface Runner {
    * Run a command: the new state, or why it was refused (the state is then
    * left as it was). A `tick` is logged like any command, but undo steps
    * over it, it adds nothing to the backlog, and it autosaves only when it
-   * changes the scene or the turn (for those policies).
+   * changes the scene or the turn (for those policies). A `newGame`, sent
+   * on its own or by a choice, starts a new game as `newGame()` does,
+   * with the profile's play settings as last read.
    */
   apply(ref: CommandRef): Result<GameState>
   /** Whether `undo` would do anything. */
@@ -148,7 +151,11 @@ export interface Runner {
   readonly saves: Saves | undefined
   /** Whether the game turned on undo, and the backlog: what a menu should offer. */
   readonly offers: { undo: boolean; backlog: boolean }
-  /** Save to a slot now: what the save says about itself, or why it wasn't written (no `saves`, or the driver failed). */
+  /**
+   * Save to a slot now: what the save says about itself, or why it wasn't
+   * written (no `saves`, the game's `saveable` refuses it now, or the driver
+   * failed). `view().saving` says beforehand whether it would be refused.
+   */
   save(slot: string, name?: string): Promise<Result<SaveMeta>>
   /**
    * Put a save in play that did not come from a slot, one the player
@@ -291,7 +298,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
 
   /** After any change of state — a command, an undo, a load — save if the policy says so. `ticking` for a `tick`. */
   function changed(before: GameState, ticking = false): void {
-    if (autosaveDue(before, state, ticking) && options.saves) {
+    // While the game's `saveable` refuses, autosave waits for the next change that's due.
+    if (autosaveDue(before, state, ticking) && options.saves && savingIn(state, game, holds).allowed) {
       const slot = options.autosave?.slot ?? 'auto'
       const toSave = state
       const saves = options.saves
@@ -376,6 +384,18 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     changed(before)
   }
 
+  /**
+   * A new game in place: the player's play settings (the profile's as last
+   * read, or the game in play's without one), a random seed unless given,
+   * and fresh history, backlog and log.
+   */
+  function startOver(start: StartOptions): GameState {
+    const settings = start.settings ?? (options.profile ? storedSettings : state.settings)
+    const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
+    begin(fresh, 0)
+    return fresh
+  }
+
   /** Put a loaded save in play: fresh history, backlog and log, and its time played. */
   function restore(loaded: LoadedSave): void {
     begin(loaded.state, loaded.meta.played)
@@ -400,6 +420,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     const fromView = () => (from ??= viewOf(before))
     const result = apply(before, game, command)
     if (!result.ok) return fail(result.reason)
+    // A `newGame`, sent or chosen: this runner starts it as `newGame()` does, with a fresh log.
+    if (result.newGame) return ok(startOver({}))
     const prior = snapshot()
     state = result.state
     log = { ...log, commands: [...log.commands, command] }
@@ -497,6 +519,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     offers: { undo: Boolean(history), backlog: backlogLimit > 0 },
     async save(slot: string, name?: string): Promise<Result<SaveMeta>> {
       if (!options.saves) return fail(say(game, 'noSaves'))
+      const policy = savingIn(state, game, holds)
+      if (!policy.allowed) return fail(policy.reason!)
       const saves = options.saves
       const toSave = state
       await saving
@@ -538,12 +562,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       return ok(to)
     },
     async newGame(start: StartOptions = {}): Promise<GameState> {
-      // The player's play settings: the profile's, once read, or the game in play's without one.
       await remembering
-      const settings = start.settings ?? (options.profile ? storedSettings : state.settings)
-      const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
-      begin(fresh, 0)
-      return fresh
+      return startOver(start)
     },
     subscribe(listener: (state: GameState) => void): () => void {
       listeners.add(listener)

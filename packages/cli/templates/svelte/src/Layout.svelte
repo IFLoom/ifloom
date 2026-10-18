@@ -7,6 +7,17 @@
   // The page, in three parts: the side column, the story, and the bottom of the
   // story with the buttons for where you are. Move, add or remove anything; a
   // section is a <details>, so it folds without any code.
+
+  // One save slot, and what happened the last time it was used.
+  let said = $state('')
+  async function save() {
+    const saved = await runner.save('quick')
+    said = saved.ok ? 'Saved.' : saved.reason
+  }
+  async function load() {
+    const loaded = await runner.load('quick')
+    said = loaded.ok ? 'Loaded.' : loaded.reason
+  }
 </script>
 
 <div class="page">
@@ -22,6 +33,18 @@
         </dl>
       </details>
     {/if}
+    <!-- Saving. While the game's `saveable` refuses it, Save is greyed out with why (`hide` leaves it off). -->
+    <details class="section" open>
+      <summary>Saves</summary>
+      <div class="saves">
+        {#if $view.saving.visible}
+          <button disabled={!$view.saving.allowed} title={$view.saving.reason ?? undefined} onclick={save}>Save</button>
+        {/if}
+        <button onclick={load}>Load</button>
+      </div>
+      {#if $view.saving.visible && $view.saving.reason}<p class="reason">{$view.saving.reason}</p>{/if}
+      {#if said}<p class="said">{said}</p>{/if}
+    </details>
   </aside>
 
   <main class="story">

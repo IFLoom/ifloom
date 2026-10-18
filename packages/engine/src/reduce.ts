@@ -6,7 +6,8 @@ import { screen } from './screen.ts'
 import { runCommandHooks } from './plugin.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 import { startingState } from './intake.ts'
-import { commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
+import { StartOver, commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
+import { roll } from './random.ts'
 import { afterSteps, screenSteps } from './features/registry.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -19,7 +20,7 @@ export function clamp(n: number, min = 0, max = 100): number {
  * one it was sent to, untouched, and `reason` says why.
  */
 export type Applied =
-  | { ok: true; state: GameState; reason?: never }
+  | { ok: true; state: GameState; reason?: never; newGame?: true }
   | { ok: false; state: GameState; reason: string }
 
 class Refused extends Error {
@@ -92,8 +93,19 @@ export function apply(
     if (error instanceof Refused) {
       return { state: current, ok: false, reason: error.detail }
     }
+    if (error instanceof StartOver) return { state: startedOver(current, game), ok: true, newGame: true }
     throw error
   }
+}
+
+/**
+ * The new game a `newGame` command starts when `apply` runs it on its own:
+ * the play settings of the run that ended, and a seed drawn from its seed and
+ * turn, so the same log always starts the same game. A runner starts its own
+ * instead, with the player's settings and a fresh seed.
+ */
+function startedOver(current: GameState, game: Game): GameState {
+  return startingState(game, { seed: roll(2 ** 31, 'newGame', current.seed, current.turn), settings: current.settings })
 }
 
 export function dispatch(

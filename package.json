@@ -18,7 +18,9 @@
     "new": "ifloom new",
     "test": "vp run test:all",
     "typecheck": "vp run typecheck:all",
-    "lint": "oxlint",
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "check": "vp check",
     "docs:dev": "npm run dev -w @ifloom/site",
     "docs:build": "npm run docs:links && npm run build -w @ifloom/site",
     "docs:links": "npm run links -w @ifloom/site"
@@ -35,7 +37,6 @@
     "fake-indexeddb": "^6.2.5",
     "github-slugger": "^2.0.0",
     "jsdom": "^30.1.1",
-    "oxlint": "^1.75.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",

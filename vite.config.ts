@@ -60,4 +60,17 @@ tasks['test:all'] = { command: 'vitest run', cache: { input: [{ auto: true }, '!
 
 export default defineConfig({
   run: { tasks },
+  // Oxfmt, for the code only: the docs' prose, JSON fixtures, stylesheets and HTML fixtures keep their hand-made shape.
+  fmt: {
+    printWidth: 160,
+    semi: false,
+    singleQuote: true,
+    // Keep keys quoted as written: the plugin template's '__id__' is replaced by a name that may hold a dash.
+    quoteProps: 'preserve',
+    sortPackageJson: false,
+    ignorePatterns: ['**/*.md', '**/*.mdx', '**/*.json', '**/*.css', '**/*.html', '**/*.yml', '**/*.yaml', 'site/content/**'],
+  },
+  lint: {
+    plugins: ['typescript', 'oxc'],
+  },
 })

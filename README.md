@@ -9,7 +9,7 @@ to a single `index.html` that opens straight from disk or uploads to itch.io as
 it is.
 
 > **Pre-release.** Nothing here is a stable API yet, and the packages aren't on
-> npm. See the [roadmap](ROADMAP.md).
+> npm. See [API status](https://ifloom.dev/docs/guide/status).
 
 **Docs:** in [`site/content/docs/`](site/content/docs); run `npm run docs:dev` to
 read them in a browser. They're published at https://ifloom.dev/docs, with
@@ -172,8 +172,7 @@ npm run lint
 npm run docs:build   # checks the docs' links, then builds the site
 ```
 
-[AGENTS.md](AGENTS.md) has the conventions the code follows, and
-[ROADMAP.md](ROADMAP.md) has what comes next and the known problems.
+[AGENTS.md](AGENTS.md) has the conventions the code follows.
 
 ## Licence
 

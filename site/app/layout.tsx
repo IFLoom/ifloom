@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: 'An interactive fiction engine for TypeScript: linear novels, management games and life sims on one core.',
   metadataBase: new URL('https://ifloom.dev'),
   // Public but not indexed until the engine is published.
-  // TODO(launch): remove, with app/robots.ts and the X-Robots-Tag header in next.config.mjs. See ROADMAP "Release readiness".
+  // TODO(launch): remove, with app/robots.ts and the X-Robots-Tag header in next.config.mjs.
   robots: { index: false, follow: false },
 }
 

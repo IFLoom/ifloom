@@ -14,3 +14,18 @@ games/
 
 # npm run pack: the packages as tarballs, for a game beside the checkout
 /packs/
+
+# Private to the maintainers: agent notes and skills, decision records,
+# design notes and the roadmap
+.claude/
+adr/
+design/
+ROADMAP.md
+
+# Tools and editors
+.vercel/
+coverage/
+.idea/
+.vscode/
+*.tsbuildinfo
+.vite/

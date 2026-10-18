@@ -47,10 +47,6 @@ type ViewBase = {
 /** Everything a UI draws for one state: the core's fields and each feature's. */
 export type View = Flat<ViewBase & FeatureView>
 
-
-
-
-
 /**
  * Everything the UI draws, assembled from the state in one pass.
  *
@@ -79,7 +75,3 @@ function viewOf(shown: Screen, state: GameState, game: Game): View {
   // Each feature's piece: the stats, the settings, the audio.
   return Object.assign(base, ...viewPieces.map((piece) => piece(state, game, shown, cx))) as View
 }
-
-
-
-

@@ -32,9 +32,28 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
         data: {
           cheats: {
             cheats: [
-              { id: 'coins', label: '+20 coins', description: 'A little help.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }], ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}) },
-              { id: 'map', label: 'Show the map', once: true, group: 'Story', effects: [{ kind: 'kv', key: 'map', to: true }], ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}) },
-              { id: 'gold', label: '+500 coins', group: 'Supporters', blocked: [{ when: supporter, reason: 'For supporters.', hide }], effects: [{ kind: 'stat', stat: 'coins', by: 500 }] },
+              {
+                id: 'coins',
+                label: '+20 coins',
+                description: 'A little help.',
+                effects: [{ kind: 'stat', stat: 'coins', by: 20 }],
+                ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),
+              },
+              {
+                id: 'map',
+                label: 'Show the map',
+                once: true,
+                group: 'Story',
+                effects: [{ kind: 'kv', key: 'map', to: true }],
+                ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),
+              },
+              {
+                id: 'gold',
+                label: '+500 coins',
+                group: 'Supporters',
+                blocked: [{ when: supporter, reason: 'For supporters.', hide }],
+                effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+              },
             ],
           },
         },
@@ -107,7 +126,14 @@ describe('the cheat panel', () => {
   })
 
   it('goes when its part is left out of the layout', () => {
-    play({ layout: storyOf(<><SceneStage /><GameMenu /></>) })
+    play({
+      layout: storyOf(
+        <>
+          <SceneStage />
+          <GameMenu />
+        </>,
+      ),
+    })
     expect(part('cheats-button')).toBeNull()
   })
 

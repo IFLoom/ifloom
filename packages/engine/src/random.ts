@@ -38,11 +38,7 @@ export function pick<T>(items: readonly T[], ...parts: (string | number)[]): T {
 }
 
 /** True `numerator` times in `outOf`, drawn from these parts. */
-export function chance(
-  numerator: number,
-  outOf: number,
-  ...parts: (string | number)[]
-): boolean {
+export function chance(numerator: number, outOf: number, ...parts: (string | number)[]): boolean {
   return roll(outOf, ...parts) < numerator
 }
 
@@ -55,11 +51,7 @@ export function chance(
  * With every weight a whole number the draw is `hash % total`, so a list where
  * every weight is 1 draws exactly what `pick` would from the same parts.
  */
-export function weighted<T>(
-  items: readonly T[],
-  weightOf: (item: T) => number | undefined,
-  ...parts: (string | number)[]
-): T | undefined {
+export function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]): T | undefined {
   const weights = items.map((item) => {
     const weight = weightOf(item) ?? 1
     return Number.isFinite(weight) && weight > 0 ? weight : 0

@@ -11,11 +11,7 @@ import type { Command, Effect, GameState } from './types.ts'
 export type { Lock, LockTarget } from './features/locks.ts'
 
 /** The first lock that stops this command right now, if any. */
-export function lockOn(
-  state: GameState,
-  game: Game,
-  command: Command,
-): locks.Lock | undefined {
+export function lockOn(state: GameState, game: Game, command: Command): locks.Lock | undefined {
   return lockIn(state, game, command, () => effectsOf(state, game, command))
 }
 
@@ -23,21 +19,12 @@ export function lockOn(
  * `lockOn`, with the command's effects from `effects`, asked only when a lock
  * names an effect: how `whyNot` shares one rendering of the open scene.
  */
-export function lockIn(
-  state: GameState,
-  game: Game,
-  command: Command,
-  effects: () => readonly Effect[],
-): locks.Lock | undefined {
+export function lockIn(state: GameState, game: Game, command: Command, effects: () => readonly Effect[]): locks.Lock | undefined {
   return locks.lockIn(state, game, command, effects, featureContext())
 }
 
 /** Why this command is stopped right now, or undefined if nothing stops it. */
-export function lockedBy(
-  state: GameState,
-  game: Game,
-  command: Command,
-): string | undefined {
+export function lockedBy(state: GameState, game: Game, command: Command): string | undefined {
   return lockOn(state, game, command)?.reason
 }
 

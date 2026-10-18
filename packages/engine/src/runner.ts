@@ -214,11 +214,9 @@ export interface Runner {
  */
 export function createRunner(game: Game, start: GameState, options: RunnerOptions = {}): Runner {
   const now = options.now ?? Date.now
-  const history: HistoryOptions | null =
-    options.history === true ? {} : options.history ? options.history : null
+  const history: HistoryOptions | null = options.history === true ? {} : options.history ? options.history : null
   const depth = history?.depth ?? 50
-  const backlogLimit =
-    options.backlog === true ? 200 : options.backlog ? (options.backlog.limit ?? 200) : 0
+  const backlogLimit = options.backlog === true ? 200 : options.backlog ? (options.backlog.limit ?? 200) : 0
 
   let state = start
   let log: CommandLog = { game: game.id, start, commands: [] }
@@ -348,7 +346,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     const value: Record<string, KvValue> = {}
     for (const setting of game.settings ?? []) {
       value[setting.id] =
-        settingAffects(setting) === 'play' ? (state.settings?.[setting.id] ?? setting.default) : (settingValue(game, storedSettings, setting.id) ?? setting.default)
+        settingAffects(setting) === 'play'
+          ? (state.settings?.[setting.id] ?? setting.default)
+          : (settingValue(game, storedSettings, setting.id) ?? setting.default)
     }
     builtSettings = { state: state.settings, stored: storedSettings, value: Object.freeze(value) }
     return builtSettings.value
@@ -571,7 +571,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     },
   }
 }
-
 
 /** A deep, frozen copy of a JSON value from the profile, so a view can read it and never change what is stored. */
 function frozenCopy(value: unknown): unknown {

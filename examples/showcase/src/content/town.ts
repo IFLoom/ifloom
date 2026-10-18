@@ -44,7 +44,9 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
 }))
 
 /** Ava's text has come and hasn't been read. */
-const textWaiting: Condition = { all: [{ custom: 'messages/arrived', with: { message: 'ava.text' } }, { not: { custom: 'messages/read', with: { message: 'ava.text' } } }] }
+const textWaiting: Condition = {
+  all: [{ custom: 'messages/arrived', with: { message: 'ava.text' } }, { not: { custom: 'messages/read', with: { message: 'ava.text' } } }],
+}
 
 const locations: LocationDef[] = [
   {
@@ -149,7 +151,14 @@ const quickFeet: MinigameDef = {
     pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
     tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
+    won: {
+      final: {
+        effects: [
+          { kind: 'stat', stat: 'coins', by: 5 },
+          { kind: 'scene', scene: 'park.arrows-won' },
+        ],
+      },
+    },
     lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
   },
 }
@@ -262,7 +271,12 @@ export const town: Pack = {
     { id: 'work', cost: { stats: { energy: 30 } }, blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
     { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
-    { id: 'buyScarf', cost: { stats: { coins: 8 } }, blocked: [onlyAt(['high-street']), { when: { item: 'scarf' }, reason: 'You have one.' }], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
+    {
+      id: 'buyScarf',
+      cost: { stats: { coins: 8 } },
+      blocked: [onlyAt(['high-street']), { when: { item: 'scarf' }, reason: 'You have one.' }],
+      effects: [{ kind: 'item', item: 'scarf', by: 1 }],
+    },
     // The camera: one photo of each person, if they're here to take.
     ...(['ava', 'sam'] as const).map((who) => ({
       id: `photo-${who}`,
@@ -293,20 +307,32 @@ export const town: Pack = {
       transition: { in: 'fade', out: 'fade', ms: 500 },
       body: [{ text: 'intro' }, { text: 'intro.tonight', reveal: { delay: 1200 } }],
       // The flat slides up into view once the boxes are in.
-      choices: [{ id: 'unpack', effects: [{ kind: 'scene', scene: null }, { kind: 'phase', to: 'open' }, { kind: 'transition', to: 'slide-up', ms: 400 }] }],
+      choices: [
+        {
+          id: 'unpack',
+          effects: [
+            { kind: 'scene', scene: null },
+            { kind: 'phase', to: 'open' },
+            { kind: 'transition', to: 'slide-up', ms: 400 },
+          ],
+        },
+      ],
     },
     {
       id: 'ava.hi',
       title: 'Ava',
       speaker: 'ava',
-      body: [
-        { text: 'ava.hi' },
-        { variants: 'ava.smalltalk' },
-        { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
-      ],
+      body: [{ text: 'ava.hi' }, { variants: 'ava.smalltalk' }, { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } }],
       choices: [
         { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
-        { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', scene: null }] },
+        {
+          id: 'compliment',
+          when: { stat: 'charm', gte: 3 },
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 10, of: person('ava') },
+            { kind: 'scene', scene: null },
+          ],
+        },
         // She points you at the job board by the till: the scene closes and the board opens over the room.
         { id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] },
         { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
@@ -317,7 +343,15 @@ export const town: Pack = {
       title: 'Ava, on the phone',
       speaker: 'ava',
       body: [{ text: 'ava.call' }],
-      choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by: 3, of: person('ava') }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'bye',
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 3, of: person('ava') },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
     {
       id: 'ava.river',
@@ -325,7 +359,15 @@ export const town: Pack = {
       transition: { in: 'fade', out: 'fade', ms: 600 },
       speaker: 'ava',
       body: [{ text: 'ava.river' }],
-      choices: [{ id: 'stay', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'stay',
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 5, of: person('ava') },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
     // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
     {
@@ -343,7 +385,15 @@ export const town: Pack = {
       drawnFrom: ['cafe'],
       when: { not: { seen: 'cafe.crossword' } },
       body: [{ text: 'cafe.crossword' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'charm', by: 1 }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'leave',
+          effects: [
+            { kind: 'stat', stat: 'charm', by: 1 },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
     {
       id: 'cafe.break',
@@ -353,7 +403,15 @@ export const town: Pack = {
       weight: 2,
       when: here('ava'),
       body: [{ text: 'cafe.break' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'leave',
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 2, of: person('ava') },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
     // When none of them can happen.
     {
@@ -380,7 +438,15 @@ export const town: Pack = {
       title: 'Sam',
       speaker: 'sam',
       body: [{ text: 'sam.hi' }],
-      choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('sam') }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'bye',
+          effects: [
+            { kind: 'stat', stat: 'friendship', by: 5, of: person('sam') },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
   ],
   minigames: [quickFeet],
@@ -492,7 +558,14 @@ export const town: Pack = {
       pools: [
         { id: 'first-names', values: ['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit'] },
         // Most come alone; plenty bring a dog; now and then, a pushchair.
-        { id: 'company', values: [{ value: 'alone', weight: 5 }, { value: 'a dog', weight: 4 }, { value: 'a pushchair', weight: 1 }] },
+        {
+          id: 'company',
+          values: [
+            { value: 'alone', weight: 5 },
+            { value: 'a dog', weight: 4 },
+            { value: 'a pushchair', weight: 1 },
+          ],
+        },
       ],
       templates: [{ id: 'visitor', of: 'visitor', name: { pool: 'first-names' }, kv: { with: { pool: 'company' }, laps: { between: [1, 3] } } }],
     },
@@ -552,12 +625,20 @@ export const town: Pack = {
       ],
     },
     statuses: {
-      statuses: [{ id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] }],
+      statuses: [
+        { id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] },
+      ],
     },
     wardrobe: {
       // You arrive in your raincoat.
-      slots: [{ id: 'coat', label: 'Coat', start: 'raincoat' }, { id: 'neck', label: 'Neck' }],
-      clothes: [{ id: 'raincoat', slot: 'coat' }, { id: 'scarf', slot: 'neck' }],
+      slots: [
+        { id: 'coat', label: 'Coat', start: 'raincoat' },
+        { id: 'neck', label: 'Neck' },
+      ],
+      clothes: [
+        { id: 'raincoat', slot: 'coat' },
+        { id: 'scarf', slot: 'neck' },
+      ],
     },
     messages: {
       messages: [

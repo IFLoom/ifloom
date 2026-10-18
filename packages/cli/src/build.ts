@@ -51,11 +51,13 @@ function inlinedAssets(html: string): Set<string> {
 
 /** Every file in a built folder, with its size, largest first. */
 export function buildFiles(dir: string, at = ''): { file: string; bytes: number }[] {
-  return readdirSync(join(dir, at)).flatMap((name) => {
-    const path = join(at, name)
-    const full = join(dir, path)
-    return statSync(full).isDirectory() ? buildFiles(dir, path) : [{ file: path, bytes: statSync(full).size }]
-  }).sort((a, b) => b.bytes - a.bytes)
+  return readdirSync(join(dir, at))
+    .flatMap((name) => {
+      const path = join(at, name)
+      const full = join(dir, path)
+      return statSync(full).isDirectory() ? buildFiles(dir, path) : [{ file: path, bytes: statSync(full).size }]
+    })
+    .sort((a, b) => b.bytes - a.bytes)
 }
 
 /** The pictures' types, for their data URLs. Only pictures go in the page. */

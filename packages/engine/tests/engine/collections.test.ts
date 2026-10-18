@@ -13,7 +13,10 @@ function withGallery(): Game {
     collections: [{ id: 'gallery', name: 'Photos', max: 2 }],
     activities: [
       ...(fixture().activities ?? []),
-      { id: 'snapHouse', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg' } }] },
+      {
+        id: 'snapHouse',
+        effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg' } }],
+      },
       { id: 'snapStreet', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'street', title: 'The street' } }] },
       { id: 'snapShop', effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'shop', title: 'The shop', data: { blurry: true } } }] },
       { id: 'deleteHouse', effects: [{ kind: 'discard', collection: 'gallery', entry: 'house' }] },
@@ -29,9 +32,7 @@ describe('collections', () => {
   it('keep what is collected, with the turn, and show it with its words filled in', () => {
     const game = withGallery()
     const state = apply(begin(game, { kv: { playerFirst: 'Sam' } }), game, act('snapHouse')).state
-    expect(state.collections.gallery).toEqual([
-      { id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg', turn: 2 },
-    ])
+    expect(state.collections.gallery).toEqual([{ id: 'house', title: 'The house', text: 'photo.house', image: 'art/house.jpg', turn: 2 }])
     expect(view(state, game).collections.gallery).toEqual({
       name: 'Photos',
       entries: [{ id: 'house', title: 'The house', text: 'The front door, Sam’s bike against it.', image: 'art/house.jpg', data: {}, turn: 2 }],
@@ -65,9 +66,25 @@ describe('collections', () => {
   })
 
   it('are checked: an effect into a collection the game does not declare is reported', () => {
-    const game = { ...withGallery(), items: [{ id: 'camera', name: 'camera', desc: '', start: 1, use: { label: 'Snap', effects: [{ kind: 'collect' as const, collection: 'album', entry: { id: 'x' } }] } }] }
+    const game = {
+      ...withGallery(),
+      items: [
+        {
+          id: 'camera',
+          name: 'camera',
+          desc: '',
+          start: 1,
+          use: { label: 'Snap', effects: [{ kind: 'collect' as const, collection: 'album', entry: { id: 'x' } }] },
+        },
+      ],
+    }
     expect(problemsOf(game)).toContain('item camera: unknown collection "album"')
-    const notes = { ...withGallery(), items: [{ id: 'pen', name: 'pen', desc: '', start: 1, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } }] }
+    const notes = {
+      ...withGallery(),
+      items: [
+        { id: 'pen', name: 'pen', desc: '', start: 1, use: { label: 'Write', effects: [{ kind: 'notify' as const, title: 'Wrote', text: 'note.unwritten' }] } },
+      ],
+    }
     expect(problemsOf(notes)).toContain('item pen: no prose for "note.unwritten"')
   })
 })

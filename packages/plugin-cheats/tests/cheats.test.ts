@@ -24,8 +24,20 @@ const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 const defs: CheatDef[] = [
   { id: 'coins', label: '+20 coins', description: 'A little help.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
   { id: 'map', label: 'Show the map', group: 'Story', once: true, effects: [{ kind: 'kv', key: 'map', to: true }] },
-  { id: 'gold', label: '+500 coins', group: 'Supporters', blocked: [{ when: supporter, reason: 'For supporters.' }], effects: [{ kind: 'stat', stat: 'coins', by: 500 }] },
-  { id: 'secret', label: 'Skip to the end', group: 'Supporters', blocked: [{ when: supporter, reason: 'For supporters.', hide: true }], effects: [{ kind: 'scene', scene: 'ending' }] },
+  {
+    id: 'gold',
+    label: '+500 coins',
+    group: 'Supporters',
+    blocked: [{ when: supporter, reason: 'For supporters.' }],
+    effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+  },
+  {
+    id: 'secret',
+    label: 'Skip to the end',
+    group: 'Supporters',
+    blocked: [{ when: supporter, reason: 'For supporters.', hide: true }],
+    effects: [{ kind: 'scene', scene: 'ending' }],
+  },
 ]
 
 /**
@@ -99,7 +111,11 @@ describe('cheats', () => {
     expect(holds(state, cheatUsed('map'), g)).toBe(false)
     state = run(state, g, runCheat('map'))
     expect(shown(g, state).used).toBe(3)
-    expect(shown(g, state).cheats.map((cheat) => [cheat.id, cheat.used])).toEqual([['coins', 2], ['map', 1], ['gold', 0]])
+    expect(shown(g, state).cheats.map((cheat) => [cheat.id, cheat.used])).toEqual([
+      ['coins', 2],
+      ['map', 1],
+      ['gold', 0],
+    ])
     expect(holds(fresh(g), cheatUsed(), g)).toBe(false)
   })
 
@@ -108,7 +124,11 @@ describe('cheats', () => {
     const before = shown(g, fresh(g))
     expect(before.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold'])
     expect(before.cheats[0]).toMatchObject({ label: '+20 coins', description: 'A little help.', group: null, once: false, used: 0 })
-    expect(before.cheats[0].button).toMatchObject({ id: 'cheat.coins', label: '+20 coins', command: { type: 'custom', name: 'cheats/use', with: { id: 'coins' } } })
+    expect(before.cheats[0].button).toMatchObject({
+      id: 'cheat.coins',
+      label: '+20 coins',
+      command: { type: 'custom', name: 'cheats/use', with: { id: 'coins' } },
+    })
     expect(before.cheats[0].button.disabled).toBeUndefined()
     expect(before.cheats[0].button.price).toBeUndefined()
     expect(before.cheats[1]).toMatchObject({ group: 'Story', once: true })

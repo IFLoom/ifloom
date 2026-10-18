@@ -174,7 +174,6 @@ export type FrozenCondition =
   /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`. */
   | PluginCall
 
-
 /** The whole save. Each field's new-game value and load default are declared in `FIELDS`, intake.ts. */
 export type FrozenGameState = {
   version: typeof SAVE_VERSION

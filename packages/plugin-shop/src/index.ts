@@ -442,9 +442,13 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
 }
 
 /** A command: buy `count` (1 if left out) of an item from a vendor. */
-export const buy = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/buy': count === undefined ? { vendor, item } : { vendor, item, count } })
+export const buy = (vendor: string, item: string, count?: number): CommandRef => ({
+  'shop/buy': count === undefined ? { vendor, item } : { vendor, item, count },
+})
 /** A command: sell `count` (1 if left out) of an item back to a vendor. */
-export const sell = (vendor: string, item: string, count?: number): CommandRef => ({ 'shop/sell': count === undefined ? { vendor, item } : { vendor, item, count } })
+export const sell = (vendor: string, item: string, count?: number): CommandRef => ({
+  'shop/sell': count === undefined ? { vendor, item } : { vendor, item, count },
+})
 /**
  * An effect: open the vendor's counter in the `shop` panel, from a place's
  * action, a person's, an item's `use`, an app or a choice. The UI draws it;

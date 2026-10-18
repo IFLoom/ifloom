@@ -36,12 +36,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
       {input.kind === 'choice' ? (
         <div {...options}>
           {input.options.map((option) => (
-            <button
-              key={String(option.value)}
-              type="button"
-              {...(input.value === option.value ? picked : unpicked)}
-              onClick={() => enter(option.value)}
-            >
+            <button key={String(option.value)} type="button" {...(input.value === option.value ? picked : unpicked)} onClick={() => enter(option.value)}>
               {option.label}
             </button>
           ))}

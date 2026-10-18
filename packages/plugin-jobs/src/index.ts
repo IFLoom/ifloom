@@ -464,7 +464,10 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
           refs: [
             ...(job.at ?? []).map((location): Reference => ({ entry: location, plugin: 'places', list: 'locations', noun: 'location' })),
             ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] })),
-            { within: 'shift', refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }] },
+            {
+              within: 'shift',
+              refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }],
+            },
             ...(job.ranks ?? []).map((rank): Reference => ({
               within: `rank ${rank.id}`,
               refs: [...Object.keys(rank.pay ?? {}).map((stat): Reference => ({ stat, writes: true })), { when: rank.requires?.when }],
@@ -476,7 +479,7 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
     // The `jobs` panel shows the job board, or only the jobs `with.job` lists.
     panelProblems: (panel, args, _game, tools) => {
       if (panel !== PANEL || args.job === undefined) return []
-      if (!Array.isArray(args.job) || !args.job.every((job) => typeof job === 'string')) return ['the jobs panel\'s job is a list of job ids']
+      if (!Array.isArray(args.job) || !args.job.every((job) => typeof job === 'string')) return ["the jobs panel's job is a list of job ids"]
       return tools.problems(args.job.map((job: string): Reference => ({ entry: job, plugin: ID, list: 'jobs', noun: 'job' })))
     },
     check: (game) => {
@@ -504,7 +507,8 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
  * if given (a newspaper's ads, a café's notice), as `with: { job: [...] }`. From a place's action, a
  * person's, an item's `use`, an app or a choice; the UI draws it.
  */
-export const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { kind: 'panel', panel: PANEL } : { kind: 'panel', panel: PANEL, with: { job: jobs } })
+export const openJobs = (jobs?: string[]): Effect =>
+  jobs === undefined ? { kind: 'panel', panel: PANEL } : { kind: 'panel', panel: PANEL, with: { job: jobs } }
 /** A command: apply for the job. */
 export const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
 /** A command: work a shift at the job. */

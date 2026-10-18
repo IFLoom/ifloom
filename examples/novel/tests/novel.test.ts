@@ -102,7 +102,19 @@ describe('The Letter', () => {
     const file = (saved: object) =>
       JSON.stringify({
         ifloom: 1,
-        meta: { game: game.id, slot: '1', name: 'Chapter three', savedAt: 1, played: 0, turn: 2, when: null, player: 'Robin', packs: ['letter'], plugins: {}, version: SAVE_VERSION },
+        meta: {
+          game: game.id,
+          slot: '1',
+          name: 'Chapter three',
+          savedAt: 1,
+          played: 0,
+          turn: 2,
+          when: null,
+          player: 'Robin',
+          packs: ['letter'],
+          plugins: {},
+          version: SAVE_VERSION,
+        },
         state: saved,
       })
     const store = saves(game, memoryDriver())

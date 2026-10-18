@@ -14,10 +14,7 @@ const ava: CharacterDef = {
   // At the counter in the day; by the river otherwise.
   schedule: [{ location: 'cafe', when: period('morning', 'afternoon') }],
   // By the river, once she is a friend, a different conversation.
-  talk: [
-    { scene: 'ava.river', when: { all: [isAt('ava', 'park'), { stat: 'friendship', of: '$', gte: 25 }] }, label: 'Walk with Ava' },
-    { scene: 'ava.hi' },
-  ],
+  talk: [{ scene: 'ava.river', when: { all: [isAt('ava', 'park'), { stat: 'friendship', of: '$', gte: 25 }] }, label: 'Walk with Ava' }, { scene: 'ava.hi' }],
   call: { scene: 'ava.call', when: period('evening', 'night'), busy: 'She’s at the counter. Try this evening.' },
   storyline: 'ava',
 }
@@ -31,7 +28,16 @@ const town: Pack = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }],
   scenes: ['ava.hi', 'ava.river', 'ava.call', 'sam.hi'].map(scene),
-  prose: { 'ava.hi': 'Hi.', 'ava.river': 'Ducks.', 'ava.call': 'Hello?', 'sam.hi': 'Hey.', 'ava.hi#bye': 'Bye', 'ava.river#bye': 'Bye', 'ava.call#bye': 'Bye', 'sam.hi#bye': 'Bye' },
+  prose: {
+    'ava.hi': 'Hi.',
+    'ava.river': 'Ducks.',
+    'ava.call': 'Hello?',
+    'sam.hi': 'Hey.',
+    'ava.hi#bye': 'Bye',
+    'ava.river#bye': 'Bye',
+    'ava.call#bye': 'Bye',
+    'sam.hi#bye': 'Bye',
+  },
   data: {
     places: {
       locations: [
@@ -94,7 +100,10 @@ describe('the cast', () => {
     const { game: g, clock } = game()
     const park = clock.write(run(g, startingState(g), go('park')), { day: 0, period: 'evening' })
     expect(run(g, park, talk('ava')).sceneId).toBe('ava.hi')
-    const friends = { ...park, entities: { ...park.entities, character: { ...park.entities.character, ava: { ...park.entities.character.ava, stats: { friendship: 30 } } } } }
+    const friends = {
+      ...park,
+      entities: { ...park.entities, character: { ...park.entities.character, ava: { ...park.entities.character.ava, stats: { friendship: 30 } } } },
+    }
     expect(shown(friends, g).present.find((person) => person.id === 'ava')?.actions[0].label).toBe('Walk with Ava')
     expect(run(g, friends, talk('ava')).sceneId).toBe('ava.river')
     expect(holds(friends, { stat: 'friendship', of: person('ava'), gte: 25 }, g)).toBe(true)
@@ -180,7 +189,14 @@ describe('the cast', () => {
         places: { locations: [{ id: 'yard', name: 'Yard', tag: '', exits: [], art: '', body: [] }] },
         cast: {
           characters: [
-            { id: 'mole', name: 'Mole', home: 'burrow', talk: 'mole.hi', storyline: 'tunnels', schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }] },
+            {
+              id: 'mole',
+              name: 'Mole',
+              home: 'burrow',
+              talk: 'mole.hi',
+              storyline: 'tunnels',
+              schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }],
+            },
           ],
         },
       },

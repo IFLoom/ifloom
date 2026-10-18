@@ -218,7 +218,10 @@ export const entities = defineFeature<EntitiesShape>({
       references: (effect) => {
         // Inside, `'$'` is one of the kind it runs over.
         const one = anyOf(effect.of)
-        return [{ kind: effect.of }, { within: `in each ${effect.of}`, refs: [{ when: bindCurrent(effect.where, one) }, { effects: bindCurrent(effect.effects, one) }] }]
+        return [
+          { kind: effect.of },
+          { within: `in each ${effect.of}`, refs: [{ when: bindCurrent(effect.where, one) }, { effects: bindCurrent(effect.effects, one) }] },
+        ]
       },
     },
   },
@@ -238,8 +241,16 @@ export const entities = defineFeature<EntitiesShape>({
     },
   },
   check: (game, tools) => {
-    tools.twice('kind', 'kinds', (game.kinds ?? []).map((entry) => entry.id))
-    tools.twice('entity', 'entities', (game.entities ?? []).map((entry) => `${entry.of}:${entry.id}`))
+    tools.twice(
+      'kind',
+      'kinds',
+      (game.kinds ?? []).map((entry) => entry.id),
+    )
+    tools.twice(
+      'entity',
+      'entities',
+      (game.entities ?? []).map((entry) => `${entry.of}:${entry.id}`),
+    )
     const kinds = kindIds(game)
     for (const entity of game.entities ?? []) {
       const source = { list: 'entity', id: `${entity.of}:${entity.id}` }
@@ -247,7 +258,11 @@ export const entities = defineFeature<EntitiesShape>({
       if (!kinds.has(entity.of)) tools.problem(source, where, `unknown kind "${entity.of}"`)
       // Object keys that look like numbers sort first, which would scramble the order entities came in.
       if (/^\d+$/.test(entity.id)) tools.problem(source, where, 'an entity id must not be a whole number')
-      tools.check(source, where, Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })))
+      tools.check(
+        source,
+        where,
+        Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })),
+      )
     }
   },
   resolve: (game) => {

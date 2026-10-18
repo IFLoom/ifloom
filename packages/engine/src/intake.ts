@@ -98,18 +98,15 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
   // is the day, and everything stamped with a day is stamped with that turn.
   2: (state) => {
     const time = state.time as { day: number } | undefined
-    const stamped = <T extends { day?: number }>(list: T[] = []) =>
-      list.map(({ day, ...rest }) => ({ ...rest, turn: day ?? 0 }))
+    const stamped = <T extends { day?: number }>(list: T[] = []) => list.map(({ day, ...rest }) => ({ ...rest, turn: day ?? 0 }))
     const flags = Object.fromEntries(
-      Object.entries((state.flags ?? {}) as Record<string, unknown>).map(([key, value]) => [
-        key.startsWith('day:') ? `turn:${key.slice(4)}` : key,
-        value,
-      ]),
+      Object.entries((state.flags ?? {}) as Record<string, unknown>).map(([key, value]) => [key.startsWith('day:') ? `turn:${key.slice(4)}` : key, value]),
     )
     const storylines = Object.fromEntries(
-      Object.entries((state.storylines ?? {}) as Record<string, { closedUntilDay?: number | null }>).map(
-        ([id, { closedUntilDay, ...rest }]) => [id, { ...rest, closedUntil: closedUntilDay ?? null }],
-      ),
+      Object.entries((state.storylines ?? {}) as Record<string, { closedUntilDay?: number | null }>).map(([id, { closedUntilDay, ...rest }]) => [
+        id,
+        { ...rest, closedUntil: closedUntilDay ?? null },
+      ]),
     )
     const collections = Object.fromEntries(
       Object.entries((state.collections ?? {}) as Record<string, { day?: number }[]>).map(([id, list]) => [id, stamped(list)]),
@@ -151,7 +148,9 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
     return {
       ...state,
       kv: flags ?? state.kv ?? {},
-      storylines: Object.fromEntries(Object.entries((state.storylines ?? {}) as Record<string, { flags?: unknown }>).map(([id, storyline]) => [id, moved(storyline)])),
+      storylines: Object.fromEntries(
+        Object.entries((state.storylines ?? {}) as Record<string, { flags?: unknown }>).map(([id, storyline]) => [id, moved(storyline)]),
+      ),
       entities: Object.fromEntries(
         Object.entries((state.entities ?? {}) as Record<string, Record<string, { flags?: unknown }>>).map(([kind, byId]) => [
           kind,

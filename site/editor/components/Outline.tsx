@@ -27,7 +27,11 @@ export function Outline() {
   const [error, setError] = useState<string | null>(null)
 
   const entries: Record<Thing, Entry[]> = {
-    scene: project.pack.scenes.map((s) => ({ id: s.id, title: s.title, badge: s.drawnFrom?.length ? 'storylet' : s.id === project.intro ? 'intro' : undefined })),
+    scene: project.pack.scenes.map((s) => ({
+      id: s.id,
+      title: s.title,
+      badge: s.drawnFrom?.length ? 'storylet' : s.id === project.intro ? 'intro' : undefined,
+    })),
     stat: project.pack.stats.map((s) => ({ id: s.id, title: s.label })),
     kv: project.kv.map((v) => ({ id: v.name })),
     item: project.pack.items.map((i) => ({ id: i.id, title: i.name })),
@@ -61,7 +65,13 @@ export function Outline() {
               <h2 className="text-xs font-semibold uppercase tracking-wide text-fd-muted-foreground">
                 {title} <span className="font-normal">{entries[thing].length}</span>
               </h2>
-              <Button size="xs" variant="ghost" aria-label={`Add a ${noun}`} title={`Add a ${noun}`} onClick={() => (setAdding(thing), setDraft(''), setError(null))}>
+              <Button
+                size="xs"
+                variant="ghost"
+                aria-label={`Add a ${noun}`}
+                title={`Add a ${noun}`}
+                onClick={() => (setAdding(thing), setDraft(''), setError(null))}
+              >
                 + Add
               </Button>
             </div>
@@ -113,7 +123,19 @@ export function Outline() {
   )
 }
 
-function OutlineLink({ selection, current, flagged, badge, children }: { selection: Selection; current: boolean; flagged?: boolean; badge?: string; children: React.ReactNode }) {
+function OutlineLink({
+  selection,
+  current,
+  flagged,
+  badge,
+  children,
+}: {
+  selection: Selection
+  current: boolean
+  flagged?: boolean
+  badge?: string
+  children: React.ReactNode
+}) {
   const { select } = useEditor()
   return (
     <button
@@ -126,7 +148,9 @@ function OutlineLink({ selection, current, flagged, badge, children }: { selecti
       )}
     >
       <span className="flex min-w-0 flex-1 flex-col">{children}</span>
-      {badge ? <span className="shrink-0 rounded border border-fd-border px-1 text-[10px] uppercase tracking-wide text-fd-muted-foreground">{badge}</span> : null}
+      {badge ? (
+        <span className="shrink-0 rounded border border-fd-border px-1 text-[10px] uppercase tracking-wide text-fd-muted-foreground">{badge}</span>
+      ) : null}
       {flagged ? <span className="size-2 shrink-0 rounded-full bg-red-500" title="Has problems" aria-label="Has problems" /> : null}
     </button>
   )

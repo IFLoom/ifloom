@@ -23,15 +23,7 @@ import { roll, weighted } from './random.ts'
 import type { Reference } from './references.ts'
 import { type CommandContext, type EffectContext, type FeatureContext, type Rendering } from './features/feature.ts'
 import { withCore, type FeatureCommands, type FeatureConditions, type FeatureEffects } from './features/registry.ts'
-import type {
-  Command,
-  Condition,
-  ConditionKind,
-  CoreCommands,
-  CoreConditions,
-  CoreEffects,
-  Effect,
-} from './types.ts'
+import type { Command, Condition, ConditionKind, CoreCommands, CoreConditions, CoreEffects, Effect } from './types.ts'
 import type { CommandEntry, ConditionEntry, EffectEntry } from './features/feature.ts'
 
 let context: FeatureContext | undefined
@@ -197,7 +189,13 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
 export const KINDS = withCore<CoreConditions, CoreEffects, CoreCommands>({ conditions, effects, commands })
 
 // No kind is both the core's and a feature's. Each line is `true` only while that is so.
-export const coreAndFeaturesApart: [Extract<keyof CoreConditions, keyof FeatureConditions> | Extract<keyof CoreEffects, keyof FeatureEffects> | Extract<keyof CoreCommands, keyof FeatureCommands>] extends [never] ? true : false = true
+export const coreAndFeaturesApart: [
+  | Extract<keyof CoreConditions, keyof FeatureConditions>
+  | Extract<keyof CoreEffects, keyof FeatureEffects>
+  | Extract<keyof CoreCommands, keyof FeatureCommands>,
+] extends [never]
+  ? true
+  : false = true
 
 /** Every kind of condition, by the key that tells it apart. */
 export const CONDITION_KINDS = Object.keys(KINDS.conditions) as ConditionKind[]

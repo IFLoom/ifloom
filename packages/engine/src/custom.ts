@@ -80,7 +80,7 @@ export type TurnContext = CustomContext & {
 export function customContext(state: GameState, game: Game): CustomContext {
   return {
     game,
-    query: <T,>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
+    query: <T>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
     value: (name, args = {}) => customValue(game, name)?.(state, args),
     roll: (max, name) => roll(max, name, state.seed, state.turn),
   }

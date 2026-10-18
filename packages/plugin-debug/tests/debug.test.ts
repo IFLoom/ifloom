@@ -21,7 +21,10 @@ function game(): Game {
       },
     },
     items: [{ id: 'key', name: 'key', desc: '' }],
-    scenes: [{ id: 'intro', body: [], choices: [] }, { id: 'ending', body: [], choices: [] }],
+    scenes: [
+      { id: 'intro', body: [], choices: [] },
+      { id: 'ending', body: [], choices: [] },
+    ],
     storylines: [{ id: 'ava', name: 'Ava' }],
     stats: [{ id: 'luck', label: 'Luck', max: 10 }],
     plugins: [clock, places({ start: 'house' }), debug()],

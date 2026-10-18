@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, applyEffects as applyBuilt, buildEffects, holds, loadGame, startingState, view, whyNot, type Game, type GameRules, type GameState } from '@ifloom/engine'
+import {
+  SCHEMA,
+  apply,
+  applyEffects as applyBuilt,
+  buildEffects,
+  holds,
+  loadGame,
+  startingState,
+  view,
+  whyNot,
+  type Game,
+  type GameRules,
+  type GameState,
+} from '@ifloom/engine'
 import { calendar, day, pass, period, sleep, weekday, weekend, type CalendarOptions, type CalendarView } from '../src/index.ts'
 
 /** A house with no map: a nap, an afternoon out, a long walk, and bed. */
@@ -110,12 +123,15 @@ describe('the calendar', () => {
 
   it('shows the game’s onTurn the clock as the turn ended, as `before`', () => {
     const seen: string[] = []
-    const { game, clock } = house({}, {
-      onTurn: (state, { before }) => {
-        seen.push(`${state.turn}: ${JSON.stringify(clock.read(before, game))}`)
-        return state
+    const { game, clock } = house(
+      {},
+      {
+        onTurn: (state, { before }) => {
+          seen.push(`${state.turn}: ${JSON.stringify(clock.read(before, game))}`)
+          return state
+        },
       },
-    })
+    )
     run(game, clock.write(startingState(game), { day: 0, period: 'night' }), sleep())
     expect(seen).toEqual(['1: {"day":0,"period":"night"}'])
   })
@@ -152,7 +168,11 @@ describe('the calendar', () => {
     expect(button(game, clock.write(startingState(game), { day: 0, period: 'night' }), 'nap').price).toEqual({ notes: ['until late'] })
     expect(button(game, clock.write(startingState(game), { day: 0, period: 'evening' }), 'bed').price).toEqual({ notes: ['until tomorrow morning'] })
     // Further than tomorrow, the day by name.
-    const far = { ...game, actions: [{ id: 'trek', label: 'Trek', command: { type: 'activity' as const, id: 'trek' } }], activities: [...(game.activities ?? []), { id: 'trek', effects: [pass(11)] }] }
+    const far = {
+      ...game,
+      actions: [{ id: 'trek', label: 'Trek', command: { type: 'activity' as const, id: 'trek' } }],
+      activities: [...(game.activities ?? []), { id: 'trek', effects: [pass(11)] }],
+    }
     expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({ notes: ['until Wednesday afternoon'] })
   })
 

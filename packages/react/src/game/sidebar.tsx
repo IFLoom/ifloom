@@ -89,7 +89,11 @@ function StatListImpl() {
           <div key={stat.key} {...row} data-stat={stat.key}>
             <dt {...label}>
               {stat.label}
-              {level ? <span {...levelPart} data-level={level.level}>{words('statLevel', { level: level.level })}</span> : null}
+              {level ? (
+                <span {...levelPart} data-level={level.level}>
+                  {words('statLevel', { level: level.level })}
+                </span>
+              ) : null}
             </dt>
             <dd {...value}>{stat.text}</dd>
             {stat.display === 'bar' || stat.display === 'pips' ? <StatGauge stat={stat} /> : null}
@@ -119,7 +123,6 @@ function StatListImpl() {
  * it, and one with `'pips'` a row of pips, one per point (a bar past 20).
  */
 export const StatList = overridable('StatList', StatListImpl)
-
 
 /** What `usePlaces` returns: the places plugin's view, and how to take an exit. */
 export type PlacesControls = PlacesView & {

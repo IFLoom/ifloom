@@ -88,7 +88,10 @@ describe('stat modifiers', () => {
   it('feed derived stats, which can have modifiers of their own', () => {
     const g = game([{ stat: 'intelligence', add: 1 }])
     expect(statValue(wearing(g), g, 'wits')).toBe(12)
-    const both = game([{ stat: 'intelligence', add: 1 }, { stat: 'wits', add: 3 }])
+    const both = game([
+      { stat: 'intelligence', add: 1 },
+      { stat: 'wits', add: 3 },
+    ])
     expect(statValue(wearing(both), both, 'wits')).toBe(15)
   })
 
@@ -131,7 +134,12 @@ describe('rounding a stat as it reads', () => {
     const half = [{ stat: 'intelligence', multiply: 1.5 }]
     // 5 × 1.5 = 7.5.
     expect(statValue(wearing(game(half)), game(half), 'intelligence')).toBe(7.5)
-    for (const [how, reads] of [['none', 7.5], ['floor', 7], ['round', 8], ['ceil', 8]] as const) {
+    for (const [how, reads] of [
+      ['none', 7.5],
+      ['floor', 7],
+      ['round', 8],
+      ['ceil', 8],
+    ] as const) {
       const g = roundedGame(half, { intelligence: how })
       const on = wearing(g)
       expect(statValue(on, g, 'intelligence')).toBe(reads)

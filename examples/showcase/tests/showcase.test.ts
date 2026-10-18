@@ -3,7 +3,25 @@
  * uses. If this passes, the features the docs point at work together.
  */
 import { describe, expect, it } from 'vitest'
-import { commandOf, apply, checkGame, createRunner, memoryDriver, profile, replay, entitiesOf, entityOf, holds, inlineChoices, startingState, statValue, view, type Command, type GameState, type CommandRef } from '@ifloom/engine'
+import {
+  commandOf,
+  apply,
+  checkGame,
+  createRunner,
+  memoryDriver,
+  profile,
+  replay,
+  entitiesOf,
+  entityOf,
+  holds,
+  inlineChoices,
+  startingState,
+  statValue,
+  view,
+  type Command,
+  type GameState,
+  type CommandRef,
+} from '@ifloom/engine'
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { StatusesView } from '@ifloom/plugin-statuses'
@@ -124,7 +142,8 @@ describe('Small Town', () => {
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
     state = run(on(state, 1, 'night'), sleep())
-    const lines = (at: GameState) => (view(at, game).plugins.messages as MessagesView).channels[0].threads[0].messages.filter((message) => message.id.startsWith('ava.chat.'))
+    const lines = (at: GameState) =>
+      (view(at, game).plugins.messages as MessagesView).channels[0].threads[0].messages.filter((message) => message.id.startsWith('ava.chat.'))
     // Nothing until she has her answer.
     state = run(state, replyTo('ava.text', 'yes'))
     expect(lines(state)).toHaveLength(1)
@@ -145,7 +164,11 @@ describe('Small Town', () => {
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     state = run(state, talk('ava'), { type: 'choose', id: 'bye' })
     // A Sunday a week in, with 40 coins and Ava a friend.
-    state = { ...on(state, 6, 'evening'), stats: { ...state.stats, coins: 40 }, entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 30 } } } } }
+    state = {
+      ...on(state, 6, 'evening'),
+      stats: { ...state.stats, coins: 40 },
+      entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 30 } } } },
+    }
     state = run(state, go('high-street'), go('park'))
     expect(state.stats.coins).toBe(10)
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Rent paid: 30 coins')
@@ -309,7 +332,10 @@ describe('Small Town', () => {
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     expect(apply(state, game, applyFor('weekend')).reason).toBe('Ava doesn’t know you well enough yet.')
     state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
-    state = { ...state, entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } } }
+    state = {
+      ...state,
+      entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } },
+    }
     state = run(state, applyFor('weekend'))
     const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
     expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })

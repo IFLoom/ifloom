@@ -98,7 +98,12 @@ export const collections = defineFeature<CollectionsShape>({
     },
   ),
   lists: ['collection'],
-  check: (game, tools) => tools.twice('collection', 'collections', (game.collections ?? []).map((entry) => entry.id)),
+  check: (game, tools) =>
+    tools.twice(
+      'collection',
+      'collections',
+      (game.collections ?? []).map((entry) => entry.id),
+    ),
   resolve: (game) => {
     const ids = new Set((game.collections ?? []).map((entry) => entry.id))
     return { collection: (ref) => (ids.has(ref.collection) ? [] : [`unknown collection "${ref.collection}"`]) }

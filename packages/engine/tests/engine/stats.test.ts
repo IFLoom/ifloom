@@ -134,11 +134,14 @@ describe('checking declared stats', () => {
 
 describe('how a stat is drawn', () => {
   it('passes display and the range through the view, as a number if the game does not say', () => {
-    const game = { ...fixture(), stats: [
-      { id: 'energy', label: 'Energy', start: 60, display: 'bar' as const },
-      { id: 'hearts', label: 'Hearts', start: 3, min: 0, max: 5, display: 'pips' as const },
-      { id: 'coins', label: 'Coins', start: 3, min: -50, max: 999 },
-    ] }
+    const game = {
+      ...fixture(),
+      stats: [
+        { id: 'energy', label: 'Energy', start: 60, display: 'bar' as const },
+        { id: 'hearts', label: 'Hearts', start: 3, min: 0, max: 5, display: 'pips' as const },
+        { id: 'coins', label: 'Coins', start: 3, min: -50, max: 999 },
+      ],
+    }
     const shown = view(begin(game), game).statsById
     expect(shown.energy).toMatchObject({ value: 60, min: 0, max: 100, display: 'bar' })
     expect(shown.hearts).toMatchObject({ value: 3, min: 0, max: 5, display: 'pips' })
@@ -146,10 +149,13 @@ describe('how a stat is drawn', () => {
   })
 
   it('reports pips on a range wider than 20', () => {
-    const game = { ...fixture(), stats: [
-      { id: 'energy', label: 'Energy', display: 'pips' as const },
-      { id: 'hearts', label: 'Hearts', max: 20, display: 'pips' as const },
-    ] }
+    const game = {
+      ...fixture(),
+      stats: [
+        { id: 'energy', label: 'Energy', display: 'pips' as const },
+        { id: 'hearts', label: 'Hearts', max: 20, display: 'pips' as const },
+      ],
+    }
     expect(problemsOf(game).filter((line) => line.includes('pips'))).toEqual(['stat energy: display pips needs a range of 20 or less; this one is 100'])
   })
 })

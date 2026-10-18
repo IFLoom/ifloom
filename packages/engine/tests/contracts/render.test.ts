@@ -23,7 +23,10 @@ const tide = definePlugin<{ height: number }>({
   effects: { rise: (_state, _args, { slice, set }) => set({ height: slice.height + 1 }) },
   guard: (_state, { effects }) => (effects.length > 3 ? 'Too much at once.' : undefined),
   price: (_state, effects) => (effects.some((effect) => effect.kind === 'custom') ? ['the tide rises'] : undefined),
-  view: (state, { game, picks, profile }) => ({ stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks), remembered: profile ?? null }),
+  view: (state, { game, picks, profile }) => ({
+    stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks),
+    remembered: profile ?? null,
+  }),
 })
 
 function counted(): { game: Game; renders: Map<GameState, number> } {
@@ -59,7 +62,15 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
     ...town,
     scenes: [...town.scenes, porch, hall],
     plugins: [tide],
-    media: { pools: { door: [{ src: 'door/red.jpg', tags: ['red'] }, { src: 'door/blue.jpg', tags: ['blue'] }], sea: [{ src: 'sea/calm.jpg' }] } },
+    media: {
+      pools: {
+        door: [
+          { src: 'door/red.jpg', tags: ['red'] },
+          { src: 'door/blue.jpg', tags: ['blue'] },
+        ],
+        sea: [{ src: 'sea/calm.jpg' }],
+      },
+    },
     audio: { tracks: { calm: { src: 'calm.ogg', channel: 'music' } } },
   }
   return { game, renders }

@@ -120,7 +120,7 @@ describe('inline actions and tooltips', () => {
     expect(inlineChoices(shown.scene.beats).map((choice) => choice.id)).toEqual(['answer', 'knock'])
   })
 
-  it('carry the reason a choice is greyed out, its own or its command\'s', () => {
+  it("carry the reason a choice is greyed out, its own or its command's", () => {
     const { game } = make()
     const shy = inlineChoices(view(start(game, { shy: true }), game).scene.beats)
     expect(shy.find((choice) => choice.id === 'knock')?.disabled).toBe('You feel too shy.')
@@ -192,7 +192,7 @@ describe('inline actions and tooltips', () => {
         expect.stringContaining('[[tip:hall.tip]] needs the words to show'),
         expect.stringContaining('[[act:go|]] has no words'),
         expect.stringContaining('is not closed with "]]"'),
-        expect.stringContaining('choice loop: a choice\'s command can\'t be another choice'),
+        expect.stringContaining("choice loop: a choice's command can't be another choice"),
         expect.stringContaining('choice call: no plugin command named "phone/dial"'),
       ]),
     )
@@ -247,7 +247,15 @@ describe('bold and italics', () => {
 
   it('are drawn by styledBeats in beats that skip the view, leaving inline actions as written', () => {
     expect(styledBeats(parseBeats('The sign says **Closed**. [[act:x|Knock]]\n\nAva: "*Again?*"\n\nPlain.'))).toEqual([
-      { kind: 'text', text: 'The sign says Closed. [[act:x|Knock]]', spans: [{ kind: 'text', text: 'The sign says ' }, { kind: 'bold', text: 'Closed' }, { kind: 'text', text: '. [[act:x|Knock]]' }] },
+      {
+        kind: 'text',
+        text: 'The sign says Closed. [[act:x|Knock]]',
+        spans: [
+          { kind: 'text', text: 'The sign says ' },
+          { kind: 'bold', text: 'Closed' },
+          { kind: 'text', text: '. [[act:x|Knock]]' },
+        ],
+      },
       { kind: 'say', who: 'character', text: 'Again?', spans: [{ kind: 'italic', text: 'Again?' }] },
       { kind: 'text', text: 'Plain.' },
     ])
@@ -266,7 +274,7 @@ describe('bold and italics', () => {
       expect.arrayContaining([
         expect.stringContaining('"*" is not closed'),
         expect.stringContaining('"***" is shown as written'),
-        expect.stringContaining('bold and italics don\'t go inside each other'),
+        expect.stringContaining("bold and italics don't go inside each other"),
         expect.stringContaining('stars next to [[act]] or [[tip]]'),
       ]),
     )

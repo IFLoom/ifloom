@@ -19,9 +19,7 @@ export function clamp(n: number, min = 0, max = 100): number {
  * on both sides. When `ok` is false the command was refused, `state` is the
  * one it was sent to, untouched, and `reason` says why.
  */
-export type Applied =
-  | { ok: true; state: GameState; reason?: never; newGame?: true }
-  | { ok: false; state: GameState; reason: string }
+export type Applied = { ok: true; state: GameState; reason?: never; newGame?: true } | { ok: false; state: GameState; reason: string }
 
 class Refused extends Error {
   readonly detail: string
@@ -71,11 +69,7 @@ function after(before: GameState, ran: GameState, game: Game): GameState {
  * Run a command and say whether it took. Prefer this over `dispatch` anywhere
  * the answer matters — a refusal and a no-op look identical in the state alone.
  */
-export function apply(
-  state: GameState | null,
-  game: Game,
-  ref: CommandRef,
-): Applied {
+export function apply(state: GameState | null, game: Game, ref: CommandRef): Applied {
   const command = commandOf(ref)
   if (command.type === 'start') {
     return {
@@ -108,19 +102,11 @@ function startedOver(current: GameState, game: Game): GameState {
   return startingState(game, { seed: roll(2 ** 31, 'newGame', current.seed, current.turn), settings: current.settings })
 }
 
-export function dispatch(
-  state: GameState | null,
-  game: Game,
-  command: CommandRef,
-): GameState {
+export function dispatch(state: GameState | null, game: Game, command: CommandRef): GameState {
   return apply(state, game, command).state
 }
 
-function run(
-  current: GameState,
-  game: Game,
-  command: Command,
-): GameState {
+function run(current: GameState, game: Game, command: Command): GameState {
   // The open scene, rendered once for the refusal, the warning and the choice.
   const rendered = rendering(current, game)
   const why = whyNotIn(rendered, current, game, command)
@@ -145,11 +131,7 @@ export function runIn(rendered: Rendering, current: GameState, game: Game, comma
   return entry.run(current, command, game, commandContext(rendered))
 }
 
-export function applyEffects(
-  state: GameState,
-  game: Game,
-  effects: Effect[],
-): GameState {
+export function applyEffects(state: GameState, game: Game, effects: Effect[]): GameState {
   return runEffects(state, game, effects, false)
 }
 
@@ -157,12 +139,7 @@ export function applyEffects(
  * `applyEffects`, told whether a turn is ending: while one is, a `turn` effect
  * does nothing. How a plugin's context applies effects, passing on what it was told.
  */
-export function runEffects(
-  state: GameState,
-  game: Game,
-  effects: readonly Effect[],
-  ending: boolean,
-): GameState {
+export function runEffects(state: GameState, game: Game, effects: readonly Effect[], ending: boolean): GameState {
   let next = state
   for (const effect of effects) {
     next = applyEffect(next, game, effect, ending)
@@ -171,12 +148,7 @@ export function runEffects(
 }
 
 /** One effect, by its kind's entry. A kind the engine doesn't have does nothing; the content checker reports it. */
-function applyEffect(
-  state: GameState,
-  game: Game,
-  effect: Effect,
-  ending: boolean,
-): GameState {
+function applyEffect(state: GameState, game: Game, effect: Effect, ending: boolean): GameState {
   const entry = effectEntry(effect)
   return entry ? entry.apply(state, effect, game, effectContext(ending)) : state
 }

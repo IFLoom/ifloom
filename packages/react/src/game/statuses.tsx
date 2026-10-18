@@ -32,7 +32,9 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
         {data.active.map((status) => {
           const changes = status.modifiers.flatMap((modifier) => [
             ...(modifier.add ? [words('modifierAdd', { n: signed(modifier.add), stat: statLabel(modifier.stat) })] : []),
-            ...(modifier.multiply !== undefined && modifier.multiply !== 1 ? [words('modifierMultiply', { n: modifier.multiply, stat: statLabel(modifier.stat) })] : []),
+            ...(modifier.multiply !== undefined && modifier.multiply !== 1
+              ? [words('modifierMultiply', { n: modifier.multiply, stat: statLabel(modifier.stat) })]
+              : []),
           ])
           return (
             <li key={status.id} {...row} data-status={status.id}>

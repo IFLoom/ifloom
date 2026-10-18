@@ -22,7 +22,14 @@ const clock = calendar()
 
 const plugin = messages()
 /** The channels, as the base game's content. */
-const channels = { messages: { channels: [{ id: 'texts', name: 'Messages' }, { id: 'post', name: 'Post' }] } }
+const channels = {
+  messages: {
+    channels: [
+      { id: 'texts', name: 'Messages' },
+      { id: 'post', name: 'Post' },
+    ],
+  },
+}
 
 function game(extra: Partial<Pack> = {}): Game {
   const pack: Pack = {
@@ -31,7 +38,10 @@ function game(extra: Partial<Pack> = {}): Game {
     storylines: [{ id: 'ava', name: 'Ava' }],
     scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
-    activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] }],
+    activities: [
+      { id: 'wait', effects: [pass(1)] },
+      { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
+    ],
     prose: {
       'ava.hi': 'Hi.',
       'ava.hi#bye': 'Bye',
@@ -46,7 +56,14 @@ function game(extra: Partial<Pack> = {}): Game {
       cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
       messages: {
         messages: [
-          { id: 'msg.hey', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ text: 'msg.hey' }], replies: [{ id: 'yes', effects: [{ kind: 'kv', key: 'saidYes', to: true }] }, { id: 'no' }] },
+          {
+            id: 'msg.hey',
+            channel: 'texts',
+            from: 'ava',
+            when: { kv: 'out' },
+            body: [{ text: 'msg.hey' }],
+            replies: [{ id: 'yes', effects: [{ kind: 'kv', key: 'saidYes', to: true }] }, { id: 'no' }],
+          },
           { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ text: 'msg.later' }] },
           { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ text: 'msg.bill' }] },
         ],
@@ -123,7 +140,11 @@ describe('messages', () => {
         {
           id: 'mod',
           schema: SCHEMA,
-          data: { messages: { messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }] } },
+          data: {
+            messages: {
+              messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }],
+            },
+          },
         },
       ],
       { id: 'g', title: 'g', plugins: [plugin], data: channels },
@@ -153,7 +174,13 @@ describe('pictures and videos in a message', () => {
         cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
         messages: {
           messages: [
-            { id: 'msg.ducks', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }] },
+            {
+              id: 'msg.ducks',
+              channel: 'texts',
+              from: 'ava',
+              when: { kv: 'out' },
+              body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }],
+            },
           ],
         },
       },
@@ -168,13 +195,15 @@ describe('pictures and videos in a message', () => {
   })
 })
 
-
 describe('pools', () => {
   /** Ava's small talk: two lines drawn from `chat`, neither again within two days; the rain one has a reply. */
   function chatty(): Game {
     const rested = (id: string) => ({ not: messageSince(id, { lt: 2 }) })
     return game({
-      activities: [{ id: 'chat', effects: [drawMessage('chat')] }, { id: 'wait', effects: [pass(1)] }],
+      activities: [
+        { id: 'chat', effects: [drawMessage('chat')] },
+        { id: 'wait', effects: [pass(1)] },
+      ],
       prose: {
         'ava.hi': 'Hi.',
         'ava.hi#bye': 'Bye',
@@ -186,7 +215,15 @@ describe('pools', () => {
         cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
         messages: {
           messages: [
-            { id: 'chat.rain', channel: 'texts', from: 'ava', drawnFrom: ['chat'], when: rested('chat.rain'), body: [{ text: 'chat.rain' }], replies: [{ id: 'ok' }] },
+            {
+              id: 'chat.rain',
+              channel: 'texts',
+              from: 'ava',
+              drawnFrom: ['chat'],
+              when: rested('chat.rain'),
+              body: [{ text: 'chat.rain' }],
+              replies: [{ id: 'ok' }],
+            },
             { id: 'chat.beans', channel: 'texts', from: 'ava', drawnFrom: ['chat'], weight: 2, when: rested('chat.beans'), body: [{ text: 'chat.beans' }] },
           ],
         },
@@ -243,7 +280,10 @@ describe('pools', () => {
   it('load an old save, with one arrival per message by id, as arrivals', () => {
     const g = game()
     const old = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
-    const saved = { ...old, plugins: { ...old.plugins, messages: { version: 1, state: { arrived: { 'msg.hey': 3 }, replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } } } } }
+    const saved = {
+      ...old,
+      plugins: { ...old.plugins, messages: { version: 1, state: { arrived: { 'msg.hey': 3 }, replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } } } },
+    }
     const loaded = loadState(JSON.parse(JSON.stringify(saved)), g)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.messages).toEqual({

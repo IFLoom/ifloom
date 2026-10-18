@@ -5,7 +5,18 @@
  * page, and the in-game menu leads back to `title`.
  */
 import type { KvValue, GameState, SaveMeta, SettingView } from '@ifloom/engine'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ChangeEvent,
+  type ComponentType,
+  type ReactNode,
+} from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -524,7 +535,10 @@ function GatePageImpl({ className }: { className?: string }) {
   const decline = usePart('gate-decline', buttonVariants({ size: 'lg', variant: 'outline' }))
   const gate = options.gate
   if (!gate) return null
-  const paragraphs = gate.text.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
+  const paragraphs = gate.text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
   const agree = async () => {
     await runner.profile?.set('ui:gate', { confirmedAt: Date.now() })
     go('title')

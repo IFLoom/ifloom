@@ -132,7 +132,13 @@ function met(def: AchievementDef, state: GameState, game: Game): boolean {
 }
 
 /** The state with these achievements recorded as earned now, and a notice for each. */
-function earn(state: GameState, ids: readonly string[], game: Game, set: (next: AchievementsState, on: GameState) => GameState, record: AchievementsState): GameState {
+function earn(
+  state: GameState,
+  ids: readonly string[],
+  game: Game,
+  set: (next: AchievementsState, on: GameState) => GameState,
+  record: AchievementsState,
+): GameState {
   if (!ids.length) return state
   const earned = { ...record.earned }
   let next = state
@@ -223,7 +229,8 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
     },
     view: (state, { slice, game, profile }) => achievementsView(slice, state, game, profile),
     references: {
-      calls: (_kind, _name, args) => (args.achievement === undefined ? [] : [{ entry: String(args.achievement), plugin: ID, list: 'achievements', noun: 'achievement' }]),
+      calls: (_kind, _name, args) =>
+        args.achievement === undefined ? [] : [{ entry: String(args.achievement), plugin: ID, list: 'achievements', noun: 'achievement' }],
       content: (game) =>
         achievementDefs(game).map((def) => ({
           list: 'achievements',
@@ -253,13 +260,19 @@ function progressRefs(value: ProgressValue): Reference[] {
   if ('kv' in value) return []
   if ('value' in value) return [{ value: value.value }]
   const parts: Formula[] =
-    'sum' in value ? value.sum
-    : 'product' in value ? value.product
-    : 'min' in value && Array.isArray(value.min) ? value.min
-    : 'max' in value && Array.isArray(value.max) ? value.max
-    : 'scale' in value ? [value.scale]
-    : 'clamp' in value ? [value.clamp]
-    : []
+    'sum' in value
+      ? value.sum
+      : 'product' in value
+        ? value.product
+        : 'min' in value && Array.isArray(value.min)
+          ? value.min
+          : 'max' in value && Array.isArray(value.max)
+            ? value.max
+            : 'scale' in value
+              ? [value.scale]
+              : 'clamp' in value
+                ? [value.clamp]
+                : []
   return parts.flatMap(progressRefs)
 }
 

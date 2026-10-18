@@ -15,10 +15,6 @@ export type { TriggerDef } from './features/triggers.ts'
  * tested in the same pass only if it comes later in the list; otherwise it
  * waits for the next command.
  */
-export function fireTriggers(
-  state: GameState,
-  game: Game,
-  apply: (state: GameState, effects: Effect[]) => GameState,
-): GameState {
+export function fireTriggers(state: GameState, game: Game, apply: (state: GameState, effects: Effect[]) => GameState): GameState {
   return triggers.fireTriggers(state, game, apply, featureContext())
 }

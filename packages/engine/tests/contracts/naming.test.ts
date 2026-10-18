@@ -41,26 +41,70 @@ import { takeOff, wardrobe, wear, wearing } from '@ifloom/plugin-wardrobe'
 const BANNED = ['value', 'add', 'amount', 'delta', 'set', 'increment', 'change'] as const
 
 /** Targets: the nouns a condition or an effect names what it works on by. */
-const TARGETS = ['stat', 'item', 'entity', 'storyline', 'scene', 'collection', 'minigame', 'channel', 'track', 'key', 'kv', 'storylineKv', 'minigameVar', 'setting', 'chose', 'seen', 'since', 'count', 'level', 'turn', 'phase', 'panel'] as const
+const TARGETS = [
+  'stat',
+  'item',
+  'entity',
+  'storyline',
+  'scene',
+  'collection',
+  'minigame',
+  'channel',
+  'track',
+  'key',
+  'kv',
+  'storylineKv',
+  'minigameVar',
+  'setting',
+  'chose',
+  'seen',
+  'since',
+  'count',
+  'level',
+  'turn',
+  'phase',
+  'panel',
+] as const
 
 /** Qualifiers and details: who it belongs to, what it compares with, what it carries. */
 const DETAILS = [
   // whose, or of which kind
   'of',
   // the comparisons
-  'is', 'gte', 'gt', 'lte', 'lt', 'open', 'where',
+  'is',
+  'gte',
+  'gt',
+  'lte',
+  'lt',
+  'open',
+  'where',
   // which time `since` counts from: the latest, not the first
   'last',
   // a change
-  'by', 'to', 'random', 'turns',
+  'by',
+  'to',
+  'random',
+  'turns',
   // how long a transition takes
   'ms',
   // what is made or drawn
-  'entry', 'effects', 'from', 'otherwise', 'title', 'text', 'image', 'tag',
+  'entry',
+  'effects',
+  'from',
+  'otherwise',
+  'title',
+  'text',
+  'image',
+  'tag',
   // a notice's own id: the notice it makes, not a target
   'id',
   // nesting and calls
-  'all', 'any', 'not', 'custom', 'name', 'with',
+  'all',
+  'any',
+  'not',
+  'custom',
+  'name',
+  'with',
 ] as const
 
 /** A command's own fields: `id` for its one target, and what the command carries. */
@@ -167,9 +211,35 @@ const SAMPLES: Record<string, Call> = {
 /** What a plugin call's arguments may be named, by role, beyond the core's targets and details. */
 const PLUGIN_NOUNS = [
   // the plugins' own targets
-  'achievement', 'status', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period', 'cheat', 'unlock',
+  'achievement',
+  'status',
+  'character',
+  'location',
+  'quest',
+  'stage',
+  'job',
+  'rank',
+  'vendor',
+  'message',
+  'reply',
+  'thread',
+  'post',
+  'feed',
+  'template',
+  'app',
+  'device',
+  'slot',
+  'day',
+  'period',
+  'cheat',
+  'unlock',
   // details: how many, where, who from, what with
-  'count', 'stacks', 'runEnd', 'likes', 'video', 'at',
+  'count',
+  'stacks',
+  'runEnd',
+  'likes',
+  'video',
+  'at',
   // a named pool a draw picks from
   'pool',
 ] as const

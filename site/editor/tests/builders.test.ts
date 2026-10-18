@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, checkGame, inlineMarkup, loadGame, parseBeats } from '@ifloom/engine'
-import { conditionForm, costOf, effectForm, newCondition, newEffect, rangeOf, shortBlock, snippet, transitionFields, transitionOptions, transitionValue, withCost, withRange } from '../lib/builders.ts'
+import {
+  conditionForm,
+  costOf,
+  effectForm,
+  newCondition,
+  newEffect,
+  rangeOf,
+  shortBlock,
+  snippet,
+  transitionFields,
+  transitionOptions,
+  transitionValue,
+  withCost,
+  withRange,
+} from '../lib/builders.ts'
 import { CONDITION_FORMS, EFFECT_FORMS } from '../lib/kinds.ts'
 import { MARKUP_KINDS, insertInline, insertParagraph, markup, proseBeats, sampleMarkup } from '../lib/markup.ts'
 
@@ -63,7 +77,9 @@ describe('the effect builder', () => {
   })
 
   it('writes snippets as TypeScript', () => {
-    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], items: [], kv: [], choices: [], sets: [] }))).toBe("{ kind: 'stat', stat: 'coins', by: 1 }")
+    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], items: [], kv: [], choices: [], sets: [] }))).toBe(
+      "{ kind: 'stat', stat: 'coins', by: 1 }",
+    )
     expect(snippet({ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] })).toBe("{ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] }")
   })
 
@@ -76,7 +92,20 @@ describe('the effect builder', () => {
           stats: [{ id: 'coins', label: 'Coins' }],
           items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
           scenes: [
-            { id: 'a', body: [{ text: 'a' }], choices: [{ id: 'go', effects: [newEffect('stat', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }), newEffect('item', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }), newEffect('scene', { scenes: ['a'], stats: [], items: [], kv: [], choices: [], sets: [] })] }] },
+            {
+              id: 'a',
+              body: [{ text: 'a' }],
+              choices: [
+                {
+                  id: 'go',
+                  effects: [
+                    newEffect('stat', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }),
+                    newEffect('item', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }),
+                    newEffect('scene', { scenes: ['a'], stats: [], items: [], kv: [], choices: [], sets: [] }),
+                  ],
+                },
+              ],
+            },
           ],
           prose: { a: 'A.', 'a#go': 'Go' },
         },

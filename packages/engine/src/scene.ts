@@ -5,11 +5,7 @@ import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
 import { revealMarkup, type Reveal, type TransitionFields } from './features/transitions.ts'
-import {
-  buildEffects,
-  customPanel,
-  type EffectRef,
-} from './custom.ts'
+import { buildEffects, customPanel, type EffectRef } from './custom.ts'
 import type { Effect, GameState } from './types.ts'
 import { commandOf, type CommandRef } from './calls.ts'
 
@@ -93,32 +89,34 @@ export type Choice = {
   command?: CommandRef
 }
 
-export type DataScene = StoryletFields & MinigameSceneFields & TransitionFields & {
-  id: string
-  title?: string
-  speaker?: string
-  /** Drawn as a conversation. A scene with a speaker is one already. */
-  frame?: 'talk'
-  /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
-  tags?: string[]
-  /** A bespoke UI panel to render in place of the choice list, by name. */
-  panel?: string
-  /**
-   * Whatever that panel needs, as the name of a registered builder.
-   *
-   * A panel usually wants something computed, which used to mean the scene had
-   * to be an assembled `render` and give up blocks, variants and conditions to
-   * get it. Naming the builder keeps the content declarative and serialisable —
-   * the same trade `{ custom: 'name' }` already makes for effects.
-   */
-  panelData?: string
-  /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
-  audio?: Record<string, string | null>
-  /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
-  stage?: MediaStage
-  body: Block[]
-  choices: Choice[]
-}
+export type DataScene = StoryletFields &
+  MinigameSceneFields &
+  TransitionFields & {
+    id: string
+    title?: string
+    speaker?: string
+    /** Drawn as a conversation. A scene with a speaker is one already. */
+    frame?: 'talk'
+    /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
+    tags?: string[]
+    /** A bespoke UI panel to render in place of the choice list, by name. */
+    panel?: string
+    /**
+     * Whatever that panel needs, as the name of a registered builder.
+     *
+     * A panel usually wants something computed, which used to mean the scene had
+     * to be an assembled `render` and give up blocks, variants and conditions to
+     * get it. Naming the builder keeps the content declarative and serialisable —
+     * the same trade `{ custom: 'name' }` already makes for effects.
+     */
+    panelData?: string
+    /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
+    audio?: Record<string, string | null>
+    /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
+    stage?: MediaStage
+    body: Block[]
+    choices: Choice[]
+  }
 
 /** How a scene reaches its words. Supplied by the loader. */
 export type Prose = {
@@ -127,11 +125,7 @@ export type Prose = {
   /** The members of a variants, in declaration order. */
   variants: (name: string) => string[]
   /** Which member of a variants this state gets, and what to remember about it. */
-  draw: (
-    state: GameState,
-    name: string,
-    members: string[],
-  ) => { id: string; remember: Effect }
+  draw: (state: GameState, name: string, members: string[]) => { id: string; remember: Effect }
 }
 
 export type SceneRuntime = {
@@ -151,14 +145,8 @@ export type SceneRuntime = {
  * whether it meant to or not — and a narrator's aside ends up dealt as a line
  * of dialogue. Anything the same scene declares as its own block is not a draw.
  */
-export function variantMembers(
-  scene: DataScene,
-  variants: string,
-  runtime: SceneRuntime,
-): string[] {
-  const declared = new Set(
-    scene.body.flatMap((entry) => ('text' in entry ? [entry.text] : [])),
-  )
+export function variantMembers(scene: DataScene, variants: string, runtime: SceneRuntime): string[] {
+  const declared = new Set(scene.body.flatMap((entry) => ('text' in entry ? [entry.text] : [])))
   return runtime.prose
     .variants(variants)
     .filter((key) => !declared.has(key))
@@ -182,9 +170,7 @@ function blockText(
   if ('text' in block) {
     return { text: runtime.prose.line(block.text, state), drawn: block.text }
   }
-  const members = variantMembers(scene, block.variants, runtime).filter((key) =>
-    holds(state, block.gate?.[key], runtime.game),
-  )
+  const members = variantMembers(scene, block.variants, runtime).filter((key) => holds(state, block.gate?.[key], runtime.game))
   if (members.length === 0) return {}
   const drawn = runtime.prose.draw(state, block.variants, members)
   const line = runtime.prose.line(drawn.id, state)
@@ -208,12 +194,7 @@ function blockText(
  * apply are dropped; the rest are joined in declaration order. New pool
  * picks are written into `picks` when it is given.
  */
-export function renderScene(
-  scene: DataScene,
-  state: GameState,
-  runtime: SceneRuntime,
-  picks?: Record<string, string>,
-): SceneView {
+export function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): SceneView {
   const parts: string[] = []
   const media: SceneMedia[] = []
   const remember: Effect[] = []
@@ -240,18 +221,10 @@ export function renderScene(
 
   const choices: SceneChoice[] = []
   for (const choice of scene.choices) {
-    const visible =
-      holds(state, choice.when, runtime.game) &&
-      !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
-    const already =
-      choice.once !== undefined &&
-      runtime.spent(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id)
-    const blocked = choice.blocked?.find((entry) =>
-      holds(state, entry.when, runtime.game),
-    )
-    const chosen = choice.labels?.find((entry) =>
-      holds(state, entry.when, runtime.game),
-    )
+    const visible = holds(state, choice.when, runtime.game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
+    const already = choice.once !== undefined && runtime.spent(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id)
+    const blocked = choice.blocked?.find((entry) => holds(state, entry.when, runtime.game))
+    const chosen = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))
     // A reply written to answer the line she actually gave beats a generic
     // one. Any block may carry its own `### Choices`; if one that rendered has
     // a label for this choice, the last of them wins.
@@ -259,13 +232,7 @@ export function renderScene(
       .map((key) => runtime.prose.line(`${key}#${choice.id}`, state))
       .filter((line): line is string => line !== undefined)
       .at(-1)
-    const label =
-      matched ??
-      runtime.prose.line(
-        chosen?.key ?? choice.label ?? `${scene.id}#${choice.id}`,
-        state,
-      ) ??
-      choice.id
+    const label = matched ?? runtime.prose.line(chosen?.key ?? choice.label ?? `${scene.id}#${choice.id}`, state) ?? choice.id
     choices.push({
       id: choice.id,
       label,
@@ -277,14 +244,10 @@ export function renderScene(
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
-        ? buildEffects(state, runtime.game, choice.effects).filter(
-            (effect) => effect.kind === 'scene',
-          )
+        ? buildEffects(state, runtime.game, choice.effects).filter((effect) => effect.kind === 'scene')
         : [
             ...buildEffects(state, runtime.game, choice.effects),
-            ...(choice.once
-              ? runtime.spend(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id)
-              : []),
+            ...(choice.once ? runtime.spend(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id) : []),
             ...remember,
           ],
     })
@@ -296,9 +259,7 @@ export function renderScene(
     frame: scene.frame,
     tags: scene.tags,
     panel: scene.panel,
-    panelData: scene.panelData
-      ? customPanel(runtime.game, scene.panelData)?.(state)
-      : undefined,
+    panelData: scene.panelData ? customPanel(runtime.game, scene.panelData)?.(state) : undefined,
     body: parts.join('\n\n'),
     media: media.length ? media : undefined,
     ...(scene.stage ? { stage: scene.stage } : {}),

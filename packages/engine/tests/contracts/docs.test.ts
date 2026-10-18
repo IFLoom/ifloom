@@ -21,7 +21,11 @@ function exportedNames(source: string): string[] {
   const names = new Set<string>()
   for (const match of source.matchAll(/export (?:type )?\{([^}]*)\}/g)) {
     for (const part of match[1].split(',')) {
-      const name = part.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop()
+      const name = part
+        .trim()
+        .replace(/^type\s+/, '')
+        .split(/\s+as\s+/)
+        .pop()
       if (name) names.add(name)
     }
   }

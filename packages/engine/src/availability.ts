@@ -114,8 +114,6 @@ export function warningOf(state: GameState, game: Game, command: CommandRef, eff
 export function warningIn(rendered: Rendering, state: GameState, game: Game, command: Command, effects?: readonly Effect[]): string | undefined {
   if (!pluginsWatch(game)) return undefined
   if (ignoresLocks(game, command)) return undefined
-  const soft = pluginGuards(game, state, { command, effects: effects ?? effectsIn(rendered, state, game, command) }).find(
-    (entry) => typeof entry !== 'string',
-  )
+  const soft = pluginGuards(game, state, { command, effects: effects ?? effectsIn(rendered, state, game, command) }).find((entry) => typeof entry !== 'string')
   return soft?.reason
 }

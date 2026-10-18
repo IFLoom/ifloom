@@ -70,7 +70,7 @@ export const storylines = defineFeature<StorylinesShape>({
       holds: (state, condition) => storylineOpen(state, condition.storyline) === (condition.open ?? true),
       explain: (state, condition) => {
         const open = storylineOpen(state, condition.storyline)
-        return `storyline ${condition.storyline} is ${open ? 'open' : 'closed'}; wants it ${condition.open ?? true ? 'open' : 'closed'}`
+        return `storyline ${condition.storyline} is ${open ? 'open' : 'closed'}; wants it ${(condition.open ?? true) ? 'open' : 'closed'}`
       },
       references: (condition) => [{ storyline: condition.storyline }],
     },
@@ -106,7 +106,12 @@ export const storylines = defineFeature<StorylinesShape>({
     for (const def of lacking) storylines[def.id] = emptyStoryline()
     return { ...state, storylines }
   },
-  check: (game, tools) => tools.twice('storyline', 'storylines', (game.storylines ?? []).map((entry) => entry.id)),
+  check: (game, tools) =>
+    tools.twice(
+      'storyline',
+      'storylines',
+      (game.storylines ?? []).map((entry) => entry.id),
+    ),
   resolve: (game) => {
     const ids = new Set((game.storylines ?? []).map((storyline) => storyline.id))
     return { storyline: (ref) => (ids.has(ref.storyline) ? [] : [`unknown storyline "${ref.storyline}"`]) }

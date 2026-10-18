@@ -17,7 +17,19 @@ import { unwrap } from '../fixtures/result.ts'
 function fileOf(game: Game, state: GameState): string {
   const file: SaveFile = {
     ifloom: 1,
-    meta: { game: game.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: state.turn, when: null, player: null, packs: [], plugins: {}, version: state.version } as never,
+    meta: {
+      game: game.id,
+      slot: '1',
+      name: 'Old',
+      savedAt: 1,
+      played: 0,
+      turn: state.turn,
+      when: null,
+      player: null,
+      packs: [],
+      plugins: {},
+      version: state.version,
+    } as never,
     state,
   }
   return JSON.stringify(file)
@@ -127,7 +139,9 @@ describe('the game’s own migrations', () => {
       migrations: { 1: (_state, tools) => ({ patience: tools.fill(['stats']).stats.patience }) },
     })
     const counted = grown({ version: 2, plugins: [counter] })
-    const withCounter = unwrap(saves(counted, memoryDriver()).importText(fileOf(counted, { ...old, plugins: { counter: { version: 1, state: {} } } } as unknown as GameState)))
+    const withCounter = unwrap(
+      saves(counted, memoryDriver()).importText(fileOf(counted, { ...old, plugins: { counter: { version: 1, state: {} } } } as unknown as GameState)),
+    )
     expect(withCounter.state.plugins.counter).toEqual({ version: 2, state: { patience: 7 } })
 
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))

@@ -27,11 +27,7 @@ function leaf(state: GameState, condition: Condition, game: Game | undefined): s
 }
 
 /** Explain a condition against a state, part by part. No condition always holds. */
-export function explain(
-  state: GameState,
-  condition: Condition | undefined,
-  game?: Game,
-): Explanation {
+export function explain(state: GameState, condition: Condition | undefined, game?: Game): Explanation {
   if (!condition) return { holds: true, why: 'no condition' }
   // `all`, `any` and `not` are explained part by part. A condition with another kind key besides is a leaf, and holds nowhere.
   const kinds = conditionKinds(condition)

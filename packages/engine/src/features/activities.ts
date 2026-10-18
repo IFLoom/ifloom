@@ -63,10 +63,7 @@ export function need(reason: string, when: Condition): Blocked {
   return { when: { not: when }, reason }
 }
 
-export function activityById(
-  game: Game,
-  id: string,
-): ActivityDef | undefined {
+export function activityById(game: Game, id: string): ActivityDef | undefined {
   return (game.activities ?? []).find((activity) => activity.id === id)
 }
 
@@ -136,7 +133,11 @@ export const activities = defineFeature<ActivitiesShape>({
   }),
   lists: ['activity'],
   check: (game, tools) => {
-    tools.twice('activity', 'activities', (game.activities ?? []).map((entry) => entry.id))
+    tools.twice(
+      'activity',
+      'activities',
+      (game.activities ?? []).map((entry) => entry.id),
+    )
     const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
     for (const activity of game.activities ?? []) {
       const source = { list: 'activity', id: activity.id }
@@ -149,7 +150,11 @@ export const activities = defineFeature<ActivitiesShape>({
       }
     }
     for (const action of game.actions ?? []) {
-      tools.check(undefined, `action ${action.id}`, [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }])
+      tools.check(undefined, `action ${action.id}`, [
+        { when: action.when },
+        ...(action.blocked ?? []).map((entry) => ({ when: entry.when })),
+        { command: action.command },
+      ])
     }
   },
   resolve: (game) => {

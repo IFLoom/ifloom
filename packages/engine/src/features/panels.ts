@@ -55,7 +55,11 @@ function movedOn(before: GameState, after: GameState): boolean {
 export const panels = defineFeature<PanelsShape>({
   name: 'panels',
   state: {
-    panel: { start: () => null, load: () => null, keeps: (value) => value === null || (typeof value === 'object' && typeof (value as OpenPanel).panel === 'string') },
+    panel: {
+      start: () => null,
+      load: () => null,
+      keeps: (value) => value === null || (typeof value === 'object' && typeof (value as OpenPanel).panel === 'string'),
+    },
   },
   effects: {
     panel: {

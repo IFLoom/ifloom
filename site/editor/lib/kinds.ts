@@ -67,7 +67,20 @@ export const conditionKeysComplete: Missing<ConditionKey, (typeof CONDITION_KEYS
 export const effectKindsComplete: Missing<Effect['kind'], (typeof EFFECT_KINDS)[number]> = true
 
 /** The conditions the builder has a form for. Anything else is edited as JSON. */
-export const CONDITION_FORMS = ['all', 'any', 'not', 'stat', 'kv', 'item', 'chose', 'seen', 'since', 'setting', 'level', 'turn'] as const satisfies readonly ConditionKey[]
+export const CONDITION_FORMS = [
+  'all',
+  'any',
+  'not',
+  'stat',
+  'kv',
+  'item',
+  'chose',
+  'seen',
+  'since',
+  'setting',
+  'level',
+  'turn',
+] as const satisfies readonly ConditionKey[]
 export type ConditionForm = (typeof CONDITION_FORMS)[number] | 'plugin' | 'json'
 
 export const CONDITION_LABELS: Record<ConditionForm, string> = {
@@ -112,7 +125,22 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
 }
 
 /** The effect builder's menu, in order. Every form is in it. */
-export const EFFECT_MENU = ['stat', 'statTo', 'kv', 'kvBy', 'item', 'scene', 'draw', 'notify', 'turn', 'sound', 'audio', 'transition', 'plugin', 'json'] as const satisfies readonly EffectForm[]
+export const EFFECT_MENU = [
+  'stat',
+  'statTo',
+  'kv',
+  'kvBy',
+  'item',
+  'scene',
+  'draw',
+  'notify',
+  'turn',
+  'sound',
+  'audio',
+  'transition',
+  'plugin',
+  'json',
+] as const satisfies readonly EffectForm[]
 export const effectMenuComplete: Missing<EffectForm, (typeof EFFECT_MENU)[number]> = true
 
 /** The comparisons a range offers. `is` is only for kv keys and settings. */

@@ -10,7 +10,8 @@ export type Selection = { thing: 'project'; field?: string } | { thing: Thing; i
 export function selectionFromHash(hash: string): Selection | null {
   const [thing, id, choice] = decodeURIComponent(hash.replace(/^#/, '')).split('/')
   if (thing === 'project') return { thing: 'project' }
-  if ((thing === 'scene' || thing === 'stat' || thing === 'item' || thing === 'kv') && id) return { thing, id, ...(thing === 'scene' && choice ? { choice } : {}) }
+  if ((thing === 'scene' || thing === 'stat' || thing === 'item' || thing === 'kv') && id)
+    return { thing, id, ...(thing === 'scene' && choice ? { choice } : {}) }
   return null
 }
 

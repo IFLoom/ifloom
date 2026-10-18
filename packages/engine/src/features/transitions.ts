@@ -121,7 +121,7 @@ function namesIn(spec: Transition | TransitionName | undefined): string[] {
 function problemsOf(spec: Transition | TransitionName | undefined, known: ReadonlySet<string>): string[] {
   const out = [...new Set(namesIn(spec))].filter((name) => !known.has(name)).map((name) => `unknown transition "${name}"`)
   const ms = typeof spec === 'object' ? spec.ms : undefined
-  if (ms !== undefined && !(typeof ms === 'number' && ms >= 0)) out.push('a transition\'s ms must be 0 or more')
+  if (ms !== undefined && !(typeof ms === 'number' && ms >= 0)) out.push("a transition's ms must be 0 or more")
   return out
 }
 
@@ -163,7 +163,9 @@ export const transitions = defineFeature<TransitionsShape>({
       transition: (ref) => problemsOf(ref.transition, known),
       reveal: (ref) => [
         ...problemsOf(ref.reveal.as, known),
-        ...(ref.reveal.delay !== undefined && !(Number.isInteger(ref.reveal.delay) && ref.reveal.delay >= 0) ? ['a reveal\'s delay must be whole milliseconds, 0 or more'] : []),
+        ...(ref.reveal.delay !== undefined && !(Number.isInteger(ref.reveal.delay) && ref.reveal.delay >= 0)
+          ? ["a reveal's delay must be whole milliseconds, 0 or more"]
+          : []),
       ],
     }
   },

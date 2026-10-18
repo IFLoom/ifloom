@@ -22,7 +22,15 @@ const supporter: Pack = {
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ text: 'cafe.back-room' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'charm', by: 1 }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'leave',
+          effects: [
+            { kind: 'stat', stat: 'charm', by: 1 },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     },
   ],
   prose: {

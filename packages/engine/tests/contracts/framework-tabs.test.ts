@@ -68,7 +68,12 @@ function blocksOf(source: string): Block[] {
   }
   blocks.forEach((block, index) => {
     const next = blocks[index + 1]
-    block.adjacentToNext = next !== undefined && lines.slice(block.end + 1, next.line - 1).join('').trim() === ''
+    block.adjacentToNext =
+      next !== undefined &&
+      lines
+        .slice(block.end + 1, next.line - 1)
+        .join('')
+        .trim() === ''
   })
   return blocks
 }
@@ -135,7 +140,11 @@ describe('the docs', () => {
     const untabbed: string[] = []
     for (const page of pages) {
       if (ALLOWED.some((pattern) => pattern.test(`/${page.path}`))) continue
-      const tabbed = new Set(groupsOf(page.blocks).filter((group) => !groupProblem(group)).flat())
+      const tabbed = new Set(
+        groupsOf(page.blocks)
+          .filter((group) => !groupProblem(group))
+          .flat(),
+      )
       for (const block of page.blocks) {
         if (isUi(block) && !tabbed.has(block)) untabbed.push(`${page.path}:${block.line}: ${block.code.split('\n')[0]}`)
       }

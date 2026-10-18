@@ -16,10 +16,18 @@ export type BuilderProps = {
   onCreate?: (thing: Thing, id: string) => void
 }
 
-const FORMS: { value: ConditionForm; label: string }[] = [...CONDITION_FORMS, 'plugin' as const, 'json' as const].map((value) => ({ value, label: CONDITION_LABELS[value] }))
+const FORMS: { value: ConditionForm; label: string }[] = [...CONDITION_FORMS, 'plugin' as const, 'json' as const].map((value) => ({
+  value,
+  label: CONDITION_LABELS[value],
+}))
 
 /** An optional condition: a button to add one, or the builder with a remove button. */
-export function OptionalCondition({ value, onChange, add = 'Add a condition', ...props }: BuilderProps & { value: Condition | undefined; onChange: (value: Condition | undefined) => void; add?: string }) {
+export function OptionalCondition({
+  value,
+  onChange,
+  add = 'Add a condition',
+  ...props
+}: BuilderProps & { value: Condition | undefined; onChange: (value: Condition | undefined) => void; add?: string }) {
   if (!value) {
     return (
       <div>
@@ -32,7 +40,14 @@ export function OptionalCondition({ value, onChange, add = 'Add a condition', ..
   return <ConditionBuilder value={value} onChange={onChange} onRemove={() => onChange(undefined)} {...props} />
 }
 
-export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, onCreate, depth = 0 }: BuilderProps & { value: Condition; onChange: (value: Condition) => void; onRemove?: () => void; depth?: number }) {
+export function ConditionBuilder({
+  value,
+  onChange,
+  onRemove,
+  names = NO_NAMES,
+  onCreate,
+  depth = 0,
+}: BuilderProps & { value: Condition; onChange: (value: Condition) => void; onRemove?: () => void; depth?: number }) {
   // Any condition can be edited as JSON, even one a form could show.
   const [raw, setRaw] = useState(false)
   const form = raw ? 'json' : conditionForm(value)
@@ -78,7 +93,14 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
     case 'level':
       fields = (
         <>
-          <IdPicker noun="stat" aria-label="Stat" value={c[form] as string} options={names.stats} onChange={(id) => set({ [form]: id })} onCreate={create('stat')} />
+          <IdPicker
+            noun="stat"
+            aria-label="Stat"
+            value={c[form] as string}
+            options={names.stats}
+            onChange={(id) => set({ [form]: id })}
+            onCreate={create('stat')}
+          />
           <RangeEditor value={value} onChange={onChange} ops={[...RANGE_OPS]} />
         </>
       )
@@ -102,7 +124,14 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
     case 'item':
       fields = (
         <>
-          <IdPicker noun="item" aria-label="Item" value={c.item as string} options={names.items} onChange={(id) => set({ item: id })} onCreate={create('item')} />
+          <IdPicker
+            noun="item"
+            aria-label="Item"
+            value={c.item as string}
+            options={names.items}
+            onChange={(id) => set({ item: id })}
+            onCreate={create('item')}
+          />
           <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
         </>
       )
@@ -119,7 +148,14 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
     case 'since':
       fields = (
         <>
-          <IdPicker noun="scene" aria-label="Scene" value={c[form] as string} options={names.scenes} onChange={(id) => set({ [form]: id })} onCreate={create('scene')} />
+          <IdPicker
+            noun="scene"
+            aria-label="Scene"
+            value={c[form] as string}
+            options={names.scenes}
+            onChange={(id) => set({ [form]: id })}
+            onCreate={create('scene')}
+          />
           <RangeEditor value={value} onChange={onChange} ops={form === 'seen' ? ['set', ...RANGE_OPS] : [...RANGE_OPS]} />
           {form === 'since' ? (
             <Checkbox
@@ -143,7 +179,11 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
       fields = (
         <div className="w-full">
           <JsonField label="Condition as JSON" value={value} rows={3} onChange={(next) => next && typeof next === 'object' && onChange(next)} />
-          {form === 'plugin' ? <p className="mt-1 text-xs text-fd-muted-foreground">A plugin's condition by its full name, such as <code>{'{ "quests/done": { "quest": "errand" } }'}</code>.</p> : null}
+          {form === 'plugin' ? (
+            <p className="mt-1 text-xs text-fd-muted-foreground">
+              A plugin's condition by its full name, such as <code>{'{ "quests/done": { "quest": "errand" } }'}</code>.
+            </p>
+          ) : null}
         </div>
       )
       break
@@ -151,10 +191,15 @@ export function ConditionBuilder({ value, onChange, onRemove, names = NO_NAMES, 
 
   return (
     <div className={cx('flex flex-wrap items-center gap-2', depth === 0 && 'rounded-md border border-fd-border bg-fd-background p-2')}>
-      <Select aria-label="Kind of condition" value={form} options={FORMS} onChange={(next) => {
+      <Select
+        aria-label="Kind of condition"
+        value={form}
+        options={FORMS}
+        onChange={(next) => {
           setRaw(next === 'json')
           if (next !== 'json') onChange(newCondition(next, names))
-        }} />
+        }}
+      />
       {fields}
       {onRemove ? (
         <Button size="xs" variant="danger" className="ms-auto" onClick={onRemove} aria-label="Remove the condition" title="Remove">
@@ -181,10 +226,22 @@ function RangeEditor({ value, onChange, ops }: { value: Condition; onChange: (va
         aria-label="Comparison"
         value={range.op}
         options={ops.map((op) => ({ value: op, label: RANGE_LABELS[op] }))}
-        onChange={(op) => onChange(withRange(value, { op, value: op === 'is' ? (typeof range.value === 'number' ? range.value : true) : typeof range.value === 'number' ? range.value : 1 }))}
+        onChange={(op) =>
+          onChange(
+            withRange(value, {
+              op,
+              value: op === 'is' ? (typeof range.value === 'number' ? range.value : true) : typeof range.value === 'number' ? range.value : 1,
+            }),
+          )
+        }
       />
       {range.op === 'is' ? (
-        <TextInput aria-label="Value" className="w-28" value={String(range.value)} onChange={(text) => onChange(withRange(value, { op: 'is', value: parseKvValue(text ?? '') }))} />
+        <TextInput
+          aria-label="Value"
+          className="w-28"
+          value={String(range.value)}
+          onChange={(text) => onChange(withRange(value, { op: 'is', value: parseKvValue(text ?? '') }))}
+        />
       ) : range.op !== 'set' ? (
         <NumberInput aria-label="Number" value={range.value as number} onChange={(n) => onChange(withRange(value, { op: range.op, value: n ?? 0 }))} />
       ) : null}

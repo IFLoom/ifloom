@@ -32,7 +32,9 @@ describe('the Vite preset', () => {
 describe('the source condition', () => {
   const checkout = fileURLToPath(new URL('../../../', import.meta.url))
   const conditions = (root: string) => {
-    const hook = sourcePlugin().config as (config: { root: string }) => { resolve?: { conditions?: string[] }; ssr?: { resolve?: { conditions?: string[] } } } | undefined
+    const hook = sourcePlugin().config as (config: {
+      root: string
+    }) => { resolve?: { conditions?: string[] }; ssr?: { resolve?: { conditions?: string[] } } } | undefined
     const made = hook({ root })
     return [made?.resolve?.conditions?.[0], made?.ssr?.resolve?.conditions?.[0]]
   }

@@ -74,13 +74,7 @@ export type CalendarView = {
 }
 
 const ID = 'calendar'
-const DEFAULT_PERIODS: PeriodDef[] = [
-  { id: 'morning' },
-  { id: 'afternoon' },
-  { id: 'evening' },
-  { id: 'night' },
-  { id: 'late' },
-]
+const DEFAULT_PERIODS: PeriodDef[] = [{ id: 'morning' }, { id: 'afternoon' }, { id: 'evening' }, { id: 'night' }, { id: 'late' }]
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 /** How many periods of time the effects pass, in total. */
@@ -114,8 +108,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
   const absolute = (clock: CalendarState) => clock.day * P + index(clock.period)
   const fromAbsolute = (n: number): CalendarState => ({ day: Math.floor(n / P), period: ids[((n % P) + P) % P] })
   /** Which turn-unit a moment falls in: its period, its day, or its week counted from the start. */
-  const unit = (n: number) =>
-    turn === 'period' ? n : turn === 'day' ? Math.floor(n / P) : Math.floor((Math.floor(n / P) - startDay) / week)
+  const unit = (n: number) => (turn === 'period' ? n : turn === 'day' ? Math.floor(n / P) : Math.floor((Math.floor(n / P) - startDay) / week))
   const weekdayIndex = (day: number) => ((day % week) + week) % week
   const curfewBinds = (state: GameState, context: PluginContext<CalendarState>) =>
     curfew === false ? false : curfew === undefined ? true : holds(state, curfew, context.game)

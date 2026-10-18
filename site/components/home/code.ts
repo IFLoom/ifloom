@@ -37,8 +37,7 @@ export const LINES = [
 
 export type Token = { c: string; t: string }
 
-const PATTERN =
-  /('(?:[^'\\]|\\.)*')|\b(import|from|export|const|type)\b|\b(SCHEMA|Pack)\b|(-?\b\d+\b)|\b(true|false)\b|([A-Za-z_]\w*)(?=\s*:)|([{}[\](),:])/g
+const PATTERN = /('(?:[^'\\]|\\.)*')|\b(import|from|export|const|type)\b|\b(SCHEMA|Pack)\b|(-?\b\d+\b)|\b(true|false)\b|([A-Za-z_]\w*)(?=\s*:)|([{}[\](),:])/g
 const CLASSES = ['str', 'kw', 'ty', 'num', 'bool', 'key', 'pun']
 
 function tokenize(line: string): Token[] {

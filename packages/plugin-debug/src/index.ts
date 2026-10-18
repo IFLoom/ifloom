@@ -98,9 +98,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       /** `{ name: 'debug/item', with: { item, to } }`: set how many of an item the player has. */
       item: free({
         whyNot: (_state, args, { game }) =>
-          !itemById(game, String(args.item))
-            ? sayDebug(game, 'noSuchItem', String(args.item))
-            : isNumber(args.to) ? undefined : sayDebug(game, 'notANumber'),
+          !itemById(game, String(args.item)) ? sayDebug(game, 'noSuchItem', String(args.item)) : isNumber(args.to) ? undefined : sayDebug(game, 'notANumber'),
         run: (state, args) => ({ ...state, items: { ...state.items, [String(args.item)]: Math.max(0, Number(args.to)) } }),
       }),
       /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
@@ -123,12 +121,18 @@ export function debug(): DefinedPlugin<null, DebugView> {
           return ok ? undefined : sayDebug(game, 'badTime', undefined, periods.join(', '))
         },
         run: (_state, args, { apply }) =>
-          apply([{ 'calendar/set': { ...(args.day === undefined ? {} : { day: Number(args.day) }), ...(args.period === undefined ? {} : { period: String(args.period) }) } }]),
+          apply([
+            {
+              'calendar/set': {
+                ...(args.day === undefined ? {} : { day: Number(args.day) }),
+                ...(args.period === undefined ? {} : { period: String(args.period) }),
+              },
+            },
+          ]),
       }),
       /** `{ name: 'debug/turn', with: { to } }`: set how many turns have passed. No turn's rules run. */
       turn: free({
-        whyNot: (_state, args, { game }) =>
-          isNumber(args.to) && Number.isInteger(args.to) && args.to >= 0 ? undefined : sayDebug(game, 'notATurn'),
+        whyNot: (_state, args, { game }) => (isNumber(args.to) && Number.isInteger(args.to) && args.to >= 0 ? undefined : sayDebug(game, 'notATurn')),
         run: (state, args) => ({ ...state, turn: Number(args.to) }),
       }),
       /**
@@ -145,15 +149,12 @@ export function debug(): DefinedPlugin<null, DebugView> {
       }),
     },
     view: (state, { game }): DebugView => ({
-      locks: (game.rules?.locks ?? [])
-        .filter((lock) => holds(state, lock.when, game))
-        .map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
+      locks: (game.rules?.locks ?? []).filter((lock) => holds(state, lock.when, game)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
       fired: { ...state.fired },
       seed: state.seed,
     }),
   })
 }
-
 
 function sayDebug(game: Game, key: string, id?: string, periods?: string): string {
   return say(game, `debug/${key}`, { ...(id === undefined ? {} : { id }), ...(periods === undefined ? {} : { periods }) })

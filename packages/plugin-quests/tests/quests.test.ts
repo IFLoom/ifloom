@@ -1,30 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SCHEMA,
-  apply,
-  holds,
-  loadGame,
-  startingState,
-  view,
-  whyNot,
-  type Game,
-  type GameState,
-  type Pack,
-} from '@ifloom/engine'
-import {
-  questActive,
-  questDone,
-  questReached,
-  quests,
-  seeQuests,
-  startQuest,
-  trackQuest,
-  type QuestDef,
-  type QuestsView,
-} from '../src/index.ts'
+import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest, type QuestDef, type QuestsView } from '../src/index.ts'
 
 const plugin = quests()
-
 
 /** Bread for breakfast: get hungry, go out, buy a loaf. A letter that only a scene can start. */
 const bread: QuestDef = {
@@ -88,9 +66,7 @@ describe('quests', () => {
     const fresh = { ...startingState(g), sceneId: null }
     expect(shown(fresh, g)).toMatchObject({ active: [], done: [], toFind: 2, updates: 0 })
     const hungry = run(fresh, g, act('getHungry'))
-    expect(shown(hungry, g).active).toEqual([
-      expect.objectContaining({ id: 'bread', hint: 'Go out to the street.', stage: 0, stages: 2, updated: true }),
-    ])
+    expect(shown(hungry, g).active).toEqual([expect.objectContaining({ id: 'bread', hint: 'Go out to the street.', stage: 0, stages: 2, updated: true })])
     expect(holds(hungry, questActive('bread'), g)).toBe(true)
   })
 
@@ -155,10 +131,7 @@ describe('quests', () => {
         { id: 'a', hint: '', done: { kv: 'x' } },
       ],
     }
-    const loaded = loadGame(
-      [{ id: 'mod', schema: SCHEMA, data: { quests: { quests: [broken] } } }],
-      { id: 'g', title: 'g', plugins: [plugin] },
-    )
+    const loaded = loadGame([{ id: 'mod', schema: SCHEMA, data: { quests: { quests: [broken] } } }], { id: 'g', title: 'g', plugins: [plugin] })
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'quests broken', what: 'unknown storyline "nobody"' },
       { pack: 'mod', where: 'quests broken', what: 'stage a: unknown item "moonstone"' },

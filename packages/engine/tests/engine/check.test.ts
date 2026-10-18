@@ -43,9 +43,12 @@ describe('checkGame', () => {
       scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { item: 'missing' }, effects: [] }] }],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown item "missing"'])
-    expect(problemsOf({ ...fixture(), activities: [...(fixture().activities ?? []), { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }] })).toEqual([
-      'activity eat: unknown item "missing"',
-    ])
+    expect(
+      problemsOf({
+        ...fixture(),
+        activities: [...(fixture().activities ?? []), { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }],
+      }),
+    ).toEqual(['activity eat: unknown item "missing"'])
   })
 
   it('reports what the engine would quietly skip: a condition with no kind or two, an effect or command it does not have', () => {
@@ -75,7 +78,21 @@ describe('checkGame', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      items: [{ id: 'map', name: 'Map', desc: '', start: 1, use: { label: 'Read', effects: [{ kind: 'scene', scene: 'missing' }, { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true }] } }],
+      items: [
+        {
+          id: 'map',
+          name: 'Map',
+          desc: '',
+          start: 1,
+          use: {
+            label: 'Read',
+            effects: [
+              { kind: 'scene', scene: 'missing' },
+              { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true },
+            ],
+          },
+        },
+      ],
     }
     expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual([
       'town · item map · goes to unknown scene "missing"',
@@ -88,7 +105,9 @@ describe('checkGame', () => {
       id: 'town',
       schema: SCHEMA,
       prose: { 'shop#buy': 'Buy one.' },
-      scenes: [{ id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', item: 'roll', by: 1 }] }] }],
+      scenes: [
+        { id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', item: 'roll', by: 1 }] }] },
+      ],
     }
     const { game, problems } = loadGame([pack], base())
     const again = checkGame(game).problems
@@ -105,7 +124,13 @@ describe('checkGame', () => {
       ...fixture(),
       scenes: [
         ...fixture().scenes,
-        { id: 'porch', render: (state) => ({ body: '[[sound:knock]]', choices: [{ id: 'in', label: 'In', effects: [{ kind: 'scene', scene: state.turn > 0 ? 'hall' : null }] }] }) },
+        {
+          id: 'porch',
+          render: (state) => ({
+            body: '[[sound:knock]]',
+            choices: [{ id: 'in', label: 'In', effects: [{ kind: 'scene', scene: state.turn > 0 ? 'hall' : null }] }],
+          }),
+        },
         {
           id: 'cellar',
           render: () => {
@@ -175,7 +200,16 @@ describe('the files a game names', () => {
           id: 'flat',
           body: [{ text: 'flat.in' }, { media: { src: 'clip', video: true, poster: 'clip-still' } }, { media: { pool: 'door', tags: ['day'] } }],
           stage: { layers: [{ src: 'room.png' }] },
-          choices: [{ id: 'snap', label: 'flat.in', effects: [{ kind: 'collect', collection: 'album', entry: { id: 'flat', image: './art/photo/flat.png' } }, { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' }] }],
+          choices: [
+            {
+              id: 'snap',
+              label: 'flat.in',
+              effects: [
+                { kind: 'collect', collection: 'album', entry: { id: 'flat', image: './art/photo/flat.png' } },
+                { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' },
+              ],
+            },
+          ],
         },
       ],
     }

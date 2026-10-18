@@ -9,7 +9,10 @@ describe('the game’s hooks', () => {
       resets: { tidied: false },
       onTurn: (state, { apply, before }) => {
         // Effects apply one after another, each seeing the last.
-        const reached = apply([{ kind: 'kv', key: 'reached', to: state.turn }, { kind: 'kv', key: 'wasTidy', to: before.kv.tidied === true }])
+        const reached = apply([
+          { kind: 'kv', key: 'reached', to: state.turn },
+          { kind: 'kv', key: 'wasTidy', to: before.kv.tidied === true },
+        ])
         return { ...reached, kv: { ...reached.kv, mornings: Number(reached.kv.mornings ?? 0) + 1 } }
       },
     })
@@ -72,9 +75,7 @@ describe('the game’s hooks', () => {
   it('lets the game veto a stat change, or add to it', () => {
     const vetoed = fixture({ onStat: (before) => before })
     const state = begin(vetoed)
-    expect(apply(state, vetoed, { type: 'activity', id: 'read' }).state.stats.intelligence).toBe(
-      state.stats.intelligence,
-    )
+    expect(apply(state, vetoed, { type: 'activity', id: 'read' }).state.stats.intelligence).toBe(state.stats.intelligence)
     const noted = fixture({
       onStat: (_before, after, key, by) => ({ ...after, kv: { ...after.kv, [`${key}+`]: by } }),
     })

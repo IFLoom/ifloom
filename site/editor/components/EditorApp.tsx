@@ -226,7 +226,9 @@ export function EditorApp() {
             <Button onClick={() => download(fileName(project, 'ts'), toTypeScript(project), 'text/typescript')}>Export TS</Button>
             <Button onClick={() => download(fileName(project, 'json'), toJson(project), 'application/json')}>Export JSON</Button>
           </span>
-          <span className="ms-auto text-xs text-fd-muted-foreground">{unavailable ? 'Drafts aren’t kept in this browser.' : 'Drafts are kept in this browser.'}</span>
+          <span className="ms-auto text-xs text-fd-muted-foreground">
+            {unavailable ? 'Drafts aren’t kept in this browser.' : 'Drafts are kept in this browser.'}
+          </span>
         </header>
         {message ? (
           <div role="status" className="flex items-center justify-between gap-2 border-b border-fd-border bg-fd-muted px-4 py-1.5 text-sm">

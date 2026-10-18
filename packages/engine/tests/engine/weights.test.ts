@@ -69,7 +69,9 @@ describe('weights in content', () => {
 
   it('report a variants member weighing 0 or less', () => {
     const pack: Pack = { id: 'street', schema: SCHEMA, prose: { a: 'A' }, variants: { v: [{ text: 'a', weight: 0 }] } }
-    expect(loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)).toContain('street · variants v · "a" has a weight of 0; a weight must be above 0')
+    expect(loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)).toContain(
+      'street · variants v · "a" has a weight of 0; a weight must be above 0',
+    )
   })
 
   it('make a heavier pool file picked more often', () => {

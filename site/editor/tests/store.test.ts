@@ -49,7 +49,13 @@ describe('the project store', () => {
       pack: {
         ...current.pack,
         schema: 4,
-        scenes: [{ id: 'market', body: [{ text: 'market', when: { flag: 'heardBusker' } }], choices: [{ id: 'listen', effects: [{ kind: 'flag', key: 'heardBusker', value: true }] }] }],
+        scenes: [
+          {
+            id: 'market',
+            body: [{ text: 'market', when: { flag: 'heardBusker' } }],
+            choices: [{ id: 'listen', effects: [{ kind: 'flag', key: 'heardBusker', value: true }] }],
+          },
+        ],
       },
     }
     await store.put(old as never)
@@ -57,7 +63,11 @@ describe('the project store', () => {
     expect(loaded?.kv).toEqual([{ name: 'heardBusker', note: 'Set once you have listened.' }])
     expect(loaded).not.toHaveProperty('variables')
     expect(loaded?.pack.schema).toBe(SCHEMA)
-    expect(loaded?.pack.scenes[0]).toEqual({ id: 'market', body: [{ text: 'market', when: { kv: 'heardBusker' } }], choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }] }] })
+    expect(loaded?.pack.scenes[0]).toEqual({
+      id: 'market',
+      body: [{ text: 'market', when: { kv: 'heardBusker' } }],
+      choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }] }],
+    })
   })
   it('upgrades a schema 5 project to the content naming rule and blocked', async () => {
     const store = projectStore(new IDBFactory())
@@ -72,7 +82,17 @@ describe('the project store', () => {
           {
             id: 'market',
             body: [{ text: 'market', when: { has: 'bun' } }],
-            choices: [{ id: 'buy', blocked: [{ when: { turn: true, lt: 1 }, reason: 'Not yet.' }], effects: [{ kind: 'stat', key: 'coins', by: -3 }, { kind: 'item', id: 'bun', by: 1 }, { kind: 'scene', id: null }] }],
+            choices: [
+              {
+                id: 'buy',
+                blocked: [{ when: { turn: true, lt: 1 }, reason: 'Not yet.' }],
+                effects: [
+                  { kind: 'stat', key: 'coins', by: -3 },
+                  { kind: 'item', id: 'bun', by: 1 },
+                  { kind: 'scene', id: null },
+                ],
+              },
+            ],
           },
         ],
       },
@@ -84,7 +104,17 @@ describe('the project store', () => {
     expect(loaded?.pack.scenes[0]).toEqual({
       id: 'market',
       body: [{ text: 'market', when: { item: 'bun' } }],
-      choices: [{ id: 'buy', blocked: [{ when: { turn: { lt: 1 } }, reason: 'Not yet.' }], effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'item', item: 'bun', by: 1 }, { kind: 'scene', scene: null }] }],
+      choices: [
+        {
+          id: 'buy',
+          blocked: [{ when: { turn: { lt: 1 } }, reason: 'Not yet.' }],
+          effects: [
+            { kind: 'stat', stat: 'coins', by: -3 },
+            { kind: 'item', item: 'bun', by: 1 },
+            { kind: 'scene', scene: null },
+          ],
+        },
+      ],
     })
   })
 })

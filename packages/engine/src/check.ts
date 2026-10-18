@@ -4,7 +4,17 @@
  * names. `loadGame` runs it on the game it merges; a hand-built game calls
  * `checkGame` itself.
  */
-import { commandOf, customCall, customPanel, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
+import {
+  commandOf,
+  customCall,
+  customPanel,
+  customValue,
+  hasCustomEffect,
+  customCondition,
+  shortFormProblem,
+  type CommandRef,
+  type EffectRef,
+} from './custom.ts'
 import type { Game } from './game.ts'
 import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
@@ -34,11 +44,7 @@ export type Checked = { problems: Problem[]; files: FileRef[] }
  * What a problem is about, for `loadGame` to name the pack it came from.
  * Undefined is the game itself: its actions, `finished`, `carryOver`.
  */
-export type Source =
-  | { list: CoreList; id: string }
-  | { list: FeatureList; id?: string }
-  | { plugin: string; list: string; id: string }
-  | undefined
+export type Source = { list: CoreList; id: string } | { list: FeatureList; id?: string } | { plugin: string; list: string; id: string } | undefined
 
 /** The lists the core keeps itself. The features' lists are their own (`FeatureList`). */
 export type CoreList = 'prose'
@@ -69,7 +75,10 @@ function shapeProblems(condition: Condition): string[] {
   const kinds = conditionKinds(condition)
   if (kinds.length === 1) return []
   const keys = Object.keys(condition)
-  if (!kinds.length) return [`a condition needs one kind, such as kv or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`]
+  if (!kinds.length)
+    return [
+      `a condition needs one kind, such as kv or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`,
+    ]
   return [`a condition has one kind, but this one has ${kinds.length}: ${kinds.join(', ')}`]
 }
 
@@ -133,9 +142,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
 
   const call = (kind: 'conditions' | 'effects' | 'commands', name: string, args: Record<string, unknown>, long: boolean, where: string): string[] => {
     const known =
-      kind === 'conditions' ? Boolean(customCondition(game, name))
-      : kind === 'commands' ? Boolean(pluginCommand(game, name))
-      : hasCustomEffect(game, name)
+      kind === 'conditions' ? Boolean(customCondition(game, name)) : kind === 'commands' ? Boolean(pluginCommand(game, name)) : hasCustomEffect(game, name)
     if (!known) {
       // A cooperating partner the game doesn't have: content may name it, and it is simply not there.
       if (absentPartner(game, name)) return []
@@ -227,7 +234,12 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     }
   }
   // Each feature's own checks, in the features' order: its lists, what they name, its rules.
-  const tools: FeatureCheckTools = { problem: (source, where, what) => say(source as Source, where, what), check: (source, where, refs) => check(source as Source, where, refs), file, twice }
+  const tools: FeatureCheckTools = {
+    problem: (source, where, what) => say(source as Source, where, what),
+    check: (source, where, refs) => check(source as Source, where, refs),
+    file,
+    twice,
+  }
   const cx = featureContext()
   for (const featureCheck of featureChecks) featureCheck(game, tools, cx)
 

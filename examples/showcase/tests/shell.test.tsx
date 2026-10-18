@@ -31,8 +31,9 @@ describe('the showcase shell', () => {
     expect(keys.slice(0, 2)).toEqual(['1', '2'])
   })
 
-  it('draws the plugins\' defaults: the achievements and the statuses, and the counter and the job board in panels', () => {
-    const run = (state: GameState, ...commands: (Command | CommandRef)[]) => commands.reduce<GameState>((now, command) => apply(now, game, command).state, state)
+  it("draws the plugins' defaults: the achievements and the statuses, and the counter and the job board in panels", () => {
+    const run = (state: GameState, ...commands: (Command | CommandRef)[]) =>
+      commands.reduce<GameState>((now, command) => apply(now, game, command).state, state)
     const unpacked = run(startingState(game), { type: 'choose', id: 'unpack' })
     const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'activity', id: 'coffee' })
     const runner = createRunner(game, cafe)
@@ -54,7 +55,7 @@ describe('the showcase shell', () => {
     expect(board.querySelector('[data-job="dogs"]')).not.toBeNull()
   })
 
-  it('opens the newspaper\'s job ads from the inventory: the board, with only the paper\'s jobs', () => {
+  it("opens the newspaper's job ads from the inventory: the board, with only the paper's jobs", () => {
     const runner = createRunner(game, apply(startingState(game), game, { type: 'choose', id: 'unpack' }).state)
     render(<GameShell runner={runner} layout={Layout} />)
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Read the job ads/ })))

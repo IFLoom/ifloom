@@ -3,7 +3,17 @@
  * effect is edited with, a new one of each kind, and ranges. The builders
  * edit the engine's own objects; there is no second model to keep in step.
  */
-import { TRANSITIONS, type Blocked, type Condition, type EffectRef, type ItemDef, type SettingDef, type StatDef, type Transition, type TransitionName } from '@ifloom/engine'
+import {
+  TRANSITIONS,
+  type Blocked,
+  type Condition,
+  type EffectRef,
+  type ItemDef,
+  type SettingDef,
+  type StatDef,
+  type Transition,
+  type TransitionName,
+} from '@ifloom/engine'
 import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 

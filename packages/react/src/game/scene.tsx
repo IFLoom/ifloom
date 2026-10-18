@@ -20,7 +20,10 @@ function VoiceReplay({ voice }: { voice: string }) {
   const { runner } = useGame()
   const player = usePlayer(runner)
   const words = useWords()
-  const button = usePart('voice-replay', 'ml-2 inline-flex size-6 items-center justify-center rounded-full align-middle text-muted-foreground hover:text-foreground [&_svg]:size-4')
+  const button = usePart(
+    'voice-replay',
+    'ml-2 inline-flex size-6 items-center justify-center rounded-full align-middle text-muted-foreground hover:text-foreground [&_svg]:size-4',
+  )
   const tracks = runner.game.audio?.tracks
   const track = tracks && Object.hasOwn(tracks, voice) ? tracks[voice] : undefined
   if (!player || !track || 'playlist' in track) return null
@@ -44,7 +47,10 @@ function Zoomable({ media, children }: { media: ViewerMedia; children: ReactNode
   const wide = media.size === 'wide'
   const opener = usePart(
     'viewer-open',
-    cn('block w-full cursor-zoom-in rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring', !wide && 'max-w-sm'),
+    cn(
+      'block w-full cursor-zoom-in rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+      !wide && 'max-w-sm',
+    ),
   )
   if (!on || (media.kind === 'video' && media.controls)) return <>{children}</>
   return (
@@ -73,16 +79,27 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
   const text = usePart('beat', 'leading-prose')
   const mono = usePart('beat', 'font-mono text-sm leading-prose')
   const say = usePart('beat', beat.kind === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
-  const image = usePart('beat', cn('w-full rounded-lg', beat.kind === 'image' && beat.size === 'inline' && 'max-w-sm', beat.kind === 'image' && beat.rotate && 'rotate-1'))
+  const image = usePart(
+    'beat',
+    cn('w-full rounded-lg', beat.kind === 'image' && beat.size === 'inline' && 'max-w-sm', beat.kind === 'image' && beat.rotate && 'rotate-1'),
+  )
   const mail = usePart('beat', 'rounded-lg border bg-card p-4 text-sm')
   const header = usePart('mail-header', 'text-muted-foreground')
   const body = usePart('mail-body', 'mt-2 whitespace-pre-wrap')
   const prop = usePart('beat', 'rounded-lg border-2 border-dashed p-4 text-center font-medium')
   switch (beat.kind) {
     case 'text':
-      return <p {...text} data-beat="text">{beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}</p>
+      return (
+        <p {...text} data-beat="text">
+          {beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}
+        </p>
+      )
     case 'mono':
-      return <p {...mono} data-beat="mono">{beat.text}</p>
+      return (
+        <p {...mono} data-beat="mono">
+          {beat.text}
+        </p>
+      )
     case 'say':
       return (
         <p {...say} data-beat="say" data-who={beat.who}>

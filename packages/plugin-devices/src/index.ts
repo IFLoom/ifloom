@@ -179,7 +179,9 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     if ('actions' in section) {
       return {
         kind: 'actions',
-        actions: section.actions.filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked)).map((action) => renderAction(state, game, action)),
+        actions: section.actions
+          .filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked))
+          .map((action) => renderAction(state, game, action)),
       }
     }
     if ('collection' in section) {
@@ -240,9 +242,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     conditions: {
       /** `{ 'devices/open': { app } }`: that app is open; with `device` instead, anything is. */
       open: (_state, args, { slice }) =>
-        args.app !== undefined
-          ? Object.values(slice.open).includes(String(args.app))
-          : Boolean(slice.open[String(args.device)]),
+        args.app !== undefined ? Object.values(slice.open).includes(String(args.app)) : Boolean(slice.open[String(args.device)]),
     },
     commands: {
       /** `{ 'devices/open': { id } }`: open the app `id`. Free: no time passes. */

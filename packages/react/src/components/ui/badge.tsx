@@ -2,20 +2,17 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
 import { cn } from '../../lib/utils.ts'
 
-export const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground',
-        outline: 'text-foreground',
-        destructive: 'border-transparent bg-destructive text-destructive-foreground',
-      },
+export const badgeVariants = cva('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold transition-colors', {
+  variants: {
+    variant: {
+      default: 'border-transparent bg-primary text-primary-foreground',
+      secondary: 'border-transparent bg-secondary text-secondary-foreground',
+      outline: 'text-foreground',
+      destructive: 'border-transparent bg-destructive text-destructive-foreground',
     },
-    defaultVariants: { variant: 'default' },
   },
-)
+  defaultVariants: { variant: 'default' },
+})
 
 export type BadgeProps = ComponentProps<'span'> & VariantProps<typeof badgeVariants>
 

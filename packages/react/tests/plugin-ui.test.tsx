@@ -133,7 +133,7 @@ const part = (name: string) => document.querySelector(`[data-part="${name}"]`)
 const press = (name: RegExp | string) => act(() => void fireEvent.click(screen.getByRole('button', { name })))
 
 describe('the shop', () => {
-  it('opens the vendor in a panel from a room\'s action, with prices, stock and greyed-out reasons', () => {
+  it("opens the vendor in a panel from a room's action, with prices, stock and greyed-out reasons", () => {
     play()
     press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
@@ -297,7 +297,14 @@ describe('the defaults, wired', () => {
   })
 
   it('go when their part is left out of the layout', () => {
-    play({ layout: storyOf(<><SceneStage /><RoomActions /></>) })
+    play({
+      layout: storyOf(
+        <>
+          <SceneStage />
+          <RoomActions />
+        </>,
+      ),
+    })
     expect(part('achievements-button')).toBeNull()
     press('Go to the counter')
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -342,7 +349,7 @@ describe('the defaults, wired', () => {
 })
 
 describe('the panels', () => {
-  it('draw the built-in ones by name, and a game\'s own over them, with what they were opened with', () => {
+  it("draw the built-in ones by name, and a game's own over them, with what they were opened with", () => {
     const Pockets = ({ data }: { data: unknown }) => <p>Lint and {JSON.stringify(data)}</p>
     const Board = () => <p>The café's own board</p>
     const runner = play({ panels: { pockets: Pockets, jobs: Board } })
@@ -350,7 +357,7 @@ describe('the panels', () => {
     expect(screen.getByRole('dialog', { name: 'Your pockets' }).textContent).toContain('Lint and {"title":"Your pockets"}')
     press('Close')
     press('Read the job board')
-    expect(screen.getByRole('dialog', { name: 'Jobs' }).textContent).toContain('The café\'s own board')
+    expect(screen.getByRole('dialog', { name: 'Jobs' }).textContent).toContain("The café's own board")
     act(() => void runner.apply({ type: 'closePanel' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -382,7 +389,9 @@ describe('the hooks', () => {
   it('give the data and the actions with no markup', () => {
     const g = game()
     const runner = createRunner(g, startingState(g))
-    const { result } = renderHook(() => ({ shop: useShop(), jobs: useJobs(), achievements: useAchievements(), statuses: useStatuses() }), { wrapper: wrapper(runner) })
+    const { result } = renderHook(() => ({ shop: useShop(), jobs: useJobs(), achievements: useAchievements(), statuses: useStatuses() }), {
+      wrapper: wrapper(runner),
+    })
     expect(result.current.shop!.here.map((vendor) => vendor.id)).toEqual(['counter'])
     act(() => void result.current.shop!.buy('counter', 'sandwich'))
     expect(runner.state.items.sandwich).toBe(1)

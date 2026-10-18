@@ -28,11 +28,21 @@ export function RightPane({ playing }: { playing: { scene: string; nonce: number
             type="button"
             aria-selected={tab === name}
             onClick={() => setTab(name)}
-            className={cx('-mb-px border-b-2 px-3 py-1.5 text-sm font-medium', tab === name ? 'border-fd-primary text-fd-primary' : 'border-transparent text-fd-muted-foreground hover:text-fd-foreground')}
+            className={cx(
+              '-mb-px border-b-2 px-3 py-1.5 text-sm font-medium',
+              tab === name ? 'border-fd-primary text-fd-primary' : 'border-transparent text-fd-muted-foreground hover:text-fd-foreground',
+            )}
           >
             {name === 'preview' ? 'Preview' : 'Problems'}
             {name === 'problems' ? (
-              <span className={cx('ms-1.5 rounded-full px-1.5 text-xs', problems.length ? 'bg-red-500/15 text-red-700 dark:text-red-300' : 'bg-fd-secondary text-fd-muted-foreground')}>{problems.length}</span>
+              <span
+                className={cx(
+                  'ms-1.5 rounded-full px-1.5 text-xs',
+                  problems.length ? 'bg-red-500/15 text-red-700 dark:text-red-300' : 'bg-fd-secondary text-fd-muted-foreground',
+                )}
+              >
+                {problems.length}
+              </span>
             ) : null}
           </button>
         ))}
@@ -94,13 +104,21 @@ function Preview({ playing }: { playing: { scene: string; nonce: number } | null
           <Select
             aria-label="Start the preview at"
             value={project.preview.start ?? ''}
-            options={[{ value: '', label: project.intro ? `The intro (${project.intro})` : 'The intro' }, ...names.scenes.map((id) => ({ value: id, label: id }))]}
+            options={[
+              { value: '', label: project.intro ? `The intro (${project.intro})` : 'The intro' },
+              ...names.scenes.map((id) => ({ value: id, label: id })),
+            ]}
             onChange={(id) => startAgain(id || null)}
           />
         </label>
         <label className="flex items-center gap-1 whitespace-nowrap text-xs text-fd-muted-foreground">
           Theme
-          <Select aria-label="Theme preset" value={project.preview.theme} options={THEMES} onChange={(theme) => update((draft) => void (draft.preview.theme = theme))} />
+          <Select
+            aria-label="Theme preset"
+            value={project.preview.theme}
+            options={THEMES}
+            onChange={(theme) => update((draft) => void (draft.preview.theme = theme))}
+          />
         </label>
         <Button size="xs" variant="primary" className="ms-auto" onClick={() => startAgain()}>
           Restart

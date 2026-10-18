@@ -35,7 +35,10 @@ function town(): Game {
         id: 'town',
         schema: SCHEMA,
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
-        activities: [{ id: 'wait', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] }, { id: 'look', effects: [{ kind: 'panel', panel: 'stats' }] }],
+        activities: [
+          { id: 'wait', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] },
+          { id: 'look', effects: [{ kind: 'panel', panel: 'stats' }] },
+        ],
         prose: { 'place.house': 'Quiet.', 'place.street': 'Busy.' },
         data: {
           places: {
@@ -44,7 +47,9 @@ function town(): Game {
               { id: 'street', name: 'High Street', tag: 'Out', exits: ['house'], art: '', body: [{ text: 'place.street' }] },
             ],
           },
-          quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: at('house', 'street'), stages: [{ id: 'go', hint: 'Go out.', done: at('street') }] }] },
+          quests: {
+            quests: [{ id: 'out', title: 'Get out of the house', starts: at('house', 'street'), stages: [{ id: 'go', hint: 'Go out.', done: at('street') }] }],
+          },
         },
       },
     ],
@@ -118,7 +123,13 @@ describe('the regions', () => {
   })
 
   it('take classes and components like every other part', () => {
-    const components: Components = { Story: ({ Default, ...props }) => <div data-wrapped><Default {...props} /></div> }
+    const components: Components = {
+      Story: ({ Default, ...props }) => (
+        <div data-wrapped>
+          <Default {...props} />
+        </div>
+      ),
+    }
     play({ components, classes: { story: 'our-story', section: 'our-section', page: 'our-page' } })
     expect(part('story')!.className).toContain('our-story')
     expect(part('story')!.parentElement!.hasAttribute('data-wrapped')).toBe(true)

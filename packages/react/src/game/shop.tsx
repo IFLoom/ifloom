@@ -64,9 +64,7 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
               </div>
               <div {...actions}>
                 <ChoiceButton choice={{ ...good.buy, label: words('buy') }} />
-                {good.sell && good.owned > 0 ? (
-                  <ChoiceButton choice={{ ...good.sell, label: words('sellFor', { price: priceText(good.sellFor) }) }} />
-                ) : null}
+                {good.sell && good.owned > 0 ? <ChoiceButton choice={{ ...good.sell, label: words('sellFor', { price: priceText(good.sellFor) }) }} /> : null}
               </div>
             </li>
           ))}

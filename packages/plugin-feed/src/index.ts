@@ -158,8 +158,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       /** `{ 'feed/appeared': { post } }`. */
       appeared: (_state, args, { slice }) => slice.appeared[String(args.post)] !== undefined,
       /** `{ 'feed/posted': { feed?, gte? } }`: how many posts the player has made, there or anywhere. */
-      posted: (_state, args, { slice }) =>
-        slice.own.filter((post) => args.feed === undefined || post.feed === args.feed).length >= Number(args.gte ?? 1),
+      posted: (_state, args, { slice }) => slice.own.filter((post) => args.feed === undefined || post.feed === args.feed).length >= Number(args.gte ?? 1),
       /** `{ 'feed/likes': { post, gte } }`: a post has at least this many likes. */
       likes: (_state, args, { slice, game }) => {
         const id = String(args.post)
@@ -241,7 +240,8 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
     view: (state, { slice, game, picks }): FeedsView => {
       const runtime = defaultRuntime(game)
       const words = (key: string | undefined) => (key ? (game.prose?.line(key, state) ?? '') : '')
-      const comments = (list: Comment[]) => list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
+      const comments = (list: Comment[]) =>
+        list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
       const feeds = feedsOf(game).map((entry): FeedView => {
         const theirs = postDefs(game)
           .filter((post) => post.feed === entry.id && slice.appeared[post.id] !== undefined)

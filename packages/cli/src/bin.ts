@@ -57,7 +57,13 @@ async function withModule<T>(
   use: (module: Record<string, unknown>, load: (path: string) => Promise<Record<string, unknown>>) => T | Promise<T>,
 ): Promise<T> {
   // A game without a Vite config (a Next app) still reads the packages' source inside the checkout.
-  const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error', configLoader: configLoader(), plugins: [sourcePlugin()] })
+  const server = await createServer({
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'error',
+    configLoader: configLoader(),
+    plugins: [sourcePlugin()],
+  })
   try {
     const load = (path: string) => server.ssrLoadModule(path)
     return await use(await load(resolve(entry ?? 'src/game.ts')), load)
@@ -104,11 +110,16 @@ async function check(entry?: string): Promise<number> {
       notes.push(...unlocks.notes)
       checked = gameFrom(module, unlocks.packs)
       const left = unlocks.packs.filter((pack) => !(checked.game.packs ?? []).includes(pack.id)).map((pack) => pack.id)
-      if (left.length) problems.push(`the game module left out the locked packs ${left.join(', ')}: export a function that takes { unlocked } and loads them after the game's own`)
+      if (left.length)
+        problems.push(
+          `the game module left out the locked packs ${left.join(', ')}: export a function that takes { unlocked } and loads them after the game's own`,
+        )
       // What the game without them lacks is what its unlocks bring: fine while it's reached only behind unlocks/has.
       const without = base.problems.filter((problem) => !checked.problems.includes(problem))
       if (without.length) {
-        notes.push(`Without its unlocks the game has ${without.length} reference${without.length === 1 ? '' : 's'} into locked content, skipped here. Reach ${without.length === 1 ? 'it' : 'them'} only behind unlocks/has:`)
+        notes.push(
+          `Without its unlocks the game has ${without.length} reference${without.length === 1 ? '' : 's'} into locked content, skipped here. Reach ${without.length === 1 ? 'it' : 'them'} only behind unlocks/has:`,
+        )
         notes.push(...without.map((problem) => `  ${problem}`))
       }
     }
@@ -248,7 +259,8 @@ async function main(): Promise<number> {
       if (rest.includes('--inline-assets')) {
         const inlined = inlineAssets(out)
         console.log(`Put ${inlined.files} file${inlined.files === 1 ? '' : 's'} from art/ into index.html.`)
-        if (inlined.videos) console.log(`Left ${inlined.videos} video${inlined.videos === 1 ? '' : 's'} in art/ beside it: video is too big to put in the page.`)
+        if (inlined.videos)
+          console.log(`Left ${inlined.videos} video${inlined.videos === 1 ? '' : 's'} in art/ beside it: video is too big to put in the page.`)
         if (existsSync(resolve(out, 'audio'))) console.log('Left audio/ beside it: sound is too big to put in the page.')
       }
       const problems = checkBuild(out, await builtFiles())
@@ -270,7 +282,9 @@ async function main(): Promise<number> {
     case 'unlock-hash':
       return unlockHash(rest.filter((arg) => !arg.startsWith('--'))[0], rest.filter((arg) => !arg.startsWith('--'))[1])
     default:
-      console.log(`ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | unlock-hash <unlock> [module]`)
+      console.log(
+        `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | unlock-hash <unlock> [module]`,
+      )
       return command === 'help' ? 0 : 1
   }
 }

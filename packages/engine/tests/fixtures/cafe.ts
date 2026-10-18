@@ -14,11 +14,7 @@ export const cafe: Pack = {
     {
       id: 'cafe.counter',
       title: 'The counter',
-      body: [
-        { text: 'cafe.counter' },
-        { variants: 'cafe.weather' },
-        { text: 'cafe.counter/regular', when: { custom: 'isRegular' } },
-      ],
+      body: [{ text: 'cafe.counter' }, { variants: 'cafe.weather' }, { text: 'cafe.counter/regular', when: { custom: 'isRegular' } }],
       choices: [
         {
           id: 'chat',

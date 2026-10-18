@@ -9,7 +9,12 @@ describe('explain', () => {
   const condition = {
     all: [
       { kv: 'metRosa' },
-      { any: [{ stat: 'coins', gte: 5 }, { level: 'intelligence', gte: 1 }] },
+      {
+        any: [
+          { stat: 'coins', gte: 5 },
+          { level: 'intelligence', gte: 1 },
+        ],
+      },
       { not: { phase: ['open'] } },
     ],
   }

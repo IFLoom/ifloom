@@ -7,6 +7,9 @@ import type { SaveListing } from '@ifloom/engine'
  * still holds its number, so a new save never writes over it.
  */
 export function nextSlot(listing: readonly SaveListing[]): string {
-  const numbers = listing.map((entry) => entry.slot).filter((slot) => /^\d+$/.test(slot)).map(Number)
+  const numbers = listing
+    .map((entry) => entry.slot)
+    .filter((slot) => /^\d+$/.test(slot))
+    .map(Number)
   return String(numbers.reduce((most, number) => Math.max(most, number), 0) + 1)
 }

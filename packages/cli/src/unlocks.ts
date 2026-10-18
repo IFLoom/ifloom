@@ -120,7 +120,9 @@ export async function lockedScript(options: {
     const name = plugin.envName(unlock)
     const code = codes[name]
     if (!code) {
-      ;(strict ? out.problems : out.notes).push(`${name} isn't set, so unlock "${unlock}"'s content can't be encrypted${strict ? '' : ' and is left out'}. Put the code in .env.local.`)
+      ;(strict ? out.problems : out.notes).push(
+        `${name} isn't set, so unlock "${unlock}"'s content can't be encrypted${strict ? '' : ' and is left out'}. Put the code in .env.local.`,
+      )
       continue
     }
     out.secrets.codes.push(code, plugin.normaliseCode(code))
@@ -204,7 +206,8 @@ export async function checkUnlocks(options: {
     const name = plugin.envName(unlock)
     const code = codes[name]
     if (!code) out.notes.push(`${name} isn't set: unlock "${unlock}"'s content was checked from source, but ifloom build needs the code to encrypt it.`)
-    else if (!(await plugin.codeFits(code, game.id, def))) out.problems.push(`${name} isn't unlock "${unlock}"'s code: its hash differs. Run ifloom unlock-hash ${unlock} and put the hash it prints in the unlock.`)
+    else if (!(await plugin.codeFits(code, game.id, def)))
+      out.problems.push(`${name} isn't unlock "${unlock}"'s code: its hash differs. Run ifloom unlock-hash ${unlock} and put the hash it prints in the unlock.`)
   }
   return out
 }

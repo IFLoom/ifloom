@@ -82,7 +82,12 @@ function renameFormula(formula: unknown, from: string, to: string): unknown {
   if (typeof formula === 'string') return formula === from ? to : formula
   if (Array.isArray(formula)) return formula.map((part) => renameFormula(part, from, to))
   if (formula && typeof formula === 'object') {
-    return Object.fromEntries(Object.entries(formula).map(([k, v]) => [k, k === 'by' || k === 'min' || k === 'max' ? (Array.isArray(v) ? renameFormula(v, from, to) : v) : renameFormula(v, from, to)]))
+    return Object.fromEntries(
+      Object.entries(formula).map(([k, v]) => [
+        k,
+        k === 'by' || k === 'min' || k === 'max' ? (Array.isArray(v) ? renameFormula(v, from, to) : v) : renameFormula(v, from, to),
+      ]),
+    )
   }
   return formula
 }

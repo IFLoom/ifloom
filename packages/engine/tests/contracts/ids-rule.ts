@@ -40,6 +40,11 @@ export function offences(value: unknown, path: string, out: string[] = []): stri
 
 /** A pack's prose keys and variants' members that break the rule. */
 export function proseOffences(pack: Pack): string[] {
-  const keys = [...Object.keys(pack.prose ?? {}), ...Object.values(pack.variants ?? {}).flat().map((member) => (typeof member === 'string' ? member : member.text))]
+  const keys = [
+    ...Object.keys(pack.prose ?? {}),
+    ...Object.values(pack.variants ?? {})
+      .flat()
+      .map((member) => (typeof member === 'string' ? member : member.text)),
+  ]
   return keys.filter((key) => !PROSE_KEY.test(key)).map((key) => `${pack.id} prose: "${key}" is not an id, or scene#choice`)
 }

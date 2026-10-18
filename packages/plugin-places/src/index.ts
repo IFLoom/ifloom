@@ -218,7 +218,9 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     label: (_state, { slice, game }) => locationById(game, slice.at)?.name,
     stage: (_state, { slice, game }) => {
       const place = locationById(game, slice.at)
-      return place ? { id: place.id, title: place.name, body: place.body, ...(place.transition !== undefined ? { transition: place.transition } : {}) } : undefined
+      return place
+        ? { id: place.id, title: place.name, body: place.body, ...(place.transition !== undefined ? { transition: place.transition } : {}) }
+        : undefined
     },
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
     audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
@@ -237,7 +239,14 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       const stage = place ? stageView(state, game, place.stage, place.id, null, picks) : null
       return {
         location: place
-          ? { id: place.id, name: place.name, tag: place.tag, tags: place.tags ?? [], art: place.art, stage: stage && !idle ? { ...stage, hotspots: [] } : stage }
+          ? {
+              id: place.id,
+              name: place.name,
+              tag: place.tag,
+              tags: place.tags ?? [],
+              art: place.art,
+              stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
+            }
           : null,
         exits,
       }
@@ -245,7 +254,18 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     references: {
       // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`.
       calls: (kind, name, args) => {
-        const named = kind === 'conditions' ? (name === 'at' || name === 'within' ? ids(args.location) : []) : kind === 'effects' ? (name === 'move' ? ids(args.location) : []) : name === 'go' ? ids(args.id) : []
+        const named =
+          kind === 'conditions'
+            ? name === 'at' || name === 'within'
+              ? ids(args.location)
+              : []
+            : kind === 'effects'
+              ? name === 'move'
+                ? ids(args.location)
+                : []
+              : name === 'go'
+                ? ids(args.id)
+                : []
         return named.map(location)
       },
       content: (game) => [

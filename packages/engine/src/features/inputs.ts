@@ -115,7 +115,11 @@ export const inputs = defineFeature<InputsShape>({
   }),
   lists: ['input'],
   check: (game, tools) => {
-    tools.twice('input', 'inputs', (game.inputs ?? []).map((entry) => entry.id))
+    tools.twice(
+      'input',
+      'inputs',
+      (game.inputs ?? []).map((entry) => entry.id),
+    )
     for (const input of game.inputs ?? []) {
       const source = { list: 'input', id: input.id }
       const where = `input ${input.id}`

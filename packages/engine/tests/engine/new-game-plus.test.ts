@@ -69,20 +69,38 @@ describe('New Game+', () => {
 describe('version 9 saves', () => {
   const settings: Game['settings'] = [
     { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
-    { id: 'difficulty', label: 'Difficulty', kind: 'choice', options: [{ value: 'usual', label: 'Usual' }, { value: 'hard', label: 'Hard' }], default: 'usual' },
+    {
+      id: 'difficulty',
+      label: 'Difficulty',
+      kind: 'choice',
+      options: [
+        { value: 'usual', label: 'Usual' },
+        { value: 'hard', label: 'Hard' },
+      ],
+      default: 'usual',
+    },
   ]
 
   it('carries a version-8 state forward with no settings', () => {
     const g = fixture()
     const { settings: _settings, audio: _audio, ...now } = startingState(g)
-    expect(unwrap(loadState({ ...now, version: 8 }, g))).toEqual({ ...now, version: SAVE_VERSION, settings: {}, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} } })
+    expect(unwrap(loadState({ ...now, version: 8 }, g))).toEqual({
+      ...now,
+      version: SAVE_VERSION,
+      settings: {},
+      audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} },
+    })
   })
 
   it('loads a version-8 save with every play setting at its default', async () => {
     const g = { ...fixture(), settings }
     const store = saves(g, memoryDriver())
     const { settings: _settings, ...old } = { ...startingState(g), version: 8 }
-    const file = { ifloom: 1, meta: { game: g.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 8 }, state: old }
+    const file = {
+      ifloom: 1,
+      meta: { game: g.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 8 },
+      state: old,
+    }
     const loaded = store.importText(JSON.stringify(file))
     expect(loaded.ok && loaded.value.state.settings).toEqual({ hints: true, difficulty: 'usual' })
   })

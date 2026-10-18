@@ -244,7 +244,8 @@ function inlineActionProblems(game: Game, body: readonly Block[] | string | unde
   }
   for (const [id, where] of blocks) {
     if (!known.has(id)) out.push(`[[act:${id}]] names no choice or action offered here`)
-    if (where.length > 1 && where.some((entry) => !entry.gated)) out.push(`[[act:${id}]] is in two blocks that can show together; only the first is drawn as an action`)
+    if (where.length > 1 && where.some((entry) => !entry.gated))
+      out.push(`[[act:${id}]] is in two blocks that can show together; only the first is drawn as an action`)
   }
   return [...new Set(out)]
 }
@@ -260,7 +261,7 @@ function emphasisProblems(text: string): string[] {
   const prose = text.replace(/\[\[(mail|sticky|clip|diary)\]\][\s\S]*?\[\[\/\1\]\]/g, '\n\n')
   for (const block of prose.split('\n\n')) {
     if (block.trim().startsWith('> ') || !block.includes('*')) continue
-    if (/\*\[\[(act|tip):|\]\]\*/.test(block)) out.push('stars next to [[act]] or [[tip]] are shown as written; bold and italics don\'t reach into them')
+    if (/\*\[\[(act|tip):|\]\]\*/.test(block)) out.push("stars next to [[act]] or [[tip]] are shown as written; bold and italics don't reach into them")
     for (const piece of block.split(INLINE_MARKUP).filter((_, at) => at % 4 === 0)) out.push(...emphasis(piece).problems)
   }
   return [...new Set(out)]
@@ -288,7 +289,8 @@ function inlineMarkupProblems(text: string, where: string, tools: ResolveTools):
   if (opened > written) out.push('[[act:…]] or [[tip:…]] is not closed with "]]", or is missing its ":"')
   // Drawn in narration and spoken lines only.
   for (const block of text.split('\n\n')) {
-    if (block.trim().startsWith('> ') && /\[\[(act|tip):/.test(block)) out.push('[[act]] and [[tip]] are shown as written in a "> " line; use them in narration or a spoken line')
+    if (block.trim().startsWith('> ') && /\[\[(act|tip):/.test(block))
+      out.push('[[act]] and [[tip]] are shown as written in a "> " line; use them in narration or a spoken line')
   }
   return out
 }
@@ -454,7 +456,11 @@ export const scenes = defineFeature<ScenesShape>({
     if (game.introScene !== undefined && !game.scenes.some((scene) => scene.id === game.introScene)) {
       tools.problem(undefined, 'introScene', `unknown scene "${game.introScene}"`)
     }
-    tools.twice('scene', 'scenes', game.scenes.map((entry) => entry.id))
+    tools.twice(
+      'scene',
+      'scenes',
+      game.scenes.map((entry) => entry.id),
+    )
     // A data scene's content.
     for (const scene of game.scenes) {
       if (!isDataScene(scene)) continue
@@ -465,7 +471,8 @@ export const scenes = defineFeature<ScenesShape>({
       for (const choice of scene.choices) {
         if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
         ids.add(choice.id)
-        if (choice.command && commandOf(choice.command).type === 'choose') tools.problem(source, where, `choice ${choice.id}: a choice's command can't be another choice; put the effects on this one`)
+        if (choice.command && commandOf(choice.command).type === 'choose')
+          tools.problem(source, where, `choice ${choice.id}: a choice's command can't be another choice; put the effects on this one`)
       }
     }
     // Every scene's storylet fields.

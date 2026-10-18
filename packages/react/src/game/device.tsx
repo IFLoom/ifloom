@@ -120,18 +120,16 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
   const appButton = usePart('app-button', 'relative flex flex-col items-center gap-1 rounded-lg p-2 text-xs hover:bg-accent')
   const appButtonOff = usePart('app-button', 'relative flex flex-col items-center gap-1 rounded-lg p-2 text-xs hover:bg-accent opacity-50')
   const icon = usePart('app-icon', 'flex size-10 items-center justify-center rounded-xl bg-secondary font-semibold')
-  const badge = usePart('app-badge', 'absolute -top-1 -right-1 flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground')
+  const badge = usePart(
+    'app-badge',
+    'absolute -top-1 -right-1 flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground',
+  )
   if (device.open) {
     return (
       <div {...screen}>
         <div {...app} data-app={device.open.id}>
           <div {...header}>
-            <button
-              type="button"
-              {...back}
-              aria-label={words('back')}
-              onClick={() => send({ type: 'custom', name: 'devices/close', with: { id: device.id } })}
-            >
+            <button type="button" {...back} aria-label={words('back')} onClick={() => send({ type: 'custom', name: 'devices/close', with: { id: device.id } })}>
               <Icon name="back" />
             </button>
             <h3 {...title}>{device.open.name}</h3>

@@ -19,12 +19,7 @@ export function counted(storylineId: string, key: string, value: number): Effect
   return { kind: 'storylineKv', storyline: storylineId, key, to: value }
 }
 
-export function bumped(
-  state: GameState,
-  storylineId: string,
-  key: string,
-  by = 1,
-): Effect {
+export function bumped(state: GameState, storylineId: string, key: string, by = 1): Effect {
   return counted(storylineId, key, count(state, storylineId, key) + by)
 }
 
@@ -88,9 +83,7 @@ function rested(state: GameState, stages: Stages, index: number): boolean {
   if (!stage.after) return true
   const previous = stages.stages[index - 1]
   if (!previous?.scene) {
-    throw new Error(
-      `stage ${stage.id} on ${stages.storylineId} waits ${stage.after} turns on a stage with no scene`,
-    )
+    throw new Error(`stage ${stage.id} on ${stages.storylineId} waits ${stage.after} turns on a stage with no scene`)
   }
   const turns = turnsSince(state, previous.scene)
   return turns !== null && turns >= stage.after

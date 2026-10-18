@@ -60,21 +60,13 @@ function covers(lock: Lock, command: Command): boolean {
  * The first lock that stops this command right now, if any, with the
  * command's effects from `effects`, asked only when a lock names an effect.
  */
-export function lockIn(
-  state: GameState,
-  game: Game,
-  command: Command,
-  effects: () => readonly Effect[],
-  cx: FeatureContext,
-): Lock | undefined {
+export function lockIn(state: GameState, game: Game, command: Command, effects: () => readonly Effect[], cx: FeatureContext): Lock | undefined {
   for (const lock of game.rules?.locks ?? []) {
     if (!covers(lock, command)) continue
     if (!cx.holds(state, lock.when, game)) continue
     if (lock.effect !== undefined) {
       const effect = lock.effect
-      const applies = effects().some((entry) =>
-        entry.kind === 'custom' ? entry.name === effect : entry.kind === effect,
-      )
+      const applies = effects().some((entry) => (entry.kind === 'custom' ? entry.name === effect : entry.kind === effect))
       if (!applies) continue
     }
     return lock

@@ -46,7 +46,11 @@ export function savingIn(state: GameState, game: Game, holds: (state: GameState,
 export const saving = defineFeature<SavingShape>({
   name: 'saving',
   check: (game, tools) => {
-    tools.check(undefined, 'saveable', (game.saveable ?? []).map((entry) => ({ when: entry.when })))
+    tools.check(
+      undefined,
+      'saveable',
+      (game.saveable ?? []).map((entry) => ({ when: entry.when })),
+    )
   },
   view: (state, game, _shown, cx) => ({ saving: savingIn(state, game, cx.holds) }),
 })

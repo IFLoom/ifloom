@@ -65,7 +65,16 @@ function unlocksPlugin(): Plugin {
     async transformIndexHtml(html) {
       if (!lockedFiles(root).length) return html
       // The game module and the locked packs are TypeScript: load them as `ifloom check` does.
-      const loader = server ?? (await createServer({ root, mode, configLoader: configLoader(root), server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom', logLevel: 'error' }))
+      const loader =
+        server ??
+        (await createServer({
+          root,
+          mode,
+          configLoader: configLoader(root),
+          server: { middlewareMode: true, hmr: false, watch: null },
+          appType: 'custom',
+          logLevel: 'error',
+        }))
       try {
         const made = await lockedScript({ root, mode, load: (path) => loader.ssrLoadModule(path), strict: building })
         if (made.problems.length) throw new Error(`Locked content:\n  ${made.problems.join('\n  ')}`)

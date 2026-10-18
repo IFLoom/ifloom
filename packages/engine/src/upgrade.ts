@@ -45,7 +45,11 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   6: (pack) =>
     Object.fromEntries(
       Object.entries(pack).map(([key, value]) => {
-        if (key === 'prose' || key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? valueTokens(text) : text])) : value]
+        if (key === 'prose' || key === 'strings')
+          return [
+            key,
+            isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? valueTokens(text) : text])) : value,
+          ]
         return [key, WORDS.has(key) ? value : deep(value, toSchema7)]
       }),
     ) as RawPack,
@@ -57,7 +61,8 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   7: (pack) =>
     Object.fromEntries(
       Object.entries(pack).map(([key, value]) => {
-        if (key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [STATUS_STRINGS[id] ?? id, text])) : value]
+        if (key === 'strings')
+          return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [STATUS_STRINGS[id] ?? id, text])) : value]
         if (key === 'data' && isRecord(value) && isRecord(value.effects) && !('statuses' in value)) {
           const { effects, ...rest } = value
           const { effects: list, ...other } = effects
@@ -103,7 +108,18 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   11: (pack) =>
     Object.fromEntries(
       Object.entries(pack).map(([key, value]) => {
-        if (key === 'prose' || key === 'strings') return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? text.replace(/\{\{v:feed\/unseen(?=[\s}])/g, '{{v:feed/unread') : text])) : value]
+        if (key === 'prose' || key === 'strings')
+          return [
+            key,
+            isRecord(value)
+              ? Object.fromEntries(
+                  Object.entries(value).map(([id, text]) => [
+                    id,
+                    typeof text === 'string' ? text.replace(/\{\{v:feed\/unseen(?=[\s}])/g, '{{v:feed/unread') : text,
+                  ]),
+                )
+              : value,
+          ]
         return [key, WORDS.has(key) ? value : deep(value, (inner) => (inner.value === 'feed/unseen' ? { ...inner, value: 'feed/unread' } : inner))]
       }),
     ) as RawPack,
@@ -300,8 +316,9 @@ function valueCall(name: string): { value: string; with?: Record<string, unknown
 
 /** Prose and strings with schema 6's value names in their tokens, as schema 7 writes them. */
 function valueTokens(text: string): string {
-  return text.replace(/\{\{v:(messages\/unread|feed\/unseen)-([A-Za-z0-9_-]+)\}\}/g, (_match, name: string, id: string) =>
-    `{{v:${name} ${name === 'messages/unread' ? 'channel' : 'feed'}=${id}}}`,
+  return text.replace(
+    /\{\{v:(messages\/unread|feed\/unseen)-([A-Za-z0-9_-]+)\}\}/g,
+    (_match, name: string, id: string) => `{{v:${name} ${name === 'messages/unread' ? 'channel' : 'feed'}=${id}}}`,
   )
 }
 

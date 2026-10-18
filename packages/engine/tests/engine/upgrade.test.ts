@@ -48,7 +48,10 @@ describe('content migrations', () => {
 
   it('refuse a pack from a newer engine, or one older than any step', () => {
     expect(upgradePack({ schema: SCHEMA + 1 })).toEqual({ ok: false, reason: `written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}` })
-    expect(upgradePack({ schema: OLD - 1 })).toEqual({ ok: false, reason: `written for schema ${OLD - 1}, too old for this engine to read (it reads ${SCHEMA})` })
+    expect(upgradePack({ schema: OLD - 1 })).toEqual({
+      ok: false,
+      reason: `written for schema ${OLD - 1}, too old for this engine to read (it reads ${SCHEMA})`,
+    })
   })
 
   it('let loadGame load an old pack, and skip a newer one with a problem', () => {
@@ -56,7 +59,9 @@ describe('content migrations', () => {
     const future = { id: 'future', schema: SCHEMA + 1, prose: { 'cafe.counter': 'From the future.' } } as Pack
     const { game, problems } = loadGame([own, oldPack as unknown as Pack, future], base)
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')
-    expect(problems.filter((problem) => problem.pack !== 'town').map(describeProblem)).toEqual([`future · pack · written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}`])
+    expect(problems.filter((problem) => problem.pack !== 'town').map(describeProblem)).toEqual([
+      `future · pack · written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}`,
+    ])
   })
 
   it('let a player install an old mod, kept at this schema', async () => {
@@ -159,14 +164,29 @@ describe('content migrations', () => {
       schema: 5,
       prose: { has: 'Words are left alone.' },
       activities: [
-        { id: 'nap', requires: [{ when: { not: { kv: 'napped' } }, reason: 'Once a day.' }, { when: { stat: 'energy', lt: 50 }, reason: 'Not tired.' }] },
+        {
+          id: 'nap',
+          requires: [
+            { when: { not: { kv: 'napped' } }, reason: 'Once a day.' },
+            { when: { stat: 'energy', lt: 50 }, reason: 'Not tired.' },
+          ],
+        },
         { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }], requires: [{ when: { 'places/at': ['park'] }, reason: 'Not here.' }] },
       ],
-      items: [{ id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'setStat', key: 'energy', to: 100, of: 'staff:ana' }] } }],
+      items: [
+        { id: 'tea', name: 'Tea', desc: '', kind: 'stuff', use: { label: 'Drink', effects: [{ kind: 'setStat', key: 'energy', to: 100, of: 'staff:ana' }] } },
+      ],
       triggers: [
         {
           id: 'late',
-          when: { all: [{ turn: true, gte: 3 }, { has: 'tea' }, { counter: { storyline: 'rosa', key: 'visits' }, gte: 2 }, { storylineKv: { storyline: 'rosa', key: 'met', is: true } }] },
+          when: {
+            all: [
+              { turn: true, gte: 3 },
+              { has: 'tea' },
+              { counter: { storyline: 'rosa', key: 'visits' }, gte: 2 },
+              { storylineKv: { storyline: 'rosa', key: 'met', is: true } },
+            ],
+          },
           effects: [
             { kind: 'stat', key: 'coins', by: -2 },
             { kind: 'item', id: 'tea', by: 1 },
@@ -209,7 +229,9 @@ describe('content migrations', () => {
             },
           ],
         },
-        jobs: { jobs: [{ id: 'barista', requires: [{ when: { kv: 'metAva' }, reason: 'Not yet.' }], ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }] }] },
+        jobs: {
+          jobs: [{ id: 'barista', requires: [{ when: { kv: 'metAva' }, reason: 'Not yet.' }], ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }] }],
+        },
       },
     }
     expect(unwrap(upgradePack(v5))).toEqual({
@@ -217,14 +239,35 @@ describe('content migrations', () => {
       schema: SCHEMA,
       prose: { has: 'Words are left alone.' },
       activities: [
-        { id: 'nap', blocked: [{ when: { kv: 'napped' }, reason: 'Once a day.' }, { when: { not: { stat: 'energy', lt: 50 } }, reason: 'Not tired.' }] },
-        { id: 'jog', blocked: [{ when: { kv: 'raining' }, reason: 'Wet.' }, { when: { not: { 'places/at': { location: ['park'] } } }, reason: 'Not here.' }] },
+        {
+          id: 'nap',
+          blocked: [
+            { when: { kv: 'napped' }, reason: 'Once a day.' },
+            { when: { not: { stat: 'energy', lt: 50 } }, reason: 'Not tired.' },
+          ],
+        },
+        {
+          id: 'jog',
+          blocked: [
+            { when: { kv: 'raining' }, reason: 'Wet.' },
+            { when: { not: { 'places/at': { location: ['park'] } } }, reason: 'Not here.' },
+          ],
+        },
       ],
-      items: [{ id: 'tea', name: 'Tea', desc: '', tags: ['stuff'], use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } }],
+      items: [
+        { id: 'tea', name: 'Tea', desc: '', tags: ['stuff'], use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } },
+      ],
       triggers: [
         {
           id: 'late',
-          when: { all: [{ turn: { gte: 3 } }, { item: 'tea' }, { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 }, { storylineKv: { storyline: 'rosa', key: 'met' }, is: true }] },
+          when: {
+            all: [
+              { turn: { gte: 3 } },
+              { item: 'tea' },
+              { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 },
+              { storylineKv: { storyline: 'rosa', key: 'met' }, is: true },
+            ],
+          },
           effects: [
             { kind: 'stat', stat: 'coins', by: -2 },
             { kind: 'item', item: 'tea', by: 1 },
@@ -267,7 +310,11 @@ describe('content migrations', () => {
             },
           ],
         },
-        jobs: { jobs: [{ id: 'barista', ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }], blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Not yet.' }] }] },
+        jobs: {
+          jobs: [
+            { id: 'barista', ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }], blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Not yet.' }] },
+          ],
+        },
       },
     })
   })
@@ -344,7 +391,14 @@ describe('content migrations', () => {
           effects: [{ 'effects/apply': { effect: 'cold' } }, { kind: 'custom', name: 'effects/remove', with: { effect: 'warm', runEnd: true } }],
         },
       ],
-      actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'effects/remove', with: { id: 'cold' } }, when: { custom: 'effects/active', with: { effect: 'cold' } } }],
+      actions: [
+        {
+          id: 'cure',
+          label: 'Cure',
+          command: { type: 'custom', name: 'effects/remove', with: { id: 'cold' } },
+          when: { custom: 'effects/active', with: { effect: 'cold' } },
+        },
+      ],
       data: { effects: { effects: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'effects/apply': { effect: 'tired' } }] }] }, quests: { quests: [] } },
     }
     expect(unwrap(upgradePack(v7))).toEqual({
@@ -358,7 +412,14 @@ describe('content migrations', () => {
           effects: [{ 'statuses/apply': { status: 'cold' } }, { kind: 'custom', name: 'statuses/remove', with: { status: 'warm', runEnd: true } }],
         },
       ],
-      actions: [{ id: 'cure', label: 'Cure', command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } }, when: { custom: 'statuses/active', with: { status: 'cold' } } }],
+      actions: [
+        {
+          id: 'cure',
+          label: 'Cure',
+          command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } },
+          when: { custom: 'statuses/active', with: { status: 'cold' } },
+        },
+      ],
       data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
     })
   })
@@ -391,13 +452,25 @@ describe('content migrations', () => {
       id: 'letter',
       schema: 9,
       prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
-      scenes: [{ id: 'ch2.stairs', body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat/open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }], choices: [] }],
+      scenes: [
+        {
+          id: 'ch2.stairs',
+          body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat/open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }],
+          choices: [],
+        },
+      ],
     }
     expect(unwrap(upgradePack(v9))).toEqual({
       id: 'letter',
       schema: SCHEMA,
       prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
-      scenes: [{ id: 'ch2.stairs', body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat#open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }], choices: [] }],
+      scenes: [
+        {
+          id: 'ch2.stairs',
+          body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat#open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }],
+          choices: [],
+        },
+      ],
     })
   })
 
@@ -429,7 +502,14 @@ describe('content migrations', () => {
       prose: { badge: '{{v:feed/unseen}} new, {{v:feed/unseen feed=social}} on social; {{v:feed/unseenish}} stays.' },
       strings: { hint: '{{v:feed/unseen feed=board}} pinned' },
       stats: [{ id: 'buzz', label: 'Buzz', max: { value: 'feed/unseen' } }],
-      data: { devices: { apps: [{ id: 'social', badge: { value: 'feed/unseen', with: { feed: 'social' } } }, { id: 'texts', badge: { value: 'messages/unread' } }] } },
+      data: {
+        devices: {
+          apps: [
+            { id: 'social', badge: { value: 'feed/unseen', with: { feed: 'social' } } },
+            { id: 'texts', badge: { value: 'messages/unread' } },
+          ],
+        },
+      },
     }
     expect(unwrap(upgradePack(v11))).toEqual({
       id: 'phone',
@@ -437,7 +517,14 @@ describe('content migrations', () => {
       prose: { badge: '{{v:feed/unread}} new, {{v:feed/unread feed=social}} on social; {{v:feed/unseenish}} stays.' },
       strings: { hint: '{{v:feed/unread feed=board}} pinned' },
       stats: [{ id: 'buzz', label: 'Buzz', max: { value: 'feed/unread' } }],
-      data: { devices: { apps: [{ id: 'social', badge: { value: 'feed/unread', with: { feed: 'social' } } }, { id: 'texts', badge: { value: 'messages/unread' } }] } },
+      data: {
+        devices: {
+          apps: [
+            { id: 'social', badge: { value: 'feed/unread', with: { feed: 'social' } } },
+            { id: 'texts', badge: { value: 'messages/unread' } },
+          ],
+        },
+      },
     })
   })
 
@@ -447,7 +534,11 @@ describe('content migrations', () => {
       id: 'naps',
       name: 'Naps',
       game: 'fixture',
-      pack: { id: 'naps', schema: 5, activities: [{ id: 'nap', requires: [{ when: { has: 'pillow' }, reason: 'No pillow.' }], effects: [{ kind: 'setStat', key: 'coins', to: 0 }] }] },
+      pack: {
+        id: 'naps',
+        schema: 5,
+        activities: [{ id: 'nap', requires: [{ when: { has: 'pillow' }, reason: 'No pillow.' }], effects: [{ kind: 'setStat', key: 'coins', to: 0 }] }],
+      },
     })
     const added = await mods('fixture', memoryDriver()).add(file)
     expect(added.ok && added.value.pack).toEqual({
@@ -461,7 +552,11 @@ describe('content migrations', () => {
     expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'use', id: 'tea' })
     expect(upgradeCommand({ type: 'setting', id: 'volume', value: 0.5 })).toEqual({ type: 'setting', id: 'volume', to: 0.5 })
     expect(upgradeCommand({ type: 'custom', name: 'places/go', with: { to: 'park' } })).toEqual({ type: 'custom', name: 'places/go', with: { id: 'park' } })
-    expect(upgradeCommand({ type: 'custom', name: 'effects/apply', with: { id: 'cold' } })).toEqual({ type: 'custom', name: 'statuses/apply', with: { id: 'cold' } })
+    expect(upgradeCommand({ type: 'custom', name: 'effects/apply', with: { id: 'cold' } })).toEqual({
+      type: 'custom',
+      name: 'statuses/apply',
+      with: { id: 'cold' },
+    })
     const now = { type: 'use', id: 'tea' }
     expect(upgradeCommand(now)).toEqual(now)
   })

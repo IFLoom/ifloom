@@ -48,7 +48,19 @@ function commandFor(manager: Manager, ui: Ui, start: Start, theme: Theme): strin
 
 type Option<T> = { id: T; label: string; disabled?: boolean }
 
-function Toggle<T extends string>({ label, options, value, onChange, note }: { label: string; options: readonly Option<T>[]; value: T; onChange: (id: T) => void; note?: string }) {
+function Toggle<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  note,
+}: {
+  label: string
+  options: readonly Option<T>[]
+  value: T
+  onChange: (id: T) => void
+  note?: string
+}) {
   return (
     <div className={s.option}>
       <span className={s.optionLabel} id={`install-${label}`}>
@@ -133,7 +145,14 @@ export function InstallCard() {
         <div className={s.top}>
           <div className={s.tabs} role="tablist" aria-label="Package manager">
             {managers.map((m) => (
-              <button key={m.id} type="button" role="tab" aria-selected={chosen === m.id} className={chosen === m.id ? s.on : undefined} onClick={() => choose(m.id)}>
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                aria-selected={chosen === m.id}
+                className={chosen === m.id ? s.on : undefined}
+                onClick={() => choose(m.id)}
+              >
                 {m.id}
               </button>
             ))}
@@ -195,8 +214,8 @@ export function InstallCard() {
           </button>
         </div>
         <p className={s.note}>
-          It makes a new game in <code>my-game</code>, ready for <code>{managers.find((m) => m.id === chosen)!.dev}</code>. <Link href="/docs/guide/installation">Installation</Link> covers the
-          templates and options.
+          It makes a new game in <code>my-game</code>, ready for <code>{managers.find((m) => m.id === chosen)!.dev}</code>.{' '}
+          <Link href="/docs/guide/installation">Installation</Link> covers the templates and options.
         </p>
         <p className={s.note}>
           <Link href="/editor">Try the editor</Link> to write a story in your browser with nothing to install, and export it when you're ready.

@@ -184,9 +184,7 @@ describe('audio', () => {
       let state: GameState = { ...startingState(g), kv: { at: 'house' } }
       state = play(state, g, { type: 'activity', id: 'buzz' })
       expect(state.audio.cues).toEqual([{ seq: 1, track: 'buzz' }])
-      expect(view(state, g).audio.cues).toEqual([
-        { key: `cue:${state.seed}:1`, channel: 'sfx', track: 'buzz', src: 'audio/buzz.ogg', volume: 0.5 },
-      ])
+      expect(view(state, g).audio.cues).toEqual([{ key: `cue:${state.seed}:1`, channel: 'sfx', track: 'buzz', src: 'audio/buzz.ogg', volume: 0.5 }])
       for (let n = 0; n < 24; n += 1) state = play(state, g, { type: 'activity', id: 'buzz' })
       expect(state.audio.seq).toBe(25)
       expect(state.audio.cues).toHaveLength(20)
@@ -254,7 +252,11 @@ describe('audio', () => {
       })
 
       const start = { ...startingState(g, { seed: 7 }), kv: { at: 'house' } }
-      const commands = [{ type: 'activity', id: 'rest' }, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'rest' }] as const
+      const commands = [
+        { type: 'activity', id: 'rest' },
+        { type: 'activity', id: 'radio' },
+        { type: 'activity', id: 'rest' },
+      ] as const
       const played = play(start, g, ...commands)
       const order = view(played, g).audio.channels.music.playlist!
       expect(order.order).toBe('shuffle')
@@ -273,8 +275,23 @@ describe('audio', () => {
       id: 'broken',
       schema: SCHEMA,
       prose: { 'bad.text': 'Hush.\n\n[[sound:calm]]\n\n"Hi." [[voice:nobody]]', 'bad#go': 'Go' },
-      scenes: [{ id: 'bad', audio: { music: 'knock', sfx: 'calm', stereo: 'calm' }, body: [{ text: 'bad.text' }], choices: [{ id: 'go', effects: [{ kind: 'sound', track: 'radio' }] }] }],
-      activities: [{ id: 'bang', effects: [{ kind: 'sound', track: 'bang' }, { kind: 'audio', channel: 'music', to: 'gone' }] }],
+      scenes: [
+        {
+          id: 'bad',
+          audio: { music: 'knock', sfx: 'calm', stereo: 'calm' },
+          body: [{ text: 'bad.text' }],
+          choices: [{ id: 'go', effects: [{ kind: 'sound', track: 'radio' }] }],
+        },
+      ],
+      activities: [
+        {
+          id: 'bang',
+          effects: [
+            { kind: 'sound', track: 'bang' },
+            { kind: 'audio', channel: 'music', to: 'gone' },
+          ],
+        },
+      ],
       audio: {
         tracks: {
           hiss: { src: 'hiss.ogg', channel: 'radio', volume: 2 },
@@ -341,7 +358,12 @@ describe('audio', () => {
     it('carry a version-9 save forward with nothing played and no showings', () => {
       const { game: g } = game()
       const { audio: _audio, media: _media, ...now } = startingState(g)
-      expect(unwrap(loadState({ ...now, version: 9 }, g))).toEqual({ ...now, version: SAVE_VERSION, audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} }, media: { picks: {} } })
+      expect(unwrap(loadState({ ...now, version: 9 }, g))).toEqual({
+        ...now,
+        version: SAVE_VERSION,
+        audio: { channels: {}, cues: [], seq: 0, shown: 0, started: {} },
+        media: { picks: {} },
+      })
     })
 
     it('keep the effects’ channels and cues', () => {

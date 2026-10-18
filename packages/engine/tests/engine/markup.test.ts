@@ -3,20 +3,8 @@ import { artSrc, parseBeats } from '../../src/sceneBody.ts'
 
 describe('scene body', () => {
   it('parses monologue, text, and image markers', () => {
-    const beats = parseBeats(
-      [
-        'She looks up.',
-        '> Don\'t stare.',
-        '[[img:character/rosa]]',
-        '[[wide:scene/rosa-coffee|Coffee]]',
-      ].join('\n\n'),
-    )
-    expect(beats.map((beat) => beat.kind)).toEqual([
-      'text',
-      'mono',
-      'image',
-      'image',
-    ])
+    const beats = parseBeats(['She looks up.', "> Don't stare.", '[[img:character/rosa]]', '[[wide:scene/rosa-coffee|Coffee]]'].join('\n\n'))
+    expect(beats.map((beat) => beat.kind)).toEqual(['text', 'mono', 'image', 'image'])
     expect(beats[2]).toMatchObject({
       kind: 'image',
       src: 'art/character/rosa.jpg',
@@ -54,13 +42,7 @@ describe('scene body', () => {
         'You: "I\'ll keep that in mind."',
       ].join('\n\n'),
     )
-    expect(beats.map((beat) => beat.kind)).toEqual([
-      'text',
-      'say',
-      'say',
-      'say',
-      'say',
-    ])
+    expect(beats.map((beat) => beat.kind)).toEqual(['text', 'say', 'say', 'say', 'say'])
     expect(beats[1]).toMatchObject({ who: 'character' })
     expect(beats[2]).toMatchObject({ who: 'player' })
     expect(beats[3]).toMatchObject({ who: 'character' })
@@ -68,13 +50,7 @@ describe('scene body', () => {
   })
 
   it('treats Name: "line" as character speech', () => {
-    const beats = parseBeats(
-      [
-        'She sits on the edge of the chair.',
-        'You: "Hi. Come in."',
-        'Rosa: "Hi. Rosa. Sorry."',
-      ].join('\n\n'),
-    )
+    const beats = parseBeats(['She sits on the edge of the chair.', 'You: "Hi. Come in."', 'Rosa: "Hi. Rosa. Sorry."'].join('\n\n'))
     expect(beats.map((beat) => beat.kind)).toEqual(['text', 'say', 'say'])
     expect(beats[1]).toMatchObject({ who: 'player', text: 'Hi. Come in.' })
     expect(beats[2]).toMatchObject({ who: 'character', text: 'Hi. Rosa. Sorry.' })
@@ -109,12 +85,7 @@ describe('scene body', () => {
         '[[diary]]\nThursday\n[[/diary]]',
       ].join('\n\n'),
     )
-    expect(beats.map((beat) => beat.kind)).toEqual([
-      'text',
-      'prop',
-      'prop',
-      'prop',
-    ])
+    expect(beats.map((beat) => beat.kind)).toEqual(['text', 'prop', 'prop', 'prop'])
     expect(beats[1]).toMatchObject({ face: 'clip' })
     expect(beats[2]).toMatchObject({
       face: 'sticky',
@@ -126,9 +97,7 @@ describe('scene body', () => {
   it('normalises art paths', () => {
     expect(artSrc('art/character/rosa.jpg')).toBe('art/character/rosa.jpg')
     expect(artSrc('character/rosa')).toBe('art/character/rosa.jpg')
-    expect(artSrc('scene/rosa-banter.webm')).toBe(
-      'art/scene/rosa-banter.webm',
-    )
+    expect(artSrc('scene/rosa-banter.webm')).toBe('art/scene/rosa-banter.webm')
     expect(artSrc('scene/rosa-talk.webp')).toBe('art/scene/rosa-talk.webp')
   })
 })

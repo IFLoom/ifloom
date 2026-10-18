@@ -45,7 +45,7 @@ export function utf8(text: string): Uint8Array {
 /** A string from UTF-8 bytes. */
 export function fromUtf8(bytes: Uint8Array): string {
   let out = ''
-  for (let at = 0; at < bytes.length; ) {
+  for (let at = 0; at < bytes.length;) {
     const first = bytes[at]
     const extra = first >= 0xf0 ? 3 : first >= 0xe0 ? 2 : first >= 0xc0 ? 1 : 0
     let code = extra === 0 ? first : first & (0x3f >> extra)
@@ -102,7 +102,10 @@ export function fromBase64(text: string): Uint8Array | undefined {
  * out, in capitals. So `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
  */
 export function normaliseCode(code: string): string {
-  return code.normalize('NFKC').replace(/[\s\-‐-―]+/g, '').toUpperCase()
+  return code
+    .normalize('NFKC')
+    .replace(/[\s\-‐-―]+/g, '')
+    .toUpperCase()
 }
 
 /** What a code is salted with: the game, the unlock and the unlock's own `salt`, so one code hashes differently in each. */

@@ -26,7 +26,15 @@ const NPM = /^(?:@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*$/
 /** One comparator of a semver range: `^0.1.0`, `~1.2`, `>=0.2.0`, `0.1.x`, `1.0.0-beta.1`. */
 const COMPARATOR = /^(?:\^|~|>=?|<=?|=)?\d+(?:\.(?:\d+|x|\*)){0,2}(?:-[\w.]+)?$/
 /** A semver range: comparators joined by spaces, and sets of them joined by `||`. */
-const isRange = (range: string) => range.split('||').every((set) => set.trim() !== '' && set.trim().split(/\s+/).every((part) => COMPARATOR.test(part)))
+const isRange = (range: string) =>
+  range.split('||').every(
+    (set) =>
+      set.trim() !== '' &&
+      set
+        .trim()
+        .split(/\s+/)
+        .every((part) => COMPARATOR.test(part)),
+  )
 
 /** What is wrong with the file's contents, as one line each. Empty when it's fine. */
 function problemsIn(data: unknown): string[] {

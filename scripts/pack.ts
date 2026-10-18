@@ -23,4 +23,8 @@ const workspaces = readdirSync(join(root, 'packages'))
   .flatMap((manifest) => ['-w', manifest.name])
 mkdirSync(packs, { recursive: true })
 execFileSync('npm', ['pack', ...workspaces, '--pack-destination', packs, '--silent'], { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] })
-console.log(`\nPacked into ${packs}: ${readdirSync(packs).filter((file) => file.endsWith('.tgz')).join(', ')}`)
+console.log(
+  `\nPacked into ${packs}: ${readdirSync(packs)
+    .filter((file) => file.endsWith('.tgz'))
+    .join(', ')}`,
+)

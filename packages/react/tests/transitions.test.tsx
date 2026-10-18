@@ -164,7 +164,7 @@ describe('the paper preset', async () => {
   const paper = fs.readFileSync(decodeURIComponent(url.protocol === 'file:' ? url.pathname : cwd + url.pathname), 'utf8')
   const dropCap = /([^{}/]+)::first-letter\s*\{/.exec(paper)![1].trim()
 
-  it('gives only a scene\'s first paragraph a drop cap, in the scene and in the copy of it going out', () => {
+  it("gives only a scene's first paragraph a drop cap, in the scene and in the copy of it going out", () => {
     vi.useFakeTimers()
     play()
     goIn()

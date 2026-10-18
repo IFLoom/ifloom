@@ -278,7 +278,11 @@ export const settings = defineFeature<SettingsShape>({
     },
   },
   check: (game, tools) => {
-    tools.twice('setting', 'settings', (game.settings ?? []).map((entry) => entry.id))
+    tools.twice(
+      'setting',
+      'settings',
+      (game.settings ?? []).map((entry) => entry.id),
+    )
     for (const setting of game.settings ?? []) {
       for (const what of settingProblems(setting)) tools.problem({ list: 'setting', id: setting.id }, `setting ${setting.id}`, what)
     }

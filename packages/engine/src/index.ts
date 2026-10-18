@@ -26,17 +26,7 @@ export type {
 export { itemById, sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatDisplay, StatLevels, StatRound } from './stats.ts'
-export {
-  clampStat,
-  formatStat,
-  lackingLine,
-  levelAt,
-  startingStats,
-  statDef,
-  statLevel,
-  statMax,
-  statValue,
-} from './stats.ts'
+export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
 export type {
   CommandRef,
   Custom,
@@ -93,16 +83,7 @@ export { audioChannels, audioSrc } from './features/audio.ts'
 export { sceneContext } from './context.ts'
 
 // The state
-export type {
-  Command,
-  Effect,
-  KvValue,
-  GameState,
-  Phase,
-  StatKey,
-  Stats,
-  StorylineState,
-} from './types.ts'
+export type { Command, Effect, KvValue, GameState, Phase, StatKey, Stats, StorylineState } from './types.ts'
 export { SAVE_VERSION } from './types.ts'
 
 // Player-facing words
@@ -125,12 +106,7 @@ export { explain, explainText } from './explain.ts'
 
 // Actions and locks
 export type { ActivityCost, ActivityDef } from './activity.ts'
-export {
-  activityBlocked,
-  activityById,
-  need,
-  payCost,
-} from './activity.ts'
+export { activityBlocked, activityById, need, payCost } from './activity.ts'
 export { effectsOf, warningOf, whyNot } from './availability.ts'
 export type { Lock, LockTarget } from './locks.ts'
 export { lockOn, lockedBy, lockedOut } from './locks.ts'
@@ -168,17 +144,7 @@ export { emptyStoryline, storylineOf, storylineOpen } from './storylines.ts'
 
 // Progress, limits, randomness
 export type { Stage, Stages } from './progress.ts'
-export {
-  bumped,
-  count,
-  counted,
-  turnsSince,
-  stageAt,
-  stageDone,
-  stageNext,
-  stageOpen,
-  stagesDone,
-} from './progress.ts'
+export { bumped, count, counted, turnsSince, stageAt, stageDone, stageNext, stageOpen, stagesDone } from './progress.ts'
 export { markUsed, oncePerTurn, usedBlock, usedThisTurn } from './once.ts'
 export { chance, hash, pick, roll, weighted } from './random.ts'
 
@@ -199,30 +165,12 @@ export type { Profile } from './profile.ts'
 export { profile } from './profile.ts'
 
 // The runner a UI drives
-export type {
-  AutosaveOptions,
-  BacklogEntry,
-  BacklogOptions,
-  CommandLog,
-  HistoryOptions,
-  Runner,
-  RunnerOptions,
-} from './runner.ts'
+export type { AutosaveOptions, BacklogEntry, BacklogOptions, CommandLog, HistoryOptions, Runner, RunnerOptions } from './runner.ts'
 export { browserRunner, createRunner, replay } from './runner.ts'
 
 // The view a UI draws, and the screen it is built from
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
 export { inlineChoices } from './screen.ts'
 export { renderAction, screen, stageView } from './screen.ts'
-export type {
-  StatView,
-  View,
-  CollectionView,
-  EntitiesView,
-  EntityView,
-  InputView,
-  NoticeView,
-  NoticesView,
-  SettingView,
-} from './view.ts'
+export type { StatView, View, CollectionView, EntitiesView, EntityView, InputView, NoticeView, NoticesView, SettingView } from './view.ts'
 export { view } from './view.ts'

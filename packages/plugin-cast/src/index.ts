@@ -195,9 +195,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       here: isHere(state, context, def),
       closed: closed(state, def),
       met: met(state, game, def),
-      actions: def.talk
-        ? [renderAction(state, game, { id: `talk-${def.id}`, label: option?.label ?? say(game, `${ID}/talk`), command: talk(def.id) })]
-        : [],
+      actions: def.talk ? [renderAction(state, game, { id: `talk-${def.id}`, label: option?.label ?? say(game, `${ID}/talk`), command: talk(def.id) })] : [],
     }
   }
 
@@ -216,24 +214,25 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       notPickingUp: '{name} does not pick up.',
     },
     kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People' }],
-    entities: (game) =>
-      charactersOf(game).map((def) => ({ id: def.id, of: kind, name: def.name, stats: def.stats, kv: def.kv })),
+    entities: (game) => charactersOf(game).map((def) => ({ id: def.id, of: kind, name: def.name, stats: def.stats, kv: def.kv })),
     conditions: {
       /** `{ 'cast/here': { character: 'ava' } }`: in the room with the player; with a list, any of them. */
-      here: (state, args, context) => ids(args.character).some((id) => {
-        const def = characterById(context.game, id)
-        return def ? isHere(state, context, def) : false
-      }),
+      here: (state, args, context) =>
+        ids(args.character).some((id) => {
+          const def = characterById(context.game, id)
+          return def ? isHere(state, context, def) : false
+        }),
       /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
       at: (state, args, { game }) => {
         const def = characterById(game, ids(args.character)[0])
         return def ? ids(args.at).includes(locationOf(state, game, def)) : false
       },
       /** `{ 'cast/met': { character: 'ava' } }`: the player has met them; with a list, any of them. */
-      met: (state, args, { game }) => ids(args.character).some((id) => {
-        const def = characterById(game, id)
-        return def ? met(state, game, def) : false
-      }),
+      met: (state, args, { game }) =>
+        ids(args.character).some((id) => {
+          const def = characterById(game, id)
+          return def ? met(state, game, def) : false
+        }),
     },
     commands: {
       /** `{ 'cast/talk': { id } }`: start a conversation with someone here. */
@@ -260,7 +259,10 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
         return def ? { id: def.id, name: nameOf(state, game, def), hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
       },
       /** The ids of everyone in the room. */
-      present: (state, _args, context) => charactersOf(context.game).filter((def) => isHere(state, context, def)).map((def) => def.id),
+      present: (state, _args, context) =>
+        charactersOf(context.game)
+          .filter((def) => isHere(state, context, def))
+          .map((def) => def.id),
       /** Where someone is (`{ character }`). */
       where: (state, args, { game }) => {
         const def = characterById(game, ids(args.character)[0])
@@ -270,7 +272,14 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       contacts: (state, _args, { game }) =>
         charactersOf(game)
           .filter((def) => def.call && met(state, game, def))
-          .map((def) => ({ id: def.id, name: nameOf(state, game, def), role: def.role ?? null, portrait: portraitOf(def), command: call(def.id), disabled: whyNot(state, game, call(def.id)) })),
+          .map((def) => ({
+            id: def.id,
+            name: nameOf(state, game, def),
+            role: def.role ?? null,
+            portrait: portraitOf(def),
+            command: call(def.id),
+            disabled: whyNot(state, game, call(def.id)),
+          })),
     },
     speaker: (id, state, { game }) => {
       const def = characterById(game, id)
@@ -301,7 +310,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
             { within: 'talk', refs: talkOptions(def).map((option) => ({ scene: option.scene, as: 'open' as const })) },
             { within: 'call', refs: def.call?.scene ? [{ scene: def.call.scene, as: 'open' as const }] : [] },
             ...(def.storyline !== undefined ? [{ storyline: def.storyline }] : []),
-            ...[...(def.schedule ?? []).map((block) => block.when), ...talkOptions(def).map((option) => option.when), def.call?.when, def.met].map((when) => ({ when: bindCurrent(when, one) })),
+            ...[...(def.schedule ?? []).map((block) => block.when), ...talkOptions(def).map((option) => option.when), def.call?.when, def.met].map((when) => ({
+              when: bindCurrent(when, one),
+            })),
             // Only a portrait the game gives: the one left out is the UI's to fall back from.
             ...(def.portrait !== undefined ? [{ picture: def.portrait }] : []),
           ],
@@ -316,7 +327,8 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       const blank = askPlaces ? startingState(game) : undefined
       const known = askPlaces ? (id: string) => Boolean(askPlaces(blank!, { location: id })) : undefined
       for (const def of charactersOf(game)) {
-        if (def.call && !def.call.scene && !talkOptions(def).length) sayOf(def.id, 'can be called, but a call opens no scene: give call a scene, or them a talk')
+        if (def.call && !def.call.scene && !talkOptions(def).length)
+          sayOf(def.id, 'can be called, but a call opens no scene: give call a scene, or them a talk')
         if (known) {
           for (const place of [def.home, ...(def.schedule ?? []).map((block) => block.location)]) {
             if (place !== undefined && place !== OFFSTAGE && !known(place)) sayOf(def.id, `unknown location "${place}"`)

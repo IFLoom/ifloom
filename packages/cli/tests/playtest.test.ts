@@ -22,9 +22,25 @@ function game(): Game {
         data: {
           places: {
             locations: [
-              { id: 'bedroom', name: 'Bedroom', tag: 'Home', exits: ['hall'], art: '', body: [{ text: 'bedroom' }], actions: [{ id: 'bed', label: 'Sleep', command: sleep() }] },
+              {
+                id: 'bedroom',
+                name: 'Bedroom',
+                tag: 'Home',
+                exits: ['hall'],
+                art: '',
+                body: [{ text: 'bedroom' }],
+                actions: [{ id: 'bed', label: 'Sleep', command: sleep() }],
+              },
               { id: 'hall', name: 'Hall', tag: 'Home', exits: ['bedroom', 'garden'], art: '', body: [{ text: 'hall' }] },
-              { id: 'garden', name: 'Garden', tag: 'Out', exits: ['hall'], art: '', body: [{ text: 'garden' }], actions: [{ id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } }] },
+              {
+                id: 'garden',
+                name: 'Garden',
+                tag: 'Out',
+                exits: ['hall'],
+                art: '',
+                body: [{ text: 'garden' }],
+                actions: [{ id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } }],
+              },
             ],
           },
         },
@@ -69,7 +85,7 @@ describe('snapshot', () => {
     expect(text).toContain('=== place:garden @ start\nSoil.')
   })
 
-  it('reads as the engine\'s view does: a choice a lock refuses is greyed out with its reason', () => {
+  it("reads as the engine's view does: a choice a lock refuses is greyed out with its reason", () => {
     const plain = game()
     const start = startingState(plain)
     const g: Game = { ...plain, rules: { ...plain.rules, locks: [{ when: { phase: [start.phase] }, deny: ['choose'], reason: 'Too sleepy.' }] } }

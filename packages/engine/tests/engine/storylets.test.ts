@@ -19,7 +19,12 @@ function cafe(scenes: DataScene[], extra: Partial<Pack> = {}) {
   const pack: Pack = {
     id: 'cafe',
     schema: SCHEMA,
-    prose: Object.fromEntries(scenes.flatMap((entry) => [[`${entry.id}.text`, entry.id], [`${entry.id}#leave`, 'Leave']])),
+    prose: Object.fromEntries(
+      scenes.flatMap((entry) => [
+        [`${entry.id}.text`, entry.id],
+        [`${entry.id}#leave`, 'Leave'],
+      ]),
+    ),
     scenes,
     activities: [
       { id: 'sit', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
@@ -89,11 +94,12 @@ describe('storylets', () => {
   })
 
   it('report a draw no scene is in, an unknown otherwise and a bad weight', () => {
-    const problems = cafe([scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { kv: 'x' } })], {
-      activities: [
-        { id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] },
-      ],
-    }).problems.map(describeProblem)
+    const problems = cafe(
+      [scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { kv: 'x' } })],
+      {
+        activities: [{ id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] }],
+      },
+    ).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
         'cafe · activity sit · draws from "nowhere", but no scene is drawn from it',
@@ -108,6 +114,8 @@ describe('storylets', () => {
   it('are checked in a hand-built game too', () => {
     const { game } = cafe([gossip, quiet])
     const broken = { ...game, activities: [{ id: 'sit', effects: [{ kind: 'scene' as const, from: 'nowhere', otherwise: 'cafe.gone' }] }] }
-    expect(problemsOf(broken)).toEqual(expect.arrayContaining(['activity sit: draws from "nowhere", but no scene is drawn from it', 'activity sit: goes to unknown scene "cafe.gone"']))
+    expect(problemsOf(broken)).toEqual(
+      expect.arrayContaining(['activity sit: draws from "nowhere", but no scene is drawn from it', 'activity sit: goes to unknown scene "cafe.gone"']),
+    )
   })
 })

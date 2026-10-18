@@ -37,7 +37,10 @@ export const custom: Custom = {
 export const corner: Pack = {
   id: 'corner',
   schema: SCHEMA,
-  kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }, { id: 'dish', label: 'Dish', plural: 'Menu' }],
+  kinds: [
+    { id: 'staff', label: 'Member of staff', plural: 'Staff' },
+    { id: 'dish', label: 'Dish', plural: 'Menu' },
+  ],
   stats: [
     { id: 'coins', label: 'Coins', start: 120, min: -9999, max: 99999, format: '£{n}', spendable: true, lacking: 'Not enough in the till.' },
     // Word gets round in steps: the sidebar shows the level, and a notice says when it goes up.
@@ -96,8 +99,20 @@ export const corner: Pack = {
       title: 'Interviews',
       body: [{ text: 'hiring' }],
       choices: [
-        { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', scene: null }] },
-        { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', scene: null }] },
+        {
+          id: 'dev',
+          effects: [
+            { kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } },
+            { kind: 'scene', scene: null },
+          ],
+        },
+        {
+          id: 'fen',
+          effects: [
+            { kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } },
+            { kind: 'scene', scene: null },
+          ],
+        },
         { id: 'nobody', effects: [{ kind: 'scene', scene: null }] },
       ],
     },
@@ -109,11 +124,15 @@ export const corner: Pack = {
     {
       id: 'review',
       when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
-      effects: [{ kind: 'stat', stat: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
+      effects: [
+        { kind: 'stat', stat: 'reputation', by: 10 },
+        { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' },
+      ],
     },
   ],
   prose: {
-    opening: 'The lease is signed, the sign is up, and Ana has already rearranged the mugs. Every week the till is counted, the staff are paid, and you find out what the town thought.',
+    opening:
+      'The lease is signed, the sign is up, and Ana has already rearranged the mugs. Every week the till is counted, the staff are paid, and you find out what the town thought.',
     'opening#begin': 'Open the doors',
     hiring: 'Two people answer the card in the window. Wages are {{v:payroll}} a week already.',
     'hiring#dev': 'Dev: keen, cheap, still learning',

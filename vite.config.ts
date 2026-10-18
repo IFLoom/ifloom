@@ -52,11 +52,18 @@ for (const project of projects) {
   tasks[`typecheck:${project.split('/')[1]}`] = { command: `tsc --noEmit -p ${project}`, cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
 }
 // The site generates its MDX collections and Next's route types first.
-tasks['typecheck:site'] = { command: 'npm run typecheck --silent', cwd: 'site', cache: { input: [{ auto: true }, '!site/.next/**', '!site/.source/**', '!site/next-env.d.ts', '!site/**/*.tsbuildinfo'], output: [] } }
+tasks['typecheck:site'] = {
+  command: 'npm run typecheck --silent',
+  cwd: 'site',
+  cache: { input: [{ auto: true }, '!site/.next/**', '!site/.source/**', '!site/next-env.d.ts', '!site/**/*.tsbuildinfo'], output: [] },
+}
 tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', dependsOn: Object.keys(tasks).filter((name) => name.startsWith('typecheck:')) }
 
 // Test: one Vitest run over every package, example and the site's editor (vitest.config.ts).
-tasks['test:all'] = { command: 'vitest run', cache: { input: [{ auto: true }, '!**/dist/**', '!node_modules/.vite/**', '!node_modules/.vite-temp/**'], output: [] } }
+tasks['test:all'] = {
+  command: 'vitest run',
+  cache: { input: [{ auto: true }, '!**/dist/**', '!node_modules/.vite/**', '!node_modules/.vite-temp/**'], output: [] },
+}
 
 export default defineConfig({
   run: { tasks },

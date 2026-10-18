@@ -174,7 +174,9 @@ export function generators(): DefinedPlugin<null> {
           refs: [
             { kind: template.of },
             ...Object.keys(template.stats ?? {}).map((stat): Reference => ({ stat, starts: template.of })),
-            ...fields(template).flatMap(({ field }) => poolsIn(field)).map((pool): Reference => ({ entry: pool, plugin: ID, list: 'pools', noun: 'pool' })),
+            ...fields(template)
+              .flatMap(({ field }) => poolsIn(field))
+              .map((pool): Reference => ({ entry: pool, plugin: ID, list: 'pools', noun: 'pool' })),
           ],
         })),
       ],

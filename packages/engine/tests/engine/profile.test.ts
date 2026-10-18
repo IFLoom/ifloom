@@ -47,10 +47,7 @@ describe('the profile', () => {
     const prof = profile(game(), memoryDriver())
     const heard: [string, unknown][] = []
     const stop = prof.subscribe((namespace, value) => heard.push([namespace, value]))
-    await Promise.all([
-      prof.update<number>('count', (n) => (n ?? 0) + 1),
-      prof.update<number>('count', (n) => (n ?? 0) + 1),
-    ])
+    await Promise.all([prof.update<number>('count', (n) => (n ?? 0) + 1), prof.update<number>('count', (n) => (n ?? 0) + 1)])
     expect(await prof.get('count')).toBe(2)
     expect(await prof.update<number>('count', () => undefined)).toBe(2)
     stop()

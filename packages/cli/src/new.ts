@@ -94,7 +94,12 @@ export function pluginNames(name: string): { id: string; camel: string; Pascal: 
     throw new Error(`"${id}" can't be a plugin's id: start with a letter and use lower-case letters, digits and dashes, like ifloom-plugin-weather.`)
   }
   const words = id.split('-').filter(Boolean)
-  const camel = words[0] + words.slice(1).map((word) => word[0].toUpperCase() + word.slice(1)).join('')
+  const camel =
+    words[0] +
+    words
+      .slice(1)
+      .map((word) => word[0].toUpperCase() + word.slice(1))
+      .join('')
   return { id, camel, Pascal: camel[0].toUpperCase() + camel.slice(1), title: titleOf(id) }
 }
 

@@ -59,7 +59,7 @@ describe('renameChoice', () => {
     expect(problemsOf(next)).toEqual([])
   })
 
-  it('moves the inline actions in the scene\'s prose that name it', () => {
+  it("moves the inline actions in the scene's prose that name it", () => {
     const project = sampleProject()
     project.pack.prose.market = `${project.pack.prose.market} [[act:buy|Buy one]] or [[act:buy]], not [[act:buyer]].`
     const next = renameChoice(project, 'market', 'buy', 'treat')
@@ -87,7 +87,12 @@ describe('problemTarget', () => {
 
 describe('the address', () => {
   it('names a selection and reads it back', () => {
-    const cases = [{ thing: 'project' as const }, { thing: 'scene' as const, id: 'market' }, { thing: 'scene' as const, id: 'market.busker', choice: 'listen' }, { thing: 'stat' as const, id: 'coins' }]
+    const cases = [
+      { thing: 'project' as const },
+      { thing: 'scene' as const, id: 'market' },
+      { thing: 'scene' as const, id: 'market.busker', choice: 'listen' },
+      { thing: 'stat' as const, id: 'coins' },
+    ]
     for (const selection of cases) expect(selectionFromHash(hashOf(selection))).toEqual(selection)
     expect(selectionFromHash('#nothing')).toBeNull()
     expect(selectionFromHash('')).toBeNull()

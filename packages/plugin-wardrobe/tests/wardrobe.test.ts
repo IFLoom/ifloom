@@ -1,16 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SCHEMA,
-  apply,
-  holds,
-  loadGame,
-  startingState,
-  view,
-  whyNot,
-  type Game,
-  type GameState,
-  type Pack,
-} from '@ifloom/engine'
+import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack } from '@ifloom/engine'
 import { slotFilled, takeOff, wardrobe, wear, wearing, type WardrobeView } from '../src/index.ts'
 
 const plugin = wardrobe()
@@ -114,10 +103,12 @@ describe('the wardrobe', () => {
   })
 
   it('reports clothes that are not items or name a slot the game does not have', () => {
-    const loaded = loadGame(
-      [{ id: 'mod', schema: SCHEMA, data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }],
-      { id: 'g', title: 'g', plugins: [plugin], data: slots },
-    )
+    const loaded = loadGame([{ id: 'mod', schema: SCHEMA, data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }], {
+      id: 'g',
+      title: 'g',
+      plugins: [plugin],
+      data: slots,
+    })
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'clothes cape', what: 'unknown item "cape"' },
       { pack: 'mod', where: 'clothes cape', what: 'unknown slot "back"' },

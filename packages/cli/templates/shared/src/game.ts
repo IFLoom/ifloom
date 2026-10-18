@@ -16,7 +16,13 @@ const story: Pack = {
       title: 'The door',
       body: [{ text: 'start' }],
       choices: [
-        { id: 'knock', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'scene', scene: 'inside' }] },
+        {
+          id: 'knock',
+          effects: [
+            { kind: 'stat', stat: 'courage', by: 1 },
+            { kind: 'scene', scene: 'inside' },
+          ],
+        },
         { id: 'wait', effects: [{ kind: 'scene', scene: 'inside' }] },
       ],
     },

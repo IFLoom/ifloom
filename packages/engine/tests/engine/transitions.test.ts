@@ -16,7 +16,13 @@ const door: DataScene = {
   body: [{ text: 'door.text' }],
   choices: [
     { id: 'in', effects: [{ kind: 'scene', scene: 'hall' }] },
-    { id: 'slow', effects: [{ kind: 'scene', scene: 'hall' }, { kind: 'transition', to: 'zoom', ms: 900 }] },
+    {
+      id: 'slow',
+      effects: [
+        { kind: 'scene', scene: 'hall' },
+        { kind: 'transition', to: 'zoom', ms: 900 },
+      ],
+    },
   ],
 }
 const hall: DataScene = {
@@ -104,7 +110,7 @@ describe('reveals', () => {
     ])
   })
 
-  it("keep who spoke last across a reveal, so a bare quote still answers", () => {
+  it('keep who spoke last across a reveal, so a bare quote still answers', () => {
     const beats = parseBeats('Ava: "Morning."\n\n[[reveal]]\n\n"Morning."')
     expect(beats.map((beat) => (beat.kind === 'say' ? beat.who : beat.kind))).toEqual(['character', 'reveal', 'player'])
   })
@@ -138,10 +144,10 @@ describe('the checker', () => {
     }
     expect(problems({ scenes: [odd, hall] })).toEqual([
       'house · scene door · unknown transition "wipe"',
-      'house · scene door · a reveal\'s delay must be whole milliseconds, 0 or more',
+      "house · scene door · a reveal's delay must be whole milliseconds, 0 or more",
       'house · scene door · unknown transition "spin"',
       'house · scene door · unknown transition "fdae"',
-      'house · scene door · a transition\'s ms must be 0 or more',
+      "house · scene door · a transition's ms must be 0 or more",
     ])
   })
 
@@ -152,9 +158,7 @@ describe('the checker', () => {
   })
 
   it('reads [[reveal]] markup in prose', () => {
-    expect(
-      problems({ prose: { ...prose, 'hall.more': '[[reveal:soon|fade]]\n\nA clock ticks. [[reveal]] Then nothing.\n\n[[reveal|swirl]]' } }),
-    ).toEqual([
+    expect(problems({ prose: { ...prose, 'hall.more': '[[reveal:soon|fade]]\n\nA clock ticks. [[reveal]] Then nothing.\n\n[[reveal|swirl]]' } })).toEqual([
       'house · prose hall.more · [[reveal]] has a delay of "soon"; it is whole milliseconds',
       'house · prose hall.more · unknown transition "swirl"',
       'house · prose hall.more · [[reveal]] goes on a line of its own, with a blank line before and after',

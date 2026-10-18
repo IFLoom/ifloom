@@ -79,7 +79,13 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
     ...(options.gallery === false ? [] : [{ id: 'gallery', name: 'Gallery', icon: 'gallery', on, sections: [{ collection: 'gallery' }] }]),
     ...(options.apps ?? []).map((app) => ({ ...app, on })),
   ]
-  const device = { id: on, name: options.name ?? 'Phone', frame: 'phone', sidebar: options.sidebar ?? true, ...(options.wallpaper !== undefined ? { wallpaper: options.wallpaper } : {}) }
+  const device = {
+    id: on,
+    name: options.name ?? 'Phone',
+    frame: 'phone',
+    sidebar: options.sidebar ?? true,
+    ...(options.wallpaper !== undefined ? { wallpaper: options.wallpaper } : {}),
+  }
   return {
     plugins: [devices(), messages(), ...(feeds.length ? [feed()] : [])],
     collections: options.gallery === false ? [] : [{ id: 'gallery', name: 'Photos' }],

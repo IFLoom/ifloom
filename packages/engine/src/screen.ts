@@ -17,7 +17,16 @@ import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { activityById } from './activity.ts'
 import { artSrc, inlineMarkup, mediaKind, parseBeats, videoView, type InlineSpan, type SceneBeat } from './sceneBody.ts'
-import { mediaMarkup, poolPick, resolveMedia, resolvePoolMarkup, type HotspotView, type MediaStage, type StageLayerView, type StageView } from './features/media.ts'
+import {
+  mediaMarkup,
+  poolPick,
+  resolveMedia,
+  resolvePoolMarkup,
+  type HotspotView,
+  type MediaStage,
+  type StageLayerView,
+  type StageView,
+} from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameDef } from './features/minigames.ts'
 import { transitionView, type TransitionView } from './features/transitions.ts'
@@ -159,9 +168,7 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
 /** The room itself, when no scene is playing over it. */
 function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginStage>, drawing: Drawing): ScreenScene {
   // A plugin's stage; with none, there is nothing to read but the buttons.
-  const rendered = stage?.body
-    ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks)
-    : { body: '' }
+  const rendered = stage?.body ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
   const body = rendered.body ?? ''
   return {
     id: null,
@@ -188,7 +195,8 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
   if (!running || !def) return null
   const owner = `minigame.${def.id}`
   const label = def.states[running.state]?.label
-  const rendered = label !== undefined ? renderScene({ id: owner, body: [{ text: label }], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
+  const rendered =
+    label !== undefined ? renderScene({ id: owner, body: [{ text: label }], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
   const body = rendered.body ?? ''
   return { ...under, title: def.label ?? under.title, body, beats: beatsOf(state, game, owner, body, undefined, drawing.picks), panel: null, panelData: null }
 }
@@ -250,9 +258,10 @@ function drawStage(
   const layers: StageLayerView[] = []
   stage.layers.forEach((layer, index) => {
     if (!holds(state, layer.when, game)) return
-    const src = layer.pool !== undefined
-      ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
-      : (layer.src ?? null)
+    const src =
+      layer.pool !== undefined
+        ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
+        : (layer.src ?? null)
     if (!src) return
     const video = Boolean(layer.video) || mediaKind(src) === 'video'
     layers.push({
@@ -319,11 +328,7 @@ function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoi
  * agree. What a room's buttons are made with, for plugins that show actions
  * somewhere else — an app on a device.
  */
-export function renderAction(
-  state: GameState,
-  game: Game,
-  action: ActionDef,
-): RenderedChoice {
+export function renderAction(state: GameState, game: Game, action: ActionDef): RenderedChoice {
   return actionButton(state, game, asAction(action), rendering(state, game))
 }
 
@@ -334,13 +339,7 @@ type Action = Omit<ActionDef, 'command'> & { command: Command }
 const asAction = (action: ActionDef): Action => ({ ...action, command: commandOf(action.command) })
 
 /** `renderAction`, asking `rendered` for the open scene. `effects`, when the caller has worked them out. */
-function actionButton(
-  state: GameState,
-  game: Game,
-  action: Action,
-  rendered: Rendering,
-  known?: readonly Effect[],
-): RenderedChoice {
+function actionButton(state: GameState, game: Game, action: Action, rendered: Rendering, known?: readonly Effect[]): RenderedChoice {
   // Worked out here only when a plugin will look at them; a lock asks for them itself.
   const watched = pluginsWatch(game)
   const effects = known ?? (watched ? effectsIn(rendered, state, game, action.command) : undefined)
@@ -348,9 +347,7 @@ function actionButton(
     id: action.id,
     label: action.label,
     price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state) }, watched ? effects : []),
-    disabled:
-      action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ??
-      whyNotIn(rendered, state, game, action.command, effects),
+    disabled: action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
     command: action.command,
   }
   const warning = warningIn(rendered, state, game, action.command, effects)
@@ -358,12 +355,7 @@ function actionButton(
   return choice
 }
 
-function priced(
-  state: GameState,
-  game: Game,
-  cost: { stats?: Record<string, number> },
-  effects: readonly Effect[] = [],
-): Price | undefined {
+function priced(state: GameState, game: Game, cost: { stats?: Record<string, number> }, effects: readonly Effect[] = []): Price | undefined {
   const out: Price = {}
   const spent = Object.entries(cost.stats ?? {})
     .filter(([, amount]) => amount > 0)
@@ -378,12 +370,7 @@ function priced(
  * A scene choice spends through its effects: any spendable
  * stat down. Listed in the order the game declared its stats.
  */
-function priceOfEffects(
-  state: GameState,
-  game: Game,
-  effects: readonly Effect[],
-  spends: Record<string, number> = {},
-): Price | undefined {
+function priceOfEffects(state: GameState, game: Game, effects: readonly Effect[], spends: Record<string, number> = {}): Price | undefined {
   const spent: Record<string, number> = { ...spends }
   for (const effect of effects) {
     if (effect.kind === 'stat' && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
@@ -422,9 +409,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         speaker: null,
         stageImage: null,
       },
-      choices: [
-        { id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' }, effects: [] },
-      ],
+      choices: [{ id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' }, effects: [] }],
       stage: null,
     }
   }

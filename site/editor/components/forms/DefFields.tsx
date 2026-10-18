@@ -43,7 +43,11 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
           )}
         </Field>
         <Field label="Display">
-          <Select value={value.display ?? 'number'} options={STAT_DISPLAYS} onChange={(display) => set({ display: display === 'number' ? undefined : display })} />
+          <Select
+            value={value.display ?? 'number'}
+            options={STAT_DISPLAYS}
+            onChange={(display) => set({ display: display === 'number' ? undefined : display })}
+          />
         </Field>
         <Field label="Round when read">
           <Select value={value.round ?? 'none'} options={STAT_ROUNDS} onChange={(round) => set({ round: round === 'none' ? undefined : round })} />
@@ -56,7 +60,13 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
         </Field>
       </div>
       <div className="flex flex-wrap gap-4">
-        {!derived ? <Checkbox checked={Boolean(value.spendable)} label="Spendable: costs in it show as prices" onChange={(spendable) => set({ spendable: spendable || undefined })} /> : null}
+        {!derived ? (
+          <Checkbox
+            checked={Boolean(value.spendable)}
+            label="Spendable: costs in it show as prices"
+            onChange={(spendable) => set({ spendable: spendable || undefined })}
+          />
+        ) : null}
         <Checkbox checked={value.listed !== false} label="Listed with the stats" onChange={(listed) => set({ listed: listed ? undefined : false })} />
       </div>
       <Field label="Visible only while">
@@ -65,7 +75,12 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
       <Field label="Levels" hint="The value each level starts at, lowest first, and a notice with {label} and {level}.">
         <div className="grid gap-2 sm:grid-cols-2">
           <ListInput numbers value={value.levels?.at} placeholder="10, 30, 60" onChange={(at) => set({ levels: at ? { ...value.levels, at } : undefined })} />
-          <TextInput optional value={value.levels?.notice} placeholder="{label} is now level {level}." onChange={(notice) => value.levels && set({ levels: { ...value.levels, notice } })} />
+          <TextInput
+            optional
+            value={value.levels?.notice}
+            placeholder="{label} is now level {level}."
+            onChange={(notice) => value.levels && set({ levels: { ...value.levels, notice } })}
+          />
         </div>
         {value.levels ? (
           <Checkbox
@@ -123,7 +138,12 @@ export function ItemFields({ value, onChange, withId, ...builder }: BuilderProps
       <Field label="Using it" hint="A button in the inventory that runs these effects.">
         {value.use ? (
           <div className="flex flex-col gap-2">
-            <TextInput aria-label="Use label" value={value.use.label} placeholder="Eat it" onChange={(label) => set({ use: { ...value.use!, label: label ?? '' } })} />
+            <TextInput
+              aria-label="Use label"
+              value={value.use.label}
+              placeholder="Eat it"
+              onChange={(label) => set({ use: { ...value.use!, label: label ?? '' } })}
+            />
             <EffectList {...builder} value={value.use.effects} onChange={(effects) => set({ use: { ...value.use!, effects: effects as Effect[] } })} />
             <div>
               <Button size="xs" variant="ghost" onClick={() => set({ use: undefined })}>
@@ -200,7 +220,11 @@ export function SettingFields({ value, onChange }: { value: SettingDef; onChange
       {value.kind === 'choice' ? (
         <Field label="Options and default" hint={'As JSON: [{ "value": "easy", "label": "Easy" }]. The default is the first unless you change it below.'}>
           <JsonField label="Options" value={value.options} rows={3} onChange={(options) => Array.isArray(options) && onChange({ ...value, options })} />
-          <Select value={value.default} options={value.options.map((o) => ({ value: o.value, label: o.label }))} onChange={(d) => onChange({ ...value, default: d })} />
+          <Select
+            value={value.default}
+            options={value.options.map((o) => ({ value: o.value, label: o.label }))}
+            onChange={(d) => onChange({ ...value, default: d })}
+          />
         </Field>
       ) : null}
     </div>

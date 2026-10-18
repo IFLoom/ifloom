@@ -224,7 +224,6 @@ export function sceneShown(state: GameState): GameState {
   return { ...state, audio: { ...audio, shown: audio.shown + 1 } }
 }
 
-
 /**
  * The track on each background channel, highest first: the open scene's,
  * an effect's, a plugin's, the game's default. A null at any of these is

@@ -71,11 +71,7 @@ export function entitiesOf(state: GameState, kind: string): EntityRef[] {
 }
 
 /** A new entity's state: each of its kind's stats at its start, then what it was given. */
-export function newEntity(
-  game: Game,
-  kind: string,
-  given: { name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> },
-): EntityState {
+export function newEntity(game: Game, kind: string, given: { name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> }): EntityState {
   const stats: Stats = {}
   // A derived stat is worked out when it is read, so an entity keeps none.
   for (const stat of game.stats ?? []) if (stat.of === kind && stat.derive === undefined) stats[stat.id] = stat.start ?? 0

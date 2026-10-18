@@ -1,4 +1,21 @@
-import { Clock, EntityTable, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
+import {
+  Clock,
+  EntityTable,
+  Game,
+  GameMenu,
+  InputFields,
+  Notices,
+  Overlay,
+  PanelHost,
+  RoomActions,
+  SceneStage,
+  Section,
+  Sidebar,
+  StatList,
+  Story,
+  Title,
+  useWords,
+} from '@ifloom/react'
 
 /**
  * The café's layout: the books in the story, where the eye goes. The staff

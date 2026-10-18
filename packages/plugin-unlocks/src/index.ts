@@ -149,7 +149,10 @@ export async function codeFits(code: string, game: string, def: UnlockDef): Prom
  */
 export async function lockContent(code: string, game: string, def: UnlockDef, packs: readonly Pack[]): Promise<LockedContent> {
   const proof = await proofFor(code, game, def)
-  if (!proof) throw new Error(`The code in ${envName(def.id)} isn't the one unlock "${def.id}" has the hash of. Run ifloom unlock-hash ${def.id} and put the hash it prints in the unlock.`)
+  if (!proof)
+    throw new Error(
+      `The code in ${envName(def.id)} isn't the one unlock "${def.id}" has the hash of. Run ifloom unlock-hash ${def.id} and put the hash it prints in the unlock.`,
+    )
   const fn = functionIn(packs)
   if (fn) throw new Error(`Unlock "${def.id}"'s packs must be data, as a mod's are, but ${fn} is a function.`)
   const text = JSON.stringify(packs)
@@ -209,7 +212,11 @@ function proofsIn(stored: unknown): Record<string, Uint8Array> {
  * unlock whose code has changed since (a new release with new codes) can't be
  * opened, and is listed in `problems`; the player enters the new code.
  */
-export async function unlockedPacks(game: string, profile: Profile, content: Readonly<Record<string, LockedContent>> = lockedContent()): Promise<{ packs: Pack[]; problems: string[] }> {
+export async function unlockedPacks(
+  game: string,
+  profile: Profile,
+  content: Readonly<Record<string, LockedContent>> = lockedContent(),
+): Promise<{ packs: Pack[]; problems: string[] }> {
   const proofs = proofsIn(await profile.get(ID).catch(() => undefined))
   const packs: Pack[] = []
   const problems: string[] = []

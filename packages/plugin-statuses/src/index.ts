@@ -241,8 +241,7 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
       },
       /** `{ 'statuses/remove': { id, runEnd? } }`. */
       remove: {
-        whyNot: (_state, args, { slice, game }) =>
-          slice.active.some((entry) => entry.id === idOf(args)) ? undefined : say(game, 'statuses/notActive'),
+        whyNot: (_state, args, { slice, game }) => (slice.active.some((entry) => entry.id === idOf(args)) ? undefined : say(game, 'statuses/notActive')),
         run: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
         effectsOf: (_state, args) => [{ kind: 'custom', name: 'statuses/remove', with: { status: idOf(args), runEnd: args.runEnd === true } }],
       },

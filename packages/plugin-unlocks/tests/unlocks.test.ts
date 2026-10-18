@@ -1,18 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SCHEMA,
-  apply,
-  createRunner,
-  holds,
-  loadGame,
-  memoryDriver,
-  profile,
-  replay,
-  startingState,
-  view,
-  type Game,
-  type Pack,
-} from '@ifloom/engine'
+import { SCHEMA, apply, createRunner, holds, loadGame, memoryDriver, profile, replay, startingState, view, type Game, type Pack } from '@ifloom/engine'
 import {
   ITERATIONS,
   codeFits,
@@ -117,14 +104,26 @@ describe('the plugin', () => {
 
   it('records through a lock, as moving day would deny everything', async () => {
     const town: Pack = { id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [] }], data: { unlocks: { unlocks: [await def()] } } }
-    const { game: g } = loadGame([town], { id: GAME, title: 't', plugins: [unlocks()], rules: { locks: [{ when: { not: { phase: ['never'] } }, deny: ['*'], reason: 'Not now.' }] } })
+    const { game: g } = loadGame([town], {
+      id: GAME,
+      title: 't',
+      plugins: [unlocks()],
+      rules: { locks: [{ when: { not: { phase: ['never'] } }, deny: ['*'], reason: 'Not now.' }] },
+    })
     expect(apply({ ...startingState(g), sceneId: null }, g, recordUnlock('supporter')).reason).toBeUndefined()
   })
 
   it('reports an unlock content names that the game lacks, and a bad entry', async () => {
     const supporter = await def()
     const loaded = loadGame(
-      [{ id: 'town', schema: SCHEMA, activities: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }], data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } } }],
+      [
+        {
+          id: 'town',
+          schema: SCHEMA,
+          activities: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }],
+          data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
+        },
+      ],
       { id: GAME, title: 't', plugins: [unlocks()] },
     )
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
@@ -225,7 +224,9 @@ describe('locked content', () => {
   it('encrypts the packs: neither the prose nor the code is in what ships', async () => {
     const { content } = await locked()
     const script = contentScript(Object.values(content))
-    expect(script).toMatch(/^<script>window\.__ifloomUnlocks=\{"supporter":\{"ifloomUnlock":1,"game":"unlocks-town","unlock":"supporter","iv":"[^"]+","data":"[^"]+"\}\}<\/script>$/)
+    expect(script).toMatch(
+      /^<script>window\.__ifloomUnlocks=\{"supporter":\{"ifloomUnlock":1,"game":"unlocks-town","unlock":"supporter","iv":"[^"]+","data":"[^"]+"\}\}<\/script>$/,
+    )
     for (const secret of ['cinnamon', 'narrow door', 'supporter.lounge', 'BREAD', 'bread']) expect(script).not.toContain(secret)
   })
 
@@ -266,7 +267,7 @@ describe('locked content', () => {
     await startUnlocks(runnerFor(build([supporter]), driver), { content }).enter(CODE)
     const stored = profile({ id: GAME }, driver)
     const data = content.supporter.data
-    const flipped = (data[10] === 'A' ? 'B' : 'A')
+    const flipped = data[10] === 'A' ? 'B' : 'A'
     const tampered = { supporter: { ...content.supporter, data: data.slice(0, 10) + flipped + data.slice(11) } }
     const problem = ['unlock:supporter · its code has changed since it was entered; enter the new one']
     expect(await unlockedPacks(GAME, stored, tampered)).toEqual({ packs: [], problems: problem })

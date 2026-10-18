@@ -39,16 +39,18 @@ function walk(dir: string): string[] {
 
 // VitePress's own slugify, from vitepress/src/shared/shared.ts.
 function vitepressSlug(text: string): string {
-  return text
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036F]/g, '')
-    // oxlint-disable-next-line no-control-regex -- VitePress drops control characters
-    .replace(/[\u0000-\u001f]/g, '')
-    .replace(/[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’<>,.?/]+/g, '-')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/^(\d)/, '_$1')
-    .toLowerCase()
+  return (
+    text
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036F]/g, '')
+      // oxlint-disable-next-line no-control-regex -- VitePress drops control characters
+      .replace(/[\u0000-\u001f]/g, '')
+      .replace(/[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’<>,.?/]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/^(\d)/, '_$1')
+      .toLowerCase()
+  )
 }
 
 // A heading's text as both sites read it: no Markdown, links as their words.
@@ -89,7 +91,13 @@ function renamedHeadings(text: string): Map<string, string> {
 function urlOf(file: string): string | undefined {
   const rel = relative(content, file).replace(/\\/g, '/')
   if (!rel.startsWith('(latest)/') || !rel.endsWith('.md')) return
-  return '/docs/' + rel.slice('(latest)/'.length).replace(/\.md$/, '').replace(/\/?index$/, '')
+  return (
+    '/docs/' +
+    rel
+      .slice('(latest)/'.length)
+      .replace(/\.md$/, '')
+      .replace(/\/?index$/, '')
+  )
 }
 
 const pages = walk(content)
@@ -98,10 +106,7 @@ const files = [...pages, ...['README.md', 'AGENTS.md', 'CHANGELOG.md'].map((f) =
 // First the pages' addresses, then the headings they link to.
 for (const file of files) {
   const before = readFileSync(file, 'utf8')
-  const after = before
-    .replace(pageLink, '](/docs/$1')
-    .replace(siteLink, 'ifloom.github.io/ifloom/docs/$1')
-    .replace(indexSlash, ']($1')
+  const after = before.replace(pageLink, '](/docs/$1').replace(siteLink, 'ifloom.github.io/ifloom/docs/$1').replace(indexSlash, ']($1')
   if (after !== before) writeFileSync(file, after)
 }
 

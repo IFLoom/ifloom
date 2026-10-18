@@ -13,7 +13,13 @@ import { Button, IdPicker, JsonField, NumberInput, RowTools, Select, TextInput, 
 
 const FORMS: { value: EffectForm; label: string }[] = EFFECT_MENU.map((value) => ({ value, label: EFFECT_LABELS[value] }))
 
-export function EffectList({ value, onChange, names = NO_NAMES, onCreate, add = 'Add an effect' }: BuilderProps & { value: EffectRef[]; onChange: (value: EffectRef[]) => void; add?: string }) {
+export function EffectList({
+  value,
+  onChange,
+  names = NO_NAMES,
+  onCreate,
+  add = 'Add an effect',
+}: BuilderProps & { value: EffectRef[]; onChange: (value: EffectRef[]) => void; add?: string }) {
   return (
     <div className="flex flex-col gap-2">
       {value.map((effect, i) => (
@@ -42,7 +48,13 @@ export function EffectList({ value, onChange, names = NO_NAMES, onCreate, add = 
   )
 }
 
-export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, tools }: BuilderProps & { value: EffectRef; onChange: (value: EffectRef) => void; tools?: React.ReactNode }) {
+export function EffectBuilder({
+  value,
+  onChange,
+  names = NO_NAMES,
+  onCreate,
+  tools,
+}: BuilderProps & { value: EffectRef; onChange: (value: EffectRef) => void; tools?: React.ReactNode }) {
   const [raw, setRaw] = useState(false)
   const form = raw ? 'json' : effectForm(value)
   const e = value as Record<string, any>
@@ -97,7 +109,17 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
       )
       break
     case 'scene':
-      fields = <IdPicker noun="scene" aria-label="Scene" empty="Close the scene" value={e.scene ?? ''} options={names.scenes} onChange={(id) => set({ scene: id || null })} onCreate={create('scene')} />
+      fields = (
+        <IdPicker
+          noun="scene"
+          aria-label="Scene"
+          empty="Close the scene"
+          value={e.scene ?? ''}
+          options={names.scenes}
+          onChange={(id) => set({ scene: id || null })}
+          onCreate={create('scene')}
+        />
+      )
       break
     case 'draw':
       fields = (
@@ -105,7 +127,15 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
           <span className="text-xs text-fd-muted-foreground">from the set</span>
           <IdPicker noun="set" aria-label="Storylet set" value={e.from} options={names.sets} onChange={(from) => set({ from })} />
           <span className="text-xs text-fd-muted-foreground">or else</span>
-          <IdPicker noun="scene" aria-label="Otherwise" empty="Nothing" value={e.otherwise ?? ''} options={names.scenes} onChange={(id) => set({ otherwise: id || undefined })} onCreate={create('scene')} />
+          <IdPicker
+            noun="scene"
+            aria-label="Otherwise"
+            empty="Nothing"
+            value={e.otherwise ?? ''}
+            options={names.scenes}
+            onChange={(id) => set({ otherwise: id || undefined })}
+            onCreate={create('scene')}
+          />
         </>
       )
       break
@@ -113,7 +143,15 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
       fields = (
         <>
           <TextInput aria-label="Title" className="min-w-40 flex-1" value={e.title} placeholder="Title" onChange={(title) => set({ title: title ?? '' })} />
-          <TextInput aria-label="Text (a prose key)" className="w-40" mono optional value={e.text} placeholder="prose key (optional)" onChange={(text) => set({ text })} />
+          <TextInput
+            aria-label="Text (a prose key)"
+            className="w-40"
+            mono
+            optional
+            value={e.text}
+            placeholder="prose key (optional)"
+            onChange={(text) => set({ text })}
+          />
         </>
       )
       break
@@ -131,9 +169,23 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
     case 'audio':
       fields = (
         <>
-          <TextInput aria-label="Channel" className="w-28" mono value={e.channel} placeholder="channel" onChange={(channel) => set({ channel: channel ?? '' })} />
+          <TextInput
+            aria-label="Channel"
+            className="w-28"
+            mono
+            value={e.channel}
+            placeholder="channel"
+            onChange={(channel) => set({ channel: channel ?? '' })}
+          />
           <span className="text-xs text-fd-muted-foreground">to</span>
-          <TextInput aria-label="Track" className="w-32" mono value={e.to ?? ''} placeholder={e.to === null ? 'silent' : 'track id'} onChange={(to) => set({ to: to || undefined })} />
+          <TextInput
+            aria-label="Track"
+            className="w-32"
+            mono
+            value={e.to ?? ''}
+            placeholder={e.to === null ? 'silent' : 'track id'}
+            onChange={(to) => set({ to: to || undefined })}
+          />
           <Button size="xs" variant="ghost" onClick={() => set({ to: null })} title="Silence the channel">
             Silence
           </Button>
@@ -155,7 +207,11 @@ export function EffectBuilder({ value, onChange, names = NO_NAMES, onCreate, too
       fields = (
         <div className="w-full">
           <JsonField label="Effect as JSON" value={value} rows={3} onChange={(next) => next && typeof next === 'object' && onChange(next)} />
-          {form === 'plugin' ? <p className="mt-1 text-xs text-fd-muted-foreground">A plugin's effect by its full name, such as <code>{'{ "quests/start": { "quest": "errand" } }'}</code>.</p> : null}
+          {form === 'plugin' ? (
+            <p className="mt-1 text-xs text-fd-muted-foreground">
+              A plugin's effect by its full name, such as <code>{'{ "quests/start": { "quest": "errand" } }'}</code>.
+            </p>
+          ) : null}
         </div>
       )
       break

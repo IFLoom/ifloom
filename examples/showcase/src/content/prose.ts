@@ -1,14 +1,16 @@
 /** Small Town's words, by key. Choice labels are `<scene>#<choice>`; reply labels `<message>#<reply>`. */
 export const prose: Record<string, string> = {
   // `*…*` is italics and `**…**` bold, inside the line.
-  intro: 'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
+  intro:
+    'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
   // The tooltip on "launderette" above.
   'intro.launderette': 'Sam from flat 2 runs it. Service washes, Monday to Saturday.',
   // Revealed after the line above: the scene's block says so with `reveal`.
   'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
   'intro#unpack': 'Unpack',
 
-  'place.flat': 'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
+  'place.flat':
+    'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
   // `[[act:read-text|…]]` draws the flat's "Read your messages" action here, in the line.
   'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
   'place.high-street': 'A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.',

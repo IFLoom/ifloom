@@ -150,7 +150,16 @@ describe('useMinigame', () => {
       return null
     }
     render(
-      <GameShell runner={runner} layout={storyOf(<><SceneStage /><Extra /><Extra /></>)} />,
+      <GameShell
+        runner={runner}
+        layout={storyOf(
+          <>
+            <SceneStage />
+            <Extra />
+            <Extra />
+          </>,
+        )}
+      />,
     )
     click(/Join in/)
     click('Space')
@@ -358,7 +367,22 @@ describe('the stat display', () => {
 describe('the notice strip', () => {
   it('counts the unseen notices, and opens them', () => {
     const runner = runnerFor()
-    render(<GameShell runner={runner} layout={() => (<Page><Sidebar><NoticeStrip /></Sidebar><Story><SceneStage /><RoomActions /></Story></Page>)} />)
+    render(
+      <GameShell
+        runner={runner}
+        layout={() => (
+          <Page>
+            <Sidebar>
+              <NoticeStrip />
+            </Sidebar>
+            <Story>
+              <SceneStage />
+              <RoomActions />
+            </Story>
+          </Page>
+        )}
+      />,
+    )
     expect(document.querySelector('[data-part="notice-strip"]')).toBeNull()
     click(/Walk on/)
     click('Wave')
@@ -391,7 +415,17 @@ describe('the notice strip, with a phone', () => {
     )
     expect(problems).toEqual([])
     const runner = createRunner(g, startingState(g))
-    render(<GameShell runner={runner} layout={storyOf(<><NoticeStrip /><SceneStage /></>)} />)
+    render(
+      <GameShell
+        runner={runner}
+        layout={storyOf(
+          <>
+            <NoticeStrip />
+            <SceneStage />
+          </>,
+        )}
+      />,
+    )
     expect(document.querySelector('[data-part="notice-strip"]')).toBeNull()
     // A message arrives after the first command.
     click('Wait')

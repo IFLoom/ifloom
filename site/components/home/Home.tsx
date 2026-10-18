@@ -139,7 +139,8 @@ export function Home() {
               Interactive fiction for <em>any shape</em> of game
             </h1>
             <p className={cx(s.p, s.lede)}>
-              Everything you&apos;d build in Twine, written in TypeScript instead: typed content, saves that survive updates, a checker that catches mistakes before players do, and a UI that looks like your game, not the engine&apos;s.
+              Everything you&apos;d build in Twine, written in TypeScript instead: typed content, saves that survive updates, a checker that catches mistakes
+              before players do, and a UI that looks like your game, not the engine&apos;s.
             </p>
             <div className={s.ctas}>
               <Link className={s.cta} href="/docs/guide/introduction">
@@ -177,7 +178,8 @@ export function Home() {
               <span className={s.tag}>01</span>
               <h3 className={s.h3}>Write the game you want</h3>
               <p className={s.p}>
-                A short novel, a business you run week by week, a town full of people with their own days. Scenes, stats and characters are yours to shape, and the engine doesn&apos;t assume a genre.
+                A short novel, a business you run week by week, a town full of people with their own days. Scenes, stats and characters are yours to shape, and
+                the engine doesn&apos;t assume a genre.
               </p>
               <ul className={s.shapes}>
                 {shapes.map((shape) => (
@@ -196,7 +198,9 @@ export function Home() {
             <Card kind="plugins">
               <span className={s.tag}>02</span>
               <h3 className={s.h3}>Plugins</h3>
-              <p className={s.p}>Add what your game needs and leave out the rest. Plugins work together when a game has both, but never depend on each other.</p>
+              <p className={s.p}>
+                Add what your game needs and leave out the rest. Plugins work together when a game has both, but never depend on each other.
+              </p>
               <div className={s.groups}>
                 {pluginGroups.map((group) => (
                   <div key={group.name} className={s.group}>
@@ -221,8 +225,9 @@ export function Home() {
               <span className={s.tag}>03</span>
               <h3 className={s.h3}>Your look, your framework</h3>
               <p className={s.p}>
-                The engine is a library with no UI. It gives your UI a view: what to show and what each button does. Draw it with React, Vue, Svelte or plain DOM. Or take the ready-made React UI and restyle any part with plain CSS, swap its classes, start unstyled, or replace any
-                component, down to the page itself. Nothing gives away which engine the game runs on.
+                The engine is a library with no UI. It gives your UI a view: what to show and what each button does. Draw it with React, Vue, Svelte or plain
+                DOM. Or take the ready-made React UI and restyle any part with plain CSS, swap its classes, start unstyled, or replace any component, down to
+                the page itself. Nothing gives away which engine the game runs on.
               </p>
               <div className={cx(s.term, s.snippet)} aria-label="Restyling a part with plain CSS">
                 <span>
@@ -262,10 +267,12 @@ export function Home() {
               <span className={s.tag}>05</span>
               <h3 className={s.h3}>Ship one file</h3>
               <p className={s.p}>
-                <code className={s.code}>ifloom build</code> makes one <code className={s.code}>index.html</code> that opens straight from disk, with your pictures, sounds and videos beside it. Put it on itch.io, your own site, or a USB stick.
+                <code className={s.code}>ifloom build</code> makes one <code className={s.code}>index.html</code> that opens straight from disk, with your
+                pictures, sounds and videos beside it. Put it on itch.io, your own site, or a USB stick.
               </p>
               <p className={s.p}>
-                Add <code className={s.code}>--inline-assets</code> and the pictures go inside the page too, so a game without video or sound is that one file and nothing else.
+                Add <code className={s.code}>--inline-assets</code> and the pictures go inside the page too, so a game without video or sound is that one file
+                and nothing else.
               </p>
               <div className={s.files}>
                 <span className={s.file}>
@@ -281,7 +288,10 @@ export function Home() {
             <Card kind="media">
               <span className={s.tag}>06</span>
               <h3 className={s.h3}>Sound, video and pictures you can click</h3>
-              <p className={s.p}>Music, ambience and voice lines play on their own channels and crossfade between scenes. Videos sit inline in the prose, and pictures can have hotspots the player clicks.</p>
+              <p className={s.p}>
+                Music, ambience and voice lines play on their own channels and crossfade between scenes. Videos sit inline in the prose, and pictures can have
+                hotspots the player clicks.
+              </p>
               <div className={s.files}>
                 <span className={s.mark}>[[video:]]</span>
                 <span className={s.mark}>[[sound:]]</span>
@@ -293,7 +303,8 @@ export function Home() {
               <span className={s.tag}>07</span>
               <h3 className={s.h3}>Works with your coding agent</h3>
               <p className={s.p}>
-                Every new game comes with an <code className={s.code}>AGENTS.md</code> that tells an agent where the docs are and how to check its work. The docs are published as <code className={s.code}>llms.txt</code>, and an MCP server lets an agent search them.
+                Every new game comes with an <code className={s.code}>AGENTS.md</code> that tells an agent where the docs are and how to check its work. The
+                docs are published as <code className={s.code}>llms.txt</code>, and an MCP server lets an agent search them.
               </p>
               <div className={s.files}>
                 <a className={cx(s.mark, s.link)} href="/llms.txt">
@@ -310,7 +321,8 @@ export function Home() {
               <span className={s.tag}>08</span>
               <h3 className={s.h3}>Write in your browser</h3>
               <p className={s.p}>
-                Not a programmer? The editor lets you write scenes, choices and stats in forms, play them as you go, and export them as TypeScript or JSON for a project. Nothing to install.
+                Not a programmer? The editor lets you write scenes, choices and stats in forms, play them as you go, and export them as TypeScript or JSON for a
+                project. Nothing to install.
               </p>
               <div className={cx(s.ctas, s['editor-ctas'])}>
                 <Link className={s.cta} href="/editor">

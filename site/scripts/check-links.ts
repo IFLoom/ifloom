@@ -18,15 +18,13 @@ const scanned = await scanURLs({
 })
 
 const files = await Promise.all(
-  source.getPages().map(
-    async (page): Promise<FileObject> => ({
-      path: page.absolutePath ?? page.path,
-      // The checker skips links to a heading on the same page, so give them the page's URL.
-      content: (await page.data.getText('raw')).replace(/\]\(#/g, `](${page.url}#`),
-      url: page.url,
-      data: page.data,
-    }),
-  ),
+  source.getPages().map(async (page): Promise<FileObject> => ({
+    path: page.absolutePath ?? page.path,
+    // The checker skips links to a heading on the same page, so give them the page's URL.
+    content: (await page.data.getText('raw')).replace(/\]\(#/g, `](${page.url}#`),
+    url: page.url,
+    data: page.data,
+  })),
 )
 
 printErrors(await validateFiles(files, { scanned, checkRelativePaths: 'as-url' }), true)

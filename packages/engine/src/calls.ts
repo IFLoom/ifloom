@@ -73,4 +73,3 @@ export function commandOf(ref: CommandRef): Command {
   if (!call || 'type' in ref) return ref as Command
   return call.with ? { type: 'custom', name: call.custom, with: call.with } : { type: 'custom', name: call.custom }
 }
-

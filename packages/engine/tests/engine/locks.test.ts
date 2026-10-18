@@ -22,9 +22,7 @@ describe('locks', () => {
 
   it('can stop everything but a few commands, and then nothing is on offer while no scene is open', () => {
     const game = fixture({
-      locks: [
-        { when: { phase: ['intro'] }, deny: ['*'], except: ['choose'], reason: 'Not yet.' },
-      ],
+      locks: [{ when: { phase: ['intro'] }, deny: ['*'], except: ['choose'], reason: 'Not yet.' }],
     })
     const intro = begin(game, { phase: 'intro', kv: { at: 'shop' } })
     expect(lockedOut(intro, game)).toBe(true)

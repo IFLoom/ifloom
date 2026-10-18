@@ -15,7 +15,13 @@ function game(): Game {
         id: 'office',
         schema: SCHEMA,
         activities: [
-          { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
+          {
+            id: 'setUpMail',
+            effects: [
+              { kind: 'kv', key: 'emailSetUp', to: true },
+              { kind: 'kv', key: 'newMail', to: true },
+            ],
+          },
           { id: 'uninstall', effects: [{ kind: 'kv', key: 'emailSetUp', to: false }] },
         ],
         prose: { 'notes.intro': 'Nothing written yet.' },

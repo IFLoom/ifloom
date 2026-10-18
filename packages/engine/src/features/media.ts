@@ -194,12 +194,23 @@ const POOL_MARKUP = /\[\[(img|wide|video|widevideo):\s*@([^\]|]+)((?:\|[^\]|]*)*
  * file it gets. Markup whose pool has nothing to give is taken out. The nth
  * request in the text is at slot `<slot>.<n>`.
  */
-export function resolvePoolMarkup(text: string, state: GameState, game: Game, owner: string, slot: string, cx: FeatureContext, picks?: Record<string, string>): string {
+export function resolvePoolMarkup(
+  text: string,
+  state: GameState,
+  game: Game,
+  owner: string,
+  slot: string,
+  cx: FeatureContext,
+  picks?: Record<string, string>,
+): string {
   if (!text.includes('@')) return text
   let n = 0
   return text.replace(POOL_MARKUP, (_whole, tag: string, pool: string, rest: string) => {
     const parts = rest.split('|').slice(1)
-    const tags = (parts[0] ?? '').split(',').map((part) => part.trim()).filter(Boolean)
+    const tags = (parts[0] ?? '')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
     const src = poolPick(state, game, { pool: pool.trim(), tags, owner, slot: `${slot}.${n++}` }, cx, picks)
     if (src === null) return ''
     return `[[${tag}:${[src, ...parts.slice(1)].join('|')}]]`
@@ -207,7 +218,15 @@ export function resolvePoolMarkup(text: string, state: GameState, game: Game, ow
 }
 
 /** A data block's media with its pool resolved to a file, or null when it has none to show. */
-export function resolveMedia(media: SceneMedia, state: GameState, game: Game, owner: string, slot: string, cx: FeatureContext, picks?: Record<string, string>): SceneMedia | null {
+export function resolveMedia(
+  media: SceneMedia,
+  state: GameState,
+  game: Game,
+  owner: string,
+  slot: string,
+  cx: FeatureContext,
+  picks?: Record<string, string>,
+): SceneMedia | null {
   if (media.pool === undefined) return media.src ? media : null
   const src = poolPick(state, game, { pool: media.pool, tags: media.tags, owner, slot }, cx, picks)
   if (src === null) return null
@@ -250,10 +269,7 @@ function poolHasVideo(game: Game, pool: string): boolean {
 }
 
 function videoFlagsSet(flags: VideoFlags): string[] {
-  return [
-    ...(['controls', 'once', 'sound'] as const).filter((name) => flags[name]),
-    ...(flags.poster ? ['poster'] : []),
-  ]
+  return [...(['controls', 'once', 'sound'] as const).filter((name) => flags[name]), ...(flags.poster ? ['poster'] : [])]
 }
 
 /** What is wrong with the picture and video markup in this prose: pools, tags, flags. */
@@ -267,10 +283,7 @@ export function mediaMarkupProblems(game: Game, text: string): string[] {
     if (read.extraAlts.length) {
       out.push(`${[read.alt, ...read.extraAlts].map((alt) => `"${alt}"`).join(' and ')} can't all be alt text in ${match[0]}; is one a misspelt flag?`)
     }
-    const video =
-      tag === 'video' ||
-      tag === 'widevideo' ||
-      (read.pool !== undefined ? poolHasVideo(game, read.pool) : mediaKind(read.path) === 'video')
+    const video = tag === 'video' || tag === 'widevideo' || (read.pool !== undefined ? poolHasVideo(game, read.pool) : mediaKind(read.path) === 'video')
     if (!video) for (const flag of read.videoFlags) out.push(`video flag "${flag}" on a picture in ${match[0]}`)
     if (video && read.flags.rot) out.push(`flag "rot" turns a picture, not a video, in ${match[0]}`)
   }
@@ -284,9 +297,7 @@ function sourceProblems(game: Game, media: { src?: string; pool?: string; tags?:
   if (media.src !== undefined && media.pool !== undefined) out.push('has both a src and a pool')
   if (media.pool !== undefined) out.push(...poolProblems(game, media.pool, media.tags ?? []))
   const video =
-    Boolean(media.video) ||
-    (media.src !== undefined && mediaKind(media.src) === 'video') ||
-    (media.pool !== undefined && poolHasVideo(game, media.pool))
+    Boolean(media.video) || (media.src !== undefined && mediaKind(media.src) === 'video') || (media.pool !== undefined && poolHasVideo(game, media.pool))
   if (!video) for (const flag of videoFlagsSet(media)) out.push(`video flag "${flag}" on a picture`)
   return out
 }
@@ -413,8 +424,12 @@ export const media = defineFeature<MediaShape>({
       for (const layer of Array.isArray(value.layers) ? value.layers : []) mediaFiles(where, layer, tools)
       return [
         ...stageProblems(game, value, ref.choices),
-        ...(Array.isArray(value.layers) ? value.layers : []).flatMap((layer, index) => tools.resolve([{ when: layer.when }], where).map((what) => `stage layer ${layer.id ?? index}: ${what}`)),
-        ...(value.hotspots ?? []).flatMap((hotspot) => tools.resolve([{ when: hotspot.when }, { command: hotspot.command }], where).map((what) => `hotspot ${hotspot.id}: ${what}`)),
+        ...(Array.isArray(value.layers) ? value.layers : []).flatMap((layer, index) =>
+          tools.resolve([{ when: layer.when }], where).map((what) => `stage layer ${layer.id ?? index}: ${what}`),
+        ),
+        ...(value.hotspots ?? []).flatMap((hotspot) =>
+          tools.resolve([{ when: hotspot.when }, { command: hotspot.command }], where).map((what) => `hotspot ${hotspot.id}: ${what}`),
+        ),
       ]
     },
     pool: (ref) => poolProblems(game, ref.pool, ref.tags ?? []),

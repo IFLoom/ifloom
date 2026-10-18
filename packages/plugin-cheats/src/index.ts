@@ -127,17 +127,15 @@ export function cheatsView(state: GameState, context: PluginContext<CheatsState>
   const { game, slice } = context
   const shown = cheatDefs(game).filter((cheat) => !blockedBy(cheat, state, game)?.hide)
   return {
-    cheats: shown.map(
-      (cheat): CheatView => ({
-        id: cheat.id,
-        label: cheat.label,
-        description: cheat.description ?? '',
-        group: cheat.group ?? null,
-        once: Boolean(cheat.once),
-        used: timesUsed(slice, cheat.id),
-        button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.label, command: runCheat(cheat.id) }),
-      }),
-    ),
+    cheats: shown.map((cheat): CheatView => ({
+      id: cheat.id,
+      label: cheat.label,
+      description: cheat.description ?? '',
+      group: cheat.group ?? null,
+      once: Boolean(cheat.once),
+      used: timesUsed(slice, cheat.id),
+      button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.label, command: runCheat(cheat.id) }),
+    })),
     used: slice.used.length,
   }
 }
@@ -192,10 +190,7 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
         cheatDefs(game).map((cheat) => ({
           list: 'cheats',
           id: cheat.id,
-          refs: [
-            { effects: cheat.effects },
-            ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] })),
-          ],
+          refs: [{ effects: cheat.effects }, ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] }))],
         })),
     },
     check: (game) => {

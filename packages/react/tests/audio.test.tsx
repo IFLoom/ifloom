@@ -32,7 +32,20 @@ function cafe(audio = true): Game {
         id: 'cafe',
         schema: SCHEMA,
         scenes: [
-          { id: 'door', title: 'The door', body: [{ text: 'door' }], choices: [{ id: 'in', effects: [{ kind: 'sound', track: 'bell' }, { kind: 'scene', scene: 'counter' }] }] },
+          {
+            id: 'door',
+            title: 'The door',
+            body: [{ text: 'door' }],
+            choices: [
+              {
+                id: 'in',
+                effects: [
+                  { kind: 'sound', track: 'bell' },
+                  { kind: 'scene', scene: 'counter' },
+                ],
+              },
+            ],
+          },
           { id: 'counter', title: 'The counter', body: [{ text: 'counter' }], choices: [] },
         ],
         prose: {
@@ -40,9 +53,7 @@ function cafe(audio = true): Game {
           'door#in': 'Go in',
           counter: '[[sound:bell]]\n\nAva: "Morning!" [[voice:ava.morning]]',
         },
-        ...(audio
-          ? { audio: { tracks: { bell: { src: 'bell.ogg' }, 'ava.morning': { src: 'voice/ava-morning.ogg', channel: 'voice' } } } }
-          : {}),
+        ...(audio ? { audio: { tracks: { bell: { src: 'bell.ogg' }, 'ava.morning': { src: 'voice/ava-morning.ogg', channel: 'voice' } } } } : {}),
       },
     ],
     { id: 'cafe', title: 'The Café', introScene: 'door' },

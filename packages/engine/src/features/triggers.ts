@@ -44,12 +44,7 @@ export type TriggersShape = {
  * tested in the same pass only if it comes later in the list; otherwise it
  * waits for the next command.
  */
-export function fireTriggers(
-  state: GameState,
-  game: Game,
-  apply: (state: GameState, effects: Effect[]) => GameState,
-  cx: FeatureContext,
-): GameState {
+export function fireTriggers(state: GameState, game: Game, apply: (state: GameState, effects: Effect[]) => GameState, cx: FeatureContext): GameState {
   let next = state
   for (const trigger of game.triggers ?? []) {
     const last = next.fired?.[trigger.id]
@@ -71,7 +66,11 @@ export const triggers = defineFeature<TriggersShape>({
   }),
   lists: ['trigger'],
   check: (game, tools) => {
-    tools.twice('trigger', 'triggers', (game.triggers ?? []).map((entry) => entry.id))
+    tools.twice(
+      'trigger',
+      'triggers',
+      (game.triggers ?? []).map((entry) => entry.id),
+    )
     for (const trigger of game.triggers ?? []) {
       tools.check({ list: 'trigger', id: trigger.id }, `trigger ${trigger.id}`, [{ when: trigger.when }, { effects: trigger.effects }])
     }

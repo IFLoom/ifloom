@@ -299,7 +299,9 @@ function conditionVars(condition: Condition | undefined): string[] {
 
 /** The minigame variables effects write. */
 function effectVars(effects: readonly EffectRef[] | undefined): string[] {
-  return (effects ?? []).flatMap((effect) => ('kind' in effect && effect.kind === 'minigameVar' ? [(effect as Extract<Effect, { kind: 'minigameVar' }>).key] : []))
+  return (effects ?? []).flatMap((effect) =>
+    'kind' in effect && effect.kind === 'minigameVar' ? [(effect as Extract<Effect, { kind: 'minigameVar' }>).key] : [],
+  )
 }
 
 /** Everything wrong with one minigame. */
@@ -335,7 +337,8 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
       }
       if (transition.to && !transition.to.length) tools.problem(source, at, `${label}: to lists no states`)
       for (const target of transition.to ?? []) {
-        if (typeof target !== 'string' && target.weight !== undefined && !(target.weight > 0)) tools.problem(source, at, `${label}: the weight of "${target.state}" must be above 0`)
+        if (typeof target !== 'string' && target.weight !== undefined && !(target.weight > 0))
+          tools.problem(source, at, `${label}: the weight of "${target.state}" must be above 0`)
       }
       // A transition that stays where it is goes back to its own state, for reachability.
       if (!go.length) targets.push(id)
@@ -451,7 +454,11 @@ export const minigames = defineFeature<MinigamesShape>({
   lists: ['minigame'],
   check: (game, tools) => {
     const list = game.minigames ?? []
-    tools.twice('minigame', 'minigames', list.map((entry) => entry.id))
+    tools.twice(
+      'minigame',
+      'minigames',
+      list.map((entry) => entry.id),
+    )
     const declaredAnywhere = new Set(list.flatMap((entry) => Object.keys(entry.vars ?? {})))
     for (const minigame of list) checkMinigame(minigame, declaredAnywhere, tools)
     for (const scene of game.scenes) {
@@ -496,4 +503,3 @@ export const minigames = defineFeature<MinigamesShape>({
     },
   },
 })
-

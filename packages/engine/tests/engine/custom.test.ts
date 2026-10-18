@@ -24,7 +24,10 @@ describe('custom functions belong to their game', () => {
   })
 
   it('runs a custom effect by name, and drops one the game does not have', () => {
-    const game = { ...fixture(), custom: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ kind: 'stat' as const, stat: 'coins', by: Number(args.by) }] } } }
+    const game = {
+      ...fixture(),
+      custom: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ kind: 'stat' as const, stat: 'coins', by: Number(args.by) }] } },
+    }
     expect(buildEffects(begin(game), game, [{ custom: 'tip', with: { by: 2 } }])).toEqual([{ kind: 'custom', name: 'tip', with: { by: 2 } }])
     expect(buildEffects(begin(game), game, [{ custom: 'nothing' }])).toEqual([])
     expect(applyEffects(begin(game), game, buildEffects(begin(game), game, [{ custom: 'tip', with: { by: 2 } }])).stats.coins).toBe(5)
@@ -36,7 +39,11 @@ describe('custom functions belong to their game', () => {
     // Doubles the coins the player has when it runs.
     const double: CustomEffect = (state) => [{ kind: 'stat', stat: 'coins', by: state.stats.coins }]
     const game = { ...fixture(), custom: { effects: { double } } }
-    const state = applyEffects(begin(game), game, buildEffects(begin(game), game, [{ kind: 'stat', stat: 'coins', by: 4 }, { custom: 'double' }, { custom: 'double' }]))
+    const state = applyEffects(
+      begin(game),
+      game,
+      buildEffects(begin(game), game, [{ kind: 'stat', stat: 'coins', by: 4 }, { custom: 'double' }, { custom: 'double' }]),
+    )
     // 3 + 4 = 7, doubled to 14, doubled to 28.
     expect(state.stats.coins).toBe(28)
   })
@@ -96,15 +103,23 @@ describe('custom functions belong to their game', () => {
 
   it('reports a short call whose arguments are not an object, and asks it with none', () => {
     const tides = definePlugin({ id: 'tides', version: 1, conditions: { high: (_state, args) => args.at === undefined } })
-    const game: Game = { ...fixture(), plugins: [tides], actions: [{ id: 'wade', label: 'Wade', command: { type: 'activity', id: 'wait' }, when: { 'tides/high': ['noon'] } as never }] }
-    expect(problemsOf(game)).toEqual(['action wade: "tides/high" takes its arguments as an object, such as { "tides/high": { … } }, or true for none; this one has ["noon"]'])
+    const game: Game = {
+      ...fixture(),
+      plugins: [tides],
+      actions: [{ id: 'wade', label: 'Wade', command: { type: 'activity', id: 'wait' }, when: { 'tides/high': ['noon'] } as never }],
+    }
+    expect(problemsOf(game)).toEqual([
+      'action wade: "tides/high" takes its arguments as an object, such as { "tides/high": { … } }, or true for none; this one has ["noon"]',
+    ])
     expect(holds(begin(game), { 'tides/high': ['noon'] } as never, game)).toBe(true)
   })
 
   it('reports a pack key no pack has, rather than dropping it quietly', () => {
     const { scenes: _s, items, storylines, activities, stats, ...rest } = fixture()
     const { problems } = loadGame([{ id: 'town', schema: SCHEMA, items, storylines, activities, stats, actions: [] } as never], rest)
-    expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain('town · pack · a pack has no "actions", so it was left out')
+    expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain(
+      'town · pack · a pack has no "actions", so it was left out',
+    )
     expect(problems.filter((problem) => problem.where === 'pack')).toHaveLength(1)
   })
 

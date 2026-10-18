@@ -11,14 +11,7 @@ import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
-import type {
-  Command,
-  Effect,
-  Flat,
-  KvValue,
-  GameState,
-  StatKey,
-} from './types.ts'
+import type { Command, Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
 
 export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
@@ -147,17 +140,19 @@ export type SceneCtx = {
   picks?: Record<string, string>
 }
 
-export type Scene = StoryletFields & MinigameSceneFields & TransitionFields & {
-  id: string
-  title?: string
-  speaker?: string
-  /** Drawn as a conversation. A scene with a speaker is one already. */
-  frame?: 'talk'
-  /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
-  tags?: string[]
-  panel?: string
-  render: (state: GameState, ctx: SceneCtx) => SceneView
-}
+export type Scene = StoryletFields &
+  MinigameSceneFields &
+  TransitionFields & {
+    id: string
+    title?: string
+    speaker?: string
+    /** Drawn as a conversation. A scene with a speaker is one already. */
+    frame?: 'talk'
+    /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
+    tags?: string[]
+    panel?: string
+    render: (state: GameState, ctx: SceneCtx) => SceneView
+  }
 
 /** Prose and variants members the declarative scenes draw on. */
 export type ProseStore = {

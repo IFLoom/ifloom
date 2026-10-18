@@ -6,7 +6,19 @@
  * it on Escape or a tap elsewhere. The note is also the button's description
  * (`aria-describedby`), so a screen reader reads it with the button.
  */
-import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import type { InlineSpan } from '@ifloom/engine'
 import { useGame } from './context.tsx'
@@ -115,8 +127,20 @@ function useBubble(tapOpens: boolean) {
 }
 
 /** The bubble itself, in the page's body, so nothing it sits in can clip it. */
-function Bubble({ attrs, props, children }: { attrs: { 'data-part': string; className: string }; props: ReturnType<typeof useBubble>['bubbleProps']; children: ReactNode }) {
-  const node = <span {...attrs} {...props}>{children}</span>
+function Bubble({
+  attrs,
+  props,
+  children,
+}: {
+  attrs: { 'data-part': string; className: string }
+  props: ReturnType<typeof useBubble>['bubbleProps']
+  children: ReactNode
+}) {
+  const node = (
+    <span {...attrs} {...props}>
+      {children}
+    </span>
+  )
   return typeof document === 'undefined' ? node : createPortal(node, document.body)
 }
 
@@ -124,7 +148,11 @@ const BUBBLE = 'z-50 max-w-xs font-(family-name:--font-body) rounded-md border b
 
 function TipImpl({ text, tip, className }: { text: string; tip: string; className?: string }) {
   const { setOpen, triggerProps, bubbleProps } = useBubble(true)
-  const attrs = usePart('tip', 'cursor-help rounded-sm underline decoration-dotted decoration-from-font underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring', className)
+  const attrs = usePart(
+    'tip',
+    'cursor-help rounded-sm underline decoration-dotted decoration-from-font underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+    className,
+  )
   const content = usePart('tip-content', BUBBLE)
   return (
     <>

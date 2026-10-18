@@ -21,7 +21,9 @@ const FRAMEWORK_DEPS: Partial<Record<(typeof TEMPLATES)[number], string[]>> = {
 
 /** The files a template's game has besides src/game.ts, AGENTS.md, .gitignore and tsconfig.json: a page and a Vite config, or Next's own. */
 const PAGE_FILES = (template: (typeof TEMPLATES)[number]) =>
-  template === 'next' ? ['app/layout.tsx', 'app/page.tsx', 'app/Game.tsx', 'next.config.ts', 'postcss.config.mjs', 'README.md'] : ['index.html', 'vite.config.ts']
+  template === 'next'
+    ? ['app/layout.tsx', 'app/page.tsx', 'app/Game.tsx', 'next.config.ts', 'postcss.config.mjs', 'README.md']
+    : ['index.html', 'vite.config.ts']
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
 
@@ -83,14 +85,22 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
     // Each starts the audio player and the minigame clock beside its runner.
     const runner = readFileSync(join(dir, template === 'vanilla' ? 'src/main.ts' : 'src/runner.ts'), 'utf8')
-    for (const call of ['await browserRunner(game)', "from '@ifloom/browser'", 'startAudio(runner)', 'startClock(runner)', 'startKeys(runner)', 'runner.subscribe(']) expect(runner).toContain(call)
+    for (const call of [
+      'await browserRunner(game)',
+      "from '@ifloom/browser'",
+      'startAudio(runner)',
+      'startClock(runner)',
+      'startKeys(runner)',
+      'runner.subscribe(',
+    ])
+      expect(runner).toContain(call)
   })
 
   it.each([
     ['react', 'react(), tailwindcss()', ['src/main.ts', 'src/layout.tsx', 'src/styles.css']],
     ['vue', 'vue()', ['src/App.vue', 'src/Layout.vue', 'src/Beat.vue', 'src/InputField.vue', 'src/Minigame.vue', 'src/Panel.vue']],
     ['svelte', 'svelte()', ['src/App.svelte', 'src/Layout.svelte', 'src/Beat.svelte', 'src/InputField.svelte', 'src/Minigame.svelte', 'src/Panel.svelte']],
-  ] as const)('gives the %s template its framework\'s Vite plugin and components', (template, plugin, components) => {
+  ] as const)("gives the %s template its framework's Vite plugin and components", (template, plugin, components) => {
     const { dir, files } = newGame({ name: 'framed', template, into: fresh() })
     expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain(`ifloom({ vite: { plugins: [${plugin}]`)
     expect(files).toEqual(expect.arrayContaining([...components]))
@@ -143,7 +153,16 @@ describe('ifloom new', () => {
     // Standalone: the tsconfig extends nothing in the checkout.
     expect(JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')).extends).toBeUndefined()
     const source = readFileSync(join(dir, 'src/index.ts'), 'utf8')
-    for (const name of ["const ID = 'rainy-day'", 'export function rainyDay(): DefinedPlugin<RainyDayState, RainyDayView>', 'definePlugin<RainyDayState, RainyDayView>', 'conditions: {', 'effects: {', 'commands: {', 'view: (', 'export const markRainyDayCommand']) {
+    for (const name of [
+      "const ID = 'rainy-day'",
+      'export function rainyDay(): DefinedPlugin<RainyDayState, RainyDayView>',
+      'definePlugin<RainyDayState, RainyDayView>',
+      'conditions: {',
+      'effects: {',
+      'commands: {',
+      'view: (',
+      'export const markRainyDayCommand',
+    ]) {
       expect(source).toContain(name)
     }
     expect(readFileSync(join(dir, 'tests/rainy-day.test.ts'), 'utf8')).toContain("from '../src/index.ts'")
@@ -155,7 +174,7 @@ describe('ifloom new', () => {
     for (const file of files) expect(readFileSync(join(dir, file), 'utf8')).not.toMatch(/\{\{\w+\}\}|__(?:id|camel|Pascal)__/)
   })
 
-  it('takes a plugin\'s id from its package name, and refuses one that can\'t be an id', () => {
+  it("takes a plugin's id from its package name, and refuses one that can't be an id", () => {
     expect(pluginNames('weather')).toEqual({ id: 'weather', camel: 'weather', Pascal: 'Weather', title: 'Weather' })
     expect(pluginNames('plugin-bus-stops')).toEqual({ id: 'bus-stops', camel: 'busStops', Pascal: 'BusStops', title: 'Bus Stops' })
     expect(pluginNames('ifloom-plugin-tide')).toMatchObject({ id: 'tide' })

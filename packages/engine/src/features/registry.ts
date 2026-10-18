@@ -32,7 +32,26 @@ import { turns, type TurnsShape } from './turns.ts'
 import { kv, type KvShape } from './kv.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
-type Shapes = EntitiesShape | TurnsShape | KvShape | StorylinesShape | CollectionsShape | NoticesShape | ItemsShape | ActivitiesShape | TriggersShape | InputsShape | SettingsShape | StatsShape | ScenesShape | MinigamesShape | AudioShape | MediaShape | TransitionsShape | PanelsShape | SavingShape
+type Shapes =
+  | EntitiesShape
+  | TurnsShape
+  | KvShape
+  | StorylinesShape
+  | CollectionsShape
+  | NoticesShape
+  | ItemsShape
+  | ActivitiesShape
+  | TriggersShape
+  | InputsShape
+  | SettingsShape
+  | StatsShape
+  | ScenesShape
+  | MinigamesShape
+  | AudioShape
+  | MediaShape
+  | TransitionsShape
+  | PanelsShape
+  | SavingShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
@@ -47,7 +66,28 @@ type Shapes = EntitiesShape | TurnsShape | KvShape | StorylinesShape | Collectio
  * closes the panel the command found open; saving anywhere, since it only
  * views and checks.
  */
-export const FEATURES = [turns, kv, storylines, collections, notices, triggers, scenes, minigames, items, activities, inputs, settings, stats, audio, media, transitions, panels, entities, locks, saving] as const
+export const FEATURES = [
+  turns,
+  kv,
+  storylines,
+  collections,
+  notices,
+  triggers,
+  scenes,
+  minigames,
+  items,
+  activities,
+  inputs,
+  settings,
+  stats,
+  audio,
+  media,
+  transitions,
+  panels,
+  entities,
+  locks,
+  saving,
+] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never
 type PartOf<T, K extends keyof FeatureShape> = T extends unknown ? (K extends keyof T ? (T[K] extends object ? T[K] : {}) : {}) : never
@@ -121,10 +161,7 @@ export const featureCommands = merged((feature) => feature.commands as Record<st
 export const featureFields = merged((feature) => feature.state as Record<string, unknown>, 'state field') as unknown as FieldsOf<FeatureState>
 
 /** Which feature answers for each list its problems name, for `loadGame` to find the pack an entry came from. */
-export const listOwners = merged((feature) => Object.fromEntries(feature.lists.map((list) => [list, feature])), 'list') as Record<
-  FeatureList,
-  AnyFeature
->
+export const listOwners = merged((feature) => Object.fromEntries(feature.lists.map((list) => [list, feature])), 'list') as Record<FeatureList, AnyFeature>
 
 /** The kinds each feature declares, by feature: the runtime list the kinds contract holds the tables to. */
 export const featureKinds: Record<string, { conditions: string[]; effects: string[]; commands: string[] }> = Object.fromEntries(

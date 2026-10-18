@@ -169,7 +169,15 @@ export function sampleProject(): Project {
         drawnFrom: ['market'],
         when: { not: { kv: 'heardBusker' } },
         body: [{ text: 'market.busker' }],
-        choices: [{ id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', scene: 'market' }] }],
+        choices: [
+          {
+            id: 'listen',
+            effects: [
+              { kind: 'kv', key: 'heardBusker', to: true },
+              { kind: 'scene', scene: 'market' },
+            ],
+          },
+        ],
       },
     ],
     prose: {

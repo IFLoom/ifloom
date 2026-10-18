@@ -130,7 +130,11 @@ export const items = defineFeature<ItemsShape>({
     },
   },
   check: (game, tools) => {
-    tools.twice('item', 'items', (game.items ?? []).map((entry) => entry.id))
+    tools.twice(
+      'item',
+      'items',
+      (game.items ?? []).map((entry) => entry.id),
+    )
     for (const item of game.items ?? []) tools.check({ list: 'item', id: item.id }, `item ${item.id}`, [{ effects: item.use?.effects }])
   },
   resolve: (game) => {

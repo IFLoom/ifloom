@@ -54,8 +54,7 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
   const jobs = useJobs()
   const shown = only ? (jobs?.jobs ?? []).filter((job) => only.includes(job.id)) : (jobs?.jobs ?? [])
   if (!jobs || !shown.length) return null
-  const shiftLine = (inDays: number) =>
-    inDays === 0 ? words('shiftToday') : inDays === 1 ? words('shiftTomorrow') : words('shiftInDays', { n: inDays })
+  const shiftLine = (inDays: number) => (inDays === 0 ? words('shiftToday') : inDays === 1 ? words('shiftTomorrow') : words('shiftInDays', { n: inDays }))
   const nextLine = (job: JobView) => {
     const up = job.next
     if (!up) return null

@@ -24,7 +24,14 @@ const TOOLS = [
 type Tool = (typeof TOOLS)[number]['id']
 
 /** A few sample ids, so the pickers have something to offer. */
-const NAMES = { scenes: ['cafe.counter', 'street', 'home'], stats: ['coins', 'charm', 'energy'], items: ['umbrella', 'key'], kv: ['metAva', 'visits'], choices: ['cafe.counter#buy'], sets: ['cafe'] }
+const NAMES = {
+  scenes: ['cafe.counter', 'street', 'home'],
+  stats: ['coins', 'charm', 'energy'],
+  items: ['umbrella', 'key'],
+  kv: ['metAva', 'visits'],
+  choices: ['cafe.counter#buy'],
+  sets: ['cafe'],
+}
 
 export function Snippets() {
   const [tool, setTool] = useState<Tool>('condition')
@@ -38,7 +45,10 @@ export function Snippets() {
             type="button"
             aria-current={tool === t.id ? 'page' : undefined}
             onClick={() => setTool(t.id)}
-            className={cx('rounded-md px-3 py-1.5 text-left text-sm', tool === t.id ? 'bg-fd-primary/10 font-medium text-fd-primary' : 'text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground')}
+            className={cx(
+              'rounded-md px-3 py-1.5 text-left text-sm',
+              tool === t.id ? 'bg-fd-primary/10 font-medium text-fd-primary' : 'text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground',
+            )}
           >
             {t.title}
           </button>
@@ -124,7 +134,11 @@ function MarkupTool() {
           </Field>
           {MARKUP_FIELDS[kind].map((field) => (
             <Field key={field.name} label={field.label}>
-              <TextInput mono={field.name !== 'text' && field.name !== 'alt'} value={fields[field.name]} onChange={(v) => setFields({ ...fields, [field.name]: v ?? '' })} />
+              <TextInput
+                mono={field.name !== 'text' && field.name !== 'alt'}
+                value={fields[field.name]}
+                onChange={(v) => setFields({ ...fields, [field.name]: v ?? '' })}
+              />
             </Field>
           ))}
           <Field label="How it reads" hint="Each piece of markup is a paragraph of its own in the prose.">

@@ -15,14 +15,7 @@ import {
   type GameState,
   type Pack,
 } from '@ifloom/engine'
-import {
-  achievementEarned,
-  achievements,
-  grantAchievement,
-  progressValue,
-  type AchievementDef,
-  type AchievementsView,
-} from '../src/index.ts'
+import { achievementEarned, achievements, grantAchievement, progressValue, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
   { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
@@ -71,7 +64,16 @@ describe('achievements', () => {
     const g = game()
     expect(shown(fresh(g), g)).toEqual({
       achievements: [
-        { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', image: null, secret: false, earned: false, earnedOn: null, progress: { value: 0, target: 10 } },
+        {
+          id: 'regular',
+          title: 'A regular',
+          description: 'Ten coffees at the café.',
+          image: null,
+          secret: false,
+          earned: false,
+          earnedOn: null,
+          progress: { value: 0, target: 10 },
+        },
         { id: 'saver', title: 'Nest egg', description: '', image: null, secret: false, earned: false, earnedOn: null, progress: { value: 10, target: 50 } },
         { id: 'river', title: '???', description: '', image: null, secret: true, earned: false, earnedOn: null, progress: null },
         { id: 'kind', title: 'A kind word', description: 'Given by a scene.', image: null, secret: false, earned: false, earnedOn: null, progress: null },

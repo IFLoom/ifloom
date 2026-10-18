@@ -109,8 +109,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       },
       /** `{ 'wardrobe/takeOff': { id } }`: take off what is in the slot `id`. */
       takeOff: {
-        whyNot: (_state, args, { slice, game }) =>
-          slice.worn[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
+        whyNot: (_state, args, { slice, game }) => (slice.worn[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff')),
         run: (_state, args, { slice, set }) => set({ worn: { ...slice.worn, [String(args.id)]: null } }),
       },
     },
@@ -137,7 +136,11 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       },
       // A piece of clothing is an item, by its id, in a slot the game has.
       content: (game) =>
-        clothes(game).map((entry) => ({ list: 'clothes', id: entry.id, refs: [{ item: entry.id }, { entry: entry.slot, plugin: ID, list: 'slots', noun: 'slot' }] })),
+        clothes(game).map((entry) => ({
+          list: 'clothes',
+          id: entry.id,
+          refs: [{ item: entry.id }, { entry: entry.slot, plugin: ID, list: 'slots', noun: 'slot' }],
+        })),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -153,7 +156,6 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       return problems
     },
   })
-
 }
 
 /** A condition: the item is on, or, with a slot, on in that slot. */

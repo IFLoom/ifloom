@@ -143,11 +143,7 @@ function DebugCardImpl({ className }: { className?: string }) {
           <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
           <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug('kv', { key, to: parse(to) })} />
           <CommandForm label={words('debugItem')} fields={['item', 'count']} build={([item, count]) => debug('item', { item, count: num(count) })} />
-          <CommandForm
-            label={words('debugStatOf')}
-            fields={['stat', 'of', 'value']}
-            build={([stat, of, to]) => debug('stat', { stat, of, to: num(to) })}
-          />
+          <CommandForm label={words('debugStatOf')} fields={['stat', 'of', 'value']} build={([stat, of, to]) => debug('stat', { stat, of, to: num(to) })} />
           {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug('go', { location })} /> : null}
           <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug('scene', { scene: scene || undefined })} />
           {view.plugins.calendar ? (
@@ -165,11 +161,27 @@ function DebugCardImpl({ className }: { className?: string }) {
         <TabsContent value="why" {...section}>
           <h4 {...heading}>{words('locksOn')}</h4>
           <ul {...locks}>
-            {data.locks.length ? data.locks.map((lock, index) => <li key={index}>{lock.reason} ({lock.deny.join(', ')})</li>) : <li>{words('noneOn')}</li>}
+            {data.locks.length ? (
+              data.locks.map((lock, index) => (
+                <li key={index}>
+                  {lock.reason} ({lock.deny.join(', ')})
+                </li>
+              ))
+            ) : (
+              <li>{words('noneOn')}</li>
+            )}
           </ul>
           <h4 {...heading}>{words('greyedOut')}</h4>
           <ul {...list}>
-            {greyed.length ? greyed.map((choice) => <li key={choice.id}>{choice.label}: {choice.disabled}</li>) : <li>{words('nothingGreyed')}</li>}
+            {greyed.length ? (
+              greyed.map((choice) => (
+                <li key={choice.id}>
+                  {choice.label}: {choice.disabled}
+                </li>
+              ))
+            ) : (
+              <li>{words('nothingGreyed')}</li>
+            )}
           </ul>
         </TabsContent>
         <TabsContent value="state" {...section}>

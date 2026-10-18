@@ -76,7 +76,10 @@ describe('derived stats', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      stats: [{ id: 'baking', label: 'Baking' }, { id: 'skill', label: 'Skill', derive: 'baking', spendable: true, start: 3 }],
+      stats: [
+        { id: 'baking', label: 'Baking' },
+        { id: 'skill', label: 'Skill', derive: 'baking', spendable: true, start: 3 },
+      ],
       activities: [{ id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 5 }], cost: { stats: { skill: 1 } } }],
     }
     const problems = loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)

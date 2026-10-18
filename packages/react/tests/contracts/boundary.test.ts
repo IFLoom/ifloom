@@ -29,7 +29,11 @@ describe('the React UI', () => {
     const used = Object.entries(SOURCES).flatMap(([file, source]) =>
       [...source.matchAll(/^import( type)?[^'"]*['"]([^'"]+)['"]/gm)]
         .filter((match) => !match[2].startsWith('.'))
-        .map((match) => ({ file, typeOnly: Boolean(match[1]), name: match[2].startsWith('@') ? match[2].split('/').slice(0, 2).join('/') : match[2].split('/')[0] })),
+        .map((match) => ({
+          file,
+          typeOnly: Boolean(match[1]),
+          name: match[2].startsWith('@') ? match[2].split('/').slice(0, 2).join('/') : match[2].split('/')[0],
+        })),
     )
     expect(used.filter((entry) => !declared.has(entry.name)).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
     const plugins = used.filter((entry) => /^@ifloom\/(plugin-|phone$)/.test(entry.name))

@@ -11,7 +11,15 @@ function withInputs(): Game {
     inputs: [
       { id: 'petName', label: 'Name the cat', kind: 'text', maxLength: 12 },
       { id: 'alarm', label: 'Alarm', kind: 'number', min: 5, max: 10, key: 'wakeAt' },
-      { id: 'tea', label: 'Tea or coffee', kind: 'choice', options: [{ value: 'tea', label: 'Tea' }, { value: 'coffee', label: 'Coffee' }] },
+      {
+        id: 'tea',
+        label: 'Tea or coffee',
+        kind: 'choice',
+        options: [
+          { value: 'tea', label: 'Tea' },
+          { value: 'coffee', label: 'Coffee' },
+        ],
+      },
       { id: 'secret', label: 'Password', kind: 'text', when: { kv: 'knowsDoor' } },
     ],
   }

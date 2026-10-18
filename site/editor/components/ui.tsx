@@ -59,7 +59,12 @@ export function TextInput({
   className,
   mono,
   ...rest
-}: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { value: string | undefined; onChange: (value: string | undefined) => void; optional?: boolean; mono?: boolean }) {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
+  value: string | undefined
+  onChange: (value: string | undefined) => void
+  optional?: boolean
+  mono?: boolean
+}) {
   return (
     <input
       className={cx(sized(className), mono && 'font-mono', className)}
@@ -71,7 +76,19 @@ export function TextInput({
 }
 
 /** A number input. Empty gives `undefined`, and what isn't a number is kept as typed until it is one. */
-export function NumberInput({ value, onChange, placeholder, className, ...rest }: { value: number | undefined; onChange: (value: number | undefined) => void; placeholder?: string; className?: string; 'aria-label'?: string }) {
+export function NumberInput({
+  value,
+  onChange,
+  placeholder,
+  className,
+  ...rest
+}: {
+  value: number | undefined
+  onChange: (value: number | undefined) => void
+  placeholder?: string
+  className?: string
+  'aria-label'?: string
+}) {
   const [text, setText] = useState(value === undefined ? '' : String(value))
   useEffect(() => {
     if (Number(text) !== value || text === '') setText(value === undefined ? '' : String(value))
@@ -94,7 +111,19 @@ export function NumberInput({ value, onChange, placeholder, className, ...rest }
   )
 }
 
-export function Select<T extends string>({ value, options, onChange, className, ...rest }: { value: T; options: readonly (T | { value: T; label: string })[]; onChange: (value: T) => void; className?: string; 'aria-label'?: string }) {
+export function Select<T extends string>({
+  value,
+  options,
+  onChange,
+  className,
+  ...rest
+}: {
+  value: T
+  options: readonly (T | { value: T; label: string })[]
+  onChange: (value: T) => void
+  className?: string
+  'aria-label'?: string
+}) {
   return (
     <select className={cx(inputBase, 'max-w-full', className)} value={value} onChange={(event) => onChange(event.target.value as T)} {...rest}>
       {options.map((option) => {
@@ -119,7 +148,17 @@ export function Checkbox({ checked, onChange, label }: { checked: boolean; onCha
 }
 
 /** A comma-separated list of words, as an array. Empty gives `undefined`. */
-export function ListInput({ value, onChange, placeholder, numbers }: { value: readonly (string | number)[] | undefined; onChange: (value: any[] | undefined) => void; placeholder?: string; numbers?: boolean }) {
+export function ListInput({
+  value,
+  onChange,
+  placeholder,
+  numbers,
+}: {
+  value: readonly (string | number)[] | undefined
+  onChange: (value: any[] | undefined) => void
+  placeholder?: string
+  numbers?: boolean
+}) {
   const [text, setText] = useState((value ?? []).join(', '))
   useEffect(() => {
     const joined = (value ?? []).join(', ')
@@ -148,7 +187,19 @@ function split(text: string, numbers?: boolean): (string | number)[] {
 }
 
 /** A box with a heading and optional buttons beside it. */
-export function Section({ title, actions, children, className, id }: { title: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; id?: string }) {
+export function Section({
+  title,
+  actions,
+  children,
+  className,
+  id,
+}: {
+  title: ReactNode
+  actions?: ReactNode
+  children: ReactNode
+  className?: string
+  id?: string
+}) {
   return (
     <section id={id} className={cx('rounded-lg border border-fd-border bg-fd-card p-3 text-fd-card-foreground', className)}>
       <div className="mb-2 flex items-center justify-between gap-2">

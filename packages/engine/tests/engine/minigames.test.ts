@@ -47,7 +47,15 @@ const arrows: MinigameDef = {
       ],
     },
     tally: { always: [{ when: { minigameVar: 'score', gte: 2 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { copy: { score: 'bestScore' }, effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'rosa.hello' }] } },
+    won: {
+      final: {
+        copy: { score: 'bestScore' },
+        effects: [
+          { kind: 'stat', stat: 'coins', by: 5 },
+          { kind: 'scene', scene: 'rosa.hello' },
+        ],
+      },
+    },
     lost: { final: { effects: [{ kind: 'turn' }] } },
   },
 }
@@ -205,7 +213,10 @@ describe('minigames', () => {
     const drawn = new Set(Array.from({ length: 12 }, (_, seed) => arrowsOf(seed)))
     expect(drawn.size).toBeGreaterThan(1)
     // A second play in the same save draws afresh.
-    const sides = Array.from({ length: 200 }, (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'flip' }, { type: 'tick', ms: 100 }).kv.side)
+    const sides = Array.from(
+      { length: 200 },
+      (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'flip' }, { type: 'tick', ms: 100 }).kv.side,
+    )
     expect(new Set(sides)).toEqual(new Set(['heads', 'tails']))
     expect(sides.filter((side) => side === 'tails').length).toBeGreaterThan(sides.filter((side) => side === 'heads').length)
   })
@@ -298,7 +309,9 @@ describe('the runner, with a minigame', () => {
 describe('the minigame checks', () => {
   const broken = (def: Partial<MinigameDef>, extra: Partial<Game> = {}) => {
     const game = withMinigames({ minigames: [arrows, toss, { id: 'bad', start: 'a', states: { a: { final: {} } }, ...def }], ...extra })
-    return checkGame(game).problems.filter((problem) => problem.where.includes('bad') || problem.what.includes('minigame')).map((problem) => `${problem.where} · ${problem.what}`)
+    return checkGame(game)
+      .problems.filter((problem) => problem.where.includes('bad') || problem.what.includes('minigame'))
+      .map((problem) => `${problem.where} · ${problem.what}`)
   }
 
   it('are quiet on a good minigame', () => {

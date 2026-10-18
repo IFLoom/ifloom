@@ -1,6 +1,14 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { KINDS } from '../../src/core.ts'
-import { afterOrder, checkRequires, FEATURES, featureKinds, type FeatureCommands, type FeatureConditions, type FeatureEffects } from '../../src/features/registry.ts'
+import {
+  afterOrder,
+  checkRequires,
+  FEATURES,
+  featureKinds,
+  type FeatureCommands,
+  type FeatureConditions,
+  type FeatureEffects,
+} from '../../src/features/registry.ts'
 
 /**
  * Core features are modules that register (ADR 0007). These hold them to
@@ -97,7 +105,10 @@ describe('core features are leaves', () => {
   it('load nothing that loads the registry back, so building it can never meet a half-loaded module', () => {
     for (const file of [REGISTRY, ...FEATURE_FILES]) {
       const loaded = loads(file)
-      expect([...loaded].filter((target) => target === REGISTRY || CORE.includes(target)), file).toEqual([])
+      expect(
+        [...loaded].filter((target) => target === REGISTRY || CORE.includes(target)),
+        file,
+      ).toEqual([])
     }
   })
 })
@@ -106,9 +117,12 @@ describe('the registry', () => {
   it('holds every kind each feature declares, in the tables the core reads', () => {
     for (const feature of FEATURES) {
       const kinds = featureKinds[feature.name]
-      for (const kind of kinds.conditions) expect(KINDS.conditions[kind as keyof typeof KINDS.conditions], `${feature.name}: condition ${kind}`).toBe(feature.conditions[kind as never])
-      for (const kind of kinds.effects) expect(KINDS.effects[kind as keyof typeof KINDS.effects], `${feature.name}: effect ${kind}`).toBe(feature.effects[kind as never])
-      for (const kind of kinds.commands) expect(KINDS.commands[kind as keyof typeof KINDS.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
+      for (const kind of kinds.conditions)
+        expect(KINDS.conditions[kind as keyof typeof KINDS.conditions], `${feature.name}: condition ${kind}`).toBe(feature.conditions[kind as never])
+      for (const kind of kinds.effects)
+        expect(KINDS.effects[kind as keyof typeof KINDS.effects], `${feature.name}: effect ${kind}`).toBe(feature.effects[kind as never])
+      for (const kind of kinds.commands)
+        expect(KINDS.commands[kind as keyof typeof KINDS.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
     }
     expect(featureKinds).toEqual({
       turns: { conditions: ['turn', 'phase'], effects: ['phase', 'turn'], commands: [] },

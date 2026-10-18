@@ -4,7 +4,15 @@ import { overridable } from './overrides.tsx'
 /** The icons the UI draws, by what they're for. */
 export type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chevron'
 
-const ICONS = { close: XIcon, back: ArrowLeftIcon, warning: TriangleAlertIcon, voice: Volume2Icon, zoom: Maximize2Icon, menu: MenuIcon, chevron: ChevronDownIcon }
+const ICONS = {
+  close: XIcon,
+  back: ArrowLeftIcon,
+  warning: TriangleAlertIcon,
+  voice: Volume2Icon,
+  zoom: Maximize2Icon,
+  menu: MenuIcon,
+  chevron: ChevronDownIcon,
+}
 
 function IconImpl({ name, label }: { name: IconName; label?: string }) {
   const Glyph = ICONS[name]

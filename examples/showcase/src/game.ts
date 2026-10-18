@@ -128,20 +128,24 @@ export function probes(game: Game) {
     {
       name: 'a-week-in',
       // Two of the day's park visitors, made as the park's trigger makes them.
-      state: applyEffects({
-        ...clock.write(first, { day: 7, period: 'afternoon' }),
-        turn: 7,
-        seen: { ...first.seen, 'ava.hi': 4 },
-        kv: { catName: 'Biscuit' },
-        entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
-        stats: { ...first.stats, charm: 5 },
-        plugins: {
-          ...first.plugins,
-          wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } },
-          // Still buzzing from the morning's coffee.
-          statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
+      state: applyEffects(
+        {
+          ...clock.write(first, { day: 7, period: 'afternoon' }),
+          turn: 7,
+          seen: { ...first.seen, 'ava.hi': 4 },
+          kv: { catName: 'Biscuit' },
+          entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
+          stats: { ...first.stats, charm: 5 },
+          plugins: {
+            ...first.plugins,
+            wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } },
+            // Still buzzing from the morning's coffee.
+            statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
+          },
         },
-      }, game, [{ kind: 'custom', name: 'generators/generate', with: { template: 'visitor', count: 2 } }]),
+        game,
+        [{ kind: 'custom', name: 'generators/generate', with: { template: 'visitor', count: 2 } }],
+      ),
     },
   ]
 }

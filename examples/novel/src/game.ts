@@ -28,7 +28,11 @@ export const letter: Pack = {
         { text: 'ch1.mat.named', when: { kv: 'playerName' } },
       ],
       choices: [
-        { id: 'open', when: { kv: 'playerName' }, effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
+        {
+          id: 'open',
+          when: { kv: 'playerName' },
+          effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }],
+        },
         { id: 'shelf', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
       ],
     },

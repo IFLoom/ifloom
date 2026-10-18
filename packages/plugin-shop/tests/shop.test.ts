@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  commandOf, SCHEMA,
+  commandOf,
+  SCHEMA,
   apply,
   createRunner,
   holds,
@@ -10,11 +11,12 @@ import {
   startingState,
   view,
   whyNot,
-
   type Game,
   type GameState,
   type Pack,
-  type Plugin, type CommandRef } from '@ifloom/engine'
+  type Plugin,
+  type CommandRef,
+} from '@ifloom/engine'
 import { calendar, pass } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
 import { buy, inStock, openShop, sell, shop, vendorOpen, type ShopView, type VendorDef } from '../src/index.ts'
@@ -53,7 +55,10 @@ function game(...partners: Plugin[]): Game {
       { id: 'energy', label: 'Energy', start: 50, spendable: true },
     ],
     items: ['coffee', 'biscuit', 'sandwich', 'cake', 'apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })),
-    activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'sleep', effects: [{ kind: 'turn' }] }],
+    activities: [
+      { id: 'wait', effects: [pass(1)] },
+      { id: 'sleep', effects: [{ kind: 'turn' }] },
+    ],
     data: {
       shop: { vendors: [counter, stall] },
       ...(partners.some((plugin) => plugin.id === 'places') ? { places: { locations: [place('street', ['cafe']), place('cafe', ['street'])] } } : {}),
@@ -90,7 +95,12 @@ describe('the shop, on its own', () => {
     const poor = { ...fresh(g), stats: { coins: 2, energy: 50 } }
     expect(whyNot(poor, g, buy('counter', 'coffee'))).toBe('You need 3 coins.')
     const coffee = goods(poor, g).find((good) => good.item === 'coffee')!
-    expect(coffee.buy).toMatchObject({ label: 'coffee', disabled: 'You need 3 coins.', price: { stats: [{ id: 'coins', amount: 3, text: '3 coins' }] }, command: commandOf(buy('counter', 'coffee')) })
+    expect(coffee.buy).toMatchObject({
+      label: 'coffee',
+      disabled: 'You need 3 coins.',
+      price: { stats: [{ id: 'coins', amount: 3, text: '3 coins' }] },
+      command: commandOf(buy('counter', 'coffee')),
+    })
   })
 
   it('runs out of limited stock, and gets it back each day', () => {
@@ -159,7 +169,14 @@ describe('the shop, on its own', () => {
   it('replays exactly, and an old save with no state for the plugin loads', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
-    for (const command of [buy('counter', 'biscuit', 2), buy('stall', 'fig'), sell('counter', 'biscuit'), { type: 'activity' as const, id: 'sleep' }, buy('counter', 'biscuit', 3)]) runner.apply(command)
+    for (const command of [
+      buy('counter', 'biscuit', 2),
+      buy('stall', 'fig'),
+      sell('counter', 'biscuit'),
+      { type: 'activity' as const, id: 'sleep' },
+      buy('counter', 'biscuit', 3),
+    ])
+      runner.apply(command)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
@@ -251,7 +268,7 @@ describe('the shop with places', () => {
 })
 
 describe('the shop panel', () => {
-  it('opens a vendor\'s counter from anything that runs effects, and stays open while the player buys', () => {
+  it("opens a vendor's counter from anything that runs effects, and stays open while the player buys", () => {
     const base = game()
     const g = { ...base, activities: [...(base.activities ?? []), { id: 'counter', effects: [openShop('counter')] }] }
     expect(openShop('counter')).toEqual({ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } })
@@ -263,12 +280,21 @@ describe('the shop panel', () => {
 
   it('checks the vendor a panel is opened with', () => {
     const loaded = loadGame(
-      [{ id: 'town', schema: SCHEMA, data: { shop: { vendors: [stall] } }, items: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })), stats: [{ id: 'coins', label: 'Coins', spendable: true }], activities: [
-          { id: 'a', effects: [openShop('stall')] },
-          { id: 'b', effects: [openShop('kiosk')] },
-          { id: 'c', effects: [{ kind: 'panel', panel: 'shop' }] },
-          { id: 'd', effects: [{ kind: 'panel', panel: 'map', with: { vendor: 'kiosk' } }] },
-        ] }],
+      [
+        {
+          id: 'town',
+          schema: SCHEMA,
+          data: { shop: { vendors: [stall] } },
+          items: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })),
+          stats: [{ id: 'coins', label: 'Coins', spendable: true }],
+          activities: [
+            { id: 'a', effects: [openShop('stall')] },
+            { id: 'b', effects: [openShop('kiosk')] },
+            { id: 'c', effects: [{ kind: 'panel', panel: 'shop' }] },
+            { id: 'd', effects: [{ kind: 'panel', panel: 'map', with: { vendor: 'kiosk' } }] },
+          ],
+        },
+      ],
       { id: 'g', title: 'g', plugins: [shop()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([

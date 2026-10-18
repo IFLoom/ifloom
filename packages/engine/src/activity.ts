@@ -15,18 +15,10 @@ export { activityById, need } from './features/activities.ts'
  * Checked in the order the player would notice: where they are, what the
  * activity asks of them, then what it costs.
  */
-export function activityBlocked(
-  state: GameState,
-  game: Game,
-  activity: activities.ActivityDef,
-): string | undefined {
+export function activityBlocked(state: GameState, game: Game, activity: activities.ActivityDef): string | undefined {
   return activities.activityBlocked(state, game, activity, featureContext())
 }
 
-export function payCost(
-  state: GameState,
-  game: Game,
-  cost: activities.ActivityCost,
-): GameState {
+export function payCost(state: GameState, game: Game, cost: activities.ActivityCost): GameState {
   return activities.payCost(state, game, cost, featureContext())
 }

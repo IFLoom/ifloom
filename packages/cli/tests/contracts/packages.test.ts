@@ -20,7 +20,12 @@ function manifestsIn(dir: string): [string, Manifest][] {
 }
 
 const packages = manifestsIn('packages')
-const everything = [...packages, ...manifestsIn('examples'), ...manifestsIn('packages/cli/templates'), ['site', JSON.parse(readFileSync(join(root, 'site/package.json'), 'utf8'))] as [string, Manifest]]
+const everything = [
+  ...packages,
+  ...manifestsIn('examples'),
+  ...manifestsIn('packages/cli/templates'),
+  ['site', JSON.parse(readFileSync(join(root, 'site/package.json'), 'utf8'))] as [string, Manifest],
+]
 const versions = new Map(packages.map(([, pkg]) => [pkg.name!, pkg.version!]))
 
 describe('how the packages depend on each other', () => {
@@ -30,7 +35,11 @@ describe('how the packages depend on each other', () => {
   })
 
   it('makes an @ifloom package a peer of the package that uses it, never a dependency', () => {
-    const hard = packages.flatMap(([dir, pkg]) => Object.keys(pkg.dependencies ?? {}).filter((name) => name.startsWith('@ifloom/')).map((name) => `${dir} depends on ${name}`))
+    const hard = packages.flatMap(([dir, pkg]) =>
+      Object.keys(pkg.dependencies ?? {})
+        .filter((name) => name.startsWith('@ifloom/'))
+        .map((name) => `${dir} depends on ${name}`),
+    )
     expect(hard).toEqual([])
   })
 
@@ -58,7 +67,8 @@ describe('how the packages depend on each other', () => {
         const source = (target as Record<string, string>)['ifloom-source']
         const built = source?.replace(/^\.\/src\//, './dist/').replace(/\.tsx?$/, '')
         const expected = { 'ifloom-source': source, types: `${built}.d.ts`, import: `${built}.js`, default: `${built}.js` }
-        if (!source?.startsWith('./src/') || JSON.stringify(target) !== JSON.stringify(expected)) problems.push(`${dir} exports ${key} as ${JSON.stringify(target)}`)
+        if (!source?.startsWith('./src/') || JSON.stringify(target) !== JSON.stringify(expected))
+          problems.push(`${dir} exports ${key} as ${JSON.stringify(target)}`)
       }
       return problems
     })

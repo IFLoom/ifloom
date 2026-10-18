@@ -34,10 +34,7 @@ const kit = phone({
       id: 'studio',
       name: 'Fans · post',
       icon: 'star',
-      sections: [
-        { prose: [{ text: 'studio.stats' }] },
-        { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'activity', id: 'post' } }] },
-      ],
+      sections: [{ prose: [{ text: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'activity', id: 'post' } }] }],
     },
   ],
 })
@@ -114,7 +111,14 @@ const town: Pack = {
     messages: {
       messages: [
         // A text that arrives the day after the café.
-        { id: 'ava.hey', channel: 'texts', from: 'ava', when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] }, body: [{ text: 'ava.hey' }], replies: [{ id: 'reply' }] },
+        {
+          id: 'ava.hey',
+          channel: 'texts',
+          from: 'ava',
+          when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
+          body: [{ text: 'ava.hey' }],
+          replies: [{ id: 'reply' }],
+        },
       ],
     },
   },
@@ -180,7 +184,10 @@ describe('a smartphone on the sidebar', () => {
   it('takes a photo only with someone to take, and keeps it in the gallery', () => {
     const g = game()
     let state = run(begin(g), g, openApp('camera'))
-    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ kind: 'actions', actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }] })
+    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
+      kind: 'actions',
+      actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
+    })
     state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'activity', id: 'photo' }, openApp('gallery'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ kind: 'list', entries: [{ id: 'ava.cafe', title: 'Ava at the café' }] })
   })

@@ -22,12 +22,26 @@ function game(): Game {
         scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
         inputs: [
           { id: 'catName', label: 'Name the cat', kind: 'text', maxLength: 8 },
-          { id: 'tea', label: 'Tea or coffee', kind: 'choice', options: [{ value: 'tea', label: 'Tea' }, { value: 'coffee', label: 'Coffee' }] },
+          {
+            id: 'tea',
+            label: 'Tea or coffee',
+            kind: 'choice',
+            options: [
+              { value: 'tea', label: 'Tea' },
+              { value: 'coffee', label: 'Coffee' },
+            ],
+          },
         ],
         prose: { 'place.house': 'Home.', intro: 'Hi.', 'intro#go': 'Go in' },
         data: {
           places: { locations: [{ id: 'house', name: 'House', tag: 'Home', exits: [], art: '', body: [{ text: 'place.house' }] }] },
-          wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'coat' }], clothes: [{ id: 'coat', slot: 'back' }, { id: 'cape', slot: 'back' }] },
+          wardrobe: {
+            slots: [{ id: 'back', label: 'Back', start: 'coat' }],
+            clothes: [
+              { id: 'coat', slot: 'back' },
+              { id: 'cape', slot: 'back' },
+            ],
+          },
         },
       },
     ],
@@ -112,9 +126,16 @@ describe('the mod manager', () => {
     const store = mods('screens', memoryDriver())
     const g = game()
     let restarted = 0
-    render(<GameShell runner={createRunner(g, startingState(g))} mods={{ store, problems: ['mod:extra · scene x · no prose for "x"'], onChange: () => void (restarted += 1) }} />)
+    render(
+      <GameShell
+        runner={createRunner(g, startingState(g))}
+        mods={{ store, problems: ['mod:extra · scene x · no prose for "x"'], onChange: () => void (restarted += 1) }}
+      />,
+    )
     click(screen.getByRole('button', { name: 'Mods' }))
-    const file = new File([JSON.stringify({ ifloomMod: 1, id: 'extra', name: 'Extra', game: 'screens', pack: { id: 'x', schema } })], 'extra.json', { type: 'application/json' })
+    const file = new File([JSON.stringify({ ifloomMod: 1, id: 'extra', name: 'Extra', game: 'screens', pack: { id: 'x', schema } })], 'extra.json', {
+      type: 'application/json',
+    })
     await act(async () => void fireEvent.change(document.querySelector('[data-mods] input[type=file]') as HTMLInputElement, { target: { files: [file] } }))
     await waitFor(() => expect(document.querySelector('[data-mod="extra"]')).toBeTruthy())
     expect(document.querySelector('[data-mod="extra"]')?.textContent).toContain('no prose for "x"')
@@ -127,10 +148,26 @@ describe('the mod manager', () => {
   it('is on the settings page with pages on, beside the menu entry', async () => {
     const { mods, SCHEMA: schema } = await import('@ifloom/engine')
     const store = mods('screens', memoryDriver())
-    await store.add(JSON.stringify({ ifloomMod: 1, id: 'naps', name: 'Naps', version: '1.2', description: 'A nap on the sofa.', game: 'screens', pack: { id: 'naps', schema } }))
+    await store.add(
+      JSON.stringify({
+        ifloomMod: 1,
+        id: 'naps',
+        name: 'Naps',
+        version: '1.2',
+        description: 'A nap on the sofa.',
+        game: 'screens',
+        pack: { id: 'naps', schema },
+      }),
+    )
     const g = game()
     let restarted = 0
-    render(<GameShell runner={createRunner(g, startingState(g))} pages={{}} mods={{ store, problems: ['mod:naps · scene nap · no prose for "nap"'], onChange: () => void (restarted += 1) }} />)
+    render(
+      <GameShell
+        runner={createRunner(g, startingState(g))}
+        pages={{}}
+        mods={{ store, problems: ['mod:naps · scene nap · no prose for "nap"'], onChange: () => void (restarted += 1) }}
+      />,
+    )
     // The game declares no settings, but the page has the mods, so the title screen offers it.
     click(screen.getByRole('button', { name: 'Settings' }))
     const section = document.querySelector('[data-settings-mods]') as HTMLElement
@@ -158,7 +195,9 @@ describe('the mod manager', () => {
   it('keeps the menu entry, and offers Settings in the game when there are only mods', async () => {
     const { mods } = await import('@ifloom/engine')
     const g = game()
-    render(<GameShell runner={createRunner(g, startingState(g))} pages={{}} mods={{ store: mods('screens', memoryDriver()), problems: [], onChange: () => {} }} />)
+    render(
+      <GameShell runner={createRunner(g, startingState(g))} pages={{}} mods={{ store: mods('screens', memoryDriver()), problems: [], onChange: () => {} }} />,
+    )
     await act(async () => void fireEvent.click(screen.getByRole('button', { name: 'New game' })))
     const menu = document.querySelector('[data-menu]') as HTMLElement
     expect(within(menu).getByRole('button', { name: 'Mods' })).toBeTruthy()

@@ -5,14 +5,23 @@ import { cn } from '../../lib/utils.ts'
 export const Tabs = TabsPrimitive.Root
 
 export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List data-slot="tabs-list" className={cn('inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground', className)} {...props} />
+  return (
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      className={cn('inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground', className)}
+      {...props}
+    />
+  )
 }
 
 export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
-      className={cn('inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow', className)}
+      className={cn(
+        'inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow',
+        className,
+      )}
       {...props}
     />
   )

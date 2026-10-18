@@ -29,11 +29,15 @@ function GameMenuImpl({ className }: { className?: string }) {
   const { dialog, overlay, title, close } = useDialogParts()
   if (!shown) return null
   const heading =
-    open === 'saves' ? words('saves')
-    : open === 'mods' ? words('mods')
-    : open === 'unlocks' ? words('enterCode')
-    : open === 'menu' ? words('menu')
-    : words('backlog')
+    open === 'saves'
+      ? words('saves')
+      : open === 'mods'
+        ? words('mods')
+        : open === 'unlocks'
+          ? words('enterCode')
+          : open === 'menu'
+            ? words('menu')
+            : words('backlog')
   const buttons = (
     <>
       {runner.saves ? (
@@ -82,14 +86,7 @@ function GameMenuImpl({ className }: { className?: string }) {
     <div {...menu} data-menu>
       {buttons}
       <Dialog open={open !== null} onOpenChange={(next) => (next ? undefined : setOpen(null))}>
-        <DialogContent
-          bare
-          {...dialog}
-          overlayProps={overlay}
-          closeProps={close}
-          closeIcon={<Icon name="close" />}
-          closeLabel={words('close')}
-        >
+        <DialogContent bare {...dialog} overlayProps={overlay} closeProps={close} closeIcon={<Icon name="close" />} closeLabel={words('close')}>
           <DialogTitle bare {...title}>
             {heading}
           </DialogTitle>

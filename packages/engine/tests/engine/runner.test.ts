@@ -116,7 +116,13 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
   it('reports a failed write and keeps saving after it', async () => {
     const game = fixture()
     let fail = true
-    const driver = { ...memoryDriver(), set: async (key: string, value: string) => { if (fail) throw new Error('disk full'); await inner.set(key, value) } }
+    const driver = {
+      ...memoryDriver(),
+      set: async (key: string, value: string) => {
+        if (fail) throw new Error('disk full')
+        await inner.set(key, value)
+      },
+    }
     const inner = memoryDriver()
     const store = saves(game, { ...driver, get: inner.get, keys: inner.keys, remove: inner.remove })
     const errors: unknown[] = []

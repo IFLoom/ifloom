@@ -14,9 +14,7 @@ describe('hash', () => {
     const b = hash('a-fairly-long-deterministic-key:1')
     expect(a).not.toBe(b)
     // Not merely different — different across the whole word.
-    const differing = [...Array(32).keys()].filter(
-      (bit) => ((a >>> bit) & 1) !== ((b >>> bit) & 1),
-    )
+    const differing = [...Array(32).keys()].filter((bit) => ((a >>> bit) & 1) !== ((b >>> bit) & 1))
     expect(differing.length).toBeGreaterThan(8)
   })
 

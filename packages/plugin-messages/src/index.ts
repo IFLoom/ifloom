@@ -294,9 +294,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
           const message = arrival && messageDefs(game).find((entry) => entry.id === arrival.message)
           if (!arrival || !message) return say(game, 'messages/noSuchMessage')
           if (slice.replied[arrival.key] !== undefined) return say(game, 'messages/alreadyReplied')
-          return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply)
-            ? undefined
-            : say(game, 'messages/notOnOffer')
+          return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : say(game, 'messages/notOnOffer')
         },
         run: (_state, args, { slice, set, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)!
@@ -350,7 +348,11 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       const channels = channelsOf(game).map((channel): ChannelView => {
         const threads = new Map<string, MessageView[]>()
         const latest = new Map<string, number>()
-        const defs = new Map(messageDefs(game).filter((message) => message.channel === channel.id).map((message) => [message.id, message]))
+        const defs = new Map(
+          messageDefs(game)
+            .filter((message) => message.channel === channel.id)
+            .map((message) => [message.id, message]),
+        )
         slice.arrived
           .flatMap((arrival) => {
             const message = defs.get(arrival.message)
@@ -397,7 +399,8 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
     },
     references: {
       // The message a condition or a reply names; a reply may name a later arrival's key.
-      calls: (_kind, _name, args) => (args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }]),
+      calls: (_kind, _name, args) =>
+        args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }],
       content: (game) =>
         messageDefs(game).map((message) => ({
           list: 'messages',
@@ -453,4 +456,3 @@ export const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: th
 export const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
 /** A condition: the player replied to the message, or with that reply. */
 export const messageReplied = (message: string, reply?: string): Condition => ({ [`${ID}/replied`]: reply === undefined ? { message } : { message, reply } })
-

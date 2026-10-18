@@ -102,9 +102,7 @@ function settle<T>(request: Request<T>): Promise<T> {
  * big backlogs and mod data. Opens (and if needed creates) one database with
  * one store of strings by key.
  */
-export function indexedDbDriver(
-  options: { database?: string; store?: string; indexedDB?: IndexedDbLike } = {},
-): SaveDriver {
+export function indexedDbDriver(options: { database?: string; store?: string; indexedDB?: IndexedDbLike } = {}): SaveDriver {
   const databaseName = options.database ?? 'ifloom'
   const storeName = options.store ?? 'saves'
   let opened: Promise<Database> | undefined
@@ -121,8 +119,7 @@ export function indexedDbDriver(
     opened = settle(request)
     return opened
   }
-  const store = async (mode: 'readonly' | 'readwrite') =>
-    (await open()).transaction(storeName, mode).objectStore(storeName)
+  const store = async (mode: 'readonly' | 'readwrite') => (await open()).transaction(storeName, mode).objectStore(storeName)
   return {
     name: 'indexedDB',
     get: async (key) => {

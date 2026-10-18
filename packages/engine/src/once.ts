@@ -25,20 +25,12 @@ export function markUsed(state: GameState, id: string): Effect {
  * The payout for a line, or nothing if it has already landed this turn. Pair
  * it with `usedBlock` so the choice explains itself instead of going quiet.
  */
-export function oncePerTurn(
-  state: GameState,
-  id: string,
-  effects: readonly Effect[],
-): Effect[] {
+export function oncePerTurn(state: GameState, id: string, effects: readonly Effect[]): Effect[] {
   if (usedThisTurn(state, id)) return []
   return [...effects, markUsed(state, id)]
 }
 
 /** Disabled text for a line already used this turn, or undefined while it is live. */
-export function usedBlock(
-  state: GameState,
-  id: string,
-  reason: string,
-): string | undefined {
+export function usedBlock(state: GameState, id: string, reason: string): string | undefined {
   return usedThisTurn(state, id) ? reason : undefined
 }

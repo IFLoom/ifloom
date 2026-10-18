@@ -16,7 +16,10 @@ function HotspotImpl({ hotspot }: { hotspot: HotspotView }) {
     'hotspot',
     'absolute rounded-md outline-offset-2 hover:outline-2 hover:outline-white/70 focus-visible:outline-3 focus-visible:outline-ring aria-disabled:cursor-not-allowed aria-disabled:bg-black/25 aria-disabled:backdrop-grayscale',
   )
-  const mark = usePart('hotspot-warning', 'absolute top-1 right-1 inline-flex size-6 items-center justify-center rounded-full bg-background/85 text-foreground [&_svg]:size-4')
+  const mark = usePart(
+    'hotspot-warning',
+    'absolute top-1 right-1 inline-flex size-6 items-center justify-center rounded-full bg-background/85 text-foreground [&_svg]:size-4',
+  )
   const note = disabled ?? warning
   return (
     <button

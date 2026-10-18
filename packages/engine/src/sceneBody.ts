@@ -135,7 +135,10 @@ export const MEDIA_MARKUP = /\[\[(img|wide|video|widevideo):([^\]|]+)((?:\|[^\]|
 const VIDEO_FLAGS = ['controls', 'once', 'sound'] as const
 
 /** Picture or video markup's parts after the path, read. Internal; the checks use it too. */
-export function mediaParts(path: string, rest: string): {
+export function mediaParts(
+  path: string,
+  rest: string,
+): {
   /** The pool, for `@pool`; undefined for a file. */
   pool?: string
   path: string
@@ -149,11 +152,21 @@ export function mediaParts(path: string, rest: string): {
   /** `name=value` parts with a name that is not a flag. */
   unknown: string[]
 } {
-  const parts = rest.split('|').slice(1).map((part) => part.trim())
+  const parts = rest
+    .split('|')
+    .slice(1)
+    .map((part) => part.trim())
   const trimmed = path.trim()
   const pool = trimmed.startsWith('@') ? trimmed.slice(1).trim() : undefined
   // After a pool, the first part is always its tags, even when empty: `[[img:@door||A door]]`.
-  const tags = pool !== undefined && parts.length ? parts.shift()!.split(',').map((tag) => tag.trim()).filter(Boolean) : []
+  const tags =
+    pool !== undefined && parts.length
+      ? parts
+          .shift()!
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : []
   const flags: VideoFlags & { rot?: boolean } = {}
   const videoFlags: string[] = []
   const alts: string[] = []
@@ -180,22 +193,26 @@ function mediaBeat(tag: string, path: string, rest: string): SceneBeat[] {
   const size: BeatSize = tag === 'wide' || tag === 'widevideo' ? 'wide' : 'inline'
   if (tag === 'video' || tag === 'widevideo' || mediaKind(read.path) === 'video') {
     const { poster, ...play } = videoView(read.flags)
-    return [{
-      kind: 'video',
-      src: artSrc(read.path, 'video'),
-      ...(poster ? { poster } : {}),
-      ...(read.alt !== undefined ? { alt: read.alt } : {}),
-      size,
-      ...play,
-    }]
+    return [
+      {
+        kind: 'video',
+        src: artSrc(read.path, 'video'),
+        ...(poster ? { poster } : {}),
+        ...(read.alt !== undefined ? { alt: read.alt } : {}),
+        size,
+        ...play,
+      },
+    ]
   }
-  return [{
-    kind: 'image',
-    src: artSrc(read.path),
-    alt: read.alt,
-    size,
-    ...(read.flags.rot ? { rotate: true } : {}),
-  }]
+  return [
+    {
+      kind: 'image',
+      src: artSrc(read.path),
+      alt: read.alt,
+      size,
+      ...(read.flags.rot ? { rotate: true } : {}),
+    },
+  ]
 }
 
 function quoteOnly(block: string): string | null {
@@ -279,7 +296,7 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
     if (last && 'chars' in last) last.chars += more
     else tokens.push({ chars: more })
   }
-  for (let at = 0; at < text.length; ) {
+  for (let at = 0; at < text.length;) {
     if (text[at] === '\\' && text[at + 1] === '*') {
       chars('*')
       at += 2
@@ -323,7 +340,8 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
       continue
     }
     const inside = tokens.slice(index + 1, close)
-    if (inside.some((other) => 'stars' in other && (other.opens || other.closes))) problems.push('bold and italics don\'t go inside each other; the inner stars are shown as written')
+    if (inside.some((other) => 'stars' in other && (other.opens || other.closes)))
+      problems.push("bold and italics don't go inside each other; the inner stars are shown as written")
     const end = tokens[close] as Stars
     const styled = { text: inside.map(shown).join(''), markup: text.slice(token.from, end.to) }
     parts.push(token.stars === 2 ? { kind: 'bold', ...styled } : { kind: 'italic', ...styled })
@@ -384,7 +402,10 @@ export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
     if (!parts) return beat
     const spans: InlineSpan[] = []
     for (const part of parts) {
-      const piece: InlineSpan = part.kind === 'bold' || part.kind === 'italic' ? { kind: part.kind, text: part.text } : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
+      const piece: InlineSpan =
+        part.kind === 'bold' || part.kind === 'italic'
+          ? { kind: part.kind, text: part.text }
+          : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
       const prev = spans.at(-1)
       if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
       else spans.push(piece)

@@ -1,4 +1,18 @@
-import { apply, buildEffects, commandOf, inlineChoices, pluginQuery, statDef, view, type Command, type CommandRef, type Game, type GameState, type RenderedChoice, type View } from '@ifloom/engine'
+import {
+  apply,
+  buildEffects,
+  commandOf,
+  inlineChoices,
+  pluginQuery,
+  statDef,
+  view,
+  type Command,
+  type CommandRef,
+  type Game,
+  type GameState,
+  type RenderedChoice,
+  type View,
+} from '@ifloom/engine'
 
 /** Picks the next command from what is on screen, or null to stop. */
 export type Policy = (screen: View, state: GameState, game: Game) => CommandRef | null
@@ -36,7 +50,9 @@ export function screenText(screen: View): string {
   ]
   for (const button of buttons) {
     const price = [...(button.price?.stats ?? []).map((stat) => stat.text), ...(button.price?.notes ?? [])]
-    lines.push(`  [${button.disabled ? ' ' : '>'}] ${button.label}${price.length ? ` (${price.join(', ')})` : ''}${button.disabled ? ` — ${button.disabled}` : ''}`)
+    lines.push(
+      `  [${button.disabled ? ' ' : '>'}] ${button.label}${price.length ? ` (${price.join(', ')})` : ''}${button.disabled ? ` — ${button.disabled}` : ''}`,
+    )
   }
   for (const exit of exitsOn(screen)) lines.push(`  -> ${exit.label}${exit.disabled ? ` — ${exit.disabled}` : ''}`)
   return lines.join('\n')
@@ -134,7 +150,9 @@ export function explorer(): Policy {
     }
     const at = here(game, state)
     if (at !== null) today.add(at)
-    const person = peopleOn(screen).flatMap((entry) => entry.actions).find((action) => !action.disabled)
+    const person = peopleOn(screen)
+      .flatMap((entry) => entry.actions)
+      .find((action) => !action.disabled)
     if (person && !today.has(`talk:${person.id}`)) {
       today.add(`talk:${person.id}`)
       return person.command

@@ -31,7 +31,14 @@ export function ProseField({ value, onChange, rows = 4, label }: { value: string
         ))}
       </div>
       <div className="grid gap-2 @md:grid-cols-2">
-        <textarea ref={area} aria-label={label} className={cx(inputClass, 'font-mono text-[13px] leading-relaxed')} rows={rows} value={value} onChange={(event) => onChange(event.target.value)} />
+        <textarea
+          ref={area}
+          aria-label={label}
+          className={cx(inputClass, 'font-mono text-[13px] leading-relaxed')}
+          rows={rows}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
         <Beats text={value} />
       </div>
     </div>
@@ -64,7 +71,11 @@ function Media({ kind, src, alt }: { kind: string; src: string; alt?: string }) 
 function Beat({ beat }: { beat: SceneBeat }) {
   switch (beat.kind) {
     case 'text':
-      return <p><Inline text={beat.text} /></p>
+      return (
+        <p>
+          <Inline text={beat.text} />
+        </p>
+      )
     case 'mono':
       return <p className="font-mono text-xs italic text-fd-muted-foreground">{beat.text}</p>
     case 'say':

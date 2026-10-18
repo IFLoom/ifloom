@@ -8,16 +8,44 @@ import { Button, TextInput } from '../ui'
 const VALID_ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 /** The thing's id, renamed everywhere it's named when you press Rename, and a Delete button. */
-export function IdHeader({ noun, id, taken, onRename, onDelete, extra }: { noun: string; id: string; taken: string[]; onRename: (to: string) => void; onDelete: () => void; extra?: ReactNode }) {
+export function IdHeader({
+  noun,
+  id,
+  taken,
+  onRename,
+  onDelete,
+  extra,
+}: {
+  noun: string
+  id: string
+  taken: string[]
+  onRename: (to: string) => void
+  onDelete: () => void
+  extra?: ReactNode
+}) {
   const [draft, setDraft] = useState(id)
   useEffect(() => setDraft(id), [id])
   const to = draft.trim()
-  const problem = to === id ? null : !VALID_ID.test(to) ? 'Use letters, numbers, dots, dashes and underscores.' : taken.includes(to) ? `There's already a ${noun} called ${to}.` : null
+  const problem =
+    to === id
+      ? null
+      : !VALID_ID.test(to)
+        ? 'Use letters, numbers, dots, dashes and underscores.'
+        : taken.includes(to)
+          ? `There's already a ${noun} called ${to}.`
+          : null
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-fd-muted-foreground">{noun}</span>
-        <TextInput mono aria-label={`The ${noun}'s id`} className="max-w-64 text-base font-semibold" value={draft} onChange={(v) => setDraft(v ?? '')} onKeyDown={(event) => event.key === 'Enter' && !problem && to !== id && onRename(to)} />
+        <TextInput
+          mono
+          aria-label={`The ${noun}'s id`}
+          className="max-w-64 text-base font-semibold"
+          value={draft}
+          onChange={(v) => setDraft(v ?? '')}
+          onKeyDown={(event) => event.key === 'Enter' && !problem && to !== id && onRename(to)}
+        />
         {to !== id ? (
           <>
             <Button size="xs" variant="primary" disabled={Boolean(problem)} onClick={() => onRename(to)} title={`Rename it everywhere it's named`}>

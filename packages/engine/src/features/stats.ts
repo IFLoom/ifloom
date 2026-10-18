@@ -331,7 +331,8 @@ export function statProblems(game: Game): { where: string; what: string }[] {
       for (const id of formulaStats(stat.derive)) {
         const used = byId.get(id)
         if (!used) out.push({ where, what: `derive reads unknown stat "${id}"` })
-        else if (used.of !== stat.of) out.push({ where, what: `derive reads stat "${id}", which belongs to ${used.of ?? 'the player'}, not ${stat.of ?? 'the player'}` })
+        else if (used.of !== stat.of)
+          out.push({ where, what: `derive reads stat "${id}", which belongs to ${used.of ?? 'the player'}, not ${stat.of ?? 'the player'}` })
       }
       if (stat.spendable) out.push({ where, what: 'a derived stat cannot be spendable: it is never written' })
       if (stat.start !== undefined) out.push({ where, what: 'a derived stat has no start: it is worked out' })
@@ -547,7 +548,11 @@ export const stats = defineFeature<StatsShape>({
     },
   },
   check: (game, tools) => {
-    tools.twice('stat', 'stats', (game.stats ?? []).map((entry) => entry.id))
+    tools.twice(
+      'stat',
+      'stats',
+      (game.stats ?? []).map((entry) => entry.id),
+    )
     const kindIds = new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.kinds ?? [])].map((kind) => kind.id))
     for (const stat of game.stats ?? []) {
       const source = { list: 'stat', id: stat.id }

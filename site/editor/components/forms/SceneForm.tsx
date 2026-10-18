@@ -74,11 +74,17 @@ export function SceneForm({ id }: { id: string }) {
           </Field>
         </div>
         <TransitionField value={scene.transition} onChange={(transition) => change((s) => void (s.transition = transition))} />
-        <Checkbox checked={project.intro === scene.id} label="The game opens on this scene" onChange={(on) => update((draft) => void (draft.intro = on ? scene.id : null))} />
+        <Checkbox
+          checked={project.intro === scene.id}
+          label="The game opens on this scene"
+          onChange={(on) => update((draft) => void (draft.intro = on ? scene.id : null))}
+        />
       </Section>
 
       <Section title="Storylet" id="field-storylet" className={cx(selection.thing === 'scene' && selection.field === 'storylet' && 'ring-2 ring-red-500/50')}>
-        <p className="text-xs text-fd-muted-foreground">A storylet is drawn at random from a set by the effect “Draw a storylet”. Leave the sets empty for an ordinary scene.</p>
+        <p className="text-xs text-fd-muted-foreground">
+          A storylet is drawn at random from a set by the effect “Draw a storylet”. Leave the sets empty for an ordinary scene.
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Drawn from sets" hint="Comma separated, such as market.">
             <ListInput value={scene.drawnFrom} onChange={(drawnFrom) => change((s) => void (s.drawnFrom = drawnFrom))} />
@@ -135,7 +141,10 @@ export function SceneForm({ id }: { id: string }) {
           <Button
             size="xs"
             onClick={() => {
-              const choiceId = freeId(scene.choices.map((c) => c.id), 'choice')
+              const choiceId = freeId(
+                scene.choices.map((c) => c.id),
+                'choice',
+              )
               change((s) => void s.choices.push({ id: choiceId, effects: [] }))
               setProse(`${scene.id}#${choiceId}`, '')
             }}
@@ -161,12 +170,19 @@ export function SceneForm({ id }: { id: string }) {
             }
           />
         ))}
-        {!scene.choices.length ? <p className="text-xs text-fd-muted-foreground">No choices: the scene is an ending, unless a plugin moves the player on.</p> : null}
+        {!scene.choices.length ? (
+          <p className="text-xs text-fd-muted-foreground">No choices: the scene is an ending, unless a plugin moves the player on.</p>
+        ) : null}
       </Section>
 
       <Section title="Stage and audio">
         <Field label="Audio while the scene is open" hint={'Track ids by channel, as JSON: { "ambience": "rain" }. null silences a channel.'}>
-          <JsonField label="Audio" value={scene.audio ?? {}} rows={2} onChange={(audio) => change((s) => void (s.audio = audio && Object.keys(audio).length ? audio : undefined))} />
+          <JsonField
+            label="Audio"
+            value={scene.audio ?? {}}
+            rows={2}
+            onChange={(audio) => change((s) => void (s.audio = audio && Object.keys(audio).length ? audio : undefined))}
+          />
         </Field>
         <Field label="Stage" hint="A layered picture with hotspots, as JSON. Layers name their pictures by path; the preview shows placeholders.">
           <JsonField label="Stage" value={scene.stage ?? null} rows={3} onChange={(stage) => change((s) => void (s.stage = stage ?? undefined))} />
@@ -188,7 +204,19 @@ function freeId(taken: string[], base: string): string {
   for (let n = 2; ; n++) if (!taken.includes(`${base}${n}`)) return `${base}${n}`
 }
 
-function BlockEditor({ block, onChange, prose, setProse, tools }: { block: Block; onChange: (block: Block) => void; prose: (key: string) => string; setProse: (key: string, text: string) => void; tools: React.ReactNode }) {
+function BlockEditor({
+  block,
+  onChange,
+  prose,
+  setProse,
+  tools,
+}: {
+  block: Block
+  onChange: (block: Block) => void
+  prose: (key: string) => string
+  setProse: (key: string, text: string) => void
+  tools: React.ReactNode
+}) {
   const { names, create } = useEditor()
   return (
     <div className="flex flex-col gap-2 rounded-md border border-fd-border bg-fd-background p-2">
@@ -206,7 +234,13 @@ function BlockEditor({ block, onChange, prose, setProse, tools }: { block: Block
       {'media' in block ? <MediaFields media={block.media} onChange={(media) => onChange({ ...block, media })} /> : null}
       {'variants' in block ? <JsonField label="Variants block" value={block} rows={3} onChange={(next) => next && onChange(next)} /> : null}
       <Field label="Shown only while">
-        <OptionalCondition names={names} onCreate={create} value={block.when} onChange={(when) => onChange({ ...block, when } as Block)} add="Only show it while…" />
+        <OptionalCondition
+          names={names}
+          onCreate={create}
+          value={block.when}
+          onChange={(when) => onChange({ ...block, when } as Block)}
+          add="Only show it while…"
+        />
       </Field>
       <RevealField block={block} onChange={onChange} />
     </div>
@@ -245,9 +279,20 @@ function RevealField({ block, onChange }: { block: Block; onChange: (block: Bloc
       <Checkbox checked={reveal !== undefined} label="Reveal it after a pause" onChange={(on) => set(on ? {} : undefined)} />
       {reveal ? (
         <>
-          <NumberInput aria-label="Pause in milliseconds" className="w-24" value={reveal.delay} placeholder="800" onChange={(delay) => set({ ...reveal, delay })} />
+          <NumberInput
+            aria-label="Pause in milliseconds"
+            className="w-24"
+            value={reveal.delay}
+            placeholder="800"
+            onChange={(delay) => set({ ...reveal, delay })}
+          />
           <span className="text-xs text-fd-muted-foreground">ms, then</span>
-          <Select aria-label="Reveal transition" value={reveal.as ?? 'fade'} options={transitionOptions(reveal.as)} onChange={(as) => set({ ...reveal, as: as === 'fade' ? undefined : as })} />
+          <Select
+            aria-label="Reveal transition"
+            value={reveal.as ?? 'fade'}
+            options={transitionOptions(reveal.as)}
+            onChange={(as) => set({ ...reveal, as: as === 'fade' ? undefined : as })}
+          />
         </>
       ) : null}
     </div>
@@ -306,7 +351,19 @@ function MediaFields({ media, onChange }: { media: SceneMedia; onChange: (media:
   )
 }
 
-function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene; choice: Choice; onChange: (choice: Choice) => void; tools: React.ReactNode; open: boolean }) {
+function ChoiceCard({
+  scene,
+  choice,
+  onChange,
+  tools,
+  open,
+}: {
+  scene: DataScene
+  choice: Choice
+  onChange: (choice: Choice) => void
+  tools: React.ReactNode
+  open: boolean
+}) {
   const { project, update, replace, select, names, create } = useEditor()
   const [expanded, setExpanded] = useState(open)
   useEffect(() => {
@@ -341,7 +398,9 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           <code className="text-xs">{choice.id}</code>
           <span className="truncate text-sm">{label || <em className="text-fd-muted-foreground">No label yet</em>}</span>
           {inlineIn.length ? <span className="shrink-0 rounded bg-fd-primary/10 px-1 text-xs text-fd-primary">in the text</span> : null}
-          {cost.length ? <span className="shrink-0 rounded bg-fd-secondary px-1 text-xs">costs {cost.map((c) => `${c.amount} ${c.stat}`).join(', ')}</span> : null}
+          {cost.length ? (
+            <span className="shrink-0 rounded bg-fd-secondary px-1 text-xs">costs {cost.map((c) => `${c.amount} ${c.stat}`).join(', ')}</span>
+          ) : null}
         </button>
         {tools}
       </div>
@@ -359,19 +418,38 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
                 }}
               />
             </Field>
-            <Field label={<>Label <code className="font-normal">{labelKey}</code></>}>
+            <Field
+              label={
+                <>
+                  Label <code className="font-normal">{labelKey}</code>
+                </>
+              }
+            >
               <TextInput value={label} placeholder="The button text" onChange={(text) => update((draft) => void (draft.pack.prose[labelKey] = text ?? ''))} />
             </Field>
           </div>
 
-          <Field label="In the text" hint="A choice the body's prose names with [[act:id]] is drawn there, as a link in the line, and not in the list of choices.">
+          <Field
+            label="In the text"
+            hint="A choice the body's prose names with [[act:id]] is drawn there, as a link in the line, and not in the list of choices."
+          >
             {inlineIn.length ? (
               <p className="text-xs">
-                Drawn inline by <code>[[act:{choice.id}]]</code> in {inlineIn.map((key) => <code key={key} className="me-1">{key}</code>)}
+                Drawn inline by <code>[[act:{choice.id}]]</code> in{' '}
+                {inlineIn.map((key) => (
+                  <code key={key} className="me-1">
+                    {key}
+                  </code>
+                ))}
               </p>
             ) : (
               <div>
-                <Button size="xs" disabled={!textKeys.length} onClick={putInline} title={textKeys.length ? `Add [[act:${choice.id}]] to the end of ${textKeys.at(-1)}` : 'Add a text block first'}>
+                <Button
+                  size="xs"
+                  disabled={!textKeys.length}
+                  onClick={putInline}
+                  title={textKeys.length ? `Add [[act:${choice.id}]] to the end of ${textKeys.at(-1)}` : 'Add a text block first'}
+                >
                   Put it in the text
                 </Button>
               </div>
@@ -382,19 +460,63 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
             <div className="flex flex-col gap-1">
               {cost.map((entry, i) => (
                 <div key={i} className="flex flex-wrap items-center gap-2">
-                  <NumberInput aria-label="Amount" value={entry.amount} onChange={(amount) => set({ effects: withCost(choice.effects, cost.map((c, j) => (j === i ? { ...c, amount: amount ?? 0 } : c))) })} />
-                  <IdPicker noun="stat" aria-label="Stat" value={entry.stat} options={names.stats} onCreate={(id) => create('stat', id)} onChange={(stat) => set({ effects: withCost(choice.effects, cost.map((c, j) => (j === i ? { ...c, stat } : c))) })} />
+                  <NumberInput
+                    aria-label="Amount"
+                    value={entry.amount}
+                    onChange={(amount) =>
+                      set({
+                        effects: withCost(
+                          choice.effects,
+                          cost.map((c, j) => (j === i ? { ...c, amount: amount ?? 0 } : c)),
+                        ),
+                      })
+                    }
+                  />
+                  <IdPicker
+                    noun="stat"
+                    aria-label="Stat"
+                    value={entry.stat}
+                    options={names.stats}
+                    onCreate={(id) => create('stat', id)}
+                    onChange={(stat) =>
+                      set({
+                        effects: withCost(
+                          choice.effects,
+                          cost.map((c, j) => (j === i ? { ...c, stat } : c)),
+                        ),
+                      })
+                    }
+                  />
                   {!statDef(entry.stat)?.spendable ? <span className="text-xs text-fd-muted-foreground">(not spendable, so no price shows)</span> : null}
-                  <Button size="xs" variant="ghost" onClick={() => set({ blocked: [...(choice.blocked ?? []), shortBlock(statDef(entry.stat), entry.stat, entry.amount)] })}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => set({ blocked: [...(choice.blocked ?? []), shortBlock(statDef(entry.stat), entry.stat, entry.amount)] })}
+                  >
                     Block it when short
                   </Button>
-                  <Button size="xs" variant="danger" aria-label="Remove the cost" onClick={() => set({ effects: withCost(choice.effects, cost.filter((_, j) => j !== i)) })}>
+                  <Button
+                    size="xs"
+                    variant="danger"
+                    aria-label="Remove the cost"
+                    onClick={() =>
+                      set({
+                        effects: withCost(
+                          choice.effects,
+                          cost.filter((_, j) => j !== i),
+                        ),
+                      })
+                    }
+                  >
                     ✕
                   </Button>
                 </div>
               ))}
               <div>
-                <Button size="xs" onClick={() => set({ effects: withCost(choice.effects, [...cost, { stat: spendable[0]?.id ?? names.stats[0] ?? 'coins', amount: 1 }]) })}>
+                <Button
+                  size="xs"
+                  onClick={() => set({ effects: withCost(choice.effects, [...cost, { stat: spendable[0]?.id ?? names.stats[0] ?? 'coins', amount: 1 }]) })}
+                >
                   + Add a cost
                 </Button>
               </div>
@@ -410,12 +532,27 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
               {(choice.blocked ?? []).map((entry, i) => (
                 <div key={i} className="flex flex-col gap-1 rounded-md border border-fd-border p-2">
                   <div className="flex items-center gap-2">
-                    <TextInput aria-label="Reason" className="flex-1" value={entry.reason} placeholder="Why it can't be taken" onChange={(reason) => set({ blocked: choice.blocked!.map((b, j) => (j === i ? { ...b, reason: reason ?? '' } : b)) })} />
-                    <Button size="xs" variant="danger" aria-label="Remove the reason" onClick={() => set({ blocked: choice.blocked!.filter((_, j) => j !== i).length ? choice.blocked!.filter((_, j) => j !== i) : undefined })}>
+                    <TextInput
+                      aria-label="Reason"
+                      className="flex-1"
+                      value={entry.reason}
+                      placeholder="Why it can't be taken"
+                      onChange={(reason) => set({ blocked: choice.blocked!.map((b, j) => (j === i ? { ...b, reason: reason ?? '' } : b)) })}
+                    />
+                    <Button
+                      size="xs"
+                      variant="danger"
+                      aria-label="Remove the reason"
+                      onClick={() => set({ blocked: choice.blocked!.filter((_, j) => j !== i).length ? choice.blocked!.filter((_, j) => j !== i) : undefined })}
+                    >
                       ✕
                     </Button>
                   </div>
-                  <OptionalCondition {...builder} value={entry.when} onChange={(when) => when && set({ blocked: choice.blocked!.map((b, j) => (j === i ? { ...b, when } : b)) })} />
+                  <OptionalCondition
+                    {...builder}
+                    value={entry.when}
+                    onChange={(when) => when && set({ blocked: choice.blocked!.map((b, j) => (j === i ? { ...b, when } : b)) })}
+                  />
                 </div>
               ))}
               <div>
@@ -427,7 +564,11 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
           </Field>
 
           <Field label="Effects" hint="Run in order when the player picks it.">
-            <EffectList {...builder} value={choice.effects.filter((e) => !cost.length || !isCost(e))} onChange={(effects) => set({ effects: withCost(effects, cost) })} />
+            <EffectList
+              {...builder}
+              value={choice.effects.filter((e) => !cost.length || !isCost(e))}
+              onChange={(effects) => set({ effects: withCost(effects, cost) })}
+            />
           </Field>
 
           <details className="text-xs">
@@ -443,11 +584,26 @@ function ChoiceCard({ scene, choice, onChange, tools, open }: { scene: DataScene
                 <ListInput value={choice.tags} onChange={(tags) => set({ tags })} />
               </Field>
             </div>
-            <Field label="Sends a command" hint={'As JSON, run before the effects, such as a plugin\'s: { "type": "custom", "name": "devices/open", "with": { "id": "texts" } }. It is greyed out while the command would be refused.'}>
-              <JsonField label="Command" rows={2} value={choice.command ?? null} onChange={(command) => set({ command: command && typeof command === 'object' && 'type' in command ? command : undefined })} />
+            <Field
+              label="Sends a command"
+              hint={
+                'As JSON, run before the effects, such as a plugin\'s: { "type": "custom", "name": "devices/open", "with": { "id": "texts" } }. It is greyed out while the command would be refused.'
+              }
+            >
+              <JsonField
+                label="Command"
+                rows={2}
+                value={choice.command ?? null}
+                onChange={(command) => set({ command: command && typeof command === 'object' && 'type' in command ? command : undefined })}
+              />
             </Field>
             <Field label="Labels that depend on state" hint={'As JSON, first match wins: [{ "when": { "seen": "home" }, "key": "market#buy-again" }].'}>
-              <JsonField label="Labels" rows={2} value={choice.labels ?? []} onChange={(labels) => set({ labels: Array.isArray(labels) && labels.length ? labels : undefined })} />
+              <JsonField
+                label="Labels"
+                rows={2}
+                value={choice.labels ?? []}
+                onChange={(labels) => set({ labels: Array.isArray(labels) && labels.length ? labels : undefined })}
+              />
             </Field>
           </details>
         </div>

@@ -39,7 +39,9 @@ describe('picture and video markup', () => {
   })
 
   it('keeps the picture markup as it was: alt text and rot', () => {
-    expect(parseBeats('[[img:cafe/cup|rot|A cup of tea]]')).toEqual([{ kind: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline', rotate: true }])
+    expect(parseBeats('[[img:cafe/cup|rot|A cup of tea]]')).toEqual([
+      { kind: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline', rotate: true },
+    ])
   })
 
   it('leaves out a pool nobody resolved, rather than drawing a broken picture', () => {
@@ -84,10 +86,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}) {
       'flat#tea': 'Make tea',
       'doorstep#leave': 'Leave',
     },
-    activities: [
-      { id: 'nap' },
-      { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] },
-    ],
+    activities: [{ id: 'nap' }, { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] }],
     scenes,
     ...extra,
   }
@@ -142,7 +141,16 @@ describe('media in a data scene’s body', () => {
   it('takes video kv on a block', () => {
     const g = game([{ id: 'flat', body: [{ media: { src: 'flat/kettle', video: true, controls: true, poster: 'flat/kettle-still' } }], choices: [] }])
     expect(view(open(g, 'flat'), g).scene.beats).toEqual([
-      { kind: 'video', src: 'art/flat/kettle.mp4', poster: 'art/flat/kettle-still.jpg', size: 'inline', autoplay: false, loop: true, muted: true, controls: true },
+      {
+        kind: 'video',
+        src: 'art/flat/kettle.mp4',
+        poster: 'art/flat/kettle-still.jpg',
+        size: 'inline',
+        autoplay: false,
+        loop: true,
+        muted: true,
+        controls: true,
+      },
     ])
   })
 })
@@ -208,7 +216,11 @@ describe('pools', () => {
   it('replay exactly', () => {
     const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const start = startingState(g, { seed: 3 })
-    const commands: Command[] = [{ type: 'activity', id: 'knock' }, { type: 'choose', id: 'leave' }, { type: 'activity', id: 'knock' }]
+    const commands: Command[] = [
+      { type: 'activity', id: 'knock' },
+      { type: 'choose', id: 'leave' },
+      { type: 'activity', id: 'knock' },
+    ]
     let state = start
     for (const command of commands) state = apply(state, g, command).state
     const replayed = replay(g, { game: g.id, start, commands })
@@ -346,7 +358,11 @@ describe('media checks', () => {
       {
         id: 'flat',
         stage: {
-          layers: [{ id: 'room', src: 'flat/room' }, { id: 'room', pool: 'door', tags: ['green'] }, { src: 'flat/mug', once: true }],
+          layers: [
+            { id: 'room', src: 'flat/room' },
+            { id: 'room', pool: 'door', tags: ['green'] },
+            { src: 'flat/mug', once: true },
+          ],
           hotspots: [
             { id: 'door', rect: [80, 20, 30, 80], label: 'Door', choice: 'leave', command: { type: 'activity', id: 'nap' } },
             { id: 'door', rect: [0, 0, 10, 10], label: 'Door again', choice: 'sing' },
@@ -376,8 +392,22 @@ describe('media checks', () => {
   it('are made for a hand-built game too, and its scenes rendered against probes', () => {
     const { game: g } = town(
       [
-        { id: 'flat', body: [{ text: 'flat.bad' }, { media: { pool: 'cupboard' } }], stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] }, choices: [] },
-        { id: 'porch', render: () => ({ stage: { layers: [{ id: 'a', src: 'porch' }], hotspots: [{ id: 'y', rect: [0, 0, 50, 50], label: 'Y', layer: 'b', command: { type: 'scene', id: 'garden' } }] }, choices: [] }) },
+        {
+          id: 'flat',
+          body: [{ text: 'flat.bad' }, { media: { pool: 'cupboard' } }],
+          stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] },
+          choices: [],
+        },
+        {
+          id: 'porch',
+          render: () => ({
+            stage: {
+              layers: [{ id: 'a', src: 'porch' }],
+              hotspots: [{ id: 'y', rect: [0, 0, 50, 50], label: 'Y', layer: 'b', command: { type: 'scene', id: 'garden' } }],
+            },
+            choices: [],
+          }),
+        },
       ],
       { prose: { 'flat.bad': '[[img:@door|green]]' }, media: { pools: { ...pools, shelf: [] } } },
     )

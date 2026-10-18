@@ -318,7 +318,11 @@ export function mergedById<G, P, T>(
       return {
         base: (game) => add(read.base?.(game), 'base'),
         add: (pack, from) => add(read.pack(pack), from),
-        finish: (game) => write(game, [...merged.values()].map((entry) => entry.value)),
+        finish: (game) =>
+          write(
+            game,
+            [...merged.values()].map((entry) => entry.value),
+          ),
         from: (_list, id) => (id === undefined ? undefined : merged.get(id)?.from),
       }
     },

@@ -59,7 +59,7 @@ export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sa
   ],
   act: [
     { name: 'id', label: 'Choice id', sample: 'answer' },
-    { name: 'words', label: 'Words to show (the choice\'s label if empty)', sample: 'Pick it up' },
+    { name: 'words', label: "Words to show (the choice's label if empty)", sample: 'Pick it up' },
   ],
   tip: [
     { name: 'key', label: 'Prose key of the tooltip', sample: 'market.stall' },
@@ -133,5 +133,7 @@ const POOL = /\[\[(img|wide):@([^|\]]+)(?:\|([^\]]*))?\]\]/g
  */
 export function proseBeats(text: string): SceneBeat[] {
   const marked = text.replace(POOL, (_, size: string, pool: string, tags?: string) => `[[${size}:${POOL_MARK}${pool}|${tags ? `tags ${tags}` : 'any tags'}]]`)
-  return parseBeats(marked).map((beat) => (beat.kind === 'image' && beat.src.includes(POOL_MARK) ? { ...beat, src: `pool:${beat.src.split(POOL_MARK)[1].replace(/\.jpg$/, '')}` } : beat))
+  return parseBeats(marked).map((beat) =>
+    beat.kind === 'image' && beat.src.includes(POOL_MARK) ? { ...beat, src: `pool:${beat.src.split(POOL_MARK)[1].replace(/\.jpg$/, '')}` } : beat,
+  )
 }

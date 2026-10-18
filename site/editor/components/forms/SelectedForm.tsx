@@ -33,7 +33,11 @@ export function SelectedForm() {
 }
 
 function Missing({ noun, id }: { noun: string; id: string }) {
-  return <p className="text-sm text-fd-muted-foreground">There's no {noun} called {id}.</p>
+  return (
+    <p className="text-sm text-fd-muted-foreground">
+      There's no {noun} called {id}.
+    </p>
+  )
 }
 
 function StatForm({ id }: { id: string }) {
@@ -125,10 +129,15 @@ function KvForm({ id }: { id: string }) {
       />
       <Section title="kv key">
         <p className="text-xs text-fd-muted-foreground">
-          A key in the kv store needs no declaration: an effect sets it and a condition reads it. Unset, it reads as false, or 0 for a number. This note is for you and goes into the TypeScript export as a comment.
+          A key in the kv store needs no declaration: an effect sets it and a condition reads it. Unset, it reads as false, or 0 for a number. This note is for
+          you and goes into the TypeScript export as a comment.
         </p>
         <Field label="Note">
-          <TextInput value={entry.note} placeholder="What it records, and its default" onChange={(note) => update((draft) => void (draft.kv[index].note = note ?? ''))} />
+          <TextInput
+            value={entry.note}
+            placeholder="What it records, and its default"
+            onChange={(note) => update((draft) => void (draft.kv[index].note = note ?? ''))}
+          />
         </Field>
         <div className="text-xs text-fd-muted-foreground">
           {uses.length ? (
@@ -169,10 +178,19 @@ function ProjectForm() {
             <TextInput mono value={project.pack.id} placeholder={slug(project.title)} onChange={(id) => update((draft) => void (draft.pack.id = id ?? ''))} />
           </Field>
           <Field label="Opens on" hint="The intro scene a new game starts at.">
-            <IdPicker noun="scene" aria-label="Intro scene" empty="No scene: the idle screen" value={project.intro ?? ''} options={names.scenes} onChange={(id) => update((draft) => void (draft.intro = id || null))} />
+            <IdPicker
+              noun="scene"
+              aria-label="Intro scene"
+              empty="No scene: the idle screen"
+              value={project.intro ?? ''}
+              options={names.scenes}
+              onChange={(id) => update((draft) => void (draft.intro = id || null))}
+            />
           </Field>
         </div>
-        {selection.thing === 'project' && selection.field === 'intro' ? <p className="text-xs text-red-600 dark:text-red-400">Pick a scene the game opens on.</p> : null}
+        {selection.thing === 'project' && selection.field === 'intro' ? (
+          <p className="text-xs text-red-600 dark:text-red-400">Pick a scene the game opens on.</p>
+        ) : null}
       </Section>
       <Section title="Preview">
         <Field label="Theme preset" hint="One of the React UI's presets, or its own look.">
@@ -181,7 +199,8 @@ function ProjectForm() {
       </Section>
       <Section title="Plugins">
         <p className="text-xs text-fd-muted-foreground">
-          Switch on the first-party plugins the preview should run. Their options are the JSON each plugin's function is called with. Their conditions and effects go in the builders as JSON, and their content in the pack's data below.
+          Switch on the first-party plugins the preview should run. Their options are the JSON each plugin's function is called with. Their conditions and
+          effects go in the builders as JSON, and their content in the pack's data below.
         </p>
         <div className="flex flex-col gap-2">
           {PLUGIN_IDS.map((id) => {
@@ -211,7 +230,12 @@ function ProjectForm() {
           })}
         </div>
         <Field label="Plugin content (the pack's data)" hint={'By plugin id, then list: { "quests": { "quests": [ ... ] } }.'}>
-          <JsonField label="Plugin data" rows={5} value={project.pack.data ?? {}} onChange={(data) => update((draft) => void (draft.pack.data = data && Object.keys(data).length ? data : undefined))} />
+          <JsonField
+            label="Plugin data"
+            rows={5}
+            value={project.pack.data ?? {}}
+            onChange={(data) => update((draft) => void (draft.pack.data = data && Object.keys(data).length ? data : undefined))}
+          />
         </Field>
       </Section>
     </div>

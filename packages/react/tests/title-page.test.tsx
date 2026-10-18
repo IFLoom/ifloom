@@ -197,7 +197,10 @@ describe('the pages', () => {
       const { back } = usePage()
       return <button onClick={back}>Gallery here</button>
     }
-    play({ pages: { gallery: { label: 'Gallery', component: Gallery }, hidden: { label: 'Hidden', component: Gallery, showOnTitle: false } }, credits: ['Written by a friend', { label: 'Site', href: 'https://example.com/' }] })
+    play({
+      pages: { gallery: { label: 'Gallery', component: Gallery }, hidden: { label: 'Hidden', component: Gallery, showOnTitle: false } },
+      credits: ['Written by a friend', { label: 'Site', href: 'https://example.com/' }],
+    })
     fireEvent.click(await screen.findByText('Gallery'))
     expect(screen.queryByText('Hidden')).toBeNull()
     fireEvent.click(screen.getByText('Gallery here'))

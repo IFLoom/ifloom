@@ -15,7 +15,11 @@ const games: [keyof typeof expected, () => Game][] = [
 ]
 
 function fileOf(game: Game, state: unknown): string {
-  return JSON.stringify({ ifloom: 1, meta: { game: game.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 1 }, state })
+  return JSON.stringify({
+    ifloom: 1,
+    meta: { game: game.id, slot: '1', name: 'Old', savedAt: 1, played: 0, turn: 0, when: null, player: null, packs: [], plugins: {}, version: 1 },
+    state,
+  })
 }
 
 describe('loadState', () => {
@@ -45,7 +49,10 @@ describe('loadState', () => {
     expect(loadState(null, game)).toEqual({ ok: false, reason: 'That is not a save file.' })
     expect(loadState('{}', game)).toEqual({ ok: false, reason: 'That is not a save file.' })
     expect(loadState({ ...OLD_SAVES[1], version: 0 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
-    expect(loadState({ ...OLD_SAVES[11], version: SAVE_VERSION + 1 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
+    expect(loadState({ ...OLD_SAVES[11], version: SAVE_VERSION + 1 }, game)).toEqual({
+      ok: false,
+      reason: 'That save is from a version this game cannot read.',
+    })
     expect(loadState({ ...OLD_SAVES[11], version: 9.5 }, game)).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
     const newer = { ...OLD_SAVES[11], plugins: { clock: { version: 3, state: {} } } }
     expect(loadState(newer, game)).toEqual({ ok: false, reason: 'That save was made with a newer version of clock.' })
@@ -55,7 +62,10 @@ describe('loadState', () => {
     const game = oldSavesGame()
     const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'activity', id: 'wait' }] })
     expect(unwrap(played)).toMatchObject({ version: SAVE_VERSION, media: { picks: {} } })
-    expect(replay(game, { game: game.id, start: { version: 0 } as unknown as GameState, commands: [] })).toEqual({ ok: false, reason: 'That save is from a version this game cannot read.' })
+    expect(replay(game, { game: game.id, start: { version: 0 } as unknown as GameState, commands: [] })).toEqual({
+      ok: false,
+      reason: 'That save is from a version this game cannot read.',
+    })
   })
 })
 

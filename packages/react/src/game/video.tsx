@@ -37,7 +37,13 @@ function useVideoSound(): { muted: boolean; volume: number } {
   const volumeId = (audio.channels.video ?? audio.channels.sfx)?.volumeSetting ?? ''
   const mute = useSetting(audio.muteSetting ?? '')
   const volume = useSetting(volumeId)
-  return { muted: mute === true, volume: rangeGain(view.settings.find((entry) => entry.id === volumeId), volume) }
+  return {
+    muted: mute === true,
+    volume: rangeGain(
+      view.settings.find((entry) => entry.id === volumeId),
+      volume,
+    ),
+  }
 }
 
 /** Start a video, quietly: a browser may refuse, and jsdom has no player at all. */

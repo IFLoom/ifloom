@@ -24,7 +24,10 @@ describe('The Corner Café', () => {
     expect(shown.stats.map((stat) => stat.text)).toEqual(['£120', '20'])
     expect(shown.entities.staff.entries.map((entry) => entry.name)).toEqual(['Ana'])
     expect(shown.entities.dish.plural).toBe('Menu')
-    expect(shown.entities.dish.entries.map((entry) => entry.stats.map((stat) => stat.text))).toEqual([['£4', '2'], ['£6', '3']])
+    expect(shown.entities.dish.entries.map((entry) => entry.stats.map((stat) => stat.text))).toEqual([
+      ['£4', '2'],
+      ['£6', '3'],
+    ])
     expect(shown.actions.map((action) => action.id)).toEqual(['end-week', 'lunch', 'soup', 'hire'])
   })
 

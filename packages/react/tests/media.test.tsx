@@ -249,7 +249,9 @@ describe('media in places, messages and posts', () => {
               ],
             },
             messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('flat'), body: [{ text: 'mum.hi' }] }] },
-            feed: { posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ text: 'post.cafe' }], video: 'art/clips/steam.mp4' }] },
+            feed: {
+              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ text: 'post.cafe' }], video: 'art/clips/steam.mp4' }],
+            },
           },
         },
       ],

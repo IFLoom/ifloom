@@ -42,8 +42,7 @@ const shells = definePlugin<Tally, { count: number }>({
   },
   commands: {
     drop: {
-      whyNot: (_state, args, { slice }) =>
-        slice.found.includes(String(args.shell)) ? undefined : 'You do not have that shell.',
+      whyNot: (_state, args, { slice }) => (slice.found.includes(String(args.shell)) ? undefined : 'You do not have that shell.'),
       run: (_state, args, { slice, set }) => set({ ...slice, found: slice.found.filter((shell) => shell !== args.shell) }),
     },
   },
@@ -51,7 +50,8 @@ const shells = definePlugin<Tally, { count: number }>({
   onTurn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
   view: (_state, { slice }) => ({ count: slice.found.length }),
   references: {
-    content: (game) => (game.data?.shells?.spots ?? []).map((spot) => ({ list: 'spots', id: spot.id, refs: [{ when: (spot as { id: string; when?: Condition }).when }] })),
+    content: (game) =>
+      (game.data?.shells?.spots ?? []).map((spot) => ({ list: 'spots', id: spot.id, refs: [{ when: (spot as { id: string; when?: Condition }).when }] })),
   },
 })
 
@@ -59,10 +59,7 @@ function withShells(): Game {
   return {
     ...fixture(),
     plugins: [shells],
-    activities: [
-      ...(fixture().activities ?? []),
-      { id: 'beachcomb', effects: [{ custom: 'shells/find', with: { shell: 'whelk' } }] },
-    ],
+    activities: [...(fixture().activities ?? []), { id: 'beachcomb', effects: [{ custom: 'shells/find', with: { shell: 'whelk' } }] }],
   }
 }
 
@@ -191,7 +188,10 @@ describe('plugins', () => {
       actions: [{ id: 'drop', label: 'Drop', command: { type: 'custom' as const, name: 'shells/fling' } }],
     }
     expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
-    const items = { ...withShells(), items: [{ id: 'cloth', name: 'cloth', desc: '', use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }] }
+    const items = {
+      ...withShells(),
+      items: [{ id: 'cloth', name: 'cloth', desc: '', use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }],
+    }
     expect(problemsOf(items)).toContain('item cloth: no plugin effect named "shells/polish"')
   })
 })
@@ -269,7 +269,14 @@ describe('plugins that bring entities and speakers', () => {
     entities: [{ id: 'bea', of: 'singer', name: 'Bea the soloist', stats: { voice: 9 } }],
     scenes: [{ id: 'hymn', speaker: 'ann', body: [{ text: 'hymn' }], choices: [] }],
     prose: { hymn: 'A long note.' },
-    data: { choir: { singers: [{ id: 'ann', name: 'Ann' }, { id: 'bea', name: 'Bea' }] } },
+    data: {
+      choir: {
+        singers: [
+          { id: 'ann', name: 'Ann' },
+          { id: 'bea', name: 'Bea' },
+        ],
+      },
+    },
   }
 
   it('start with the plugin’s kinds and entities, a game’s own declaration winning', () => {

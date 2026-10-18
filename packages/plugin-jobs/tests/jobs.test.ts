@@ -14,7 +14,9 @@ import {
   type Game,
   type GameState,
   type Pack,
-  type Plugin, type CommandRef } from '@ifloom/engine'
+  type Plugin,
+  type CommandRef,
+} from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
 import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, workedToday, type JobDef, type JobsView } from '../src/index.ts'
@@ -89,7 +91,13 @@ describe('jobs, on their own', () => {
   it('hire only when the requirements hold, in their own words', () => {
     const g = game()
     expect(whyNot(fresh(g), g, applyFor('cafe'))).toBe('Ava needs to know you first.')
-    expect(board(fresh(g), g)).toMatchObject({ hired: false, rank: null, apply: { disabled: 'Ava needs to know you first.' }, work: null, pay: { stats: [{ id: 'coins', amount: 12, text: '12 coins' }] } })
+    expect(board(fresh(g), g)).toMatchObject({
+      hired: false,
+      rank: null,
+      apply: { disabled: 'Ava needs to know you first.' },
+      work: null,
+      pay: { stats: [{ id: 'coins', amount: 12, text: '12 coins' }] },
+    })
     const state = run(fresh(g), g, act('meet'), applyFor('cafe'))
     expect(holds(state, hasJob('cafe'), g)).toBe(true)
     expect(holds(state, hasJob('cafe', 'help'), g)).toBe(true)
@@ -184,7 +192,10 @@ describe('jobs, on their own', () => {
                   title: 'Bad',
                   blocked: [{ when: { not: { item: 'badge' } }, reason: 'x' }],
                   shift: { cost: { stamina: 1 } },
-                  ranks: [{ id: 'a', title: 'A', pay: { gold: 1 }, requires: { shifts: 1 } }, { id: 'a', title: 'A', pay: {} }],
+                  ranks: [
+                    { id: 'a', title: 'A', pay: { gold: 1 }, requires: { shifts: 1 } },
+                    { id: 'a', title: 'A', pay: {} },
+                  ],
                   fire: { missed: 0 },
                 },
               ],
@@ -266,12 +277,22 @@ describe('the jobs panel', () => {
   })
 
   it('checks the jobs a panel lists', () => {
-    const loaded = loadGame([{ id: 'town', schema: SCHEMA, data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } }, activities: [
-        { id: 'a', effects: [openJobs(['cafe'])] },
-        { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
-        { id: 'c', effects: [{ kind: 'panel', panel: 'jobs', with: { job: 'cafe' } }] },
-        { id: 'd', effects: [openJobs()] },
-      ] }], { id: 'g', title: 'g', plugins: [jobs()] })
+    const loaded = loadGame(
+      [
+        {
+          id: 'town',
+          schema: SCHEMA,
+          data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } },
+          activities: [
+            { id: 'a', effects: [openJobs(['cafe'])] },
+            { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
+            { id: 'c', effects: [{ kind: 'panel', panel: 'jobs', with: { job: 'cafe' } }] },
+            { id: 'd', effects: [openJobs()] },
+          ],
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [jobs()] },
+    )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'activity b: unknown job "circus"',
       "activity c: the jobs panel's job is a list of job ids",

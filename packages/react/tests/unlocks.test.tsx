@@ -19,7 +19,14 @@ const content: Record<string, LockedContent> = { supporter: await lockContent(CO
 
 function game(withPlugin = true): Game {
   return loadGame(
-    [{ id: 'street', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [] }], ...(withPlugin ? { data: { unlocks: { unlocks: [supporter] } } } : {}) }],
+    [
+      {
+        id: 'street',
+        schema: SCHEMA,
+        scenes: [{ id: 'intro', body: [], choices: [] }],
+        ...(withPlugin ? { data: { unlocks: { unlocks: [supporter] } } } : {}),
+      },
+    ],
     { id: 'unlocks-ui', title: 'High Street', plugins: withPlugin ? [unlocks()] : [] },
   ).game
 }
@@ -70,9 +77,17 @@ describe('entering a code', () => {
   })
 
   it('shows what the profile could not open under the box', () => {
-    render(<GameShell runner={runnerFor()} pages={{}} unlocks={{ ...option(), problems: ['unlock:supporter · its code has changed since it was entered; enter the new one'] }} />)
+    render(
+      <GameShell
+        runner={runnerFor()}
+        pages={{}}
+        unlocks={{ ...option(), problems: ['unlock:supporter · its code has changed since it was entered; enter the new one'] }}
+      />,
+    )
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Settings' })))
-    expect(document.querySelector('[data-part="unlock-problem"]')?.textContent).toBe('unlock:supporter · its code has changed since it was entered; enter the new one')
+    expect(document.querySelector('[data-part="unlock-problem"]')?.textContent).toBe(
+      'unlock:supporter · its code has changed since it was entered; enter the new one',
+    )
   })
 
   it('is nowhere without unlocks on the provider, and the panel then lists the unlocks with no box', () => {

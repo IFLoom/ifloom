@@ -7,7 +7,14 @@ const clock = calendar()
 
 const plugin = feed()
 /** The feeds, as the base game's content. */
-const feeds = { feed: { feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }] } }
+const feeds = {
+  feed: {
+    feeds: [
+      { id: 'social', name: 'Social' },
+      { id: 'board', name: 'Notice board' },
+    ],
+  },
+}
 
 function game(): Game {
   const pack: Pack = {
@@ -90,9 +97,26 @@ describe('video on a post', () => {
     const pack: Pack = {
       id: 'town',
       schema: SCHEMA,
-      activities: [{ id: 'wait', effects: [pass(1)] }, { id: 'film', effects: [postTo('social', 'pond', { text: 'own.pond', video: 'clips/pond.mp4' })] }],
+      activities: [
+        { id: 'wait', effects: [pass(1)] },
+        { id: 'film', effects: [postTo('social', 'pond', { text: 'own.pond', video: 'clips/pond.mp4' })] },
+      ],
       prose: { 'post.fete': 'Bunting going up.\n\n[[widevideo:fete|once]]', 'own.pond': 'Ducks.' },
-      data: { feed: { posts: [{ id: 'fete', feed: 'board', from: 'Parish council', when: day({ gte: 1 }), body: [{ text: 'post.fete' }], image: 'art/fete.jpg', video: 'art/fete.webm' }] } },
+      data: {
+        feed: {
+          posts: [
+            {
+              id: 'fete',
+              feed: 'board',
+              from: 'Parish council',
+              when: day({ gte: 1 }),
+              body: [{ text: 'post.fete' }],
+              image: 'art/fete.jpg',
+              video: 'art/fete.webm',
+            },
+          ],
+        },
+      },
     }
     const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], data: feeds })
     expect(problems).toEqual([])
@@ -107,4 +131,3 @@ describe('video on a post', () => {
     ])
   })
 })
-

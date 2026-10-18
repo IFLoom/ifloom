@@ -128,7 +128,13 @@ export function HeroDemo() {
           </figcaption>
           <div className={s.screen}>
             <div className={s.head}>
-              {view.title ? <h3 key="t" className={`${s.title} ${s.pop}`}>The Corner Café</h3> : <span key="s" className={`${s.skeleton} ${s.wide}`} />}
+              {view.title ? (
+                <h3 key="t" className={`${s.title} ${s.pop}`}>
+                  The Corner Café
+                </h3>
+              ) : (
+                <span key="s" className={`${s.skeleton} ${s.wide}`} />
+              )}
               {view.coins && (
                 <span className={`${s.stat} ${s.pop}`}>
                   Coins <b>£3</b>

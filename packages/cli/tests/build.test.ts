@@ -55,12 +55,15 @@ describe('inlineAssets', () => {
 })
 
 describe('checkGame', () => {
-  it('prints a loader problem in the loader\'s words', () => {
-    const loaded = loadGame([{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }], {
-      id: 'town',
-      title: 'Town',
-      introScene: 'intro',
-    })
+  it("prints a loader problem in the loader's words", () => {
+    const loaded = loadGame(
+      [{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }],
+      {
+        id: 'town',
+        title: 'Town',
+        introScene: 'intro',
+      },
+    )
     expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 
@@ -100,7 +103,14 @@ describe('the files a game names', () => {
               radio: { playlist: ['calm'] },
             },
           },
-          media: { pools: { door: [{ src: 'door/blue.jpg', tags: ['blue'] }, { src: 'door/red.jpg', tags: ['red'] }] } },
+          media: {
+            pools: {
+              door: [
+                { src: 'door/blue.jpg', tags: ['blue'] },
+                { src: 'door/red.jpg', tags: ['red'] },
+              ],
+            },
+          },
           scenes: [
             {
               id: 'knock',
@@ -118,7 +128,10 @@ describe('the files a game names', () => {
             'post.cafe': 'Cakes.\n\n[[wide:cafe/cakes]]',
           },
           data: {
-            feed: { feeds: [{ id: 'town', name: 'Town' }], posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }] },
+            feed: {
+              feeds: [{ id: 'town', name: 'Town' }],
+              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }],
+            },
           },
         },
       ],
@@ -161,7 +174,15 @@ describe('the files a game names', () => {
   })
 
   it('reports a missing sound, picture, video, poster and pool file, each where it is named', () => {
-    const dir = without('audio/bell.ogg', 'art/flat/letter.png', 'art/flat/rain.mp4', 'art/flat/rain-still.jpg', 'art/door/red.jpg', 'art/cafe/steam.mp4', 'art/flat/kettle.jpg')
+    const dir = without(
+      'audio/bell.ogg',
+      'art/flat/letter.png',
+      'art/flat/rain.mp4',
+      'art/flat/rain-still.jpg',
+      'art/door/red.jpg',
+      'art/cafe/steam.mp4',
+      'art/flat/kettle.jpg',
+    )
     expect(checkFiles(files(), dir)).toEqual([
       `scene knock: no file ${join(dir, 'art/flat/letter.png')}`,
       `scene knock: no file ${join(dir, 'art/flat/rain.mp4')}`,

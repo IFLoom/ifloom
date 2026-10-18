@@ -17,19 +17,19 @@ import type { GameState } from './types.ts'
  * doesn't look at tokens.
  */
 export function fillTokens(text: string, state: GameState, game: Game): string {
-  return text
-        .replace(/\{\{n:([A-Za-z0-9_-]+)\.([A-Za-z0-9_]+)\}\}/g, (_match, storyline, key) =>
-      String(count(state, storyline, key)),
-    )
-    .replace(VALUE_TOKEN, (match, name, args) => {
-      const fn = customValue(game, name)
-      return fn ? String(fn(state, tokenArgs(args))) : match
-    })
-    // kv keys last: a value the player typed is shown as typed, never read as a token.
-    .replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (match, key) => {
-      const value = state.kv[key]
-      return typeof value === 'string' || typeof value === 'number' ? String(value) : match
-    })
+  return (
+    text
+      .replace(/\{\{n:([A-Za-z0-9_-]+)\.([A-Za-z0-9_]+)\}\}/g, (_match, storyline, key) => String(count(state, storyline, key)))
+      .replace(VALUE_TOKEN, (match, name, args) => {
+        const fn = customValue(game, name)
+        return fn ? String(fn(state, tokenArgs(args))) : match
+      })
+      // kv keys last: a value the player typed is shown as typed, never read as a token.
+      .replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (match, key) => {
+        const value = state.kv[key]
+        return typeof value === 'string' || typeof value === 'number' ? String(value) : match
+      })
+  )
 }
 
 /** A value token: `{{v:name}}`, or `{{v:name key=value …}}` with arguments. */
@@ -63,11 +63,7 @@ export function memberKey(member: VariantMember): string {
  * their words from. `line(key, state)` fills the tokens for that save;
  * without a state it returns the line as written.
  */
-export function proseStore(
-  game: Game,
-  lines: Record<string, string>,
-  variants: Record<string, readonly VariantMember[]> = {},
-): ProseStore {
+export function proseStore(game: Game, lines: Record<string, string>, variants: Record<string, readonly VariantMember[]> = {}): ProseStore {
   const keys: Record<string, string[]> = {}
   const weights: Record<string, Record<string, number>> = {}
   for (const [name, members] of Object.entries(variants)) {

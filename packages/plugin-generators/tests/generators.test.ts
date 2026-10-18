@@ -20,7 +20,14 @@ const pools: PoolDef[] = [
   { id: 'first', values: ['Ana', 'Ben', 'Cleo', 'Dev', 'Esme', 'Finn'] },
   { id: 'last', values: ['Hart', 'Moss', 'Reed'] },
   // Most people walk; a few have a dog; one in a hundred a parrot.
-  { id: 'company', values: [{ value: 'none', weight: 60 }, { value: 'dog', weight: 39 }, { value: 'parrot', weight: 1 }] },
+  {
+    id: 'company',
+    values: [
+      { value: 'none', weight: 60 },
+      { value: 'dog', weight: 39 },
+      { value: 'parrot', weight: 1 },
+    ],
+  },
 ]
 const visitor: TemplateDef = {
   id: 'visitor',

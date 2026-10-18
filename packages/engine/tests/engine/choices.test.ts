@@ -140,7 +140,10 @@ describe('a new game', () => {
     const moved = unwrap(loadState(old, game))
     expect(moved).not.toHaveProperty('time')
     expect(moved.plugins.calendar).toEqual({ version: 1, state: { day: 3, period: 'late' } })
-    expect(unwrap(loadState({ ...now, version: 4, time: { day: 1, period: 'morning' } }, game)).plugins.calendar).toEqual({ version: 1, state: { day: 1, period: 'morning' } })
+    expect(unwrap(loadState({ ...now, version: 4, time: { day: 1, period: 'morning' } }, game)).plugins.calendar).toEqual({
+      version: 1,
+      state: { day: 1, period: 'morning' },
+    })
   })
 
   it('carries a version-5 save’s place to the places plugin', () => {

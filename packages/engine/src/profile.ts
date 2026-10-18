@@ -91,9 +91,9 @@ export function profile(game: Pick<Game, 'id'>, driver: SaveDriver): Profile {
   }
 
   return {
-    get: <T,>(namespace: string) => next(async () => (await read())[namespace] as T | undefined),
+    get: <T>(namespace: string) => next(async () => (await read())[namespace] as T | undefined),
     set: (namespace, value) => next(() => write(namespace, value)),
-    update: <T,>(namespace: string, change: (current: T | undefined) => T | undefined) =>
+    update: <T>(namespace: string, change: (current: T | undefined) => T | undefined) =>
       next(async () => {
         const current = (await read())[namespace] as T | undefined
         const value = change(current)

@@ -3,7 +3,7 @@ import { ref, useId } from 'vue'
 import type { InlineSpan } from '@ifloom/engine'
 import { runner } from './runner.ts'
 
-// A line's words, with its inline actions and tooltips as buttons in it. A tooltip, or a
+// A line's words, with bold and italics, and its inline actions and tooltips as buttons in it. A tooltip, or a
 // greyed-out action's reason, is a note after the button that shows on hover, on focus
 // and on a tap (see `.note` in styles.css).
 defineProps<{ text: string; spans?: InlineSpan[] }>()
@@ -21,6 +21,8 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
   <template v-if="!spans">{{ text }}</template>
   <template v-for="(span, at) in spans" v-else :key="at">
     <template v-if="span.kind === 'text'">{{ span.text }}</template>
+    <strong v-else-if="span.kind === 'bold'">{{ span.text }}</strong>
+    <em v-else-if="span.kind === 'italic'">{{ span.text }}</em>
     <template v-else>
       <button
         type="button"

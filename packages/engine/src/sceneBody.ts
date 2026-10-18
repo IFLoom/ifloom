@@ -20,12 +20,17 @@ export type InlineSpan =
   | { kind: 'text'; text: string }
   | { kind: 'action'; text: string; choice: RenderedChoice }
   | { kind: 'tip'; text: string; tip: string }
+  /** Words to stress, from `**words**`. `text` is the words alone. */
+  | { kind: 'bold'; text: string }
+  /** Words in italics, from `*words*`. `text` is the words alone. */
+  | { kind: 'italic'; text: string }
 
 export type SceneBeat =
   /**
-   * A paragraph. `spans` is there only when it holds inline actions or
-   * tooltips: the same words in pieces. `text` always has the words alone,
-   * for a UI that draws text and nothing else.
+   * A paragraph. `spans` is there only when it holds inline actions,
+   * tooltips, bold or italics: the same words in pieces. `text` always has
+   * the words alone, without the markup, for a UI that draws text and
+   * nothing else, a screen reader, the backlog and the playtest.
    */
   | { kind: 'text'; text: string; spans?: InlineSpan[] }
   | { kind: 'mono'; text: string }
@@ -243,29 +248,104 @@ function revealBeat(block: string): Extract<SceneBeat, { kind: 'reveal' }> | nul
  */
 export const INLINE_MARKUP = /\[\[(act|tip):([^\]|]*)(?:\|([^\]]*))?\]\]/g
 
-/** A piece of a line, as `inlineMarkup` reads it: words, or an inline action or tooltip as written. */
+/** A piece of a line, as `inlineMarkup` reads it: words, or an inline action, tooltip, bold or italics as written. */
 export type InlinePart =
   | { kind: 'text'; text: string }
   /** `[[act:id]]`, with the words to show if it gives them. */
   | { kind: 'act'; id: string; text?: string; markup: string }
   /** `[[tip:key|words]]`. */
   | { kind: 'tip'; key: string; text: string; markup: string }
+  /** `**words**`: `text` is the words alone. */
+  | { kind: 'bold'; text: string; markup: string }
+  /** `*words*`: `text` is the words alone. */
+  | { kind: 'italic'; text: string; markup: string }
+
+type Stars = { stars: number; from: number; to: number; opens: boolean; closes: boolean }
+type Token = { chars: string } | Stars
 
 /**
- * A line of prose cut at its inline markup, or null when it has none. Markup
- * with no id or key, or a tooltip with no words, is left in the words as
- * written, so it shows on screen; the content checker reports it.
+ * Words cut at their `**bold**` and `*italic*`, with `\*` read as a star
+ * shown as it is. As in Markdown, a star opens only when a space doesn't
+ * follow it and closes only when a space doesn't come before it, so `5 * 3`
+ * stays as written. Stars left
+ * as written because they open and never close, come three or more in a row
+ * or sit inside other styled words are listed in `problems`, for the content
+ * checker. Internal; `inlineMarkup` and the checks use it.
+ */
+export function emphasis(text: string): { parts: InlinePart[]; problems: string[] } {
+  const tokens: Token[] = []
+  const chars = (more: string) => {
+    const last = tokens.at(-1)
+    if (last && 'chars' in last) last.chars += more
+    else tokens.push({ chars: more })
+  }
+  for (let at = 0; at < text.length; ) {
+    if (text[at] === '\\' && text[at + 1] === '*') {
+      chars('*')
+      at += 2
+      continue
+    }
+    if (text[at] !== '*') {
+      chars(text[at])
+      at += 1
+      continue
+    }
+    let to = at
+    while (text[to] === '*') to += 1
+    const before = text[at - 1]
+    const after = text[to]
+    tokens.push({ stars: to - at, from: at, to, opens: after !== undefined && !/\s/.test(after), closes: before !== undefined && !/\s/.test(before) })
+    at = to
+  }
+  const parts: InlinePart[] = []
+  const problems: string[] = []
+  const words = (more: string) => {
+    const last = parts.at(-1)
+    if (last?.kind === 'text') last.text += more
+    else if (more) parts.push({ kind: 'text', text: more })
+  }
+  const shown = (token: Token) => ('chars' in token ? token.chars : '*'.repeat(token.stars))
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if ('chars' in token) {
+      words(token.chars)
+      continue
+    }
+    if (token.stars > 2) {
+      if (token.opens || token.closes) problems.push(`"${shown(token)}" is shown as written: use ** for bold or * for italics, not both`)
+      words(shown(token))
+      continue
+    }
+    const close = token.opens ? tokens.findIndex((other, at) => at > index && 'stars' in other && other.stars === token.stars && other.closes) : -1
+    if (close < 0) {
+      if (token.opens) problems.push(`"${shown(token)}" is not closed, so it is shown as written; close it, or write \\* for a star`)
+      words(shown(token))
+      continue
+    }
+    const inside = tokens.slice(index + 1, close)
+    if (inside.some((other) => 'stars' in other && (other.opens || other.closes))) problems.push('bold and italics don\'t go inside each other; the inner stars are shown as written')
+    const end = tokens[close] as Stars
+    const styled = { text: inside.map(shown).join(''), markup: text.slice(token.from, end.to) }
+    parts.push(token.stars === 2 ? { kind: 'bold', ...styled } : { kind: 'italic', ...styled })
+    index = close
+  }
+  return { parts, problems }
+}
+
+/**
+ * A line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`,
+ * `**bold**`, `*italic*`), or null when it has none. Markup with no id or
+ * key, a tooltip with no words, or stars that don't close are left in the
+ * words as written, so they show on screen; the content checker reports
+ * them. A `\*` is a star shown as it is. Bold and italics inside an inline
+ * action's or a tooltip's words, or around them, are not read.
  */
 export function inlineMarkup(text: string): InlinePart[] | null {
-  if (!text.includes('[[act:') && !text.includes('[[tip:')) return null
-  const parts: InlinePart[] = []
+  if (!text.includes('[[act:') && !text.includes('[[tip:') && !text.includes('*')) return null
+  const cut: InlinePart[] = []
   let last = 0
-  let found = false
   const words = (until: number) => {
-    if (until <= last) return
-    const prev = parts.at(-1)
-    if (prev?.kind === 'text') prev.text += text.slice(last, until)
-    else parts.push({ kind: 'text', text: text.slice(last, until) })
+    if (until > last) cut.push({ kind: 'text', text: text.slice(last, until) })
   }
   for (const match of text.matchAll(INLINE_MARKUP)) {
     const id = match[2].trim()
@@ -273,13 +353,20 @@ export function inlineMarkup(text: string): InlinePart[] | null {
     const ok = id !== '' && (match[1] === 'act' ? shown !== '' : Boolean(shown))
     if (!ok) continue
     words(match.index)
-    if (match[1] === 'act') parts.push({ kind: 'act', id, ...(shown !== undefined ? { text: shown } : {}), markup: match[0] })
-    else parts.push({ kind: 'tip', key: id, text: shown!, markup: match[0] })
+    if (match[1] === 'act') cut.push({ kind: 'act', id, ...(shown !== undefined ? { text: shown } : {}), markup: match[0] })
+    else cut.push({ kind: 'tip', key: id, text: shown!, markup: match[0] })
     last = match.index + match[0].length
-    found = true
   }
-  if (!found) return null
   words(text.length)
+  const parts: InlinePart[] = []
+  for (const part of cut) {
+    for (const piece of part.kind === 'text' ? emphasis(part.text).parts : [part]) {
+      const prev = parts.at(-1)
+      if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
+      else parts.push(piece)
+    }
+  }
+  if (parts.length === 1 && parts[0].kind === 'text' && parts[0].text === text) return null
   return parts
 }
 

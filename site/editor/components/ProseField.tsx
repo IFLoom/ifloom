@@ -96,7 +96,7 @@ function Beat({ beat }: { beat: SceneBeat }) {
   }
 }
 
-/** A line with its inline actions drawn as links and its tooltips underlined, each saying what it names. */
+/** A line with its inline actions drawn as links, its tooltips underlined, each saying what it names, and its bold and italics. */
 function Inline({ text }: { text: string }) {
   const parts = inlineMarkup(text)
   if (!parts) return <>{text}</>
@@ -105,6 +105,10 @@ function Inline({ text }: { text: string }) {
       {parts.map((part, i) =>
         part.kind === 'text' ? (
           <span key={i}>{part.text}</span>
+        ) : part.kind === 'bold' ? (
+          <strong key={i}>{part.text}</strong>
+        ) : part.kind === 'italic' ? (
+          <em key={i}>{part.text}</em>
         ) : part.kind === 'act' ? (
           <span key={i} className="font-medium text-fd-primary underline underline-offset-2" title={`Inline action: choice ${part.id}`}>
             {part.text ?? part.id}

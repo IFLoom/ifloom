@@ -522,3 +522,13 @@
 [data-part="drawer"] [data-part="sidebar"] {
   border-right: 0;
 }
+
+/* Bold and italics as a printed book sets them: a heavier weight, and true italics. */
+[data-part="bold"] {
+  font-weight: 600;
+}
+
+[data-part="italic"] {
+  font-style: italic;
+  letter-spacing: 0.01em;
+}

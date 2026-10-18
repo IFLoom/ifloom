@@ -1,6 +1,6 @@
 /**
- * Inline actions and tooltips in the prose: the `spans` of a text or spoken
- * beat. An inline action is a button in the line that presses its choice; a
+ * Inline actions, tooltips, bold and italics in the prose: the `spans` of a
+ * text or spoken beat. An inline action is a button in the line that presses its choice; a
  * tooltip is a button in the line that shows a short note. Both show their
  * note in a small bubble on hover, on keyboard focus and on a tap, and close
  * it on Escape or a tap elsewhere. The note is also the button's description
@@ -194,13 +194,27 @@ function InlineActionImpl({ text, choice, className }: { text: string; choice: E
  */
 export const InlineAction = overridable('InlineAction', InlineActionImpl)
 
-/** A line's spans: words as they are, inline actions and tooltips as buttons in the line. */
+/** Words in bold, from `**words**`: a `strong` with the part `bold`. */
+function Bold({ text }: { text: string }) {
+  return <strong {...usePart('bold', 'font-bold')}>{text}</strong>
+}
+
+/** Words in italics, from `*words*`: an `em` with the part `italic`. */
+function Italic({ text }: { text: string }) {
+  return <em {...usePart('italic', 'italic')}>{text}</em>
+}
+
+/** A line's spans: words as they are, bold and italics, inline actions and tooltips as buttons in the line. */
 export function InlineSpans({ spans }: { spans: InlineSpan[] }) {
   return (
     <>
       {spans.map((span, index) =>
         span.kind === 'text' ? (
           <Fragment key={index}>{span.text}</Fragment>
+        ) : span.kind === 'bold' ? (
+          <Bold key={index} text={span.text} />
+        ) : span.kind === 'italic' ? (
+          <Italic key={index} text={span.text} />
         ) : span.kind === 'tip' ? (
           <Tip key={index} text={span.text} tip={span.tip} />
         ) : (

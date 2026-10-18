@@ -148,7 +148,7 @@ function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
 let notes = 0
 
 /**
- * A line's words, with its inline actions and tooltips as buttons in it. A
+ * A line's words, with bold and italics, and its inline actions and tooltips as buttons in it. A
  * tooltip, or a greyed-out action's reason, is a note after the button that
  * shows on hover, on focus and on a tap (see `.note` in styles.css).
  */
@@ -160,6 +160,10 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
   for (const span of spans) {
     if (span.kind === 'text') {
       line.append(span.text)
+      continue
+    }
+    if (span.kind === 'bold' || span.kind === 'italic') {
+      add(line, span.kind === 'bold' ? 'strong' : 'em', span.text)
       continue
     }
     const button = add(line, 'button', span.text, span.kind === 'tip' ? 'tip' : 'inline-action')

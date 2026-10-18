@@ -371,3 +371,9 @@
 [data-part="drawer"] [data-part="sidebar"] {
   margin: 0.75rem;
 }
+
+/* Bold and italics kept quiet, as in an interface. */
+[data-part="bold"] {
+  font-weight: 650;
+  color: var(--foreground);
+}

@@ -662,3 +662,10 @@ body {
   background: var(--background);
   box-shadow: none;
 }
+
+/* A monospace screen has no weights to spare, so bold glows instead. */
+[data-part="bold"] {
+  font-weight: inherit;
+  color: var(--primary);
+  text-shadow: 0 0 6px color-mix(in oklch, var(--primary) 60%, transparent);
+}

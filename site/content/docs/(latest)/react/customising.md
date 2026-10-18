@@ -556,6 +556,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `inline-action` | An [inline action](/docs/react/components#inlineaction) in the prose, a button inside the line. Carries `data-choice`, and `data-disabled` while it's greyed out (it stays focusable, with `aria-disabled`). Each preset styles it as its own kind of link. |
 | `tip` | A [tooltip](/docs/react/components#tip)'s words in the prose, a button underlined with dots. |
 | `tip-content` | The bubble with a tooltip's note, or an inline action's reason. It's put in the page's `body`, with `role="tooltip"`, and carries `data-open` while it shows. |
+| `bold` | Words in [bold](/docs/reference/prose#bold-and-italics) in the prose, a `<strong>`. The presets give it their own weight or colour, and the terminal preset makes it glow. |
+| `italic` | Words in [italics](/docs/reference/prose#bold-and-italics) in the prose, an `<em>`. |
 
 ### Pictures, videos and the stage
 

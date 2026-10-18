@@ -171,8 +171,9 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[reveal]]`, `[[reveal:1500]]`, `[[reveal:1500\|slide-up]]` | `{ kind: 'reveal', delay, as, at }`. Nothing to draw: what follows waits. |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
+| `… **closed** …`, `… *again* …` inside a paragraph | The same, with a `bold` or `italic` span. See [Bold and italics](#bold-and-italics). |
 
-There's no markup for emphasis or for styling a line. `**bold**` and `*italic*` are left as written, and a paragraph can't carry a class. A line that should stand out, such as a warning that work is due, is a block of its own with a `when`, and your UI decides how it looks. For news the player shouldn't miss, raise a [notice](/docs/reference/notices) instead. Inside the line, a [tooltip](#inline-actions-and-tooltips) can carry the detail.
+A paragraph can't carry a class. A line that should stand out, such as a warning that work is due, is a block of its own with a `when`, and your UI decides how it looks. For news the player shouldn't miss, raise a [notice](/docs/reference/notices) instead. Inside the line, [bold or italics](#bold-and-italics) can stress a word and a [tooltip](#inline-actions-and-tooltips) can carry the detail.
 
 ### Speech
 
@@ -327,6 +328,27 @@ const kitchen: DataScene = {
 - Inline markup in a `> ` line, a picture's alt text or a fenced section is shown as written.
 - The backlog keeps an inline action as its words, with nothing to press. Tooltips stay.
 
+### Bold and italics
+
+Two stars around words make them bold, and one star makes them italic, as in Markdown. They go inside a paragraph, in narration or a spoken line:
+
+```md
+The sign on the door says **Closed**, but the light is *still* on.
+
+Ava: "I said *one* croissant."
+```
+
+The paragraph's beat gets `spans`, with a `bold` or `italic` span for the styled words. Its `text` is the words without the stars, so a screen reader, the backlog and the playtest read "The sign on the door says Closed, but the light is still on."
+
+To show a star as it is, write `\*`: `Five \* three` shows "Five * three". You rarely need to, because a star only opens when a space doesn't follow it and only closes when a space doesn't come before it. `5 * 3 = 15` and a line of `* * *` stay as written.
+
+**Gotchas:**
+- Bold and italics don't go inside each other, and `***words***` isn't read. The stars are shown as written, and the loader reports them.
+- A star that opens and never closes, such as `*sigh`, is shown as written, and the loader reports it. Close it, or write `\*`.
+- Stars around an inline action or a tooltip (`**[[act:go]]**`), or inside their words, are shown as written, and the loader reports the first kind.
+- A `> ` line, a picture's alt text, a fenced section and a choice's label show stars as written.
+- In a TypeScript string, `\*` is written `'\\*'`, because the backslash has to survive the string.
+
 ### Fenced sections
 
 `[[mail]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` open a section that runs to the matching close tag, across blank lines. Text before and after is parsed as usual. In `mail`, leading `From:`, `To:`, `Cc:`, `Bcc:`, `Subject:` and `Date:` lines become `headers` (`{ key, value }`, in order). One blank line after them is skipped, and the rest is `body`.
@@ -369,7 +391,7 @@ type SceneBeat =
 
 One piece of a scene. A UI switches on `kind`, and draws nothing for `sound` or `reveal`. A `reveal` beat marks where held-back beats start: see [Reveals](#reveals).
 
-A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw. Its `text` is the same words without the markup either way.
+A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 
 A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`, worked out from its [flags](#videos). Without flags they're `true`, `true`, `true` and `false`. With `controls`, `autoplay` is `false`.
 
@@ -384,15 +406,18 @@ type InlineSpan =
   | { kind: 'text'; text: string }
   | { kind: 'action'; text: string; choice: RenderedChoice }
   | { kind: 'tip'; text: string; tip: string }
+  | { kind: 'bold'; text: string }
+  | { kind: 'italic'; text: string }
 ```
 
-One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips), in order. Joined, the `text` of every span is the beat's `text`.
+One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips) or [bold or italics](#bold-and-italics), in order. Joined, the `text` of every span is the beat's `text`.
 
 - `text` is words to draw as they are.
 - `action` is an inline action: `text` is the words of its link, and `choice` is what it presses, as [`view.scene.choices`](/docs/reference/view#the-scene) would have it (`command`, `disabled`, `price`, `irreversible`, `warning`). Send `choice.command` when it's pressed and `disabled` is unset.
 - `tip` is a tooltip: `text` is the words shown, and `tip` the note, filled in for this save.
+- `bold` and `italic` are words to draw in bold or in italics, without their stars.
 
-A UI draws an `action` as a button in the line and a `tip` as a button that shows its note. The React UI does both with [`InlineAction`](/docs/react/components#inlineaction) and [`Tip`](/docs/react/components#tip). For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
+A UI draws an `action` as a button in the line, a `tip` as a button that shows its note, and `bold` and `italic` as `<strong>` and `<em>`. A UI that doesn't know a kind can draw its `text`, and the line still reads. The React UI does all four, with [`InlineAction`](/docs/react/components#inlineaction), [`Tip`](/docs/react/components#tip) and the parts `bold` and `italic`. For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ## parseBeats
 
@@ -402,7 +427,7 @@ import { parseBeats } from '@ifloom/engine'
 function parseBeats(body: string): SceneBeat[]
 ```
 
-The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]` and `[[tip:]]` in the text: the view draws them, because only the view knows the choices and the prose.
+The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]` and the stars of bold and italics in the text: the view draws them, because only the view knows the choices and the prose.
 
 ## inlineMarkup
 
@@ -415,9 +440,11 @@ type InlinePart =
   | { kind: 'text'; text: string }
   | { kind: 'act'; id: string; text?: string; markup: string }
   | { kind: 'tip'; key: string; text: string; markup: string }
+  | { kind: 'bold'; text: string; markup: string }
+  | { kind: 'italic'; text: string; markup: string }
 ```
 
-A line cut at its `[[act:]]` and `[[tip:]]` markup, as written, or `null` when it has none. `markup` is the markup itself. Malformed markup (no id or key, a tooltip with no words) stays in the text around it. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
+A line cut at its `[[act:]]`, `[[tip:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip with no words, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
 
 ```ts
 inlineMarkup('Ring. [[act:answer|Pick up]]')

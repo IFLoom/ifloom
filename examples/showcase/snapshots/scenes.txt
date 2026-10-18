@@ -134,7 +134,7 @@ You take the stool by the window. A bus goes by, then a man with a ladder, then 
   [>] Finish your cup
 
 === intro @ moving-day
-The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a [[tip:intro.launderette|launderette]]; it smells of warm cotton.
+The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 
 [[reveal:1200]]
 
@@ -142,7 +142,7 @@ Tomorrow you start learning the town. Tonight you unpack, and the cat needs a na
   [>] Unpack
 
 === intro @ first-morning
-The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a [[tip:intro.launderette|launderette]]; it smells of warm cotton.
+The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 
 [[reveal:1200]]
 
@@ -150,7 +150,7 @@ Tomorrow you start learning the town. Tonight you unpack, and the cat needs a na
   [>] Unpack
 
 === intro @ a-week-in
-The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a [[tip:intro.launderette|launderette]]; it smells of warm cotton.
+The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 
 [[reveal:1200]]
 

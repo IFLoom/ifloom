@@ -29,7 +29,7 @@ function house(): Game {
           },
         ],
         prose: {
-          hall: 'The phone rings. [[act:answer|Pick it up]], or [[act:knock|knock]] on the door. The [[tip:hall.caller|caller]] waits.',
+          hall: 'The phone rings. [[act:answer|Pick it up]], or [[act:knock|knock]] on the door. The [[tip:hall.caller|caller]] waits.\n\nIt is **very** loud, and *still* ringing.',
           'hall.caller': 'Ava, from the café.',
           'hall#answer': 'Answer',
           'hall#knock': 'Knock',
@@ -121,5 +121,15 @@ describe('tooltips', () => {
     expect(note.hidden).toBe(false)
     fireEvent.pointerLeave(tip, { pointerType: 'mouse' })
     expect(note.hidden).toBe(true)
+  })
+})
+
+describe('bold and italics', () => {
+  it('are a strong and an em in the line, with their parts', () => {
+    play()
+    const line = document.querySelectorAll('[data-beat="text"]')[1]
+    expect(line.textContent).toBe('It is very loud, and still ringing.')
+    expect(line.querySelector('strong[data-part="bold"]')?.textContent).toBe('very')
+    expect(line.querySelector('em[data-part="italic"]')?.textContent).toBe('still')
   })
 })

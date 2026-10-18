@@ -1,6 +1,7 @@
 /** Small Town's words, by key. Choice labels are `<scene>#<choice>`; reply labels `<message>#<reply>`. */
 export const prose: Record<string, string> = {
-  intro: 'The van pulls away and leaves you on the pavement with three boxes, a key and a cat in a basket. The flat is above a [[tip:intro.launderette|launderette]]; it smells of warm cotton.',
+  // `*…*` is italics and `**…**` bold, inside the line.
+  intro: 'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
   // The tooltip on "launderette" above.
   'intro.launderette': 'Sam from flat 2 runs it. Service washes, Monday to Saturday.',
   // Revealed after the line above: the scene's block says so with `reveal`.

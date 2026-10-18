@@ -198,3 +198,70 @@ describe('inline actions and tooltips', () => {
     )
   })
 })
+
+describe('bold and italics', () => {
+  it('cut a line at its stars, read \\* as a star, and leave stray stars as written', () => {
+    expect(inlineMarkup('A **loud** knock and a *soft* one.')).toEqual([
+      { kind: 'text', text: 'A ' },
+      { kind: 'bold', text: 'loud', markup: '**loud**' },
+      { kind: 'text', text: ' knock and a ' },
+      { kind: 'italic', text: 'soft', markup: '*soft*' },
+      { kind: 'text', text: ' one.' },
+    ])
+    expect(inlineMarkup('Five * three, and a \\*star\\*.')).toEqual([{ kind: 'text', text: 'Five * three, and a *star*.' }])
+    expect(inlineMarkup('Five * three.')).toBeNull()
+    expect(inlineMarkup('An *open line.')).toBeNull()
+    expect(inlineMarkup('**Ring** [[act:answer|Pick up]] *now*')).toEqual([
+      { kind: 'bold', text: 'Ring', markup: '**Ring**' },
+      { kind: 'text', text: ' ' },
+      { kind: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' },
+      { kind: 'text', text: ' ' },
+      { kind: 'italic', text: 'now', markup: '*now*' },
+    ])
+  })
+
+  it('become spans, with the words alone in text, and stay in the backlog', () => {
+    const lines = { ...prose, 'hall.ring': 'Your phone is **ringing**. [[act:answer|Pick it up]], *quickly*.', 'hall.door': 'A \\*star\\* on the door.' }
+    const { game, problems } = make({ prose: lines })
+    expect(problems).toEqual([])
+    const [ring, door] = view(start(game), game).scene.beats
+    expect(ring).toMatchObject({
+      kind: 'text',
+      text: 'Your phone is ringing. Pick it up, quickly.',
+      spans: [
+        { kind: 'text', text: 'Your phone is ' },
+        { kind: 'bold', text: 'ringing' },
+        { kind: 'text', text: '. ' },
+        { kind: 'action', text: 'Pick it up' },
+        { kind: 'text', text: ', ' },
+        { kind: 'italic', text: 'quickly' },
+        { kind: 'text', text: '.' },
+      ],
+    })
+    expect(door).toEqual({ kind: 'text', text: 'A *star* on the door.' })
+    const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
+    expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
+    const past = runner.backlog()[0].beats[0]
+    expect(past.kind === 'text' && past.spans?.map((span) => span.kind)).toEqual(['text', 'bold', 'text', 'italic', 'text'])
+  })
+
+  it('are checked: stars that never close, three in a row, one inside another, next to an action', () => {
+    const lines = {
+      ...prose,
+      'hall.ring': 'An *open line, and ***too many***.',
+      'hall.door': '*A **nested** one* and **[[act:knock]]**. Five * three is fine.',
+      'hall.post': '> A *mono line is shown as written.',
+    }
+    const { game } = make({ prose: lines, scenes: [{ ...hall, body: [...(hall.body as { text: string }[]), { text: 'hall.post' }] }] })
+    const problems = checkGame(game).problems.map(describeProblem)
+    expect(problems).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('"*" is not closed'),
+        expect.stringContaining('"***" is shown as written'),
+        expect.stringContaining('bold and italics don\'t go inside each other'),
+        expect.stringContaining('stars next to [[act]] or [[tip]]'),
+      ]),
+    )
+    expect(problems.filter((problem) => problem.includes('hall.post'))).toEqual([])
+  })
+})

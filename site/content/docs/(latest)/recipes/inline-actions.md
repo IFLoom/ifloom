@@ -104,9 +104,9 @@ The React UI draws both with no code from you. An inline action is an [`InlineAc
 
 ## Draw them yourself
 
-With another framework, draw a beat's `spans` when it has them, and its `text` when it doesn't. Each piece is plain words, an inline action or a tooltip:
+With another framework, draw a beat's `spans` when it has them, and its `text` when it doesn't. Each piece is plain words, words in [bold or italics](/docs/reference/prose#bold-and-italics), an inline action or a tooltip:
 
-1. Draw `text` spans as they are.
+1. Draw `text` spans as they are, and `bold` and `italic` spans in a `<strong>` and an `<em>`.
 2. Draw an `action` span as a `<button>` with its words. When it's pressed and `choice.disabled` is unset, send `choice.command`. When it's greyed out, use `aria-disabled="true"` rather than `disabled`, so it can still be focused and its reason read.
 3. Draw a `tip` span as a `<button>` with its words, and its `tip` as a note after it.
 4. Give the note an `id` and the button `aria-describedby` with it, and show the note on hover, on focus and on a tap. A greyed-out action's reason works the same way.
@@ -137,6 +137,10 @@ export function drawLine(runner: Runner, line: HTMLElement, text: string, spans:
   for (const span of spans) {
     if (span.kind === 'text') {
       line.append(span.text)
+      continue
+    }
+    if (span.kind === 'bold' || span.kind === 'italic') {
+      line.appendChild(document.createElement(span.kind === 'bold' ? 'strong' : 'em')).textContent = span.text
       continue
     }
     const button = line.appendChild(document.createElement('button'))
@@ -173,6 +177,8 @@ export function Line({ runner, text, spans }: { runner: Runner; text: string; sp
     <>
       {spans.map((span, at) => {
         if (span.kind === 'text') return <span key={at}>{span.text}</span>
+        if (span.kind === 'bold') return <strong key={at}>{span.text}</strong>
+        if (span.kind === 'italic') return <em key={at}>{span.text}</em>
         const note = span.kind === 'tip' ? span.tip : span.choice.disabled
         const press = () => {
           if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
@@ -221,6 +227,8 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
   <template v-if="!spans">{{ text }}</template>
   <template v-for="(span, at) in spans" v-else :key="at">
     <template v-if="span.kind === 'text'">{{ span.text }}</template>
+    <strong v-else-if="span.kind === 'bold'">{{ span.text }}</strong>
+    <em v-else-if="span.kind === 'italic'">{{ span.text }}</em>
     <template v-else>
       <button
         type="button"
@@ -255,7 +263,7 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
   const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
 </script>
 
-{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else}<button
+{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else if span.kind === 'bold'}<strong>{span.text}</strong>{:else if span.kind === 'italic'}<em>{span.text}</em>{:else}<button
         type="button"
         class={span.kind === 'tip' ? 'tip' : 'inline-action'}
         aria-disabled={span.kind === 'action' && span.choice.disabled ? 'true' : undefined}
@@ -268,7 +276,7 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
 **Gotchas:**
 - Don't also draw the inline choices in your list. The view has already left them out of `view.scene.choices` and `view.actions`.
 - Keep the words in the line even when a choice can't be taken. An inline action whose choice is hidden comes as plain words, so the sentence still reads.
-- The backlog keeps inline actions as plain words, so nothing in it can be pressed. Tooltips stay.
+- The backlog keeps inline actions as plain words, so nothing in it can be pressed. Tooltips, bold and italics stay.
 
 ## See it in the showcase
 

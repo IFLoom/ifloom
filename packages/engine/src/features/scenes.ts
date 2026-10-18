@@ -9,7 +9,7 @@ import type { Game, Scene } from '../game.ts'
 import type { Reference } from '../references.ts'
 import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
-import { INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
+import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
 import { defineFeature, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
@@ -249,10 +249,27 @@ function inlineActionProblems(game: Game, body: readonly Block[] | string | unde
   return [...new Set(out)]
 }
 
+/**
+ * Stars that don't make bold or italics in the paragraphs where they're read:
+ * narration and spoken lines, between inline actions and tooltips. A mail,
+ * a prop or a `> ` line shows its stars as written.
+ */
+function emphasisProblems(text: string): string[] {
+  if (!text.includes('*')) return []
+  const out: string[] = []
+  const prose = text.replace(/\[\[(mail|sticky|clip|diary)\]\][\s\S]*?\[\[\/\1\]\]/g, '\n\n')
+  for (const block of prose.split('\n\n')) {
+    if (block.trim().startsWith('> ') || !block.includes('*')) continue
+    if (/\*\[\[(act|tip):|\]\]\*/.test(block)) out.push('stars next to [[act]] or [[tip]] are shown as written; bold and italics don\'t reach into them')
+    for (const piece of block.split(INLINE_MARKUP).filter((_, at) => at % 4 === 0)) out.push(...emphasis(piece).problems)
+  }
+  return [...new Set(out)]
+}
+
 /** Malformed inline markup in a line of prose, and tooltips whose prose key has no words. */
 function inlineMarkupProblems(text: string, where: string, tools: ResolveTools): string[] {
-  if (!text.includes('[[act') && !text.includes('[[tip')) return []
-  const out: string[] = []
+  if (!text.includes('[[act') && !text.includes('[[tip')) return emphasisProblems(text)
+  const out: string[] = emphasisProblems(text)
   let written = 0
   for (const match of text.matchAll(INLINE_MARKUP)) {
     written += 1

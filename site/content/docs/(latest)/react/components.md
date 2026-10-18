@@ -618,6 +618,8 @@ While the viewer is on, a picture or a clip sits inside a `viewer-open` button w
 
 Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body`, `voice-replay` and `viewer-open`. A video beat is a `video` part, with `data-beat="video"`.
 
+A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `<strong>` with the part `bold` and an `<em>` with the part `italic`, inside the beat. Restyle them with [`classes`](#classes) or CSS on `[data-part="bold"]`.
+
 ### InlineAction
 
 ```tsx

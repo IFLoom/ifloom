@@ -417,3 +417,13 @@
 [data-part="drawer"] [data-part="sidebar"] {
   margin: 0.75rem;
 }
+
+/* Bold as a heavy coloured word, and italics in a softer colour. */
+[data-part="bold"] {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+[data-part="italic"] {
+  color: var(--muted-foreground);
+}

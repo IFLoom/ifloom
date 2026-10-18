@@ -13,6 +13,7 @@
     "transitions",
     "inline-actions",
     "supporter-content",
+    "life-sim-patterns",
     "---Other bundlers---",
     "next",
     "webpack",

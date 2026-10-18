@@ -628,6 +628,8 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 
 The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.onTurn` works the same way: each `apply` runs on the state the one before it left, so the rent can come out of the wages just paid. What the day held before the night's resets is in `before`. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
 
+[Life sim patterns](/docs/recipes/life-sim-patterns) has short worked examples of the rest: work each new day, cooldowns, wages paid on a Friday, who's behind an exit, lines shared across places, placeholders for missing art, and the order refusals come in.
+
 ## Harlowe
 
 Harlowe's macros map to the same places as SugarCube's.
@@ -693,4 +695,5 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 - [Your first story](/docs/guide/first-story) builds a short story with scenes, choices, a stat, a counter and a name input.
 - [Core concepts](/docs/guide/concepts) explains the ideas behind scenes, stats, turns and saves.
+- [Life sim patterns](/docs/recipes/life-sim-patterns) shows the common pieces of a life sim built from what the engine and plugins have.
 - [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

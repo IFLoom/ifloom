@@ -433,6 +433,7 @@ describe('the hooks', () => {
 
 describe('the presets', async () => {
   // Read as text from disk: a stylesheet imported in a test comes back empty. The package has no Node types, hence the loose import.
+  // oxlint-disable-next-line typescript/no-unnecessary-template-expression -- a plain 'node:fs' would make tsc look for Node's types
   const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync: (path: string, encoding: string) => string }
   const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd()
   const read = (name: string) => {

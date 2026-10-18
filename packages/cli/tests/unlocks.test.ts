@@ -41,7 +41,7 @@ async function buildFixture(input = 'index.html'): Promise<string> {
     root: ROOT,
     configLoader: 'native',
     logLevel: 'silent',
-    build: { outDir: dir, emptyOutDir: true, rollupOptions: { input: join(ROOT, input) } },
+    build: { outDir: dir, emptyOutDir: true, rolldownOptions: { input: join(ROOT, input) } },
   })
   return dir
 }

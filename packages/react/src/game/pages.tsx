@@ -129,7 +129,10 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
  */
 export function useSetting(id: string): KvValue | undefined {
   const { runner } = useGame()
-  return useSyncExternalStore(runner.subscribe, () => runner.settings()[id])
+  return useSyncExternalStore(
+    (listener) => runner.subscribe(listener),
+    () => runner.settings()[id],
+  )
 }
 
 /** Gives the pages below it a place among the pages. `GameShell` uses it when `pages` is on. */
@@ -367,7 +370,10 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
 function SettingsPageImpl({ className }: { className?: string }) {
   const { runner, view, unlocks, mods } = useGame()
   const words = useWords()
-  const values = useSyncExternalStore(runner.subscribe, () => runner.settings())
+  const values = useSyncExternalStore(
+    (listener) => runner.subscribe(listener),
+    () => runner.settings(),
+  )
   const [said, setSaid] = useState<string | null>(null)
   const section = usePageParts(className, 'settings-page')
   const list = usePart('settings', 'flex flex-col gap-4')

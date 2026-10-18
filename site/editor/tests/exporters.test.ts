@@ -139,6 +139,7 @@ describe('TypeScript', () => {
     const project = sampleProject()
     const source = toTypeScript(project)
     const literal = source.slice(source.indexOf(': Pack = ') + ': Pack = '.length).replace(/SCHEMA/g, String(SCHEMA))
+    // oxlint-disable-next-line typescript/no-implied-eval -- the test runs the exported literal on purpose
     expect(new Function(`return ${literal}`)()).toEqual(JSON.parse(toJson(project)))
   })
 })

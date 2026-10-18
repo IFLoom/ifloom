@@ -43,7 +43,7 @@ export function lockedFiles(root: string): LockedFile[] {
   const dir = resolve(root, UNLOCKS_DIR)
   if (!existsSync(dir)) return []
   return readdirSync(dir)
-    .filter((name) => EXTENSIONS.has(extname(name)) && !name.endsWith('.d.ts') && !/\.test\./.test(name))
+    .filter((name) => EXTENSIONS.has(extname(name)) && !name.endsWith('.d.ts') && !name.includes('.test.'))
     .sort()
     .map((name) => ({ unlock: basename(name, extname(name)), file: join(dir, name) }))
 }

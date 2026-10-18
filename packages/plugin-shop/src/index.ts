@@ -431,7 +431,7 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
           for (const [stat, amount] of Object.entries(good.price ?? {})) {
             const def = statDef(game, stat)
             if (def && !def.spendable) problem(`good ${good.item}: price in stat "${stat}", which is not spendable`)
-            if (def && def.derive !== undefined) problem(`good ${good.item}: price in stat "${stat}", which is derived and never written`)
+            if (def?.derive !== undefined) problem(`good ${good.item}: price in stat "${stat}", which is derived and never written`)
             if (!(amount >= 0)) problem(`good ${good.item}: price must be 0 or more`)
           }
         }

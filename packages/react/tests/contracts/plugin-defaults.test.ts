@@ -77,7 +77,7 @@ describe('the default UI for first-party plugins', () => {
     const sources = Object.fromEntries(PLUGINS.map((plugin) => [plugin.id, SOURCES[plugin.path]]))
     for (const [id, { panel }] of Object.entries(DEFAULTS)) {
       // A plugin that answers for a panel's `with` has its panel drawn by name, and is listed with it.
-      const opens = /panelProblems:/.test(sources[id] ?? '')
+      const opens = (sources[id] ?? '').includes('panelProblems:')
       expect(Boolean(panel), `${id}: panel`).toBe(opens)
       if (panel) expect(typeof ui.BUILT_IN_PANELS[panel], `${id}: the ${panel} panel`).toBe('function')
     }

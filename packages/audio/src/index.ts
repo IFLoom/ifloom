@@ -112,7 +112,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   /** A range setting as 0 to 1 from its min to its max; 1 if the game has no such setting. */
   function rangeGain(id: string): number {
     const setting = runner.game.settings?.find((entry) => entry.id === id)
-    if (!setting || setting.kind !== 'range') return 1
+    if (setting?.kind !== 'range') return 1
     const at = Number(settings[id] ?? setting.default)
     return setting.max > setting.min ? clamp((at - setting.min) / (setting.max - setting.min)) : 1
   }

@@ -91,7 +91,7 @@ export interface Saves {
 
 function isSaveFile(data: unknown): data is { ifloom: 1; meta: SaveMeta; state: unknown } {
   const file = data as { ifloom?: unknown; meta?: { game?: unknown } } | null
-  return Boolean(file && file.ifloom === 1 && typeof file.meta?.game === 'string')
+  return Boolean(file?.ifloom === 1 && typeof file.meta?.game === 'string')
 }
 
 /**

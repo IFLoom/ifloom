@@ -61,7 +61,9 @@ const frame = () => document.querySelector('[data-part="scene-transition"]') as 
 /** Go into the hall, and wait for the door to go. */
 function goIn() {
   act(() => screen.getByRole('button', { name: /Go in/ }).click())
-  act(() => vi.advanceTimersByTime(200))
+  act(() => {
+    vi.advanceTimersByTime(200)
+  })
 }
 
 /** The player's system asking for reduced motion, or not. */
@@ -89,7 +91,9 @@ describe('scene transitions', () => {
     expect(leaving.textContent).toContain('A blue door.')
     expect(leaving.querySelector('[data-choice-key]')).toBeNull()
     expect(scene()).toBeNull()
-    act(() => vi.advanceTimersByTime(200))
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
     expect(document.querySelector('[data-leaving]')).toBeNull()
     expect(scene().getAttribute('data-scene')).toBe('hall')
     expect(scene().getAttribute('data-transition-in')).toBe('slide-up')
@@ -157,6 +161,7 @@ describe('scene transitions', () => {
 describe('the paper preset', async () => {
   /** Paper's drop-cap selector, as its stylesheet writes it. */
   // Read as text from disk: a stylesheet imported in a test comes back empty. The package has no Node types, hence the loose import.
+  // oxlint-disable-next-line typescript/no-unnecessary-template-expression -- a plain 'node:fs' would make tsc look for Node's types
   const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync: (path: string, encoding: string) => string }
   // Under jsdom the test's URL can be from the project root rather than a file URL.
   const url = new URL('../src/themes/paper.css', import.meta.url)

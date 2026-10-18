@@ -14,7 +14,7 @@ function NoticeImpl({ notice }: { notice: NoticeView }) {
   const image = usePart('notice-image', 'size-10 rounded object-cover')
   const title = usePart('notice-title', 'text-sm font-medium')
   const text = usePart('notice-text', 'text-sm text-muted-foreground')
-  const dismiss = usePart('notice-dismiss', `${buttonVariants({ variant: 'ghost', size: 'icon' })}`)
+  const dismiss = usePart('notice-dismiss', buttonVariants({ variant: 'ghost', size: 'icon' }))
   return (
     <div {...card} data-notice={notice.id}>
       {notice.image ? <Picture {...image} src={notice.image} alt="" /> : null}

@@ -189,6 +189,8 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
 export const KINDS = withCore<CoreConditions, CoreEffects, CoreCommands>({ conditions, effects, commands })
 
 // No kind is both the core's and a feature's. Each line is `true` only while that is so.
+// Each Extract is `never` while that holds, which is the point; the type-aware lint reads it as a redundant union.
+/* oxlint-disable typescript/no-redundant-type-constituents, typescript/no-duplicate-type-constituents */
 export const coreAndFeaturesApart: [
   | Extract<keyof CoreConditions, keyof FeatureConditions>
   | Extract<keyof CoreEffects, keyof FeatureEffects>
@@ -196,6 +198,7 @@ export const coreAndFeaturesApart: [
 ] extends [never]
   ? true
   : false = true
+/* oxlint-enable typescript/no-redundant-type-constituents, typescript/no-duplicate-type-constituents */
 
 /** Every kind of condition, by the key that tells it apart. */
 export const CONDITION_KINDS = Object.keys(KINDS.conditions) as ConditionKind[]

@@ -1,5 +1,5 @@
 import type { Entered, UnlocksView } from '@ifloom/plugin-unlocks'
-import { useState, type FormEvent } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import { badgeVariants } from '../components/ui/badge.tsx'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
@@ -79,8 +79,8 @@ function UnlocksPanelImpl({ className }: { className?: string }) {
   const state = usePart('unlock-state', badgeVariants({ variant: 'secondary' }))
   const text = usePart('unlock-text', 'text-muted-foreground')
   const problem = usePart('unlock-problem', 'text-xs text-destructive')
-  if (!unlocks || !unlocks.total) return null
-  const send = async (event: FormEvent) => {
+  if (!unlocks?.total) return null
+  const send = async (event: SyntheticEvent) => {
     event.preventDefault()
     if (await unlocks.enter(code)) setCode('')
   }

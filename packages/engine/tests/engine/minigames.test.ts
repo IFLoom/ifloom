@@ -290,7 +290,13 @@ describe('the runner, with a minigame', () => {
     const game = withMinigames()
     const store = saves(game, memoryDriver())
     const writes: string[] = []
-    const watched = { ...store, write: (...args: Parameters<typeof store.write>) => (writes.push(args[0]), store.write(...args)) }
+    const watched = {
+      ...store,
+      write: (...args: Parameters<typeof store.write>) => {
+        writes.push(args[0])
+        return store.write(...args)
+      },
+    }
     const runner = createRunner(game, begin(game), { saves: watched, autosave: { every: 'command' } })
     runner.apply({ type: 'activity', id: 'play' })
     runner.apply({ type: 'tick', ms: 100 })

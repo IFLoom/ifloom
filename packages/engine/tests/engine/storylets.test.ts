@@ -53,7 +53,7 @@ describe('storylets', () => {
     expect(problems).toEqual([])
     const drawn = new Set(seeds.map((seed) => sit(seed, game).sceneId))
     // The regular only comes in once the player has tipped.
-    expect([...drawn].sort()).toEqual(['cafe.busker', 'cafe.gossip'])
+    expect(drawn).toEqual(new Set(['cafe.busker', 'cafe.gossip']))
     const tipped = (seed: number) => {
       const state = apply(startingState(game, { seed }), game, { type: 'activity', id: 'tip' }).state
       return apply(state, game, { type: 'activity', id: 'sit' }).state.sceneId

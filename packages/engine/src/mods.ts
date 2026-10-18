@@ -40,8 +40,7 @@ export function readMod(text: string, gameId: string): Result<ModFile> {
   }
   const mod = data as Partial<ModFile> | null
   if (
-    !mod ||
-    mod.ifloomMod !== 1 ||
+    mod?.ifloomMod !== 1 ||
     typeof mod.id !== 'string' ||
     typeof mod.name !== 'string' ||
     typeof mod.game !== 'string' ||

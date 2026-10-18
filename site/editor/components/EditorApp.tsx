@@ -219,7 +219,7 @@ export function EditorApp() {
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0]
-                if (file) importFile(file)
+                if (file) void importFile(file)
                 event.target.value = ''
               }}
             />

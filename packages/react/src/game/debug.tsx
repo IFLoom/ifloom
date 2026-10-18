@@ -1,7 +1,7 @@
 import type { Command, GameState, RenderedChoice, Result } from '@ifloom/engine'
 import type { CastView } from '@ifloom/plugin-cast'
 import type { DebugView } from '@ifloom/plugin-debug'
-import { useState, type FormEvent } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { ScrollArea } from '../components/ui/scroll-area.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.tsx'
@@ -61,7 +61,7 @@ function CommandForm({ label, fields, build }: { label: string; fields: string[]
   const button = usePart('button', buttonVariants({ size: 'sm' }))
   const error = usePart('debug-error', 'text-destructive')
   const [said, setSaid] = useState<string | null>(null)
-  const submit = (event: FormEvent) => {
+  const submit = (event: SyntheticEvent) => {
     event.preventDefault()
     const out = send(build(values))
     setSaid(out.ok ? null : (out.reason ?? null))

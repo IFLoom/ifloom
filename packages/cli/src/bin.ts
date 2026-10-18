@@ -139,7 +139,7 @@ async function secrets(): Promise<Parameters<typeof leaks>[1] | undefined> {
     const plugin = await unlocksModule('.', load)
     const codes = Object.values(codesFrom('.', 'production'))
     const packs = (await Promise.all(files.map(async ({ file }) => packsOf(await load(file), file)))).flat()
-    return { codes: [...codes, ...codes.map(plugin.normaliseCode)], packs, shared: linesOf(gameFrom(module).game) }
+    return { codes: [...codes, ...codes.map((code) => plugin.normaliseCode(code))], packs, shared: linesOf(gameFrom(module).game) }
   })
 }
 
@@ -279,8 +279,10 @@ async function main(): Promise<number> {
       return snap(positional())
     case 'new':
       return create(positional(), flag('template'), flag('theme'))
-    case 'unlock-hash':
-      return unlockHash(rest.filter((arg) => !arg.startsWith('--'))[0], rest.filter((arg) => !arg.startsWith('--'))[1])
+    case 'unlock-hash': {
+      const [unlock, entry] = rest.filter((arg) => !arg.startsWith('--'))
+      return unlockHash(unlock, entry)
+    }
     default:
       console.log(
         `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | unlock-hash <unlock> [module]`,

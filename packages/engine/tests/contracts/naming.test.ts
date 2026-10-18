@@ -123,6 +123,7 @@ const core = {
   effectIds: true as Exactly<Extract<KeysOf<Exclude<Effect, { kind: 'notify' }>>, 'id'>, never>,
   conditionIds: true as Exactly<Extract<KeysOf<Condition>, 'id'>, never>,
   // A command names its target `id`, and sets with `to`.
+  // oxlint-disable-next-line typescript/no-duplicate-type-constituents -- the intersection is the test: every key is one of COMMAND_FIELDS
   commands: true as Exactly<KeysOf<Command>, KeysOf<Command> & (typeof COMMAND_FIELDS)[number]>,
   // No banned word anywhere.
   banned: true as Exactly<Extract<KeysOf<Condition> | KeysOf<Effect> | KeysOf<Command>, (typeof BANNED)[number]>, never>,

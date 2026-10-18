@@ -151,7 +151,7 @@ describe('the plugin shape (ADR 0009)', () => {
   it('declares what each factory returns', () => {
     const bare = Object.entries(SOURCES).flatMap(([path, source]) =>
       [...source.matchAll(/^export function (\w+)\(([^)]*)\)\s*\{/gm)]
-        .filter((match) => /definePlugin/.test(source.slice(match.index, match.index + 400)))
+        .filter((match) => source.slice(match.index, match.index + 400).includes('definePlugin'))
         .map((match) => `${path.split('/').at(-3)}: ${match[1]}`),
     )
     expect(bare).toEqual([])

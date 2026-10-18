@@ -79,5 +79,54 @@ export default defineConfig({
   },
   lint: {
     plugins: ['typescript', 'oxc'],
+    // Type-aware rules (tsgolint, on TypeScript 7's checker). tsc on TypeScript 6 stays the typecheck (`vp run typecheck:all`),
+    // so no `typeCheck` here. Any warning fails `vp check`.
+    options: { typeAware: true, denyWarnings: true },
+    // The templates are copied into a new game, with packages the checkout doesn't install for them.
+    ignorePatterns: ['packages/cli/templates/**'],
+    rules: {
+      // Plugins turn content's `with` arguments (`unknown`) into ids with String() on purpose; argProblems catches a wrong shape.
+      'typescript/no-base-to-string': 'off',
+      // Without noUncheckedIndexedAccess an index read never looks undefined, so a default on one (`const [a, b = 0] = ...`) looks useless.
+      'typescript/no-useless-default-assignment': 'off',
+      // mountGame is a page's entry: a failure to mount shows in the console as it is, so its promise is left on its own.
+      'typescript/no-floating-promises': ['warn', { allowForKnownSafeCalls: [{ from: 'file', name: 'mountGame', path: 'packages/react/src/game/mount.tsx' }] }],
+      // On top of tsgolint's defaults, the rules that find real mistakes here and say nothing false.
+      // An async handler on a JSX attribute is fine: React ignores what it returns, and each one catches its own failure.
+      'typescript/no-misused-promises': ['warn', { checksVoidReturn: { attributes: false } }],
+      'typescript/await-thenable': 'warn',
+      'typescript/no-deprecated': 'warn',
+      'typescript/no-for-in-array': 'warn',
+      'typescript/no-array-delete': 'warn',
+      'typescript/no-misused-spread': 'warn',
+      'typescript/no-meaningless-void-operator': 'warn',
+      'typescript/no-unsafe-unary-minus': 'warn',
+      'typescript/no-unsafe-enum-comparison': 'warn',
+      'typescript/only-throw-error': 'warn',
+      'typescript/restrict-plus-operands': 'warn',
+      'typescript/restrict-template-expressions': 'warn',
+      'typescript/return-await': 'warn',
+      'typescript/use-unknown-in-catch-callback-variable': 'warn',
+      'typescript/no-unnecessary-template-expression': 'warn',
+      'typescript/prefer-includes': 'warn',
+      'typescript/prefer-find': 'warn',
+      'typescript/prefer-optional-chain': 'warn',
+      // Left off, as noise for this code:
+      // no-unsafe-*: the upgrade, intake and editor code reads untrusted JSON through Array.isArray and JSON.parse, which the lib types as any.
+      // no-unnecessary-type-conversion: for the same reason, it calls Boolean(record[key]) a no-op when the key may be missing.
+      // no-unnecessary-condition, strict-boolean-expressions: content comes from games in plain JS too, so the engine checks what its types promise.
+      // no-unnecessary-type-assertion: it flags the `as unknown as` steps and import.meta.glob casts that tsc on TypeScript 6 needs.
+      // switch-exhaustiveness-check: each switch over a union that skips cases has a deliberate `default`.
+      // prefer-nullish-coalescing: `||` on '' and 0 is meant where it's used; `??` would change behaviour.
+      // prefer-promise-reject-errors: IndexedDB rejects with `request.error`, typed `DOMException | null`.
+      // no-confusing-void-expression, require-await, consistent-return: style the repo doesn't follow.
+    },
+    overrides: [
+      {
+        // A test passes a spy to expect() and never calls it, so its `this` can't be lost.
+        files: ['**/tests/**'],
+        rules: { 'typescript/unbound-method': 'off' },
+      },
+    ],
   },
 })

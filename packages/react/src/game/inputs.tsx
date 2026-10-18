@@ -1,5 +1,5 @@
 import type { KvValue, InputView } from '@ifloom/engine'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type SyntheticEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -24,7 +24,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
     const out = send({ type: 'input', id: input.id, to: value })
     setSaid(out.ok ? null : (out.reason ?? null))
   }
-  const submit = (event: FormEvent) => {
+  const submit = (event: SyntheticEvent) => {
     event.preventDefault()
     enter(input.kind === 'number' ? (text.trim() === '' ? undefined : Number(text)) : text)
   }

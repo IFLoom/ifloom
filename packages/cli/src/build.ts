@@ -23,7 +23,7 @@ export function checkBuild(dir: string, files?: readonly FileRef[]): string[] {
   }
   // Scripts and stylesheets: what the game needs to run. A favicon or a link to a page doesn't count.
   const loads = [
-    ...[...html.matchAll(/<script\b([^>]*)\bsrc="([^"]+)"/g)].map((match) => ({ url: match[2], module: /type="module"/.test(match[1]) })),
+    ...[...html.matchAll(/<script\b([^>]*)\bsrc="([^"]+)"/g)].map((match) => ({ url: match[2], module: match[1].includes('type="module"') })),
     ...[...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*\bhref="([^"]+)"|<link\b[^>]*\bhref="([^"]+)"[^>]*rel="stylesheet"/g)].map((match) => ({
       url: match[1] ?? match[2],
       module: false,

@@ -52,7 +52,7 @@ function CheatPanelImpl({ className }: { className?: string }) {
   const text = usePart('cheat-text', 'text-sm text-muted-foreground')
   const used = usePart('cheat-used', `${badgeVariants({ variant: 'secondary' })} self-start`)
   const cheats = useCheats()
-  if (!cheats || !cheats.cheats.length) return null
+  if (!cheats?.cheats.length) return null
   return (
     <div {...panel} data-cheats>
       {cheats.groups.map((group) => (
@@ -85,7 +85,7 @@ function CheatsButtonImpl({ className }: { className?: string }) {
   const [open, setOpen] = useState(false)
   const button = usePart('cheats-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
   // Nothing to open in a game without the plugin, or while every cheat is hidden.
-  if (!cheats || !cheats.cheats.length) return null
+  if (!cheats?.cheats.length) return null
   return (
     <>
       <button type="button" {...button} data-cheats-button onClick={() => setOpen(true)}>

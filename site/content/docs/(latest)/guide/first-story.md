@@ -13,7 +13,7 @@ It's the smallest kind of game you can make with IFLoom. There are no plugins, s
 - a name the player types
 - a turn for each chapter
 
-The finished game is one file, `src/game.ts`, plus a page that draws it. The whole file is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter) is a slightly longer story built the same way, and `--template novel` starts a copy of it.
+The finished game is three short files, plus a page that draws it: `src/story/opening.ts` holds the scenes and their words, `src/world/stats.ts` the stat, and `src/game.ts` puts them together. The whole thing is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter) is a slightly longer story built the same way, and `--template novel` starts a copy of it.
 
 To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a pack you can bring back to this page.
 
@@ -51,20 +51,20 @@ npm run dev
 
 The default `react` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
 
-That gives you a folder `my-story` with a two-scene game in `src/game.ts` and the code that draws it. Open the address Vite prints, and keep `npm run dev` running in a terminal. The game reloads each time you save a file.
+That gives you a folder `my-story` with a two-scene game and the code that draws it. The game is in three files: `src/story/opening.ts` has the scenes and their words, `src/world/stats.ts` a stat, and `src/game.ts` puts them together. Open the address Vite prints, and keep `npm run dev` running in a terminal. The game reloads each time you save a file.
 
-You'll replace `src/game.ts` as you go, and leave the other files as they are.
+You'll replace those three files as you go, and leave the other files as they are. Why the game is split this way is on [Organising a game](/docs/guide/organising).
 
 ## 1. One scene
 
-A game is one or more packs of content that [`loadGame`](/docs/reference/loader#loadgame) merges. Start with a pack holding one scene, and the words it shows. Replace everything in `src/game.ts` with this:
+A game is one or more packs of content that [`loadGame`](/docs/reference/loader#loadgame) merges. Each file in `src/story/` and `src/world/` is a pack. Start with a pack holding one scene, and the words it shows. Replace everything in `src/story/opening.ts` with this:
 
 ```ts
-// src/game.ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+// src/story/opening.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
 
-const story: Pack = {
-  id: 'story',
+export const opening: Pack = {
+  id: 'story.opening',
   schema: SCHEMA,
   scenes: [
     {
@@ -78,15 +78,24 @@ const story: Pack = {
     'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',
   },
 }
+```
 
-export default loadGame([story], { id: 'last-bus', title: 'The Last Bus', introScene: 'ch1.stop' })
+Then point `src/game.ts` at it, with the game's own title and first scene:
+
+```ts
+// src/game.ts
+import { loadGame } from '@ifloom/engine'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
+
+export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus', introScene: 'ch1.stop' })
 ```
 
 The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
 
 Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
 
-`loadGame` takes the packs and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts. `schema: SCHEMA` says which version of the pack format you wrote against.
+`loadGame` takes the packs, in a list, and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts. `schema: SCHEMA` says which version of the pack format you wrote against.
 
 The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check` prints each problem, or `No problems.` when there are none.
 
@@ -128,13 +137,20 @@ If you misspell a scene id or forget a label, `npm run check` says which scene a
 
 ## 3. A stat
 
-A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one in the pack. This story keeps one, `warmth`, for how kind the player has been:
+A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one. A stat is used all through the story, so it goes in `src/world/stats.ts`, the pack for what the whole game shares. This story keeps one, `warmth`, for how kind the player has been. Replace the template's stat with it:
 
 ```ts
-stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
+// src/world/stats.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const stats: Pack = {
+  id: 'world.stats',
+  schema: SCHEMA,
+  stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
+}
 ```
 
-Sharing the umbrella raises it. Put the stat effect before the scene change:
+Sharing the umbrella raises it. Back in `src/story/opening.ts`, put the stat effect before the scene change:
 
 ```ts
 { id: 'share', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch2.bus' }] },
@@ -204,7 +220,7 @@ A key that was never set counts as 0, so the honest player's line needs nothing 
 
 ## 6. A name the player types
 
-An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
+An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. It goes in `src/story/opening.ts`, beside the first scene, since that's where it's asked. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
 
 ```ts
 inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
@@ -226,10 +242,10 @@ choices: [
 ],
 ```
 
-Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `loadGame`:
+Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `src/game.ts`:
 
 ```ts
-export default loadGame([story], {
+export default loadGame([stats, opening], {
   id: 'last-bus',
   title: 'The Last Bus',
   introScene: 'ch1.stop',
@@ -365,14 +381,47 @@ To test the story in code, see [Testing your game](/docs/guide/testing).
 
 ## The whole thing
 
+The game is three files. `src/game.ts` puts it together:
+
 ```ts
 // src/game.ts
-import { SCHEMA, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
+import { loadGame, startingState, type Game } from '@ifloom/engine'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
 
-const story: Pack = {
-  id: 'story',
+export default loadGame([stats, opening], {
+  id: 'last-bus',
+  title: 'The Last Bus',
+  introScene: 'ch1.stop',
+  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+})
+
+/** Where `ifloom playtest` starts: a player who has already typed a name. */
+export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
+```
+
+`src/world/stats.ts` declares the stat:
+
+```ts
+// src/world/stats.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const stats: Pack = {
+  id: 'world.stats',
   schema: SCHEMA,
   stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
+}
+```
+
+And `src/story/opening.ts` is the story, its scenes beside their words:
+
+```ts
+// src/story/opening.ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+export const opening: Pack = {
+  id: 'story.opening',
+  schema: SCHEMA,
   inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
@@ -444,20 +493,13 @@ const story: Pack = {
     'end.door': 'The kettle, the radiator, the rain on the window. You sleep well enough.',
   },
 }
-
-export default loadGame([story], {
-  id: 'last-bus',
-  title: 'The Last Bus',
-  introScene: 'ch1.stop',
-  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
-})
-
-/** Where `ifloom playtest` starts: a player who has already typed a name. */
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
 ```
+
+Three chapters fit in one file. When a story grows, give each chapter a file of its own in `src/story/`, add each pack to the list in `game.ts`, and `npm run check` tells you if two of them declare the same scene. The Letter is laid out that way.
 
 ## Where next
 
+- [Organising a game](/docs/guide/organising) explains the files: what goes in `world/` and `story/`, when to split one, and how the packs merge.
 - [How the pieces fit](/docs/guide/how-it-fits) shows what you just used: the engine, the UI and the CLI.
 - [A game with a world](/docs/guide/first-game), the second tutorial, adds a calendar, places and a character with plugins.
 - [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

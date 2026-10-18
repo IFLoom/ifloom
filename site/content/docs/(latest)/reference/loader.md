@@ -76,7 +76,7 @@ The game's other custom conditions, and its effects, values and panels, are left
 
 ### Two packs with one key
 
-A game split into several packs can end up declaring the same thing twice by mistake: a scene copied into a second file, or a stat declared in both `world/stats.ts` and a chapter. The later pack would win without a word, so `loadGame` reports it instead, naming both packs:
+A game split into several packs (see [Organising a game](/docs/guide/organising)) can end up declaring the same thing twice by mistake: a scene copied into a second file, or a stat declared in both `world/stats.ts` and a chapter. The later pack would win without a word, so `loadGame` reports it instead, naming both packs:
 
 ```text
 story.town · pack · scene "cafe.counter" is in both story.cafe and story.town

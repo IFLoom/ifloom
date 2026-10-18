@@ -56,16 +56,19 @@ Import JSON opens a JSON pack as a new project and lists what `checkGame` makes 
 When you want a world with places and a clock, hand-written scenes or your own UI, move the pack into a game:
 
 1. Make a game with `npm create ifloom@latest my-story`, as [Installation](/docs/guide/installation) shows, and run `npm install` in its folder.
-2. Export the project as TypeScript, and save the file in the game's `src/` folder, say as `src/market-day.ts`.
+2. Export the project as TypeScript, and save the file in the game's `src/story/` folder, say as `src/story/market-day.ts`. It's part of the story, so it goes beside the template's `opening.ts` (see [Organising a game](/docs/guide/organising)).
 3. Load it in `src/game.ts`, with the title and intro scene the export's comment gives:
 
 ```ts
 // src/game.ts
 import { loadGame } from '@ifloom/engine'
-import { marketDay } from './market-day.ts'
+import { stats } from './world/stats.ts'
+import { marketDay } from './story/market-day.ts'
 
-export default loadGame([marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })
+export default loadGame([stats, marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })
 ```
+
+Delete `src/story/opening.ts` if you don't want the template's two scenes. If your export declares stats the template's `src/world/stats.ts` declares too, `npm run check` names both packs, so you can keep one.
 
 Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-story). Plugins you used in the preview go in the base game's `plugins`, as [A game with a world](/docs/guide/first-game) shows.
 

@@ -38,6 +38,8 @@ from disk. Pre-release; nothing here is a stable API yet.
 | `games/` | Not in git: users' own games, made by `npm run new -- <name>`, as workspaces of the checkout. |
 | `examples/cafe` | The Corner Café: a management game a week at a time, with staff and dishes as entities. |
 
+Every game, template and example lays out its source the same way: `src/game.ts` only assembles (`loadGame([...packs], base)`, with the plugins and rules), `src/rules.ts` holds the game's rules and custom functions, `src/world/` holds what the whole game shares as one pack per kind (`world.stats`, `world.items`, `world.cast`, ...), and `src/story/` one pack per area, a place, chapter or arc (`story.cafe`), with its scenes, prose (or a sibling `<area>.prose.ts`) and its slice of plugin content. Keep new example content in that layout; the docs page is `guide/organising.md`, and `loadGame` reports a key two of a game's own packs both declare (mods and packs with `overrides: true` excepted).
+
 A first-party plugin is a package of its own that imports only `@ifloom/engine` (its `tests/contracts/boundary.test.ts` holds it to that) and requires no other plugin. It may work with others when the game has them, by name only: it lists them in `cooperates` and asks them through conditions, effects and `query`. It is documented under `site/content/docs/(latest)/plugins/`, and a docs contract fails on any export the page does not name.
 
 ## How packages depend on each other

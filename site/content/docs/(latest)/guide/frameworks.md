@@ -17,9 +17,9 @@ npm install
 npm run dev
 ```
 
-Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share two files:
+Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share the game and its stylesheet:
 
-- `src/game.ts`, the game.
+- `src/game.ts`, which puts the game together from `src/world/stats.ts` and `src/story/opening.ts` (see [Organising a game](/docs/guide/organising)).
 - `src/styles.css`, a plain stylesheet.
 
 The rest of this page goes through their code piece by piece, with a tab for each framework. The React tab shows React by hand, without the React UI, for when you want React but none of `@ifloom/react`. The tab you pick is remembered, and every other page of the docs shows the same one. [A UI from scratch](/docs/guide/ui-from-scratch) explains the plain JS version in more detail, if you want to know what each part is for.

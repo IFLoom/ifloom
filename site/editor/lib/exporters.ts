@@ -47,7 +47,7 @@ export function toTypeScript(project: Project): string {
   }
   lines.push(
     ' *',
-    ' * Load it with:',
+    " * Save it in your game's src/story/ folder, and load it in src/game.ts with:",
     ` *   loadGame([${name}], { id: ${quote(pack.id)}, title: ${quote(project.title)}${project.intro ? `, introScene: ${quote(project.intro)}` : ''} })`,
     ' */',
   )

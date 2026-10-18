@@ -26,7 +26,9 @@ my-site/
 │   ├── page.tsx       the home page, which draws <Game />
 │   └── Game.tsx       a client component that starts the game
 ├── src/
-│   ├── game.ts        the game, as in every template
+│   ├── game.ts        puts the game together, as in every template
+│   ├── world/         what the whole game shares, such as stats.ts
+│   ├── story/         the story, one file per area, starting with opening.ts
 │   ├── layout.tsx     the game's page: the side column, the story and its sections
 │   └── styles.css     the React UI's styles and a theme preset
 ├── next.config.ts     Next's settings, empty to start with

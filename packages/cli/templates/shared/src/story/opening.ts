@@ -1,12 +1,12 @@
 /**
- * The first area of the story: its scenes, the choices in them, and their
- * words in `prose`, kept apart from the scenes so they're easy to edit. Once
- * the words grow long, move `prose` to a `start.prose.ts` beside this file.
+ * The opening of the story: its scenes, the choices in them, and their words
+ * in `prose`, kept apart from the scenes so they're easy to edit. Once the
+ * words grow long, move `prose` to an `opening.prose.ts` beside this file.
  */
 import { SCHEMA, type Pack } from '@ifloom/engine'
 
-export const start: Pack = {
-  id: 'story.start',
+export const opening: Pack = {
+  id: 'story.opening',
   schema: SCHEMA,
   scenes: [
     {

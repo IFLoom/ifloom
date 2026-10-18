@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-`my-game` has the game in `src/game.ts`, a plain stylesheet in `src/styles.css`, an `index.html` with an empty `<div id="root">`, and the UI in `src/main.ts`. Open `src/main.ts` beside this page.
+`my-game` has the game in `src/game.ts`, which puts together the packs in `src/world/` and `src/story/`, a plain stylesheet in `src/styles.css`, an `index.html` with an empty `<div id="root">`, and the UI in `src/main.ts`. Open `src/main.ts` beside this page.
 
 ## 1. The runner and the helpers
 

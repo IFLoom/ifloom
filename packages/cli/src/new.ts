@@ -75,7 +75,7 @@ export const BASE_COMPILER_OPTIONS = {
 /** The files every template of our own takes from `templates/shared/`. */
 const BASE = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
 /** The game itself, the same in every template: `game.ts` assembles the packs in `world/` and `story/`. */
-const GAME = ['src/game.ts', 'src/world/stats.ts', 'src/story/start.ts']
+const GAME = ['src/game.ts', 'src/world/stats.ts', 'src/story/opening.ts']
 /** What the templates without React share: the game and the plain stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
 const PLAIN = [...BASE, ...GAME, 'src/styles.css']
 

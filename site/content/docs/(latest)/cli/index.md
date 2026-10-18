@@ -82,17 +82,17 @@ npm create ifloom@latest ifloom-plugin-weather -- --template plugin
 
 | Template | What you get |
 |---|---|
-| `react` | A two-scene game drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/recipes/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
+| `react` | A two-scene game, its scenes in `src/story/opening.ts` and its stat in `src/world/stats.ts` with `src/game.ts` putting them together, drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/recipes/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
 | `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
 | `next` | The same game in a Next.js app (the App Router), drawn with the React UI from a client component, for a game hosted on the web. It builds with Next, not Vite, so it has no `vite.config.ts` or `index.html` and can't make the single offline file. See [Next.js](/docs/recipes/next). |
-| `novel` | A copy of The Letter, `examples/novel`. |
-| `cafe` | A copy of The Corner Café, `examples/cafe`. |
-| `town` | A copy of Small Town, `examples/showcase`, with every plugin. |
+| `novel` | A copy of The Letter, `examples/novel`, with a file per chapter in `src/story/`. |
+| `cafe` | A copy of The Corner Café, `examples/cafe`, with its staff, menu and triggers by kind in `src/world/`. |
+| `town` | A copy of Small Town, `examples/showcase`, with every plugin, and a file per place or arc in `src/story/`. |
 | `plugin` | Not a game: a [plugin](/docs/reference/plugins) package of its own, to publish on npm. See [A plugin package](#a-plugin-package). |
 
-The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. They share the game itself (`src/game.ts`, `src/world/stats.ts` and `src/story/start.ts`) and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Your own UI in any framework](/docs/guide/frameworks) walks through them.
+The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. Every game template has the same game in the same files, laid out as [Organising a game](/docs/guide/organising) explains. The three share it and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Your own UI in any framework](/docs/guide/frameworks) walks through them.
 
 `--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 

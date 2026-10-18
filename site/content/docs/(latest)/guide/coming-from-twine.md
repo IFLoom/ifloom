@@ -23,7 +23,7 @@ Ava looks up from the till. "The usual?"
 [[Head back out|Street]]
 ```
 
-The same scene in IFLoom:
+The same scene in IFLoom, in one file to keep it short:
 
 ```ts
 // src/game.ts
@@ -66,6 +66,19 @@ It's longer, and it does a few things the passage doesn't:
 - The coffee button stays on screen when the player can't afford it, greyed out, with `You need 3 coins.` on it. You wrote the rule once and the reason comes with it.
 - `coins` is declared, with a start, a range and a label, so the UI lists it. Because it's `spendable`, the button works its price out from the choice's effects and shows `Buy a coffee (3 coins)` by itself. Leave the price out of the label, or it shows twice.
 - `npm run check` fails if `street` is misspelt anywhere, or a choice has no words.
+
+### Where passages go
+
+A Twine story is one file of passages. An IFLoom game is a few files, each a [pack](/docs/reference/loader#pack), in the layout every template starts with (see [Organising a game](/docs/guide/organising)):
+
+| In Twine | In an IFLoom game |
+|---|---|
+| `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `items.ts`, `cast.ts` for the people |
+| The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
+| Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the rules and the custom functions content calls by name |
+| The story's title and its start passage | `src/game.ts`, which lists the packs for `loadGame` and holds the title and `introScene` |
+
+So the café above would be `src/story/cafe.ts`, with its scenes and prose, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
 ## SugarCube
 
@@ -277,9 +290,10 @@ A set of widgets that keeps its own state, such as a loyalty card or an inventor
 <<set $visits to 0>>
 ```
 
-There's no init passage. You declare what the game keeps, and each declaration carries its starting value:
+There's no init passage. You declare what the game keeps, and each declaration carries its starting value. What every part of the story uses goes in `src/world/`, a pack for each kind:
 
 ```ts
+// src/world/stats.ts and src/world/items.ts, shown together
 stats: [
   { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true },
   { id: 'energy', label: 'Energy', start: 80 },

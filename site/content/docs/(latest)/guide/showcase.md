@@ -49,7 +49,7 @@ The other examples start with one call to [`mountGame`](/docs/react#mountgame) i
 
 ### Locks
 
-`src/game.ts`, `rules.locks`. Moving day is a [lock](/docs/reference/locks) on the `arrival` phase. It denies `'*'` except `choose` and `input`, so the intro only moves through its scene and the box for the cat's name. The `unpack` choice in `town.ts` sets the phase to `open`, and the lock lets go.
+`src/rules.ts`, `rules.locks`. Moving day is a [lock](/docs/reference/locks) on the `arrival` phase. It denies `'*'` except `choose` and `input`, so the intro only moves through its scene and the box for the cat's name. The `unpack` choice in `town.ts` sets the phase to `open`, and the lock lets go.
 
 A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.' }`, keeps the phone away at the office. It uses the [places](/docs/plugins/places) plugin's [`at()`](/docs/plugins/places#conditions). In the test `keeps the phone in the pocket at work`, opening the camera there is refused with `Not at work.`
 
@@ -277,11 +277,11 @@ The player's own post is the `post` activity. Its `{ custom: 'postLatest' }` eff
 
 ### Resets each turn
 
-`src/game.ts`, `rules.resets`. `hadCoffee` and `postedToday` go back to `false` at the end of each turn ([`resets`](/docs/reference/rules)). In this game that's each day, when the player goes to bed. The `coffee` and `post` activities are blocked while they're set, so each works once a day, and a second coffee is refused with `One is enough for today.`
+`src/rules.ts`, `rules.resets`. `hadCoffee` and `postedToday` go back to `false` at the end of each turn ([`resets`](/docs/reference/rules)). In this game that's each day, when the player goes to bed. The `coffee` and `post` activities are blocked while they're set, so each works once a day, and a second coffee is refused with `One is enough for today.`
 
 ### The turn rule
 
-`src/game.ts`, `rules.onTurn`. [`onTurn`](/docs/reference/rules#onturn) applies an effect that puts `energy` back to 100 at the end of each turn, which is overnight here, since a turn is a day. It runs before the calendar's `onTurn` hook, so it sees the night, not the new morning.
+`src/rules.ts`, `rules.onTurn`. [`onTurn`](/docs/reference/rules#onturn) applies an effect that puts `energy` back to 100 at the end of each turn, which is overnight here, since a turn is a day. It runs before the calendar's `onTurn` hook, so it sees the night, not the new morning.
 
 ### Stats
 

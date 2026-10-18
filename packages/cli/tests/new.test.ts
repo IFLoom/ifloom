@@ -52,8 +52,8 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'src/world/stats.ts'), 'utf8')).toContain("id: 'world.stats'")
     // The templates of our own start with one area of story; the examples have their own.
     if (!['novel', 'cafe', 'town'].includes(template)) {
-      expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain('loadGame([stats, start]')
-      expect(readFileSync(join(dir, 'src/story/start.ts'), 'utf8')).toContain("id: 'story.start'")
+      expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain('loadGame([stats, opening]')
+      expect(readFileSync(join(dir, 'src/story/opening.ts'), 'utf8')).toContain("id: 'story.opening'")
     }
   })
 

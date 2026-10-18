@@ -8,7 +8,7 @@
  */
 import { loadGame } from '@ifloom/engine'
 import { stats } from './world/stats.ts'
-import { start } from './story/start.ts'
+import { opening } from './story/opening.ts'
 
 /** The game, and anything the loader found wrong with it. `ifloom check` reads this. */
-export default loadGame([stats, start], { id: '{{name}}', title: '{{title}}', introScene: 'start' })
+export default loadGame([stats, opening], { id: '{{name}}', title: '{{title}}', introScene: 'start' })

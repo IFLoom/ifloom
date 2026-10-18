@@ -67,6 +67,12 @@ export const prose: Record<string, string> = {
   'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',
   'ava.text#yes': 'Deal!',
   'ava.text#later': 'Maybe later in the week',
+  // Ava's small talk by text: a pool of messages, one drawn each day.
+  'ava.chat.rain': 'Rain later. The ducks know before the forecast does.',
+  'ava.chat.beans': 'New beans this week. Tell me if they’re *awful*. Nobody else will.',
+  'ava.chat.beans#taste': 'I’ll come and taste them',
+  'ava.chat.river': 'Walk the river at dusk sometime. It’s the only quiet in town.',
+  'ava.chat.ducks': 'A duck walked into the café this morning. **Walked in.** Then out again.',
 
   'feed.ava-cake': 'Lemon drizzle today. It will not last until noon.',
   'feed.sam-river': 'The ducks have unionised.',

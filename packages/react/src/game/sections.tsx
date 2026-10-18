@@ -79,7 +79,7 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
             {thread.name}
           </h4>
           {thread.messages.map((entry) => (
-            <div key={entry.id} {...message}>
+            <div key={entry.key} {...message} data-message={entry.key}>
               <div {...theirs} data-from="them">
                 <Words beats={entry.beats} text={entry.text} />
               </div>

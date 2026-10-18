@@ -6,7 +6,7 @@ description: "Jobs with hiring requirements, shifts that cost stats and time and
 
 ```ts
 import {
-  jobs, applyFor, work, quit, hire, fire, hasJob, wasFired, shiftsWorked,
+  jobs, applyFor, work, quit, hire, fire, hasJob, wasFired, shiftsWorked, workedToday,
   jobDefs, jobsView,
   type JobDef, type ShiftDef, type RankDef, type FireDef,
   type JobsState, type HeldJob, type JobsView, type JobView, type RankView,
@@ -207,18 +207,17 @@ Days missed add nothing to `owed`, so the week's pay is the wage times the days 
 
 ### "Worked today"
 
-The plugin has no condition for whether today's shift is done. `shiftsWorked` counts every shift. For a reminder such as "Work is due" on every screen, set a kv key in the shift's `effects` and put it back each day with [`rules.resets`](/docs/reference/rules#resets):
+`workedToday(job)` holds once a shift at the job is done today, for the rest of the day. It reads the same record as the refusal "You’ve done today’s shift.", so the two always agree. Without a job it holds for any job the player holds. Use it for a reminder such as "Work is due" on every screen:
 
 ```ts
-// in the job
-shift: { cost: { energy: 25 }, passes: 1, effects: [{ kind: 'kv', key: 'workedToday', to: true }] }
-
-// in the game's rules
-resets: { workedToday: false }
+import { hasJob, workedToday } from '@ifloom/plugin-jobs'
+import { weekday } from '@ifloom/plugin-calendar'
 
 // a line in a place's body
-{ text: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: { kv: 'workedToday' } }] } }
+{ text: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: workedToday('weekend') }] } }
 ```
+
+A day is the calendar's day, or a turn in a game without the calendar. `shiftsWorked` counts every shift instead.
 
 ## Conditions
 
@@ -227,6 +226,7 @@ resets: { workedToday: false }
 | `{ 'jobs/hired': { job, rank? } }` | `hasJob(job, rank?)` | The player holds the job, at that rank if given. |
 | `{ 'jobs/fired': { job } }` | `wasFired(job)` | The player was fired from it and hasn't been hired again. |
 | `{ 'jobs/shifts': { job, gte… } }` | `shiftsWorked(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
+| `{ 'jobs/worked': { job } }`, or `true` for any job | `workedToday(job?)` | A shift at the job was worked today: the calendar's day, or this turn without the calendar. See ["Worked today"](#worked-today). |
 
 ## Commands and effects
 
@@ -342,6 +342,7 @@ const fire: (job: string) => EffectRef
 const hasJob: (job: string, rank?: string) => Condition
 const wasFired: (job: string) => Condition
 const shiftsWorked: (job: string, range: Range) => Condition
+const workedToday: (job?: string) => Condition
 const openJobs: (jobs?: string[]) => Effect
 ```
 

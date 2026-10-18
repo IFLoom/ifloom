@@ -386,6 +386,16 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
       },
       /** `{ 'jobs/fired': { job } }`: was fired from it. */
       fired: (_state, args, { slice }) => slice.fired[String(args.job ?? '')] !== undefined,
+      /**
+       * `{ 'jobs/worked': { job } }`: a shift at the job was worked today, the
+       * day the calendar says (or this turn, without one), as the refusal
+       * "You've done today's shift." reads it. `true` for any job held.
+       */
+      worked: (state, args, { slice, game }) => {
+        const today = dayOf(state, game)
+        const job = args.job === undefined ? undefined : String(args.job)
+        return Object.entries(slice.held).some(([id, held]) => (job === undefined || id === job) && held.lastWorked === today)
+      },
       /** `{ 'jobs/shifts': { job, gte… } }`: shifts worked at a job held, in a range. */
       shifts: (_state, args, { slice }) => {
         const held = slice.held[String(args.job ?? '')]
@@ -511,3 +521,5 @@ export const hasJob = (job: string, rank?: string): Condition => ({ 'jobs/hired'
 export const wasFired = (job: string): Condition => ({ 'jobs/fired': { job } })
 /** A condition: shifts worked at a job the player holds, in this range. */
 export const shiftsWorked = (job: string, range: Range): Condition => ({ 'jobs/shifts': { job, ...range } })
+/** A shift at `job` was worked today; any job held, without one. */
+export const workedToday = (job?: string): Condition => ({ 'jobs/worked': job === undefined ? true : { job } })

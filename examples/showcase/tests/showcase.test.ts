@@ -9,7 +9,7 @@ import type { DevicesView } from '@ifloom/plugin-devices'
 import type { StatusesView } from '@ifloom/plugin-statuses'
 import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
-import type { MessagesView } from '@ifloom/plugin-messages'
+import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
 import { buy, type ShopView } from '@ifloom/plugin-shop'
 import { wearing } from '@ifloom/plugin-wardrobe'
@@ -117,6 +117,27 @@ describe('Small Town', () => {
     expect((view(opened, game).plugins.devices as DevicesView).devices[0].open?.id).toBe('texts')
     state = run(on(state, 2, 'evening'), call('ava'))
     expect(view(state, game).scene.title).toBe('Ava, on the phone')
+  })
+
+  it('draws a line of Ava’s small talk each day once her text is answered, never one twice in three days', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
+    state = run(on(state, 1, 'night'), sleep())
+    const lines = (at: GameState) => (view(at, game).plugins.messages as MessagesView).channels[0].threads[0].messages.filter((message) => message.id.startsWith('ava.chat.'))
+    // Nothing until she has her answer.
+    state = run(state, replyTo('ava.text', 'yes'))
+    expect(lines(state)).toHaveLength(1)
+    // A week of nights in: one line each morning.
+    for (let night = 2; night < 8; night += 1) state = run(on(state, night, 'night'), sleep())
+    const drawn = lines(state)
+    expect(drawn).toHaveLength(7)
+    // Each line rests three days after it comes.
+    drawn.forEach((line, at) => {
+      const again = drawn.slice(at + 1).find((later) => later.id === line.id)
+      if (again) expect(again.turn - line.turn).toBeGreaterThanOrEqual(3)
+    })
+    expect(new Set(drawn.map((line) => line.key)).size).toBe(7)
   })
 
   it('charges rent on Sundays, and meets Ava by the river once a friendship has had time', () => {

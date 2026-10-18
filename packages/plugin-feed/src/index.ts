@@ -13,6 +13,7 @@ import {
   definePlugin,
   holds,
   parseBeats,
+  styledBeats,
   pluginQuery,
   renderScene,
   say,
@@ -278,7 +279,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
           }))
         const posts = [...theirs, ...mine]
           .sort((a, b) => b.turn - a.turn || b.order - a.order)
-          .map(({ order: _order, ...post }) => ({ ...post, beats: parseBeats(post.text) }))
+          .map(({ order: _order, ...post }) => ({ ...post, beats: styledBeats(parseBeats(post.text)) }))
         return { id: entry.id, name: entry.name, posts, unread: unseenIn(slice, game, entry.id) }
       })
       return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }

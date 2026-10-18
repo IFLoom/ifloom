@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   SCHEMA,
   apply,
+  createRunner,
   holds,
   loadGame,
+  loadState,
+  replay,
   startingState,
   view,
   whyNot,
@@ -12,7 +15,7 @@ import {
   type Pack,
 } from '@ifloom/engine'
 import { cast } from '@ifloom/plugin-cast'
-import { messageArrived, messageReplied, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
+import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
@@ -165,3 +168,110 @@ describe('pictures and videos in a message', () => {
   })
 })
 
+
+describe('pools', () => {
+  /** Ava's small talk: two lines drawn from `chat`, neither again within two days; the rain one has a reply. */
+  function chatty(): Game {
+    const rested = (id: string) => ({ not: messageSince(id, { lt: 2 }) })
+    return game({
+      activities: [{ id: 'chat', effects: [drawMessage('chat')] }, { id: 'wait', effects: [pass(1)] }],
+      prose: {
+        'ava.hi': 'Hi.',
+        'ava.hi#bye': 'Bye',
+        'chat.rain': 'Rain later.',
+        'chat.rain#ok': 'Noted',
+        'chat.beans': 'New beans.',
+      },
+      data: {
+        cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
+        messages: {
+          messages: [
+            { id: 'chat.rain', channel: 'texts', from: 'ava', drawnFrom: ['chat'], when: rested('chat.rain'), body: [{ text: 'chat.rain' }], replies: [{ id: 'ok' }] },
+            { id: 'chat.beans', channel: 'texts', from: 'ava', drawnFrom: ['chat'], weight: 2, when: rested('chat.beans'), body: [{ text: 'chat.beans' }] },
+          ],
+        },
+      },
+    })
+  }
+  const chat = { type: 'activity', id: 'chat' } as const
+  const keys = (state: GameState, g: Game) => shown(state, g).channels[0].threads.flatMap((thread) => thread.messages.map((message) => message.key))
+
+  it('wait to be drawn, then arrive as a new arrival with a notice, drawn the same way on replay', () => {
+    const g = chatty()
+    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
+    expect(keys(state, g)).toEqual([])
+    const runner = createRunner(g, begin(g))
+    expect(runner.apply(chat).ok).toBe(true)
+    state = runner.state
+    const [first] = keys(state, g)
+    expect(['chat.rain', 'chat.beans']).toContain(first)
+    expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
+    expect(holds(state, messageArrived(first), g)).toBe(true)
+    expect(shown(state, g).unread).toBe(1)
+    expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
+  })
+
+  it('come again once their own cooldown has passed, each arrival with its own key, reply and read mark', () => {
+    const g = chatty()
+    let state = begin(g)
+    state = apply(state, g, chat).state
+    state = apply(state, g, chat).state
+    // Both lines are resting now, so a third draw brings nothing.
+    expect([...keys(state, g)].sort()).toEqual(['chat.beans', 'chat.rain'])
+    expect(apply(state, g, chat).state.plugins).toEqual(state.plugins)
+    // Two days on, both can come again.
+    state = clock.write(state, { day: 3, period: 'morning' })
+    expect(holds(state, messageSince('chat.rain', { gte: 2 }), g)).toBe(true)
+    state = apply(state, g, chat).state
+    state = apply(state, g, chat).state
+    const all = keys(state, g)
+    expect([...all].sort()).toEqual(['chat.beans', 'chat.beans~2', 'chat.rain', 'chat.rain~2'])
+    expect(shown(state, g).unread).toBe(4)
+    // The second rain's reply is its own: the first is still unanswered.
+    const rain = shown(state, g).channels[0].threads[0].messages.filter((message) => message.id === 'chat.rain')
+    expect(rain.map((message) => message.replies[0]?.command)).toEqual([
+      { type: 'custom', name: 'messages/reply', with: { message: 'chat.rain', reply: 'ok' } },
+      { type: 'custom', name: 'messages/reply', with: { message: 'chat.rain~2', reply: 'ok' } },
+    ])
+    state = apply(state, g, replyTo('chat.rain~2', 'ok')).state
+    expect(whyNot(state, g, replyTo('chat.rain~2', 'ok'))).toBe('You have already replied.')
+    expect(whyNot(state, g, replyTo('chat.rain', 'ok'))).toBeUndefined()
+    expect(holds(state, messageReplied('chat.rain', 'ok'), g)).toBe(true)
+    expect(shown(state, g).unread).toBe(3)
+  })
+
+  it('load an old save, with one arrival per message by id, as arrivals', () => {
+    const g = game()
+    const old = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const saved = { ...old, plugins: { ...old.plugins, messages: { version: 1, state: { arrived: { 'msg.hey': 3 }, replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } } } } }
+    const loaded = loadState(JSON.parse(JSON.stringify(saved)), g)
+    if (!loaded.ok) throw new Error(loaded.reason)
+    expect(loaded.value.plugins.messages).toEqual({
+      version: 2,
+      state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } },
+    })
+    expect(holds(loaded.value, messageReplied('msg.hey', 'yes'), g)).toBe(true)
+    expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })
+  })
+
+  it('report a draw from a pool no message is in, and a weight below 0', () => {
+    const loaded = loadGame(
+      [
+        {
+          id: 'mod',
+          schema: SCHEMA,
+          prose: { m: 'Hi.' },
+          activities: [{ id: 'chat', effects: [drawMessage('nobody')] }],
+          data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ text: 'm' }] }] } },
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [plugin], data: channels },
+    )
+    expect(loaded.problems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ what: expect.stringContaining('draws from "nobody", but no message is drawn from it') }),
+        { pack: 'mod', where: 'messages m', what: 'weight must be 0 or more' },
+      ]),
+    )
+  })
+})

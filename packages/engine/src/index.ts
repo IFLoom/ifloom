@@ -79,7 +79,7 @@ export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from
 export type { VariantMember } from './prose.ts'
 export { fillTokens, proseStore } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
-export { artSrc, inlineMarkup, mediaKind, parseBeats } from './sceneBody.ts'
+export { artSrc, inlineMarkup, mediaKind, parseBeats, styledBeats } from './sceneBody.ts'
 
 // Media: pools, and the stage
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'

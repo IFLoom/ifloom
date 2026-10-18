@@ -6,12 +6,13 @@ description: "Texts, emails and letters that arrive when a condition holds, kept
 
 You'd want it when people get in touch with the player rather than the player going to them. In the showcase, Ava texts you the day after you meet her. If everything the player reads happens where they're standing, scenes are enough.
 
-A message is like a scene that arrives instead of one the player walks into. It has [prose blocks](/docs/reference/scenes#block) for its words, a sender, and replies that carry [effects](/docs/reference/effects). It arrives the first time its condition holds at the end of a command, and it raises a [notice](/docs/reference/notices) tagged with its channel, so the UI can show a toast or a badge.
+A message is like a scene that arrives instead of one the player walks into. It has [prose blocks](/docs/reference/scenes#block) for its words, a sender, and replies that carry [effects](/docs/reference/effects). It arrives the first time its condition holds at the end of a command, and it raises a [notice](/docs/reference/notices) tagged with its channel, so the UI can show a toast or a badge. A message can also sit in a pool, like a [storylet](/docs/reference/storylets), and arrive each time an effect draws it.
 
 ```ts
 import {
   messages, messageDefs, channelsOf, replyTo, readThread, messageArrived, messageReplied,
-  type Channel, type MessageDef, type ReplyDef, type MessagesState,
+  messageSince, drawMessage,
+  type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival,
   type MessagesView, type ChannelView, type ThreadView, type MessageView,
 } from '@ifloom/plugin-messages'
 ```
@@ -112,7 +113,9 @@ type MessageDef = {
   channel: string
   from: string
   thread?: string
-  when: Condition
+  when?: Condition
+  drawnFrom?: string[]
+  weight?: number
   body: Block[]
   replies?: ReplyDef[]
 }
@@ -124,7 +127,9 @@ type MessageDef = {
 | `channel` | The [channel](#channel) it arrives in. |
 | `from` | Who sent it. Either a [cast](/docs/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). A character's name and portrait are looked up, and anything else is shown as written. |
 | `thread` | The thread it goes in. If you leave it out, the thread is the sender, so every message from `ava` in a channel goes in one thread. |
-| `when` | It arrives the first time this [condition](/docs/reference/conditions) holds at the end of a command. |
+| `when` | It arrives the first time this [condition](/docs/reference/conditions) holds at the end of a command. Leave it out and it arrives after the first command. For a message in a pool, it can only be drawn while `when` holds. |
+| `drawnFrom` | The pools it's in. A message in a pool arrives only when [`messages/draw`](#effects) draws it, and it can arrive again each time. See [Messages that come again](#messages-that-come-again). |
+| `weight` | How likely a draw is to pick it, against the others in the pool that can be drawn. 1 if you leave it out, and 0 is never. |
 | `body` | Its words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/docs/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
 | `replies` | What the player can send back. The player sends one, once. Leave it out for a message with no replies. |
 
@@ -166,29 +171,35 @@ const text: MessageDef = {
 
 ### Messages that come again
 
-Each message arrives once. For a text that keeps coming, such as Sam checking in now and then, write a numbered run of messages and let a counter in the kv store release them one at a time. Something else raises the counter, such as a roll in [`rules.onTurn`](/docs/reference/rules#onturn):
+A message the story sends arrives once. For one that keeps coming, such as Ava's small talk, put it in a pool with `drawnFrom` and draw from the pool with the effect `messages/draw`. Each draw picks one message whose `when` holds, by `weight`, and delivers it as a new arrival, with its own replies and its own read mark. The same message can be drawn again later.
+
+Something has to run the draw. A [trigger](/docs/reference/triggers) with `once: 'turn'` draws once a turn, which in the showcase is once a day:
 
 ```ts
-import type { GameRules } from '@ifloom/engine'
-import type { MessageDef } from '@ifloom/plugin-messages'
+import type { Condition, TriggerDef } from '@ifloom/engine'
+import { drawMessage, messageReplied, messageSince, type MessageDef } from '@ifloom/plugin-messages'
 
-// Twelve check-ins, each arriving once the counter reaches its number.
-const checkIns: MessageDef[] = Array.from({ length: 12 }, (_, n) => ({
-  id: `sam.checkin.${n + 1}`,
+// Not the same line twice within three days.
+const rested = (id: string): Condition => ({ not: messageSince(id, { lt: 3 }) })
+
+const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
+  id: `ava.chat.${topic}`,
   channel: 'texts',
-  from: 'sam',
-  when: { kv: 'samTexts', gte: n + 1 },
-  body: [{ variants: 'sam.checkin' }],
-  replies: [{ id: 'reply' }],
+  from: 'ava',
+  drawnFrom: ['ava.chat'],
+  when: rested(`ava.chat.${topic}`),
+  body: [{ text: `ava.chat.${topic}` }],
 }))
 
-const rules: GameRules = {
-  // Two mornings in five, Sam texts.
-  onTurn: (state, { apply, roll }) => (roll(5, 'sam.checkin') < 2 ? apply([{ kind: 'kv', key: 'samTexts', by: 1 }]) : state),
-}
+// Once a day, after she's had a reply to her first text.
+const chat: TriggerDef = { id: 'ava.chat', once: 'turn', when: messageReplied('ava.text'), effects: [drawMessage('ava.chat')] }
 ```
 
-The body is a [variants](/docs/reference/prose#variantmember) block, so the words rotate rather than repeating the last text. Each message needs its reply label too (`sam.checkin.1#reply` and so on), which a loop over `checkIns` can write into `prose`. Once the run is used up, nothing more arrives, so make it long enough for the game.
+`messageSince(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.
+
+The draw is seeded by the save, the turn and how many messages have arrived, so a replay or an undo draws the same message. When no message in the pool can be drawn, nothing arrives.
+
+Each arrival has a key. The first is the message's id, and later ones are `<id>~2`, `<id>~3` and on. The view gives each arrival's replies with the right key in their command, so a UI doesn't build it.
 
 ## A worked example
 
@@ -351,9 +362,10 @@ inbox(state).unread     // 0
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'messages/arrived': { message } }` | `messageArrived(message)` | The message has arrived. |
-| `{ 'messages/replied': { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message. With `reply`, they sent that reply. |
-| `{ 'messages/read': { message } }` | | The player has read the message. |
+| `{ 'messages/arrived': { message } }` | `messageArrived(message)` | The message has arrived, at least once. |
+| `{ 'messages/since': { message, gte… } }` | `messageSince(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/conditions#range). Days are the calendar's, or turns without it. False if it has never arrived. |
+| `{ 'messages/replied': { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. |
+| `{ 'messages/read': { message } }` | | The player has read the message's latest arrival. |
 
 You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each can also be written short, with the full name as the only key. `{ 'messages/arrived': { message: 'ava.text' } }` is the same as `{ custom: 'messages/arrived', with: { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
@@ -365,16 +377,22 @@ const block = { text: 'place.cafe.ava-coffee', when: messageReplied('ava.text', 
 
 An unknown message is false.
 
+## Effects
+
+| Content writes | Helper | Does |
+|---|---|---|
+| `{ 'messages/draw': { pool } }` | `drawMessage(pool)` | Draws one message from the pool, from those whose `when` holds, by `weight`, and delivers it as a new arrival with its notice. Nothing arrives when none can be drawn. See [Messages that come again](#messages-that-come-again). |
+
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'messages/reply': { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the message replied and read, then runs the reply's effects. |
+| `{ 'messages/reply': { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the arrival replied and read, then runs the reply's effects. `message` is the [arrival's key](#arrival), which for a message that arrives once is its id. |
 | `{ 'messages/read': { id?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
 
 `messages/reply` is refused, in this order, with:
 
-- `There is no such message.` when no message has that id, or it hasn't arrived.
+- `There is no such message.` when no arrival has that key, or the message hasn't arrived.
 - `You have already replied.` once a reply has been sent.
 - `That is not a reply on offer.` when the message has no such reply, or the reply's `when` doesn't hold.
 
@@ -476,6 +494,7 @@ type ThreadView = {
 ```ts
 type MessageView = {
   id: string
+  key: string
   from: string
   name: string
   text: string
@@ -489,10 +508,12 @@ type MessageView = {
 
 | Field | What it is |
 |---|---|
+| `id` | The message's id. A message drawn twice is in the thread twice, with the same id. |
+| `key` | This arrival's [key](#arrival). Use it as the list key when you draw the thread. |
 | `from` | The sender, as written. |
 | `name` | The sender's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. |
 | `text` | The body, rendered for the current state. It has the blocks whose `when` holds, with tokens filled in. Any picture or video is in it as markup. |
-| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
+| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, with its [bold and italics](/docs/reference/prose#bold-and-italics) as spans. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
 | `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
 | `replies` | The replies on offer now, each a button like a scene's choices ([`RenderedChoice`](/docs/reference/view#renderedchoice)) with its `label` and the `command` that sends it. Empty once one is sent. |
@@ -513,17 +534,32 @@ The React UI's [`MessagesSection`](/docs/react/components#messagessection) draws
 
 ```ts
 type MessagesState = {
-  arrived: Record<string, number>
+  arrived: Arrival[]
   replied: Record<string, string>
   read: Record<string, true>
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.messages`. It holds the turn each message arrived on, the reply sent to each, and which have been read, all by message id. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each and which have been read, by the arrival's key. A UI reads the view, not this.
+
+A save from before pools (the plugin's state version 1) kept one arrival per message by id. It loads with each of those as an arrival keyed by the message's id, so its replies and reads carry over. Its day is taken to be its turn, because the old save didn't keep the day.
+
+### Arrival
+
+```ts
+type Arrival = {
+  key: string
+  message: string
+  turn: number
+  day: number
+}
+```
+
+One arrival of a message. `key` is the message's id for its first arrival, then `<id>~2`, `<id>~3` and on. `turn` is the turn it arrived on, and `day` the calendar's day, or the turn in a game without the calendar.
 
 ## For code
 
-The helpers write the content objects for you, typed. `messageArrived` and `messageReplied` return a `Condition`, and `replyTo` and `readThread` return a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
+The helpers write the content objects for you, typed. `messageArrived`, `messageReplied` and `messageSince` return a `Condition`, `drawMessage` an `EffectRef`, and `replyTo` and `readThread` a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
 
 ### Helpers
 
@@ -532,6 +568,8 @@ const replyTo: (message: string, reply: string) => CommandRef
 const readThread: (thread?: string) => CommandRef
 const messageArrived: (message: string) => Condition
 const messageReplied: (message: string, reply?: string) => Condition
+const messageSince: (message: string, range: Range) => Condition
+const drawMessage: (pool: string) => EffectRef
 ```
 
 ### messageDefs
@@ -552,25 +590,26 @@ When the game loads, the plugin reports these problems against the pack each mes
 - Two replies with the same id (`two replies are called "…"`).
 - A reply with no label (`no prose for "<message id>#<reply id>"`).
 - Anything a reply's `when` or `effects` name, such as `reply <id>: unknown storyline "…"`.
+- A `weight` below 0 (`weight must be 0 or more`).
 
 ```text
 mod:summer-fete · messages fete.invite · no prose for "fete.invite#maybe"
 ```
 
-A `messages/arrived`, `messages/replied` or `messages/read` condition, or a `messages/reply` command, naming a message the game doesn't have gives `unknown message "…"` where it's written.
+A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` condition, or a `messages/reply` command, naming a message the game doesn't have gives `unknown message "…"` where it's written. A `messages/draw` naming a pool no message is in gives `draws from "…", but no message is drawn from it`.
 
 ## Gotchas
 
 - **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
-- **A message arrives once.** After that it stays, whatever `when` does. For a message that comes again, write one message for each time. See [Messages that come again](#messages-that-come-again).
+- **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
 - **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
-- **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<message id>`, the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
+- **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
 - **The sender is matched by id.** A `from` that's a [cast](/docs/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
 - **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.
 
 ## See it in an example
 
-Small Town: `ava.text` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) arrives the day after you meet Ava, with two replies. Their labels are in [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts).
+Small Town: `ava.text` in [`examples/showcase/src/content/town.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/town.ts) arrives the day after you meet Ava, with two replies. Once you've answered it, the trigger `ava.chat` draws a line of her small talk from the pool `ava.chat` each day, never the same one twice within three days. Their labels are in [`examples/showcase/src/content/prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/content/prose.ts).

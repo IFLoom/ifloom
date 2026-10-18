@@ -429,6 +429,23 @@ function parseBeats(body: string): SceneBeat[]
 
 The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]` and the stars of bold and italics in the text: the view draws them, because only the view knows the choices and the prose.
 
+## styledBeats
+
+```ts
+import { parseBeats, styledBeats } from '@ifloom/engine'
+
+function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
+```
+
+Draws the [bold and italics](#bold-and-italics) in `text` and `say` beats that don't go through a scene's view: each gets `bold` and `italic` [spans](#inlinespan), and its `text` loses the stars. The view does this for a scene and a room, and the messages and feed plugins do it for their `beats`. Call it on beats you parse yourself:
+
+```ts
+styledBeats(parseBeats('The sign says **Closed**.'))
+// [{ kind: 'text', text: 'The sign says Closed.', spans: [{ kind: 'text', text: 'The sign says ' }, { kind: 'bold', text: 'Closed' }, { kind: 'text', text: '.' }] }]
+```
+
+`[[act:]]` and `[[tip:]]` stay in the words as written, because only the view knows the choices and the prose. A beat that already has `spans` is left as it is.
+
 ## inlineMarkup
 
 ```ts

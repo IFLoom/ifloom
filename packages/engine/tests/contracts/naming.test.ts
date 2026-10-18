@@ -12,8 +12,8 @@ import { appOpen, closeApp, devices, openApp } from '@ifloom/plugin-devices'
 import { applyStatus, removeStatus, statusActive, statuses } from '@ifloom/plugin-statuses'
 import { feed, hasPosted, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 import { generate, generators } from '@ifloom/plugin-generators'
-import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work } from '@ifloom/plugin-jobs'
-import { messageArrived, messageReplied, messages, readThread, replyTo } from '@ifloom/plugin-messages'
+import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work, workedToday } from '@ifloom/plugin-jobs'
+import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo } from '@ifloom/plugin-messages'
 import { at, go, moveTo, places, within } from '@ifloom/plugin-places'
 import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest } from '@ifloom/plugin-quests'
 import { buy, inStock, sell, shop, vendorOpen } from '@ifloom/plugin-shop'
@@ -128,6 +128,7 @@ const SAMPLES: Record<string, Call> = {
   'conditions:jobs/hired': hasJob('barista', 'head'),
   'conditions:jobs/fired': wasFired('barista'),
   'conditions:jobs/shifts': shiftsWorked('barista', { gte: 3 }),
+  'conditions:jobs/worked': workedToday('barista'),
   'effects:jobs/hire': hire('barista'),
   'effects:jobs/fire': fire('barista'),
   'conditions:cheats/used': cheatUsed('coins'),
@@ -139,6 +140,8 @@ const SAMPLES: Record<string, Call> = {
   'commands:jobs/quit': quit('barista'),
   'conditions:messages/arrived': messageArrived('hi'),
   'conditions:messages/replied': messageReplied('hi', 'yes'),
+  'conditions:messages/since': messageSince('hi', { lt: 3 }),
+  'effects:messages/draw': drawMessage('smalltalk'),
   'conditions:messages/read': { custom: 'messages/read', with: { message: 'hi' } },
   'commands:messages/reply': replyTo('hi', 'yes'),
   'commands:messages/read': readThread('ava'),
@@ -167,6 +170,8 @@ const PLUGIN_NOUNS = [
   'achievement', 'status', 'character', 'location', 'quest', 'stage', 'job', 'rank', 'vendor', 'message', 'reply', 'thread', 'post', 'feed', 'template', 'app', 'device', 'slot', 'day', 'period', 'cheat', 'unlock',
   // details: how many, where, who from, what with
   'count', 'stacks', 'runEnd', 'likes', 'video', 'at',
+  // a named pool a draw picks from
+  'pool',
 ] as const
 
 const allowed = new Set<string>([...TARGETS, ...DETAILS, ...PLUGIN_NOUNS])

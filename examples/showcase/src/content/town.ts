@@ -17,6 +17,7 @@ import { openApp } from '@ifloom/plugin-devices'
 import { hasUnlock } from '@ifloom/plugin-unlocks'
 import { openShop } from '@ifloom/plugin-shop'
 import { openJobs } from '@ifloom/plugin-jobs'
+import { drawMessage, messageReplied, messageSince, type MessageDef } from '@ifloom/plugin-messages'
 import { prose } from './prose.ts'
 
 const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: string }): LocationDef => ({
@@ -25,6 +26,22 @@ const place = (location: Omit<LocationDef, 'art' | 'tag' | 'body'> & { tag?: str
   body: [{ text: `place.${location.id}` }],
   ...location,
 })
+
+/**
+ * Ava's small talk by text: a pool the `ava.chat` trigger draws one line from
+ * each day, once you've answered her first text. A line rests for three days
+ * after it comes, so the same one never comes twice within three days.
+ */
+const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) => ({
+  id: `ava.chat.${topic}`,
+  channel: 'texts',
+  from: 'ava',
+  drawnFrom: ['ava.chat'],
+  when: { not: messageSince(`ava.chat.${topic}`, { lt: 3 }) },
+  body: [{ text: `ava.chat.${topic}` }],
+  // The beans want an answer, every time she asks.
+  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ kind: 'stat' as const, stat: 'friendship', by: 2, of: person('ava') }] }] } : {}),
+}))
 
 /** Ava's text has come and hasn't been read. */
 const textWaiting: Condition = { all: [{ custom: 'messages/arrived', with: { message: 'ava.text' } }, { not: { custom: 'messages/read', with: { message: 'ava.text' } } }] }
@@ -389,6 +406,8 @@ export const town: Pack = {
         { kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
       ],
     },
+    // Once a day after you've answered Ava's first text, a line of her small talk from the pool.
+    { id: 'ava.chat', once: 'turn', when: messageReplied('ava.text'), effects: [drawMessage('ava.chat')] },
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.
     {
       id: 'rent',
@@ -550,6 +569,7 @@ export const town: Pack = {
           body: [{ text: 'ava.text' }],
           replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
         },
+        ...smallTalk,
       ],
     },
     feed: {

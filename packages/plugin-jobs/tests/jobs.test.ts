@@ -17,7 +17,7 @@ import {
   type Plugin, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, places, type LocationDef } from '@ifloom/plugin-places'
-import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, type JobDef, type JobsView } from '../src/index.ts'
+import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, workedToday, type JobDef, type JobsView } from '../src/index.ts'
 
 /**
  * Weekend help at the café: friends of the owner only, Saturday mornings,
@@ -105,8 +105,12 @@ describe('jobs, on their own', () => {
     expect(state.stats).toMatchObject({ coins: 12, energy: 80, manner: 6 })
     expect(whyNot(state, g, work('cafe'))).toBe('You’ve done today’s shift.')
     expect(holds(state, shiftsWorked('cafe', { gte: 1 }), g)).toBe(true)
+    expect(holds(state, workedToday('cafe'), g)).toBe(true)
+    expect(holds(state, workedToday(), g)).toBe(true)
+    expect(holds(state, workedToday('other'), g)).toBe(false)
     // Without the calendar a day is a turn, and every day has a shift.
     state = run(state, g, act('sleep'))
+    expect(holds(state, workedToday(), g)).toBe(false)
     expect(board(state, g).nextShift).toEqual({ day: 1, inDays: 0 })
     expect(whyNot({ ...state, stats: { ...state.stats, energy: 10 } }, g, work('cafe'))).toBe('Too tired.')
   })
@@ -219,10 +223,13 @@ describe('jobs with the calendar', () => {
     expect(clock.read(state, g)).toEqual({ day: 5, period: 'afternoon' })
     // Done for the day says so, not that the hours are over.
     expect(whyNot(state, g, work('cafe'))).toBe('You’ve done today’s shift.')
+    // Worked today for the rest of the calendar's day, as the refusal reads it.
+    expect(holds(state, workedToday('cafe'), g)).toBe(true)
     expect(board(state, g)).toMatchObject({ shifts: 1, missed: 0, nextShift: { day: 12, inDays: 7 } })
     // A whole week passes in one go: one Saturday missed, the weekdays not counted.
     state = run(state, g, act('week'))
     expect(clock.read(state, g)).toEqual({ day: 12, period: 'afternoon' })
+    expect(holds(state, workedToday('cafe'), g)).toBe(false)
     expect(board(state, g)).toMatchObject({ hired: true, missed: 0 })
     state = run(state, g, act('week'))
     expect(board(state, g)).toMatchObject({ hired: true, missed: 1 })

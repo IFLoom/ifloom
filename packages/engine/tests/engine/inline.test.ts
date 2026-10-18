@@ -5,7 +5,7 @@ import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { createRunner, replay } from '../../src/runner.ts'
-import { inlineMarkup } from '../../src/sceneBody.ts'
+import { inlineMarkup, parseBeats, styledBeats } from '../../src/sceneBody.ts'
 import { inlineChoices, screen } from '../../src/screen.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
@@ -243,6 +243,14 @@ describe('bold and italics', () => {
     expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
     const past = runner.backlog()[0].beats[0]
     expect(past.kind === 'text' && past.spans?.map((span) => span.kind)).toEqual(['text', 'bold', 'text', 'italic', 'text'])
+  })
+
+  it('are drawn by styledBeats in beats that skip the view, leaving inline actions as written', () => {
+    expect(styledBeats(parseBeats('The sign says **Closed**. [[act:x|Knock]]\n\nAva: "*Again?*"\n\nPlain.'))).toEqual([
+      { kind: 'text', text: 'The sign says Closed. [[act:x|Knock]]', spans: [{ kind: 'text', text: 'The sign says ' }, { kind: 'bold', text: 'Closed' }, { kind: 'text', text: '. [[act:x|Knock]]' }] },
+      { kind: 'say', who: 'character', text: 'Again?', spans: [{ kind: 'italic', text: 'Again?' }] },
+      { kind: 'text', text: 'Plain.' },
+    ])
   })
 
   it('are checked: stars that never close, three in a row, one inside another, next to an action', () => {

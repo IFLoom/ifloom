@@ -416,7 +416,7 @@ type PostView = {
 | `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
 | `portrait` | A cast character's portrait (their `portrait`, or `art/character/<id>.jpg`), or `null`. Always `null` for the player's own. |
 | `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
-| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. |
+| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
 | `image` | The image path, or `null`. |
 | `video` | The video path, or `null`. The React UI's [`FeedSection`](/docs/react/components#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
 | `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |

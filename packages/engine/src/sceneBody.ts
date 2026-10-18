@@ -370,6 +370,30 @@ export function inlineMarkup(text: string): InlinePart[] | null {
   return parts
 }
 
+/**
+ * Text and spoken beats with their bold and italics drawn: `spans` with
+ * `bold` and `italic` pieces, and `text` without the stars. For beats that
+ * don't go through a scene's view, such as a message's or a post's. Inline
+ * actions and tooltips stay in the words as written, because only the view
+ * knows the choices and the prose. A beat with no styled words is left as it is.
+ */
+export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
+  return beats.map((beat) => {
+    if ((beat.kind !== 'text' && beat.kind !== 'say') || beat.spans) return beat
+    const parts = inlineMarkup(beat.text)
+    if (!parts) return beat
+    const spans: InlineSpan[] = []
+    for (const part of parts) {
+      const piece: InlineSpan = part.kind === 'bold' || part.kind === 'italic' ? { kind: part.kind, text: part.text } : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
+      const prev = spans.at(-1)
+      if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
+      else spans.push(piece)
+    }
+    const text = spans.map((span) => span.text).join('')
+    return spans.some((span) => span.kind !== 'text') ? { ...beat, text, spans } : { ...beat, text }
+  })
+}
+
 function parseBlocks(body: string): SceneBeat[] {
   let lastSay: 'character' | 'player' | null = null
   return body

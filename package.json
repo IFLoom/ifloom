@@ -20,7 +20,7 @@
     "typecheck": "vp run typecheck:all",
     "lint": "vp lint",
     "format": "vp fmt",
-    "check": "vp check",
+    "check": "vp check && vp run typecheck:all",
     "docs:dev": "npm run dev -w @ifloom/site",
     "docs:build": "npm run docs:links && npm run build -w @ifloom/site",
     "docs:links": "npm run links -w @ifloom/site"

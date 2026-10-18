@@ -15,8 +15,8 @@ docs=1
 step() { printf '\n== %s\n' "$*"; }
 
 step "npm test"; npm test
-step "npm run typecheck"; npm run typecheck
-step "npm run lint"; npm run lint
+# vp check: the format (npm run format fixes it) and lint, then tsc on every project; each cached.
+step "npm run check"; npm run check
 
 if (( docs )); then
   step "npm run docs:build"; npm run docs:build

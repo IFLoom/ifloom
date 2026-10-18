@@ -418,10 +418,11 @@
   margin: 0.75rem;
 }
 
-/* Bold as a heavy coloured word, and italics in a softer colour. */
+/* Bold as a heavy word in the text's own colour, so it never reads as a link,
+   and italics in a softer colour. */
 [data-part="bold"] {
   font-weight: 800;
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 [data-part="italic"] {

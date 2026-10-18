@@ -18,7 +18,7 @@ const town: Pack = {
   id: 'town',
   schema: SCHEMA,
   activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
-  data: { __id__: { entries: [{ id: 'bread', label: 'A loaf of bread' }] } },
+  data: { '__id__': { entries: [{ id: 'bread', label: 'A loaf of bread' }] } },
 }
 
 const { game } = loadGame([town], { id: 'my-game', title: 'My Game', plugins: [__camel__()] })

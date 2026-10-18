@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { begin, fixture } from '../fixtures/town.ts'
+import { definePlugin } from '../../src/plugin.ts'
 
 describe('the game’s hooks', () => {
   it('ends the turn: resets put back, then onTurn, with the state the turn ended on and effects in order', () => {
@@ -20,6 +21,25 @@ describe('the game’s hooks', () => {
     expect(next.state.kv.reached).toBe(3)
     expect(next.state.kv.wasTidy).toBe(true)
     expect(next.state.kv.mornings).toBe(1)
+  })
+
+  it('runs onTurnDone after every plugin’s onTurn, so it sees what they did', () => {
+    // A stand-in clock: a plugin that moves the day on each turn.
+    const clock = definePlugin({ id: 'clock', version: 1, onTurn: (state) => ({ ...state, kv: { ...state.kv, day: Number(state.kv.day ?? 0) + 1 } }) })
+    const order: string[] = []
+    const game = {
+      ...fixture({
+        onTurn: (state) => (order.push(`onTurn day ${state.kv.day}`), state),
+        onTurnDone: (state, { apply, before }) => {
+          order.push(`onTurnDone day ${state.kv.day}`)
+          return state.kv.day !== before.kv.day ? apply([{ kind: 'kv', key: 'newDays', by: 1 }]) : state
+        },
+      }),
+      plugins: [clock],
+    }
+    const next = applyEffects(begin(game, { kv: { day: 4 } }), game, [{ kind: 'turn', by: 2 }])
+    expect(order).toEqual(['onTurn day 4', 'onTurnDone day 5', 'onTurn day 5', 'onTurnDone day 6'])
+    expect(next.kv.newDays).toBe(2)
   })
 
   it('ends several turns by effect', () => {

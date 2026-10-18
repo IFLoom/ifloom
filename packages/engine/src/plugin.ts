@@ -149,7 +149,7 @@ export type Plugin<S = any, V = unknown> = {
    * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
    */
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-  /** A hook: at the start of each turn, after the game's own `rules.onTurn`. Returns the next state. */
+  /** A hook: at the start of each turn, after the game's own `rules.onTurn` and before its `rules.onTurnDone`. Returns the next state. */
   onTurn?: (state: GameState, context: PluginContext<S>) => GameState
   /**
    * A hook: after every command that took, with the state it started from and

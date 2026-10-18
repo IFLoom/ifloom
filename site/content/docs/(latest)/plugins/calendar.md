@@ -156,7 +156,7 @@ From day 0 at any period, the `closeTheWeek` activity ends turn 0 and the clock 
 
 ### What the game's turn rules see
 
-The game's `onTurn` sees the clock as the turn ended. At the end of a turn, the engine runs [`rules.onTurn`](/docs/reference/rules#onturn) first, then each plugin's `onTurn` hook. So the game's own rule sees the clock before the calendar moves it. If the player goes to bed at night, `rules.onTurn` sees the clock at day 0, night, not day 1, morning, in both its state and its `before`. Plugins listed after the calendar see the new day.
+The game's `onTurn` sees the clock as the turn ended. At the end of a turn, the engine runs [`rules.onTurn`](/docs/reference/rules#onturn) first, then each plugin's `onTurn` hook. So the game's own rule sees the clock before the calendar moves it. If the player goes to bed at night, `rules.onTurn` sees the clock at day 0, night, not day 1, morning, in both its state and its `before`. Plugins listed after the calendar see the new day, and so does the game's [`rules.onTurnDone`](/docs/reference/rules#onturndone), which runs after every plugin. [Each new day](/docs/reference/rules#each-new-day) uses it.
 
 When one pass ends several turns, the first turn's rules see the clock where the pass began. Each later turn's rules see the clock where the turn before left it, which is the start of the day (or period, or week) that turn ends.
 
@@ -496,7 +496,7 @@ base · options weekend · no day 9 in a week of 7
 ## Gotchas
 
 - **List the calendar first.** Other plugins' `onTurn` hooks then see the new day. If you list it after them, it moves the clock after they've run.
-- **The game's own turn rule sees the old clock.** `rules.onTurn` runs before the calendar's `onTurn` hook. To act on the day that's just begun, work the day out from `state.turn` (see [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step)), do it in a plugin listed after the calendar, or read the clock in the next command.
+- **`rules.onTurn` sees the old clock.** It runs before the calendar's `onTurn` hook. To act on the day that's just begun, use [`rules.onTurnDone`](/docs/reference/rules#onturndone), which runs after it.
 - **A pass inside a turn's end ends no turn.** Applied from `rules.onTurn`, or from another plugin's `onTurn` hook, `calendar/pass` still moves the clock. The turns it would end do nothing, as any [`turn` effect](/docs/reference/effects#turn) there does.
 - **`calendar/set` and `write` end no turn.** They put the clock somewhere, and `state.turn` stays where it was.
 - **The weekday counts from day 0, but a week turn counts from `start.day`.** With `start: { day: 3 }` and `turn: 'week'`, the game starts on a Thursday and each week turn runs from Thursday to Wednesday.

@@ -83,6 +83,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - The vue, svelte and vanilla templates lay the page out the same way, in `src/Layout.vue`, `src/Layout.svelte` and `src/layout.ts`: a side column with the stats in a section that folds, the story, and the room's buttons at the bottom of it. On a phone the side column sits above the story.
 - A recipe, Layouts: sections, drawers and showing things in some rooms.
 - The `--width-prose` token (`70ch`) keeps a scene's text to a readable line length while the page grows.
+- `rules.onTurnDone`, a hook that runs at the end of a turn after every plugin's `onTurn`, with the same `before` and `apply` as `rules.onTurn`. It sees what the plugins did, such as the calendar's new day, so "each new day" is a few lines in your rules. The rules page shows how.
 
 ### Changed
 

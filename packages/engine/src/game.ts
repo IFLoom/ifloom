@@ -198,9 +198,17 @@ export type GameRules = {
    * `resets` are back, with the state then and a `TurnContext`, whose
    * `before` is the state as the turn ended. Return the next state: apply
    * effects with `context.apply`, in order, each seeing the ones before it.
-   * Runs before every plugin's `onTurn`.
+   * Runs before every plugin's `onTurn`, so a plugin's clock still reads the
+   * turn that ended. To act on what the plugins did, use `onTurnDone`.
    */
   onTurn?: (state: GameState, context: TurnContext) => GameState
+  /**
+   * A hook: the end of a turn, after every plugin's `onTurn`. The same
+   * arguments as `onTurn`, but the state has the plugins' changes (the
+   * calendar's new day, a status worn off), so it is where "each new day"
+   * goes. `before` is still the state as the turn ended.
+   */
+  onTurnDone?: (state: GameState, context: TurnContext) => GameState
   /**
    * Commands the game handles itself, by type. Return the next state, or a
    * string to refuse with that reason.

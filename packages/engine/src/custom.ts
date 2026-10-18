@@ -64,7 +64,7 @@ export type CustomContext = {
 }
 
 /**
- * What `rules.onTurn` is handed besides the state: a game function's context,
+ * What `rules.onTurn` and `rules.onTurnDone` are handed besides the state: a game function's context,
  * the state as the turn ended, and `apply` for effects, as a plugin's
  * context has it. A `turn` effect applied here does nothing: a turn's end
  * can't end another turn.

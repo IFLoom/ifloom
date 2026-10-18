@@ -490,14 +490,14 @@ Nothing is nested, so every hook sits beside the rest of the plugin.
 
 | Hook | When |
 |---|---|
-| `onTurn(state, context)` | At the end of each turn, after the game's own [`rules.onTurn`](/docs/reference/rules#onturn). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
+| `onTurn(state, context)` | At the end of each turn, after the game's own [`rules.onTurn`](/docs/reference/rules#onturn) and before its [`rules.onTurnDone`](/docs/reference/rules#onturndone). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
 | `onCommand(before, after, context)` | After every command that took. `before` is the state the command started from, and the context belongs to `after`. |
 
 Those are the only two hooks. Plugins' hooks run in the order `game.plugins` lists them, and each gets the state the one before it left. To notice the player moving, use `onCommand` and ask `places/here`, as the example below does.
 
 Within one command, the order is:
 
-1. The command runs, including the end of any turn it causes (the game's `rules.onTurn`, then each plugin's `onTurn`).
+1. The command runs, including the end of any turn it causes (the game's `rules.onTurn`, each plugin's `onTurn`, then the game's `rules.onTurnDone`).
 2. The game's [triggers](/docs/reference/triggers) fire.
 3. The scene left on screen is counted as [seen](/docs/reference/state#seen), its [minigame](/docs/reference/minigames) starts if it has one, and its sounds get [keys of their own](/docs/reference/audio#sounds-and-voices).
 4. Each plugin's `onCommand` runs. Triggers don't see what it changes until the next command.
@@ -759,7 +759,7 @@ apply: (effects: readonly EffectRef[], on?: GameState) => GameState
 
 On the [context](#plugincontext), `apply` applies a list of effects as content would and returns the next state. Anything content can write goes in the list: built-in effects, the game's [custom effects](/docs/reference/custom#effects) and plugins' effects (this plugin's own included), in the long form or [in short](/docs/reference/custom#plugincall). They apply in order, each on the state the one before it left. The list is built from `on`, which defaults to the state the function was handed.
 
-This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with the game's `rules.onTurn` and every plugin's `onTurn` hook.
+This is how a plugin's effect or command ends a turn. `apply([{ kind: 'turn' }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with the game's `rules.onTurn`, every plugin's `onTurn` hook and the game's `rules.onTurnDone`.
 
 ```ts
 // Empty the sink first, so the turn's hooks see it empty.

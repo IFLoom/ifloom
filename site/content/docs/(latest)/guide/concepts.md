@@ -70,7 +70,7 @@ See [The view](/docs/reference/view).
 
 The engine has one clock, the turn. `state.turn` is 0 in a new game. Your game decides how long a turn is: a chapter in a novel, a week in a management game, a day in a life sim. A turn ends when the `turn` effect, `{ kind: 'turn' }`, runs. Everything the engine dates is dated in turns, such as when a scene was first seen or when a trigger last fired.
 
-At the end of a turn the counter goes up by one, the kv keys the game lists in `resets` are put back, and the game's `onTurn` rule and each plugin's `onTurn` hook run. That's where a game that has energy fills it back up.
+At the end of a turn the counter goes up by one, the kv keys the game lists in `resets` are put back, and the game's `onTurn` rule, each plugin's `onTurn` hook and the game's `onTurnDone` rule run. That's where a game that has energy fills it back up.
 
 The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
 

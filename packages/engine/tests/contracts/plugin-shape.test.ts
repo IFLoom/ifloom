@@ -124,7 +124,7 @@ describe('the plugin shape (ADR 0009)', () => {
     // Every on-name a plugin may have is a hook, and every hook is an on-name.
     expect([...allowed].filter((name) => /^on[A-Z]/.test(name)).sort()).toEqual([...MEMBERS.hooks].sort())
     // The game's rules follow the same rule: its hooks are on-names, and there's no `turn` beside `onTurn`.
-    const rules: Record<keyof GameRules, 'hook' | 'data' | 'table'> = { locks: 'data', resets: 'data', onTurn: 'hook', onStat: 'hook', commands: 'table' }
+    const rules: Record<keyof GameRules, 'hook' | 'data' | 'table'> = { locks: 'data', resets: 'data', onTurn: 'hook', onTurnDone: 'hook', onStat: 'hook', commands: 'table' }
     expect(Object.entries(rules).filter(([name, role]) => (role === 'hook') !== /^on[A-Z]/.test(name))).toEqual([])
   })
 

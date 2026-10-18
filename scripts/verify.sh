@@ -3,7 +3,7 @@
 # clean-up of what they leave behind. Stops at the first failure.
 #
 #   scripts/verify.sh            everything
-#   scripts/verify.sh --no-docs  skip the docs build (and the link check)
+#   scripts/verify.sh --no-docs  skip the docs build and its link check
 #
 # Run scripts/privacy-check.sh as well before pushing.
 set -euo pipefail
@@ -19,11 +19,9 @@ step "npm test"; npm test
 step "npm run check"; npm run check
 
 if (( docs )); then
+  # The link check, then next build: cached tasks (site:links, site:build in vite.config.ts) that run again only when
+  # something the site reads has changed.
   step "npm run docs:build"; npm run docs:build
-  # The link check, once the docs site has one: any root script with "link" in its name.
-  for script in $(node -e 'for (const name of Object.keys(require("./package.json").scripts ?? {})) if (/link/i.test(name)) console.log(name)'); do
-    step "npm run $script"; npm run "$script"
-  done
 fi
 
 for example in novel cafe showcase; do

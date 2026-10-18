@@ -22,8 +22,8 @@
     "format": "vp fmt",
     "check": "vp check && vp run typecheck:all",
     "docs:dev": "npm run dev -w @ifloom/site",
-    "docs:build": "npm run docs:links && npm run build -w @ifloom/site",
-    "docs:links": "npm run links -w @ifloom/site"
+    "docs:build": "vp run site:build",
+    "docs:links": "vp run site:links"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",

@@ -1,8 +1,10 @@
 # {{title}}
 
 An IFLoom game in a Next.js app, for a game you host on the web: on Vercel,
-Netlify or any host that runs Next. The game is in `src/game.ts`, and
-`app/Game.tsx` draws it with the React UI.
+Netlify or any host that runs Next. `src/game.ts` puts the game together from
+its packs in `src/world/` (stats and the rest the whole game shares) and
+`src/story/` (the scenes, one file per area), and `app/Game.tsx` draws it with
+the React UI.
 
 Next builds a website for a server to host. If you want a game players can
 download and open from disk, as one `index.html`, start from another template instead

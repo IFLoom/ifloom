@@ -1,18 +1,13 @@
 /**
- * Your game. It's plain data: scenes, the choices in them, a stat, and the
- * words, kept apart from the scenes in `prose` so they're easy to edit.
- *
- * The docs: https://ifloom.dev/docs/
+ * The first area of the story: its scenes, the choices in them, and their
+ * words in `prose`, kept apart from the scenes so they're easy to edit. Once
+ * the words grow long, move `prose` to a `start.prose.ts` beside this file.
  */
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { SCHEMA, type Pack } from '@ifloom/engine'
 
-const story: Pack = {
-  id: 'story',
+export const start: Pack = {
+  id: 'story.start',
   schema: SCHEMA,
-  stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
-  // What the player can change on the settings page. A condition reads a
-  // setting like a kv key: `when: { setting: 'hints' }`.
-  // settings: [{ id: 'hints', label: 'Show hints', kind: 'toggle', default: true }],
   scenes: [
     {
       id: 'start',
@@ -47,6 +42,3 @@ const story: Pack = {
     'inside#again': 'Start again',
   },
 }
-
-/** The game, and anything the loader found wrong with it. `ifloom check` reads this. */
-export default loadGame([story], { id: '{{name}}', title: '{{title}}', introScene: 'start' })

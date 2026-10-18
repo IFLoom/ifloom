@@ -4,8 +4,8 @@
  * checkout so there is only one of each to keep working. The `plugin` template
  * is not a game: it's a plugin package of its own, with a test, to publish on npm.
  */
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
-import { join, relative, resolve, sep } from 'node:path'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const TEMPLATES = ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel', 'cafe', 'town', 'plugin'] as const
@@ -74,18 +74,20 @@ export const BASE_COMPILER_OPTIONS = {
 
 /** The files every template of our own takes from `templates/shared/`. */
 const BASE = ['AGENTS.md', 'gitignore', 'tsconfig.json', 'index.html']
-/** What the templates without React share: the plain game and the stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
-const PLAIN = [...BASE, 'src/game.ts', 'src/styles.css']
+/** The game itself, the same in every template: `game.ts` assembles the packs in `world/` and `story/`. */
+const GAME = ['src/game.ts', 'src/world/stats.ts', 'src/story/start.ts']
+/** What the templates without React share: the game and the plain stylesheet. The minigame clock and keys come from `@ifloom/browser`. */
+const PLAIN = [...BASE, ...GAME, 'src/styles.css']
 
 /** Where each template's files come from, under the templates' folder or the examples'. Ours add the shared files; the examples bring their own. */
 const SOURCES: Record<TemplateName, { dir: string; example?: true; shared: string[] }> = {
   // React, Vue and Svelte bring their own vite.config.ts, which adds the framework's plugin.
-  react: { dir: 'react', shared: BASE },
+  react: { dir: 'react', shared: [...BASE, ...GAME] },
   vanilla: { dir: 'vanilla', shared: [...PLAIN, 'vite.config.ts'] },
   vue: { dir: 'vue', shared: PLAIN },
   svelte: { dir: 'svelte', shared: PLAIN },
   // A Next app: its own config, tsconfig, AGENTS.md and .gitignore, and no index.html or Vite config.
-  next: { dir: 'next', shared: [] },
+  next: { dir: 'next', shared: GAME },
   novel: { dir: 'novel', example: true, shared: ['AGENTS.md', 'gitignore'] },
   cafe: { dir: 'cafe', example: true, shared: ['AGENTS.md', 'gitignore'] },
   town: { dir: 'showcase', example: true, shared: ['AGENTS.md', 'gitignore'] },
@@ -204,6 +206,7 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
   const from = join(example ? EXAMPLE_DIR! : TEMPLATE_DIR, source.dir)
   cpSync(from, dir, { recursive: true, filter: (path) => !(example ? LEFT_OUT : BUILT).has(relative(from, path).split(/[\\/]/)[0]) })
   for (const file of source.shared) {
+    mkdirSync(dirname(join(dir, file)), { recursive: true })
     cpSync(join(TEMPLATE_DIR, 'shared', file), join(dir, file === 'gitignore' ? '.gitignore' : file))
   }
   // npm leaves a .gitignore out of a published package, so a template keeps its own as `gitignore`.

@@ -48,7 +48,7 @@ describe('a plugin’s stage', () => {
   it('fills the screen while no scene is open, its blocks drawn under its own id', () => {
     const { game: g } = game()
     const shown = view(startingState(g), g)
-    expect(shown.scene).toMatchObject({ id: null, title: 'The market stall', frame: 'stage' })
+    expect(shown.scene).toMatchObject({ id: null, title: 'The market stall', key: 'room:market' })
     expect(shown.scene.body).toMatch(/^Crates of eggs and a heap of loaves\.\n\n“(Fresh bread|Eggs, a dozen)!”$/)
   })
 

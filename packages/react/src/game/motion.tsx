@@ -1,9 +1,10 @@
 /**
- * Scene transitions and prose reveals, drawn with CSS from the view's names
- * (`view.transition` and the scene's `reveal` beats). The engine only names
- * them; the keyframes are in `theme.css`, keyed by `data-transition-in`,
- * `data-transition-out` and `data-reveal`, so a theme or a game's own CSS can
- * redraw any of them, or add its own names.
+ * Scene transitions and prose reveals, drawn with CSS from the content's
+ * `ui` hints (`ui.transition` on scenes, places, choices and the game, and
+ * `ui.reveal` on blocks; see `hints.ts`). The engine carries them and gives
+ * them no meaning; the keyframes are in `theme.css`, keyed by
+ * `data-transition-in`, `data-transition-out` and `data-reveal`, so a theme or
+ * a game's own CSS can redraw any of them, or add its own names.
  *
  * Nothing is hidden for good: a revealed line is in the page from the start
  * (only its opacity waits), so a screen reader reads it, and a click on the
@@ -40,11 +41,13 @@ export function useMotion(): boolean {
 }
 
 type FrameProps = {
-  /** `view.transition.key`: the copy is kept, and the delay set, when it changes. */
+  /** `view.scene.key`: the copy is kept, and the delay set, when it changes. */
   transitionKey: string
   /** How the screen on show leaves when the next one replaces it, and how long that takes. */
   out: string
   ms: number
+  /** How the screen before goes, from the choice that left it, over its own `out` and `ms`. */
+  leave?: { out?: string; ms?: number }
   motion: boolean
   attrs: { 'data-part': string; className: string }
   children: ReactNode
@@ -105,11 +108,12 @@ export class SceneFrame extends Component<FrameProps> {
   }
 
   render() {
-    const { transitionKey, out, ms, motion, attrs, children } = this.props
+    const { transitionKey, out, ms, leave, motion, attrs, children } = this.props
     const before = this.shown
-    if (before && before.key !== transitionKey && !this.leaving && motion && before.out !== 'none' && before.ms > 0) {
+    const goes = before ? { out: leave?.out ?? before.out, ms: leave?.ms ?? before.ms } : null
+    if (before && goes && before.key !== transitionKey && !this.leaving && motion && goes.out !== 'none' && goes.ms > 0) {
       const html = this.copy()
-      if (html) this.leaving = { html, out: before.out, ms: before.ms }
+      if (html) this.leaving = { html, out: goes.out, ms: goes.ms }
     }
     this.shown = { key: transitionKey, out, ms }
     if (!motion && this.leaving) {
@@ -131,7 +135,7 @@ export class SceneFrame extends Component<FrameProps> {
   }
 }
 
-export { lastReveal, revealGroups } from '@ifloom/browser'
+export { lastReveal, revealGroups } from '../hints.ts'
 
 /**
  * Show everything at once on the first key press while reveals are pending,

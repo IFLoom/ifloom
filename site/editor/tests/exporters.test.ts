@@ -105,7 +105,8 @@ describe('JSON', () => {
       image: 'people/ava.png',
       stats: { coins: 3 },
       kv: { role: 'baker' },
-      traits: { 'cast/person': { home: 'market', hue: 30 }, 'laundry/washable': { temp: 30 } },
+      traits: { 'cast/person': { home: 'market' }, 'laundry/washable': { temp: 30 } },
+      ui: { hue: 30 },
     })
     project.pack.entities[0].at = { player: 1, 'character:ava': 6 }
     project.pack.entities[0].traits = { 'shop/sellable': { price: { coins: 3 } }, 'wardrobe/wearable': { slot: 'hat' } }

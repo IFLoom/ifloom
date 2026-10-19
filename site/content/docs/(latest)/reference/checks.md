@@ -205,9 +205,9 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses variable "…", which is not in its vars` (one another minigame declares), and `copies variable "…", which is not in its vars`. See [Minigames](/docs/reference/minigames#the-checks). |
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
-| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition, and `display pips needs a range of 20 or less; this one is …` for [`display: 'pips'`](/docs/reference/stats#statdef) on a wide range. For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
+| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition and its `ui` (see [Presentation hints](#presentation-hints)). For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. For its [`at`](/docs/reference/entities#holding-things): `at can't be "you" where a thing starts: …`, `at names the entity itself: nothing can hold itself`, `at names unknown holder "…"` (a holder has to be declared), `at names "…", whose kind isn't unique, so it can't hold things`, `at gives "…" <n>: a count is a whole number above 0`, `a unique thing starts in one place, one of it`, and `holders go round in a cycle: … → …` for unique things that start inside each other. |
-| `kind <id>` | What its `listed` and `flags` conditions name, with `'$'` as any one of the kind. |
+| `kind <id>` | What its `listed` and `flags` conditions name, with `'$'` as any one of the kind, and its `ui`. |
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |
 | `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and whatever the plugin's trait finds in the data with its `check` and `references`. See [Traits](#traits). |
 | `finished` | The game's [`finished`](/docs/reference/state#new-game) condition. |
@@ -290,18 +290,16 @@ Wherever content asks for a picture or a video, it's checked against `game.media
 
 A hotspot's `command` and `when`, and a layer's `when`, are checked as any command and condition are, with `hotspot <id>:` or `stage layer <id>:` in front.
 
-## Transitions
+## Presentation hints
 
-Every [transition](/docs/reference/transitions) name content gives is checked against the built-in names (`TRANSITIONS`) and the game's `transitions.names`. That's a scene's `transition`, a place's, `game.transitions.default`, a `transition` effect, a block's `reveal` and `[[reveal]]` markup in prose.
+A `ui` field of [presentation hints](/docs/reference/ui-hints) is checked only for being data, wherever content writes one: a scene, a choice (as `choice <id>:`), a block, an action, a stat, a kind, an entity, a place and the game (reported as `ui`). What the hints say is the UI's to check. The React UI's [`checkUiHints`](/docs/react/hints#checkuihints) does that for its own.
 
 | Problem | When |
 |---|---|
-| `unknown transition "…"` | A name that's neither built in nor declared. |
-| `a transition's ms must be 0 or more` | A transition's `ms` is negative or not a number. |
-| `a reveal's delay must be whole milliseconds, 0 or more` | A block's `reveal.delay`. |
-| `[[reveal]] has a delay of "…"; it is whole milliseconds` | Markup such as `[[reveal:soon]]`. |
-| `[[reveal]] goes on a line of its own, with a blank line before and after` | `[[reveal]]` inside a paragraph, which is shown as written. |
-| `transition name "…" is not lower-case letters, digits and "-"` | An entry in `game.transitions.names`. Reported as `transitions`. |
+| `ui must be an object of hints` | `ui` is a string, a number, an array or null. |
+| `ui.… is a function; ui hints are data` | A function anywhere inside it. |
+| `ui.… is not plain data; ui hints are objects, arrays, text, numbers and true/false` | A class instance, such as a `Date` or a `Map`. |
+| `[[reveal]] is no longer markup and would be shown as written; …` | `[[reveal]]` left in prose. Put the paragraph in a block of its own with a `ui` hint. |
 
 ## Inline actions and tooltips
 

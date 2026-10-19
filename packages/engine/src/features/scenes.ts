@@ -134,7 +134,7 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene {
   return 'body' in scene && Array.isArray((scene as DataScene).body)
 }
 
-/** What prose blocks name: prose keys, variants and their art, conditions, media, reveals. */
+/** What prose blocks name: prose keys, variants and their art, conditions, media, hints. */
 export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
   const out: Reference[] = []
   for (const block of blocks ?? []) {
@@ -144,7 +144,7 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
       for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
     }
     if ('media' in block) out.push({ media: block.media })
-    if (block.reveal) out.push({ reveal: block.reveal })
+    if (block.ui !== undefined) out.push({ ui: block.ui })
     out.push({ when: block.when })
     if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
   }
@@ -162,6 +162,7 @@ export function dataSceneReferences(scene: DataScene): Reference[] {
     out.push({ when: choice.when })
     for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
     out.push({ effects: choice.effects })
+    if (choice.ui !== undefined) out.push({ within: `choice ${choice.id}`, refs: [{ ui: choice.ui }] })
   }
   for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
   if (scene.panelData !== undefined) out.push({ panel: scene.panelData })
@@ -483,7 +484,7 @@ export const scenes = defineFeature<ScenesShape>({
       if (scene.weight !== undefined && !(scene.weight > 0)) tools.problem(source, where, 'weight must be above 0')
       if (scene.weight !== undefined && !drawn) tools.problem(source, where, 'has a weight but no drawnFrom, so it is never drawn')
       if (scene.when !== undefined && !drawn) tools.problem(source, where, 'has a when but no drawnFrom; when only gates draws')
-      tools.check(source, where, [{ when: scene.when }, { transition: scene.transition }])
+      tools.check(source, where, [{ when: scene.when }, { ui: scene.ui }])
     }
   },
   // Render every scene against a probe state and check what falls out. A data scene's content is checked already.

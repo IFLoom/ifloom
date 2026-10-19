@@ -197,6 +197,7 @@ type ActionDef = {
   command: CommandRef
   when?: Condition
   blocked?: Blocked[]
+  ui?: Ui<ChoiceUi>
 }
 ```
 
@@ -211,6 +212,7 @@ While no scene is open, the view shows the plugins' buttons first and then the g
 | `command` | What to send when it's pressed: a [command](/docs/reference/commands), or a plugin's in short, as in `{ 'places/go': { id: 'cafe' } }` (see [`CommandRef`](/docs/reference/custom#commandref)). The view shows it in the long form. |
 | `when` | The button is only on screen while this holds. Without it, it's always there. |
 | `blocked` | The button is on screen but greyed out while one of these holds, or left off with `hide`. The first that does gives the disabled text. See [`Blocked`](#blocked). |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the button as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. |
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'

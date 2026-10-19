@@ -7,7 +7,7 @@ import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
 import type { EntityDef, KindDef, TraitDef } from './entities.ts'
 import type { Reference } from './references.ts'
-import type { Transition, TransitionName } from './features/transitions.ts'
+import type { EntityUi, SceneUi, Ui } from './features/ui.ts'
 import type { MigrationTools } from './intake.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
@@ -265,10 +265,10 @@ export type StatModifier = {
 export type SpeakerView = {
   id: string
   name: string
-  /** A colour for their lines, as a hue from 0 to 360; null for the UI's own. */
-  hue: number | null
   /** Their picture; null for none. */
   portrait: string | null
+  /** Their presentation hints, as their entity has them; left out with none. See `EntityUi`. */
+  ui?: Ui<EntityUi>
 }
 
 /** What the screen shows while no scene is open, from a plugin's `stage`. */
@@ -282,8 +282,8 @@ export type StageDef = {
    * place gives its own id to keep its lines its own. The plugin's id if left out.
    */
   id?: string
-  /** How the room comes on screen and goes off: a place's `transition`. The game's default if left out. */
-  transition?: Transition | TransitionName
+  /** Presentation hints for the room, carried to `view.scene.ui` as a scene's are. See `SceneUi`. */
+  ui?: Ui<SceneUi>
 }
 
 /**

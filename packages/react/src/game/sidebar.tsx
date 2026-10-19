@@ -9,6 +9,7 @@ import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { Stage } from './stage.tsx'
 import { cn, PROSE } from '../lib/utils.ts'
+import { MAX_PIPS } from '../hints.ts'
 import { useWords } from './words.ts'
 
 /** What `useClock` returns: where the game is in time. */
@@ -35,9 +36,6 @@ function ClockImpl() {
 /** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. A thin default on `useClock`. */
 export const Clock = overridable('Clock', ClockImpl)
 
-/** The most pips drawn; a wider range is drawn as a bar. */
-const MAX_PIPS = 20
-
 /** A stat's value as a bar from its `min` to its `max`, or as pips, one per point. */
 function StatGauge({ stat }: { stat: StatView }) {
   const bar = usePart('stat-bar', 'col-span-2 h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
@@ -53,7 +51,7 @@ function StatGauge({ stat }: { stat: StatView }) {
     'aria-valuenow': stat.value,
     'aria-valuetext': stat.text,
   } as const
-  if (stat.display === 'pips' && range > 0 && range <= MAX_PIPS) {
+  if (stat.ui?.display === 'pips' && range > 0 && range <= MAX_PIPS) {
     const filled = Math.max(0, Math.min(range, Math.round(stat.value - stat.min)))
     return (
       <dd {...pips} {...meter}>
@@ -97,7 +95,7 @@ function StatListImpl() {
               ) : null}
             </dt>
             <dd {...value}>{stat.text}</dd>
-            {stat.display === 'bar' || stat.display === 'pips' ? <StatGauge stat={stat} /> : null}
+            {stat.ui?.display === 'bar' || stat.ui?.display === 'pips' ? <StatGauge stat={stat} /> : null}
             {level && level.next !== null ? (
               <dd
                 {...progressPart}
@@ -120,8 +118,9 @@ function StatListImpl() {
 /**
  * The stats the game lists, with their values written as the game formats them.
  * A stat with levels also shows its level and a bar towards the next one. A
- * stat whose `display` is `'bar'` gets a bar from its `min` to its `max` under
- * it, and one with `'pips'` a row of pips, one per point (a bar past 20).
+ * stat whose `ui.display` hint is `'bar'` gets a bar from its `min` to its
+ * `max` under it, and one with `'pips'` a row of pips, one per point (a bar
+ * past 20).
  */
 export const StatList = overridable('StatList', StatListImpl)
 
@@ -301,7 +300,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
                   <div key={stat.key} className="contents" data-stat={stat.key}>
                     <dt {...label}>{stat.label}</dt>
                     <dd {...value}>{stat.text}</dd>
-                    {stat.display === 'bar' || stat.display === 'pips' ? <StatGauge stat={stat} /> : null}
+                    {stat.ui?.display === 'bar' || stat.ui?.display === 'pips' ? <StatGauge stat={stat} /> : null}
                   </div>
                 ))}
               </dl>

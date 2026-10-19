@@ -24,7 +24,7 @@ const ava = person({
   name: 'Ava',
   fullName: 'Ava Marsh',
   desc: 'Runs the café',
-  hue: 20,
+  ui: { hue: 20 },
   home: 'park',
   // At the counter in the day; by the river otherwise.
   schedule: [{ location: 'cafe', when: period('morning', 'afternoon') }],
@@ -185,7 +185,7 @@ describe('the cast', () => {
     const { game: g } = game()
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'ava.hi' ? { ...entry, speaker: 'ava' } : entry)) }
     const state = run(withSpeaker, startingState(withSpeaker), go('cafe'), talk('ava'))
-    expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', name: 'Ava', hue: 20, portrait: 'art/character/ava.jpg' })
+    expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', name: 'Ava', portrait: 'art/character/ava.jpg', ui: { hue: 20 } })
   })
 
   it('fill prose tokens in a name wherever it is shown, so the player can name someone', () => {

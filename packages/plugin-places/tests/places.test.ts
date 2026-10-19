@@ -90,7 +90,7 @@ describe('places', () => {
     const state = startingState(g)
     expect(where(state)).toBe('house')
     const screen = view(state, g)
-    expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', frame: 'stage' })
+    expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', key: 'room:house' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
       location: { id: 'house', name: 'House', tag: 'Town', tags: [], art: 'place/house', stage: null },
@@ -186,24 +186,25 @@ describe('places', () => {
     expect(shown(state, g)).toEqual({ location: null, exits: [], things: [] })
   })
 
-  it('give the room its transition, keyed by the place', () => {
-    const fading: Content = {
+  it('give the room its hints and a key by the place', () => {
+    const hinted: Content = {
       ...town,
       data: {
         places: {
-          locations: town.data!.places.locations.map((entry) => ({ ...entry, transition: entry.id === 'street' ? { in: 'slide-left', ms: 400 } : 'fade' })),
+          locations: town.data!.places.locations.map((entry) => (entry.id === 'street' ? { ...entry, ui: { transition: 'slide-left' } } : entry)),
         },
       },
     }
-    const { game: g, problems } = loadGame([fading], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
+    const { game: g, problems } = loadGame([hinted], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
     expect(problems).toEqual([])
     const house = startingState(g)
-    expect(view(house, g).transition).toEqual({ key: 'room:house', in: 'fade', out: 'fade', ms: 300 })
-    expect(view(walk(g, house, 'street'), g).transition).toEqual({ key: 'room:street', in: 'slide-left', out: 'none', ms: 400 })
-    const odd: Content = { name: 'odd', prose: town.prose, data: { places: { locations: [place('house', [], { transition: 'spin' })] } } }
+    expect(view(house, g).scene).toMatchObject({ key: 'room:house' })
+    expect(view(house, g).scene.ui).toBeUndefined()
+    expect(view(walk(g, house, 'street'), g).scene).toMatchObject({ key: 'room:street', ui: { transition: 'slide-left' } })
+    const odd: Content = { name: 'odd', prose: town.prose, data: { places: { locations: [place('house', [], { ui: 'fade' as never })] } } }
     expect(
       loadGame([odd], { id: 't', title: 'T', plugins: [places({ start: 'house' })] }).problems.map((problem) => `${problem.where}: ${problem.what}`),
-    ).toEqual(['locations house: unknown transition "spin"'])
+    ).toEqual(['locations house: ui must be an object of hints'])
   })
 
   it('report places content names that are not there', () => {

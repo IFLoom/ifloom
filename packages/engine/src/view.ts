@@ -3,6 +3,7 @@ import type { Game } from './game.ts'
 import type { StageView } from './features/media.ts'
 import type { SpeakerView } from './plugin.ts'
 import type { SceneBeat } from './sceneBody.ts'
+import type { SceneUi, Ui } from './features/ui.ts'
 import type { RenderedChoice } from './screen.ts'
 import type { Flat, GameState } from './types.ts'
 import { renderedChoice, screen, type Screen, type ViewOptions } from './screen.ts'
@@ -22,10 +23,11 @@ type ViewBase = {
   when: string | null
   scene: {
     id: string | null
+    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<stage id>` or `room`. It changes when the screen does, and only then. */
+    key: string
     title: string
     body: string
     beats: SceneBeat[]
-    frame: 'stage' | 'talk'
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
     /** A bespoke panel to render instead of the choice list, by name. */
@@ -37,6 +39,8 @@ type ViewBase = {
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
     stage: StageView | null
     choices: RenderedChoice[]
+    /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
+    ui?: Ui<SceneUi>
   }
   actions: RenderedChoice[]
   /** What each plugin gives the UI, by plugin id. */

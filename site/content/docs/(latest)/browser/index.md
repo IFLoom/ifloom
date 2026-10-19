@@ -1,14 +1,14 @@
 ---
 title: "Browser helpers"
-description: "@ifloom/browser: the minigame clock, keyboard shortcuts, the number for a new save slot and the timing of revealed prose, as plain DOM for any framework."
+description: "@ifloom/browser: the minigame clock, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose, as plain DOM for any framework."
 ---
-The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a clock for minigame timers, keyboard shortcuts, the number for a new save slot, and the timing of prose that reveals in steps. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the `vanilla`, `vue` and `svelte` templates start the clock and the keys beside the runner.
+The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a clock for minigame timers, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the `vanilla`, `vue` and `svelte` templates start the clock and the keys beside the runner.
 
 ```ts
 import {
   startClock, startKeys, startMinigameKeys, startRevealSkip,
-  nextSlot, numberedChoices, minigameInput, revealGroups, lastReveal, ignoredKey, dialogOpen,
-  type ClockOptions, type KeysOptions, type RevealBeat, type RevealGroup,
+  nextSlot, numberedChoices, minigameInput, ignoredKey, dialogOpen,
+  type ClockOptions, type KeysOptions,
 } from '@ifloom/browser'
 ```
 
@@ -156,38 +156,9 @@ import { nextSlot } from '@ifloom/browser'
 const saved = await runner.save(nextSlot(await runner.saves!.list()), 'Before the café')
 ```
 
-## Reveals
+## Revealed prose
 
-A scene's `reveal` beats hold prose back and show it in steps (see [Transitions](/docs/reference/transitions)). The React UI draws them with CSS. These help you do the same in another framework.
-
-### RevealBeat and RevealGroup
-
-```ts
-type RevealBeat = Extract<SceneBeat, { kind: 'reveal' }>
-
-type RevealGroup = {
-  reveal: RevealBeat | null
-  beats: { beat: SceneBeat; index: number }[]
-}
-```
-
-A `RevealBeat` says when what follows it shows, in `at` milliseconds from the scene coming on, and how, in `as`. A `RevealGroup` is a run of beats with the reveal that holds it back, and each beat's index in the scene's beats, for a key.
-
-### revealGroups
-
-```ts
-function revealGroups(beats: readonly SceneBeat[]): RevealGroup[]
-```
-
-A scene's beats in groups: first the beats shown with the scene (its `reveal` is `null`), then each reveal with the beats after it. Draw each group in a wrapper that waits for its reveal's `at`.
-
-### lastReveal
-
-```ts
-function lastReveal(beats: readonly SceneBeat[]): number
-```
-
-When the last reveal comes, in milliseconds from the scene coming on, or 0 when there's none. The React UI holds the scene's choices back until then.
+How and when prose reveals is a UI's to decide, from [presentation hints](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The [Transitions recipe](/docs/recipes/transitions#draw-them-yourself) times them in each framework. This helper does the part every UI shares: letting a key show everything at once.
 
 ### startRevealSkip
 

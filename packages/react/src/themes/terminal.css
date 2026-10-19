@@ -43,6 +43,11 @@
   --destructive: oklch(0.7 0.18 25);
 }
 
+/* A speaker's `ui.hue` on black: bright, like the rest of the screen. */
+[data-speaker-hue] {
+  --speech: oklch(0.86 0.1 var(--ifloom-speaker-hue));
+}
+
 body {
   text-shadow: 0 0 6px color-mix(in oklch, var(--foreground) 35%, transparent);
 }

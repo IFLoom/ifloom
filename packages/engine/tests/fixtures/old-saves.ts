@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 16, each in the
+ * A save of every format version the engine has had, 1 to 17, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -151,7 +151,13 @@ const v16 = {
   version: 16,
   entities: { ...v15.entities, photo: { house: { name: 'The house', image: 'photo/house.jpg' } } },
   held: { player: { 'item:umbrella': 0, 'photo:house': 1 } },
+  // How the next screen comes in, as a `transition` effect left it; a save of 16 kept it.
+  transition: { to: 'fade', ms: 400 },
 }
+
+// The save no longer keeps a transition: how a screen comes in is the UI's, from a choice's hints.
+const { transition: _transition, ...still } = v16
+const v17 = { ...still, version: 17 }
 
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
@@ -171,4 +177,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   14: v14,
   15: v15,
   16: v16,
+  17: v17,
 }

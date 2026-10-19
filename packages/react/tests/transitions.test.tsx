@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
-import { GameShell } from '../src/index.ts'
+import { createRunner, definePlugin, loadGame, startingState, type Game } from '@ifloom/engine'
+import { checkUiHints, GameShell } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
 afterEach(() => {
@@ -21,21 +21,27 @@ function house(): Game {
           {
             id: 'door',
             title: 'The door',
-            transition: { in: 'fade', out: 'fade', ms: 200 },
+            ui: { transition: { in: 'fade', out: 'fade', ms: 200 } },
             body: [{ text: 'door' }],
-            choices: [{ id: 'in', effects: [{ kind: 'scene', scene: 'hall' }] }],
+            choices: [
+              { id: 'in', effects: [{ kind: 'scene', scene: 'hall' }] },
+              // How the hall comes in when you knock first, whatever the hall says; and the door goes at once.
+              { id: 'knock', ui: { transition: { in: 'zoom', out: 'none', ms: 150 } }, effects: [{ kind: 'scene', scene: 'hall' }] },
+            ],
           },
           {
             id: 'hall',
             title: 'The hall',
-            transition: { in: 'slide-up', ms: 200 },
-            body: [{ text: 'hall' }, { text: 'hall.clock', reveal: { delay: 1000 } }, { text: 'hall.cough', reveal: { as: 'slide-left' } }],
+            speaker: 'ann',
+            ui: { transition: { in: 'slide-up', ms: 200 } },
+            body: [{ text: 'hall' }, { text: 'hall.clock', ui: { reveal: { delay: 1000 } } }, { text: 'hall.cough', ui: { reveal: { as: 'slide-left' } } }],
             choices: [{ id: 'out', effects: [{ kind: 'scene', scene: null }] }],
           },
         ],
         prose: {
           door: 'A blue door.',
           'door#in': 'Go in',
+          'door#knock': 'Knock first',
           hall: 'A long hall.',
           'hall.clock': 'A clock ticks.',
           'hall.cough': 'Somebody coughs upstairs.',
@@ -43,7 +49,15 @@ function house(): Game {
         },
       },
     ],
-    { id: 'house', title: 'The House', introScene: 'door' },
+    {
+      id: 'house',
+      title: 'The House',
+      introScene: 'door',
+      // Ann, who speaks in the hall, has a colour for her lines.
+      plugins: [
+        definePlugin<null>({ id: 'voices', version: 1, speaker: (id) => (id === 'ann' ? { id, name: 'Ann', portrait: null, ui: { hue: 280 } } : undefined) }),
+      ],
+    },
   ).game
 }
 
@@ -96,6 +110,27 @@ describe('scene transitions', () => {
     expect(document.querySelector('[data-leaving]')).toBeNull()
     expect(scene().getAttribute('data-scene')).toBe('hall')
     expect(scene().getAttribute('data-transition-in')).toBe('slide-up')
+  })
+
+  it('bring the next screen in the way the pressed choice says, by a click or a key', () => {
+    vi.useFakeTimers()
+    play({ keys: true })
+    // Knock first is the second choice.
+    fireEvent.keyDown(window, { key: '2' })
+    // The door goes at once: its own fade is overruled.
+    expect(document.querySelector('[data-leaving]')).toBeNull()
+    expect(scene().getAttribute('data-scene')).toBe('hall')
+    expect(scene().getAttribute('data-transition-in')).toBe('zoom')
+    expect(frame().style.getPropertyValue('--ifloom-transition-ms')).toBe('150ms')
+  })
+
+  it("colour a speaker's lines by their hue", () => {
+    vi.useFakeTimers()
+    play()
+    expect(scene().hasAttribute('data-speaker-hue')).toBe(false)
+    goIn()
+    expect(scene().hasAttribute('data-speaker-hue')).toBe(true)
+    expect(scene().style.getPropertyValue('--ifloom-speaker-hue')).toBe('280')
   })
 
   it('reveal later lines in groups, with every word in the page from the start', () => {
@@ -154,6 +189,46 @@ describe('scene transitions', () => {
     expect(document.querySelector('[data-leaving]')).toBeNull()
     expect(scene().hasAttribute('data-transition-in')).toBe(false)
     expect(scene().querySelector('[data-reveal]')).toBeNull()
+  })
+})
+
+describe('checkUiHints', () => {
+  it("finds nothing wrong with the house's hints", () => {
+    expect(checkUiHints(house())).toEqual([])
+  })
+
+  it("reports a hint the React UI doesn't read, and values it can't draw", () => {
+    const { game } = loadGame(
+      [
+        {
+          name: 'odd',
+          scenes: [
+            {
+              id: 'door',
+              ui: { transiton: 'fade', transition: { in: 'spin', ms: -1 } },
+              body: [{ text: 'door', ui: { reveal: { delay: 1.5, as: 'curtain' } } }],
+              choices: [{ id: 'in', ui: { transition: 'curtain', mood: 'calm' }, effects: [] }],
+            },
+          ],
+          prose: { door: 'A door.', 'door#in': 'In' },
+          stats: [
+            { id: 'energy', label: 'Energy', ui: { display: 'pips' } },
+            { id: 'charm', label: 'Charm', ui: { display: 'dial' as never } },
+          ],
+          kinds: [{ id: 'cat', label: 'Cat', ui: { hue: 400 } }],
+        },
+      ],
+      { id: 'odd', title: 'Odd', introScene: 'door', ui: { transitionNames: ['curtain'] } },
+    )
+    expect(checkUiHints(game, { allow: ['mood'] })).toEqual([
+      'scene door: ui.transiton is not a hint the React UI reads',
+      'scene door: ui.transition in "spin" is not a transition the game has',
+      'scene door: ui.transition ms must be 0 or more',
+      'scene door block 1: ui.reveal delay must be whole milliseconds, 0 or more',
+      'stat energy: ui.display pips needs a range of 20 or less; this one is 100',
+      "stat charm: ui.display is 'number', 'bar' or 'pips'",
+      'kind cat: ui.hue is a number from 0 to 360',
+    ])
   })
 })
 

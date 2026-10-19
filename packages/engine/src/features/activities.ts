@@ -154,6 +154,7 @@ export const activities = defineFeature<ActivitiesShape>({
         { when: action.when },
         ...(action.blocked ?? []).map((entry) => ({ when: entry.when })),
         { command: action.command },
+        { ui: action.ui },
       ])
     }
   },

@@ -95,7 +95,11 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 ### Transitions and reveals
 
-`intro` in `story/moving-day.ts` and `ava.river` in `story/ava.ts`. The moving-day scene has `transition: { in: 'fade', out: 'fade', ms: 500 }`, so it fades in from the title page, and its second block has `reveal: { delay: 1200 }`, so the line about the cat comes a moment after the first. Its Unpack choice ends with `{ kind: 'transition', to: 'slide-up', ms: 400 }`, and the flat rises into view. By the river, the scene fades, and Ava's prose holds `[[reveal:1500|slide-up]]` before her answer. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
+`intro` in `story/moving-day.ts` and `ava.river` in `story/ava.ts`, written as the React UI's [presentation hints](/docs/react/hints). The moving-day scene has `ui: { transition: { in: 'fade', out: 'fade', ms: 500 } }`, so it fades in from the title page, and its second block has `ui: { reveal: { delay: 1200 } }`, so the line about the cat comes a moment after the first. Its Unpack choice has `ui: { transition: { in: 'slide-up', ms: 400 } }`, and the flat rises into view. By the river, the scene fades, and Ava's answer is a block of its own, `ava.river.2`, revealed with `slide-up`. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
+
+### Stat bars and speakers' colours
+
+`world/stats.ts` and `world/cast.ts`. Energy has `ui: { display: 'bar' }` and charm `ui: { display: 'pips' }`, so the sidebar draws a bar and a row of pips under them. Ava has `ui: { hue: 20 }` and Sam `ui: { hue: 200 }`, so their lines come in their own colours. The tests run [`checkUiHints`](/docs/react/hints#checkuihints) over the whole town.
 
 ### Actions and tooltips in the text
 

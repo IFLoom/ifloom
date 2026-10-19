@@ -12,6 +12,7 @@ import {
   entitiesOf,
   entityDef,
   entityImage,
+  entityUi,
   entityKv,
   entityTags,
   entityText,
@@ -36,6 +37,7 @@ import type { EffectRef } from '../custom.ts'
 import type { Reference } from '../references.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
+import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
 import { bounded, inRange, wanted } from '../range.ts'
 import { statDef, statView, type StatView } from './stats.ts'
@@ -60,6 +62,8 @@ export type EntityView = {
   stats: StatView[]
   /** Its kv store as it reads: what it was declared with, and what play set. */
   kv: Record<string, KvValue>
+  /** Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. */
+  ui?: Ui<EntityUi>
 }
 
 export type EntitiesView = {
@@ -491,18 +495,14 @@ export const entities = defineFeature<EntitiesShape>({
         ...Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })),
         { when: bindCurrent(entity.visible, `${entity.of}:${entity.id}`) },
         ...(entity.image !== undefined ? [{ picture: entity.image }] : []),
+        { ui: entity.ui },
       ])
     }
     // A kind's `listed` and `flags` are asked of each of its entities, so `'$'` is any one of them.
     for (const kind of game.kinds ?? []) {
       const one = anyOf(kind.id)
       const asked = [...(typeof kind.listed === 'object' ? [kind.listed] : []), ...Object.values(kind.flags ?? {})]
-      if (asked.length)
-        tools.check(
-          { list: 'kind', id: kind.id },
-          `kind ${kind.id}`,
-          asked.map((when) => ({ when: bindCurrent(when, one) })),
-        )
+      tools.check({ list: 'kind', id: kind.id }, `kind ${kind.id}`, [...asked.map((when) => ({ when: bindCurrent(when, one) })), { ui: kind.ui }])
     }
     checkTraits(game, tools)
   },
@@ -544,6 +544,7 @@ export const entities = defineFeature<EntitiesShape>({
                 flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
                 stats: stats.filter((stat) => holdsFor(stat.visible, ref)).map((stat) => statView(state, game, stat, ref, cx)),
                 kv: entityKv(state, game, ref),
+                ...withUi(entityUi(state, game, ref)),
               }
             })
           return [kind.id, { label: kind.label, plural: kind.plural ?? kind.label, unique: kind.unique ?? false, entries }]

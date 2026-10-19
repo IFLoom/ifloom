@@ -6,7 +6,7 @@ import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
-import type { TransitionFields } from './features/transitions.ts'
+import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene } from './scene.ts'
@@ -46,6 +46,8 @@ export type ActionDef = {
    * or an activity's own `blocked`, let `whyNot` say it instead.
    */
   blocked?: Blocked[]
+  /** Presentation hints for the UI, carried to the button as written. See `ChoiceUi`. */
+  ui?: Ui<ChoiceUi>
 }
 
 export type SceneChoice = {
@@ -59,6 +61,8 @@ export type SceneChoice = {
   effects: Effect[]
   /** A command it sends as well, run before its effects. See `Choice.command`. */
   command?: CommandRef
+  /** Presentation hints for the UI, carried to the view's choice as written. See `ChoiceUi`. */
+  ui?: Ui<ChoiceUi>
 }
 
 /**
@@ -89,8 +93,6 @@ export type SceneMedia = {
 export type SceneView = {
   title?: string
   speaker?: string
-  /** Drawn as a conversation. A scene with a speaker is one already. */
-  frame?: 'talk'
   /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
   tags?: string[]
   /**
@@ -113,6 +115,12 @@ export type SceneView = {
   stage?: MediaStage
   /** What plays on background channels while the scene is open, by channel. Null silences one. */
   audio?: Record<string, string | null>
+  /**
+   * Where each block that has `ui` hints starts in `body`, by character, for
+   * the screen to put them on the beats. A data scene's render fills it; a
+   * hand-built scene leaves it out.
+   */
+  blockUi?: { at: number; ui: Ui<BlockUi> }[]
   choices: SceneChoice[]
 }
 
@@ -129,16 +137,15 @@ export type SceneCtx = {
 }
 
 export type Scene = StoryletFields &
-  MinigameSceneFields &
-  TransitionFields & {
+  MinigameSceneFields & {
     id: string
     title?: string
     speaker?: string
-    /** Drawn as a conversation. A scene with a speaker is one already. */
-    frame?: 'talk'
     /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
     panel?: string
+    /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
+    ui?: Ui<SceneUi>
     render: (state: GameState, ctx: SceneCtx) => SceneView
   }
 

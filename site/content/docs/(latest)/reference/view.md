@@ -99,22 +99,22 @@ type Screen = {
   plugins: Record<string, unknown>
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
-  transition: TransitionView
 }
 
 type ScreenChoice = RenderedChoice & { effects: Effect[] }
 
 type ScreenScene = {
   id: string | null
+  key: string
   title: string
   body: string
   beats: SceneBeat[]
-  frame: 'stage' | 'talk'
   tags: string[]
   panel: string | null
   panelData: unknown
   speaker: SpeakerView | null
   stageImage: string | null
+  ui?: Ui<SceneUi>
 }
 ```
 
@@ -127,7 +127,6 @@ type ScreenScene = {
 | `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
 | `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
 | `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
-| `transition` | [`view.transition`](#transition): which screen this is, and how it comes in and goes out. |
 
 `view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether. Everything else it takes as it is.
 
@@ -182,15 +181,15 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 
 ### The scene
 
-`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, frame `'stage'`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks go through the same [renderer](/docs/reference/scenes#renderscene) as a data scene, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
+`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks go through the same [renderer](/docs/reference/scenes#renderscene) as a data scene, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
 
 | Field | Type | Meaning |
 |---|---|---|
 | `id` | `string \| null` | The scene, or `null` for the stage. |
+| `key` | `string` | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a [minigame](#minigame) runs, `room:<id>` for a plugin's stage (a place, with the places plugin), and `room` with none. It changes when the screen does, and only then, so a UI keys an animation or moves focus by it. A choice that keeps the same scene open keeps the key. |
 | `title` | `string` | The title in the scene's rendered [`SceneView`](/docs/reference/scenes#sceneview), else the scene's own, else the title of a plugin's [stage](/docs/reference/plugins#stage) (the room's name, with the places plugin), else the game's `title`. |
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
 | `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. |
-| `frame` | `'stage' \| 'talk'` | The layout. It's the render's `frame`, else the scene's, else `talk` when there's a speaker and `stage` when there isn't. The screen with no scene open is `stage`. |
 | `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The stage has none. |
 | `panel` | `string \| null` | A bespoke panel to draw instead of the choice list. |
 | `panelData` | `unknown` | What that panel needs. Opaque to the engine. |
@@ -198,6 +197,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 | `stageImage` | `string \| null` | The big picture: the render's `portrait`, else the speaker's portrait, else `null`. |
 | `stage` | [`StageView`](/docs/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/docs/plugins/places#placesview)). |
 | `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices. Hidden ones (`visible: false`) are left out, and disabled ones stay. So are the ones the prose draws inline with `[[act:id]]`: those are in `beats`, as `action` [spans](/docs/reference/prose#inlinespan). |
+| `ui` | `Ui<SceneUi>`, optional | The scene's [presentation hints](/docs/reference/ui-hints) as written, or the room's (a place's) while no scene is open. Left out when there are none, and while a minigame runs. The engine gives them no meaning. |
 
 If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/docs/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
 
@@ -296,25 +296,6 @@ cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
 ```
 
 The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/docs/browser/audio-player) does all of this. See [Audio](/docs/reference/audio).
-
-### transition
-
-| Field | Type | Meaning |
-|---|---|---|
-| `transition` | [`TransitionView`](/docs/reference/transitions#transitionview) | Which screen is on show (`key`), how it comes in (`in`) and goes out (`out`), and how long each takes (`ms`). `'none'` both ways when nothing declares one. |
-
-`key` is `scene:<id>` while a scene is open, `minigame:<id>` while a minigame runs, and `room:<id>` (or `room`) for the idle screen. Play a transition only when it changes: keep the screen before for its `out`, then bring the new one in with `in`. A choice that keeps the same scene open keeps the key, so nothing plays.
-
-```ts
-let shownKey = runner.view().transition.key
-runner.subscribe(() => {
-  const { key, in: entering, ms } = runner.view().transition
-  if (key !== shownKey) console.log(`${key} comes in with ${entering} over ${ms} ms`)
-  shownKey = key
-})
-```
-
-The reveal beats in `scene.beats` time the prose within a scene. See [Transitions](/docs/reference/transitions) for both, and the [Transitions recipe](/docs/recipes/transitions) for drawing them in each framework.
 
 ### panel
 
@@ -428,6 +409,7 @@ type RenderedChoice = {
   irreversible?: string
   warning?: string
   command: Command
+  ui?: Ui<ChoiceUi>
 }
 ```
 
@@ -438,6 +420,7 @@ Every pressable thing in a `View`: scene choices, the game's and plugins' button
 - **`irreversible`** is a warning to show before sending. The [React UI](/docs/react/components#choicebutton) prints it on the button.
 - **`tags`** are a scene choice's [`tags`](/docs/reference/scenes#scenechoice), passed through as words to style or filter it by. The engine gives them no meaning, and other buttons have none.
 - **`price`** is what pressing it will cost. See [Price](#price).
+- **`ui`** is a scene choice's or an action's [presentation hints](/docs/reference/ui-hints), as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice). Left out when there are none.
 
 ## inlineChoices
 
@@ -522,12 +505,12 @@ type StatView = {
   min: number
   max: number
   text: string
-  display: 'number' | 'bar' | 'pips'
   level?: { level: number; next: number | null; progress: number }
+  ui?: Ui<StatUi>
 }
 ```
 
-One stat as the UI shows it. `min` is the stat's declared `min`, or 0. `display` is the stat's [`display`](/docs/reference/stats#statdef), or `'number'`, so a UI can draw a bar from `min` to `max` or a row of pips. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/docs/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#formatstat), such as `'12 coins'`.
+One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI can draw a bar from `min` to `max`. `ui` is the stat's [presentation hints](/docs/reference/ui-hints) as written, such as the React UI's [`display`](/docs/react/hints#display), and is left out when it has none. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/docs/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#formatstat), such as `'12 coins'`.
 
 `level` is only there for a stat that declares [`levels`](/docs/reference/stats#levels). It's what [`statLevel`](/docs/reference/stats#statlevel) gives:
 
@@ -591,6 +574,7 @@ type EntityView = {
   flags: Record<string, boolean>
   stats: StatView[]
   kv: Record<string, KvValue>
+  ui?: Ui<EntityUi>
 }
 ```
 
@@ -607,6 +591,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 | `flags` | Each of its kind's [`flags`](/docs/reference/entities#listing), by name, and whether it holds for this entity. `{}` when the kind declares none. Use it to split a list, such as people you've met and people you haven't, without the engine hiding anything more. |
 | `stats` | Its kind's `listed` stats whose `visible` holds with `'$'` bound to it, in the order the game declared them, as [`StatView`](#statview)s with its own values. |
 | `kv` | Its kv store as it reads: its declaration's keys with what play set laid over them. |
+| `ui` | Its [presentation hints](/docs/reference/ui-hints): its kind's with its own laid over them (see [`entityUi`](/docs/reference/ui-hints#entityui)). Left out when it has none. |
 
 **Gotcha.** Each entity's `stats` is decided on its own, so two entries of one kind can show different stats. The [React UI](/docs/react/components#entitytable)'s table makes a column for every stat any row shows, and leaves the other rows' cells blank.
 
@@ -621,10 +606,11 @@ type HeldView = {
   tags: string[]
   count: number
   at: Holder
+  ui?: Ui<EntityUi>
 }
 ```
 
-One thing in [`view.held`](#held). `ref` is how content names it. `name` and `desc` are filled in for this save, `image` is its picture through [`artSrc`](/docs/reference/prose#artsrc), and `tags` are its kind's then its own. All of them read through the entity it was made [like](/docs/reference/entities#things-made-like-another). `count` is how many are held, and `at` who holds them: the protagonist's reference, or `'player'`. They come in the game's order of its entities, each holder's in turn. A thing whose `visible` doesn't hold is left out, but its kind's `listed` doesn't matter here.
+One thing in [`view.held`](#held). `ref` is how content names it. `name` and `desc` are filled in for this save, `image` is its picture through [`artSrc`](/docs/reference/prose#artsrc), and `tags` are its kind's then its own. All of them read through the entity it was made [like](/docs/reference/entities#things-made-like-another). `ui` is its [presentation hints](/docs/reference/ui-hints), as [`entityUi`](/docs/reference/ui-hints#entityui) gives them, and is left out when it has none. `count` is how many are held, and `at` who holds them: the protagonist's reference, or `'player'`. They come in the game's order of its entities, each holder's in turn. A thing whose `visible` doesn't hold is left out, but its kind's `listed` doesn't matter here.
 
 ## NoticesView and NoticeView
 
@@ -697,8 +683,8 @@ Send a change of either kind through [`runner.setSetting`](/docs/reference/runne
 type SpeakerView = {
   id: string
   name: string
-  hue: number | null
   portrait: string | null
+  ui?: Ui<EntityUi>
 }
 ```
 
@@ -708,8 +694,8 @@ Who's speaking in a scene, at `view.scene.speaker`. The id is the render's `spea
 |---|---|
 | `id` | The speaker id, as the scene named it. |
 | `name` | What the player reads over their lines. |
-| `hue` | A colour for their lines, as a hue from 0 to 360. `null` when the plugin gives none, and the UI picks its own. |
 | `portrait` | Their picture. `null` for none, and the UI draws no face. The cast always gives one: the character's `portrait`, or `art/character/<id>.jpg`. |
+| `ui` | Their [presentation hints](/docs/reference/ui-hints), such as the React UI's [`hue`](/docs/react/hints#hue) for the colour of their lines. The cast gives their entity's, as [`entityUi`](/docs/reference/ui-hints#entityui) reads them. Left out when there are none. |
 
 Exported from `@ifloom/engine` alongside [`Plugin`](/docs/reference/plugins#plugin), which returns it from `speaker`.
 

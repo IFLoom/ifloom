@@ -20,20 +20,19 @@ type Scene = {
   id: string
   title?: string
   speaker?: string
-  frame?: 'talk'
   tags?: string[]
   panel?: string
+  ui?: Ui<SceneUi>
   drawnFrom?: string[]
   weight?: number
   when?: Condition
-  transition?: Transition | TransitionName
   render: (state: GameState, ctx: SceneCtx) => SceneView
 }
 ```
 
 This is what sits in `game.scenes`. The engine calls `render` whenever it builds the view and again when the player chooses, so it must be a pure function of `state` (and of `ctx`, which comes from the state). If you need anything random, draw it with [`roll` or `pick`](/docs/reference/random), never `Math.random`.
 
-The top-level `title`, `speaker`, `frame`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `transition` is how the scene comes on screen and goes off: see [Transitions](/docs/reference/transitions).
+The top-level `title`, `speaker`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `ui` holds [presentation hints](/docs/reference/ui-hints), such as how the scene comes on screen in the React UI, carried to [`view.scene.ui`](/docs/reference/view#the-scene) as written.
 
 ```ts
 import type { Scene } from '@ifloom/engine'
@@ -69,7 +68,6 @@ import type { SceneView } from '@ifloom/engine'
 type SceneView = {
   title?: string
   speaker?: string               // a speaker id, as a plugin knows it: the cast's characters
-  frame?: 'talk'
   tags?: string[]
   panel?: string
   panelData?: unknown
@@ -78,6 +76,7 @@ type SceneView = {
   media?: SceneMedia[]
   stage?: MediaStage             // a layered picture with hotspots
   audio?: Record<string, string | null>   // background audio by channel while the scene is open
+  blockUi?: { at: number; ui: Ui<BlockUi> }[]
   choices: SceneChoice[]
 }
 ```
@@ -87,8 +86,7 @@ What `render` returns.
 | Field | Meaning |
 |---|---|
 | `title` | The heading. Falls back to `Scene.title`, then the title of a plugin's [stage](/docs/reference/plugins#stage) (with the [places plugin](/docs/plugins/places#the-stage), the room's name), then the game's title. |
-| `speaker` | Who's talking, as an id that a [plugin's `speaker`](/docs/reference/plugins#speakers) knows, such as a [cast](/docs/plugins/cast#speakers) character's. The view shows their name and portrait and makes the frame `talk` by default. Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. An id no plugin knows gives no speaker either, so a game without the cast (or another plugin that answers) shows none. |
-| `frame` | `'talk'` draws the screen as a conversation. Falls back to `Scene.frame`. Without either, the view's frame is `talk` when there's a speaker and `stage` when there isn't. |
+| `speaker` | Who's talking, as an id that a [plugin's `speaker`](/docs/reference/plugins#speakers) knows, such as a [cast](/docs/plugins/cast#speakers) character's. The view shows their name and portrait. Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. An id no plugin knows gives no speaker either, so a game without the cast (or another plugin that answers) shows none. |
 | `tags` | Words the UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning and passes them to [`view.scene.tags`](/docs/reference/view#the-scene). Falls back to `Scene.tags`, then `[]`. |
 | `panel` | The name of a bespoke UI panel the game draws instead of the choice list. The panel keeps its own local state and finishes by dispatching one of the scene's own choices. |
 | `panelData` | Whatever that panel needs. The engine passes it through without looking inside. |
@@ -97,6 +95,7 @@ What `render` returns.
 | `media` | Pictures and videos that aren't in the prose. See [`SceneMedia`](#scenemedia). |
 | `stage` | A layered picture with hotspots, drawn as the scene's stage. See [The stage](#the-stage). |
 | `audio` | What plays on [background channels](/docs/reference/audio#what-plays-on-a-background-channel) while the scene is open, by channel. It wins over effects, places and the default. `null` silences a channel. |
+| `blockUi` | Where each block with [hints](/docs/reference/ui-hints) starts in `body`, by character, so the view can put its `ui` on the first beat it makes. [`renderScene`](#renderscene) fills it for a data scene; a hand-built render leaves it out. |
 | `choices` | Every choice the scene knows about, including hidden ones. |
 
 ## SceneChoice
@@ -113,6 +112,7 @@ type SceneChoice = {
   irreversible?: string
   effects: Effect[]
   command?: Command
+  ui?: Ui<ChoiceUi>
 }
 ```
 
@@ -126,6 +126,7 @@ type SceneChoice = {
 | `irreversible` | A warning the UI shows before the choice is taken. A [runner](/docs/reference/runner#historyoptions) with history on never undoes past it. |
 | `effects` | Applied in order when the player picks it. See [Effects](/docs/reference/effects). |
 | `command` | A command to run as well, before the effects. A data scene's [`Choice.command`](#choice) is passed through. |
+| `ui` | [Presentation hints](/docs/reference/ui-hints), passed to the view's choice as written. A data scene's [`Choice.ui`](#choice) is passed through. |
 
 The view works out a choice's [price](/docs/reference/view#price) from its `effects`. That covers what it spends of any [spendable](/docs/reference/stats#statdef) stat, and what plugins note about it, such as the [calendar](/docs/plugins/calendar#price-notes)'s `until evening`. What a choice pays the player is never shown.
 
@@ -228,7 +229,6 @@ type DataScene = {
   id: string
   title?: string
   speaker?: string
-  frame?: 'talk'
   tags?: string[]
   panel?: string
   panelData?: string      // the name of a custom panel on the game
@@ -238,7 +238,7 @@ type DataScene = {
   weight?: number         // how often a draw picks it, 1 if left out
   when?: Condition        // only drawn while this holds
   minigame?: string       // a minigame that starts when it's entered
-  transition?: Transition | TransitionName   // how it comes on screen and goes off
+  ui?: Ui<SceneUi>        // presentation hints, carried to the view as written
   body: Block[]
   choices: Choice[]
 }
@@ -288,7 +288,7 @@ type Block = (
   | { text: string; when?: Condition }
   | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
-) & { reveal?: Reveal }
+) & { ui?: Ui<BlockUi> }
 ```
 
 Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them.
@@ -298,7 +298,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
-- **`reveal`**, on any block, makes it wait before it appears: `{ text: 'intro.tonight', reveal: { delay: 1200 } }`. It's written into the body as [`[[reveal]]`](/docs/reference/prose#reveals) markup before the block. See [Reveals](/docs/reference/transitions#reveals).
+- **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'intro.tonight', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 
 **Gotchas.**
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
@@ -357,6 +357,7 @@ type Choice = {
   irreversible?: string
   effects: EffectRef[]
   command?: Command
+  ui?: Ui<ChoiceUi>
 }
 ```
 
@@ -367,7 +368,7 @@ type Choice = {
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. `key` records it under a different name. | unlimited |
-| `tags`, `irreversible` | Passed through to [`SceneChoice`](#scenechoice). | |
+| `tags`, `irreversible`, `ui` | Passed through to [`SceneChoice`](#scenechoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'activity', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
@@ -501,7 +502,7 @@ Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#rendersce
 function bakeScene(game: Game, scene: DataScene): Scene
 ```
 
-The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `frame`, `tags` and `panel`, its `drawnFrom`, `weight` and `when` when it has them, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
+The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `tags` and `panel`, its `drawnFrom`, `weight`, `when`, `minigame` and `ui` when it has them, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
 
 The cache is per game, so the same scene object listed in two games runs with each game's own prose and custom functions.
 

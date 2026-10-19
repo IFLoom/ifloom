@@ -42,7 +42,10 @@
  * no `item` or `collection` condition, `item`, `collect` or `discard`
  * effect, `use` command, `GameState.items` or `collections`, `Game.items`,
  * `collections` or `Pack` keys for them, `View.pack` or `View.collections`;
- * `CarryOver.held` for `items`.
+ * `CarryOver.held` for `items`. Presentation in UI packages: no `transition`
+ * effect, `GameState.transition`, `Game.transitions`, `View.transition` or
+ * `view.scene.frame`; `Game.ui` and `view.scene.ui` (hints carried as
+ * written) and `view.scene.key` (which screen this is).
  */
 import type {
   ActionDef,
@@ -99,9 +102,9 @@ import type {
   StorylineDef,
   StorylineState,
   Stats,
-  Transition,
-  TransitionName,
-  TransitionView,
+  GameUi,
+  SceneUi,
+  Ui,
   TriggerDef,
   VariantMember,
 } from '../../src/index.ts'
@@ -255,8 +258,6 @@ export type FrozenGameState = {
   media: MediaState
   /** The minigame being played, or null. */
   minigame: MinigameState | null
-  /** How the screen after the last command arrives, as a `transition` effect set it, or null. */
-  transition: { to: TransitionName; ms?: number } | null
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
   /**
@@ -356,8 +357,7 @@ export type FrozenEffect =
   | { kind: 'minigameVar'; key: string; random: [number, number] }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
   | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
-  /** The screen this command leaves on comes in with `to`. */
-  | { kind: 'transition'; to: TransitionName; ms?: number }
+/** The screen this command leaves on comes in with `to`. */
 
 export type FrozenGame = {
   id: string
@@ -442,8 +442,8 @@ export type FrozenGame = {
   media?: GameMedia
   /** The game's minigames. None if left out. */
   minigames?: MinigameDef[]
-  /** The default transition for every scene and room, and the game's own transition names. */
-  transitions?: { default?: Transition | TransitionName; names?: string[] }
+  /** Presentation hints for the whole game, carried as written. */
+  ui?: Ui<GameUi>
 }
 
 export type FrozenPack = {
@@ -509,10 +509,11 @@ export type FrozenView = {
   when: string | null
   scene: {
     id: string | null
+    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<stage id>` or `room`. */
+    key: string
     title: string
     body: string
     beats: SceneBeat[]
-    frame: 'stage' | 'talk'
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
     /** A bespoke panel to render instead of the choice list, by name. */
@@ -524,6 +525,8 @@ export type FrozenView = {
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
     stage: StageView | null
     choices: RenderedChoice[]
+    /** The scene's presentation hints, as written. */
+    ui?: Ui<SceneUi>
   }
   actions: RenderedChoice[]
   stats: StatView[]
@@ -545,8 +548,6 @@ export type FrozenView = {
   audio: AudioView
   /** The minigame being played, or null. */
   minigame: MinigameView | null
-  /** The screen on show, and how it comes in and goes out. */
-  transition: TransitionView
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
   /** Whether the player can save now. */

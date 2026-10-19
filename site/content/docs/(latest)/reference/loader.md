@@ -85,7 +85,7 @@ export const ch1: Content = {
 | `audio` | [Audio](/docs/reference/audio#gameaudio), over the base's own `audio`. `tracks` and `channels` merge by id, and `mute` and `default` go over the base's. |
 | `media` | [Media](/docs/reference/media#gamemedia), over the base's own `media`. `pools` merge by id. |
 
-Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in content or a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `transitions`. Content that has one of them anyway loads without it, with the problem `content has no "…", so it was left out`. So does content with an `id`, a `schema` or `patches`, which only a pack has. TypeScript catches all of these sooner, because they aren't in the `Content` type.
+Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in content or a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `ui`. Content that has one of them anyway loads without it, with the problem `content has no "…", so it was left out`. So does content with an `id`, a `schema` or `patches`, which only a pack has. TypeScript catches all of these sooner, because they aren't in the `Content` type.
 
 ### One key declared twice
 
@@ -168,12 +168,12 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 15
+const SCHEMA = 16
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 16, this engine reads 15`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 17, this engine reads 16`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -196,6 +196,7 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 | 12 to 13 | Items and collections are [entities](/docs/reference/entities#holding-things). A pack's `items` become entities of an `item` kind, which the pack declares unlisted unless it already does: `{ id, name, desc, tags }` as they were, a `start` as `at: { player: start }`, and a `use` as the [inventory plugin](/docs/plugins/inventory)'s `inventory/usable` trait. A `collections` entry becomes an unlisted kind of the same id and name (the phone's `gallery` is `photo`). `{ item: 'tea', gte: 2 }` becomes `{ entity: 'item:tea', at: 'you', gte: 2 }`, and the `item` effect the `entity` effect with `at: 'you'`. The `use` command becomes `{ 'inventory/use': { id: 'item:tea' } }`. `collect` becomes `create`, given to the player, with the entry's `title` as its name, its prose (from the pack's own `prose`) as its description, its `image` and its `data` as kv. `discard` becomes `remove`. `{ collection, entry }` becomes `{ entity: '<kind>:<entry>' }`, and `{ collection, …range }` counts what the player holds of the kind. A shop good's `item`, and `shop/buy`, `shop/sell`, `shop/inStock` and `wardrobe/wearing`'s `item`, become `entity`, with `item:` in front, as do `wardrobe/wear`'s `id` and a wardrobe slot's `start`. `data.wardrobe.clothes` becomes rows of the `wardrobe/wearable` trait in the pack's `traits`. `debug/item` becomes `debug/held`. The strings `doesNothing` and `haveNone` become `inventory/doesNothing` and `inventory/haveNone` (and `wardrobe/haveNone`), with `{item}` written `{thing}`. |
 | 13 to 14 | The [cast](/docs/plugins/cast#characters)'s characters are entities with the `cast/person` trait. Each entry of `data.cast.characters` becomes an entity of the kind `character`, after the pack's own entities: its `id`, `name`, `tags`, `stats` and `kv` as they were, its `role` as `desc` and its `portrait` as `image`, and everything else (`fullName`, `schedule`, `talk`, `call` and the rest) as the trait. `data.cast.characters` goes. |
 | 14 to 15 | A [kind](/docs/reference/entities#kinddef)'s named conditions are its `flags`: `{ id: 'staff', marks: { senior: … } }` becomes `{ id: 'staff', flags: { senior: … } }`. |
+| 15 to 16 | How things look and move is the UI's, written as [presentation hints](/docs/reference/ui-hints) in the React UI's words. A scene's and a place's `transition` becomes `ui.transition`, and a scene's `frame` goes. A block's `reveal` becomes `ui.reveal`. `[[reveal]]` on a line of its own, in the prose of a scene's or a place's `{ text }` block, splits that prose there: the words before it keep the key, and each part after it gets a key of its own (`<key>.2`, `<key>.3`) and a block of its own with `ui.reveal`, under the same `when`. Anywhere else, such as inside a paragraph or in a variants member, the markup is taken out and the words show at once. A `transition` effect in a choice's effects becomes that choice's `ui.transition` (`{ in, ms }`), and is dropped anywhere else. A stat's `display` becomes `ui.display`. The cast's `hue`, on a person's `cast/person` trait, becomes the entity's or the kind's `ui.hue`; a `traits` table row's `hue` moves to the pack's own entity of that reference, or is dropped when the pack doesn't declare it. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -203,8 +204,8 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 16, this engine reads 15` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 14)` |
+| `schema` is newer than `SCHEMA` | `written for schema 17, this engine reads 16` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 16)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 

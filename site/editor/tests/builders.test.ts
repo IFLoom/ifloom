@@ -13,6 +13,7 @@ import {
   transitionOptions,
   transitionValue,
   withCost,
+  withHint,
   withRange,
 } from '../lib/builders.ts'
 import { CONDITION_FORMS, EFFECT_FORMS } from '../lib/kinds.ts'
@@ -164,7 +165,7 @@ describe('the effect builder', () => {
 })
 
 describe('the transition fields', () => {
-  it('read a transition and write the shortest one back', () => {
+  it("read the React UI's ui.transition hint and write the shortest one back", () => {
     expect(transitionFields(undefined)).toEqual({ in: '', out: '', ms: undefined })
     expect(transitionFields('fade')).toEqual({ in: 'fade', out: 'fade', ms: undefined })
     expect(transitionValue({ in: 'fade', out: 'fade', ms: undefined })).toBe('fade')
@@ -173,7 +174,12 @@ describe('the transition fields', () => {
     expect(transitionValue(transitionFields({ in: 'zoom', out: 'fade' }))).toEqual({ in: 'zoom', out: 'fade' })
     // A name of the game's own stays on the menu.
     expect(transitionOptions('curtain')).toEqual(['fade', 'slide-up', 'slide-left', 'zoom', 'none', 'curtain'])
-    expect(effectForm(newEffect('transition'))).toBe('transition')
+  })
+
+  it('set one hint and leave the others, dropping ui once it is empty', () => {
+    expect(withHint(undefined, 'transition', 'fade')).toEqual({ transition: 'fade' })
+    expect(withHint({ transition: 'fade', mood: 'calm' }, 'transition', undefined)).toEqual({ mood: 'calm' })
+    expect(withHint({ transition: 'fade' }, 'transition', undefined)).toBeUndefined()
   })
 })
 
@@ -190,9 +196,6 @@ describe('the markup helper', () => {
     expect(proseBeats(sampleMarkup('pool'))).toEqual([{ kind: 'image', size: 'inline', src: 'pool:door', alt: 'tags red,night' }])
     expect(markup('speaker', { name: 'You', text: 'Just a coffee.' })).toBe('You: "Just a coffee."')
     expect(markup('img', { path: 'a', alt: 'x|y]' })).toBe('[[img:a|xy]]')
-    expect(beats.reveal).toEqual([{ kind: 'reveal', delay: 1000, as: 'fade', at: 1000 }])
-    expect(markup('reveal', { delay: '', as: '' })).toBe('[[reveal]]')
-    expect(markup('reveal', { delay: '1500 ms', as: 'slide-up' })).toBe('[[reveal:1500|slide-up]]')
     expect(inlineMarkup(sampleMarkup('act'))).toEqual([{ kind: 'act', id: 'answer', text: 'Pick it up', markup: '[[act:answer|Pick it up]]' }])
     expect(markup('act', { id: 'answer', words: '' })).toBe('[[act:answer]]')
     expect(inlineMarkup(sampleMarkup('tip'))).toEqual([{ kind: 'tip', key: 'market.stall', text: 'the stall', markup: '[[tip:market.stall|the stall]]' }])

@@ -830,18 +830,18 @@ type StageDef = {
   title: string
   body?: readonly Block[]
   id?: string
-  transition?: Transition | TransitionName
+  ui?: Ui<SceneUi>
 }
 ```
 
-What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (prose keys, variants, conditions and the game's prose), with `id: null`, `frame: 'stage'` and no choices. Return `undefined` to let the next plugin answer.
+What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (prose keys, variants, conditions and the game's prose), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
 
 | Field | What it is |
 |---|---|
 | `title` | The heading, such as a room's name. |
 | `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
-| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also the room's [`view.transition`](/docs/reference/view#transition) key, `room:<id>`. |
-| `transition` | How the room comes on screen and goes off. The game's [default](/docs/reference/transitions#gametransitions) if left out. Name it in [`references`](#references) as `{ transition }` so the checker sees it. |
+| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also in the room's [`view.scene.key`](/docs/reference/view#the-scene), `room:<id>`. |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the room, carried to `view.scene.ui` as a scene's are. Name it in [`references`](#references) as `{ ui }` so the checker sees it's data. |
 
 With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name and its `body`.
 
@@ -869,7 +869,7 @@ variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
 
 ```ts
 view(state, game).scene
-// { id: null, title: 'The market stall', frame: 'stage',
+// { id: null, key: 'room:market', title: 'The market stall',
 //   body: 'Crates of eggs and a heap of loaves.\n\n“Fresh bread!”', choices: [], ... }
 
 view(stall.write(state, { open: false }), game).scene.title // the next plugin's stage title, or the game's title
@@ -926,8 +926,8 @@ speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerVi
 type SpeakerView = {
   id: string
   name: string
-  hue: number | null
   portrait: string | null
+  ui?: Ui<EntityUi>
 }
 ```
 
@@ -937,34 +937,34 @@ Who a scene's [`speaker`](/docs/reference/scenes#sceneview) id is, for the scree
 |---|---|
 | `id` | The speaker id, as the scene named it. |
 | `name` | What the player reads over their lines. |
-| `hue` | A colour for their lines, as a hue from 0 to 360. `null` leaves it to the UI. |
 | `portrait` | Their picture, as a path or URL. `null` for none. |
+| `ui` | Their [presentation hints](/docs/reference/ui-hints), such as the React UI's [`hue`](/docs/react/hints#hue). A plugin whose speakers are entities passes on [`entityUi`](/docs/reference/ui-hints#entityui). |
 
 With no plugin answering, the scene has no speaker. The [cast](/docs/plugins/cast#speakers) answers for its characters, such as Ava in the showcase. The id is never guessed from the scene's id.
 
 A plugin that keeps the café's regulars says who's talking from its own content:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin, type EntityUi, type Ui } from '@ifloom/engine'
 
-type Regular = { id: string; name: string; hue?: number; portrait?: string }
+type Regular = { id: string; name: string; portrait?: string; ui?: Ui<EntityUi> }
 
 const regulars = definePlugin<null>({
   id: 'regulars',
   version: 1,
   speaker: (id, _state, { game }) => {
     const regular = (game.data?.regulars?.people as readonly Regular[] | undefined)?.find((entry) => entry.id === id)
-    return regular ? { id, name: regular.name, hue: regular.hue ?? null, portrait: regular.portrait ?? null } : undefined
+    return regular ? { id, name: regular.name, portrait: regular.portrait ?? null, ...(regular.ui ? { ui: regular.ui } : {}) } : undefined
   },
 })
 
 // in your content
-data: { regulars: { people: [{ id: 'mo', name: 'Mo', hue: 200 }] } },
+data: { regulars: { people: [{ id: 'mo', name: 'Mo', ui: { hue: 200 } }] } },
 scenes: [{ id: 'counter', speaker: 'mo', body: [{ text: 'counter' }], choices: [] }],
 ```
 
 ```ts
-view(state, game).scene.speaker   // { id: 'mo', name: 'Mo', hue: 200, portrait: null }
+view(state, game).scene.speaker   // { id: 'mo', name: 'Mo', portrait: null, ui: { hue: 200 } }
 ```
 
 ### pluginSpeaker

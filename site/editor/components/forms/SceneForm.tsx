@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react'
 import { inlineMarkup, type Block, type Choice, type DataScene, type SceneMedia } from '@ifloom/engine'
-import { costOf, isCost, shortBlock, transitionFields, transitionOptions, transitionValue, withCost } from '../../lib/builders'
+import { costOf, isCost, shortBlock, transitionFields, transitionOptions, transitionValue, withCost, withHint } from '../../lib/builders'
 import { rename, renameChoice } from '../../lib/references'
 import { OptionalCondition } from '../ConditionBuilder'
 import { EffectList } from '../EffectBuilder'
@@ -59,21 +59,11 @@ export function SceneForm({ id }: { id: string }) {
           <Field label="Speaker" hint="A character id a plugin knows, such as the cast's.">
             <TextInput optional mono value={scene.speaker} onChange={(speaker) => change((s) => void (s.speaker = speaker))} />
           </Field>
-          <Field label="Frame">
-            <Select
-              value={scene.frame ?? ''}
-              options={[
-                { value: '', label: 'Stage (default)' },
-                { value: 'talk', label: 'Talk' },
-              ]}
-              onChange={(frame) => change((s) => void (s.frame = frame === 'talk' ? 'talk' : undefined))}
-            />
-          </Field>
           <Field label="Tags" hint="Comma separated. The UI can style the scene by them.">
             <ListInput value={scene.tags} onChange={(tags) => change((s) => void (s.tags = tags))} />
           </Field>
         </div>
-        <TransitionField value={scene.transition} onChange={(transition) => change((s) => void (s.transition = transition))} />
+        <TransitionField value={scene.ui?.transition} onChange={(transition) => change((s) => void (s.ui = withHint(s.ui, 'transition', transition)))} />
         <Checkbox
           checked={project.intro === scene.id}
           label="The game opens on this scene"
@@ -247,14 +237,16 @@ function BlockEditor({
   )
 }
 
-/** How the scene comes on screen and goes off: a menu each way, and how long. Blank parts take the game's default. */
-function TransitionField({ value, onChange }: { value: DataScene['transition']; onChange: (value: DataScene['transition']) => void }) {
+type TransitionHint = NonNullable<DataScene['ui']>['transition']
+
+/** How the scene comes on screen and goes off, as the React UI's `ui.transition` hint: a menu each way, and how long. Blank parts take the game's default. */
+function TransitionField({ value, onChange }: { value: TransitionHint; onChange: (value: TransitionHint) => void }) {
   const fields = transitionFields(value)
   const set = (patch: Partial<typeof fields>) => onChange(transitionValue({ ...fields, ...patch }))
   const menu = (current: string) => [{ value: '', label: 'Game default' }, ...transitionOptions(current).map((name) => ({ value: name, label: name }))]
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <Field label="Comes in" hint="How the scene appears.">
+      <Field label="Comes in" hint="How the scene appears in the React UI.">
         <Select aria-label="Transition in" value={fields.in} options={menu(fields.in)} onChange={(name) => set({ in: name })} />
       </Field>
       <Field label="Goes out" hint="How it leaves for the next screen.">
@@ -267,12 +259,13 @@ function TransitionField({ value, onChange }: { value: DataScene['transition']; 
   )
 }
 
-/** Whether a block comes after a pause, how long, and how. */
+/** Whether a block comes after a pause, how long, and how: the React UI's `ui.reveal` hint. */
 function RevealField({ block, onChange }: { block: Block; onChange: (block: Block) => void }) {
-  const reveal = block.reveal
-  const set = (next: Block['reveal']) => {
-    const { reveal: _old, ...rest } = block
-    onChange((next ? { ...rest, reveal: next } : rest) as Block)
+  const reveal = block.ui?.reveal
+  const set = (next: NonNullable<Block['ui']>['reveal']) => {
+    const { ui, ...rest } = block
+    const hints = withHint(ui, 'reveal', next)
+    onChange((hints ? { ...rest, ui: hints } : rest) as Block)
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -454,6 +447,21 @@ function ChoiceCard({
                 </Button>
               </div>
             )}
+          </Field>
+
+          <Field label="Next screen comes in" hint="How the screen this choice leads to appears in the React UI (ui.transition). Its own if left as is.">
+            <Select
+              aria-label="Next screen comes in"
+              value={typeof choice.ui?.transition === 'string' ? choice.ui.transition : (choice.ui?.transition?.in ?? '')}
+              options={[
+                { value: '', label: 'As that screen says' },
+                ...transitionOptions(typeof choice.ui?.transition === 'string' ? choice.ui.transition : choice.ui?.transition?.in).map((name) => ({
+                  value: name,
+                  label: name,
+                })),
+              ]}
+              onChange={(name) => set({ ui: withHint(choice.ui, 'transition', name || undefined) })}
+            />
           </Field>
 
           <Field label="What it costs" hint="Spending a stat takes it from the player and shows as the button's price when the stat is spendable.">

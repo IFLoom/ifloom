@@ -217,6 +217,9 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     if (Object.keys(player).length) held.player = player
     return { ...state, entities, held }
   },
+  // 16 → 17: how the next screen comes in is the UI's to say, from a choice's `ui` hints, so the
+  // save no longer keeps a `transition` effect's override.
+  16: ({ transition: _transition, ...state }) => state,
 }
 
 /** A collection entry as saves before version 16 kept it. */

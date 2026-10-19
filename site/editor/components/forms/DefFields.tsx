@@ -5,7 +5,7 @@
  * snippets page uses the stat, thing and setting on their own.
  */
 import type { Condition, EntityDef, KindDef, Placement, SettingDef, StatDef, StatWords } from '@ifloom/engine'
-import { NO_NAMES, type Names } from '../../lib/builders'
+import { NO_NAMES, withHint, type Names } from '../../lib/builders'
 import { STAT_DISPLAYS, STAT_ROUNDS } from '../../lib/kinds'
 import { ConditionBuilder, OptionalCondition, type BuilderProps } from '../ConditionBuilder'
 import { Button, Checkbox, Field, JsonField, ListInput, NumberInput, Select, TextInput } from '../ui'
@@ -58,11 +58,12 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
             <NumberInput value={value.max} onChange={(max) => set({ max })} />
           )}
         </Field>
-        <Field label="Display">
+        <Field label="Display" hint="A hint for the React UI's sidebar (ui.display).">
           <Select
-            value={value.display ?? 'number'}
+            aria-label="Display"
+            value={value.ui?.display ?? 'number'}
             options={STAT_DISPLAYS}
-            onChange={(display) => set({ display: display === 'number' ? undefined : display })}
+            onChange={(display) => set({ ui: withHint(value.ui, 'display', display === 'number' ? undefined : display) })}
           />
         </Field>
         <Field label="Round when read">
@@ -219,6 +220,17 @@ export function ThingFields({
       </div>
       <Field label="Traits" hint="Data a plugin reads: using it, wearing it, selling it, or a person to meet.">
         <TraitsEditor {...builder} value={value.traits} onChange={(traits) => set({ traits: traits as EntityDef['traits'] })} />
+      </Field>
+      <Field
+        label="UI hints"
+        hint={'How a UI draws it, as JSON. The React UI reads { "hue": 200 }, the colour of a person\'s lines. The engine passes them on as written.'}
+      >
+        <JsonField
+          label="UI hints"
+          rows={2}
+          value={value.ui ?? {}}
+          onChange={(ui) => set({ ui: ui && typeof ui === 'object' && Object.keys(ui).length ? (ui as EntityDef['ui']) : undefined })}
+        />
       </Field>
     </div>
   )

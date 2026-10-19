@@ -128,7 +128,7 @@ function person(def: PersonDef): EntityDef
 type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 ```
 
-Writes a character for your content's `entities`: an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `character` (or `of`) with the `cast/person` trait. You give the entity's fields and the trait's side by side, and `person()` sorts them: `fullName`, `pronouns`, `hue`, `home`, `schedule`, `talk`, `call`, `storyline` and `met` go in the trait, and the rest stay on the entity.
+Writes a character for your content's `entities`: an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `character` (or `of`) with the `cast/person` trait. You give the entity's fields and the trait's side by side, and `person()` sorts them: `fullName`, `pronouns`, `home`, `schedule`, `talk`, `call`, `storyline` and `met` go in the trait, and the rest stay on the entity.
 
 ```ts
 import { person } from '@ifloom/plugin-cast'
@@ -149,6 +149,7 @@ The entity's fields that matter most to a character:
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
 | `stats` | Their stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
 | `kv` | Their kv store at the start. | `{}` |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, such as the React UI's [`hue`](/docs/react/hints#hue), the colour of their lines: `ui: { hue: 20 }`. The plugin passes them to its view and to the speaker as written. | None. |
 
 ### Person
 
@@ -156,7 +157,6 @@ The entity's fields that matter most to a character:
 type Person = {
   fullName?: string
   pronouns?: Record<string, string>
-  hue?: number
   home?: string
   schedule?: { location: string; when?: Condition }[]
   talk?: string | TalkOption[]
@@ -172,7 +172,6 @@ The `cast/person` trait: what makes an entity someone the player can meet, find 
 |---|---|---|
 | `fullName` | Their whole name, for the UI. Tokens are filled as in `name`. | `name` |
 | `pronouns` | For prose that needs them, such as `{ they: 'she', them: 'her' }`. The plugin gives them no meaning and doesn't pass them to the view. | None. |
-| `hue` | A colour for their lines, as a hue from 0 to 360. | `null`, which leaves it to the UI. |
 | `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/docs/plugins/places#locations). | [`OFFSTAGE`](#offstage), meaning nowhere. |
 | `schedule` | Where they are while each `when` holds. See [Where people are](#where-people-are). | Always at `home`. |
 | `talk` | The scene that talking to them opens, or a list of [`TalkOption`](#talkoption)s, of which the first whose `when` holds is used. | They can't be talked to, and have no Talk button. |
@@ -240,7 +239,7 @@ const ava = person({
   desc: 'Runs the café',
   image: 'art/character/ava.svg',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
-  hue: 20,
+  ui: { hue: 20 },
   home: 'park',
   // At the counter through the working day, by the river in the evening.
   schedule: [{ location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4, 5), period('morning', 'afternoon')] } }],
@@ -256,7 +255,7 @@ const sam = person({
   desc: 'Neighbour',
   image: 'art/character/sam.svg',
   pronouns: { they: 'they', them: 'them', their: 'their', theirs: 'theirs' },
-  hue: 200,
+  ui: { hue: 200 },
   home: 'park',
   schedule: [{ location: 'high-street', when: period('morning') }],
   talk: 'sam.hi',
@@ -496,7 +495,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 
 | Query | Answers |
 |---|---|
-| `cast/person` | `{ id, name, hue, portrait }` for that character, as the [`speaker` provider](#speakers) gives it, or `undefined`. |
+| `cast/person` | `{ id, name, portrait, ui }` for that character (`ui` only when they have hints), as the [`speaker` provider](#speakers) gives it, or `undefined`. |
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
 | `cast/where` | Where that character is: a place id or `OFFSTAGE`. `undefined` for one the game doesn't have. |
 | `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, desc, portrait, command, disabled }`. `desc` is `null` when they have none, `command` is `call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
@@ -519,12 +518,12 @@ const contacts = definePlugin<null>({
 
 ## Speakers
 
-A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [`speaker` provider](/docs/reference/plugins#speakers) answers with their `name`, `hue` and portrait (their `image`, or `art/character/<id>.jpg` if they have none), which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
+A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [`speaker` provider](/docs/reference/plugins#speakers) answers with their `name`, their portrait (their `image`, or `art/character/<id>.jpg` if they have none) and their entity's `ui` hints, which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
 ```ts
 import { view } from '@ifloom/engine'
 
-view(state, game).scene.speaker   // { id: 'ava', name: 'Ava', hue: 20, portrait: 'art/character/ava.svg' }
+view(state, game).scene.speaker   // { id: 'ava', name: 'Ava', portrait: 'art/character/ava.svg', ui: { hue: 20 } }
 ```
 
 Talking to someone doesn't set the speaker, because a scene names its own. An id the cast doesn't have is left to the next plugin that has a `speaker` provider. When no plugin knows it, `view.scene.speaker` is `null` and the scene shows no speaker.
@@ -558,7 +557,7 @@ type PersonView = {
   name: string
   fullName: string
   desc: string | null
-  hue: number | null
+  ui?: Ui<EntityUi>
   portrait: string | null
   here: boolean
   closed: boolean
@@ -571,7 +570,8 @@ type PersonView = {
 |---|---|
 | `id` | Their id, as `talk(id)` names them. For someone of another kind than the cast's, their whole reference, such as `'staff:ana'`. |
 | `ref` | How content names their entity, such as `'character:ava'`. |
-| `name`, `hue` | Their entity's name, tokens filled, and their trait's `hue` (or `null`). |
+| `name` | Their entity's name, tokens filled. |
+| `ui` | Their entity's [presentation hints](/docs/reference/ui-hints), over their kind's, as [`entityUi`](/docs/reference/ui-hints#entityui) reads them. Left out when they have none. |
 | `fullName` | Their `fullName`, or `name`. |
 | `desc` | Their entity's `desc`, tokens filled, or `null`. |
 | `portrait` | Their entity's `image`, or `art/<kind>/<id>.jpg`. Typed `string | null` like every plugin's portrait, though the cast always gives one. |
@@ -584,7 +584,7 @@ In the café on Monday morning, Ava's card is:
 
 ```ts
 {
-  id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', desc: 'Runs the café', hue: 20,
+  id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', desc: 'Runs the café', ui: { hue: 20 },
   portrait: 'art/character/ava.svg', here: true, closed: false, met: false,
   actions: [{ id: 'talk-ava', label: 'Talk', command: talk('ava') }],
 }

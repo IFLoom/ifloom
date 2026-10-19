@@ -45,8 +45,8 @@ import {
   type RenderedChoice,
   type Reference,
   type StageView,
-  type Transition,
-  type TransitionName,
+  type SceneUi,
+  type Ui,
   YOU,
 } from '@ifloom/engine'
 
@@ -84,11 +84,11 @@ export type LocationDef = {
    */
   audio?: Record<string, string | null>
   /**
-   * How the room comes on screen and goes off while no scene is open:
-   * `'fade'`, or `{ in: 'slide-left', ms: 400 }`. The game's
-   * `transitions.default` if left out. See `view.transition`.
+   * Presentation hints for the room while no scene is open, carried to
+   * `view.scene.ui` as a scene's are: the React UI's `{ transition: 'slide-left' }`.
+   * The engine gives them no meaning.
    */
-  transition?: Transition | TransitionName
+  ui?: Ui<SceneUi>
   /**
    * What happens on the doorstep, after the player walks in by an exit (not
    * after a `places/move`): someone catching you on the way in. Its effects
@@ -292,9 +292,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     label: (_state, { slice, game }) => locationById(game, slice.at)?.name,
     stage: (_state, { slice, game }) => {
       const place = locationById(game, slice.at)
-      return place
-        ? { id: place.id, title: place.name, body: place.body, ...(place.transition !== undefined ? { transition: place.transition } : {}) }
-        : undefined
+      return place ? { id: place.id, title: place.name, body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) } : undefined
     },
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
     audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
@@ -366,7 +364,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
             { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
             // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
             { stage: place.stage, choices: null },
-            { transition: place.transition },
+            { ui: place.ui },
             ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(place.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
             ...(place.actions ?? []).map((action) => ({

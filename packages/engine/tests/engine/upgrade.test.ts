@@ -610,8 +610,10 @@ describe('content migrations', () => {
           stats: { trust: 3 },
           kv: { mood: 'calm' },
           traits: {
-            'cast/person': { fullName: 'Rosa Vale', hue: 120, home: 'garden', schedule: [{ location: 'shop', when: { kv: 'open' } }], talk: 'rosa.hi' },
+            'cast/person': { fullName: 'Rosa Vale', home: 'garden', schedule: [{ location: 'shop', when: { kv: 'open' } }], talk: 'rosa.hi' },
           },
+          // Her colour is a hint for the UI since schema 16.
+          ui: { hue: 120 },
         },
         { id: 'tom', of: 'character', name: 'Tom', traits: { 'cast/person': {} } },
       ],
@@ -638,6 +640,100 @@ describe('content migrations', () => {
         { id: 'staff', label: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
         { id: 'photo', label: 'Photo' },
       ],
+    })
+  })
+
+  it('move presentation into ui hints at schema 16', () => {
+    const v15 = {
+      id: 'evening',
+      schema: 15,
+      scenes: [
+        {
+          id: 'porch',
+          frame: 'talk',
+          transition: { in: 'fade', ms: 500 },
+          body: [
+            { text: 'porch', when: { kv: 'dusk' } },
+            { text: 'porch.more', reveal: { delay: 1200 } },
+            { variants: 'porch.birds', reveal: {} },
+          ],
+          choices: [
+            {
+              id: 'in',
+              effects: [
+                { kind: 'scene', scene: null },
+                { kind: 'transition', to: 'slide-up', ms: 400 },
+              ],
+            },
+            { id: 'wait', ui: { transition: 'zoom' }, effects: [{ kind: 'transition', to: 'fade' }] },
+          ],
+        },
+      ],
+      prose: {
+        porch: 'A porch.\n\n[[reveal:1500|slide-up]]\n\nA swing creaks.\n\n[[reveal]]\n\nIt stops.',
+        'porch.more': 'Crickets. [[reveal]] Then quiet.',
+        'porch.birds/one': 'A blackbird.\n\n[[reveal]]\n\nAnother.',
+      },
+      triggers: [
+        {
+          id: 'dusk',
+          effects: [
+            { kind: 'transition', to: 'fade' },
+            { kind: 'kv', key: 'dusk', to: true },
+          ],
+        },
+      ],
+      stats: [{ id: 'energy', label: 'Energy', display: 'bar' }],
+      kinds: [{ id: 'neighbour', label: 'Neighbour', traits: { 'cast/person': { hue: 40 } } }],
+      entities: [
+        { id: 'rosa', of: 'character', name: 'Rosa', traits: { 'cast/person': { hue: 120, home: 'garden' } } },
+        { id: 'tom', of: 'character', name: 'Tom' },
+      ],
+      traits: { 'cast/person': { 'character:tom': { hue: 300, home: 'shop' }, 'character:ann': { hue: 10 } } },
+      data: { places: { locations: [{ id: 'garden', name: 'Garden', transition: 'slide-left', body: [{ text: 'garden', reveal: { as: 'zoom' } }] }] } },
+    }
+    expect(unwrap(upgradePack(v15))).toEqual({
+      id: 'evening',
+      schema: SCHEMA,
+      scenes: [
+        {
+          id: 'porch',
+          ui: { transition: { in: 'fade', ms: 500 } },
+          body: [
+            // The prose split at its reveals: each later part a key and a block of its own, under the same `when`.
+            { text: 'porch', when: { kv: 'dusk' } },
+            { text: 'porch.2', when: { kv: 'dusk' }, ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+            { text: 'porch.3', when: { kv: 'dusk' }, ui: { reveal: {} } },
+            { text: 'porch.more', ui: { reveal: { delay: 1200 } } },
+            { variants: 'porch.birds', ui: { reveal: {} } },
+          ],
+          choices: [
+            { id: 'in', effects: [{ kind: 'scene', scene: null }], ui: { transition: { in: 'slide-up', ms: 400 } } },
+            // A hint the choice already has wins.
+            { id: 'wait', ui: { transition: 'zoom' }, effects: [] },
+          ],
+        },
+      ],
+      prose: {
+        porch: 'A porch.',
+        'porch.2': 'A swing creaks.',
+        'porch.3': 'It stops.',
+        // Markup inside a paragraph, or in prose no block splits, is taken out.
+        'porch.more': 'Crickets. Then quiet.',
+        'porch.birds/one': 'A blackbird.\n\nAnother.',
+      },
+      triggers: [{ id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] }],
+      stats: [{ id: 'energy', label: 'Energy', ui: { display: 'bar' } }],
+      kinds: [{ id: 'neighbour', label: 'Neighbour', traits: { 'cast/person': {} }, ui: { hue: 40 } }],
+      entities: [
+        { id: 'rosa', of: 'character', name: 'Rosa', traits: { 'cast/person': { home: 'garden' } }, ui: { hue: 120 } },
+        { id: 'tom', of: 'character', name: 'Tom', ui: { hue: 300 } },
+      ],
+      // A row's hue goes to the pack's own entity; Ann isn't one, so hers is dropped.
+      traits: { 'cast/person': { 'character:tom': { home: 'shop' }, 'character:ann': {} } },
+      data: {
+        places: { locations: [{ id: 'garden', name: 'Garden', ui: { transition: 'slide-left' }, body: [{ text: 'garden', ui: { reveal: { as: 'zoom' } } }] }] },
+      },
     })
   })
 

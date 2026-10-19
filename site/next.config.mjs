@@ -19,6 +19,8 @@ const MOVED = {
   'reference/audio-player': 'browser/audio-player',
   // Collections became things the player holds, entities like any other.
   'reference/collections': 'reference/entities',
+  // Transitions and reveals left the engine for the React UI's presentation hints.
+  'reference/transitions': 'react/hints',
 }
 
 /**

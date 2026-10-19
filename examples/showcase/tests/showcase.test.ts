@@ -42,6 +42,7 @@ import { go, pickUp, type PlacesState, type PlacesView } from '@ifloom/plugin-pl
 import { call, talk, type CastView } from '@ifloom/plugin-cast'
 import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
 import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlockDefs, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
 import supporterPack from '../src/unlocks/supporter.ts'
@@ -68,6 +69,8 @@ describe('Small Town', () => {
     expect(problems).toEqual([])
     // Checked again as it stands, the loaded game is the same.
     expect(checkGame(game).problems).toEqual([])
+    // The engine only checks hints are data; the React UI checks they're hints it can draw.
+    expect(checkUiHints(game)).toEqual([])
   })
 
   it('holds the player in moving day until they unpack', () => {

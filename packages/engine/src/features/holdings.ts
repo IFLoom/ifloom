@@ -9,6 +9,7 @@ import {
   bindCurrent,
   entityDef,
   entityImage,
+  entityUi,
   entityTags,
   entityText,
   hasEntity,
@@ -27,6 +28,7 @@ import {
 import { canHold, heldBy, heldCount, holderOf, moveHeld, placementCounts, setHeld } from '../holdings.ts'
 import type { Game } from '../game.ts'
 import type { GameState } from '../types.ts'
+import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
 /** One thing a holder has, as the UI draws it. */
@@ -45,6 +47,8 @@ export type HeldView = {
   count: number
   /** Who holds it: the protagonist being played, or `'player'`. */
   at: Holder
+  /** Its presentation hints, its own over its kind's, as written; left out with none. See `EntityUi`. */
+  ui?: Ui<EntityUi>
 }
 
 /** What the holdings feature adds, as types. */
@@ -98,6 +102,7 @@ function heldView(state: GameState, game: Game, holder: Holder, cx: FeatureConte
         tags: entityTags(state, game, ref),
         count,
         at: holder,
+        ...withUi(entityUi(state, game, ref)),
       }
     })
 }

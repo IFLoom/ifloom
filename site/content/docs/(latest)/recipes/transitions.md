@@ -1,20 +1,20 @@
 ---
 title: "Transitions"
-description: "Fade between scenes, slide a room in, and reveal a scene's lines one after another, in the React UI or drawn yourself in plain DOM, React, Vue or Svelte."
+description: "Fade between scenes, slide a room in, and reveal a scene's lines one after another with the React UI's ui hints, or draw the same hints yourself in plain DOM, React, Vue or Svelte."
 ---
-A scene can fade in, the next room can slide in from the side, and a paragraph can wait a moment before it appears. This page shows how to ask for each in your content, how the React UI draws them, and how to draw them yourself with another framework.
+A scene can fade in, the next room can slide in from the side, and a paragraph can wait a moment before it appears. This page shows how to ask for each in your content, how the React UI draws them, and how to draw the same hints with another framework.
 
-The engine never animates anything. It names the transition in the view and the UI decides what that looks like, as it does for [audio](/docs/reference/audio). That keeps tests, `ifloom playtest` and replays free of timing, and lets each UI draw the same names its own way. The [Transitions reference](/docs/reference/transitions) has every field.
+None of this is the engine's. How a screen moves doesn't change the game, so content writes it as [presentation hints](/docs/reference/ui-hints): a `ui` field the engine passes to the view untouched. The names on this page (`ui.transition`, `ui.reveal`) are the React UI's, listed in [Presentation hints](/docs/react/hints). Tests, `ifloom playtest` and replays ignore them.
 
 ## Ask for a transition
 
-Give a scene a `transition`. A name on its own is used both ways:
+Give a scene a `ui.transition`. A name on its own is used both ways:
 
 ```ts
 {
   id: 'ava.river',
   title: 'By the river',
-  transition: 'fade',
+  ui: { transition: 'fade' },
   body: [{ text: 'ava.river' }],
   choices: [{ id: 'stay', effects: [{ kind: 'scene', scene: null }] }],
 }
@@ -23,52 +23,42 @@ Give a scene a `transition`. A name on its own is used both ways:
 Or say how it comes in and goes out separately, and how long each takes in milliseconds (300 if you leave `ms` out):
 
 ```ts
-transition: { in: 'slide-up', out: 'fade', ms: 500 }
+ui: { transition: { in: 'slide-up', out: 'fade', ms: 500 } }
 ```
 
-The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, listed in [`TRANSITIONS`](/docs/reference/transitions#transitionname).
+The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, listed in [`TRANSITIONS`](/docs/react/hints#transitionname).
 
-A place takes a `transition` too, for the room while no scene is open, so walking between places can slide:
+A place takes one too, for the room while no scene is open, so walking between places can slide:
 
 ```ts
-{ id: 'high-street', name: 'High Street', tag: 'Town', exits: ['flat', 'cafe'], art: 'place/high-street', body: [{ text: 'place.high-street' }], transition: 'slide-left' }
+{ id: 'high-street', name: 'High Street', tag: 'Town', exits: ['flat', 'cafe'], art: 'place/high-street', body: [{ text: 'place.high-street' }], ui: { transition: 'slide-left' } }
 ```
 
-For the whole game, set a default on the `Game`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
+For the whole game, set a default in the game's `ui`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', transitions: { default: { in: 'fade', ms: 250 } } })
+loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transition: { in: 'fade', ms: 250 } } })
 ```
 
-A choice can decide how the next screen arrives with a `transition` effect, whatever that screen declares. It lasts for that one command:
+A choice can say how the screen it leads to comes in, whatever that screen declares. The React UI knows which choice was pressed, by a click or a number key, and plays it once:
 
 ```ts
-{ id: 'unpack', effects: [{ kind: 'scene', scene: null }, { kind: 'transition', to: 'slide-up', ms: 400 }] }
+{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ kind: 'scene', scene: null }] }
 ```
 
 ## Reveal lines one after another
 
-Give a body block a `reveal` and it waits before it appears. `delay` is in milliseconds after the reveal before it, or after the scene comes on (800 if left out). `as` is how it comes in (`fade` if left out):
+Give a body block a `ui.reveal` and it waits before it appears. `delay` is in milliseconds after the reveal before it, or after the scene comes on (800 if left out). `as` is how it comes in (`fade` if left out):
 
 ```ts
 body: [
   { text: 'intro' },
-  { text: 'intro.tonight', reveal: { delay: 1200 } },
-  { text: 'intro.cat', reveal: { delay: 1500, as: 'slide-up' } },
+  { text: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
+  { text: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
 ]
 ```
 
-Inside one prose key, put `[[reveal]]` on a line of its own. A delay goes after a colon and a transition after a `|`:
-
-```md
-Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
-
-[[reveal:1500|slide-up]]
-
-"I told you it was the only quiet in town." She shuffles up to make room.
-```
-
-Both become a `reveal` beat in `view.scene.beats`, with `at`: the time it comes, counted from the scene coming on. The lines after it are in the beats from the start, so a UI can put them in the page at once for screen readers and hold back only how they look.
+A paragraph that should wait goes in a block of its own, under its own prose key. The block's hints arrive on the first [beat](/docs/reference/prose#scenebeat) it makes, and the lines after it are in the beats from the start. So a UI can put every word in the page at once for screen readers and hold back only how they look.
 
 ## The React UI
 
@@ -92,10 +82,10 @@ Your rules win over the base styles, which sit in a cascade layer. [Components](
 
 ### Your own names
 
-Declare a name in `game.transitions.names`, use it like a built-in one, and draw it with CSS. Without the declaration the content checker reports it as an unknown transition, which catches typos.
+List a name in the game's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', transitions: { names: ['curtain'] } })
+loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transitionNames: ['curtain'] } })
 ```
 
 ```css
@@ -112,11 +102,11 @@ loadGame([town], { id: 'small-town', title: 'Small Town', transitions: { names: 
 
 ## Draw them yourself
 
-With another framework, read `view.transition` and the reveal beats and draw them with CSS. The steps are the same in each:
+Another UI can read the same hints. They're plain data in the view: the scene's `ui` is `view.scene.ui`, and a block's is on the first beat it makes. Whether your UI uses the React UI's names, its own, or none is up to you. If it uses these, content written for one UI looks the same in the other. The steps are the same in each framework:
 
-1. Keep the view whose scene is on the page. While `view.transition.key` stays the same, draw each new view at once.
-2. When the key changes, mark the scene on the page with `data-transition-out` and its `out`, wait its `ms`, then draw the new one with `data-transition-in` and its `in`. Keying the element by `transition.key` makes it a new element, so its animation plays.
-3. Put every beat in the page. A beat after a reveal gets `data-reveal` and `--at` from that reveal.
+1. Keep the view whose scene is on the page. While [`view.scene.key`](/docs/reference/view#the-scene) stays the same, draw each new view at once.
+2. When the key changes, mark the scene on the page with `data-transition-out` and its `out`, wait its `ms`, then draw the new one with `data-transition-in` and its `in`. Keying the element by the key makes it a new element, so its animation plays.
+3. Put every beat in the page. A beat from a revealed block onwards gets `data-reveal` and `--at` from that reveal.
 4. On a click or a key, mark the scene `data-revealed` so everything shows.
 5. Skip all of it when `prefers-reduced-motion` is set.
 
@@ -141,23 +131,41 @@ This CSS draws `fade` and `slide-up`. Add rules for the other names you use:
 }
 ```
 
-Each beat needs to know the reveal it waits for. This helper is the same in every framework:
+These helpers read the hints, and are the same in every framework. The `declare module` block types the two hints for a game without `@ifloom/react`. A game that has it gets them from there, so leave the block out.
 
 ```ts
-// src/reveals.ts
-import type { SceneBeat } from '@ifloom/engine'
+// src/hints.ts
+import type { SceneBeat, View } from '@ifloom/engine'
 
-type Reveal = Extract<SceneBeat, { kind: 'reveal' }>
+type Transition = { in?: string; out?: string; ms?: number }
 
-/** The beats to draw, each with the reveal it waits for, or null for those shown with the scene. */
-export function withReveals(beats: readonly SceneBeat[]): { beat: SceneBeat; reveal: Reveal | null }[] {
-  let reveal: Reveal | null = null
-  return beats.flatMap((beat) => {
-    if (beat.kind === 'reveal') {
-      reveal = beat
-      return []
+declare module '@ifloom/engine' {
+  interface SceneUi {
+    transition?: Transition | string
+  }
+  interface BlockUi {
+    reveal?: { delay?: number; as?: string }
+  }
+}
+
+/** The screen in a view, and how it comes in and goes out, from its scene's `ui.transition`. */
+export function transitionOf(view: View): { key: string; in: string; out: string; ms: number } {
+  const spec = view.scene.ui?.transition
+  const pair: Transition = typeof spec === 'string' ? { in: spec, out: spec } : (spec ?? {})
+  return { key: view.scene.key, in: pair.in ?? 'none', out: pair.out ?? 'none', ms: pair.ms ?? 300 }
+}
+
+/** The beats to draw, each with the reveal it waits for (how and when), or null for those shown with the scene. */
+export function withReveals(beats: readonly SceneBeat[]): { beat: SceneBeat; reveal: { as: string; at: number } | null }[] {
+  let at = 0
+  let reveal: { as: string; at: number } | null = null
+  return beats.map((beat) => {
+    const hint = beat.ui?.reveal
+    if (hint) {
+      at += hint.delay ?? 800
+      reveal = { as: hint.as ?? 'fade', at }
     }
-    return [{ beat, reveal }]
+    return { beat, reveal }
   })
 }
 ```
@@ -167,7 +175,7 @@ Then the scene, in each framework. Each draws the title and the words. Add your 
 ```ts tab="Plain JS" tab-group="framework"
 // src/scene.ts: call drawScene(stage, view) from draw(), with a <div> that stays in the page.
 import type { View } from '@ifloom/engine'
-import { withReveals } from './reveals.ts'
+import { transitionOf, withReveals } from './hints.ts'
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
 let shown: View | null = null
@@ -175,9 +183,10 @@ let timer: ReturnType<typeof setTimeout> | undefined
 
 function article(view: View, entering: boolean): HTMLElement {
   const scene = document.createElement('article')
-  scene.style.setProperty('--ms', `${view.transition.ms}ms`)
+  const transition = transitionOf(view)
+  scene.style.setProperty('--ms', `${transition.ms}ms`)
   // Drawn again on the same screen, its reveals have played already.
-  if (entering && !reduced.matches) scene.dataset.transitionIn = view.transition.in
+  if (entering && !reduced.matches) scene.dataset.transitionIn = transition.in
   else scene.dataset.revealed = ''
   scene.onclick = () => (scene.dataset.revealed = '')
   scene.append(Object.assign(document.createElement('h2'), { textContent: view.scene.title }))
@@ -197,14 +206,15 @@ export function drawScene(stage: HTMLElement, view: View): void {
   shown = view
   clearTimeout(timer)
   const old = stage.querySelector<HTMLElement>('article')
-  const changed = before !== null && before.transition.key !== view.transition.key
-  if (changed && old && !reduced.matches && before.transition.out !== 'none') {
+  const going = before && transitionOf(before)
+  const changed = going !== null && going.key !== view.scene.key
+  if (going && changed && old && !reduced.matches && going.out !== 'none') {
     // The screen before goes out by its own `out`, and can't be pressed or heard meanwhile.
-    old.dataset.transitionOut = before.transition.out
-    old.style.setProperty('--ms', `${before.transition.ms}ms`)
+    old.dataset.transitionOut = going.out
+    old.style.setProperty('--ms', `${going.ms}ms`)
     old.setAttribute('aria-hidden', 'true')
     old.inert = true
-    timer = setTimeout(() => stage.replaceChildren(article(view, true)), before.transition.ms)
+    timer = setTimeout(() => stage.replaceChildren(article(view, true)), going.ms)
     return
   }
   stage.replaceChildren(article(view, before === null || changed))
@@ -214,8 +224,8 @@ export function drawScene(stage: HTMLElement, view: View): void {
 ```tsx tab="React" tab-group="framework"
 // src/Scene.tsx: React with the runner, without @ifloom/react.
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
-import type { Runner, View } from '@ifloom/engine'
-import { withReveals } from './reveals.ts'
+import type { Runner } from '@ifloom/engine'
+import { transitionOf, withReveals } from './hints.ts'
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -226,6 +236,7 @@ export function Scene({ runner }: { runner: Runner }) {
   const [shown, setShown] = useState(view)
   const [leaving, setLeaving] = useState(false)
   const [revealed, setRevealed] = useState(false)
+  const transition = transitionOf(shown)
   useEffect(() => {
     if (view === shown) return
     const swap = () => {
@@ -233,22 +244,23 @@ export function Scene({ runner }: { runner: Runner }) {
       setRevealed(false)
       setShown(view)
     }
-    if (view.transition.key === shown.transition.key) return setShown(view)
-    if (!motion || shown.transition.out === 'none') return swap()
+    const going = transitionOf(shown)
+    if (view.scene.key === going.key) return setShown(view)
+    if (!motion || going.out === 'none') return swap()
     setLeaving(true)
-    const timer = setTimeout(swap, shown.transition.ms)
+    const timer = setTimeout(swap, going.ms)
     return () => clearTimeout(timer)
   }, [view, shown, motion])
   return (
     <article
-      key={shown.transition.key}
-      data-transition-in={motion ? shown.transition.in : undefined}
-      data-transition-out={leaving ? shown.transition.out : undefined}
+      key={transition.key}
+      data-transition-in={motion ? transition.in : undefined}
+      data-transition-out={leaving ? transition.out : undefined}
       data-revealed={revealed ? '' : undefined}
       aria-hidden={leaving || undefined}
       inert={leaving}
       onClick={() => setRevealed(true)}
-      style={{ '--ms': `${shown.transition.ms}ms` } as CSSProperties}
+      style={{ '--ms': `${transition.ms}ms` } as CSSProperties}
     >
       <h2>{shown.scene.title}</h2>
       {withReveals(shown.scene.beats).map(({ beat, reveal }, at) =>
@@ -266,40 +278,41 @@ export function Scene({ runner }: { runner: Runner }) {
 ```vue tab="Vue" tab-group="framework"
 <!-- src/Scene.vue -->
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { view } from './runner.ts'
-import { withReveals } from './reveals.ts'
+import { transitionOf, withReveals } from './hints.ts'
 
 const motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 // The view whose scene is on the page, and whether it's going out.
 const shown = shallowRef(view.value)
 const leaving = ref(false)
 const revealed = ref(false)
+const transition = computed(() => transitionOf(shown.value))
 let timer: ReturnType<typeof setTimeout> | undefined
 
 watch(view, (now) => {
   clearTimeout(timer)
-  if (now.transition.key === shown.value.transition.key) return void (shown.value = now)
+  if (now.scene.key === transition.value.key) return void (shown.value = now)
   const swap = () => {
     leaving.value = false
     revealed.value = false
     shown.value = now
   }
-  if (!motion || shown.value.transition.out === 'none') return swap()
+  if (!motion || transition.value.out === 'none') return swap()
   leaving.value = true
-  timer = setTimeout(swap, shown.value.transition.ms)
+  timer = setTimeout(swap, transition.value.ms)
 })
 </script>
 
 <template>
   <article
-    :key="shown.transition.key"
-    :data-transition-in="motion ? shown.transition.in : undefined"
-    :data-transition-out="leaving ? shown.transition.out : undefined"
+    :key="transition.key"
+    :data-transition-in="motion ? transition.in : undefined"
+    :data-transition-out="leaving ? transition.out : undefined"
     :data-revealed="revealed ? '' : undefined"
     :aria-hidden="leaving ? 'true' : undefined"
     :inert="leaving"
-    :style="{ '--ms': `${shown.transition.ms}ms` }"
+    :style="{ '--ms': `${transition.ms}ms` }"
     @click="revealed = true"
   >
     <h2>{{ shown.scene.title }}</h2>
@@ -315,7 +328,7 @@ watch(view, (now) => {
 <script lang="ts">
   import type { View } from '@ifloom/engine'
   import { view } from './runner.ts'
-  import { withReveals } from './reveals.ts'
+  import { transitionOf, withReveals } from './hints.ts'
 
   const motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   // The view whose scene is on the page, and whether it's going out.
@@ -327,16 +340,16 @@ watch(view, (now) => {
     let timer: ReturnType<typeof setTimeout> | undefined
     const stop = view.subscribe((now) => {
       clearTimeout(timer)
-      const before = shown
-      if (!before || now.transition.key === before.transition.key) return void (shown = now)
+      const going = shown && transitionOf(shown)
+      if (!going || now.scene.key === going.key) return void (shown = now)
       const swap = () => {
         leaving = false
         revealed = false
         shown = now
       }
-      if (!motion || before.transition.out === 'none') return swap()
+      if (!motion || going.out === 'none') return swap()
       leaving = true
-      timer = setTimeout(swap, before.transition.ms)
+      timer = setTimeout(swap, going.ms)
     })
     return () => {
       stop()
@@ -346,15 +359,16 @@ watch(view, (now) => {
 </script>
 
 {#if shown}
-  {#key shown.transition.key}
+  {@const transition = transitionOf(shown)}
+  {#key transition.key}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
     <article
-      data-transition-in={motion ? shown.transition.in : undefined}
-      data-transition-out={leaving ? shown.transition.out : undefined}
+      data-transition-in={motion ? transition.in : undefined}
+      data-transition-out={leaving ? transition.out : undefined}
       data-revealed={revealed ? '' : undefined}
       aria-hidden={leaving ? 'true' : undefined}
       inert={leaving}
-      style="--ms: {shown.transition.ms}ms"
+      style="--ms: {transition.ms}ms"
       onclick={() => (revealed = true)}
     >
       <h2>{shown.scene.title}</h2>
@@ -366,13 +380,13 @@ watch(view, (now) => {
 {/if}
 ```
 
-To let a key show everything too, listen for `keydown` on the window while the scene has reveals to come, and set `data-revealed` as the click does.
+To let a key show everything too, call [`startRevealSkip`](/docs/browser#startrevealskip) from `@ifloom/browser` while the scene has reveals to come, and set `data-revealed` as the click does. To play a choice's own `ui.transition`, note the choice when the player presses it, and use its `in` and `ms` for the next screen.
 
 **Gotchas:**
-- Play a transition only when `view.transition.key` changes. A choice that keeps the same scene open gives a new view with the same key, and replaying the scene's `in` there looks like a flicker.
+- Play a transition only when `view.scene.key` changes. A choice that keeps the same scene open gives a new view with the same key, and replaying the scene's `in` there looks like a flicker.
 - Keep the words of revealed lines in the page. Hiding them with `display: none` or `visibility: hidden` until they come hides them from screen readers too.
 - Choices that come before the last reveal can be pressed before the player has read the lines. The React UI holds them back with `visibility: hidden` until the last reveal, which also keeps them from screen readers and the keyboard until then.
 
 ## See it in the showcase
 
-Small Town's moving-day scene fades in from the title page and reveals its second paragraph after a pause. Its Unpack choice brings the flat in with `slide-up`. By the river, Ava's scene fades, and her answer comes a moment after the narration. The content is in `examples/showcase/src/story/moving-day.ts`, and in `story/ava.ts` with its prose in `story/ava.prose.ts`.
+Small Town's moving-day scene fades in from the title page and reveals its second paragraph after a pause. Its Unpack choice brings the flat in with `slide-up`. By the river, Ava's scene fades, and her answer comes a moment after the narration, in a block of its own. The content is in `examples/showcase/src/story/moving-day.ts`, and in `story/ava.ts` with its prose in `story/ava.prose.ts`.

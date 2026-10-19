@@ -470,8 +470,8 @@ export type UiOptions = {
    */
   keys?: boolean | KeyOptions
   /**
-   * Play scene transitions and prose reveals (`view.transition`, reveal
-   * beats). On if left out. `false` shows every scene and every line at once.
+   * Play scene transitions and prose reveals (the `ui.transition` and
+   * `ui.reveal` hints). On if left out. `false` shows every scene and every line at once.
    * A player whose system asks for reduced motion gets them at once either way.
    */
   motion?: boolean

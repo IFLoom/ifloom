@@ -46,8 +46,6 @@ She has your cup out before you ask.
 === ava.river @ moving-day
 Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 
-[[reveal:1500|slide-up]]
-
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
   [>] Sit with her until the light goes
@@ -55,16 +53,12 @@ Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 === ava.river @ first-morning
 Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 
-[[reveal:1500|slide-up]]
-
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
   [>] Sit with her until the light goes
 
 === ava.river @ a-week-in
 Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
-
-[[reveal:1500|slide-up]]
 
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
@@ -139,23 +133,17 @@ You take the stool by the window. A bus goes by, then a man with a ladder, then 
 === intro @ moving-day
 The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 
-[[reveal:1200]]
-
 Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.
   [>] Unpack
 
 === intro @ first-morning
 The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 
-[[reveal:1200]]
-
 Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.
   [>] Unpack
 
 === intro @ a-week-in
 The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
-
-[[reveal:1200]]
 
 Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.
   [>] Unpack

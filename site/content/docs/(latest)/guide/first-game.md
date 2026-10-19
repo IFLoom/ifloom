@@ -113,7 +113,7 @@ const ruth = person({
   fullName: 'Ruth Okafor',
   desc: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
-  hue: 30,
+  ui: { hue: 30 },
   schedule: [
     // Monday to Friday (0 is Monday), mornings and afternoons, at the café.
     { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
@@ -670,7 +670,7 @@ const ruth = person({
   fullName: 'Ruth Okafor',
   desc: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
-  hue: 30,
+  ui: { hue: 30 },
   schedule: [
     { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
   ],

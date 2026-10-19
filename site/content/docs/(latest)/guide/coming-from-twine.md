@@ -617,7 +617,7 @@ minigames: [
 ],
 ```
 
-A scene with `minigame: 'kettle'` starts it when the player enters. The React UI runs the clock, so the timer counts down on screen. A `<<timed>>` that only reveals text after a pause, with nothing for the player to do, has no direct equivalent. Make the reveal a choice ("Wait"), or animate it in your UI.
+A scene with `minigame: 'kettle'` starts it when the player enters. The React UI runs the clock, so the timer counts down on screen. A `<<timed>>` that only reveals text after a pause, with nothing for the player to do, is a block with a [presentation hint](/docs/reference/ui-hints): in the React UI, `ui: { reveal: { delay: 1500 } }`. Nothing in the game waits, so a test or a replay sees the text at once.
 
 ### A life sim: the clock, the day's end and game over
 

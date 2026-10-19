@@ -25,6 +25,7 @@
     "---Running a game---",
     "runner",
     "view",
+    "ui-hints",
     "saves",
     "profile",
     "loader",
@@ -40,7 +41,6 @@
     "random",
     "audio",
     "media",
-    "transitions",
     "panels"
   ]
 }

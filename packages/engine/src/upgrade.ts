@@ -8,7 +8,7 @@ import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 15
+export const SCHEMA = 16
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -132,6 +132,8 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
     Array.isArray(pack.kinds)
       ? { ...pack, kinds: pack.kinds.map((kind) => (isRecord(kind) && 'marks' in kind ? renamed(kind, { marks: 'flags' }) : kind)) }
       : pack,
+  // 15 → 16: how things look and move is the UI's, written as `ui` hints. See `toSchema16`.
+  15: (pack) => toSchema16(pack),
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -662,6 +664,185 @@ function toSchema14(pack: RawPack): RawPack {
     entities: [...(Array.isArray(pack.entities) ? pack.entities : []), ...people],
     ...(Object.keys(nextData).length ? { data: nextData } : {}),
   } as RawPack
+}
+
+/** `[[reveal]]` markup on a block of its own: its delay and its transition. */
+const REVEAL_BLOCK = /^\[\[reveal(?::\s*(\d*)\s*)?(?:\|\s*([a-z0-9-]*)\s*)?\]\]$/
+
+/** `[[reveal]]` markup anywhere, as written. */
+const REVEAL_ANYWHERE = /[ \t]*\[\[reveal(?::[^\]|]*)?(?:\|[^\]]*)?\]\][ \t]*/g
+
+/** A reveal's markup as the React UI's hint: `{ delay, as }`, leaving out what the markup left out. */
+function revealHint(match: RegExpMatchArray): Record<string, unknown> {
+  return { ...(match[1] ? { delay: Number(match[1]) } : {}), ...(match[2] ? { as: match[2] } : {}) }
+}
+
+/** Prose with its `[[reveal]]` markup taken out: a marker on a line of its own goes with its blank line, one inside a paragraph is cut out. */
+function withoutReveals(text: string): string {
+  if (!text.includes('[[reveal')) return text
+  return text
+    .split('\n\n')
+    .filter((block) => !REVEAL_BLOCK.test(block.trim()))
+    .map((block) => block.replace(REVEAL_ANYWHERE, (found) => (/^[ \t]/.test(found) && /[ \t]$/.test(found) ? ' ' : '')))
+    .join('\n\n')
+}
+
+/** Hints laid into an object's `ui`, what it already says winning. */
+function hinted(value: Record<string, unknown>, hints: Record<string, unknown>): Record<string, unknown> {
+  const ui = isRecord(value.ui) ? value.ui : {}
+  return { ...value, ui: { ...hints, ...ui } }
+}
+
+/**
+ * Schema 15 content as schema 16 writes it. Presentation moved out of the
+ * engine into `ui` hints, which the engine carries to the view as written,
+ * in the React UI's words:
+ *
+ * - a scene's and a place's `transition` is `ui.transition`, and a scene's
+ *   `frame` is gone (nothing read it);
+ * - a block's `reveal` is `ui.reveal`;
+ * - `[[reveal]]` markup on a line of its own, in the prose of a scene's or a
+ *   place's `{ text }` block, splits that prose: the words before it keep the
+ *   key, and each part after it gets a key of its own (`<key>.2`, `<key>.3`)
+ *   and a block of its own with `ui.reveal`, under the same `when`. Anywhere
+ *   else, such as inside a paragraph or in a variants member, the markup is
+ *   taken out and the words show at once;
+ * - a `transition` effect in a choice's effects is the choice's
+ *   `ui.transition` (`{ in, ms }`), which the React UI plays for the screen the
+ *   choice leads to; anywhere else it is dropped;
+ * - a stat's `display` is `ui.display`;
+ * - the cast's `hue` on a person (an entity's or a kind's `cast/person`
+ *   trait) is the entity's or kind's `ui.hue`; a `traits` table row's `hue`
+ *   moves to the pack's own entity of that reference, else it is dropped.
+ */
+function toSchema16(pack: RawPack): RawPack {
+  const prose: Record<string, unknown> = isRecord(pack.prose) ? { ...pack.prose } : {}
+  const out: Record<string, unknown> = { ...pack }
+  /** A block list with each `{ text }` block whose prose holds reveals split at them. */
+  const splitBlocks = (blocks: unknown): unknown => {
+    if (!Array.isArray(blocks)) return blocks
+    return blocks.flatMap((block) => {
+      if (!isRecord(block) || typeof block.text !== 'string' || typeof prose[block.text] !== 'string') return [block]
+      const key = block.text
+      const parts: { words: string[]; reveal?: Record<string, unknown> }[] = [{ words: [] }]
+      for (const piece of (prose[key] as string).split('\n\n')) {
+        const marker = piece.trim().match(REVEAL_BLOCK)
+        if (marker) parts.push({ words: [], reveal: revealHint(marker) })
+        else parts.at(-1)!.words.push(piece)
+      }
+      if (parts.length === 1) return [block]
+      const { reveal: _reveal, ui: _ui, text: _text, ...shared } = block
+      const kept = parts.filter((part) => part.words.join('').trim() !== '')
+      return kept.map((part, index) => {
+        let id = key
+        if (index > 0) {
+          let n = index + 1
+          while (`${key}.${n}` in prose && prose[`${key}.${n}`] !== part.words.join('\n\n')) n += 1
+          id = `${key}.${n}`
+        }
+        prose[id] = part.words.join('\n\n')
+        const own = index === 0 ? block : { ...shared, text: id }
+        return part.reveal ? hinted(own, { reveal: part.reveal }) : own
+      })
+    })
+  }
+  if (Array.isArray(pack.scenes)) {
+    out.scenes = pack.scenes.map((scene) => {
+      if (!isRecord(scene)) return scene
+      const { frame: _frame, transition, ...rest } = scene
+      let next: Record<string, unknown> = transition !== undefined ? hinted(rest, { transition }) : rest
+      if (Array.isArray(next.body)) next = { ...next, body: splitBlocks(next.body) }
+      if (Array.isArray(next.choices))
+        next = {
+          ...next,
+          choices: next.choices.map((choice) => {
+            if (!isRecord(choice) || !Array.isArray(choice.effects)) return choice
+            const effect = choice.effects.find((entry) => isRecord(entry) && entry.kind === 'transition' && typeof entry.to === 'string') as
+              | Record<string, unknown>
+              | undefined
+            if (!effect) return choice
+            return hinted({ ...choice }, { transition: effect.ms !== undefined ? { in: effect.to, ms: effect.ms } : { in: effect.to } })
+          }),
+        }
+      return next
+    })
+  }
+  if (isRecord(pack.data) && isRecord(pack.data.places) && Array.isArray(pack.data.places.locations)) {
+    const places = pack.data.places
+    out.data = {
+      ...pack.data,
+      places: {
+        ...places,
+        locations: (places.locations as unknown[]).map((location) => {
+          if (!isRecord(location)) return location
+          const { transition, ...rest } = location
+          const next = transition !== undefined ? hinted(rest, { transition }) : rest
+          return Array.isArray(next.body) ? { ...next, body: splitBlocks(next.body) } : next
+        }),
+      },
+    }
+  }
+  if (Array.isArray(pack.stats))
+    out.stats = pack.stats.map((stat) => {
+      if (!isRecord(stat) || !('display' in stat)) return stat
+      const { display, ...rest } = stat
+      return hinted(rest, { display })
+    })
+  /** An entity or a kind with its person's `hue` as its own `ui.hue`. */
+  const hueOut = (holder: unknown): unknown => {
+    if (!isRecord(holder) || !isRecord(holder.traits) || !isRecord(holder.traits['cast/person']) || !('hue' in holder.traits['cast/person'])) return holder
+    const { hue, ...person } = holder.traits['cast/person']
+    return hinted({ ...holder, traits: { ...holder.traits, 'cast/person': person } }, { hue })
+  }
+  if (Array.isArray(pack.kinds)) out.kinds = pack.kinds.map(hueOut)
+  if (Array.isArray(pack.entities)) out.entities = pack.entities.map(hueOut)
+  if (isRecord(pack.traits) && isRecord(pack.traits['cast/person'])) {
+    const rows: Record<string, unknown> = {}
+    for (const [ref, row] of Object.entries(pack.traits['cast/person'])) {
+      if (!isRecord(row) || !('hue' in row)) {
+        rows[ref] = row
+        continue
+      }
+      const { hue, ...rest } = row
+      rows[ref] = rest
+      if (Array.isArray(out.entities))
+        out.entities = out.entities.map((entity) =>
+          isRecord(entity) && `${String(entity.of)}:${String(entity.id)}` === ref ? hinted(entity, { hue }) : entity,
+        )
+    }
+    out.traits = { ...pack.traits, 'cast/person': rows }
+  }
+  // Blocks' `reveal` everywhere else, and `transition` effects that no choice took, the deep way. Words and code are left as they are.
+  for (const [key, value] of Object.entries(out)) {
+    if (WORDS.has(key)) continue
+    out[key] = deepArrays(value)
+  }
+  if (isRecord(pack.prose))
+    out.prose = Object.fromEntries(Object.entries(prose).map(([id, text]) => [id, typeof text === 'string' ? withoutReveals(text) : text]))
+  return out as RawPack
+}
+
+/** A value with every block's `reveal` as `ui.reveal`, and every `transition` effect left out of the lists that held it. */
+function deepArrays(value: unknown): unknown {
+  if (Array.isArray(value))
+    return value
+      .filter(
+        (inner) =>
+          !(
+            isRecord(inner) &&
+            inner.kind === 'transition' &&
+            typeof inner.to === 'string' &&
+            Object.keys(inner).every((key) => ['kind', 'to', 'ms'].includes(key))
+          ),
+      )
+      .map(deepArrays)
+  if (!isRecord(value)) return value
+  const inner = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, deepArrays(entry)]))
+  if (isRecord(inner.reveal) && ('text' in inner || 'variants' in inner || 'media' in inner)) {
+    const { reveal, ...rest } = inner
+    return hinted(rest, { reveal })
+  }
+  return inner
 }
 
 /**

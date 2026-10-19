@@ -10,7 +10,6 @@
 import { commandOf, customCall, type CommandRef, type EffectRef } from './calls.ts'
 import type { SceneMedia } from './game.ts'
 import type { MediaStage } from './features/media.ts'
-import type { Reveal, Transition, TransitionName } from './features/transitions.ts'
 import type { PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
 import type { Condition, Effect, KvValue } from './types.ts'
@@ -72,10 +71,8 @@ export type Reference =
   | { channel: string; track: string | null | undefined }
   /** A track played once. */
   | { sound: string }
-  /** A transition, by name or as a pair: a scene's, a place's, the game's default, an effect's. */
-  | { transition: Transition | TransitionName | undefined }
-  /** A block's `reveal`: its transition and its delay. */
-  | { reveal: Reveal }
+  /** A `ui` field of presentation hints, which must be data. */
+  | { ui: unknown }
   /** A pool, with the tags asked of it. */
   | { pool: string; tags?: readonly string[] }
   /**

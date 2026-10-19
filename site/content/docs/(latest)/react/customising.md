@@ -169,10 +169,11 @@ Some parts carry a second attribute that says more:
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
 | `data-layer` | Every `stage-layer` | The layer's id, when it has one. |
 | `data-hotspot` | Every `hotspot` | The hotspot's id. |
-| `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/reference/transitions#transitionname). Not set with motion off. |
+| `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/react/hints#transitionname). Not set with motion off. |
 | `data-transition-out`, `data-leaving` | The copy of the scene before | How it goes out. |
 | `data-reveal` | Every `reveal` | How its beats come in. |
 | `data-revealed` | The `scene` | Present once the player has shown every reveal at once. |
+| `data-speaker-hue` | The `scene` | Present while the speaker has a [`hue`](/docs/react/hints#hue), which is in `--ifloom-speaker-hue`. |
 
 The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-thing`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
@@ -513,8 +514,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `stat-value` | A stat's value, as the game formats it. |
 | `stat-level` | A levelled stat's level (`ui.statLevel`, "Level 2"), inside its label. Carries `data-level`. |
 | `stat-progress` | A levelled stat's bar towards its next level, a `progressbar` holding one `<span>` as wide as the progress, labelled with `ui.statProgress`. Not drawn at the top level. The `paper` preset hides it, so a stat there shows only its level. |
-| `stat-bar` | A stat with `display: 'bar'`: a `meter` holding one `<span>` as wide as the value is from `min` to `max`. |
-| `stat-pips` | A stat with `display: 'pips'`: a `meter` holding a pip for each point. |
+| `stat-bar` | A stat with the hint `ui: { display: 'bar' }`: a `meter` holding one `<span>` as wide as the value is from `min` to `max`. |
+| `stat-pips` | A stat with `ui: { display: 'pips' }`: a `meter` holding a pip for each point. |
 | `stat-pip` | One pip. Carries `data-filled` when it's filled. |
 
 ### Where you are, and who's there
@@ -554,7 +555,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `stage-image` | The picture on the stage, above the text. |
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
-| `reveal` | The beats after a [reveal](/docs/reference/transitions#reveals), which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
+| `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
 | `mail-header` | One header line of a letter (a `mail` beat). |
 | `mail-body` | A letter's body. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |

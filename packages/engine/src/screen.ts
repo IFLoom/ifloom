@@ -29,7 +29,7 @@ import {
 } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameDef } from './features/minigames.ts'
-import { transitionView, type TransitionView } from './features/transitions.ts'
+import { withUi, type BlockUi, type ChoiceUi, type SceneUi, type Ui } from './features/ui.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { commandOf, previewEffects } from './custom.ts'
@@ -53,6 +53,8 @@ export type RenderedChoice = {
   disabled?: string
   tags?: string[]
   irreversible?: string
+  /** The choice's or button's presentation hints, as written; left out with none. See `ChoiceUi`. */
+  ui?: Ui<ChoiceUi>
   /**
    * Pressable, but the game would rather you didn't, and says why: a plugin
    * guard's soft refusal: running past dawn, say. The reducer refuses it all the
@@ -72,10 +74,15 @@ export type ScreenChoice = RenderedChoice & {
 export type ScreenScene = {
   /** The open scene's id, or null for the room. */
   id: string | null
+  /**
+   * Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>`
+   * while a minigame is played, `room:<stage id>` for a plugin's stage (a
+   * place), and `room` with none. It changes when the screen does, and only then.
+   */
+  key: string
   title: string
   body: string
   beats: SceneBeat[]
-  frame: 'stage' | 'talk'
   /** The scene's tags, for the UI to style it by. */
   tags: string[]
   /** A bespoke panel to render instead of the choice list, by name. */
@@ -84,6 +91,8 @@ export type ScreenScene = {
   panelData: unknown
   speaker: SpeakerView | null
   stageImage: string | null
+  /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
+  ui?: Ui<SceneUi>
 }
 
 /** One state's screen. See `screen`. */
@@ -106,8 +115,6 @@ export type Screen = {
    * records as started.
    */
   audio: AudioView & { tracks: Record<string, string | null> }
-  /** Which screen this is, and how it comes in and goes out, as `view.transition` has it. */
-  transition: TransitionView
 }
 
 /**
@@ -157,11 +164,6 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
     plugins,
     picks,
     audio: { ...audioView(state, game, tracks, beats, cx), tracks },
-    transition: playing
-      ? transitionView(`minigame:${state.minigame!.id}`, undefined, game, state.transition)
-      : dialogue
-        ? transitionView(`scene:${state.sceneId}`, sceneById(game, state.sceneId!)?.transition, game, state.transition)
-        : transitionView(roomStage ? `room:${roomStage.id}` : 'room', roomStage?.transition, game, state.transition),
   }
 }
 
@@ -172,15 +174,24 @@ function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginS
   const body = rendered.body ?? ''
   return {
     id: null,
+    key: stage ? `room:${stage.id}` : 'room',
     title: stage?.title ?? game.title,
     body,
-    beats: beatsOf(state, game, stage?.id ?? '', body, 'media' in rendered ? rendered.media : undefined, drawing.picks),
-    frame: 'stage',
+    beats: beatsOf(
+      state,
+      game,
+      stage?.id ?? '',
+      body,
+      'media' in rendered ? rendered.media : undefined,
+      drawing.picks,
+      'blockUi' in rendered ? rendered.blockUi : undefined,
+    ),
     tags: [],
     panel: null,
     panelData: null,
     speaker: null,
     stageImage: null,
+    ...withUi(stage?.ui),
   }
 }
 
@@ -198,7 +209,16 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
   const rendered =
     label !== undefined ? renderScene({ id: owner, body: [{ text: label }], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
   const body = rendered.body ?? ''
-  return { ...under, title: def.label ?? under.title, body, beats: beatsOf(state, game, owner, body, undefined, drawing.picks), panel: null, panelData: null }
+  const { ui: _under, ...rest } = under
+  return {
+    ...rest,
+    key: `minigame:${def.id}`,
+    title: def.label ?? under.title,
+    body,
+    beats: beatsOf(state, game, owner, body, undefined, drawing.picks),
+    panel: null,
+    panelData: null,
+  }
 }
 
 /**
@@ -213,6 +233,7 @@ function beatsOf(
   body: string,
   media: readonly SceneMedia[] | undefined,
   picks: Record<string, string>,
+  hints?: readonly { at: number; ui: Ui<BlockUi> }[],
 ): SceneBeat[] {
   const placed = (media ?? []).flatMap((item, index) => {
     const shown = resolveMedia(item, state, game, owner, `media.${index}`, featureContext(), picks)
@@ -220,7 +241,7 @@ function beatsOf(
   })
   return [
     ...placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats),
-    ...parseBeats(body),
+    ...parseBeats(body, hints),
     ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats),
   ]
 }
@@ -349,6 +370,7 @@ function actionButton(state: GameState, game: Game, action: Action, rendered: Re
     price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state) }, watched ? effects : []),
     disabled: action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
     command: action.command,
+    ...withUi(action.ui),
   }
   const warning = warningIn(rendered, state, game, action.command, effects)
   if (warning) choice.warning = warning
@@ -399,10 +421,10 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
     return {
       scene: {
         id: state.sceneId,
+        key: `scene:${state.sceneId}`,
         title: pluginStage(game, state)?.title ?? game.title,
         body: say(game, 'momentPassed'),
         beats: parseBeats(say(game, 'momentPassed')),
-        frame: 'stage',
         tags: [],
         panel: null,
         panelData: null,
@@ -419,7 +441,8 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   const rendered = drawing.rendered.scene()!
   // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
   const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
-  const beats = beatsOf(state, game, state.sceneId, body, rendered.media, drawing.picks)
+  // A block's hints say where it starts in the body; a hand-built body whose pools were just filled has none.
+  const beats = beatsOf(state, game, state.sceneId, body, rendered.media, drawing.picks, body === rendered.body ? rendered.blockUi : undefined)
   const choices: ScreenChoice[] = rendered.choices
     .filter((choice) => choice.visible !== false)
     .map((choice) => {
@@ -439,6 +462,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         irreversible: choice.irreversible,
         warning: warningIn(drawing.rendered, state, game, command, effects),
         command,
+        ...withUi(choice.ui),
         effects,
       }
     })
@@ -446,20 +470,20 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   const labels = new Map(rendered.choices.map((choice) => [choice.id, choice.label]))
   const inline = inlineBeats(beats, choices, (id) => labels.get(id), state, game)
   const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
-  const frame = rendered.frame ?? scene.frame ?? (speaker ? 'talk' : 'stage')
   return {
     audio: rendered.audio,
     scene: {
       id: state.sceneId,
+      key: `scene:${state.sceneId}`,
       title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
       body,
       beats: inline.beats,
-      frame,
       tags: rendered.tags ?? scene.tags ?? [],
       panel: rendered.panel ?? scene.panel ?? null,
       panelData: rendered.panelData ?? null,
       speaker,
       stageImage: rendered.portrait ?? speaker?.portrait ?? null,
+      ...withUi(scene.ui),
     },
     choices: inline.offered,
     stage: drawStage(state, game, rendered.stage, state.sceneId, choices, drawing),

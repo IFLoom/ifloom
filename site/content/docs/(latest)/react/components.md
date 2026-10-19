@@ -561,18 +561,20 @@ From top to bottom, it draws:
 - the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`
 - the title
 - the scene's [`Stage`](#stage) when [`view.scene.stage`](/docs/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape
-- each [`Beat`](#beat) of the body, with the beats after each [reveal](/docs/reference/transitions#reveals) in a `reveal` part that waits for it
+- each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
 The `<article>` carries `data-scene` with the scene's id, or `stage` when no scene is open.
 
-**Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.transition.key`](/docs/reference/view#transition) changes. It carries `data-transition-in` with the new screen's `in`, which the base styles animate. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
+**Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.scene.key`](/docs/reference/view#the-scene) changes. It carries `data-transition-in` with the new screen's `in`, from the content's [`transition`](/docs/react/hints#transition) hints (worked out by [`screenTransition`](/docs/react/hints#screentransition)), which the base styles animate. A choice with its own `transition` hint decides how the screen it leads to comes in. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
 
 **Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/recipes/transitions#the-react-ui) to restyle them.
 
 With [`motion`](#uioptions) off, or the player asking for reduced motion, none of this plays: no attribute is set and everything is shown at once.
+
+**Speakers.** While the scene's speaker has a [`hue`](/docs/react/hints#hue) hint, the article carries `data-speaker-hue` and `--ifloom-speaker-hue`, and their spoken lines are drawn in that colour.
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
@@ -593,7 +595,7 @@ import { useGame, useMotion } from '@ifloom/react'
 function SceneTitle() {
   const { view } = useGame()
   const motion = useMotion()
-  return <h2 data-transition-in={motion ? view.transition.in : undefined}>{view.scene.title}</h2>
+  return <h2 data-transition-in={motion ? 'fade' : undefined}>{view.scene.title}</h2>
 }
 ```
 
@@ -615,7 +617,6 @@ One beat of a scene's body, drawn by kind:
 | `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
 | `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
 | `sound` | Nothing. The audio player plays it. |
-| `reveal` | Nothing. [`SceneStage`](#scenestage) holds back the beats after it. |
 
 ```tsx
 import { Beat } from '@ifloom/react'
@@ -923,12 +924,12 @@ The stats the view lists, each label beside its value written the way the game [
 
 A stat that declares [`levels`](/docs/reference/stats#levels) also shows its level inside its label, as "Level 2" (the word `ui.statLevel`). Under the row is a bar towards the next level, drawn from [`StatView.level`](/docs/reference/view#statview). The bar is a `progressbar` from 0 to 100, and its label for screen readers is the word `ui.statProgress`, such as "Cooking: 50% of the way to level 2". At the top level there's no bar, only the level. A stat without levels shows as before.
 
-A stat whose [`display`](/docs/reference/stats#statdef) is `'bar'` gets a bar under its row, filled from its `min` to its `max`. One with `'pips'` gets a row of pips instead, one for each point between `min` and `max`, with as many filled as the value is above `min`. A stat with a range of more than 20 is drawn as a bar even if it asks for pips. Both are a `meter` for screen readers, labelled with the stat's label, with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and the formatted value as `aria-valuetext`. Each filled pip carries `data-filled`. The value is still written beside the label.
+A stat whose [`display`](/docs/react/hints#display) hint is `'bar'` gets a bar under its row, filled from its `min` to its `max`. One with `'pips'` gets a row of pips instead, one for each point between `min` and `max`, with as many filled as the value is above `min`. A stat with a range of more than 20 is drawn as a bar even if it asks for pips. Both are a `meter` for screen readers, labelled with the stat's label, with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and the formatted value as `aria-valuetext`. Each filled pip carries `data-filled`. The value is still written beside the label.
 
 ```ts
 stats: [
-  { id: 'energy', label: 'Energy', start: 80, max: 100, display: 'bar' },
-  { id: 'hearts', label: 'Hearts', start: 3, max: 5, display: 'pips' },
+  { id: 'energy', label: 'Energy', start: 80, max: 100, ui: { display: 'bar' } },
+  { id: 'hearts', label: 'Hearts', start: 3, max: 5, ui: { display: 'pips' } },
 ]
 ```
 

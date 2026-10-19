@@ -15,7 +15,8 @@ export const stats: Content = {
       format: { one: '{n} coin', other: '{n} coins' },
       lacking: { one: 'You need {n} coin.', other: 'You need {n} coins.' },
     },
-    { id: 'energy', label: 'Energy', start: 80, spendable: true, format: '{n}%', lacking: 'Too tired.', round: 'round' },
-    { id: 'charm', label: 'Charm', start: 1, max: 20 },
+    // The React UI draws energy as a bar and charm as pips, one per point.
+    { id: 'energy', label: 'Energy', start: 80, spendable: true, format: '{n}%', lacking: 'Too tired.', round: 'round', ui: { display: 'bar' } },
+    { id: 'charm', label: 'Charm', start: 1, max: 20, ui: { display: 'pips' } },
   ],
 }

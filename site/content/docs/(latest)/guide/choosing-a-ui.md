@@ -32,7 +32,7 @@ A UI of your own is a loop: draw `runner.view()`, send the `command` on whatever
 - [Your own UI in any framework](/docs/guide/frameworks) shows the same UI in plain JS, React by hand, Vue and Svelte, side by side.
 - The recipes build the pieces most games want in each framework: a [title screen](/docs/recipes/title-screen), a [HUD](/docs/recipes/hud), [plugin panels](/docs/recipes/plugin-ui), [minigames](/docs/recipes/minigames), [transitions](/docs/recipes/transitions) and [actions inside the text](/docs/recipes/inline-actions).
 
-Two packages do the browser jobs every UI needs, so you don't write them again. [`@ifloom/browser`](/docs/browser) runs a minigame's clock and the keyboard shortcuts, numbers new save slots and times revealed prose. [`@ifloom/audio`](/docs/browser/audio-player) plays the game's music and sounds. Both are plain DOM and work under any framework.
+Two packages do the browser jobs every UI needs, so you don't write them again. [`@ifloom/browser`](/docs/browser) runs a minigame's clock and the keyboard shortcuts, numbers new save slots and gives a key that shows held-back prose. [`@ifloom/audio`](/docs/browser/audio-player) plays the game's music and sounds. Both are plain DOM and work under any framework.
 
 ## Mixing the two
 

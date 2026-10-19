@@ -118,6 +118,7 @@ type KindDef = {
   tags?: string[]
   flags?: Record<string, Condition>
   traits?: Record<string, unknown>
+  ui?: Ui<EntityUi>
 }
 ```
 
@@ -131,6 +132,7 @@ type KindDef = {
 | `tags` | `[]` | Words every entity of the kind has, before its own [`tags`](#entitydef). |
 | `flags` | `{}` | Named true/false conditions asked for each listed entity, with `'$'` as that one. The view gives each entity a `flags` record of the answers, so a UI can split a list without hiding anything. See [Listing](#listing). |
 | `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
+| `ui` | none | [Presentation hints](/docs/reference/ui-hints) for each of its entities, under each one's own, such as the React UI's [`hue`](/docs/react/hints#hue). The engine carries them to the view as written. |
 
 Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in your [content](/docs/reference/loader#content)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
 
@@ -149,6 +151,7 @@ type EntityDef = {
   kv?: Record<string, KvValue>
   at?: Placement
   traits?: Record<string, unknown>
+  ui?: Ui<EntityUi>
 }
 ```
 
@@ -167,6 +170,7 @@ One entity that exists from the start of the game, and stays until a [`remove`](
 | `kv` | Its own [kv store](/docs/reference/state#kv) at the start. Read a key with `{ kv, of }` and set it with the `kv` effect's `of`. |
 | `at` | Who holds it at the start: `'player'` or a unique entity for one of it, or how many each holds, such as `{ player: 2, 'place:larder': 6 }`. Held by nobody if left out. A unique thing starts in one place. See [Holding things](#holding-things). |
 | `traits` | Its [traits](#traits), by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. |
+| `ui` | Its [presentation hints](/docs/reference/ui-hints), laid over its kind's field by field and carried to the view as written (see [`entityUi`](/docs/reference/ui-hints#entityui)). |
 
 Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in your content. They merge by kind and id (`'staff:ana'`), the base's first. A pack's entity replaces one with the same kind and id, whole.
 

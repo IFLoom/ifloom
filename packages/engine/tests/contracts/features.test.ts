@@ -80,9 +80,9 @@ describe('core features are leaves', () => {
       'features/settings.ts',
       'features/stats.ts',
       'features/storylines.ts',
-      'features/transitions.ts',
       'features/triggers.ts',
       'features/turns.ts',
+      'features/ui.ts',
     ])
     // The registry loads every feature, and a feature what it needs: audio needs settings.
     expect([...loads(REGISTRY)].filter((file) => file.startsWith(`${SRC}features/`)).sort()).toEqual(FEATURE_FILES.sort())
@@ -137,7 +137,7 @@ describe('the registry', () => {
       stats: { conditions: ['stat', 'level'], effects: ['stat'], commands: [] },
       audio: { conditions: [], effects: ['audio', 'sound'], commands: [] },
       media: { conditions: [], effects: [], commands: [] },
-      transitions: { conditions: [], effects: ['transition'], commands: [] },
+      ui: { conditions: [], effects: [], commands: [] },
       panels: { conditions: [], effects: ['panel'], commands: ['closePanel'] },
       entities: { conditions: ['count', 'entity'], effects: ['create', 'remove', 'each'], commands: [] },
       holdings: { conditions: [], effects: ['entity', 'move', 'you'], commands: [] },
@@ -159,9 +159,8 @@ describe('the registry', () => {
     // The game's triggers fire first, so the showing a trigger opens is counted, and its sounds keyed, in the same command;
     // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
     // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
-    // A transition effect's override is cleared after the hooks, so one a hook sets lasts its command as the game's own do.
     // A panel closes after the hooks, so a turn or a scene a hook moves on closes it too.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'transitions', 'panels'] })
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'panels'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

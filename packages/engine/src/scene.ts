@@ -4,7 +4,7 @@ import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
-import { revealMarkup, type Reveal, type TransitionFields } from './features/transitions.ts'
+import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
 import { buildEffects, customPanel, type EffectRef } from './custom.ts'
 import type { Effect, GameState } from './types.ts'
 import { commandOf, type CommandRef } from './calls.ts'
@@ -43,12 +43,10 @@ export type Block = (
   | { media: SceneMedia; when?: Condition }
 ) & {
   /**
-   * Reveal this block after the ones before it, rather than with them:
-   * `{ delay: 1200, as: 'fade' }`. Written into the body as `[[reveal]]`
-   * markup, so the UI sees a `reveal` beat. Both are optional: 800
-   * milliseconds and `'fade'` if left out.
+   * Presentation hints for the UI, carried on the first beat the block makes
+   * and given no meaning by the engine. See `BlockUi`.
    */
-  reveal?: Reveal
+  ui?: Ui<BlockUi>
 }
 
 export type Choice = {
@@ -87,16 +85,15 @@ export type Choice = {
    * the command spends. Any command but `choose`.
    */
   command?: CommandRef
+  /** Presentation hints for the UI, carried to the view's choice as written. See `ChoiceUi`. */
+  ui?: Ui<ChoiceUi>
 }
 
 export type DataScene = StoryletFields &
-  MinigameSceneFields &
-  TransitionFields & {
+  MinigameSceneFields & {
     id: string
     title?: string
     speaker?: string
-    /** Drawn as a conversation. A scene with a speaker is one already. */
-    frame?: 'talk'
     /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
     /** A bespoke UI panel to render in place of the choice list, by name. */
@@ -114,6 +111,8 @@ export type DataScene = StoryletFields &
     audio?: Record<string, string | null>
     /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
     stage?: MediaStage
+    /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
+    ui?: Ui<SceneUi>
     body: Block[]
     choices: Choice[]
   }
@@ -200,14 +199,15 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   const remember: Effect[] = []
   /** Every block this render used, in order. Later ones win a label. */
   const drawn: string[] = []
+  /** The blocks with hints, by the first of `parts` each wrote. */
+  const hinted: { part: number; ui: Ui<BlockUi> }[] = []
 
   scene.body.forEach((block, index) => {
     if (!holds(state, block.when, runtime.game)) return
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
     const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), featureContext(), picks)
-    // A block revealed later opens with its reveal, so the beats after it wait for it.
-    if (block.reveal && (resolved.text || (shown && !shown.at))) parts.push(revealMarkup(block.reveal))
+    const first = parts.length
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
@@ -217,6 +217,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)
+    if (block.ui && parts.length > first) hinted.push({ part: first, ui: block.ui })
   })
 
   const choices: SceneChoice[] = []
@@ -241,6 +242,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       tags: choice.tags,
       irreversible: choice.irreversible,
       ...(choice.command ? { command: commandOf(choice.command) } : {}),
+      ...(choice.ui ? { ui: choice.ui } : {}),
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
@@ -256,16 +258,27 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   return {
     title: scene.title,
     speaker: scene.speaker,
-    frame: scene.frame,
     tags: scene.tags,
     panel: scene.panel,
     panelData: scene.panelData ? customPanel(runtime.game, scene.panelData)?.(state) : undefined,
     body: parts.join('\n\n'),
+    ...(hinted.length ? { blockUi: hintOffsets(parts, hinted) } : {}),
     media: media.length ? media : undefined,
     ...(scene.stage ? { stage: scene.stage } : {}),
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }
+}
+
+/** Where each hinted block starts in the body its parts join into, by character. */
+function hintOffsets(parts: readonly string[], hinted: readonly { part: number; ui: Ui<BlockUi> }[]): { at: number; ui: Ui<BlockUi> }[] {
+  const starts: number[] = []
+  let at = 0
+  for (const part of parts) {
+    starts.push(at)
+    at += part.length + 2
+  }
+  return hinted.map((entry) => ({ at: starts[entry.part], ui: entry.ui }))
 }
 
 /**
@@ -336,14 +349,13 @@ export function bakeScene(game: Game, scene: DataScene): Scene {
     id: scene.id,
     title: scene.title,
     speaker: scene.speaker,
-    frame: scene.frame,
     tags: scene.tags,
     panel: scene.panel,
     ...(scene.drawnFrom ? { drawnFrom: scene.drawnFrom } : {}),
     ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
     ...(scene.when ? { when: scene.when } : {}),
     ...(scene.minigame !== undefined ? { minigame: scene.minigame } : {}),
-    ...(scene.transition !== undefined ? { transition: scene.transition } : {}),
+    ...(scene.ui !== undefined ? { ui: scene.ui } : {}),
     // `screen` passes a context with `picks`, to collect the pool picks the render makes.
     render: (state, ctx) => renderScene(scene, state, runtime, ctx?.picks),
   }

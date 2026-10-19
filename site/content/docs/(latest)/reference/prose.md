@@ -168,7 +168,6 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[diary]] … [[/diary]]` | `{ kind: 'prop', face: 'diary', text }` |
 | `[[sound:knock]]` | `{ kind: 'sound', track }`. Nothing to draw. |
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
-| `[[reveal]]`, `[[reveal:1500]]`, `[[reveal:1500\|slide-up]]` | `{ kind: 'reveal', delay, as, at }`. Nothing to draw: what follows waits. |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
 | `… **closed** …`, `… *again* …` inside a paragraph | The same, with a `bold` or `italic` span. See [Bold and italics](#bold-and-italics). |
@@ -275,23 +274,11 @@ The open scene's sound and voice beats are in [`view.audio.cues`](/docs/referenc
 - In a place's body (the [stage](/docs/reference/plugins#stage)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
 - The loader reports an unknown track, a playlist, and a track on a background channel such as `music`.
 
-### Reveals
+### Paragraphs that wait
 
-`[[reveal]]` on a paragraph of its own holds back what follows. It waits 800 milliseconds after the reveal before it, or after the scene comes on, then the UI brings the rest in with a fade. Give a delay in whole milliseconds after a colon, and a [transition name](/docs/reference/transitions#transitionname) after a `|`:
+Prose has no markup for timing. To make a paragraph wait before it appears, put it in a [block](/docs/reference/scenes#block) of its own, under its own prose key, and give the block a [presentation hint](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The block's hints arrive on the first beat it makes.
 
-```md
-Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
-
-[[reveal:1500|slide-up]]
-
-"I told you it was the only quiet in town." She shuffles up to make room.
-```
-
-Each one becomes a `reveal` beat. Its `at` is when it comes, counted from the scene coming on, so a UI can time each group without adding the delays up itself. A block's [`reveal`](/docs/reference/scenes#block) field writes the same markup. See [Reveals](/docs/reference/transitions#reveals) for what a UI should do with it.
-
-**Gotchas:**
-- Only a paragraph of its own counts. `[[reveal]]` inside a paragraph is shown as written, and the loader reports it.
-- The text after a reveal is in the beats from the start. Only how it's drawn waits, so screen readers have it all.
+`[[reveal]]` used to be markup. The checker reports one left in prose (`[[reveal]] is no longer markup and would be shown as written`), and a pack written before schema 16 has it turned into blocks by [`upgradePack`](/docs/reference/loader#upgradepack).
 
 ### Inline actions and tooltips
 
@@ -367,7 +354,7 @@ The atlas you asked for is in. We hold books for a week.
 ```ts
 import type { SceneBeat } from '@ifloom/engine'
 
-type SceneBeat =
+type SceneBeat = (
   | { kind: 'text'; text: string; spans?: InlineSpan[] }
   | { kind: 'mono'; text: string }
   | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
@@ -386,10 +373,10 @@ type SceneBeat =
   | { kind: 'mail'; headers: { key: string; value: string }[]; body: string }
   | { kind: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
   | { kind: 'sound'; track: string }
-  | { kind: 'reveal'; delay: number; as: TransitionName; at: number }
+) & { ui?: Ui<BlockUi> }
 ```
 
-One piece of a scene. A UI switches on `kind`, and draws nothing for `sound` or `reveal`. A `reveal` beat marks where held-back beats start: see [Reveals](#reveals).
+One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`. `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
 
 A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 
@@ -424,10 +411,10 @@ A UI draws an `action` as a button in the line, a `tip` as a button that shows i
 ```ts
 import { parseBeats } from '@ifloom/engine'
 
-function parseBeats(body: string): SceneBeat[]
+function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[]): SceneBeat[]
 ```
 
-The parser described above. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]` and the stars of bold and italics in the text: the view draws them, because only the view knows the choices and the prose.
+The parser described above. `hints` puts each block's `ui` on the first beat that starts at or after its `at`, a character offset into `body`, as a data scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]` and the stars of bold and italics in the text: the view draws them, because only the view knows the choices and the prose.
 
 ## styledBeats
 

@@ -4,7 +4,7 @@
  */
 import { parseBeats, type SceneBeat } from '@ifloom/engine'
 
-export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'reveal', 'act', 'tip'] as const
+export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'act', 'tip'] as const
 export type MarkupKind = (typeof MARKUP_KINDS)[number]
 
 export const MARKUP_LABELS: Record<MarkupKind, string> = {
@@ -16,7 +16,6 @@ export const MARKUP_LABELS: Record<MarkupKind, string> = {
   speaker: 'Speaker line',
   mono: 'Thought (mono)',
   pool: 'Pool picture',
-  reveal: 'Pause, then reveal',
   act: 'Inline action',
   tip: 'Tooltip',
 }
@@ -53,10 +52,6 @@ export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sa
     { name: 'pool', label: 'Pool id', sample: 'door' },
     { name: 'tags', label: 'Tags, comma separated', sample: 'red,night' },
   ],
-  reveal: [
-    { name: 'delay', label: 'Pause, in milliseconds', sample: '1000' },
-    { name: 'as', label: 'Transition (fade, slide-up, slide-left, zoom, none)', sample: 'fade' },
-  ],
   act: [
     { name: 'id', label: 'Choice id', sample: 'answer' },
     { name: 'words', label: "Words to show (the choice's label if empty)", sample: 'Pick it up' },
@@ -91,8 +86,6 @@ export function markup(kind: MarkupKind, fields: Record<string, string>): string
       return `> ${f('text')}`
     case 'pool':
       return f('tags') ? `[[img:@${f('pool')}|${f('tags').replace(/\s+/g, '')}]]` : `[[img:@${f('pool')}]]`
-    case 'reveal':
-      return `[[reveal${f('delay') ? `:${f('delay').replace(/\D/g, '')}` : ''}${f('as') ? `|${f('as')}` : ''}]]`
     case 'act':
       return f('words') ? `[[act:${f('id')}|${clean(f('words'))}]]` : `[[act:${f('id')}]]`
     case 'tip':

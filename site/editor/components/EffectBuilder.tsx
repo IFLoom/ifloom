@@ -5,7 +5,7 @@
  */
 import { useState } from 'react'
 import type { EffectRef } from '@ifloom/engine'
-import { effectForm, newEffect, NO_NAMES, transitionOptions } from '../lib/builders'
+import { effectForm, newEffect, NO_NAMES } from '../lib/builders'
 import { EFFECT_LABELS, EFFECT_MENU, type EffectForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
 import { HolderPicker, parseKvValue, withKey, type BuilderProps } from './ConditionBuilder'
@@ -230,16 +230,6 @@ export function EffectBuilder({
           <Button size="xs" variant="ghost" onClick={() => set({ to: null })} title="Silence the channel">
             Silence
           </Button>
-        </>
-      )
-      break
-    case 'transition':
-      fields = (
-        <>
-          <Select aria-label="Transition" value={e.to} options={transitionOptions(e.to)} onChange={(to) => set({ to })} />
-          <span className="text-xs text-fd-muted-foreground">over</span>
-          <NumberInput aria-label="Milliseconds" className="w-20" value={e.ms} placeholder="300" onChange={(ms) => set({ ms })} />
-          <span className="text-xs text-fd-muted-foreground">ms</span>
         </>
       )
       break

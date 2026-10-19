@@ -1,0 +1,140 @@
+/**
+ * The React UI's presentation hints: what it reads from the `ui` fields the
+ * engine carries to the view as written. The engine gives them no meaning, so
+ * they're declared here, by augmenting the engine's hint interfaces, and a
+ * game that imports `@ifloom/react` gets them typed.
+ *
+ * - `ui.transition` on a scene, a place or the game: how a screen comes on and
+ *   goes off. On a choice or a room's button: how the screen it leads to comes
+ *   in (and, with `out`, how this one goes).
+ * - `ui.reveal` on a block: the block waits, then comes in.
+ * - `ui.display` on a stat: a number, a bar or pips.
+ * - `ui.hue` on an entity or a kind: the colour of their spoken lines.
+ */
+import type { Game, RenderedChoice, SceneBeat, View } from '@ifloom/engine'
+
+/** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
+export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
+
+/** A transition by name: one of `TRANSITIONS`, or one the game adds. */
+export type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
+
+/** How something comes on screen (`in`) and goes off it (`out`), over `ms` milliseconds each. A name on its own means both. */
+export type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
+
+/** How a block of prose is revealed: `delay` milliseconds after the reveal before it (or the scene coming on), coming in with `as`. */
+export type Reveal = { delay?: number; as?: TransitionName }
+
+/** How the sidebar draws a stat: its number, a bar from `min` to `max`, or pips, one per point. */
+export type StatDisplay = 'number' | 'bar' | 'pips'
+
+declare module '@ifloom/engine' {
+  interface SceneUi {
+    /** How this scene, or this place's room, comes on screen and goes off. The game's `ui.transition` if left out. */
+    transition?: Transition | TransitionName
+  }
+  interface ChoiceUi {
+    /** How the screen this leads to comes in, whatever that screen says; with `out`, how this one goes. */
+    transition?: Transition | TransitionName
+  }
+  interface BlockUi {
+    /** Reveal this block after the ones before it: `{ delay: 1200, as: 'slide-up' }`. 800 ms and `'fade'` if left out. */
+    reveal?: Reveal
+  }
+  interface StatUi {
+    /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */
+    display?: StatDisplay
+  }
+  interface EntityUi {
+    /** A colour for their spoken lines, as a hue from 0 to 360. */
+    hue?: number
+  }
+  interface GameUi {
+    /** How every screen comes and goes when it says nothing itself. `'none'` if left out. */
+    transition?: Transition | TransitionName
+    /** Transition names beyond `TRANSITIONS`, which the game draws with its own CSS. */
+    transitionNames?: string[]
+  }
+}
+
+/** How long a transition takes when nothing says, in milliseconds. */
+export const DEFAULT_TRANSITION_MS = 300
+
+/** How long a reveal waits when it doesn't say, in milliseconds. */
+export const DEFAULT_REVEAL_DELAY = 800
+
+/** The most pips the sidebar draws; a stat with a wider range is drawn as a bar. */
+export const MAX_PIPS = 20
+
+/** A transition as a name or a pair, as the pair. */
+function asPair(spec: Transition | TransitionName | undefined): Transition {
+  if (spec === undefined) return {}
+  return typeof spec === 'string' ? { in: spec, out: spec } : spec
+}
+
+/** The screen on show, and how it comes in and goes out, as `SceneStage` plays it. */
+export type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
+
+/**
+ * How the screen in `view` comes and goes: its own `ui.transition` over the
+ * game's, with `pressed` (the transition of the choice or button that led
+ * here) deciding how it comes in.
+ */
+export function screenTransition(view: View, game: Game, pressed?: Transition | TransitionName): ScreenTransition {
+  const own = asPair(view.scene.ui?.transition)
+  const fallback = asPair(game.ui?.transition)
+  // A choice's bare name says only how the next screen comes in.
+  const lead = typeof pressed === 'string' ? { in: pressed } : (pressed ?? {})
+  return {
+    key: view.scene.key,
+    in: lead.in ?? own.in ?? fallback.in ?? 'none',
+    out: own.out ?? fallback.out ?? 'none',
+    ms: lead.ms ?? own.ms ?? fallback.ms ?? DEFAULT_TRANSITION_MS,
+  }
+}
+
+/** How a choice's transition says the screen it leaves goes off: its `out`, if it gives one. */
+export function leavingOf(pressed: Transition | TransitionName | undefined): { out?: TransitionName; ms?: number } {
+  return typeof pressed === 'object'
+    ? { ...(pressed.out !== undefined ? { out: pressed.out } : {}), ...(pressed.ms !== undefined ? { ms: pressed.ms } : {}) }
+    : {}
+}
+
+/** Every choice and button a view offers: its choices, those its prose holds inline, and the room's buttons. */
+export function offeredIn(view: View): RenderedChoice[] {
+  const inline = view.scene.beats.flatMap((beat) =>
+    (beat.kind === 'text' || beat.kind === 'say') && beat.spans ? beat.spans.flatMap((span) => (span.kind === 'action' ? [span.choice] : [])) : [],
+  )
+  return [...view.scene.choices, ...inline, ...view.actions]
+}
+
+/** A reveal as the React UI plays it: where the prose holds back, and when what follows comes, from the scene coming on. */
+export type RevealPoint = { delay: number; as: TransitionName; at: number }
+
+/** A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the scene). */
+export type RevealGroup = {
+  reveal: RevealPoint | null
+  /** Its beats, each with its index in the scene's beats. */
+  beats: { beat: SceneBeat; index: number }[]
+}
+
+/** A scene's beats in groups: those shown with the scene, then each block with `ui.reveal` and the beats after it. */
+export function revealGroups(beats: readonly SceneBeat[]): RevealGroup[] {
+  const groups: RevealGroup[] = [{ reveal: null, beats: [] }]
+  let at = 0
+  beats.forEach((beat, index) => {
+    const reveal = beat.ui?.reveal
+    if (reveal) {
+      const delay = typeof reveal.delay === 'number' && reveal.delay >= 0 ? reveal.delay : DEFAULT_REVEAL_DELAY
+      at += delay
+      groups.push({ reveal: { delay, as: reveal.as ?? 'fade', at }, beats: [] })
+    }
+    groups.at(-1)!.beats.push({ beat, index })
+  })
+  return groups
+}
+
+/** When the last reveal in these beats comes, in milliseconds from the scene coming on; 0 with none. */
+export function lastReveal(beats: readonly SceneBeat[]): number {
+  return revealGroups(beats).reduce((last, group) => Math.max(last, group.reveal?.at ?? 0), 0)
+}

@@ -3,17 +3,8 @@
  * effect is edited with, a new one of each kind, and ranges. The builders
  * edit the engine's own objects; there is no second model to keep in step.
  */
-import {
-  TRANSITIONS,
-  type Blocked,
-  type Condition,
-  type EffectRef,
-  type EntityDef,
-  type SettingDef,
-  type StatDef,
-  type Transition,
-  type TransitionName,
-} from '@ifloom/engine'
+import type { Blocked, Condition, EffectRef, EntityDef, SettingDef, StatDef } from '@ifloom/engine'
+import { TRANSITIONS, type Transition, type TransitionName } from '@ifloom/react'
 import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
@@ -141,7 +132,19 @@ export function transitionOptions(current?: string): string[] {
   return current && !(TRANSITIONS as readonly string[]).includes(current) ? [...TRANSITIONS, current] : [...TRANSITIONS]
 }
 
-/** A scene's `transition` as the scene form edits it: each part blank when it isn't set. */
+/**
+ * A `ui` field with one hint set, or taken out when `value` is undefined; the
+ * whole field undefined once it holds nothing. The forms edit the React UI's
+ * hints this way and leave any other hint as it was.
+ */
+export function withHint<U extends object>(ui: U | undefined, key: string, value: unknown): U | undefined {
+  const next: Record<string, unknown> = { ...ui }
+  if (value === undefined) delete next[key]
+  else next[key] = value
+  return Object.keys(next).length ? (next as U) : undefined
+}
+
+/** A scene's `ui.transition` as the scene form edits it: each part blank when it isn't set. */
 export type TransitionFields = { in: string; out: string; ms: number | undefined }
 
 /** A transition, by name or as a pair, as the form's fields. */
@@ -183,7 +186,6 @@ export function effectForm(effect: EffectRef): EffectForm {
     case 'turn':
     case 'sound':
     case 'audio':
-    case 'transition':
       return effect.kind
     default:
       return 'json'
@@ -219,8 +221,6 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'sound', track: 'knock' }
     case 'audio':
       return { kind: 'audio', channel: 'music', to: 'calm' }
-    case 'transition':
-      return { kind: 'transition', to: 'fade' }
     case 'plugin':
       return { 'quests/start': { quest: 'errand' } }
     case 'json':

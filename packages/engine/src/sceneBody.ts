@@ -1,5 +1,5 @@
-import type { TransitionName } from './features/transitions.ts'
 import type { RenderedChoice } from './screen.ts'
+import type { BlockUi, Ui } from './features/ui.ts'
 
 export type BeatSize = 'inline' | 'wide'
 
@@ -25,6 +25,10 @@ export type InlineSpan =
   /** Words in italics, from `*words*`. `text` is the words alone. */
   | { kind: 'italic'; text: string }
 
+/**
+ * One piece of a scene's body, as the UI draws it. Any beat can carry `ui`:
+ * the presentation hints of the block it starts, as content wrote them.
+ */
 export type SceneBeat =
   /**
    * A paragraph. `spans` is there only when it holds inline actions,
@@ -32,40 +36,36 @@ export type SceneBeat =
    * the words alone, without the markup, for a UI that draws text and
    * nothing else, a screen reader, the backlog and the playtest.
    */
-  | { kind: 'text'; text: string; spans?: InlineSpan[] }
-  | { kind: 'mono'; text: string }
-  /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. `spans` as a text beat has them. */
-  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
-  | { kind: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
-  /**
-   * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
-   * flags say otherwise: it plays by itself, loops, has no sound and plays inline.
-   */
-  | {
-      kind: 'video'
-      src: string
-      /** A still shown before it plays. */
-      poster?: string
-      alt?: string
-      size: BeatSize
-      autoplay: boolean
-      loop: boolean
-      muted: boolean
-      controls: boolean
-    }
-  | { kind: 'mail'; headers: MailHeader[]; body: string }
-  | { kind: 'prop'; face: PropFace; text: string }
-  /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
-  | { kind: 'sound'; track: string }
-  /**
-   * What follows is revealed later, from `[[reveal]]` on a line of its own or
-   * a block's `reveal`: `delay` milliseconds after the reveal before it (or the
-   * scene coming on), drawn with the transition `as`. `at` is when, counted
-   * from the scene coming on: the delays of this reveal and every one before
-   * it. Nothing to draw. The beats after it are in the body from the start, so
-   * a screen reader has them and a UI can show them all at once.
-   */
-  | { kind: 'reveal'; delay: number; as: TransitionName; at: number }
+  (
+    | { kind: 'text'; text: string; spans?: InlineSpan[] }
+    | { kind: 'mono'; text: string }
+    /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. `spans` as a text beat has them. */
+    | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
+    | { kind: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
+    /**
+     * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
+     * flags say otherwise: it plays by itself, loops, has no sound and plays inline.
+     */
+    | {
+        kind: 'video'
+        src: string
+        /** A still shown before it plays. */
+        poster?: string
+        alt?: string
+        size: BeatSize
+        autoplay: boolean
+        loop: boolean
+        muted: boolean
+        controls: boolean
+      }
+    | { kind: 'mail'; headers: MailHeader[]; body: string }
+    | { kind: 'prop'; face: PropFace; text: string }
+    /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
+    | { kind: 'sound'; track: string }
+  ) & {
+    /** The hints of the block this beat starts, as written; left out with none. See `BlockUi`. */
+    ui?: Ui<BlockUi>
+  }
 
 /**
  * Where the game's pictures live, relative to the page.
@@ -249,16 +249,6 @@ function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<
   return null
 }
 
-/** How long a reveal waits when it doesn't say, in milliseconds. */
-export const DEFAULT_REVEAL_DELAY = 800
-
-/** `[[reveal]]`, `[[reveal:1200]]` or `[[reveal:1200|slide-up]]` on a block of its own, as a beat. `at` is filled in by `parseBeats`. */
-function revealBeat(block: string): Extract<SceneBeat, { kind: 'reveal' }> | null {
-  const match = block.match(/^\[\[reveal(?::\s*(\d*)\s*)?(?:\|\s*([a-z0-9-]*)\s*)?\]\]$/)
-  if (!match) return null
-  return { kind: 'reveal', delay: match[1] ? Number(match[1]) : DEFAULT_REVEAL_DELAY, as: match[2] || 'fade', at: 0 }
-}
-
 /**
  * Inline actions and tooltips, as written: `[[act:id]]`, `[[act:id|words]]`
  * and `[[tip:key|words]]`. Groups: the tag, the id or key, then the words.
@@ -415,73 +405,87 @@ export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   })
 }
 
-function parseBlocks(body: string): SceneBeat[] {
-  let lastSay: 'character' | 'player' | null = null
-  return body
-    .split('\n\n')
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .flatMap((block): SceneBeat[] => {
-      const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
-      if (sound) return [{ kind: 'sound', track: sound[1].trim() }]
-      // A reveal leaves who spoke last as it was: a quote after one still answers the line before.
-      const reveal = revealBeat(block)
-      if (reveal) return [reveal]
-      // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
-      const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
-      const said = voiced ? spoken(voiced[1], lastSay) : null
-      if (voiced && said) {
-        lastSay = said.who
-        return [{ ...said, voice: voiced[2].trim() }]
-      }
-      const media = block.match(new RegExp(`^${MEDIA_MARKUP.source}$`))
-      if (media) {
-        lastSay = null
-        return mediaBeat(media[1], media[2], media[3])
-      }
-      if (block.startsWith('> ')) {
-        lastSay = null
-        return [{ kind: 'mono' as const, text: block.slice(2) }]
-      }
-      const line = spoken(block, lastSay)
-      if (line) {
-        lastSay = line.who
-        return [line]
-      }
-      lastSay = null
-      return [{ kind: 'text' as const, text: block }]
-    })
+/** A body's blocks, split at blank lines, trimmed, each with where it starts in the body. Empty ones are left out. */
+function blocksOf(body: string, base: number): { block: string; from: number }[] {
+  const out: { block: string; from: number }[] = []
+  let from = 0
+  for (const piece of body.split('\n\n')) {
+    const block = piece.trim()
+    if (block) out.push({ block, from: base + from })
+    from += piece.length + 2
+  }
+  return out
 }
 
-export function parseBeats(body: string): SceneBeat[] {
-  const beats: SceneBeat[] = []
+/** Beats with where in the body each came from, so a block's hints can find its first. */
+type Placed = { beat: SceneBeat; from: number }
+
+function parseBlocks(body: string, base: number): Placed[] {
+  let lastSay: 'character' | 'player' | null = null
+  return blocksOf(body, base).flatMap(({ block, from }) => beatsOfBlock(block).map((beat) => ({ beat, from })))
+
+  function beatsOfBlock(block: string): SceneBeat[] {
+    const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
+    if (sound) return [{ kind: 'sound', track: sound[1].trim() }]
+    // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
+    const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
+    const said = voiced ? spoken(voiced[1], lastSay) : null
+    if (voiced && said) {
+      lastSay = said.who
+      return [{ ...said, voice: voiced[2].trim() }]
+    }
+    const media = block.match(new RegExp(`^${MEDIA_MARKUP.source}$`))
+    if (media) {
+      lastSay = null
+      return mediaBeat(media[1], media[2], media[3])
+    }
+    if (block.startsWith('> ')) {
+      lastSay = null
+      return [{ kind: 'mono' as const, text: block.slice(2) }]
+    }
+    const line = spoken(block, lastSay)
+    if (line) {
+      lastSay = line.who
+      return [line]
+    }
+    lastSay = null
+    return [{ kind: 'text' as const, text: block }]
+  }
+}
+
+/**
+ * A body's beats, in order. `hints` puts each block's `ui` on the first beat
+ * that block made: `at` is where the block starts in `body`, by character, as
+ * a data scene's render gives it in `SceneView.blockUi`.
+ */
+export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[]): SceneBeat[] {
+  const placed: Placed[] = []
   const fence = /\[\[(mail|sticky|clip|diary)\]\]([\s\S]*?)\[\[\/\1\]\]/g
   let last = 0
   let match: RegExpExecArray | null
   while ((match = fence.exec(body))) {
     if (match.index > last) {
-      beats.push(...parseBlocks(body.slice(last, match.index)))
+      placed.push(...parseBlocks(body.slice(last, match.index), last))
     }
     const tag = match[1]
     const inner = match[2].trim()
     if (tag === 'mail') {
       const mail = parseMail(inner)
-      beats.push({ kind: 'mail', headers: mail.headers, body: mail.body })
+      placed.push({ beat: { kind: 'mail', headers: mail.headers, body: mail.body }, from: match.index })
     } else {
-      beats.push({ kind: 'prop', face: tag as PropFace, text: inner })
+      placed.push({ beat: { kind: 'prop', face: tag as PropFace, text: inner }, from: match.index })
     }
     last = match.index + match[0].length
   }
   if (last < body.length) {
-    beats.push(...parseBlocks(body.slice(last)))
+    placed.push(...parseBlocks(body.slice(last), last))
   }
-  // Each reveal's time from the scene coming on: its own delay after the one before.
-  let at = 0
-  for (const beat of beats) {
-    if (beat.kind === 'reveal') {
-      at += beat.delay
-      beat.at = at
-    }
-  }
-  return beats
+  // Each hint goes on the first beat its block made, if it made one before the next hinted block starts.
+  const sorted = [...(hints ?? [])].sort((a, b) => a.at - b.at)
+  sorted.forEach((hint, index) => {
+    const until = sorted[index + 1]?.at ?? Infinity
+    const first = placed.find((entry) => entry.from >= hint.at && entry.from < until)
+    if (first) first.beat = { ...first.beat, ui: hint.ui }
+  })
+  return placed.map((entry) => entry.beat)
 }

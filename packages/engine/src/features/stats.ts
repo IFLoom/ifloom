@@ -11,6 +11,7 @@ import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { ValueRef } from '../calls.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
+import { withUi, type StatUi, type Ui } from './ui.ts'
 import { inRange, wanted } from '../range.ts'
 
 /**
@@ -109,27 +110,20 @@ export type StatDef = {
   /** Levels the stat passes as it grows. None if left out. See `StatLevels`. */
   levels?: StatLevels
   /**
-   * How a UI should draw it: the number, a bar from `min` to `max`, or pips,
-   * one per point. `'number'` if left out. Pips suit a small range: the
-   * checker reports pips on a stat whose range is more than 20.
-   */
-  display?: StatDisplay
-  /**
    * How the value reads: `'floor'`, `'round'` or `'ceil'` to a whole number,
    * or `'none'` to read it as it is. Applied to what is read, last, after
    * `derive` and any plugin's modifiers, then held to the range; the kept
    * value underneath is never rounded. `'none'` if left out.
    */
   round?: StatRound
+  /** Presentation hints for the UI, carried to the stat's view as written. See `StatUi`. */
+  ui?: Ui<StatUi>
 }
 
 /** How a stat's value is rounded when it is read: see `StatDef.round`. */
 export type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
-/** How a UI draws a stat: see `StatDef.display`. */
-export type StatDisplay = 'number' | 'bar' | 'pips'
-
-/** A stat as the UI shows it: its value, its range, the value written out, and how to draw it. */
+/** A stat as the UI shows it: its value, its range, the value written out, and its hints. */
 export type StatView = {
   key: StatKey
   label: string
@@ -138,8 +132,6 @@ export type StatView = {
   min: number
   /** The highest it can go right now. */
   max: number
-  /** How to draw it, from `StatDef.display`: `'number'` if the game doesn't say. */
-  display: StatDisplay
   text: string
   /**
    * Where a stat with `levels` stands: its level, the value the next level
@@ -147,6 +139,8 @@ export type StatView = {
    * out for a stat with no levels.
    */
   level?: { level: number; next: number | null; progress: number }
+  /** The stat's presentation hints, as written; left out with none. See `StatUi`. */
+  ui?: Ui<StatUi>
 }
 
 /** What the stats feature adds, as types. */
@@ -421,8 +415,8 @@ export function statView(state: GameState, game: Game, stat: StatDef, of: string
     min: stat.min ?? 0,
     max: statMax(state, game, stat.id, cx),
     text: formatStat(stat, value),
-    display: stat.display ?? 'number',
     ...(level ? { level } : {}),
+    ...withUi(stat.ui),
   }
 }
 
@@ -566,12 +560,7 @@ export const stats = defineFeature<StatsShape>({
       const source = { list: 'stat', id: stat.id }
       const where = `stat ${stat.id}`
       if (stat.of !== undefined && !kindIds.has(stat.of)) tools.problem(source, where, `belongs to unknown kind "${stat.of}"`)
-      tools.check(source, where, [...(typeof stat.max === 'object' ? [{ value: stat.max.value }] : []), { when: stat.visible }])
-      // Pips are one per point, so a wide range can't be drawn as pips. A ceiling from a custom value isn't known until play.
-      if (stat.display === 'pips' && typeof stat.max !== 'object') {
-        const range = (stat.max ?? 100) - (stat.min ?? 0)
-        if (range > 20) tools.problem(source, where, `display pips needs a range of 20 or less; this one is ${range}`)
-      }
+      tools.check(source, where, [...(typeof stat.max === 'object' ? [{ value: stat.max.value }] : []), { when: stat.visible }, { ui: stat.ui }])
     }
     // Derived stats and levels: formulas, cycles, thresholds.
     for (const { where, what } of statProblems(game)) tools.problem({ list: 'stat', id: where.slice('stat '.length) }, where, what)

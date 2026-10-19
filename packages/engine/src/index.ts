@@ -24,7 +24,7 @@ export type {
 } from './game.ts'
 export { sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
-export type { Formula, StatDef, StatDisplay, StatLevels, StatRound, StatWords } from './stats.ts'
+export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
 export type {
   CommandRef,
@@ -72,9 +72,10 @@ export { artSrc, inlineMarkup, mediaKind, parseBeats, styledBeats } from './scen
 
 // Media: pools, and the stage
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
-// Transitions: how screens come and go, and prose revealed in steps
-export { TRANSITIONS } from './features/transitions.ts'
-export type { Reveal, Transition, TransitionName, TransitionView } from './features/transitions.ts'
+
+// Presentation hints: carried to the view as written, given meaning by a UI package
+export type { BlockUi, ChoiceUi, EntityUi, GameUi, SceneUi, StatUi, Ui } from './features/ui.ts'
+export { uiProblems } from './features/ui.ts'
 
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'
@@ -123,6 +124,7 @@ export {
   entityOf,
   entityTags,
   entityTrait,
+  entityUi,
   everyEntity,
   isUnique,
   kindById,

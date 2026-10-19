@@ -41,6 +41,8 @@ The engine is a library. Your content goes in, a description of the screen comes
 - **A view out.** The [view](/docs/reference/view) is everything a UI needs to draw: the scene's paragraphs, each button with the command it sends and, if it can't be pressed, the reason why. It also has the stats, inputs, audio and each plugin's part.
 - **Commands in.** When the player presses a button, the UI sends that button's command. The engine checks it and returns the next state, or the reason it was refused.
 
+The engine keeps what changes the game: the state, the rules and what a replay must repeat. How the game looks and moves is the UI's, so a fade or a stat drawn as pips is a [presentation hint](/docs/reference/ui-hints) the engine passes along untouched.
+
 A [runner](/docs/reference/runner) wraps those three in one object, with undo, saves and autosave. This plays the template's two-scene game in Node, with no browser at all:
 
 ```ts
@@ -73,7 +75,7 @@ A UI does two things. It draws the view, and it sends a command when the player 
 
 - [`@ifloom/react`](/docs/react) is one ready-made UI. It draws the whole game in the browser with React, Tailwind and shadcn/ui: the scene, the choices, the stats, saves, menus, a title screen and settings. [`mountGame`](/docs/react#mountgame) starts it in one call, and you can restyle it with presets and plain CSS or replace any part. Nothing else in IFLoom depends on it.
 - Your own UI can use any framework, or none. The `vanilla`, `vue` and `svelte` templates each draw the game themselves with no React. [A UI from scratch](/docs/guide/ui-from-scratch) explains the plain JS one line by line, and [Your own UI in any framework](/docs/guide/frameworks) shows the same code in React, Vue and Svelte.
-- [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are helpers for any UI. The first runs a minigame's clock, the keyboard shortcuts, numbers for new save slots and the timing of revealed prose. The second plays the game's music and sounds. Both are plain DOM, import only the engine, and work the same under every framework. The React UI uses them itself.
+- [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are helpers for any UI. The first runs a minigame's clock, the keyboard shortcuts, numbers for new save slots and a key that shows held-back prose. The second plays the game's music and sounds. Both are plain DOM, import only the engine, and work the same under every framework. The React UI uses them itself.
 
 [Choosing a UI](/docs/guide/choosing-a-ui) helps you pick.
 

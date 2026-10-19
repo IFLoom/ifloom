@@ -21,7 +21,6 @@ import type { CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
-import type { TransitionView } from './transitions.ts'
 import type { Command, Condition, Effect, GameState, StartOptions } from '../types.ts'
 
 /** The core's helpers a feature can call. The core hands one to every hook that needs it. */
@@ -124,12 +123,10 @@ export type CommandEntry<C> = {
   references: (command: C) => Reference[]
 }
 
-/** What `fromScreen` and a view piece read: the pool picks a screen made, the track each background channel resolved to, and its transition. */
+/** What `fromScreen` and a view piece read: the pool picks a screen made, and the track each background channel resolved to. */
 export type ShownScreen = {
   picks: Record<string, string>
   audio: { tracks: Record<string, string | null> }
-  /** The screen's transition, as the view has it. */
-  transition: TransitionView
 }
 
 /** An entry in one of a feature's lists, for `loadGame` to name the pack a problem came from. Undefined is the game itself. */

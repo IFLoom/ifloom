@@ -1,6 +1,6 @@
 ---
 title: "Stats"
-description: "Declaring stats: ranges, moving ceilings, display, derived stats with formulas, levels shown or hidden, and stats kept on entities."
+description: "Declaring stats: ranges, moving ceilings, derived stats with formulas, levels shown or hidden, and stats kept on entities."
 ---
 A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/docs/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 
@@ -39,11 +39,10 @@ type StatDef = {
   format?: StatWords
   derive?: Formula
   levels?: StatLevels
-  display?: StatDisplay
   round?: StatRound
+  ui?: Ui<StatUi>
 }
 
-type StatDisplay = 'number' | 'bar' | 'pips'
 type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 ```
 
@@ -62,8 +61,8 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. For words that change with the number, give one for 1 and one for the rest: `{ one: '{n} coin', other: '{n} coins' }`. The view's `text` and prices use it. See [`StatWords`](#statwords). |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows, shown to the player or hidden. See [`StatLevels`](#statlevels). |
-| `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/docs/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
 | `round` | `'none'` | Round the value as it's read: `'floor'`, `'round'` or `'ceil'` to a whole number, or `'none'` to read it as it is. The kept value is never rounded. See [Rounding](#rounding). |
+| `ui` | none | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the stat's [`StatView`](/docs/reference/view#statview) as written. The React UI reads [`display`](/docs/react/hints#display): `{ ui: { display: 'bar' } }` draws a bar from `min` to `max`, and `'pips'` a pip per point. The engine gives them no meaning. |
 
 **Gotchas.**
 - You have to declare a stat before you use it. The [content checker](/docs/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.

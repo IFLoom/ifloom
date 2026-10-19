@@ -15,9 +15,8 @@ export const prose: Record<string, string> = {
   'ava.hi#bye': 'Leave her to it',
   'ava.call': '"Oh, hello! I’m on the bench by the river. Come and find me some evening."',
   'ava.call#bye': 'Say goodnight',
-  'ava.river':
-    // `[[reveal]]` on a line of its own: what follows comes a moment later.
-    'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.\n\n[[reveal:1500|slide-up]]\n\n"I told you it was the only quiet in town." She shuffles up to make room.',
+  'ava.river': 'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.',
+  'ava.river.2': '"I told you it was the only quiet in town." She shuffles up to make room.',
   'ava.river#shell': 'Pocket a smooth shell from the bank',
   'ava.river#stay': 'Sit with her until the light goes',
   'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',

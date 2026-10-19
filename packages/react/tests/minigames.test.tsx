@@ -33,8 +33,8 @@ function game(): Game {
       {
         name: 'park',
         stats: [
-          { id: 'energy', label: 'Energy', start: 60, max: 100, display: 'bar' },
-          { id: 'hearts', label: 'Hearts', start: 2, max: 5, display: 'pips' },
+          { id: 'energy', label: 'Energy', start: 60, max: 100, ui: { display: 'bar' } },
+          { id: 'hearts', label: 'Hearts', start: 2, max: 5, ui: { display: 'pips' } },
           { id: 'coins', label: 'Coins', start: 3 },
         ],
         minigames: [catchBall],

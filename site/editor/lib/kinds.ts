@@ -4,6 +4,7 @@
  * here, so the menus can't fall out of step with `Condition` and `Effect`.
  */
 import type { Condition, Effect, StatDef } from '@ifloom/engine'
+import type { StatDisplay } from '@ifloom/react'
 
 /** The keys an object type can't leave out. */
 type RequiredKeys<T> = T extends unknown ? { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T] : never
@@ -54,7 +55,6 @@ export const EFFECT_KINDS = [
   'sound',
   'minigame',
   'minigameVar',
-  'transition',
   'panel',
   'custom',
 ] as const satisfies readonly Effect['kind'][]
@@ -104,19 +104,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
  * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
  * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
  */
-export const EFFECT_FORMS = [
-  'stat',
-  'kv',
-  'entity',
-  'move',
-  'you',
-  'scene',
-  'notify',
-  'turn',
-  'sound',
-  'audio',
-  'transition',
-] as const satisfies readonly Effect['kind'][]
+export const EFFECT_FORMS = ['stat', 'kv', 'entity', 'move', 'you', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
@@ -133,7 +121,6 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   turn: 'End the turn',
   sound: 'Play a sound',
   audio: 'Background audio',
-  transition: 'How the next screen comes in',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
@@ -153,7 +140,6 @@ export const EFFECT_MENU = [
   'turn',
   'sound',
   'audio',
-  'transition',
   'plugin',
   'json',
 ] as const satisfies readonly EffectForm[]
@@ -171,7 +157,8 @@ export const RANGE_LABELS: Record<RangeOp | 'is' | 'set', string> = {
   lt: 'less than',
 }
 
-export const STAT_DISPLAYS = ['number', 'bar', 'pips'] as const satisfies readonly NonNullable<StatDef['display']>[]
+/** How the React UI draws a stat, from its `ui.display` hint. */
+export const STAT_DISPLAYS = ['number', 'bar', 'pips'] as const satisfies readonly StatDisplay[]
 export const STAT_ROUNDS = ['none', 'floor', 'round', 'ceil'] as const satisfies readonly NonNullable<StatDef['round']>[]
-export const displaysComplete: Missing<NonNullable<StatDef['display']>, (typeof STAT_DISPLAYS)[number]> = true
+export const displaysComplete: Missing<StatDisplay, (typeof STAT_DISPLAYS)[number]> = true
 export const roundsComplete: Missing<NonNullable<StatDef['round']>, (typeof STAT_ROUNDS)[number]> = true

@@ -20,7 +20,8 @@ export const cast: Content = {
       desc: 'Runs the café',
       image: 'art/character/ava.svg',
       pronouns: they,
-      hue: 20,
+      // The React UI colours her lines with this hue.
+      ui: { hue: 20 },
       home: 'park',
       // At the counter through the working day; by the river in the evening.
       schedule: [{ location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4, 5), period('morning', 'afternoon')] } }],
@@ -35,7 +36,7 @@ export const cast: Content = {
       desc: 'Neighbour',
       image: 'art/character/sam.svg',
       pronouns: { they: 'they', them: 'them', their: 'their', theirs: 'theirs' },
-      hue: 200,
+      ui: { hue: 200 },
       home: 'park',
       schedule: [{ location: 'high-street', when: period('morning') }],
       talk: 'sam.hi',

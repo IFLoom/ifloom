@@ -177,7 +177,6 @@ describe('who is speaking', () => {
     game.scenes = [...game.scenes, { id: 'rosa.aside', render: () => ({ body: 'The shop is quiet.', choices: [] }) }]
     const shown = view({ ...begin(game), sceneId: 'rosa.aside' }, game).scene
     expect(shown.speaker).toBeNull()
-    expect(shown.frame).toBe('stage')
     expect(shown.tags).toEqual([])
   })
 })

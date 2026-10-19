@@ -8,7 +8,7 @@ import type { GameState } from './types.ts'
 import { featureContext } from './core.ts'
 import * as stats from './features/stats.ts'
 
-export type { Formula, StatDef, StatDisplay, StatLevels, StatRound, StatView, StatWords } from './features/stats.ts'
+export type { Formula, StatDef, StatLevels, StatRound, StatView, StatWords } from './features/stats.ts'
 export { formatStat, lackingLine, levelAt, startingStats, statDef } from './features/stats.ts'
 
 /**

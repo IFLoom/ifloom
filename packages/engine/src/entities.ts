@@ -3,6 +3,7 @@ import type { EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
 import type { Reference } from './references.ts'
 import type { KvValue, GameState, Stats } from './types.ts'
+import type { EntityUi, Ui } from './features/ui.ts'
 
 /**
  * The traits plugins give meaning to, by trait id, with the data each one
@@ -92,6 +93,8 @@ export type KindDef = {
    * under the entity's, field by field; anything else is replaced whole.
    */
   traits?: { [K in keyof Traits]?: Partial<Traits[K]> } & Record<string, unknown>
+  /** Presentation hints for the UI, for every one of the kind, under each entity's own. See `EntityUi`. */
+  ui?: Ui<EntityUi>
 }
 
 /** One thing of a kind, as content declares it: there from the start of the game. */
@@ -125,6 +128,8 @@ export type EntityDef = {
    * Over its kind's, and under a row for it in content's `traits` table.
    */
   traits?: { [K in keyof Traits]?: Traits[K] } & Record<string, unknown>
+  /** Presentation hints for the UI, laid over its kind's field by field, carried to the view as written. See `EntityUi`. */
+  ui?: Ui<EntityUi>
 }
 
 /**
@@ -366,6 +371,25 @@ export function entityImage(state: GameState, game: Game | undefined, ref: Entit
 function entityImageThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): string | undefined {
   const like = likeOf(state, ref, depth)
   return recordOf(state, ref)?.image ?? entityDef(game, ref)?.image ?? (like !== undefined ? entityImageThrough(state, game, like, depth + 1) : undefined)
+}
+
+/**
+ * An entity's presentation hints: its kind's, with those of the one it was
+ * created `like` over them, then its own declaration's, field by field.
+ * Undefined when none has any. The engine carries them to the view as written.
+ */
+export function entityUi(state: GameState, game: Game | undefined, ref: EntityRef): Ui<EntityUi> | undefined {
+  const kind = parseRef(ref)?.kind
+  const fromKind = kind !== undefined ? kindOf(game, kind)?.ui : undefined
+  const own = entityUiThrough(state, game, ref, 0)
+  return fromKind && own ? { ...fromKind, ...own } : (own ?? fromKind)
+}
+
+function entityUiThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): Ui<EntityUi> | undefined {
+  const like = likeOf(state, ref, depth)
+  const under = like !== undefined ? entityUiThrough(state, game, like, depth + 1) : undefined
+  const own = entityDef(game, ref)?.ui
+  return under && own ? { ...under, ...own } : (own ?? under)
 }
 
 /** What an entity is created with: a name or a `like` to read it from, and its own tags, traits, stats and kv. */

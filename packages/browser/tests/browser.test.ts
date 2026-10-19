@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner, type SceneBeat } from '@ifloom/engine'
-import { lastReveal, minigameInput, nextSlot, revealGroups, startClock, startKeys, startMinigameKeys, startRevealSkip } from '../src/index.ts'
+import { createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner } from '@ifloom/engine'
+import { minigameInput, nextSlot, startClock, startKeys, startMinigameKeys, startRevealSkip } from '../src/index.ts'
 
 /** Catch: wait for the throw, then press space within a second. Left drops it. */
 const catchBall: MinigameDef = {
@@ -214,25 +214,6 @@ describe('nextSlot', () => {
 })
 
 describe('reveals', () => {
-  const beats: SceneBeat[] = [
-    { kind: 'text', text: 'A knock.' },
-    { kind: 'reveal', at: 800 },
-    { kind: 'text', text: 'Another.' },
-    { kind: 'reveal', at: 1600 },
-    { kind: 'text', text: 'Then quiet.' },
-  ] as SceneBeat[]
-
-  it('groups the beats by reveal, and says when the last comes', () => {
-    const groups = revealGroups(beats)
-    expect(groups.map((group) => [group.reveal?.at ?? 0, group.beats.map((entry) => entry.index)])).toEqual([
-      [0, [0]],
-      [800, [2]],
-      [1600, [4]],
-    ])
-    expect(lastReveal(beats)).toBe(1600)
-    expect(lastReveal([])).toBe(0)
-  })
-
   it('swallows the next key press to show everything, until stopped', () => {
     const skip = vi.fn()
     const runner = runnerFor()

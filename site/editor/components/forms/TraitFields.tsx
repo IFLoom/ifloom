@@ -21,7 +21,6 @@ type Sellable = { price: Record<string, number> }
 /** `cast/person`, the fields the form shows; the rest are JSON. */
 type Person = {
   fullName?: string
-  hue?: number
   home?: string
   storyline?: string
   talk?: string | { scene: string; when?: Condition; label?: string }[]
@@ -175,9 +174,6 @@ function PersonFields({ value, onChange, ...builder }: BuilderProps & { value: P
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Full name" hint="The name if left out.">
           <TextInput optional value={value.fullName} onChange={(v) => set('fullName', v)} />
-        </Field>
-        <Field label="Colour" hint="A hue from 0 to 360 for their lines.">
-          <NumberInput value={value.hue} onChange={(v) => set('hue', v)} />
         </Field>
         <Field label="Home" hint="The location they're at when no schedule entry holds.">
           <TextInput optional mono value={value.home} onChange={(v) => set('home', v)} />

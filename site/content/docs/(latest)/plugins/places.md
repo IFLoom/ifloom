@@ -107,7 +107,7 @@ type LocationDef = {
   body: Block[]
   actions?: ActionDef[]
   audio?: Record<string, string | null>
-  transition?: Transition | TransitionName
+  ui?: Ui<SceneUi>
   arrive?: Arrival
 }
 ```
@@ -126,7 +126,7 @@ type LocationDef = {
 | `body` | What the player reads here while no scene is open. These are [prose blocks](/docs/reference/scenes#block), exactly as in a data scene's body, so pictures and videos sit in it in order, from markup or `{ media }` blocks. |
 | `actions` | What there is to do here, as [`ActionDef`](/docs/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
 | `audio` | What plays on background [audio channels](/docs/reference/audio#channels) while the player is here, by channel, such as `{ ambience: 'cafe.murmur' }`. `null` silences a channel. See [Audio](#audio). |
-| `transition` | How the room comes on screen and goes off while no scene is open: `'fade'`, or `{ in: 'slide-left', ms: 400 }`. The game's [default](/docs/reference/transitions#gametransitions) if left out. The view's [`transition.key`](/docs/reference/view#transition) is `room:<id>`, so walking to another place plays it. See [Transitions](/docs/reference/transitions). |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the room while no scene is open, carried to `view.scene.ui` as a scene's are. The React UI reads [`transition`](/docs/react/hints#transition): `{ ui: { transition: 'slide-left' } }` slides the room in. The view's [`scene.key`](/docs/reference/view#the-scene) is `room:<id>`, so walking to another place counts as a new screen. |
 | `arrive` | What happens on the doorstep as the player walks in by an exit. See [Arrival](#arrival). |
 
 ### Arrival
@@ -449,7 +449,7 @@ const prose = { postcard: 'Greetings from the {{v:places/name}}.' }
 
 ### The stage
 
-While no scene is open, the room fills the screen. Its plugin [`stage`](/docs/reference/plugins#stage) has the place's `name` as the title and its `body` as the text. `view.scene` is then `{ title: 'The Corner Café', body: 'Six tables, one of them wobbly.', frame: 'stage', ... }`.
+While no scene is open, the room fills the screen. Its plugin [`stage`](/docs/reference/plugins#stage) has the place's `name` as the title and its `body` as the text. `view.scene` is then `{ key: 'room:cafe', title: 'The Corner Café', body: 'Six tables, one of them wobbly.', ... }`.
 
 The body is drawn under the place's own id, not the plugin's. A [`variants`](/docs/reference/scenes#block) block rotates per id, so each place keeps its own rotation, and the café's lines don't move on because the high street was drawn.
 
@@ -668,7 +668,7 @@ town · activity swim · unknown location "lido"
 - Anything a `blocked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown location "moon"`).
 - A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/docs/reference/checks#audio).
-- A `transition` name the game doesn't know (`unknown transition "spin"`).
+- A `ui` that isn't data (`ui must be an object of hints`).
 - Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/docs/reference/checks#media).
 
 A stage layer's file is listed in the checker's [`files`](/docs/reference/checks#fileref). A place's `art` isn't, because no UI draws it.

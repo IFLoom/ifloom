@@ -26,8 +26,8 @@ import { settings, type SettingsShape } from './settings.ts'
 import { stats, type StatsShape } from './stats.ts'
 import { storylines, type StorylinesShape } from './storylines.ts'
 import { triggers, type TriggersShape } from './triggers.ts'
-import { transitions, type TransitionsShape } from './transitions.ts'
 import { turns, type TurnsShape } from './turns.ts'
+import { ui, type UiShape } from './ui.ts'
 import { kv, type KvShape } from './kv.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
@@ -47,7 +47,7 @@ type Shapes =
   | MinigamesShape
   | AudioShape
   | MediaShape
-  | TransitionsShape
+  | UiShape
   | PanelsShape
   | SavingShape
 
@@ -57,13 +57,12 @@ type Shapes =
  * scenes and audio, so a scene a trigger opens is counted as seen in the same
  * command; minigames straight after scenes, so a scene with a minigame starts
  * it in the command that opens it; settings before audio, which requires it; stats before entities,
- * so a loaded save's entities are filled after their stats; transitions anywhere
- * after the plugins' hooks, since only its after-command step (clearing a
- * `transition` effect's override a command didn't set) depends on order;
+ * so a loaded save's entities are filled after their stats;
  * panels after the plugins' hooks too, so a turn or scene a hook moves on
  * closes the panel the command found open; holdings anywhere, since it only
  * applies, views and checks (it sits beside entities, whose kinds it reads);
- * saving anywhere, since it only views and checks.
+ * saving anywhere, since it only views and checks; ui anywhere, since it only
+ * checks that hints are data.
  */
 export const FEATURES = [
   turns,
@@ -79,7 +78,7 @@ export const FEATURES = [
   stats,
   audio,
   media,
-  transitions,
+  ui,
   panels,
   entities,
   holdings,

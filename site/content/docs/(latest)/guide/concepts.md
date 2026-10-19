@@ -160,6 +160,8 @@ See [Plugins](/docs/plugins) for the first-party ones, and [Writing a plugin](/d
 
 The engine has no DOM and no framework. It hands out a view and takes commands, so any UI can draw a game, and a test or a script can play one with no UI at all. [`@ifloom/react`](/docs/react) is a ready-made UI in React, and `mountGame` from it starts a game in a page with one call. To use Vue, Svelte, plain DOM or anything else, see [Choosing a UI](/docs/guide/choosing-a-ui). [How the pieces fit](/docs/guide/how-it-fits) shows where each package sits.
 
+The engine owns what changes the state, the rules and a replay. How things look and move belongs to the UI. Content can still ask for a fade or a stat drawn as a bar, as [presentation hints](/docs/reference/ui-hints) in a `ui` field, which the engine carries to the view without reading.
+
 ## Randomness is seeded
 
 Each save has a seed, and every random draw is worked out from the seed, a name for the draw and what it's keyed on, such as the turn. Which variant of a line shows, or whether something happens today, comes out the same for the same save every time.

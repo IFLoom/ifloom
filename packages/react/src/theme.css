@@ -129,10 +129,10 @@
 }
 
 /*
- * Scene transitions and prose reveals, by the names the engine gives
- * (`view.transition`, reveal beats). `SceneStage` sets the attributes; these
- * rules draw them. Redraw one, or add a name your game declares in
- * `game.transitions.names`, with rules of your own:
+ * Scene transitions and prose reveals, by the names in the content's `ui`
+ * hints (`ui.transition`, `ui.reveal`). `SceneStage` sets the attributes;
+ * these rules draw them. Redraw one, or add a name your game declares in
+ * `game.ui.transitionNames`, with rules of your own:
  *
  *   [data-transition-in="curtain"] { animation-name: my-curtain-in; }
  *   [data-leaving][data-transition-out="curtain"] { animation-name: my-curtain-out; }
@@ -193,6 +193,14 @@
    */
   body:has([role="dialog"][data-state="open"]) [data-part="overlay"] {
     visibility: hidden;
+  }
+
+  /* A speaker's `ui.hue`: their lines in that colour, light or dark. */
+  [data-speaker-hue] {
+    --speech: oklch(0.47 0.11 var(--ifloom-speaker-hue));
+  }
+  .dark [data-speaker-hue] {
+    --speech: oklch(0.78 0.1 var(--ifloom-speaker-hue));
   }
 
   [data-transition-in] {

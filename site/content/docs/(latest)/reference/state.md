@@ -38,7 +38,6 @@ type GameState = {
   audio: AudioState
   media: MediaState
   minigame: MinigameState | null
-  transition: { to: TransitionName; ms?: number } | null
   panel: OpenPanel | null
   gameVersion?: number
 }
@@ -265,14 +264,6 @@ minigame: MinigameState | null   // { id, state, elapsed, vars, steps }
 
 The [minigame](/docs/reference/minigames) being played, or `null`. See [`MinigameState`](/docs/reference/minigames#minigamestate). A save from before minigames loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
 
-### transition
-
-```ts
-transition: { to: TransitionName; ms?: number } | null
-```
-
-How the screen after the last command comes in, as a [`transition` effect](/docs/reference/effects#transition) set it, or `null`. It lasts one command: the next command that doesn't set it again clears it. [`view.transition`](/docs/reference/view#transition) reads it. A save from before transitions loads with `null`. Like `minigame`, the field came with a load default and no new save version.
-
 ### panel
 
 ```ts
@@ -327,7 +318,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 16
+const SAVE_VERSION = 17
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -351,6 +342,7 @@ The versions so far:
 | 14 | Keyed [`chosen`](#chosen) by `scene#choice`. |
 | 15 | Made each record in [`entities`](#entities) keep only what play changed. |
 | 16 | Took out `items` and `collections`: the player's items are counts in [`held`](#held), and collection entries are entities made in play that the player holds. |
+| 17 | Took out `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from [presentation hints](/docs/reference/ui-hints). |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

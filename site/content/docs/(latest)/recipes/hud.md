@@ -128,7 +128,7 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 
 `max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
 
-If you use the React UI and a plain bar is all you need, you don't have to write one. Set [`display: 'bar'`](/docs/reference/stats#statdef) or `'pips'` on the stat, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
+If you use the React UI and a plain bar is all you need, you don't have to write one. Give the stat the hint [`ui: { display: 'bar' }`](/docs/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
 
 ## A strip of unread counts
 

@@ -24,6 +24,7 @@ import {
   entityName,
   entityOf,
   entityTrait,
+  entityUi,
   fillTokens,
   holds,
   lockedOut,
@@ -39,6 +40,7 @@ import {
   type Condition,
   type DefinedPlugin,
   type EntityDef,
+  type EntityUi,
   type EntityRef,
   type Game,
   type GameState,
@@ -47,6 +49,7 @@ import {
   type Reference,
   type RenderedChoice,
   type TraitDef,
+  type Ui,
 } from '@ifloom/engine'
 
 /** One way a conversation can open: the scene, while `when` holds, with its button's label. */
@@ -58,8 +61,6 @@ export type Person = {
   fullName?: string
   /** For prose that needs them: `{ they: 'she', them: 'her', … }`. The engine gives them no meaning. */
   pronouns?: Record<string, string>
-  /** A colour for their lines, as a hue from 0 to 360. */
-  hue?: number
   /** Where they are when no schedule entry holds. Offstage — nowhere — if left out. */
   home?: string
   /** Where they are while each `when` holds; the first that holds wins. `'$'` is them. */
@@ -106,7 +107,8 @@ export type PersonView = {
   fullName: string
   /** Their entity's `desc`, tokens filled: "Runs the café". */
   desc: string | null
-  hue: number | null
+  /** Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. */
+  ui?: Ui<EntityUi>
   /** The portrait's path: the entity's `image`, else `<kind>/<id>`. Typed as every plugin's portrait is, though the cast always gives one. */
   portrait: string | null
   /** In the room with the player. */
@@ -147,12 +149,18 @@ export function personOf(state: GameState, game: Game, ref: EntityRef): Person |
   return entityOf(state, game, ref) ? entityTrait(state, game, ref, PERSON) : undefined
 }
 
+/** Someone's presentation hints, as a view's `ui` field: left out with none. */
+function uiOf(state: GameState, game: Game, ref: EntityRef): { ui?: Ui<EntityUi> } {
+  const ui = entityUi(state, game, ref)
+  return ui ? { ui } : {}
+}
+
 /** One or several, as a list: `character: 'ava'` or `character: ['ava', 'sam']`. */
 function ids(value: unknown): string[] {
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
-const PERSON_FIELDS = ['fullName', 'pronouns', 'hue', 'home', 'schedule', 'talk', 'call', 'storyline', 'met'] as const
+const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call', 'storyline', 'met'] as const
 
 const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 'string' ? [{ scene: person.talk }] : (person.talk ?? []))
 
@@ -232,7 +240,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       name: nameOf(state, game, them),
       fullName: fullNameOf(state, game, them),
       desc: descOf(state, game, them),
-      hue: them.person.hue ?? null,
+      ...uiOf(state, game, them.ref),
       portrait: portraitOf(state, game, them.ref),
       here: isHere(state, context, them),
       closed: closed(state, them),
@@ -326,11 +334,11 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       },
     },
     queries: {
-      /** `{ id, name, hue, portrait }` of someone (`{ character }`), or undefined. */
+      /** `{ id, name, portrait, ui }` of someone (`{ character }`), or undefined. */
       person: (state, args, { game }) => {
         const them = one(state, game, who(args.character)[0])
         return them
-          ? { id: short(them.ref), name: nameOf(state, game, them), hue: them.person.hue ?? null, portrait: portraitOf(state, game, them.ref) }
+          ? { id: short(them.ref), name: nameOf(state, game, them), portrait: portraitOf(state, game, them.ref), ...uiOf(state, game, them.ref) }
           : undefined
       },
       /** The ids of everyone in the room. */
@@ -358,7 +366,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     },
     speaker: (id, state, { game }) => {
       const them = one(state, game, refOf(id))
-      return them ? { id, name: nameOf(state, game, them), hue: them.person.hue ?? null, portrait: portraitOf(state, game, them.ref) } : undefined
+      return them ? { id, name: nameOf(state, game, them), portrait: portraitOf(state, game, them.ref), ...uiOf(state, game, them.ref) } : undefined
     },
     view: (state, context): CastView => {
       const { game } = context

@@ -81,9 +81,10 @@ export const ava: Content = {
     {
       id: 'ava.river',
       title: 'By the river',
-      transition: { in: 'fade', out: 'fade', ms: 600 },
+      ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
       speaker: 'ava',
-      body: [{ text: 'ava.river' }],
+      // Her line comes a moment after the ducks: a block of its own, revealed by the React UI.
+      body: [{ text: 'ava.river' }, { text: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } }],
       choices: [
         // A thing to keep: the shell is an entity, and picking it up gives it to you.
         { id: 'shell', when: { not: { entity: 'keepsake:shell', gte: 1 } }, effects: [give('keepsake:shell')] },

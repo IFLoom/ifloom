@@ -10,17 +10,17 @@ export const movingDay: Content = {
     {
       id: 'intro',
       title: 'Moving day',
-      // Fades in from the title page; its second paragraph comes after a pause.
-      transition: { in: 'fade', out: 'fade', ms: 500 },
-      body: [{ text: 'intro' }, { text: 'intro.tonight', reveal: { delay: 1200 } }],
-      // The flat slides up into view once the boxes are in.
+      // The React UI's hints: it fades in from the title page, and its second paragraph comes after a pause.
+      ui: { transition: { in: 'fade', out: 'fade', ms: 500 } },
+      body: [{ text: 'intro' }, { text: 'intro.tonight', ui: { reveal: { delay: 1200 } } }],
       choices: [
         {
           id: 'unpack',
+          // The flat slides up into view once the boxes are in.
+          ui: { transition: { in: 'slide-up', ms: 400 } },
           effects: [
             { kind: 'scene', scene: null },
             { kind: 'phase', to: 'open' },
-            { kind: 'transition', to: 'slide-up', ms: 400 },
           ],
         },
       ],
@@ -61,7 +61,7 @@ export const movingDay: Content = {
       'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
     // The tooltip on "launderette" above.
     'intro.launderette': 'Sam from flat 2 runs it. Service washes, Monday to Saturday.',
-    // Revealed after the line above: the scene's block says so with `reveal`.
+    // Revealed after the line above: the scene's block says so with its `ui.reveal` hint.
     'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
     'intro#unpack': 'Unpack',
     'notice.welcome': WELCOME,

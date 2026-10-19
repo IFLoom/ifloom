@@ -257,7 +257,7 @@ describe('plugins that bring entities and speakers', () => {
       ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).map((singer) => ({ id: singer.id, of: 'singer', name: singer.name })),
     speaker: (id, _state, { game }) => {
       const singer = ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).find((entry) => entry.id === id)
-      return singer ? { id, name: singer.name, hue: 280, portrait: null } : undefined
+      return singer ? { id, name: singer.name, portrait: null, ui: { hue: 280 } } : undefined
     },
   })
   const hall: Content = {
@@ -291,7 +291,7 @@ describe('plugins that bring entities and speakers', () => {
 
   it('say who is speaking', () => {
     const { game } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [choir] })
-    expect(view(startingState(game), game).scene.speaker).toEqual({ id: 'ann', name: 'Ann', hue: 280, portrait: null })
+    expect(view(startingState(game), game).scene.speaker).toEqual({ id: 'ann', name: 'Ann', portrait: null, ui: { hue: 280 } })
     const { game: plain } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [] })
     expect(view(startingState(plain), plain).scene.speaker).toBeNull()
   })

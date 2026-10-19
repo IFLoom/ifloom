@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { audioSrc, type SceneBeat } from '@ifloom/engine'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { audioSrc, type SceneBeat, type View } from '@ifloom/engine'
+import { leavingOf, offeredIn, screenTransition, type ScreenTransition, type Transition, type TransitionName } from '../hints.ts'
 import { cn, PROSE } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
@@ -145,9 +146,6 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
     case 'sound':
       // Heard, not seen: the audio player plays it.
       return null
-    case 'reveal':
-      // A marker: the scene draws the beats after it as a group that waits for it.
-      return null
   }
 }
 
@@ -176,10 +174,10 @@ function MinigameSlot() {
 const REVEAL_MS = 400
 
 /**
- * A scene's beats: those shown with it, then each reveal's beats in a
- * `reveal` part that waits for it (`data-reveal` names how it comes in,
- * `--ifloom-reveal-at` when). With motion off, the groups are drawn but wait
- * for nothing.
+ * A scene's beats: those shown with it, then from each beat whose block has a
+ * `ui.reveal` hint, the beats to the next in a `reveal` part that waits for it
+ * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). With motion
+ * off, the groups are drawn but wait for nothing.
  */
 function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
   const list = usePart('beats', cn(PROSE, 'flex flex-col gap-(--gap-beats)'))
@@ -201,8 +199,14 @@ function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
   )
 }
 
-/** One scene, drawn once per `view.transition.key`: it comes in by `data-transition-in`, and its reveals run from then. */
-function SceneArticle({ className, motion }: { className?: string; motion: boolean }) {
+/** The colour a speaker's `ui.hue` gives their lines, as the CSS variable the styles read. */
+function speakerHue(view: View): CSSProperties | undefined {
+  const hue = view.scene.speaker?.ui?.hue
+  return typeof hue === 'number' && Number.isFinite(hue) ? ({ '--ifloom-speaker-hue': String(hue) } as CSSProperties) : undefined
+}
+
+/** One scene, drawn once per `view.scene.key`: it comes in by `data-transition-in`, and its reveals run from then. */
+function SceneArticle({ className, motion, transition }: { className?: string; motion: boolean; transition: ScreenTransition }) {
   const { view, panels } = useGame()
   const scene = view.scene
   const Panel = scene.panel ? panels[scene.panel] : undefined
@@ -220,10 +224,11 @@ function SceneArticle({ className, motion }: { className?: string; motion: boole
   useSkipKey(pending, skip)
   useEffect(() => {
     if (!pending) return
-    const timer = setTimeout(skip, last + view.transition.ms + REVEAL_MS)
+    const timer = setTimeout(skip, last + transition.ms + REVEAL_MS)
     return () => clearTimeout(timer)
-  }, [pending, last, view.transition.ms, skip])
-  const entering = motion ? view.transition.in : undefined
+  }, [pending, last, transition.ms, skip])
+  const entering = motion ? transition.in : undefined
+  const hue = speakerHue(view)
   if (view.minigame) {
     return (
       <article {...article} data-scene={scene.id ?? 'stage'} data-minigame={view.minigame.id} data-transition-in={entering}>
@@ -238,6 +243,8 @@ function SceneArticle({ className, motion }: { className?: string; motion: boole
       data-scene={scene.id ?? 'stage'}
       data-transition-in={entering}
       data-revealed={last > 0 && (revealed || !motion) ? '' : undefined}
+      data-speaker-hue={hue ? '' : undefined}
+      style={hue}
       onClick={pending ? skip : undefined}
     >
       <header {...header}>
@@ -258,14 +265,42 @@ function SceneArticle({ className, motion }: { className?: string; motion: boole
   )
 }
 
+type Seen = { key: string; view: View; commands: number; pressed: Transition | TransitionName | undefined }
+
+/**
+ * The `ui.transition` of the choice or button that led to this screen, if one
+ * did: when the screen changes after exactly one more command, the one of the
+ * screen before's choices, inline actions or buttons that sends that command.
+ * Worked out while rendering, once per screen, so the copy of the screen
+ * before can go out the way the choice says.
+ */
+function usePressed(view: View): Transition | TransitionName | undefined {
+  const { runner } = useGame()
+  const seen = useRef<Seen | null>(null)
+  const commands = runner.log().commands
+  const before = seen.current
+  if (before && before.key === view.scene.key) {
+    if (before.view !== view) seen.current = { ...before, view, commands: commands.length }
+    return before.pressed
+  }
+  let pressed: Transition | TransitionName | undefined
+  if (before && commands.length === before.commands + 1) {
+    const sent = JSON.stringify(commands.at(-1))
+    pressed = offeredIn(before.view).find((choice) => JSON.stringify(choice.command) === sent)?.ui?.transition
+  }
+  seen.current = { key: view.scene.key, view, commands: commands.length, pressed }
+  return pressed
+}
+
 function SceneStageImpl({ className }: { className?: string }) {
-  const { view } = useGame()
+  const { view, runner } = useGame()
   const motion = useMotion()
   const frame = usePart('scene-transition', '')
-  const transition = view.transition
+  const pressed = usePressed(view)
+  const transition = screenTransition(view, runner.game, pressed)
   return (
-    <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} motion={motion} attrs={frame}>
-      <SceneArticle key={transition.key} className={className} motion={motion} />
+    <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} leave={leavingOf(pressed)} motion={motion} attrs={frame}>
+      <SceneArticle key={transition.key} className={className} motion={motion} transition={transition} />
     </SceneFrame>
   )
 }
@@ -277,10 +312,12 @@ function SceneStageImpl({ className }: { className?: string }) {
  * draws that instead: the game's panel named by the minigame's id, else
  * `MinigameCard`.
  *
- * It plays `view.transition` when the screen changes, in a `scene-transition`
- * part that keeps a copy of the scene before for its `out`, and reveals the
- * prose after each reveal beat in a `reveal` part, with the choices after the
- * last. A click on the scene or a key press shows the rest at once. The
- * `motion` option, or the player's reduced-motion setting, turns all of it off.
+ * It plays the content's `ui.transition` hints when the screen (`view.scene.key`)
+ * changes, in a `scene-transition` part that keeps a copy of the scene before
+ * for its `out`, and reveals each block with a `ui.reveal` hint in a `reveal`
+ * part, with the choices after the last. A click on the scene or a key press
+ * shows the rest at once. The `motion` option, or the player's reduced-motion
+ * setting, turns all of it off. A speaker with a `ui.hue` gets their lines in
+ * that colour.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

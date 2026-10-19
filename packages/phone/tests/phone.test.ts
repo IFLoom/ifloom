@@ -90,7 +90,7 @@ const town: Content = {
       id: 'ava',
       name: 'Ava',
       desc: 'Friend',
-      hue: 200,
+      ui: { hue: 200 },
       home: 'cafe',
       talk: 'ava.hi',
       storyline: 'ava',

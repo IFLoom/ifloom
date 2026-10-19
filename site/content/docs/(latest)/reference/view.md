@@ -43,6 +43,17 @@ function screen(state: GameState, game: Game, options?: ViewOptions): Screen
 
 What one state shows, before it's formatted as a `View`. `view` is built from it, and the reducer reads it after each command to record pool picks and what each audio channel started playing. It renders the open scene once and answers every choice's availability, effects and price from that one render.
 
+`view` is what every UI draws. It holds only what the player may see, already worded and formatted: labels, prices, reasons and stat text. `screen` is the layer under it. It keeps what a UI shouldn't show, such as what each choice would apply, and the bookkeeping the engine records after a command. Most code never calls it.
+
+### Why there are two
+
+They answer different questions about the same state.
+
+- **The view is a contract with the UI.** Anything in it can go on the page, so it never carries a spoiler like a choice's hidden effects. A UI in any framework can draw it without knowing the rules, and the [React UI](/docs/react), the templates and your own UI all read the same thing.
+- **The screen is what the engine works from.** The reducer needs to know which pool files and tracks the new state shows, so that it can record them. Choices' effects feed locks, guards and prices. Working those out means rendering the open scene, and doing that a second time could give a different answer.
+
+So the engine draws each state once, as a screen, and the view is formatted from it. Neither can disagree with the other, and a command never renders a scene more than once.
+
 Use `view` to draw a game. Reach for `screen` when you need something the view leaves out:
 
 - **What each choice would apply.** A UI that previews a choice's outcome, or a tool that maps where choices lead, reads `choices[i].effects`.

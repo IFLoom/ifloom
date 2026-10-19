@@ -63,6 +63,8 @@ const TARGETS = [
   'turn',
   'phase',
   'panel',
+  // the latest roll under a key, for the roll condition
+  'roll',
 ] as const
 
 /** Qualifiers and details: who it belongs to, what it compares with, what it carries. */
@@ -93,6 +95,12 @@ const DETAILS = [
   'turns',
   // how long a transition takes
   'ms',
+  // dice: what is thrown, what is added, the target, and the outcome asked of a roll
+  'dice',
+  'plus',
+  'against',
+  'passed',
+  'critical',
   // what is made or drawn
   'effects',
   'from',

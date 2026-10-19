@@ -619,6 +619,21 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `minigame-inputs` | The row of input buttons. |
 | `minigame-input` | One input button. Carries `data-input`. |
 
+### Dice rolls
+
+| Part | What it is |
+|---|---|
+| `dice` | One [`DiceRoll`](/docs/react/components#diceroll). Carries `data-roll` (its key), `data-state` (`rolling` or `settled`), and once settled `data-passed` and `data-critical`. |
+| `dice-label` | The dice thrown, such as `2d6`. |
+| `dice-faces` | The row of faces. |
+| `dice-face` | One die. Carries `data-rolling` while it tumbles, and `data-high` or `data-low` on its top face or on 1. |
+| `dice-plus` | What was added, such as `+2`. |
+| `dice-total` | The total, once the dice settle. |
+| `dice-outcome` | Passed or Failed, and what it needed. Carries `data-passed`. |
+| `dice-critical` | Critical! or Fumble. |
+| `dice-overlay` | The [`DiceOverlay`](/docs/react/components#diceoverlay) over the scene, for rolls no block names. |
+| `dice-dismiss` | The overlay's close button. |
+
 ### The menu and its dialogs
 
 | Part | What it is |

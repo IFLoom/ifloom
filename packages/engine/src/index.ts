@@ -162,6 +162,8 @@ export { minigameDef } from './features/minigames.ts'
 // Panels
 export type { OpenPanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
+export type { Dice, Roll, RollsState } from './features/rolls.ts'
+export { readDice } from './features/rolls.ts'
 export { inputById, inputRefusal, inputValue } from './inputs.ts'
 
 // Storylines

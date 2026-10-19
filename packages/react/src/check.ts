@@ -10,7 +10,7 @@ import { MAX_PIPS, TRANSITIONS } from './hints.ts'
 const KNOWN = {
   scene: ['transition'],
   choice: ['transition'],
-  block: ['reveal'],
+  block: ['reveal', 'dice'],
   stat: ['display'],
   entity: ['hue'],
   game: ['transition', 'transitionNames'],
@@ -25,7 +25,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * this UI doesn't know (a typo, or another UI's), a transition name that is
  * neither built in nor in `game.ui.transitionNames`, a negative `ms`, a reveal
  * `delay` that isn't whole milliseconds, a `display` that isn't `number`, `bar`
- * or `pips`, pips on a stat with a range over 20, and a `hue` outside 0 to 360.
+ * or `pips`, pips on a stat with a range over 20, a `hue` outside 0 to 360,
+ * and a block's `dice` that isn't a roll's key.
  * Hints in `allow` (`['mood']`, say, for another UI's) aren't reported. Empty
  * when all is well.
  */
@@ -66,6 +67,8 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[] } 
       else if (ui.display === 'pips' && extra?.range !== undefined && extra.range > MAX_PIPS)
         out.push(`${where}: ui.display pips needs a range of ${MAX_PIPS} or less; this one is ${extra.range}`)
     }
+    if (ui.dice !== undefined && !(typeof ui.dice === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(ui.dice)))
+      out.push(`${where}: ui.dice names a roll's key: letters, digits and _`)
     if (ui.hue !== undefined && !(typeof ui.hue === 'number' && ui.hue >= 0 && ui.hue <= 360)) out.push(`${where}: ui.hue is a number from 0 to 360`)
     if (ui.transitionNames !== undefined) {
       const list = ui.transitionNames

@@ -17,6 +17,12 @@ describe('the presets', () => {
     }
   })
 
+  it('draw dice in their own style', () => {
+    for (const { name, css } of PRESETS) {
+      for (const needed of ['[data-part="dice"]', '[data-part="dice-face"]']) expect(css, `${name}: ${needed}`).toContain(needed)
+    }
+  })
+
   it('leave the page fluid: no --width-page cap', () => {
     for (const { name, css } of PRESETS) expect(css, name).not.toContain('--width-page')
   })

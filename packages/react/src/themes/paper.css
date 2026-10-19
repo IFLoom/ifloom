@@ -556,3 +556,26 @@
   font-variant: small-caps;
   letter-spacing: 0.04em;
 }
+
+/* Dice: printed in the margin's ink, no card behind them. */
+[data-part="dice"] {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+  font-family: var(--font-body);
+}
+[data-part="dice-face"] {
+  border-width: 1px;
+  border-radius: 0.2rem;
+  font-family: var(--font-body);
+  font-style: italic;
+}
+[data-part="dice-outcome"] {
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+[data-part="dice-outcome"][data-passed="true"] {
+  color: var(--primary) !important;
+}

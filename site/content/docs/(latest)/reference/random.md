@@ -84,6 +84,8 @@ A whole number in `[0, max)`, from the parts joined with `:`. Returns `0` when `
 roll(6, state.seed, state.turn, 'dice') // 0 to 5
 ```
 
+For dice in content, a check against a target or a total the prose prints, use the [`roll` effect](/docs/reference/effects#roll) instead. It draws its dice this way and records the roll for the view. See [Dice rolls](/docs/reference/rolls).
+
 **Gotcha:** the parts are joined into one string, so `roll(6, 'a:b')` and `roll(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
 
 ## pick

@@ -254,6 +254,48 @@ export function ConditionBuilder({
         </>
       )
       break
+    case 'roll': {
+      // Bare is "a roll was made"; `passed` and `critical` narrow it.
+      const outcome = c.passed === undefined ? 'made' : c.passed ? 'passed' : 'failed'
+      const critical = c.critical === undefined ? 'any' : c.critical === true ? 'yes' : c.critical === false ? 'no' : (c.critical as string)
+      fields = (
+        <>
+          <IdPicker
+            noun="kv key"
+            aria-label="Roll key"
+            value={c.roll as string}
+            options={names.kv}
+            onChange={(id) => set({ roll: id })}
+            onCreate={create('kv')}
+          />
+          <Select
+            aria-label="Outcome"
+            value={outcome}
+            options={[
+              { value: 'made', label: 'was rolled' },
+              { value: 'passed', label: 'passed' },
+              { value: 'failed', label: 'failed' },
+            ]}
+            onChange={(next) => onChange(withKey(value, 'passed', next === 'made' ? undefined : next === 'passed'))}
+          />
+          <Select
+            aria-label="Critical"
+            value={critical}
+            options={[
+              { value: 'any', label: 'critical or not' },
+              { value: 'yes', label: 'critical' },
+              { value: 'max', label: 'all top faces' },
+              { value: 'min', label: 'all ones' },
+              { value: 'no', label: 'not critical' },
+            ]}
+            onChange={(next) =>
+              onChange(withKey(value, 'critical', next === 'any' ? undefined : next === 'yes' ? true : next === 'no' ? false : (next as 'max' | 'min')))
+            }
+          />
+        </>
+      )
+      break
+    }
     case 'turn':
       // The range is the condition's value: `{ turn: { gte: 3 } }`.
       fields = <RangeEditor value={c.turn as Condition} onChange={(turn) => onChange({ turn } as Condition)} ops={[...RANGE_OPS]} />

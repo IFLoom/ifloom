@@ -443,7 +443,7 @@ type Components = Partial<{
 }>
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `StatusList`, `AchievementList`, `AchievementsButton`, `AchievementsPage`, `PanelHost`, `ShopDialog`, `ShopCounter`, `JobBoard`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `StatusList`, `AchievementList`, `AchievementsButton`, `AchievementsPage`, `PanelHost`, `ShopDialog`, `ShopCounter`, `JobBoard`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -573,6 +573,8 @@ The `<article>` carries `data-scene` with the scene's id, or `stage` when no sce
 **Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/recipes/transitions#the-react-ui) to restyle them.
 
 With [`motion`](#uioptions) off, or the player asking for reduced motion, none of this plays: no attribute is set and everything is shown at once.
+
+**Dice.** A block with a [`dice`](/docs/react/hints#dice) hint gets the [`DiceRoll`](#diceroll) of the roll the last command made under that key, just above it. A new roll tumbles, and the block waits in a `reveal` part until the dice settle. A click or a key settles them at once. New rolls that no block on screen names show in a [`DiceOverlay`](#diceoverlay), which `SceneStage` draws after the scene.
 
 **Speakers.** While the scene's speaker has a [`hue`](/docs/react/hints#hue) hint, the article carries `data-speaker-hue` and `--ifloom-speaker-hue`, and their spoken lines are drawn in that colour.
 
@@ -1649,6 +1651,49 @@ It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread
 Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/recipes/hud) shows how to write your own from the view.
 
 Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-strip`, `notice-strip-item` (with `data-strip`) and `badge`, plus the dialog's parts.
+
+## Dice
+
+### DiceRoll
+
+```tsx
+function DiceRoll(props: DiceRollProps): JSX.Element
+
+type DiceRollProps = { roll: Roll; animate?: boolean; className?: string }
+```
+
+One [roll](/docs/reference/rolls#roll) from [`view.rolls`](/docs/reference/view#rolls). From left to right: the dice (`2d6`), a face for each die, what was added (`+2`), and once they settle, the total, and with a target, Passed or Failed and what it needed. A die on its top face or on 1 is marked with `data-high` or `data-low`, and a critical gets Critical! or Fumble.
+
+With `animate` (the default), the faces tumble for `DICE_ROLL_MS` milliseconds before they settle on the faces rolled. The tumbling numbers are only for show; the engine's roll was made already. With [`motion`](#uioptions) off, or the player asking for reduced motion, it shows settled at once. The result is in a `status` region, so a screen reader hears it once the dice settle, worded by `ui.diceRolled` and the strings after it. [`SceneStage`](#scenestage) draws it above a block with a [`dice`](/docs/react/hints#dice) hint, and [`DiceOverlay`](#diceoverlay) for the rest.
+
+```tsx
+import { DiceRoll, useGame } from '@ifloom/react'
+
+function LastRolls() {
+  const { view } = useGame()
+  return view.rolls.map((roll, at) => <DiceRoll key={at} roll={roll} animate={false} />)
+}
+```
+
+Replaceable as `DiceRoll` in [`components`](#components). Parts: `dice` (with `data-roll`, `data-state` `rolling` or `settled`, and once settled `data-passed` and `data-critical`), `dice-label`, `dice-faces`, `dice-face` (with `data-rolling`, `data-high` and `data-low`), `dice-plus`, `dice-total`, `dice-outcome` (with `data-passed`) and `dice-critical`. Each preset draws them its own way: printed in Paper, chunky in Storybook, tiles in Studio, and `[4] [6] = 10` in Terminal.
+
+### DiceOverlay
+
+```tsx
+function DiceOverlay(props: { rolls: readonly Roll[]; className?: string }): JSX.Element | null
+```
+
+Rolls the story doesn't name, shown for a moment over the scene: a `DiceRoll` for each, near the top of the window. It goes about two and a half seconds after the dice settle, or when the player presses its close button (`ui.diceDismiss`). [`SceneStage`](#scenestage) draws one for the new rolls that no block's `dice` hint names, such as Small Town's ducks, counted by a trigger as you reach the park.
+
+Replaceable as `DiceOverlay` in [`components`](#components). Parts: `dice-overlay` and `dice-dismiss`. To show these rolls somewhere else, replace it with a component that draws them where you like, or with `() => null` to show none.
+
+### useFreshRolls
+
+```ts
+function useFreshRolls(): { rolls: Roll[]; at: number }
+```
+
+The rolls the last command made, while they're new: those that came with one command more than the view before. Rolls a loaded save or an undo brings back aren't new, so they don't tumble again. `at` counts each new set, so a component can key on it to play afresh. Only inside a [`GameProvider`](#gameprovider). `SceneStage` uses it, and a replacement for it can too.
 
 ## Minigames
 

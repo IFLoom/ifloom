@@ -4,7 +4,7 @@
  * fields it needs, with JSON for plugin calls and the rarer kinds.
  */
 import { useState } from 'react'
-import type { EffectRef } from '@ifloom/engine'
+import { readDice, type EffectRef } from '@ifloom/engine'
 import { effectForm, newEffect, NO_NAMES } from '../lib/builders'
 import { EFFECT_LABELS, EFFECT_MENU, type EffectForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
@@ -233,6 +233,47 @@ export function EffectBuilder({
         </>
       )
       break
+    case 'roll': {
+      const read = readDice(e.dice)
+      const plus: 'none' | 'number' | 'stat' = e.plus === undefined ? 'none' : typeof e.plus === 'number' ? 'number' : 'stat'
+      fields = (
+        <>
+          <TextInput aria-label="Dice" className="w-24" mono value={e.dice} placeholder="2d6+1" onChange={(dice) => set({ dice: dice ?? '' })} />
+          <span className="text-xs text-fd-muted-foreground">into</span>
+          <IdPicker noun="kv key" aria-label="kv key" value={e.key} options={names.kv} onChange={(key) => set({ key })} onCreate={create('kv')} />
+          <span className="text-xs text-fd-muted-foreground">plus</span>
+          <Select
+            aria-label="Plus"
+            value={plus}
+            options={[
+              { value: 'none', label: 'nothing' },
+              { value: 'number', label: 'a number' },
+              { value: 'stat', label: 'a stat' },
+            ]}
+            onChange={(next) => onChange(withKey(value, 'plus', next === 'none' ? undefined : next === 'number' ? 1 : { stat: names.stats[0] ?? 'strength' }))}
+          />
+          {plus === 'number' ? <NumberInput aria-label="Plus number" value={e.plus} onChange={(n) => set({ plus: n ?? 0 })} /> : null}
+          {plus === 'stat' ? (
+            <IdPicker
+              noun="stat"
+              aria-label="Plus stat"
+              value={e.plus.stat}
+              options={names.stats}
+              onChange={(stat) => set({ plus: { stat } })}
+              onCreate={create('stat')}
+            />
+          ) : null}
+          <span className="text-xs text-fd-muted-foreground">against</span>
+          <NumberInput aria-label="Against" value={e.against} placeholder="no target" onChange={(against) => onChange(withKey(value, 'against', against))} />
+          {'problem' in read ? (
+            <p role="alert" className="w-full text-xs text-red-600 dark:text-red-400">
+              {read.problem}
+            </p>
+          ) : null}
+        </>
+      )
+      break
+    }
     case 'plugin':
     case 'json':
       fields = (

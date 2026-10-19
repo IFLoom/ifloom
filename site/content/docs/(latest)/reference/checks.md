@@ -148,6 +148,11 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
 | `unknown minigame "…"` | A `minigame` effect. |
 | `minigame variable "…" is not in any minigame's vars` | A `minigameVar` effect. |
+| `dice "…" is not dice notation such as "2d6+1", "1d20" or "d100"` | A [`roll`](/docs/reference/effects#roll) effect's `dice` that isn't notation. The effect rolls nothing. |
+| `dice have … sides; a die needs at least 2`, `… dice; a roll throws 1 to 100` | A `roll` effect's dice, in notation or as `{ count, sides }`. |
+| `roll key "…" must be letters, digits and _, not starting with a digit, so {{key}} can show it` | A `roll` effect's `key`. |
+| `roll plus must be a number or { stat }`, `roll against must be a number` | A `roll` effect's `plus` and `against`. |
+| `unknown stat "…"` | A `roll` effect's `plus: { stat }`. |
 | Whatever the plugin says | For a call to a plugin's effect, what its references name and its `argProblems`. |
 | Whatever the plugins say | For a `panel` effect, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. Any panel name is allowed. |
 

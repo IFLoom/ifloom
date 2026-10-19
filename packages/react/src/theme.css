@@ -167,6 +167,14 @@
 @keyframes ifloom-zoom-out {
   to { opacity: 0; transform: scale(1.04); }
 }
+/* A die tumbling before it settles on the face the engine rolled (`DiceRoll`). */
+@keyframes ifloom-dice-tumble {
+  0% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-14deg) translateY(-3px); }
+  50% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(14deg) translateY(-3px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
 /* What waits for a reveal and can be pressed (the choices) is hidden until it comes, not only faded. */
 @keyframes ifloom-fade-in-hidden {
   from { opacity: 0; visibility: hidden; }
@@ -248,7 +256,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     [data-transition-in],
-    [data-reveal] {
+    [data-reveal],
+    [data-part^="dice"] {
       animation: none !important;
     }
     [data-leaving] {

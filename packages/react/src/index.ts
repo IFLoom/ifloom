@@ -27,7 +27,17 @@ export { SceneStage, Beat } from './game/scene.tsx'
 export { InlineAction, Tip } from './game/inline.tsx'
 export { useMotion, useReducedMotion } from './game/motion.tsx'
 // The hints the React UI reads from content's `ui` fields, typed by augmenting the engine's hint interfaces.
-export { DEFAULT_REVEAL_DELAY, DEFAULT_TRANSITION_MS, MAX_PIPS, TRANSITIONS, lastReveal, revealGroups, screenTransition } from './hints.ts'
+export {
+  DEFAULT_REVEAL_DELAY,
+  DEFAULT_TRANSITION_MS,
+  DICE_ROLL_MS,
+  MAX_PIPS,
+  TRANSITIONS,
+  lastReveal,
+  revealGroups,
+  rollFor,
+  screenTransition,
+} from './hints.ts'
 export type { Reveal, RevealGroup, RevealPoint, ScreenTransition, StatDisplay, Transition, TransitionName } from './hints.ts'
 export { checkUiHints } from './check.ts'
 export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'
@@ -36,6 +46,8 @@ export type { ClockState, PlacesControls } from './game/sidebar.tsx'
 export { Notice, Notices } from './game/notices.tsx'
 export { NoticeStrip } from './game/strip.tsx'
 export { MinigameCard, useMinigame } from './game/minigame.tsx'
+export { DiceOverlay, DiceRoll, useFreshRolls } from './game/dice.tsx'
+export type { DiceRollProps } from './game/dice.tsx'
 export type { MinigameControls } from './game/minigame.tsx'
 export type { KeyOptions } from './game/keys.tsx'
 export { QuestLog, useQuests } from './game/quests.tsx'

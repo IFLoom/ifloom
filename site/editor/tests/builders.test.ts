@@ -109,6 +109,16 @@ describe('the effect builder', () => {
     for (const form of [...EFFECT_FORMS, 'kvBy', 'draw', 'plugin'] as const) expect(effectForm(newEffect(form))).toBe(form)
   })
 
+  it('edits a roll in its form: notation, a number or a stat added, a target', () => {
+    expect(effectForm({ kind: 'roll', key: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 })).toBe('roll')
+    expect(effectForm({ kind: 'roll', key: 'climb', dice: '2d6+1', plus: 2 })).toBe('roll')
+    // Dice as `{ count, sides }` are edited as JSON.
+    expect(effectForm({ kind: 'roll', key: 'climb', dice: { count: 2, sides: 6 } })).toBe('json')
+    expect(conditionForm({ roll: 'climb', passed: true, critical: 'max' })).toBe('roll')
+    expect(conditionForm({ roll: 'climb', critical: false })).toBe('roll')
+    expect(conditionForm({ roll: 'climb', gte: 3 } as never)).toBe('json')
+  })
+
   it('falls back to JSON for an entity’s stat', () => {
     expect(effectForm({ kind: 'stat', stat: 'morale', by: 1, of: 'staff:ana' })).toBe('json')
   })
@@ -150,6 +160,7 @@ describe('the effect builder', () => {
                     newEffect('stat', { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: [], sets: [] }),
                     newEffect('entity', { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: [], sets: [] }),
                     newEffect('scene', { scenes: ['a'], stats: [], things: [], kv: [], choices: [], sets: [] }),
+                    newEffect('roll'),
                   ],
                 },
               ],

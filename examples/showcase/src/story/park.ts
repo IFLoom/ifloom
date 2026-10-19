@@ -1,5 +1,5 @@
-/** Riverside Park: jogging, quick feet with the kids, the day's visitors and dog walking. */
-import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
+/** Riverside Park: jogging, quick feet with the kids, skimming stones, the ducks, the day's visitors and dog walking. */
+import type { Block, Condition, MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
 import { generate } from '@ifloom/plugin-generators'
 import { pass } from '@ifloom/plugin-calendar'
 import { at, onlyAt } from '@ifloom/plugin-places'
@@ -54,10 +54,27 @@ const quickFeet: MinigameDef = {
   },
 }
 
+/**
+ * How a skimmed stone went, under the dice: drawn only the turn you skim
+ * (`skimmed` resets each day), by the latest roll under `skim`. The React UI
+ * draws the dice before the line that shows (`ui.dice`), and holds the line
+ * back until they settle.
+ */
+const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
+
 export const park: Content = {
   activities: [
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
     { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
+    // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
+    {
+      id: 'skim',
+      blocked: [onlyAt(['park'])],
+      effects: [
+        { kind: 'kv', key: 'skimmed', to: true },
+        { kind: 'roll', key: 'skim', dice: '2d6', against: 8 },
+      ],
+    },
   ],
   scenes: [
     // How quick feet ends.
@@ -85,17 +102,29 @@ export const park: Content = {
       when: at('park'),
       effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', entity: '$' }] }, generate('visitor', 2)],
     },
+    // And the ducks come to see what you brought: a roll no line of prose hints, so the React UI shows it over the scene.
+    { id: 'ducks', once: 'turn', when: at('park'), effects: [{ kind: 'roll', key: 'ducks', dice: '1d6+2' }] },
   ],
   data: {
     places: {
       locations: [
         {
           ...place({ id: 'park', name: 'Riverside Park', tags: ['outdoors'], exits: ['high-street'] }),
-          // The river, then a line while the day's visitors are about.
-          body: [{ text: 'place.park' }, { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } }],
+          // The river, the ducks, a line while the day's visitors are about, then the stones, with how today's skim went.
+          body: [
+            { text: 'place.park' },
+            { text: 'place.park.ducks', when: { roll: 'ducks' } },
+            { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
+            { text: 'place.park.stones' },
+            skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
+            skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
+            skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
+          ],
           actions: [
             { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
             { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
+            // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.
+            { id: 'skim', label: 'Skim a stone', command: { type: 'activity', id: 'skim' } },
           ],
         },
       ],
@@ -133,6 +162,12 @@ export const park: Content = {
   prose: {
     'place.park': 'The river is slow and brown and full of ducks with opinions.',
     'place.park.visitors': 'A few people are out along the path today, walking off their lunch.',
+    // `{{ducks}}` is the total the trigger's roll put in the kv store.
+    'place.park.ducks': '{{ducks}} of them paddle over at once, in case you brought bread.',
+    'place.park.stones': 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].',
+    'park.skim.best': 'Skip after skip, clean to the far bank. An old man on the bench gives you a slow round of applause.',
+    'park.skim.passed': 'The stone skips once, twice, again, and sinks most of the way across. The ducks look impressed despite themselves.',
+    'park.skim.failed': 'Plop. It goes straight in, and the ducks look delighted.',
     'arrows.up': 'The girl with the whistle points at the sky. Up!',
     'arrows.down': 'She points at her shoes. Down!',
     'arrows.left': 'She points at the river. Left!',

@@ -45,7 +45,8 @@
  * `CarryOver.held` for `items`. Presentation in UI packages: no `transition`
  * effect, `GameState.transition`, `Game.transitions`, `View.transition` or
  * `view.scene.frame`; `Game.ui` and `view.scene.ui` (hints carried as
- * written) and `view.scene.key` (which screen this is).
+ * written) and `view.scene.key` (which screen this is). Dice rolls: the
+ * `roll` effect and condition, `GameState.rolls` and `View.rolls`.
  */
 import type {
   ActionDef,
@@ -76,6 +77,9 @@ import type {
   MinigameView,
   MediaState,
   OpenPanel,
+  Dice,
+  Roll,
+  RollsState,
   SavingView,
   Blocked,
   MigrationTools,
@@ -181,6 +185,8 @@ export type FrozenCondition =
    * running. `{ minigameVar: 'score', gte: 3 }`.
    */
   | ({ minigameVar: string } & FrozenRange)
+  /** The latest roll under a key: made, passed or failed, critical. */
+  | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
   | { custom: string; with?: Record<string, unknown> }
   /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`. */
@@ -260,6 +266,8 @@ export type FrozenGameState = {
   minigame: MinigameState | null
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
+  /** The rolls made: how many, the last command's, and the latest under each key. */
+  rolls: RollsState
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -355,6 +363,8 @@ export type FrozenEffect =
   | { kind: 'minigameVar'; key: string; to: number }
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
+  /** Throw dice, keep the total in the kv store under `key`, and record the roll. */
+  | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
   | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
 /** The screen this command leaves on comes in with `to`. */
@@ -550,6 +560,8 @@ export type FrozenView = {
   minigame: MinigameView | null
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
+  /** The rolls the last command made. */
+  rolls: Roll[]
   /** Whether the player can save now. */
   saving: SavingView
 }

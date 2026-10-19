@@ -468,6 +468,30 @@ describe('Small Town', () => {
     expect(visitors()).not.toEqual(first)
   })
 
+  it('skims a stone at the park on two dice against 8, and counts the ducks as you come in', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
+    // The ducks' roll came with arriving, from the park's trigger, and no line hints it.
+    const [ducks] = view(state, game).rolls
+    expect(ducks).toMatchObject({ key: 'ducks', dice: '1d6', plus: 2 })
+    expect(view(state, game).scene.body).toContain(`${ducks.total} of them paddle over`)
+    // The stones line holds the inline action that rolls.
+    const inline = view(state, game).scene.beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans : []))
+    expect(inline.some((span) => span.kind === 'action' && span.text === 'Try to skim a stone' && span.choice.id === 'skim')).toBe(true)
+    state = run(state, act('skim'))
+    const [skim] = view(state, game).rolls
+    expect(skim).toMatchObject({ key: 'skim', dice: '2d6', against: 8 })
+    expect(state.kv.skim).toBe(skim.total)
+    const body = view(state, game).scene.body
+    const line = skim.critical === 'max' ? 'Skip after skip' : skim.passed ? 'The stone skips once' : 'Plop.'
+    expect(body).toContain(line)
+    // The line under the dice carries the React UI's hint.
+    expect(view(state, game).scene.beats.find((beat) => beat.kind === 'text' && beat.text.startsWith(line))?.ui).toEqual({ dice: 'skim' })
+    // A new day resets `skimmed`, and the outcome is gone until you skim again.
+    expect(game.rules?.resets?.skimmed).toBe(false)
+    expect(view({ ...state, kv: { ...state.kv, skimmed: false } }, game).scene.body).not.toContain(line)
+  })
+
   it('keeps the phone in the pocket at work', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('office'))

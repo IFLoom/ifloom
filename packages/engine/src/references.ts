@@ -71,6 +71,8 @@ export type Reference =
   | { channel: string; track: string | null | undefined }
   /** A track played once. */
   | { sound: string }
+  /** A roll effect's dice, key, `plus` and `against`, which must be well formed. */
+  | { dice: unknown; key?: unknown; plus?: unknown; against?: unknown }
   /** A `ui` field of presentation hints, which must be data. */
   | { ui: unknown }
   /** A pool, with the tags asked of it. */

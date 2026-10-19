@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { audioSrc, type SceneBeat, type View } from '@ifloom/engine'
-import { leavingOf, offeredIn, screenTransition, type ScreenTransition, type Transition, type TransitionName } from '../hints.ts'
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { audioSrc, type Roll, type SceneBeat, type View } from '@ifloom/engine'
+import { leavingOf, offeredIn, rollFor, screenTransition, type ScreenTransition, type Transition, type TransitionName } from '../hints.ts'
 import { cn, PROSE } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
@@ -15,6 +15,7 @@ import { MinigameCard, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
 import { InlineSpans } from './inline.tsx'
 import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
+import { DiceOverlay, DiceRoll, unnamedRolls, useFreshRolls } from './dice.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
 function VoiceReplay({ voice }: { voice: string }) {
@@ -173,26 +174,45 @@ function MinigameSlot() {
 /** How long a reveal takes to come in, as `--ifloom-reveal-ms` sets it in the base styles. Only for when to stop listening for a skip. */
 const REVEAL_MS = 400
 
+/** A scene's rolls: those the last command made, and those of them that are new (`fresh`, changing `at`), which tumble and hold their block back. */
+type SceneRolls = { all: readonly Roll[]; fresh: readonly Roll[]; at: number }
+
 /**
  * A scene's beats: those shown with it, then from each beat whose block has a
  * `ui.reveal` hint, the beats to the next in a `reveal` part that waits for it
- * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). With motion
- * off, the groups are drawn but wait for nothing.
+ * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). A block
+ * with a `ui.dice` hint naming a roll gets that roll's `DiceRoll` before it;
+ * a new roll tumbles, and its block waits in a `reveal` part until the dice
+ * settle. With motion off, the groups are drawn but wait for nothing.
  */
-function Beats({ beats, motion }: { beats: SceneBeat[]; motion: boolean }) {
+function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: boolean; rolls: SceneRolls; skipped: boolean }) {
   const list = usePart('beats', cn(PROSE, 'flex flex-col gap-(--gap-beats)'))
   const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
+  const animate = motion && !skipped
+  // A roll that isn't new is drawn settled before its block, which doesn't wait.
+  const beat = (entry: SceneBeat, index: number, held: boolean) => {
+    const settled = held ? undefined : rollFor(entry, rolls.all)
+    return settled ? (
+      <Fragment key={index}>
+        <DiceRoll roll={settled} animate={false} />
+        <Beat beat={entry} />
+      </Fragment>
+    ) : (
+      <Beat key={index} beat={entry} />
+    )
+  }
   return (
     <div {...list}>
-      {revealGroups(beats).map((entry, at) =>
+      {revealGroups(beats, motion ? rolls.fresh : []).map((entry, at) =>
         entry.reveal ? (
-          <div key={`reveal-${at}`} {...group} data-reveal={motion ? entry.reveal.as : undefined} style={motion ? revealStyle(entry.reveal.at) : undefined}>
-            {entry.beats.map(({ beat, index }) => (
-              <Beat key={index} beat={beat} />
-            ))}
-          </div>
+          <Fragment key={`reveal-${at}-${entry.dice ? rolls.at : 0}`}>
+            {entry.dice ? <DiceRoll roll={entry.dice} animate={animate} /> : null}
+            <div {...group} data-reveal={motion ? entry.reveal.as : undefined} style={motion ? revealStyle(entry.reveal.at) : undefined}>
+              {entry.beats.map(({ beat: inner, index }, n) => beat(inner, index, n === 0 && entry.dice !== undefined))}
+            </div>
+          </Fragment>
         ) : (
-          entry.beats.map(({ beat, index }) => <Beat key={index} beat={beat} />)
+          entry.beats.map(({ beat: inner, index }) => beat(inner, index, false))
         ),
       )}
     </div>
@@ -206,7 +226,7 @@ function speakerHue(view: View): CSSProperties | undefined {
 }
 
 /** One scene, drawn once per `view.scene.key`: it comes in by `data-transition-in`, and its reveals run from then. */
-function SceneArticle({ className, motion, transition }: { className?: string; motion: boolean; transition: ScreenTransition }) {
+function SceneArticle({ className, motion, transition, rolls }: { className?: string; motion: boolean; transition: ScreenTransition; rolls: SceneRolls }) {
   const { view, panels } = useGame()
   const scene = view.scene
   const Panel = scene.panel ? panels[scene.panel] : undefined
@@ -217,8 +237,14 @@ function SceneArticle({ className, motion, transition }: { className?: string; m
   const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
   const choicesGroup = usePart('reveal', '')
   // Reveals wait until the player clicks the scene or presses a key, or they have all come in.
-  const last = view.minigame ? 0 : lastReveal(scene.beats)
+  const last = view.minigame ? 0 : lastReveal(scene.beats, motion ? rolls.fresh : [])
   const [revealed, setRevealed] = useState(false)
+  // New rolls on the same screen hold their blocks back again.
+  const [rolledAt, setRolledAt] = useState(rolls.at)
+  if (rolledAt !== rolls.at) {
+    setRolledAt(rolls.at)
+    setRevealed(false)
+  }
   const pending = motion && last > 0 && !revealed
   const skip = useCallback(() => setRevealed(true), [])
   useSkipKey(pending, skip)
@@ -252,7 +278,7 @@ function SceneArticle({ className, motion, transition }: { className?: string; m
         <h2 {...title}>{scene.title}</h2>
       </header>
       {scene.stage?.layers.length ? <Stage stage={scene.stage} /> : scene.stageImage ? <Picture {...image} src={scene.stageImage} alt="" /> : null}
-      <Beats beats={scene.beats} motion={motion} />
+      <Beats beats={scene.beats} motion={motion} rolls={rolls} skipped={revealed} />
       {/* With reveals to come, the choices come with the last of them: not pressable, or read out, until then. */}
       {last > 0 && motion ? (
         <div {...choicesGroup} data-reveal="fade" data-reveal-choices="" style={revealStyle(last)}>
@@ -298,10 +324,17 @@ function SceneStageImpl({ className }: { className?: string }) {
   const frame = usePart('scene-transition', '')
   const pressed = usePressed(view)
   const transition = screenTransition(view, runner.game, pressed)
+  const fresh = useFreshRolls()
+  const rolls = { all: view.rolls, fresh: fresh.rolls, at: fresh.at }
+  // New rolls no block on screen names show for a moment over the scene.
+  const unnamed = view.minigame ? [] : unnamedRolls(fresh.rolls, view.scene.beats)
   return (
-    <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} leave={leavingOf(pressed)} motion={motion} attrs={frame}>
-      <SceneArticle key={transition.key} className={className} motion={motion} transition={transition} />
-    </SceneFrame>
+    <>
+      <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} leave={leavingOf(pressed)} motion={motion} attrs={frame}>
+        <SceneArticle key={transition.key} className={className} motion={motion} transition={transition} rolls={rolls} />
+      </SceneFrame>
+      {unnamed.length ? <DiceOverlay key={fresh.at} rolls={unnamed} /> : null}
+    </>
   )
 }
 
@@ -319,5 +352,10 @@ function SceneStageImpl({ className }: { className?: string }) {
  * shows the rest at once. The `motion` option, or the player's reduced-motion
  * setting, turns all of it off. A speaker with a `ui.hue` gets their lines in
  * that colour.
+ *
+ * Dice: a block with a `ui.dice` hint gets the `DiceRoll` of the roll the last
+ * command made under that key, drawn before it, and a new roll's block waits
+ * for its dice to settle. New rolls no block names show for a moment in a
+ * `DiceOverlay`.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

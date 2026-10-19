@@ -73,6 +73,7 @@ type Condition =
   | { turn: Range }
   | { phase: Phase[] }
   | ({ minigameVar: string } & Range)
+  | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   | { custom: string; with?: Record<string, unknown> }
   | PluginCall
 ```
@@ -299,6 +300,24 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 Tests a variable of the [minigame](/docs/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
 
 The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
+
+### roll
+
+```ts
+{ roll: 'skim' }                     // a roll has been made under this key
+{ roll: 'skim', passed: true }       // it reached its target
+{ roll: 'skim', passed: false }      // it missed
+{ roll: 'climb', critical: 'max' }   // every die on its top face
+{ roll: 'climb', critical: true }    // every die on its top face, or every die on 1
+```
+
+Reads the latest [roll](/docs/reference/effects#roll) made under a key. Bare, it asks whether one has been made at all. `passed` asks whether the total reached the effect's `against`, and is false either way for a roll with no target. `critical: true` asks whether every die showed its top face or every die showed 1, `'max'` and `'min'` ask for one of them, and `false` asks for neither. Give both and both must hold.
+
+The total itself is a kv key, so test a number with [`kv`](#kv): `{ kv: 'skim', gte: 10 }`.
+
+A roll is kept until another roll under the same key replaces it, across turns and saves. To show an outcome only on the turn of the roll, set a kv key in the same effects and reset it each turn with [`rules.resets`](/docs/reference/rules#resets), as the showcase does with `skimmed`.
+
+[`explain`](#explain) says `roll skim is 9 on 2d6, passed; wants failed`.
 
 ### scene
 

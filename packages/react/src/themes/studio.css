@@ -390,3 +390,20 @@
   border-radius: calc(var(--radius) * 0.6);
   background: var(--card);
 }
+
+/* Dice: a raised card like the choices, with crisp tiles. */
+[data-part="dice"] {
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+}
+[data-part="dice-face"] {
+  border-width: 1px;
+  border-color: var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--muted);
+  font-weight: 700;
+}
+[data-part="dice-face"][data-high] {
+  border-color: var(--primary);
+  color: var(--primary);
+}

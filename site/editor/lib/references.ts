@@ -81,9 +81,12 @@ export function kvUsed(pack: EditorPack): string[] {
   walkPack(pack, {
     condition: (c) => {
       if (typeof c.kv === 'string' && c.of === undefined) names.add(c.kv)
+      if (typeof c.roll === 'string') names.add(c.roll)
     },
     effect: (e) => {
       if (e.kind === 'kv' && typeof e.key === 'string' && e.of === undefined) names.add(e.key)
+      // A roll keeps its total under its key.
+      if (e.kind === 'roll' && typeof e.key === 'string') names.add(e.key)
     },
   })
   return [...names]
@@ -157,6 +160,8 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
     }
     visit.effect = (e) => {
       if (e.kind === 'stat' && e.stat === from) e.stat = to
+      // A roll that adds the stat's value.
+      if (e.kind === 'roll' && typeof e.plus === 'object' && (e.plus as { stat?: unknown } | null)?.stat === from) e.plus = { stat: to }
     }
   } else if (thing === 'thing' || thing === 'kind') {
     // A thing is named by its reference, `kind:id`; renaming a kind moves every reference of that kind.
@@ -205,9 +210,11 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
     for (const entry of next.kv) if (entry.name === from) entry.name = to
     visit.condition = (c) => {
       if (c.kv === from && c.of === undefined) c.kv = to
+      if (c.roll === from) c.roll = to
     }
     visit.effect = (e) => {
       if (e.kind === 'kv' && e.key === from && e.of === undefined) e.key = to
+      if (e.kind === 'roll' && e.key === from) e.key = to
     }
   }
   walkPack(pack, visit)

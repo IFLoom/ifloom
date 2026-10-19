@@ -32,6 +32,7 @@ export const CONDITION_KEYS = [
   'turn',
   'phase',
   'minigameVar',
+  'roll',
   'custom',
 ] as const satisfies readonly ConditionKey[]
 
@@ -56,6 +57,7 @@ export const EFFECT_KINDS = [
   'minigame',
   'minigameVar',
   'panel',
+  'roll',
   'custom',
 ] as const satisfies readonly Effect['kind'][]
 
@@ -79,6 +81,7 @@ export const CONDITION_FORMS = [
   'setting',
   'level',
   'turn',
+  'roll',
 ] as const satisfies readonly ConditionKey[]
 export type ConditionForm = (typeof CONDITION_FORMS)[number] | 'plugin' | 'json'
 
@@ -96,6 +99,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   setting: 'Setting',
   level: 'Stat level',
   turn: 'Turn',
+  roll: 'A roll’s outcome',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
@@ -104,7 +108,19 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
  * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
  * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
  */
-export const EFFECT_FORMS = ['stat', 'kv', 'entity', 'move', 'you', 'scene', 'notify', 'turn', 'sound', 'audio'] as const satisfies readonly Effect['kind'][]
+export const EFFECT_FORMS = [
+  'stat',
+  'kv',
+  'entity',
+  'move',
+  'you',
+  'scene',
+  'notify',
+  'turn',
+  'sound',
+  'audio',
+  'roll',
+] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
@@ -121,6 +137,7 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   turn: 'End the turn',
   sound: 'Play a sound',
   audio: 'Background audio',
+  roll: 'Roll dice',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
@@ -140,6 +157,7 @@ export const EFFECT_MENU = [
   'turn',
   'sound',
   'audio',
+  'roll',
   'plugin',
   'json',
 ] as const satisfies readonly EffectForm[]

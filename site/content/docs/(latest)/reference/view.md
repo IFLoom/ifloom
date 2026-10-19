@@ -305,6 +305,24 @@ The engine never reads the [profile](/docs/reference/profile), so the view gives
 
 Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
 
+### rolls
+
+| Field | Type | Meaning |
+|---|---|---|
+| `rolls` | [`Roll`](/docs/reference/rolls#roll)`[]` | The [rolls](/docs/reference/effects#roll) the last command made, in order. Empty when it made none. |
+
+Each roll is what happened and nothing more: the key, the dice (`'2d6'`), the face each die showed, what was added, the total, and with a target, the target and whether it passed. A roll made by a [trigger](/docs/reference/triggers) or a plugin's hook in the same command is there too. Use it to show the dice as they land. The next command clears it, so a UI animates a roll once.
+
+```ts
+const shown = runner.view()
+for (const roll of shown.rolls) {
+  const outcome = roll.against === undefined ? '' : roll.passed ? ' (passed)' : ' (failed)'
+  log(`${roll.dice}: ${roll.faces.join(' + ')}${roll.plus ? ` + ${roll.plus}` : ''} = ${roll.total}${outcome}`)
+}
+```
+
+The React UI draws a roll with [`DiceRoll`](/docs/react/components#diceroll), in the story where a block's [`dice`](/docs/react/hints#dice) hint names it. The [Dice rolls and checks](/docs/recipes/dice) recipe shows the same with other frameworks.
+
 ### saving
 
 | Field | Type | Meaning |

@@ -517,6 +517,15 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.minigameLeft` | `Left` | |
 | `ui.minigameRight` | `Right` | |
 | `ui.minigameSpace` | `Space` | |
+| `ui.diceNeeds` | `needs {against}` | `against`: the roll's target |
+| `ui.dicePassed` | `Passed` | |
+| `ui.diceFailed` | `Failed` | |
+| `ui.diceCriticalMax` | `Critical!` | |
+| `ui.diceCriticalMin` | `Fumble` | |
+| `ui.diceRolled` | `Rolled {dice}: {faces}, total {total}.` | `dice`, `faces`, `total` |
+| `ui.diceRolledPassed` | `Needed {against}: passed.` | `against` |
+| `ui.diceRolledFailed` | `Needed {against}: failed.` | `against` |
+| `ui.diceDismiss` | `Dismiss the roll` | |
 | `ui.notices` | `Notices` | |
 | `ui.noticesMore` | `+{n} more` | `n`: the notices hidden on a phone |
 | `ui.noticesFewer` | `Show fewer` | |
@@ -578,6 +587,7 @@ Which component uses which keys:
 - **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
 - **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
+- **[Dice](/docs/react/components#diceroll)**: `ui.dicePassed`, `ui.diceFailed` and `ui.diceNeeds` on a roll's outcome, `ui.diceCriticalMax` and `ui.diceCriticalMin` on a critical, `ui.diceRolled`, `ui.diceRolledPassed` and `ui.diceRolledFailed` in what a screen reader hears, and `ui.diceDismiss` on the overlay's close button.
 - **[Devices](/docs/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.

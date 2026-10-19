@@ -96,4 +96,4 @@ Nothing else. It doesn't read a hint, give one a default, merge a scene's with t
 
 ## See it in an example
 
-The showcase's scenes, stats and characters carry the React UI's hints: `ui.transition` on `intro` and `ava.river`, `ui.reveal` on their second paragraphs, `ui.display` on energy, and `ui.hue` on Ava and Sam. Its source is in `examples/showcase/src/`.
+The showcase's scenes, stats and characters carry the React UI's hints: `ui.transition` on `intro` and `ava.river`, `ui.reveal` on their second paragraphs, `ui.dice` on the park's skimming lines, `ui.display` on energy, and `ui.hue` on Ava and Sam. Its source is in `examples/showcase/src/`.

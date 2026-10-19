@@ -35,6 +35,7 @@ import type { ModManager } from './mods.tsx'
 import type { Icon } from './icon.tsx'
 import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
 import type { MinigameCard } from './minigame.tsx'
+import type { DiceOverlay, DiceRoll } from './dice.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
 import type { AchievementList, AchievementsButton, AchievementsPage } from './achievements.tsx'
@@ -146,6 +147,17 @@ export const PART_KEYS = [
   'notice-dismiss',
   'notice-strip',
   'notice-strip-item',
+  // Dice rolls
+  'dice',
+  'dice-label',
+  'dice-faces',
+  'dice-face',
+  'dice-plus',
+  'dice-total',
+  'dice-outcome',
+  'dice-critical',
+  'dice-overlay',
+  'dice-dismiss',
   // Minigames
   'minigame',
   'minigame-title',
@@ -412,6 +424,8 @@ export type Components = Partial<{
   Notice: Override<PropsOf<typeof Notice>>
   NoticeStrip: Override<PropsOf<typeof NoticeStrip>>
   MinigameCard: Override<PropsOf<typeof MinigameCard>>
+  DiceRoll: Override<PropsOf<typeof DiceRoll>>
+  DiceOverlay: Override<PropsOf<typeof DiceOverlay>>
   GameMenu: Override<PropsOf<typeof GameMenu>>
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>

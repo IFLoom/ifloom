@@ -39,6 +39,7 @@ type GameState = {
   media: MediaState
   minigame: MinigameState | null
   panel: OpenPanel | null
+  rolls: RollsState
   gameVersion?: number
 }
 ```
@@ -271,6 +272,14 @@ panel: OpenPanel | null   // { panel: 'shop', with: { vendor: 'counter' } }
 ```
 
 The [panel](/docs/reference/panels) open over the story, with what it was opened with, or `null`. A [`panel` effect](/docs/reference/effects#panel) sets it and the [`closePanel`](/docs/reference/commands#closepanel) command clears it. [`view.panel`](/docs/reference/view#panel) reads it. A save from before panels loads with `null`. Like `minigame`, the field came with a load default and no new save version.
+
+### rolls
+
+```ts
+rolls: RollsState   // { made: 3, last: [/* this command's */], latest: { skim: { /* ... */ } } }
+```
+
+The [dice rolls](/docs/reference/rolls) the save has made. `made` counts every roll, and is part of each new roll's seed. `last` holds the rolls the last command made, which [`view.rolls`](/docs/reference/view#rolls) shows. `latest` keeps the latest roll under each key for the [`roll` condition](/docs/reference/conditions#roll). See [`RollsState`](/docs/reference/rolls#rollsstate). A save from before dice loads with `{ made: 0, last: [], latest: {} }`. Like `minigame`, the field came with a load default and no new save version.
 
 ## New Game+
 

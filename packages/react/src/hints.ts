@@ -10,8 +10,10 @@
  * - `ui.reveal` on a block: the block waits, then comes in.
  * - `ui.display` on a stat: a number, a bar or pips.
  * - `ui.hue` on an entity or a kind: the colour of their spoken lines.
+ * - `ui.dice` on a block: the roll under that key is drawn here, as dice that
+ *   tumble and settle before the block comes in.
  */
-import type { Game, RenderedChoice, SceneBeat, View } from '@ifloom/engine'
+import type { Game, RenderedChoice, Roll, SceneBeat, View } from '@ifloom/engine'
 
 /** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
 export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
@@ -40,6 +42,8 @@ declare module '@ifloom/engine' {
   interface BlockUi {
     /** Reveal this block after the ones before it: `{ delay: 1200, as: 'slide-up' }`. 800 ms and `'fade'` if left out. */
     reveal?: Reveal
+    /** Draw the roll the last command made under this kv key here, before this block: `ui: { dice: 'skim' }`. */
+    dice?: string
   }
   interface StatUi {
     /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */
@@ -62,6 +66,9 @@ export const DEFAULT_TRANSITION_MS = 300
 
 /** How long a reveal waits when it doesn't say, in milliseconds. */
 export const DEFAULT_REVEAL_DELAY = 800
+
+/** How long dice tumble before they settle, in milliseconds. The block a `ui.dice` hint is on comes in after it. */
+export const DICE_ROLL_MS = 1000
 
 /** The most pips the sidebar draws; a stat with a wider range is drawn as a bar. */
 export const MAX_PIPS = 20
@@ -114,27 +121,42 @@ export type RevealPoint = { delay: number; as: TransitionName; at: number }
 /** A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the scene). */
 export type RevealGroup = {
   reveal: RevealPoint | null
+  /** The roll whose dice are drawn before this run, which waits for them to settle: a block's `ui.dice` naming one of `rolled`. */
+  dice?: Roll
   /** Its beats, each with its index in the scene's beats. */
   beats: { beat: SceneBeat; index: number }[]
 }
 
-/** A scene's beats in groups: those shown with the scene, then each block with `ui.reveal` and the beats after it. */
-export function revealGroups(beats: readonly SceneBeat[]): RevealGroup[] {
+/** The roll a beat's `ui.dice` names among `rolls`: the last one under that key. */
+export function rollFor(beat: SceneBeat, rolls: readonly Roll[]): Roll | undefined {
+  const key = beat.ui?.dice
+  return typeof key === 'string' ? rolls.findLast((roll) => roll.key === key) : undefined
+}
+
+/**
+ * A scene's beats in groups: those shown with the scene, then each block with
+ * `ui.reveal` and the beats after it. With `rolled`, the rolls being shown
+ * as they're made, a block whose `ui.dice` names one of them starts a group
+ * too, which waits `DICE_ROLL_MS` for the dice to settle.
+ */
+export function revealGroups(beats: readonly SceneBeat[], rolled: readonly Roll[] = []): RevealGroup[] {
   const groups: RevealGroup[] = [{ reveal: null, beats: [] }]
   let at = 0
   beats.forEach((beat, index) => {
     const reveal = beat.ui?.reveal
-    if (reveal) {
-      const delay = typeof reveal.delay === 'number' && reveal.delay >= 0 ? reveal.delay : DEFAULT_REVEAL_DELAY
+    const dice = rollFor(beat, rolled)
+    if (reveal || dice) {
+      const wait = reveal ? (typeof reveal.delay === 'number' && reveal.delay >= 0 ? reveal.delay : DEFAULT_REVEAL_DELAY) : 0
+      const delay = wait + (dice ? DICE_ROLL_MS : 0)
       at += delay
-      groups.push({ reveal: { delay, as: reveal.as ?? 'fade', at }, beats: [] })
+      groups.push({ reveal: { delay, as: reveal?.as ?? 'fade', at }, ...(dice ? { dice } : {}), beats: [] })
     }
     groups.at(-1)!.beats.push({ beat, index })
   })
   return groups
 }
 
-/** When the last reveal in these beats comes, in milliseconds from the scene coming on; 0 with none. */
-export function lastReveal(beats: readonly SceneBeat[]): number {
-  return revealGroups(beats).reduce((last, group) => Math.max(last, group.reveal?.at ?? 0), 0)
+/** When the last reveal in these beats comes, in milliseconds from the scene coming on; 0 with none. `rolled` as for `revealGroups`. */
+export function lastReveal(beats: readonly SceneBeat[], rolled: readonly Roll[] = []): number {
+  return revealGroups(beats, rolled).reduce((last, group) => Math.max(last, group.reveal?.at ?? 0), 0)
 }

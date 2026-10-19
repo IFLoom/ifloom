@@ -1,6 +1,6 @@
 ---
 title: "Presentation hints"
-description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, stat bars and pips, and the colour of a person's lines. With checkUiHints to catch typos."
+description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, stat bars and pips, and the colour of a person's lines. With checkUiHints to catch typos."
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
@@ -11,6 +11,7 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`transition`](#transition) | A scene, a place, the game | How the screen comes on and goes off. |
 | [`transition`](#transition-on-a-choice) | A choice, an action | How the screen it leads to comes in. |
 | [`reveal`](#reveal) | A block | The block waits, then comes in. |
+| [`dice`](#dice) | A block | The roll under that key is drawn above the block, which waits for the dice to settle. |
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
@@ -131,14 +132,42 @@ type Reveal = { delay?: number; as?: TransitionName }
 ```ts
 import { revealGroups, lastReveal, type RevealGroup, type RevealPoint } from '@ifloom/react'
 
-function revealGroups(beats: readonly SceneBeat[]): RevealGroup[]
-function lastReveal(beats: readonly SceneBeat[]): number
+function revealGroups(beats: readonly SceneBeat[], rolled?: readonly Roll[]): RevealGroup[]
+function lastReveal(beats: readonly SceneBeat[], rolled?: readonly Roll[]): number
 
 type RevealPoint = { delay: number; as: TransitionName; at: number }
-type RevealGroup = { reveal: RevealPoint | null; beats: { beat: SceneBeat; index: number }[] }
+type RevealGroup = { reveal: RevealPoint | null; dice?: Roll; beats: { beat: SceneBeat; index: number }[] }
 ```
 
 `revealGroups` cuts a scene's beats into the run shown with the scene (its `reveal` is `null`) and a run for each beat with `ui.reveal`. `at` is when that reveal comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. `lastReveal` is the last `at`, or 0 with none. Use them in a [`Beat`](/docs/react/components#beat) or a `SceneStage` of your own.
+
+With `rolled`, the rolls being shown as they land, a beat whose [`dice`](#dice) hint names one of them starts a run too. Its `dice` is that roll, and it waits `DICE_ROLL_MS` more, for the dice to settle. Leave `rolled` out and dice hints change nothing.
+
+## dice
+
+```ts
+body: [
+  { text: 'place.park.stones' },   // 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].'
+  { text: 'park.skim.passed', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
+  { text: 'park.skim.failed', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
+]
+```
+
+On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `SceneStage` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for `DICE_ROLL_MS` (1000) milliseconds and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
+
+A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
+
+The [Dice rolls and checks](/docs/recipes/dice) recipe builds the whole check.
+
+### rollFor
+
+```ts
+import { rollFor, DICE_ROLL_MS } from '@ifloom/react'
+
+function rollFor(beat: SceneBeat, rolls: readonly Roll[]): Roll | undefined
+```
+
+The roll a beat's `dice` hint names among `rolls`, such as [`view.rolls`](/docs/reference/view#rolls): the last one under that key. Undefined for a beat with no hint, or one whose roll isn't there. Use it in a [`Beat`](/docs/react/components#beat) of your own to draw dice beside a line. `DICE_ROLL_MS` is how long `DiceRoll` tumbles, in milliseconds.
 
 ## display
 
@@ -188,6 +217,7 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a reveal `delay` that isn't whole milliseconds
 - a `display` that isn't `'number'`, `'bar'` or `'pips'`, or pips on a range over 20
 - a `hue` outside 0 to 360
+- a block's `dice` that isn't a roll's key (letters, digits and `_`)
 
 It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, and the places plugin's locations. Put it in a test beside the engine's checks:
 
@@ -205,4 +235,4 @@ describe('the content', () => {
 
 ## See it in the showcase
 
-Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.
+Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.

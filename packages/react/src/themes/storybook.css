@@ -441,3 +441,23 @@
   background: var(--card);
   box-shadow: var(--shadow-card);
 }
+
+/* Dice: chunky and round, like a board game's. */
+[data-part="dice"] {
+  border-radius: 1.25rem;
+  padding: 0.6rem 1rem;
+}
+[data-part="dice-face"] {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.8rem;
+  border-width: 3px;
+  box-shadow: 0 3px 0 var(--border);
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+}
+[data-part="dice-outcome"] {
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+  font-weight: 700;
+}

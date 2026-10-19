@@ -55,6 +55,13 @@ export function conditionForm(condition: Condition): ConditionForm {
     if (typeof count !== 'string' && !(typeof count === 'object' && count !== null && Object.keys(count).every((k) => SELECT_KEYS.has(k)))) return 'json'
   }
   if (kind === 'all' || kind === 'any' || kind === 'not') return keys.length === 1 ? kind : 'json'
+  // A roll's outcome: passed or failed, and critical, with no range (its total is a kv key).
+  if (kind === 'roll') {
+    const c = condition as { roll: unknown; passed?: unknown; critical?: unknown }
+    const critical = c.critical === undefined || typeof c.critical === 'boolean' || c.critical === 'max' || c.critical === 'min'
+    const passed = c.passed === undefined || typeof c.passed === 'boolean'
+    return typeof c.roll === 'string' && critical && passed && keys.every((k) => ['roll', 'passed', 'critical'].includes(k)) ? kind : 'json'
+  }
   // A turn's range is its value: `{ turn: { gte: 3 } }`.
   if (kind === 'turn') {
     const range = (condition as { turn: unknown }).turn
@@ -94,6 +101,8 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
       return { level: names.stats[0] ?? 'coins', gte: 1 }
     case 'turn':
       return { turn: { gte: 1 } }
+    case 'roll':
+      return { roll: names.kv[0] ?? 'climb', passed: true }
     case 'plugin':
       return { 'quests/done': { quest: 'errand' } }
     case 'json':
@@ -180,6 +189,11 @@ export function effectForm(effect: EffectRef): EffectForm {
       return 'from' in effect ? 'draw' : 'scene'
     case 'entity':
       return 'by' in effect ? 'entity' : 'json'
+    case 'roll':
+      // Notation, and `plus` as a number or a stat; dice as `{ count, sides }` are edited as JSON.
+      return typeof effect.dice === 'string' && (effect.plus === undefined || typeof effect.plus === 'number' || typeof effect.plus?.stat === 'string')
+        ? 'roll'
+        : 'json'
     case 'move':
     case 'you':
     case 'notify':
@@ -221,6 +235,8 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'sound', track: 'knock' }
     case 'audio':
       return { kind: 'audio', channel: 'music', to: 'calm' }
+    case 'roll':
+      return { kind: 'roll', key: 'climb', dice: '2d6', against: 8 }
     case 'plugin':
       return { 'quests/start': { quest: 'errand' } }
     case 'json':

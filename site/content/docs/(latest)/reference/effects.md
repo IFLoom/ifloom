@@ -73,6 +73,7 @@ type Effect =
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
   | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
+  | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
 ```
 
 ### stat
@@ -399,6 +400,26 @@ The panel stays open while the player uses it, and closes when a later command e
 
 The checker allows any name. A plugin that knows a panel checks its `with`, so the shop reports an unknown vendor. See [Checking a panel](/docs/reference/panels#checking-a-panel).
 
+### roll
+
+```ts
+{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }
+{ kind: 'roll', key: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
+{ kind: 'roll', key: 'ducks', dice: { count: 1, sides: 6 }, plus: 2 }
+```
+
+Throws dice and keeps the total in the [kv store](/docs/reference/state#kv) under `key`, so `{ kv: 'skim', gte: 8 }` tests it and `{{skim}}` prints it in prose. The roll itself is recorded too: the [`roll` condition](/docs/reference/conditions#roll) reads whether it passed, and [`view.rolls`](/docs/reference/view#rolls) gives a UI the faces to show.
+
+- **`dice`** is notation, `'2d6'`, `'1d20'`, `'d100'` or `'2d6+1'`, or an object, `{ count: 2, sides: 6 }`. A notation's `+1` or `-1` is added to the total.
+- **`plus`** adds a number, or the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it (modifiers included): `plus: { stat: 'strength' }`.
+- **`against`** is a target. The roll passes when the total reaches it, so `2d6` against 8 passes on 8 or more.
+
+A roll is a critical when every die shows its top face (`'max'`) or every die shows 1 (`'min'`). On one die, that's a natural 20 or a natural 1 on a d20. A critical doesn't change whether a roll passed. Test it with the condition's `critical` if your game says a natural 20 always succeeds.
+
+Each die is drawn from the save's seed, the turn, the save's count of rolls so far, the key and the die's place. The count goes up with every roll, so two rolls in one command differ and trying again in the same turn rolls afresh. A replay of the same commands makes the same rolls, and reloading a save and trying again gives the same result. See [Dice rolls](/docs/reference/rolls).
+
+The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't read, a die with fewer than 2 sides, more than 100 dice, a key that `{{key}}` couldn't print, a `plus` that isn't a number or `{ stat }`, an unknown stat, and an `against` that isn't a number. Dice it can't read roll nothing.
+
 ## Computed effects
 
 Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next stage of this ladder", declare a custom effect on the game and name it in the content:
@@ -441,4 +462,4 @@ You write a [plugin](/docs/reference/plugins)'s effect the same way, with the pl
 
 - The Corner Café: the `endWeek` activity in [`examples/cafe/src/world/activities.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/activities.ts) runs two custom effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ kind: 'turn' }`. The `hiring` scene's choices `create` new staff.
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kind: 'kv', key: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
-- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the park's `arrows` activity starts a minigame, and Ava's choices raise her friendship with `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.
+- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the park's `arrows` activity starts a minigame, its `skim` activity rolls two dice against 8, and Ava's choices raise her friendship with `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.

@@ -29,6 +29,7 @@ import { triggers, type TriggersShape } from './triggers.ts'
 import { turns, type TurnsShape } from './turns.ts'
 import { ui, type UiShape } from './ui.ts'
 import { kv, type KvShape } from './kv.ts'
+import { rolls, type RollsShape } from './rolls.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
 type Shapes =
@@ -50,6 +51,7 @@ type Shapes =
   | UiShape
   | PanelsShape
   | SavingShape
+  | RollsShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
@@ -62,7 +64,8 @@ type Shapes =
  * closes the panel the command found open; holdings anywhere, since it only
  * applies, views and checks (it sits beside entities, whose kinds it reads);
  * saving anywhere, since it only views and checks; ui anywhere, since it only
- * checks that hints are data.
+ * checks that hints are data; rolls last, after the plugins' hooks, so the
+ * rolls a command keeps for the view include any a hook or a trigger made.
  */
 export const FEATURES = [
   turns,
@@ -84,6 +87,7 @@ export const FEATURES = [
   holdings,
   locks,
   saving,
+  rolls,
 ] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never

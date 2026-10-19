@@ -47,6 +47,21 @@ describe('rename', () => {
     expect(kvUsed(vars.pack)).toEqual(['heardFiddle'])
     expect(problemsOf(vars)).toEqual([])
   })
+
+  it('moves a roll’s key and the stat it adds', () => {
+    const project = sampleProject()
+    project.pack.scenes[1].choices.push({ id: 'guess', effects: [{ kind: 'roll', key: 'guess', dice: '1d6', plus: { stat: 'coins' }, against: 4 }] })
+    project.pack.scenes[1].body.push({ text: 'home.lucky', when: { roll: 'guess', passed: true } })
+    project.pack.prose['home#guess'] = 'Guess'
+    project.pack.prose['home.lucky'] = 'Lucky.'
+    expect(kvUsed(project.pack)).toContain('guess')
+    const keys = rename(project, 'kv', 'guess', 'hunch')
+    expect(keys.pack.scenes[1].choices.at(-1)?.effects[0]).toMatchObject({ kind: 'roll', key: 'hunch' })
+    expect(keys.pack.scenes[1].body.at(-1)?.when).toEqual({ roll: 'hunch', passed: true })
+    const stats = rename(project, 'stat', 'coins', 'pennies')
+    expect(stats.pack.scenes[1].choices.at(-1)?.effects[0]).toMatchObject({ plus: { stat: 'pennies' } })
+    expect(problemsOf(stats)).toEqual([])
+  })
 })
 
 describe('rename a kind', () => {

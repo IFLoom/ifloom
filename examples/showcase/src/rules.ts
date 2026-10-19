@@ -8,8 +8,8 @@ import { at } from '@ifloom/plugin-places'
 
 /** How the town runs: what a new day resets, energy back overnight, and what's locked when. */
 export const rules: GameRules = {
-  // A coffee and a post a day; each new day (a turn, here) resets them.
-  resets: { hadCoffee: false, postedToday: false },
+  // A coffee, a post and a skimmed stone a day; each new day (a turn, here) resets them.
+  resets: { hadCoffee: false, postedToday: false, skimmed: false },
   // Energy back to full overnight.
   onTurn: (_state, { apply }) => apply([{ kind: 'stat', stat: 'energy', to: 100 }]),
   locks: [

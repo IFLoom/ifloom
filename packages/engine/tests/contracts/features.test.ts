@@ -75,6 +75,7 @@ describe('core features are leaves', () => {
       'features/minigames.ts',
       'features/notices.ts',
       'features/panels.ts',
+      'features/rolls.ts',
       'features/saving.ts',
       'features/scenes.ts',
       'features/settings.ts',
@@ -143,6 +144,7 @@ describe('the registry', () => {
       holdings: { conditions: [], effects: ['entity', 'move', 'you'], commands: [] },
       locks: { conditions: [], effects: [], commands: [] },
       saving: { conditions: [], effects: [], commands: [] },
+      rolls: { conditions: ['roll'], effects: ['roll'], commands: [] },
     })
     // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
     const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))
@@ -160,7 +162,8 @@ describe('the registry', () => {
     // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
     // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
     // A panel closes after the hooks, so a turn or a scene a hook moves on closes it too.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'panels'] })
+    // The command's rolls are kept last, so they include any a trigger or a hook made.
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'panels', 'rolls'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

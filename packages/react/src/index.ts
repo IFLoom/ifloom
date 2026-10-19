@@ -10,7 +10,17 @@
 
 // The game
 export { GameProvider, useGame } from './game/context.tsx'
-export type { GameContextValue, GameProviderProps, ModsOption, PanelComponent, PluginSectionComponent, UnlocksOption } from './game/context.tsx'
+export type {
+  GameContextValue,
+  GameProviderProps,
+  InlineComponent,
+  InlineComponents,
+  InlineProps,
+  ModsOption,
+  PanelComponent,
+  PluginSectionComponent,
+  UnlocksOption,
+} from './game/context.tsx'
 export { GameShell } from './game/shell.tsx'
 export type { GameShellProps } from './game/shell.tsx'
 export { DefaultLayout, RoomActions, Title } from './game/layout.tsx'
@@ -24,7 +34,7 @@ export { mountGame } from './game/mount.tsx'
 export { useAudio } from './game/audio.ts'
 export type { MountOptions } from './game/mount.tsx'
 export { SceneStage, Beat } from './game/scene.tsx'
-export { InlineAction, Tip } from './game/inline.tsx'
+export { BUILT_IN_INLINE, InlineAction, InlineImage, InlineModal, InlineTrigger, Tip } from './game/inline.tsx'
 export { useMotion, useReducedMotion } from './game/motion.tsx'
 // The hints the React UI reads from content's `ui` fields, typed by augmenting the engine's hint interfaces.
 export {

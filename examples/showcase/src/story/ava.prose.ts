@@ -1,7 +1,9 @@
 /** Ava's words, by key. Choice labels are `<scene>#<choice>`; reply labels `<message>#<reply>`. */
 export const prose: Record<string, string> = {
   // A paragraph in quotes is a spoken line, so narration goes in its own paragraph.
-  'ava.hi': 'Ava looks up from the till and grins.\n\n"You’re the one above the launderette. Welcome to the worst-kept secret in town: me."',
+  // `[[ui:image|…]]` is the React UI's: her name opens her photo in the viewer.
+  'ava.hi':
+    '[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.\n\n"You’re the one above the launderette. Welcome to the worst-kept secret in town: me."',
   // Named lines: they follow another of Ava's, and a bare quote there would read as the player's.
   'ava.smalltalk.rain': 'Ava: "Rain later. The ducks know before the forecast does."',
   'ava.smalltalk.beans': 'Ava: "New beans this week. Tell me if they’re awful. Nobody else will."',

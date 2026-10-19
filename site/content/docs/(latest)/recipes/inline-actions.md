@@ -104,12 +104,13 @@ The React UI draws both with no code from you. An inline action is an [`InlineAc
 
 ## Draw them yourself
 
-With another framework, draw a beat's `spans` when it has them, and its `text` when it doesn't. Each piece is plain words, words in [bold or italics](/docs/reference/prose#bold-and-italics), an inline action or a tooltip:
+With another framework, draw a beat's `spans` when it has them, and its `text` when it doesn't. Each piece is plain words, words in [bold or italics](/docs/reference/prose#bold-and-italics), an inline action, a tooltip or a [UI piece](/docs/reference/prose#ui-pieces):
 
 1. Draw `text` spans as they are, and `bold` and `italic` spans in a `<strong>` and an `<em>`.
 2. Draw an `action` span as a `<button>` with its words. When it's pressed and `choice.disabled` is unset, send `choice.command`. When it's greyed out, use `aria-disabled="true"` rather than `disabled`, so it can still be focused and its reason read.
 3. Draw a `tip` span as a `<button>` with its words, and its `tip` as a note after it.
-4. Give the note an `id` and the button `aria-describedby` with it, and show the note on hover, on focus and on a tap. A greyed-out action's reason works the same way.
+4. Draw a `ui` span's words, or your own component for its `name`. [Popups and modals](/docs/recipes/modals) draws a `modal`.
+5. Give the note an `id` and the button `aria-describedby` with it, and show the note on hover, on focus and on a tap. A greyed-out action's reason works the same way.
 
 This CSS shows a note while its button is hovered, focused, or tapped open (`aria-expanded="true"`). The `vue`, `svelte` and `vanilla` templates have the same rules in `src/styles.css`:
 
@@ -141,6 +142,11 @@ export function drawLine(runner: Runner, line: HTMLElement, text: string, spans:
     }
     if (span.kind === 'bold' || span.kind === 'italic') {
       line.appendChild(document.createElement(span.kind === 'bold' ? 'strong' : 'em')).textContent = span.text
+      continue
+    }
+    // A UI piece, [[ui:…]]: its words, unless you draw that name (see the Popups and modals recipe).
+    if (span.kind === 'ui') {
+      line.append(span.text)
       continue
     }
     const button = line.appendChild(document.createElement('button'))
@@ -179,6 +185,7 @@ export function Line({ runner, text, spans }: { runner: Runner; text: string; sp
         if (span.kind === 'text') return <span key={at}>{span.text}</span>
         if (span.kind === 'bold') return <strong key={at}>{span.text}</strong>
         if (span.kind === 'italic') return <em key={at}>{span.text}</em>
+        if (span.kind === 'ui') return <span key={at}>{span.text}</span>
         const note = span.kind === 'tip' ? span.tip : span.choice.disabled
         const press = () => {
           if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
@@ -229,6 +236,7 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
     <template v-if="span.kind === 'text'">{{ span.text }}</template>
     <strong v-else-if="span.kind === 'bold'">{{ span.text }}</strong>
     <em v-else-if="span.kind === 'italic'">{{ span.text }}</em>
+    <template v-else-if="span.kind === 'ui'">{{ span.text }}</template>
     <template v-else>
       <button
         type="button"
@@ -263,7 +271,7 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
   const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
 </script>
 
-{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else if span.kind === 'bold'}<strong>{span.text}</strong>{:else if span.kind === 'italic'}<em>{span.text}</em>{:else}<button
+{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else if span.kind === 'bold'}<strong>{span.text}</strong>{:else if span.kind === 'italic'}<em>{span.text}</em>{:else if span.kind === 'ui'}{span.text}{:else}<button
         type="button"
         class={span.kind === 'tip' ? 'tip' : 'inline-action'}
         aria-disabled={span.kind === 'action' && span.choice.disabled ? 'true' : undefined}

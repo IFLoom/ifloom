@@ -305,6 +305,26 @@
   font-weight: 600;
 }
 
+/* Inline pieces as words with a dashed outline, like a sticker to peel, and the note as a soft card. */
+[data-part="inline-ui"] {
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 0.35em;
+  border: 2px dashed color-mix(in oklch, var(--primary) 45%, transparent);
+  border-radius: 999px;
+}
+
+[data-part="inline-ui"]:hover {
+  background: color-mix(in oklch, var(--primary) 14%, transparent);
+}
+
+[data-part="inline-modal"] {
+  border-radius: 1rem;
+  background: var(--card);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
 /* The plugins' defaults: soft cards that sit on the page like stickers. */
 [data-part="achievement"],
 [data-part="good"],

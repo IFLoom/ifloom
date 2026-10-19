@@ -1,10 +1,13 @@
 /**
- * Inline actions, tooltips, bold and italics in the prose: the `spans` of a
- * text or spoken beat. An inline action is a button in the line that presses its choice; a
- * tooltip is a button in the line that shows a short note. Both show their
- * note in a small bubble on hover, on keyboard focus and on a tap, and close
- * it on Escape or a tap elsewhere. The note is also the button's description
- * (`aria-describedby`), so a screen reader reads it with the button.
+ * Inline actions, tooltips, inline pieces, bold and italics in the prose: the
+ * `spans` of a text or spoken beat. An inline action is a button in the line
+ * that presses its choice; a tooltip is a button in the line that shows a
+ * short note. Both show their note in a small bubble on hover, on keyboard
+ * focus and on a tap, and close it on Escape or a tap elsewhere. The note is
+ * also the button's description (`aria-describedby`), so a screen reader
+ * reads it with the button. An inline piece (`[[ui:name|…]]`) is drawn by the
+ * game's own `inline` component of that name, else a built-in one (`modal`,
+ * `image`), else as its words.
  */
 import {
   Fragment,
@@ -20,10 +23,13 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import type { InlineSpan } from '@ifloom/engine'
-import { useGame } from './context.tsx'
+import { artSrc, parseBeats, styledBeats, type InlineSpan } from '@ifloom/engine'
+import { useGame, useGameIfAny, type InlineComponent, type InlineComponents, type InlineProps } from './context.tsx'
 import { PriceTag } from './choices.tsx'
+import { PartDialog } from './dialog.tsx'
 import { overridable, usePart } from './overrides.tsx'
+import { Beat } from './scene.tsx'
+import { MediaViewer } from './viewer.tsx'
 
 type Place = { left: number; top: number }
 
@@ -222,6 +228,114 @@ function InlineActionImpl({ text, choice, className }: { text: string; choice: E
  */
 export const InlineAction = overridable('InlineAction', InlineActionImpl)
 
+/**
+ * The words of an inline piece as a button that opens something over the
+ * page: the part `inline-ui`, with `data-ui` set to the piece's name and
+ * `aria-haspopup="dialog"`. When `open` goes back to false, focus returns to
+ * it. The built-in `modal` and `image` use it, and so can a game's own.
+ */
+export function InlineTrigger({
+  name,
+  open,
+  onOpen,
+  className,
+  children,
+}: {
+  name: string
+  /** Whether what it opens is open, for `aria-expanded`. */
+  open: boolean
+  onOpen: () => void
+  className?: string
+  children: ReactNode
+}) {
+  const button = useRef<HTMLButtonElement>(null)
+  const was = useRef(open)
+  // Focus comes back to the words when what they opened closes: the dialog has no trigger of its own to return it to.
+  useEffect(() => {
+    if (was.current && !open) button.current?.focus()
+    was.current = open
+  }, [open])
+  const attrs = usePart(
+    'inline-ui',
+    'cursor-pointer rounded-sm font-medium underline decoration-dashed decoration-1 underline-offset-4 hover:decoration-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[ui=image]:cursor-zoom-in',
+    className,
+  )
+  return (
+    <button {...attrs} ref={button} type="button" data-ui={name} aria-haspopup="dialog" aria-expanded={open} onClick={onOpen}>
+      {children}
+    </button>
+  )
+}
+
+/**
+ * The built-in `modal`, from `[[ui:modal|words|key]]` or
+ * `[[ui:modal|words|key|title]]`: the words as an `InlineTrigger` that opens
+ * a dialog with the prose line `key`, filled in for this save and drawn as a
+ * scene's paragraphs are, in an `inline-modal` part. The dialog is titled
+ * `title`, else the words. Escape, the close button or a click outside close
+ * it, and focus goes back to the words. A key with no prose shows the words.
+ * Replace it with a `modal` of your own in `inline`.
+ */
+export function InlineModal({ text, args }: InlineProps<'modal'>) {
+  const game = useGameIfAny()
+  const [open, setOpen] = useState(false)
+  const body = usePart('inline-modal', 'grid gap-3 leading-relaxed')
+  const [key, title] = args
+  // The line as it reads in this save, cut into paragraphs like a scene's body.
+  const line = key && game ? game.runner.game.prose?.line(key, game.runner.state) : undefined
+  if (line === undefined) return <>{text}</>
+  return (
+    <>
+      <InlineTrigger name="modal" open={open} onOpen={() => setOpen(true)}>
+        {text}
+      </InlineTrigger>
+      <PartDialog open={open} onClose={() => setOpen(false)} title={title ?? text}>
+        <div {...body}>
+          {styledBeats(parseBeats(line)).map((beat, index) => (
+            <Beat key={index} beat={beat} />
+          ))}
+        </div>
+      </PartDialog>
+    </>
+  )
+}
+
+/**
+ * The built-in `image`, from `[[ui:image|words|path]]` or
+ * `[[ui:image|words|path|alt]]`: the words as an `InlineTrigger` that opens
+ * the picture at `path` in the `MediaViewer`, the lightbox a story's pictures
+ * open in. The path is resolved as `[[img:…]]` resolves it (`art/`, `.jpg` for
+ * a bare name), and `alt` describes it, else the words. Replace it with an
+ * `image` of your own in `inline`.
+ */
+export function InlineImage({ text, args }: InlineProps<'image'>) {
+  const [open, setOpen] = useState(false)
+  const [path, alt] = args
+  if (!path) return <>{text}</>
+  return (
+    <>
+      <InlineTrigger name="image" open={open} onOpen={() => setOpen(true)}>
+        {text}
+      </InlineTrigger>
+      {open ? <MediaViewer media={{ kind: 'image', src: artSrc(path), alt: alt ?? text, size: 'inline' }} open={open} onOpenChange={setOpen} /> : null}
+    </>
+  )
+}
+
+/** The inline pieces the React UI draws by name. A game's own `inline` of the same name go over these. */
+export const BUILT_IN_INLINE: Readonly<InlineComponents> = {
+  modal: InlineModal,
+  image: InlineImage,
+}
+
+/** An inline piece: the game's component by its name, else a built-in one, else its words. */
+function InlinePiece({ span }: { span: Extract<InlineSpan, { kind: 'ui' }> }) {
+  const own = useGameIfAny()?.inline
+  const Piece = (own?.[span.name] ?? BUILT_IN_INLINE[span.name]) as InlineComponent | undefined
+  if (!Piece) return <>{span.text}</>
+  return <Piece name={span.name} text={span.text} args={span.args} />
+}
+
 /** Words in bold, from `**words**`: a `strong` with the part `bold`. */
 function Bold({ text }: { text: string }) {
   return <strong {...usePart('bold', 'font-bold')}>{text}</strong>
@@ -232,7 +346,7 @@ function Italic({ text }: { text: string }) {
   return <em {...usePart('italic', 'italic')}>{text}</em>
 }
 
-/** A line's spans: words as they are, bold and italics, inline actions and tooltips as buttons in the line. */
+/** A line's spans: words as they are, bold and italics, inline actions and tooltips as buttons in the line, and inline pieces. */
 export function InlineSpans({ spans }: { spans: InlineSpan[] }) {
   return (
     <>
@@ -245,6 +359,8 @@ export function InlineSpans({ spans }: { spans: InlineSpan[] }) {
           <Italic key={index} text={span.text} />
         ) : span.kind === 'tip' ? (
           <Tip key={index} text={span.text} tip={span.tip} />
+        ) : span.kind === 'ui' ? (
+          <InlinePiece key={index} span={span} />
         ) : (
           <InlineAction key={index} text={span.text} choice={span.choice} />
         ),

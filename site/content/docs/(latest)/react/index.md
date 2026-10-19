@@ -215,6 +215,7 @@ function GameShell(props: GameShellProps): JSX.Element
 type GameShellProps = {
   runner: Runner
   panels?: Record<string, PanelComponent>
+  inline?: InlineComponents
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
   unlocks?: UnlocksOption
@@ -232,6 +233,7 @@ type GameShellProps = {
 |---|---|
 | `runner` | The game's [runner](/docs/reference/runner). |
 | `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
+| `inline` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name. `modal` and `image` are built in. See [Inline pieces](/docs/react/hints#inline-pieces). |
 | `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/docs/react/extending#plugin-sections). |
 | `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
 | `unlocks` | Codes the player can enter, for the [unlocks plugin](/docs/plugins/unlocks): its `startUnlocks`, what couldn't be opened, and how to restart. It puts a code box on the settings page, or in the menu without pages. See [`UnlocksOption`](/docs/react/components#unlocksoption). |

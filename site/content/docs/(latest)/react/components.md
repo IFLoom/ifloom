@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions,
-  SceneStage, Beat, InlineAction, Tip, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
+  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Clock, StatList, EntityTable, LocationCard, Exits, PeopleHere, Relationships, Inventory, WardrobeCard,
   useClock, usePlaces, usePeople, useWardrobe,
   InputField, InputFields,
@@ -30,7 +30,7 @@ import {
   UI_STRINGS, uiSay, useWords,
   PART_KEYS, UiProvider, usePart, overridable,
   type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption, type UnlocksOption,
-  type PanelComponent, type PluginSectionComponent, type UiStringKey, type IconName,
+  type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type IconName,
   type SavesState, type ModsState, type DevicesState, type DeviceState,
   type ClockState, type PlacesControls, type QuestsControls, type WardrobeControls, type WardrobeSlotControls,
   type MessagesControls, type FeedControls, type DebugControls, type ShopControls, type JobsControls,
@@ -256,6 +256,7 @@ function GameProvider(props: GameProviderProps): JSX.Element
 type GameProviderProps = {
   runner: Runner
   panels?: Record<string, PanelComponent>
+  inline?: InlineComponents
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
   unlocks?: UnlocksOption
@@ -270,11 +271,11 @@ type GameProviderProps = {
 
 Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, reads `runner.view()` again only when the state changes or what the plugins' views show of the profile does, and hands both down through [`useGame`](#usegame).
 
-`panels` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `unlocks` turns on the [code box](#unlockspanel): the provider calls its `start` with the runner once it's drawn, and stops what it started when it goes. See [`UnlocksOption`](#unlocksoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
+`panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `unlocks` turns on the [code box](#unlockspanel): the provider calls its `start` with the runner once it's drawn, and stops what it started when it goes. See [`UnlocksOption`](#unlocksoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
 Use it on its own to build [your own layout](/docs/react/extending#your-own-layout).
 
-**Gotcha.** Define `panels`, `sections`, `mods`, `unlocks`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
+**Gotcha.** Define `panels`, `inline`, `sections`, `mods`, `unlocks`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
 
 ### useGame
 
@@ -378,6 +379,16 @@ type PanelComponent = ComponentType<{ data: unknown }>
 ```
 
 A game's own panel: a scene's bespoke panel, an app's panel section, or a [panel](/docs/reference/panels) content opens. `data` is what the game's [custom panel](/docs/reference/custom#panels) returned, or what the open panel was opened with. See [Panels](/docs/react/extending#panels).
+
+### InlineComponents
+
+```ts
+type InlineProps<N extends string = string> = { name: N; text: string; args: InlineUiArgs<N> }
+type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
+type InlineComponents = { [N in keyof InlineUi]?: InlineComponent<N> } & { [name: string]: ComponentType<InlineProps<never>> | undefined }
+```
+
+A game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, by name, for the provider's `inline`. Each gets the piece's `name`, its words as `text`, and the arguments after the words as `args`, typed by what [`InlineUi`](/docs/reference/ui-hints#inlineui) declares for that name. See [Inline pieces](/docs/react/hints#inline-pieces).
 
 ### PluginSectionComponent
 
@@ -660,6 +671,38 @@ A tooltip in the prose, from a `tip` [span](/docs/reference/prose#inlinespan): `
 The bubble is put in the page's `body`, so a scrolling panel can't clip it, and it's kept inside the window: under the words, or above them when there's no room below.
 
 Replaceable as `Tip` in [`components`](#components). Parts: `tip` and `tip-content`.
+
+### InlineTrigger
+
+```tsx
+function InlineTrigger(props: { name: string; open: boolean; onOpen: () => void; className?: string; children: ReactNode }): JSX.Element
+```
+
+The words of an [inline piece](/docs/react/hints#inline-pieces) as a button in the line that opens something over the page. It has the part `inline-ui`, `data-ui` set to `name`, `aria-haspopup="dialog"` and `aria-expanded` from `open`. When `open` goes back to false, focus returns to it, since a dialog opened this way has no trigger of its own to return to. The built-in `modal` and `image` use it, and so can yours.
+
+### InlineModal
+
+```tsx
+function InlineModal(props: InlineProps<'modal'>): JSX.Element
+```
+
+The built-in `modal`, from `[[ui:modal|words|key]]` or `[[ui:modal|words|key|title]]`. The words are an [`InlineTrigger`](#inlinetrigger) that opens a [`PartDialog`](#partdialog) with the prose line `key`, filled in for this save and drawn as a scene's paragraphs are, inside an `inline-modal` part. The dialog is titled `title`, or the words when there's none. Escape, the close button or a click outside close it, and focus goes back to the words. A key with no prose shows the words alone. Replace it with a `modal` of your own in `inline`.
+
+### InlineImage
+
+```tsx
+function InlineImage(props: InlineProps<'image'>): JSX.Element
+```
+
+The built-in `image`, from `[[ui:image|words|path]]` or `[[ui:image|words|path|alt]]`. The words are an [`InlineTrigger`](#inlinetrigger) that opens the picture at `path` in the [`MediaViewer`](#mediaviewer), the same lightbox a story's pictures open in. The path is resolved as [`[[img:…]]`](/docs/reference/prose#images) resolves it, and `alt` describes the picture, or the words when there's none. It opens even with `viewer: false`, because the words are the only way to see it. Replace it with an `image` of your own in `inline`.
+
+### BUILT_IN_INLINE
+
+```ts
+const BUILT_IN_INLINE: Readonly<InlineComponents>
+```
+
+The inline pieces the React UI draws by name: `modal` ([`InlineModal`](#inlinemodal)) and `image` ([`InlineImage`](#inlineimage)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
 
 ```tsx
 import type { Components } from '@ifloom/react'

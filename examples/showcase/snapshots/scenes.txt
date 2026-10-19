@@ -11,7 +11,7 @@
   [>] Say goodnight
 
 === ava.hi @ moving-day
-Ava looks up from the till and grins.
+[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
@@ -21,7 +21,7 @@ Ava: "Walk the river at dusk sometime. It’s the only quiet in town."
   [>] Leave her to it
 
 === ava.hi @ first-morning
-Ava looks up from the till and grins.
+[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
@@ -31,7 +31,7 @@ Ava: "New beans this week. Tell me if they’re awful. Nobody else will."
   [>] Leave her to it
 
 === ava.hi @ a-week-in
-Ava looks up from the till and grins.
+[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
@@ -219,13 +219,13 @@ Ava is behind the counter, flour to the elbows, and nods you in.
 Your knee won’t stop jiggling under the table. The coffee is working.
 
 === place:flat @ moving-day
-Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. The cat has claimed the warm spot on the sill.
+Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. The cat has claimed the warm spot on the sill.
 
 === place:flat @ first-morning
-Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. The cat has claimed the warm spot on the sill.
+Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. The cat has claimed the warm spot on the sill.
 
 === place:flat @ a-week-in
-Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. Biscuit has claimed the warm spot on the sill.
+Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. Biscuit has claimed the warm spot on the sill.
 
 === place:high-street @ moving-day
 A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.

@@ -491,6 +491,18 @@ describe('Small Town', () => {
     expect(visitors()).not.toEqual(first)
   })
 
+  it("carries the React UI's inline pieces in the flat's prose as written, with the words in the text", () => {
+    const state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    const [room] = view(state, game).scene.beats
+    expect(room.kind === 'text' && room.text).toContain('and the radiator knocks when it feels like it')
+    expect(room.kind === 'text' && room.spans?.find((span) => span.kind === 'ui')).toEqual({
+      kind: 'ui',
+      name: 'modal',
+      text: 'the radiator knocks',
+      args: ['notice.welcome', "Sam's note"],
+    })
+  })
+
   it('skims a stone at the park on two dice against 8, and counts the ducks as you come in', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('park'))

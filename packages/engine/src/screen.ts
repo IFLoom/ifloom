@@ -506,7 +506,8 @@ export function renderedChoice({ effects: _effects, ...choice }: ScreenChoice): 
  * in the prose and not in the list as well. One `offered` doesn't have (left
  * off, or not there) is shown as its words, as is a second mention of one
  * already drawn. Each tooltip gets its prose line, filled in for this save; one
- * with no line is shown as its words. Bold and italics become their spans, and
+ * with no line is shown as its words. A UI piece (`[[ui:…]]`) is carried as
+ * written. Bold and italics become their spans, and
  * `text` keeps the words alone. `label` gives the words of a choice that isn't
  * offered, for markup that doesn't give its own.
  */
@@ -531,6 +532,7 @@ function inlineBeats(
     for (const part of parts) {
       if (part.kind === 'text') words(part.text)
       else if (part.kind === 'bold' || part.kind === 'italic') spans.push({ kind: part.kind, text: part.text })
+      else if (part.kind === 'ui') spans.push({ kind: 'ui', name: part.name, text: part.text, args: part.args })
       else if (part.kind === 'tip') {
         const tip = game.prose?.line(part.key, state)
         if (tip === undefined) words(part.text)
@@ -558,7 +560,7 @@ export function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[] {
 
 /**
  * Beats as the backlog keeps them: an inline action is history there, so it
- * becomes its words and nothing can press it. Tooltips, bold and italics stay.
+ * becomes its words and nothing can press it. Tooltips, UI pieces, bold and italics stay.
  */
 export function pastBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {

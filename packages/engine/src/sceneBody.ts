@@ -24,6 +24,15 @@ export type InlineSpan =
   | { kind: 'bold'; text: string }
   /** Words in italics, from `*words*`. `text` is the words alone. */
   | { kind: 'italic'; text: string }
+  /**
+   * A piece of a UI's own, from `[[ui:name|words|arg|…]]`, such as a popup
+   * or a picture to zoom. The engine gives it no meaning and carries it as
+   * written: `name` says which of the UI's components draws it, `text` is the
+   * words to show (what a screen reader, the backlog and the playtest read),
+   * and `args` are the parts after the words, as text, in order. A UI
+   * package types its names and arguments by augmenting `InlineUi`.
+   */
+  | { kind: 'ui'; name: string; text: string; args: string[] }
 
 /**
  * One piece of a scene's body, as the UI draws it. Any beat can carry `ui`:
@@ -250,10 +259,25 @@ function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<
 }
 
 /**
- * Inline actions and tooltips, as written: `[[act:id]]`, `[[act:id|words]]`
- * and `[[tip:key|words]]`. Groups: the tag, the id or key, then the words.
+ * Inline actions, tooltips and a UI's inline pieces, as written:
+ * `[[act:id]]`, `[[act:id|words]]`, `[[tip:key|words]]` and
+ * `[[ui:name|words|arg|…]]`. Groups: the tag, the id, key or name, then
+ * everything after the first `|` (for `ui`, the words and the arguments).
  */
-export const INLINE_MARKUP = /\[\[(act|tip):([^\]|]*)(?:\|([^\]]*))?\]\]/g
+export const INLINE_MARKUP = /\[\[(act|tip|ui):([^\]|]*)(?:\|([^\]]*))?\]\]/g
+
+/**
+ * A UI piece's name, as `[[ui:name|…]]` writes it: an id (letters, digits,
+ * `-` and `_`, in parts joined by `.`), with a plugin's name and `/` in front
+ * when a plugin's UI draws it (`shop/price-card`).
+ */
+export const UI_NAME = /^(?:[A-Za-z0-9_-]+\/)?[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/
+
+/** `[[ui:…]]` read: its name, its words and its arguments, each trimmed. Internal; the checks use it too. */
+export function uiParts(name: string, rest: string | undefined): { name: string; text: string | undefined; args: string[] } {
+  const parts = rest === undefined ? [] : rest.split('|').map((part) => part.trim())
+  return { name: name.trim(), text: parts[0], args: parts.slice(1) }
+}
 
 /** A piece of a line, as `inlineMarkup` reads it: words, or an inline action, tooltip, bold or italics as written. */
 export type InlinePart =
@@ -262,6 +286,8 @@ export type InlinePart =
   | { kind: 'act'; id: string; text?: string; markup: string }
   /** `[[tip:key|words]]`. */
   | { kind: 'tip'; key: string; text: string; markup: string }
+  /** `[[ui:name|words|arg|…]]`: `args` are the parts after the words. */
+  | { kind: 'ui'; name: string; text: string; args: string[]; markup: string }
   /** `**words**`: `text` is the words alone. */
   | { kind: 'bold'; text: string; markup: string }
   /** `*words*`: `text` is the words alone. */
@@ -342,20 +368,29 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
 
 /**
  * A line of prose cut at its inline markup (`[[act:…]]`, `[[tip:…]]`,
- * `**bold**`, `*italic*`), or null when it has none. Markup with no id or
- * key, a tooltip with no words, or stars that don't close are left in the
- * words as written, so they show on screen; the content checker reports
- * them. A `\*` is a star shown as it is. Bold and italics inside an inline
- * action's or a tooltip's words, or around them, are not read.
+ * `[[ui:…]]`, `**bold**`, `*italic*`), or null when it has none. Markup with
+ * no id or key, a tooltip or UI piece with no words, a UI piece whose name
+ * isn't an id or with an empty argument, or stars that don't close are left
+ * in the words as written, so they show on screen; the content checker
+ * reports them. A `\*` is a star shown as it is. Bold and italics inside the
+ * words of inline markup, or around it, are not read.
  */
 export function inlineMarkup(text: string): InlinePart[] | null {
-  if (!text.includes('[[act:') && !text.includes('[[tip:') && !text.includes('*')) return null
+  if (!text.includes('[[act:') && !text.includes('[[tip:') && !text.includes('[[ui:') && !text.includes('*')) return null
   const cut: InlinePart[] = []
   let last = 0
   const words = (until: number) => {
     if (until > last) cut.push({ kind: 'text', text: text.slice(last, until) })
   }
   for (const match of text.matchAll(INLINE_MARKUP)) {
+    if (match[1] === 'ui') {
+      const piece = uiParts(match[2], match[3])
+      if (!UI_NAME.test(piece.name) || !piece.text || piece.args.some((arg) => arg === '')) continue
+      words(match.index)
+      cut.push({ kind: 'ui', name: piece.name, text: piece.text, args: piece.args, markup: match[0] })
+      last = match.index + match[0].length
+      continue
+    }
     const id = match[2].trim()
     const shown = match[3]?.trim()
     const ok = id !== '' && (match[1] === 'act' ? shown !== '' : Boolean(shown))
@@ -379,11 +414,12 @@ export function inlineMarkup(text: string): InlinePart[] | null {
 }
 
 /**
- * Text and spoken beats with their bold and italics drawn: `spans` with
- * `bold` and `italic` pieces, and `text` without the stars. For beats that
- * don't go through a scene's view, such as a message's or a post's. Inline
- * actions and tooltips stay in the words as written, because only the view
- * knows the choices and the prose. A beat with no styled words is left as it is.
+ * Text and spoken beats with their bold, italics and UI pieces drawn: `spans`
+ * with `bold`, `italic` and `ui` pieces, and `text` with the words alone. For
+ * beats that don't go through a scene's view, such as a message's or a
+ * post's. Inline actions and tooltips stay in the words as written, because
+ * only the view knows the choices and the prose. A beat with none of these is
+ * left as it is.
  */
 export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {
@@ -395,7 +431,9 @@ export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
       const piece: InlineSpan =
         part.kind === 'bold' || part.kind === 'italic'
           ? { kind: part.kind, text: part.text }
-          : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
+          : part.kind === 'ui'
+            ? { kind: 'ui', name: part.name, text: part.text, args: part.args }
+            : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
       const prev = spans.at(-1)
       if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
       else spans.push(piece)

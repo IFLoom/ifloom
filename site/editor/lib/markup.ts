@@ -4,7 +4,7 @@
  */
 import { parseBeats, type SceneBeat } from '@ifloom/engine'
 
-export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'act', 'tip'] as const
+export const MARKUP_KINDS = ['img', 'wide', 'video', 'sound', 'voice', 'speaker', 'mono', 'pool', 'act', 'tip', 'modal', 'zoom'] as const
 export type MarkupKind = (typeof MARKUP_KINDS)[number]
 
 export const MARKUP_LABELS: Record<MarkupKind, string> = {
@@ -18,10 +18,16 @@ export const MARKUP_LABELS: Record<MarkupKind, string> = {
   pool: 'Pool picture',
   act: 'Inline action',
   tip: 'Tooltip',
+  modal: 'Popup text',
+  zoom: 'Picture to open',
 }
 
-/** Kinds that go inside a line, at the cursor, rather than in a paragraph of their own. */
-export const INLINE_KINDS: ReadonlySet<MarkupKind> = new Set(['act', 'tip'])
+/**
+ * Kinds that go inside a line, at the cursor, rather than in a paragraph of
+ * their own. `modal` and `zoom` are the React UI's built-in inline pieces,
+ * `[[ui:modal|…]]` and `[[ui:image|…]]`.
+ */
+export const INLINE_KINDS: ReadonlySet<MarkupKind> = new Set(['act', 'tip', 'modal', 'zoom'])
 
 /** The fields each kind asks for, in order, with a sample value. */
 export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sample: string }[]> = {
@@ -60,6 +66,16 @@ export const MARKUP_FIELDS: Record<MarkupKind, { name: string; label: string; sa
     { name: 'key', label: 'Prose key of the tooltip', sample: 'market.stall' },
     { name: 'words', label: 'Words to show', sample: 'the stall' },
   ],
+  modal: [
+    { name: 'key', label: 'Prose key of the text it opens', sample: 'notice.welcome' },
+    { name: 'words', label: 'Words to show', sample: 'the note' },
+    { name: 'title', label: 'Title (the words if empty)', sample: "Sam's note" },
+  ],
+  zoom: [
+    { name: 'path', label: 'Path of the picture', sample: 'photo/ava' },
+    { name: 'words', label: 'Words to show', sample: 'the photo' },
+    { name: 'alt', label: 'Alt text (the words if empty)', sample: 'Ava by the river' },
+  ],
 }
 
 /** Alt text can't hold `|` or `]`, which the markup uses itself. */
@@ -90,6 +106,10 @@ export function markup(kind: MarkupKind, fields: Record<string, string>): string
       return f('words') ? `[[act:${f('id')}|${clean(f('words'))}]]` : `[[act:${f('id')}]]`
     case 'tip':
       return `[[tip:${f('key')}|${clean(f('words')) || f('key')}]]`
+    case 'modal':
+      return `[[ui:modal|${clean(f('words')) || f('key')}|${f('key')}${f('title') ? `|${clean(f('title'))}` : ''}]]`
+    case 'zoom':
+      return `[[ui:image|${clean(f('words')) || f('path')}|${f('path')}${f('alt') ? `|${clean(f('alt'))}` : ''}]]`
   }
 }
 

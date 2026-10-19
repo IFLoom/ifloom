@@ -74,7 +74,7 @@ export { artSrc, inlineMarkup, mediaKind, parseBeats, styledBeats } from './scen
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
 
 // Presentation hints: carried to the view as written, given meaning by a UI package
-export type { BlockUi, ChoiceUi, EntityUi, GameUi, SceneUi, StatUi, Ui } from './features/ui.ts'
+export type { BlockUi, ChoiceUi, EntityUi, GameUi, InlineUi, InlineUiArgs, SceneUi, StatUi, Ui } from './features/ui.ts'
 export { uiProblems } from './features/ui.ts'
 
 // Audio

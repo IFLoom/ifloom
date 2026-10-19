@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
-import { GameShell } from '../src/index.ts'
+import { GameShell, checkUiHints } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
 afterEach(() => {
@@ -130,5 +130,110 @@ describe('bold and italics', () => {
     expect(line.textContent).toBe('It is very loud, and still ringing.')
     expect(line.querySelector('strong[data-part="bold"]')?.textContent).toBe('very')
     expect(line.querySelector('em[data-part="italic"]')?.textContent).toBe('still')
+  })
+})
+
+/** A hall with a note to read, a photo to look at, a piece of the game's own and one nothing draws. */
+function hallway(): Game {
+  return loadGame(
+    [
+      {
+        name: 'hallway',
+        scenes: [{ id: 'hall', title: 'The hall', body: [{ text: 'hall' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] }],
+        prose: {
+          hall: 'A [[ui:modal|note|hall.note|From Sam]] is under the door, beside [[ui:image|a photo|photo/ava.svg|Ava by the river]]. The [[ui:stamp|stamp|blue]] is smudged, and the [[ui:sticker|sticker]] peels.',
+          'hall.note': 'Welcome to the building, {{name}}!\n\nBins go out **Thursday**.',
+          'hall#leave': 'Leave',
+        },
+      },
+    ],
+    { id: 'house', title: 'The House', introScene: 'hall' },
+  ).game
+}
+
+function playHallway(props: Partial<Parameters<typeof GameShell>[0]> = {}) {
+  const game = hallway()
+  const start = startingState(game)
+  const runner = createRunner(game, { ...start, kv: { ...start.kv, name: 'Robin' } })
+  render(<GameShell runner={runner} layout={Reading} motion={false} {...props} />)
+  return runner
+}
+
+describe('inline pieces', () => {
+  it('keep their words in the line, and show a name nothing draws as its words', () => {
+    playHallway()
+    const line = document.querySelector('[data-beat="text"]')!
+    expect(line.textContent).toBe('A note is under the door, beside a photo. The stamp is smudged, and the sticker peels.')
+    expect(line.querySelectorAll('[data-part="inline-ui"]')).toHaveLength(2)
+  })
+
+  it('open a modal with a prose line, titled, and close it on Escape with focus back on the words', async () => {
+    playHallway()
+    const note = screen.getByRole('button', { name: 'note' })
+    expect(note.getAttribute('data-ui')).toBe('modal')
+    expect(note.getAttribute('aria-haspopup')).toBe('dialog')
+    note.focus()
+    fireEvent.click(note)
+    const dialog = await screen.findByRole('dialog')
+    expect(note.getAttribute('aria-expanded')).toBe('true')
+    expect(dialog.querySelector('[data-part="dialog-title"]')?.textContent).toBe('From Sam')
+    const body = dialog.querySelector('[data-part="inline-modal"]')!
+    expect([...body.querySelectorAll('[data-beat="text"]')].map((beat) => beat.textContent)).toEqual([
+      'Welcome to the building, Robin!',
+      'Bins go out Thursday.',
+    ])
+    expect(body.querySelector('strong[data-part="bold"]')?.textContent).toBe('Thursday')
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    await act(async () => {})
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(note)
+  })
+
+  it('open a picture in the viewer', async () => {
+    playHallway()
+    const photo = screen.getByRole('button', { name: 'a photo' })
+    expect(photo.getAttribute('data-ui')).toBe('image')
+    fireEvent.click(photo)
+    const viewer = await screen.findByRole('dialog')
+    expect(viewer.getAttribute('data-part')).toBe('viewer')
+    const img = viewer.querySelector('img')!
+    expect(img.getAttribute('src')).toBe('art/photo/ava.svg')
+    expect(img.getAttribute('alt')).toBe('Ava by the river')
+  })
+
+  it("draw the game's own by name, over a built-in one", () => {
+    playHallway({
+      inline: {
+        stamp: ({ text, args }) => <mark data-colour={args[0]}>{text}</mark>,
+        modal: ({ text }) => <u>{text}</u>,
+      },
+    })
+    expect(document.querySelector('mark[data-colour="blue"]')?.textContent).toBe('stamp')
+    expect(document.querySelector('u')?.textContent).toBe('note')
+    expect(screen.queryByRole('button', { name: 'note' })).toBeNull()
+  })
+
+  it('are checked by checkUiHints: unknown names, a modal with no prose, an image with no path', () => {
+    const game = loadGame(
+      [
+        {
+          name: 'bad',
+          prose: {
+            a: 'A [[ui:stamp|stamp]], a [[ui:modal|note|nope]], a [[ui:modal|bare]], an [[ui:image|image]] and [[ui:image|more|x|y|z]].',
+            b: 'A [[ui:mood|calm]] one.',
+          },
+        },
+      ],
+      { id: 'bad', title: 'Bad' },
+    ).game
+    const problems = checkUiHints(game, { allow: ['mood'] })
+    expect(problems).toEqual([
+      'prose a: [[ui:stamp|stamp]] is not an inline piece the React UI draws, so it shows only its words; add it to inline',
+      'prose a: [[ui:modal|note]]: no prose for "nope"',
+      'prose a: [[ui:modal|bare]] needs a prose key: [[ui:modal|words|key]]',
+      "prose a: [[ui:image|image]] needs a picture's path: [[ui:image|words|path]]",
+      'prose a: [[ui:image|more]] takes two arguments at most',
+    ])
+    expect(checkUiHints(game, { allow: ['mood'], inline: { stamp: () => null } })).toHaveLength(4)
   })
 })

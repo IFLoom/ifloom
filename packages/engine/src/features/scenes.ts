@@ -262,7 +262,8 @@ function emphasisProblems(text: string): string[] {
   const prose = text.replace(/\[\[(mail|sticky|clip|diary)\]\][\s\S]*?\[\[\/\1\]\]/g, '\n\n')
   for (const block of prose.split('\n\n')) {
     if (block.trim().startsWith('> ') || !block.includes('*')) continue
-    if (/\*\[\[(act|tip):|\]\]\*/.test(block)) out.push("stars next to [[act]] or [[tip]] are shown as written; bold and italics don't reach into them")
+    if (/\*\[\[(act|tip|ui):|\]\]\*/.test(block))
+      out.push("stars next to [[act]], [[tip]] or [[ui]] are shown as written; bold and italics don't reach into them")
     for (const piece of block.split(INLINE_MARKUP).filter((_, at) => at % 4 === 0)) out.push(...emphasis(piece).problems)
   }
   return [...new Set(out)]
@@ -274,6 +275,8 @@ function inlineMarkupProblems(text: string, where: string, tools: ResolveTools):
   const out: string[] = emphasisProblems(text)
   let written = 0
   for (const match of text.matchAll(INLINE_MARKUP)) {
+    // `[[ui:…]]` is the ui feature's to check.
+    if (match[1] === 'ui') continue
     written += 1
     const id = match[2].trim()
     const words = match[3]?.trim()

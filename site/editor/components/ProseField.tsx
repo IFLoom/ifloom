@@ -13,7 +13,7 @@ export function ProseField({ value, onChange, rows = 4, label }: { value: string
   function insert(kind: MarkupKind) {
     const at = area.current?.selectionStart ?? value.length
     const snippet = sampleMarkup(kind)
-    // An inline action or a tooltip goes in the line at the cursor; anything else is a paragraph of its own.
+    // An inline action, a tooltip or an inline piece goes in the line at the cursor; anything else is a paragraph of its own.
     const next = INLINE_KINDS.has(kind) ? insertInline(value, at, snippet) : insertParagraph(value, at, snippet)
     onChange(next.text)
     requestAnimationFrame(() => {
@@ -101,7 +101,7 @@ function Beat({ beat }: { beat: SceneBeat }) {
   }
 }
 
-/** A line with its inline actions drawn as links, its tooltips underlined, each saying what it names, and its bold and italics. */
+/** A line with its inline actions drawn as links, its tooltips and inline pieces underlined, each saying what it names, and its bold and italics. */
 function Inline({ text }: { text: string }) {
   const parts = inlineMarkup(text)
   if (!parts) return <>{text}</>
@@ -118,6 +118,11 @@ function Inline({ text }: { text: string }) {
           <span key={i} className="font-medium text-fd-primary underline underline-offset-2" title={`Inline action: choice ${part.id}`}>
             {part.text ?? part.id}
             <sup className="ms-0.5 text-[10px] text-fd-muted-foreground">{part.id}</sup>
+          </span>
+        ) : part.kind === 'ui' ? (
+          <span key={i} className="underline decoration-dashed underline-offset-2" title={`Inline piece ${part.name}: ${part.args.join(', ')}`}>
+            {part.text}
+            <sup className="ms-0.5 text-[10px] text-fd-muted-foreground">{part.name}</sup>
           </span>
         ) : (
           <span key={i} className="underline decoration-dotted underline-offset-2" title={`Tooltip: ${part.key}`}>

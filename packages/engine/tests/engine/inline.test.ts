@@ -275,9 +275,91 @@ describe('bold and italics', () => {
         expect.stringContaining('"*" is not closed'),
         expect.stringContaining('"***" is shown as written'),
         expect.stringContaining("bold and italics don't go inside each other"),
-        expect.stringContaining('stars next to [[act]] or [[tip]]'),
+        expect.stringContaining('stars next to [[act]], [[tip]] or [[ui]]'),
       ]),
     )
     expect(problems.filter((problem) => problem.includes('hall.post'))).toEqual([])
+  })
+})
+
+describe('UI pieces', () => {
+  it('cut a line at [[ui:name|words|arg|…]], and leave malformed markup as written', () => {
+    expect(inlineMarkup('Read [[ui:modal|the note|notice.welcome]] and [[ui:shop/card|this]].')).toEqual([
+      { kind: 'text', text: 'Read ' },
+      { kind: 'ui', name: 'modal', text: 'the note', args: ['notice.welcome'], markup: '[[ui:modal|the note|notice.welcome]]' },
+      { kind: 'text', text: ' and ' },
+      { kind: 'ui', name: 'shop/card', text: 'this', args: [], markup: '[[ui:shop/card|this]]' },
+      { kind: 'text', text: '.' },
+    ])
+    expect(inlineMarkup('[[ui:image| her photo | photo/ava.svg | Ava ]]')).toEqual([
+      { kind: 'ui', name: 'image', text: 'her photo', args: ['photo/ava.svg', 'Ava'], markup: '[[ui:image| her photo | photo/ava.svg | Ava ]]' },
+    ])
+    expect(inlineMarkup('A [[ui:modal]], [[ui:|x]], [[ui:no good|x]] and [[ui:modal|x||y]].')).toBeNull()
+  })
+
+  it('come through the view as written, in narration and spoken lines, and stay in the backlog', () => {
+    const lines = {
+      ...prose,
+      'hall.ring': 'Your phone is ringing. [[ui:modal|The screen|hall.tip|Caller]] says {{friend}}.',
+      'hall.door': 'Ava: "Look at [[ui:image|this|photo/ava.svg]]!"',
+    }
+    const { game, problems } = make({ prose: lines })
+    expect(problems).toEqual([])
+    const [ring, door] = view(start(game), game).scene.beats
+    expect(ring).toEqual({
+      kind: 'text',
+      text: 'Your phone is ringing. The screen says Ava.',
+      spans: [
+        { kind: 'text', text: 'Your phone is ringing. ' },
+        { kind: 'ui', name: 'modal', text: 'The screen', args: ['hall.tip', 'Caller'] },
+        { kind: 'text', text: ' says Ava.' },
+      ],
+    })
+    expect(door).toMatchObject({
+      kind: 'say',
+      text: 'Look at this!',
+      spans: [{ kind: 'text' }, { kind: 'ui', name: 'image', args: ['photo/ava.svg'] }, { kind: 'text' }],
+    })
+    const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
+    expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
+    const past = runner.backlog()[0].beats[0]
+    expect(past.kind === 'text' && past.spans?.map((span) => span.kind)).toEqual(['text', 'ui', 'text'])
+  })
+
+  it('are drawn by styledBeats in beats that skip the view', () => {
+    expect(styledBeats(parseBeats('See [[ui:image|the map|map.png]].'))).toEqual([
+      {
+        kind: 'text',
+        text: 'See the map.',
+        spans: [
+          { kind: 'text', text: 'See ' },
+          { kind: 'ui', name: 'image', text: 'the map', args: ['map.png'] },
+          { kind: 'text', text: '.' },
+        ],
+      },
+    ])
+  })
+
+  it('are checked: no name, a name that is not an id, no words, an empty argument, not closed, in a "> " line', () => {
+    const lines = {
+      ...prose,
+      'hall.ring': 'A [[ui:|x]] [[ui:no good|x]] [[ui:modal]] [[ui:modal|x||y]] [[ui:modal|open',
+      'hall.door': '> A [[ui:modal|mono|hall.tip]] line.',
+    }
+    const { game } = make({ prose: lines })
+    const problems = checkGame(game).problems.map(describeProblem)
+    expect(problems).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('[[ui]] needs a name'),
+        expect.stringContaining('[[ui:no good]]: a name is letters'),
+        expect.stringContaining('[[ui:modal]] needs the words to show'),
+        expect.stringContaining('has an empty argument'),
+        expect.stringContaining('[[ui:…]] is not closed'),
+        expect.stringContaining('[[ui]] is shown as written in a "> " line'),
+      ]),
+    )
+    // A name no UI knows is the UI's to report, not the engine's.
+    const fine = make({ prose: { ...prose, 'hall.ring': 'A [[ui:anything|piece|a|b]].' } })
+    expect(checkGame(fine.game).problems).toEqual([])
   })
 })

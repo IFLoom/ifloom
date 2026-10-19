@@ -231,6 +231,13 @@ describe('the markup helper', () => {
     expect(inlineMarkup(sampleMarkup('act'))).toEqual([{ kind: 'act', id: 'answer', text: 'Pick it up', markup: '[[act:answer|Pick it up]]' }])
     expect(markup('act', { id: 'answer', words: '' })).toBe('[[act:answer]]')
     expect(inlineMarkup(sampleMarkup('tip'))).toEqual([{ kind: 'tip', key: 'market.stall', text: 'the stall', markup: '[[tip:market.stall|the stall]]' }])
+    expect(inlineMarkup(sampleMarkup('modal'))).toEqual([
+      { kind: 'ui', name: 'modal', text: 'the note', args: ['notice.welcome', "Sam's note"], markup: "[[ui:modal|the note|notice.welcome|Sam's note]]" },
+    ])
+    expect(markup('modal', { key: 'notice.welcome', words: '', title: '' })).toBe('[[ui:modal|notice.welcome|notice.welcome]]')
+    expect(inlineMarkup(sampleMarkup('zoom'))).toEqual([
+      { kind: 'ui', name: 'image', text: 'the photo', args: ['photo/ava', 'Ava by the river'], markup: '[[ui:image|the photo|photo/ava|Ava by the river]]' },
+    ])
   })
 
   it('puts an inline action or a tooltip in the line, with spaces round it', () => {

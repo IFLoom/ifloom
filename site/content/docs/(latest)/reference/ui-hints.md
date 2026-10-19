@@ -70,6 +70,31 @@ declare module '@ifloom/engine' {
 
 Once a game's code imports that package, `ui: { display: 'bar' }` on a stat is typed, and `display: 'dial'` is a type error. A hint no package declares still compiles, because `Ui` lets any other key through, so a mod or a second UI can add its own. A typo in a key isn't caught by the types for the same reason. A UI package can offer a check for that: the React UI's is [`checkUiHints`](/docs/react/hints#checkuihints).
 
+## InlineUi
+
+```ts
+import type { InlineUi, InlineUiArgs } from '@ifloom/engine'
+
+interface InlineUi {}
+
+type InlineUiArgs<N extends string> = N extends keyof InlineUi ? InlineUi[N] : readonly string[]
+```
+
+The pieces a UI draws inside a line of prose, from [`[[ui:name|words|arg|…]]`](/docs/reference/prose#ui-pieces), by name, each with the arguments it takes after the words. Like the hint interfaces, it's empty in the engine and a UI package augments it. The React UI declares its two built-in pieces this way:
+
+```ts
+declare module '@ifloom/engine' {
+  interface InlineUi {
+    modal: [key: string, title?: string]
+    image: [path: string, alt?: string]
+  }
+}
+```
+
+A game that adds a piece of its own declares it the same way, so its component's `args` are typed. `InlineUiArgs<'modal'>` is `[key: string, title?: string]` once the React UI is imported, and a name nobody declared takes any text.
+
+The engine never reads `InlineUi`. A `ui` [span](/docs/reference/prose#inlinespan) has `name: string` and `args: string[]` whatever was declared, because the markup is prose and a mod or a second UI can write a name of its own. Nothing checks that the arguments a line gives match the tuple, so a component should cope with one missing. The React UI's [`checkUiHints`](/docs/react/hints#checkuihints) reports a built-in piece with too few or too many.
+
 ## entityUi
 
 ```ts
@@ -92,8 +117,8 @@ What the [content checker](/docs/reference/checks) says about one `ui` field: no
 
 ## What the engine does with them
 
-Nothing else. It doesn't read a hint, give one a default, merge a scene's with the game's, or check a hint's name or value against any list. That's all the UI's job. The checker only makes sure each `ui` is data, so a pack or a mod with hints can be saved and loaded as JSON.
+Nothing else, and the same goes for [UI pieces](/docs/reference/prose#ui-pieces) in prose. It doesn't read a hint, give one a default, merge a scene's with the game's, or check a hint's name or value against any list. That's all the UI's job. The checker only makes sure each `ui` is data, so a pack or a mod with hints can be saved and loaded as JSON.
 
 ## See it in an example
 
-The showcase's scenes, stats and characters carry the React UI's hints: `ui.transition` on `intro` and `ava.river`, `ui.reveal` on their second paragraphs, `ui.dice` on the park's skimming lines, `ui.display` on energy, and `ui.hue` on Ava and Sam. Its source is in `examples/showcase/src/`.
+The showcase's scenes, stats and characters carry the React UI's hints: `ui.transition` on `intro` and `ava.river`, `ui.reveal` on their second paragraphs, `ui.dice` on the park's skimming lines, `ui.display` on energy, and `ui.hue` on Ava and Sam. The flat's prose opens Sam's welcome note with `[[ui:modal|…]]`, and Ava's greeting her photo with `[[ui:image|…]]`. Its source is in `examples/showcase/src/`.

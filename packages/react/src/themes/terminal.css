@@ -460,6 +460,35 @@ body {
   color: var(--muted-foreground);
 }
 
+/* Inline pieces as a command in angle brackets, and the note as a printout. */
+[data-part="inline-ui"] {
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+[data-part="inline-ui"]::before {
+  content: "<";
+  color: var(--muted-foreground);
+}
+
+[data-part="inline-ui"]::after {
+  content: ">";
+  color: var(--muted-foreground);
+}
+
+[data-part="inline-ui"]:hover,
+[data-part="inline-ui"]:focus-visible {
+  background: var(--foreground);
+  color: var(--background);
+  text-shadow: none;
+}
+
+[data-part="inline-modal"] {
+  font-family: var(--font-body);
+  border-left: 2px solid var(--muted-foreground);
+  padding-left: 0.75rem;
+}
+
 /* The plugins' defaults: plain listings, as a text adventure prints them. */
 [data-part="achievement"],
 [data-part="good"],

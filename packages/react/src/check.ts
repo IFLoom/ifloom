@@ -4,8 +4,12 @@
  * so this is where a typo such as `ui: { transiton: 'fade' }` is caught. Call
  * it in a test, beside `checkGame`.
  */
-import { isDataScene, type Block, type Game } from '@ifloom/engine'
+import { inlineMarkup, isDataScene, type Block, type Game } from '@ifloom/engine'
+import type { InlineComponents } from './game/context.tsx'
 import { MAX_PIPS, TRANSITIONS } from './hints.ts'
+
+/** The inline pieces the React UI draws itself, as `BUILT_IN_INLINE` has them. */
+const INLINE = ['modal', 'image']
 
 const KNOWN = {
   scene: ['transition'],
@@ -28,10 +32,18 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * or `pips`, pips on a stat with a range over 20, a `hue` outside 0 to 360,
  * a block's `dice` that isn't a roll's key, and a block's `timer` that isn't a
  * timer the game declares.
- * Hints in `allow` (`['mood']`, say, for another UI's) aren't reported. Empty
- * when all is well.
+ *
+ * It also reads the prose for inline pieces, `[[ui:name|…]]`: a name that is
+ * neither built in (`modal`, `image`) nor one of the game's own `inline`
+ * components (pass the same object you give `mountGame` or the
+ * `GameProvider`), which would show only its words; a `modal` with no prose
+ * key, or one with no prose; an `image` with no path; and either with more
+ * than two arguments.
+ *
+ * Hints and inline names in `allow` (`['mood']`, say, for another UI's)
+ * aren't reported. Empty when all is well.
  */
-export function checkUiHints(game: Game, options: { allow?: readonly string[] } = {}): string[] {
+export function checkUiHints(game: Game, options: { allow?: readonly string[]; inline?: InlineComponents } = {}): string[] {
   const out: string[] = []
   const allowed = new Set(options.allow ?? [])
   const timers = new Set((game.timers ?? []).map((timer) => timer.id))
@@ -105,6 +117,27 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[] } 
     const where = `place ${String(place.id)}`
     hints('scene', where, place.ui)
     blocks(where, place.body)
+  }
+  // Inline pieces in the prose: every line the store lists, as written.
+  const inline = new Set([...INLINE, ...Object.keys(options.inline ?? {})])
+  for (const key of game.prose?.keys?.() ?? []) {
+    for (const part of inlineMarkup(game.prose?.line(key) ?? '') ?? []) {
+      if (part.kind !== 'ui') continue
+      const where = `prose ${key}: [[ui:${part.name}|${part.text}]]`
+      if (!inline.has(part.name) && !allowed.has(part.name)) {
+        out.push(`${where} is not an inline piece the React UI draws, so it shows only its words; add it to inline`)
+        continue
+      }
+      // A game's own component of a built-in name reads its arguments its own way.
+      if (options.inline?.[part.name]) continue
+      const [first] = part.args
+      if (part.name === 'modal') {
+        if (!first) out.push(`${where} needs a prose key: [[ui:modal|words|key]]`)
+        else if (game.prose?.line(first) === undefined) out.push(`${where}: no prose for "${first}"`)
+      }
+      if (part.name === 'image' && !first) out.push(`${where} needs a picture's path: [[ui:image|words|path]]`)
+      if ((part.name === 'modal' || part.name === 'image') && part.args.length > 2) out.push(`${where} takes two arguments at most`)
+    }
   }
   return out
 }

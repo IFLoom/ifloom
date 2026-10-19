@@ -369,6 +369,29 @@
   padding-left: 0;
 }
 
+/* Inline pieces read as a footnote to look up: a thin dotted rule, and the note set like a page. */
+[data-part="inline-ui"] {
+  font-weight: inherit;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+[data-part="inline-ui"]::after {
+  content: "\2020";
+  margin-left: 0.1em;
+  font-size: 0.75em;
+  vertical-align: super;
+  color: var(--muted-foreground);
+}
+
+[data-part="inline-modal"] {
+  font-family: var(--font-body);
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
 /* The plugins' defaults: ruled entries, as in a book's index, rather than boxes. */
 [data-part="achievement"],
 [data-part="good"],

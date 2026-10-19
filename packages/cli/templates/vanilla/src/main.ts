@@ -159,7 +159,8 @@ let notes = 0
 /**
  * A line's words, with bold and italics, and its inline actions and tooltips as buttons in it. A
  * tooltip, or a greyed-out action's reason, is a note after the button that
- * shows on hover, on focus and on a tap (see `.note` in styles.css).
+ * shows on hover, on focus and on a tap (see `.note` in styles.css). A UI
+ * piece (`[[ui:…]]`) shows its words.
  */
 function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefined): HTMLElement {
   if (!spans) {
@@ -173,6 +174,11 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
     }
     if (span.kind === 'bold' || span.kind === 'italic') {
       add(line, span.kind === 'bold' ? 'strong' : 'em', span.text)
+      continue
+    }
+    if (span.kind === 'ui') {
+      // A UI piece (`[[ui:name|words]]`): this page has no components of its own, so it shows the words.
+      line.append(span.text)
       continue
     }
     const button = add(line, 'button', span.text, span.kind === 'tip' ? 'tip' : 'inline-action')

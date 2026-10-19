@@ -14,6 +14,10 @@
  *   tumble and settle before the block comes in.
  * - `ui.timer` on a block: the timer by that id counts down here, after the
  *   block, while it runs.
+ *
+ * It also declares the inline pieces it draws in prose by default, by
+ * augmenting `InlineUi`: `[[ui:modal|words|key|title]]` and
+ * `[[ui:image|words|path|alt]]`.
  */
 import type { Game, RenderedChoice, Roll, SceneBeat, View } from '@ifloom/engine'
 
@@ -56,6 +60,12 @@ declare module '@ifloom/engine' {
   interface EntityUi {
     /** A colour for their spoken lines, as a hue from 0 to 360. */
     hue?: number
+  }
+  interface InlineUi {
+    /** `[[ui:modal|words|key]]`: the words open a dialog showing the prose line `key`, titled `title` if given, else the words. */
+    modal: [key: string, title?: string]
+    /** `[[ui:image|words|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. */
+    image: [path: string, alt?: string]
   }
   interface GameUi {
     /** How every screen comes and goes when it says nothing itself. `'none'` if left out. */

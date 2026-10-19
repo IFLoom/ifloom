@@ -1,6 +1,6 @@
 ---
 title: "Presentation hints"
-description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, a countdown under one, stat bars and pips, and the colour of a person's lines. With checkUiHints to catch typos."
+description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, a countdown under one, stat bars and pips, the colour of a person's lines, and inline pieces in prose such as a popup or a picture to open. With checkUiHints to catch typos."
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
@@ -16,6 +16,8 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
+
+Prose can also hold [inline pieces](#inline-pieces), `[[ui:name|words|arg]]`, which the React UI draws by name: a popup with a prose line, a picture to open, or a component of your own.
 
 Importing `@ifloom/react` anywhere in your game types them: `ui: { display: 'bar' }` on a stat is checked, and `display: 'dial'` is a type error. A hint the React UI doesn't know still compiles, so another UI or a mod can add its own. [`checkUiHints`](#checkuihints) catches a typo the types let through.
 
@@ -217,12 +219,77 @@ On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/referen
 }
 ```
 
+## Inline pieces
+
+A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, is drawn by the component of that name. The React UI has two:
+
+| Markup | What the player sees |
+|---|---|
+| `[[ui:modal\|words\|key]]`, `[[ui:modal\|words\|key\|title]]` | The words as a link that opens a dialog with the prose line `key`, titled `title` or the words. See [`InlineModal`](/docs/react/components#inlinemodal). |
+| `[[ui:image\|words\|path]]`, `[[ui:image\|words\|path\|alt]]` | The words as a link that opens the picture at `path` in the viewer, as a story's pictures open. See [`InlineImage`](/docs/react/components#inlineimage). |
+
+```ts
+const prose = {
+  'place.flat':
+    "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it.",
+  'notice.welcome': 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. Sam, flat 2',
+}
+```
+
+Both are buttons in the line, with the part [`inline-ui`](/docs/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
+
+A modal shows words and nothing else. It can't change the game, so it suits a note, a letter or a sign. For a dialog with buttons that do something, open a [panel](/docs/reference/panels) from an [inline action](/docs/reference/prose#inline-actions-and-tooltips). [Popups and modals](/docs/recipes/modals) shows both.
+
+### Your own pieces
+
+Give the shell or the provider an `inline` object with a component per name. Each gets the piece's `name`, its words as `text` and its arguments as `args`. One with a built-in name replaces it:
+
+```tsx
+// src/main.tsx
+import { mountGame, InlineTrigger, PartDialog, type InlineComponents, type InlineProps } from '@ifloom/react'
+import { useState } from 'react'
+import { game } from './game.ts'
+
+declare module '@ifloom/engine' {
+  interface InlineUi {
+    /** `[[ui:map|words|place]]`: the words open the town map with `place` marked. */
+    map: [place: string]
+  }
+}
+
+function TownMap({ text, args: [place] }: InlineProps<'map'>) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <InlineTrigger name="map" open={open} onOpen={() => setOpen(true)}>
+        {text}
+      </InlineTrigger>
+      <PartDialog open={open} onClose={() => setOpen(false)} title="Small Town">
+        <img src={`art/map/${place}.svg`} alt={`The town map, with ${place} marked`} />
+      </PartDialog>
+    </>
+  )
+}
+
+// Outside any component, so it's the same object on every render.
+const inline: InlineComponents = { map: TownMap }
+
+mountGame(game, { inline })
+// 'park.gate': 'A sign by the gate shows [[ui:map|where you are|park]].'
+```
+
+The `declare module` block types `args` for `map`. A name nothing declares still works, with `args` as text. A name that neither `inline` nor the built-ins have shows its words as plain text, so the line still reads.
+
+Nothing about a piece goes in a save or the log: the engine carries the markup and never sees it open. A piece's words are what the backlog and a screen reader keep. A piece can read the game with [`useGame`](/docs/react/components#usegame), but anything it sends with `send` is a command like any other, so a piece that changes the game is better written as an inline action.
+
+**Gotcha.** The picture an `image` piece opens is only a piece of text to the engine, so `ifloom build` doesn't check the file is there, as it does for `[[img:…]]`. Open it once in the game.
+
 ## checkUiHints
 
 ```ts
 import { checkUiHints } from '@ifloom/react'
 
-function checkUiHints(game: Game, options?: { allow?: readonly string[] }): string[]
+function checkUiHints(game: Game, options?: { allow?: readonly string[]; inline?: InlineComponents }): string[]
 ```
 
 What's wrong with a game's hints for the React UI, as `where: what` lines, or nothing when all is well. The engine's [content checker](/docs/reference/checks) only makes sure a hint is data, so this is where these are caught:
@@ -234,8 +301,9 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a `hue` outside 0 to 360
 - a block's `dice` that isn't a roll's key (letters, digits and `_`)
 - a block's `timer` that isn't one of the game's `timers`
+- an [inline piece](#inline-pieces) in the prose whose name is neither built in nor in `inline` (pass the same object you give `mountGame`), a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
 
-It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, and the places plugin's locations. Put it in a test beside the engine's checks:
+It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, the places plugin's locations, and every prose line. Put it in a test beside the engine's checks:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -251,4 +319,4 @@ describe('the content', () => {
 
 ## See it in the showcase
 
-Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). At home, Ava's call counts down under the line that says the phone is ringing (`story/flat.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.
+Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). At home, Ava's call counts down under the line that says the phone is ringing (`story/flat.ts`). In the flat, "the radiator knocks" opens Sam's welcome note in a dialog, and at the café Ava's name opens her photo (`story/flat.ts`, `story/ava.prose.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.

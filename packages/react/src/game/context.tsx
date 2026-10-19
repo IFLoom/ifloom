@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
-import type { Command, GameState, Mods, Result, Runner, View } from '@ifloom/engine'
+import type { Command, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, View } from '@ifloom/engine'
 import type { UnlockCodes } from '@ifloom/plugin-unlocks'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
@@ -12,6 +12,23 @@ import { useTicking } from './timers.tsx'
  * returned, or what the panel was opened with.
  */
 export type PanelComponent = ComponentType<{ data: unknown }>
+
+/**
+ * What an inline piece of the prose gets, from `[[ui:name|words|arg|…]]`: its
+ * `name`, the `text` to show and the `args` after the words, typed by what
+ * `InlineUi` declares for that name.
+ */
+export type InlineProps<N extends string = string> = { name: N; text: string; args: InlineUiArgs<N> }
+
+/** A component that draws an inline piece of the prose named `N`. */
+export type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
+
+/**
+ * A game's own inline pieces by name, for `[[ui:name|…]]` in its prose. A
+ * name `InlineUi` declares gets its arguments typed; any other name takes them
+ * as text.
+ */
+export type InlineComponents = { [N in keyof InlineUi]?: InlineComponent<N> } & { [name: string]: ComponentType<InlineProps<never>> | undefined }
 
 /** Draws another plugin's view inside an app: a messages channel, a feed. Gets the plugin's slice of the view and the section's `with`. */
 export type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string, unknown> }>
@@ -48,6 +65,8 @@ export type GameContextValue = {
   /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
   send: (command: Command) => Result<GameState>
   panels: Record<string, PanelComponent>
+  /** The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. */
+  inline: InlineComponents
   sections: Record<string, PluginSectionComponent>
 }
 
@@ -57,6 +76,12 @@ export type GameProviderProps = UiOptions & {
   runner: Runner
   /** The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. */
   panels?: Record<string, PanelComponent>
+  /**
+   * The game's own components for `[[ui:name|words|arg|…]]` in its prose, by
+   * name. One here goes over a built-in one of the same name (`modal`,
+   * `image`); a name nothing draws shows its words.
+   */
+  inline?: InlineComponents
   /** Renderers for plugin sections in apps, by plugin id, over the built-in ones. */
   sections?: Record<string, PluginSectionComponent>
   /** Mods the player can add, turn off or remove. Leave out for a game without mods. */
@@ -76,6 +101,7 @@ const NONE = {}
 export function GameProvider({
   runner,
   panels = NONE,
+  inline = NONE,
   sections = NONE,
   mods,
   unlocks,
@@ -111,8 +137,8 @@ export function GameProvider({
   }, [start, runner])
   const unlocking = useMemo(() => (unlocks ? { ...unlocks, codes } : undefined), [unlocks, codes])
   const value = useMemo(
-    () => ({ runner, view, send, panels, mods, unlocks: unlocking, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
-    [runner, view, send, panels, sections, mods, unlocking],
+    () => ({ runner, view, send, panels, inline, mods, unlocks: unlocking, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
+    [runner, view, send, panels, inline, sections, mods, unlocking],
   )
   return (
     <GameContext.Provider value={value}>

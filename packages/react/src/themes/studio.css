@@ -265,6 +265,25 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Inline pieces as accent links with a dashed rule, and the note on a card. */
+[data-part="inline-ui"] {
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration-thickness: 2px;
+  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
+}
+
+[data-part="inline-ui"]:hover {
+  text-decoration-color: var(--primary);
+}
+
+[data-part="inline-modal"] {
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--card);
+  padding: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
 /* The plugins' defaults: cards like the rest of the app. */
 [data-part="achievement"],
 [data-part="good"],

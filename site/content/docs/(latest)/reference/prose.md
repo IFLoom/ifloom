@@ -170,6 +170,7 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
+| `… [[ui:modal\|the note\|notice.welcome]] …` inside a paragraph | The same, with a `ui` span the engine carries as written, for your UI to draw. See [UI pieces](#ui-pieces). |
 | `… **closed** …`, `… *again* …` inside a paragraph | The same, with a `bold` or `italic` span. See [Bold and italics](#bold-and-italics). |
 
 A paragraph can't carry a class. A line that should stand out, such as a warning that work is due, is a block of its own with a `when`, and your UI decides how it looks. For news the player shouldn't miss, raise a [notice](/docs/reference/notices) instead. Inside the line, [bold or italics](#bold-and-italics) can stress a word and a [tooltip](#inline-actions-and-tooltips) can carry the detail.
@@ -315,6 +316,26 @@ const kitchen: DataScene = {
 - Inline markup in a `> ` line, a picture's alt text or a fenced section is shown as written.
 - The backlog keeps an inline action as its words, with nothing to press. Tooltips stay.
 
+### UI pieces
+
+Sometimes a word should open something that changes nothing in the game: the full text of a note, a photo to look at closely. Write `[[ui:name|words|arg|…]]` inside a paragraph, in narration or a spoken line:
+
+```md
+Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it.
+
+[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.
+```
+
+- `name` says which of your UI's components draws it. It's an id (letters, digits, `-` and `_`, in parts joined by `.`), with a plugin's name and `/` in front for a piece a plugin's UI draws.
+- `words` are what the line shows. They're also what a screen reader, the backlog and `ifloom playtest` read.
+- Everything after the words is the piece's arguments, as text, in order. There can be none.
+
+The engine gives a UI piece no meaning. The view hands it to the UI as a `ui` span, `{ kind: 'ui', name, text, args }`, with the words in `text`, and the beat's `text` has the words as for any other span. So a piece can't change the state, and it isn't in the log or a replay. Something that should change the game, such as a dialog with buttons that buy things, is an [inline action](#inline-actions-and-tooltips) whose choice opens a [panel](/docs/reference/panels). [Popups and modals](/docs/recipes/modals) shows both.
+
+The React UI draws two pieces itself: `modal`, whose words open a dialog with a prose line, and `image`, whose words open a picture in the viewer. A game adds its own by name. See [Inline pieces](/docs/react/hints#inline-pieces). A UI types its names and arguments by augmenting [`InlineUi`](/docs/reference/ui-hints#inlineui).
+
+The content checker reports a piece with no name, a name that isn't an id, no words or an empty argument, markup that isn't closed, and a piece in a `> ` line, where it's shown as written. It doesn't know what a name means, so whether your UI draws it is that UI's check: the React UI's is [`checkUiHints`](/docs/react/hints#checkuihints).
+
 ### Bold and italics
 
 Two stars around words make them bold, and one star makes them italic, as in Markdown. They go inside a paragraph, in narration or a spoken line:
@@ -393,18 +414,20 @@ type InlineSpan =
   | { kind: 'text'; text: string }
   | { kind: 'action'; text: string; choice: RenderedChoice }
   | { kind: 'tip'; text: string; tip: string }
+  | { kind: 'ui'; name: string; text: string; args: string[] }
   | { kind: 'bold'; text: string }
   | { kind: 'italic'; text: string }
 ```
 
-One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips) or [bold or italics](#bold-and-italics), in order. Joined, the `text` of every span is the beat's `text`.
+One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips), [UI pieces](#ui-pieces) or [bold or italics](#bold-and-italics), in order. Joined, the `text` of every span is the beat's `text`.
 
 - `text` is words to draw as they are.
 - `action` is an inline action: `text` is the words of its link, and `choice` is what it presses, as [`view.scene.choices`](/docs/reference/view#the-scene) would have it (`command`, `disabled`, `price`, `irreversible`, `warning`). Send `choice.command` when it's pressed and `disabled` is unset.
 - `tip` is a tooltip: `text` is the words shown, and `tip` the note, filled in for this save.
+- `ui` is a UI piece, as written: `name` says which of your UI's components draws it, `text` is its words and `args` the arguments after them. The engine gives it no meaning.
 - `bold` and `italic` are words to draw in bold or in italics, without their stars.
 
-A UI draws an `action` as a button in the line, a `tip` as a button that shows its note, and `bold` and `italic` as `<strong>` and `<em>`. A UI that doesn't know a kind can draw its `text`, and the line still reads. The React UI does all four, with [`InlineAction`](/docs/react/components#inlineaction), [`Tip`](/docs/react/components#tip) and the parts `bold` and `italic`. For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
+A UI draws an `action` as a button in the line, a `tip` as a button that shows its note, and `bold` and `italic` as `<strong>` and `<em>`. A UI that doesn't know a kind, or a `ui` span's name, can draw its `text`, and the line still reads. The React UI does all four, with [`InlineAction`](/docs/react/components#inlineaction), [`Tip`](/docs/react/components#tip) and the parts `bold` and `italic`. For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ## parseBeats
 
@@ -414,7 +437,7 @@ import { parseBeats } from '@ifloom/engine'
 function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[]): SceneBeat[]
 ```
 
-The parser described above. `hints` puts each block's `ui` on the first beat that starts at or after its `at`, a character offset into `body`, as a data scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]` and the stars of bold and italics in the text: the view draws them, because only the view knows the choices and the prose.
+The parser described above. `hints` puts each block's `ui` on the first beat that starts at or after its `at`, a character offset into `body`, as a data scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
 
 ## styledBeats
 
@@ -424,7 +447,7 @@ import { parseBeats, styledBeats } from '@ifloom/engine'
 function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
 ```
 
-Draws the [bold and italics](#bold-and-italics) in `text` and `say` beats that don't go through a scene's view: each gets `bold` and `italic` [spans](#inlinespan), and its `text` loses the stars. The view does this for a scene and a room, and the messages and feed plugins do it for their `beats`. Call it on beats you parse yourself:
+Draws the [bold and italics](#bold-and-italics) and the [UI pieces](#ui-pieces) in `text` and `say` beats that don't go through a scene's view: each gets `bold`, `italic` and `ui` [spans](#inlinespan), and its `text` has the words alone. The view does this for a scene and a room, and the messages and feed plugins do it for their `beats`. Call it on beats you parse yourself:
 
 ```ts
 styledBeats(parseBeats('The sign says **Closed**.'))
@@ -444,11 +467,12 @@ type InlinePart =
   | { kind: 'text'; text: string }
   | { kind: 'act'; id: string; text?: string; markup: string }
   | { kind: 'tip'; key: string; text: string; markup: string }
+  | { kind: 'ui'; name: string; text: string; args: string[]; markup: string }
   | { kind: 'bold'; text: string; markup: string }
   | { kind: 'italic'; text: string; markup: string }
 ```
 
-A line cut at its `[[act:]]`, `[[tip:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip with no words, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
+A line cut at its `[[act:]]`, `[[tip:]]`, `[[ui:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or with an empty argument, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
 
 ```ts
 inlineMarkup('Ring. [[act:answer|Pick up]]')

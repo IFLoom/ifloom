@@ -111,10 +111,12 @@ export const PART_KEYS = [
   'mail-header',
   'mail-body',
   'voice-replay',
-  // Inline actions, tooltips, bold and italics in the prose
+  // Inline actions, tooltips, inline pieces, bold and italics in the prose
   'inline-action',
   'tip',
   'tip-content',
+  'inline-ui',
+  'inline-modal',
   'bold',
   'italic',
   // Pictures, videos, the stage and the viewer

@@ -92,8 +92,9 @@ export const flat: Content = {
     },
   },
   prose: {
+    // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note in a dialog.
     'place.flat':
-      'Boxes, mostly. The window looks over the high street, and the radiator knocks when it feels like it. {{v:catName}} has claimed the warm spot on the sill.',
+      "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. {{v:catName}} has claimed the warm spot on the sill.",
     // `[[act:read-text|…]]` draws the flat's "Read your messages" action here, in the line.
     'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
     'flat.ring': 'Your phone is ringing on the sill. Ava. Answer before it stops.',

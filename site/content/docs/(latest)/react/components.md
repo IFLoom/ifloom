@@ -1777,7 +1777,7 @@ A panel for the person testing the game, when the game has the [debug plugin](/d
 
 The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
 
-The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Item**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
+The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Held**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
 
 **Gotchas.**
 

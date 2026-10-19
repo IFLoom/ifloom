@@ -88,8 +88,8 @@ The list covers:
 - every file in a [pool](/docs/reference/media#pools)
 - a `{ media }` block's `src` and `poster`, and a stage layer's
 - the files in picture and video markup in any prose, posters included
-- the `image` of a `notify` effect, used as written (a URL is left out), and of a `create` effect's entity, through `artSrc`
-- whatever a plugin's [references](#plugin-references) name, such as a post's picture or a character's `portrait`.
+- the `image` of a `notify` effect, used as written (a URL is left out), and of an entity, declared or made by a `create` effect, through `artSrc`, so a character's portrait is listed with them
+- whatever a plugin's [references](#plugin-references) name, such as a post's picture.
 
 A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. A place's `art` isn't listed, because no UI draws it.
 

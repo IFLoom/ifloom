@@ -63,6 +63,8 @@ runner.state.stats.courage                      // 2
 
 A plugin adds a system to the engine: the [calendar](/docs/plugins/calendar)'s days and times, the [places](/docs/plugins/places) the player walks between, the [cast](/docs/plugins/cast) who keep their own hours. It brings its own state, commands, conditions, effects and part of the view, and it imports nothing but the engine.
 
+Plugins share the game's things through the engine rather than through each other. A sandwich, a scarf or a person is an [entity](/docs/reference/entities) of a kind, and the engine keeps who [holds](/docs/reference/entities#holding-things) it. A plugin reads the [trait](/docs/reference/entities#traits) it knows on each one, such as the wardrobe's `wardrobe/wearable` or the cast's `cast/person`, so the shop can sell what the wardrobe dresses you in without either knowing the other. [Things: carrying, selling, wearing](/docs/recipes/things) shows them together.
+
 Plugins have no UI. What a plugin wants on screen goes into the view, under `view.plugins.<id>`, and any UI draws it from there. The React UI has a ready-made panel for some of them. In your own UI, you draw the parts you want. [Plugins](/docs/plugins) lists them all, and [Plugin UI](/docs/recipes/plugin-ui) shows how to draw their views.
 
 ## The UI

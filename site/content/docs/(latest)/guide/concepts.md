@@ -84,13 +84,20 @@ A stat can also be [derived](/docs/reference/stats#derived-stats), worked out fr
 
 See [Stats](/docs/reference/stats).
 
-## Entities and kinds
+## Entities, kinds and things
 
-An [entity](/docs/reference/entities) is one of several things of the same kind, such as a member of staff or a dish. The game declares the kinds in `kinds` and the entities there are at the start in `entities`. A stat declared with `of: 'staff'` is kept on every member of staff rather than on the player, and content names one of them as `'staff:ana'`.
+An [entity](/docs/reference/entities) is one of several things of the same kind, such as a member of staff, a dish, a person or a sandwich. The game declares the kinds in `kinds` and the entities there are at the start in `entities`. Content names one as `kind:id`, such as `'staff:ana'`. A stat declared with `of: 'staff'` is kept on every member of staff rather than on the player.
 
-The `create` and `remove` effects add and take away entities in play, and `each` runs a list of effects over every entity of a kind, or the ones that match a condition. The cast plugin's characters are entities of the kind `character`, so a friendship is a stat the game declares on that kind.
+What an entity is stays in content: its name, description, picture, tags, starting stats and kv. The save keeps only what play changed, so an update that fixes a name reaches old saves too. The `create` and `remove` effects add and take away entities in play, and `each` runs a list of effects over every entity of a kind, or the ones that match a condition.
 
-See [Entities](/docs/reference/entities).
+A few more ideas build on that:
+
+- **Kinds.** A `unique` kind is one where each entity is one particular thing, such as a person or a place. A kind that isn't unique stacks, so two sandwiches are a count of 2. A kind's `listed` says whether the view lists its entities at all, so the cast's characters stay out of the list until you've met them.
+- **Traits.** A trait is a named piece of data an entity carries, which a plugin reads. The inventory's `inventory/usable` gives a thing a button, the wardrobe's `wardrobe/wearable` names the slot it goes in, the shop's `shop/sellable` gives it a price, and the cast's `cast/person` makes it someone you can meet. A thing with no traits can still be held and counted.
+- **Holders.** A thing the player has, such as a sandwich, a note or a photo, is an entity they [hold](/docs/reference/entities#holding-things). The player is a holder, and so is any unique entity: Ava can hold a scarf and the café can hold a lost glove. An entity's `at` says who holds it at the start, and the `entity` and `move` effects change it.
+- **You.** `'you'` is whoever the player is playing now. A game with one protagonist never changes it, so `'you'` is the player. A game with several switches with the `you` effect.
+
+See [Entities](/docs/reference/entities), and [Things: carrying, selling, wearing](/docs/recipes/things) for how the plugins share them.
 
 ## The kv store
 
@@ -108,11 +115,10 @@ The engine records which scenes the player has seen, and on which turn. That let
 
 See [Storylines](/docs/reference/storylines) and [Progress and limits](/docs/reference/progress).
 
-## Collections, notices, triggers and inputs
+## Notices, triggers and inputs
 
-These are the parts a phone, a notice board or a journal is built from:
+These are the parts a phone, a notice board or a journal is built from, with the things the player holds:
 
-- A thing the player holds, such as a sandwich, a note or a photo, is an [entity](/docs/reference/entities#holding-things) too, held by the player or by someone who can hold things.
 - A [notice](/docs/reference/notices) is something the game tells the player outside a scene, shown as a toast or counted on a badge.
 - A [trigger](/docs/reference/triggers) is a list of effects that runs by itself the first time its condition holds, such as a note under the door the morning after the player first visits the café. It can also be set to fire at most once a turn.
 - An [input](/docs/reference/inputs) is something the player types or picks, written to a kv key, such as their name.
@@ -178,7 +184,7 @@ A save is a snapshot of the state, with details for a load screen: the turn, the
 
 The driver says where saves are kept: `localStorage`, IndexedDB, memory for tests, or one you write for a desktop wrapper. The engine has no default, so the game chooses.
 
-Each save carries a version. The format is at version 14 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
+Each save carries a version. The format is at version 16 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
 
 Your game can do the same for its own content. Give it a `version`, and when an update renames a kv key or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 

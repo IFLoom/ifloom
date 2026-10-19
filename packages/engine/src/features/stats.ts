@@ -5,7 +5,7 @@
  */
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
-import { entityOf, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
+import { entityOf, entityStat, hasEntity, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
@@ -223,14 +223,15 @@ function evaluate(formula: Formula, read: (id: string, depth: number) => number,
  * range again. An entity that isn't there reads 0.
  */
 export function statValue(state: GameState, game: Game, id: string, of: string | undefined, cx: FeatureContext): number {
-  const stats = of === undefined ? state.stats : entityOf(state, of)?.stats
-  if (!stats) return 0
+  if (of !== undefined && !hasEntity(state, game, of)) return 0
+  // An entity's kept stat reads what play left, then its declaration, then the stat's start.
+  const kept = (key: string) => (of === undefined ? state.stats[key] : entityStat(state, game, of, key))
   // The plugins' modifiers change what the player's stats read, never what is kept.
   const modifiers = of === undefined ? cx.statModifiers(state, game) : []
   const read = (key: string, depth: number): number => {
     const def = statDef(game, key)
     let value: number
-    if (def?.derive === undefined) value = stats[key] ?? def?.start ?? 0
+    if (def?.derive === undefined) value = kept(key) ?? def?.start ?? 0
     else if (depth > DEPTH) return 0
     else value = clampStat(state, game, key, evaluate(def.derive, read, depth), cx)
     if (modifiers.length) value = modified(state, game, key, value, modifiers, cx)
@@ -435,9 +436,9 @@ function writeStat(state: GameState, game: Game, key: StatKey, of: string | unde
   // A derived stat is worked out, never written: the loader reports the effect.
   if (statDef(game, key)?.derive !== undefined) return state
   if (of !== undefined) {
-    const entity = entityOf(state, of)
+    const entity = entityOf(state, game, of)
     if (!entity) return state
-    const value = clampStat(state, game, key, to(entity.stats[key] ?? 0), cx)
+    const value = clampStat(state, game, key, to(entityStat(state, game, of, key) ?? statDef(game, key)?.start ?? 0), cx)
     return writeEntity(state, of, { ...entity, stats: { ...entity.stats, [key]: value } })
   }
   const was = state.stats[key] ?? 0
@@ -454,25 +455,25 @@ export const stats = defineFeature<StatsShape>({
     stat: {
       holds: (state, condition, game, cx) => {
         // An entity that is not there fails every range, `lt` included.
-        if (condition.of !== undefined && !entityOf(state, condition.of)) return false
+        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return false
         if (!game) return inRange(state.stats[condition.stat] ?? 0, condition)
         return inRange(statValue(state, game, condition.stat, condition.of, cx), condition)
       },
       explain: (state, condition, game, cx) => {
         const read = (of?: string) => (game ? statValue(state, game, condition.stat, of, cx) : (state.stats[condition.stat] ?? 0))
         if (condition.of === undefined) return `stat ${condition.stat} is ${read()}; wants ${wanted(condition)}`
-        if (!entityOf(state, condition.of)) return `${condition.of} is not in the game`
+        if (!hasEntity(state, game, condition.of)) return `${condition.of} is not in the game`
         return `${condition.of} stat ${condition.stat} is ${read(condition.of)}; wants ${wanted(condition)}`
       },
       references: (condition) => [{ stat: condition.stat, of: condition.of }, ...ofKind(condition.of)],
     },
     level: {
       holds: (state, condition, game, cx) => {
-        if (condition.of !== undefined && !entityOf(state, condition.of)) return false
+        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return false
         return inRange(game ? (statLevel(state, game, condition.level, condition.of, cx)?.level ?? 0) : 0, condition)
       },
       explain: (state, condition, game, cx) => {
-        if (condition.of !== undefined && !entityOf(state, condition.of)) return `${condition.of} is not in the game`
+        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return `${condition.of} is not in the game`
         const level = game ? (statLevel(state, game, condition.level, condition.of, cx)?.level ?? 0) : 0
         return `${condition.of === undefined ? '' : `${condition.of} `}stat ${condition.level} is at level ${level}; wants ${wanted(condition)}`
       },
@@ -508,24 +509,12 @@ export const stats = defineFeature<StatsShape>({
     },
   },
   lists: ['stat'],
-  // A kept stat the save lacks, the player's or an entity's, starts at its start.
+  // A kept stat of the player's the save lacks starts at its start. An entity's reads its start until play changes it.
   fill: {
     kind: 'stats',
     run: (state, game) => {
-      let next = state
-      const kept = (game.stats ?? []).filter((stat) => stat.derive === undefined)
-      const lacking = kept.filter((stat) => !stat.of && next.stats?.[stat.id] === undefined)
-      if (lacking.length) next = { ...next, stats: { ...next.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } }
-      for (const [kind, entities] of Object.entries(next.entities ?? {})) {
-        const owned = kept.filter((stat) => stat.of === kind)
-        for (const [id, entity] of Object.entries(entities)) {
-          const missing = owned.filter((stat) => entity.stats?.[stat.id] === undefined)
-          if (!missing.length) continue
-          const stats = { ...entity.stats, ...Object.fromEntries(missing.map((stat) => [stat.id, stat.start ?? 0])) }
-          next = writeEntity(next, `${kind}:${id}`, { ...entity, stats })
-        }
-      }
-      return next
+      const lacking = (game.stats ?? []).filter((stat) => stat.derive === undefined && !stat.of && state.stats?.[stat.id] === undefined)
+      return lacking.length ? { ...state, stats: { ...state.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } } : state
     },
   },
   // A New Game+ carries the player's stats `carryOver` lists, held to the new game's range.

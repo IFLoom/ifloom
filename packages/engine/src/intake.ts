@@ -172,6 +172,22 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
     ...state,
     chosen: Object.fromEntries(Object.entries((state.chosen ?? {}) as Record<string, number>).map(([key, count]) => [choiceKey(key), count])),
   }),
+  // 14 → 15: an entity's record keeps only what play changed, and reads the rest from content. Empty
+  // stats and kv go here; the entities feature's `loaded` drops what equals the game's content (names, starts).
+  14: (state) => ({
+    ...state,
+    entities: Object.fromEntries(
+      Object.entries((state.entities ?? {}) as Record<string, Record<string, Record<string, unknown>>>).map(([kind, byId]) => [
+        kind,
+        Object.fromEntries(
+          Object.entries(byId).map(([id, record]) => [
+            id,
+            Object.fromEntries(Object.entries(record).filter(([, value]) => !(value && typeof value === 'object' && !Object.keys(value).length))),
+          ]),
+        ),
+      ]),
+    ),
+  }),
 }
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */
@@ -233,9 +249,8 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 
 /**
  * What `MigrationTools.fill` can fill, each named by the feature that fills
- * it: the player's stats and each entity's (start values), items (start
- * counts), kv keys the game resets each turn (`rules.resets`), play
- * settings (defaults) and declared entities.
+ * it: the player's stats (start values), items (start counts), kv keys the
+ * game resets each turn (`rules.resets`) and play settings (defaults).
  */
 export type FillKind = FeatureFill
 
@@ -252,7 +267,7 @@ export type MigrationTools = {
 /**
  * A state with what the game declares and the save lacks filled in: only the
  * kinds asked for, every kind if left out. Nothing the save already has is
- * changed, and an entity removed in play is not brought back.
+ * changed.
  */
 function fillDeclared(state: GameState, game: Game, kinds?: readonly FillKind[]): GameState {
   return fillSteps.reduce((next, fill) => (!kinds || kinds.includes(fill.kind) ? fill.run(next, game) : next), state)
@@ -283,7 +298,7 @@ function carryGame(state: GameState, game: Game): GameState | string {
 /**
  * What the game as it is now declares and the save lacks, as each feature's
  * `loaded` says: a storyline added since. A game that declares no `version`
- * also gets the fills marked `unversioned` (its play settings and entities)
+ * also gets the fills marked `unversioned` (its play settings)
  * here, as it always has; one that declares a version fills them in its own
  * steps, with `tools.fill()`.
  */

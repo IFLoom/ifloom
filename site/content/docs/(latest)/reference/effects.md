@@ -240,9 +240,9 @@ Takes one entry out of a collection, named by its id in `entry`. It does nothing
 { kind: 'create', of: 'staff', entity: { id: 'cleo', name: 'Cleo' } }
 ```
 
-Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. It gets every stat of its kind at that stat's `start`, overridden by `entity.stats`. Its kv store is `entity.kv`, or empty.
+Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. The save keeps a record of it with its `name` and whatever `entity.stats` and `entity.kv` give. Every other stat of its kind reads as that stat's `start`.
 
-Without `id`, it gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). A number is never given again, even once the entity that had it is [removed](#remove). With `id`, it gets that id, unless an entity of that kind already has it. In that case the effect does nothing, and the entity there keeps its name and numbers.
+Without `id`, it gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). A number is never given again, even once the entity that had it is [removed](#remove). With `id`, it gets that id, unless an entity of that kind already has it. In that case the effect does nothing, and the entity there keeps its name and numbers. An id the game declares counts as taken, unless that entity was removed: then it comes back, with the name the `create` gives.
 
 This choice, from the café's interviews, hires someone:
 
@@ -266,9 +266,9 @@ choices: [
 { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
 ```
 
-Takes an [entity](/docs/reference/entities) out of the game, with its stats and its kv store. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
+Takes an [entity](/docs/reference/entities) out of the game, with what the save kept about it. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
 
-An entity the game declares is also recorded in [`state.removed`](/docs/reference/state#removed). That keeps it gone, rather than being put back when the save [loads](/docs/reference/entities#entities-in-old-saves), which adds declared entities a save lacks. An entity created in play isn't recorded.
+An entity the game declares is also recorded in [`state.removed`](/docs/reference/state#removed). A declared entity is in the game unless it's recorded there, so that's what keeps it gone, in this save and when it [loads](/docs/reference/entities#entities-in-old-saves) again. An entity created in play isn't recorded: once its record goes, it's gone.
 
 ### each
 

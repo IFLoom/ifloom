@@ -272,6 +272,8 @@ export const PART_KEYS = [
   'entity-column',
   'entity-row',
   'entity-name',
+  'entity-image',
+  'entity-desc',
   'entity-value',
   'inputs',
   'input',

@@ -172,7 +172,7 @@ const town: Content = {
 
 Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/person` and `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the token shows as written, so ask for the name before the player can meet them.
 
-The entity keeps the `name` as written, because entities are made before there's a save to read. Read the name from the plugin's view or `cast/person`, not from `state.entities`.
+The entity's `name` is the character's, as written, and it's filled in wherever it's read: in [`view.entities`](/docs/reference/view#entitiesview-and-entityview) and through [`entityName`](/docs/reference/entities#entityname) too.
 
 ### TalkOption
 
@@ -275,14 +275,14 @@ The [loader](/docs/reference/loader#content) merges characters by id, as it merg
 The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kinds-and-entities)) and one entity of it per character (through `entities`). Each entity is named by the character's `name` and starts with their `stats` and `kv`. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
 
 ```ts
-import { startingState, type Condition, type Effect, type Game } from '@ifloom/engine'
+import { entitiesOf, startingState, statValue, type Condition, type Effect, type Game } from '@ifloom/engine'
 import { person } from '@ifloom/plugin-cast'
 
 declare const game: Game   // built from the content above
 
-startingState(game).entities.character
-// { ava: { name: 'Ava', stats: { friendship: 0 }, kv: {} },
-//   sam: { name: 'Sam', stats: { friendship: 0 }, kv: {} } }
+const state = startingState(game)
+entitiesOf(state, game, 'character')                    // ['character:ava', 'character:sam']
+statValue(state, game, 'friendship', person('ava'))     // 0
 
 const isFriend: Condition = { stat: 'friendship', of: person('ava'), gte: 25 }
 const warmer: Effect = { kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }
@@ -290,7 +290,18 @@ const warmer: Effect = { kind: 'stat', stat: 'friendship', by: 10, of: person('a
 const drift: Effect = { kind: 'each', of: 'character', effects: [{ kind: 'stat', stat: 'friendship', by: -1, of: '$' }] }
 ```
 
-The entities are made when the game loads, from the merged content, so a mod's character gets their stats too. If the game declares an entity itself with the same kind and id, the game's wins whole. A save made before a character was added gains them when it loads (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
+The entities are made when the game loads, from the merged content, so a mod's character gets their stats too. If the game declares an entity itself with the same kind and id, the game's wins whole. A save made before a character was added has them as soon as it loads (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
+
+The kind is [`unique`](/docs/reference/entities#kinddef), since each character is one person, and it's [listed](/docs/reference/entities#listing) with `{ 'cast/met': { character: '$' } }`. So [`view.entities.character`](/docs/reference/view#entities) only has the people the player has met, and a UI that draws every entity gives nobody away early. To list everyone, or to split the list instead, redeclare the kind in your content. What you leave out keeps the plugin's:
+
+```ts
+import type { Content } from '@ifloom/engine'
+
+const people: Content = {
+  // Everyone on the list, with `met` to tell them apart.
+  kinds: [{ id: 'character', label: 'Person', plural: 'People', listed: true, marks: { met: { 'cast/met': { character: '$' } } } }],
+}
+```
 
 ## Where people are
 
@@ -368,10 +379,10 @@ Met people are listed in the view's [`people`](#castview), and only met people w
 The [content above](#in-your-content), with the calendar and places. The game starts on the high street on a Monday morning.
 
 ```ts
-import { apply, applyEffects, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
+import { apply, applyEffects, holds, loadGame, startingState, statValue, view, whyNot, type GameState } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
-import { cast, call, here, isAt, talk, type CastView } from '@ifloom/plugin-cast'
+import { cast, call, here, isAt, person, talk, type CastView } from '@ifloom/plugin-cast'
 
 const clock = calendar()
 const { game } = loadGame([town], {
@@ -395,7 +406,7 @@ holds(state, here('ava'), game)          // true
 state = apply(state, game, talk('ava')).state
 state.sceneId                            // 'ava.hi'
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
-state.entities.character.ava.stats       // { friendship: 10 }
+statValue(state, game, 'friendship', person('ava'))   // 10
 
 // That evening, Ava has gone to the park.
 state = clock.write(state, { day: 0, period: 'evening' })

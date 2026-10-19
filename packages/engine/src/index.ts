@@ -67,7 +67,7 @@ export { definePlugin, pluginById, pluginQuery, pluginSpeaker } from './plugin.t
 export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
 export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from './scene.ts'
 export type { VariantMember } from './prose.ts'
-export { fillTokens, proseStore } from './prose.ts'
+export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaKind, parseBeats, styledBeats } from './sceneBody.ts'
 
@@ -114,7 +114,7 @@ export { lockOn, lockedBy, lockedOut } from './locks.ts'
 // Collections, notices, triggers and input
 export type { CollectionDef, CollectionEntry, CollectionItem } from './collections.ts'
 export type { EntityDef, EntityRef, EntityState, KindDef } from './entities.ts'
-export { anyOf, bindCurrent, entitiesOf, entityOf, kindById, parseRef, writeEntity } from './entities.ts'
+export { anyOf, bindCurrent, entitiesOf, entityKv, entityOf, entityTags, kindById, parseRef, writeEntity } from './entities.ts'
 export { collect, collected, collectionById, discard } from './collections.ts'
 export type { Notice } from './notices.ts'
 export { NOTICES_KEPT, dismiss, notify } from './notices.ts'

@@ -252,7 +252,7 @@ describe('plugins that bring entities and speakers', () => {
   const choir = definePlugin<null>({
     id: 'choir',
     version: 1,
-    kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir' }],
+    kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true }],
     entities: (game) =>
       ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).map((singer) => ({ id: singer.id, of: 'singer', name: singer.name })),
     speaker: (id, _state, { game }) => {
@@ -280,11 +280,13 @@ describe('plugins that bring entities and speakers', () => {
     const { game, problems } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [choir] })
     expect(problems).toEqual([])
     const state = startingState(game)
-    expect(state.entities.singer).toEqual({
-      bea: { name: 'Bea the soloist', stats: { voice: 9 }, kv: {} },
-      ann: { name: 'Ann', stats: { voice: 3 }, kv: {} },
-    })
-    expect(view(state, game).entities.singer.plural).toBe('Choir')
+    expect(state.entities).toEqual({})
+    const singers = view(state, game).entities.singer
+    expect(singers.plural).toBe('Choir')
+    expect(singers.entries.map((entry) => [entry.ref, entry.name, entry.stats.map((stat) => stat.value)])).toEqual([
+      ['singer:bea', 'Bea the soloist', [9]],
+      ['singer:ann', 'Ann', [3]],
+    ])
   })
 
   it('say who is speaking', () => {

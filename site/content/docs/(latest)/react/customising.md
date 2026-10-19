@@ -745,7 +745,9 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `entity-columns` | The table's header row. |
 | `entity-column` | One column heading. |
 | `entity-row` | One entity's row. Carries `data-entity`. |
-| `entity-name` | The entity's name. |
+| `entity-name` | The entity's name, with its picture and description inside. |
+| `entity-image` | Its picture, when it has one. |
+| `entity-desc` | Its description, when it has one. |
 | `entity-value` | One of its stats. |
 | `inputs` | Every input on offer. |
 | `input` | One input. Carries `data-input`. |

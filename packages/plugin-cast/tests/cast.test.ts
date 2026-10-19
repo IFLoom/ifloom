@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Game, type GameState, type Content, type CommandRef } from '@ifloom/engine'
+import {
+  apply,
+  entitiesOf,
+  holds,
+  pluginQuery,
+  loadGame,
+  startingState,
+  statValue,
+  view,
+  whyNot,
+  writeEntity,
+  type Game,
+  type GameState,
+  type Content,
+  type CommandRef,
+} from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { call, cast, hasMet, here, isAt, person, talk, type CastView, type CharacterDef } from '../src/index.ts'
@@ -77,11 +92,13 @@ describe('the cast', () => {
   it('are entities of the kind character, with the stats the game declares on it', () => {
     const { game: g } = game()
     const state = startingState(g)
-    expect(state.entities.character).toEqual({
-      ava: { name: 'Ava', stats: { friendship: 0 }, kv: {} },
-      sam: { name: 'Sam', stats: { friendship: 5 }, kv: {} },
-    })
-    expect(view(state, g).entities.character.plural).toBe('People')
+    expect(state.entities).toEqual({})
+    expect(entitiesOf(state, g, 'character')).toEqual(['character:ava', 'character:sam'])
+    expect([statValue(state, g, 'friendship', person('ava')), statValue(state, g, 'friendship', person('sam'))]).toEqual([0, 5])
+    // Listed in the view once met, so nobody is given away before then.
+    expect(view(state, g).entities.character).toMatchObject({ plural: 'People', unique: true, entries: [] })
+    const met = run(g, run(g, state, go('cafe')), talk('ava'))
+    expect(view(met, g).entities.character.entries.map((entry) => [entry.ref, entry.name])).toEqual([['character:ava', 'Ava']])
   })
 
   it('are where their schedule puts them, and in the room when that is where the player is', () => {
@@ -99,10 +116,7 @@ describe('the cast', () => {
     const { game: g, clock } = game()
     const park = clock.write(run(g, startingState(g), go('park')), { day: 0, period: 'evening' })
     expect(run(g, park, talk('ava')).sceneId).toBe('ava.hi')
-    const friends = {
-      ...park,
-      entities: { ...park.entities, character: { ...park.entities.character, ava: { ...park.entities.character.ava, stats: { friendship: 30 } } } },
-    }
+    const friends = writeEntity(park, person('ava'), { stats: { friendship: 30 } })
     expect(shown(friends, g).present.find((person) => person.id === 'ava')?.actions[0].label).toBe('Walk with Ava')
     expect(run(g, friends, talk('ava')).sceneId).toBe('ava.river')
     expect(holds(friends, { stat: 'friendship', of: person('ava'), gte: 25 }, g)).toBe(true)

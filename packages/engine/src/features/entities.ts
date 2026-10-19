@@ -6,13 +6,16 @@
 import {
   anyOf,
   bindCurrent,
+  createdRecord,
+  dropRecord,
   entitiesOf,
-  entityOf,
-  newEntity,
+  entityDef,
+  entityKv,
+  entityTags,
+  entityText,
+  hasEntity,
   ofKind,
   parseRef,
-  removeEntity,
-  startingEntities,
   writeEntity,
   type EntityDef,
   type EntityState,
@@ -23,37 +26,51 @@ import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
 import { defineFeature, type FeatureContext, type PackMerge } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
-import { statView, type StatView } from './stats.ts'
+import { statDef, statView, type StatView } from './stats.ts'
+import { artSrc } from '../sceneBody.ts'
 
 /** One entity as the UI draws it. */
 export type EntityView = {
   id: string
   /** How content names it: `'staff:ana'`. */
   ref: string
+  /** Its name, with prose tokens filled in. */
   name: string
+  /** Its description, filled in the same way; null with none. */
+  desc: string | null
+  /** Its picture's path, through `artSrc`; null with none. */
+  image: string | null
+  /** Its kind's tags, then its own. */
+  tags: string[]
+  /** Each of its kind's `marks`, by name: whether it holds for this one. Empty when the kind declares none. */
+  marks: Record<string, boolean>
   /** Its kind's listed stats that the player can see on it, in declared order. */
   stats: StatView[]
+  /** Its kv store as it reads: what it was declared with, and what play set. */
   kv: Record<string, KvValue>
 }
 
 export type EntitiesView = {
   label: string
   plural: string
+  /** The kind's `unique`: each one is one particular thing. */
+  unique: boolean
+  /** Its entities that are listed and visible, declared ones first, then the ones created in play. */
   entries: EntityView[]
 }
 
 /** What the entities feature adds, as types. */
 export type EntitiesShape = {
   state: {
-    /** The things the game keeps several of, by kind and id: `entities.staff.ana`. */
+    /**
+     * What play changed about the game's entities, by kind and id:
+     * `entities.staff.ana`. A declared entity has no record until something
+     * changes it; one created in play has one from the start.
+     */
     entities: Record<string, Record<string, EntityState>>
     /** How many of each kind have been created in play, for the next one's id. */
     created: Record<string, number>
-    /**
-     * Entities the game declared that were removed in play, by reference. A
-     * declared entity a save does not have is added when it loads (a mod's new
-     * character, say) unless it is here: gone for good.
-     */
+    /** Entities the game declares that were removed in play, by reference: gone for good. */
     removed: string[]
   }
   conditions: {
@@ -93,16 +110,19 @@ export type EntitiesShape = {
     entities?: EntityDef[]
   }
   view: {
-    /** Each kind's entities, by kind id, in the order they came. Every declared kind is here, empty or not. */
+    /**
+     * Each listed kind's listed, visible entities, by kind id: declared ones
+     * first, then those created in play. A listed kind is here, empty or not;
+     * a kind whose `listed` is false is not.
+     */
     entities: Record<string, EntitiesView>
   }
   lists: 'kind' | 'entity'
-  fill: 'entities'
 }
 
 /** How many entities of a kind a `count` condition counts. */
 function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game | undefined, cx: FeatureContext): number {
-  const refs = entitiesOf(state, condition.count)
+  const refs = entitiesOf(state, game, condition.count)
   return condition.where ? refs.filter((ref) => cx.holds(state, bindCurrent(condition.where, ref), game)).length : refs.length
 }
 
@@ -118,6 +138,8 @@ function kindIds(game: Game): Set<string> {
  */
 function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
   const kinds = new Map<string, { value: KindDef; from: string }>()
+  // A plugin's kinds, unlisted unless the plugin says: a game that redeclares one keeps what it leaves out.
+  const plugged = new Map<string, KindDef>()
   // Keyed `kind:id`: two kinds may each have an entity called the same.
   const entities = new Map<string, { value: EntityDef; from: string }>()
   const addKinds = (list: readonly KindDef[] | undefined, from: string) => {
@@ -129,7 +151,13 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
   return {
     base: (game) => {
       // The base is the whole game as declared, plugins and all.
-      for (const plugin of (game as Pick<Game, 'plugins'>).plugins ?? []) addKinds(plugin.kinds, plugin.id)
+      for (const plugin of (game as Pick<Game, 'plugins'>).plugins ?? []) {
+        for (const kind of plugin.kinds ?? []) {
+          const unlisted = { ...kind, listed: kind.listed ?? false }
+          plugged.set(kind.id, unlisted)
+          kinds.set(kind.id, { value: unlisted, from: plugin.id })
+        }
+      }
       addKinds(game.kinds, 'base')
       addEntities(game.entities, 'base')
     },
@@ -138,7 +166,10 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
       addEntities(pack.entities, from)
     },
     finish: (game) => {
-      game.kinds = [...kinds.values()].map((entry) => entry.value)
+      game.kinds = [...kinds.values()].map(({ value }) => {
+        const theirs = plugged.get(value.id)
+        return theirs && theirs !== value ? { ...theirs, ...value } : value
+      })
       // A plugin's entities, from its content; one the game declares itself wins.
       for (const plugin of game.plugins ?? []) {
         for (const entity of plugin.entities?.(game) ?? []) {
@@ -155,7 +186,7 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
 export const entities = defineFeature<EntitiesShape>({
   name: 'entities',
   state: {
-    entities: { start: (game) => startingEntities(game), load: () => ({}) },
+    entities: { start: () => ({}), load: () => ({}) },
     created: { start: () => ({}), load: () => ({}) },
     removed: { start: () => [], load: () => [] },
   },
@@ -167,40 +198,40 @@ export const entities = defineFeature<EntitiesShape>({
       references: (condition) => [{ kind: condition.count }, { when: bindCurrent(condition.where, anyOf(condition.count)) }],
     },
     entity: {
-      holds: (state, condition) => entityOf(state, condition.entity) !== undefined,
-      explain: (state, condition) => `${condition.entity} is ${entityOf(state, condition.entity) ? '' : 'not '}in the game`,
+      holds: (state, condition, game) => hasEntity(state, game, condition.entity),
+      explain: (state, condition, game) => `${condition.entity} is ${hasEntity(state, game, condition.entity) ? '' : 'not '}in the game`,
       references: (condition) => ofKind(condition.entity),
     },
   },
   effects: {
     create: {
       apply: (state, effect, game) => {
-        const kind = state.entities?.[effect.of] ?? {}
-        const made = (id: string) => writeEntity(state, `${effect.of}:${id}`, newEntity(game, effect.of, effect.entity))
+        const made = (id: string) => writeEntity(state, `${effect.of}:${id}`, createdRecord(effect.entity))
         // A given id is used as it is, unless it is taken, or a whole number that would sort first.
         if (effect.entity.id !== undefined) {
-          if (kind[effect.entity.id] || /^\d+$/.test(effect.entity.id)) return state
+          const ref = `${effect.of}:${effect.entity.id}`
+          if (hasEntity(state, game, ref) || /^\d+$/.test(effect.entity.id)) return state
           // Back after being removed: no longer gone for good.
           const back = made(effect.entity.id)
-          const ref = `${effect.of}:${effect.entity.id}`
           return back.removed?.includes(ref) ? { ...back, removed: back.removed.filter((entry) => entry !== ref) } : back
         }
         // The next free number, `#1`, `#2`, never reused. Not a bare number: object keys
         // that look like numbers sort before the rest, and entities keep the order they came.
         let n = state.created?.[effect.of] ?? 0
         do n += 1
-        while (kind[`#${n}`])
+        while (hasEntity(state, game, `${effect.of}:#${n}`))
         return { ...made(`#${n}`), created: { ...state.created, [effect.of]: n } }
       },
       references: (effect) => [{ kind: effect.of }, ...Object.keys(effect.entity.stats ?? {}).map((stat) => ({ stat, starts: effect.of }))],
     },
     remove: {
       apply: (state, effect, game) => {
-        if (!entityOf(state, effect.entity)) return state
-        const gone = removeEntity(state, effect.entity)
-        // A declared one stays gone when the save is next loaded.
-        const declared = (game.entities ?? []).some((entity) => `${entity.of}:${entity.id}` === effect.entity)
-        return declared && !(gone.removed ?? []).includes(effect.entity) ? { ...gone, removed: [...(gone.removed ?? []), effect.entity] } : gone
+        if (!hasEntity(state, game, effect.entity)) return state
+        const gone = dropRecord(state, effect.entity)
+        // A declared one stays gone: nothing in the save says it was ever there otherwise.
+        return entityDef(game, effect.entity) && !(gone.removed ?? []).includes(effect.entity)
+          ? { ...gone, removed: [...(gone.removed ?? []), effect.entity] }
+          : gone
       },
       references: (effect) => ofKind(effect.entity),
     },
@@ -208,8 +239,8 @@ export const entities = defineFeature<EntitiesShape>({
       apply: (state, effect, game, cx) => {
         // Who it runs for is decided before it starts: one created on the way is not visited, one removed is skipped.
         let next = state
-        for (const ref of entitiesOf(state, effect.of)) {
-          if (!entityOf(next, ref)) continue
+        for (const ref of entitiesOf(state, game, effect.of)) {
+          if (!hasEntity(next, game, ref)) continue
           if (effect.where && !cx.holds(next, bindCurrent(effect.where, ref), game)) continue
           next = cx.runEffects(next, game, cx.buildEffects(next, game, bindCurrent(effect.effects, ref)), cx.ending)
         }
@@ -227,19 +258,8 @@ export const entities = defineFeature<EntitiesShape>({
   },
   pack: { merge },
   lists: ['kind', 'entity'],
-  // A declared entity the save does not have (a mod's, a new version's) joins it, unless it was removed in play.
-  fill: {
-    kind: 'entities',
-    unversioned: true,
-    run: (state, game) => {
-      let next = state
-      const missing = (game.entities ?? []).filter(
-        (entity) => !next.entities?.[entity.of]?.[entity.id] && !(next.removed ?? []).includes(`${entity.of}:${entity.id}`),
-      )
-      for (const entity of missing) next = writeEntity(next, `${entity.of}:${entity.id}`, newEntity(game, entity.of, entity))
-      return next
-    },
-  },
+  // What older saves copied from content (names, and values equal to where they start) is dropped, so it reads from content again.
+  loaded: (state, game) => tidied(state, game),
   check: (game, tools) => {
     tools.twice(
       'kind',
@@ -258,34 +278,92 @@ export const entities = defineFeature<EntitiesShape>({
       if (!kinds.has(entity.of)) tools.problem(source, where, `unknown kind "${entity.of}"`)
       // Object keys that look like numbers sort first, which would scramble the order entities came in.
       if (/^\d+$/.test(entity.id)) tools.problem(source, where, 'an entity id must not be a whole number')
-      tools.check(
-        source,
-        where,
-        Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })),
-      )
+      tools.check(source, where, [
+        ...Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })),
+        { when: bindCurrent(entity.visible, `${entity.of}:${entity.id}`) },
+        ...(entity.image !== undefined ? [{ picture: entity.image }] : []),
+      ])
+    }
+    // A kind's `listed` and `marks` are asked of each of its entities, so `'$'` is any one of them.
+    for (const kind of game.kinds ?? []) {
+      const one = anyOf(kind.id)
+      const asked = [...(typeof kind.listed === 'object' ? [kind.listed] : []), ...Object.values(kind.marks ?? {})]
+      if (asked.length)
+        tools.check(
+          { list: 'kind', id: kind.id },
+          `kind ${kind.id}`,
+          asked.map((when) => ({ when: bindCurrent(when, one) })),
+        )
     }
   },
   resolve: (game) => {
     const kinds = kindIds(game)
     return { kind: (ref) => (kinds.has(ref.kind) ? [] : [`unknown kind "${ref.kind}"`]) }
   },
-  // Every kind's entities, with the stats the player can see on each.
+  // Each listed kind's listed, visible entities, with the stats the player can see on each.
   view: (state, game, _shown, cx) => ({
     entities: Object.fromEntries(
-      (game.kinds ?? []).map((kind) => {
-        const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
-        const entries = entitiesOf(state, kind.id).map((ref) => {
-          const entity = entityOf(state, ref)!
-          return {
-            id: parseRef(ref)!.id,
-            ref,
-            name: entity.name,
-            stats: stats.filter((stat) => cx.holds(state, bindCurrent(stat.visible, ref), game)).map((stat) => statView(state, game, stat, ref, cx)),
-            kv: entity.kv,
-          }
-        })
-        return [kind.id, { label: kind.label, plural: kind.plural ?? kind.label, entries }]
-      }),
+      (game.kinds ?? [])
+        .filter((kind) => kind.listed !== false)
+        .map((kind) => {
+          const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
+          const holdsFor = (when: Condition | undefined, ref: string) => cx.holds(state, bindCurrent(when, ref), game)
+          const listed = (ref: string) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
+          const entries = entitiesOf(state, game, kind.id)
+            .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
+            .map((ref): EntityView => {
+              const id = parseRef(ref)!.id
+              const desc = entityText(state, game, ref, 'desc')
+              const image = entityDef(game, ref)?.image
+              return {
+                id,
+                ref,
+                name: cx.fillTokens(entityText(state, game, ref, 'name') ?? id, state, game),
+                desc: desc === undefined ? null : cx.fillTokens(desc, state, game),
+                image: image === undefined ? null : artSrc(image),
+                tags: entityTags(state, game, ref),
+                marks: Object.fromEntries(Object.entries(kind.marks ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
+                stats: stats.filter((stat) => holdsFor(stat.visible, ref)).map((stat) => statView(state, game, stat, ref, cx)),
+                kv: entityKv(state, game, ref),
+              }
+            })
+          return [kind.id, { label: kind.label, plural: kind.plural ?? kind.label, unique: kind.unique ?? false, entries }]
+        }),
     ),
   }),
 })
+
+/** One record with what content already says taken out; undefined when nothing is left of a declared one's. */
+function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: string, game: Game): EntityState | undefined {
+  const next: EntityState = {}
+  if (record.name !== undefined && record.name !== def?.name) next.name = record.name
+  const stats = Object.entries(record.stats ?? {}).filter(([id, value]) => {
+    const stat = statDef(game, id)
+    if (!stat || stat.of !== kind || stat.derive !== undefined) return true
+    return value !== (def?.stats?.[id] ?? stat.start ?? 0)
+  })
+  if (stats.length) next.stats = Object.fromEntries(stats)
+  const kv = Object.entries(record.kv ?? {}).filter(([key, value]) => def?.kv?.[key] !== value)
+  if (kv.length) next.kv = Object.fromEntries(kv)
+  // A created one's record is what says it is there, so it stays, however little is left.
+  if (def && !Object.keys(next).length) return undefined
+  return next
+}
+
+/**
+ * The save's entity records with what content says dropped: a declared
+ * entity's name, and stats and kv keys equal to where they start. Saves
+ * before version 15 copied all of it, which would hide a fix to the content.
+ * Nothing left means no record, and a kind with no records goes too.
+ */
+function tidied(state: GameState, game: Game): GameState {
+  if (!state.entities) return state
+  const out: Record<string, Record<string, EntityState>> = {}
+  for (const [kind, byId] of Object.entries(state.entities)) {
+    for (const [id, record] of Object.entries(byId ?? {})) {
+      const next = tidiedRecord(record, entityDef(game, `${kind}:${id}`), kind, game)
+      if (next) out[kind] = { ...out[kind], [id]: next }
+    }
+  }
+  return JSON.stringify(out) === JSON.stringify(state.entities) ? state : { ...state, entities: out }
+}

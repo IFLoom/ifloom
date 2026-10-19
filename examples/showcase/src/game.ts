@@ -168,7 +168,8 @@ export function probes(game: Game) {
           turn: 7,
           seen: { ...first.seen, 'ava.hi': 4 },
           kv: { catName: 'Biscuit' },
-          entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
+          // Only what play changed is saved: Ava's friendship.
+          entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
           stats: { ...first.stats, charm: 5 },
           plugins: {
             ...first.plugins,

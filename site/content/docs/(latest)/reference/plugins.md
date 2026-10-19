@@ -992,7 +992,7 @@ entities?: (game: Game) => readonly EntityDef[]
 
 A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
-- **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in its content, replaces the plugin's. That's how a game renames one.
+- **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game declares with the same id, on the base or in its content, replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one.
 - **`entities(game)`** is called once the game is loaded, with the content and every pack merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
 
 The regulars above, each also an entity with a stat of their own:
@@ -1001,7 +1001,8 @@ The regulars above, each also an entity with a stat of their own:
 const regulars = definePlugin<null>({
   id: 'regulars',
   version: 1,
-  kinds: [{ id: 'regular', label: 'Regular', plural: 'Regulars' }],
+  // Listed in the view: everyone at the bar is known to the player.
+  kinds: [{ id: 'regular', label: 'Regular', plural: 'Regulars', listed: true }],
   entities: (game) =>
     ((game.data?.regulars?.people ?? []) as readonly Regular[]).map((person) => ({ id: person.id, of: 'regular', name: person.name })),
   // speaker as above
@@ -1014,9 +1015,9 @@ data: { regulars: { people: [{ id: 'mo', name: 'Mo' }, { id: 'sal', name: 'Sal' 
 ```
 
 ```ts
-startingState(game).entities.regular
-// { mo: { name: 'Mo from next door', stats: { fondness: 8 }, kv: {} },
-//   sal: { name: 'Sal', stats: { fondness: 3 }, kv: {} } }
+const state = startingState(game)
+view(state, game).entities.regular.entries.map((entry) => [entry.name, entry.stats[0].value])
+// [['Mo from next door', 8], ['Sal', 3]]
 ```
 
 The content's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.

@@ -1,6 +1,7 @@
 import {
   apply,
   buildEffects,
+  entitiesOf,
   commandOf,
   inlineChoices,
   pluginQuery,
@@ -198,7 +199,7 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
     // The player's stats, then how many there are of each kind of entity.
     const stats = Object.fromEntries([
       ...(game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, state.stats[stat.id] ?? statDef(game, stat.id)?.start ?? 0]),
-      ...(game.kinds ?? []).map((kind) => [kind.id, Object.keys(state.entities?.[kind.id] ?? {}).length]),
+      ...(game.kinds ?? []).map((kind) => [kind.id, entitiesOf(state, game, kind.id).length]),
     ])
     metrics.push({ turn: turn + 1, stats, scenes, refused })
     scenes = []

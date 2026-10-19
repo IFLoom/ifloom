@@ -1,6 +1,6 @@
 /** The Corner Café, played a few weeks: the management shape needs entities, `each`, `count` and a turn. */
 import { describe, expect, it } from 'vitest'
-import { apply, holds, startingState, view, type Command, type GameState } from '@ifloom/engine'
+import { apply, entitiesOf, holds, startingState, statValue, view, type Command, type GameState } from '@ifloom/engine'
 import { cornerCafe } from '../src/game.ts'
 
 const { game, problems } = cornerCafe()
@@ -35,8 +35,9 @@ describe('The Corner Café', () => {
     let state = play(open(), act('interview'))
     expect(view(state, game).scene.body).toContain('Wages are 12 a week already.')
     state = play(state, { type: 'choose', id: 'dev' }, act('interview'), { type: 'choose', id: 'fen' })
-    expect(Object.keys(state.entities.staff)).toEqual(['ana', '#1', '#2'])
-    expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 }, kv: {} })
+    expect(entitiesOf(state, game, 'staff')).toEqual(['staff:ana', 'staff:#1', 'staff:#2'])
+    // Ana is declared, so the save keeps only what changed about her; Dev was hired in play, with his own numbers.
+    expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 } })
     expect(holds(state, { count: 'staff', gte: 3 }, game)).toBe(true)
     state = play(state, act('interview'), { type: 'choose', id: 'dev' })
     expect(apply(state, game, act('interview')).reason).toBe('There is no room behind the counter.')
@@ -48,13 +49,13 @@ describe('The Corner Café', () => {
     expect(after.turn).toBe(1)
     // Ten covers, plus Ana's skill twice, plus reputation over five: 24, at £26 a cover, over ten.
     expect(after.stats.coins).toBe(120 + Math.round((24 * 26) / 10) - 12)
-    expect(after.entities.staff.ana.stats.morale).toBe(52)
+    expect(statValue(after, game, 'morale', 'staff:ana')).toBe(52)
   })
 
   it('loses staff whose morale runs out, and says so when nobody is left', () => {
     let state = open()
     for (let week = 0; week < 6; week += 1) state = play(state, act('endWeek'))
-    expect(state.entities.staff).toEqual({})
+    expect(entitiesOf(state, game, 'staff')).toEqual([])
     expect(state.notices.map((notice) => notice.title)).toContain('Nobody to open up tomorrow.')
     // With nobody in the kitchen nothing sells, but nobody is paid either.
     const coins = state.stats.coins
@@ -67,7 +68,7 @@ describe('The Corner Café', () => {
     expect(state.stats.reputation).toBe(30)
     expect(state.notices.map((notice) => notice.title)).toEqual(['A glowing review in the local paper.'])
     for (let week = 0; week < 6; week += 1) state = play(state, act('staffLunch'), act('endWeek'))
-    expect(Object.keys(state.entities.staff)).toEqual(['ana', '#1'])
+    expect(entitiesOf(state, game, 'staff')).toEqual(['staff:ana', 'staff:#1'])
     expect(state.stats.reputation).toBe(30)
   })
 

@@ -184,7 +184,11 @@ export type Plugin<S = any, V = unknown> = {
    * plugin that answers is believed; with none, a scene has no speaker shown.
    */
   speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
-  /** Kinds of entity this plugin brings: the people of a cast. A game may redeclare one by id. */
+  /**
+   * Kinds of entity this plugin brings: the people of a cast. Unlisted in the
+   * view unless the kind sets `listed`. A game may redeclare one by id, and
+   * keeps what it leaves out.
+   */
   kinds?: readonly KindDef[]
   /**
    * Entities there at the start, made from the plugin's content when the game

@@ -28,7 +28,11 @@
  * records: `GameState.lastSeenOn`, `chosenOn` and `lastChosenOn`, and the
  * `since` condition's `last`. Organising a game: `Pack.overrides`. Content
  * and packs: `Content` (a pack's keys with an optional `name`, and no `id`,
- * `schema` or `patches`), and `Pack.overrides` gone.
+ * `schema` or `patches`), and `Pack.overrides` gone. Things are entities
+ * (phase 2): `EntityState` keeps only what play changed (its fields optional),
+ * `EntityDef` gains `desc`, `image`, `tags` and `visible`, `KindDef` gains
+ * `unique`, `listed`, `tags` and `marks`, and `View.entities` lists only what
+ * is listed, each `EntityView` with `desc`, `image`, `tags` and `marks`.
  */
 import type {
   ActionDef,
@@ -218,7 +222,7 @@ export type FrozenGameState = {
   lastChosenOn: Record<string, number>
   /** The player's stats. An entity's are on the entity. */
   stats: Stats
-  /** The things the game keeps several of, by kind and id: `entities.staff.ana`. */
+  /** What play changed about the game's entities, by kind and id: `entities.staff.ana`. */
   entities: Record<string, Record<string, EntityState>>
   /** How many of each kind have been created in play, for the next one's id. */
   created: Record<string, number>
@@ -531,7 +535,7 @@ export type FrozenView = {
   inScene: boolean
   /** Every declared collection, with its entries oldest first and their words filled in. */
   collections: Record<string, CollectionView>
-  /** Each kind's entities, by kind id, in the order they came. Every declared kind is here, empty or not. */
+  /** Each listed kind's listed, visible entities, by kind id. */
   entities: Record<string, EntitiesView>
   notices: NoticesView
   /** The inputs on offer now, by id, with the value each holds. */

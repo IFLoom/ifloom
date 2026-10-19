@@ -20,7 +20,7 @@ function cafe() {
         ],
         entities: [
           { id: 'ana', of: 'staff', name: 'Ana', stats: { wage: 12 } },
-          { id: 'ben', of: 'staff', name: 'Ben' },
+          { id: 'ben', of: 'staff', name: 'Ben', desc: 'New this week.', image: 'staff/ben' },
         ],
         activities: [{ id: 'hire', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { morale: 90 } } }] }],
       },
@@ -41,12 +41,14 @@ describe('EntityTable', () => {
     const rows = () => [...staff.querySelectorAll('tbody tr')].map((row) => [...row.querySelectorAll('td')].map((cell) => cell.textContent))
     expect(rows()).toEqual([
       ['Ana', '60', '£12'],
-      ['Ben', '60', '£10'],
+      ['BenNew this week.', '60', '£10'],
     ])
+    expect(staff.querySelector('[data-entity="staff:ben"] img')?.getAttribute('src')).toBe('art/staff/ben.jpg')
+    expect(staff.querySelector('[data-entity="staff:ana"] img')).toBeNull()
     act(() => void runner.apply({ type: 'activity', id: 'hire' }))
     expect(rows()).toEqual([
       ['Ana', '60', '£12'],
-      ['Ben', '60', '£10'],
+      ['BenNew this week.', '60', '£10'],
       ['Cleo', '90', '£10'],
     ])
     expect(staff.querySelector('[data-entity="staff:#1"]')).toBeTruthy()

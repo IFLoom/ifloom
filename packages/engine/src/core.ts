@@ -16,6 +16,7 @@ import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
+import { fillTokens } from './prose.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runTurnHooks } from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
@@ -44,6 +45,7 @@ export function featureContext(): FeatureContext {
     weighted,
     roll,
     customValue,
+    fillTokens,
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),
     sceneById,

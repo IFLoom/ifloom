@@ -10,6 +10,7 @@ import { saves, type SaveFile } from '../../src/save.ts'
 import { statValue } from '../../src/stats.ts'
 import type { GameState } from '../../src/types.ts'
 import { view } from '../../src/view.ts'
+import { entitiesOf } from '../../src/entities.ts'
 import { fixture } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 
@@ -147,17 +148,19 @@ describe('the game’s own migrations', () => {
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
     expect(all.stats.patience).toBe(7)
     expect(all.items.umbrella).toBe(1)
-    expect(all.entities.staff.ana).toEqual({ name: 'Ana', stats: {}, kv: {} })
+    // A declared entity needs no filling: Ana is there with no record of her own.
+    expect(all.entities.staff).toBeUndefined()
+    expect(entitiesOf(all, grown({ version: 2 }), 'staff')).toEqual(['staff:ana'])
     expect(all.settings).toEqual({ hints: true })
     expect(all.kv.tidied).toBe(false)
   })
 
-  it('leave a game with no version filling settings and entities by itself, as before', () => {
+  it('leave a game with no version filling settings by itself, as before', () => {
     const old = { ...startingState(before), sceneId: null, settings: undefined } as unknown as GameState
     const game = grown()
     const loaded = unwrap(saves(game, memoryDriver()).importText(fileOf(game, old)))
     expect(loaded.state.settings).toEqual({ hints: true })
-    expect(loaded.state.entities.staff.ana.name).toBe('Ana')
+    expect(entitiesOf(loaded.state, game, 'staff')).toEqual(['staff:ana'])
     expect(loaded.state).not.toHaveProperty('gameVersion')
     // loadState does the same for a state that never went through a save.
     expect(unwrap(loadState(old, game)).settings).toEqual({ hints: true })

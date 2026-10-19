@@ -225,7 +225,7 @@ While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the mi
 
 | Field | Type | Meaning |
 |---|---|---|
-| `entities` | `Record<string, `[`EntitiesView`](#entitiesview-and-entityview)`>` | Every declared [kind](/docs/reference/entities), by id, with its entities in the order they came and the stats the player can see on each. A kind with none is there, with no entries. |
+| `entities` | `Record<string, `[`EntitiesView`](#entitiesview-and-entityview)`>` | Every [listed](/docs/reference/entities#listing) [kind](/docs/reference/entities), by id, with the entities whose `listed` and `visible` hold, declared ones first, and the stats the player can see on each. A listed kind with none to show is there, with no entries. A kind whose `listed` is `false` isn't here, and neither are a plugin's kinds unless the plugin lists them. |
 
 ```ts
 const { staff } = view(state, game).entities
@@ -592,6 +592,7 @@ A [collection](/docs/reference/collections) as the UI draws it. `name` is the de
 type EntitiesView = {
   label: string
   plural: string
+  unique: boolean
   entries: EntityView[]
 }
 
@@ -599,20 +600,28 @@ type EntityView = {
   id: string
   ref: string
   name: string
+  desc: string | null
+  image: string | null
+  tags: string[]
+  marks: Record<string, boolean>
   stats: StatView[]
   kv: Record<string, KvValue>
 }
 ```
 
-A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has the kind's `label`, its `plural` (the `label` if the kind declares none), and an entry for each entity of that kind, in the order they came.
+A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has the kind's `label`, its `plural` (the `label` if the kind declares none), its `unique` (`false` if left out), and an entry for each entity of that kind the view may show: the [listed](/docs/reference/entities#listing) ones whose `visible` holds, declared ones in content order, then those created in play.
 
 | `EntityView` field | What it holds |
 |---|---|
 | `id` | Its id within the kind: `'ana'`, `'#1'`. |
 | `ref` | How content names it, such as `'staff:ana'`. It's what an effect's `of` or an [`{ entity }`](/docs/reference/conditions#entity) condition takes. |
-| `name` | Its name. |
+| `name` | Its name, with [prose tokens](/docs/reference/prose#tokens) filled in for this save. |
+| `desc` | Its description, filled in the same way, or `null`. |
+| `image` | Its picture's path through [`artSrc`](/docs/reference/prose#artsrc), or `null`. |
+| `tags` | Its kind's tags, then its own. |
+| `marks` | Each of its kind's [`marks`](/docs/reference/entities#listing), by name, and whether it holds for this entity. `{}` when the kind declares none. Use it to split a list, such as people you've met and people you haven't, without the engine hiding anything more. |
 | `stats` | Its kind's `listed` stats whose `visible` holds with `'$'` bound to it, in the order the game declared them, as [`StatView`](#statview)s with its own values. |
-| `kv` | Its kv store, as the state holds it. |
+| `kv` | Its kv store as it reads: its declaration's keys with what play set laid over them. |
 
 **Gotcha.** Each entity's `stats` is decided on its own, so two entries of one kind can show different stats. The [React UI](/docs/react/components#entitytable)'s table makes a column for every stat any row shows, and leaves the other rows' cells blank.
 

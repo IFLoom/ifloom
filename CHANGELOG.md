@@ -8,6 +8,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- An entity can have a `desc`, an `image` and `tags`, and a `visible` condition that decides whether the view lists it. [`entityName`](/docs/reference/entities#entityname), [`entityDesc`](/docs/reference/entities#entitydesc), [`entityKv`](/docs/reference/entities#entitykv) and [`entityTags`](/docs/reference/entities#entitytags) read them, names and descriptions with their prose tokens filled. The React UI's `EntityTable` shows the picture and description when there are any.
+- A kind can be `unique` (each entity one particular thing, such as a person), have `tags` every entity of it shares, decide what the view lists with `listed` (true, false, or a condition asked for each entity with `'$'` as it), and give each listed entity `marks`, named conditions a UI can split a list by. See [Listing](/docs/reference/entities#listing).
+- `'$'` is bound inside a plugin or custom call's arguments too, so a kind can list its entities with `{ 'cast/met': { character: '$' } }`.
 - A guide page, [Organising a game](/docs/guide/organising): where content goes as a game grows, combining your files, prose files, tests per area, editor exports and mods.
 - [Content and packs](/docs/reference/loader#content-and-packs) on the loader's page: what your own content is, what a pack is, and how each merges, is saved and is upgraded.
 - `loadGame` reports a scene, prose key, stat, item, entity, custom function, plugin entry or any other key that your content declares twice, so `ifloom check` fails on it and a game split into files can't lose one by accident. Give a file's content a `name` and the problem names both files.
@@ -99,6 +102,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** a save keeps only what play changed about an entity. A declared entity has no record in `state.entities` until something changes it, and its name, description and starting numbers are read from your content, so a fix to them reaches old saves. One created in play keeps the name it was given. Read values with [`statValue`](/docs/reference/stats#statvalue), [`entityKv`](/docs/reference/entities#entitykv) and [`entityName`](/docs/reference/entities#entityname) rather than from the state. Saves are version 15, and older ones drop what they copied from content when they load.
+- **Breaking:** `entitiesOf(state, game, kind)` and `entityOf(state, game, ref)` take the game. `entitiesOf` lists the declared entities in content order, then the ones created in play. `entityOf` gives what play changed (`{}` for a declared entity nothing has changed), or `undefined` when it isn't in the game.
+- **Breaking:** `view.entities` lists only what may be shown: kinds whose `listed` isn't false, and entities whose `listed` and `visible` hold. A plugin's kinds aren't listed unless the plugin says, so the cast's characters appear once the player has met them instead of from the first turn. Each `EntityView` gains `desc`, `image`, `tags` and `marks`, each `EntitiesView` gains `unique`, and an entry's `kv` includes its declared keys.
+- A declared entity is in the game unless it was removed, in any save, so one an update or a mod adds needs no filling. A game that redeclares a plugin's kind keeps the fields it leaves out, such as `listed`.
 - **Breaking:** your game's own files are now `Content`, not packs. A file in `src/world/` or `src/story/` exports `Content`, which has no `id`, `schema` or `patches`: write `export const cafe: Content = { scenes, prose }`. A pack is now only what comes from outside your code (a mod, unlocked supporter content or a JSON export), with an `id`, a `schema` and optional `patches`. Content is never upgraded, since it's built with the engine it runs on, so in a plain-JS game `ifloom check` reports any old names after an engine update.
 - **Breaking:** `loadGame(content, base, { packs })` takes your content and the packs separately. Content merges first, in order, and a key it declares twice is a problem. Packs go over it in order and replace what they repeat, as before. Mods and unlocked content move from the first list to `packs`: `loadGame(content, base, { packs: [...unlocked, ...mods] })`. Content given an `id`, `schema` or `patches` still loads, with a problem for each.
 - **Breaking:** `game.packs`, and so a save's `packs`, list only the packs' ids, not your own files. Renaming or splitting your files changes nothing a save records.
@@ -179,6 +186,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** the `entities` kind of `MigrationTools.fill`, and the filling of declared entities into old saves: they're there without it.
 - **Breaking:** a pack's `overrides` field, since every pack replaces what it repeats and your own content declares each key once. An old JSON pack or mod that sets it still loads, and the field is ignored.
 - The React UI's layout lists: the `Layout`, `Part` and `PartName` types, `DEFAULT_LAYOUT`, `READING_LAYOUT`, `Parts`, `Frame` and `FrameProps`, and `Sidebar`'s `parts`. Write the page as a layout component instead.
 - `validatePack` and `referenced`. Use `checkGame` to check a game's content.
@@ -187,6 +195,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- A name with a prose token, such as a character called `'{{partnerName}}'`, is filled in `view.entities` too, not only in the cast plugin's own view.
 - In the editor, a JSON import that fails while reading the file or keeping the new project now says why in the message bar, instead of doing nothing.
 - In the React UI with `keys` on, Escape is left to the page again when there's no menu on screen, instead of being swallowed. `startKeys`'s `escape` can return `false` to let the key through the same way.
 - On a phone, the React UI no longer leaves a gap between the side column and the scene. The page's rows now start at the top instead of stretching to fill the window.

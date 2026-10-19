@@ -20,7 +20,7 @@ A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect]
 
 A stat can also be [derived](#derived-stats), worked out from other stats by a formula instead of kept, and any stat can have [levels](#levels) that it passes as it grows.
 
-A stat declared with `of` is kept on each [entity](/docs/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. The value lives at `state.entities[kind][id].stats[id]`, and the same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
+A stat declared with `of` is kept on each [entity](/docs/reference/entities) of a kind instead, so every member of staff has a `morale` and every dish a `price`. It reads from the save once play has changed it, at `state.entities[kind][id].stats[id]`, and from the entity's declaration or the stat's `start` until then. The same effects and conditions reach it when you add an `of` naming the entity. See [Entity stats](#entity-stats).
 
 ## StatDef
 

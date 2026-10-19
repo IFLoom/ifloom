@@ -56,7 +56,7 @@ type Game = {
 |---|---|
 | `id` | The game's id. [Saves](/docs/reference/saves#keys) are kept under it and refuse another game's, so pick one unique to your game and never change it. |
 | `title` | The game's name. The view passes it through as `view().title`. |
-| `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with `migrations`. Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings and entities into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
+| `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with `migrations`. Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `migrations` | Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from: step 1 takes a version-1 save to version 2. Each is `(state, tools) => GameState`, and `tools.fill()` fills in content the save lacks. They run when an older save loads. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/docs/reference/settings). |
 | `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, items? }`, each a list of ids or keys, and `items` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |

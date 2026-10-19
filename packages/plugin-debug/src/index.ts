@@ -74,7 +74,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
         whyNot: (state, args, { game }) => {
           const def = statDef(game, String(args.stat))
           if (!def) return sayDebug(game, 'noSuchStat', String(args.stat))
-          if (args.of !== undefined && !entityOf(state, String(args.of))) return sayDebug(game, 'noSuchEntity', String(args.of))
+          if (args.of !== undefined && !entityOf(state, game, String(args.of))) return sayDebug(game, 'noSuchEntity', String(args.of))
           // The stat must be the owner's: the player's with no `of`, its kind's with one.
           const kind = args.of === undefined ? undefined : parseRef(String(args.of))?.kind
           if (def.of !== kind) return sayDebug(game, 'notTheirs', String(args.stat))
@@ -86,7 +86,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
           const to = clampStat(state, game, key, Number(args.to))
           if (args.of === undefined) return { ...state, stats: { ...state.stats, [key]: to } }
           const ref = String(args.of)
-          const entity = entityOf(state, ref)!
+          const entity = entityOf(state, game, ref)!
           return writeEntity(state, ref, { ...entity, stats: { ...entity.stats, [key]: to } })
         },
       }),

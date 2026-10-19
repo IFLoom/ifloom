@@ -44,6 +44,8 @@ export type FeatureContext = {
   roll: (max: number, ...parts: (string | number)[]) => number
   /** A custom value by name, the game's or a plugin's. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
+  /** A line with its prose tokens filled in for this save, as `fillTokens` does. */
+  fillTokens: (text: string, state: GameState, game: Game) => string
   /** What the plugins' `statModifiers` change about the player's stats right now. */
   statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
   /** What the plugins put on background channels, by channel. */

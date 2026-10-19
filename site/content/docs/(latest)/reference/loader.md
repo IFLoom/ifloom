@@ -265,7 +265,7 @@ The real file is `examples/showcase/src/game.ts`, which lists all fifteen of the
 - `game.packs` lists the packs' ids in order, and nothing for your content. [Saves](/docs/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed names that mod.
 - Custom functions can sit on `base`, in content and in packs. The base's come first, and the content and packs lay theirs over them by name, kind by kind.
 - [Plugins](/docs/reference/plugins) go on `base`, as `plugins`, and only there. Content and packs can't add one. Plugin content can sit in `base.data`, in content and in packs, and the base's comes first.
-- `kinds`, `entities`, `collections`, `triggers` and `inputs` can sit on `base` as well as in content. The base's come first and are reported as from `base`. A plugin's own `kinds` come before the base's, so the game can redeclare them, and the entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
+- `kinds`, `entities`, `collections`, `triggers` and `inputs` can sit on `base` as well as in content. The base's come first and are reported as from `base`. A plugin's own `kinds` come before the base's, so the game can redeclare them, keeping the plugin's fields it leaves out (such as `listed`), and the entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
 
 ## Patches
 

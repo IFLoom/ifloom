@@ -12,12 +12,15 @@ import {
   profile,
   replay,
   entitiesOf,
+  entityKv,
+  entityName,
   entityOf,
   holds,
   inlineChoices,
   startingState,
   statValue,
   view,
+  writeEntity,
   type Command,
   type GameState,
   type CommandRef,
@@ -164,11 +167,10 @@ describe('Small Town', () => {
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     state = run(state, talk('ava'), { type: 'choose', id: 'bye' })
     // A Sunday a week in, with 40 coins and Ava a friend.
-    state = {
-      ...on(state, 6, 'evening'),
-      stats: { ...state.stats, coins: 40 },
-      entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 30 } } } },
-    }
+    state = writeEntity({ ...on(state, 6, 'evening'), stats: { ...state.stats, coins: 40 } }, 'character:ava', {
+      ...entityOf(state, game, 'character:ava'),
+      stats: { friendship: 30 },
+    })
     state = run(state, go('high-street'), go('park'))
     expect(state.stats.coins).toBe(10)
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Rent paid: 30 coins')
@@ -332,10 +334,7 @@ describe('Small Town', () => {
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     expect(apply(state, game, applyFor('weekend')).reason).toBe('Ava doesn’t know you well enough yet.')
     state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
-    state = {
-      ...state,
-      entities: { ...state.entities, character: { ...state.entities.character, ava: { ...state.entities.character.ava, stats: { friendship: 10 } } } },
-    }
+    state = writeEntity(state, 'character:ava', { ...entityOf(state, game, 'character:ava'), stats: { friendship: 10 } })
     state = run(state, applyFor('weekend'))
     const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
     expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
@@ -352,7 +351,7 @@ describe('Small Town', () => {
   it('fills the park with two new visitors each day, drawn from the town’s pools', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
-    const visitors = () => entitiesOf(state, 'visitor').map((ref) => entityOf(state, ref)!)
+    const visitors = () => entitiesOf(state, game, 'visitor').map((ref) => ({ name: entityName(state, game, ref), kv: entityKv(state, game, ref) }))
     expect(visitors()).toHaveLength(2)
     for (const visitor of visitors()) {
       expect(['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit']).toContain(visitor.name)
@@ -362,7 +361,7 @@ describe('Small Town', () => {
     const first = visitors()
     // Back the next day: yesterday's have gone home, and two more are out.
     state = run(on(state, 2, 'morning'), go('high-street'), go('park'))
-    expect(entitiesOf(state, 'visitor')).toEqual(['visitor:#3', 'visitor:#4'])
+    expect(entitiesOf(state, game, 'visitor')).toEqual(['visitor:#3', 'visitor:#4'])
     expect(visitors()).not.toEqual(first)
   })
 

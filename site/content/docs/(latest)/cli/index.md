@@ -423,8 +423,8 @@ export function probes(game: Game) {
         turn: 7,
         seen: { ...first.seen, 'ava.hi': 4 },
         kv: { catName: 'Biscuit' },
-        // Ava's friendship, a stat of the cast's `character` kind, kept on her entity.
-        entities: { ...first.entities, character: { ...first.entities.character, ava: { ...first.entities.character.ava, stats: { friendship: 30 } } } },
+        // Ava's friendship, a stat of the cast's `character` kind. The save keeps only what changed about her.
+        entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
         stats: { ...first.stats, charm: 5 },
         plugins: { ...first.plugins, wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } } },
       },

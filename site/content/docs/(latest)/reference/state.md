@@ -131,11 +131,11 @@ A stat declared `of` a [kind](/docs/reference/entities) isn't here. Each entity 
 entities: Record<string, Record<string, EntityState>>
 ```
 
-The things the game keeps several of, by [kind](/docs/reference/entities) and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) holding its name, its stats and its own kv store. Within a kind they're in the order they arrived, declared ones first and then those [created](/docs/reference/effects#create) in play.
+What play has changed about the game's [entities](/docs/reference/entities), by kind and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) with only what changed: stats, kv keys, and for one [created](/docs/reference/effects#create) in play, the name it was given. A declared entity has no record until something changes it, so a new game starts with `{}`. Everything else about an entity is read from content.
 
 A new game has an entry for every declared kind, empty if no entity of that kind is declared. Each declared entity starts with every stat declared `of` its kind at that stat's `start`, overridden by the declaration's `stats`.
 
-The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change it, as do `stat` and `kv` with `of`. Read it with [`{ count }`](/docs/reference/conditions#count), [`{ entity }`](/docs/reference/conditions#entity), `{ stat, of }` and `{ kv, of }`, or with [`entitiesOf`](/docs/reference/entities#entitiesof) and [`entityOf`](/docs/reference/entities#entityof). A save from before version 4 loads with `{}`.
+The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change it, as do `stat` and `kv` with `of`. Read it with [`{ count }`](/docs/reference/conditions#count), [`{ entity }`](/docs/reference/conditions#entity), `{ stat, of }` and `{ kv, of }`, or with [`entitiesOf`](/docs/reference/entities#entitiesof), [`statValue`](/docs/reference/stats#statvalue) and [`entityKv`](/docs/reference/entities#entitykv), which fall back to content. Don't read it directly for a value, since most values aren't here. A save from before version 4 loads with `{}`, and one from before version 15 loses what it copied from content (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
 
 ### created
 
@@ -151,7 +151,7 @@ For each kind, the last number given to an entity created in play without an id 
 removed: string[]
 ```
 
-The declared [entities](/docs/reference/entities) that were [removed](/docs/reference/effects#remove) in play, as references in the order they went, such as `['staff:ben']`. Loading a save with [`loadState`](/docs/reference/saves#loadstate) adds every declared entity it doesn't have, such as one a mod or a new version of the game declares. It skips these, so an entity that left stays gone. An entity created in play is never recorded here, because nothing would bring it back. A new game starts with `[]`, and a save from before version 7 loads with `[]`. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
+The declared [entities](/docs/reference/entities) that were [removed](/docs/reference/effects#remove) in play, as references in the order they went, such as `['staff:ben']`. A declared entity is in the game unless it's here, so one a mod or a new version of the game declares is there in an old save, and one that left stays gone. An entity created in play is never recorded here, because nothing would bring it back. A new game starts with `[]`, and a save from before version 7 loads with `[]`. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
 
 ### storylines
 
@@ -343,6 +343,7 @@ The versions so far:
 | 12 | Renamed `flags` to [`kv`](#kv), on the state, on each storyline and on each entity. |
 | 13 | Moved the timed-effects plugin's state from `plugins.effects` to `plugins.statuses`, its new name. |
 | 14 | Keyed [`chosen`](#chosen) by `scene#choice`. |
+| 15 | Made each record in [`entities`](#entities) keep only what play changed. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

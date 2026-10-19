@@ -331,9 +331,9 @@ A refused command leaves the state untouched, so `apply` is how you tell a refus
 When you don't need to know, `dispatch` returns just the next state:
 
 ```ts
-import { dispatch } from '@ifloom/engine'
+import { dispatch, statValue } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
-import { talk } from '@ifloom/plugin-cast'
+import { person, talk } from '@ifloom/plugin-cast'
 
 state = dispatch(state, game, { type: 'choose', id: 'bed' })
 state = dispatch(state, game, sleep())                       // Tuesday morning: turn 1
@@ -342,7 +342,7 @@ state = dispatch(state, game, go('cafe'))
 state = dispatch(state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'chat' })
 
-state.entities.character.ruth.stats.friendship // 5
+statValue(state, game, 'friendship', person('ruth')) // 5
 ```
 
 `go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
@@ -618,6 +618,7 @@ import {
   memoryDriver,
   saves,
   startingState,
+  statValue,
   view,
   type ActivityDef,
   type DataScene,
@@ -778,7 +779,7 @@ console.log(screen.scene.choices.map((choice) => choice.label))
 // [ 'Ask how the bread is going', 'Just the coffee, thanks' ]
 
 const chat = apply(state, game, { type: 'choose', id: 'chat' })
-console.log(chat.ok, chat.state.entities.character.ruth.stats.friendship) // true 5
+console.log(chat.ok, statValue(chat.state, game, 'friendship', person('ruth'))) // true 5
 
 state = dispatch(chat.state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'bye' })

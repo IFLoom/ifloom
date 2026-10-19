@@ -276,7 +276,7 @@ entities: [
 ],
 ```
 
-So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana, at `state.entities.staff.ana`, has a skill of 5, a morale of 60 and a wage of 12. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/react/components#entitytable) draws a table of staff and one of the menu. The café puts them on the stage (see [Drawing it](#drawing-it-the-books-on-the-stage)).
+So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has a skill of 5, a morale of 60 and a wage of 12. The save keeps nothing about her until one of those changes: they're read from the content. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/react/components#entitytable) draws a table of staff and one of the menu. The café puts them on the stage (see [Drawing it](#drawing-it-the-books-on-the-stage)).
 
 ### Reaching one of them
 
@@ -338,14 +338,14 @@ A single activity, sent by the game's Count the till and end the week button, ru
 
 It runs four steps, in order:
 
-1. **Takings and wages.** Two [custom effects](/docs/reference/effects#computed-effects) the game declares work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`entityOf`](/docs/reference/entities#entityof):
+1. **Takings and wages.** Two [custom effects](/docs/reference/effects#computed-effects) the game declares work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
 
    ```ts
-   function total(state: GameState, kind: string, stat: string): number {
-     return entitiesOf(state, kind).reduce((sum, ref) => sum + (entityOf(state, ref)?.stats[stat] ?? 0), 0)
+   function total(state: GameState, game: Game, kind: string, stat: string): number {
+     return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
    }
 
-   wages: (state): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, 'staff', 'wage') }],
+   wages: (state, _args, { game }): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
    ```
 
    Like any custom effect in a list, each runs in its turn, on the state the effects before it left. The wages come before anyone quits, so they include anyone who quits further down.

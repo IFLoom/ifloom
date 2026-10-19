@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 14, each in the
+ * A save of every format version the engine has had, 1 to 15, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -135,6 +135,9 @@ const v13 = { ...v12, version: 13, plugins: { ...v12Plugins, statuses: v12Effect
 // Choices picked are counted by `scene#choice`; until 14 it was `scene/choice`.
 const v14 = { ...v13, version: 14, chosen: { 'start#go': 1 } }
 
+// An entity's record keeps only what play changed: Ana's skill, and Dev, hired in play, with the name he was given.
+const v15 = { ...v14, version: 15, entities: { staff: { ana: { stats: { skill: 4 } }, '#1': { name: 'Dev', stats: { skill: 2 } } } }, created: { staff: 1 } }
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -151,4 +154,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   12: v12,
   13: v13,
   14: v14,
+  15: v15,
 }

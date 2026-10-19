@@ -2,7 +2,7 @@
  * The kv store: keys with a true/false, number or text value. A key is the
  * player's, or with `of`, an entity's. A storyline's keys are in `storylines.ts`.
  */
-import { entityOf, ofKind, writeEntity } from '../entities.ts'
+import { entityKv, entityOf, hasEntity, ofKind, writeEntity } from '../entities.ts'
 import type { KvValue, Range } from '../types.ts'
 import { defineFeature } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
@@ -39,8 +39,8 @@ export const kv = defineFeature<KvShape>({
   },
   conditions: {
     kv: {
-      holds: (state, condition) => {
-        const store = condition.of === undefined ? state.kv : entityOf(state, condition.of)?.kv
+      holds: (state, condition, game) => {
+        const store = condition.of === undefined ? state.kv : hasEntity(state, game, condition.of) ? entityKv(state, game, condition.of) : undefined
         // An entity that is not there has no keys to test: false, whatever was asked.
         if (!store) return false
         const value = store[condition.kv]
@@ -48,8 +48,8 @@ export const kv = defineFeature<KvShape>({
         if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },
-      explain: (state, condition) => {
-        const owner = condition.of === undefined ? state.kv : entityOf(state, condition.of)?.kv
+      explain: (state, condition, game) => {
+        const owner = condition.of === undefined ? state.kv : hasEntity(state, game, condition.of) ? entityKv(state, game, condition.of) : undefined
         if (!owner) return `${condition.of} is not in the game; wants it there`
         const value = owner[condition.kv]
         const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : bounded(condition) ? wanted(condition) : 'set'
@@ -60,16 +60,16 @@ export const kv = defineFeature<KvShape>({
   },
   effects: {
     kv: {
-      apply: (state, effect) => {
-        const entity = effect.of === undefined ? undefined : entityOf(state, effect.of)
+      apply: (state, effect, game) => {
+        const entity = effect.of === undefined ? undefined : entityOf(state, game, effect.of)
         if (effect.of !== undefined && !entity) return state
-        const store = entity ? entity.kv : state.kv
+        const store = entity ? entityKv(state, game, effect.of!) : state.kv
         let value: KvValue
         if ('by' in effect) {
           const was = store[effect.key]
           value = (typeof was === 'number' ? was : 0) + effect.by
         } else value = effect.to
-        if (entity) return writeEntity(state, effect.of!, { ...entity, kv: { ...store, [effect.key]: value } })
+        if (entity) return writeEntity(state, effect.of!, { ...entity, kv: { ...entity.kv, [effect.key]: value } })
         return { ...state, kv: { ...state.kv, [effect.key]: value } }
       },
       references: (effect) => ofKind(effect.of),

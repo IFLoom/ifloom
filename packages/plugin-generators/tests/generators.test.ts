@@ -3,12 +3,14 @@ import {
   apply,
   createRunner,
   entitiesOf,
-  entityOf,
+  entityKv,
+  entityName,
   holds,
   loadGame,
   loadState,
   replay,
   startingState,
+  statValue,
   type Game,
   type GameState,
   type Content,
@@ -66,14 +68,20 @@ function run(state: GameState, g: Game, ...ids: string[]): GameState {
 }
 
 const fresh = (g: Game, seed = 7) => ({ ...startingState(g, { seed }), sceneId: null })
-const visitors = (state: GameState) => entitiesOf(state, 'visitor').map((ref) => entityOf(state, ref)!)
+/** Each visitor as it reads: its name, its stats and its kv store. */
+const visitors = (state: GameState, g: Game) =>
+  entitiesOf(state, g, 'visitor').map((ref) => ({
+    name: entityName(state, g, ref),
+    stats: { mood: statValue(state, g, 'mood', ref), patience: statValue(state, g, 'patience', ref) },
+    kv: entityKv(state, g, ref),
+  }))
 
 describe('generators', () => {
   it('make entities of a kind from a template: pools, ranges and fixed values', () => {
     const g = game()
     const state = run(fresh(g), g, 'crowd')
-    expect(entitiesOf(state, 'visitor')).toEqual(['visitor:#1', 'visitor:#2', 'visitor:#3'])
-    for (const made of visitors(state)) {
+    expect(entitiesOf(state, g, 'visitor')).toEqual(['visitor:#1', 'visitor:#2', 'visitor:#3'])
+    for (const made of visitors(state, g)) {
       expect(made.name).toMatch(/^(Ana|Ben|Cleo|Dev|Esme|Finn) (Hart|Moss|Reed)$/)
       expect(made.stats.mood).toBeGreaterThanOrEqual(1)
       expect(made.stats.mood).toBeLessThanOrEqual(5)
@@ -86,14 +94,14 @@ describe('generators', () => {
 
   it('draw each one differently, and the same again from the same save', () => {
     const g = game()
-    const once = visitors(run(fresh(g), g, 'crowd'))
-    const again = visitors(run(fresh(g), g, 'crowd'))
+    const once = visitors(run(fresh(g), g, 'crowd'), g)
+    const again = visitors(run(fresh(g), g, 'crowd'), g)
     expect(again).toEqual(once)
     // Twenty visitors over different seeds aren't all the same person.
-    const names = new Set(Array.from({ length: 20 }, (_, seed) => visitors(run(fresh(g, seed), g, 'one'))[0].name))
+    const names = new Set(Array.from({ length: 20 }, (_, seed) => visitors(run(fresh(g, seed), g, 'one'), g)[0].name))
     expect(names.size).toBeGreaterThan(5)
     // One at a time makes the same three as three at once.
-    expect(visitors(run(fresh(g), g, 'one', 'one', 'one'))).toEqual(once)
+    expect(visitors(run(fresh(g), g, 'one', 'one', 'one'), g)).toEqual(once)
   })
 
   it('pick from a pool by weight', () => {
@@ -110,13 +118,13 @@ describe('generators', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
     for (const id of ['crowd', 'sleep', 'one', 'crowd']) runner.apply({ type: 'activity', id })
-    expect(entitiesOf(runner.state, 'visitor')).toHaveLength(7)
+    expect(entitiesOf(runner.state, g, 'visitor')).toHaveLength(7)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
     if (!loadedRead.ok) throw new Error(loadedRead.reason)
     const loaded = loadedRead.value
-    expect(visitors(run(loaded, g, 'one'))).toHaveLength(1)
+    expect(visitors(run(loaded, g, 'one'), g)).toHaveLength(1)
   })
 
   it('report templates and pools that name what the game does not have, and their own mistakes', () => {

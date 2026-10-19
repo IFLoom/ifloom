@@ -135,6 +135,8 @@ function ids(value: unknown): string[] {
 export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? 'character'
   const refOf = (id: string) => `${kind}:${id}`
+  /** Who a call names, by id or as an entity (`'character:ava'`, what `'$'` becomes in the kind's `listed`). */
+  const who = (value: unknown) => ids(value).map((id) => (id.startsWith(`${kind}:`) ? id.slice(kind.length + 1) : id))
   /** A character's own condition, with `'$'` as them. */
   const theirs = (def: CharacterDef, when: Condition | undefined) => bindCurrent(when, refOf(def.id))
   const holdsFor = (state: GameState, game: Game, def: CharacterDef, when: Condition | undefined) => holds(state, theirs(def, when), game)
@@ -213,23 +215,24 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       cannotCall: 'You cannot reach {name} from here.',
       notPickingUp: '{name} does not pick up.',
     },
-    kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People' }],
+    // Each character is one particular person, listed in the view once the player has met them.
+    kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People', unique: true, listed: { [`${ID}/met`]: { character: '$' } } }],
     entities: (game) => charactersOf(game).map((def) => ({ id: def.id, of: kind, name: def.name, stats: def.stats, kv: def.kv })),
     conditions: {
       /** `{ 'cast/here': { character: 'ava' } }`: in the room with the player; with a list, any of them. */
       here: (state, args, context) =>
-        ids(args.character).some((id) => {
+        who(args.character).some((id) => {
           const def = characterById(context.game, id)
           return def ? isHere(state, context, def) : false
         }),
       /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
       at: (state, args, { game }) => {
-        const def = characterById(game, ids(args.character)[0])
+        const def = characterById(game, who(args.character)[0])
         return def ? ids(args.at).includes(locationOf(state, game, def)) : false
       },
       /** `{ 'cast/met': { character: 'ava' } }`: the player has met them; with a list, any of them. */
       met: (state, args, { game }) =>
-        ids(args.character).some((id) => {
+        who(args.character).some((id) => {
           const def = characterById(game, id)
           return def ? met(state, game, def) : false
         }),
@@ -255,7 +258,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     queries: {
       /** `{ id, name, hue, portrait }` of someone (`{ character }`), or undefined. */
       person: (state, args, { game }) => {
-        const def = characterById(game, ids(args.character)[0])
+        const def = characterById(game, who(args.character)[0])
         return def ? { id: def.id, name: nameOf(state, game, def), hue: def.hue ?? null, portrait: portraitOf(def) } : undefined
       },
       /** The ids of everyone in the room. */
@@ -265,7 +268,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
           .map((def) => def.id),
       /** Where someone is (`{ character }`). */
       where: (state, args, { game }) => {
-        const def = characterById(game, ids(args.character)[0])
+        const def = characterById(game, who(args.character)[0])
         return def ? locationOf(state, game, def) : undefined
       },
       /** Everyone met who can be called, each with the call command and why it can't go through now. */
@@ -297,8 +300,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     references: {
       // The people a call names: a condition's `character`, a command's `id`.
       calls: (kindOf, _name, args) => {
-        const named = kindOf === 'conditions' ? ids(args.character) : ids(args.id)
-        return named.map((id) => ({ entry: id, plugin: ID, list: 'characters', noun: 'character' }))
+        // `'$'` in the kind's own conditions is checked as any one of them (`'character:*'`), which names nobody.
+        const named = kindOf === 'conditions' ? who(args.character) : who(args.id)
+        return named.filter((id) => id !== '*').map((id) => ({ entry: id, plugin: ID, list: 'characters', noun: 'character' }))
       },
       content: (game) => {
         // Inside a character's own conditions, `'$'` is them.

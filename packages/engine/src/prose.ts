@@ -2,6 +2,7 @@ import { customValue } from './custom.ts'
 import type { Game, ProseStore } from './game.ts'
 import { count } from './progress.ts'
 import type { GameState } from './types.ts'
+import { entityText, parseRef, type EntityRef } from './entities.ts'
 
 /**
  * Fill the tokens a line of prose may carry:
@@ -30,6 +31,20 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
         return typeof value === 'string' || typeof value === 'number' ? String(value) : match
       })
   )
+}
+
+/**
+ * An entity's name as the player reads it: the name it was created with, or
+ * its declaration's, with prose tokens filled. Its id when it has neither.
+ */
+export function entityName(state: GameState, game: Game, ref: EntityRef): string {
+  return fillTokens(entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref, state, game)
+}
+
+/** An entity's description, filled like its name; undefined when it has none. */
+export function entityDesc(state: GameState, game: Game, ref: EntityRef): string | undefined {
+  const desc = entityText(state, game, ref, 'desc')
+  return desc === undefined ? undefined : fillTokens(desc, state, game)
 }
 
 /** A value token: `{{v:name}}`, or `{{v:name key=value …}}` with arguments. */

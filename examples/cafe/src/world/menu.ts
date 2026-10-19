@@ -8,7 +8,7 @@ export const menu: Content = {
     { id: 'quality', label: 'Quality', of: 'dish', start: 2, min: 1, max: 5 },
   ],
   entities: [
-    { id: 'toast', of: 'dish', name: 'Cheese on toast', stats: { price: 4, quality: 2 } },
-    { id: 'soup', of: 'dish', name: 'Soup of the day', stats: { price: 6, quality: 3 } },
+    { id: 'toast', of: 'dish', name: 'Cheese on toast', desc: 'Thick bread, sharp cheddar.', stats: { price: 4, quality: 2 } },
+    { id: 'soup', of: 'dish', name: 'Soup of the day', desc: 'Whatever the market had.', stats: { price: 6, quality: 3 } },
   ],
 }

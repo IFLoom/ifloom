@@ -108,7 +108,7 @@ describe('derived stats', () => {
       ],
     }
     const state = begin(game)
-    expect(state.entities.staff.ana.stats.service).toBeUndefined()
+    expect(state.entities.staff?.ana?.stats?.service).toBeUndefined()
     expect(statValue(state, game, 'service', 'staff:ana')).toBe(9)
     expect(statValue(state, game, 'service', 'staff:ben')).toBe(5)
     expect(holds(state, { count: 'staff', where: { stat: 'service', of: '$', gte: 8 } }, game)).toBe(true)

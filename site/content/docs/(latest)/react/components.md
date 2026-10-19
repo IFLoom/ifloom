@@ -948,11 +948,11 @@ Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat`
 function EntityTable(props: { kinds?: string[]; className?: string }): JSX.Element | null
 ```
 
-The things the game keeps several of, from [`view.entities`](/docs/reference/view#entities). It draws a table for each [kind](/docs/reference/entities) that has any entities, headed with the kind's `plural`. Each row is one entity: its name, then its stats written the way the game [formats](/docs/reference/stats) them.
+The things the game keeps several of, from [`view.entities`](/docs/reference/view#entities). It draws a table for each [kind](/docs/reference/entities) in the view that has any entities, headed with the kind's `plural`. The view only has the kinds and entities that are [listed](/docs/reference/entities#listing), so nothing the player shouldn't see yet is drawn. Each row is one entity: its picture and name, its description under the name when it has one, then its stats written the way the game [formats](/docs/reference/stats) them.
 
 The columns are every stat any row shows, in the order they first appear. A row that doesn't show a stat (because its `visible` doesn't hold for that entity) has a blank cell. Each section carries `data-kind` with the kind's id, and each row carries `data-entity` with its reference, such as `staff:ana`.
 
-`kinds` limits it to those kinds. Without it, every kind is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The default layout leaves it out, and the café's layout puts it in the story.
+`kinds` limits it to those kinds. Without it, every kind in the view is drawn. It draws nothing when none of the kinds has any entities, so a game with no kinds gets no empty box. The default layout leaves it out, and the café's layout puts it in the story.
 
 ```tsx
 import { EntityTable } from '@ifloom/react'
@@ -961,7 +961,7 @@ import { EntityTable } from '@ifloom/react'
 <EntityTable kinds={['dish']} className="border-t pt-4" />
 ```
 
-Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name` and `entity-value`.
+Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name`, `entity-image`, `entity-desc` and `entity-value`.
 
 ### LocationCard
 

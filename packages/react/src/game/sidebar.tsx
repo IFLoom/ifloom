@@ -156,7 +156,7 @@ function LocationCardImpl() {
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
-  const list = usePart('location-things', 'flex flex-col gap-1.5 text-sm')
+  const list = usePart('location-things', 'mt-3 flex flex-col gap-1.5 text-sm')
   const row = usePart('location-thing', 'flex items-center justify-between gap-2')
   const thingName = usePart('location-thing-name', 'flex-1')
   const pick = usePart('location-thing-pick', buttonVariants({ size: 'sm', variant: 'outline' }))

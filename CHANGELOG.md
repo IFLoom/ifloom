@@ -239,6 +239,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- The React UI's `LocationCard` leaves a gap between the place's line and the things lying there.
 - A stat drawn or written on a thing made `like` another is kept when a save loads, even when it equals the stat's `start`, so it no longer reads the other's value instead.
 - The React UI's debug card sends the place, scene and turn forms with the arguments the debug plugin reads, so they work.
 - A name with a prose token, such as a character called `'{{partnerName}}'`, is filled in `view.entities` too, not only in the cast plugin's own view.

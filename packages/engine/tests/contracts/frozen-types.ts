@@ -33,6 +33,8 @@
  * `EntityDef` gains `desc`, `image`, `tags` and `visible`, `KindDef` gains
  * `unique`, `listed`, `tags` and `marks`, and `View.entities` lists only what
  * is listed, each `EntityView` with `desc`, `image`, `tags` and `marks`.
+ * Traits (phase 3): `Game.traits` and `Pack.traits` (`TraitTable`), and
+ * `traits` on `KindDef`, `EntityDef` and `EntityState`.
  */
 import type {
   ActionDef,
@@ -58,6 +60,7 @@ import type {
   InputView,
   ItemDef,
   KindDef,
+  TraitTable,
   MinigameDef,
   MinigameState,
   MinigameView,
@@ -395,6 +398,8 @@ export type FrozenGame = {
   kinds?: KindDef[]
   /** The things of those kinds there are at the start. More can be created in play. */
   entities?: EntityDef[]
+  /** Traits by id and then entity: rows given to `loadGame`, every entity's once loaded. */
+  traits?: TraitTable
   /** The game's named functions: custom conditions, effects, values and panel data. */
   custom?: Custom
   /**
@@ -456,6 +461,8 @@ export type FrozenPack = {
   kinds?: KindDef[]
   /** Things of those kinds there at the start. A later pack can redeclare one by kind and id. */
   entities?: EntityDef[]
+  /** Traits given to entities, by trait id and then entity, over what each declares. */
+  traits?: TraitTable
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]

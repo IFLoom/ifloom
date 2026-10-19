@@ -29,6 +29,7 @@ type Game = {
   stats?: StatDef[]
   kinds?: KindDef[]
   entities?: EntityDef[]
+  traits?: TraitTable
   introScene?: string
   activities?: ActivityDef[]
   items?: ItemDef[]
@@ -68,6 +69,7 @@ type Game = {
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
 | `kinds` | The kinds of thing the game keeps several of, such as staff or dishes, each with stats of its own. See [Entities](/docs/reference/entities). |
 | `entities` | The things of those kinds that exist at the start of a new game. More can be [created](/docs/reference/effects#create) in play. See [Entities](/docs/reference/entities). |
+| `traits` | [Traits](/docs/reference/entities#traits) by trait id and then entity. On a game from [`loadGame`](/docs/reference/loader#traits), every declared entity's traits, worked out from the table rows, the entities and their kinds. On a game built by hand, rows over what the entities declare; [`traitOf`](/docs/reference/entities#traitof) works them out the same way. |
 | `activities` | Everything the player can do, such as paperwork, a jog or a drink. None if left out. See [Activities and buttons](/docs/reference/actions). |
 | `items` | Things the player can have. None if left out. See [`ItemDef`](#itemdef). |
 | `scenes` | Every scene. [Data scenes](/docs/reference/scenes#datascene) and hand-written [`Scene`](/docs/reference/scenes#scene)s sit side by side. A data scene is baked into a `Scene` the first time [`sceneById`](#scenebyid) asks for it. |

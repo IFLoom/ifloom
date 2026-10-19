@@ -93,6 +93,7 @@ type KindDef = {
   listed?: boolean | Condition
   tags?: string[]
   marks?: Record<string, Condition>
+  traits?: Record<string, unknown>
 }
 ```
 
@@ -105,6 +106,7 @@ type KindDef = {
 | `listed` | `true` for your kinds, `false` for a plugin's | Whether the view lists the kind's entities. `false` leaves the kind out of the view altogether. A condition is asked for each entity, with `'$'` as that one. See [Listing](#listing). |
 | `tags` | `[]` | Words every entity of the kind has, before its own [`tags`](#entitydef). |
 | `marks` | `{}` | Named conditions asked for each listed entity, with `'$'` as that one. The view gives each entity a `marks` record of the answers, so a UI can split a list without hiding anything. See [Listing](#listing). |
+| `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
 
 Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in your [content](/docs/reference/loader#content)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
 
@@ -121,6 +123,7 @@ type EntityDef = {
   visible?: Condition
   stats?: Record<string, number>
   kv?: Record<string, KvValue>
+  traits?: Record<string, unknown>
 }
 ```
 
@@ -137,6 +140,7 @@ One entity that exists from the start of the game, and stays until a [`remove`](
 | `visible` | Whether the view lists it, asked with `'$'` as it. Always, if left out. It narrows its kind's [`listed`](#listing), and changes nothing else: `each`, `count` and the rest still see it. |
 | `stats` | Starting values for any of its stats that differ from each stat's `start`. Only stats declared `of` its kind. |
 | `kv` | Its own [kv store](/docs/reference/state#kv) at the start. Read a key with `{ kv, of }` and set it with the `kv` effect's `of`. |
+| `traits` | Its [traits](#traits), by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. |
 
 Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in your content. They merge by kind and id (`'staff:ana'`), the base's first. A pack's entity replaces one with the same kind and id, whole.
 
@@ -149,6 +153,7 @@ type EntityState = {
   name?: string
   stats?: Stats
   kv?: Record<string, KvValue>
+  traits?: Record<string, unknown>
 }
 ```
 
@@ -160,6 +165,7 @@ Reads fall back in this order:
 - **A kv key:** the record, then the declaration's `kv`. See [`entityKv`](#entitykv).
 - **The name:** the record's `name` (one created in play), then the declaration's, always with its tokens filled. See [`entityName`](#entityname).
 - **The description, picture and tags:** the declaration, and the kind for tags.
+- **A trait's state:** the record's `traits`, for the rare [trait](#traits) that keeps state, then where the trait says it starts. See [`traitState`](#traitstate).
 
 Definitions never go into a save. That's why a fix to a name or a starting value reaches old saves, and why a save stays small however many entities the game declares.
 
@@ -190,6 +196,73 @@ A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner on
 ```
 
 **Where `'$'` is replaced.** It's replaced where it's the value of an `of` or an `entity` key, at any depth, and anywhere in a plugin or custom call's arguments. That's how a custom function or a plugin learns which entity it's working on. `{ custom: 'payBonus', with: { of: '$' } }` is called with `args.of` set to `'staff:ana'`, then `'staff:#1'`, and so on, and the cast lists a character once `{ 'cast/met': { character: '$' } }` holds for them. A `'$'` under any other key, such as a kv condition's `is`, is left as it is.
+
+## Traits
+
+A trait is a named piece of data an entity carries, such as "wash this at 30 degrees". The engine doesn't know what any trait means. A [plugin](/docs/reference/plugins#traits) declares the traits it reads and gives them meaning, and your game can keep traits of its own. Stats and kv stay as they are: a trait is for what an entity *is*, written in content, never for what changes in play.
+
+A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for your [custom functions](/docs/reference/custom) to read.
+
+You can write a trait in three places:
+
+```ts
+import type { Content } from '@ifloom/engine'
+
+export const clothes: Content = {
+  // On a kind: a default for every entity of it.
+  kinds: [{ id: 'clothing', label: 'Clothing', traits: { 'laundry/washable': { temp: 40 }, cosy: true } }],
+  entities: [
+    // On an entity.
+    { id: 'scarf', of: 'clothing', name: 'Red scarf', traits: { 'laundry/washable': { gentle: true } } },
+    { id: 'coat', of: 'clothing', name: 'Winter coat', traits: { 'laundry/washable': { temp: 30 }, cosy: false } },
+    { id: 'hat', of: 'clothing', name: 'Bobble hat' },
+  ],
+  // In the `traits` table, by trait and then entity.
+  traits: { 'laundry/washable': { 'clothing:hat': { temp: 30, gentle: true } } },
+}
+```
+
+```ts
+import { traitOf, withTrait } from '@ifloom/engine'
+
+traitOf(game, 'clothing:scarf', 'laundry/washable')   // { temp: 40, gentle: true }
+traitOf(game, 'clothing:hat', 'laundry/washable')     // { temp: 30, gentle: true }
+traitOf(game, 'clothing:coat', 'cosy')                // false
+withTrait(game, 'laundry/washable')                   // ['clothing:scarf', 'clothing:coat', 'clothing:hat']
+```
+
+**Which one wins.** A row in the `traits` table wins over the entity's own, and either is laid over the kind's default. When both the default and the entity's value are objects, they're merged field by field, so the scarf keeps the kind's `temp`. Anything else, such as `true` or a list, is replaced whole. A row replaces the entity's own value whole too, though it still gets the kind's default under it.
+
+**What the table is for.** It gives an entity a trait without writing the entity out again, so a [mod](/docs/reference/mods) can change how the hat is washed with one row. In your own content, each row is declared once, like everything else (see [One key declared twice](/docs/reference/loader#one-key-declared-twice)). A pack's row replaces an earlier one. See [the `traits` key](/docs/reference/loader#traits).
+
+**Typed by the plugin.** A plugin that declares a trait adds its data's type to the engine's `Traits` interface, so `traitOf` returns that type and a typo in a field is a type error. See [Declaring traits](/docs/reference/plugins#traits).
+
+**Checked by the plugin.** The [content checker](/docs/reference/checks#traits) asks each plugin's trait about the data on every entity that has it. A trait of a plugin the game doesn't have is let through, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
+
+### Traits and TraitData
+
+```ts
+interface Traits {}
+type TraitData<K extends string> = K extends keyof Traits ? Traits[K] : unknown
+```
+
+`Traits` is empty in the engine. Each plugin adds its own traits to it with a `declare module` block, and `TraitData<'laundry/washable'>` is then the data that trait takes. A trait nobody has added, your game's own included, is `unknown`. To type your own, add them the same way:
+
+```ts
+declare module '@ifloom/engine' {
+  interface Traits {
+    cosy: boolean
+  }
+}
+```
+
+### TraitTable
+
+```ts
+type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by Traits for the ids it knows
+```
+
+Traits by trait id and then entity reference. It's the type of the `traits` key in [content and packs](/docs/reference/loader#traits), and of [`game.traits`](/docs/reference/game#game). On a game [`loadGame`](/docs/reference/loader#loadgame) returns, `game.traits` holds every declared entity's traits already worked out, so a tool can read them as plain data.
 
 ## Ids
 
@@ -393,6 +466,49 @@ writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 ```
 
 **Gotcha.** Nothing is checked, so a stat isn't held to its range. An entity added this way isn't counted in [`state.created`](/docs/reference/state#created), and isn't recorded when it's later removed. It counts as one created in play unless the game declares it.
+
+### traitOf
+
+```ts
+function traitOf<K extends string>(game: Game | undefined, ref: EntityRef, id: K): TraitData<K> | undefined
+```
+
+One trait's data on one entity, worked out as [Traits](#traits) says: a table row, else the entity's own, over its kind's default. `undefined` when it doesn't have the trait. An entity [created](/docs/reference/effects#create) in play has its kind's default.
+
+```ts
+traitOf(game, 'clothing:coat', 'laundry/washable')?.temp   // 30
+```
+
+**Gotcha.** It reads content only, so it doesn't know whether the entity is still in the game. Ask [`{ entity }`](/docs/reference/conditions#entity) or [`entitiesOf`](#entitiesof) for that.
+
+### withTrait
+
+```ts
+function withTrait(game: Game | undefined, id: string): EntityRef[]
+```
+
+Every declared entity that has the trait, in the order your content lists them. It doesn't list entities created in play, nor ask whether one was removed. Filter it with [`entitiesOf`](#entitiesof) when that matters.
+
+### traitState
+
+```ts
+function traitState<S = unknown>(state: GameState, game: Game, ref: EntityRef, id: string): S | undefined
+```
+
+For the rare trait that keeps state of its own on each entity, such as the uses left in a torch: what play last wrote for this entity, or else where the trait's [`state.start`](/docs/reference/plugins#traitdef) says it begins. `undefined` when the entity isn't in the game, doesn't have the trait, or the trait keeps no state. Nothing goes into the save until [`setTraitState`](#settraitstate) writes it.
+
+### setTraitState
+
+```ts
+function setTraitState(state: GameState, game: Game, ref: EntityRef, id: string, next: unknown): GameState
+```
+
+The state with one entity's state for one trait replaced, kept in its record's `traits`. An entity that isn't in the game is left alone. A plugin calls it from its own effects and commands.
+
+```ts
+const left = traitState<{ uses: number }>(state, game, 'tool:torch', 'kit/lamp')?.uses ?? 0
+return setTraitState(state, game, 'tool:torch', 'kit/lamp', { uses: left - 1 })
+```
 
 ### anyOf
 

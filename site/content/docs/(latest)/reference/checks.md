@@ -194,11 +194,13 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition, and `display pips needs a range of 20 or less; this one is …` for [`display: 'pips'`](/docs/reference/stats#statdef) on a wide range. For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. |
 | `kind <id>` | What its `listed` and `marks` conditions name, with `'$'` as any one of the kind. |
+| `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |
+| `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and whatever the plugin's trait finds in the data with its `check` and `references`. See [Traits](#traits). |
 | `finished` | The game's [`finished`](/docs/reference/state#new-game) condition. |
 | `carryOver` | `unknown stat "…"` and `unknown item "…"` in [`carryOver`](/docs/reference/state#new-game), and `stat "…" belongs to <kind>, not the player` for a kind's stat. |
 | `lock <n>` | The `when` of each lock in [`rules.locks`](/docs/reference/locks), by its place in the list from 0. |
 | `introScene` | `unknown scene "…"`, when the game opens on a scene it doesn't have. |
-| `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. |
+| `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. For its [traits](/docs/reference/plugins#traits): `trait "…" must be named "<id>/" and a name` and `two traits share the id "…"`. |
 | `data <plugin>` | `the game has no plugin named "<plugin>"`: content for a plugin the game wasn't built with. |
 | `<list> <id>` | What a plugin's content names, from its [references](#plugin-references), and whatever its own [`check`](/docs/reference/plugins#check) finds. |
 | `track <id>`, `channel <id>`, `audio`, `audio default` | The audio manifest. See [Audio](#audio). |
@@ -209,6 +211,16 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since `loadGame` merges by id. |
 
 `loadGame` adds a few of its own, about the content and packs themselves, such as a key declared twice. See [What the loader adds](/docs/reference/loader#what-the-loader-adds).
+
+## Traits
+
+Every declared entity's [traits](/docs/reference/entities#traits) are checked once the kind's default, the entity's own and any table row are combined. What's checked depends on whose trait it is:
+
+- **A trait of a plugin the game has.** The plugin must declare it, or the checker reports `plugin "laundry" has no trait "laundry/washabel"`. Its `check` is asked about the data on each entity that has it, and what its `references` name is resolved, at `trait laundry/washable on clothing:scarf`.
+- **A trait of a plugin the game doesn't have.** Let through unchecked, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
+- **Your game's own** (no `/` in the id). Not checked, since no plugin says what it holds.
+
+A row of the `traits` table for an entity nobody declares is reported whoever's trait it is: `unknown entity "clothing:sock"`. A problem from a row is pinned on the content or pack the row came from, and one from an entity's own data on the content that declares the entity.
 
 ## Audio
 

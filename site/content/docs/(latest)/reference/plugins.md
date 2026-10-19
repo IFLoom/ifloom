@@ -198,6 +198,7 @@ import {
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
   type PluginReferences, type ContentReferences, type StatModifier,
+  type TraitDef, type TraitTools,
 } from '@ifloom/engine'
 
 type Plugin<S = any> = {
@@ -223,6 +224,7 @@ type Plugin<S = any> = {
   speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
   kinds?: readonly KindDef[]
   entities?: (game: Game) => readonly EntityDef[]
+  traits?: readonly TraitDef[]
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => unknown
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
@@ -259,6 +261,7 @@ type Plugin<S = any> = {
 | `speaker` | Who a scene's `speaker` id is: a name, a colour and a picture. See [Speakers](#speakers). |
 | `kinds` | [Kinds](/docs/reference/entities#kinddef) of entity the plugin brings. See [Kinds and entities](#kinds-and-entities). |
 | `entities` | [Entities](/docs/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
+| `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/docs/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
@@ -1026,6 +1029,81 @@ The content's own Mo wins over the plugin's. Sal comes from the plugin, after th
 - **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
 - **`entities` runs before the prose is ready.** `game.prose` isn't set yet when it's called, so read only `game.data` and the other content lists.
 - **A save carries them in.** A declared entity a save doesn't have, such as one a new entry in the plugin's content makes, joins the save when it loads, unless it was removed in play. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
+
+## Traits
+
+```ts
+traits?: readonly TraitDef[]
+```
+
+A plugin that works on things the game declares, such as clothes to wash or tools to use, reads what it needs from [traits](/docs/reference/entities#traits). Content writes a trait on a kind, an entity or the `traits` table, and the plugin reads it back with [`traitOf`](/docs/reference/entities#traitof) and [`withTrait`](/docs/reference/entities#withtrait). A trait is data only. What it does is the plugin's own conditions, effects and commands.
+
+Declaring one takes three things: the data's type, added to the engine's `Traits`, the trait in `traits`, and the code that reads it.
+
+```ts
+import { definePlugin, traitOf, type TraitDef } from '@ifloom/engine'
+
+declare module '@ifloom/engine' {
+  interface Traits {
+    'laundry/washable': { temp: number; gentle?: boolean }
+  }
+}
+
+const washable: TraitDef<'laundry/washable'> = {
+  id: 'laundry/washable',
+  // data is { temp: number; gentle?: boolean }
+  check: (data) => (data.temp > 90 ? [`${data.temp} degrees would shrink it`] : []),
+}
+
+export function laundry() {
+  return definePlugin<null>({
+    id: 'laundry',
+    version: 1,
+    traits: [washable],
+    conditions: {
+      // { 'laundry/delicate': { entity: 'clothing:scarf' } }
+      delicate: (_state, args, context) => traitOf(context.game, String(args.entity), 'laundry/washable')?.gentle === true,
+    },
+  })
+}
+```
+
+With the `declare module` block in the plugin's source, every game that imports the plugin gets the type. `traitOf(game, ref, 'laundry/washable')` returns `{ temp: number; gentle?: boolean } | undefined`, and content that writes `{ 'laundry/washable': { temp: 'hot' } }` is a type error. Name the trait in `TraitDef<'laundry/washable'>` so its `check` and `references` get the data typed too.
+
+**Ids.** A trait's id is the plugin's id, a `/` and a name, like its conditions and effects. The [content checker](/docs/reference/checks#traits) reports a trait named otherwise, and two with one id.
+
+**Checks.** The checker asks the plugin's trait about the data on every declared entity that has it, after the kind's default and the entity's own are combined. If the game has the plugin but content names a trait it doesn't declare, such as `laundry/washabel`, that's a problem too, so a typo doesn't go quietly unread. A game without the plugin can carry its traits unchecked, as with any [cooperating](#cooperates) plugin's content.
+
+### TraitDef
+
+```ts
+type TraitDef<K extends string = string, S = unknown> = {
+  id: K
+  check?(data: TraitData<K>, tools: TraitTools): readonly string[]
+  references?(data: TraitData<K>): readonly Reference[]
+  state?: { start(data: TraitData<K>): S }
+}
+```
+
+| Field | What it does |
+|---|---|
+| `id` | The trait's id: the plugin's id, `/` and a name. |
+| `check` | What's wrong with the data on one entity, by a rule of the plugin's own. Each string is reported at `trait <id> on <entity>`. |
+| `references` | What the data names, such as a scene or a prose key, for the checker to resolve like any [reference](#references). |
+| `state` | For the rare trait that keeps state on each entity, such as the uses left in a torch: `start` says where it begins, from the entity's data. Read and write it with [`traitState`](/docs/reference/entities#traitstate) and [`setTraitState`](/docs/reference/entities#settraitstate). Leave it out for a trait that is only data, which is most of them. |
+
+### TraitTools
+
+```ts
+type TraitTools = { game: Game; ref: EntityRef }
+```
+
+What a trait's `check` gets beside the data: the game, and the entity the data is on.
+
+**Gotchas.**
+- **Data, never functions.** A trait is written in content, and packs and mods can write it as JSON. Put behaviour in the plugin.
+- **The kind's default comes first.** A trait's data on an entity is the kind's default with the entity's own laid over it, field by field, so make a field optional in `Traits` when a kind is expected to supply it.
+- **Declared entities only.** `withTrait` lists the entities content declares. One [created](/docs/reference/effects#create) in play has its kind's default, which `traitOf` returns.
 
 ## Content and checks
 

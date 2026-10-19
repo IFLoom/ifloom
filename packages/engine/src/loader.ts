@@ -103,6 +103,7 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   minigames: true,
   kinds: true,
   entities: true,
+  traits: true,
 }
 
 /**
@@ -165,6 +166,7 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   minigames: byId('minigame', (content) => content.minigames),
   kinds: byId('kind', (content) => content.kinds),
   entities: (content) => (content.entities ?? []).map((entity) => `entity "${entity.of}:${entity.id}"`),
+  traits: (content) => Object.entries(content.traits ?? {}).flatMap(([id, rows]) => Object.keys(rows ?? {}).map((ref) => `trait "${id}" on "${ref}"`)),
   audio: byKey('track', (content) => content.audio?.tracks),
   media: byKey('pool', (content) => content.media?.pools),
 }

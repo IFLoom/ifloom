@@ -16,15 +16,18 @@ import {
   hasEntity,
   ofKind,
   parseRef,
+  resolveTraits,
+  traitDef,
   writeEntity,
   type EntityDef,
   type EntityState,
   type KindDef,
+  type TraitTable,
 } from '../entities.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
-import { defineFeature, type FeatureContext, type PackMerge } from './feature.ts'
+import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
 import { statDef, statView, type StatView } from './stats.ts'
 import { artSrc } from '../sceneBody.ts'
@@ -102,12 +105,24 @@ export type EntitiesShape = {
     kinds?: KindDef[]
     /** The things of those kinds there are at the start. More can be created in play. */
     entities?: EntityDef[]
+    /**
+     * Traits by id and then entity. Given to `loadGame`, rows over what
+     * entities declare; on the game it returns, every entity's traits,
+     * worked out. Read them with `traitOf`.
+     */
+    traits?: TraitTable
   }
   pack: {
     /** Kinds of thing the game keeps several of. A later pack can redeclare one by id. */
     kinds?: KindDef[]
     /** Things of those kinds there at the start. A later pack can redeclare one by kind and id. */
     entities?: EntityDef[]
+    /**
+     * Traits given to entities, by trait id and then entity, over what each
+     * entity declares itself: `{ 'laundry/washable': { 'clothing:scarf': {
+     * temp: 30 } } }`. A later pack's row replaces an earlier one's.
+     */
+    traits?: TraitTable
   }
   view: {
     /**
@@ -117,7 +132,7 @@ export type EntitiesShape = {
      */
     entities: Record<string, EntitiesView>
   }
-  lists: 'kind' | 'entity'
+  lists: 'kind' | 'entity' | 'trait'
 }
 
 /** How many entities of a kind a `count` condition counts. */
@@ -148,6 +163,17 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
   const addEntities = (list: readonly EntityDef[] | undefined, from: string) => {
     for (const entity of list ?? []) entities.set(`${entity.of}:${entity.id}`, { value: entity, from })
   }
+  // Table rows by trait, then entity: a later pack's row replaces an earlier one's.
+  const rows = new Map<string, Map<string, { value: unknown; from: string }>>()
+  const addTraits = (table: TraitTable | undefined, from: string) => {
+    for (const [id, byRef] of Object.entries(table ?? {})) {
+      const into = rows.get(id) ?? new Map<string, { value: unknown; from: string }>()
+      rows.set(id, into)
+      for (const [ref, value] of Object.entries(byRef ?? {})) into.set(ref, { value, from })
+    }
+  }
+  // Where each worked-out trait came from, by `id` and by `id ref`, for problems.
+  const traitFrom = new Map<string, string>()
   return {
     base: (game) => {
       // The base is the whole game as declared, plugins and all.
@@ -160,10 +186,12 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
       }
       addKinds(game.kinds, 'base')
       addEntities(game.entities, 'base')
+      addTraits(game.traits, 'base')
     },
     add: (pack, from) => {
       addKinds(pack.kinds, from)
       addEntities(pack.entities, from)
+      addTraits(pack.traits, from)
     },
     finish: (game) => {
       game.kinds = [...kinds.values()].map(({ value }) => {
@@ -178,8 +206,26 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
         }
       }
       game.entities = [...entities.values()].map((entry) => entry.value)
+      // Every entity's traits worked out once, from the rows over what the entities and kinds declare.
+      const table = Object.fromEntries([...rows].map(([id, byRef]) => [id, Object.fromEntries([...byRef].map(([ref, row]) => [ref, row.value]))]))
+      game.traits = resolveTraits({ kinds: game.kinds, entities: game.entities, traits: table }) as TraitTable
+      for (const [id, byRef] of Object.entries(game.traits)) {
+        for (const ref of Object.keys(byRef)) {
+          const kind = parseRef(ref)?.kind ?? ''
+          const entity = entities.get(ref)
+          // The row's pack, else the entity's if it gives the trait itself, else its kind's.
+          const ownsIt = Object.hasOwn(entity?.value.traits ?? {}, id)
+          const from = rows.get(id)?.get(ref)?.from ?? (ownsIt ? entity?.from : kinds.get(kind)?.from) ?? entity?.from ?? 'base'
+          traitFrom.set(`${id} ${ref}`, from)
+          if (!traitFrom.has(id)) traitFrom.set(id, from)
+        }
+      }
     },
-    from: (list, id) => (id === undefined ? undefined : (list === 'kind' ? kinds : entities).get(id)?.from),
+    from: (list, id) => {
+      if (id === undefined) return undefined
+      if (list === 'trait') return traitFrom.get(id)
+      return (list === 'kind' ? kinds : entities).get(id)?.from
+    },
   }
 }
 
@@ -257,7 +303,7 @@ export const entities = defineFeature<EntitiesShape>({
     },
   },
   pack: { merge },
-  lists: ['kind', 'entity'],
+  lists: ['kind', 'entity', 'trait'],
   // What older saves copied from content (names, and values equal to where they start) is dropped, so it reads from content again.
   loaded: (state, game) => tidied(state, game),
   check: (game, tools) => {
@@ -295,6 +341,7 @@ export const entities = defineFeature<EntitiesShape>({
           asked.map((when) => ({ when: bindCurrent(when, one) })),
         )
     }
+    checkTraits(game, tools)
   },
   resolve: (game) => {
     const kinds = kindIds(game)
@@ -333,6 +380,54 @@ export const entities = defineFeature<EntitiesShape>({
   }),
 })
 
+/**
+ * What is wrong with the game's traits: a plugin's trait id not its own, a
+ * trait of a plugin the game has that the plugin doesn't declare, a row for
+ * an entity nobody declares, and what each trait's own `check` and
+ * `references` say of the data on each entity. Ids without a `/` are the
+ * game's, and a plugin the game lacks has its traits let through unchecked.
+ */
+function checkTraits(game: Game, tools: FeatureCheckTools): void {
+  for (const plugin of game.plugins ?? []) {
+    const seen = new Set<string>()
+    for (const trait of plugin.traits ?? []) {
+      const where = `plugin ${plugin.id}`
+      if (!trait.id.startsWith(`${plugin.id}/`) || trait.id.length === plugin.id.length + 1)
+        tools.problem(undefined, where, `trait "${trait.id}" must be named "${plugin.id}/" and a name`)
+      if (seen.has(trait.id)) tools.problem(undefined, where, `two traits share the id "${trait.id}"`)
+      seen.add(trait.id)
+    }
+  }
+  const table = resolveTraits(game)
+  // A plugin the game has that doesn't declare the trait: most likely a typo.
+  const unknownTrait = (id: string): string | undefined => {
+    const at = id.indexOf('/')
+    if (at <= 0) return undefined
+    const plugin = game.plugins?.find((entry) => entry.id === id.slice(0, at))
+    return plugin && !traitDef(game, id) ? `plugin "${plugin.id}" has no trait "${id}"` : undefined
+  }
+  const ids = new Set([...(game.kinds ?? []).flatMap((kind) => Object.keys(kind.traits ?? {})), ...Object.keys(table)])
+  for (const id of ids) {
+    const what = unknownTrait(id)
+    if (what) tools.problem({ list: 'trait', id }, `trait ${id}`, what)
+  }
+  for (const [id, byRef] of Object.entries(table)) {
+    const trait = traitDef(game, id)
+    for (const [ref, data] of Object.entries(byRef)) {
+      const source = { list: 'trait', id: `${id} ${ref}` }
+      const where = `trait ${id} on ${ref}`
+      if (!entityDef(game, ref)) {
+        tools.problem(source, where, `unknown entity "${ref}"`)
+        continue
+      }
+      if (!trait) continue
+      for (const what of trait.check?.(data, { game, ref }) ?? []) tools.problem(source, where, what)
+      const refs = trait.references?.(data) ?? []
+      if (refs.length) tools.check(source, where, refs)
+    }
+  }
+}
+
 /** One record with what content already says taken out; undefined when nothing is left of a declared one's. */
 function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: string, game: Game): EntityState | undefined {
   const next: EntityState = {}
@@ -345,6 +440,8 @@ function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: str
   if (stats.length) next.stats = Object.fromEntries(stats)
   const kv = Object.entries(record.kv ?? {}).filter(([key, value]) => def?.kv?.[key] !== value)
   if (kv.length) next.kv = Object.fromEntries(kv)
+  // A trait's state is only ever written by play.
+  if (record.traits && Object.keys(record.traits).length) next.traits = record.traits
   // A created one's record is what says it is there, so it stays, however little is left.
   if (def && !Object.keys(next).length) return undefined
   return next

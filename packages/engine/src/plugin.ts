@@ -5,7 +5,7 @@ import { buildEffects, customContext, type CustomContext, type EffectRef } from 
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
-import type { EntityDef, KindDef } from './entities.ts'
+import type { EntityDef, KindDef, TraitDef } from './entities.ts'
 import type { Reference } from './references.ts'
 import type { Transition, TransitionName } from './features/transitions.ts'
 import type { MigrationTools } from './intake.ts'
@@ -195,6 +195,13 @@ export type Plugin<S = any, V = unknown> = {
    * is loaded. One the game declares itself, with the same kind and id, wins.
    */
   entities?: (game: Game) => readonly EntityDef[]
+  /**
+   * Traits this plugin gives meaning to: named data entities carry, written
+   * on a kind, an entity or content's `traits` table, which the plugin reads
+   * with `traitOf`. Each id is the plugin's id, `/` and a name. Data only:
+   * what a trait does is the plugin's code.
+   */
+  traits?: readonly TraitDef<any, any>[]
   /**
    * What plays on background channels, by channel: a place's ambience. Below
    * an open scene's choice and an `audio` effect's, above the game's default.

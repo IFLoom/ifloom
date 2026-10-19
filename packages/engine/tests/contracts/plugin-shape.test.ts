@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Plugin } from '../../src/plugin.ts'
 import type { GameRules } from '../../src/game.ts'
+import { PLUGIN_NAME } from './ids-rule.ts'
 import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { cheats } from '@ifloom/plugin-cheats'
@@ -39,6 +40,8 @@ const MEMBERS = {
   hooks: ['onTurn', 'onCommand'],
   // Providers: answers, never a change to the state.
   providers: ['guard', 'price', 'label', 'stage', 'buttons', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'kinds', 'entities'],
+  // What entities carry that it gives meaning to: data, each named `<id>/<name>`.
+  declares: ['traits'],
   // What the content checker asks.
   checks: ['references', 'check', 'argProblems', 'panelProblems'],
   // What `definePlugin` adds for code outside the plugin.
@@ -112,6 +115,9 @@ describe('the plugin shape (ADR 0009)', () => {
       }
       if ('hooks' in plugin) wrong.push(`${plugin.id}: hooks are flat members (onTurn, onCommand), not a hooks table`)
       if (plugin.profile !== undefined && typeof plugin.profile !== 'function') wrong.push(`${plugin.id}: profile is a function, not a table`)
+      for (const trait of plugin.traits ?? []) {
+        if (!PLUGIN_NAME.test(trait.id) || !trait.id.startsWith(`${plugin.id}/`)) wrong.push(`${plugin.id}: trait "${trait.id}" is not ${plugin.id}/<name>`)
+      }
       for (const hook of MEMBERS.hooks) {
         const fn = (plugin as Record<string, unknown>)[hook]
         if (fn !== undefined && typeof fn !== 'function') wrong.push(`${plugin.id}: ${hook} is a function`)

@@ -45,6 +45,7 @@ type Content = {
   stats?: StatDef[]
   kinds?: KindDef[]
   entities?: EntityDef[]
+  traits?: TraitTable
   collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
@@ -77,6 +78,7 @@ export const ch1: Content = {
 | `name` | Optional. What problems call this content, such as `story.cafe`. Without one, they say `content`. |
 | `scenes`, `items`, `storylines`, `activities`, `stats`, `kinds`, `collections`, `triggers`, `inputs`, `minigames`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. Any `kinds`, `collections`, `triggers`, `inputs`, `minigames` and `settings` on `loadGame`'s `base` come first. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. The base's come first. See [Entities](/docs/reference/entities). |
+| `traits` | By trait id and then entity, one row each. See [Traits](#traits). |
 | `strings` | By key, over the base's `strings`. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
 | `prose` | By key. |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
@@ -101,9 +103,33 @@ Give your content a `name` and the problem says which two files it's in:
 story.town · scene "cafe.counter" · declared twice, in story.cafe and story.town
 ```
 
-It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, items, kinds, entities, storylines, activities, collections, triggers, inputs, minigames, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
+It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, items, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, activities, collections, triggers, inputs, minigames, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
 
 To change something on purpose, change it where it's declared. Packs are the only way to replace what the content declares.
+
+### Traits
+
+The `traits` key gives entities [traits](/docs/reference/entities#traits) by trait id and then entity, without writing the entities out again:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+const gentler: Pack = {
+  id: 'mod:gentle-wash',
+  schema: SCHEMA,
+  traits: { 'laundry/washable': { 'clothing:scarf': { temp: 30, gentle: true }, 'clothing:hat': { temp: 30 } } },
+}
+```
+
+The loader works out each entity's traits from three places, in this order:
+
+1. A row in the `traits` table, from your content or a pack. A pack's row replaces an earlier one.
+2. Otherwise, the entity's own `traits`.
+3. Under either, its kind's `traits`, as defaults. Two objects are merged field by field, the entity's fields winning. Any other value is replaced whole.
+
+A row replaces the entity's own value whole, but still sits on the kind's default. The result is in [`game.traits`](/docs/reference/game#game), every declared entity's traits as plain data, which [`traitOf`](/docs/reference/entities#traitof) reads. A row for an entity no content declares is a problem, `unknown entity "…"`.
+
+Packs written before traits existed have no `traits` key, so they need no upgrade. The key is new, not a change to an old one, and [`SCHEMA`](#schema) stays the same.
 
 ## Pack
 
@@ -123,7 +149,7 @@ Content from outside your code, laid over the game. It has everything [`Content`
 | `schema` | The [`SCHEMA`](#schema) it was written for. An older pack is [upgraded](#upgradepack) as it loads. A newer one is skipped whole, with a problem. |
 | `patches` | Small changes to scenes the content or an earlier pack declared, applied straight away, in order. See [Patches](#patches). |
 
-A pack merges as content does, except that it may repeat any key. Its scene, item, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. Its `prose`, `strings` and custom functions replace the ones with the same key or name, and the rest are kept. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
+A pack merges as content does, except that it may repeat any key. Its scene, item, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings` and custom functions replace the ones with the same key or name, and the rest are kept. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
 
 So a mod that changes one custom condition ships only that one:
 

@@ -693,7 +693,7 @@ import { onlyAt } from '@ifloom/plugin-places'
 // in the content
 activities: [
   { id: 'cook', blocked: [onlyAt(['flat'])], effects: [{ kind: 'stat', stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
-  { id: 'bake', blocked: [onlyAt(['flat'])], effects: [{ kind: 'item', item: 'loaf', by: 1 }, { 'dishes/add': true }] },
+  { id: 'bake', blocked: [onlyAt(['flat'])], effects: [{ kind: 'entity', entity: 'food:loaf', by: 1 }, { 'dishes/add': true }] },
 ],
 // on the flat, in data.places.locations
 actions: [
@@ -1145,7 +1145,7 @@ What the plugin's calls and content name, so the [content checker](/docs/referen
 - **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the content or pack that entry came from.
 
-Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
+Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ entity }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
 
 The loyalty plugin's cards each have a condition, and its `stamp` effect names a card:
 
@@ -1307,7 +1307,7 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 - **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in content or a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the activity a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
-- **A plain-effect list takes the long form.** A plugin's `effectsOf` and `applyEffects` take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. Every list content writes (a choice's, an activity's, a trigger's, an item's use) takes any form. The [content checker](/docs/reference/checks) reports a name no plugin has.
+- **A plain-effect list takes the long form.** A plugin's `effectsOf` and `applyEffects` take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. Every list content writes (a choice's, an activity's, a trigger's) takes any form. The [content checker](/docs/reference/checks) reports a name no plugin has.
 - **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every game and mod that uses it.
 
 ## See it in an example

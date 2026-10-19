@@ -2,7 +2,7 @@ import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { Lock } from './locks.ts'
 import type { Custom, TurnContext } from './custom.ts'
-import type { CommandRef, EffectRef } from './calls.ts'
+import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
@@ -46,18 +46,6 @@ export type ActionDef = {
    * or an activity's own `blocked`, let `whyNot` say it instead.
    */
   blocked?: Blocked[]
-}
-
-export type ItemDef = {
-  id: string
-  name: string
-  desc: string
-  /** Words the UI can sort, style or filter items by: `['clothes']`. The engine gives them no meaning. */
-  tags?: string[]
-  /** How many a new game starts with. 0 if left out. */
-  start?: number
-  /** A button in the inventory: using one spends it, then runs these effects, in either form. */
-  use?: { label: string; effects: EffectRef[] }
 }
 
 export type SceneChoice = {
@@ -216,13 +204,16 @@ export type GameRules = {
   onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
 }
 
-/** What a New Game+ takes from the game before: player stats, kv keys and items, by id. */
+/** What a New Game+ takes from the game before: player stats, kv keys and what the player holds. */
 export type CarryOver = {
   stats?: string[]
   /** kv keys, by name. */
   kv?: string[]
-  /** Items by id, or `'all'` for every item the player has. */
-  items?: string[] | 'all'
+  /**
+   * Things the player holds, by reference (`'food:apple'`), or `'all'` for
+   * everything the player holds. A thing made in play comes with them.
+   */
+  held?: string[] | 'all'
 }
 
 /** The fields of a game the core reads itself. The features' (settings, stats, audio, media) are in `features/`. */
@@ -278,10 +269,6 @@ type CoreGame = {
 
 /** A game: what the core reads, and what each feature does. */
 export type Game = Flat<CoreGame & FeatureGame>
-
-export function itemById(game: Game, id: string) {
-  return (game.items ?? []).find((item) => item.id === id)
-}
 
 /**
  * A scene ready to render, by id. A data scene is baked into one the first

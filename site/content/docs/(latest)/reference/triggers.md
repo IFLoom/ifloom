@@ -10,22 +10,23 @@ import { fireTriggers, type TriggerDef } from '@ifloom/engine'
 
 ## A worked example
 
-These are the showcase's two triggers. The first time the player steps onto the high street, Sam's welcome note turns up: a [notice](/docs/reference/notices) says so, and the note goes into the player's [notes](/docs/reference/collections). Every Sunday from the first week on, the rent goes out.
+These are the showcase's two triggers. The first time the player steps onto the high street, Sam's welcome note turns up: a [notice](/docs/reference/notices) says so, and the player is given the note, a [thing](/docs/reference/entities#notes-photos-and-other-things-made-in-play) they keep in the phone's Notes app. Every Sunday from the first week on, the rent goes out.
 
 ```ts
-import type { Content } from '@ifloom/engine'
+import { give, type Content } from '@ifloom/engine'
 import { day, weekday } from '@ifloom/plugin-calendar'
 import { at } from '@ifloom/plugin-places'
 
 const town: Content = {
-  collections: [{ id: 'notes', name: 'Notes' }],
+  kinds: [{ id: 'note', label: 'Note', listed: false }],
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: 'Bins go out Thursday. — Sam, flat 2' }],
   triggers: [
     {
       id: 'welcome',
       when: at('high-street'),
       effects: [
         { kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' },
-        { kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
+        give('note:welcome'),
       ],
     },
     {
@@ -104,7 +105,7 @@ const next = fireTriggers(state, game, (state, effects) => applyEffects(state, g
 - **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or activity that does X.
 - **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
 - **A scene effect cuts in.** A trigger with `{ kind: 'scene', id }` puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
-- **`text` in a `notify` or `collect` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.
+- **`text` in a `notify` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.
 
 ## See it in an example
 

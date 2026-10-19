@@ -131,6 +131,10 @@ export type EntityDef = {
 export type EntityState = {
   /** The name it was created with. A declared entity's name is read from content. */
   name?: string
+  /** The description it was created with, as written. */
+  desc?: string
+  /** The picture it was created with, as written. */
+  image?: string
   /**
    * The entity it was created like: what it doesn't have itself (its name,
    * description, picture, tags, stats, kv and traits) is read from that one.
@@ -336,7 +340,7 @@ function entityTagsThrough(state: GameState, game: Game, ref: EntityRef, depth: 
 
 /**
  * An entity's name or description as written, before its tokens are filled:
- * the name it was created with, then what the one it was created `like`
+ * what it was created with, then what the one it was created `like`
  * has, then its declaration's. `entityName` and `entityDesc` fill them.
  */
 export function entityText(state: GameState, game: Game | undefined, ref: EntityRef, field: 'name' | 'desc'): string | undefined {
@@ -344,27 +348,27 @@ export function entityText(state: GameState, game: Game | undefined, ref: Entity
 }
 
 function textThrough(state: GameState, game: Game | undefined, ref: EntityRef, field: 'name' | 'desc', depth: number): string | undefined {
-  if (field === 'name') {
-    const given = recordOf(state, ref)?.name
-    if (given !== undefined) return given
-  }
+  const given = recordOf(state, ref)?.[field]
+  if (given !== undefined) return given
   const like = likeOf(state, ref, depth)
   return (like !== undefined ? textThrough(state, game, like, field, depth + 1) : undefined) ?? entityDef(game, ref)?.[field]
 }
 
-/** An entity's picture as written (before `artSrc`): its declaration's, else that of the one it was created `like`. */
+/** An entity's picture as written (before `artSrc`): the one it was created with, its declaration's, else that of the one it was created `like`. */
 export function entityImage(state: GameState, game: Game | undefined, ref: EntityRef): string | undefined {
   return entityImageThrough(state, game, ref, 0)
 }
 
 function entityImageThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): string | undefined {
   const like = likeOf(state, ref, depth)
-  return entityDef(game, ref)?.image ?? (like !== undefined ? entityImageThrough(state, game, like, depth + 1) : undefined)
+  return recordOf(state, ref)?.image ?? entityDef(game, ref)?.image ?? (like !== undefined ? entityImageThrough(state, game, like, depth + 1) : undefined)
 }
 
 /** What an entity is created with: a name or a `like` to read it from, and its own tags, traits, stats and kv. */
 export type CreatedFields = {
   name?: string
+  desc?: string
+  image?: string
   like?: EntityRef
   tags?: string[]
   traits?: Record<string, unknown>
@@ -376,6 +380,8 @@ export type CreatedFields = {
 export function createdRecord(given: CreatedFields): EntityState {
   const record: EntityState = {}
   if (given.name !== undefined) record.name = given.name
+  if (given.desc !== undefined) record.desc = given.desc
+  if (given.image !== undefined) record.image = given.image
   if (given.like !== undefined) record.like = given.like
   if (given.tags?.length) record.tags = [...given.tags]
   if (given.traits && Object.keys(given.traits).length) record.traitData = { ...given.traits }

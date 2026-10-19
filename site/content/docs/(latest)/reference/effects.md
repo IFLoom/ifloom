@@ -1,15 +1,15 @@
 ---
 title: "Effects"
-description: "Every effect: stats, kv, items, scenes and storylet draws, entities, each, turns, notices, audio, minigames, and custom effects."
+description: "Every effect: stats, kv, scenes and storylet draws, entities and what holds them, each, turns, notices, audio, minigames, and custom effects."
 ---
-An effect is one change to the [state](/docs/reference/state), written as data. Choices, activities, item uses, triggers and the end of a turn all carry lists of them.
+An effect is one change to the [state](/docs/reference/state), written as data. Choices, activities, triggers and the end of a turn all carry lists of them, and so can a plugin's content, such as a thing's use in the inventory.
 
 ```ts
 import type { Effect } from '@ifloom/engine'
 
 const effects: Effect[] = [
   { kind: 'stat', stat: 'coins', by: -4 },
-  { kind: 'item', item: 'sandwich', by: 1 },
+  { kind: 'entity', entity: 'item:sandwich', by: 1 },
   { kind: 'storylineKv', storyline: 'ava', key: 'boughtLunch', to: true },
 ]
 ```
@@ -41,7 +41,7 @@ const next = applyEffects(state, game, [
 
 ## Effect
 
-Every effect follows one naming rule. Its target is named by its noun (`stat`, `item`, `entity`, `storyline`, `scene`, `collection`, or `key` in a kv store), `by` changes a number, and `to` sets a value.
+Every effect follows one naming rule. Its target is named by its noun (`stat`, `entity`, `storyline`, `scene`, or `key` in a kv store), `by` changes a number, and `to` sets a value.
 
 ```ts
 type Effect =
@@ -62,13 +62,9 @@ type Effect =
   | { kind: 'you'; to: string | null }
   | { kind: 'scene'; scene: string | null }
   | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'item'; item: string; by: number }
-  | { kind: 'item'; item: string; to: number }
   | { kind: 'phase'; to: Phase }
   | { kind: 'closeStoryline'; storyline: string; turns: number }
   | { kind: 'turn'; by?: number }
-  | { kind: 'collect'; collection: string; entry: CollectionItem }
-  | { kind: 'discard'; collection: string; entry: string }
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
   | { kind: 'audio'; channel: string; to?: string | null }
   | { kind: 'sound'; track: string }
@@ -122,7 +118,7 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 
 Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [custom effects](/docs/reference/custom#effects), on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that neither the game nor its plugins has does nothing.
 
-In a data scene choice, an activity, a trigger or an item's use, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one.
+In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one.
 
 **Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
 
@@ -175,15 +171,6 @@ The draw is seeded by the save, the turn and a count of draws from that set, kep
 
 The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, such as a plugin's `effectsOf`, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'park' } }`.
 
-### item
-
-```ts
-{ kind: 'item', item: 'sandwich', by: 1 }
-{ kind: 'item', item: 'umbrella', to: 0 }
-```
-
-Changes how many of an item the player holds `by` an amount, or puts it `to` a count. The count never goes below 0.
-
 ### phase
 
 ```ts
@@ -220,24 +207,6 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 - A `turn` effect run while a turn is ending does nothing, so a turn's rules can never end another turn. That covers anything the game's [`rules.onTurn`](/docs/reference/rules#onturn) or a plugin's `onTurn` hook applies.
 - A `by` of 0 or less does nothing.
 
-### collect
-
-```ts
-{ kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } }
-```
-
-Adds an entry to a [collection](/docs/reference/collections), stamped with the current [turn](/docs/reference/state#turn). `entry` is a [`CollectionItem`](/docs/reference/collections#collectionitem), and its `text` is a prose key. If the id is already in the collection, the effect does nothing and the entry there is left as it is. When the collection goes over its `max`, the oldest entries go.
-
-The [content checker](/docs/reference/checks) checks the collection and the `text`.
-
-### discard
-
-```ts
-{ kind: 'discard', collection: 'notes', entry: 'welcome' }
-```
-
-Takes one entry out of a collection, named by its id in `entry`. It does nothing if the entry isn't there.
-
 ### create
 
 ```ts
@@ -252,6 +221,8 @@ Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already 
 type CreatedEntity = {
   id?: string
   name?: string
+  desc?: string
+  image?: string
   tags?: string[]
   traits?: Record<string, unknown>
   stats?: Record<string, number>
@@ -259,7 +230,15 @@ type CreatedEntity = {
 }
 ```
 
-Every other stat of its kind reads as that stat's `start`.
+Its `desc` is read like a declared entity's, with tokens filled in, and its `image` goes through [`artSrc`](/docs/reference/prose#artsrc). Every other stat of its kind reads as that stat's `start`.
+
+A thing made in play this way is how a game keeps notes, photos or letters. The phone's camera makes a photo the player keeps:
+
+```ts
+{ kind: 'create', of: 'photo', entity: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
+```
+
+The phone's gallery lists the `photo` things you hold, and `{ count: { of: 'photo', at: 'you' } }` asks whether you have any. See [Notes, photos and other things made in play](/docs/reference/entities#notes-photos-and-other-things-made-in-play).
 
 With `like`, the new entity is [made like](/docs/reference/entities#things-made-like-another) another, and reads whatever it isn't given from that one: name, description, picture, tags, stats, kv and traits. Its kind is the `like`'s if `of` is left out, and `entity` can be left out altogether. `like` names an entity your content declares.
 
@@ -463,7 +442,7 @@ A custom effect runs in its turn. Its function is called with the state the effe
 You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
-- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, in an item's `use`, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places, and `rules.onTurn`'s `apply` takes either. Neither is a plain `Effect`, so a list that takes only those, such as a plugin's `effectsOf`, needs the long form.
+- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, in a thing's [`inventory/usable`](/docs/plugins/inventory) trait, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places, and `rules.onTurn`'s `apply` takes either. Neither is a plain `Effect`, so a list that takes only those, such as a plugin's `effectsOf`, needs the long form.
 - A button's price, a guard and a lock see a custom effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
 - Custom effects that return custom effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.

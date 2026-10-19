@@ -1,14 +1,14 @@
 ---
 title: "The game"
-description: "The Game object: every key a game can have, items, storylines, the idle screen, saveName, and the helpers that look things up."
+description: "The Game object: every key a game can have, storylines, the idle screen, saveName, and the helpers that look things up."
 ---
-A game is one `Game` object. It holds every item, scene and storyline, plus the rules the engine calls when it needs to know something about your game. Every engine function takes the game as an argument, and nothing is registered globally. Even the game's own [custom functions](/docs/reference/custom) live on the game.
+A game is one `Game` object. It holds every scene, storyline and thing, plus the rules the engine calls when it needs to know something about your game. Every engine function takes the game as an argument, and nothing is registered globally. Even the game's own [custom functions](/docs/reference/custom) live on the game.
 
 ```ts
 import type { Game } from '@ifloom/engine'
 ```
 
-Every type on this page comes from the package root: `Game`, `ItemDef`, `StorylineDef` and the rest. `CollectionDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
+Every type on this page comes from the package root: `Game`, `StorylineDef` and the rest. `KindDef`, `EntityDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
 
 The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in your content's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are content in `data.cast.characters`.
 
@@ -32,13 +32,11 @@ type Game = {
   traits?: TraitTable
   introScene?: string
   activities?: ActivityDef[]
-  items?: ItemDef[]
   scenes: (Scene | DataScene)[]
   storylines?: StorylineDef[]
   prose?: ProseStore
   rules?: GameRules
   strings?: Record<string, string>
-  collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
   minigames?: MinigameDef[]
@@ -60,23 +58,21 @@ type Game = {
 | `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with `migrations`. Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `migrations` | Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from: step 1 takes a version-1 save to version 2. Each is `(state, tools) => GameState`, and `tools.fill()` fills in content the save lacks. They run when an older save loads. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/docs/reference/settings). |
-| `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, items? }`, each a list of ids or keys, and `items` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
+| `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, held? }`, lists of stat ids, kv keys and the things the player holds, and `held` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
 | `saveName` | The name a save is listed under, worked out from the state. See [`saveName`](#savename). |
 | `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
 | `startPhase` | The stage a new game opens in. Default `''`. See [`phase`](/docs/reference/state#phase). |
 | `saveable` | When saving is refused, and why. Saving is always allowed if left out. See [`saveable`](#saveable). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
-| `kinds` | The kinds of thing the game keeps several of, such as staff or dishes, each with stats of its own. See [Entities](/docs/reference/entities). |
+| `kinds` | The kinds of thing the game keeps, such as staff, dishes or what the player carries, each with stats of its own. See [Entities](/docs/reference/entities). |
 | `entities` | The things of those kinds that exist at the start of a new game. More can be [created](/docs/reference/effects#create) in play. See [Entities](/docs/reference/entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) by trait id and then entity. On a game from [`loadGame`](/docs/reference/loader#traits), every declared entity's traits, worked out from the table rows, the entities and their kinds. On a game built by hand, rows over what the entities declare; [`traitOf`](/docs/reference/entities#traitof) works them out the same way. |
 | `activities` | Everything the player can do, such as paperwork, a jog or a drink. None if left out. See [Activities and buttons](/docs/reference/actions). |
-| `items` | Things the player can have. None if left out. See [`ItemDef`](#itemdef). |
 | `scenes` | Every scene. [Data scenes](/docs/reference/scenes#datascene) and hand-written [`Scene`](/docs/reference/scenes#scene)s sit side by side. A data scene is baked into a `Scene` the first time [`sceneById`](#scenebyid) asks for it. |
 | `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
 | `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, make it with [`proseStore`](/docs/reference/prose#prosestore-1). |
 | `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the base's, the content's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
-| `collections` | Named lists the game keeps entries in, such as letters, photos or a ledger. See [Collections](/docs/reference/collections). |
 | `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/docs/reference/triggers). |
 | `inputs` | What the player can type or pick, and the kv key each one writes. See [Inputs](/docs/reference/inputs). |
 | `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
@@ -159,39 +155,6 @@ const { game, problems } = loadGame(content, {
 
 The town's locations and people are the plugins' content, in `data.places.locations` and `data.cast.characters`, and `loadGame` fills in `data` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
 
-## ItemDef
-
-```ts
-type ItemDef = {
-  id: string
-  name: string
-  desc: string
-  tags?: string[]
-  start?: number
-  use?: { label: string; effects: EffectRef[] }
-}
-```
-
-| Field | What it does |
-|---|---|
-| `tags` | Words your UI can sort, style or filter items by, such as `['clothes']`. The engine gives them no meaning. |
-| `start` | How many a new game starts with. 0 if left out. |
-| `use` | Makes the item usable with [`use`](/docs/reference/commands#use). Using it spends one, then runs these [effects](/docs/reference/effects), in any form: `{ kind: 'stat', … }`, `{ custom }` or a plugin's short call such as `applyStatus('caffeinated')`. They read the state as it was before the item was spent. |
-
-An item has no slot of its own. To let the player wear one, add the [wardrobe plugin](/docs/plugins/wardrobe) and list the item among its clothes.
-
-```ts
-import type { ItemDef } from '@ifloom/engine'
-
-const sandwich: ItemDef = {
-  id: 'sandwich',
-  name: 'sandwich',
-  desc: 'Cheese and pickle, wrapped in paper.',
-  tags: ['food'],
-  use: { label: 'Eat the sandwich', effects: [{ kind: 'stat', stat: 'energy', by: 25 }] },
-}
-```
-
 ## Scene
 
 ```ts
@@ -260,10 +223,9 @@ So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` i
 
 ```ts
 function sceneById(game: Game, id: string): Scene | undefined
-function itemById(game: Game, id: string): ItemDef | undefined
 ```
 
-Each returns the entry with that id, or `undefined`. The engine finds everything through these.
+Returns the scene with that id, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof) or [`kindById`](/docs/reference/entities#kindbyid).
 
 ### sceneById
 
@@ -278,19 +240,11 @@ const shown = intro?.render(state, sceneContext(state, game))
 
 **Gotcha.** Look scenes up through `sceneById`, not `game.scenes.find(...)`. The list holds data scenes as you declared them, with no `render`.
 
-### itemById
-
-```ts
-import { itemById } from '@ifloom/engine'
-
-itemById(game, 'sandwich')?.tags   // ['food']
-```
-
 ## Checking a game
 
 [`checkGame`](/docs/reference/checks#checkgame) checks that everything the game names resolves, and lists the files it names. Run it from a test so a broken id fails at commit time instead of mid-game. [`loadGame`](/docs/reference/loader#loadgame) runs it for you. [Checking content](/docs/reference/checks) has the whole list.
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `introScene`, `startPhase`, `custom`, `plugins`, `actions`, `strings` and `rules` to `loadGame`. The `items` in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts) are `ItemDef`s, and the sandwich and flapjack have a `use`. The `storylines` in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) are Ava's and Sam's.
+- Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) passes `introScene`, `startPhase`, `custom`, `plugins`, `actions`, `strings` and `rules` to `loadGame`. The things in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts) are entities, and the sandwich and flapjack have the inventory's `usable` trait. The `storylines` in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts) are Ava's and Sam's.
 - The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) sets `version`, `migrations`, `finished` and `carryOver`.

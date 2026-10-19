@@ -108,8 +108,9 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
     migrations: { 1: (old, { game }) => fromItems(old, game) },
     traits: [wearableTrait],
     strings: {
-      notClothing: 'The {item} is not something you wear.',
-      alreadyWearing: 'You are already wearing the {item}.',
+      notClothing: 'The {thing} is not something you wear.',
+      alreadyWearing: 'You are already wearing the {thing}.',
+      haveNone: 'You have no {thing}.',
       nothingToTakeOff: 'There is nothing to take off.',
     },
     start: (game) => ({
@@ -138,9 +139,9 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
           const ref = String(args.id ?? '')
           if (!entityOf(state, game, ref)) return say(game, 'noSuchThing')
           const wearable = wearableOf(state, game, ref)
-          if (!wearable) return say(game, 'wardrobe/notClothing', { item: nameOf(state, game, ref) })
-          if (slice.worn[wearable.slot] === ref) return say(game, 'wardrobe/alreadyWearing', { item: nameOf(state, game, ref) })
-          if (heldCount(state, game, ref, YOU) <= 0) return say(game, 'haveNone', { item: nameOf(state, game, ref) })
+          if (!wearable) return say(game, 'wardrobe/notClothing', { thing: nameOf(state, game, ref) })
+          if (slice.worn[wearable.slot] === ref) return say(game, 'wardrobe/alreadyWearing', { thing: nameOf(state, game, ref) })
+          if (heldCount(state, game, ref, YOU) <= 0) return say(game, 'wardrobe/haveNone', { thing: nameOf(state, game, ref) })
           return undefined
         },
         run: (state, args, { slice, set, game }) => {

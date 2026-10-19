@@ -71,7 +71,7 @@ A Twine story is one file of passages. An IFLoom game is a few files, each expor
 
 | In Twine | In an IFLoom game |
 |---|---|
-| `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `items.ts`, `cast.ts` for the people |
+| `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `things.ts`, `cast.ts` for the people |
 | The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
 | Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the rules and the custom functions content calls by name |
 | The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title and `introScene` |
@@ -98,7 +98,7 @@ Each change is an [effect](/docs/reference/effects), and a choice runs its list 
 { kind: 'kv', key: 'visits', by: 1 }
 ```
 
-Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [items](/docs/reference/game#itemdef): `{ kind: 'item', item: 'umbrella', by: 1 }`.
+Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [entities](/docs/reference/entities#holding-things) they hold: `{ kind: 'entity', entity: 'item:umbrella', by: 1 }` gives one, and the `give` helper writes it.
 
 There's no temporary `_variable`. A value you only need while a scene is on screen is usually a condition you can write where it's used.
 
@@ -131,7 +131,7 @@ There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don'
 
 ```ts
 { all: [{ stat: 'coins', gte: 3 }, { not: { kv: 'hadCoffee' } }] }
-{ any: [{ item: 'umbrella' }, { item: 'raincoat' }] }
+{ any: [{ entity: 'item:umbrella', at: 'you' }, { entity: 'item:raincoat', at: 'you' }] }
 { kv: 'errand', is: 'bread' }
 ```
 
@@ -291,17 +291,18 @@ A set of widgets that keeps its own state, such as a loyalty card or an inventor
 There's no init passage. You declare what the game keeps, and each declaration carries its starting value. What every part of the story uses goes in `src/world/`, a file for each kind:
 
 ```ts
-// src/world/stats.ts and src/world/items.ts, shown together
+// src/world/stats.ts and src/world/things.ts, shown together
 stats: [
   { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true },
   { id: 'energy', label: 'Energy', start: 80 },
 ],
-items: [{ id: 'umbrella', name: 'umbrella', desc: 'Big enough for two.', start: 1 }],
+kinds: [{ id: 'item', label: 'Thing', listed: false }],
+entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', desc: 'Big enough for two.', at: 'player' }],
 ```
 
-An item starts at its `start`, or 0 if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
+A thing starts with whoever its `at` names, here the player, and with nobody if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
 
-When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or an item (a thing they have). If it's neither, set it with an effect on the first scene's choices.
+When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or a thing they have. If it's neither, set it with an effect on the first scene's choices.
 
 ### `State.variables` and `setup`
 
@@ -313,7 +314,7 @@ setup.dishes = {
 }
 ```
 
-In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, the kv store in `state.kv` and items in `state.items`. Content reads them with conditions, and only custom functions and your UI read the object itself.
+In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, the kv store in `state.kv` and what the player holds in `state.held`. Content reads them with conditions, and only custom functions and your UI read the object itself.
 
 Data in `setup` that never changes is content: it stays in your TypeScript, beside the scenes. When you'd keep several of something, each with numbers that change in play, declare a kind and its [entities](/docs/reference/entities):
 
@@ -657,7 +658,7 @@ Harlowe's macros map to the same places as SugarCube's.
 | `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a custom value |
 | `(random: 1, 6)` | [`roll`](/docs/reference/random#roll) in a custom function, or `{ kind: 'minigameVar', key, random: [1, 6] }` in a minigame |
 | `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and kv store |
-| `(a: "lemon", "carrot")` | A plain TypeScript array in your content, or a [collection](/docs/reference/collections) when the player gathers entries |
+| `(a: "lemon", "carrot")` | A plain TypeScript array in your content, or [things the player holds](/docs/reference/entities#notes-photos-and-other-things-made-in-play) when they gather them |
 | `\|order>[…]` with `(replace: ?order)[…]` | A choice that stays on the scene and sets a kv key, and a block whose `when` reads it |
 | `(live: 2s)[…]` | A [minigame](/docs/reference/minigames) timer |
 | `(dialog: "The café is closing.")` | A [notice](/docs/reference/notices), with the `notify` effect |
@@ -688,7 +689,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 ## What IFLoom does for you
 
 - **Rules written once.** A condition that greys out a choice carries its reason, and the same check runs when the button is drawn and when it's pressed. The player sees `You need 3 coins.` on the button, and the button and the refusal never disagree. In Twine you'd write the `<<if>>` around the link and the line explaining it separately.
-- **`ifloom check` before anyone plays.** Every scene, stat, item, kind and prose key that content names is checked, so a typo shows up as a line like `cafe · scene cafe · goes to unknown scene "stret"` instead of a broken link in play. See [`ifloom check`](/docs/cli#ifloom-check).
+- **`ifloom check` before anyone plays.** Every scene, stat, kind and prose key that content names is checked, so a typo shows up as a line like `cafe · scene cafe · goes to unknown scene "stret"` instead of a broken link in play. See [`ifloom check`](/docs/cli#ifloom-check).
 - **Typed content.** Scenes, conditions and effects are TypeScript types, so your editor completes `kind: 'stat'` and underlines a missing field as you type.
 - **Seeded randomness that replays.** Every draw comes from the save's seed. Undo can't re-roll, a bug report's save reproduces exactly, and tests give the same result every run. See [Randomness](/docs/reference/random).
 - **Versioned saves.** Give the game a `version` and `migrations`, and saves from older releases load into the new one. See [Saves](/docs/reference/saves#the-games-own-migrations).
@@ -699,9 +700,9 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 - **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is a custom function.
 - **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
-- **State is typed and declared.** Stats, items, kinds, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
+- **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.
-- **Not into TypeScript?** The [editor](/docs/guide/editor) at `/editor` lets you write scenes, choices, stats and items from forms in your browser and play them as you go. When you're done, you export it as a TypeScript file and drop it into a game's `src/story/`.
+- **Not into TypeScript?** The [editor](/docs/guide/editor) at `/editor` lets you write scenes, choices, stats and things from forms in your browser and play them as you go. When you're done, you export it as a TypeScript file and drop it into a game's `src/story/`.
 
 ## Where next
 

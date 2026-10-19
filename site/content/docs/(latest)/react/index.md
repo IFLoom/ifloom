@@ -33,7 +33,7 @@ The default layout, [`DefaultLayout`](#layouts), puts these on the page. A secti
   - **Stats**, which folds, with the active statuses (the [statuses plugin](/docs/plugins/statuses)) and the turns each has left.
   - **Quests**, a button that opens the [quest](/docs/plugins/quests) log in a dialog, with a count of quests with news.
   - **People**, a button that opens everyone the player has met (the [cast](/docs/plugins/cast)), with the stats the game keeps on each of them, such as friendship.
-  - **Carrying**, which folds, with the player's items.
+  - **Carrying**, which folds, with the things the player holds.
   - **Wearing**, which folds, with the [wardrobe](/docs/plugins/wardrobe).
   - Buttons for the [achievements](/docs/plugins/achievements), the [cheats](/docs/plugins/cheats) and the [devices](/docs/plugins/devices).
 - **On a phone**, the side column becomes a drawer. A slim bar across the top holds the title, the clock and a button that slides the column in.
@@ -489,12 +489,12 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.modsChanged` | `Changes to mods take effect when the game restarts.` | |
 | `ui.close` | `Close` | |
 | `ui.priceSeparator` | ` · ` | |
-| `ui.itemCount` | `×{n}` | `n` |
-| `ui.wearItem` | `Wear {item}` | `item` |
+| `ui.heldCount` | `×{n}` | `n` |
+| `ui.wearThing` | `Wear {thing}` | `thing` |
 | `ui.mailHeader` | `{key}: {value}` | `key`, `value` |
 | `ui.debugStat` | `Stat` | |
 | `ui.debugKv` | `kv key` | |
-| `ui.debugItem` | `Item` | |
+| `ui.debugHeld` | `Held` | |
 | `ui.debugStatOf` | `Stat of` | |
 | `ui.debugGo` | `Go` | |
 | `ui.debugScene` | `Scene` | |
@@ -569,9 +569,9 @@ Which component uses which keys:
 
 - **[Debug card](/docs/react/components#debugcard)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the Why not tab says when no lock is on or nothing is greyed out.
 - **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug card), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
-- **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
+- **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearThing` for each wear button. `ui.wear` is no longer drawn.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
-- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, `ui.itemCount` after a thing there's more than one of, and `ui.drop` on its drop buttons.
+- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, `ui.heldCount` after a thing there's more than one of, and `ui.drop` on its drop buttons.
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
 - **[Beat](/docs/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.

@@ -386,7 +386,7 @@ The `ShopView` for a state. The plugin's view is `shopView(state, slice, context
 
 When the game loads, the plugin reports these problems against the content or pack each vendor came from, with `where` as `vendors <id>`:
 
-- A good that names no thing, such as one still written for items (`{ item: 'sandwich' }`).
+- A good that names no thing, such as one in your own content still written as `{ item: 'sandwich' }`. A pack written that way is [upgraded](/docs/reference/loader#upgradepack) as it loads.
 - An unknown thing (`good food:pear: unknown entity "food:pear"`), or a price in an unknown stat.
 - A good with no price, whose thing has no `shop/sellable` trait.
 - A price in a stat that isn't `spendable`, or is derived.
@@ -408,4 +408,4 @@ A command that names a vendor or thing the game doesn't have gives `unknown vend
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) sells sandwiches, two flapjacks a day that it holds, and the newspaper, buys back at half, and has a daily discount. Their prices are their `sellable` traits, in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts). The café's "Go to the counter" action opens it with `openShop('counter')`.
+Small Town: the café's `counter` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) sells sandwiches, two flapjacks a day that it holds, and the newspaper, buys back at half, and has a daily discount. Their prices are their `sellable` traits, in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts). The café's "Go to the counter" action opens it with `openShop('counter')`.

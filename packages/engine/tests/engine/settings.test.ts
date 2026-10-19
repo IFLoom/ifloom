@@ -46,7 +46,7 @@ function game(patch: Partial<Game> = {}): Game {
 
 /** A game loaded from a pack with a scene whose choices read settings. */
 function loaded(scene?: Content['scenes']) {
-  const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = fixture()
+  const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = fixture()
   const pack: Content = {
     name: 'core',
     settings: SETTINGS,
@@ -187,14 +187,14 @@ describe('ui settings', () => {
 
 describe('the loader’s settings checks', () => {
   const problemsOf = (pack: Partial<Content>, base: Partial<Game> = {}) => {
-    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
     return loadGame([{ name: 'core', ...pack }], { ...rest, ...base }).problems.map(describeProblem)
   }
 
   it('finds two settings with one id in one list, but lets a later pack redeclare one', () => {
     const toggle: SettingDef = { id: 'hints', label: 'Hints', kind: 'toggle', default: true }
     expect(problemsOf({ settings: [toggle, toggle] })).toEqual(['core · setting hints · two settings share this id'])
-    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
     const twice = loadGame([{ name: 'core', settings: [toggle] }], rest, {
       packs: [{ id: 'mod:hints', schema: SCHEMA, settings: [{ ...toggle, default: false }] }],
     })
@@ -259,7 +259,7 @@ describe('settings checks in a hand-built game', () => {
         { id: 'upside', label: 'Upside', kind: 'range', min: 5, max: 1, default: 3 },
       ],
       finished: { any: [{ setting: 'volume' }, { setting: 'textSize' }, { setting: 'patience', is: 3 }] },
-      carryOver: { stats: ['charm'], items: ['umbrella'] },
+      carryOver: { stats: ['charm'], held: ['umbrella', 'thing:umbrella'] },
     })
     expect(problemsOf(g)).toEqual([
       'setting hints: two settings share this id',
@@ -268,7 +268,8 @@ describe('settings checks in a hand-built game', () => {
       'finished: setting "textSize" is a ui setting; conditions read only play settings',
       'finished: 3 for setting "patience" is not in steps of 2',
       'carryOver: unknown stat "charm"',
-      'carryOver: unknown item "umbrella"',
+      'carryOver: unknown entity "umbrella": name one as "kind:id"',
+      'carryOver: unknown kind "thing"',
     ])
   })
 })

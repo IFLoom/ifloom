@@ -157,7 +157,7 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 |---|---|---|
 | `{ 'achievements/grant': { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
-It works in any effect list, an item's use included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
+It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
 
 ## Value
 
@@ -280,7 +280,7 @@ A progress value read now. Anything that isn't a finite number reads 0.
 
 When the game loads, the plugin reports these problems against the content or pack each achievement came from, with `where` as `achievements <id>`:
 
-- Anything `when` names that the game doesn't have (`when: unknown item "…"`).
+- Anything `when` names that the game doesn't have (`when: unknown kind "…"`).
 - A progress value naming a stat or custom value the game doesn't have (`progress: unknown stat "…"`).
 - A progress target of 0 or less (`progress target must be more than 0`).
 - A missing `image` file, when `ifloom check` looks for files.

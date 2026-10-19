@@ -54,13 +54,13 @@ const town: Content = {
     {
       id: 'photo',
       blocked: [{ when: { not: here('ava') }, reason: 'Nobody to take a picture of.' }],
-      effects: [{ kind: 'collect', collection: 'gallery', entry: { id: 'ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' } }],
+      effects: [{ kind: 'create', of: 'photo', entity: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' }, at: 'player' }],
     },
     {
       id: 'post',
       cost: { stats: { energy: 10 } },
       blocked: [
-        { when: { not: { collection: 'gallery' } }, reason: 'Nothing to post yet.' },
+        { when: { not: { count: { of: 'photo', at: 'you' } } }, reason: 'Nothing to post yet.' },
         { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [
@@ -134,7 +134,7 @@ function game(): Game {
     title: 'Phone town',
 
     plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
-    collections: kit.collections,
+    kinds: kit.kinds,
     data: kit.data,
     rules: {
       resets: { postedToday: false },
@@ -188,7 +188,10 @@ describe('a smartphone on the sidebar', () => {
       actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
     })
     state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'activity', id: 'photo' }, openApp('gallery'))
-    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ kind: 'list', entries: [{ id: 'ava.cafe', title: 'Ava at the café' }] })
+    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
+      kind: 'list',
+      entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
+    })
   })
 
   it('posts to the creator app once a day, at a price, and the post does what the game rolls', () => {

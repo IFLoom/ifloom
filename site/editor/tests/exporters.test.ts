@@ -6,7 +6,7 @@ import { SCHEMA, checkGame } from '@ifloom/engine'
 import { exportContent, fromJson, toJson, toTypeScript, exportPack } from '../lib/exporters.ts'
 import { constName, formatTs, Raw } from '../lib/format.ts'
 import { buildGame, importJson, problemsOf } from '../lib/game.ts'
-import { newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model.ts'
+import { newKind, newProject, newScene, newStat, newThing, sampleProject, type Project } from '../lib/model.ts'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
@@ -48,13 +48,14 @@ describe('a new project', () => {
     expect(clean(newProject())).toEqual([])
   })
 
-  it('stays clean with a scene, a stat and an item added from the forms’ defaults', () => {
+  it('stays clean with a scene, a stat and a thing added from the forms’ defaults', () => {
     const project = newProject()
     project.pack.scenes.push(newScene('next'))
     project.pack.prose.next = 'And on.'
     project.pack.stats.push(newStat('charm'))
-    project.pack.items.push(newItem('key'))
-    project.pack.items[0].desc = 'A key.'
+    project.pack.kinds = [newKind('item')]
+    project.pack.entities.push(newThing('key'))
+    project.pack.entities[0].desc = 'A key.'
     expect(clean(project)).toEqual([])
   })
 
@@ -173,7 +174,8 @@ describe('TypeScript', () => {
     const source = toTypeScript(sampleProject())
     expect(source).toContain("  stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, format: '{n}p', spendable: true }],")
     expect(source).toContain("        { id: 'listen', effects: [{ kind: 'kv', key: 'heardBusker', to: true }, { kind: 'scene', scene: 'market' }] },")
-    expect(source).toContain("    { id: 'home', title: 'Home', body: [{ text: 'home' }, { text: 'home.bun', when: { item: 'bun' } }], choices: [] },")
+    expect(source).toContain("  entities: [{ id: 'bun', of: 'item', name: 'Iced bun', desc: 'Still warm from the bakery stall.' }],")
+    expect(source).toContain("      body: [{ text: 'home' }, { text: 'home.bun', when: { entity: 'item:bun', at: 'you' } }],")
     expect(source).toContain("    'market#buy': 'Buy an iced bun',")
     expect(source).toContain(' * - `heardBusker`: Set once you have listened to the busker.')
     expect(source).toContain("loadGame([marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })")

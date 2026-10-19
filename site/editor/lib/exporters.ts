@@ -9,11 +9,12 @@ import { kvUsed } from './references.ts'
 
 /** The project as a pack, with its id and schema: the lists it has nothing in left out. */
 export function exportPack(project: Project): Pack {
-  const { id, schema: _schema, scenes, stats, items, prose, ...rest } = project.pack
-  // The usual order: id and schema, then stats, items, scenes, anything else, and the prose last.
+  const { id, schema: _schema, scenes, stats, kinds, entities, prose, ...rest } = project.pack
+  // The usual order: id and schema, then stats, kinds and things, scenes, anything else, and the prose last.
   const pack: Pack = { id, schema: SCHEMA }
   if (stats.length) pack.stats = stats
-  if (items.length) pack.items = items
+  if (kinds?.length) pack.kinds = kinds
+  if (entities.length) pack.entities = entities
   pack.scenes = scenes
   Object.assign(pack, rest)
   if (Object.keys(prose).length) pack.prose = prose
@@ -94,14 +95,21 @@ export function fromJson(text: string, title?: string, fallbackId = 'story'): Im
   const { name: _name, ...rest } = raw
   if (typeof raw.id !== 'string' || !raw.id) raw = { ...rest, id: slug(fallbackId) }
   const id = raw.id as string
-  for (const list of ['scenes', 'stats', 'items'] as const) {
+  for (const list of ['scenes', 'stats', 'kinds', 'entities'] as const) {
     if (raw[list] !== undefined && !Array.isArray(raw[list])) return { error: `"${list}" should be a list.` }
   }
   if (raw.prose !== undefined && !isRecord(raw.prose)) return { error: '"prose" should be an object of keys and text.' }
   const scenes = (raw.scenes ?? []) as unknown[]
   const bad = scenes.find((scene) => !isRecord(scene) || !Array.isArray(scene.body) || !Array.isArray(scene.choices))
   if (bad) return { error: `Scene ${isRecord(bad) ? `"${String(bad.id)}"` : ''} isn't a data scene with a body and choices.`.replace('  ', ' ') }
-  const pack = { ...raw, schema: SCHEMA, scenes: scenes as DataScene[], stats: raw.stats ?? [], items: raw.items ?? [], prose: raw.prose ?? {} } as EditorPack
+  const pack = {
+    ...raw,
+    schema: SCHEMA,
+    scenes: scenes as DataScene[],
+    stats: raw.stats ?? [],
+    entities: raw.entities ?? [],
+    prose: raw.prose ?? {},
+  } as EditorPack
   const preview = defaultPreview()
   // Plugin content switches its plugin on, so the preview can run it.
   for (const id of Object.keys(isRecord(raw.data) ? raw.data : {})) {

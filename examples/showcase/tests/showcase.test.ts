@@ -94,7 +94,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'))
     expect(view(state, game).notices.unseen[0].title).toBe('A note under your door')
-    expect(state.collections.notes.map((note) => note.id)).toEqual(['welcome'])
+    expect(heldCount(state, game, 'note:welcome', 'player')).toBe(1)
 
     state = run(state, go('cafe'))
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
@@ -119,6 +119,13 @@ describe('Small Town', () => {
     expect(social.posts[0]).toMatchObject({ mine: true, text: 'New town, new faces.' })
     expect(social.posts[0].likes).toBeGreaterThan(2)
     expect(quests(state).done.map((quest) => quest.id)).toEqual(['settle'])
+    // The photo is a thing you keep, in the phone's gallery; Sam's note is in Notes.
+    const app = (id: string) => (view(run(state, commandOf({ 'devices/open': { id } })), game).plugins.devices as DevicesView).devices[0].open?.sections[0]
+    expect(app('gallery')).toEqual({ kind: 'list', entries: [{ id: 'photo:ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] })
+    expect(app('notes')).toMatchObject({
+      kind: 'list',
+      entries: [{ id: 'note:welcome', title: 'Welcome note', text: expect.stringContaining('Bins go out Thursday') }],
+    })
   })
 
   it('brings Ava’s text the next day, and she picks up in the evening', () => {
@@ -201,16 +208,22 @@ describe('Small Town', () => {
       stats: { friendship: 30 },
     })
     state = run(state, go('high-street'), go('park'), talk('ava'), { type: 'choose', id: 'shell' })
-    // What you hold is in the view, after the raincoat and the paper you came with; the keepsake kind itself isn't listed.
+    // What you hold is in the view, after the raincoat and the paper you came with and Sam's note; the keepsake kind itself isn't listed.
     const held = () => view(state, game).held.map((thing) => thing.ref)
-    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'keepsake:shell'])
-    expect(view(state, game).held[2]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
+    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome', 'keepsake:shell'])
+    // The inventory shows only what it's for: no notes or photos, which the phone keeps.
+    expect((view(state, game).plugins.inventory as InventoryView).things.map((thing) => thing.ref)).toEqual([
+      'clothing:raincoat',
+      'item:paper',
+      'keepsake:shell',
+    ])
+    expect(view(state, game).held[3]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
     expect(view(state, game).entities.keepsake).toBeUndefined()
     state = run(state, { type: 'choose', id: 'stay' })
     // The next morning at the café she takes it, and keeps it by the till.
     state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
     expect(holds(state, { entity: 'keepsake:shell', at: 'character:ava' }, game)).toBe(true)
-    expect(held()).toEqual(['clothing:raincoat', 'item:paper'])
+    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome'])
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
   })
 

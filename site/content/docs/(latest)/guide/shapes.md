@@ -8,7 +8,7 @@ IFLoom is one engine for several shapes of game. The repository has an example o
 - **A management game.** Money, and several of a thing (staff, dishes, rooms), each with numbers of its own, run a week at a time.
 - **A life sim.** People who keep their own hours, friendships that grow, and a town to wander.
 
-They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities, the kv store, collections, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/react) lays it out:
+They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities and what holds them, the kv store, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/react) lays it out:
 
 | Shape | The game | Plugins | Layout | Example |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ This page walks through the smallest shape first, then a management game, then a
 
 ## One clock: the turn
 
-Every game has a turn. It's `state.turn`, 0 in a new game, and `view.turn` for the screen. Everything the engine dates is dated in turns, such as when a scene was first seen (so `{ since }` counts turns), when a trigger last fired, when a collection entry or notice arrived, and how long a storyline stays closed.
+Every game has a turn. It's `state.turn`, 0 in a new game, and `view.turn` for the screen. Everything the engine dates is dated in turns, such as when a scene was first seen (so `{ since }` counts turns), when a trigger last fired, when a notice arrived, and how long a storyline stays closed.
 
 Your game decides how long a turn is. A turn ends when the [`turn` effect](/docs/reference/effects#turn), `{ kind: 'turn' }`, runs, and any choice or activity can carry it (`by` ends several). A novel ends one per chapter.
 

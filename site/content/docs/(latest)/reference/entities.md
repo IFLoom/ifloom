@@ -1,8 +1,8 @@
 ---
 title: "Entities"
-description: "Kinds and entities: several of a thing, such as staff, dishes or apples, each with its own stats and kv store, declared in content, created and removed in play, held by the player or by someone, and listed in the view when you say."
+description: "Kinds and entities: the things a game keeps, such as staff, dishes, apples, notes or photos, each with its own stats and kv store, declared in content, created and removed in play, held by the player or by someone, and listed in the view when you say."
 ---
-Use entities when your game keeps several of a thing, each with numbers of its own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`) and an entity is one of them (Ana, the soup). A [stat](/docs/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
+Use entities for the things your game keeps: what the player carries, the notes and photos they collect, and anything there are several of with numbers of their own. A café might have staff, each with a skill and a wage, and dishes on its menu, each with a price. A kind names such a thing (`staff`, `dish`, `photo`) and an entity is one of them (Ana, the soup, the photo of the pier). A [stat](/docs/reference/stats) declared with `of: 'staff'` is kept on every member of staff rather than on the player.
 
 The game declares its kinds and the entities that exist at the start. In play, you can:
 
@@ -177,6 +177,8 @@ A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, m
 ```ts
 type EntityState = {
   name?: string
+  desc?: string
+  image?: string
   like?: EntityRef
   tags?: string[]
   traitData?: Record<string, unknown>
@@ -186,14 +188,14 @@ type EntityState = {
 }
 ```
 
-What play has changed about one entity, at [`state.entities[kind][id]`](/docs/reference/state#entities). A declared entity has no record until an effect changes it, and then only what changed is there: `{ stats: { morale: 52 } }` after Ana's first week. Everything else is read from your content. An entity [created](/docs/reference/effects#create) in play has a record from the start, with what it was given: a `name`, the entity it was made `like`, its own `tags`, its trait data (`traitData`), stats and kv.
+What play has changed about one entity, at [`state.entities[kind][id]`](/docs/reference/state#entities). A declared entity has no record until an effect changes it, and then only what changed is there: `{ stats: { morale: 52 } }` after Ana's first week. Everything else is read from your content. An entity [created](/docs/reference/effects#create) in play has a record from the start, with what it was given: a `name`, a `desc` and an `image`, the entity it was made `like`, its own `tags`, its trait data (`traitData`), stats and kv.
 
 Reads fall back in this order:
 
 - **A stat:** the record, then the entity it was made [like](#things-made-like-another), then the declaration's `stats`, then the stat's `start`. [`statValue`](/docs/reference/stats#statvalue) does this.
 - **A kv key:** the record, then the declaration's `kv`, then the `like`'s. See [`entityKv`](#entitykv).
 - **The name:** the record's `name` (one created in play), then the `like`'s, then the declaration's, always with its tokens filled. See [`entityName`](#entityname).
-- **The description and picture:** the `like`'s, then the declaration's. See [`entityImage`](#entityimage).
+- **The description and picture:** the record's (one created in play), then the `like`'s, then the declaration's. See [`entityDesc`](#entitydesc) and [`entityImage`](#entityimage).
 - **Tags:** the kind's, the `like`'s, the declaration's and the record's, each once.
 - **A trait's data:** the record's `traitData` laid over the `like`'s, else over the kind's default. See [`entityTrait`](#entitytrait).
 - **A trait's state:** the record's `traits`, for the rare [trait](#traits) that keeps state, then where the trait says it starts. See [`traitState`](#traitstate).
@@ -393,6 +395,38 @@ The effects are [`entity`](/docs/reference/effects#entity) and [`move`](/docs/re
 - **Giving a unique thing takes it.** `{ kind: 'entity', entity: 'gift:scarf', at: 'character:ava', to: 1 }` takes the scarf from whoever had it. A unique thing's count is 0 or 1.
 - **Holding isn't listing.** A kind with `listed: false` still shows in [`view.held`](/docs/reference/view#held) when you hold one of it. An entity's `visible` does hide it there too.
 
+### Notes, photos and other things made in play
+
+Things the player collects, such as a note under the door or the photos they take, are entities too. A note the story knows about is declared, and given when the player finds it. A photo the player takes is made in play with [`create`](/docs/reference/effects#create), with its own name, description and picture:
+
+```ts
+import { give, type Content } from '@ifloom/engine'
+
+export const notes: Content = {
+  kinds: [
+    { id: 'note', label: 'Note', plural: 'Notes', listed: false },
+    { id: 'photo', label: 'Photo', plural: 'Photos', listed: false },
+  ],
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: 'Bins go out Thursday. — Sam, flat 2' }],
+  triggers: [{ id: 'welcome', when: { seen: 'street' }, effects: [give('note:welcome')] }],
+  activities: [
+    {
+      id: 'photo-pier',
+      effects: [{ kind: 'create', of: 'photo', entity: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
+    },
+  ],
+}
+```
+
+They're held, so they're in [`view.held`](/docs/reference/view#held), and you ask about them as about anything held:
+
+```ts
+{ entity: 'note:welcome', at: 'player' }          // the note is in the player's hands
+{ count: { of: 'photo', at: 'player' }, gte: 3 }  // three photos taken
+```
+
+A UI lists them by kind. The [devices plugin](/docs/plugins/devices#section)'s `things` section lists the things of a kind you hold, newest first, so the [phone](/docs/plugins/phone)'s gallery is the `photo` things you hold and a notes app is `{ things: { of: 'note' } }`. To leave them out of the inventory card, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/plugins/inventory).
+
 ### Protagonists: you and player
 
 A game where the player plays more than one person, such as two siblings taking turns, switches who `'you'` is with the [`you`](/docs/reference/effects#you) effect:
@@ -463,6 +497,8 @@ const left = applyEffects(save, game, [{ kind: 'remove', entity: 'staff:ben' }])
 left.removed                      // ['staff:ben']
 entitiesOf(left, game, 'staff')   // ['staff:ana']: he stays gone
 ```
+
+Saves made before version 16 kept the player's items and the game's collections apart from entities. When one loads, each item's count is held by the player as the entity it became (`item:<id>`, or the one entity your game declares with that id), and each collection entry becomes a thing made in play and held by the player: of a kind named after the collection (the phone's `gallery` is `photo`), with its title as its name, its prose as its description, its picture and its data as kv. See the [15 → 16 step](/docs/reference/saves#the-engines-steps).
 
 Saves made before version 15 copied every declared entity's name and starting numbers into the save. When one loads, [`loadState`](/docs/reference/saves#loadstate) drops a declared entity's copied name, and every stat and kv key equal to where it starts, so they read from your content again. A record with nothing left goes.
 
@@ -540,7 +576,7 @@ entityName(state, game, 'character:partner') // 'Sam', when the declaration says
 function entityDesc(state: GameState, game: Game, ref: EntityRef): string | undefined
 ```
 
-An entity's description from its declaration, with its tokens filled, or `undefined` if it has none.
+An entity's description, with its tokens filled, or `undefined` if it has none. It's the one it was created with, else the `like`'s, else its declaration's.
 
 ### entityKv
 
@@ -570,7 +606,7 @@ An entity's tags: its kind's, then those of the entity it was made `like`, then 
 function entityImage(state: GameState, game: Game | undefined, ref: EntityRef): string | undefined
 ```
 
-An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc): its declaration's, or else that of the entity it was made `like`.
+An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc): the one it was created with, its declaration's, or else that of the entity it was made `like`.
 
 ### kindById
 

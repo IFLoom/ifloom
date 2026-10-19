@@ -24,7 +24,7 @@ A linear novel might use none of them. A life sim like the [showcase](/docs/guid
 | [Devices](/docs/plugins/devices) | `@ifloom/plugin-devices` | Devices with apps declared as data, badges, and opening an app without leaving the room. |
 | [Cheats](/docs/plugins/cheats) | `@ifloom/plugin-cheats` | Cheats for the player, such as +20 coins, that work in any scene and through any lock. Each is free for everyone or refused (or hidden) until a condition holds, such as a supporter unlock. A log records what was used, and content can ask about it. |
 | [Unlocks](/docs/plugins/unlocks) | `@ifloom/plugin-unlocks` | Codes the player enters, such as a supporter's, checked against a slow hash so no code ships in the game. An unlock opens cheats and choices through `unlocks/has`, and can carry packs of its own that the build encrypts under the code. It's remembered in the profile. |
-| [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a kv key, give the player an item (`debug/item`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
+| [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a kv key, set how many of a thing someone holds (`debug/held`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
 
 There's also one bundle:
 

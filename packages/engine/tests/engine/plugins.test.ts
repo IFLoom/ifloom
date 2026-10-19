@@ -167,7 +167,7 @@ describe('plugins', () => {
   })
 
   it('take content from packs, merged by id, and check it', () => {
-    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
+    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
     const beach: Content = {
       name: 'beach',
       data: { shells: { spots: [{ id: 'rockpool', when: { storyline: 'tides' } }] } },
@@ -187,11 +187,11 @@ describe('plugins', () => {
       actions: [{ id: 'drop', label: 'Drop', command: { type: 'custom' as const, name: 'shells/fling' } }],
     }
     expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
-    const items = {
+    const triggered = {
       ...withShells(),
-      items: [{ id: 'cloth', name: 'cloth', desc: '', use: { label: 'Polish', effects: [{ kind: 'custom' as const, name: 'shells/polish' }] } }],
+      triggers: [{ id: 'cloth', when: { turn: { gte: 1 } }, effects: [{ kind: 'custom' as const, name: 'shells/polish' }] }],
     }
-    expect(problemsOf(items)).toContain('item cloth: no plugin effect named "shells/polish"')
+    expect(problemsOf(triggered)).toContain('trigger cloth: no plugin effect named "shells/polish"')
   })
 })
 

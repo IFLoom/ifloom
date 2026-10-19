@@ -45,8 +45,8 @@ describe('mods', () => {
     const store = mods('fixture', memoryDriver())
     await store.add(mod())
     const { game: base } = withCafe()
-    const { scenes, items, storylines, activities, stats, packs: _p, ...rest } = base
-    const own = { scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
+    const { scenes, storylines, activities, stats, packs: _p, ...rest } = base
+    const own = { scenes, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
     const { game, problems } = loadGame([own], rest, { packs: await store.packs() })
     expect(problems.filter((problem) => problem.pack === 'mod:night-market')).toEqual([])
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')

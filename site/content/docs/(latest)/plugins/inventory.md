@@ -87,8 +87,8 @@ It's a [trait](/docs/reference/entities#traits), so you can write it on a kind a
 `inventory/use` is refused with:
 
 - `There is no such thing.` (the engine's [`noSuchThing`](/docs/reference/strings#refusals)) when the thing isn't in the game.
-- `You have no <name>.` ([`haveNone`](/docs/reference/strings#refusals)) when you hold none.
-- `The <name> does not do anything.` ([`doesNothing`](/docs/reference/strings#refusals)) when it has no `inventory/usable` trait.
+- `You have no <name>.` (`inventory/haveNone`) when you hold none.
+- `The <name> does not do anything.` (`inventory/doesNothing`) when it has no `inventory/usable` trait.
 
 All three go through [locks](/docs/reference/locks) like any command, so a lock can say `deny: ['inventory/use']` during a scene where eating would be rude. A button for `inventory/use` greys out with the reason, and a [guard](/docs/reference/plugins#guards) sees the effects it would run.
 
@@ -215,10 +215,12 @@ function inventoryView(state: GameState, game: Game): InventoryView
 
 | Key | English |
 |---|---|
+| `inventory/haveNone` | `You have no {thing}.` |
+| `inventory/doesNothing` | `The {thing} does not do anything.` |
 | `inventory/cantGiveTo` | `You can’t give things to {to}.` |
 | `inventory/giveToSelf` | `You already have it.` |
 
-The other refusals are the engine's own: `noSuchThing`, `haveNone` and `doesNothing`.
+`{thing}` is the thing's name. A thing the game doesn't have is refused with the engine's own [`noSuchThing`](/docs/reference/strings#refusals).
 
 ## Checks
 
@@ -236,4 +238,4 @@ When the game loads, the checker reports:
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts) gives the sandwich and the flapjack a use that restores energy, and the newspaper one that opens the job board with only the paper's ads, kept so you can read it again.
+Small Town: [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts) gives the sandwich and the flapjack a use that restores energy, and the newspaper one that opens the job board with only the paper's ads, kept so you can read it again.

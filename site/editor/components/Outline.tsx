@@ -1,10 +1,11 @@
 'use client'
 /**
  * The left pane: the project's scenes (storylets marked), stats, kv keys
- * and items, with a filter and a way to add each.
+ * and things, with a filter and a way to add each.
  */
 import { useState } from 'react'
 import type { Thing } from '../lib/references'
+import { thingRef } from '../lib/model'
 import { useEditor, type Selection } from './context'
 import { Button, cx, inputClass } from './ui'
 
@@ -14,10 +15,12 @@ const SECTIONS: { thing: Thing; title: string; noun: string }[] = [
   { thing: 'scene', title: 'Scenes', noun: 'scene' },
   { thing: 'stat', title: 'Stats', noun: 'stat' },
   { thing: 'kv', title: 'Key–values (kv)', noun: 'kv key' },
-  { thing: 'item', title: 'Items', noun: 'item' },
+  { thing: 'thing', title: 'Things', noun: 'thing' },
 ]
 
 const VALID_ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
+/** A thing's id, with its kind in front if it says one: `bun`, `food:bun`. */
+const VALID_THING = /^(?:[A-Za-z0-9_][A-Za-z0-9_.-]*:)?[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 export function Outline() {
   const { project, selection, select, create, targets } = useEditor()
@@ -34,7 +37,7 @@ export function Outline() {
     })),
     stat: project.pack.stats.map((s) => ({ id: s.id, title: s.label })),
     kv: project.kv.map((v) => ({ id: v.name })),
-    item: project.pack.items.map((i) => ({ id: i.id, title: i.name })),
+    thing: project.pack.entities.map((entity) => ({ id: `${entity.of}:${entity.id}`, title: entity.name })),
   }
   const existing = (thing: Thing) => entries[thing].map((e) => e.id)
   const words = filter.trim().toLowerCase()
@@ -42,8 +45,8 @@ export function Outline() {
   const flagged = (thing: Thing, id: string) => targets.some((t) => t.thing === thing && t.id === id)
 
   function add(thing: Thing) {
-    const id = draft.trim()
-    if (!VALID_ID.test(id)) return setError('Use letters, numbers, dots, dashes and underscores.')
+    const id = thing === 'thing' ? thingRef(draft.trim()) : draft.trim()
+    if (!(thing === 'thing' ? VALID_THING : VALID_ID).test(id)) return setError('Use letters, numbers, dots, dashes and underscores.')
     if (existing(thing).includes(id)) return setError(`There's already a ${thing} called ${id}.`)
     create(thing, id)
     select({ thing, id })

@@ -8,7 +8,7 @@ import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 12
+export const SCHEMA = 13
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -123,6 +123,8 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
         return [key, WORDS.has(key) ? value : deep(value, (inner) => (inner.value === 'feed/unseen' ? { ...inner, value: 'feed/unread' } : inner))]
       }),
     ) as RawPack,
+  // 12 → 13: items and collections leave the engine; things are entities. See `toSchema13`.
+  12: (pack) => toSchema13(pack),
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -401,12 +403,223 @@ function toSchema8(value: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
+/** The kind a collection's entries became, by the collection's id: its own id, except the phone's `gallery`, whose entries are `photo` things. */
+export function collectionKind(collection: string): string {
+  return collection === 'gallery' ? 'photo' : collection
+}
+
+/** An item's id as the entity it became: `item:<id>`. An id that is already a reference is left as it is. */
+const itemRef = (id: unknown): unknown => (typeof id === 'string' && !id.includes(':') ? `item:${id}` : id)
+
+/**
+ * The first-party plugin calls that named an item at schema 12, and what each
+ * names now: the argument that held the item's id, and the one that holds the
+ * entity. `debug/item` is `debug/held`.
+ */
+const ITEM_CALLS: Record<string, { from: string; to: string; name?: string }> = {
+  'shop/buy': { from: 'item', to: 'entity' },
+  'shop/sell': { from: 'item', to: 'entity' },
+  'shop/inStock': { from: 'item', to: 'entity' },
+  'wardrobe/wearing': { from: 'item', to: 'entity' },
+  'wardrobe/wear': { from: 'id', to: 'id' },
+  'debug/item': { from: 'item', to: 'entity', name: 'debug/held' },
+}
+
+/** A plugin call's name and arguments, as schema 13 has them. */
+function itemCall(name: string, args: unknown): [string, unknown] {
+  const call = ITEM_CALLS[name]
+  if (!call) return [name, args]
+  if (!isRecord(args) || !(call.from in args)) return [call.name ?? name, args]
+  const { [call.from]: item, ...rest } = args
+  return [call.name ?? name, { ...rest, [call.to]: itemRef(item) }]
+}
+
+/** Strings the engine said for items, as the plugins that say them now: by the old key, the new ones. */
+const ITEM_STRINGS: Record<string, string[]> = {
+  doesNothing: ['inventory/doesNothing'],
+  haveNone: ['inventory/haveNone', 'wardrobe/haveNone'],
+}
+
+/** Strings whose `{item}` is `{thing}` now. */
+const THING_STRINGS = new Set(['inventory/doesNothing', 'inventory/haveNone', 'wardrobe/haveNone', 'wardrobe/notClothing', 'wardrobe/alreadyWearing'])
+
+/**
+ * Schema 12 content as schema 13 writes it, where items and collections
+ * leave the engine and things are entities:
+ * - `items` are entities of an `item` kind (declared unlisted unless the pack
+ *   declares it), held by the player from the start where they had a `start`,
+ *   with their `use` as the inventory's `inventory/usable` trait;
+ * - `collections` are kinds, unlisted, named by `collectionKind`;
+ * - `{ item, …range }` is `{ entity: 'item:<id>', at: 'you', …range }`, and the
+ *   `item` effect the `entity` effect, held by `'you'`;
+ * - the `use` command is `inventory/use`, with the entity;
+ * - `collect` is `create` (given to the player), `discard` is `remove`, and
+ *   `{ collection, entry }` asks for the entity, `{ collection, …range }`
+ *   counts what the player holds of the kind;
+ * - shop goods, the shop's and wardrobe's calls and `debug/item` name the
+ *   entity; the wardrobe's `clothes` are the `wardrobe/wearable` trait, and a
+ *   slot's `start` names the entity;
+ * - strings the engine said for items are the plugins'.
+ */
+function toSchema13(pack: RawPack): RawPack {
+  const { items, collections, ...rest } = pack
+  const prose = isRecord(pack.prose) ? pack.prose : {}
+  const out: RawPack = { ...rest } as RawPack
+  const kinds = Array.isArray(rest.kinds) ? [...rest.kinds] : []
+  const entities = Array.isArray(rest.entities) ? [...rest.entities] : []
+  const traits: Record<string, unknown> = isRecord(rest.traits) ? { ...rest.traits } : {}
+  const declares = (id: string) => kinds.some((kind) => isRecord(kind) && kind.id === id)
+  if (Array.isArray(items) && items.length) {
+    if (!declares('item')) kinds.push({ id: 'item', label: 'Item', plural: 'Items', listed: false })
+    for (const item of items) {
+      if (!isRecord(item) || typeof item.id !== 'string') continue
+      const start = typeof item.start === 'number' && item.start > 0 ? item.start : undefined
+      entities.push({
+        id: item.id,
+        of: 'item',
+        name: item.name,
+        ...(item.desc !== undefined ? { desc: item.desc } : {}),
+        ...(Array.isArray(item.tags) ? { tags: item.tags } : {}),
+        ...(start !== undefined ? { at: { player: start } } : {}),
+        ...(isRecord(item.use) ? { traits: { 'inventory/usable': item.use } } : {}),
+      })
+    }
+  }
+  for (const collection of Array.isArray(collections) ? collections : []) {
+    if (!isRecord(collection) || typeof collection.id !== 'string') continue
+    const kind = collectionKind(collection.id)
+    if (!declares(kind)) kinds.push({ id: kind, label: collection.name ?? kind, plural: collection.name ?? kind, listed: false })
+  }
+  if (isRecord(rest.data)) {
+    const data: Record<string, unknown> = { ...rest.data }
+    const shop = data.shop
+    if (isRecord(shop) && Array.isArray(shop.vendors)) {
+      data.shop = {
+        ...shop,
+        vendors: shop.vendors.map((vendor) =>
+          isRecord(vendor) && Array.isArray(vendor.goods)
+            ? {
+                ...vendor,
+                goods: vendor.goods.map((good) => {
+                  if (!isRecord(good) || !('item' in good) || 'entity' in good) return good
+                  const { item, ...other } = good
+                  return { entity: itemRef(item), ...other }
+                }),
+              }
+            : vendor,
+        ),
+      }
+    }
+    const wardrobe = data.wardrobe
+    if (isRecord(wardrobe)) {
+      const { clothes, ...kept } = wardrobe
+      const wearable: Record<string, unknown> = isRecord(traits['wardrobe/wearable']) ? { ...traits['wardrobe/wearable'] } : {}
+      for (const entry of Array.isArray(clothes) ? clothes : []) {
+        if (isRecord(entry) && typeof entry.id === 'string') wearable[itemRef(entry.id) as string] = { slot: entry.slot }
+      }
+      if (Object.keys(wearable).length) traits['wardrobe/wearable'] = wearable
+      data.wardrobe = Array.isArray(kept.slots)
+        ? { ...kept, slots: kept.slots.map((slot) => (isRecord(slot) && slot.start !== undefined ? { ...slot, start: itemRef(slot.start) } : slot)) }
+        : kept
+    }
+    out.data = data
+  }
+  if (kinds.length) out.kinds = kinds
+  if (entities.length) out.entities = entities
+  if (Object.keys(traits).length) out.traits = traits
+  if (isRecord(rest.strings)) {
+    const strings: Record<string, unknown> = {}
+    const given = rest.strings
+    for (const [id, text] of Object.entries(given)) {
+      if (!ITEM_STRINGS[id]) strings[id] = text
+      // The plugins' own key, where the pack gives it too, wins.
+      else for (const key of ITEM_STRINGS[id]) if (!(key in given)) strings[key] = text
+    }
+    out.strings = Object.fromEntries(
+      Object.entries(strings).map(([id, text]) => [id, THING_STRINGS.has(id) && typeof text === 'string' ? text.replaceAll('{item}', '{thing}') : text]),
+    )
+  }
+  return Object.fromEntries(Object.entries(out).map(([key, value]) => [key, WORDS.has(key) ? value : thingsIn(value, prose, false)])) as RawPack
+}
+
+/**
+ * Schema 12 content in one value, as schema 13 writes it, from the outside
+ * in. `args` is a plugin call's arguments, which are the plugin's own and
+ * never read as a condition or an effect, though what is inside them is.
+ */
+function thingsIn(value: unknown, prose: Record<string, unknown>, args: boolean): unknown {
+  if (Array.isArray(value)) return value.map((inner) => thingsIn(inner, prose, false))
+  if (!isRecord(value)) return value
+  const long =
+    typeof value.custom === 'string'
+      ? value.custom
+      : (value.kind === 'custom' || value.type === 'custom') && typeof value.name === 'string'
+        ? value.name
+        : undefined
+  let out: Record<string, unknown> = {}
+  for (const [key, inner] of Object.entries(value)) {
+    if (key.includes('/')) {
+      const [name, given] = itemCall(key, inner)
+      out[name] = thingsIn(given, prose, true)
+    } else if (key === 'with' && long !== undefined) {
+      out.with = thingsIn(itemCall(long, inner)[1], prose, true)
+    } else out[key] = thingsIn(inner, prose, false)
+  }
+  if (long !== undefined && ITEM_CALLS[long]?.name) out = { ...out, [typeof value.custom === 'string' ? 'custom' : 'name']: ITEM_CALLS[long].name }
+  return args ? out : thingTo13(out, prose)
+}
+
+/** One condition, effect or command of schema 12 that named an item or a collection, as schema 13 writes it. */
+function thingTo13(value: Record<string, unknown>, prose: Record<string, unknown>): Record<string, unknown> {
+  const rangeOf = (from: Record<string, unknown>) => Object.fromEntries(RANGE.filter((key) => key in from).map((key) => [key, from[key]]))
+  const only = (allowed: string[]) => Object.keys(value).every((key) => allowed.includes(key) || RANGE.includes(key))
+  if (value.kind === 'item' && typeof value.item === 'string') {
+    const { kind: _kind, item, ...rest } = value
+    return { kind: 'entity', entity: itemRef(item), at: 'you', ...rest }
+  }
+  if (value.kind === 'collect' && typeof value.collection === 'string' && isRecord(value.entry)) {
+    const { id, title, text, image, data } = value.entry
+    const desc = typeof text === 'string' && typeof prose[text] === 'string' ? prose[text] : undefined
+    const entity = {
+      ...(id !== undefined ? { id } : {}),
+      ...(title !== undefined ? { name: title } : {}),
+      ...(desc !== undefined ? { desc } : {}),
+      ...(image !== undefined ? { image } : {}),
+      ...(isRecord(data) && Object.keys(data).length ? { kv: data } : {}),
+    }
+    return { kind: 'create', of: collectionKind(value.collection), entity, at: 'player' }
+  }
+  if (value.kind === 'discard' && typeof value.collection === 'string' && typeof value.entry === 'string') {
+    return { kind: 'remove', entity: `${collectionKind(value.collection)}:${value.entry}` }
+  }
+  if (value.type === 'use' && typeof value.id === 'string') return { 'inventory/use': { id: itemRef(value.id) } }
+  if (value.kind === undefined && value.type === undefined) {
+    if (typeof value.item === 'string' && only(['item'])) return { entity: itemRef(value.item), at: 'you', ...rangeOf(value) }
+    if (typeof value.collection === 'string' && only(['collection', 'entry'])) {
+      const kind = collectionKind(value.collection)
+      if (typeof value.entry === 'string') return { entity: `${kind}:${value.entry}` }
+      return { count: { of: kind, at: 'player' }, ...rangeOf(value) }
+    }
+  }
+  return value
+}
+
+/** A command of schema 12 that named an item, as a command of this engine: `use` is the inventory's, and a plugin's calls name the entity. */
+function commandToSchema13(command: Record<string, unknown>): Record<string, unknown> {
+  if (command.type === 'use' && typeof command.id === 'string') return { type: 'custom', name: 'inventory/use', with: { id: itemRef(command.id) } }
+  if (command.type === 'custom' && typeof command.name === 'string' && ITEM_CALLS[command.name]) {
+    const [name, args] = itemCall(command.name, command.with)
+    return { ...command, name, with: args }
+  }
+  return command
+}
+
 /**
  * A command from an older engine, as this one takes it: what `replay` plays an
  * old command log with. A command already in this shape comes back as it is.
  */
 export function upgradeCommand<C>(command: C): C {
-  return isRecord(command) && typeof command.type === 'string' ? (toSchema8(toSchema6(command)) as C) : command
+  return isRecord(command) && typeof command.type === 'string' ? (commandToSchema13(toSchema8(toSchema6(command))) as C) : command
 }
 
 /**

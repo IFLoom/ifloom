@@ -127,7 +127,9 @@ describe('a new game', () => {
       turn: 4,
       kv: { 'turn:cafe.counter.chat': 4, tidy: true },
       storylines: { rosa: { closedUntil: 6, kv: {} } },
-      collections: { gallery: [{ id: 'house', turn: 2 }] },
+      // The gallery's entries are the photos you hold since version 16.
+      entities: { photo: { house: {} } },
+      held: { player: { 'photo:house': 1 } },
       notices: [{ id: 'n', title: 'Rent', turn: 3, seen: false }],
     })
   })

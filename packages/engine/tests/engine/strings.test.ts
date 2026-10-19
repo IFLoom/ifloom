@@ -25,8 +25,8 @@ describe('the strings table', () => {
   })
 
   it('come from packs too, so a translation can ship as a mod, later packs winning', () => {
-    const { scenes: _s, introScene: _in, items, storylines, activities, stats, ...base } = fixture()
-    const town = { name: 'town', items, storylines, activities, stats, scenes: _s }
+    const { scenes: _s, introScene: _in, storylines, activities, stats, ...base } = fixture()
+    const town = { name: 'town', storylines, activities, stats, scenes: _s }
     const dutch = { name: 'nl', strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
     const fixes = { name: 'nl-fixes', strings: { tooEarly: 'Nog te vroeg.' } }
     const { game } = loadGame([town, dutch, fixes], { ...base, strings: { tooEarly: 'Too soon.' } })

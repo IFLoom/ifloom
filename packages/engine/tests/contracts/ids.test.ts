@@ -18,7 +18,7 @@ describe('ids and separators (ADR 0010)', () => {
   it('holds the first-party plugins’ content in the showcase to the rule', () => {
     const { game } = smallTown({ withDebug: true })
     expect(offences(game.data, 'data')).toEqual([])
-    expect(offences(game.collections, 'collections')).toEqual([])
+    expect(offences(game.kinds, 'kinds')).toEqual([])
     expect(Object.keys(game.data ?? {}).length).toBeGreaterThan(5)
   })
 

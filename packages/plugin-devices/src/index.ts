@@ -8,21 +8,28 @@
  *
  * An app is built from sections, each one a thing the engine already has:
  * prose, actions (the same buttons a room has, with prices and reasons), a list
- * (a collection, or the people the player can call), another plugin's view (a
+ * (the things of a kind you hold, or the people the player can call), another plugin's view (a
  * messages channel, a feed), or a panel the game draws itself.
  */
 import {
+  artSrc,
   customPanel,
   customValue,
   defaultRuntime,
   commandOf,
   definePlugin,
+  entityDesc,
+  entityImage,
+  entityName,
+  heldBy,
   holds,
+  parseRef,
   pluginQuery,
   renderAction,
   renderScene,
   say,
   whyNot,
+  YOU,
   type Block,
   type Blocked,
   type Command,
@@ -58,8 +65,11 @@ export type Section =
   | { prose: Block[] }
   /** Buttons, the same as a room's. */
   | { actions: ActionDef[] }
-  /** A collection's entries, newest first. */
-  | { collection: string }
+  /**
+   * The things of a kind a holder holds, newest first: `{ things: { of: 'photo' } }`
+   * for the photos you have. `at` is `'you'` if left out.
+   */
+  | { things: { of: string; at?: string } }
   /** The people the player can call and has met (the cast plugin's `cast/contacts`), with a Call button each. */
   | { contacts: true }
   /** Another plugin's view, for the UI to draw with that plugin's renderer: a channel, a feed. */
@@ -184,17 +194,17 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
           .map((action) => renderAction(state, game, action)),
       }
     }
-    if ('collection' in section) {
-      const words = (key?: string) => (key ? (game.prose?.line(key, state) ?? '') : '')
+    if ('things' in section) {
+      const { of, at = YOU } = section.things
       return {
         kind: 'list',
-        entries: [...(state.collections?.[section.collection] ?? [])].reverse().map((entry) => ({
-          id: entry.id,
-          title: entry.title ?? '',
-          text: words(entry.text),
-          image: entry.image ?? null,
-          actions: [],
-        })),
+        entries: heldBy(state, game, at)
+          .filter(({ ref }) => parseRef(ref)?.kind === of)
+          .reverse()
+          .map(({ ref }) => {
+            const image = entityImage(state, game, ref)
+            return { id: ref, title: entityName(state, game, ref), text: entityDesc(state, game, ref) ?? '', image: image ? artSrc(image) : null, actions: [] }
+          }),
       }
     }
     if ('contacts' in section) {
@@ -298,7 +308,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
             ...(app.badge && 'value' in app.badge ? [{ value: app.badge.value }] : []),
             ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {
-              if ('collection' in section) return [{ collection: section.collection }]
+              if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
               if ('panel' in section) return [{ panel: section.panel }]
               if ('prose' in section) return [{ blocks: section.prose }]
               if ('actions' in section) {

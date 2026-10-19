@@ -39,7 +39,6 @@ export function fixture(rules: Game['rules'] = {}): Game {
       { id: 'coins', label: 'Coins', start: 3, max: 999, format: '{n}c' },
       { id: 'luck', label: 'Luck', visible: { kv: 'feelingLucky' } },
     ],
-    items: [],
     scenes: [
       // Where a new game opens: nothing to read, and nothing to do but carry on.
       { id: 'start', render: () => ({ choices: [] }) },

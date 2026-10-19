@@ -51,7 +51,7 @@ const counter: Scene = {
         id: 'buy',
         label: 'Buy a sandwich (4)',
         disabled: (state.stats.coins ?? 0) < 4 ? 'You need 4 coins.' : undefined,
-        effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'item', item: 'sandwich', by: 1 }],
+        effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'entity', entity: 'item:sandwich', by: 1 }],
       },
       { id: 'leave', label: 'Leave', effects: [{ kind: 'scene', scene: null }] },
     ],

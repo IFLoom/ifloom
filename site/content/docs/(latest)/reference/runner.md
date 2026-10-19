@@ -360,7 +360,7 @@ function replay(game: Game, log: CommandLog): Result<GameState>
 
 Plays a command log back and returns the state it leads to, as a [`Result`](#result). The engine is deterministic, so the same log against the same game gives the same state every time.
 
-The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used, such as `{ type: 'use', itemId }`, are read with today's names. If the start can't be loaded, `replay` fails with the reason.
+The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used are read with today's names: `{ type: 'use', itemId: 'tea' }`, from when items were the engine's, is the [inventory plugin](/docs/plugins/inventory)'s `inventory/use` on `item:tea`. If the start can't be loaded, `replay` fails with the reason.
 
 ```ts
 import { replay, type CommandLog } from '@ifloom/engine'

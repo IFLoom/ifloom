@@ -1,6 +1,6 @@
 ---
 title: "Conditions"
-description: "Every condition: kv, stats, levels, choices, scenes seen, items, counts, turns, phases, custom and plugin calls."
+description: "Every condition: kv, stats, levels, choices, scenes seen, things held, counts, turns, phases, custom and plugin calls."
 ---
 A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/docs/reference/checks) can check every id in it.
 
@@ -41,7 +41,7 @@ type Range = { gte?: number; gt?: number; lte?: number; lt?: number }
 
 Many conditions compare a number against a range: at least `gte`, above `gt`, at most `lte`, below `lt`. You can leave any bound out, and every bound you give must hold.
 
-A range with no bounds at all means "any of it", so the value has to be above 0. That's why `{ item: 'scarf' }` means "has a scarf", and `{ seen: 'ava.hi' }` means "has seen it at least once".
+A range with no bounds at all means "any of it", so the value has to be above 0. That's why `{ entity: 'clothing:scarf', at: 'you' }` means "has a scarf", and `{ seen: 'ava.hi' }` means "has seen it at least once".
 
 ```ts
 { stat: 'charm', gte: 10 }          // 10 or more
@@ -69,8 +69,6 @@ type Condition =
   | ({ entity: string; at?: string } & Range)
   | ({ level: StatKey; of?: string } & Range)
   | { storyline: string; open?: boolean }
-  | ({ item: string } & Range)
-  | ({ collection: string; entry?: string } & Range)
   | { scene: string[] }
   | { turn: Range }
   | { phase: Phase[] }
@@ -79,15 +77,15 @@ type Condition =
   | PluginCall
 ```
 
-A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gte: 3 }`, `{ item: 'scarf' }`, `{ storyline: 'ava' }`. The range or `is` sits beside it. A condition that names nothing, such as `turn`, takes its range as its value: `{ turn: { gte: 3 } }`.
+A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gte: 3 }`, `{ entity: 'clothing:scarf', at: 'you' }`, `{ storyline: 'ava' }`. The range or `is` sits beside it. A condition that names nothing, such as `turn`, takes its range as its value: `{ turn: { gte: 3 } }`.
 
-**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', item: 'scarf' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
+**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', stat: 'coins' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
 
 ### all, any, not
 
 ```ts
-{ all: [{ kv: 'marketDay' }, { item: 'scarf' }] }   // on market day, with a scarf
-{ any: [{ item: 'scarf' }, { item: 'raincoat' }] }
+{ all: [{ kv: 'marketDay' }, { entity: 'clothing:scarf', at: 'you' }] }   // on market day, with a scarf
+{ any: [{ entity: 'clothing:scarf', at: 'you' }, { entity: 'clothing:raincoat', at: 'you' }] }
 { not: { phase: ['arrival'] } }
 ```
 
@@ -250,6 +248,8 @@ Bare, the [entity](/docs/reference/entities) is in the game, which means it was 
 
 With `at`, it's how many of it a [holder](/docs/reference/entities#holding-things) holds, against a [range](#range): `'you'`, `'player'` or a unique entity, and at least one if there's no range. With a range and no `at`, it's how many are held by everyone together. [`explain`](#explain) says `food:apple: 2 held by you; wants 3 or more`. The [`holding`](/docs/reference/entities#give-take-move-and-holding) helper writes `{ entity, at: 'you', gte }`.
 
+The [content checker](/docs/reference/checks) reports a kind the game doesn't declare. It doesn't report an id it doesn't know, since the thing may be made in play.
+
 **Gotcha.** Inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here (and in `at`) as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
 
 ### level
@@ -299,28 +299,6 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 Tests a variable of the [minigame](/docs/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
 
 The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
-
-### item
-
-```ts
-{ item: 'sandwich' }            // has at least one
-{ item: 'sandwich', gte: 3 }
-```
-
-How many of an item the player has. Bare, it means at least one.
-
-### collection
-
-```ts
-{ collection: 'notes', entry: 'welcome' }   // that entry is there
-{ collection: 'notes' }                     // at least one entry
-{ collection: 'notes', gte: 10 }            // ten or more
-{ collection: 'notes', lt: 1 }              // none at all
-```
-
-What's in a [collection](/docs/reference/collections). With `entry`, it's true when an entry with that id is there, and any range is ignored. Without `entry`, it tests the number of entries against the range, and a bare one means at least 1. A collection nothing has been collected into has 0.
-
-The [content checker](/docs/reference/checks) reports a collection the game doesn't declare. [`explain`](#explain) says what it found, as in `notes has 1; wants 3 or more` or `notes lacks welcome; wants it there`.
 
 ### scene
 
@@ -408,7 +386,7 @@ import { holds } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
 
-holds(state, { item: 'scarf' })                // true with a scarf
+holds(state, { kv: 'metAva' })                // true once you've met Ava
 holds(state, at('cafe'), town)                // a plugin's condition needs the game
 holds(state, here('ava'), town)               // so does the cast's
 ```
@@ -508,5 +486,5 @@ console.log(explainText(why))
 ## See it in an example
 
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ chose: 'ch1.mat#open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
-- Small Town: the files in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) use `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ collection: 'gallery' }` on the `post` activity and `{ minigameVar }` in quick feet.
+- Small Town: the files in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) use `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ count: { of: 'photo', at: 'player' } }` on the `post` activity and `{ minigameVar }` in quick feet.
 - The Corner Café: the `review` trigger in [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

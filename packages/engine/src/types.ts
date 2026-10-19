@@ -8,7 +8,7 @@ import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState }
  * An added field doesn't: it declares a load default in `FIELDS` or in its
  * feature's `state`, and older saves get that default when they load.
  */
-export const SAVE_VERSION = 15 as const
+export const SAVE_VERSION = 16 as const
 
 /** A value in the kv store: true/false, a number or text. */
 export type KvValue = boolean | number | string
@@ -68,7 +68,7 @@ export type StartOptions = {
   settings?: Record<string, unknown>
   /**
    * The state a finished game ended on, for a New Game+: the stats, kv keys
-   * and items the game's `carryOver` lists are copied from it.
+   * and things the game's `carryOver` lists are copied from it.
    */
   carry?: GameState
 }

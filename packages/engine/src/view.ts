@@ -12,7 +12,6 @@ import { viewPieces, type FeatureView } from './features/registry.ts'
 export type { SettingView } from './features/settings.ts'
 export type { StatView } from './features/stats.ts'
 export type { InputView } from './features/inputs.ts'
-export type { CollectionView } from './features/collections.ts'
 export type { NoticeView, NoticesView } from './features/notices.ts'
 export type { EntitiesView, EntityView } from './features/entities.ts'
 

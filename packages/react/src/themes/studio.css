@@ -384,7 +384,7 @@
   box-shadow: var(--shadow-card);
 }
 
-[data-part="item"] {
+[data-part="thing"] {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) * 0.6);

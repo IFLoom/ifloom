@@ -1,12 +1,13 @@
 /**
  * What a pack names, and renaming it. The editor walks every condition and
- * effect in a pack, so renaming a scene, a stat, an item or a kv key moves
+ * effect in a pack, so renaming a scene, a stat, a thing or a kv key moves
  * every reference to it, and the prose keys that follow the scene's id.
  */
 import type { Condition, DataScene, EffectRef, Problem } from '@ifloom/engine'
 import type { EditorPack, Project } from './model.ts'
 
-export type Thing = 'scene' | 'stat' | 'item' | 'kv'
+/** What the outline lists: scenes, stats, things (entities, by reference: `item:bun`) and kv keys. */
+export type Thing = 'scene' | 'stat' | 'thing' | 'kv'
 
 type Visit = {
   condition?: (condition: Record<string, unknown>) => void
@@ -51,7 +52,8 @@ function walkScene(scene: DataScene, visit: Visit) {
 export function walkPack(pack: EditorPack, visit: Visit) {
   for (const scene of pack.scenes) walkScene(scene, visit)
   for (const stat of pack.stats) walkCondition(stat.visible, visit)
-  for (const item of pack.items) walkEffects(item.use?.effects, visit)
+  // A thing's use, the inventory's trait.
+  for (const entity of pack.entities) walkEffects((entity.traits?.['inventory/usable'] as { effects?: EffectRef[] } | undefined)?.effects, visit)
 }
 
 /** The kv keys a pack sets or reads, in the order it first names them. */
@@ -93,7 +95,7 @@ function renameFormula(formula: unknown, from: string, to: string): unknown {
 }
 
 /**
- * The project with one scene, stat, item or kv key renamed everywhere it is
+ * The project with one scene, stat, thing or kv key renamed everywhere it is
  * named. A scene's prose keys (`id`, `id.…`, `id#…`, and an older `id/…`) move with it.
  */
 export function rename(project: Project, thing: Thing, from: string, to: string): Project {
@@ -137,13 +139,17 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
     visit.effect = (e) => {
       if (e.kind === 'stat' && e.stat === from) e.stat = to
     }
-  } else if (thing === 'item') {
-    for (const item of pack.items) if (item.id === from) item.id = to
+  } else if (thing === 'thing') {
+    // A thing is named by its reference, `kind:id`.
+    const [of, id] = to.split(':')
+    for (const entity of pack.entities) {
+      if (`${entity.of}:${entity.id}` === from && of && id) Object.assign(entity, { of, id })
+    }
     visit.condition = (c) => {
-      if (c.item === from) c.item = to
+      if (c.entity === from) c.entity = to
     }
     visit.effect = (e) => {
-      if (e.kind === 'item' && e.item === from) e.item = to
+      if ((e.kind === 'entity' || e.kind === 'move' || e.kind === 'remove') && e.entity === from) e.entity = to
     }
   } else {
     for (const entry of next.kv) if (entry.name === from) entry.name = to
@@ -203,7 +209,8 @@ export type ProblemTarget = { thing: Thing | 'project'; id: string; choice?: str
 export function problemTarget(pack: EditorPack, problem: Problem): ProblemTarget {
   const [kind, ...rest] = problem.where.split(' ')
   const id = rest.join(' ')
-  if (kind === 'stat' || kind === 'item') return { thing: kind, id }
+  if (kind === 'stat') return { thing: kind, id }
+  if (kind === 'entity') return { thing: 'thing', id }
   if (kind === 'introScene') return { thing: 'project', id: '', field: 'intro' }
   if (kind !== 'scene') return { thing: 'project', id: '' }
   const scene = pack.scenes.find((s) => s.id === id)

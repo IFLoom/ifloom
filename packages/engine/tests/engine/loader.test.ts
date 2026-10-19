@@ -20,7 +20,7 @@ const broken: Content = {
 
 /** The town's rules and settings, with none of its content. */
 function baseOf() {
-  const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, ...base } = fixture()
+  const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, ...base } = fixture()
   return base
 }
 
@@ -44,16 +44,16 @@ describe('the loader', () => {
     )
   })
 
-  it('checks triggers, inputs, calls and the collections and prose their effects name', () => {
+  it('checks triggers, inputs, calls and the kinds and prose their effects name', () => {
     const pack: Content = {
       name: 'post',
-      collections: [{ id: 'letters', name: 'Letters' }],
+      kinds: [{ id: 'letter', label: 'Letter' }],
       triggers: [
         {
           id: 'parcel',
-          when: { collection: 'parcels' },
+          when: { count: { of: 'parcel', at: 'you' } },
           effects: [
-            { kind: 'collect', collection: 'drawer', entry: { id: 'a' } },
+            { kind: 'create', of: 'drawer', entity: { id: 'a' }, at: 'player' },
             { kind: 'notify', title: 'Post', text: 'post.unwritten' },
             { kind: 'scene', scene: 'nowhere' },
             { custom: 'shred' },
@@ -68,8 +68,8 @@ describe('the loader', () => {
     const problems = loadGame([pack], baseOf()).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
-        'post · trigger parcel · unknown collection "parcels"',
-        'post · trigger parcel · unknown collection "drawer"',
+        'post · trigger parcel · unknown kind "parcel"',
+        'post · trigger parcel · unknown kind "drawer"',
         'post · trigger parcel · no prose for "post.unwritten"',
         'post · trigger parcel · goes to unknown scene "nowhere"',
         'post · trigger parcel · no custom effect named "shred"',
@@ -97,7 +97,6 @@ describe('one thing declared twice across the content', () => {
     ['prose keys', { prose: { 'cafe.counter': 'The counter.' } }, 'prose "cafe.counter"'],
     ['strings', { strings: { 'turn.next': 'Next' } }, 'string "turn.next"'],
     ['stats', { stats: [stat('coins')] }, 'stat "coins"'],
-    ['items', { items: [{ id: 'key', name: 'Key', desc: 'A key.' }] }, 'item "key"'],
     ['kinds', { kinds: [{ id: 'staff', label: 'Staff' }] }, 'kind "staff"'],
     ['entities', { kinds: [], entities: [{ of: 'staff', id: 'ana', name: 'Ana' }] }, 'entity "staff:ana"'],
     ['storylines', { storylines: [{ id: 'ava', name: 'Ava' }] }, 'storyline "ava"'],

@@ -88,15 +88,18 @@ export type StatDef = {
   spendable?: boolean
   /**
    * The refusal when a cost needs more than the player has, with `{n}` for
-   * the amount: `'Not enough on you.'`, `'Need {n} energy.'`. Without it:
-   * "Not enough" and the label.
+   * the amount: `'Not enough on you.'`, `'Need {n} energy.'`, or one for 1
+   * and one for any other amount, as `format` takes. Without it: "Not
+   * enough" and the label.
    */
-  lacking?: string
+  lacking?: StatWords
   /**
    * How the value is written for the player, with `{n}` for the number:
-   * `'£{n}'`, `'{n} energy'`. Just the number if left out.
+   * `'£{n}'`, `'{n} energy'`. For words that change with the number, one
+   * for 1 and one for any other: `{ one: '{n} coin', other: '{n} coins' }`.
+   * Just the number if left out.
    */
-  format?: string
+  format?: StatWords
   /**
    * Work the stat out from others instead of keeping it: `{ sum: ['strength', 'agility'] }`.
    * A derived stat is read like any stat and never written; the loader
@@ -389,13 +392,22 @@ export function clampStat(state: GameState, game: Game, id: string, value: numbe
 
 /** The refusal for a cost the player cannot cover. */
 export function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string {
-  if (def?.lacking) return def.lacking.replaceAll('{n}', String(amount))
+  if (def?.lacking) return counted(def.lacking, amount)
   return say(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
 }
 
 /** A value as the player reads it, through the stat's `format`. */
 export function formatStat(def: StatDef | undefined, value: number): string {
-  return def?.format ? def.format.replace('{n}', String(value)) : String(value)
+  return def?.format ? counted(def.format, value) : String(value)
+}
+
+/** A stat's words for a number: the same for every number, or `one` for exactly 1 and `other` for the rest. */
+export type StatWords = string | { one: string; other: string }
+
+/** A stat's words for a number, with `{n}` filled in. */
+function counted(words: StatWords, n: number): string {
+  const text = typeof words === 'string' ? words : n === 1 ? words.one : words.other
+  return text.replaceAll('{n}', String(n))
 }
 
 /** One stat as the UI shows it: the player's, or with `of`, an entity's. */

@@ -126,7 +126,7 @@ const settle: QuestDef = {
 const scarf: QuestDef = {
   id: 'scarf',
   title: 'Something warm',
-  stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { item: 'scarf' } }],
+  stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { entity: 'clothing:scarf', at: 'you' } }],
 }
 
 const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
@@ -134,11 +134,12 @@ const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
 const town: Content = {
-  items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' }],
+  kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
+  entities: [{ id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' }],
   activities: [
     { id: 'unpack', blocked: [onlyAt(['flat'])], effects: [{ kind: 'phase', to: 'open' }] },
     { id: 'collar', blocked: [onlyAt(['high-street'])], effects: [startQuest('scarf')] },
-    { id: 'buyScarf', blocked: [onlyAt(['high-street'])], effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
+    { id: 'buyScarf', blocked: [onlyAt(['high-street'])], effects: [{ kind: 'entity', entity: 'clothing:scarf', by: 1 }] },
     { id: 'coffee', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'kv', key: 'hadCoffee', to: true }] },
   ],
   prose: {
@@ -233,7 +234,7 @@ An unknown quest or stage is false.
 |---|---|---|
 | `{ 'quests/start': { quest } }` | `startQuest(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
 
-It works in any effect list: a data scene choice's, an activity's or an item's use. The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
+It works in any effect list: a data scene choice's, an activity's or a thing's use in the [inventory](/docs/plugins/inventory). The short form, `{ 'quests/start': { quest: 'scarf' } }`, works in the same places. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'quests/start', with: { quest } }`. Starting a quest that has already started, or that doesn't exist, does nothing.
 
 ## Commands
 

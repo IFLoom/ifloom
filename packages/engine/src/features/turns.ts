@@ -14,7 +14,7 @@ export type TurnsShape = {
     /**
      * How many turns have passed: the engine's one clock. What a turn is belongs
      * to the game — a day, an hour, a week, a chapter — and everything the engine
-     * dates (`seenOn`, `fired`, collection entries, notices) is dated in turns.
+     * dates (`seenOn`, `fired`, notices) is dated in turns.
      */
     turn: number
   }

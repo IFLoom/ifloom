@@ -1,8 +1,8 @@
 ---
 title: "Debug"
-description: "Commands for testing that ignore locks: set a stat, a kv key, an item, the scene, the turn, the clock or the place."
+description: "Commands for testing that ignore locks: set a stat, a kv key, what someone holds, the scene, the turn, the clock or the place."
 ---
-`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, give the player an item, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
+`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, set how many of a thing the player (or anyone who can hold things) holds, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
 
 You'd want it while you build and test a game, so you can get straight to the state you want to look at without playing up to it. It's for you, not the player, so leave it out of release builds.
 
@@ -12,7 +12,7 @@ To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `de
 
 ```ts
 import {
-  debug, debugStat, debugKv, debugItem, debugScene, debugTime, debugTurn, debugGo,
+  debug, debugStat, debugKv, debugHeld, debugScene, debugTime, debugTurn, debugGo,
   type DebugView,
 } from '@ifloom/plugin-debug'
 ```
@@ -77,7 +77,7 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 |---|---|---|
 | `{ 'debug/stat': { stat, to, of? } }` | `debugStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
 | `{ 'debug/kv': { key, to } }` | `debugKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ 'debug/item': { item, to } }` | `debugItem(item, to)` | Sets how many of an item the player has. Below 0 counts as 0. |
+| `{ 'debug/held': { entity, to, at? } }` | `debugHeld(entity, to, at?)` | Sets how many of a [thing](/docs/reference/entities#holding-things) a holder holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. Below 0 counts as 0, and a unique thing is taken from whoever had it. |
 | `{ 'debug/scene': { id } }` | `debugScene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
 | `{ 'debug/time': { day?, period? } }` | `debugTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
 | `{ 'debug/turn': { to } }` | `debugTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
@@ -85,9 +85,10 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 A command is refused, with a line from [Strings](#strings), when:
 
-- the game has no such stat, item, scene or place
+- the game has no such stat, thing, scene or place
+- `debug/held`'s `at` can't hold things
 - `debug/stat`'s `of` names no entity in the game, or the stat isn't one the owner has (see [Gotchas](#gotchas))
-- the number given to `debug/stat` or `debug/item` isn't a finite number
+- the number given to `debug/stat` or `debug/held` isn't a finite number
 - a kv key's value isn't one the kv store can hold
 - the turn isn't a whole number from 0
 - the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/plugins/calendar#queries) query)
@@ -113,7 +114,7 @@ import type { CommandRef, KvValue } from '@ifloom/engine'
 
 const debugStat: (stat: string, to: number, of?: string) => CommandRef
 const debugKv: (key: string, to: KvValue) => CommandRef
-const debugItem: (item: string, count: number) => CommandRef
+const debugHeld: (entity: string, to: number, at?: string) => CommandRef
 const debugScene: (scene?: string) => CommandRef
 const debugTime: (time: { day?: number; period?: string }) => CommandRef
 const debugTurn: (turn: number) => CommandRef
@@ -129,7 +130,7 @@ Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s c
 ```ts
 import { apply, startingState, type CommandRef, type Game } from '@ifloom/engine'
 import { where } from '@ifloom/plugin-places'
-import { debugGo, debugScene, debugItem, debugStat, debugTime, debugTurn, debugKv } from '@ifloom/plugin-debug'
+import { debugGo, debugScene, debugHeld, debugStat, debugTime, debugTurn, debugKv } from '@ifloom/plugin-debug'
 
 declare const game: Game // the showcase, built with debug()
 
@@ -138,7 +139,7 @@ let state = startingState(game) // moving day, behind a lock that denies '*'
 const set = (command: CommandRef) => (state = apply(state, game, command).state)
 set(debugStat('coins', 40))
 set(debugKv('catName', 'Biscuit'))
-set(debugItem('sandwich', 2))
+set(debugHeld('item:sandwich', 2))
 set(debugStat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
 set(debugTurn(4))
 set(debugTime({ day: 4, period: 'afternoon' }))      // the game has the calendar
@@ -155,7 +156,7 @@ apply(state, game, debugStat('friendship', 5, 'character:ghost')).reason
 // 'There is nobody and nothing called character:ghost.'
 apply(state, game, debugStat('friendship', 5)).reason // 'That is not whose friendship it is.'
 apply(state, game, debugGo('moon')).reason           // 'There is no location called moon.'
-apply(state, game, debugItem('sandwich', NaN)).reason // 'That needs a number.'
+apply(state, game, debugHeld('item:sandwich', NaN)).reason // 'That needs a number.'
 apply(state, game, debugTime({ period: 'noon' })).reason
 // 'A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.'
 apply(state, game, debugTurn(-1)).reason            // 'A turn is a whole number from 0.'
@@ -174,7 +175,7 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `debug/noSuchStat` | `There is no stat called {id}.` |
 | `debug/noSuchEntity` | `There is nobody and nothing called {id}.` |
 | `debug/notTheirs` | `That is not whose {id} it is.` |
-| `debug/noSuchItem` | `There is no item called {id}.` |
+| `debug/cantHold` | `{id} can’t hold things.` |
 | `debug/noSuchPlace` | `There is no location called {id}.` |
 | `debug/noPlaces` | `This game has no places.` |
 | `debug/noSuchScene` | `There is no scene called {id}.` |

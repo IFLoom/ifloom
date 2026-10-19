@@ -220,15 +220,16 @@ Both commands go through [locks](/docs/reference/locks) like any other. A lock n
 
 ## Strings
 
-The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key. `{item}` is the thing's name.
+The plugin's lines go in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords them by their full key. `{thing}` is the thing's name.
 
 | Key | English |
 |---|---|
-| `wardrobe/notClothing` | `The {item} is not something you wear.` |
-| `wardrobe/alreadyWearing` | `You are already wearing the {item}.` |
+| `wardrobe/notClothing` | `The {thing} is not something you wear.` |
+| `wardrobe/alreadyWearing` | `You are already wearing the {thing}.` |
+| `wardrobe/haveNone` | `You have no {thing}.` |
 | `wardrobe/nothingToTakeOff` | `There is nothing to take off.` |
 
-`wardrobe/wear` also uses two of the engine's own lines, so they read the same as everywhere else and you reword them along with the engine's: [`noSuchThing`](/docs/reference/strings#refusals) (`There is no such thing.`) and [`haveNone`](/docs/reference/strings#refusals) (`You have no {item}.`).
+`wardrobe/wear` also uses the engine's [`noSuchThing`](/docs/reference/strings#refusals) (`There is no such thing.`), so it reads the same as everywhere else.
 
 To reword one in your game, put it in the base's `strings`:
 
@@ -241,7 +242,7 @@ const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
   plugins: [wardrobe()],
-  strings: { 'wardrobe/alreadyWearing': 'The {item} is already on.' },
+  strings: { 'wardrobe/alreadyWearing': 'The {thing} is already on.' },
 })
 ```
 
@@ -334,4 +335,4 @@ town · slots coat · starts with "clothing:raincoat", which the player does not
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The raincoat and the scarf, their `wearable` traits, and the coat and neck slots are in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts), and the café's body reads `wearing('clothing:raincoat')`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The raincoat and the scarf, their `wearable` traits, and the coat and neck slots are in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts), and the café's body reads `wearing('clothing:raincoat')`.

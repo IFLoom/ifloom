@@ -1,6 +1,9 @@
 /** Moving day: the arrival, the cat's name, the note under the door and settling in. */
-import type { Content } from '@ifloom/engine'
+import { give, type Content } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
+
+/** Sam's note under the door: the notice's words, and the note's, kept in the phone's Notes app. */
+const WELCOME = 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. — Sam, flat 2'
 
 export const movingDay: Content = {
   scenes: [
@@ -23,7 +26,8 @@ export const movingDay: Content = {
       ],
     },
   ],
-  collections: [{ id: 'notes', name: 'Notes' }],
+  // Sam's note: the notice says it, and you keep it in the phone's Notes app.
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: WELCOME }],
   // On moving day the cat needs a name; the prose says it from then on.
   inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }],
   triggers: [
@@ -31,10 +35,7 @@ export const movingDay: Content = {
     {
       id: 'welcome',
       when: at('high-street'),
-      effects: [
-        { kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' },
-        { kind: 'collect', collection: 'notes', entry: { id: 'welcome', title: 'Welcome note', text: 'notice.welcome' } },
-      ],
+      effects: [{ kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' }, give('note:welcome')],
     },
   ],
   data: {
@@ -63,6 +64,6 @@ export const movingDay: Content = {
     // Revealed after the line above: the scene's block says so with `reveal`.
     'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
     'intro#unpack': 'Unpack',
-    'notice.welcome': 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. — Sam, flat 2',
+    'notice.welcome': WELCOME,
   },
 }

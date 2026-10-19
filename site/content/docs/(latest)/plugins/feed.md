@@ -319,7 +319,7 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 | `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ 'feed/react': { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in a data scene choice's effects, an activity's `effects`, an item's `use`, a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
+They work in a data scene choice's effects, an activity's `effects`, a thing's use in the [inventory](/docs/plugins/inventory), a message reply's effects, and in what a game's custom effect returns. You can write the long form or the short one, `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)). Where only plain effects go, such as a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), write `{ kind: 'custom', name: 'feed/post', with: {...} }` instead.
 
 ## Commands
 

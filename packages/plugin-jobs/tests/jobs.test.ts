@@ -187,7 +187,7 @@ describe('jobs, on their own', () => {
                 {
                   id: 'bad',
                   title: 'Bad',
-                  blocked: [{ when: { not: { item: 'badge' } }, reason: 'x' }],
+                  blocked: [{ when: { not: { entity: 'thing:badge', at: 'you' } }, reason: 'x' }],
                   shift: { cost: { stamina: 1 } },
                   ranks: [
                     { id: 'a', title: 'A', pay: { gold: 1 }, requires: { shifts: 1 } },
@@ -204,7 +204,7 @@ describe('jobs, on their own', () => {
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action y: unknown job "nope"',
-      'jobs bad: blocked: unknown item "badge"',
+      'jobs bad: blocked: unknown kind "thing"',
       'jobs bad: shift: unknown stat "stamina"',
       'jobs bad: rank a: unknown stat "gold"',
       'jobs bad: two ranks are called "a"',

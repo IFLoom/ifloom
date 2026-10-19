@@ -32,7 +32,7 @@ type Checked = { problems: Problem[]; files: FileRef[] }
 type Probe = { name: string; state: GameState }
 ```
 
-Walks every part of the game that is data: scenes and data scenes, items and their `use` effects, activities, the game's actions, triggers, inputs, settings, stats, entities, `finished`, `carryOver`, the locks in `rules.locks`, `introScene`, audio, media pools, all the prose, and every plugin's content. Each condition, effect and command is looked up in one table that says what it names, so a condition reads the same wherever it sits. Then each name is checked against the game.
+Walks every part of the game that is data: scenes and data scenes, activities, the game's actions, triggers, inputs, settings, stats, entities, `finished`, `carryOver`, the locks in `rules.locks`, `introScene`, audio, media pools, all the prose, and every plugin's content. Each condition, effect and command is looked up in one table that says what it names, so a condition reads the same wherever it sits. Then each name is checked against the game.
 
 It never throws on bad content. It returns the problems in the order it found them, and an empty list when there's nothing wrong.
 
@@ -88,7 +88,7 @@ The list covers:
 - every file in a [pool](/docs/reference/media#pools)
 - a `{ media }` block's `src` and `poster`, and a stage layer's
 - the files in picture and video markup in any prose, posters included
-- the `image` of a `notify` effect and of a `collect` entry, used as written (a URL is left out)
+- the `image` of a `notify` effect, used as written (a URL is left out), and of a `create` effect's entity, through `artSrc`
 - whatever a plugin's [references](#plugin-references) name, such as a post's picture or a character's `portrait`.
 
 A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. A place's `art` isn't listed, because no UI draws it.
@@ -106,12 +106,10 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | Problem | When the condition names |
 |---|---|
 | `"…" takes its arguments as an object, …` | A [short plugin call](/docs/reference/custom#plugincall) whose value isn't an object or `true`, such as `{ 'places/at': ['cafe'] }`. It's asked with no arguments. The same problem is reported for an effect or a command written that way. |
-| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, has }`. It never holds, so combine them with `all`. Its parts aren't looked into. |
+| `a condition has one kind, but this one has …` | Two kinds in one object, such as `{ kv, stat }`. It never holds, so combine them with `all`. Its parts aren't looked into. |
 | `a condition needs one kind, such as kv or stat; …` | No kind at all, such as `{}` or `{ gte: 3 }`. It never holds. |
 | `unknown storyline "…"` | A storyline nobody declares, in `storyline` or `storylineKv`. |
-| `unknown item "…"` | An item nobody declares, in an `item` condition or effect, or a `use` command. |
 | `unknown stat "…"` | A stat nobody declares, in `stat` or `level`. |
-| `unknown collection "…"` | A collection nobody declares. |
 | `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'`, `'you'` and `'player'` name no kind and aren't checked. |
 | A holder problem | An `entity` condition's `at`, or a `count`'s `Select`'s. See [Holders](#holders). |
 | `plugin "…" has no trait "…"` | A `count`'s `Select` names a `trait` of a plugin the game has, which that plugin doesn't declare. |
@@ -143,10 +141,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown entity "…" to be like: name one the game declares` | A `create`'s `like` names an entity nobody declares. |
 | `like names a <kind>, not a <of>` | A `create`'s `like` is of another kind than its `of`. |
 | `plugin "…" has no trait "…"` | An `each`'s `trait`, or a trait in a `create`'s `entity.traits`, of a plugin the game has that doesn't declare it. |
-| `unknown item "…"` | An `item` effect. |
 | `unknown storyline "…"` | A `storylineKv` or `closeStoryline` effect. |
-| `unknown collection "…"` | A `collect` or `discard`. |
-| `no prose for "…"` | A `notify`'s `text`, or a `collect` entry's `text`. |
+| `no prose for "…"` | A `notify`'s `text`. |
 | `goes to unknown scene "…"` | A `scene` effect, or a [storylet](/docs/reference/storylets) draw's `otherwise`. |
 | `draws from "…", but no scene is drawn from it` | A storylet draw, `{ kind: 'scene', from }`, names a set no scene's `drawnFrom` includes. |
 | An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
@@ -163,7 +159,6 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 |---|---|
 | `scene` | `opens unknown scene "…"` |
 | `activity` | `unknown activity "…"` |
-| `use` | `unknown item "…"` |
 | `input` | `unknown input "…"` |
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
 | `custom`, or a plugin's command in short | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
@@ -203,7 +198,6 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `where` | Checked |
 |---|---|
 | `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and `no custom panel named "…"` for its `panelData`. For every scene, data or hand-written, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
-| `item <id>` | The effects of its `use`. |
 | `activity <id>` | Each `blocked` entry's `when`, and its `effects`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. |
 | `action <id>` | The game's own [`actions`](/docs/reference/game#game): each one's `when` and `blocked`, and its `command`. |
 | `trigger <id>` | Its `when` and its `effects`. |
@@ -217,7 +211,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |
 | `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and whatever the plugin's trait finds in the data with its `check` and `references`. See [Traits](#traits). |
 | `finished` | The game's [`finished`](/docs/reference/state#new-game) condition. |
-| `carryOver` | `unknown stat "…"` and `unknown item "…"` in [`carryOver`](/docs/reference/state#new-game), and `stat "…" belongs to <kind>, not the player` for a kind's stat. |
+| `carryOver` | `unknown stat "…"` in [`carryOver`](/docs/reference/state#new-game) and `stat "…" belongs to <kind>, not the player` for a kind's stat. For each thing in `held`: `unknown entity "…": name one as "kind:id"`, or `unknown kind "…"`. |
 | `lock <n>` | The `when` of each lock in [`rules.locks`](/docs/reference/locks), by its place in the list from 0. |
 | `introScene` | `unknown scene "…"`, when the game opens on a scene it doesn't have. |
 | `plugin <id>` | `a plugin id is letters, digits and "-" only` and `two plugins share this id`. For its [traits](/docs/reference/plugins#traits): `trait "…" must be named "<id>/" and a name` and `two traits share the id "…"`. |
@@ -228,7 +222,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]`, and the pools and flags in picture and video markup, in every line of prose. |
 | `version` | `version must be a whole number, 1 or more`, for the game's [`version`](/docs/reference/saves#the-games-own-migrations). |
 | `migration <n>` | `a step is keyed by the version it upgrades from, 1 to …`, for a step keyed outside 1 to `version - 1`. A game with no `version` has no room for steps, so any step is reported. |
-| `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since `loadGame` merges by id. |
+| `<list> <id>` for `scene`, `storyline`, `activity`, `stat`, `kind`, `entity`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since `loadGame` merges by id. |
 
 `loadGame` adds a few of its own, about the content and packs themselves, such as a key declared twice. See [What the loader adds](/docs/reference/loader#what-the-loader-adds).
 
@@ -345,9 +339,7 @@ type Reference =
   | { drawnFrom: string }
   | { stat: string; of?: string; writes?: boolean }
   | { stat: string; starts: string }
-  | { item: string }
   | { storyline: string }
-  | { collection: string }
   | { setting: string; is?: KvValue }
   | { kind: string }
   | { entity: string }
@@ -381,7 +373,7 @@ type Reference =
 | `{ choice }` | A `scene#choice` key, as `chose` and `since` check it. |
 | `{ stat, of, writes }` | A stat read, or with `writes`, written, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
-| `{ item }`, `{ storyline }`, `{ collection }`, `{ kind }`, `{ activity }`, `{ input }` | An id that has to be declared. |
+| `{ storyline }`, `{ kind }`, `{ activity }`, `{ input }` | An id that has to be declared. |
 | `{ entity }` | An entity by reference, `'food:apple'`, that content (or a plugin's `entities`) declares: `unknown entity "food:pear"`. `'$'` and `'food:*'` pass, once the kind is there. A shop's goods and the wardrobe's slots name their things this way. |
 | `{ setting, is }` | A play setting, and a value it has to be able to take. |
 | `{ prose }`, `{ variants }` | A prose key that needs words, a variants list that needs lines. |

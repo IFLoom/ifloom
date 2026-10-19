@@ -38,7 +38,11 @@
  * `GameState.held` and `you`, `View.held`, the `entity` condition's `at` and
  * range, `count`'s `Select` and `units`, the `entity`, `move` and `you`
  * effects, `each`'s selection, and `create`'s `like` and `at` (its `of` and
- * `entity` optional with a `like`).
+ * `entity` optional with a `like`). Items and collections out (phase 6):
+ * no `item` or `collection` condition, `item`, `collect` or `discard`
+ * effect, `use` command, `GameState.items` or `collections`, `Game.items`,
+ * `collections` or `Pack` keys for them, `View.pack` or `View.collections`;
+ * `CarryOver.held` for `items`.
  */
 import type {
   ActionDef,
@@ -46,10 +50,6 @@ import type {
   AudioState,
   AudioView,
   CarryOver,
-  CollectionDef,
-  CollectionEntry,
-  CollectionItem,
-  CollectionView,
   Custom,
   DataScene,
   EffectRef,
@@ -62,7 +62,6 @@ import type {
   GameRules,
   InputDef,
   InputView,
-  ItemDef,
   KindDef,
   HeldView,
   Placement,
@@ -168,13 +167,6 @@ export type FrozenCondition =
    * until a turn that has come. With `open: false`, that it is closed for now.
    */
   | { storyline: string; open?: boolean }
-  /** How many of an item the player carries. Bare, at least one. */
-  | ({ item: string } & FrozenRange)
-  /**
-   * What is in a collection. With `entry`: that entry is there. Without: how many
-   * entries there are, at least one if no range is given.
-   */
-  | ({ collection: string; entry?: string } & FrozenRange)
   /** The scene on screen is one of these. */
   | { scene: string[] }
   /** How many turns have passed. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on. */
@@ -200,7 +192,7 @@ export type FrozenGameState = {
   /**
    * How many turns have passed: the engine's one clock. What a turn is belongs
    * to the game — a day, an hour, a week, a chapter — and everything the engine
-   * dates (`seenOn`, `fired`, collection entries, notices) is dated in turns.
+   * dates (`seenOn`, `fired`, notices) is dated in turns.
    */
   turn: number
   sceneId: string | null
@@ -249,9 +241,6 @@ export type FrozenGameState = {
   you: string | null
   storylines: Record<string, StorylineState>
   kv: Record<string, KvValue>
-  items: Record<string, number>
-  /** Each collection's entries, by collection id, oldest first. */
-  collections: Record<string, CollectionEntry[]>
   /** What the game has told the player outside scenes, oldest first. */
   notices: Notice[]
   /** The turn each trigger last fired, by trigger id. */
@@ -290,7 +279,6 @@ export type FrozenCommand =
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
-  | { type: 'use'; id: string }
   /** Mark one notice seen, or every one. */
   | { type: 'dismiss'; id?: string }
   /** Write what the player typed or picked. A button leaves `to` out and the UI asks. */
@@ -347,16 +335,10 @@ export type FrozenEffect =
    * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
    */
   | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'item'; item: string; by: number }
-  | { kind: 'item'; item: string; to: number }
   | { kind: 'phase'; to: Phase }
   | { kind: 'closeStoryline'; storyline: string; turns: number }
   /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
   | { kind: 'turn'; by?: number }
-  /** Add an entry to a collection. An id already there is left as it is. */
-  | { kind: 'collect'; collection: string; entry: CollectionItem }
-  /** Take an entry out of a collection, by its id. */
-  | { kind: 'discard'; collection: string; entry: string }
   /** Tell the player something outside a scene. `text` is a prose key. */
   | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
   /**
@@ -432,7 +414,6 @@ export type FrozenGame = {
   /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
   introScene?: string
   activities?: ActivityDef[]
-  items?: ItemDef[]
   /** Hand-written scenes and data scenes, side by side. */
   scenes: (Scene | DataScene)[]
   storylines?: StorylineDef[]
@@ -444,8 +425,6 @@ export type FrozenGame = {
    * Packs can add theirs; a later pack's line wins.
    */
   strings?: Record<string, string>
-  /** Named lists the game keeps entries in: a gallery, notes, a ledger. */
-  collections?: CollectionDef[]
   /** Effects that happen by themselves the first time a condition holds. */
   triggers?: TriggerDef[]
   /** What the player can type or pick, and the kv key each one writes. */
@@ -472,7 +451,6 @@ export type FrozenPack = {
   /** Schema this pack was written against. Refused if it is not ours. */
   schema: number
   scenes?: (Scene | DataScene)[]
-  items?: ItemDef[]
   storylines?: StorylineDef[]
   activities?: ActivityDef[]
   /** Stats the game keeps. A later pack can redeclare one by id. */
@@ -483,7 +461,6 @@ export type FrozenPack = {
   entities?: EntityDef[]
   /** Traits given to entities, by trait id and then entity, over what each declares. */
   traits?: TraitTable
-  collections?: CollectionDef[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
   /** What the player can change from a settings screen. A later pack can redeclare one by id. */
@@ -552,16 +529,7 @@ export type FrozenView = {
   stats: StatView[]
   /** Every declared stat, by id, whether or not it is listed. */
   statsById: Record<string, StatView>
-  pack: {
-    id: string
-    name: string
-    desc: string
-    count: number
-    useLabel?: string
-  }[]
   inScene: boolean
-  /** Every declared collection, with its entries oldest first and their words filled in. */
-  collections: Record<string, CollectionView>
   /** Each listed kind's listed, visible entities, by kind id. */
   entities: Record<string, EntitiesView>
   /** What you hold: the protagonist's things while one is played, then the player's. */

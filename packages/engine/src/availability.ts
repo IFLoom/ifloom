@@ -83,7 +83,7 @@ export function ignoresLocks(game: Game, command: Command): boolean {
 /**
  * What a command would apply, worked out before it runs, for plugins' guards
  * and prices and locks by effect to look at: an activity's cost (as stat
- * effects) then its effects, a choice's effects, an item's use, a plugin
+ * effects) then its effects, a choice's effects, a plugin
  * command's `effectsOf`. Anything else applies nothing that can be known ahead.
  */
 export function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[] {

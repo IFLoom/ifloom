@@ -154,7 +154,7 @@ function takenFrom(state: GameState, game: Game, ref: EntityRef): Holder | undef
 /** Why you can't do anything with this thing now: not in the game, or you hold none. */
 function notHeld(state: GameState, game: Game, ref: EntityRef): string | undefined {
   if (!inGame(state, game, ref)) return say(game, 'noSuchThing')
-  return takenFrom(state, game, ref) === undefined ? say(game, 'haveNone', { item: nameOf(state, game, ref) }) : undefined
+  return takenFrom(state, game, ref) === undefined ? say(game, 'inventory/haveNone', { thing: nameOf(state, game, ref) }) : undefined
 }
 
 function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
@@ -226,6 +226,8 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
     cooperates: ['places'],
     traits: [usableTrait],
     strings: {
+      haveNone: 'You have no {thing}.',
+      doesNothing: 'The {thing} does not do anything.',
       cantGiveTo: 'You can’t give things to {to}.',
       giveToSelf: 'You already have it.',
     },
@@ -236,7 +238,7 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
           const ref = idOf(args)
           const held = notHeld(state, game, ref)
           if (held) return held
-          return usableOf(state, game, ref) ? undefined : say(game, 'doesNothing', { item: nameOf(state, game, ref) })
+          return usableOf(state, game, ref) ? undefined : say(game, 'inventory/doesNothing', { thing: nameOf(state, game, ref) })
         },
         // Its effects read the state as it was before one was spent, as an activity's do before its cost.
         effectsOf: (state, args, { game }) => useEffects(state, game, idOf(args)),

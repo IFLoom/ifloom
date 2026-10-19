@@ -68,7 +68,7 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
           <span {...slotName}>{slot.label}</span>
           <span {...worn}>{slot.name ?? words('nothingOn')}</span>
           {slot.takeOff ? button(words('takeOff'), slot.takeOff) : null}
-          {slot.wear.map((choice) => button(words('wearItem', { item: choice.label }), choice))}
+          {slot.wear.map((choice) => button(words('wearThing', { thing: choice.label }), choice))}
         </div>
       ))}
     </section>

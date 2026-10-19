@@ -1,6 +1,6 @@
 /**
  * The game, put together from its content. This file only assembles: what the
- * whole game shares is in `world/`, one file per kind (stats, items, people),
+ * whole game shares is in `world/`, one file per kind (stats, things, people),
  * and the story is in `story/`, one file per area (a place, a chapter or a
  * character's arc). Add a new file's content to the list when you make one.
  *

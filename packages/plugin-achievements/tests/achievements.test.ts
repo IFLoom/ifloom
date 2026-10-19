@@ -188,7 +188,7 @@ describe('achievements', () => {
           data: {
             achievements: {
               achievements: [
-                { id: 'a', title: 'A', when: { item: 'moonstone' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
+                { id: 'a', title: 'A', when: { entity: 'thing:moonstone', at: 'you' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
                 { id: 'b', title: 'B', progress: { value: { value: 'nothing' }, target: 3 } },
               ],
             },
@@ -199,7 +199,7 @@ describe('achievements', () => {
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'activity x: unknown achievement "nope"',
-      'achievements a: when: unknown item "moonstone"',
+      'achievements a: when: unknown kind "thing"',
       'achievements a: progress: unknown stat "luck"',
       'achievements b: progress: no custom value named "nothing"',
       'achievements a: progress target must be more than 0',

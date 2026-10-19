@@ -172,7 +172,7 @@ const medicine = removeStatus('cold')        // gone, nothing else happens
 const recovered = removeStatus('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing a status the game doesn't have does nothing. Both work in any effect list, an item's use included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'statuses/apply', with: { status: 'tired' } }`.
+Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'statuses/apply', with: { status: 'tired' } }`.
 
 ## Commands
 
@@ -270,7 +270,7 @@ When the game loads, the plugin reports these problems against the content or pa
 - `turns` below 1 (`turns must be 1 or more`).
 - `max` on a status that refreshes (`max only applies with reapply: "stack"`), or below 1.
 - A modifier on a stat the game doesn't have (`unknown stat "…"`), or on an entity's stat.
-- Anything `onStart`, `eachTurn` or `onEnd` names that the game doesn't have (`onEnd: unknown item "…"`).
+- Anything `onStart`, `eachTurn` or `onEnd` names that the game doesn't have (`onEnd: unknown kind "…"`).
 
 A call that names a status the game doesn't have gives `unknown status "…"` where it's written.
 

@@ -14,9 +14,9 @@ A project is one file of [content](/docs/reference/loader#content-and-packs). Th
 - **Choices** in each scene. A choice has a label, a cost in stats, a condition for showing it, reasons to grey it out, and its effects.
 - **Stats**, with every field of a [`StatDef`](/docs/reference/stats#statdef), including levels, rounding, how it's displayed and a derived formula.
 - **Key–values (kv)**, the keys of the kv store. They need no declaration, so the editor only keeps a note of what each one is for. The note goes into the TypeScript export as a comment.
-- **Items**, with what using one does.
+- **Things**, the [entities](/docs/reference/entities) the player can hold, each with how many the player starts with and what using one does (the [inventory](/docs/plugins/inventory) plugin's `usable` trait). A thing you add is of the `item` kind unless you name another, as in `food:bun`, and the editor declares its kind.
 
-Conditions and effects come from menus. Wherever a form asks for a scene, a stat, an item or a kv key, it offers the ones that exist, and "Add new…" makes another. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`.
+Conditions and effects come from menus. Wherever a form asks for a scene, a stat, a thing or a kv key, it offers the ones that exist, and "Add new…" makes another. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`.
 
 ### Choices with a cost
 
@@ -74,10 +74,10 @@ Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-s
 
 ## Snippets
 
-[Snippets](/editor/snippets) has the editor's builders on their own: a condition, a list of effects, a stat, an item, a setting and the prose markup helper. Each shows the TypeScript it makes, with a Copy button, for pasting into a game you're already writing in code.
+[Snippets](/editor/snippets) has the editor's builders on their own: a condition, a list of effects, a stat, a thing, a setting and the prose markup helper. Each shows the TypeScript it makes, with a Copy button, for pasting into a game you're already writing in code.
 
 ## What it doesn't do
 
-- **Only part of the engine has forms.** Scenes, choices, stats, kv keys and items do. Activities, triggers, inputs, collections, entities, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
+- **Only part of the engine has forms.** Scenes, choices, stats, kv keys and things do. Activities, triggers, inputs, kinds, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
 - **Drafts stay in this browser.** Clearing the site's data deletes them, and they don't follow you to another machine. Export anything you want to keep.
 - **One file per project.** A game made of several files is a project you build in code.

@@ -26,8 +26,8 @@ afterEach(() => {
 /** The cafe fixture's game, split into its base and its own pack. */
 function cafe() {
   const { game } = withCafe()
-  const { scenes, items, storylines, activities, stats, packs: _p, ...base } = game
-  const own: Content = { name: 'town', scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
+  const { scenes, storylines, activities, stats, packs: _p, ...base } = game
+  const own: Content = { name: 'town', scenes, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
   return { base, own }
 }
 
@@ -254,8 +254,17 @@ describe('content migrations', () => {
           ],
         },
       ],
-      items: [
-        { id: 'tea', name: 'Tea', desc: '', tags: ['stuff'], use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } },
+      // Items are things since schema 13: entities of an item kind, with their use the inventory's trait.
+      kinds: [{ id: 'item', label: 'Item', plural: 'Items', listed: false }],
+      entities: [
+        {
+          id: 'tea',
+          of: 'item',
+          name: 'Tea',
+          desc: '',
+          tags: ['stuff'],
+          traits: { 'inventory/usable': { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } },
+        },
       ],
       triggers: [
         {
@@ -263,22 +272,22 @@ describe('content migrations', () => {
           when: {
             all: [
               { turn: { gte: 3 } },
-              { item: 'tea' },
+              { entity: 'item:tea', at: 'you' },
               { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 },
               { storylineKv: { storyline: 'rosa', key: 'met' }, is: true },
             ],
           },
           effects: [
             { kind: 'stat', stat: 'coins', by: -2 },
-            { kind: 'item', item: 'tea', by: 1 },
+            { kind: 'entity', entity: 'item:tea', at: 'you', by: 1 },
             { kind: 'phase', to: 'night' },
             { kind: 'scene', scene: null },
             { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' },
             { kind: 'storylineKv', storyline: 'rosa', key: 'met', to: true },
             { kind: 'closeStoryline', storyline: 'rosa', turns: 2 },
-            { kind: 'collect', collection: 'notes', entry: { id: 'n1' } },
-            { kind: 'discard', collection: 'notes', entry: 'n1' },
-            { kind: 'each', of: 'staff', where: { collection: 'notes', entry: 'n1' }, effects: [{ kind: 'remove', entity: '$' }] },
+            { kind: 'create', of: 'notes', entity: { id: 'n1' }, at: 'player' },
+            { kind: 'remove', entity: 'notes:n1' },
+            { kind: 'each', of: 'staff', where: { entity: 'notes:n1' }, effects: [{ kind: 'remove', entity: '$' }] },
             { kind: 'audio', channel: 'music', to: null },
             { kind: 'minigame', minigame: 'arrows' },
             { kind: 'minigameVar', key: 'score', by: 1 },
@@ -303,7 +312,7 @@ describe('content migrations', () => {
               id: 'cafe',
               actions: [
                 { id: 'talk', label: 'Talk', command: { type: 'custom', name: 'cast/talk', with: { id: 'ava' } } },
-                { id: 'drink', label: 'Drink', command: { type: 'use', id: 'tea' } },
+                { id: 'drink', label: 'Drink', command: { 'inventory/use': { id: 'item:tea' } } },
                 { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', to: 0 } },
               ],
               blocked: [{ when: { phase: ['night'] }, reason: 'Shut.', hide: true }],
@@ -438,10 +447,12 @@ describe('content migrations', () => {
     expect(unwrap(upgradePack(v8))).toEqual({
       id: 'town',
       schema: SCHEMA,
-      items: [
-        { id: 'umbrella', name: 'Umbrella', desc: '', tags: ['gear'], start: 1 },
-        { id: 'coat', name: 'Coat', desc: '', start: 0, tags: ['clothes', 'gear'] },
-        { id: 'bun', name: 'Bun', desc: '', tags: ['stuff'] },
+      // And at schema 13 they are things: a start of one is the player's from the start.
+      kinds: [{ id: 'item', label: 'Item', plural: 'Items', listed: false }],
+      entities: [
+        { id: 'umbrella', of: 'item', name: 'Umbrella', desc: '', tags: ['gear'], at: { player: 1 } },
+        { id: 'coat', of: 'item', name: 'Coat', desc: '', tags: ['clothes', 'gear'] },
+        { id: 'bun', of: 'item', name: 'Bun', desc: '', tags: ['stuff'] },
       ],
       data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', exits: [], art: '', body: [], tags: ['street'] }] } },
     })
@@ -544,12 +555,150 @@ describe('content migrations', () => {
     expect(added.ok && added.value.pack).toEqual({
       id: 'mod:naps',
       schema: SCHEMA,
-      activities: [{ id: 'nap', blocked: [{ when: { not: { item: 'pillow' } }, reason: 'No pillow.' }], effects: [{ kind: 'stat', stat: 'coins', to: 0 }] }],
+      activities: [
+        {
+          id: 'nap',
+          blocked: [{ when: { not: { entity: 'item:pillow', at: 'you' } }, reason: 'No pillow.' }],
+          effects: [{ kind: 'stat', stat: 'coins', to: 0 }],
+        },
+      ],
+    })
+  })
+
+  it('make items and collections things at schema 13, wherever content names them', () => {
+    const v12 = {
+      id: 'town',
+      schema: 12,
+      items: [
+        { id: 'tea', name: 'Tea', desc: 'Hot.', start: 2, use: { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] } },
+        { id: 'scarf', name: 'Scarf', desc: 'Wool.' },
+      ],
+      collections: [
+        { id: 'gallery', name: 'Photos' },
+        { id: 'letters', name: 'Letters', max: 5 },
+      ],
+      activities: [
+        {
+          id: 'snap',
+          blocked: [{ when: { collection: 'gallery', gte: 3 }, reason: 'Full.' }],
+          effects: [
+            {
+              kind: 'collect',
+              collection: 'gallery',
+              entry: { id: 'pier', title: 'The pier', text: 'photo.pier', image: 'art/pier.jpg', data: { sunny: true } },
+            },
+            { kind: 'collect', collection: 'letters', entry: { id: 'gran', text: 'nowhere' } },
+            { kind: 'discard', collection: 'letters', entry: 'old' },
+            { kind: 'item', item: 'tea', to: 0 },
+          ],
+        },
+        {
+          id: 'read',
+          blocked: [{ when: { not: { collection: 'letters', entry: 'gran' } }, reason: 'No letter.' }],
+          effects: [{ 'shop/sell': { vendor: 'kiosk', item: 'tea' } }, { kind: 'custom', name: 'debug/item', with: { item: 'tea', to: 1 } }],
+        },
+      ],
+      scenes: [
+        {
+          id: 'shop',
+          body: [{ text: 'shop', when: { 'wardrobe/wearing': { item: 'scarf' } } }],
+          choices: [
+            { id: 'drink', command: { type: 'use', id: 'tea' }, effects: [] },
+            {
+              id: 'wear',
+              command: { type: 'custom', name: 'wardrobe/wear', with: { id: 'scarf' } },
+              when: { custom: 'shop/inStock', with: { vendor: 'kiosk', item: 'tea' } },
+              effects: [],
+            },
+          ],
+        },
+      ],
+      data: {
+        shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', goods: [{ item: 'tea', price: { coins: 2 } }, { entity: 'food:bun' }] }] },
+        wardrobe: { slots: [{ id: 'neck', label: 'Neck', start: 'scarf' }], clothes: [{ id: 'scarf', slot: 'neck' }] },
+      },
+      strings: { haveNone: 'No {item} on you.', 'wardrobe/haveNone': 'Not in your bag.', doesNothing: 'The {item} just sits there.' },
+      prose: { 'photo.pier': 'Gulls, and the end of the pier.' },
+    }
+    expect(unwrap(upgradePack(v12))).toEqual({
+      id: 'town',
+      schema: SCHEMA,
+      kinds: [
+        { id: 'item', label: 'Item', plural: 'Items', listed: false },
+        { id: 'photo', label: 'Photos', plural: 'Photos', listed: false },
+        { id: 'letters', label: 'Letters', plural: 'Letters', listed: false },
+      ],
+      entities: [
+        {
+          id: 'tea',
+          of: 'item',
+          name: 'Tea',
+          desc: 'Hot.',
+          at: { player: 2 },
+          traits: { 'inventory/usable': { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] } },
+        },
+        { id: 'scarf', of: 'item', name: 'Scarf', desc: 'Wool.' },
+      ],
+      traits: { 'wardrobe/wearable': { 'item:scarf': { slot: 'neck' } } },
+      activities: [
+        {
+          id: 'snap',
+          blocked: [{ when: { count: { of: 'photo', at: 'player' }, gte: 3 }, reason: 'Full.' }],
+          effects: [
+            {
+              kind: 'create',
+              of: 'photo',
+              entity: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'art/pier.jpg', kv: { sunny: true } },
+              at: 'player',
+            },
+            { kind: 'create', of: 'letters', entity: { id: 'gran' }, at: 'player' },
+            { kind: 'remove', entity: 'letters:old' },
+            { kind: 'entity', entity: 'item:tea', at: 'you', to: 0 },
+          ],
+        },
+        {
+          id: 'read',
+          blocked: [{ when: { not: { entity: 'letters:gran' } }, reason: 'No letter.' }],
+          effects: [{ 'shop/sell': { vendor: 'kiosk', entity: 'item:tea' } }, { kind: 'custom', name: 'debug/held', with: { entity: 'item:tea', to: 1 } }],
+        },
+      ],
+      scenes: [
+        {
+          id: 'shop',
+          body: [{ text: 'shop', when: { 'wardrobe/wearing': { entity: 'item:scarf' } } }],
+          choices: [
+            { id: 'drink', command: { 'inventory/use': { id: 'item:tea' } }, effects: [] },
+            {
+              id: 'wear',
+              command: { type: 'custom', name: 'wardrobe/wear', with: { id: 'item:scarf' } },
+              when: { custom: 'shop/inStock', with: { vendor: 'kiosk', entity: 'item:tea' } },
+              effects: [],
+            },
+          ],
+        },
+      ],
+      data: {
+        shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', goods: [{ entity: 'item:tea', price: { coins: 2 } }, { entity: 'food:bun' }] }] },
+        wardrobe: { slots: [{ id: 'neck', label: 'Neck', start: 'item:scarf' }] },
+      },
+      strings: { 'inventory/haveNone': 'No {thing} on you.', 'wardrobe/haveNone': 'Not in your bag.', 'inventory/doesNothing': 'The {thing} just sits there.' },
+      prose: { 'photo.pier': 'Gulls, and the end of the pier.' },
     })
   })
 
   it('upgrade an old command log’s commands as replay reads them', () => {
-    expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'use', id: 'tea' })
+    // Using an item is the inventory's command since schema 13, on the thing the item became.
+    expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'custom', name: 'inventory/use', with: { id: 'item:tea' } })
+    expect(upgradeCommand({ type: 'custom', name: 'debug/item', with: { item: 'tea', to: 2 } })).toEqual({
+      type: 'custom',
+      name: 'debug/held',
+      with: { entity: 'item:tea', to: 2 },
+    })
+    expect(upgradeCommand({ type: 'custom', name: 'shop/buy', with: { vendor: 'kiosk', item: 'paper' } })).toEqual({
+      type: 'custom',
+      name: 'shop/buy',
+      with: { vendor: 'kiosk', entity: 'item:paper' },
+    })
     expect(upgradeCommand({ type: 'setting', id: 'volume', value: 0.5 })).toEqual({ type: 'setting', id: 'volume', to: 0.5 })
     expect(upgradeCommand({ type: 'custom', name: 'places/go', with: { to: 'park' } })).toEqual({ type: 'custom', name: 'places/go', with: { id: 'park' } })
     expect(upgradeCommand({ type: 'custom', name: 'effects/apply', with: { id: 'cold' } })).toEqual({
@@ -557,7 +706,7 @@ describe('content migrations', () => {
       name: 'statuses/apply',
       with: { id: 'cold' },
     })
-    const now = { type: 'use', id: 'tea' }
+    const now = { type: 'custom', name: 'inventory/use', with: { id: 'item:tea' } }
     expect(upgradeCommand(now)).toEqual(now)
   })
 })

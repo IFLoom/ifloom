@@ -10,7 +10,7 @@ import { problemsOf } from '../fixtures/checked.ts'
 
 /** The fixture's base, for loading packs over: its content comes from the packs. */
 function base(patch: Partial<Game> = {}) {
-  const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+  const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
   return { ...rest, ...patch }
 }
 
@@ -30,24 +30,28 @@ describe('checkGame', () => {
   })
 
   it('names the pack "game" for a hand-built game, and describes a problem as pack · where · what', () => {
-    const game: Game = { ...fixture(), finished: { item: 'trophy' } }
-    expect(checkGame(game).problems).toEqual([{ pack: 'game', where: 'finished', what: 'unknown item "trophy"' }])
-    expect(checkGame(game).problems.map(describeProblem)).toEqual(['game · finished · unknown item "trophy"'])
+    const game: Game = { ...fixture(), finished: { entity: 'thing:trophy', at: 'you' } }
+    expect(checkGame(game).problems).toEqual([{ pack: 'game', where: 'finished', what: 'unknown kind "thing"' }])
+    expect(checkGame(game).problems.map(describeProblem)).toEqual(['game · finished · unknown kind "thing"'])
   })
 
-  it('reports an item in { has } that the game does not have, loaded or hand-built', () => {
+  it('reports a thing of a kind the game does not have, loaded or hand-built', () => {
+    // A thing can be made in play, so only its kind is known ahead.
     const pack: Content = {
       name: 'town',
       prose: { 'shop#buy': 'Buy one.' },
-      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { item: 'missing' }, effects: [] }] }],
+      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { entity: 'thing:missing', at: 'you' }, effects: [] }] }],
     }
-    expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown item "missing"'])
+    expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown kind "thing"'])
     expect(
       problemsOf({
         ...fixture(),
-        activities: [...(fixture().activities ?? []), { id: 'eat', blocked: [{ when: { not: { item: 'missing' } }, reason: 'Nothing to eat.' }] }],
+        activities: [
+          ...(fixture().activities ?? []),
+          { id: 'eat', blocked: [{ when: { not: { entity: 'thing:missing', at: 'you' } }, reason: 'Nothing to eat.' }] },
+        ],
       }),
-    ).toEqual(['activity eat: unknown item "missing"'])
+    ).toEqual(['activity eat: unknown kind "thing"'])
   })
 
   it('reports what the engine would quietly skip: a condition with no kind or two, an effect or command it does not have', () => {
@@ -61,40 +65,15 @@ describe('checkGame', () => {
         { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
         { id: 'odd', label: 'Odd', command: { type: 'activity', id: 'wait' } },
       ],
-      items: [...(town.items ?? []), { id: 'kite', name: 'Kite', desc: '', start: 1, use: { label: 'Fly', effects: [{ kind: 'fly' } as never, {} as never] } }],
+      activities: [...(town.activities ?? []), { id: 'kite', effects: [{ kind: 'fly' } as never, {} as never] }],
     } as Game
     expect(problemsOf(game)).toEqual([
-      'item kite: unknown effect kind "fly"',
-      'item kite: an effect needs a kind, or a custom call by name',
+      'activity kite: unknown effect kind "fly"',
+      'activity kite: an effect needs a kind, or a custom call by name',
       'action blank: a condition needs one kind, such as kv or stat; this one has nothing in it',
       'action blank: unknown command type "dance"',
       // Its parts aren't looked into: the engine wouldn't know which one it means.
       'finished: a condition has one kind, but this one has 2: kv, setting',
-    ])
-  })
-
-  it('checks an item’s use effects in a loaded game', () => {
-    const pack: Content = {
-      name: 'town',
-      items: [
-        {
-          id: 'map',
-          name: 'Map',
-          desc: '',
-          start: 1,
-          use: {
-            label: 'Read',
-            effects: [
-              { kind: 'scene', scene: 'missing' },
-              { kind: 'storylineKv', storyline: 'nobody', key: 'k', to: true },
-            ],
-          },
-        },
-      ],
-    }
-    expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual([
-      'town · item map · goes to unknown scene "missing"',
-      'town · item map · unknown storyline "nobody"',
     ])
   })
 
@@ -103,13 +82,17 @@ describe('checkGame', () => {
       name: 'town',
       prose: { 'shop#buy': 'Buy one.' },
       scenes: [
-        { id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', item: 'roll', by: 1 }] }] },
+        {
+          id: 'shop',
+          body: [{ text: 'shop.none' }],
+          choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'entity', entity: 'thing:roll', by: 1 }] }],
+        },
       ],
     }
     const { game, problems } = loadGame([pack], base())
     const again = checkGame(game).problems
     expect(again.map((problem) => `${problem.where} · ${problem.what}`)).toEqual(problems.map((problem) => `${problem.where} · ${problem.what}`))
-    expect(problems.map((problem) => problem.what)).toEqual(['no prose for "shop.none"', 'unknown stat "grit"', 'unknown item "roll"'])
+    expect(problems.map((problem) => problem.what)).toEqual(['no prose for "shop.none"', 'unknown stat "grit"', 'unknown kind "thing"'])
   })
 
   it('reports an introScene the game does not have', () => {
@@ -160,7 +143,6 @@ describe('a cooperating partner the game does not have', () => {
       name: 'shore',
       prose: { 'shore#wade': 'Wade in.' },
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
-      items: [{ id: 'net', name: 'Net', desc: '', start: 1, use: { label: 'Cast', effects: [named.long] } }],
       activities: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
     const loaded = loadGame([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
@@ -173,10 +155,10 @@ describe('a cooperating partner the game does not have', () => {
       ...fixture(),
       plugins: [beach],
       actions: [{ id: 'look', label: 'Look', when: { 'moon/up': true }, command: { type: 'custom', name: 'moon/look' } }],
-      items: [{ id: 'net', name: 'Net', desc: '', start: 1, use: { label: 'Cast', effects: [{ kind: 'custom', name: 'moon/pull' }] } }],
+      activities: [...(fixture().activities ?? []), { id: 'net', effects: [{ kind: 'custom', name: 'moon/pull' }] }],
     }
     expect(problemsOf(game)).toEqual([
-      'item net: no plugin effect named "moon/pull"',
+      'activity net: no plugin effect named "moon/pull"',
       'action look: no custom condition named "moon/up"',
       'action look: no plugin command named "moon/look"',
     ])
@@ -189,7 +171,7 @@ describe('the files a game names', () => {
       ...fixture(),
       audio: { tracks: { calm: { src: 'music/calm', channel: 'music' }, knock: { src: '/audio/knock.mp3' }, radio: { playlist: ['calm'] } } },
       media: { pools: { door: [{ src: 'door/blue.jpg', tags: ['day'] }, { src: 'door/rain.mp4' }] } },
-      collections: [{ id: 'album', name: 'Album' }],
+      kinds: [{ id: 'photo', label: 'Photo' }],
       scenes: [
         ...fixture().scenes,
         {
@@ -201,7 +183,7 @@ describe('the files a game names', () => {
               id: 'snap',
               label: 'flat.in',
               effects: [
-                { kind: 'collect', collection: 'album', entry: { id: 'flat', image: './art/photo/flat.png' } },
+                { kind: 'create', of: 'photo', entity: { id: 'flat', image: 'photo/flat.png' }, at: 'player' },
                 { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' },
               ],
             },

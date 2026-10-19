@@ -14,7 +14,7 @@ src/
 ├── rules.ts          rules and custom functions, once it has any
 ├── world/            what the whole game shares, one file per kind
 │   ├── stats.ts      the stats
-│   ├── items.ts      the items
+│   ├── things.ts     what the player carries
 │   ├── cast.ts       the people, when the game has a cast
 │   └── settings.ts   what the player can change
 └── story/            the story, one file per area
@@ -49,7 +49,7 @@ export const stats: Content = {
 
 The two folders split the game in different ways on purpose.
 
-- **`world/` goes by kind.** A stat, an item or a character is used all over the story. Coins are spent in the café and earned at the office, and Ava turns up in three places. These declarations have no one home in the story, so they're kept together by what they are, and you know where to look for every item.
+- **`world/` goes by kind.** A stat, a thing or a character is used all over the story. Coins are spent in the café and earned at the office, and Ava turns up in three places. These declarations have no one home in the story, so they're kept together by what they are, and you know where to look for every thing.
 - **`story/` goes by area.** A scene, its choices, the words it shows, the activity that opens it and the plugin content around it are written and changed together. Keeping them in one file means a change to the café touches `story/cafe.ts` and nothing else.
 
 What an area is depends on the shape of your game:
@@ -73,7 +73,7 @@ The layout is a convention. The engine only sees the list of content, so any lay
 
 ## Combining your files
 
-`loadGame` merges your files in the order you list them. Each scene, stat, item, prose key and the rest is declared once across all of them. If two files declare the same one, say a scene you copied into a new file and forgot to delete, `loadGame` reports it and `npm run check` fails:
+`loadGame` merges your files in the order you list them. Each scene, stat, entity, prose key and the rest is declared once across all of them. If two files declare the same one, say a scene you copied into a new file and forgot to delete, `loadGame` reports it and `npm run check` fails:
 
 ```text
 content · scene "cafe.counter" · declared twice
@@ -83,7 +83,7 @@ Search for the id and delete the copy you don't want. To have the problem name b
 
 Lists keep the order you combine your files in. Triggers fire in that order, and the quest log, the job board and the places list show their entries in it. Small Town lists `world/` first, then its story from moving day onwards, so its quests and places come in the order the player meets them.
 
-Your files have no ids of their own, so you can rename, split or merge them at any time, even after release. What a save depends on is the ids inside them: keep scene, item and storyline ids stable once players have saves.
+Your files have no ids of their own, so you can rename, split or merge them at any time, even after release. What a save depends on is the ids inside them: keep scene, entity and storyline ids stable once players have saves.
 
 ## Prose beside its scenes
 
@@ -137,7 +137,7 @@ When a test fails, its file names the area, and the area's file is where the fix
 
 ## An editor export
 
-The [editor](/docs/guide/editor)'s TypeScript export is one file of content. It's part of the story, so save it in `story/` and add it to the list in `game.ts`. If it declares stats or items the rest of the game uses too, move those into `world/`, and `npm run check` tells you if you leave a copy behind.
+The [editor](/docs/guide/editor)'s TypeScript export is one file of content. It's part of the story, so save it in `story/` and add it to the list in `game.ts`. If it declares stats or things the rest of the game uses too, move those into `world/`, and `npm run check` tells you if you leave a copy behind.
 
 ## Mods are packs
 
@@ -159,6 +159,6 @@ A pack replaces whatever it repeats, since changing your game is what it's for, 
 
 ## See it in the examples
 
-- **Small Town** (`examples/showcase`): `world/` has stats, items, cast, settings, activities, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
+- **Small Town** (`examples/showcase`): `world/` has stats, things, cast, settings, activities, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
 - **The Letter** (`examples/novel`): `world/stats.ts` and a file per chapter in `story/`.
 - **The Corner Café** (`examples/cafe`): nearly everything in `world/`, by kind, with its sums in `rules.ts`.

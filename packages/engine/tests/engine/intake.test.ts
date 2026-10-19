@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
-import { FIELDS, itemStart, loadState, startingState } from '../../src/intake.ts'
+import { FIELDS, loadState, startingState } from '../../src/intake.ts'
+import { heldBy } from '../../src/holdings.ts'
+import { proseStore } from '../../src/prose.ts'
 import { replay } from '../../src/runner.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
@@ -58,6 +60,37 @@ describe('loadState', () => {
     expect(loadState(newer, game)).toEqual({ ok: false, reason: 'That save was made with a newer version of clock.' })
   })
 
+  it('carries a version-15 save’s items and collections to things the player holds', () => {
+    const base = oldSavesGame()
+    const game: Game = {
+      ...base,
+      kinds: [...(base.kinds ?? []), { id: 'clothing', label: 'Clothing', unique: true }, { id: 'letters', label: 'Letters' }],
+      // The scarf was an item, and is clothing now: the one entity with its id.
+      entities: [...(base.entities ?? []), { id: 'scarf', of: 'clothing', name: 'Scarf' }],
+    }
+    game.prose = proseStore(game, { 'letter.gran': 'Love, {{grannyName}}.' })
+    const old = {
+      ...OLD_SAVES[15],
+      items: { umbrella: 0, apple: 5, scarf: 1, kite: 2 },
+      collections: {
+        gallery: [{ id: 'pier', title: 'The pier', image: 'art/pier.jpg', data: { sunny: true }, turn: 3 }],
+        letters: [
+          { id: 'gran', text: 'letter.gran', turn: 4 },
+          { id: 'gran', title: 'Twice', turn: 5 },
+          { title: 'No id', turn: 6 },
+        ],
+      },
+    }
+    const loaded = unwrap(loadState(old, game))
+    expect(loaded).not.toHaveProperty('items')
+    expect(loaded).not.toHaveProperty('collections')
+    expect(loaded.held.player).toEqual({ 'item:umbrella': 0, 'item:apple': 5, 'clothing:scarf': 1, 'item:kite': 2, 'photo:pier': 1, 'letters:gran': 1 })
+    expect(loaded.entities.photo).toEqual({ pier: { name: 'The pier', image: 'art/pier.jpg', kv: { sunny: true } } })
+    // A prose key's words, as written: their tokens are filled when the description is read.
+    expect(loaded.entities.letters).toEqual({ gran: { desc: 'Love, {{grannyName}}.' } })
+    expect(heldBy(loaded, game, 'player').map((entry) => entry.ref)).toEqual(['item:apple', 'clothing:scarf', 'photo:pier', 'letters:gran'])
+  })
+
   it('starts a command log from an old save', () => {
     const game = oldSavesGame()
     const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'activity', id: 'wait' }] })
@@ -86,13 +119,5 @@ describe('state fields', () => {
       const loaded = unwrap(loadState(lacking, game)) as Record<string, unknown>
       expect(loaded[key], key).toEqual((field as { load: () => unknown }).load())
     }
-  })
-})
-
-describe('itemStart', () => {
-  it('is the item’s start, else one of gear and none of stuff', () => {
-    expect(itemStart({ id: 'a', name: 'A', desc: '', start: 1 })).toBe(1)
-    expect(itemStart({ id: 'b', name: 'B', desc: '' })).toBe(0)
-    expect(itemStart({ id: 'c', name: 'C', desc: '', start: 0 })).toBe(0)
   })
 })

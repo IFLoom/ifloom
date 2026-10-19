@@ -3,7 +3,7 @@ import { holds } from '../../src/condition.ts'
 import type { Game } from '../../src/game.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
-import { formatStat, statDef, statLevel, statMax } from '../../src/stats.ts'
+import { formatStat, lackingLine, statDef, statLevel, statMax } from '../../src/stats.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -50,6 +50,12 @@ describe('stats', () => {
     const game = fixture()
     expect(formatStat(statDef(game, 'coins'), 12)).toBe('12c')
     expect(formatStat(statDef(game, 'intelligence'), 12)).toBe('12')
+  })
+
+  it('writes 1 and any other number in their own words, when the stat gives both', () => {
+    const coins = { id: 'coins', label: 'Coins', format: { one: '{n} coin', other: '{n} coins' }, lacking: { one: 'Need {n} coin.', other: 'Need {n} coins.' } }
+    expect([0, 1, 2].map((n) => formatStat(coins, n))).toEqual(['0 coins', '1 coin', '2 coins'])
+    expect([1, 3].map((n) => lackingLine(coins, 'coins', n))).toEqual(['Need 1 coin.', 'Need 3 coins.'])
   })
 
   it('reports an effect on a stat the game never declared', () => {

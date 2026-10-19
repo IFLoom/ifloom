@@ -9,15 +9,16 @@ import { here } from '@ifloom/plugin-cast'
 export const activities: Content = {
   activities: [
     { id: 'wait', effects: [pass(1)] },
-    // The camera: one photo of each person, if they're here to take.
+    // The camera: one photo of each person, if they're here to take. A photo is a thing the camera makes, kept by the player.
     ...(['ava', 'sam'] as const).map((who) => ({
       id: `photo-${who}`,
       blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
       effects: [
         {
-          kind: 'collect' as const,
-          collection: 'gallery',
-          entry: { id: `photo.${who}`, title: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `art/photo/${who}.svg` },
+          kind: 'create' as const,
+          of: 'photo',
+          entity: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` },
+          at: 'player',
         },
       ],
     })),
@@ -25,7 +26,7 @@ export const activities: Content = {
       id: 'post',
       cost: { stats: { energy: 5 } },
       blocked: [
-        { when: { not: { collection: 'gallery' } }, reason: 'Take a photo first.' },
+        { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
         { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],

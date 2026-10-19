@@ -7,7 +7,7 @@ import { cheatUsed, cheats, runCheat } from '@ifloom/plugin-cheats'
 import { hasUnlock, recordUnlock, unlocks } from '@ifloom/plugin-unlocks'
 import { calendar, day, period, sleep, weekday, weekend } from '@ifloom/plugin-calendar'
 import { call, cast, hasMet, here, isAt, talk } from '@ifloom/plugin-cast'
-import { debug, debugGo, debugScene, debugItem, debugKv, debugStat, debugTime, debugTurn } from '@ifloom/plugin-debug'
+import { debug, debugGo, debugScene, debugHeld, debugKv, debugStat, debugTime, debugTurn } from '@ifloom/plugin-debug'
 import { appOpen, closeApp, devices, openApp } from '@ifloom/plugin-devices'
 import { applyStatus, removeStatus, statusActive, statuses } from '@ifloom/plugin-statuses'
 import { feed, hasPosted, postTo, react, seeFeed } from '@ifloom/plugin-feed'
@@ -25,7 +25,7 @@ import { dropThing, giveThing, inventory, useThing } from '@ifloom/plugin-invent
  * effect and command, the core's and the first-party plugins', names its
  * fields by one rule.
  *
- * - An effect's or condition's target is named by its noun (`stat`, `item`,
+ * - An effect's or condition's target is named by its noun (`stat`,
  *   `entity`, `storyline`, `scene`); the kv stores keep `key`.
  * - `by` changes a number and `to` sets a value. Never `value`, `add`,
  *   `amount`, `delta` or `set`.
@@ -44,11 +44,9 @@ const BANNED = ['value', 'add', 'amount', 'delta', 'set', 'increment', 'change']
 /** Targets: the nouns a condition or an effect names what it works on by. */
 const TARGETS = [
   'stat',
-  'item',
   'entity',
   'storyline',
   'scene',
-  'collection',
   'minigame',
   'channel',
   'track',
@@ -96,7 +94,6 @@ const DETAILS = [
   // how long a transition takes
   'ms',
   // what is made or drawn
-  'entry',
   'effects',
   'from',
   'otherwise',
@@ -158,7 +155,7 @@ const SAMPLES: Record<string, Call> = {
   'commands:cast/call': call('ava'),
   'commands:debug/stat': debugStat('coins', 5),
   'commands:debug/kv': debugKv('met', true),
-  'commands:debug/item': debugItem('scarf', 1),
+  'commands:debug/held': debugHeld('clothing:scarf', 1),
   'commands:debug/scene': debugScene('intro'),
   'commands:debug/time': debugTime({ day: 2, period: 'morning' }),
   'commands:debug/turn': debugTurn(3),

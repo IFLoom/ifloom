@@ -84,7 +84,7 @@ const settings = [
 ]
 
 function baseOf() {
-  const { scenes: _s, items: _i, storylines: _t, activities: _a, stats: _st, introScene: _in, actions: _ac, ...base } = fixture()
+  const { scenes: _s, storylines: _t, activities: _a, stats: _st, introScene: _in, actions: _ac, ...base } = fixture()
   return { ...base, settings }
 }
 

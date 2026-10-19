@@ -13,7 +13,7 @@ import { problemTarget } from '../lib/references'
 
 afterEach(cleanup)
 
-const names = { scenes: ['market', 'home'], stats: ['coins'], items: ['bun'], kv: ['met'], choices: ['market#buy'], sets: ['market'] }
+const names = { scenes: ['market', 'home'], stats: ['coins'], things: ['item:bun'], kv: ['met'], choices: ['market#buy'], sets: ['market'] }
 
 describe('the condition builder', () => {
   it('switches kind and edits the fields of the new one', () => {
@@ -113,7 +113,7 @@ describe('the scene form', () => {
     fireEvent.change(within(card).getByLabelText('Amount'), { target: { value: '4' } })
     expect(latest.pack.scenes[0].choices[0].effects).toEqual([
       { kind: 'stat', stat: 'coins', by: -4 },
-      { kind: 'item', item: 'bun', by: 1 },
+      { kind: 'entity', entity: 'item:bun', by: 1 },
     ])
   })
 

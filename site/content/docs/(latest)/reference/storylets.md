@@ -44,7 +44,7 @@ Any scene can be a storylet, a [data scene](/docs/reference/scenes#datascene) or
 { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
 ```
 
-This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or an item's use. When it runs, it:
+This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or a thing's use. When it runs, it:
 
 1. Finds the eligible scenes: the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds.
 2. Draws one of them by weight, with [`weighted`](/docs/reference/random#weighted).
@@ -224,7 +224,7 @@ The [content checker](/docs/reference/checks) reports:
 
 A storylet's `when` is checked like [any other condition](/docs/reference/checks#in-a-condition), for unknown stats, scenes and so on.
 
-The effect is checked wherever it is, in item uses and activities too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
+The effect is checked wherever it is, in activities and triggers too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
 
 ## See it in an example
 

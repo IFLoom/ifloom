@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 15, each in the
+ * A save of every format version the engine has had, 1 to 16, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -12,7 +12,11 @@ import type { Game } from '../../src/game.ts'
  * older checkout of the engine.
  */
 
-/** The game the saves load into: grown since they were made, by a storyline, an item, an entity and a setting. */
+/**
+ * The game the saves load into: grown since they were made, by a storyline, a
+ * thing, an entity and a setting. Its items were things of an `item` kind
+ * from version 16, and its gallery's entries `photo` things.
+ */
 export function oldSavesGame(extra: Partial<Game> = {}): Game {
   return {
     id: 'old-saves',
@@ -25,19 +29,21 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
       { id: 'patience', label: 'Patience', start: 7 },
       { id: 'skill', label: 'Skill', of: 'staff', start: 1 },
     ],
-    items: [
-      { id: 'umbrella', name: 'Umbrella', desc: 'Blue.', start: 1 },
-      { id: 'apple', name: 'Apple', desc: 'Red.', start: 2 },
-    ],
     scenes: [{ id: 'start', render: () => ({ choices: [] }) }],
     storylines: [
       { id: 'rosa', name: 'Rosa' },
       { id: 'ben', name: 'Ben' },
     ],
-    kinds: [{ id: 'staff', label: 'Staff' }],
+    kinds: [
+      { id: 'staff', label: 'Staff' },
+      { id: 'item', label: 'Item', listed: false },
+      { id: 'photo', label: 'Photo', listed: false },
+    ],
     entities: [
       { id: 'ana', of: 'staff', name: 'Ana' },
       { id: 'cleo', of: 'staff', name: 'Cleo' },
+      { id: 'umbrella', of: 'item', name: 'Umbrella', desc: 'Blue.', at: 'player' },
+      { id: 'apple', of: 'item', name: 'Apple', desc: 'Red.', at: { player: 2 } },
     ],
     settings: [{ id: 'hints', label: 'Hints', kind: 'toggle', default: true }],
     rules: { resets: { tidied: false } },
@@ -138,6 +144,15 @@ const v14 = { ...v13, version: 14, chosen: { 'start#go': 1 } }
 // An entity's record keeps only what play changed: Ana's skill, and Dev, hired in play, with the name he was given.
 const v15 = { ...v14, version: 15, entities: { staff: { ana: { stats: { skill: 4 } }, '#1': { name: 'Dev', stats: { skill: 2 } } } }, created: { staff: 1 } }
 
+// Items and collections are things: the umbrella's 0 is the player's, and the gallery's house a photo they hold.
+const { items: _items, collections: _collections, ...thingless } = v15
+const v16 = {
+  ...thingless,
+  version: 16,
+  entities: { ...v15.entities, photo: { house: { name: 'The house', image: 'photo/house.jpg' } } },
+  held: { player: { 'item:umbrella': 0, 'photo:house': 1 } },
+}
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -155,4 +170,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   13: v13,
   14: v14,
   15: v15,
+  16: v16,
 }

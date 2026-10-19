@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { apply, startingState, view, whyNot, type Game, type GameState, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places, where } from '@ifloom/plugin-places'
-import { debug, debugGo, debugScene, debugItem, debugStat, debugTime, debugTurn, debugKv, type DebugView } from '../src/index.ts'
+import { debug, debugGo, debugScene, debugHeld, debugStat, debugTime, debugTurn, debugKv, type DebugView } from '../src/index.ts'
 
 const clock = calendar()
 
@@ -20,7 +20,8 @@ function game(): Game {
         ],
       },
     },
-    items: [{ id: 'key', name: 'key', desc: '' }],
+    kinds: [{ id: 'thing', label: 'Thing' }],
+    entities: [{ id: 'key', of: 'thing', name: 'key' }],
     scenes: [
       { id: 'intro', body: [], choices: [] },
       { id: 'ending', body: [], choices: [] },
@@ -48,7 +49,7 @@ describe('the debugger', () => {
       g,
       debugStat('luck', 50),
       debugKv('metAva', true),
-      debugItem('key', 2),
+      debugHeld('thing:key', 2),
       debugTime({ day: 6, period: 'evening' }),
       debugTurn(9),
       debugGo('island'),
@@ -57,7 +58,7 @@ describe('the debugger', () => {
     expect(state).toMatchObject({
       stats: { luck: 10 },
       kv: { metAva: true },
-      items: { key: 2 },
+      held: { player: { 'thing:key': 2 } },
       turn: 9,
       sceneId: 'ending',
     })
@@ -84,7 +85,9 @@ describe('the debugger', () => {
     expect(whyNot(state, g, debugStat('luck', 1, 'character:nobody'))).toBe('There is nobody and nothing called character:nobody.')
     const withAva = { ...state, entities: { character: { ava: { name: 'Ava', stats: {}, kv: {} } } } }
     expect(whyNot(withAva, g, debugStat('luck', 1, 'character:ava'))).toBe('That is not whose luck it is.')
-    expect(whyNot(state, g, debugItem('key', NaN))).toBe('That needs a number.')
+    expect(whyNot(state, g, debugHeld('thing:key', NaN))).toBe('That needs a number.')
+    expect(whyNot(state, g, debugHeld('thing:lock', 1))).toBe('There is nobody and nothing called thing:lock.')
+    expect(whyNot(state, g, debugHeld('thing:key', 1, 'thing:key'))).toBe('thing:key can’t hold things.')
   })
 
   it('shows the locks that are on, and the seed', () => {

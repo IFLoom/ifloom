@@ -542,16 +542,16 @@
 }
 
 [data-part="good-desc"],
-[data-part="item-text"] {
+[data-part="thing-text"] {
   font-style: italic;
 }
 
-[data-part="item"] {
+[data-part="thing"] {
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border);
 }
 
-[data-part="item-drop"],
+[data-part="thing-drop"],
 [data-part="wardrobe-slot-name"] {
   font-variant: small-caps;
   letter-spacing: 0.04em;

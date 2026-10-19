@@ -49,7 +49,7 @@ function game(strings: Record<string, string> = {}): Game {
       title: 'Small Town',
       introScene: 'intro',
       plugins: [calendar(), places({ start: 'house' }), ...kit.plugins, quests(), debug()],
-      collections: kit.collections,
+      kinds: kit.kinds,
       data: kit.data,
       actions: [
         { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },

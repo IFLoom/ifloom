@@ -2,7 +2,7 @@
 title: "Commands"
 description: "apply, dispatch and startingState, every command the player can send, and what each one refuses with."
 ---
-A command is one thing the player does, such as picking a choice, using an item or starting an activity. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
+A command is one thing the player does, such as picking a choice, starting an activity or a plugin's own, such as using a thing in the inventory. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
 
 ```ts
 import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
@@ -91,7 +91,7 @@ Returns a new game at turn 0, with `introScene` open and counted as seen. Every 
 - Each [plugin](/docs/reference/plugins)'s state is its `start`. For example, where the player stands is the [places plugin](/docs/plugins/places#placesoptions)'s `start` option.
 - The phase is `game.startPhase`, or `''`.
 - Every declared storyline is empty.
-- Each item is held `start` times, or not at all if it gives no `start`. `itemStart(item)` gives that number for one item.
+- Nothing is held yet in [`held`](/docs/reference/state#held): each entity's `at` says where it starts, and is read until play changes it.
 - Each declared [stat](/docs/reference/stats) is at its `start`. The engine adds no stats of its own.
 - Each `play` [setting](/docs/reference/settings) is at the value given in `settings`, or its default.
 
@@ -130,7 +130,6 @@ type Command =
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
-  | { type: 'use'; id: string }
   | { type: 'dismiss'; id?: string }
   | { type: 'input'; id: string; to?: KvValue }
   | { type: 'setting'; id: string; to: KvValue }
@@ -201,16 +200,6 @@ If the open scene's id no longer exists in the game, `choose` closes it instead 
 ### leave
 
 Closes the scene on screen. It's never refused by the engine, even with no scene open, though a lock can stop it.
-
-### use
-
-```ts
-{ type: 'use', id: 'umbrella' }
-```
-
-Uses one of the item `id`. It spends one, then runs the item's `use.effects`.
-
-It's refused with `There is no such thing.` for an unknown item, `The <name> does not do anything.` for an item with no `use`, and `You have no <name>.` when the player has none.
 
 ### dismiss
 

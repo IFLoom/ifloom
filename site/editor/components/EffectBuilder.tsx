@@ -99,10 +99,10 @@ export function EffectBuilder({
         </>
       )
       break
-    case 'item':
+    case 'entity':
       fields = (
         <>
-          <IdPicker noun="item" aria-label="Item" value={e.item} options={names.items} onChange={(item) => set({ item })} onCreate={create('item')} />
+          <IdPicker noun="thing" aria-label="Thing" value={e.entity} options={names.things} onChange={(entity) => set({ entity })} onCreate={create('thing')} />
           <span className="text-xs text-fd-muted-foreground">by</span>
           <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
         </>

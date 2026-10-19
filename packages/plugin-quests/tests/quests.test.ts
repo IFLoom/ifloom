@@ -126,14 +126,14 @@ describe('quests', () => {
       storyline: 'nobody',
       starts: { custom: 'quests/nope' },
       stages: [
-        { id: 'a', hint: '', done: { item: 'moonstone' } },
+        { id: 'a', hint: '', done: { entity: 'thing:moonstone', at: 'you' } },
         { id: 'a', hint: '', done: { kv: 'x' } },
       ],
     }
     const loaded = loadGame([{ name: 'mod', data: { quests: { quests: [broken] } } }], { id: 'g', title: 'g', plugins: [plugin] })
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'quests broken', what: 'unknown storyline "nobody"' },
-      { pack: 'mod', where: 'quests broken', what: 'stage a: unknown item "moonstone"' },
+      { pack: 'mod', where: 'quests broken', what: 'stage a: unknown kind "thing"' },
       { pack: 'mod', where: 'quests broken', what: 'starts: no custom condition named "quests/nope"' },
       { pack: 'mod', where: 'quests broken', what: 'two stages are called "a"' },
     ])

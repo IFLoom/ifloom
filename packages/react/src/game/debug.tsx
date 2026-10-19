@@ -142,10 +142,10 @@ function DebugCardImpl({ className }: { className?: string }) {
         <TabsContent value="set" {...setSection}>
           <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
           <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug('kv', { key, to: parse(to) })} />
-          <CommandForm label={words('debugItem')} fields={['item', 'count']} build={([item, count]) => debug('item', { item, count: num(count) })} />
+          <CommandForm label={words('debugHeld')} fields={['entity', 'count']} build={([entity, count]) => debug('held', { entity, to: num(count) })} />
           <CommandForm label={words('debugStatOf')} fields={['stat', 'of', 'value']} build={([stat, of, to]) => debug('stat', { stat, of, to: num(to) })} />
-          {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug('go', { location })} /> : null}
-          <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug('scene', { scene: scene || undefined })} />
+          {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug('go', { id: location })} /> : null}
+          <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug('scene', { id: scene || undefined })} />
           {view.plugins.calendar ? (
             <CommandForm
               label={words('debugTime')}
@@ -153,7 +153,7 @@ function DebugCardImpl({ className }: { className?: string }) {
               build={([day, period]) => debug('time', { day: day === '' ? undefined : num(day), period: period || undefined })}
             />
           ) : null}
-          <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug('turn', { turn: num(turn) })} />
+          <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug('turn', { to: num(turn) })} />
           <button type="button" {...closeScene} onClick={() => data.run('scene')}>
             {words('closeScene')}
           </button>

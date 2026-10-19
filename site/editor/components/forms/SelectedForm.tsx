@@ -1,12 +1,12 @@
 'use client'
 /** The form for what the outline has selected. */
 import { useEffect } from 'react'
-import { PLUGINS, PLUGIN_IDS, THEMES, slug } from '../../lib/model'
+import { PLUGINS, PLUGIN_IDS, THEMES, slug, thingRef } from '../../lib/model'
 import { rename, walkPack } from '../../lib/references'
 import { useEditor } from '../context'
 import { Checkbox, Field, IdPicker, JsonField, Section, Select, TextInput } from '../ui'
 import { IdHeader, InlineProblems } from './common'
-import { ItemFields, StatFields } from './DefFields'
+import { StatFields, ThingFields } from './DefFields'
 import { SceneForm } from './SceneForm'
 
 export function SelectedForm() {
@@ -25,8 +25,8 @@ export function SelectedForm() {
       return <SceneForm key={key} id={selection.id} />
     case 'stat':
       return <StatForm key={key} id={selection.id} />
-    case 'item':
-      return <ItemForm key={key} id={selection.id} />
+    case 'thing':
+      return <ThingForm key={key} id={selection.id} />
     case 'kv':
       return <KvForm key={key} id={selection.id} />
   }
@@ -68,29 +68,30 @@ function StatForm({ id }: { id: string }) {
   )
 }
 
-function ItemForm({ id }: { id: string }) {
+function ThingForm({ id }: { id: string }) {
   const { project, update, replace, select, names, create } = useEditor()
-  const index = project.pack.items.findIndex((i) => i.id === id)
-  const item = project.pack.items[index]
-  if (!item) return <Missing noun="item" id={id} />
+  const index = project.pack.entities.findIndex((entity) => `${entity.of}:${entity.id}` === id)
+  const thing = project.pack.entities[index]
+  if (!thing) return <Missing noun="thing" id={id} />
   return (
     <div className="flex flex-col gap-3">
       <IdHeader
-        noun="item"
-        id={item.id}
-        taken={names.items}
-        onRename={(to) => {
-          replace(rename(project, 'item', item.id, to))
-          select({ thing: 'item', id: to })
+        noun="thing"
+        id={id}
+        taken={names.things}
+        onRename={(given) => {
+          const to = thingRef(given)
+          replace(rename(project, 'thing', id, to))
+          select({ thing: 'thing', id: to })
         }}
         onDelete={() => {
-          update((draft) => void draft.pack.items.splice(index, 1))
+          update((draft) => void draft.pack.entities.splice(index, 1))
           select({ thing: 'project' })
         }}
       />
-      <InlineProblems thing="item" id={item.id} />
-      <Section title="Item">
-        <ItemFields names={names} onCreate={create} value={item} onChange={(next) => update((draft) => void (draft.pack.items[index] = next))} />
+      <InlineProblems thing="thing" id={id} />
+      <Section title="Thing">
+        <ThingFields names={names} onCreate={create} value={thing} onChange={(next) => update((draft) => void (draft.pack.entities[index] = next))} />
       </Section>
     </div>
   )
@@ -104,7 +105,7 @@ function KvForm({ id }: { id: string }) {
   // Where the pack reads or sets it.
   const uses: string[] = []
   for (const scene of project.pack.scenes) {
-    const single = { ...project.pack, scenes: [scene], stats: [], items: [] }
+    const single = { ...project.pack, scenes: [scene], stats: [], entities: [] }
     let used = false
     walkPack(single, {
       condition: (c) => void (c.kv === id && (used = true)),

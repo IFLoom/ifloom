@@ -2,7 +2,7 @@
  * Small Town's own code: its rules, and the custom functions its content calls
  * by name. Everything else in the game is data, in `world/` and `story/`.
  */
-import { roll, type Custom, type GameRules } from '@ifloom/engine'
+import { artSrc, entityImage, heldBy, parseRef, PLAYER, roll, type Custom, type GameRules } from '@ifloom/engine'
 import { postTo, react } from '@ifloom/plugin-feed'
 import { at } from '@ifloom/plugin-places'
 
@@ -33,14 +33,15 @@ export const custom: Custom = {
   },
   effects: {
     // Post the newest photo, and roll how it does.
-    postLatest: (state) => {
-      const photos = state.collections.gallery ?? []
-      const latest = photos[photos.length - 1]
+    postLatest: (state, _args, { game }) => {
+      const photos = heldBy(state, game, PLAYER).filter(({ ref }) => parseRef(ref)?.kind === 'photo')
+      const latest = photos.at(-1)?.ref
       if (!latest) return []
-      const id = `post.${latest.id}`
+      const image = entityImage(state, game, latest)
+      const id = `post.photo.${parseRef(latest)!.id}`
       const likes = 2 + roll(10, state.seed, state.turn, 'likes') + (state.stats.charm ?? 0)
       return [
-        postTo('social', id, { text: 'post.photo', image: latest.image }),
+        postTo('social', id, { text: 'post.photo', ...(image ? { image: artSrc(image) } : {}) }),
         { kind: 'stat', stat: 'charm', by: 1 },
         react(id, { likes, from: 'ava', text: 'comment.nice' }),
       ]

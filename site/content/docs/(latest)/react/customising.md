@@ -174,7 +174,7 @@ Some parts carry a second attribute that says more:
 | `data-reveal` | Every `reveal` | How its beats come in. |
 | `data-revealed` | The `scene` | Present once the player has shown every reveal at once. |
 
-The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-item`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
+The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-thing`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
 ### Why your CSS wins
 
@@ -667,11 +667,11 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `quest-done` | One finished quest. |
 | `inventory` | What the player carries. |
 | `inventory-title` | Its heading. |
-| `item` | One thing you hold, carrying `data-thing` and `data-at`, or an older item, carrying `data-item`. |
-| `item-name` | Its name. |
-| `item-count` | How many, when there's more than one. |
-| `item-text` | Its description. |
-| `item-drop` | Its drop button, with `drop` on. |
+| `thing` | One thing you hold, carrying `data-thing` and `data-at`. |
+| `thing-name` | Its name. |
+| `thing-count` | How many, when there's more than one. |
+| `thing-text` | Its description. |
+| `thing-drop` | Its drop button, with `drop` on. |
 | `wardrobe` | The wardrobe card. |
 | `wardrobe-title` | Its heading. |
 | `wardrobe-slot` | One slot. Carries `data-slot-id`, and `data-worn` with what's in it. |

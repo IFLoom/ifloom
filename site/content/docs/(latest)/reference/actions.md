@@ -130,7 +130,7 @@ A `blocked` entry written the other way round: refused with `reason` unless `whe
 ```ts
 import { need } from '@ifloom/engine'
 
-blocked: [need('You need a scarf for this.', { item: 'scarf' })]
+blocked: [need('You need a scarf for this.', { entity: 'clothing:scarf', at: 'you' })]
 ```
 
 For a test worked out from several values, use a [custom condition](/docs/reference/custom#conditions): `{ when: { custom: 'marketDay' }, reason: 'Not on market day.' }`.
@@ -262,7 +262,7 @@ A `blocked` entry that holds takes the place of `whyNot`'s line. Use it sparingl
 function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined
 ```
 
-Why the player can't do this right now, or `undefined` if they can. It answers for every command: activities, choices, items, inputs and plugin commands such as the [cast](/docs/plugins/cast#commands)'s talking and calling. The reducer refuses with this line and the view greys buttons out with it, so the two can't disagree, and every refusal is a sentence a UI can show as it is.
+Why the player can't do this right now, or `undefined` if they can. It answers for every command: activities, choices, inputs and plugin commands such as the [cast](/docs/plugins/cast#commands)'s talking and calling. The reducer refuses with this line and the view greys buttons out with it, so the two can't disagree, and every refusal is a sentence a UI can show as it is.
 
 It checks in this order:
 
@@ -317,11 +317,10 @@ What a command would apply, worked out before it runs, as plain [effects](/docs/
 |---|---|
 | `activity` | First its cost, as a `stat` effect of minus the amount for each stat in `cost.stats`, then its `effects`, with the game's custom ones worked out against `state`. |
 | `choose` | The effects of that choice in the open scene, as it renders now. |
-| `use` | The item down by one, then the item's `use` effects. |
 | `custom` | The plugin command's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), or none if it has none. |
 | anything else | None. |
 
-An unknown activity, choice or item, or an item with no `use`, gives none.
+An unknown activity or choice gives none.
 
 ```ts
 import { effectsOf } from '@ifloom/engine'

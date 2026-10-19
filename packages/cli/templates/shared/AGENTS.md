@@ -15,7 +15,7 @@ for coding agents working on the game.
 - `src/game.ts` only assembles the game: `loadGame([...content], { ... })`,
   with the plugins and rules. Content doesn't go here.
 - `src/world/` holds what the whole game shares, one file per kind:
-  `stats.ts`, `items.ts`, `cast.ts` for the people, `settings.ts` for what the
+  `stats.ts`, `things.ts`, `cast.ts` for the people, `settings.ts` for what the
   player can change. Each file exports a `Content` object.
 - `src/story/` holds the story, one file per area: a place, a chapter or a
   character's arc. Each exports a `Content` object with that area's scenes,

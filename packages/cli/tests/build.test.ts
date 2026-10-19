@@ -69,7 +69,6 @@ describe('checkGame', () => {
       id: 'town',
       title: 'Town',
       activities: [],
-      items: [],
       storylines: [],
       scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }],
     }

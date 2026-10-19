@@ -4,20 +4,20 @@
  * each showing the TypeScript it makes, to copy into a game.
  */
 import { useState } from 'react'
-import type { Condition, EffectRef, ItemDef, SettingDef, StatDef } from '@ifloom/engine'
+import type { Condition, EffectRef, EntityDef, SettingDef, StatDef } from '@ifloom/engine'
 import { SNIPPET_DEFAULTS, compact, snippet } from '../lib/builders'
 import { MARKUP_FIELDS, MARKUP_KINDS, MARKUP_LABELS, markup, type MarkupKind } from '../lib/markup'
 import { ConditionBuilder } from './ConditionBuilder'
 import { EffectList } from './EffectBuilder'
-import { ItemFields, SettingFields, StatFields } from './forms/DefFields'
+import { SettingFields, StatFields, ThingFields } from './forms/DefFields'
 import { Beats } from './ProseField'
 import { CodeOut, Field, Select, TextInput, cx } from './ui'
 
 const TOOLS = [
   { id: 'condition', title: 'Condition', blurb: 'A condition for a choice’s when, a blocked reason, a block or a storylet.' },
-  { id: 'effects', title: 'Effects', blurb: 'A list of effects for a choice or an item’s use, run in order.' },
+  { id: 'effects', title: 'Effects', blurb: 'A list of effects for a choice or a thing’s use, run in order.' },
   { id: 'stat', title: 'Stat', blurb: 'A StatDef for a pack’s stats or a game’s.' },
-  { id: 'item', title: 'Item', blurb: 'An ItemDef for a pack’s items.' },
+  { id: 'thing', title: 'Thing', blurb: 'An EntityDef for a pack’s entities: a thing the player can hold.' },
   { id: 'setting', title: 'Setting', blurb: 'A SettingDef for a game’s settings screen.' },
   { id: 'markup', title: 'Prose markup', blurb: 'Pictures, video, sound, voice, speaker lines, thoughts, pool pictures and reveals, for a prose key.' },
 ] as const
@@ -27,7 +27,7 @@ type Tool = (typeof TOOLS)[number]['id']
 const NAMES = {
   scenes: ['cafe.counter', 'street', 'home'],
   stats: ['coins', 'charm', 'energy'],
-  items: ['umbrella', 'key'],
+  things: ['item:umbrella', 'item:key'],
   kv: ['metAva', 'visits'],
   choices: ['cafe.counter#buy'],
   sets: ['cafe'],
@@ -64,7 +64,7 @@ export function Snippets() {
         {tool === 'condition' ? <ConditionTool /> : null}
         {tool === 'effects' ? <EffectsTool /> : null}
         {tool === 'stat' ? <StatTool /> : null}
-        {tool === 'item' ? <ItemTool /> : null}
+        {tool === 'thing' ? <ThingTool /> : null}
         {tool === 'setting' ? <SettingTool /> : null}
         {tool === 'markup' ? <MarkupTool /> : null}
       </section>
@@ -91,7 +91,7 @@ function ConditionTool() {
 function EffectsTool() {
   const [value, setValue] = useState<EffectRef[]>([
     { kind: 'stat', stat: 'coins', by: -4 },
-    { kind: 'item', item: 'umbrella', by: 1 },
+    { kind: 'entity', entity: 'item:umbrella', by: 1 },
     { kind: 'scene', scene: null },
   ])
   return <Split form={<EffectList value={value} names={NAMES} onChange={setValue} />} code={snippet(value)} />
@@ -102,9 +102,9 @@ function StatTool() {
   return <Split form={<StatFields withId value={value} names={NAMES} onChange={setValue} />} code={snippet(compact(value))} />
 }
 
-function ItemTool() {
-  const [value, setValue] = useState<ItemDef>(SNIPPET_DEFAULTS.item)
-  return <Split form={<ItemFields withId value={value} names={NAMES} onChange={setValue} />} code={snippet(compact(value))} />
+function ThingTool() {
+  const [value, setValue] = useState<EntityDef>(SNIPPET_DEFAULTS.thing)
+  return <Split form={<ThingFields withId value={value} names={NAMES} onChange={setValue} />} code={snippet(compact(value))} />
 }
 
 function SettingTool() {

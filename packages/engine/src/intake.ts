@@ -10,15 +10,14 @@ import { say } from './strings.ts'
 import type { Game } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
-import { choiceKey } from './upgrade.ts'
+import { choiceKey, collectionKind } from './upgrade.ts'
 import { hash } from './random.ts'
 import { featureContext } from './core.ts'
 import type { StateField } from './features/feature.ts'
+import { entityDef } from './entities.ts'
 import { carrySteps, featureFields, fillSteps, loadSteps, startSteps, type FeatureFill } from './features/registry.ts'
 
 export type { StartOptions } from './types.ts'
-
-export { itemStart } from './features/items.ts'
 
 /** One field of the state: what a new game has, and what a loaded state that lacks it gets. See `StateField`. */
 type Field<K extends keyof GameState> = StateField<GameState[K]>
@@ -85,9 +84,10 @@ const OLDEST = 1
  * which their load defaults in `FIELDS` fill.
  *
  * When the save format changes after release, bump `SAVE_VERSION`, and add the
- * step that reshapes the previous version in the same change.
+ * step that reshapes the previous version in the same change. A step is given
+ * the game too, for one that has to read its content.
  */
-const STEPS: Record<number, (state: Saved) => Saved> = {
+const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
   // 1 → 2: the player's name moves into flags (the kv store since 12), and choices start being remembered.
   1: ({ playerName, playerFirst, playerLast, ...state }) => ({
     ...state,
@@ -188,16 +188,59 @@ const STEPS: Record<number, (state: Saved) => Saved> = {
       ]),
     ),
   }),
+  // 15 → 16: items and collections leave the engine; both are things the player holds. An item's count
+  // is held by the player, the entity named after it (see `itemRef`), 0s kept. A collection's entries
+  // become things made in play of a kind named after the collection (the phone's `gallery` is `photo`
+  // things), held by the player: its title the name, its prose the description, its data the kv.
+  15: ({ items, collections, ...state }, game) => {
+    const player: Record<string, number> = { ...(state.held as Record<string, Record<string, number>> | undefined)?.player }
+    for (const [id, count] of Object.entries((items ?? {}) as Record<string, unknown>)) {
+      if (typeof count === 'number') player[itemRef(game, id)] = count
+    }
+    const entities = { ...(state.entities as Record<string, Record<string, Record<string, unknown>>> | undefined) }
+    for (const [collection, entries] of Object.entries((collections ?? {}) as Record<string, OldEntry[]>)) {
+      const kind = collectionKind(collection)
+      for (const entry of Array.isArray(entries) ? entries : []) {
+        if (typeof entry?.id !== 'string' || entities[kind]?.[entry.id]) continue
+        const desc = entry.text !== undefined ? game.prose?.line(entry.text) : undefined
+        const record: Record<string, unknown> = {
+          ...(entry.title !== undefined ? { name: entry.title } : {}),
+          ...(desc ? { desc } : {}),
+          ...(entry.image !== undefined ? { image: entry.image } : {}),
+          ...(entry.data && Object.keys(entry.data).length ? { kv: { ...entry.data } } : {}),
+        }
+        entities[kind] = { ...entities[kind], [entry.id]: record }
+        player[`${kind}:${entry.id}`] = 1
+      }
+    }
+    const held = { ...(state.held as Record<string, Record<string, number>> | undefined) }
+    if (Object.keys(player).length) held.player = player
+    return { ...state, entities, held }
+  },
+}
+
+/** A collection entry as saves before version 16 kept it. */
+type OldEntry = { id?: unknown; title?: string; text?: string; image?: string; data?: Record<string, unknown> }
+
+/**
+ * The entity an item became, by the item's id: the `item` kind's with that
+ * id, else the one entity the game declares with that id (a raincoat that is
+ * clothing now), else `item:<id>`, as a pack's items are upgraded.
+ */
+function itemRef(game: Game, id: string): string {
+  if (entityDef(game, `item:${id}`)) return `item:${id}`
+  const named = (game.entities ?? []).filter((entity) => entity.id === id)
+  return named.length === 1 ? `${named[0].of}:${id}` : `item:${id}`
 }
 
 /** The engine's steps, then each field's load default. Null when the save's version can't be read. */
-function carryEngine(data: Saved): GameState | null {
+function carryEngine(data: Saved, game: Game): GameState | null {
   let state = data
   let version = typeof state.version === 'number' ? state.version : 0
   if (!Number.isInteger(version) || version < OLDEST || version > SAVE_VERSION) return null
   while (version < SAVE_VERSION) {
     const step = STEPS[version]
-    if (step) state = step(state)
+    if (step) state = step(state, game)
     version += 1
   }
   let next = (state.version === SAVE_VERSION ? state : { ...state, version: SAVE_VERSION }) as Record<string, unknown>
@@ -249,7 +292,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 
 /**
  * What `MigrationTools.fill` can fill, each named by the feature that fills
- * it: the player's stats (start values), items (start counts), kv keys the
+ * it: the player's stats (start values), kv keys the
  * game resets each turn (`rules.resets`) and play settings (defaults).
  */
 export type FillKind = FeatureFill
@@ -318,7 +361,7 @@ function fillGame(state: GameState, game: Game): GameState {
  */
 export function loadState(raw: unknown, game: Game): Result<GameState> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(say(game, 'notASave'))
-  const engine = carryEngine(raw as Saved)
+  const engine = carryEngine(raw as Saved, game)
   if (!engine) return fail(say(game, 'saveTooOld'))
   const plugged = carryPlugins(engine, game)
   if (typeof plugged === 'string') return fail(plugged)

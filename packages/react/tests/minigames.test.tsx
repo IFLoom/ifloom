@@ -409,7 +409,7 @@ describe('the notice strip, with a phone', () => {
           data: { messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] } },
         },
       ],
-      { id: 'phone-test', title: 'Home', introScene: 'intro', plugins: [...kit.plugins], collections: kit.collections, data: kit.data },
+      { id: 'phone-test', title: 'Home', introScene: 'intro', plugins: [...kit.plugins], kinds: kit.kinds, data: kit.data },
     )
     expect(problems).toEqual([])
     const runner = createRunner(g, startingState(g))

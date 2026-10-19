@@ -121,16 +121,16 @@ export function ConditionBuilder({
         </>
       )
       break
-    case 'item':
+    case 'entity':
       fields = (
         <>
           <IdPicker
-            noun="item"
-            aria-label="Item"
-            value={c.item as string}
-            options={names.items}
-            onChange={(id) => set({ item: id })}
-            onCreate={create('item')}
+            noun="thing"
+            aria-label="Thing"
+            value={c.entity as string}
+            options={names.things}
+            onChange={(id) => set({ entity: id })}
+            onCreate={create('thing')}
           />
           <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
         </>

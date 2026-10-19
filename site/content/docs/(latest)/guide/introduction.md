@@ -6,7 +6,7 @@ IFLoom is a TypeScript engine for interactive fiction. You can write a linear no
 
 ## Who it's for
 
-IFLoom is for people who write games in TypeScript and want the bookkeeping handled for them. The core keeps the turn, scenes and choices, stats, entities, a kv store, collections, storylines, triggers, notices, inputs, and saves that survive a game update. It also works out what the player can do right now, and why not.
+IFLoom is for people who write games in TypeScript and want the bookkeeping handled for them. The core keeps the turn, scenes and choices, stats, entities and what the player holds, a kv store, storylines, triggers, notices, inputs, and saves that survive a game update. It also works out what the player can do right now, and why not.
 
 Time of day, places and people aren't in the core. If your game needs them, the [calendar](/docs/plugins/calendar), [places](/docs/plugins/places) and [cast](/docs/plugins/cast) plugins add them. A linear novel needs none of them.
 

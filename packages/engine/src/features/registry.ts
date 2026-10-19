@@ -11,11 +11,9 @@ import type { CarryOver, Game } from '../game.ts'
 import type { GameState } from '../types.ts'
 import { activities, type ActivitiesShape } from './activities.ts'
 import { audio, type AudioShape } from './audio.ts'
-import { collections, type CollectionsShape } from './collections.ts'
 import { entities, type EntitiesShape } from './entities.ts'
 import { holdings, type HoldingsShape } from './holdings.ts'
 import { inputs, type InputsShape } from './inputs.ts'
-import { items, type ItemsShape } from './items.ts'
 import { locks } from './locks.ts'
 import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
@@ -39,9 +37,7 @@ type Shapes =
   | TurnsShape
   | KvShape
   | StorylinesShape
-  | CollectionsShape
   | NoticesShape
-  | ItemsShape
   | ActivitiesShape
   | TriggersShape
   | InputsShape
@@ -73,12 +69,10 @@ export const FEATURES = [
   turns,
   kv,
   storylines,
-  collections,
   notices,
   triggers,
   scenes,
   minigames,
-  items,
   activities,
   inputs,
   settings,

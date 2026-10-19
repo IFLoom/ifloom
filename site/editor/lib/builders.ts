@@ -8,7 +8,7 @@ import {
   type Blocked,
   type Condition,
   type EffectRef,
-  type ItemDef,
+  type EntityDef,
   type SettingDef,
   type StatDef,
   type Transition,
@@ -18,9 +18,10 @@ import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
 /** The ids the pickers offer. */
-export type Names = { scenes: string[]; stats: string[]; items: string[]; kv: string[]; choices: string[]; sets: string[] }
+/** The ids the pickers offer. `things` are entities, by reference: `item:bun`. */
+export type Names = { scenes: string[]; stats: string[]; things: string[]; kv: string[]; choices: string[]; sets: string[] }
 
-export const NO_NAMES: Names = { scenes: [], stats: [], items: [], kv: [], choices: [], sets: [] }
+export const NO_NAMES: Names = { scenes: [], stats: [], things: [], kv: [], choices: [], sets: [] }
 
 const isPluginCall = (value: object) => {
   const keys = Object.keys(value)
@@ -33,8 +34,9 @@ export function conditionForm(condition: Condition): ConditionForm {
   const keys = Object.keys(condition)
   const kind = (CONDITION_FORMS as readonly string[]).find((k) => k in condition) as ConditionForm | undefined
   if (!kind) return 'json'
-  // Only the keys a form shows: its kind, a range, and `is` for kv keys and settings.
-  const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'kv' || kind === 'setting' ? ['is'] : [])])
+  // Only the keys a form shows: its kind, a range, `is` for kv keys and settings, and what you hold for things.
+  const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'kv' || kind === 'setting' ? ['is'] : []), ...(kind === 'entity' ? ['at'] : [])])
+  if (kind === 'entity' && (condition as { at?: string }).at !== 'you') return 'json'
   if (kind === 'all' || kind === 'any' || kind === 'not') return keys.length === 1 ? kind : 'json'
   // A turn's range is its value: `{ turn: { gte: 3 } }`.
   if (kind === 'turn') {
@@ -59,8 +61,8 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
       return { stat: names.stats[0] ?? 'coins', gte: 1 }
     case 'kv':
       return { kv: names.kv[0] ?? 'met' }
-    case 'item':
-      return { item: names.items[0] ?? 'key', gte: 1 }
+    case 'entity':
+      return { entity: names.things[0] ?? 'item:key', at: 'you', gte: 1 }
     case 'chose':
       return { chose: names.choices[0] ?? 'start#go' }
     case 'seen':
@@ -145,8 +147,8 @@ export function effectForm(effect: EffectRef): EffectForm {
       return 'by' in effect ? 'kvBy' : 'kv'
     case 'scene':
       return 'from' in effect ? 'draw' : 'scene'
-    case 'item':
-      return 'by' in effect ? 'item' : 'json'
+    case 'entity':
+      return 'by' in effect && (effect.at === undefined || effect.at === 'you') ? 'entity' : 'json'
     case 'notify':
     case 'turn':
     case 'sound':
@@ -169,8 +171,8 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'kv', key: names.kv[0] ?? 'met', to: true }
     case 'kvBy':
       return { kind: 'kv', key: names.kv[0] ?? 'visits', by: 1 }
-    case 'item':
-      return { kind: 'item', item: names.items[0] ?? 'key', by: 1 }
+    case 'entity':
+      return { kind: 'entity', entity: names.things[0] ?? 'item:key', by: 1 }
     case 'scene':
       return { kind: 'scene', scene: names.scenes[0] ?? null }
     case 'draw':
@@ -219,10 +221,10 @@ export function snippet(value: unknown): string {
   return formatTs(value, { width: 80 })
 }
 
-/** A new stat, item or setting for the snippet forms. */
+/** A new stat, thing or setting for the snippet forms. */
 export const SNIPPET_DEFAULTS = {
   stat: { id: 'coins', label: 'Coins', start: 20, max: 9999, format: '{n}c', spendable: true } satisfies StatDef,
-  item: { id: 'umbrella', name: 'Umbrella', desc: 'A black umbrella with a bent spoke.', start: 1 } satisfies ItemDef,
+  thing: { id: 'umbrella', of: 'item', name: 'Umbrella', desc: 'A black umbrella with a bent spoke.', at: 'player' } satisfies EntityDef,
   setting: { id: 'hints', label: 'Show hints', kind: 'toggle', default: true } satisfies SettingDef,
 }
 

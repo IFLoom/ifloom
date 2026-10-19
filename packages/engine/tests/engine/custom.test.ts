@@ -115,8 +115,8 @@ describe('custom functions belong to their game', () => {
   })
 
   it("reports a key content can't hold, rather than dropping it quietly", () => {
-    const { scenes: _s, items, storylines, activities, stats, ...rest } = fixture()
-    const { problems } = loadGame([{ name: 'town', items, storylines, activities, stats, actions: [] } as never], rest)
+    const { scenes: _s, storylines, activities, stats, ...rest } = fixture()
+    const { problems } = loadGame([{ name: 'town', storylines, activities, stats, actions: [] } as never], rest)
     expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain(
       'town · content · content has no "actions", so it was left out',
     )
@@ -130,8 +130,8 @@ describe('custom functions belong to their game', () => {
 
   it('keeps the base game’s functions when content is loaded over it', () => {
     const base = { ...fixture(), custom: { conditions: { fine: () => true } } }
-    const { scenes: _s, items, storylines, activities, stats, ...rest } = base
-    const { game } = loadGame([{ name: 'town', items, storylines, activities, stats }], rest)
+    const { scenes: _s, storylines, activities, stats, ...rest } = base
+    const { game } = loadGame([{ name: 'town', storylines, activities, stats }], rest)
     expect(holds(begin(game), { custom: 'fine' }, game)).toBe(true)
   })
 

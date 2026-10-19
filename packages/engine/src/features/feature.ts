@@ -1,7 +1,7 @@
 /**
  * What a core feature declares, and what the core lends it.
  *
- * A core feature (scenes, stats, items, entities, triggers and the rest; see
+ * A core feature (scenes, stats, entities, holdings, triggers and the rest; see
  * `FEATURES` in `registry.ts`) is a module that declares everything it adds in
  * one place: its slice of the state, its kinds of condition, effect and
  * command, its pack key, its checks and the references it resolves, its
@@ -11,7 +11,7 @@
  *
  * A feature is a leaf. It imports types, other features, and at runtime only
  * modules that import nothing back (strings, entities, holdings, notices, storylines,
- * collections, context, the scene body). What it needs from the core,
+ * context, the scene body). What it needs from the core,
  * such as `holds` or `runEffects`, comes in a `FeatureContext` argument, as a
  * plugin's context does. That keeps the registry free of import cycles. Core
  * features aren't plugins: see ADR 0007.

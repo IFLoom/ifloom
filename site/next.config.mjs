@@ -17,6 +17,8 @@ const MOVED = {
   // The browser packages left the engine's reference.
   'reference/browser': 'browser',
   'reference/audio-player': 'browser/audio-player',
+  // Collections became things the player holds, entities like any other.
+  'reference/collections': 'reference/entities',
 }
 
 /**

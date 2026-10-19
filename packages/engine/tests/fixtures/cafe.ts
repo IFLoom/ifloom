@@ -44,11 +44,10 @@ export const cafe: Content = {
 /** The town with the café loaded over it. */
 export function withCafe(): Loaded {
   const town = fixture()
-  const { scenes, items, storylines, activities, stats, custom, ...base } = town
+  const { scenes, storylines, activities, stats, custom, ...base } = town
   const townPack: Content = {
     name: 'town',
     scenes,
-    items,
     storylines,
     activities,
     stats,

@@ -676,12 +676,12 @@ body {
   image-rendering: pixelated;
 }
 
-[data-part="item-name"]::before {
+[data-part="thing-name"]::before {
   content: "- ";
   color: var(--muted-foreground);
 }
 
-[data-part="item-drop"] {
+[data-part="thing-drop"] {
   text-transform: uppercase;
 }
 

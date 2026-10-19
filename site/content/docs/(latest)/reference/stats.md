@@ -35,8 +35,8 @@ type StatDef = {
   visible?: Condition
   listed?: boolean
   spendable?: boolean
-  lacking?: string
-  format?: string
+  lacking?: StatWords
+  format?: StatWords
   derive?: Formula
   levels?: StatLevels
   display?: StatDisplay
@@ -58,8 +58,8 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
-| `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. See [`lackingLine`](#lackingline). |
-| `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. The view's `text` and prices use it. |
+| `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. Like `format`, it can be a line for 1 and one for any other amount. See [`lackingLine`](#lackingline). |
+| `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. For words that change with the number, give one for 1 and one for the rest: `{ one: '{n} coin', other: '{n} coins' }`. The view's `text` and prices use it. See [`StatWords`](#statwords). |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows, shown to the player or hidden. See [`StatLevels`](#statlevels). |
 | `display` | `'number'` | How a UI should draw it: `'number'`, `'bar'` from `min` to `max`, or `'pips'`, one per point. It's passed through to [`StatView.display`](/docs/reference/view#statview) with the range, and the engine gives it no other meaning. The checker reports pips on a stat whose range is more than 20, counting a `max` left out as 100. |
@@ -236,6 +236,28 @@ import { formatStat, statDef } from '@ifloom/engine'
 
 formatStat(statDef(game, 'coins'), 12) // '12c'
 ```
+
+## StatWords
+
+```ts
+type StatWords = string | { one: string; other: string }
+```
+
+A stat's `format` or `lacking`. A string is used for every number. With `one` and `other`, `one` is used when the number is exactly 1 and `other` for any other, 0 included, so a price reads "1 coin" and "4 coins":
+
+```ts
+import type { StatDef } from '@ifloom/engine'
+
+const coins: StatDef = {
+  id: 'coins',
+  label: 'Coins',
+  spendable: true,
+  format: { one: '{n} coin', other: '{n} coins' },
+  lacking: { one: 'You need {n} coin.', other: 'You need {n} coins.' },
+}
+```
+
+**Gotcha.** It's English's rule for one and many. A language with more forms than that needs a format that reads the same for every number, such as `'£{n}'`, or a [custom value](/docs/reference/custom#values) of its own.
 
 ## Derived stats
 

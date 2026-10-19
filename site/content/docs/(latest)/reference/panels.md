@@ -1,10 +1,10 @@
 ---
 title: "Panels"
-description: "Open a named panel over the story, such as a shop's counter or a job board, from any action, choice or item, and draw it by name."
+description: "Open a named panel over the story, such as a shop's counter or a job board, from any action, choice or thing you use, and draw it by name."
 ---
 A panel is a piece of UI that content opens over the story by name: a shop's counter, a job board, the wardrobe. The engine keeps which panel is open and what it was opened with. The UI decides what each name draws.
 
-Nothing opens a panel by itself. Content opens one with the [`panel` effect](/docs/reference/effects#panel), so a place's action, a person's scene, an item's `use`, an app's button, a choice or an inline `[[act:]]` link can each open one. Because it's an effect, saves and replays open it exactly as play did.
+Nothing opens a panel by itself. Content opens one with the [`panel` effect](/docs/reference/effects#panel), so a place's action, a person's scene, a thing's use in the [inventory](/docs/plugins/inventory), an app's button, a choice or an inline `[[act:]]` link can each open one. Because it's an effect, saves and replays open it exactly as play did.
 
 ```ts
 import type { OpenPanel } from '@ifloom/engine'
@@ -19,19 +19,23 @@ import type { Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 import { openShop } from '@ifloom/plugin-shop'
 import { openJobs } from '@ifloom/plugin-jobs'
+import { usable } from '@ifloom/plugin-inventory'
 
 export const town: Content = {
   activities: [
     // { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
     { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
   ],
-  items: [
+  kinds: [{ id: 'item', label: 'Thing', listed: false }],
+  entities: [
     {
       id: 'paper',
+      of: 'item',
       name: 'newspaper',
       desc: 'Today’s Small Town Gazette. The back page is job ads.',
-      // { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }
-      use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] },
+      at: 'player',
+      // { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }, and the paper is kept to read again.
+      traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) },
     },
   ],
   scenes: [
@@ -48,7 +52,7 @@ export const town: Content = {
 }
 ```
 
-The café's location then lists `{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }` among its actions. Using an item spends one, so the paper is gone once read. The counter sells another for 2 coins.
+The café's location then lists `{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }` among its actions. The paper is kept, so the player can read the ads again.
 
 ## OpenPanel
 
@@ -158,4 +162,4 @@ The [content checker](/docs/reference/checks#in-an-effect) allows any panel name
 
 ## See it in an example
 
-The showcase's café counter is in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts), Ava's choice in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and the newspaper in [`examples/showcase/src/world/items.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/items.ts), and [`examples/showcase/tests/shell.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/shell.test.tsx) opens each in the React UI.
+The showcase's café counter is in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts), Ava's choice in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and the newspaper in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts), and [`examples/showcase/tests/shell.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/shell.test.tsx) opens each in the React UI.

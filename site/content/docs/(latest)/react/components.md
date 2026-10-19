@@ -59,7 +59,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | `data-choice` | Each choice or action button. |
 | `data-exit`, `data-person` | Each exit, and each person here or met. |
 | `data-stat`, `data-kind`, `data-entity` | Each stat row, entity table and entity row. |
-| `data-item`, `data-slot-id` | Each item carried and each wardrobe slot. |
+| `data-thing`, `data-slot-id` | Each thing you hold (its reference) and each wardrobe slot. |
 | `data-input` | Each input field. |
 | `data-notice`, `data-quest` | Each notice and each active quest. |
 | `data-status` | Each active status. |
@@ -1051,11 +1051,9 @@ The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their 
 function Inventory(props: { className?: string; title?: string | false; drop?: boolean }): JSX.Element | null
 ```
 
-What the player carries. It lists the things you hold, from the [inventory](/docs/plugins/inventory) plugin's view when the game has it, else from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.itemCount`) when there's more than one, and its description. With the plugin, a thing that has a use gets a [`ChoiceButton`](#choicebutton) from its `use` button, such as "Eat the sandwich", greyed out with the reason when it can't be used now. With `drop`, each also gets a **Drop** button (`ui.drop`). Without the plugin there are no buttons.
+What the player carries. It lists the things you hold, from the [inventory](/docs/plugins/inventory) plugin's view when the game has it, else from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.heldCount`) when there's more than one, and its description. With the plugin, a thing that has a use gets a [`ChoiceButton`](#choicebutton) from its `use` button, such as "Eat the sandwich", greyed out with the reason when it can't be used now. With `drop`, each also gets a **Drop** button (`ui.drop`). Without the plugin there are no buttons.
 
-Items from the older [`items`](/docs/reference/game#itemdef) list (`view.pack`) come first, each with a button that sends [`use`](/docs/reference/commands#use) when it has a `use`.
-
-The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each thing carries `data-thing` (its reference) and `data-at` (who holds it), and each older item `data-item`. It draws nothing when the player carries nothing.
+The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each thing carries `data-thing` (its reference) and `data-at` (who holds it). It draws nothing when the player carries nothing.
 
 ```tsx
 import { Inventory } from '@ifloom/react'
@@ -1064,7 +1062,7 @@ import { Inventory } from '@ifloom/react'
 <Inventory className="border-t pt-4" />
 ```
 
-Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `item` (with `data-thing` or `data-item`), `item-name`, `item-count`, `item-text` and `item-drop`.
+Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `thing` (with `data-thing`), `thing-name`, `thing-count`, `thing-text` and `thing-drop`.
 
 ### useInventory
 
@@ -1096,7 +1094,7 @@ function Snacks() {
 function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearItem`, with the thing's name as `item`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
+The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearThing`, with the thing's name as `thing`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
 
 A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
 
@@ -1769,7 +1767,7 @@ A panel for the person testing the game, when the game has the [debug plugin](/d
 
 | Tab | What it has |
 |---|---|
-| **Set** | A form each for a stat, a kv key, an item, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
+| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
 | **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
 | **State** | The whole game state, as JSON. |
 | **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
@@ -2414,7 +2412,7 @@ type UiStringKey = keyof typeof UI_STRINGS
 
 The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/docs/react#words). `UiStringKey` is one of its keys.
 
-Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `itemCount` (`×{n}` after an item), `wearItem` (`Wear {item}`), `mailHeader` (`{key}: {value}` for a letter's headers), and the debug panel's form rows, `debugStat` to `debugTurn`.
+Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `heldCount` (`×{n}` after a thing you hold), `wearThing` (`Wear {thing}`), `mailHeader` (`{key}: {value}` for a letter's headers), and the debug panel's form rows, `debugStat` to `debugTurn`.
 
 ### uiSay
 

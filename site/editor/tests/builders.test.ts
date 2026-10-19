@@ -37,14 +37,15 @@ describe('the condition builder', () => {
   })
 
   it('makes conditions the checker accepts', () => {
-    const names = { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: ['a#go'], sets: [] }
+    const names = { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: ['a#go'], sets: [] }
     const conditions = CONDITION_FORMS.filter((f) => f !== 'setting').map((f) => newCondition(f, names))
     const { problems } = loadGame(
       [
         {
           name: 'p',
           stats: [{ id: 'coins', label: 'Coins', levels: { at: [5] } }],
-          items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
+          kinds: [{ id: 'item', label: 'Item' }],
+          entities: [{ id: 'key', of: 'item', name: 'Key', desc: 'A key.' }],
           scenes: [{ id: 'a', body: [{ text: 'a', when: { all: conditions } }], choices: [{ id: 'go', effects: [] }] }],
           prose: { a: 'A.', 'a#go': 'Go' },
         },
@@ -65,18 +66,18 @@ describe('the effect builder', () => {
   })
 
   it('reads and writes a cost', () => {
-    const effects = [{ kind: 'item', item: 'bun', by: 1 } as const, { kind: 'stat', stat: 'coins', by: -3 } as const]
+    const effects = [{ kind: 'entity', entity: 'item:bun', by: 1 } as const, { kind: 'stat', stat: 'coins', by: -3 } as const]
     expect(costOf(effects)).toEqual([{ stat: 'coins', amount: 3 }])
     expect(withCost(effects, [{ stat: 'coins', amount: 4 }])).toEqual([
       { kind: 'stat', stat: 'coins', by: -4 },
-      { kind: 'item', item: 'bun', by: 1 },
+      { kind: 'entity', entity: 'item:bun', by: 1 },
     ])
-    expect(withCost(effects, [])).toEqual([{ kind: 'item', item: 'bun', by: 1 }])
+    expect(withCost(effects, [])).toEqual([{ kind: 'entity', entity: 'item:bun', by: 1 }])
     expect(shortBlock({ id: 'coins', label: 'Coins' }, 'coins', 4)).toEqual({ when: { stat: 'coins', lt: 4 }, reason: 'You need 4 coins.' })
   })
 
   it('writes snippets as TypeScript', () => {
-    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], items: [], kv: [], choices: [], sets: [] }))).toBe(
+    expect(snippet(newEffect('stat', { scenes: [], stats: ['coins'], things: [], kv: [], choices: [], sets: [] }))).toBe(
       "{ kind: 'stat', stat: 'coins', by: 1 }",
     )
     expect(snippet({ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] })).toBe("{ all: [{ stat: 'coins', gte: 3 }, { kv: 'met' }] }")
@@ -88,7 +89,8 @@ describe('the effect builder', () => {
         {
           name: 'p',
           stats: [{ id: 'coins', label: 'Coins' }],
-          items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
+          kinds: [{ id: 'item', label: 'Item' }],
+          entities: [{ id: 'key', of: 'item', name: 'Key', desc: 'A key.' }],
           scenes: [
             {
               id: 'a',
@@ -97,9 +99,9 @@ describe('the effect builder', () => {
                 {
                   id: 'go',
                   effects: [
-                    newEffect('stat', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }),
-                    newEffect('item', { scenes: ['a'], stats: ['coins'], items: ['key'], kv: ['met'], choices: [], sets: [] }),
-                    newEffect('scene', { scenes: ['a'], stats: [], items: [], kv: [], choices: [], sets: [] }),
+                    newEffect('stat', { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: [], sets: [] }),
+                    newEffect('entity', { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: [], sets: [] }),
+                    newEffect('scene', { scenes: ['a'], stats: [], things: [], kv: [], choices: [], sets: [] }),
                   ],
                 },
               ],

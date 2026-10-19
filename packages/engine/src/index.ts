@@ -9,7 +9,6 @@
 export type {
   Game,
   GameRules,
-  ItemDef,
   ActionDef,
   Blocked,
   ProseStore,
@@ -23,9 +22,9 @@ export type {
   StorylineDef,
   StoryletFields,
 } from './game.ts'
-export { itemById, sceneById } from './game.ts'
+export { sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
-export type { Formula, StatDef, StatDisplay, StatLevels, StatRound } from './stats.ts'
+export type { Formula, StatDef, StatDisplay, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
 export type {
   CommandRef,
@@ -95,7 +94,7 @@ export type { Result } from './result.ts'
 export type { Applied } from './reduce.ts'
 export { apply, applyEffects, dispatch } from './reduce.ts'
 export type { FillKind, MigrationTools, StartOptions } from './intake.ts'
-export { itemStart, loadState, startingState } from './intake.ts'
+export { loadState, startingState } from './intake.ts'
 
 // Conditions, and why they hold
 export type { Condition, Range } from './condition.ts'
@@ -111,8 +110,7 @@ export { effectsOf, warningOf, whyNot } from './availability.ts'
 export type { Lock, LockTarget } from './locks.ts'
 export { lockOn, lockedBy, lockedOut } from './locks.ts'
 
-// Collections, notices, triggers and input
-export type { CollectionDef, CollectionEntry, CollectionItem } from './collections.ts'
+// Entities, holdings, notices, triggers and input
 export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitDef, Traits, TraitTable, TraitTools } from './entities.ts'
 export {
   PLAYER,
@@ -141,7 +139,6 @@ export {
 export type { CreatedEntity, Select } from './features/entities.ts'
 export type { HeldView } from './features/holdings.ts'
 export { canHold, give, heldBy, heldCount, heldTotal, holderOf, holdersOf, holding, move, take } from './holdings.ts'
-export { collect, collected, collectionById, discard } from './collections.ts'
 export type { Notice } from './notices.ts'
 export { NOTICES_KEPT, dismiss, notify } from './notices.ts'
 export type { TriggerDef } from './triggers.ts'
@@ -198,5 +195,5 @@ export { browserRunner, createRunner, replay } from './runner.ts'
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
 export { inlineChoices } from './screen.ts'
 export { renderAction, screen, stageView } from './screen.ts'
-export type { StatView, View, CollectionView, EntitiesView, EntityView, InputView, NoticeView, NoticesView, SettingView } from './view.ts'
+export type { StatView, View, EntitiesView, EntityView, InputView, NoticeView, NoticesView, SettingView } from './view.ts'
 export { view } from './view.ts'

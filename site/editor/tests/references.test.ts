@@ -36,9 +36,12 @@ describe('rename', () => {
     expect(problemsOf(next)).toEqual([])
   })
 
-  it('moves an item and a kv key', () => {
-    const items = rename(sampleProject(), 'item', 'bun', 'roll')
-    expect(items.pack.scenes[1].body[1].when).toEqual({ item: 'roll' })
+  it('moves a thing and a kv key', () => {
+    const things = rename(sampleProject(), 'thing', 'item:bun', 'item:roll')
+    expect(things.pack.scenes[1].body[1].when).toEqual({ entity: 'item:roll', at: 'you' })
+    expect(things.pack.scenes[0].choices[0].effects[1]).toEqual({ kind: 'entity', entity: 'item:roll', by: 1 })
+    expect(things.pack.entities[0]).toMatchObject({ id: 'roll', of: 'item' })
+    expect(problemsOf(things)).toEqual([])
     const vars = rename(sampleProject(), 'kv', 'heardBusker', 'heardFiddle')
     expect(vars.kv[0].name).toBe('heardFiddle')
     expect(kvUsed(vars.pack)).toEqual(['heardFiddle'])
@@ -71,7 +74,7 @@ describe('problemTarget', () => {
   it('finds the choice a problem is about', () => {
     const project = sampleProject()
     delete project.pack.prose['market#home']
-    project.pack.scenes[0].choices[0].effects.push({ kind: 'item', item: 'ring', by: 1 })
+    project.pack.scenes[0].choices[0].effects.push({ kind: 'scene', scene: 'nowhere' })
     const targets = problemsOf(project).map((p) => problemTarget(project.pack, p))
     expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'home' })
     expect(targets).toContainEqual({ thing: 'scene', id: 'market', choice: 'buy' })
@@ -81,7 +84,11 @@ describe('problemTarget', () => {
     const project = sampleProject()
     expect(problemTarget(project.pack, { pack: 'x', where: 'stat coins', what: 'bad' })).toEqual({ thing: 'stat', id: 'coins' })
     expect(problemTarget(project.pack, { pack: 'base', where: 'introScene', what: 'unknown scene "x"' })).toEqual({ thing: 'project', id: '', field: 'intro' })
-    expect(problemTarget(project.pack, { pack: 'x', where: 'scene home', what: 'unknown item "bun"' })).toEqual({ thing: 'scene', id: 'home', field: 'body' })
+    expect(problemTarget(project.pack, { pack: 'x', where: 'scene home', what: 'unknown entity "item:bun"' })).toEqual({
+      thing: 'scene',
+      id: 'home',
+      field: 'body',
+    })
   })
 })
 

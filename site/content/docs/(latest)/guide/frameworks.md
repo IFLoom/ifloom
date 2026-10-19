@@ -909,7 +909,7 @@ The [view reference](/docs/reference/view) lists every field. Beyond what the te
 - `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice, and [Building UI for plugins](/docs/recipes/plugin-ui) draws some of them.
 - `settings`, for a settings page. See [The title screen and settings](/docs/recipes/title-screen#add-settings).
 
-`entities`, `collections` and `pack` are there when your game has them.
+`entities` and `held` are there when your game has them.
 
 ## Sound
 

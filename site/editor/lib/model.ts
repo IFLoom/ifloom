@@ -3,13 +3,14 @@
  * uses. Everything here is plain data, so a project goes into IndexedDB and a
  * pack goes out as JSON without any conversion.
  */
-import { SCHEMA, upgradePack, type DataScene, type ItemDef, type Pack, type StatDef } from '@ifloom/engine'
+import { SCHEMA, upgradePack, type DataScene, type EntityDef, type KindDef, type Pack, type StatDef } from '@ifloom/engine'
 
 /** A pack as the editor holds it: data scenes only, and the lists it edits always there. */
-export type EditorPack = Omit<Pack, 'scenes' | 'stats' | 'items' | 'prose'> & {
+export type EditorPack = Omit<Pack, 'scenes' | 'stats' | 'entities' | 'prose'> & {
   scenes: DataScene[]
   stats: StatDef[]
-  items: ItemDef[]
+  /** The things the pack declares, entities of any kind: the outline's Things. */
+  entities: EntityDef[]
   prose: Record<string, string>
 }
 
@@ -74,10 +75,11 @@ export type Project = {
 export function upgradeProject(stored: Project & { variables?: KvKey[] }): Project {
   const { variables, ...project } = stored
   const upgraded = project.pack.schema === SCHEMA ? undefined : upgradePack(project.pack)
+  const pack = upgraded?.ok ? (upgraded.value as EditorPack) : project.pack
   return {
     ...project,
     kv: project.kv ?? variables ?? [],
-    pack: upgraded?.ok ? (upgraded.value as EditorPack) : project.pack,
+    pack: { ...pack, entities: pack.entities ?? [] },
   }
 }
 
@@ -97,7 +99,7 @@ export function slug(title: string): string {
 }
 
 export function emptyPack(id: string): EditorPack {
-  return { id, schema: SCHEMA, stats: [], items: [], scenes: [], prose: {} }
+  return { id, schema: SCHEMA, stats: [], entities: [], scenes: [], prose: {} }
 }
 
 export function defaultPreview(): PreviewSettings {
@@ -121,8 +123,24 @@ export function newStat(id: string): StatDef {
   return { id, label: id.charAt(0).toUpperCase() + id.slice(1) }
 }
 
-export function newItem(id: string): ItemDef {
-  return { id, name: id.charAt(0).toUpperCase() + id.slice(1), desc: '' }
+/** The kind a thing is made of when its id doesn't say: `bun` is `item:bun`. */
+export const THING_KIND = 'item'
+
+/** A thing's reference, `kind:id`, from what "Add new…" was given: `bun` or `food:bun`. */
+export function thingRef(given: string): string {
+  return given.includes(':') ? given : `${THING_KIND}:${given}`
+}
+
+/** A new thing, from its reference: named after its id, of the kind the reference says. */
+export function newThing(ref: string): EntityDef {
+  const [of, id] = thingRef(ref).split(':')
+  return { id, of, name: id.charAt(0).toUpperCase() + id.slice(1) }
+}
+
+/** A kind for the things the editor makes: unlisted, as what you hold is drawn from `view.held`. */
+export function newKind(id: string): KindDef {
+  const label = id.charAt(0).toUpperCase() + id.slice(1)
+  return { id, label, listed: false }
 }
 
 /** A copy of a project under a new id and title. */
@@ -139,7 +157,8 @@ export function sampleProject(): Project {
     id: 'market-day',
     schema: SCHEMA,
     stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, format: '{n}p', spendable: true }],
-    items: [{ id: 'bun', name: 'Iced bun', desc: 'Still warm from the bakery stall.' }],
+    kinds: [{ id: 'item', label: 'Item', plural: 'Items', listed: false }],
+    entities: [{ id: 'bun', of: 'item', name: 'Iced bun', desc: 'Still warm from the bakery stall.' }],
     scenes: [
       {
         id: 'market',
@@ -151,7 +170,7 @@ export function sampleProject(): Project {
             blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3p for a bun.' }],
             effects: [
               { kind: 'stat', stat: 'coins', by: -3 },
-              { kind: 'item', item: 'bun', by: 1 },
+              { kind: 'entity', entity: 'item:bun', by: 1 },
             ],
           },
           { id: 'browse', effects: [{ kind: 'scene', from: 'market', otherwise: 'home' }] },
@@ -161,7 +180,7 @@ export function sampleProject(): Project {
       {
         id: 'home',
         title: 'Home',
-        body: [{ text: 'home' }, { text: 'home.bun', when: { item: 'bun' } }],
+        body: [{ text: 'home' }, { text: 'home.bun', when: { entity: 'item:bun', at: 'you' } }],
         choices: [],
       },
       {

@@ -1,14 +1,21 @@
 'use client'
 /**
- * The fields of a stat, an item and a setting, as controlled forms. The
+ * The fields of a stat, a thing and a setting, as controlled forms. The
  * editor wraps the first two with a rename and delete header; the snippets
  * page uses all three on their own.
  */
-import type { Effect, ItemDef, SettingDef, StatDef } from '@ifloom/engine'
+import type { EffectRef, EntityDef, Placement, SettingDef, StatDef, StatWords } from '@ifloom/engine'
 import { STAT_DISPLAYS, STAT_ROUNDS } from '../../lib/kinds'
 import { OptionalCondition, type BuilderProps } from '../ConditionBuilder'
 import { EffectList } from '../EffectBuilder'
 import { Button, Checkbox, Field, JsonField, ListInput, NumberInput, Select, TextInput } from '../ui'
+
+/** A stat's words for any number: the line itself, or its line for numbers other than 1. */
+const anyNumber = (words: StatWords | undefined) => (typeof words === 'object' ? words.other : words)
+/** A stat's line for exactly 1, when it has one. */
+const justOne = (words: StatWords | undefined) => (typeof words === 'object' ? words.one : undefined)
+/** The words from the two fields: one line, or a line for 1 and one for the rest. */
+const statWords = (other: string | undefined, one: string | undefined): StatWords | undefined => (one ? { one, other: other ?? '' } : other)
 
 export function StatFields({ value, onChange, withId, ...builder }: BuilderProps & { value: StatDef; onChange: (value: StatDef) => void; withId?: boolean }) {
   const set = (patch: Partial<StatDef>) => onChange({ ...value, ...patch })
@@ -24,8 +31,16 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
         <Field label="Label" hint="What the player reads.">
           <TextInput value={value.label} onChange={(label) => set({ label: label ?? '' })} />
         </Field>
-        <Field label="Format" hint="{n} is the number: '{n}p', '£{n}'.">
-          <TextInput optional value={value.format} placeholder="{n}" onChange={(format) => set({ format })} />
+        <Field label="Format" hint="{n} is the number: '{n}p', '£{n}', '{n} coins'.">
+          <TextInput
+            optional
+            value={anyNumber(value.format)}
+            placeholder="{n}"
+            onChange={(format) => set({ format: statWords(format, justOne(value.format)) })}
+          />
+        </Field>
+        <Field label="Format for 1" hint="Only if 1 reads differently: '{n} coin'.">
+          <TextInput optional value={justOne(value.format)} onChange={(one) => set({ format: statWords(anyNumber(value.format), one) })} />
         </Field>
         {!derived ? (
           <Field label="Start" hint="0 if left empty.">
@@ -53,7 +68,12 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
           <Select value={value.round ?? 'none'} options={STAT_ROUNDS} onChange={(round) => set({ round: round === 'none' ? undefined : round })} />
         </Field>
         <Field label="When short" hint="The refusal when a cost asks for more, with {n}.">
-          <TextInput optional value={value.lacking} placeholder={`Not enough ${value.label.toLowerCase()}.`} onChange={(lacking) => set({ lacking })} />
+          <TextInput
+            optional
+            value={anyNumber(value.lacking)}
+            placeholder={`Not enough ${value.label.toLowerCase()}.`}
+            onChange={(lacking) => set({ lacking: statWords(lacking, justOne(value.lacking)) })}
+          />
         </Field>
         <Field label="Belongs to a kind" hint="An entity kind, such as staff. Empty for the player's own.">
           <TextInput optional mono value={value.of} onChange={(of) => set({ of })} />
@@ -112,8 +132,40 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
   )
 }
 
-export function ItemFields({ value, onChange, withId, ...builder }: BuilderProps & { value: ItemDef; onChange: (value: ItemDef) => void; withId?: boolean }) {
-  const set = (patch: Partial<ItemDef>) => onChange({ ...value, ...patch })
+/** The inventory plugin's `inventory/usable` trait, as the form edits it. */
+type Usable = { label: string; effects: EffectRef[]; keep?: boolean }
+
+/** How many the player starts with, as a thing's `at` says. */
+function playerStart(at: Placement | undefined): number | undefined {
+  if (at === undefined) return undefined
+  if (typeof at === 'string') return at === 'player' ? 1 : undefined
+  return at.player
+}
+
+/** A thing's `at` with the player's start count changed, and anyone else's kept. */
+function withPlayerStart(at: Placement | undefined, n: number | undefined): Placement | undefined {
+  const others: Record<string, number> = typeof at === 'string' ? (at === 'player' ? {} : { [at]: 1 }) : { ...at }
+  delete others.player
+  const next = n && n > 0 ? { ...others, player: n } : others
+  return Object.keys(next).length ? next : undefined
+}
+
+/**
+ * A thing: an entity the pack declares. Its use is the inventory plugin's
+ * `inventory/usable` trait, so the preview needs the inventory on for its button.
+ */
+export function ThingFields({
+  value,
+  onChange,
+  withId,
+  ...builder
+}: BuilderProps & { value: EntityDef; onChange: (value: EntityDef) => void; withId?: boolean }) {
+  const set = (patch: Partial<EntityDef>) => onChange({ ...value, ...patch })
+  const use = value.traits?.['inventory/usable'] as Usable | undefined
+  const setUse = (next: Usable | undefined) => {
+    const { 'inventory/usable': _old, ...rest } = value.traits ?? {}
+    set({ traits: next ? { ...rest, 'inventory/usable': next } : Object.keys(rest).length ? rest : undefined })
+  }
   return (
     <div className="flex flex-col gap-3">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -122,38 +174,38 @@ export function ItemFields({ value, onChange, withId, ...builder }: BuilderProps
             <TextInput mono value={value.id} onChange={(id) => set({ id: id ?? '' })} />
           </Field>
         ) : null}
+        {withId ? (
+          <Field label="Kind">
+            <TextInput mono value={value.of} onChange={(of) => set({ of: of ?? '' })} />
+          </Field>
+        ) : null}
         <Field label="Name">
           <TextInput value={value.name} onChange={(name) => set({ name: name ?? '' })} />
         </Field>
-        <Field label="Tags" hint="Words to sort or style items by, separated by commas. The engine gives them no meaning.">
+        <Field label="Tags" hint="Words to sort or style things by, separated by commas. The engine gives them no meaning.">
           <ListInput value={value.tags} placeholder="clothes" onChange={(tags) => set({ tags })} />
         </Field>
-        <Field label="Start with" hint="How many a new game has. None if left empty.">
-          <NumberInput value={value.start} onChange={(start) => set({ start })} />
+        <Field label="The player starts with" hint="How many a new game gives the player. None if left empty.">
+          <NumberInput value={playerStart(value.at)} onChange={(n) => set({ at: withPlayerStart(value.at, n) })} />
         </Field>
       </div>
       <Field label="Description">
-        <TextInput value={value.desc} onChange={(desc) => set({ desc: desc ?? '' })} />
+        <TextInput optional value={value.desc} onChange={(desc) => set({ desc })} />
       </Field>
-      <Field label="Using it" hint="A button in the inventory that runs these effects.">
-        {value.use ? (
+      <Field label="Using it" hint="A button in the inventory plugin's card that runs these effects and spends one.">
+        {use ? (
           <div className="flex flex-col gap-2">
-            <TextInput
-              aria-label="Use label"
-              value={value.use.label}
-              placeholder="Eat it"
-              onChange={(label) => set({ use: { ...value.use!, label: label ?? '' } })}
-            />
-            <EffectList {...builder} value={value.use.effects} onChange={(effects) => set({ use: { ...value.use!, effects: effects as Effect[] } })} />
+            <TextInput aria-label="Use label" value={use.label} placeholder="Eat it" onChange={(label) => setUse({ ...use, label: label ?? '' })} />
+            <EffectList {...builder} value={use.effects} onChange={(effects) => setUse({ ...use, effects })} />
             <div>
-              <Button size="xs" variant="ghost" onClick={() => set({ use: undefined })}>
+              <Button size="xs" variant="ghost" onClick={() => setUse(undefined)}>
                 It can't be used
               </Button>
             </div>
           </div>
         ) : (
           <div>
-            <Button size="xs" onClick={() => set({ use: { label: 'Use it', effects: [] } })}>
+            <Button size="xs" onClick={() => setUse({ label: 'Use it', effects: [] })}>
               + Make it usable
             </Button>
           </div>

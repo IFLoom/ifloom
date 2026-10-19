@@ -1,6 +1,6 @@
 ---
 title: "Opening a shop or a job board from anywhere"
-description: "Open a vendor's counter or the job board from a place, a person, an item or an app, with openShop and openJobs."
+description: "Open a vendor's counter or the job board from a place, a person, a thing the player uses or an app, with openShop and openJobs."
 ---
 A shop or a job board doesn't appear on its own just because the player is somewhere. Your content opens it, so it can sit wherever it makes sense in your town: a counter in the café, a job board at the town hall, the job ads in a newspaper, a shop on a phone.
 
@@ -54,18 +54,22 @@ const avaHi = {
 }
 ```
 
-## From an item
+## From a thing the player uses
 
-An item's `use` runs effects too. Using an item spends one, so a newspaper is gone once read. Sell another at the counter if the player should be able to read it again.
+With the [inventory plugin](/docs/plugins/inventory), a thing's use runs effects too. Using one spends it unless it's kept, so give a newspaper `keep` to let the player read it again.
 
 ```ts
+import type { EntityDef } from '@ifloom/engine'
+import { usable } from '@ifloom/plugin-inventory'
 import { openJobs } from '@ifloom/plugin-jobs'
 
-const paper = {
+const paper: EntityDef = {
   id: 'paper',
+  of: 'item',
   name: 'newspaper',
   desc: 'Today’s Small Town Gazette. The back page is job ads.',
-  use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] },
+  at: 'player',
+  traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) },
 }
 ```
 
@@ -99,5 +103,5 @@ The React UI draws both panels for you, as a [`ShopCounter`](/docs/react/compone
 
 ```text
 town · activity counter · unknown vendor "kiosk"
-town · item paper · unknown job "circus"
+town · trait inventory/usable on item:paper · unknown job "circus"
 ```

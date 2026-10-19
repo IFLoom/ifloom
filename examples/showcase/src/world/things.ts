@@ -2,6 +2,8 @@
  * What the player can carry: things, each an entity. Clothes are each one
  * particular thing, worn by the wardrobe; food and the newspaper stack, and
  * the inventory uses them. Their prices are the shop's, from their traits.
+ * Notes are things too, read in the phone's Notes app; photos are the
+ * phone's `photo` kind, made by the camera in `activities.ts`.
  */
 import type { Content } from '@ifloom/engine'
 import { usable } from '@ifloom/plugin-inventory'
@@ -9,11 +11,12 @@ import { openJobs } from '@ifloom/plugin-jobs'
 import { sellable } from '@ifloom/plugin-shop'
 import { wearable } from '@ifloom/plugin-wardrobe'
 
-export const items: Content = {
+export const things: Content = {
   // Not listed with the town's people and visitors: what you hold is in `view.held`.
   kinds: [
     { id: 'clothing', label: 'Clothing', unique: true, listed: false },
     { id: 'item', label: 'Thing', plural: 'Things', listed: false },
+    { id: 'note', label: 'Note', plural: 'Notes', listed: false },
   ],
   entities: [
     { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wearable('coat') } },
@@ -43,6 +46,8 @@ export const items: Content = {
     },
   ],
   data: {
+    // The inventory card shows what you carry; notes and photos are in the phone.
+    inventory: { kinds: [{ id: 'clothing' }, { id: 'item' }, { id: 'keepsake' }] },
     wardrobe: {
       // You arrive in your raincoat.
       slots: [

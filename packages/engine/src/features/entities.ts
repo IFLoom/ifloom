@@ -89,12 +89,16 @@ export type Select = {
   where?: Condition
 }
 
-/** What a created entity is given in `create`: a name (or a `like` to read it from), tags, traits, stats and kv. */
+/** What a created entity is given in `create`: a name (or a `like` to read it from), a description, a picture, tags, traits, stats and kv. */
 export type CreatedEntity = {
   /** Its id within its kind: the next free number (`#1`, `#2`) if left out. */
   id?: string
   /** What the player reads. The `like`'s, if it is made like one and left out. */
   name?: string
+  /** A line or two about it, tokens filled in when it is read. The `like`'s, if left out. */
+  desc?: string
+  /** Its picture, through `artSrc`. The `like`'s, if left out. */
+  image?: string
   /** Its tags, after its kind's and its `like`'s. */
   tags?: string[]
   /** Its trait data, by trait id, over its `like`'s or its kind's. */
@@ -422,6 +426,7 @@ export const entities = defineFeature<EntitiesShape>({
           ...(kind !== undefined ? Object.keys(effect.entity?.stats ?? {}).map((stat) => ({ stat, starts: kind })) : []),
           ...Object.keys(placementCounts(effect.at)).map((holder) => ({ holder })),
           ...Object.keys(effect.entity?.traits ?? {}).map((trait) => ({ trait })),
+          ...(effect.entity?.image !== undefined ? [{ picture: effect.entity.image }] : []),
         ]
       },
     },
@@ -599,6 +604,9 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
 function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: string, game: Game): EntityState | undefined {
   const next: EntityState = {}
   if (record.name !== undefined && record.name !== def?.name) next.name = record.name
+  // What it was created with, desc and picture included, is only ever written by play.
+  if (record.desc !== undefined) next.desc = record.desc
+  if (record.image !== undefined) next.image = record.image
   // What it was created like and with is only ever written by play.
   if (record.like !== undefined) next.like = record.like
   if (record.tags?.length) next.tags = record.tags

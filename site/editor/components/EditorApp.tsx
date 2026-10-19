@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { fileName, toJson, toTypeScript } from '../lib/exporters'
 import { importJson, problemsOf } from '../lib/game'
-import { duplicateProject, newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model'
+import { duplicateProject, newKind, newProject, newScene, newStat, newThing, sampleProject, type Project } from '../lib/model'
 import { problemTarget, type Thing } from '../lib/references'
 import { hashOf, selectionFromHash } from '../lib/selection'
 import { projectStore, type ProjectStore } from '../lib/store'
@@ -127,7 +127,12 @@ export function EditorApp() {
           draft.pack.prose[id] ??= ''
         }
         if (thing === 'stat' && !draft.pack.stats.some((s) => s.id === id)) draft.pack.stats.push(newStat(id))
-        if (thing === 'item' && !draft.pack.items.some((i) => i.id === id)) draft.pack.items.push(newItem(id))
+        if (thing === 'thing') {
+          const made = newThing(id)
+          if (!draft.pack.entities.some((e) => e.of === made.of && e.id === made.id)) draft.pack.entities.push(made)
+          // Its kind, declared once: the engine reports a thing of a kind nobody declares.
+          if (!draft.pack.kinds?.some((k) => k.id === made.of)) draft.pack.kinds = [...(draft.pack.kinds ?? []), newKind(made.of)]
+        }
         if (thing === 'kv' && !draft.kv.some((v) => v.name === id)) draft.kv.push({ name: id, note: '' })
       }),
     [update],

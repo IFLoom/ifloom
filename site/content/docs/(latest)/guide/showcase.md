@@ -27,7 +27,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 
 | File | What's in it |
 |---|---|
-| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `items.ts` (the things you carry and wear, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
+| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `things.ts` (the things you carry and wear, and notes, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
 | `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its activities, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
 | `src/rules.ts` | The only code in the content: the rules and locks, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
@@ -61,7 +61,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Things you use
 
-`world/items.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`world/things.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
 
 ### Mods
 
@@ -223,7 +223,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/items.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the raincoat and the scarf as `clothing` entities with the `wearable` trait. The café notices the raincoat with a body line on `wearing('clothing:raincoat')`. The scarf is given on the high street by the `buyScarf` activity, with the engine's `give`. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/things.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the raincoat and the scarf as `clothing` entities with the `wearable` trait. The café notices the raincoat with a body line on `wearing('clothing:raincoat')`. The scarf is given on the high street by the `buyScarf` activity, with the engine's `give`. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed statuses
 
@@ -249,17 +249,17 @@ You start with a newspaper. Its `usable` trait, "Read the job ads", opens the bo
 
 ### Triggers and notices
 
-`story/moving-day.ts`, `triggers`. `welcome` [fires](/docs/reference/triggers) the first time the player is on the high street. It raises a [notice](/docs/reference/notices), a note under the door, and files the note in the `notes` collection.
+`story/moving-day.ts`, `triggers`. `welcome` [fires](/docs/reference/triggers) the first time the player is on the high street. It raises a [notice](/docs/reference/notices), a note under the door, and gives the player the note itself, `note:welcome`, with the engine's `give`.
 
 `rent` repeats, because it's `once: 'turn'`. Its condition is Sunday from day 6 on, `{ all: [weekday(6), day({ gte: 6 })] }` with the calendar's conditions, so it fires on the first command of every Sunday. It takes 30 coins and raises the notice `Rent paid: 30 coins` with the fixed id `rent`, so each week's notice replaces the last one rather than piling up. It's the town's one bill, so the coins the player earns have somewhere to go.
 
-### Collections
+### Notes and photos
 
-`story/moving-day.ts` declares `notes`, and the phone kit declares `gallery`. The camera's `photo-ava` and `photo-sam` activities, in `world/activities.ts`, [`collect`](/docs/reference/effects#collect) a photo into the gallery, and each is blocked while that person isn't here. `post` needs a photo first, with the [condition](/docs/reference/conditions#collection) `{ collection: 'gallery' }`. See [Collections](/docs/reference/collections).
+Notes and photos are [things the player holds](/docs/reference/entities#notes-photos-and-other-things-made-in-play). `world/things.ts` declares the `note` kind, `story/moving-day.ts` the welcome note, and the phone kit the `photo` kind. The camera's `photo-ava` and `photo-sam` activities, in `world/activities.ts`, make a photo with [`create`](/docs/reference/effects#create), with its name and picture, and give it to the player. Each is blocked while that person isn't here. `post` needs a photo first, with the [condition](/docs/reference/conditions#count) `{ count: { of: 'photo', at: 'player' } }`, and the game's `postLatest` effect, in `rules.ts`, posts the newest one. The inventory lists only clothing, items and keepsakes (its `data.inventory.kinds`), so notes and photos stay in the phone.
 
 ### The phone kit, with its own apps
 
-`src/game.ts`, `kit`. [`phone`](/docs/plugins/phone#phone) builds the stock Messages, Social, Contacts and Gallery apps. It also builds two of the game's own, listed in `apps`: a Camera whose section is three buttons that send activities, and Notes, a section over the `notes` collection. The game passes on all three parts of the kit: `kit.plugins`, `kit.collections`, and `kit.data`, which holds the phone, its apps, the texts channel and the social feed as content. `openCamera` is the [devices](/docs/plugins/devices) helper `openApp('camera')`, for tests.
+`src/game.ts`, `kit`. [`phone`](/docs/plugins/phone#phone) builds the stock Messages, Social, Contacts and Gallery apps. It also builds two of the game's own, listed in `apps`: a Camera whose section is three buttons that send activities, and Notes, a section listing the `note` things you hold. The game passes on all three parts of the kit: `kit.plugins`, `kit.kinds` (the `photo` kind), and `kit.data`, which holds the phone, its apps, the texts channel and the social feed as content. `openCamera` is the [devices](/docs/plugins/devices) helper `openApp('camera')`, for tests.
 
 ### Calls
 

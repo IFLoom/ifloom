@@ -19,6 +19,7 @@ import {
   PLAYER,
   protagonist,
   traitDef,
+  writeEntity,
   YOU,
   type EntityRef,
   type Holder,
@@ -195,6 +196,37 @@ export const holdings = defineFeature<HoldingsShape>({
         return state.you === effect.to ? state : { ...state, you: effect.to }
       },
       references: (effect) => (effect.to === null ? [] : [{ holder: effect.to, protagonist: true }]),
+    },
+  },
+  // A New Game+ carries how many the player held of what `carryOver.held` lists, or of everything; a thing made in play comes with its record.
+  carry: {
+    key: 'held',
+    run: (fresh, game, from) => {
+      const listed = game.carryOver?.held
+      if (!listed) return {}
+      const refs = listed === 'all' ? [...new Set([...heldBy(from, game, PLAYER), ...heldBy(fresh, game, PLAYER)].map((entry) => entry.ref))] : listed
+      let next = fresh
+      for (const ref of refs) {
+        const parts = parseRef(ref)
+        const record = parts ? from.entities?.[parts.kind]?.[parts.id] : undefined
+        if (parts && record && !entityDef(game, ref) && !hasEntity(next, game, ref)) {
+          next = writeEntity(next, ref, record)
+          const made = from.created?.[parts.kind] ?? 0
+          if (made > (next.created?.[parts.kind] ?? 0)) next = { ...next, created: { ...next.created, [parts.kind]: made } }
+        }
+        next = setHeld(next, game, ref, PLAYER, heldCount(from, game, ref, PLAYER))
+      }
+      return { held: next.held, entities: next.entities, created: next.created }
+    },
+    check: (game, tools) => {
+      if (!Array.isArray(game.carryOver?.held)) return
+      // A thing made in play has no declaration, so only its kind is checked.
+      const kinds = kindIds(game)
+      for (const ref of game.carryOver.held) {
+        const kind = parseRef(ref)?.kind
+        if (kind === undefined) tools.problem(undefined, 'carryOver', `unknown entity "${ref}": name one as "kind:id"`)
+        else if (!kinds.has(kind)) tools.problem(undefined, 'carryOver', `unknown kind "${kind}"`)
+      }
     },
   },
   check: (game, tools) => checkStarts(game, tools),

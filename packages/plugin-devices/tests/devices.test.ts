@@ -81,14 +81,14 @@ describe('devices', () => {
         icon: 'x',
         on: 'watch',
         badge: { value: 'nope/value' },
-        sections: [{ collection: 'album' }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
+        sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
       },
     ]
     const loaded = loadGame([], { id: 'g', title: 'g', plugins: [devices()], data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } })
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
       'unknown device "watch"',
       'no custom value named "nope/value"',
-      'unknown collection "album"',
+      'unknown kind "album"',
       'no custom panel named "nothing"',
       'no prose for "x.none"',
       'the game has no plugin named "radio"',

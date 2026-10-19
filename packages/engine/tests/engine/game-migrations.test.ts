@@ -43,7 +43,6 @@ function grown(extra: Partial<Game> = {}): Game {
   return {
     ...game,
     stats: [...game.stats!, { id: 'patience', label: 'Patience', start: 7 }],
-    items: [{ id: 'umbrella', name: 'Umbrella', desc: 'Blue.', start: 1 }],
     kinds: [{ id: 'staff', label: 'Staff' }],
     entities: [{ id: 'ana', of: 'staff', name: 'Ana' }],
     settings: [{ id: 'hints', label: 'Hints', kind: 'toggle', default: true }],
@@ -116,7 +115,6 @@ describe('the game’s own migrations', () => {
     }
     const untouched = read(grown({ version: 2 }))
     expect(untouched.stats).not.toHaveProperty('patience')
-    expect(untouched.items).not.toHaveProperty('umbrella')
     expect(untouched.entities.staff).toBeUndefined()
     expect(untouched.settings).toEqual({})
     expect(untouched.kv).not.toHaveProperty('tidied')
@@ -130,7 +128,6 @@ describe('the game’s own migrations', () => {
     const some = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill(['stats', 'settings']) } }))
     expect(some.stats.patience).toBe(7)
     expect(some.settings).toEqual({ hints: true })
-    expect(some.items).not.toHaveProperty('umbrella')
 
     // A plugin's step gets the same tools, so it can read what the game declares and the save lacks.
     const counter = definePlugin({
@@ -147,7 +144,6 @@ describe('the game’s own migrations', () => {
 
     const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
     expect(all.stats.patience).toBe(7)
-    expect(all.items.umbrella).toBe(1)
     // A declared entity needs no filling: Ana is there with no record of her own.
     expect(all.entities.staff).toBeUndefined()
     expect(entitiesOf(all, grown({ version: 2 }), 'staff')).toEqual(['staff:ana'])

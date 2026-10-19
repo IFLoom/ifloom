@@ -1,6 +1,7 @@
 /**
  * @ifloom/plugin-debug — commands for testing a game while it runs: set a stat
- * (an entity's too) or a kv key, give an item, jump to a scene, set the
+ * (an entity's too) or a kv key, set how many of a thing someone holds, jump
+ * to a scene, set the
  * clock, go anywhere.
  *
  * Every command here ignores locks, needs no exit and pays no cost: it is a
@@ -14,8 +15,10 @@ import {
   clampStat,
   definePlugin,
   entityOf,
+  canHold,
   holds,
-  itemById,
+  resolveHolder,
+  YOU,
   parseRef,
   say,
   sceneById,
@@ -58,7 +61,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       noSuchStat: 'There is no stat called {id}.',
       noSuchEntity: 'There is nobody and nothing called {id}.',
       notTheirs: 'That is not whose {id} it is.',
-      noSuchItem: 'There is no item called {id}.',
+      cantHold: '{id} can’t hold things.',
       noSuchPlace: 'There is no location called {id}.',
       noPlaces: 'This game has no places.',
       noSuchScene: 'There is no scene called {id}.',
@@ -95,11 +98,19 @@ export function debug(): DefinedPlugin<null, DebugView> {
         whyNot: (_state, args, { game }) => (isKvValue(args.to) ? undefined : sayDebug(game, 'badValue')),
         run: (state, args) => ({ ...state, kv: { ...state.kv, [String(args.key)]: args.to as KvValue } }),
       }),
-      /** `{ name: 'debug/item', with: { item, to } }`: set how many of an item the player has. */
-      item: free({
-        whyNot: (_state, args, { game }) =>
-          !itemById(game, String(args.item)) ? sayDebug(game, 'noSuchItem', String(args.item)) : isNumber(args.to) ? undefined : sayDebug(game, 'notANumber'),
-        run: (state, args) => ({ ...state, items: { ...state.items, [String(args.item)]: Math.max(0, Number(args.to)) } }),
+      /**
+       * `{ name: 'debug/held', with: { entity, at?, to } }`: set how many of a thing a holder
+       * holds, `'you'` if `at` is left out. Never below 0, and a unique thing is taken from whoever had it.
+       */
+      held: free({
+        whyNot: (state, args, { game }) => {
+          if (!entityOf(state, game, String(args.entity))) return sayDebug(game, 'noSuchEntity', String(args.entity))
+          const at = args.at === undefined ? YOU : String(args.at)
+          if (!canHold(state, game, resolveHolder(state, at))) return sayDebug(game, 'cantHold', at)
+          return isNumber(args.to) ? undefined : sayDebug(game, 'notANumber')
+        },
+        run: (_state, args, { apply }) =>
+          apply([{ kind: 'entity', entity: String(args.entity), at: args.at === undefined ? YOU : String(args.at), to: Number(args.to) }]),
       }),
       /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
       scene: free({
@@ -164,8 +175,8 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 export const debugStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
 /** A command: set a key in the kv store. */
 export const debugKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
-/** A command: set how many of an item the player has. */
-export const debugItem = (item: string, to: number): CommandRef => ({ 'debug/item': { item, to } })
+/** A command: set how many of a thing a holder holds, `'you'` if `at` is left out. */
+export const debugHeld = (entity: string, to: number, at?: string): CommandRef => ({ 'debug/held': { entity, to, ...(at === undefined ? {} : { at }) } })
 /** A command: put a scene on screen, or close it. */
 export const debugScene = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
 /** A command: set the clock. */

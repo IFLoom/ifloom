@@ -21,7 +21,7 @@ const town: Game = {
 | Kind | Content writes | Where |
 |---|---|---|
 | `conditions` | `{ custom: 'marketDay' }` | Any [condition](/docs/reference/conditions#custom) |
-| `effects` | `{ custom: 'tip', with: { by: 2 } }` | A data scene choice's [effects](/docs/reference/effects#computed-effects), an [activity](/docs/reference/actions#activitydef)'s `effects`, a [trigger](/docs/reference/triggers)'s `effects`, an [`each`](/docs/reference/effects#each)'s `effects`, an item's `use`, what another custom effect returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
+| `effects` | `{ custom: 'tip', with: { by: 2 } }` | A data scene choice's [effects](/docs/reference/effects#computed-effects), an [activity](/docs/reference/actions#activitydef)'s `effects`, a [trigger](/docs/reference/triggers)'s `effects`, an [`each`](/docs/reference/effects#each)'s `effects`, a thing's use in the [inventory](/docs/plugins/inventory), what another custom effect returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
 | `values` | `{{v:breadPrice}}`, or `{ value: 'breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
 | `panels` | `panelData: 'stallPrices'` | A [data scene](/docs/reference/scenes#paneldata) |
 

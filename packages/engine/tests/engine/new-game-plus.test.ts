@@ -4,6 +4,7 @@ import type { Game } from '../../src/game.ts'
 import { loadGame } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { loadState, startingState } from '../../src/intake.ts'
+import { heldBy, heldCount } from '../../src/holdings.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
 import { fixture } from '../fixtures/town.ts'
@@ -12,41 +13,57 @@ import { unwrap } from '../fixtures/result.ts'
 function game(carryOver: Game['carryOver']): Game {
   return {
     ...fixture(),
-    items: [
-      { id: 'umbrella', name: 'Umbrella', desc: 'Black, with a bent spoke.', start: 1 },
-      { id: 'bun', name: 'Bun', desc: 'From the bakery.' },
+    kinds: [
+      { id: 'thing', label: 'Thing' },
+      { id: 'photo', label: 'Photo' },
+    ],
+    entities: [
+      { id: 'umbrella', of: 'thing', name: 'Umbrella', desc: 'Black, with a bent spoke.', at: 'player' },
+      { id: 'bun', of: 'thing', name: 'Bun', desc: 'From the bakery.' },
     ],
     carryOver,
   }
 }
 
-/** A game played for a while: stats up, kv keys set, things bought. */
+/** A game played for a while: stats up, kv keys set, things bought, the umbrella lost and a photo taken. */
 function played(g: Game) {
   const state = startingState(g)
   return {
     ...state,
     stats: { ...state.stats, intelligence: 40, coins: 2000, luck: 7 },
     kv: { ...state.kv, readTheLetter: true, metRosa: 'twice', at: 'shop' },
-    items: { umbrella: 0, bun: 3 },
+    entities: { photo: { '#1': { name: 'The pier' } } },
+    created: { photo: 1 },
+    held: { player: { 'thing:umbrella': 0, 'thing:bun': 3, 'photo:#1': 1 } },
     turn: 12,
   }
 }
 
 describe('New Game+', () => {
-  it('copies only the stats, kv keys and items carryOver lists', () => {
-    const g = game({ stats: ['intelligence'], kv: ['readTheLetter'], items: ['bun'] })
+  it('copies only the stats, kv keys and things held carryOver lists', () => {
+    const g = game({ stats: ['intelligence'], kv: ['readTheLetter'], held: ['thing:bun'] })
     const plus = startingState(g, { carry: played(g) })
     expect(plus.stats).toEqual({ intelligence: 40, coins: 3, luck: 0 })
     expect(plus.kv).toEqual({ readTheLetter: true })
-    expect(plus.items).toEqual({ umbrella: 1, bun: 3 })
+    expect(heldBy(plus, g, 'player')).toEqual([
+      { ref: 'thing:umbrella', count: 1 },
+      { ref: 'thing:bun', count: 3 },
+    ])
+    expect(plus.entities).toEqual({})
     expect(plus.turn).toBe(0)
   })
 
-  it('holds a copied stat to its range, and copies every item with all', () => {
-    const g = game({ stats: ['coins'], items: 'all' })
+  it('holds a copied stat to its range, and copies everything held with all, things made in play too', () => {
+    const g = game({ stats: ['coins'], held: 'all' })
     const plus = startingState(g, { carry: played(g) })
     expect(plus.stats.coins).toBe(999)
-    expect(plus.items).toEqual({ umbrella: 0, bun: 3 })
+    expect(heldCount(plus, g, 'thing:umbrella', 'player')).toBe(0)
+    expect(heldBy(plus, g, 'player')).toEqual([
+      { ref: 'thing:bun', count: 3 },
+      { ref: 'photo:#1', count: 1 },
+    ])
+    expect(plus.entities).toEqual({ photo: { '#1': { name: 'The pier' } } })
+    expect(plus.created).toEqual({ photo: 1 })
   })
 
   it('copies nothing from a game with no carryOver, and lets given kv keys win', () => {
@@ -55,14 +72,18 @@ describe('New Game+', () => {
     expect(startingState(g, { carry: played(g), kv: { metRosa: 'never' } }).kv).toEqual({ metRosa: 'never' })
   })
 
-  it('is checked by the loader: unknown stats and items, and stats that are not the player’s', () => {
-    const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
-    const problems = loadGame([{ name: 'core', stats, items: [] }], {
+  it('is checked by the loader: unknown stats and kinds, and stats that are not the player’s', () => {
+    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
+    const problems = loadGame([{ name: 'core', stats }], {
       ...base,
       kinds: [{ id: 'staff', label: 'Staff', plural: 'Staff' }],
-      carryOver: { stats: ['intelligence', 'charm'], items: ['umbrella'] },
+      carryOver: { stats: ['intelligence', 'charm'], held: ['umbrella', 'staff:ana', 'thing:umbrella'] },
     }).problems.map(describeProblem)
-    expect(problems).toEqual(['base · carryOver · unknown stat "charm"', 'base · carryOver · unknown item "umbrella"'])
+    expect(problems).toEqual([
+      'base · carryOver · unknown stat "charm"',
+      'base · carryOver · unknown entity "umbrella": name one as "kind:id"',
+      'base · carryOver · unknown kind "thing"',
+    ])
   })
 })
 

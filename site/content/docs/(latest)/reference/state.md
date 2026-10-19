@@ -1,6 +1,6 @@
 ---
 title: "Game state"
-description: "GameState field by field: the turn, phase, scene, stats, kv store, items, entities, plugins' state, and what was seen and chosen when."
+description: "GameState field by field: the turn, phase, scene, stats, kv store, entities and what is held, plugins' state, and what was seen and chosen when."
 ---
 `GameState` is the whole save, as a plain object you can serialise to JSON. Commands take one and return the next, and nothing else in the engine holds state. Treat it as read-only, and change it only through [commands](/docs/reference/commands) and [effects](/docs/reference/effects).
 
@@ -31,8 +31,6 @@ type GameState = {
   you: EntityRef | null
   storylines: Record<string, StorylineState>
   kv: Record<string, KvValue>
-  items: Record<string, number>
-  collections: Record<string, CollectionEntry[]>
   notices: Notice[]
   fired: Record<string, number>
   plugins: Record<string, PluginSlice>
@@ -46,7 +44,7 @@ type GameState = {
 }
 ```
 
-`KvValue`, `StorylineState`, `Phase`, `Stats`, `EntityState`, `CollectionEntry` and `Notice` come from the package root too:
+`KvValue`, `StorylineState`, `Phase`, `Stats`, `EntityState` and `Notice` come from the package root too:
 
 ```ts
 import type { KvValue, StorylineState } from '@ifloom/engine'
@@ -82,7 +80,7 @@ turn: number
 
 How many turns have passed. This is the engine's only clock, and a new game starts at 0. Your game decides how long a turn is, whether that's a day, a chapter or a week. The engine moves the counter on when a turn ends, which is when a [`turn`](/docs/reference/effects#turn) effect runs, from a choice, an activity or a plugin. The [calendar plugin](/docs/plugins/calendar#what-a-turn-is) ends turns this way when time passes and when the player sleeps, so with it a turn is a day, a period or a week.
 
-Everything the engine dates is dated in turns: [`seenOn`](#seenon) and [`lastSeenOn`](#lastseenon), [`chosenOn`](#chosenon) and [`lastChosenOn`](#lastchosenon), [`fired`](#fired), [collection](#collections) entries, [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
+Everything the engine dates is dated in turns: [`seenOn`](#seenon) and [`lastSeenOn`](#lastseenon), [`chosenOn`](#chosenon) and [`lastChosenOn`](#lastchosenon), [`fired`](#fired), [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
 **There's no time of day in the state.** A game with days and periods keeps them in the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, at `state.plugins.calendar`.
 
@@ -147,7 +145,7 @@ held: Record<Holder, Record<EntityRef, number>>
 
 What play has changed about who [holds](/docs/reference/entities#holding-things) what, by holder and then thing, as in `state.held.player['food:apple']`. A holder is `'player'` or a unique entity's reference, never `'you'`, which is resolved before anything is written. A new game starts with `{}`: where things start is read from each entity's [`at`](/docs/reference/entities#entitydef) in content until play changes it. Once a count is written it's kept, 0 included, so a thing placed and then used up stays used up.
 
-Read it with [`heldCount`](/docs/reference/entities#heldcount), [`heldBy`](/docs/reference/entities#heldby) and [`holderOf`](/docs/reference/entities#holderof-and-holdersof), or the [`{ entity, at }`](/docs/reference/conditions#entity) and [`{ count }`](/docs/reference/conditions#count) conditions, which fall back to content. The [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change it, as do `create` with `at` and `remove`. Who holds each thing is worked out from it when asked and kept for that state, never saved. A save from before holdings loads with `{}`. The field came with a load default and no new save version.
+Read it with [`heldCount`](/docs/reference/entities#heldcount), [`heldBy`](/docs/reference/entities#heldby) and [`holderOf`](/docs/reference/entities#holderof-and-holdersof), or the [`{ entity, at }`](/docs/reference/conditions#entity) and [`{ count }`](/docs/reference/conditions#count) conditions, which fall back to content. The [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change it, as do `create` with `at` and `remove`. Who holds each thing is worked out from it when asked and kept for that state, never saved. A save from before holdings loads with `{}`. The field came with a load default and no new save version. A save from before version 16 has the player's items written here, by the entity each became.
 
 ### you
 
@@ -197,7 +195,7 @@ Reading a storyline that isn't in the save gives an empty one (open, nothing set
 type KvValue = boolean | number | string
 ```
 
-The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or an item. Keys need no declaring. A key nobody has set reads as unset, which a condition treats as false, or as 0 in a range.
+The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or a thing. Keys need no declaring. A key nobody has set reads as unset, which a condition treats as false, or as 0 in a range.
 
 A new game starts with the `kv` given to [`startingState`](/docs/reference/commands#startingstate), or `{}`. The [`kv`](/docs/reference/effects#kv) effect and [inputs](/docs/reference/inputs) set keys. [`{ kv }`](/docs/reference/conditions#kv) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. [`rules.resets`](/docs/reference/rules#resets) puts some back at the start of each turn. Each [storyline](#storylines) and each [entity](#entities) has a kv store of its own too.
 
@@ -208,18 +206,6 @@ The engine writes some keys here itself, so don't use these prefixes for your ow
 - `turn:` keys, used by [`oncePerTurn()`](/docs/reference/progress#onceperturn) and a data-scene choice's `once`
 - `variants:<name>` keys, which count how often a set of [variants](/docs/reference/prose) has been drawn
 - `storylet:<name>` keys, which count how often a set of [storylets](/docs/reference/storylets) has been drawn from
-
-### items
-
-How many of each item the player is carrying, by id. It never goes below 0. A new game holds each item's `start`, or 0 if it gives none. The [wardrobe plugin](/docs/plugins/wardrobe) leaves worn clothes counted here, so wearing something doesn't change how many the player has.
-
-### collections
-
-```ts
-collections: Record<string, CollectionEntry[]>
-```
-
-Each [collection](/docs/reference/collections)'s entries, by collection id, oldest first. Each entry records the [turn](#turn) it was collected. The [`collect`](/docs/reference/effects#collect) and [`discard`](/docs/reference/effects#discard) effects change it, and [`{ collection }`](/docs/reference/conditions#collection) reads it. A new game starts with `{}`, and a collection nothing has been collected into has no entry.
 
 ### notices
 
@@ -305,7 +291,7 @@ const { game } = loadGame([town], {
   title: 'Small Town',
   // Finished once the letter is read and the bakery's last scene has been seen.
   finished: { all: [{ kv: 'readTheLetter' }, { seen: 'bakery.ending' }] },
-  carryOver: { stats: ['coins'], kv: ['readTheLetter'], items: ['umbrella'] },
+  carryOver: { stats: ['coins'], kv: ['readTheLetter'], held: ['clothing:umbrella'] },
 })
 ```
 
@@ -320,7 +306,7 @@ if (done) await runner.newGame({ carry: runner.state })
 type CarryOver = {
   stats?: string[]
   kv?: string[]
-  items?: string[] | 'all'
+  held?: string[] | 'all'
 }
 ```
 
@@ -328,20 +314,20 @@ type CarryOver = {
 
 - each player stat in `carryOver.stats`, held to its range
 - each key of the [kv store](#kv) in `carryOver.kv` that is set
-- each item in `carryOver.items`, or every declared item with `items: 'all'`
+- how many the player held of each thing in `carryOver.held`, by reference, or of everything the player held with `held: 'all'`
 
-Nothing else comes across. The turn, scenes seen, storylines, entities and plugin states all start fresh. Keys passed in `kv` are written after the carried ones, so they win. A game with no `carryOver` carries nothing.
+A thing the player made in play, such as a photo, comes with its record, so it's still there. With `'all'`, something the new game would start the player with that they no longer had is 0. Nothing else comes across. The turn, scenes seen, storylines, other entities, what other holders hold and plugin states all start fresh. Keys passed in `kv` are written after the carried ones, so they win. A game with no `carryOver` carries nothing.
 
 **Gotcha.** Carry from the state the player finished on. If you start the New Game+ from a title screen after a reload, load the save first, or keep that state yourself. The profile records only when the game was finished, not the state.
 
-The [content checker](/docs/reference/checks) reports a stat or item in `carryOver` that the game doesn't declare, and a stat that belongs to a kind rather than the player.
+The [content checker](/docs/reference/checks) reports a stat in `carryOver` that the game doesn't declare, a stat that belongs to a kind rather than the player, and a thing in `held` that isn't written `kind:id` or whose kind the game doesn't declare.
 
 ## Constants
 
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 12
+const SAVE_VERSION = 16
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -364,6 +350,7 @@ The versions so far:
 | 13 | Moved the timed-effects plugin's state from `plugins.effects` to `plugins.statuses`, its new name. |
 | 14 | Keyed [`chosen`](#chosen) by `scene#choice`. |
 | 15 | Made each record in [`entities`](#entities) keep only what play changed. |
+| 16 | Took out `items` and `collections`: the player's items are counts in [`held`](#held), and collection entries are entities made in play that the player holds. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

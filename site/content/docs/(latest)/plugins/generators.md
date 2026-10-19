@@ -126,7 +126,7 @@ type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { j
 |---|---|---|
 | `{ 'generators/generate': { template, count? } }` | `generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
 
-Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on) and starts with the kind's stats. It works in any effect list, an item's use included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'generators/generate', with: { template, count } }`.
+Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on) and starts with the kind's stats. It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'generators/generate', with: { template, count } }`.
 
 A template the game doesn't have makes nothing.
 

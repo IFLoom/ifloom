@@ -87,7 +87,7 @@ describe('panels', () => {
       id: 'counter',
       version: 1,
       panelProblems: (panel, args, _game, tools) =>
-        panel !== 'shop' ? [] : args.vendor === undefined ? ['the shop panel needs a vendor'] : tools.problems([{ item: String(args.vendor) }]),
+        panel !== 'shop' ? [] : args.vendor === undefined ? ['the shop panel needs a vendor'] : tools.problems([{ entity: String(args.vendor) }]),
     })
     const game: Game = {
       ...withPanels(),
@@ -100,7 +100,7 @@ describe('panels', () => {
       ],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity a: unknown item "nowhere"',
+      'activity a: unknown entity "nowhere": name one as "kind:id"',
       'activity b: the shop panel needs a vendor',
     ])
   })

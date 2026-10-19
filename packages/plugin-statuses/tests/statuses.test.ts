@@ -57,8 +57,6 @@ function game(extra: StatusDef[] = []): Game {
       { id: 'climb', cost: { stats: { energy: 55 } } },
       { id: 'tire', effects: [{ kind: 'stat', stat: 'energy', by: -10 }] },
     ],
-    // An item's use takes the short form, as an activity's effects do.
-    items: [{ id: 'flask', name: 'flask', desc: 'Coffee, still hot.', start: 1, use: { label: 'Drink', effects: [applyStatus('caffeinated')] } }],
     data: { statuses: { statuses: [caffeinated, cold, ...extra] } },
   }
   const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [statuses()] })
@@ -95,14 +93,6 @@ describe('timed statuses', () => {
     const tired = run(state, g, 'tire')
     expect(tired.stats.energy).toBe(40)
     expect(statValue(tired, g, 'energy')).toBe(50)
-  })
-
-  it('start from an item’s use, written in the short form', () => {
-    const g = game()
-    const out = apply(fresh(g), g, { type: 'use', id: 'flask' })
-    expect(out.reason).toBeUndefined()
-    expect(out.state.items.flask).toBe(0)
-    expect(holds(out.state, statusActive('caffeinated'), g)).toBe(true)
   })
 
   it('run onStart, count down at the end of each turn, and run onEnd when they run out', () => {
@@ -201,7 +191,14 @@ describe('timed statuses', () => {
           data: {
             statuses: {
               statuses: [
-                { id: 'bad', label: 'Bad', turns: 0, max: 2, modifiers: [{ stat: 'luck', add: 1 }], onEnd: [{ kind: 'item', item: 'moonstone', by: 1 }] },
+                {
+                  id: 'bad',
+                  label: 'Bad',
+                  turns: 0,
+                  max: 2,
+                  modifiers: [{ stat: 'luck', add: 1 }],
+                  onEnd: [{ kind: 'entity', entity: 'thing:moonstone', by: 1 }],
+                },
               ],
             },
           },
@@ -212,7 +209,7 @@ describe('timed statuses', () => {
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'activity x: unknown status "flu"',
       'statuses bad: unknown stat "luck"',
-      'statuses bad: onEnd: unknown item "moonstone"',
+      'statuses bad: onEnd: unknown kind "thing"',
       'statuses bad: turns must be 1 or more',
       'statuses bad: max only applies with reapply: "stack"',
     ])

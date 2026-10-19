@@ -8,6 +8,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A stat's `format` and `lacking` can give one line for 1 and one for any other number, `{ one: '{n} coin', other: '{n} coins' }`, so a price reads "1 coin" and "4 coins". See [`StatWords`](/docs/reference/stats#statwords).
+- [`create`](/docs/reference/effects#create) gives the thing it makes a `desc` and an `image`, so a photo the player takes or a note they write has its own words and picture.
+- The devices plugin's `{ things: { of, at? } }` section lists the things of a kind you hold, newest first, such as photos or notes.
+- `carryOver.held` for New Game+: the things the player held, by reference, or `'all'`. A thing made in play, such as a photo, comes with them.
+- The debug plugin's `debug/held` (`debugHeld(entity, to, at?)`) sets how many of a thing someone holds.
 - [`@ifloom/plugin-inventory`](/docs/plugins/inventory): use, drop and give away the things you hold. Give a thing the `inventory/usable` trait with `usable('Eat the sandwich', effects)` and it gets a button that runs its effects and spends one, or keeps it with `keep: true`. `giveThing(ref, 'character:ava')` hands one to someone. The React UI's `Inventory` draws its buttons, and `useInventory` gives them with no markup.
 - The shop's `shop/sellable` trait (`sellable({ coins: 4 })`): a thing's price for every vendor that lists it without one, on a kind, an entity or a mod's `traits` table.
 - The wardrobe's `wardrobe/wearable` trait (`wearable('coat')`): the slot a thing is worn in.
@@ -26,13 +31,13 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `'$'` is bound inside a plugin or custom call's arguments too, so a kind can list its entities with `{ 'cast/met': { character: '$' } }`.
 - A guide page, [Organising a game](/docs/guide/organising): where content goes as a game grows, combining your files, prose files, tests per area, editor exports and mods.
 - [Content and packs](/docs/reference/loader#content-and-packs) on the loader's page: what your own content is, what a pack is, and how each merges, is saved and is upgraded.
-- `loadGame` reports a scene, prose key, stat, item, entity, custom function, plugin entry or any other key that your content declares twice, so `ifloom check` fails on it and a game split into files can't lose one by accident. Give a file's content a `name` and the problem names both files.
+- `loadGame` reports a scene, prose key, stat, entity, custom function, plugin entry or any other key that your content declares twice, so `ifloom check` fails on it and a game split into files can't lose one by accident. Give a file's content a `name` and the problem names both files.
 - The editor imports JSON content (no `id` or `schema`) as well as JSON packs, naming the project after the file.
 - `npm create ifloom@latest my-game` (also `pnpm create ifloom`, `yarn create ifloom` and `bun create ifloom`), from the new `create-ifloom` package: a new game in the folder `my-game`, with the same `--template` and `--theme` as `ifloom new`, and the next steps written for the package manager you ran it with. With yarn 2 or later it also sets yarn to install into `node_modules`, which Vite needs.
 - The packages are compiled JavaScript with type declarations and source maps, so a game installs them with npm, pnpm, yarn or bun, and any bundler uses them with no extra settings. Until they're on npm, `npm run pack` in the checkout packs them for a game beside it.
 - `@ifloom/react/styles.min.css` and `@ifloom/react/themes/<preset>.min.css`: the React UI's stylesheet and its presets already built, for a game without Tailwind.
 - An engine for any shape of game: a linear novel, a management game played a week at a time, or a life sim with a calendar, places and characters.
-- A small core that keeps the turn, scenes and choices, stats, entities, a kv store (keys with a true/false, number or text value), collections, storylines, triggers, notices, inputs and saves.
+- A small core that keeps the turn, scenes and choices, stats, entities and who holds them, a kv store (keys with a true/false, number or text value), storylines, triggers, notices, inputs and saves.
 - Plugins for the rest, each a package of its own: a calendar, places, a cast of characters, quests, a wardrobe, messages, feeds, devices, a ready-made phone, and debug commands that are left out of release builds.
 - Content as data. Conditions and effects are plain objects, and your game's own logic plugs in by name with `{ custom: name }`.
 - `ifloom check`, which checks a game's content and lists any missing pictures, videos and audio files before anyone plays.
@@ -114,6 +119,12 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** items are things. The engine has no items of its own any more: what the player carries is [entities](/docs/reference/entities#holding-things) they hold, such as `{ id: 'sandwich', of: 'item', name: 'sandwich', at: 'player' }`, given with `give('item:sandwich')` and asked about with `{ entity: 'item:sandwich', at: 'you' }`. Using one is the [inventory plugin](/docs/plugins/inventory)'s `usable` trait and `inventory/use` command. A pack or mod written with items is upgraded as it loads (schema 13), and a save keeps what the player had, as counts held by the player (save version 16). Your own content isn't upgraded, so rewrite its items as things.
+- **Breaking:** collections are things too. A note or a photo is an entity the player holds: declare it and `give` it, or make it in play with `create`, with its name, `desc` and `image`. The phone's kit returns `kinds` (its `photo` kind) instead of `collections`, and its Gallery lists the photos you hold. Old packs and saves are upgraded: a collection's entries become things of a kind named after it (the phone's `gallery` is `photo`), held by the player.
+- **Breaking:** the strings `doesNothing` and `haveNone` are the inventory's, `inventory/doesNothing` and `inventory/haveNone`, and the wardrobe has its own `wardrobe/haveNone`. The inventory's and the wardrobe's lines name the thing as `{thing}`, not `{item}`.
+- **Breaking:** the React UI's `Inventory` parts are `thing`, `thing-name`, `thing-count`, `thing-text` and `thing-drop`, and its words `ui.heldCount`, `ui.wearThing` and `ui.debugHeld`. A thing carries `data-thing`, and there's no `data-item`.
+- Small Town's notes and photos are things you hold, read in the phone's Notes and Gallery apps, and its inventory lists only what you carry. Its coins read "1 coin".
 
 - **Breaking:** the shop sells entities. A good is `{ entity: 'food:sandwich', price?, stock?, restock?, when? }` instead of `{ item, price }`, its price falls back to the thing's `sellable` trait, and `buy`, `sell`, `inStock` and the commands take the thing's reference: `buy('counter', 'food:sandwich')`. A good with no `stock` never runs out. A good with a `stock` is held by the vendor, now a unique entity `'vendor:<id>'`, which buying moves from and a restock tops up, so conditions and effects can read and change what it has. `GoodView` has `entity`, `desc` and `image` in place of `item`, and `VendorView` has `ref`. Saves carry their sold counts into the vendor's stock.
 - **Breaking:** the wardrobe dresses you in entities. Instead of `data.wardrobe.clothes`, give each thing that can be worn `wearable(slot)`. A slot's `start`, `wear`, `wearing` and the view name things by reference (`'clothing:raincoat'`), `wardrobe/wearing` takes `entity` instead of `item`, and you can wear only what you hold. Saves carry worn item ids into references.
@@ -202,6 +213,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** core items: `ItemDef`, `itemById`, `itemStart`, the `items` key of a game, content and pack, the `{ item }` condition, the `item` effect, the `use` command, `view.pack`, `state.items`, `CarryOver.items`, the `items` kind of `MigrationTools.fill`, and the debug plugin's `debug/item` and `debugItem`. Use things the player holds and the inventory plugin.
+- **Breaking:** collections: `CollectionDef`, `CollectionItem`, `CollectionEntry`, `CollectionView`, `collect`, `collected`, `collectionById`, `discard`, the `collections` key, the `{ collection }` condition, the `collect` and `discard` effects, `view.collections`, `state.collections`, the devices plugin's `{ collection }` section and `PhoneKit.collections`. Use things the player holds.
 - **Breaking:** the `entities` kind of `MigrationTools.fill`, and the filling of declared entities into old saves: they're there without it.
 - **Breaking:** a pack's `overrides` field, since every pack replaces what it repeats and your own content declares each key once. An old JSON pack or mod that sets it still loads, and the field is ignored.
 - The React UI's layout lists: the `Layout`, `Part` and `PartName` types, `DEFAULT_LAYOUT`, `READING_LAYOUT`, `Parts`, `Frame` and `FrameProps`, and `Sidebar`'s `parts`. Write the page as a layout component instead.
@@ -211,6 +224,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- The React UI's debug card sends the place, scene and turn forms with the arguments the debug plugin reads, so they work.
 - A name with a prose token, such as a character called `'{{partnerName}}'`, is filled in `view.entities` too, not only in the cast plugin's own view.
 - In the editor, a JSON import that fails while reading the file or keeping the new project now says why in the message bar, instead of doing nothing.
 - In the React UI with `keys` on, Escape is left to the page again when there's no menu on screen, instead of being swallowed. `startKeys`'s `escape` can return `false` to let the key through the same way.

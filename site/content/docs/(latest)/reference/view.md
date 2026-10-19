@@ -133,7 +133,7 @@ type ScreenScene = {
 
 ## View
 
-`View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: [collections](#collections), [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and the [phone bundle](/docs/plugins/phone) wires them together.
+`View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: the [things you hold](#held), such as notes and photos, [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and the [phone bundle](/docs/plugins/phone) wires them together.
 
 ### The clock and the player
 
@@ -211,15 +211,8 @@ While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the mi
 |---|---|---|
 | `stats` | [`StatView[]`](#statview) | The player's [declared stats](/docs/reference/stats) that are `listed` and whose `visible` condition holds, in declaration order. A stat declared `of` a kind belongs to an entity, and is in [`entities`](#entities) instead. |
 | `statsById` | `Record<string, `[`StatView`](#statview)`>` | Every one of the player's declared stats, by id, listed or not and visible or not. Read a purse or a gauge your UI draws its own way from here, such as `shown.statsById.coins.text`. |
-| `pack` | `{ id, name, desc, count, useLabel? }[]` | Items the player is carrying (count above 0), in the order the game declares them. A `useLabel` means the item can be used with the `use` command. |
 
-`View.pack` is the player's inventory. It shares a name with the loader's [`Pack`](/docs/reference/loader#pack) type, content such as a mod laid over the game, but the two are unrelated.
-
-### collections
-
-| Field | Type | Meaning |
-|---|---|---|
-| `collections` | `Record<string, `[`CollectionView`](#collectionview)`>` | Every declared [collection](/docs/reference/collections), by id, with its entries oldest first and their words filled in. A collection with nothing in it is there, with no entries. |
+What the player carries is in [`held`](#held). The [inventory plugin](/docs/plugins/inventory)'s slice adds a button to use each thing that can be used.
 
 ### entities
 
@@ -577,24 +570,6 @@ Each entry in `stats` is a stat spent, its amount, and the amount written throug
 `notes` are every plugin's [price](/docs/reference/plugins#prices) for the button's effects, in the order `game.plugins` lists them. Time passing, for example, is the [calendar](/docs/plugins/calendar#price-notes)'s note `until evening`. A button with notes and no cost has a price of only `{ notes }`, and a button with neither has no `price`.
 
 **Gotcha:** it only shows costs. What a choice pays is deliberately left off, because a payout printed on a button tells the player which button is the right one.
-
-## CollectionView
-
-```ts
-type CollectionView = {
-  name: string
-  entries: {
-    id: string
-    title: string
-    text: string
-    image: string | null
-    data: Record<string, KvValue>
-    turn: number
-  }[]
-}
-```
-
-A [collection](/docs/reference/collections) as the UI draws it. `name` is the declared name. Each entry's `text` is its prose filled in for this save, or `''` if it has none. `title` is `''` and `data` is `{}` if left out. `turn` is the [turn](/docs/reference/state#turn) the entry was collected in, counted from 0.
 
 ## EntitiesView and EntityView
 

@@ -6,7 +6,7 @@ These are the ideas the engine is built on, one short section each, with a link 
 
 ## The state is one plain object
 
-Everything about a game in progress lives in one `GameState`. It holds the turn, the scene on screen, the player's stats, kv store and items, each entity's numbers, the storylines, and each plugin's own part, such as the calendar's day. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
+Everything about a game in progress lives in one `GameState`. It holds the turn, the scene on screen, the player's stats and kv store, what everyone holds, each entity's numbers, the storylines, and each plugin's own part, such as the calendar's day. It holds no functions and no class instances, so it turns into JSON as it is. The state is the save.
 
 The engine never changes a state in place. Every command returns a new one, so keeping the previous state is all an undo needs. The [runner](#the-runner-drives-the-game) keeps them for you.
 
@@ -45,9 +45,9 @@ The game is your content. It can hold:
 - the scene it opens on (`introScene`) and the phase it starts in (`startPhase`)
 - stats
 - kinds of entity, and the entities that exist at the start
-- items, activities and the buttons offered in every room (`actions`)
+- activities and the buttons offered in every room (`actions`)
 - storylines
-- collections, triggers and inputs
+- triggers and inputs
 - the words that replace the engine's own (`strings`)
 - named custom functions that conditions, effects and prose can call (`custom`)
 - the plugins it uses, and their content under `data`
@@ -112,7 +112,7 @@ See [Storylines](/docs/reference/storylines) and [Progress and limits](/docs/ref
 
 These are the parts a phone, a notice board or a journal is built from:
 
-- A [collection](/docs/reference/collections) is a named list the game keeps entries in, such as photos taken or letters found.
+- A thing the player holds, such as a sandwich, a note or a photo, is an [entity](/docs/reference/entities#holding-things) too, held by the player or by someone who can hold things.
 - A [notice](/docs/reference/notices) is something the game tells the player outside a scene, shown as a toast or counted on a badge.
 - A [trigger](/docs/reference/triggers) is a list of effects that runs by itself the first time its condition holds, such as a note under the door the morning after the player first visits the café. It can also be set to fire at most once a turn.
 - An [input](/docs/reference/inputs) is something the player types or picks, written to a kv key, such as their name.
@@ -129,13 +129,13 @@ A plugin adds a system to the engine, such as a calendar, a map, people or quest
 
 First-party plugins don't import each other. One plugin asks another for an answer by name through a query, as the cast asks the places plugin where the player is. A plugin can also list the plugins it `cooperates` with. Content may then name their conditions and effects in a game that leaves them out: the condition is false and the effect does nothing.
 
-The core is the same in every game. It's made of built-in parts, such as scenes, stats, items, entities and triggers, and each part keeps its own piece of the state and its own conditions, effects and commands. Plugins are the parts a game chooses. They plug into the core through the plugin API, and reach each other only by name:
+The core is the same in every game. It's made of built-in parts, such as scenes, stats, entities, holdings and triggers, and each part keeps its own piece of the state and its own conditions, effects and commands. Plugins are the parts a game chooses. They plug into the core through the plugin API, and reach each other only by name:
 
 ```mermaid
 flowchart TD
   game["your game<br/>content, mods, the plugins it lists"]
   subgraph core["the core: apply, view, loadState, checkGame"]
-    parts["built-in parts<br/>scenes, stats, items, entities,<br/>triggers, audio, minigames…"]
+    parts["built-in parts<br/>scenes, stats, entities, holdings,<br/>triggers, audio, minigames…"]
   end
   subgraph chosen["plugins the game lists"]
     places["places"]

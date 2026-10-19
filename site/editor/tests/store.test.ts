@@ -71,11 +71,12 @@ describe('the project store', () => {
   })
   it('upgrades a schema 5 project to the content naming rule and blocked', async () => {
     const store = projectStore(new IDBFactory())
+    const { kinds: _kinds, entities: _entities, ...pack } = sampleProject().pack
     const current = sampleProject()
     const old = {
       ...current,
       pack: {
-        ...current.pack,
+        ...pack,
         schema: 5,
         items: [{ id: 'bun', name: 'Bun', desc: 'A bun.', kind: 'stuff', use: { label: 'Eat', effects: [{ kind: 'setStat', key: 'energy', to: 10 }] } }],
         scenes: [
@@ -100,17 +101,28 @@ describe('the project store', () => {
     await store.put(old as never)
     const loaded = await store.get(old.id)
     expect(loaded?.pack.schema).toBe(SCHEMA)
-    expect(loaded?.pack.items[0].use?.effects).toEqual([{ kind: 'stat', stat: 'energy', to: 10 }])
+    // Items are things now: an item kind, and the bun's use the inventory's trait.
+    expect(loaded?.pack.kinds).toEqual([{ id: 'item', label: 'Item', plural: 'Items', listed: false }])
+    expect(loaded?.pack.entities).toEqual([
+      {
+        id: 'bun',
+        of: 'item',
+        name: 'Bun',
+        desc: 'A bun.',
+        tags: ['stuff'],
+        traits: { 'inventory/usable': { label: 'Eat', effects: [{ kind: 'stat', stat: 'energy', to: 10 }] } },
+      },
+    ])
     expect(loaded?.pack.scenes[0]).toEqual({
       id: 'market',
-      body: [{ text: 'market', when: { item: 'bun' } }],
+      body: [{ text: 'market', when: { entity: 'item:bun', at: 'you' } }],
       choices: [
         {
           id: 'buy',
           blocked: [{ when: { turn: { lt: 1 } }, reason: 'Not yet.' }],
           effects: [
             { kind: 'stat', stat: 'coins', by: -3 },
-            { kind: 'item', item: 'bun', by: 1 },
+            { kind: 'entity', entity: 'item:bun', at: 'you', by: 1 },
             { kind: 'scene', scene: null },
           ],
         },

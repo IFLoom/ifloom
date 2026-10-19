@@ -35,9 +35,7 @@ export type Reference =
   | { stat: string; of?: string; writes?: boolean }
   /** A stat an entity of this kind is given a starting value for. */
   | { stat: string; starts: string }
-  | { item: string }
   | { storyline: string }
-  | { collection: string }
   /** A `play` setting, and the value it is compared with or given. */
   | { setting: string; is?: KvValue }
   /** A kind of entity. */

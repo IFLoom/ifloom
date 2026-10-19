@@ -61,8 +61,6 @@ Why a [command](/docs/reference/commands) can't be done.
 | `nothingToChoose` | `There is nothing to choose.` | |
 | `notOnOffer` | `That is not on offer.` | |
 | `noSuchThing` | `There is no such thing.` | |
-| `doesNothing` | `The {item} does not do anything.` | `{item}` is the item's name |
-| `haveNone` | `You have no {item}.` | `{item}` |
 
 ### Input
 
@@ -275,7 +273,7 @@ const kites = definePlugin({
 say(game, 'kites/noWind', { kite: 'the red one' }) // 'There is no wind for the red one.'
 ```
 
-A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game's content or a pack. A plugin can also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and a game's override covers both.
+A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game's content or a pack. A plugin can also say an engine key, such as `say(game, 'noSuchThing')`, so its refusals match the engine's and a game's override covers both.
 
 **Gotcha.** The plugin's defaults are only found when the game has the plugin. Without it, `say(game, 'kites/noWind')` returns `'kites/noWind'`.
 

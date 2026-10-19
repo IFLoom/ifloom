@@ -27,8 +27,6 @@ export const CONDITION_KEYS = [
   'entity',
   'level',
   'storyline',
-  'item',
-  'collection',
   'scene',
   'turn',
   'phase',
@@ -48,12 +46,9 @@ export const EFFECT_KINDS = [
   'move',
   'you',
   'scene',
-  'item',
   'phase',
   'closeStoryline',
   'turn',
-  'collect',
-  'discard',
   'notify',
   'audio',
   'sound',
@@ -76,7 +71,7 @@ export const CONDITION_FORMS = [
   'not',
   'stat',
   'kv',
-  'item',
+  'entity',
   'chose',
   'seen',
   'since',
@@ -92,7 +87,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   not: 'Not',
   stat: 'Stat',
   kv: 'kv key',
-  item: 'Item count',
+  entity: 'Things you hold',
   chose: 'Chose',
   seen: 'Seen scene',
   since: 'Turns since scene',
@@ -107,7 +102,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
  * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
  * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
  */
-export const EFFECT_FORMS = ['stat', 'kv', 'item', 'scene', 'notify', 'turn', 'sound', 'audio', 'transition'] as const satisfies readonly Effect['kind'][]
+export const EFFECT_FORMS = ['stat', 'kv', 'entity', 'scene', 'notify', 'turn', 'sound', 'audio', 'transition'] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
@@ -115,7 +110,7 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   statTo: 'Set a stat',
   kv: 'Set a kv key',
   kvBy: 'Change a kv key by',
-  item: 'Give or take an item',
+  entity: 'Give or take a thing',
   scene: 'Go to a scene',
   draw: 'Draw a storylet',
   notify: 'Notify',
@@ -133,7 +128,7 @@ export const EFFECT_MENU = [
   'statTo',
   'kv',
   'kvBy',
-  'item',
+  'entity',
   'scene',
   'draw',
   'notify',

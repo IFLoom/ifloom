@@ -22,7 +22,7 @@ You build an app from sections, and each section is something the engine already
 
 - prose
 - actions, the same buttons a room has, with prices and reasons
-- a list, either a [collection](/docs/reference/collections) or the people the player can call
+- a list, either the [things of a kind](/docs/reference/entities#notes-photos-and-other-things-made-in-play) you hold, such as notes or photos, or the people the player can call
 - another plugin's view, such as a [messages](/docs/plugins/messages) channel or a [feed](/docs/plugins/feed)
 - a panel the game draws itself
 
@@ -148,7 +148,7 @@ import type { Block, ActionDef } from '@ifloom/engine'
 type Section =
   | { prose: Block[] }
   | { actions: ActionDef[] }
-  | { collection: string }
+  | { things: { of: string; at?: string } }
   | { contacts: true }
   | { plugin: string; with?: Record<string, unknown> }
   | { panel: string }
@@ -158,7 +158,7 @@ type Section =
 |---|---|
 | `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [custom value](/docs/reference/custom) in a token can print a balance or the weather. |
 | `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has an activity's price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. |
-| `{ collection }` | A declared [collection](/docs/reference/collections)'s entries, newest first, such as a gallery or notes. |
+| `{ things: { of, at? } }` | The [things](/docs/reference/entities#notes-photos-and-other-things-made-in-play) of the kind `of` that a holder holds, newest first, such as photos or notes. `at` is `'you'` if left out, or name `'player'` or a unique entity. Each entry is the thing's reference, name, description and picture, and has no buttons. |
 | `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
 | `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/plugins/feed). |
 | `{ panel }` | A screen the game draws itself, with the data the game's [custom panel](/docs/reference/custom) of that name returns. |
@@ -197,7 +197,7 @@ In a game without the cast, the section is an empty list.
 
 This laptop sits in the player's flat, in a town like the [showcase](/docs/guide/showcase)'s. It has four apps:
 
-- Notes, over a `notes` collection
+- Notes, listing the `note` things the player holds
 - a café app that delivers, with a button that only shows while the player has no scarf
 - a bank app that's locked until the player opens an account
 - a Mail app that appears once email is set up, with a dot while there's new mail
@@ -212,14 +212,14 @@ import { at, places, type LocationDef } from '@ifloom/plugin-places'
 const apps: AppDef[] = [
   {
     id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop',
-    sections: [{ prose: [{ text: 'notes.top' }] }, { collection: 'notes' }],
+    sections: [{ prose: [{ text: 'notes.top' }] }, { things: { of: 'note' } }],
   },
   {
     id: 'shop', name: 'Corner Café', icon: 'basket', on: 'laptop',
     sections: [{
       actions: [
         { id: 'sandwich', label: 'Order a sandwich', command: { type: 'activity', id: 'orderSandwich' } },
-        { id: 'scarf', label: 'Order a scarf', command: { type: 'activity', id: 'orderScarf' }, when: { not: { item: 'scarf' } } },
+        { id: 'scarf', label: 'Order a scarf', command: { type: 'activity', id: 'orderScarf' }, when: { not: { entity: 'clothing:scarf', at: 'you' } } },
       ],
     }],
   },
@@ -243,22 +243,25 @@ const locations: LocationDef[] = [
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
-  items: [
-    { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
-    { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
+  kinds: [
+    { id: 'item', label: 'Thing', listed: false },
+    { id: 'clothing', label: 'Clothing', unique: true, listed: false },
+    { id: 'note', label: 'Note', listed: false },
   ],
-  collections: [{ id: 'notes', name: 'Notes' }],
+  entities: [
+    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
+    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' },
+  ],
   activities: [
-    { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
-    { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'item', item: 'scarf', by: 1 }] },
-    { id: 'jot', effects: [{ kind: 'collect', collection: 'notes', entry: { id: 'shopping', title: 'Shopping', text: 'note.shopping' } }] },
+    { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'entity', entity: 'item:sandwich', by: 1 }] },
+    { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'entity', entity: 'clothing:scarf', by: 1 }] },
+    { id: 'jot', effects: [{ kind: 'create', of: 'note', entity: { id: 'shopping', name: 'Shopping', desc: 'Milk, bread, a lemon.' }, at: 'player' }] },
     { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
     'place.high-street': 'The high street.',
     'notes.top': 'Your notes, newest first.',
-    'note.shopping': 'Milk, bread, a lemon.',
     'bank.balance': 'You have {{v:balance}}.',
   },
   custom: {
@@ -302,7 +305,7 @@ state = apply(state, game, { type: 'activity', id: 'jot' }).state
 state = apply(state, game, openApp('notes')).state     // no time passes, and the player is still at home
 laptop(state).open?.sections
 // [{ kind: 'prose', text: 'Your notes, newest first.' },
-//  { kind: 'list', entries: [{ id: 'shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
+//  { kind: 'list', entries: [{ id: 'note:shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
 
 state = apply(state, game, openApp('shop')).state      // the notes close: one app open per device
 laptop(state).open?.sections
@@ -469,7 +472,7 @@ type SectionView =
 |---|---|---|
 | `prose` | `{ prose }` | The blocks rendered for the current state. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
-| `list` | `{ collection }`, `{ contacts }` | One entry per collection entry (title, words filled in, image, no actions) or per contact (name, role, portrait, a Call button). |
+| `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, role, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel }` | What the game's custom panel returned, or `null` if it has none. |
 
@@ -504,13 +507,13 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 - an app on a device the game doesn't have (`unknown device "…"`)
 - anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
 - a count badge naming a value no plugin and no custom function has (`no custom value named "…"`)
-- a collection the game doesn't declare (`unknown collection "…"`)
+- a `things` section's kind the game doesn't declare (`unknown kind "…"`), and a holder in its `at` that can't hold things
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
 - a panel the game has no custom panel for (`no custom panel named "…"`)
 - a prose block with no prose (`no prose for "…"`), and anything its `when` names
 - anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, checked as the game's own [actions](/docs/reference/actions#actiondef) are
 
-The action check catches an unknown scene, activity or item, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
+The action check catches an unknown scene or activity, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
 A problem with an app is pinned on the content or pack it came from, or on `base` for one in the base game's `data`.
 
@@ -533,4 +536,4 @@ mod:radio · apps tuner · no custom panel named "dial"
 
 ## See it in an example
 
-Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app showing a collection, and `openApp('camera')` opens it.
+Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app listing the notes you hold, and `openApp('camera')` opens it.

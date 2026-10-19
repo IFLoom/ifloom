@@ -73,7 +73,7 @@ export type Pack = Flat<
 >
 
 /** What `loadGame` takes beside the content: the rest of the game, such as its title, first scene, rules and plugins. */
-export type GameBase = Omit<Game, 'scenes' | 'items' | 'storylines' | 'activities' | 'stats'>
+export type GameBase = Omit<Game, 'scenes' | 'storylines' | 'activities' | 'stats'>
 
 /** What else `loadGame` takes. */
 export type LoadOptions = {
@@ -90,10 +90,8 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   data: true,
   scenes: true,
   patches: true,
-  items: true,
   storylines: true,
   activities: true,
-  collections: true,
   triggers: true,
   inputs: true,
   settings: true,
@@ -155,10 +153,8 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
       Object.entries(lists).flatMap(([list, entries]) => entries.map((entry) => `${plugin}/${list} "${entry.id}"`)),
     ),
   scenes: byId('scene', (content) => content.scenes),
-  items: byId('item', (content) => content.items),
   storylines: byId('storyline', (content) => content.storylines),
   activities: byId('activity', (content) => content.activities),
-  collections: byId('collection', (content) => content.collections),
   triggers: byId('trigger', (content) => content.triggers),
   inputs: byId('input', (content) => content.inputs),
   settings: byId('setting', (content) => content.settings),
@@ -303,7 +299,6 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   const game: Game = {
     ...base,
     scenes: [],
-    items: [],
     storylines: [],
     activities: [],
     custom,

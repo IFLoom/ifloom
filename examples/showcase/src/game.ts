@@ -24,7 +24,7 @@ import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
 import { custom, rules } from './rules.ts'
 import { stats } from './world/stats.ts'
-import { items } from './world/items.ts'
+import { things } from './world/things.ts'
 import { cast as castContent } from './world/cast.ts'
 import { settings } from './world/settings.ts'
 import { activities } from './world/activities.ts'
@@ -46,7 +46,7 @@ import { sam } from './story/sam.ts'
  */
 export const content: Content[] = [
   stats,
-  items,
+  things,
   castContent,
   settings,
   activities,
@@ -83,7 +83,7 @@ const kit = phone({
         },
       ],
     },
-    { id: 'notes', name: 'Notes', icon: 'notes', sections: [{ collection: 'notes' }] },
+    { id: 'notes', name: 'Notes', icon: 'notes', sections: [{ things: { of: 'note' } }] },
   ],
 })
 
@@ -102,7 +102,8 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
       introScene: 'intro',
       startPhase: 'arrival',
       custom,
-      collections: kit.collections,
+      // The phone's `photo` kind, for the camera's photos.
+      kinds: kit.kinds,
       // The phone, its apps, the texts and the feed: content, so a mod can add an app.
       data: kit.data,
       // The calendar first, so every other plugin sees the new day when one begins.

@@ -460,6 +460,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.closeScene` | `Close the scene` | |
 | `ui.wardrobe` | `Wearing` | |
 | `ui.inventory` | `Carrying` | |
+| `ui.drop` | `Drop` | |
 | `ui.takeOff` | `Take off` | |
 | `ui.wear` | `Wear` | |
 | `ui.nothingOn` | `Nothing` | |
@@ -570,7 +571,7 @@ Which component uses which keys:
 - **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug card), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
 - **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearItem` for each wear button. `ui.wear` is no longer drawn.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
-- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.itemCount` after an item there's more than one of.
+- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, `ui.itemCount` after a thing there's more than one of, and `ui.drop` on its drop buttons.
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
 - **[Beat](/docs/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.

@@ -27,7 +27,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 
 | File | What's in it |
 |---|---|
-| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `items.ts` (with the clothes), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
+| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `items.ts` (the things you carry and wear, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
 | `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its activities, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
 | `src/rules.ts` | The only code in the content: the rules and locks, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
@@ -59,9 +59,9 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 `src/rules.ts` has a [custom value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
 
-### Items you use
+### Things you use
 
-`world/items.ts`, the `sandwich` item, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The sandwich costs 4 coins and has a [`use`](/docs/reference/game#itemdef). Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what the player carries, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`world/items.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
 
 ### Mods
 
@@ -223,7 +223,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/items.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the clothes and the items they are. The café notices the raincoat with a body line on `wearing('raincoat')`. The scarf is bought on the high street with the `buyScarf` activity. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/items.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the raincoat and the scarf as `clothing` entities with the `wearable` trait. The café notices the raincoat with a body line on `wearing('clothing:raincoat')`. The scarf is given on the high street by the `buyScarf` activity, with the engine's `give`. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed statuses
 
@@ -231,13 +231,13 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### The café counter
 
-`story/cafe.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, flapjacks for 2, two a day, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Go to the counter" action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
+`story/cafe.ts`, `data.shop`, and `shop()` in `src/game.ts`. The counter is a [shop](/docs/plugins/shop) vendor at the café, open in the morning and afternoon. It sells sandwiches for 4 coins, which never run out, flapjacks for 2, two a day that the counter holds, baked fresh each morning (`stock: 2, restock: 'day'`), and the newspaper for 2. The prices are each thing's `sellable` trait. Each day one of them is half price, drawn from the save's seed, and Ava takes an unopened sandwich back for half. The café's "Go to the counter" action runs the `counter` activity, whose effect is `openShop('counter')`. That opens the counter in a [panel](/docs/reference/panels), which the React UI draws as a dialog with each good's price, stock and discount, greyed out with `Sold out.` or `Closed.`, to buy and sell back. The café keeps its plain "Buy a sandwich" button, the `buySandwich` activity with a `cost` of 4 coins and no plugin, so you can compare the two ways: the activity is always the same price and never sells out. The tests `sells a sandwich at the café as a plain activity too, beside the counter` and `sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich` play them, and `draws the plugins' defaults` in `tests/shell.test.tsx` opens the counter.
 
 ### A job at the café
 
 `story/cafe.ts` and `story/park.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
 
-You start with a newspaper. Its `use`, "Read the job ads", opens the board with only the paper's ad on it, `openJobs(['dogs'])`. Reading it spends it, and the counter sells another. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
+You start with a newspaper. Its `usable` trait, "Read the job ads", opens the board with only the paper's ad on it, `openJobs(['dogs'])`. It's kept (`keep: true`), so you can read it again. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
 
 ### Visitors in the park
 

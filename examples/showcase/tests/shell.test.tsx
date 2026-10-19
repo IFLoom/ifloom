@@ -44,7 +44,7 @@ describe('the showcase shell', () => {
     expect(document.querySelector('[data-job], [data-vendor]')).toBeNull()
     // The café's "Go to the counter" opens the counter.
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Go to the counter/ })))
-    expect(screen.getByRole('dialog', { name: 'The counter' }).querySelector('[data-good="flapjack"]')).not.toBeNull()
+    expect(screen.getByRole('dialog', { name: 'The counter' }).querySelector('[data-good="item:flapjack"]')).not.toBeNull()
     act(() => void fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' }))
     expect(runner.state.panel).toBeNull()
     // Asking Ava about work opens the job board, every job on it.

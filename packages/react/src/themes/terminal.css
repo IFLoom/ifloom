@@ -669,3 +669,22 @@ body {
   color: var(--primary);
   text-shadow: 0 0 6px color-mix(in oklch, var(--primary) 60%, transparent);
 }
+
+/* What you carry, listed as a text adventure lists it; pictures square, without corners. */
+[data-part="good-image"] {
+  border-radius: 0;
+  image-rendering: pixelated;
+}
+
+[data-part="item-name"]::before {
+  content: "- ";
+  color: var(--muted-foreground);
+}
+
+[data-part="item-drop"] {
+  text-transform: uppercase;
+}
+
+[data-part="wardrobe-slot-name"] {
+  text-transform: uppercase;
+}

@@ -234,7 +234,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     let version = slice.version
     let inner = slice.state
     // The same tools a game's step gets: the state as the engine carried it, filled from the game on request.
-    const tools: MigrationTools = { fill: (kinds) => fillDeclared(state, game, kinds) }
+    const tools: MigrationTools = { game, fill: (kinds) => fillDeclared(state, game, kinds) }
     while (version < plugin.version) {
       const step = plugin.migrations?.[version]
       if (!step) return say(game, 'pluginUnreadable', { plugin: plugin.id })
@@ -256,6 +256,8 @@ export type FillKind = FeatureFill
 
 /** What a step of `game.migrations` is given besides the state. */
 export type MigrationTools = {
+  /** The game the save is loading into, for a step that needs its content: which entity an old id now names, say. */
+  game: Game
   /**
    * The state this step was given, with what the game declares and the save
    * lacks filled in: the kinds asked for, or every kind if left out. Nothing
@@ -287,7 +289,7 @@ function carryGame(state: GameState, game: Game): GameState | string {
     const step = game.migrations?.[version]
     if (step) {
       const given = next
-      next = step(given, { fill: (kinds) => fillDeclared(given, game, kinds) })
+      next = step(given, { game, fill: (kinds) => fillDeclared(given, game, kinds) })
     }
     version += 1
   }

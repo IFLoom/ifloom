@@ -10,6 +10,7 @@ import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
 import { feed } from '@ifloom/plugin-feed'
 import { generators } from '@ifloom/plugin-generators'
+import { inventory } from '@ifloom/plugin-inventory'
 import { jobs } from '@ifloom/plugin-jobs'
 import { messages } from '@ifloom/plugin-messages'
 import { places } from '@ifloom/plugin-places'
@@ -29,6 +30,7 @@ const FACTORIES: Record<PluginId, Factory> = {
   quests,
   statuses,
   achievements,
+  inventory,
   shop,
   jobs,
   generators,

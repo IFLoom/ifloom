@@ -25,6 +25,7 @@
     "@ifloom/plugin-statuses": "^0.0.0",
     "@ifloom/plugin-feed": "^0.0.0",
     "@ifloom/plugin-generators": "^0.0.0",
+    "@ifloom/plugin-inventory": "^0.0.0",
     "@ifloom/plugin-jobs": "^0.0.0",
     "@ifloom/plugin-messages": "^0.0.0",
     "@ifloom/plugin-places": "^0.0.0",

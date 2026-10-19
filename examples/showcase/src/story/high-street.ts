@@ -1,5 +1,5 @@
 /** The high street: the way to everywhere, the weather, and the market's scarves. */
-import type { Content } from '@ifloom/engine'
+import { give, holding, type Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
@@ -8,8 +8,8 @@ export const highStreet: Content = {
     {
       id: 'buyScarf',
       cost: { stats: { coins: 8 } },
-      blocked: [onlyAt(['high-street']), { when: { item: 'scarf' }, reason: 'You have one.' }],
-      effects: [{ kind: 'item', item: 'scarf', by: 1 }],
+      blocked: [onlyAt(['high-street']), { when: holding('clothing:scarf'), reason: 'You have one.' }],
+      effects: [give('clothing:scarf')],
     },
   ],
   variants: {

@@ -11,10 +11,10 @@ import { useWords } from './words.ts'
 export type ShopControls = ShopView & {
   /** The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. */
   here: VendorView[]
-  /** Buy `count` (1 if left out) of an item: sends `shop/buy`, refused with its reason as the buy button says. */
-  buy: (vendor: string, item: string, count?: number) => Result<GameState>
-  /** Sell `count` (1 if left out) of an item back: sends `shop/sell`. */
-  sell: (vendor: string, item: string, count?: number) => Result<GameState>
+  /** Buy `count` (1 if left out) of a thing, by its reference: sends `shop/buy`, refused with its reason as the buy button says. */
+  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
+  /** Sell `count` (1 if left out) of a thing back: sends `shop/sell`. */
+  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
 }
 
 /** The shop plugin's view with its commands, or null in a game without the plugin. `ShopDialog`, `ShopCounter` and the `shop` panel are drawn from it. */
@@ -22,12 +22,12 @@ export function useShop(): ShopControls | null {
   const { view, send } = useGame()
   const shop = view.plugins.shop as ShopView | undefined
   if (!shop) return null
-  const args = (vendor: string, item: string, count?: number) => (count === undefined ? { vendor, item } : { vendor, item, count })
+  const args = (vendor: string, entity: string, count?: number) => (count === undefined ? { vendor, entity } : { vendor, entity, count })
   return {
     ...shop,
     here: shop.vendors.filter((vendor) => vendor.here),
-    buy: (vendor, item, count) => send({ type: 'custom', name: 'shop/buy', with: args(vendor, item, count) }),
-    sell: (vendor, item, count) => send({ type: 'custom', name: 'shop/sell', with: args(vendor, item, count) }),
+    buy: (vendor, entity, count) => send({ type: 'custom', name: 'shop/buy', with: args(vendor, entity, count) }),
+    sell: (vendor, entity, count) => send({ type: 'custom', name: 'shop/sell', with: args(vendor, entity, count) }),
   }
 }
 
@@ -40,6 +40,8 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
   const list = usePart('goods', 'flex flex-col gap-2')
   const row = usePart('good', 'flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-start')
   const name = usePart('good-name', 'font-medium')
+  const desc = usePart('good-desc', 'text-xs text-muted-foreground')
+  const image = usePart('good-image', 'size-12 shrink-0 rounded-md object-cover')
   const details = usePart('good-details', 'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground')
   const stock = usePart('good-stock', '')
   const owned = usePart('good-owned', '')
@@ -52,9 +54,11 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
       {vendor.goods.length ? (
         <ul {...list}>
           {vendor.goods.map((good) => (
-            <li key={good.item} {...row} data-good={good.item}>
+            <li key={good.entity} {...row} data-good={good.entity}>
+              {good.image ? <img {...image} src={good.image} alt="" /> : null}
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p {...name}>{good.name}</p>
+                {good.desc ? <p {...desc}>{good.desc}</p> : null}
                 <p {...details}>
                   {good.off > 0 ? <span {...off}>{words('percentOff', { percent: Math.round(good.off * 100) })}</span> : null}
                   {good.fullPrice ? <s {...full}>{priceText(good.fullPrice)}</s> : null}
@@ -77,8 +81,9 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
 }
 
 /**
- * A vendor's goods: each with its name, today's discount and the full price
- * struck out, how many are left and how many the player has, a Buy button
+ * A vendor's goods: each with its picture and name and a line about it,
+ * today's discount and the full price struck out, how many are left (when
+ * they can run out) and how many the player has, a Buy button
  * with today's price, and a Sell button with what it pays when the vendor
  * buys back and the player has one. A greyed-out button says why on it. A
  * closed vendor says so above its goods.

@@ -534,3 +534,25 @@
   font-style: italic;
   letter-spacing: 0.01em;
 }
+
+/* What you carry and what's on the counter: a picture framed like a plate, a line about it in italics. */
+[data-part="good-image"] {
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+[data-part="good-desc"],
+[data-part="item-text"] {
+  font-style: italic;
+}
+
+[data-part="item"] {
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+[data-part="item-drop"],
+[data-part="wardrobe-slot-name"] {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}

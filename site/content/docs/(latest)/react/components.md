@@ -1048,12 +1048,14 @@ The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their 
 ### Inventory
 
 ```tsx
-function Inventory(props: { className?: string; title?: string | false }): JSX.Element | null
+function Inventory(props: { className?: string; title?: string | false; drop?: boolean }): JSX.Element | null
 ```
 
-What the player carries, from [`view.pack`](/docs/reference/view#the-players-numbers-and-things). Each item shows its name, `×n` (`ui.itemCount`) when there's more than one, and its description. An item with a [`use`](/docs/reference/game#itemdef) gets a [`ChoiceButton`](#choicebutton) labelled with its `useLabel` that sends [`use`](/docs/reference/commands#use). When [`whyNot`](/docs/reference/actions#whynot) says it can't be used now, the button is greyed out with that reason on it.
+What the player carries. It lists the things you hold, from the [inventory](/docs/plugins/inventory) plugin's view when the game has it, else from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.itemCount`) when there's more than one, and its description. With the plugin, a thing that has a use gets a [`ChoiceButton`](#choicebutton) from its `use` button, such as "Eat the sandwich", greyed out with the reason when it can't be used now. With `drop`, each also gets a **Drop** button (`ui.drop`). Without the plugin there are no buttons.
 
-The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each item carries `data-item`. It draws nothing when the player carries nothing.
+Items from the older [`items`](/docs/reference/game#itemdef) list (`view.pack`) come first, each with a button that sends [`use`](/docs/reference/commands#use) when it has a `use`.
+
+The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each thing carries `data-thing` (its reference) and `data-at` (who holds it), and each older item `data-item`. It draws nothing when the player carries nothing.
 
 ```tsx
 import { Inventory } from '@ifloom/react'
@@ -1062,7 +1064,31 @@ import { Inventory } from '@ifloom/react'
 <Inventory className="border-t pt-4" />
 ```
 
-Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `item` (with `data-item`), `item-name`, `item-count` and `item-text`.
+Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `item` (with `data-thing` or `data-item`), `item-name`, `item-count`, `item-text` and `item-drop`.
+
+### useInventory
+
+```ts
+function useInventory(): InventoryControls | null
+
+type InventoryControls = InventoryView & {
+  use: (ref: string) => Result<GameState>
+  drop: (ref: string) => Result<GameState>
+  give: (ref: string, to: string) => Result<GameState>
+}
+```
+
+The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](#inventory) is drawn from it.
+
+```tsx
+import { useInventory } from '@ifloom/react'
+
+function Snacks() {
+  const bag = useInventory()
+  const food = bag?.things.filter((thing) => thing.ref.startsWith('item:') && thing.use) ?? []
+  return food.map((thing) => <button key={thing.ref} onClick={() => bag!.use(thing.ref)}>{thing.use!.label}</button>)
+}
+```
 
 ### WardrobeCard
 
@@ -1070,7 +1096,7 @@ Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `
 function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare piece of clothing for that slot gets a **Wear …** button (`ui.wearItem`, with the item's name as `item`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
+The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearItem`, with the thing's name as `item`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
 
 A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
 
@@ -1085,7 +1111,7 @@ function useWardrobe(): WardrobeControls | null
 
 type WardrobeControls = Omit<WardrobeView, 'slots'> & {
   slots: WardrobeSlotControls[]
-  wear: (id: string) => Result<GameState>
+  wear: (entity: string) => Result<GameState>
   takeOff: (slot: string) => Result<GameState>
 }
 type WardrobeSlotControls = WardrobeView['slots'][number] & {
@@ -1094,7 +1120,7 @@ type WardrobeSlotControls = WardrobeView['slots'][number] & {
 }
 ```
 
-The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare piece of clothing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wear(id)` and `takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
+The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wear(entity)` (a reference, `'clothing:scarf'`) and `takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
 
 ## Inputs
 
@@ -2113,14 +2139,14 @@ Replaceable as `ShopDialog` in [`components`](#components). Parts: `dialog`, `di
 function ShopCounter(props: { vendor: VendorView; className?: string }): JSX.Element
 ```
 
-A vendor's goods, from its [`VendorView`](/docs/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`) shows its name, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with stock, and how many the player has (`ui.owned`). Then:
+A vendor's goods, from its [`VendorView`](/docs/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`, the thing's reference) shows its picture when it has one, its name and description, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with a stock, and how many the player has (`ui.owned`). Then:
 
 - **Buy** (`ui.buy`), a [`ChoiceButton`](#choicebutton) built from the good's `buy` button, so it shows today's price and, when it's greyed out, the reason on it: `Sold out.`, `You need 10 coins.` or the vendor's closed line.
 - **Sell for 2 coins** (`ui.sellFor`), from the good's `sell` button, when the vendor buys back and the player has one.
 
 It says `ui.noGoods` when nothing is on offer.
 
-Replaceable as `ShopCounter` in [`components`](#components). Parts: `shop` (with `data-vendor`), `shop-closed`, `shop-empty`, `goods`, `good` (with `data-good`), `good-name`, `good-details`, `good-off`, `good-full-price`, `good-stock`, `good-owned`, `good-actions` and `choice`.
+Replaceable as `ShopCounter` in [`components`](#components). Parts: `shop` (with `data-vendor`), `shop-closed`, `shop-empty`, `goods`, `good` (with `data-good`), `good-image`, `good-name`, `good-desc`, `good-details`, `good-off`, `good-full-price`, `good-stock`, `good-owned`, `good-actions` and `choice`.
 
 ### useShop
 
@@ -2129,8 +2155,8 @@ function useShop(): ShopControls | null
 
 type ShopControls = ShopView & {
   here: VendorView[]
-  buy: (vendor: string, item: string, count?: number) => Result<GameState>
-  sell: (vendor: string, item: string, count?: number) => Result<GameState>
+  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
+  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
 }
 ```
 
@@ -2141,9 +2167,9 @@ import { useShop } from '@ifloom/react'
 
 function QuickCoffee() {
   const shop = useShop()
-  const coffee = shop?.here[0]?.goods.find((good) => good.item === 'coffee')
+  const coffee = shop?.here[0]?.goods.find((good) => good.entity === 'food:coffee')
   if (!shop || !coffee) return null
-  return <button disabled={Boolean(coffee.buy.disabled)} onClick={() => shop.buy(shop.here[0].id, 'coffee')}>Coffee to go</button>
+  return <button disabled={Boolean(coffee.buy.disabled)} onClick={() => shop.buy(shop.here[0].id, 'food:coffee')}>Coffee to go</button>
 }
 ```
 

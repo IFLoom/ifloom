@@ -90,10 +90,11 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-quests` | A quest log with progress and hints. |
 | `@ifloom/plugin-statuses` | Timed statuses that change stats for a few turns. |
 | `@ifloom/plugin-achievements` | Achievements, secret ones and progress counts, kept in the player's profile. |
-| `@ifloom/plugin-shop` | Vendors, stock, selling back and daily discounts. |
+| `@ifloom/plugin-inventory` | Using, dropping and giving away the things the player holds. |
+| `@ifloom/plugin-shop` | Vendors, stock they hold, selling back and daily discounts. |
 | `@ifloom/plugin-jobs` | Jobs, shifts and wages, promotions and getting fired. |
 | `@ifloom/plugin-generators` | Entities made from templates and pools of values, seeded. |
-| `@ifloom/plugin-wardrobe` | Clothing slots and what the player is wearing. |
+| `@ifloom/plugin-wardrobe` | Clothing slots, wearable things and what the player is wearing. |
 | `@ifloom/plugin-devices` | Phones, laptops and other in-game devices with their own apps. |
 | `@ifloom/plugin-messages` | Message threads whose replies are choices. |
 | `@ifloom/plugin-feed` | Social feeds, the player's posts and the reactions to them. |

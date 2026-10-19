@@ -41,6 +41,7 @@
     "@ifloom/plugin-debug": "^0.0.0",
     "@ifloom/plugin-devices": "^0.0.0",
     "@ifloom/plugin-feed": "^0.0.0",
+    "@ifloom/plugin-inventory": "^0.0.0",
     "@ifloom/plugin-jobs": "^0.0.0",
     "@ifloom/plugin-messages": "^0.0.0",
     "@ifloom/plugin-places": "^0.0.0",
@@ -70,6 +71,9 @@
       "optional": true
     },
     "@ifloom/plugin-feed": {
+      "optional": true
+    },
+    "@ifloom/plugin-inventory": {
       "optional": true
     },
     "@ifloom/plugin-jobs": {
@@ -119,6 +123,7 @@
     "@ifloom/plugin-debug": "^0.0.0",
     "@ifloom/plugin-devices": "^0.0.0",
     "@ifloom/plugin-feed": "^0.0.0",
+    "@ifloom/plugin-inventory": "^0.0.0",
     "@ifloom/plugin-jobs": "^0.0.0",
     "@ifloom/plugin-messages": "^0.0.0",
     "@ifloom/plugin-places": "^0.0.0",

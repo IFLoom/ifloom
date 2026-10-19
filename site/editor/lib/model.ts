@@ -28,6 +28,7 @@ export const PLUGINS = {
   quests: { label: 'Quests', options: '' },
   statuses: { label: 'Statuses', options: '' },
   achievements: { label: 'Achievements', options: '' },
+  inventory: { label: 'Inventory', options: '' },
   shop: { label: 'Shop', options: '' },
   jobs: { label: 'Jobs', options: '' },
   generators: { label: 'Generators', options: '' },

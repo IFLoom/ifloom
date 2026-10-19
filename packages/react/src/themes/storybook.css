@@ -428,3 +428,16 @@
 [data-part="italic"] {
   color: var(--muted-foreground);
 }
+
+/* What you carry: soft cards, the counter's pictures rounded like stickers. */
+[data-part="good-image"] {
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="item"] {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}

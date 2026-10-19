@@ -126,6 +126,7 @@ export {
   entityTags,
   entityTrait,
   everyEntity,
+  isUnique,
   kindById,
   ownerOf,
   parseRef,

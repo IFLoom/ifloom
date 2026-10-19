@@ -77,7 +77,7 @@ An app's actions section has buttons that send commands, so the button sends an 
 import type { AppDef } from '@ifloom/plugin-devices'
 import { openShop, type VendorDef } from '@ifloom/plugin-shop'
 
-const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ item: 'scarf', price: { coins: 10 } }] }
+const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] }
 const activities = [{ id: 'browse', effects: [openShop('webshop')] }]
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'phone',

@@ -667,13 +667,14 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `quest-done` | One finished quest. |
 | `inventory` | What the player carries. |
 | `inventory-title` | Its heading. |
-| `item` | One item. Carries `data-item`. |
+| `item` | One thing you hold, carrying `data-thing` and `data-at`, or an older item, carrying `data-item`. |
 | `item-name` | Its name. |
 | `item-count` | How many, when there's more than one. |
 | `item-text` | Its description. |
+| `item-drop` | Its drop button, with `drop` on. |
 | `wardrobe` | The wardrobe card. |
 | `wardrobe-title` | Its heading. |
-| `wardrobe-slot` | One slot. Carries `data-slot-id`. |
+| `wardrobe-slot` | One slot. Carries `data-slot-id`, and `data-worn` with what's in it. |
 | `wardrobe-slot-name` | The slot's label. |
 | `wardrobe-worn` | What's in the slot. |
 | `statuses` | The list of active statuses. |
@@ -719,7 +720,9 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `shop-empty` | What it says when nothing is on offer. |
 | `goods` | The list of goods. |
 | `good` | One good. Carries `data-good`. |
+| `good-image` | Its picture, when the thing has one. |
 | `good-name` | Its name. |
+| `good-desc` | Its description, when it has one. |
 | `good-details` | The line under it: the discount, the full price, the stock and how many the player has. |
 | `good-off` | Today's discount (`50% off`). |
 | `good-full-price` | The price before it, struck out. |

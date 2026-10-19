@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "description": "Shops for IFLoom: vendors with prices in any spendable stat, limited stock that restocks, selling back, and seeded daily discounts.",
+  "description": "Shops for IFLoom: vendors that sell entities for any spendable stat, stock the vendor holds and restocks, selling back, and seeded daily discounts.",
   "type": "module",
   "exports": {
     ".": {

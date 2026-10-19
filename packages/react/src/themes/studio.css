@@ -377,3 +377,16 @@
   font-weight: 650;
   color: var(--foreground);
 }
+
+/* What you carry: rows like the app's lists, the counter's pictures as thumbnails. */
+[data-part="good-image"] {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+[data-part="item"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * 0.6);
+  background: var(--card);
+}

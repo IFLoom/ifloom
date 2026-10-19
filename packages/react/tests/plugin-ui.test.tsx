@@ -2,15 +2,17 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
+import { createRunner, heldCount, holding, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { jobs, openJobs } from '@ifloom/plugin-jobs'
 import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
 import { applyStatus, statuses } from '@ifloom/plugin-statuses'
+import { inventory, usable } from '@ifloom/plugin-inventory'
 import {
   AchievementList,
   GameProvider,
   GameShell,
+  Inventory,
   JobBoard,
   PanelHost,
   RoomActions,
@@ -18,6 +20,7 @@ import {
   ShopCounter,
   StatusList,
   useAchievements,
+  useInventory,
   useJobs,
   useShop,
   useStatuses,
@@ -40,10 +43,17 @@ function game(withPlugins = true): Game {
           { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
           { id: 'energy', label: 'Energy', start: 50, max: 100, spendable: true },
         ],
-        items: [
-          { id: 'sandwich', name: 'Sandwich', desc: '' },
-          { id: 'flapjack', name: 'Flapjack', desc: '' },
-          { id: 'cake', name: 'Cake', desc: '' },
+        kinds: [{ id: 'food', label: 'Food', listed: false }],
+        entities: [
+          {
+            id: 'sandwich',
+            of: 'food',
+            name: 'Sandwich',
+            desc: 'Cheese and pickle.',
+            traits: { ...usable('Eat the sandwich', [{ kind: 'stat', stat: 'energy', by: 20 }]) },
+          },
+          { id: 'flapjack', of: 'food', name: 'Flapjack' },
+          { id: 'cake', of: 'food', name: 'Cake' },
         ],
         activities: [
           { id: 'coffee', effects: [applyStatus('buzz')] },
@@ -61,9 +71,9 @@ function game(withPlugins = true): Game {
                 name: 'The counter',
                 buysBack: 0.5,
                 goods: [
-                  { item: 'sandwich', price: { coins: 4 } },
-                  { item: 'flapjack', price: { coins: 2 }, stock: 1 },
-                  { item: 'cake', price: { coins: 10 } },
+                  { entity: 'food:sandwich', price: { coins: 4 } },
+                  { entity: 'food:flapjack', price: { coins: 2 }, stock: 1 },
+                  { entity: 'food:cake', price: { coins: 10 } },
                 ],
               },
             ],
@@ -93,7 +103,7 @@ function game(withPlugins = true): Game {
             achievements: [
               { id: 'rich', title: 'Nest egg', description: 'Have 20 coins.', progress: { value: 'coins', target: 20 } },
               { id: 'river', title: 'Dusk by the river', description: 'Sit by the river.', secret: true, when: { kv: 'river' } },
-              { id: 'shopper', title: 'Shopper', description: 'Buy a sandwich.', when: { item: 'sandwich', gte: 1 } },
+              { id: 'shopper', title: 'Shopper', description: 'Buy a sandwich.', when: holding('food:sandwich') },
             ],
           },
           statuses: {
@@ -105,7 +115,7 @@ function game(withPlugins = true): Game {
     {
       id: 'plugin-ui',
       title: 'High Street',
-      plugins: withPlugins ? [statuses(), achievements(), shop(), jobs()] : [],
+      plugins: withPlugins ? [statuses(), achievements(), shop(), jobs(), inventory()] : [],
       actions: [
         { id: 'coffee', label: 'Have a coffee', command: { type: 'activity', id: 'coffee' } },
         { id: 'sleep', label: 'Sleep', command: { type: 'activity', id: 'sleep' } },
@@ -136,13 +146,13 @@ describe('the shop', () => {
     play()
     press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
-    const cake = within(dialog.querySelector('[data-good="cake"]') as HTMLElement)
+    const cake = within(dialog.querySelector('[data-good="food:cake"]') as HTMLElement)
     const buyCake = cake.getByRole('button', { name: /Buy/ }) as HTMLButtonElement
     expect(buyCake.disabled).toBe(true)
     // The reason is written on the button, as on every greyed-out choice.
     expect(buyCake.textContent).toContain('You need 10 coins.')
     expect(buyCake.textContent).toContain('10 coins')
-    expect(within(dialog.querySelector('[data-good="flapjack"]') as HTMLElement).getByText('1 left')).toBeTruthy()
+    expect(within(dialog.querySelector('[data-good="food:flapjack"]') as HTMLElement).getByText('1 left')).toBeTruthy()
   })
 
   it('has no button of its own: a vendor opens only from content', () => {
@@ -155,7 +165,7 @@ describe('the shop', () => {
     const runner = play()
     press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
-    const flapjack = () => within(dialog.querySelector('[data-good="flapjack"]') as HTMLElement)
+    const flapjack = () => within(dialog.querySelector('[data-good="food:flapjack"]') as HTMLElement)
     act(() => void fireEvent.click(flapjack().getByRole('button', { name: /Buy/ })))
     act(() => void fireEvent.click(flapjack().getByRole('button', { name: /Sell/ })))
     expect(runner.state.stats.coins).toBe(4)
@@ -170,25 +180,62 @@ describe('the shop', () => {
     const runner = play()
     press('Go to the counter')
     const dialog = screen.getByRole('dialog', { name: 'The counter' })
-    const sandwich = () => within(dialog.querySelector('[data-good="sandwich"]') as HTMLElement)
+    const sandwich = () => within(dialog.querySelector('[data-good="food:sandwich"]') as HTMLElement)
     expect(sandwich().queryByRole('button', { name: /Sell/ })).toBeNull()
     act(() => void fireEvent.click(sandwich().getByRole('button', { name: /Buy/ })))
-    expect(runner.state.items.sandwich).toBe(1)
+    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
     expect(runner.state.stats.coins).toBe(1)
     expect(sandwich().getByText('You have 1')).toBeTruthy()
     act(() => void fireEvent.click(sandwich().getByRole('button', { name: /Sell for 2 coins/ })))
-    expect(runner.state.items.sandwich ?? 0).toBe(0)
+    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(0)
     expect(runner.state.stats.coins).toBe(3)
   })
 
   it('says sold out on the button once the stock is gone', () => {
     const runner = play()
-    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', item: 'flapjack' } }))
+    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:flapjack' } }))
     press('Go to the counter')
-    const flapjack = document.querySelector('[data-good="flapjack"]') as HTMLElement
+    const flapjack = document.querySelector('[data-good="food:flapjack"]') as HTMLElement
     const button = within(flapjack).getByRole('button', { name: /Buy/ }) as HTMLButtonElement
     expect(button.disabled).toBe(true)
     expect(button.textContent).toContain('Sold out.')
+  })
+})
+
+describe('the inventory', () => {
+  it('lists what you hold, with the plugin’s use button, and drops one with drop on', () => {
+    const g = game()
+    const start = startingState(g)
+    const runner = createRunner(g, { ...start, stats: { ...start.stats, coins: 20 } })
+    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:sandwich' } }))
+    render(
+      <GameProvider runner={runner}>
+        <Inventory drop />
+      </GameProvider>,
+    )
+    const sandwich = within(document.querySelector('[data-thing="food:sandwich"]') as HTMLElement)
+    expect(sandwich.getByText('Sandwich')).toBeTruthy()
+    expect(sandwich.getByText('Cheese and pickle.')).toBeTruthy()
+    act(() => void fireEvent.click(sandwich.getByRole('button', { name: /Eat the sandwich/ })))
+    expect(runner.state.stats.energy).toBe(70)
+    expect(document.querySelector('[data-thing="food:sandwich"]')).toBeNull()
+    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:flapjack' } }))
+    act(() => void fireEvent.click(within(document.querySelector('[data-thing="food:flapjack"]') as HTMLElement).getByRole('button', { name: 'Drop' })))
+    expect(heldCount(runner.state, runner.game, 'food:flapjack')).toBe(0)
+  })
+
+  it('lists what you hold without the plugin too, with no buttons', () => {
+    const g = game(false)
+    const runner = createRunner(g, { ...startingState(g), held: { player: { 'food:cake': 2 } } })
+    render(
+      <GameProvider runner={runner}>
+        <Inventory drop />
+      </GameProvider>,
+    )
+    const cake = document.querySelector('[data-thing="food:cake"]') as HTMLElement
+    expect(cake.textContent).toContain('Cake')
+    expect(cake.textContent).toContain('×2')
+    expect(within(cake).queryByRole('button')).toBeNull()
   })
 })
 
@@ -254,7 +301,7 @@ describe('the achievements', () => {
 
   it('marks one earned when it is', () => {
     const runner = play()
-    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', item: 'sandwich' } }))
+    act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:sandwich' } }))
     expect(screen.getByRole('button', { name: /Achievements/ }).textContent).toContain('1 of 3')
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Achievements/ })))
     const shopper = document.querySelector('[data-achievement="shopper"]') as HTMLElement
@@ -392,9 +439,9 @@ describe('the hooks', () => {
       wrapper: wrapper(runner),
     })
     expect(result.current.shop!.here.map((vendor) => vendor.id)).toEqual(['counter'])
-    act(() => void result.current.shop!.buy('counter', 'sandwich'))
-    expect(runner.state.items.sandwich).toBe(1)
-    expect(result.current.shop!.sell('counter', 'cake').ok).toBe(false)
+    act(() => void result.current.shop!.buy('counter', 'food:sandwich'))
+    expect(heldCount(runner.state, runner.game, 'food:sandwich')).toBe(1)
+    expect(result.current.shop!.sell('counter', 'food:cake').ok).toBe(false)
     expect(result.current.jobs!.apply('office')).toMatchObject({ ok: false, reason: 'Nobody has interviewed you.' })
     act(() => void result.current.jobs!.apply('weekend'))
     expect(result.current.jobs!.held.map((job) => job.id)).toEqual(['weekend'])
@@ -402,17 +449,28 @@ describe('the hooks', () => {
     expect(result.current.statuses!.active).toEqual([])
   })
 
+  it('give what you hold and its commands from useInventory', () => {
+    const g = game()
+    const runner = createRunner(g, startingState(g))
+    const { result } = renderHook(() => ({ shop: useShop(), inventory: useInventory() }), { wrapper: wrapper(runner) })
+    act(() => void result.current.shop!.buy('counter', 'food:sandwich'))
+    expect(result.current.inventory!.things.map((thing) => [thing.ref, thing.use?.label])).toEqual([['food:sandwich', 'Eat the sandwich']])
+    expect(result.current.inventory!.use('food:cake').ok).toBe(false)
+    act(() => void result.current.inventory!.use('food:sandwich'))
+    expect(result.current.inventory!.things).toEqual([])
+  })
+
   it('give null in a game without the plugin', () => {
     const g = game(false)
     const runner = createRunner(g, startingState(g))
-    const { result } = renderHook(() => [useShop(), useJobs(), useAchievements(), useStatuses()], { wrapper: wrapper(runner) })
-    expect(result.current).toEqual([null, null, null, null])
+    const { result } = renderHook(() => [useShop(), useJobs(), useAchievements(), useStatuses(), useInventory()], { wrapper: wrapper(runner) })
+    expect(result.current).toEqual([null, null, null, null, null])
   })
 
   it('drive a component of your own', () => {
     function Purse() {
       const shop = useShop()
-      return shop ? <button onClick={() => shop.buy('counter', 'flapjack')}>Grab a flapjack</button> : null
+      return shop ? <button onClick={() => shop.buy('counter', 'food:flapjack')}>Grab a flapjack</button> : null
     }
     const g = game()
     const runner = createRunner(g, startingState(g))
@@ -426,7 +484,7 @@ describe('the hooks', () => {
       </GameProvider>,
     )
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Grab a flapjack' })))
-    expect(runner.state.items.flapjack).toBe(1)
+    expect(heldCount(runner.state, runner.game, 'food:flapjack')).toBe(1)
   })
 })
 

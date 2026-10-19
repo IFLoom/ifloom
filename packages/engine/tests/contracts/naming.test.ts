@@ -18,6 +18,7 @@ import { at, go, moveTo, places, within } from '@ifloom/plugin-places'
 import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest } from '@ifloom/plugin-quests'
 import { buy, inStock, sell, shop, vendorOpen } from '@ifloom/plugin-shop'
 import { takeOff, wardrobe, wear, wearing } from '@ifloom/plugin-wardrobe'
+import { dropThing, giveThing, inventory, useThing } from '@ifloom/plugin-inventory'
 
 /**
  * Content naming (ADR 0008, `adr/0008-content-naming.md`): every condition,
@@ -208,11 +209,14 @@ const SAMPLES: Record<string, Call> = {
   'commands:quests/track': trackQuest('settle'),
   'commands:quests/seen': seeQuests('settle'),
   'conditions:shop/open': vendorOpen('baker'),
-  'conditions:shop/inStock': inStock('baker', 'bun'),
-  'commands:shop/buy': buy('baker', 'bun', 2),
-  'commands:shop/sell': sell('baker', 'bun', 2),
-  'conditions:wardrobe/wearing': wearing('scarf', 'neck'),
-  'commands:wardrobe/wear': wear('scarf'),
+  'conditions:shop/inStock': inStock('baker', 'food:bun'),
+  'commands:shop/buy': buy('baker', 'food:bun', 2),
+  'commands:shop/sell': sell('baker', 'food:bun', 2),
+  'conditions:wardrobe/wearing': wearing('clothing:scarf', 'neck'),
+  'commands:wardrobe/wear': wear('clothing:scarf'),
+  'commands:inventory/use': useThing('food:apple'),
+  'commands:inventory/drop': dropThing('food:apple'),
+  'commands:inventory/give': giveThing('food:apple', 'character:ava'),
   'commands:wardrobe/takeOff': takeOff('neck'),
 }
 
@@ -263,6 +267,7 @@ const firstParty: Plugin<any>[] = [
   devices(),
   feed(),
   generators(),
+  inventory(),
   jobs(),
   messages(),
   places(),

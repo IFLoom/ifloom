@@ -15,8 +15,10 @@ import {
   entityKv,
   entityName,
   entityOf,
+  heldCount,
   holds,
   inlineChoices,
+  loadState,
   startingState,
   statValue,
   view,
@@ -32,7 +34,8 @@ import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
-import { buy, type ShopView } from '@ifloom/plugin-shop'
+import { buy, sell, type ShopView } from '@ifloom/plugin-shop'
+import { useThing, type InventoryView } from '@ifloom/plugin-inventory'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
 import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
@@ -79,11 +82,12 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'input', id: 'catName', to: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
     expect(apply(state, game, { type: 'input', id: 'catName', to: 'Rex' }).reason).toBe('Not now.')
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'sandwich'))
-    expect(view(state, game).pack.find((item) => item.id === 'sandwich')?.useLabel).toBe('Eat the sandwich')
-    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, { type: 'use', id: 'sandwich' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'item:sandwich'))
+    const carried = (view(state, game).plugins.inventory as InventoryView).things
+    expect(carried.find((thing) => thing.ref === 'item:sandwich')?.use?.label).toBe('Eat the sandwich')
+    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, useThing('item:sandwich'))
     expect(state.stats.energy).toBe(75)
-    expect(state.items.sandwich).toBe(0)
+    expect(heldCount(state, game, 'item:sandwich')).toBe(0)
   })
 
   it('plays a first day: a note under the door, coffee, Ava, a photo and a post', () => {
@@ -95,7 +99,7 @@ describe('Small Town', () => {
     state = run(state, go('cafe'))
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
     expect(view(state, game).scene.body).toContain('very yellow')
-    expect(holds(state, wearing('raincoat'), game)).toBe(true)
+    expect(holds(state, wearing('clothing:raincoat'), game)).toBe(true)
 
     // The café's stage: the counter while Ava is on shift, and a hotspot on her that talks to her.
     const cafe = (view(state, game).plugins.places as PlacesView).location!
@@ -197,14 +201,16 @@ describe('Small Town', () => {
       stats: { friendship: 30 },
     })
     state = run(state, go('high-street'), go('park'), talk('ava'), { type: 'choose', id: 'shell' })
-    // What you hold is in the view; the keepsake kind itself isn't listed.
-    expect(view(state, game).held).toEqual([expect.objectContaining({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })])
+    // What you hold is in the view, after the raincoat and the paper you came with; the keepsake kind itself isn't listed.
+    const held = () => view(state, game).held.map((thing) => thing.ref)
+    expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'keepsake:shell'])
+    expect(view(state, game).held[2]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
     expect(view(state, game).entities.keepsake).toBeUndefined()
     state = run(state, { type: 'choose', id: 'stay' })
     // The next morning at the café she takes it, and keeps it by the till.
     state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
     expect(holds(state, { entity: 'keepsake:shell', at: 'character:ava' }, game)).toBe(true)
-    expect(view(state, game).held).toEqual([])
+    expect(held()).toEqual(['clothing:raincoat', 'item:paper'])
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
   })
 
@@ -319,13 +325,13 @@ describe('Small Town', () => {
     const labels = view(state, game).actions.map((action) => action.label)
     expect(labels).toEqual(expect.arrayContaining(['Buy a sandwich']))
     // The counter sells one too, from the shop's view, which the React UI draws as the counter's dialog.
-    expect((view(state, game).plugins.shop as ShopView).vendors[0].goods.map((good) => good.item)).toContain('sandwich')
+    expect((view(state, game).plugins.shop as ShopView).vendors[0].goods.map((good) => good.entity)).toContain('item:sandwich')
     const button = view(state, game).actions.find((action) => action.id === 'buy-sandwich')!
     expect(button.price?.stats).toEqual([{ id: 'coins', amount: 4, text: '4 coins' }])
     const coins = state.stats.coins
     state = run(state, act('buySandwich'))
     expect(state.stats.coins).toBe(coins - 4)
-    expect(state.items.sandwich).toBe(1)
+    expect(heldCount(state, game, 'item:sandwich')).toBe(1)
     // Only in the café.
     expect(apply(run(state, go('high-street')), game, act('buySandwich')).reason).toBeDefined()
   })
@@ -337,16 +343,41 @@ describe('Small Town', () => {
     expect(counter()).toMatchObject({ id: 'counter', here: true, closed: null })
     expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
     // Each good's buy button carries today's price, and greys out with the reason.
-    const flapjack = () => counter().goods.find((good) => good.item === 'flapjack')!
+    const flapjack = () => counter().goods.find((good) => good.entity === 'item:flapjack')!
     expect(flapjack().buy.price?.stats?.[0].id).toBe('coins')
-    state = run(state, buy('counter', 'flapjack'), buy('counter', 'flapjack'))
-    expect(apply(state, game, buy('counter', 'flapjack')).reason).toBe('Sold out.')
+    expect(flapjack().stock).toBe(2)
+    state = run(state, buy('counter', 'item:flapjack'), buy('counter', 'item:flapjack'))
+    expect(apply(state, game, buy('counter', 'item:flapjack')).reason).toBe('Sold out.')
     expect(flapjack().buy.disabled).toBe('Sold out.')
+    // The counter holds its flapjacks, as any holder holds things; a sandwich never runs out.
+    expect(heldCount(state, game, 'item:flapjack', 'vendor:counter')).toBe(0)
+    expect(counter().goods[0].stock).toBeNull()
     const coins = state.stats.coins
-    state = run(state, buy('counter', 'sandwich'), { type: 'custom', name: 'shop/sell', with: { vendor: 'counter', item: 'sandwich' } })
+    state = run(state, buy('counter', 'item:sandwich'), sell('counter', 'item:sandwich'))
     expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
+    // Baked again the next morning.
+    expect(apply(on(state, 2, 'morning'), game, buy('counter', 'item:flapjack')).reason).toBeUndefined()
     // Closed in the evening, with the café.
-    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'sandwich')).reason).toBe('Closed.')
+    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'item:sandwich')).reason).toBe('Closed.')
+  })
+
+  it('carries a save from before things were entities: the counter’s flapjacks and the raincoat on', () => {
+    const now = on(run(startingState(game), { type: 'choose', id: 'unpack' }), 1, 'morning')
+    const old = {
+      ...now,
+      plugins: {
+        ...now.plugins,
+        shop: { version: 1, state: { sold: { counter: { flapjack: { n: 1, at: 1 } } } } },
+        wardrobe: { version: 1, state: { worn: { coat: 'raincoat', neck: null } } },
+      },
+    }
+    const loaded = loadState(JSON.parse(JSON.stringify(old)), game)
+    if (!loaded.ok) throw new Error(loaded.reason)
+    expect(loaded.value.plugins.shop.state).toEqual({ stocked: { counter: { 'item:flapjack': { at: 1, left: 1 } } } })
+    expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { coat: 'clothing:raincoat', neck: null } })
+    expect(holds(loaded.value, wearing('clothing:raincoat'), game)).toBe(true)
+    const flapjack = (view(loaded.value, game).plugins.shop as ShopView).vendors[0].goods.find((good) => good.entity === 'item:flapjack')!
+    expect(flapjack.stock).toBe(1)
   })
 
   it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {

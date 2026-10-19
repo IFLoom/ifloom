@@ -26,6 +26,7 @@ const DEFAULTS: Record<string, { component: string; hook: string; panel?: string
   shop: { component: 'ShopCounter', hook: 'useShop', panel: 'shop' },
   jobs: { component: 'JobBoard', hook: 'useJobs', panel: 'jobs' },
   wardrobe: { component: 'WardrobeCard', hook: 'useWardrobe' },
+  inventory: { component: 'Inventory', hook: 'useInventory' },
   messages: { component: 'MessagesSection', hook: 'useMessages' },
   feed: { component: 'FeedSection', hook: 'useFeed' },
   devices: { component: 'DeviceButtons', hook: 'useDevices' },

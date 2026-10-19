@@ -36,6 +36,7 @@ import {
   holderOf,
   holdersOf,
   holding,
+  isUnique,
   kindById,
   move,
   ownerOf,
@@ -771,6 +772,14 @@ function canHold(state: GameState, game: Game | undefined, holder: Holder): bool
 ```
 
 Whether a holder can hold things now: `'player'` always, a unique entity while it's in the game. Pass a real holder: `'you'` isn't resolved here, so use [`resolveHolder`](#protagonist-resolveholder-and-ownerof) first.
+
+### isUnique
+
+```ts
+function isUnique(game: Pick<Game, 'kinds' | 'plugins'> | undefined, ref: EntityRef): boolean
+```
+
+Whether an entity's kind is [`unique`](#kinddef): each one is one particular thing, which holds things and is held one at a time. A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop](/docs/plugins/shop) does when it sells a unique thing only from the vendor's stock.
 
 ### protagonist, resolveHolder and ownerOf
 

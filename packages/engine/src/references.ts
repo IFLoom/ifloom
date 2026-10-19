@@ -42,6 +42,8 @@ export type Reference =
   | { setting: string; is?: KvValue }
   /** A kind of entity. */
   | { kind: string }
+  /** An entity content declares (or a plugin's `entities` makes), by reference: `'food:apple'`. `'$'` and `'food:*'` pass. */
+  | { entity: string }
   /**
    * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
    * thing given to it, which can't be the holder itself; `protagonist` for a

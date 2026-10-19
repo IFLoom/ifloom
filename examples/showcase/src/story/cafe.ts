@@ -2,7 +2,7 @@
  * The Corner Café: coffee, the counter, its storylets when you sit a while,
  * and weekend work. Its words are in `cafe.prose.ts`.
  */
-import type { Content } from '@ifloom/engine'
+import { give, type Content } from '@ifloom/engine'
 import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { period } from '@ifloom/plugin-calendar'
@@ -25,7 +25,7 @@ export const cafe: Content = {
         applyStatus('caffeinated'),
       ],
     },
-    { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [{ kind: 'item', item: 'sandwich', by: 1 }] },
+    { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [give('item:sandwich')] },
     { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
     { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
   ],
@@ -93,7 +93,7 @@ export const cafe: Content = {
             { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
             // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
             { id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } },
-            // A sandwich as a plain activity: a cost, a place and an item, with no plugin. Always 4 coins, never sold out.
+            // A sandwich as a plain activity: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
             { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
             // Something small happens while you sit: one of the café's storylets, drawn at random.
             { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
@@ -107,7 +107,7 @@ export const cafe: Content = {
           body: [
             { text: 'place.cafe' },
             { text: 'place.cafe.ava', when: here('ava') },
-            { text: 'place.cafe.raincoat', when: wearing('raincoat') },
+            { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
             { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
           ],
         },
@@ -125,10 +125,11 @@ export const cafe: Content = {
           // One thing on the board is half price each day.
           discounts: { off: 0.5 },
           goods: [
-            { item: 'sandwich', price: { coins: 4 } },
-            // Two a day, baked each morning.
-            { item: 'flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
-            { item: 'paper', price: { coins: 2 } },
+            // Prices from each thing's sellable trait. A sandwich is always there.
+            { entity: 'item:sandwich' },
+            // Two a day, baked each morning: the counter holds them.
+            { entity: 'item:flapjack', stock: 2, restock: 'day' },
+            { entity: 'item:paper' },
           ],
         },
       ],

@@ -5,6 +5,7 @@
  */
 import {
   anyOf,
+  CURRENT,
   bindCurrent,
   createdRecord,
   dropRecord,
@@ -502,7 +503,16 @@ export const entities = defineFeature<EntitiesShape>({
   },
   resolve: (game) => {
     const kinds = kindIds(game)
-    return { kind: (ref) => (kinds.has(ref.kind) ? [] : [`unknown kind "${ref.kind}"`]) }
+    return {
+      kind: (ref) => (kinds.has(ref.kind) ? [] : [`unknown kind "${ref.kind}"`]),
+      entity: (ref) => {
+        if (ref.entity === CURRENT) return []
+        const parts = parseRef(ref.entity)
+        if (!parts) return [`unknown entity "${ref.entity}": name one as "kind:id"`]
+        if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
+        return parts.id === '*' || entityDef(game, ref.entity) ? [] : [`unknown entity "${ref.entity}"`]
+      },
+    }
   },
   // Each listed kind's listed, visible entities, with the stats the player can see on each.
   view: (state, game, _shown, cx) => ({

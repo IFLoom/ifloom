@@ -192,7 +192,7 @@ export function Counter() {
       <h2 className="font-semibold">{vendor.name}</h2>
       <ul className="divide-y">
         {vendor.goods.map((good) => (
-          <li key={good.item} className="flex items-center gap-3 py-2">
+          <li key={good.entity} className="flex items-center gap-3 py-2">
             <span className="flex-1">
               {good.name}
               {good.stock !== null ? <small className="text-muted-foreground"> · {good.stock} left</small> : null}
@@ -231,7 +231,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
   <section v-else-if="vendor">
     <h2>{{ vendor.name }}</h2>
     <ul>
-      <li v-for="good in vendor.goods" :key="good.item">
+      <li v-for="good in vendor.goods" :key="good.entity">
         {{ good.name }}
         <small v-if="good.stock !== null">· {{ good.stock }} left</small>
         <s v-if="good.fullPrice">{{ priceText(good.fullPrice) }}</s>
@@ -269,7 +269,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
   <section>
     <h2>{vendor.name}</h2>
     <ul>
-      {#each vendor.goods as good (good.item)}
+      {#each vendor.goods as good (good.entity)}
         <li>
           {good.name}
           {#if good.stock !== null}<small>· {good.stock} left</small>{/if}

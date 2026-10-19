@@ -18,6 +18,7 @@ import { jobs } from '@ifloom/plugin-jobs'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { inventory } from '@ifloom/plugin-inventory'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
@@ -118,6 +119,8 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
         jobs(),
         generators(),
         wardrobe(),
+        // Using, dropping and giving away what you hold: the sandwich, the paper.
+        inventory(),
         // Cheats are for players; the debugger below is for the developer.
         cheats(),
         // Supporter codes: one opens a cheat and a scene.
@@ -173,7 +176,7 @@ export function probes(game: Game) {
           stats: { ...first.stats, charm: 5 },
           plugins: {
             ...first.plugins,
-            wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } },
+            wardrobe: { version: 2, state: { worn: { coat: null, neck: null } } },
             // Still buzzing from the morning's coffee.
             statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
           },

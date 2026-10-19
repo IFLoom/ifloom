@@ -18,6 +18,7 @@ import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { inventory } from '@ifloom/plugin-inventory'
 
 /**
  * The plugin shape (ADR 0009, `adr/0009-plugin-shape.md`).
@@ -67,6 +68,7 @@ const firstParty: Plugin<any>[] = [
   statuses(),
   unlocks(),
   wardrobe(),
+  inventory(),
 ]
 
 /** The first-party plugins' sources, by path. */

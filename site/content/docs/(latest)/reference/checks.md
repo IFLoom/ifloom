@@ -350,6 +350,7 @@ type Reference =
   | { collection: string }
   | { setting: string; is?: KvValue }
   | { kind: string }
+  | { entity: string }
   | { activity: string }
   | { input: string }
   | { prose: string }
@@ -381,6 +382,7 @@ type Reference =
 | `{ stat, of, writes }` | A stat read, or with `writes`, written, on the player or on `of`. |
 | `{ stat, starts }` | A stat an entity of the kind `starts` is given a value for. |
 | `{ item }`, `{ storyline }`, `{ collection }`, `{ kind }`, `{ activity }`, `{ input }` | An id that has to be declared. |
+| `{ entity }` | An entity by reference, `'food:apple'`, that content (or a plugin's `entities`) declares: `unknown entity "food:pear"`. `'$'` and `'food:*'` pass, once the kind is there. A shop's goods and the wardrobe's slots name their things this way. |
 | `{ setting, is }` | A play setting, and a value it has to be able to take. |
 | `{ prose }`, `{ variants }` | A prose key that needs words, a variants list that needs lines. |
 | `{ value }`, `{ panel }` | A [custom value or panel](/docs/reference/custom). |

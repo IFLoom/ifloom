@@ -47,6 +47,7 @@ export const UI_STRINGS = {
   debugTurn: 'Turn',
   wardrobe: 'Wearing',
   inventory: 'Carrying',
+  drop: 'Drop',
   takeOff: 'Take off',
   wear: 'Wear',
   nothingOn: 'Nothing',

@@ -17,8 +17,8 @@ export type WardrobeSlotControls = WardrobeView['slots'][number] & {
 export type WardrobeControls = Omit<WardrobeView, 'slots'> & {
   /** Every slot, in order, with what is in it and its buttons. */
   slots: WardrobeSlotControls[]
-  /** Put on a piece of clothing by its item id: sends `wardrobe/wear`. */
-  wear: (id: string) => Result<GameState>
+  /** Put on a thing you hold, by its reference (`'clothing:scarf'`): sends `wardrobe/wear`. */
+  wear: (entity: string) => Result<GameState>
   /** Empty a slot by its id: sends `wardrobe/takeOff`. */
   takeOff: (slot: string) => Result<GameState>
 }
@@ -34,10 +34,12 @@ export function useWardrobe(): WardrobeControls | null {
     ...data,
     slots: data.slots.map((slot) => ({
       ...slot,
-      takeOff: slot.item ? button(`takeOff.${slot.id}`, slot.name ?? slot.item, 'wardrobe/takeOff', { id: slot.id }) : null,
-      wear: data.spare.filter((entry) => entry.slot === slot.id).map((entry) => button(`wear.${entry.id}`, entry.name, 'wardrobe/wear', { id: entry.id })),
+      takeOff: slot.entity ? button(`takeOff.${slot.id}`, slot.name ?? slot.entity, 'wardrobe/takeOff', { id: slot.id }) : null,
+      wear: data.spare
+        .filter((entry) => entry.slot === slot.id)
+        .map((entry) => button(`wear.${entry.entity}`, entry.name, 'wardrobe/wear', { id: entry.entity })),
     })),
-    wear: (id) => send({ type: 'custom', name: 'wardrobe/wear', with: { id } }),
+    wear: (entity) => send({ type: 'custom', name: 'wardrobe/wear', with: { id: entity } }),
     takeOff: (slot) => send({ type: 'custom', name: 'wardrobe/takeOff', with: { id: slot } }),
   }
 }
@@ -62,7 +64,7 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
     <section {...section} data-wardrobe>
       {titleText === false ? null : <h3 {...title}>{titleText ?? words('wardrobe')}</h3>}
       {data.slots.map((slot) => (
-        <div key={slot.id} {...row} data-slot-id={slot.id}>
+        <div key={slot.id} {...row} data-slot-id={slot.id} data-worn={slot.entity ?? undefined}>
           <span {...slotName}>{slot.label}</span>
           <span {...worn}>{slot.name ?? words('nothingOn')}</span>
           {slot.takeOff ? button(words('takeOff'), slot.takeOff) : null}

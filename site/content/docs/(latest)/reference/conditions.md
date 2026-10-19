@@ -307,7 +307,7 @@ The [content checker](/docs/reference/checks) reports a variable that no minigam
 { item: 'sandwich', gte: 3 }
 ```
 
-How many of an item the player has. Bare, it means at least one. Something the [wardrobe plugin](/docs/plugins/wardrobe) has them wearing still counts. To ask whether it's on, use the plugin's `wardrobe/wearing` condition.
+How many of an item the player has. Bare, it means at least one.
 
 ### collection
 
@@ -390,7 +390,7 @@ const town: Game = {
 
 ```ts
 { 'quests/done': { quest: 'bread' } }    // { custom: 'quests/done', with: { quest: 'bread' } }
-{ 'wardrobe/wearing': { item: 'raincoat' } }
+{ 'wardrobe/wearing': { entity: 'clothing:raincoat' } }
 ```
 
 A plugin's condition with its full name as the only key, and its arguments as an object (or `true` for none). See [`PluginCall`](/docs/reference/custom#plugincall). It holds, fails and is checked exactly like the `{ custom }` it stands for.

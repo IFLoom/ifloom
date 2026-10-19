@@ -7,6 +7,7 @@ import { MapPinIcon } from '@phosphor-icons/react/dist/csr/MapPin'
 import { UsersIcon } from '@phosphor-icons/react/dist/csr/Users'
 import { StorefrontIcon } from '@phosphor-icons/react/dist/csr/Storefront'
 import { TShirtIcon } from '@phosphor-icons/react/dist/csr/TShirt'
+import { BackpackIcon } from '@phosphor-icons/react/dist/csr/Backpack'
 import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag'
 import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy'
 import { BriefcaseIcon } from '@phosphor-icons/react/dist/csr/Briefcase'
@@ -39,6 +40,7 @@ const pluginIcons: Record<string, Icon> = {
   cast: UsersIcon,
   shop: StorefrontIcon,
   wardrobe: TShirtIcon,
+  inventory: BackpackIcon,
   quests: FlagIcon,
   achievements: TrophyIcon,
   jobs: BriefcaseIcon,
@@ -53,7 +55,7 @@ const pluginIcons: Record<string, Icon> = {
 }
 
 const pluginGroups = [
-  { name: 'World', plugins: ['calendar', 'places', 'cast', 'shop', 'wardrobe'] },
+  { name: 'World', plugins: ['calendar', 'places', 'cast', 'inventory', 'shop', 'wardrobe'] },
   { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'statuses'] },
   { name: 'Phone', plugins: ['messages', 'feed', 'devices'] },
   { name: 'Tools', plugins: ['cheats', 'unlocks', 'debug', 'generators'] },

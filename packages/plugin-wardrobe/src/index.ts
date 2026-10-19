@@ -8,6 +8,10 @@
  * Putting something on takes off whatever was in its slot. Something you no
  * longer hold comes off by itself. The slots are the game's: a coat and
  * boots, armour and a ring, a uniform with a cap.
+ *
+ * What is worn is kept per body: the player's, and each protagonist's the
+ * game switches to with the `you` effect, so switching shows that one's
+ * clothes and switching back the first's.
  */
 import {
   definePlugin,
@@ -17,6 +21,9 @@ import {
   heldBy,
   heldCount,
   parseRef,
+  PLAYER,
+  protagonist,
+  resolveHolder,
   say,
   traitOf,
   withTrait,
@@ -27,6 +34,7 @@ import {
   type EntityRef,
   type Game,
   type GameState,
+  type Holder,
   type PluginProblem,
   type TraitDef,
 } from '@ifloom/engine'
@@ -51,11 +59,14 @@ export type WardrobeSlot = {
   start?: EntityRef
 }
 
-/** What the plugin keeps in a save: what is in each slot, by reference. */
-export type WardrobeState = { worn: Record<string, EntityRef | null> }
+/**
+ * What the plugin keeps in a save: what each body has on, by who wears it
+ * (`'player'`, or a protagonist such as `'character:sam'`), then by slot.
+ */
+export type WardrobeState = { worn: Record<Holder, Record<string, EntityRef | null>> }
 
 export type WardrobeView = {
-  /** Every slot, in order, with what is in it. */
+  /** Every slot, in order, with what is in it on whoever the player is playing now. */
   slots: { id: string; label: string; entity: EntityRef | null; name: string | null }[]
   /** Wearable things you hold and aren't wearing, in the game's order of its entities. */
   spare: { entity: EntityRef; name: string; slot: string }[]
@@ -85,7 +96,7 @@ const wearableTrait: TraitDef<'wardrobe/wearable'> = {
 }
 
 /** Version 1 kept item ids in the slots; an item's id is the id of the wearable entity that took its place. */
-function fromItems(old: unknown, game: Game): WardrobeState {
+function fromItems(old: unknown, game: Game): { worn: Record<string, EntityRef | null> } {
   const worn = ((old as { worn?: Record<string, string | null> } | undefined)?.worn ?? {}) as Record<string, string | null>
   const wearables = withTrait(game, WEARABLE)
   const refOf = (item: string | null): EntityRef | null => {
@@ -96,6 +107,22 @@ function fromItems(old: unknown, game: Game): WardrobeState {
   return { worn: Object.fromEntries(Object.entries(worn).map(([slot, item]) => [slot, refOf(item)])) }
 }
 
+/** Version 2 kept one set of slots, worn by whoever was played: now it is theirs, among each body's own. */
+function perBody(old: unknown, you: Holder): WardrobeState {
+  const worn = (old as { worn?: Record<string, EntityRef | null> } | undefined)?.worn ?? {}
+  return { worn: { [you]: worn } }
+}
+
+/** What one body has on, slot by slot: nothing in a slot it never filled. */
+function wornBy(slice: WardrobeState, holder: Holder): Record<string, EntityRef | null> {
+  return slice.worn[holder] ?? {}
+}
+
+/** The slice with one body's slots changed. */
+function dressed(slice: WardrobeState, holder: Holder, slots: Record<string, EntityRef | null>): WardrobeState {
+  return { worn: { ...slice.worn, [holder]: { ...wornBy(slice, holder), ...slots } } }
+}
+
 /**
  * The plugin. Add it to the game's `plugins`, put the slots in the content's
  * `data.wardrobe.slots`, and give each thing that can be worn the
@@ -104,8 +131,12 @@ function fromItems(old: unknown, game: Game): WardrobeState {
 export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
   return definePlugin<WardrobeState, WardrobeView>({
     id: ID,
-    version: 2,
-    migrations: { 1: (old, { game }) => fromItems(old, game) },
+    version: 3,
+    migrations: {
+      1: (old, { game }) => fromItems(old, game),
+      // Whoever was played when the save was made was the one wearing it.
+      2: (old, { fill }) => perBody(old, protagonist(fill([]))),
+    },
     traits: [wearableTrait],
     strings: {
       notClothing: 'The {thing} is not something you wear.',
@@ -113,23 +144,26 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       haveNone: 'You have no {thing}.',
       nothingToTakeOff: 'There is nothing to take off.',
     },
+    // What the player starts in. A protagonist starts in nothing until they put something on.
     start: (game) => ({
-      worn: Object.fromEntries(slotsOf(game).map((slot) => [slot.id, slot.start ?? null])),
+      worn: { [PLAYER]: Object.fromEntries(slotsOf(game).map((slot) => [slot.id, slot.start ?? null])) },
     }),
     conditions: {
       /**
-       * `{ 'wardrobe/wearing': { entity } }`: the thing is on.
+       * `{ 'wardrobe/wearing': { entity } }`: the thing is on whoever the player is playing.
        * With `slot` and no `entity`: something is in that slot. With both: that thing, in that slot.
+       * With `at`: on that body instead, `'player'` or a protagonist.
        */
-      wearing: (_state, args, { slice, game }) => {
+      wearing: (state, args, { slice, game }) => {
         const entity = args.entity === undefined ? undefined : String(args.entity)
         const slot = args.slot === undefined ? undefined : String(args.slot)
+        const worn = wornBy(slice, resolveHolder(state, args.at === undefined ? YOU : String(args.at)))
         if (slot !== undefined) {
-          const worn = slice.worn[slot] ?? null
-          return entity === undefined ? worn !== null : worn === entity
+          const on = worn[slot] ?? null
+          return entity === undefined ? on !== null : on === entity
         }
         // Only the slots the game has now: a save can still hold one that was taken out.
-        return entity !== undefined && slotsOf(game).some((entry) => slice.worn[entry.id] === entity)
+        return entity !== undefined && slotsOf(game).some((entry) => worn[entry.id] === entity)
       },
     },
     commands: {
@@ -140,33 +174,38 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
           if (!entityOf(state, game, ref)) return say(game, 'noSuchThing')
           const wearable = wearableOf(state, game, ref)
           if (!wearable) return say(game, 'wardrobe/notClothing', { thing: nameOf(state, game, ref) })
-          if (slice.worn[wearable.slot] === ref) return say(game, 'wardrobe/alreadyWearing', { thing: nameOf(state, game, ref) })
+          if (wornBy(slice, protagonist(state))[wearable.slot] === ref) return say(game, 'wardrobe/alreadyWearing', { thing: nameOf(state, game, ref) })
           if (heldCount(state, game, ref, YOU) <= 0) return say(game, 'wardrobe/haveNone', { thing: nameOf(state, game, ref) })
           return undefined
         },
         run: (state, args, { slice, set, game }) => {
           const ref = String(args.id)
           const { slot } = wearableOf(state, game, ref)!
-          return set({ worn: { ...slice.worn, [slot]: ref } })
+          return set(dressed(slice, protagonist(state), { [slot]: ref }))
         },
       },
       /** `{ 'wardrobe/takeOff': { id } }`: take off what is in the slot `id`. */
       takeOff: {
-        whyNot: (_state, args, { slice, game }) => (slice.worn[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff')),
-        run: (_state, args, { slice, set }) => set({ worn: { ...slice.worn, [String(args.id)]: null } }),
+        whyNot: (state, args, { slice, game }) =>
+          wornBy(slice, protagonist(state))[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
+        run: (state, args, { slice, set }) => set(dressed(slice, protagonist(state), { [String(args.id)]: null })),
       },
     },
-    // Sold, given away, used up or no longer yours to wear: whatever you no longer hold comes off.
+    // Sold, given away, used up or no longer theirs to wear: whatever a body no longer holds comes off it.
     onCommand: (_before, after, { slice, set, game }) => {
-      const gone = Object.entries(slice.worn).filter(([, ref]) => ref && heldCount(after, game, ref, YOU) <= 0)
-      if (!gone.length) return after
-      return set({ worn: { ...slice.worn, ...Object.fromEntries(gone.map(([slot]) => [slot, null])) } })
+      let next = slice
+      for (const [holder, slots] of Object.entries(slice.worn)) {
+        const gone = Object.entries(slots).filter(([, ref]) => ref && heldCount(after, game, ref, holder) <= 0)
+        if (gone.length) next = dressed(next, holder, Object.fromEntries(gone.map(([slot]) => [slot, null])))
+      }
+      return next === slice ? after : set(next)
     },
     view: (state, { slice, game }): WardrobeView => {
-      const worn = new Set(Object.values(slice.worn))
+      const on = wornBy(slice, protagonist(state))
+      const worn = new Set(Object.values(on))
       return {
         slots: slotsOf(game).map((slot) => {
-          const entity = slice.worn[slot.id] ?? null
+          const entity = on[slot.id] ?? null
           return { id: slot.id, label: slot.label, entity, name: entity ? nameOf(state, game, entity) : null }
         }),
         spare: heldBy(state, game, YOU).flatMap(({ ref }) => {
@@ -183,6 +222,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
         return [
           ...(entity === undefined ? [] : [{ entity: String(entity) }]),
           ...(slot === undefined ? [] : [{ entry: String(slot), plugin: ID, list: 'slots', noun: 'slot' }]),
+          ...(kind === 'conditions' && args.at !== undefined ? [{ holder: String(args.at) }] : []),
         ]
       },
       content: (game) =>
@@ -222,7 +262,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
  */
 export const wearable = (slot: string): { 'wardrobe/wearable': Wearable } => ({ [WEARABLE]: { slot } })
 
-/** A condition: the thing is on, or, with a slot, on in that slot. */
+/** A condition: the thing is on whoever the player is playing, or, with a slot, on in that slot. */
 export const wearing = (entity: EntityRef, slot?: string): Condition => ({ [`${ID}/wearing`]: slot === undefined ? { entity } : { entity, slot } })
 /** A condition: something is in this slot. */
 export const slotFilled = (slot: string): Condition => ({ [`${ID}/wearing`]: { slot } })

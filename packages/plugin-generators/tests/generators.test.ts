@@ -127,6 +127,50 @@ describe('generators', () => {
     expect(visitors(run(loaded, g, 'one'), g)).toHaveLength(1)
   })
 
+  it('make one like another, with a description, a picture, tags, traits and a holder, keeping only the stats that differ', () => {
+    const regular: TemplateDef = {
+      id: 'regular',
+      like: 'visitor:pattern',
+      desc: { pool: 'company' },
+      image: 'art/visitor.png',
+      tags: ['regular'],
+      traits: { 'town/seat': { table: 2 } },
+      at: 'player',
+      stats: { mood: { between: [1, 1] }, patience: 0 },
+    }
+    const { game: g, problems } = loadGame(
+      [
+        {
+          name: 'town',
+          kinds: [{ id: 'visitor', label: 'Visitor', unique: true }],
+          stats: [
+            { id: 'mood', label: 'Mood', of: 'visitor', max: 5 },
+            { id: 'patience', label: 'Patience', of: 'visitor' },
+          ],
+          entities: [{ id: 'pattern', of: 'visitor', name: 'A regular', stats: { mood: 1, patience: 4 } }],
+          activities: [{ id: 'one', effects: [generate('regular')] }],
+          data: { generators: { pools, templates: [regular] } },
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [generators()] },
+    )
+    expect(problems).toEqual([])
+    const state = run(fresh(g), g, 'one')
+    const record = state.entities.visitor['#1']
+    // The mood drawn is the pattern's, so it isn't kept; the patience differs from the pattern's 4, so it is.
+    expect(record).toMatchObject({
+      like: 'visitor:pattern',
+      image: 'art/visitor.png',
+      tags: ['regular'],
+      traitData: { 'town/seat': { table: 2 } },
+      stats: { patience: 0 },
+    })
+    expect(['none', 'dog', 'parrot']).toContain(record.desc)
+    expect(record.stats).not.toHaveProperty('mood')
+    expect(entityName(state, g, 'visitor:#1')).toBe('A regular')
+    expect(state.held.player).toEqual({ 'visitor:#1': 1 })
+  })
+
   it('report templates and pools that name what the game does not have, and their own mistakes', () => {
     const loaded = loadGame(
       [

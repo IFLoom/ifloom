@@ -158,7 +158,7 @@ Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGa
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
 
-const town: Content = { strings: { finishFirst: 'Not yet. Finish this first.' }, data: { places: { locations }, cast: { characters } } /* ... */ }
+const town: Content = { strings: { finishFirst: 'Not yet. Finish this first.' }, entities: people, data: { places: { locations } } /* ... */ }
 const { game } = loadGame([town], base)
 ```
 

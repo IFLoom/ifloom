@@ -301,19 +301,19 @@ Loads the module as `check` does, then plays the game from its start for `--turn
 It writes two files:
 
 - **The transcript**, to `--out` (default `playtest.txt`). This is every screen as the player would read it, with the command taken on it underneath.
-- **The numbers**, to `<out>.metrics`. There's one row per turn, with each of the player's [declared stats](/docs/reference/stats) as the turn ended, how many [entities](/docs/reference/entities) there were of each kind, how many scenes were entered and how many commands were refused.
+- **The numbers**, to `<out>.metrics`. There's one row per turn, with each of the player's [declared stats](/docs/reference/stats) as the turn ended, how many [entities](/docs/reference/entities) there were of each kind (a plugin's too, such as the places plugin's `location`), how many scenes were entered and how many commands were refused.
 
 Then it prints the numbers, and each refused command with its turn and its reason, as `turn 3: refused {…}: <reason>`. Any folders in `--out` are created for you.
 
 It exits with `1` if any command was refused, so CI fails on a button the game offered and then wouldn't do. Otherwise it exits with `0`. `--turns` takes a whole number, 1 or more. Anything else is refused with `--turns takes a whole number of turns, 1 or more.` and exits with `1` before playing.
 
 ```
-turn	coins	energy	charm	character	scenes	refused
-1	12	80	1	2	0	0
-2	21	55	2	2	2	0
-3	34	55	3	2	2	0
+turn	coins	energy	charm	location	character	scenes	refused
+1	12	80	1	5	2	0	0
+2	21	55	2	5	2	2	0
+3	34	55	3	5	2	2	0
 ...
-7	16	85	7	2	2	0
+7	16	85	7	5	2	2	0
 ```
 
 A screen in the transcript is what [`screenText`](#screentext) writes, followed by the JSON command the policy returned:

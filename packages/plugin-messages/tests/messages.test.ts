@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { apply, createRunner, holds, loadGame, loadState, replay, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
-import { cast } from '@ifloom/plugin-cast'
+import { cast, person } from '@ifloom/plugin-cast'
 import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
 
@@ -36,9 +36,9 @@ function game(extra: Partial<Content> = {}): Game {
       'msg.later': 'Coffee tomorrow?',
       'msg.bill': 'The water bill. You owe 12.',
     },
+    entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' })],
     data: {
       // Ava is the cast's: messages from her are signed with her name.
-      cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
       messages: {
         messages: [
           {
@@ -154,8 +154,8 @@ describe('pictures and videos in a message', () => {
         'msg.ducks': 'Look at the ducks!\n\n[[video:ducks|A duck on the pond]]',
       },
       media: { pools: { pond: [{ src: 'pond/morning.jpg', tags: ['morning'] }] } },
+      entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' })],
       data: {
-        cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
         messages: {
           messages: [
             {
@@ -195,8 +195,8 @@ describe('pools', () => {
         'chat.rain#ok': 'Noted',
         'chat.beans': 'New beans.',
       },
+      entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' })],
       data: {
-        cast: { characters: [{ id: 'ava', name: 'Ava', role: 'Neighbour', hue: 200, talk: 'ava.hi', storyline: 'ava' }] },
         messages: {
           messages: [
             {

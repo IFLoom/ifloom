@@ -46,7 +46,7 @@ import {
 } from '@ifloom/engine'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
-type Contact = { id: string; name: string; role: string | null; portrait: string | null; command: Command }
+type Contact = { id: string; name: string; desc: string | null; portrait: string | null; command: Command }
 
 export type DeviceDef = {
   id: string
@@ -214,7 +214,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
         entries: ((pluginQuery(game, 'cast/contacts')?.(state) ?? []) as Contact[]).map((contact) => ({
           id: contact.id,
           title: contact.name,
-          text: contact.role ?? '',
+          text: contact.desc ?? '',
           image: contact.portrait,
           actions: [renderAction(state, game, { id: `call-${contact.id}`, label: say(game, 'devices/call'), command: contact.command })],
         })),

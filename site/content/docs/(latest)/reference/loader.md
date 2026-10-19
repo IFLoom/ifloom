@@ -81,7 +81,7 @@ export const ch1: Content = {
 | `prose` | By key. |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
 | `custom` | [Custom functions](/docs/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`) and then by name. |
-| `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations and characters are content of this kind: `data.places.locations` for the [places plugin](/docs/plugins/places#in-your-content) and `data.cast.characters` for the [cast](/docs/plugins/cast#in-your-content). |
+| `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations are content of this kind: `data.places.locations` for the [places plugin](/docs/plugins/places#in-your-content). The [cast](/docs/plugins/cast#in-your-content)'s characters are entities instead, in `entities`. |
 | `audio` | [Audio](/docs/reference/audio#gameaudio), over the base's own `audio`. `tracks` and `channels` merge by id, and `mute` and `default` go over the base's. |
 | `media` | [Media](/docs/reference/media#gamemedia), over the base's own `media`. `pools` merge by id. |
 
@@ -168,12 +168,12 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 13
+const SCHEMA = 14
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 14, this engine reads 13`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 15, this engine reads 14`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -194,6 +194,7 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 | 10 to 11 | A stat's hidden `bands` are [levels](/docs/reference/stats#statlevels) the player isn't shown: `bands: [10, 20]` becomes `levels: { at: [10, 20], hidden: true }`, and `{ tier: 'charm', gte: 2 }` becomes `{ level: 'charm', gte: 2 }`. A stat that had both keeps its `levels` and loses its `bands`. |
 | 11 to 12 | The [feed plugin](/docs/plugins/feed#values)'s value `feed/unseen` is `feed/unread`, as its view and the messages plugin count news: in a value's name, such as a badge's `{ value: 'feed/unseen' }`, and in prose and strings tokens, `{{v:feed/unseen feed=social}}`. |
 | 12 to 13 | Items and collections are [entities](/docs/reference/entities#holding-things). A pack's `items` become entities of an `item` kind, which the pack declares unlisted unless it already does: `{ id, name, desc, tags }` as they were, a `start` as `at: { player: start }`, and a `use` as the [inventory plugin](/docs/plugins/inventory)'s `inventory/usable` trait. A `collections` entry becomes an unlisted kind of the same id and name (the phone's `gallery` is `photo`). `{ item: 'tea', gte: 2 }` becomes `{ entity: 'item:tea', at: 'you', gte: 2 }`, and the `item` effect the `entity` effect with `at: 'you'`. The `use` command becomes `{ 'inventory/use': { id: 'item:tea' } }`. `collect` becomes `create`, given to the player, with the entry's `title` as its name, its prose (from the pack's own `prose`) as its description, its `image` and its `data` as kv. `discard` becomes `remove`. `{ collection, entry }` becomes `{ entity: '<kind>:<entry>' }`, and `{ collection, …range }` counts what the player holds of the kind. A shop good's `item`, and `shop/buy`, `shop/sell`, `shop/inStock` and `wardrobe/wearing`'s `item`, become `entity`, with `item:` in front, as do `wardrobe/wear`'s `id` and a wardrobe slot's `start`. `data.wardrobe.clothes` becomes rows of the `wardrobe/wearable` trait in the pack's `traits`. `debug/item` becomes `debug/held`. The strings `doesNothing` and `haveNone` become `inventory/doesNothing` and `inventory/haveNone` (and `wardrobe/haveNone`), with `{item}` written `{thing}`. |
+| 13 to 14 | The [cast](/docs/plugins/cast#characters)'s characters are entities with the `cast/person` trait. Each entry of `data.cast.characters` becomes an entity of the kind `character`, after the pack's own entities: its `id`, `name`, `tags`, `stats` and `kv` as they were, its `role` as `desc` and its `portrait` as `image`, and everything else (`fullName`, `schedule`, `talk`, `call` and the rest) as the trait. `data.cast.characters` goes. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -201,8 +202,8 @@ It returns the pack at `SCHEMA`, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 14, this engine reads 13` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 13)` |
+| `schema` is newer than `SCHEMA` | `written for schema 15, this engine reads 14` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 14)` |
 
 A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 

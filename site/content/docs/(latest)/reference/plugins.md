@@ -1080,7 +1080,7 @@ With the `declare module` block in the plugin's source, every game that imports 
 type TraitDef<K extends string = string, S = unknown> = {
   id: K
   check?(data: TraitData<K>, tools: TraitTools): readonly string[]
-  references?(data: TraitData<K>): readonly Reference[]
+  references?(data: TraitData<K>, tools: TraitTools): readonly Reference[]
   state?: { start(data: TraitData<K>): S }
 }
 ```
@@ -1089,7 +1089,7 @@ type TraitDef<K extends string = string, S = unknown> = {
 |---|---|
 | `id` | The trait's id: the plugin's id, `/` and a name. |
 | `check` | What's wrong with the data on one entity, by a rule of the plugin's own. Each string is reported at `trait <id> on <entity>`. |
-| `references` | What the data names, such as a scene or a prose key, for the checker to resolve like any [reference](#references). |
+| `references` | What the data names, such as a scene or a prose key, for the checker to resolve like any [reference](#references). `tools.ref` is the entity it's on, so a condition in the data that names it as `'$'` can be bound to it first with [`bindCurrent`](/docs/reference/entities#bindcurrent), as the [cast](/docs/plugins/cast#person-1)'s `cast/person` does. |
 | `state` | For the rare trait that keeps state on each entity, such as the uses left in a torch: `start` says where it begins, from the entity's data. Read and write it with [`traitState`](/docs/reference/entities#traitstate) and [`setTraitState`](/docs/reference/entities#settraitstate). Leave it out for a trait that is only data, which is most of them. |
 
 ### TraitTools
@@ -1098,7 +1098,7 @@ type TraitDef<K extends string = string, S = unknown> = {
 type TraitTools = { game: Game; ref: EntityRef }
 ```
 
-What a trait's `check` gets beside the data: the game, and the entity the data is on.
+What a trait's `check` and `references` get beside the data: the game, and the entity the data is on.
 
 **Gotchas.**
 - **Data, never functions.** A trait is written in content, and packs and mods can write it as JSON. Put behaviour in the plugin.

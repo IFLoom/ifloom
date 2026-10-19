@@ -66,7 +66,7 @@ describe('playtest', () => {
     expect(carrots.slice(0, 3).every((count, day) => count > (carrots[day - 1] ?? 0))).toBe(true)
     expect(result.transcript).toContain('== Turn 1 · Day 1 · Monday morning · Bedroom')
     expect(result.transcript).toContain('[>] Dig')
-    expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tcarrots\tscenes\trefused')
+    expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tcarrots\tlocation\tscenes\trefused')
   })
 
   it('stops a policy that keeps being refused', () => {

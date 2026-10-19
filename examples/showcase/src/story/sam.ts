@@ -1,7 +1,7 @@
 /** Sam from flat 2, out with a dog that isn't theirs. */
 import type { Content } from '@ifloom/engine'
 import { day } from '@ifloom/plugin-calendar'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
 export const sam: Content = {
   scenes: [
@@ -14,7 +14,7 @@ export const sam: Content = {
         {
           id: 'bye',
           effects: [
-            { kind: 'stat', stat: 'friendship', by: 5, of: person('sam') },
+            { kind: 'stat', stat: 'friendship', by: 5, of: character('sam') },
             { kind: 'scene', scene: null },
           ],
         },

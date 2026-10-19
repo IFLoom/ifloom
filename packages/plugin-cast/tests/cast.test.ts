@@ -17,13 +17,13 @@ import {
 } from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
-import { call, cast, hasMet, here, isAt, person, talk, type CastView, type CharacterDef } from '../src/index.ts'
+import { call, cast, character, hasMet, here, isAt, peopleOf, person, personOf, talk, type CastView } from '../src/index.ts'
 
-const ava: CharacterDef = {
+const ava = person({
   id: 'ava',
   name: 'Ava',
   fullName: 'Ava Marsh',
-  role: 'Runs the café',
+  desc: 'Runs the café',
   hue: 20,
   home: 'park',
   // At the counter in the day; by the river otherwise.
@@ -32,8 +32,8 @@ const ava: CharacterDef = {
   talk: [{ scene: 'ava.river', when: { all: [isAt('ava', 'park'), { stat: 'friendship', of: '$', gte: 25 }] }, label: 'Walk with Ava' }, { scene: 'ava.hi' }],
   call: { scene: 'ava.call', when: period('evening', 'night'), busy: 'She’s at the counter. Try this evening.' },
   storyline: 'ava',
-}
-const sam: CharacterDef = { id: 'sam', name: 'Sam', home: 'park', talk: 'sam.hi', stats: { friendship: 5 } }
+})
+const sam = person({ id: 'sam', name: 'Sam', home: 'park', talk: 'sam.hi', stats: { friendship: 5 } })
 
 const scene = (id: string) => ({ id, body: [{ text: id }], choices: [{ id: 'bye', effects: [{ kind: 'scene' as const, scene: null }] }] })
 
@@ -41,6 +41,7 @@ const town: Content = {
   name: 'town',
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }],
+  entities: [ava, sam],
   scenes: ['ava.hi', 'ava.river', 'ava.call', 'sam.hi'].map(scene),
   prose: {
     'ava.hi': 'Hi.',
@@ -60,14 +61,13 @@ const town: Content = {
         { id: 'park', name: 'Park', tag: 'Town', exits: ['street'], art: '', body: [] },
       ],
     },
-    cast: { characters: [ava, sam] },
   },
 }
 
 function game(withPlaces = true): { game: Game; clock: ReturnType<typeof calendar> } {
   const clock = calendar()
   // Without places, the town's map goes too: nobody is anywhere the player can be.
-  const pack = withPlaces ? town : { ...town, data: { cast: town.data!.cast } }
+  const pack = withPlaces ? town : { ...town, data: {} }
   const { game, problems } = loadGame([pack], {
     id: 'town',
     title: 'Town',
@@ -94,11 +94,31 @@ describe('the cast', () => {
     const state = startingState(g)
     expect(state.entities).toEqual({})
     expect(entitiesOf(state, g, 'character')).toEqual(['character:ava', 'character:sam'])
-    expect([statValue(state, g, 'friendship', person('ava')), statValue(state, g, 'friendship', person('sam'))]).toEqual([0, 5])
+    expect([statValue(state, g, 'friendship', character('ava')), statValue(state, g, 'friendship', character('sam'))]).toEqual([0, 5])
     // Listed in the view once met, so nobody is given away before then.
     expect(view(state, g).entities.character).toMatchObject({ plural: 'People', unique: true, entries: [] })
     const met = run(g, run(g, state, go('cafe')), talk('ava'))
     expect(view(met, g).entities.character.entries.map((entry) => [entry.ref, entry.name])).toEqual([['character:ava', 'Ava']])
+  })
+
+  it('are written as entities with the person trait, by person()', () => {
+    expect(sam).toEqual({ id: 'sam', name: 'Sam', of: 'character', stats: { friendship: 5 }, traits: { 'cast/person': { home: 'park', talk: 'sam.hi' } } })
+    const { game: g } = game()
+    const state = startingState(g)
+    expect(peopleOf(g)).toEqual(['character:ava', 'character:sam'])
+    expect(personOf(state, g, 'character:sam')).toEqual({ home: 'park', talk: 'sam.hi' })
+    // Their desc is the line under their name, their image their portrait.
+    const cafe = run(g, state, go('cafe'))
+    expect(shown(cafe, g).present[0]).toMatchObject({ id: 'ava', ref: 'character:ava', desc: 'Runs the café', portrait: 'art/character/ava.jpg' })
+  })
+
+  it('include anyone with the trait, of any kind or made in play, named by reference', () => {
+    const { game: g } = game()
+    const next = run(g, startingState(g), go('park'))
+    const created = { ...next, entities: { ...next.entities, character: { '#1': { name: 'Rook', like: 'character:sam' } } } }
+    expect(peopleOf(g, created)).toEqual(['character:ava', 'character:sam', 'character:#1'])
+    expect(shown(created, g).present.map((one) => one.name)).toEqual(['Sam', 'Rook'])
+    expect(holds(created, here('character:#1'), g)).toBe(true)
   })
 
   it('are where their schedule puts them, and in the room when that is where the player is', () => {
@@ -116,10 +136,10 @@ describe('the cast', () => {
     const { game: g, clock } = game()
     const park = clock.write(run(g, startingState(g), go('park')), { day: 0, period: 'evening' })
     expect(run(g, park, talk('ava')).sceneId).toBe('ava.hi')
-    const friends = writeEntity(park, person('ava'), { stats: { friendship: 30 } })
+    const friends = writeEntity(park, character('ava'), { stats: { friendship: 30 } })
     expect(shown(friends, g).present.find((person) => person.id === 'ava')?.actions[0].label).toBe('Walk with Ava')
     expect(run(g, friends, talk('ava')).sceneId).toBe('ava.river')
-    expect(holds(friends, { stat: 'friendship', of: person('ava'), gte: 25 }, g)).toBe(true)
+    expect(holds(friends, { stat: 'friendship', of: character('ava'), gte: 25 }, g)).toBe(true)
   })
 
   it('say why a conversation cannot start', () => {
@@ -170,7 +190,10 @@ describe('the cast', () => {
 
   it('fill prose tokens in a name wherever it is shown, so the player can name someone', () => {
     // Sam is whoever the player says: an input sets the kv key, the name reads it.
-    const named: Content = { ...town, data: { ...town.data, cast: { characters: [ava, { ...sam, name: '{{friendName}}', fullName: '{{friendName}} Reed' }] } } }
+    const named: Content = {
+      ...town,
+      entities: [ava, person({ id: 'sam', name: '{{friendName}}', fullName: '{{friendName}} Reed', home: 'park', talk: 'sam.hi' })],
+    }
     const { game: g, problems } = loadGame([named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
     expect(problems).toEqual([])
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'sam.hi' ? { ...entry, speaker: 'sam' } : entry)) }
@@ -197,28 +220,28 @@ describe('the cast', () => {
       name: 'broken',
       stats: [{ id: 'trust', label: 'Trust', of: 'character' }],
       activities: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
+      entities: [
+        person({
+          id: 'mole',
+          name: 'Mole',
+          home: 'burrow',
+          talk: 'mole.hi',
+          storyline: 'tunnels',
+          schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }],
+        }),
+      ],
       data: {
         places: { locations: [{ id: 'yard', name: 'Yard', tag: '', exits: [], art: '', body: [] }] },
-        cast: {
-          characters: [
-            {
-              id: 'mole',
-              name: 'Mole',
-              home: 'burrow',
-              talk: 'mole.hi',
-              storyline: 'tunnels',
-              schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }],
-            },
-          ],
-        },
+        cast: { characters: [{ id: 'old', name: 'Old' }] },
       },
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places(), cast()] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity wave: unknown character "ghost"',
-      'characters mole: talk: opens unknown scene "mole.hi"',
-      'characters mole: unknown storyline "tunnels"',
-      'characters mole: unknown location "burrow"',
+      'activity wave: unknown entity "character:ghost"',
+      'trait cast/person on character:mole: unknown location "burrow"',
+      'trait cast/person on character:mole: talk: opens unknown scene "mole.hi"',
+      'trait cast/person on character:mole: unknown storyline "tunnels"',
+      'characters old: characters are entities now: write them in entities with person({ id, name, ... })',
     ])
   })
 })

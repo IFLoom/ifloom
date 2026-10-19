@@ -190,7 +190,7 @@ The rest is the town's content. These are the parts the phone uses (the full fil
 
 ```ts
 import { type ActivityDef } from '@ifloom/engine'
-import { here, person, type CharacterDef } from '@ifloom/plugin-cast'
+import { character, here, person } from '@ifloom/plugin-cast'
 import { period } from '@ifloom/plugin-calendar'
 import type { MessageDef } from '@ifloom/plugin-messages'
 
@@ -220,10 +220,11 @@ const activities: ActivityDef[] = [
 ]
 
 // Ava can be called in the evening and at night (the rest of her entry is left out here).
-const ava: Pick<CharacterDef, 'id' | 'call'> = {
+const ava = person({
   id: 'ava',
+  name: 'Ava',
   call: { scene: 'ava.call', when: period('evening', 'night'), busy: 'She’s busy at the counter. Try her this evening.' },
-}
+})
 
 // Her text arrives a turn after the player first talks to her. In the showcase, a turn is a day.
 const text: MessageDef = {
@@ -232,7 +233,7 @@ const text: MessageDef = {
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
-  replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+  replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
 }
 ```
 

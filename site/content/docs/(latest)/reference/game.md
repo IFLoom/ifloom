@@ -10,7 +10,7 @@ import type { Game } from '@ifloom/engine'
 
 Every type on this page comes from the package root: `Game`, `StorylineDef` and the rest. `KindDef`, `EntityDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
 
-The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in your content's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are content in `data.cast.characters`.
+The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in your content's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are entities in your content's `entities`, written with its `person()`.
 
 ## Game
 
@@ -153,7 +153,7 @@ const { game, problems } = loadGame(content, {
 })
 ```
 
-The town's locations and people are the plugins' content, in `data.places.locations` and `data.cast.characters`, and `loadGame` fills in `data` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
+The town's locations are the places plugin's content, in `data.places.locations`, and its people are entities, in `entities`; `loadGame` fills in `data` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
 
 ## Scene
 
@@ -180,7 +180,7 @@ A scene is anything with an id and a `render` function. If you write it as data,
 type StorylineDef = { id: string; name: string }
 ```
 
-A storyline is a thread of the story. It's followed by its kv store and stages, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#characterdef) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
+A storyline is a thread of the story. It's followed by its kv store and stages, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
 
 ```ts
 storylines: [

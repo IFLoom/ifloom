@@ -7,10 +7,22 @@
  * open (`stage`), offers the room's actions as buttons, and hands the UI the
  * exits. Locations are content — `data.places.locations` in a pack — so a mod
  * can add a room or change one.
+ *
+ * Each location is also a unique entity of the kind `location`, so it holds
+ * things: what lies there, shown in the view with a button to pick it up. The
+ * `places/holder` query names where the player is as that entity, so another
+ * plugin (the inventory's drop) can put something down there by name.
  */
 import {
+  artSrc,
+  bindCurrent,
   commandOf,
   definePlugin,
+  entityImage,
+  entityName,
+  entityOf,
+  heldBy,
+  heldCount,
   holds,
   lockOn,
   lockedOut,
@@ -23,7 +35,9 @@ import {
   type CommandRef,
   type Condition,
   type DefinedPlugin,
+  type Effect,
   type EffectRef,
+  type EntityRef,
   type Game,
   type GameState,
   type MediaStage,
@@ -33,6 +47,7 @@ import {
   type StageView,
   type Transition,
   type TransitionName,
+  YOU,
 } from '@ifloom/engine'
 
 /** A place, as content declares it in `data.places.locations`. */
@@ -108,6 +123,19 @@ export type ExitView = RenderedChoice & {
   art: string
 }
 
+/** A thing lying where the player is, as the UI draws it. */
+export type LyingView = {
+  /** How content names it: `'item:paper'`. */
+  ref: EntityRef
+  name: string
+  /** Its picture's path, through `artSrc`; null with none. */
+  image: string | null
+  /** How many lie here. */
+  count: number
+  /** The button that picks one up. Send its `command`. */
+  pickUp: RenderedChoice
+}
+
 /** What the UI reads at `view.plugins.places`. */
 export type PlacesView = {
   /**
@@ -118,9 +146,14 @@ export type PlacesView = {
   location: { id: string; name: string; tag: string; tags: string[]; art: string; stage: StageView | null } | null
   /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
   exits: ExitView[]
+  /** What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. */
+  things: LyingView[]
 }
 
 const ID = 'places'
+
+/** The kind each location is as an entity, so it can hold things: `'location:park'`. */
+export const LOCATION = 'location'
 
 /** The game's locations: its packs' `data.places.locations`. */
 export function locationsOf(game: Game): LocationDef[] {
@@ -138,12 +171,22 @@ export function where(state: GameState): string | null {
   return (state.plugins?.[ID]?.state as PlacesState | undefined)?.at ?? null
 }
 
+/** A location's entity, which holds what lies there: `location('park')` is `'location:park'`. */
+export const location = (id: string): EntityRef => `${LOCATION}:${id}`
+
 /** A reference to one of the game's locations. */
-const location = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
+const locationEntry = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
 
 /** One location or several, as a list: `location: 'cafe'` or `location: ['cafe', 'park']`. */
 function ids(value: unknown): string[] {
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
+}
+
+/** What lies in a place that the player can see: what its entity holds, but things whose `visible` doesn't hold. */
+function lyingIn(state: GameState, game: Game, at: string): { ref: EntityRef; count: number }[] {
+  return heldBy(state, game, location(at)).filter(({ ref }) =>
+    holds(state, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref), game),
+  )
 }
 
 /** Build the plugin. */
@@ -166,6 +209,17 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     return undefined
   }
 
+  /** Why the player can't pick this up now, or undefined. */
+  function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: EntityRef): string | undefined {
+    if (state.sceneId) return say(game, 'finishFirst')
+    if (!entityOf(state, game, ref)) return say(game, 'noSuchThing')
+    if (at === null || heldCount(state, game, ref, location(at)) <= 0) return say(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
+    return undefined
+  }
+  /** Picking one up: from the place to whoever the player is playing. */
+  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] =>
+    at === null ? [] : [{ kind: 'move', entity: ref, from: location(at), to: YOU, by: 1 }]
+
   return definePlugin<PlacesState, PlacesView>({
     id: ID,
     version: 1,
@@ -173,7 +227,19 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       noSuchPlace: 'There is no such place.',
       alreadyHere: 'You are already here.',
       cannotGetThere: 'You cannot get there from here.',
+      pickUp: 'Pick up',
+      notLyingHere: 'There is no {thing} here.',
     },
+    // Each location is a unique entity, so it can hold things: what lies there. Not listed: the places are the plugin's to show.
+    kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }],
+    entities: (game) =>
+      locationsOf(game).map((def) => ({
+        id: def.id,
+        of: LOCATION,
+        name: def.name,
+        ...(def.tag ? { desc: def.tag } : {}),
+        ...(def.tags?.length ? { tags: def.tags } : {}),
+      })),
     start: () => ({ at: options.start ?? null }),
     conditions: {
       /** `{ 'places/at': { location: ['cafe', 'park'] } }`: the player is in one of these. */
@@ -204,9 +270,17 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
           return arrive && holds(arrived, arrive.when, game) ? apply(arrive.effects, arrived) : arrived
         },
       },
+      /** `{ 'places/pickUp': { id } }`: pick up one of the thing `id` lying where the player is, for whoever they are playing. */
+      pickUp: {
+        whyNot: (state, args, { slice, game }) => pickUpBlocked(state, game, slice.at, String(args.id ?? '')),
+        effectsOf: (_state, args, { slice }) => pickUpEffects(slice.at, String(args.id ?? '')),
+        run: (state, args, { slice, apply }) => apply(pickUpEffects(slice.at, String(args.id ?? '')), state),
+      },
     },
     queries: {
       here: (_state, _args, { slice }) => slice.at,
+      /** The entity of where the player is, which holds what is put down there (`'location:park'`); null when nowhere. */
+      holder: (_state, _args, { slice, game }) => (slice.at !== null && locationById(game, slice.at) ? location(slice.at) : null),
       all: (_state, _args, { game }) => locationsOf(game),
       known: (_state, args, { game }) => Boolean(locationById(game, ids(args.location)[0])),
       exits: (_state, _args, { slice, game }) => (locationById(game, slice.at)?.exits ?? []).filter((id) => locationById(game, id)),
@@ -225,10 +299,10 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
     audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
     view: (state, { slice, game, picks }): PlacesView => {
-      const place = locationById(game, slice.at)
+      const here = locationById(game, slice.at)
       const idle = !state.sceneId && !lockedOut(state, game)
       const exits: ExitView[] = []
-      for (const id of idle && place ? place.exits : []) {
+      for (const id of idle && here ? here.exits : []) {
         const dest = locationById(game, id)
         if (!dest) continue
         const command = commandOf(go(id))
@@ -236,24 +310,36 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
         if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
         exits.push({ ...renderAction(state, game, { id, label: dest.name, command }), tag: dest.tag, tags: dest.tags ?? [], art: dest.art })
       }
-      const stage = place ? stageView(state, game, place.stage, place.id, null, picks) : null
+      const stage = here ? stageView(state, game, here.stage, here.id, null, picks) : null
+      const things: LyingView[] = (idle && here ? lyingIn(state, game, here.id) : []).map(({ ref, count }) => {
+        const image = entityImage(state, game, ref)
+        return {
+          ref,
+          name: entityName(state, game, ref),
+          image: image === undefined ? null : artSrc(image),
+          count,
+          pickUp: renderAction(state, game, { id: `pickUp.${ref}`, label: say(game, `${ID}/pickUp`), command: pickUp(ref) }),
+        }
+      })
       return {
-        location: place
+        location: here
           ? {
-              id: place.id,
-              name: place.name,
-              tag: place.tag,
-              tags: place.tags ?? [],
-              art: place.art,
+              id: here.id,
+              name: here.name,
+              tag: here.tag,
+              tags: here.tags ?? [],
+              art: here.art,
               stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
             }
           : null,
         exits,
+        things,
       }
     },
     references: {
-      // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`.
+      // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`; the thing `places/pickUp` names.
       calls: (kind, name, args) => {
+        if (kind === 'commands' && name === 'pickUp') return args.id === undefined ? [] : [{ entity: String(args.id) }]
         const named =
           kind === 'conditions'
             ? name === 'at' || name === 'within'
@@ -266,10 +352,10 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
               : name === 'go'
                 ? ids(args.id)
                 : []
-        return named.map(location)
+        return named.map(locationEntry)
       },
       content: (game) => [
-        ...(options.start !== undefined ? [{ list: 'options', id: 'start', refs: [location(options.start)] }] : []),
+        ...(options.start !== undefined ? [{ list: 'options', id: 'start', refs: [locationEntry(options.start)] }] : []),
         ...locationsOf(game).map((place) => ({
           list: 'locations',
           id: place.id,
@@ -306,6 +392,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
   })
 }
 
+/** The command that picks up one of a thing lying where the player is. */
+export const pickUp = (ref: EntityRef): CommandRef => ({ [`${ID}/pickUp`]: { id: ref } })
 /** The command that walks to a place by an exit. */
 export const go = (id: string): CommandRef => ({ [`${ID}/go`]: { id } })
 /** True in any of these places. */

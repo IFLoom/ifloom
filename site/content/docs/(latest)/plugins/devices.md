@@ -185,7 +185,7 @@ const mail: AppDef = {
 A `{ contacts: true }` section lists the [cast](/docs/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/docs/plugins/cast#queries) query. That's everyone the player has [met](/docs/plugins/cast#meeting-people) who has a [`call`](/docs/plugins/cast#calls). Each entry has:
 
 - their `name` as its title
-- their `role` as its text, or `''` when they have none
+- their `desc` as its text, or `''` when they have none
 - their portrait as its image
 - one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`call(id)`](/docs/plugins/cast#commands)
 
@@ -472,7 +472,7 @@ type SectionView =
 |---|---|---|
 | `prose` | `{ prose }` | The blocks rendered for the current state. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
-| `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, role, portrait, a Call button). |
+| `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, desc, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel }` | What the game's custom panel returned, or `null` if it has none. |
 

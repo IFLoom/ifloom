@@ -125,10 +125,12 @@ function StatListImpl() {
  */
 export const StatList = overridable('StatList', StatListImpl)
 
-/** What `usePlaces` returns: the places plugin's view, and how to take an exit. */
+/** What `usePlaces` returns: the places plugin's view, how to take an exit, and how to pick up what lies here. */
 export type PlacesControls = PlacesView & {
   /** Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. */
   go: (exit: string) => Result<GameState>
+  /** Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. */
+  pickUp: (thing: string) => Result<GameState>
 }
 
 /** The places plugin's view with a way to travel, or null in a game without the plugin. `LocationCard` is drawn from it. */
@@ -142,6 +144,10 @@ export function usePlaces(): PlacesControls | null {
       const found: ExitView | undefined = places.exits.find((entry) => entry.id === exit)
       return found ? send(found.command) : send({ type: 'custom', name: 'places/go', with: { id: exit } })
     },
+    pickUp: (thing) => {
+      const found = places.things.find((entry) => entry.ref === thing)
+      return found ? send(found.pickUp.command) : send({ type: 'custom', name: 'places/pickUp', with: { id: thing } })
+    },
   }
 }
 
@@ -150,15 +156,35 @@ function LocationCardImpl() {
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
+  const list = usePart('location-things', 'flex flex-col gap-1.5 text-sm')
+  const row = usePart('location-thing', 'flex items-center justify-between gap-2')
+  const thingName = usePart('location-thing-name', 'flex-1')
+  const pick = usePart('location-thing-pick', buttonVariants({ size: 'sm', variant: 'outline' }))
   // A game without the places plugin has nothing to show here.
   const location = places?.location
   if (!location) return null
+  const things = places.things ?? []
   return (
     <section {...section}>
       {location.stage?.layers.length ? <Stage stage={location.stage} /> : null}
       <div className={PROSE}>
         <h3 {...name}>{location.name}</h3>
         <p {...tag}>{location.tag}</p>
+        {things.length ? (
+          <ul {...list}>
+            {things.map((thing) => (
+              <li key={thing.ref} {...row} data-thing={thing.ref}>
+                <span {...thingName}>
+                  {thing.name}
+                  {thing.count > 1 ? ` ×${thing.count}` : ''}
+                </span>
+                <button {...pick} disabled={Boolean(thing.pickUp.disabled)} title={thing.pickUp.disabled} onClick={() => places.pickUp(thing.ref)}>
+                  {thing.pickUp.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </section>
   )
@@ -166,7 +192,8 @@ function LocationCardImpl() {
 
 /**
  * Where the player is: the place's name and tag, with its stage above them,
- * hotspots and all. The exits are `Exits`. A thin default on `usePlaces`.
+ * hotspots and all, and what lies there with a button to pick each up. The
+ * exits are `Exits`. A thin default on `usePlaces`.
  */
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
@@ -209,7 +236,7 @@ function PeopleHereImpl({ className }: { className?: string }) {
   const card = usePart('person', 'flex flex-col gap-1.5')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
-  const role = usePart('person-role', 'text-xs text-muted-foreground')
+  const desc = usePart('person-desc', 'text-xs text-muted-foreground')
   const actions = usePart('person-actions', 'flex flex-wrap gap-1.5')
   const people = usePeople()?.present ?? []
   if (!people.length) return null
@@ -221,7 +248,7 @@ function PeopleHereImpl({ className }: { className?: string }) {
             {person.portrait ? <Picture {...portrait} src={person.portrait} alt="" /> : null}
             <div className="flex-1">
               <p {...name}>{person.name}</p>
-              {person.role ? <p {...role}>{person.role}</p> : null}
+              {person.desc ? <p {...desc}>{person.desc}</p> : null}
             </div>
           </div>
           {person.actions.length ? (
@@ -247,7 +274,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
   const head = usePart('relationship-header', 'flex items-center gap-2')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
-  const role = usePart('person-role', 'text-xs text-muted-foreground')
+  const desc = usePart('person-desc', 'text-xs text-muted-foreground')
   const stats = usePart('relationship-stats', 'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1')
   const label = usePart('stat-label', 'text-muted-foreground')
   const value = usePart('stat-value', 'text-right font-medium tabular-nums')
@@ -265,7 +292,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
               {person.portrait ? <Picture {...portrait} src={person.portrait} alt="" /> : null}
               <div className="flex-1">
                 <p {...name}>{person.name}</p>
-                {person.role ? <p {...role}>{person.role}</p> : null}
+                {person.desc ? <p {...desc}>{person.desc}</p> : null}
               </div>
             </div>
             {shown.length ? (

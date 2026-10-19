@@ -594,7 +594,7 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
       }
       if (!trait) continue
       for (const what of trait.check?.(data, { game, ref }) ?? []) tools.problem(source, where, what)
-      const refs = trait.references?.(data) ?? []
+      const refs = trait.references?.(data, { game, ref }) ?? []
       if (refs.length) tools.check(source, where, refs)
     }
   }
@@ -612,6 +612,8 @@ function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: str
   if (record.tags?.length) next.tags = record.tags
   if (record.traitData && Object.keys(record.traitData).length) next.traitData = record.traitData
   const stats = Object.entries(record.stats ?? {}).filter(([id, value]) => {
+    // One made like another reads what it lacks from that one, not from the stat's start: keep it all.
+    if (record.like !== undefined) return true
     const stat = statDef(game, id)
     if (!stat || stat.of !== kind || stat.derive !== undefined) return true
     return value !== (def?.stats?.[id] ?? stat.start ?? 0)

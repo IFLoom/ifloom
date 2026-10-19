@@ -8,6 +8,8 @@ You'd want it when what the player wears matters to the story: a dress code at t
 
 You wear only what you [hold](/docs/reference/entities#holding-things). Wearing something doesn't change how many you hold, because the wardrobe only marks what's on. Putting something on takes off whatever was in its slot, and something you no longer hold comes off by itself.
 
+What's worn is kept for each body: the player's, and each [protagonist](/docs/reference/entities#protagonists-you-and-player)'s the game plays with the `you` effect. Switching to Sam shows what Sam has on, and switching back shows the player's clothes again, as they were left. See [Who wears what](#who-wears-what).
+
 ```ts
 import {
   wardrobe, wearable, wearing, slotFilled, wear, takeOff, slotsOf, wearableOf,
@@ -193,8 +195,9 @@ whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf
 | `{ 'wardrobe/wearing': { entity } }` | `wearing(entity)` | The thing is on, in whichever slot. |
 | `{ 'wardrobe/wearing': { entity, slot } }` | `wearing(entity, slot)` | That thing is on in that slot. |
 | `{ 'wardrobe/wearing': { slot } }` | `slotFilled(slot)` | Something is in that slot. |
+| `{ 'wardrobe/wearing': { entity, at } }` | | The thing is on `at`'s body: `'player'` or a protagonist, such as `'character:sam'`, whoever is played. |
 
-You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. These are the short forms (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'wardrobe/wearing', with: { entity: 'clothing:scarf' } }`. With neither `entity` nor `slot`, it's false. An unknown thing, or a slot the save has nothing in, is false.
+Without `at`, it asks about whoever the player is playing now ([`'you'`](/docs/reference/entities#protagonists-you-and-player)). You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. These are the short forms (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'wardrobe/wearing', with: { entity: 'clothing:scarf' } }`. With neither `entity` nor `slot`, it's false. An unknown thing, or a slot the save has nothing in, is false.
 
 To ask whether you hold a thing at all, worn or not, use the engine's [`holding`](/docs/reference/entities#give-take-move-and-holding), or [`{ entity, at }`](/docs/reference/conditions#entity).
 
@@ -202,8 +205,8 @@ To ask whether you hold a thing at all, worn or not, use the engine's [`holding`
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'wardrobe/wear': { id } }` | `wear(entity)` | Puts the thing `id` on in its slot, in place of whatever was there. What comes off is still yours. |
-| `{ 'wardrobe/takeOff': { id } }` | `takeOff(slot)` | Empties the slot `id`. |
+| `{ 'wardrobe/wear': { id } }` | `wear(entity)` | Puts the thing `id` on whoever the player is playing, in its slot, in place of whatever was there. What comes off is still theirs. |
+| `{ 'wardrobe/takeOff': { id } }` | `takeOff(slot)` | Empties the slot `id` on whoever the player is playing. |
 
 `wardrobe/wear` is refused, in this order, with:
 
@@ -263,8 +266,8 @@ type WardrobeView = {
 
 | Field | What it is |
 |---|---|
-| `slots` | Every slot, in the order the game declared them. `entity` is what's in it and `name` is its name. Both are `null` for an empty slot. |
-| `spare` | Wearable things you hold and aren't wearing, in the game's order of its entities. `slot` is where each would go. |
+| `slots` | Every slot, in the order the game declared them, on whoever the player is playing now. `entity` is what's in it and `name` is its name. Both are `null` for an empty slot. |
+| `spare` | Wearable things they hold and aren't wearing, in the game's order of its entities. `slot` is where each would go. |
 
 What you wear is also in the engine's [`view.held`](/docs/reference/view#held), since you still hold it. A UI that wants the bag without the clothes leaves out the refs in `slots`.
 
@@ -273,10 +276,31 @@ What you wear is also in the engine's [`view.held`](/docs/reference/view#held), 
 ### WardrobeState
 
 ```ts
-type WardrobeState = { worn: Record<string, EntityRef | null> }
+type WardrobeState = { worn: Record<Holder, Record<string, EntityRef | null>> }
 ```
 
-What the plugin keeps in a save, at `state.plugins.wardrobe`: the thing in each slot, by reference, or `null`. A UI reads the view, not this. A save from the plugin's first version, which kept item ids, is carried forward: each id becomes the wearable entity with that id, or `null` when there isn't one.
+What the plugin keeps in a save, at `state.plugins.wardrobe`: for each body that has worn something (`'player'`, or a protagonist's reference), the thing in each slot, or `null`. A new game has the player's slots, from each slot's `start`. A UI reads the view, not this.
+
+Older saves are carried forward. The plugin's first version kept item ids: each becomes the wearable entity with that id, or `null` when there isn't one. Its second kept one set of slots for whoever was played: they become that one's, the player's or the protagonist's the save was playing.
+
+### Who wears what
+
+Each body keeps its own slots. Wearing and taking off change the slots of whoever is played now, and the view and `wearing` read them. A protagonist starts with nothing on until they put something on, whatever the slots' `start`, which is the player's. After every command, whatever a body no longer holds comes off it, so giving the player's scarf to Sam takes it off the player even while Sam is played.
+
+```ts
+import { apply, applyEffects, holds, type Game, type GameState } from '@ifloom/engine'
+import { wear, wearing } from '@ifloom/plugin-wardrobe'
+
+declare const game: Game
+declare const state: GameState   // the player in the raincoat; Sam holds a scarf
+
+const asSam = applyEffects(state, game, [{ kind: 'you', to: 'character:sam' }])
+const dressed = apply(asSam, game, wear('clothing:scarf')).state
+holds(dressed, wearing('clothing:raincoat'), game)   // false: Sam isn't wearing it
+const back = applyEffects(dressed, game, [{ kind: 'you', to: 'player' }])
+holds(back, wearing('clothing:raincoat'), game)      // true: the player still is
+holds(back, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'character:sam' } }, game)   // true
+```
 
 ## For code
 
@@ -328,7 +352,7 @@ town · slots coat · starts with "clothing:raincoat", which the player does not
 - **The player has to start holding what they start wearing.** A slot's `start` needs `at: 'player'` (or a count for the player) on the thing. Otherwise the load reports it.
 - **Losing a thing takes it off after the command.** Whether it's sold, used up, given away or taken by an effect, once you hold none, the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that you no longer hold.
 - **Worn things are still held.** `holding('clothing:raincoat')` holds while it's on. To ask whether it's on, use `wearing`.
-- **"You" is whoever the player is playing.** Switch to a [protagonist](/docs/reference/entities#protagonists-you-and-player) with the `you` effect and what the player held comes off, since the protagonist doesn't hold it. The slots are the same for everyone you play.
+- **"You" is whoever the player is playing.** Switch to a [protagonist](/docs/reference/entities#protagonists-you-and-player) with the `you` effect and the wardrobe shows their clothes, not the player's. The slots are the same for everyone you play, but each body fills its own.
 - **Wearing doesn't check where you are or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks a thing as on, not a count. A player with two of a stackable thing wears one, and selling one leaves it on.
 - **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wearing(entity)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `slotFilled('hat')` still holds, and `takeOff('hat')` isn't refused and empties it.

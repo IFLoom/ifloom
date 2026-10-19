@@ -31,7 +31,7 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 - An [activity](/docs/reference/actions#blocked)'s `blocked`.
 - [Stages](/docs/reference/progress#stages): `needs`.
 - [Locks](/docs/reference/locks), [triggers](/docs/reference/triggers) and [inputs](/docs/reference/inputs): `when`.
-- A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `blocked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#characterdef) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
+- A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `blocked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#person-1) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
 
 ## Range
 
@@ -287,7 +287,7 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 
 [`explain`](#explain) says `storyline ava is closed; wants it open`.
 
-**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: person('ava'), gte: 20 }`.
+**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: character('ava'), gte: 20 }`.
 
 ### minigameVar
 

@@ -27,13 +27,13 @@ Returns `effects` plus a `kv` effect recording that they were paid this [turn](/
 
 ```ts
 import { oncePerTurn } from '@ifloom/engine'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
 {
   id: 'chat',
   label: 'Ask how the coffee machine is behaving',
   effects: [
-    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }]),
+    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }]),
     { kind: 'scene', scene: 'ava.chat.machine' },
   ],
 }

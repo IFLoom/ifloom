@@ -101,17 +101,17 @@ The locations are content. In step 5 they go into the game's content, under `dat
 
 ## 2. A character with a schedule
 
-The core has no people either, so characters come from the cast plugin. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're offstage, which means nowhere on the map.
+The core has no people either, so characters come from the cast plugin. A character is an [entity](/docs/reference/entities) written with the cast's `person()`: a name and a line about them, and the cast's own fields beside them. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're offstage, which means nowhere on the map.
 
 ```ts
 import { period, weekday } from '@ifloom/plugin-calendar'
-import type { CharacterDef } from '@ifloom/plugin-cast'
+import { person } from '@ifloom/plugin-cast'
 
-const ruth: CharacterDef = {
+const ruth = person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
-  role: 'Baker',
+  desc: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   hue: 30,
   schedule: [
@@ -119,14 +119,14 @@ const ruth: CharacterDef = {
     { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
   ],
   talk: 'ruth.talk',
-}
+})
 ```
 
 A `when` is any [condition](/docs/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
 
-Like the locations, Ruth is content. In step 5 she goes into the game's content, under `data.cast.characters`. Every field is in [`CharacterDef`](/docs/plugins/cast#characterdef), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
+Like the locations, Ruth is content. In step 5 she goes into the game's content, under `entities`. Every field is in [`person`](/docs/plugins/cast#person), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
 
-Each character is also an [entity](/docs/reference/entities) of the kind `character`, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
+She's an entity of the kind `character`, which the cast declares, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
 
 ## 3. Stats, and something to spend them on
 
@@ -152,7 +152,7 @@ const stats: StatDef[] = [
 
 `format` is how the number is written for the player. `spendable` says the stat is spent on things, so it shows in prices. `lacking` is the line the player reads when a cost needs more than they have.
 
-`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: person('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
+`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
 
 An activity is something the player can do. It has a cost the engine charges before the effects apply, and a `blocked` list. Each entry is a condition with the reason the player reads while it holds. The engine refuses the activity, with that reason, when an entry holds or the player can't pay.
 
@@ -196,21 +196,21 @@ const intro: DataScene = {
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
 ```ts
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
 const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
     { text: 'ruth.talk.hello' },
-    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
+    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
   ],
   choices: [
     {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', stat: 'friendship', by: 5, of: person('ruth') },
+        { kind: 'stat', stat: 'friendship', by: 5, of: character('ruth') },
         { kind: 'scene', scene: null },
       ],
     },
@@ -219,7 +219,7 @@ const ruthTalk: DataScene = {
 }
 ```
 
-`person('ruth')` is how content names Ruth's entity, `'character:ruth'`. The second line only appears once her friendship has reached 5. The `chat` choice adds 5 to it, once a turn. After that it stays on screen, greyed out with its reason, until the player has slept. `speaker: 'ruth'` draws the scene as Ruth, and the cast supplies her name, colour and portrait.
+`character('ruth')` is how content names Ruth's entity, `'character:ruth'`. The second line only appears once her friendship has reached 5. The `chat` choice adds 5 to it, once a turn. After that it stays on screen, greyed out with its reason, until the player has slept. `speaker: 'ruth'` draws the scene as Ruth, and the cast supplies her name, colour and portrait.
 
 ### The words
 
@@ -251,7 +251,7 @@ For the odd screen that doesn't fit blocks and choices, a scene can also be a pl
 
 ## 5. The game
 
-The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations and Ruth are plugins' content, so they go in the content's `data`, under the plugin's id and the list's name: `data.places.locations` and `data.cast.characters`.
+The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations are the places plugin's content, so they go in the content's `data`, under the plugin's id and the list's name: `data.places.locations`. Ruth is an entity, so she goes in `entities`.
 
 The second argument holds everything that isn't content, and only `id` and `title` are required. `introScene` is on screen from the first frame. `actions` are buttons offered in every room after the room's own, here the `wait` activity from step 3 and a bed to go to. A story that opens on its room leaves out `introScene`.
 
@@ -276,7 +276,8 @@ export const { game, problems } = loadGame(
       activities,
       scenes: [intro, ruthTalk],
       prose,
-      data: { places: { locations }, cast: { characters: [ruth] } },
+      entities: [ruth],
+      data: { places: { locations } },
     },
   ],
   {
@@ -333,7 +334,7 @@ When you don't need to know, `dispatch` returns just the next state:
 ```ts
 import { dispatch, statValue } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
-import { person, talk } from '@ifloom/plugin-cast'
+import { character, talk } from '@ifloom/plugin-cast'
 
 state = dispatch(state, game, { type: 'choose', id: 'bed' })
 state = dispatch(state, game, sleep())                       // Tuesday morning: turn 1
@@ -342,7 +343,7 @@ state = dispatch(state, game, go('cafe'))
 state = dispatch(state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'chat' })
 
-statValue(state, game, 'friendship', person('ruth')) // 5
+statValue(state, game, 'friendship', character('ruth')) // 5
 ```
 
 `go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
@@ -626,7 +627,7 @@ import {
 } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { go, onlyAt, places, where, type LocationDef } from '@ifloom/plugin-places'
-import { cast, here, person, talk, type CharacterDef } from '@ifloom/plugin-cast'
+import { cast, character, here, person, talk } from '@ifloom/plugin-cast'
 
 const locations: LocationDef[] = [
   {
@@ -663,18 +664,18 @@ const locations: LocationDef[] = [
   },
 ]
 
-const ruth: CharacterDef = {
+const ruth = person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
-  role: 'Baker',
+  desc: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   hue: 30,
   schedule: [
     { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
   ],
   talk: 'ruth.talk',
-}
+})
 
 const stats: StatDef[] = [
   {
@@ -712,14 +713,14 @@ const ruthTalk: DataScene = {
   speaker: 'ruth',
   body: [
     { text: 'ruth.talk.hello' },
-    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: person('ruth'), gte: 5 } },
+    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
   ],
   choices: [
     {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', stat: 'friendship', by: 5, of: person('ruth') },
+        { kind: 'stat', stat: 'friendship', by: 5, of: character('ruth') },
         { kind: 'scene', scene: null },
       ],
     },
@@ -748,7 +749,8 @@ export const { game, problems } = loadGame(
       activities,
       scenes: [intro, ruthTalk],
       prose,
-      data: { places: { locations }, cast: { characters: [ruth] } },
+      entities: [ruth],
+      data: { places: { locations } },
     },
   ],
   {
@@ -779,7 +781,7 @@ console.log(screen.scene.choices.map((choice) => choice.label))
 // [ 'Ask how the bread is going', 'Just the coffee, thanks' ]
 
 const chat = apply(state, game, { type: 'choose', id: 'chat' })
-console.log(chat.ok, statValue(chat.state, game, 'friendship', person('ruth'))) // true 5
+console.log(chat.ok, statValue(chat.state, game, 'friendship', character('ruth'))) // true 5
 
 state = dispatch(chat.state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'bye' })

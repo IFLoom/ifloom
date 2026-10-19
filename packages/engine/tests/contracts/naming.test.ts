@@ -14,7 +14,7 @@ import { feed, hasPosted, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 import { generate, generators } from '@ifloom/plugin-generators'
 import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work, workedToday } from '@ifloom/plugin-jobs'
 import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo } from '@ifloom/plugin-messages'
-import { at, go, moveTo, places, within } from '@ifloom/plugin-places'
+import { at, go, moveTo, pickUp, places, within } from '@ifloom/plugin-places'
 import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest } from '@ifloom/plugin-quests'
 import { buy, inStock, sell, shop, vendorOpen } from '@ifloom/plugin-shop'
 import { takeOff, wardrobe, wear, wearing } from '@ifloom/plugin-wardrobe'
@@ -199,6 +199,7 @@ const SAMPLES: Record<string, Call> = {
   'conditions:places/within': within('cafe'),
   'effects:places/move': moveTo('park'),
   'commands:places/go': go('park'),
+  'commands:places/pickUp': pickUp('item:paper'),
   'conditions:quests/active': questActive('settle'),
   'conditions:quests/done': questDone('settle'),
   'conditions:quests/reached': questReached('settle', 'unpack'),

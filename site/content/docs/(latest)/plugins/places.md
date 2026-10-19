@@ -16,11 +16,12 @@ These are the parts of a game that deal with places, and where each one comes fr
 - **Opening hours** are a location's `blocked` entries, written with the [calendar](/docs/plugins/calendar)'s conditions. See [Opening hours](#opening-hours).
 - **"Only in the café"** is the [`at()`](#conditions) condition, or [`onlyAt()`](#helpers) in an activity's `blocked` list.
 - **The header** is the plugin's [label](#the-label), at `view.when`.
+- **Things lying somewhere**, such as a dropped scarf or a parcel left in the hall, are held by the place's [entity](#each-place-is-an-entity), and the view lists them with a button to [pick each up](#things-lying-in-a-place).
 
 ```ts
 import {
-  places, go, at, within, moveTo, onlyAt, where, locationsOf, locationById,
-  type PlacesOptions, type PlacesState, type PlacesView, type ExitView,
+  places, go, at, within, moveTo, onlyAt, pickUp, location, where, locationsOf, locationById, LOCATION,
+  type PlacesOptions, type PlacesState, type PlacesView, type ExitView, type LyingView,
   type LocationDef, type Arrival,
 } from '@ifloom/plugin-places'
 ```
@@ -268,6 +269,44 @@ body: [
 ```
 
 
+### Each place is an entity
+
+The plugin declares a kind, `location` ([`LOCATION`](#helpers)), and makes one entity of it for each place, with the place's `name`, its `tag` as the entity's `desc` and its `tags`. The kind is [`unique`](/docs/reference/entities#kinddef), so each place is a [holder](/docs/reference/entities#holding-things) that can hold things, and it's not [listed](/docs/reference/entities#listing): the places are the plugin's to show, through its view, not in [`view.entities`](/docs/reference/view#entities).
+
+A place's entity is named `location:<id>`, which [`location()`](#helpers) writes. Content puts a thing in a room with its `at`, and asks about it as about any holder:
+
+```ts
+import type { Condition, Content } from '@ifloom/engine'
+import { location } from '@ifloom/plugin-places'
+
+const hall: Content = {
+  kinds: [{ id: 'item', label: 'Thing' }],
+  // A parcel waiting in the hall at the start.
+  entities: [{ id: 'parcel', of: 'item', name: 'parcel', at: location('hall') }],
+}
+
+// For a line in the hall's body: true while nobody has picked it up.
+const stillThere: Condition = { entity: 'item:parcel', at: location('hall') }
+```
+
+The plugin answers the [`places/holder`](#queries) query with where the player is, as an entity, so the [inventory](/docs/plugins/inventory#dropping-and-giving)'s `drop` puts a dropped thing down in the room. Neither plugin needs the other: without places a dropped thing is gone, and without the inventory nothing is dropped, but things placed in rooms by content are still shown and can be picked up.
+
+### Things lying in a place
+
+While no scene is open, the view lists what the place's entity holds, in its [`things`](#placesview), each with a button that picks one up. [`pickUp()`](#commands) moves one from the place to [`'you'`](/docs/reference/entities#protagonists-you-and-player), whoever the player is playing. A thing with a [`visible`](/docs/reference/entities#entitydef) condition that doesn't hold isn't listed, so a coin under the rug shows only once the player has looked.
+
+```ts
+import { apply, startingState, view, type Game } from '@ifloom/engine'
+import { pickUp, type PlacesView } from '@ifloom/plugin-places'
+
+declare const game: Game   // starts in the hall, with the parcel above
+const state = startingState(game)
+
+;(view(state, game).plugins.places as PlacesView).things
+// [{ ref: 'item:parcel', name: 'parcel', image: null, count: 1, pickUp: { id: 'pickUp.item:parcel', label: 'Pick up', command: pickUp('item:parcel') } }]
+apply(state, game, pickUp('item:parcel')).state.held.player   // { 'item:parcel': 1 }
+```
+
 ## A worked example
 
 The town above, with the calendar and a coffee to buy in the café. The coffee is only sold in the café, so it lists [`onlyAt`](#helpers) in its `blocked`.
@@ -333,6 +372,12 @@ Because `blocked` is asked before the exits, a closed café says it's closed eve
 
 A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*`, and stops every journey. To stop some journeys and not others, use the destination's `blocked`.
 
+| Command | Helper | Does |
+|---|---|---|
+| `{ 'places/pickUp': { id: 'item:paper' } }` | `pickUp('item:paper')` | Moves one of the thing from where the player is to `'you'`. See [Things lying in a place](#things-lying-in-a-place). |
+
+`places/pickUp` is refused with `Finish this first.` while a scene is open, `There is no such thing.` (the engine's `noSuchThing`) for a thing not in the game, and `There is no paper here.` ([`places/notLyingHere`](#strings)) when none lies where the player is. It lists its effect, a [`move`](/docs/reference/effects#move), so a lock with `effect` sees it.
+
 ## Effects
 
 | Content writes | Helper | Does |
@@ -364,6 +409,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 | `places/all` | Every place the game has: [`locationsOf(game)`](#helpers). |
 | `places/known` | Whether the game has a place with this id, given as `{ location }`: `true` or `false`. |
 | `places/exits` | The current place's `exits`, as listed, leaving out any the game doesn't have. Empty when nowhere. |
+| `places/holder` | The entity of where the player is, such as `'location:park'`, which holds what's put down there; `null` when nowhere. The [inventory](/docs/plugins/inventory)'s `drop` asks it. |
 
 For example, a delivery plugin that only hands over parcels at the flat, when the game has places, asks where the player is:
 
@@ -461,7 +507,7 @@ Walk back out to the high street and the ambience stops, because the street name
 
 `view(state, game).plugins.places` is a `PlacesView`.
 
-The [React UI](/docs/react) draws it with [`LocationCard`](/docs/react/components#locationcard), and [`usePlaces`](/docs/react/components#useplaces) gives the same data and a way to take an exit with no markup, for a map of your own.
+The [React UI](/docs/react) draws it with [`LocationCard`](/docs/react/components#locationcard), and [`usePlaces`](/docs/react/components#useplaces) gives the same data, a way to take an exit and a way to pick something up with no markup, for a map of your own.
 
 ### PlacesView
 
@@ -469,6 +515,7 @@ The [React UI](/docs/react) draws it with [`LocationCard`](/docs/react/component
 type PlacesView = {
   location: { id: string; name: string; tag: string; tags: string[]; art: string; stage: StageView | null } | null
   exits: ExitView[]
+  things: LyingView[]
 }
 ```
 
@@ -476,6 +523,7 @@ type PlacesView = {
 |---|---|
 | `location` | Where the player is. `null` when nowhere, or when `at` names a place the game no longer has. Its `stage` is the place's [picture stage](#the-picture-stage) as a [`StageView`](/docs/reference/media#stageview), or `null` when it has none. |
 | `exits` | The ways out, in the order the place lists them. Empty while a scene is open, or while a lock stops everything ([`lockedOut`](/docs/reference/locks#lockedout)). |
+| `things` | What lies here, as [`LyingView`](#lyingview)s, in the order the place's entity holds them. Empty when nothing does, while a scene is open, or while a lock stops everything. |
 
 An exit is left out when:
 
@@ -513,8 +561,31 @@ On a new game in the flat:
 {
   location: { id: 'flat', name: 'Your flat', tag: 'Home', tags: [], art: 'place/flat', stage: null },
   exits: [{ id: 'high-street', label: 'High Street', tag: 'Small Town', tags: ['outdoors'], art: 'place/high-street', command: go('high-street') }],
+  things: [],
 }
 ```
+
+### LyingView
+
+```ts
+type LyingView = {
+  ref: EntityRef
+  name: string
+  image: string | null
+  count: number
+  pickUp: RenderedChoice
+}
+```
+
+One thing lying where the player is.
+
+| Field | What it is |
+|---|---|
+| `ref` | How content names it, such as `'item:paper'`. |
+| `name` | Its [name](/docs/reference/entities#entityname), tokens filled. |
+| `image` | Its picture through [`artSrc`](/docs/reference/prose#artsrc), or `null`. |
+| `count` | How many lie here. |
+| `pickUp` | The button that picks one up: a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the [`places/pickUp`](#strings) string, `Pick up`, that sends `pickUp(ref)`. |
 
 ## The state
 
@@ -537,6 +608,8 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `places/noSuchPlace` | `There is no such place.` |
 | `places/alreadyHere` | `You are already here.` |
 | `places/cannotGetThere` | `You cannot get there from here.` |
+| `places/pickUp` | `Pick up` |
+| `places/notLyingHere` | `There is no {thing} here.` |
 
 `places/go` also uses the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
 
@@ -552,6 +625,9 @@ function locationById(game: Game, id: string | null | undefined): LocationDef | 
 function where(state: GameState): string | null
 
 const go: (to: string) => CommandRef
+const pickUp: (ref: EntityRef) => CommandRef
+const location: (id: string) => EntityRef
+const LOCATION = 'location'
 const at: (...places: string[]) => Condition
 const within: (...places: string[]) => Condition
 const moveTo: (place: string) => EffectRef
@@ -564,6 +640,9 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 | `locationById` | The place with this id, or `undefined`. `undefined` for `null`. |
 | `where` | Where the player is, read straight from the state with no game needed: the place's id, or `null`. |
 | `go` | The [`places/go`](#commands) command. |
+| `pickUp` | The [`places/pickUp`](#commands) command. |
+| `location` | A place's [entity](#each-place-is-an-entity): `location('park')` is `'location:park'`. |
+| `LOCATION` | The kind every place's entity is, `'location'`. |
 | `at`, `within` | The [conditions](#conditions). |
 | `moveTo` | The [`places/move`](#effects) effect. |
 | `onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an activity: `{ when: { not: at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
@@ -574,7 +653,7 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up, wherever content writes it: an activity's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
+**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up (and the thing `places/pickUp` names, as an entity), wherever content writes it: an activity's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
 
 ```text
 town · activity swim · unknown location "lido"
@@ -611,6 +690,7 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 - **A game that starts nowhere can't walk anywhere.** `places/go` from nowhere is refused with `You cannot get there from here.` A `places/move`, from an intro scene's last choice say, puts the player on the map.
 - **`blocked` comes before the exits.** A locked place's reason is the refusal even when it isn't one step away.
 - **`places/go` lists no effects.** A lock with `effect` doesn't see it, and no plugin puts a price on it.
+- **A place's entity is the plugin's.** The game can redeclare the `location` kind (to list the places, say), but an entity the game declares as `location:<id>` replaces the plugin's whole, name and all.
 
 ## See it in an example
 

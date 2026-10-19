@@ -112,7 +112,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 - A `{{v:…}}` naming a value the game doesn't declare is left in place, so the missing name shows on screen instead of vanishing.
 - In `{{n:storyline.key}}`, the storyline id is letters, digits, `_` and `-`, and the key is letters, digits and `_`.
 - A `{{v:…}}` name is letters, digits, `_` and `-`. A plugin value is the plugin's id (letters, digits and `-`), a `/`, and such a name. Arguments follow the name as `key=value`, separated by spaces, as in `{{v:messages/unread channel=texts}}`. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
-- The pronoun forms on a [cast](/docs/plugins/cast#characterdef) character (`pronouns`) aren't tokens. A game that wants them substitutes them itself.
+- The pronoun forms on a [cast](/docs/plugins/cast#person-1) character (`pronouns`) aren't tokens. A game that wants them substitutes them itself.
 
 ## fillTokens
 

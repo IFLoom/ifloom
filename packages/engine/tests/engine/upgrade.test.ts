@@ -113,7 +113,10 @@ describe('content migrations', () => {
       schema: SCHEMA,
       prose: { flag: 'A prose key called flag stays as it is.' },
       inputs: [{ id: 'name', label: 'Name', kind: 'text', key: 'playerName', when: { not: { kv: 'playerName' } } }],
-      entities: [{ id: 'ana', of: 'staff', name: 'Ana', kv: { role: 'cook' } }],
+      entities: [
+        { id: 'ana', of: 'staff', name: 'Ana', kv: { role: 'cook' } },
+        { id: 'rosa', of: 'character', name: 'Rosa', kv: { mood: 'calm' }, traits: { 'cast/person': {} } },
+      ],
       scenes: [
         {
           id: 'cafe.evening',
@@ -132,7 +135,6 @@ describe('content migrations', () => {
           ],
         },
       ],
-      data: { cast: { characters: [{ id: 'rosa', name: 'Rosa', kv: { mood: 'calm' } }] } },
     })
     // The pack it was given is left alone.
     expect(v4.entities[0].flags).toEqual({ role: 'cook' })
@@ -563,6 +565,61 @@ describe('content migrations', () => {
         },
       ],
     })
+  })
+
+  it('make the cast’s characters entities with the person trait at schema 14', () => {
+    const v13 = {
+      id: 'neighbours',
+      schema: 13,
+      entities: [{ id: 'scarf', of: 'clothing', name: 'Scarf' }],
+      data: {
+        cast: {
+          characters: [
+            {
+              id: 'rosa',
+              name: 'Rosa',
+              fullName: 'Rosa Vale',
+              role: 'Next door',
+              portrait: 'art/rosa.png',
+              tags: ['neighbour'],
+              hue: 120,
+              home: 'garden',
+              schedule: [{ location: 'shop', when: { kv: 'open' } }],
+              talk: 'rosa.hi',
+              stats: { trust: 3 },
+              kv: { mood: 'calm' },
+            },
+            { id: 'tom', name: 'Tom' },
+          ],
+        },
+        places: { locations: [] },
+      },
+    }
+    expect(unwrap(upgradePack(v13))).toEqual({
+      id: 'neighbours',
+      schema: SCHEMA,
+      entities: [
+        { id: 'scarf', of: 'clothing', name: 'Scarf' },
+        {
+          id: 'rosa',
+          of: 'character',
+          name: 'Rosa',
+          desc: 'Next door',
+          image: 'art/rosa.png',
+          tags: ['neighbour'],
+          stats: { trust: 3 },
+          kv: { mood: 'calm' },
+          traits: {
+            'cast/person': { fullName: 'Rosa Vale', hue: 120, home: 'garden', schedule: [{ location: 'shop', when: { kv: 'open' } }], talk: 'rosa.hi' },
+          },
+        },
+        { id: 'tom', of: 'character', name: 'Tom', traits: { 'cast/person': {} } },
+      ],
+      data: { places: { locations: [] } },
+    })
+    // A pack with no characters is left as it was.
+    const plain: RawPack = { id: 'x', schema: 13, prose: { a: 'A' } }
+    expect(unwrap(upgradePack(plain))).toEqual({ id: 'x', schema: SCHEMA, prose: { a: 'A' } })
   })
 
   it('make items and collections things at schema 13, wherever content names them', () => {

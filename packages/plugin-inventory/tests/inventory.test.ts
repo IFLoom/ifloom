@@ -15,7 +15,8 @@ import {
   type GameState,
   type Plugin,
 } from '@ifloom/engine'
-import { cast, person } from '@ifloom/plugin-cast'
+import { cast, character, person } from '@ifloom/plugin-cast'
+import { go, location, pickUp, places, type PlacesView } from '@ifloom/plugin-places'
 import { buy, sellable, shop, type ShopView } from '@ifloom/plugin-shop'
 import { wear, wearable, wardrobe, wearing } from '@ifloom/plugin-wardrobe'
 import { dropThing, giveThing, inventory, usable, useThing } from '../src/index.ts'
@@ -148,23 +149,51 @@ describe('the inventory alone', () => {
   })
 })
 
+describe('the inventory with places', () => {
+  const park: Content = {
+    name: 'park',
+    data: {
+      places: {
+        locations: [
+          { id: 'lawn', name: 'Lawn', tag: 'Park', exits: ['pond'], art: '', body: [] },
+          { id: 'pond', name: 'Pond', tag: 'Park', exits: ['lawn'], art: '', body: [] },
+        ],
+      },
+    },
+  }
+
+  it('drops a thing where you are, where it lies until it is picked up again', () => {
+    const g = game([park], [inventory(), places({ start: 'lawn' })])
+    const dropped = run(begin(g), g, dropThing('gear:stone'))
+    expect(heldCount(dropped, g, 'gear:stone')).toBe(0)
+    expect(heldCount(dropped, g, 'gear:stone', location('lawn'))).toBe(1)
+    const lying = (state: GameState) => (view(state, g).plugins.places as PlacesView).things.map((thing) => thing.ref)
+    expect(lying(dropped)).toEqual(['gear:stone'])
+    // Somewhere else it isn't there; back on the lawn, it is.
+    expect(lying(run(dropped, g, go('pond')))).toEqual([])
+    const back = run(dropped, g, go('pond'), go('lawn'), pickUp('gear:stone'))
+    expect(heldCount(back, g, 'gear:stone')).toBe(1)
+    expect(lying(back)).toEqual([])
+  })
+})
+
 describe('the inventory with the cast', () => {
   const town: Content = {
     name: 'town',
     stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
     scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
     prose: { 'ava.hi': 'Hi.', 'ava.hi#bye': 'Bye' },
-    data: { cast: { characters: [{ id: 'ava', name: 'Ava', talk: 'ava.hi' }] } },
+    entities: [person({ id: 'ava', name: 'Ava', talk: 'ava.hi' })],
   }
 
   it('gives a thing to a character, who holds it', () => {
     const g = game([town], [inventory(), cast()])
-    const given = run(begin(g), g, giveThing('food:apple', person('ava')))
-    expect(heldCount(given, g, 'food:apple', person('ava'))).toBe(1)
+    const given = run(begin(g), g, giveThing('food:apple', character('ava')))
+    expect(heldCount(given, g, 'food:apple', character('ava'))).toBe(1)
   })
 
   it('hands what a protagonist holds over to them as you', () => {
-    const g = game([{ ...town, activities: [{ id: 'be', effects: [{ kind: 'you', to: person('ava') }, give('food:apple')] }] }], [inventory(), cast()])
+    const g = game([{ ...town, activities: [{ id: 'be', effects: [{ kind: 'you', to: character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
     const played = run(begin(g), g, { type: 'activity', id: 'be' })
     expect(shown(g, played).things.map((thing) => [thing.ref, thing.at])).toEqual([
       ['food:apple', 'character:ava'],
@@ -174,7 +203,7 @@ describe('the inventory with the cast', () => {
     ])
     // Using it spends the protagonist's.
     const ate = run(played, g, useThing('food:apple'))
-    expect(heldCount(ate, g, 'food:apple', person('ava'))).toBe(0)
+    expect(heldCount(ate, g, 'food:apple', character('ava'))).toBe(0)
     expect(heldCount(ate, g, 'food:apple', 'player')).toBe(2)
   })
 })

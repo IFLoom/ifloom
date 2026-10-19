@@ -92,7 +92,10 @@ describe('the wardrobe, on its own', () => {
 
   it('ignores a slot the game no longer has', () => {
     const g = game()
-    const old = { ...begin(g), plugins: { wardrobe: { version: 2, state: { worn: { coat: null, feet: 'clothing:boots', hat: 'clothing:raincoat' } } } } }
+    const old = {
+      ...begin(g),
+      plugins: { wardrobe: { version: 3, state: { worn: { player: { coat: null, feet: 'clothing:boots', hat: 'clothing:raincoat' } } } } },
+    }
     expect(holds(old, wearing('clothing:raincoat'), g)).toBe(false)
   })
 
@@ -140,7 +143,7 @@ describe('the wardrobe, on its own', () => {
     const old = { ...begin(g), plugins: { wardrobe: { version: 1, state: { worn: { coat: 'raincoat', feet: null, hat: 'beret' } } } } }
     const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
     if (!loaded.ok) throw new Error(loaded.reason)
-    expect(loaded.value.plugins.wardrobe).toEqual({ version: 2, state: { worn: { coat: 'clothing:raincoat', feet: null, hat: null } } })
+    expect(loaded.value.plugins.wardrobe).toEqual({ version: 3, state: { worn: { player: { coat: 'clothing:raincoat', feet: null, hat: null } } } })
   })
 
   it('reports wearables in a slot the game does not have, and slots that start with the wrong thing', () => {
@@ -195,8 +198,36 @@ describe('the wardrobe with a protagonist', () => {
       },
     ])
     const kim = apply(begin(g), g, { type: 'activity', id: 'beKim' }).state
-    // The boots are the player's, not Kim's, so they come off; the raincoat is Kim's now, to wear.
+    // Kim has nothing on yet; the raincoat is Kim's now, to wear.
     expect(holds(kim, slotFilled('feet'), g)).toBe(false)
     expect(shown(kim, g).spare).toEqual([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
+    const dressed = apply(kim, g, wear('clothing:raincoat')).state
+    expect(shown(dressed, g).slots.map((slot) => slot.entity)).toEqual(['clothing:raincoat', null])
+    expect(dressed.plugins.wardrobe.state).toEqual({ worn: { player: { coat: null, feet: 'clothing:boots' }, 'friend:kim': { coat: 'clothing:raincoat' } } })
+  })
+
+  it('keeps what each body has on, so switching back shows the player’s clothes again', () => {
+    const g = game([
+      {
+        name: 'play',
+        activities: [
+          { id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] },
+          { id: 'beMe', effects: [{ kind: 'you', to: 'player' }] },
+        ],
+      },
+    ])
+    const kim = apply(apply(begin(g), g, { type: 'activity', id: 'beKim' }).state, g, wear('clothing:raincoat')).state
+    const me = apply(kim, g, { type: 'activity', id: 'beMe' }).state
+    expect(shown(me, g).slots.map((slot) => slot.entity)).toEqual([null, 'clothing:boots'])
+    expect(holds(me, wearing('clothing:raincoat'), g)).toBe(false)
+    expect(holds(me, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } }, g)).toBe(true)
+  })
+
+  it('carries a version 2 save’s slots over to whoever was played', () => {
+    const g = game()
+    const old = { ...begin(g), you: 'friend:kim', plugins: { wardrobe: { version: 2, state: { worn: { coat: null, feet: 'clothing:boots' } } } } }
+    const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
+    if (!loaded.ok) throw new Error(loaded.reason)
+    expect(loaded.value.plugins.wardrobe).toEqual({ version: 3, state: { worn: { 'friend:kim': { coat: null, feet: 'clothing:boots' } } } })
   })
 })

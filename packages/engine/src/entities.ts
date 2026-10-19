@@ -44,8 +44,12 @@ export type TraitDef<K extends string = string, S = unknown> = {
   id: K
   /** What is wrong with the data on one entity, by a rule of the plugin's own: `['a slot needs a name']`. Asked by the content checker. */
   check?(data: TraitData<K>, tools: TraitTools): readonly string[]
-  /** What the data names, for the content checker to resolve: a slot, a scene, a prose key. */
-  references?(data: TraitData<K>): readonly Reference[]
+  /**
+   * What the data names, for the content checker to resolve: a slot, a scene,
+   * a prose key. `tools.ref` is the entity it is on, for a condition in the
+   * data that names it as `'$'`.
+   */
+  references?(data: TraitData<K>, tools: TraitTools): readonly Reference[]
   /**
    * For the rare trait that keeps state of its own on each entity, such as
    * the uses left in a torch: where it starts, from the entity's data. Read

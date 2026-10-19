@@ -3,7 +3,9 @@ import {
   SCHEMA,
   commandOf,
   apply,
+  heldCount,
   holds,
+  pluginQuery,
   loadGame,
   startingState,
   view,
@@ -15,7 +17,7 @@ import {
   type Pack,
 } from '@ifloom/engine'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
-import { at, go, moveTo, onlyAt, places, where, within, type LocationDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
+import { at, go, location, moveTo, onlyAt, pickUp, places, where, within, type LocationDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
 const place = (id: string, exits: string[], extra: Partial<LocationDef> = {}): LocationDef => ({
   id,
@@ -93,6 +95,7 @@ describe('places', () => {
     expect(shown(state, g)).toEqual({
       location: { id: 'house', name: 'House', tag: 'Town', tags: [], art: 'place/house', stage: null },
       exits: [{ id: 'street', label: 'Street', tag: 'Town', tags: ['outdoors'], art: 'place/street', command: commandOf(go('street')) }],
+      things: [],
     })
   })
 
@@ -180,7 +183,7 @@ describe('places', () => {
     const state = startingState(g)
     expect(where(state)).toBeNull()
     expect(view(state, g).scene).toMatchObject({ title: 'Town', body: '' })
-    expect(shown(state, g)).toEqual({ location: null, exits: [] })
+    expect(shown(state, g)).toEqual({ location: null, exits: [], things: [] })
   })
 
   it('give the room its transition, keyed by the place', () => {
@@ -371,6 +374,56 @@ describe('places', () => {
         'locations cafe: hotspot lamp: unknown layer "lamp"',
         'locations cafe: hotspot lamp: unknown activity "dance"',
       ])
+    })
+  })
+
+  describe('things lying in a place', () => {
+    const lying = (): { g: Game } => {
+      const withThings: Content = {
+        ...town,
+        kinds: [{ id: 'item', label: 'Thing' }],
+        entities: [
+          { id: 'paper', of: 'item', name: 'Newspaper', at: { 'location:street': 2 } },
+          { id: 'coin', of: 'item', name: 'Coin', at: 'location:house', visible: { kv: 'lookedClosely' } },
+        ],
+        activities: [...(town.activities ?? []), { id: 'drop', effects: [{ kind: 'move', entity: 'item:paper', from: 'you', to: 'location:park' }] }],
+      }
+      const { game: g, problems } = loadGame([withThings], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
+      expect(problems).toEqual([])
+      return { g }
+    }
+
+    it('are what the place’s entity holds: each location is a unique entity of the kind location', () => {
+      const { g } = lying()
+      expect(g.kinds?.find((kind) => kind.id === 'location')).toMatchObject({ unique: true, listed: false })
+      expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', desc: 'Town' })
+      const state = startingState(g)
+      expect(view(state, g).entities.location).toBeUndefined()
+      expect(pluginQuery(g, 'places/holder')!(state)).toBe(location('house'))
+      expect(holds(state, { entity: 'item:paper', at: 'location:street', gte: 2 }, g)).toBe(true)
+    })
+
+    it('are shown in the place, but those not visible, with a button that picks one up', () => {
+      const { g } = lying()
+      const house = startingState(g)
+      expect(shown(house, g).things).toEqual([])
+      expect(shown({ ...house, kv: { lookedClosely: true } }, g).things.map((thing) => thing.ref)).toEqual(['item:coin'])
+      const street = walk(g, house, 'street')
+      expect(shown(street, g).things).toEqual([
+        {
+          ref: 'item:paper',
+          name: 'Newspaper',
+          image: null,
+          count: 2,
+          pickUp: { id: 'pickUp.item:paper', label: 'Pick up', command: commandOf(pickUp('item:paper')) },
+        },
+      ])
+      const took = apply(street, g, pickUp('item:paper'))
+      expect(took.reason).toBeUndefined()
+      expect([heldCount(took.state, g, 'item:paper', 'player'), heldCount(took.state, g, 'item:paper', location('street'))]).toEqual([1, 1])
+      expect(whyNot(house, g, pickUp('item:paper'))).toBe('There is no Newspaper here.')
+      expect(whyNot({ ...street, sceneId: 'x' }, g, pickUp('item:paper'))).toBe('Finish this first.')
+      expect(shown({ ...street, sceneId: 'x' }, g).things).toEqual([])
     })
   })
 })

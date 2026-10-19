@@ -969,13 +969,13 @@ Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, 
 function LocationCard(): JSX.Element | null
 ```
 
-Where the player is: the place's name and tag. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
+Where the player is: the place's name and tag, and what lies there, each with a small **Pick up** button that sends the thing's [`pickUp`](/docs/plugins/places#things-lying-in-a-place) command. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
 
 A place with a [stage](/docs/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
 
 It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). The exits are [`Exits`](#exits).
 
-Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name` and `location-text`.
+Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `location-things`, `location-thing` (with `data-thing`, the thing's reference), `location-thing-name` and `location-thing-pick`.
 
 ### Exits
 
@@ -994,10 +994,13 @@ Replaceable as `Exits` in [`components`](#components). Parts: `exits` and `exit`
 ```ts
 function usePlaces(): PlacesControls | null
 
-type PlacesControls = PlacesView & { go: (exit: string) => Result<GameState> }
+type PlacesControls = PlacesView & {
+  go: (exit: string) => Result<GameState>
+  pickUp: (thing: string) => Result<GameState>
+}
 ```
 
-The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location` and `exits`) with a way to travel, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. [`LocationCard`](#locationcard) and [`Exits`](#exits) are drawn from it.
+The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location`, `exits` and the `things` lying there) with a way to travel and to pick things up, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. `pickUp(ref)` sends the thing's own pick-up command the same way. [`LocationCard`](#locationcard) and [`Exits`](#exits) are drawn from it.
 
 ```tsx
 import { usePlaces } from '@ifloom/react'
@@ -1023,9 +1026,9 @@ function ExitList() {
 function PeopleHere(props: { className?: string }): JSX.Element | null
 ```
 
-Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and role (when they have them) and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
+Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and `desc`, the line under their name (when they have them), and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
 
-Replaceable as `PeopleHere` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-role` and `person-actions`.
+Replaceable as `PeopleHere` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-desc` and `person-actions`.
 
 ### Relationships
 
@@ -1033,7 +1036,7 @@ Replaceable as `PeopleHere` in [`components`](#components). Parts: `people`, `pe
 function Relationships(props: { className?: string }): JSX.Element | null
 ```
 
-Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and role, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](#built_in_panels).
+Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `desc`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](#built_in_panels).
 
 Replaceable as `Relationships` in [`components`](#components). Parts: `relationships`, `relationship` (with `data-person`), `relationship-header`, `relationship-stats`, and the `person-` and `stat-` parts inside.
 

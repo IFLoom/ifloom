@@ -234,7 +234,7 @@ A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner on
 
 A trait is a named piece of data an entity carries, such as "wash this at 30 degrees". The engine doesn't know what any trait means. A [plugin](/docs/reference/plugins#traits) declares the traits it reads and gives them meaning, and your game can keep traits of its own. Stats and kv stay as they are: a trait is for what an entity *is*, written in content, never for what changes in play.
 
-A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for your [custom functions](/docs/reference/custom) to read.
+A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for your [custom functions](/docs/reference/custom) to read. The first-party plugins' traits are the [cast](/docs/plugins/cast#person-1)'s `cast/person` (who a character is: their schedule, talk and call), the [wardrobe](/docs/plugins/wardrobe#the-wearable-trait)'s `wardrobe/wearable`, the [inventory](/docs/plugins/inventory#usable)'s `inventory/usable` and the [shop](/docs/plugins/shop#the-sellable-trait)'s `shop/sellable`.
 
 You can write a trait in three places:
 
@@ -349,7 +349,7 @@ view(state, game).entities.staff.entries.map((entry) => [entry.name, entry.marks
 Things are held: an apple in the player's pocket, a scarf in a gift box, six apples in the larder. Any entity can be held. Holders are:
 
 - **`'player'`**, the person playing the game. What the player holds stays theirs whoever they're playing.
-- **A unique entity**, such as `'character:ava'` or `'place:larder'`. Only entities of a [`unique`](#kinddef) kind hold things.
+- **A unique entity**, such as `'character:ava'` or `'place:larder'`. Only entities of a [`unique`](#kinddef) kind hold things. The [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters are unique, and so is every place of the [places plugin](/docs/plugins/places#each-place-is-an-entity), as `'location:<id>'`, so a thing can lie in a room.
 - **`'you'`**, whoever the player is playing now. In a game with one protagonist that's always `'player'`. See [Protagonists](#protagonists-you-and-player).
 
 A kind that isn't unique stacks, so the player holds a count of `'food:apple'` rather than separate apples. A unique thing is one particular thing, so it's held once, by one holder at most. Nothing holds itself, however far round: the box can't go into the scarf it holds.

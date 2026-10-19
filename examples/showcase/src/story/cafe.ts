@@ -7,7 +7,7 @@ import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { period } from '@ifloom/plugin-calendar'
 import { onlyAt } from '@ifloom/plugin-places'
-import { here, person, talk } from '@ifloom/plugin-cast'
+import { character, here, talk } from '@ifloom/plugin-cast'
 import { openShop } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
 import { prose } from './cafe.prose.ts'
@@ -68,7 +68,7 @@ export const cafe: Content = {
         {
           id: 'leave',
           effects: [
-            { kind: 'stat', stat: 'friendship', by: 2, of: person('ava') },
+            { kind: 'stat', stat: 'friendship', by: 2, of: character('ava') },
             { kind: 'scene', scene: null },
           ],
         },
@@ -140,7 +140,7 @@ export const cafe: Content = {
           id: 'weekend',
           title: 'Weekend help',
           description: 'Saturday mornings behind the counter at the Corner Café.',
-          blocked: [{ when: { not: { stat: 'friendship', of: person('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
+          blocked: [{ when: { not: { stat: 'friendship', of: character('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
           at: ['cafe'],
           // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
           days: [5],

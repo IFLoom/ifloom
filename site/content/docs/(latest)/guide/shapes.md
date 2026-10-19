@@ -559,7 +559,7 @@ plugins: [calendar(), places({ start: 'flat' }), cast()]
 
 A place keeps hours with its `blocked` list and the calendar's conditions. An activity that only happens in one place lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
-Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: person('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
+Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 
 The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/react#layouts) with two changes. It puts the [notice strip](/docs/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
 

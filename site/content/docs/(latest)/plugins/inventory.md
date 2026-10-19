@@ -94,15 +94,28 @@ All three go through [locks](/docs/reference/locks) like any command, so a lock 
 
 ## Dropping and giving
 
-`inventory/drop` takes one away from you. With places, it asks for somewhere to put it where you are, through the `places/holder` [query](/docs/reference/plugins#queries), and moves it there when the answer is a holder that can hold things. Places doesn't answer that query yet, so a dropped thing is gone for now. It's refused with `There is no such thing.` and `You have no <name>.` as `use` is.
+`inventory/drop` takes one away from you. With [places](/docs/plugins/places), it asks for somewhere to put it where you are, through the `places/holder` [query](/docs/reference/plugins#queries), and moves it there when the answer is a holder that can hold things. Places answers with the room's [entity](/docs/plugins/places#each-place-is-an-entity), so the thing lies in the room, listed in the places view with a button to [pick it up](/docs/plugins/places#things-lying-in-a-place) again. Without places, or with the player nowhere, a dropped thing is gone. It's refused with `There is no such thing.` and `You have no <name>.` as `use` is.
+
+```ts
+import { apply, type Game, type GameState } from '@ifloom/engine'
+import { dropThing } from '@ifloom/plugin-inventory'
+import { pickUp } from '@ifloom/plugin-places'
+
+declare const game: Game
+declare const inFlat: GameState   // in the flat, holding the paper
+
+const dropped = apply(inFlat, game, dropThing('item:paper')).state
+dropped.held['location:flat']   // { 'item:paper': 1 }: it lies in the flat
+apply(dropped, game, pickUp('item:paper')).state.held.player   // { 'item:paper': 1 }: back with you
+```
 
 `inventory/give` moves one to `to`. It's refused when you hold none, with `You already have it.` when `to` is you or the player, and with `You can’t give things to <name>.` when `to` can't hold things: a kind that isn't [`unique`](/docs/reference/entities#kinddef), or an entity that isn't in the game. Who you can give to in the story is yours to say, by where you put the button: a choice in Ava's scene, say.
 
 ```ts
 import { giveThing } from '@ifloom/plugin-inventory'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
-choices: [{ id: 'gift', when: holding('clothing:scarf'), command: giveThing('clothing:scarf', person('ava')) }],
+choices: [{ id: 'gift', when: holding('clothing:scarf'), command: giveThing('clothing:scarf', character('ava')) }],
 ```
 
 ## With the shop and the wardrobe

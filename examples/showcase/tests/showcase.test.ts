@@ -35,11 +35,11 @@ import type { FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
 import { buy, sell, type ShopView } from '@ifloom/plugin-shop'
-import { useThing, type InventoryView } from '@ifloom/plugin-inventory'
+import { dropThing, useThing, type InventoryView } from '@ifloom/plugin-inventory'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { sleep } from '@ifloom/plugin-calendar'
-import { go, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
-import { call, talk } from '@ifloom/plugin-cast'
+import { go, pickUp, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
+import { call, talk, type CastView } from '@ifloom/plugin-cast'
 import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
 import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlockDefs, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { readFileSync } from 'node:fs'
@@ -227,6 +227,42 @@ describe('Small Town', () => {
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
   })
 
+  it('leaves the paper where you drop it, in the flat, until you pick it up again', () => {
+    let state = on(run(startingState(game), { type: 'choose', id: 'unpack' }), 1, 'morning')
+    const lying = () => (view(state, game).plugins.places as PlacesView).things.map((thing) => [thing.ref, thing.name, thing.count])
+    state = run(state, dropThing('item:paper'))
+    expect(heldCount(state, game, 'item:paper')).toBe(0)
+    expect(holds(state, { entity: 'item:paper', at: 'location:flat' }, game)).toBe(true)
+    expect(lying()).toEqual([['item:paper', 'newspaper', 1]])
+    // Out on the high street it isn't there; back in the flat, it is.
+    state = run(state, go('high-street'))
+    expect(lying()).toEqual([])
+    state = run(state, go('flat'), pickUp('item:paper'))
+    expect(heldCount(state, game, 'item:paper')).toBe(1)
+    expect(lying()).toEqual([])
+  })
+
+  it('shows Ava as an entity once met: her line, her portrait, and the friendship she keeps', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    expect((view(state, game).plugins.cast as CastView).present[0]).toMatchObject({
+      id: 'ava',
+      ref: 'character:ava',
+      fullName: 'Ava Marsh',
+      desc: 'Runs the café',
+      portrait: 'art/character/ava.svg',
+    })
+    expect(view(state, game).entities.character.entries).toEqual([])
+    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    expect(view(state, game).entities.character.entries[0]).toMatchObject({
+      ref: 'character:ava',
+      name: 'Ava',
+      desc: 'Runs the café',
+      image: 'art/character/ava.svg',
+      stats: [{ key: 'friendship' }],
+    })
+  })
+
   it('offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded', () => {
     let state = startingState(game)
     const coins = state.stats.coins
@@ -387,7 +423,7 @@ describe('Small Town', () => {
     const loaded = loadState(JSON.parse(JSON.stringify(old)), game)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.shop.state).toEqual({ stocked: { counter: { 'item:flapjack': { at: 1, left: 1 } } } })
-    expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { coat: 'clothing:raincoat', neck: null } })
+    expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { player: { coat: 'clothing:raincoat', neck: null } } })
     expect(holds(loaded.value, wearing('clothing:raincoat'), game)).toBe(true)
     const flapjack = (view(loaded.value, game).plugins.shop as ShopView).vendors[0].goods.find((good) => good.entity === 'item:flapjack')!
     expect(flapjack.stock).toBe(1)

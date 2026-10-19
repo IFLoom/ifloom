@@ -5,7 +5,7 @@
 import { holding, move, give, type Content } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { day } from '@ifloom/plugin-calendar'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 import { openJobs } from '@ifloom/plugin-jobs'
 import { drawMessage, messageReplied, messageSince, type MessageDef } from '@ifloom/plugin-messages'
 import { prose } from './ava.prose.ts'
@@ -23,7 +23,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
   when: { not: messageSince(`ava.chat.${topic}`, { lt: 3 }) },
   body: [{ text: `ava.chat.${topic}` }],
   // The beans want an answer, every time she asks.
-  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ kind: 'stat' as const, stat: 'friendship', by: 2, of: person('ava') }] }] } : {}),
+  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ kind: 'stat' as const, stat: 'friendship', by: 2, of: character('ava') }] }] } : {}),
 }))
 
 export const ava: Content = {
@@ -40,21 +40,21 @@ export const ava: Content = {
         { variants: 'ava.smalltalk' },
         { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
         // Things are held: once the shell is Ava's, it sits by her till.
-        { text: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: person('ava') } },
+        { text: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: character('ava') } },
       ],
       choices: [
         // Shown while you hold the shell from the river: giving it moves it to her.
         {
           id: 'shell',
           when: holding('keepsake:shell'),
-          effects: [move('keepsake:shell', person('ava')), { kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }],
+          effects: [move('keepsake:shell', character('ava')), { kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }],
         },
-        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
+        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
         {
           id: 'compliment',
           when: { stat: 'charm', gte: 3 },
           effects: [
-            { kind: 'stat', stat: 'friendship', by: 10, of: person('ava') },
+            { kind: 'stat', stat: 'friendship', by: 10, of: character('ava') },
             { kind: 'scene', scene: null },
           ],
         },
@@ -72,7 +72,7 @@ export const ava: Content = {
         {
           id: 'bye',
           effects: [
-            { kind: 'stat', stat: 'friendship', by: 3, of: person('ava') },
+            { kind: 'stat', stat: 'friendship', by: 3, of: character('ava') },
             { kind: 'scene', scene: null },
           ],
         },
@@ -90,7 +90,7 @@ export const ava: Content = {
         {
           id: 'stay',
           effects: [
-            { kind: 'stat', stat: 'friendship', by: 5, of: person('ava') },
+            { kind: 'stat', stat: 'friendship', by: 5, of: character('ava') },
             { kind: 'scene', scene: null },
           ],
         },
@@ -113,7 +113,7 @@ export const ava: Content = {
           storyline: 'ava',
           starts: questActive('settle'),
           stages: [
-            { id: 'close', hint: 'Spend time with Ava.', done: { stat: 'friendship', of: person('ava'), gte: 25 } },
+            { id: 'close', hint: 'Spend time with Ava.', done: { stat: 'friendship', of: character('ava'), gte: 25 } },
             // A friendship takes days as well as visits: three since you met, however often you chat.
             {
               id: 'river',
@@ -138,7 +138,7 @@ export const ava: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
         },
         ...smallTalk,
       ],

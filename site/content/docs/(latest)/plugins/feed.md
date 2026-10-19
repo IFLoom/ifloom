@@ -180,7 +180,7 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 import { loadGame, roll, type Content } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
 import { onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
-import { cast } from '@ifloom/plugin-cast'
+import { cast, person } from '@ifloom/plugin-cast'
 import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
@@ -205,6 +205,10 @@ const town: Content = {
     'own.river': 'The river at dusk.',
     'comment.nice': 'Lovely!',
   },
+  entities: [
+    person({ id: 'ava', name: 'Ava', desc: 'Runs the café', image: 'art/character/ava.svg', home: 'park' }),
+    person({ id: 'sam', name: 'Sam', desc: 'Neighbour', image: 'art/character/sam.svg', home: 'park' }),
+  ],
   data: {
     places: {
       locations: [
@@ -214,12 +218,6 @@ const town: Content = {
           actions: [{ id: 'board', label: 'Read the notice board', command: seeFeed('board') }],
         },
         place('park', 'Riverside Park', ['high-street']),
-      ],
-    },
-    cast: {
-      characters: [
-        { id: 'ava', name: 'Ava', role: 'Runs the café', portrait: 'art/character/ava.svg', home: 'park' },
-        { id: 'sam', name: 'Sam', role: 'Neighbour', portrait: 'art/character/sam.svg', home: 'park' },
       ],
     },
     feed: {

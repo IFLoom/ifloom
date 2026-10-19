@@ -250,7 +250,7 @@ This is Ava's hello from the showcase:
 
 ```ts
 import type { DataScene } from '@ifloom/engine'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
 const hello: DataScene = {
   id: 'ava.hi',
@@ -262,8 +262,8 @@ const hello: DataScene = {
     { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
   ],
   choices: [
-    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
-    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: person('ava') }, { kind: 'scene', scene: null }] },
+    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
+    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: character('ava') }, { kind: 'scene', scene: null }] },
     { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
   ],
 }
@@ -378,7 +378,7 @@ type Choice = {
   id: 'ask',
   labels: [{ when: { seen: 'ava.river' }, key: 'ava.hi#ask-again' }],
   once: { per: 'turn', reason: 'You have asked today already.' },
-  effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }],
+  effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }],
 }
 ```
 
@@ -464,7 +464,7 @@ The fields that make a scene a [storylet](/docs/reference/storylets), a scene dr
 
 ```ts
 import type { DataScene } from '@ifloom/engine'
-import { here, person } from '@ifloom/plugin-cast'
+import { character, here } from '@ifloom/plugin-cast'
 
 const avasBreak: DataScene = {
   id: 'cafe.break',
@@ -474,7 +474,7 @@ const avasBreak: DataScene = {
   weight: 2,
   when: here('ava'),
   body: [{ text: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: person('ava') }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }, { kind: 'scene', scene: null }] }],
 }
 ```
 

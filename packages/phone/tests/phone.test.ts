@@ -11,7 +11,7 @@ import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
 import { calendar, pass, period, sleep } from '@ifloom/plugin-calendar'
 import { at, go, places, where } from '@ifloom/plugin-places'
-import { call, cast, here, talk } from '@ifloom/plugin-cast'
+import { call, cast, here, person, talk } from '@ifloom/plugin-cast'
 import { phone } from '../src/index.ts'
 
 const clock = calendar()
@@ -85,21 +85,19 @@ const town: Content = {
     'fans.ava-cafe': 'Coffee with a friend.',
     'fans.nice': 'Love this',
   },
+  entities: [
+    person({
+      id: 'ava',
+      name: 'Ava',
+      desc: 'Friend',
+      hue: 200,
+      home: 'cafe',
+      talk: 'ava.hi',
+      storyline: 'ava',
+      call: { scene: 'ava.call', when: { not: period('night') }, busy: 'Straight to voicemail.' },
+    }),
+  ],
   data: {
-    cast: {
-      characters: [
-        {
-          id: 'ava',
-          name: 'Ava',
-          role: 'Friend',
-          hue: 200,
-          home: 'cafe',
-          talk: 'ava.hi',
-          storyline: 'ava',
-          call: { scene: 'ava.call', when: { not: period('night') }, busy: 'Straight to voicemail.' },
-        },
-      ],
-    },
     places: {
       locations: [
         { id: 'house', name: 'House', tag: 'Home', exits: ['cafe', 'work'], art: '', body: [{ text: 'place.house' }] },

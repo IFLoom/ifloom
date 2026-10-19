@@ -134,7 +134,7 @@ In a data scene choice, an activity or a trigger, write the short form, `{ custo
 
 Sets a key in a [storyline](/docs/reference/storylines)'s own kv store `to` a value, or changes its number `by` an amount, as [`kv`](#kv) does. Read it back with [`{ storylineKv }`](/docs/reference/conditions#storylinekv), with a range for a number.
 
-A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`.
+A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.
 
 ### kv
 
@@ -452,4 +452,4 @@ You write a [plugin](/docs/reference/plugins)'s effect the same way, with the pl
 
 - The Corner Café: the `endWeek` activity in [`examples/cafe/src/world/activities.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/activities.ts) runs two custom effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ kind: 'turn' }`. The `hiring` scene's choices `create` new staff.
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kind: 'kv', key: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
-- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the park's `arrows` activity starts a minigame, and Ava's choices raise her friendship with `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`.
+- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the park's `arrows` activity starts a minigame, and Ava's choices raise her friendship with `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.

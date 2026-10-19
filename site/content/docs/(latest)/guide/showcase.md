@@ -61,7 +61,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Things you use
 
-`world/things.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both.
+`world/things.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button and a **Drop** button each. What you drop lies where you dropped it: each place is an entity that [holds things](/docs/plugins/places#things-lying-in-a-place), and the [`LocationCard`](/docs/react/components#locationcard) lists it with a **Pick up** button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both, and `leaves the paper where you drop it` drops the newspaper in the flat and picks it up again.
 
 ### Mods
 
@@ -75,7 +75,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 `public/art/`. Ava and Sam have portraits, `art/character/ava.svg` and `art/character/sam.svg`, and the camera's two photos are `art/photo/ava.svg` and `art/photo/sam.svg`. Each is their initials on a coloured disc, with no face. Vite copies `public/` into the build, so they sit in `dist/art/` beside the page. `npm run build:one-file` puts them inside it instead.
 
-Each character's `portrait` in `world/cast.ts` names its `.svg` file. If it were left out, the [cast](/docs/plugins/cast#characterdef) would draw `art/character/ava.jpg`, because [`artSrc`](/docs/reference/prose#artsrc) adds `.jpg` to a path with no extension, and there's no such file. The photos name their `.svg` the same way.
+Each character's `image` in `world/cast.ts` names its `.svg` file. If it were left out, the [cast](/docs/plugins/cast#person) would draw `art/character/ava.jpg`, because [`artSrc`](/docs/reference/prose#artsrc) adds `.jpg` to a path with no extension, and there's no such file. The photos name their `.svg` the same way.
 
 ### Saves, the backlog and undo
 
@@ -147,7 +147,7 @@ The layer has a `when`, and the hotspot names the layer, so both go when Ava doe
 
 ### People and schedules
 
-`world/cast.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, in that file's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
+`world/cast.ts`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, entities written with [`person()`](/docs/plugins/cast#person) in that file's `entities`: each one's name, a line about them (`desc`) and portrait (`image`), with the cast's schedule, talk and call beside them. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
 
 Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Monday to Saturday, mornings and afternoons:
 
@@ -201,7 +201,7 @@ The test `draws something to happen when you sit a while at the café, and a qui
 
 `story/moving-day.ts` and `story/ava.ts`, `data.quests`, and the [quests plugin](/docs/plugins/quests) in `src/game.ts`. `settle` starts when the phase is `open` and has three stages. The last is done by the feed plugin's condition `{ custom: 'feed/posted', with: { gte: 1 } }`.
 
-`friend` starts once the other is active, with `questActive('settle')`, and is tied to Ava's storyline. Its first stage, `close`, is done when she's a friend, `{ stat: 'friendship', of: person('ava'), gte: 25 }`. The UI calls the quest list "To do", from the game's strings.
+`friend` starts once the other is active, with `questActive('settle')`, and is tied to Ava's storyline. Its first stage, `close`, is done when she's a friend, `{ stat: 'friendship', of: character('ava'), gte: 25 }`. The UI calls the quest list "To do", from the game's strings.
 
 ### A stage that waits turns
 
@@ -211,7 +211,7 @@ Friendship says how well the player knows her, and [`since`](/docs/reference/con
 
 ### Friendship, and who you talk to where
 
-`world/stats.ts` and Ava's `talk` in `world/cast.ts`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
+`world/stats.ts` and Ava's `talk` in `world/cast.ts`. Friendship is a stat the game declares on the cast's kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`, so each character keeps their own ([entity stats](/docs/reference/stats#entity-stats)). Scenes change it with `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`, using the cast's [`person`](/docs/plugins/cast#helpers).
 
 Talking to Ava opens the first of her [`talk`](/docs/plugins/cast#talkoption) options whose `when` holds. The first one is:
 

@@ -64,7 +64,7 @@ This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-sea
 
 It adds a fourth line to the high street's weather, because a pack's `variants` are appended. It rewrites the park, because a pack's `prose` replaces the line with the same key. See [Pack](/docs/reference/loader#pack) for how each field merges.
 
-A pack in a file has only what JSON can hold: scenes, storylines, activities, stats, kinds, entities, traits, triggers, inputs, strings, prose, variants, patches and plugin content (`data`). Locations and characters are plugin content, at `data.places.locations` for the [places plugin](/docs/plugins/places#in-your-content) and `data.cast.characters` for the [cast](/docs/plugins/cast#in-your-content). A [`DataScene`](/docs/reference/scenes#datascene) is already JSON. A hand-written `Scene` and [custom functions](/docs/reference/custom) are code, so a mod file can't carry them.
+A pack in a file has only what JSON can hold: scenes, storylines, activities, stats, kinds, entities, traits, triggers, inputs, strings, prose, variants, patches and plugin content (`data`). Locations are plugin content, at `data.places.locations` for the [places plugin](/docs/plugins/places#in-your-content). The [cast](/docs/plugins/cast#in-your-content)'s characters are entities with the `cast/person` trait, so a mod adds one in `entities`. A [`DataScene`](/docs/reference/scenes#datascene) is already JSON. A hand-written `Scene` and [custom functions](/docs/reference/custom) are code, so a mod file can't carry them.
 
 ## readMod
 

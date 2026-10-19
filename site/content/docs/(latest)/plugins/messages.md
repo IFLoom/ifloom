@@ -153,7 +153,7 @@ This is the showcase's text from Ava. It arrives once a day has passed since the
 
 ```ts
 import { type MessageDef } from '@ifloom/plugin-messages'
-import { person } from '@ifloom/plugin-cast'
+import { character } from '@ifloom/plugin-cast'
 
 const text: MessageDef = {
   id: 'ava.text',
@@ -162,7 +162,7 @@ const text: MessageDef = {
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
   replies: [
-    { id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
+    { id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
     { id: 'later' },
   ],
 }
@@ -211,25 +211,26 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 import { loadGame, type Content } from '@ifloom/engine'
 import { calendar, day, pass, period, sleep } from '@ifloom/plugin-calendar'
 import { places, type LocationDef } from '@ifloom/plugin-places'
-import { cast, person, type CharacterDef } from '@ifloom/plugin-cast'
+import { cast, character, person } from '@ifloom/plugin-cast'
 import { messageReplied, messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
-const ava: CharacterDef = {
+const ava = person({
   id: 'ava',
   name: 'Ava',
-  role: 'Runs the café',
-  portrait: 'art/character/ava.svg',
+  desc: 'Runs the café',
+  image: 'art/character/ava.svg',
   home: 'park',
   schedule: [{ location: 'cafe', when: period('morning', 'afternoon') }],
   talk: 'ava.hi',
-}
+})
 
 const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   activities: [{ id: 'wait', effects: [pass(1)] }],
+  entities: [ava],
   scenes: [
     { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
   ],
@@ -262,7 +263,6 @@ const town: Content = {
         place('park', 'Riverside Park', ['high-street']),
       ],
     },
-    cast: { characters: [ava] },
     messages: {
       channels: [{ id: 'texts', name: 'Texts' }, { id: 'letters', name: 'Letters' }],
       messages: [
@@ -272,7 +272,7 @@ const town: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
         },
         {
           id: 'ava.beans',

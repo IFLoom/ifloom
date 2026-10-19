@@ -8,6 +8,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- Every place of the [places plugin](/docs/plugins/places#each-place-is-an-entity) is a unique entity of the kind `location` (`location('park')` is `'location:park'`), so a thing can lie in a room: write `at: 'location:hall'` on it, or drop it there. The places view lists what lies where the player is, with a **Pick up** button each (`pickUp(ref)`, the `places/pickUp` command), and the React UI's `LocationCard` draws them. Places answers `places/holder`, so the inventory's `drop` now puts a thing down in the room instead of losing it.
+- [Generator templates](/docs/plugins/generators#templatedef) take the rest of `create`'s fields: `like`, `desc`, `image` (drawn as the name is), `tags`, `traits` and `at`. With `like`, `of` and `name` can be left out. A drawn stat that's what the entity would read anyway isn't kept in the save. Draws for the fields a template already had are unchanged, so old seeds make the same people.
+- The wardrobe's `wardrobe/wearing` takes `at`, to ask about the player's or a protagonist's clothes rather than whoever is played now.
+- A trait's `references` gets the entity it's on (`tools.ref`), as `check` does, so a trait can bind `'$'` in its conditions.
 - A stat's `format` and `lacking` can give one line for 1 and one for any other number, `{ one: '{n} coin', other: '{n} coins' }`, so a price reads "1 coin" and "4 coins". See [`StatWords`](/docs/reference/stats#statwords).
 - [`create`](/docs/reference/effects#create) gives the thing it makes a `desc` and an `image`, so a photo the player takes or a note they write has its own words and picture.
 - The devices plugin's `{ things: { of, at? } }` section lists the things of a kind you hold, newest first, such as photos or notes.
@@ -120,6 +124,12 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** the cast's characters are entities. Write each one in your content's `entities` with [`person()`](/docs/plugins/cast#person), which puts their name, `desc` (once `role`) and `image` (once `portrait`) on the entity and their schedule, talk, call and the rest in the `cast/person` trait: `person({ id: 'sam', name: 'Sam', desc: 'Neighbour', home: 'park', talk: 'sam.hi' })`. `data.cast.characters` is no longer read, and `ifloom check` reports it. A pack or mod written for an older schema has its characters moved for it (schema 14). Anyone with the trait is a person, whatever their kind, and so is a thing made in play `like` one; conditions and commands take a reference (`'staff:ana'`) as well as an id.
+- **Breaking:** the cast's `person('ava')`, which named a character's entity, is [`character('ava')`](/docs/plugins/cast#helpers); `person` now writes a character. `charactersOf` and `characterById` are [`peopleOf`](/docs/plugins/cast#helpers) and [`personOf`](/docs/plugins/cast#helpers), and the type `CharacterDef` is `PersonDef` (what `person()` takes) and `Person` (the trait).
+- **Breaking:** the cast's `PersonView` and `cast/contacts` have `desc` in place of `role`, and the React UI's part `person-role` is `person-desc`. The devices plugin's contacts section shows the `desc`.
+- The wardrobe keeps what each body wears: the player's, and each protagonist's the `you` effect switches to. Switching shows that one's clothes, and switching back the player's as they were. Old saves are carried over, to whoever the save was playing.
+- The places view has `things`, what lies where the player is, and `usePlaces` in the React UI has `pickUp(ref)`.
+
 - **Breaking:** items are things. The engine has no items of its own any more: what the player carries is [entities](/docs/reference/entities#holding-things) they hold, such as `{ id: 'sandwich', of: 'item', name: 'sandwich', at: 'player' }`, given with `give('item:sandwich')` and asked about with `{ entity: 'item:sandwich', at: 'you' }`. Using one is the [inventory plugin](/docs/plugins/inventory)'s `usable` trait and `inventory/use` command. A pack or mod written with items is upgraded as it loads (schema 13), and a save keeps what the player had, as counts held by the player (save version 16). Your own content isn't upgraded, so rewrite its items as things.
 - **Breaking:** collections are things too. A note or a photo is an entity the player holds: declare it and `give` it, or make it in play with `create`, with its name, `desc` and `image`. The phone's kit returns `kinds` (its `photo` kind) instead of `collections`, and its Gallery lists the photos you hold. Old packs and saves are upgraded: a collection's entries become things of a kind named after it (the phone's `gallery` is `photo`), held by the player.
 - **Breaking:** the strings `doesNothing` and `haveNone` are the inventory's, `inventory/doesNothing` and `inventory/haveNone`, and the wardrobe has its own `wardrobe/haveNone`. The inventory's and the wardrobe's lines name the thing as `{thing}`, not `{item}`.
@@ -213,6 +223,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- The cast's `data.cast.characters`, `charactersOf`, `characterById` and `CharacterDef`, and the plugin's own entities provider: characters are entities your content writes (see Changed).
+
 - **Breaking:** core items: `ItemDef`, `itemById`, `itemStart`, the `items` key of a game, content and pack, the `{ item }` condition, the `item` effect, the `use` command, `view.pack`, `state.items`, `CarryOver.items`, the `items` kind of `MigrationTools.fill`, and the debug plugin's `debug/item` and `debugItem`. Use things the player holds and the inventory plugin.
 - **Breaking:** collections: `CollectionDef`, `CollectionItem`, `CollectionEntry`, `CollectionView`, `collect`, `collected`, `collectionById`, `discard`, the `collections` key, the `{ collection }` condition, the `collect` and `discard` effects, `view.collections`, `state.collections`, the devices plugin's `{ collection }` section and `PhoneKit.collections`. Use things the player holds.
 - **Breaking:** the `entities` kind of `MigrationTools.fill`, and the filling of declared entities into old saves: they're there without it.
@@ -224,6 +236,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- A stat drawn or written on a thing made `like` another is kept when a save loads, even when it equals the stat's `start`, so it no longer reads the other's value instead.
 - The React UI's debug card sends the place, scene and turn forms with the arguments the debug plugin reads, so they work.
 - A name with a prose token, such as a character called `'{{partnerName}}'`, is filled in `view.entities` too, not only in the cast plugin's own view.
 - In the editor, a JSON import that fails while reading the file or keeping the new project now says why in the message bar, instead of doing nothing.

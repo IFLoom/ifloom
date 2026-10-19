@@ -524,6 +524,10 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `location` | The location card: the place's picture, name and tag. |
 | `location-name` | The location's name. |
 | `location-text` | The location's tag, under its name. |
+| `location-things` | The list of things lying here. |
+| `location-thing` | One of them, with its Pick up button. Carries `data-thing`. |
+| `location-thing-name` | Its name, with how many when there's more than one. |
+| `location-thing-pick` | Its **Pick up** button, greyed out with the reason when it can't be picked up. |
 | `exits` | The row of exit buttons. |
 | `exit` | One exit button. Carries `data-exit`. |
 | `people` | The list of people here. |
@@ -531,11 +535,11 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `person` | One person. Carries `data-person`. |
 | `person-portrait` | Their portrait. |
 | `person-name` | Their name. |
-| `person-role` | Their role, under the name. |
+| `person-desc` | Their `desc`, under the name, such as `Runs the café`. |
 | `person-actions` | Their buttons. |
 | `relationships` | Everyone the player has met, in [`Relationships`](/docs/react/components#relationships). |
-| `relationship` | One of them. Carries `data-person`. Their portrait, name and role use the `person-` parts. |
-| `relationship-header` | The row with their portrait, name and role. |
+| `relationship` | One of them. Carries `data-person`. Their portrait, name and desc use the `person-` parts. |
+| `relationship-header` | The row with their portrait, name and desc. |
 | `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
 
 ### Scenes

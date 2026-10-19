@@ -92,20 +92,50 @@ The draw is the engine's [`weighted`](/docs/reference/random#weighted).
 ```ts
 type TemplateDef = {
   id: string
-  of: string
-  name: FieldDef
+  of?: string
+  like?: EntityRef
+  name?: FieldDef
+  desc?: FieldDef
+  image?: FieldDef
+  tags?: string[]
+  traits?: Record<string, unknown>
+  at?: Placement
   stats?: Record<string, FieldDef>
   kv?: Record<string, FieldDef>
 }
 ```
 
-| Field | What it is |
-|---|---|
-| `id` | Unique among templates. The `generators/generate` effect names it. |
-| `of` | The [kind](/docs/reference/entities#kinddef) of entity it makes. |
-| `name` | Where the entity's name comes from. |
-| `stats` | Where its stats come from, by id. Each must be a stat the game declares for the kind (`of`). A stat left out starts at its `start`, as a `create` effect's does. |
-| `kv` | Where the keys of its kv store come from, by name. |
+A template has the fields of the engine's [`create`](/docs/reference/effects#create) effect. The words and numbers are [drawn](#fielddef); the rest are written as they are.
+
+| Field | What it is | If left out |
+|---|---|---|
+| `id` | Unique among templates. The `generators/generate` effect names it. | Required. |
+| `of` | The [kind](/docs/reference/entities#kinddef) of entity it makes. | The `like`'s kind. One of `of` and `like` is required. |
+| `like` | A declared entity it's made [like](/docs/reference/entities#things-made-like-another): what it isn't given, such as its name, picture, traits and stats, is read from that one. | Like nothing. |
+| `name` | Where the entity's name comes from. | The `like`'s. Required without a `like`. |
+| `desc` | Where its description comes from, drawn as the name is. | The `like`'s, or none. |
+| `image` | Where its picture comes from, through [`artSrc`](/docs/reference/prose#artsrc): a path, or `{ pool: 'faces' }` to pick one. | The `like`'s, or none. |
+| `tags` | Words it has, after its kind's and its `like`'s. | None of its own. |
+| `traits` | [Trait](/docs/reference/entities#traits) data, by trait id, laid over its `like`'s or its kind's: `{ 'cast/person': { home: 'park', talk: 'visitor.hi' } }` makes someone the [cast](/docs/plugins/cast) can find. | None of its own. |
+| `at` | Who [holds](/docs/reference/entities#holding-things) it once made: a holder, such as `'player'` or `'location:park'`, or how many each holds. | Nobody. |
+| `stats` | Where its stats come from, by id. Each must be a stat the game declares for the kind. A drawn value that's what it would read anyway (its `like`'s, or else the stat's `start`) isn't kept, so the save holds only what differs. | Its `like`'s, else each stat's `start`, as a `create` effect's. |
+| `kv` | Where the keys of its kv store come from, by name. | Its `like`'s, or none. |
+
+A regular at the café, made like a pattern the game declares, with a face from a pool and the cast's trait so the player can talk to them:
+
+```ts
+import { type TemplateDef } from '@ifloom/plugin-generators'
+
+const regular: TemplateDef = {
+  id: 'regular',
+  like: 'character:regular',            // a declared person nobody meets, with talk: 'regular.hi'
+  name: { pool: 'first-names' },
+  image: { pool: 'faces' },
+  tags: ['regular'],
+  traits: { 'cast/person': { home: 'cafe' } },
+  stats: { patience: { between: [1, 5] } },
+}
+```
 
 ### FieldDef
 
@@ -126,13 +156,13 @@ type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { j
 |---|---|---|
 | `{ 'generators/generate': { template, count? } }` | `generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
 
-Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on) and starts with the kind's stats. It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'generators/generate', with: { template, count } }`.
+Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on), reads what it isn't given from its `like` or its kind, and goes to the template's `at`. It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'generators/generate', with: { template, count } }`.
 
 A template the game doesn't have makes nothing.
 
 ## Seeded draws
 
-Every field is drawn from the save's [seed](/docs/reference/state#seed), the template's id, the number the new entity will get, and the field's name. So:
+Every field is drawn from the save's [seed](/docs/reference/state#seed), the template's id, the number the new entity will get, and the field's name. A field added to a template, such as a `desc`, has a name of its own, so it doesn't change what the others draw. So:
 
 - The same save makes the same entities every time, and a replay of its commands makes them again exactly.
 - Each new entity is drawn differently, because its number is new. Making three at once gives the same three as making one three times.
@@ -150,10 +180,18 @@ const generate: (template: string, count?: number) => EffectRef
 
 ```ts
 function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity
-type GeneratedEntity = { name: string; stats: Record<string, number>; kv: Record<string, KvValue> }
+type GeneratedEntity = { name?: string; desc?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
 
-What the template draws for the `n`th entity of its kind made in play, without making it. The effect passes the number the next one will get. Use it to preview a template, or in a test.
+What the template draws for the `n`th entity of its kind made in play, without making it: the fields that come from pools and ranges, each only when the template has it. `stats` holds every stat drawn, before the effect leaves out the ones equal to what the entity would read anyway. The effect passes the number the next one will get. Use it to preview a template, or in a test.
+
+### templateKind
+
+```ts
+function templateKind(template: TemplateDef): string | undefined
+```
+
+The kind a template makes: its `of`, else its `like`'s kind. Undefined for a template with neither, which the checks report.
 
 ### poolDefs and templateDefs
 
@@ -169,6 +207,8 @@ The game's pools and templates, merged from its content and packs.
 When the game loads, the plugin reports these problems against the content or pack each pool or template came from:
 
 - A template whose kind the game doesn't have (`templates visitor: unknown kind "…"`), or a stat the kind doesn't have (`no visitor stat named "…"`).
+- A template with neither `of` nor `like` (`makes nothing: give it an of or a like`), or with no `name` and no `like` to read one from (`needs a name, or a like to read it from`).
+- A `like` that isn't a declared entity of the kind, a holder in `at` that can't hold things, a trait no plugin declares, or an `image` path with no file, as the engine's `create` reports them.
 - A template naming a pool the game doesn't have (`unknown pool "…"`).
 - A `between` whose first number is bigger than its second (`stat mood: between [5, 1] runs backwards`).
 - A pool with nothing to pick (`pools <id>: has nothing to pick: no values, or every weight is 0`).

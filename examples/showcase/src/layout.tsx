@@ -32,11 +32,11 @@ import {
 import { at } from '@ifloom/plugin-places'
 
 /**
- * The showcase's layout: the React UI's own (`DefaultLayout`) with two
+ * The showcase's layout: the React UI's own (`DefaultLayout`) with three
  * changes. The notice strip sits over the story, a row of unread counts that
- * open where they are. And what you're wearing shows at home only: out and
+ * open where they are. What you're wearing shows at home only: out and
  * about, the wardrobe is the flat's "Open the wardrobe", which opens it as a
- * panel.
+ * panel. And the inventory has drop buttons.
  */
 export function Layout() {
   const words = useWords()
@@ -58,7 +58,8 @@ export function Layout() {
           <Relationships />
         </Section>
         <Section id="inventory" title={words('inventory')} collapsible>
-          <Inventory title={false} />
+          {/* With a drop button: what you drop lies in the room, in the location card, until you pick it up. */}
+          <Inventory title={false} drop />
         </Section>
         <Section id="wardrobe" title={words('wardrobe')} collapsible when={at('flat')}>
           <WardrobeCard title={false} />

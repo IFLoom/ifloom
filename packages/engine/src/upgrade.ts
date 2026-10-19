@@ -8,7 +8,7 @@ import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 13
+export const SCHEMA = 14
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -125,6 +125,8 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
     ) as RawPack,
   // 12 → 13: items and collections leave the engine; things are entities. See `toSchema13`.
   12: (pack) => toSchema13(pack),
+  // 13 → 14: the cast's characters are entities with the `cast/person` trait. See `toSchema14`.
+  13: (pack) => toSchema14(pack),
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */
@@ -620,6 +622,41 @@ function commandToSchema13(command: Record<string, unknown>): Record<string, unk
  */
 export function upgradeCommand<C>(command: C): C {
   return isRecord(command) && typeof command.type === 'string' ? (commandToSchema13(toSchema8(toSchema6(command))) as C) : command
+}
+
+/** What a character's fields became: the trait's, as written; `role` is the entity's `desc` and `portrait` its `image`. */
+const ENTITY_FIELDS: Record<string, string> = { id: 'id', name: 'name', role: 'desc', portrait: 'image', tags: 'tags', stats: 'stats', kv: 'kv' }
+
+/**
+ * 13 → 14: a character in `data.cast.characters` is an entity of the kind
+ * `character` (the cast's own) carrying the `cast/person` trait. Its `role`
+ * is the entity's `desc`, its `portrait` its `image`, its `tags`, `stats`
+ * and `kv` the entity's; the rest (schedule, talk, call and so on) is the
+ * trait. The characters follow the pack's own entities.
+ */
+function toSchema14(pack: RawPack): RawPack {
+  const data = isRecord(pack.data) ? pack.data : undefined
+  const castData = data && isRecord(data.cast) ? data.cast : undefined
+  if (!castData || !Array.isArray(castData.characters)) return pack
+  const people = castData.characters.filter(isRecord).map((character) => {
+    const entity: Record<string, unknown> = { of: 'character' }
+    const person: Record<string, unknown> = {}
+    for (const [field, value] of Object.entries(character)) {
+      if (value === undefined) continue
+      if (field in ENTITY_FIELDS) entity[ENTITY_FIELDS[field]] = value
+      else person[field] = value
+    }
+    return { ...entity, traits: { 'cast/person': person } }
+  })
+  const { characters: _moved, ...restCast } = castData
+  const { cast: _cast, ...restData } = data!
+  const nextData = Object.keys(restCast).length ? { ...restData, cast: restCast } : restData
+  const { data: _data, ...rest } = pack
+  return {
+    ...rest,
+    entities: [...(Array.isArray(pack.entities) ? pack.entities : []), ...people],
+    ...(Object.keys(nextData).length ? { data: nextData } : {}),
+  } as RawPack
 }
 
 /**

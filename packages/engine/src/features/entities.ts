@@ -54,8 +54,8 @@ export type EntityView = {
   image: string | null
   /** Its kind's tags, then its own. */
   tags: string[]
-  /** Each of its kind's `marks`, by name: whether it holds for this one. Empty when the kind declares none. */
-  marks: Record<string, boolean>
+  /** Each of its kind's `flags`, by name: whether it holds for this one. Empty when the kind declares none. */
+  flags: Record<string, boolean>
   /** Its kind's listed stats that the player can see on it, in declared order. */
   stats: StatView[]
   /** Its kv store as it reads: what it was declared with, and what play set. */
@@ -493,10 +493,10 @@ export const entities = defineFeature<EntitiesShape>({
         ...(entity.image !== undefined ? [{ picture: entity.image }] : []),
       ])
     }
-    // A kind's `listed` and `marks` are asked of each of its entities, so `'$'` is any one of them.
+    // A kind's `listed` and `flags` are asked of each of its entities, so `'$'` is any one of them.
     for (const kind of game.kinds ?? []) {
       const one = anyOf(kind.id)
-      const asked = [...(typeof kind.listed === 'object' ? [kind.listed] : []), ...Object.values(kind.marks ?? {})]
+      const asked = [...(typeof kind.listed === 'object' ? [kind.listed] : []), ...Object.values(kind.flags ?? {})]
       if (asked.length)
         tools.check(
           { list: 'kind', id: kind.id },
@@ -541,7 +541,7 @@ export const entities = defineFeature<EntitiesShape>({
                 desc: desc === undefined ? null : cx.fillTokens(desc, state, game),
                 image: image === undefined ? null : artSrc(image),
                 tags: entityTags(state, game, ref),
-                marks: Object.fromEntries(Object.entries(kind.marks ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
+                flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
                 stats: stats.filter((stat) => holdsFor(stat.visible, ref)).map((stat) => statView(state, game, stat, ref, cx)),
                 kv: entityKv(state, game, ref),
               }

@@ -31,8 +31,8 @@
  * `schema` or `patches`), and `Pack.overrides` gone. Things are entities
  * (phase 2): `EntityState` keeps only what play changed (its fields optional),
  * `EntityDef` gains `desc`, `image`, `tags` and `visible`, `KindDef` gains
- * `unique`, `listed`, `tags` and `marks`, and `View.entities` lists only what
- * is listed, each `EntityView` with `desc`, `image`, `tags` and `marks`.
+ * `unique`, `listed`, `tags` and `flags`, and `View.entities` lists only what
+ * is listed, each `EntityView` with `desc`, `image`, `tags` and `flags`.
  * Traits (phase 3): `Game.traits` and `Pack.traits` (`TraitTable`), and
  * `traits` on `KindDef`, `EntityDef` and `EntityState`. Holdings (phase 4):
  * `GameState.held` and `you`, `View.held`, the `entity` condition's `at` and

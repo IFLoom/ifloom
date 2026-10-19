@@ -66,7 +66,7 @@ export function walkPack(pack: EditorPack, visit: Visit) {
   for (const stat of pack.stats) walkCondition(stat.visible, visit)
   for (const kind of pack.kinds ?? []) {
     if (typeof kind.listed === 'object') walkCondition(kind.listed, visit)
-    for (const mark of Object.values(kind.marks ?? {})) walkCondition(mark, visit)
+    for (const flag of Object.values(kind.flags ?? {})) walkCondition(flag, visit)
     walkTraits(kind.traits, visit)
   }
   for (const entity of pack.entities) {

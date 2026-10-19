@@ -588,7 +588,7 @@ type EntityView = {
   desc: string | null
   image: string | null
   tags: string[]
-  marks: Record<string, boolean>
+  flags: Record<string, boolean>
   stats: StatView[]
   kv: Record<string, KvValue>
 }
@@ -604,7 +604,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 | `desc` | Its description, filled in the same way, or `null`. |
 | `image` | Its picture's path through [`artSrc`](/docs/reference/prose#artsrc), or `null`. |
 | `tags` | Its kind's tags, then its own. |
-| `marks` | Each of its kind's [`marks`](/docs/reference/entities#listing), by name, and whether it holds for this entity. `{}` when the kind declares none. Use it to split a list, such as people you've met and people you haven't, without the engine hiding anything more. |
+| `flags` | Each of its kind's [`flags`](/docs/reference/entities#listing), by name, and whether it holds for this entity. `{}` when the kind declares none. Use it to split a list, such as people you've met and people you haven't, without the engine hiding anything more. |
 | `stats` | Its kind's `listed` stats whose `visible` holds with `'$'` bound to it, in the order the game declared them, as [`StatView`](#statview)s with its own values. |
 | `kv` | Its kv store as it reads: its declaration's keys with what play set laid over them. |
 

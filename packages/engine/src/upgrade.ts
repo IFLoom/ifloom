@@ -8,7 +8,7 @@ import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 14
+export const SCHEMA = 15
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -127,6 +127,11 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   12: (pack) => toSchema13(pack),
   // 13 → 14: the cast's characters are entities with the `cast/person` trait. See `toSchema14`.
   13: (pack) => toSchema14(pack),
+  // 14 → 15: a kind's named conditions are its `flags`, no longer its `marks`.
+  14: (pack) =>
+    Array.isArray(pack.kinds)
+      ? { ...pack, kinds: pack.kinds.map((kind) => (isRecord(kind) && 'marks' in kind ? renamed(kind, { marks: 'flags' }) : kind)) }
+      : pack,
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */

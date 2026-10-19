@@ -236,7 +236,7 @@ describe('the view of entities', () => {
   const listing: Content = {
     name: 'listing',
     kinds: [
-      { id: 'staff', label: 'Member of staff', plural: 'Staff', tags: ['crew'], marks: { senior: { stat: 'skill', of: '$', gte: 4 } } },
+      { id: 'staff', label: 'Member of staff', plural: 'Staff', tags: ['crew'], flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
       { id: 'dish', label: 'Dish', listed: { kv: 'onMenu', of: '$' } },
       { id: 'secret', label: 'Secret', listed: false },
     ],
@@ -278,7 +278,7 @@ describe('the view of entities', () => {
     expect(view(later, game).entities.dish.entries.map((entry) => entry.ref)).toEqual(['dish:soup', 'dish:pie'])
   })
 
-  it('fill each entry’s name and description, with its picture, tags and marks', () => {
+  it('fill each entry’s name and description, with its picture, tags and flags', () => {
     const game = g()
     const state = applyEffects(startingState(game, { kv: { title: 'head cook', owner: 'Rosa' } }), game, [{ kind: 'kv', key: 'benHired', to: true }])
     const [ana, ben] = view(state, game).entities.staff.entries
@@ -287,9 +287,9 @@ describe('the view of entities', () => {
       desc: 'Runs the kitchen for Rosa.',
       image: 'art/staff/ana.jpg',
       tags: ['crew', 'cook'],
-      marks: { senior: true },
+      flags: { senior: true },
     })
-    expect(ben).toMatchObject({ name: 'Ben', desc: null, image: null, tags: ['crew'], marks: { senior: false } })
+    expect(ben).toMatchObject({ name: 'Ben', desc: null, image: null, tags: ['crew'], flags: { senior: false } })
     expect(view(state, game).entities.staff.unique).toBe(false)
     expect(entityDesc(state, game, 'staff:ana')).toBe('Runs the kitchen for Rosa.')
     expect(entityDesc(state, game, 'staff:ben')).toBeUndefined()
@@ -321,9 +321,9 @@ describe('the view of entities', () => {
     expect(relabelled.kinds?.find((kind) => kind.id === 'singer')).toEqual({ id: 'singer', label: 'Voice', plural: 'Choir', listed: false })
   })
 
-  it('bind `$` in a plugin call’s arguments, and check what `listed` and `marks` ask', () => {
+  it('bind `$` in a plugin call’s arguments, and check what `listed` and `flags` ask', () => {
     const { problems } = loadGame(
-      [{ kinds: [{ id: 'staff', label: 'Staff', listed: { stat: 'nerve', of: '$', gte: 1 }, marks: { odd: { kv: 'x', of: 'pig:$' } } }] }],
+      [{ kinds: [{ id: 'staff', label: 'Staff', listed: { stat: 'nerve', of: '$', gte: 1 }, flags: { odd: { kv: 'x', of: 'pig:$' } } }] }],
       { id: 'c', title: 'C' },
     )
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(['kind staff: unknown stat "nerve"', 'kind staff: unknown kind "pig"'])

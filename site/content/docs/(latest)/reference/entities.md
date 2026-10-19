@@ -116,7 +116,7 @@ type KindDef = {
   unique?: boolean
   listed?: boolean | Condition
   tags?: string[]
-  marks?: Record<string, Condition>
+  flags?: Record<string, Condition>
   traits?: Record<string, unknown>
 }
 ```
@@ -129,7 +129,7 @@ type KindDef = {
 | `unique` | `false` | Each entity of the kind is one particular thing, such as a person or a scarf, rather than a sort of thing, such as an apple. Only unique entities [hold things](#holding-things), and a unique thing is in one place at a time. Things of a kind that isn't unique stack: the player holds 3 of `'food:apple'`. The cast's characters are unique. The view passes it on as [`unique`](/docs/reference/view#entitiesview-and-entityview). |
 | `listed` | `true` for your kinds, `false` for a plugin's | Whether the view lists the kind's entities. `false` leaves the kind out of the view altogether. A condition is asked for each entity, with `'$'` as that one. See [Listing](#listing). |
 | `tags` | `[]` | Words every entity of the kind has, before its own [`tags`](#entitydef). |
-| `marks` | `{}` | Named conditions asked for each listed entity, with `'$'` as that one. The view gives each entity a `marks` record of the answers, so a UI can split a list without hiding anything. See [Listing](#listing). |
+| `flags` | `{}` | Named true/false conditions asked for each listed entity, with `'$'` as that one. The view gives each entity a `flags` record of the answers, so a UI can split a list without hiding anything. See [Listing](#listing). |
 | `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
 
 Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in your [content](/docs/reference/loader#content)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
@@ -210,7 +210,7 @@ type EntityRef = string
 
 Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'staff:#2'`.
 
-**`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `marks`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
+**`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 
 ```ts
 { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
@@ -332,12 +332,12 @@ const kitchen: Content = {
 
 The [cast plugin](/docs/plugins/cast)'s `character` kind is listed with `{ 'cast/met': { character: '$' } }`, so a character appears once the player has met them.
 
-To split a list rather than shorten it, give the kind `marks`. Each is a condition asked for every listed entity, and the view hands the answers over as the entity's `marks`:
+To split a list rather than shorten it, give the kind `flags`. Each is a condition asked for every listed entity, and the view hands the answers over as the entity's `flags`:
 
 ```ts
-{ id: 'staff', label: 'Member of staff', plural: 'Staff', marks: { senior: { stat: 'skill', of: '$', gte: 4 } } }
+{ id: 'staff', label: 'Member of staff', plural: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } }
 
-view(state, game).entities.staff.entries.map((entry) => [entry.name, entry.marks.senior])   // [['Ana', true], ['Ben', false]]
+view(state, game).entities.staff.entries.map((entry) => [entry.name, entry.flags.senior])   // [['Ana', true], ['Ben', false]]
 ```
 
 **Gotchas.**

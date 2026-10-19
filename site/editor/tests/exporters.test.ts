@@ -94,7 +94,7 @@ describe('JSON', () => {
   it('round-trips kinds, holders and traits', () => {
     const project = sampleProject()
     project.pack.kinds = [
-      { id: 'item', label: 'Item', plural: 'Items', listed: { entity: '$', at: 'you' }, tags: ['food'], marks: { many: { entity: '$', at: 'you', gte: 2 } } },
+      { id: 'item', label: 'Item', plural: 'Items', listed: { entity: '$', at: 'you' }, tags: ['food'], flags: { many: { entity: '$', at: 'you', gte: 2 } } },
       { id: 'character', label: 'Character', unique: true, listed: false },
     ]
     project.pack.entities.push({

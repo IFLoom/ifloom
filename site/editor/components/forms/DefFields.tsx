@@ -235,14 +235,14 @@ const LISTINGS: { value: Listing; label: string }[] = [
 /**
  * A kind: what its entities are called, whether each is one particular thing
  * (`unique`, so it can hold others), whether the view lists them, its tags,
- * its marks, and traits every one of it starts with.
+ * its flags, and traits every one of it starts with.
  */
 export function KindFields({ value, onChange, ...builder }: BuilderProps & { value: KindDef; onChange: (value: KindDef) => void }) {
   const set = (patch: Partial<KindDef>) => onChange(tidy({ ...value, ...patch }))
   const listing: Listing = value.listed === false ? 'no' : typeof value.listed === 'object' ? 'when' : 'yes'
   const self = withSelf(builder.names)
-  const marks = Object.entries(value.marks ?? {})
-  const setMarks = (next: [string, Condition][]) => set({ marks: next.length ? Object.fromEntries(next) : undefined })
+  const flags = Object.entries(value.flags ?? {})
+  const setFlags = (next: [string, Condition][]) => set({ flags: next.length ? Object.fromEntries(next) : undefined })
   return (
     <div className="flex flex-col gap-3">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -270,28 +270,28 @@ export function KindFields({ value, onChange, ...builder }: BuilderProps & { val
         />
         {typeof value.listed === 'object' ? <ConditionBuilder {...builder} names={self} value={value.listed} onChange={(listed) => set({ listed })} /> : null}
       </Field>
-      <Field label="Marks" hint="Named conditions asked of each listed one, so a UI can split them: met, broken.">
+      <Field label="Flags" hint="Named conditions asked of each listed one, so a UI can split them: met, broken.">
         <div className="flex flex-col gap-2">
-          {marks.map(([name, condition], i) => (
+          {flags.map(([name, condition], i) => (
             <div key={i} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <TextInput
-                  aria-label={`Mark ${i + 1}`}
+                  aria-label={`Flag ${i + 1}`}
                   className="w-40"
                   mono
                   value={name}
-                  onChange={(next) => setMarks(marks.map((m, j) => (j === i ? [next ?? '', m[1]] : m)))}
+                  onChange={(next) => setFlags(flags.map((m, j) => (j === i ? [next ?? '', m[1]] : m)))}
                 />
-                <Button size="xs" variant="danger" aria-label={`Remove mark ${i + 1}`} onClick={() => setMarks(marks.filter((_, j) => j !== i))}>
+                <Button size="xs" variant="danger" aria-label={`Remove flag ${i + 1}`} onClick={() => setFlags(flags.filter((_, j) => j !== i))}>
                   ✕
                 </Button>
               </div>
-              <ConditionBuilder {...builder} names={self} value={condition} onChange={(next) => setMarks(marks.map((m, j) => (j === i ? [m[0], next] : m)))} />
+              <ConditionBuilder {...builder} names={self} value={condition} onChange={(next) => setFlags(flags.map((m, j) => (j === i ? [m[0], next] : m)))} />
             </div>
           ))}
           <div>
-            <Button size="xs" onClick={() => setMarks([...marks, [`mark${marks.length + 1}`, { entity: '$', at: 'you' }]])}>
-              + Add a mark
+            <Button size="xs" onClick={() => setFlags([...flags, [`flag${flags.length + 1}`, { entity: '$', at: 'you' }]])}>
+              + Add a flag
             </Button>
           </div>
         </div>

@@ -622,6 +622,25 @@ describe('content migrations', () => {
     expect(unwrap(upgradePack(plain))).toEqual({ id: 'x', schema: SCHEMA, prose: { a: 'A' } })
   })
 
+  it('rename a kind’s marks to flags at schema 15', () => {
+    const v14 = {
+      id: 'staffroom',
+      schema: 14,
+      kinds: [
+        { id: 'staff', label: 'Staff', marks: { senior: { stat: 'skill', of: '$', gte: 4 } } },
+        { id: 'photo', label: 'Photo' },
+      ],
+    }
+    expect(unwrap(upgradePack(v14))).toEqual({
+      id: 'staffroom',
+      schema: SCHEMA,
+      kinds: [
+        { id: 'staff', label: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
+        { id: 'photo', label: 'Photo' },
+      ],
+    })
+  })
+
   it('make items and collections things at schema 13, wherever content names them', () => {
     const v12 = {
       id: 'town',

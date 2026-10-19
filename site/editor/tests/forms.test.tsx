@@ -156,12 +156,12 @@ describe('the kind form', () => {
     expect(out()).toEqual({ id: 'note', label: 'Note' })
   })
 
-  it('makes it unique and adds a mark', () => {
+  it('makes it unique and adds a flag', () => {
     render(<Harness start={{ id: 'stall', label: 'Stall' }} />)
     fireEvent.click(screen.getByLabelText(/Unique/))
-    fireEvent.click(screen.getByText('+ Add a mark'))
-    fireEvent.change(screen.getByLabelText('Mark 1'), { target: { value: 'open' } })
-    expect(out()).toEqual({ id: 'stall', label: 'Stall', unique: true, marks: { open: { entity: '$', at: 'you' } } })
+    fireEvent.click(screen.getByText('+ Add a flag'))
+    fireEvent.change(screen.getByLabelText('Flag 1'), { target: { value: 'open' } })
+    expect(out()).toEqual({ id: 'stall', label: 'Stall', unique: true, flags: { open: { entity: '$', at: 'you' } } })
   })
 })
 

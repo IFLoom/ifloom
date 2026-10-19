@@ -83,9 +83,9 @@ export type KindDef = {
   tags?: string[]
   /**
    * Named conditions asked for each listed entity, with `'$'` as that one,
-   * for the view's `marks`: `{ met: { 'cast/met': { character: '$' } } }`.
+   * for the view's `flags`: `{ met: { 'cast/met': { character: '$' } } }`.
    */
-  marks?: Record<string, Condition>
+  flags?: Record<string, Condition>
   /**
    * Traits every one of the kind has, by trait id: defaults its entities
    * start from. Where an entity gives the same trait, an object here is laid

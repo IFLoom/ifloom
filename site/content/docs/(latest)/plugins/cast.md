@@ -330,7 +330,7 @@ import type { Content } from '@ifloom/engine'
 
 const people: Content = {
   // Everyone on the list, with `met` to tell them apart.
-  kinds: [{ id: 'character', label: 'Person', plural: 'People', listed: true, marks: { met: { 'cast/met': { character: '$' } } } }],
+  kinds: [{ id: 'character', label: 'Person', plural: 'People', listed: true, flags: { met: { 'cast/met': { character: '$' } } } }],
 }
 ```
 

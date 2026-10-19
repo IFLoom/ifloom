@@ -73,10 +73,10 @@ describe('rename a kind', () => {
 
   it('walks the conditions and effects in kinds and traits', () => {
     const project = sampleProject()
-    project.pack.kinds![0].marks = { fresh: { kv: 'heardBusker' } }
+    project.pack.kinds![0].flags = { fresh: { kv: 'heardBusker' } }
     project.pack.entities[0].traits = { 'inventory/usable': { label: 'Eat it', effects: [{ kind: 'kv', key: 'heardBusker', to: false }] } }
     const next = rename(project, 'kv', 'heardBusker', 'heardFiddle')
-    expect(next.pack.kinds![0].marks).toEqual({ fresh: { kv: 'heardFiddle' } })
+    expect(next.pack.kinds![0].flags).toEqual({ fresh: { kv: 'heardFiddle' } })
     expect(next.pack.entities[0].traits).toEqual({ 'inventory/usable': { label: 'Eat it', effects: [{ kind: 'kv', key: 'heardFiddle', to: false }] } })
   })
 })

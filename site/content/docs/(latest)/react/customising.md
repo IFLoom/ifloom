@@ -619,6 +619,16 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `minigame-inputs` | The row of input buttons. |
 | `minigame-input` | One input button. Carries `data-input`. |
 
+### Timers
+
+| Part | What it is |
+|---|---|
+| `timers` | [`Timers`](/docs/react/components#timers-1), a list of every running timer's countdown. |
+| `timer` | One [`Countdown`](/docs/react/components#countdown). Carries `data-timer` (its id) and `data-urgent` with a quarter or less left. |
+| `timer-label` | The timer's label. |
+| `timer-bar` | The bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Carries `data-urgent`. Left out with motion off. |
+| `timer-left` | The seconds left, a `timer` region. Carries `data-urgent`. |
+
 ### Dice rolls
 
 | Part | What it is |

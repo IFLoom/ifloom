@@ -47,6 +47,9 @@
  * `view.scene.frame`; `Game.ui` and `view.scene.ui` (hints carried as
  * written) and `view.scene.key` (which screen this is). Dice rolls: the
  * `roll` effect and condition, `GameState.rolls` and `View.rolls`.
+ * Timers: the `timer` condition and effect, `GameState.timers`,
+ * `Game.timers`, `Pack.timers` and `View.timers` (the `tick` command, now
+ * the timers feature's, is unchanged).
  */
 import type {
   ActionDef,
@@ -80,6 +83,9 @@ import type {
   Dice,
   Roll,
   RollsState,
+  RunningTimer,
+  TimerDef,
+  TimerView,
   SavingView,
   Blocked,
   MigrationTools,
@@ -185,6 +191,8 @@ export type FrozenCondition =
    * running. `{ minigameVar: 'score', gte: 3 }`.
    */
   | ({ minigameVar: string } & FrozenRange)
+  /** A timer: bare, whether it is running; with a range, its milliseconds left. */
+  | ({ timer: string } & FrozenRange)
   /** The latest roll under a key: made, passed or failed, critical. */
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
@@ -268,6 +276,8 @@ export type FrozenGameState = {
   panel: OpenPanel | null
   /** The rolls made: how many, the last command's, and the latest under each key. */
   rolls: RollsState
+  /** The running timers, by id. */
+  timers: Record<string, RunningTimer>
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -363,6 +373,9 @@ export type FrozenEffect =
   | { kind: 'minigameVar'; key: string; to: number }
   | { kind: 'minigameVar'; key: string; by: number }
   | { kind: 'minigameVar'; key: string; random: [number, number] }
+  /** Start a timer (for its `ms` or `to`), stop it (`to: null`), or add time (`by`). */
+  | { kind: 'timer'; timer: string; to?: number | null }
+  | { kind: 'timer'; timer: string; by: number }
   /** Throw dice, keep the total in the kv store under `key`, and record the roll. */
   | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
@@ -452,6 +465,8 @@ export type FrozenGame = {
   media?: GameMedia
   /** The game's minigames. None if left out. */
   minigames?: MinigameDef[]
+  /** The game's timers. None if left out. */
+  timers?: TimerDef[]
   /** Presentation hints for the whole game, carried as written. */
   ui?: Ui<GameUi>
 }
@@ -505,6 +520,8 @@ export type FrozenPack = {
   media?: GameMedia
   /** Minigames. A later pack's replaces an earlier one's by id. */
   minigames?: MinigameDef[]
+  /** Timers. A later pack's replaces an earlier one's by id. */
+  timers?: TimerDef[]
 }
 
 /** The game's own content: a pack's keys, with a name for problems and no id, schema or patches. */
@@ -562,6 +579,8 @@ export type FrozenView = {
   panel: OpenPanel | null
   /** The rolls the last command made. */
   rolls: Roll[]
+  /** The running timers. */
+  timers: TimerView[]
   /** Whether the player can save now. */
   saving: SavingView
 }

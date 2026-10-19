@@ -1,6 +1,6 @@
 ---
 title: "Presentation hints"
-description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, stat bars and pips, and the colour of a person's lines. With checkUiHints to catch typos."
+description: "The ui hints the React UI reads from your content: scene and choice transitions, revealed paragraphs, dice drawn above a line, a countdown under one, stat bars and pips, and the colour of a person's lines. With checkUiHints to catch typos."
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
@@ -12,6 +12,7 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`transition`](#transition-on-a-choice) | A choice, an action | How the screen it leads to comes in. |
 | [`reveal`](#reveal) | A block | The block waits, then comes in. |
 | [`dice`](#dice) | A block | The roll under that key is drawn above the block, which waits for the dice to settle. |
+| [`timer`](#timer) | A block | The running timer by that id counts down under the block. |
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
@@ -169,6 +170,20 @@ function rollFor(beat: SceneBeat, rolls: readonly Roll[]): Roll | undefined
 
 The roll a beat's `dice` hint names among `rolls`, such as [`view.rolls`](/docs/reference/view#rolls): the last one under that key. Undefined for a beat with no hint, or one whose roll isn't there. Use it in a [`Beat`](/docs/react/components#beat) of your own to draw dice beside a line. `DICE_ROLL_MS` is how long `DiceRoll` tumbles, in milliseconds.
 
+## timer
+
+```ts
+body: [
+  { text: 'flat.ring', ui: { timer: 'flat.ring' } },   // 'Your phone is ringing on the sill. Ava. Answer before it stops.'
+]
+```
+
+On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `SceneStage` draws its [`Countdown`](/docs/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
+
+The hint only draws the timer. The game's clock runs whether or not anything draws it, so a timer no block names still runs out on time. To show one elsewhere, put `Countdown` or `Timers` in your layout.
+
+The [Timed choices and countdowns](/docs/recipes/timers) recipe builds a whole timed choice.
+
 ## display
 
 ```ts
@@ -218,6 +233,7 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a `display` that isn't `'number'`, `'bar'` or `'pips'`, or pips on a range over 20
 - a `hue` outside 0 to 360
 - a block's `dice` that isn't a roll's key (letters, digits and `_`)
+- a block's `timer` that isn't one of the game's `timers`
 
 It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, and the places plugin's locations. Put it in a test beside the engine's checks:
 
@@ -235,4 +251,4 @@ describe('the content', () => {
 
 ## See it in the showcase
 
-Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.
+Small Town's moving-day scene fades in and reveals its second paragraph, and its Unpack choice slides the flat up (`examples/showcase/src/story/moving-day.ts`). Ava's scene by the river fades, and her line comes a moment later (`story/ava.ts`). At the park, skimming a stone draws its dice above the line that says how it went (`story/park.ts`). At home, Ava's call counts down under the line that says the phone is ringing (`story/flat.ts`). Energy is a bar and charm is pips (`world/stats.ts`), and Ava's and Sam's lines have their own colours (`world/cast.ts`). Its tests run `checkUiHints`.

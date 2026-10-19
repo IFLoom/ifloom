@@ -181,7 +181,7 @@ function Playing({ runner }: { runner: Runner }) {
 }
 ```
 
-The third argument is the server's snapshot, which `useSyncExternalStore` asks for in a server-rendered app. With your own UI you can drop `@ifloom/react` and Tailwind. Keep `@ifloom/audio` and `@ifloom/browser` for sound, the minigame clock and the keys (see [A UI from scratch](/docs/guide/ui-from-scratch)). [Your own UI in any framework](/docs/guide/frameworks) has the rest of a UI in React by hand.
+The third argument is the server's snapshot, which `useSyncExternalStore` asks for in a server-rendered app. With your own UI you can drop `@ifloom/react` and Tailwind. Keep `@ifloom/audio` and `@ifloom/browser` for sound, the clock for timers and minigames, and the keys (see [A UI from scratch](/docs/guide/ui-from-scratch)). [Your own UI in any framework](/docs/guide/frameworks) has the rest of a UI in React by hand.
 
 ## Check and playtest it
 

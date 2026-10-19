@@ -176,6 +176,29 @@ describe('Small Town', () => {
     expect(new Set(drawn.map((line) => line.key)).size).toBe(7)
   })
 
+  it('rings the phone at home one evening once her text is answered: answer within ten seconds, or miss the call', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
+    state = run(on(state, 1, 'night'), sleep())
+    // Answering her text in the evening at home: the phone rings straight after, with ten seconds on it.
+    state = run(on(state, 2, 'evening'), replyTo('ava.text', 'yes'))
+    expect(state.sceneId).toBe('flat.ring')
+    expect(view(state, game).timers).toEqual([{ id: 'flat.ring', label: 'Ringing', left: 10_000, total: 10_000 }])
+    // Picked up in time: Ava's call, and no missed call.
+    const answered = run(state, { type: 'tick', ms: 6000 }, { type: 'choose', id: 'answer' })
+    expect(view(answered, game).scene.title).toBe('Ava, on the phone')
+    expect(answered.timers).toEqual({})
+    expect(answered.kv.missedAva).toBeUndefined()
+    // Left ringing: at ten seconds it stops, the scene closes and a missed call waits.
+    const missed = run(state, { type: 'tick', ms: 4000 }, { type: 'tick', ms: 6000 })
+    expect(missed.sceneId).toBeNull()
+    expect(missed.kv.missedAva).toBe(true)
+    expect(missed.notices.map((notice) => notice.title)).toContain('Missed call: Ava')
+    // It rings once.
+    expect(run(on(missed, 3, 'evening'), { type: 'activity', id: 'openWardrobe' }).sceneId).toBeNull()
+  })
+
   it('charges rent on Sundays, and meets Ava by the river once a friendship has had time', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))

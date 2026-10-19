@@ -119,6 +119,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `no custom condition named "…"` | A custom condition that neither the game nor a plugin declares, as `{ custom }` or a [short plugin call](/docs/reference/custom#plugincall). |
 | A stat owner problem | See [Stat owners](#stat-owners). |
 | `minigame variable "…" is not in any minigame's vars` | A `minigameVar` no [minigame](/docs/reference/minigames) declares. |
+| `unknown timer "…"` | A `timer` condition naming a timer the game doesn't declare in `timers`. |
 | `unknown setting "…"` | A `setting` the game doesn't declare. |
 | `setting "…" is a ui setting; conditions read only play settings` | A `ui` [setting](/docs/reference/settings), which isn't in the state. |
 | `<value> for setting "…" is not …` | An `is` the setting can't take: not `true` or `false` for a toggle, not one of a choice's options, or out of a range's bounds or steps. |
@@ -153,6 +154,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `roll key "…" must be letters, digits and _, not starting with a digit, so {{key}} can show it` | A `roll` effect's `key`. |
 | `roll plus must be a number or { stat }`, `roll against must be a number` | A `roll` effect's `plus` and `against`. |
 | `unknown stat "…"` | A `roll` effect's `plus: { stat }`. |
+| `unknown timer "…"` | A [`timer`](/docs/reference/effects#timer) effect naming a timer the game doesn't declare. The effect does nothing. |
+| `a timer’s to must be a number of milliseconds above 0, or null to stop it`, `a timer’s by must be a number of milliseconds` | A `timer` effect's `to` and `by`. |
 | Whatever the plugin says | For a call to a plugin's effect, what its references name and its `argProblems`. |
 | Whatever the plugins say | For a `panel` effect, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. Any panel name is allowed. |
 
@@ -209,6 +212,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
 | `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses variable "…", which is not in its vars` (one another minigame declares), and `copies variable "…", which is not in its vars`. See [Minigames](/docs/reference/minigames#the-checks). |
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
+| `timer <id>` | `a timer needs ms above 0`, `two timers share this id`, and its `effects`. See [Timers](/docs/reference/timers#the-checks). |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
 | `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition and its `ui` (see [Presentation hints](#presentation-hints)). For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. For its [`at`](/docs/reference/entities#holding-things): `at can't be "you" where a thing starts: …`, `at names the entity itself: nothing can hold itself`, `at names unknown holder "…"` (a holder has to be declared), `at names "…", whose kind isn't unique, so it can't hold things`, `at gives "…" <n>: a count is a whole number above 0`, `a unique thing starts in one place, one of it`, and `holders go round in a cycle: … → …` for unique things that start inside each other. |

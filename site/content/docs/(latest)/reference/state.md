@@ -40,6 +40,7 @@ type GameState = {
   minigame: MinigameState | null
   panel: OpenPanel | null
   rolls: RollsState
+  timers: Record<string, RunningTimer>
   gameVersion?: number
 }
 ```
@@ -280,6 +281,14 @@ rolls: RollsState   // { made: 3, last: [/* this command's */], latest: { skim: 
 ```
 
 The [dice rolls](/docs/reference/rolls) the save has made. `made` counts every roll, and is part of each new roll's seed. `last` holds the rolls the last command made, which [`view.rolls`](/docs/reference/view#rolls) shows. `latest` keeps the latest roll under each key for the [`roll` condition](/docs/reference/conditions#roll). See [`RollsState`](/docs/reference/rolls#rollsstate). A save from before dice loads with `{ made: 0, last: [], latest: {} }`. Like `minigame`, the field came with a load default and no new save version.
+
+### timers
+
+```ts
+timers: Record<string, RunningTimer>   // { phone: { left: 4200, total: 10000 } }
+```
+
+The [timers](/docs/reference/timers) running now, by id, in the order they started. Each keeps only the milliseconds `left` and the `total` it was started with (which adding time can raise). What a timer does when it runs out stays in the game's `timers`, read when it runs out, so a save stays small and an update to a timer's effects reaches saves already running it. See [`RunningTimer`](/docs/reference/timers#runningtimer). A save from before timers loads with `{}`. Like `minigame`, the field came with a load default and no new save version.
 
 ## New Game+
 

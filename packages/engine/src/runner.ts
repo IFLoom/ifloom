@@ -401,6 +401,14 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     begin(loaded.state, loaded.meta.played)
   }
 
+  /** Whether a timer ran out (or started again) between two states. */
+  function ranOut(before: GameState, after: GameState): boolean {
+    return Object.entries(before.timers).some(([id, timer]) => {
+      const now = after.timers[id]
+      return !now || now.left > timer.left
+    })
+  }
+
   /** Whether the autosave policy wants a save now. A tick is not a command for `'command'`: a minigame sends ten a second. */
   function autosaveDue(before: GameState, after: GameState, ticking: boolean): boolean {
     const every = options.autosave?.every
@@ -465,8 +473,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
         redoStack = []
       }
     }
-    // A tick is written to the profile only when it ends the minigame, not ten times a second.
-    if (!ticking || (before.minigame && !state.minigame)) recordInProfile(before, state, command)
+    // A tick is written to the profile only when it ends the minigame or runs a timer out, not ten times a second.
+    if (!ticking || (before.minigame && !state.minigame) || ranOut(before, state)) recordInProfile(before, state, command)
     changed(before, ticking)
     return ok(state)
   }

@@ -16,6 +16,7 @@ import { useWords } from './words.ts'
 import { InlineSpans } from './inline.tsx'
 import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
 import { DiceOverlay, DiceRoll, unnamedRolls, useFreshRolls } from './dice.tsx'
+import { Countdown } from './timers.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
 function VoiceReplay({ voice }: { voice: string }) {
@@ -183,19 +184,22 @@ type SceneRolls = { all: readonly Roll[]; fresh: readonly Roll[]; at: number }
  * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). A block
  * with a `ui.dice` hint naming a roll gets that roll's `DiceRoll` before it;
  * a new roll tumbles, and its block waits in a `reveal` part until the dice
- * settle. With motion off, the groups are drawn but wait for nothing.
+ * settle. A block with a `ui.timer` hint gets that timer's `Countdown` after
+ * it, while the timer runs. With motion off, the groups are drawn but wait for nothing.
  */
 function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: boolean; rolls: SceneRolls; skipped: boolean }) {
   const list = usePart('beats', cn(PROSE, 'flex flex-col gap-(--gap-beats)'))
   const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
   const animate = motion && !skipped
-  // A roll that isn't new is drawn settled before its block, which doesn't wait.
+  // A roll that isn't new is drawn settled before its block, which doesn't wait. A timer the block names comes after it.
   const beat = (entry: SceneBeat, index: number, held: boolean) => {
     const settled = held ? undefined : rollFor(entry, rolls.all)
-    return settled ? (
+    const timer = entry.ui?.timer
+    return settled || typeof timer === 'string' ? (
       <Fragment key={index}>
-        <DiceRoll roll={settled} animate={false} />
+        {settled ? <DiceRoll roll={settled} animate={false} /> : null}
         <Beat beat={entry} />
+        {typeof timer === 'string' ? <Countdown timer={timer} /> : null}
       </Fragment>
     ) : (
       <Beat key={index} beat={entry} />
@@ -357,5 +361,8 @@ function SceneStageImpl({ className }: { className?: string }) {
  * command made under that key, drawn before it, and a new roll's block waits
  * for its dice to settle. New rolls no block names show for a moment in a
  * `DiceOverlay`.
+ *
+ * Timers: a block with a `ui.timer` hint gets a `Countdown` of that timer
+ * after it, while it runs.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

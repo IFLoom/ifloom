@@ -323,6 +323,23 @@ for (const roll of shown.rolls) {
 
 The React UI draws a roll with [`DiceRoll`](/docs/react/components#diceroll), in the story where a block's [`dice`](/docs/react/hints#dice) hint names it. The [Dice rolls and checks](/docs/recipes/dice) recipe shows the same with other frameworks.
 
+### timers
+
+| Field | Type | Meaning |
+|---|---|---|
+| `timers` | [`TimerView`](/docs/reference/timers#timerview)`[]` | The running [timers](/docs/reference/timers), in the order they started: each one's `id`, `label` (or `null`), the milliseconds `left` and its `total` length. Empty when none runs. |
+
+It never says what a timer does when it runs out, so it's safe to show. Draw a countdown from `left / total`, and send `{ type: 'tick', ms }` about every 100 ms while it isn't empty, as [`startClock`](/docs/browser#startclock) does.
+
+```ts
+const shown = runner.view()
+for (const timer of shown.timers) {
+  drawCountdown(timer.label ?? timer.id, timer.left / timer.total, Math.ceil(timer.left / 1000))
+}
+```
+
+A timer only shows in the view while it runs. Once it runs out or is stopped, it's gone, and nothing stays behind to draw. The React UI draws one with [`Countdown`](/docs/react/components#countdown), after a block whose [`timer`](/docs/react/hints#timer) hint names it. The [Timed choices and countdowns](/docs/recipes/timers) recipe shows the same with other frameworks.
+
 ### saving
 
 | Field | Type | Meaning |

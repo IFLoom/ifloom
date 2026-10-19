@@ -65,6 +65,7 @@ const TARGETS = [
   'panel',
   // the latest roll under a key, for the roll condition
   'roll',
+  'timer',
 ] as const
 
 /** Qualifiers and details: who it belongs to, what it compares with, what it carries. */

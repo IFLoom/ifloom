@@ -233,6 +233,46 @@ export function EffectBuilder({
         </>
       )
       break
+    case 'timer': {
+      // One form for the three shapes: start (its own length, or `to` ms), stop (`to: null`), add time (`by`).
+      const mode: 'start' | 'startFor' | 'stop' | 'add' = 'by' in e ? 'add' : e.to === null ? 'stop' : typeof e.to === 'number' ? 'startFor' : 'start'
+      const shaped = (next: string) => {
+        const base = { kind: 'timer', timer: e.timer } as EffectRef
+        if (next === 'startFor') return { ...base, to: 10_000 } as EffectRef
+        if (next === 'stop') return { ...base, to: null } as EffectRef
+        if (next === 'add') return { ...base, by: 5000 } as EffectRef
+        return base
+      }
+      fields = (
+        <>
+          <Select
+            aria-label="What to do"
+            value={mode}
+            options={[
+              { value: 'start', label: 'Start' },
+              { value: 'startFor', label: 'Start for' },
+              { value: 'stop', label: 'Stop' },
+              { value: 'add', label: 'Add to' },
+            ]}
+            onChange={(next) => onChange(shaped(next))}
+          />
+          <IdPicker noun="timer" aria-label="Timer" value={e.timer} options={names.timers ?? []} onChange={(timer) => set({ timer })} />
+          {mode === 'startFor' ? (
+            <>
+              <NumberInput aria-label="Milliseconds" value={e.to} onChange={(to) => set({ to: to ?? 1000 })} />
+              <span className="text-xs text-fd-muted-foreground">ms</span>
+            </>
+          ) : null}
+          {mode === 'add' ? (
+            <>
+              <NumberInput aria-label="Milliseconds to add" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
+              <span className="text-xs text-fd-muted-foreground">ms (negative takes time away)</span>
+            </>
+          ) : null}
+        </>
+      )
+      break
+    }
     case 'roll': {
       const read = readDice(e.dice)
       const plus: 'none' | 'number' | 'stat' = e.plus === undefined ? 'none' : typeof e.plus === 'number' ? 'number' : 'stat'

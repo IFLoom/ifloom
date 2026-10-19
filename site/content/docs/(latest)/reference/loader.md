@@ -48,6 +48,7 @@ type Content = {
   triggers?: TriggerDef[]
   inputs?: InputDef[]
   minigames?: MinigameDef[]
+  timers?: TimerDef[]
   settings?: SettingDef[]
   strings?: Record<string, string>
   prose?: Record<string, string>
@@ -74,7 +75,7 @@ export const ch1: Content = {
 | Field | Merged how |
 |---|---|
 | `name` | Optional. What problems call this content, such as `story.cafe`. Without one, they say `content`. |
-| `scenes`, `storylines`, `activities`, `stats`, `kinds`, `triggers`, `inputs`, `minigames`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. Any `kinds`, `triggers`, `inputs`, `minigames` and `settings` on `loadGame`'s `base` come first. |
+| `scenes`, `storylines`, `activities`, `stats`, `kinds`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. Any `kinds`, `triggers`, `inputs`, `minigames`, `timers` and `settings` on `loadGame`'s `base` come first. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. The base's come first. See [Entities](/docs/reference/entities). |
 | `traits` | By trait id and then entity, one row each. See [Traits](#traits). |
 | `strings` | By key, over the base's `strings`. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
@@ -101,7 +102,7 @@ Give your content a `name` and the problem says which two files it's in:
 story.town · scene "cafe.counter" · declared twice, in story.cafe and story.town
 ```
 
-It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, activities, triggers, inputs, minigames, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
+It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, activities, triggers, inputs, minigames, timers, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
 
 To change something on purpose, change it where it's declared. Packs are the only way to replace what the content declares.
 

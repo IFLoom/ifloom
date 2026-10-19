@@ -461,3 +461,26 @@
   padding: 0.2rem 0.8rem;
   font-weight: 700;
 }
+
+/* Timers: a fat rounded bar in a little card, the seconds big and bold. */
+[data-part="timer"] {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+[data-part="timer-label"] {
+  font-weight: 800;
+  color: var(--primary);
+}
+[data-part="timer-bar"] {
+  height: 0.75rem;
+  background: var(--secondary);
+}
+[data-part="timer-bar"] > span {
+  border-radius: 999px;
+}
+[data-part="timer-left"] {
+  font-size: 1.1rem;
+  font-weight: 800;
+}

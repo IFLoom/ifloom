@@ -1,6 +1,6 @@
 ---
 title: "Effects"
-description: "Every effect: stats, kv, scenes and storylet draws, entities and what holds them, each, turns, notices, audio, minigames, and custom effects."
+description: "Every effect: stats, kv, scenes and storylet draws, entities and what holds them, each, turns, notices, audio, minigames, timers, and custom effects."
 ---
 An effect is one change to the [state](/docs/reference/state), written as data. Choices, activities, triggers and the end of a turn all carry lists of them, and so can a plugin's content, such as a thing's use in the inventory.
 
@@ -74,6 +74,8 @@ type Effect =
   | { kind: 'minigameVar'; key: string; random: [number, number] }
   | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
   | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+  | { kind: 'timer'; timer: string; to?: number | null }
+  | { kind: 'timer'; timer: string; by: number }
 ```
 
 ### stat
@@ -385,6 +387,20 @@ It also adds 1 to the kv key `minigame:<id>`, which counts how many times the mi
 Changes a variable of the [minigame](/docs/reference/minigames#its-variables) being played: sets it `to` a value, changes it `by` an amount, or sets it to a whole number drawn from `random`, both ends included. The draw comes from the save's seed, so it's the same every time the same commands are played. With no minigame running, it does nothing.
 
 The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
+
+### timer
+
+```ts
+{ kind: 'timer', timer: 'phone' }             // start it, for its own ms
+{ kind: 'timer', timer: 'phone', to: 5000 }   // start it for 5 seconds
+{ kind: 'timer', timer: 'phone', to: null }   // stop it; its effects don't run
+{ kind: 'timer', timer: 'phone', by: 5000 }   // 5 more seconds
+{ kind: 'timer', timer: 'phone', by: -2000 }  // 2 seconds fewer
+```
+
+Starts, stops or changes one of the game's [timers](/docs/reference/timers), named by its id in `timers`. Starting one that's already running starts it again from the top. `to` sets how long it runs this time instead of its `ms`. `to: null` stops it without running its effects, so answering the phone stops the missed call. `by` adds milliseconds to a running timer (a negative `by` takes them away, down to 0) and does nothing to one that isn't running. A timer at 0 runs out on the next [`tick`](/docs/reference/commands#tick).
+
+When a tick runs a timer out, the timer stops and its `effects` run. See [When a timer runs out](/docs/reference/timers#when-a-timer-runs-out). The checker reports an unknown timer, a `to` that isn't a number above 0 (or `null`), and a `by` that isn't a number.
 
 ### panel
 

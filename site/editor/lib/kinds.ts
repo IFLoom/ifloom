@@ -33,6 +33,7 @@ export const CONDITION_KEYS = [
   'phase',
   'minigameVar',
   'roll',
+  'timer',
   'custom',
 ] as const satisfies readonly ConditionKey[]
 
@@ -58,6 +59,7 @@ export const EFFECT_KINDS = [
   'minigameVar',
   'panel',
   'roll',
+  'timer',
   'custom',
 ] as const satisfies readonly Effect['kind'][]
 
@@ -82,6 +84,7 @@ export const CONDITION_FORMS = [
   'level',
   'turn',
   'roll',
+  'timer',
 ] as const satisfies readonly ConditionKey[]
 export type ConditionForm = (typeof CONDITION_FORMS)[number] | 'plugin' | 'json'
 
@@ -100,6 +103,7 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   level: 'Stat level',
   turn: 'Turn',
   roll: 'A roll’s outcome',
+  timer: 'A timer running',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
@@ -120,6 +124,7 @@ export const EFFECT_FORMS = [
   'sound',
   'audio',
   'roll',
+  'timer',
 ] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
@@ -138,6 +143,7 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   sound: 'Play a sound',
   audio: 'Background audio',
   roll: 'Roll dice',
+  timer: 'Start, stop or add to a timer',
   plugin: 'Plugin call (JSON)',
   json: 'Other (JSON)',
 }
@@ -158,6 +164,7 @@ export const EFFECT_MENU = [
   'sound',
   'audio',
   'roll',
+  'timer',
   'plugin',
   'json',
 ] as const satisfies readonly EffectForm[]

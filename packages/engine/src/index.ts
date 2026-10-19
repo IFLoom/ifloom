@@ -159,6 +159,10 @@ export type {
 } from './features/minigames.ts'
 export { minigameDef } from './features/minigames.ts'
 
+// Timers
+export type { RunningTimer, TimerDef, TimerView } from './features/timers.ts'
+export { timerDef } from './features/timers.ts'
+
 // Panels
 export type { OpenPanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'

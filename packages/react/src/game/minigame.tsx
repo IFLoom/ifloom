@@ -1,37 +1,16 @@
 /**
  * Minigames in the React UI: `useMinigame` for the one being played and the
- * clock that drives its timers, and `MinigameCard`, the basic card that
+ * clock that drives its timers (shared with the game's timers), and `MinigameCard`, the basic card that
  * draws it.
  */
 import { useEffect } from 'react'
-import { startClock, startMinigameKeys } from '@ifloom/browser'
+import { startMinigameKeys } from '@ifloom/browser'
 import type { Command, MinigameView, Runner } from '@ifloom/engine'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
+import { useTicking } from './timers.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useWords, type UiStringKey } from './words.ts'
-
-/** One clock per runner, however many components ask for it. */
-const clocks = new WeakMap<Runner, { users: number; stop: () => void }>()
-
-function useClock(runner: Runner): void {
-  useEffect(() => {
-    let clock = clocks.get(runner)
-    if (!clock) {
-      clock = { users: 0, stop: startClock(runner) }
-      clocks.set(runner, clock)
-    }
-    clock.users += 1
-    const held = clock
-    return () => {
-      held.users -= 1
-      if (!held.users) {
-        held.stop()
-        clocks.delete(runner)
-      }
-    }
-  }, [runner])
-}
 
 export type MinigameControls = {
   /** The minigame being played, as the view has it, or `null`. */
@@ -42,14 +21,15 @@ export type MinigameControls = {
 
 /**
  * The minigame being played, and a way to press its inputs. While it's
- * mounted it also runs the game's clock, `startClock` from `@ifloom/browser`:
- * a `tick` about every 100 ms while a timer runs, with the real time that passed. With `keys: true` it also maps
+ * mounted it also runs the game's clock, `startClock` from `@ifloom/browser`
+ * (as `GameProvider` does): a `tick` about every 100 ms while a timer runs,
+ * with the real time that passed. With `keys: true` it also maps
  * the keyboard to the inputs, as `MinigameCard` does.
  */
 export function useMinigame({ keys = false }: { keys?: boolean } = {}): MinigameControls {
   const { view, runner } = useGame()
   const minigame = view.minigame
-  useClock(runner)
+  useTicking(runner)
   const send = (input: string) => runner.apply({ type: 'minigame', input } satisfies Command)
   const playing = minigame !== null
   // Before the game's hotkeys, which skip a key this takes.

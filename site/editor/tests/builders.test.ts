@@ -6,6 +6,7 @@ import {
   effectForm,
   newCondition,
   newEffect,
+  NO_NAMES,
   rangeOf,
   shortBlock,
   snippet,
@@ -38,7 +39,7 @@ describe('the condition builder', () => {
   })
 
   it('makes conditions the checker accepts', () => {
-    const names = { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: ['a#go'], sets: [] }
+    const names = { scenes: ['a'], stats: ['coins'], things: ['item:key'], kv: ['met'], choices: ['a#go'], sets: [], timers: ['bell'] }
     const conditions = CONDITION_FORMS.filter((f) => f !== 'setting').map((f) => newCondition(f, names))
     const { problems } = loadGame(
       [
@@ -47,6 +48,7 @@ describe('the condition builder', () => {
           stats: [{ id: 'coins', label: 'Coins', levels: { at: [5] } }],
           kinds: [{ id: 'item', label: 'Item' }],
           entities: [{ id: 'key', of: 'item', name: 'Key', desc: 'A key.' }],
+          timers: [{ id: 'bell', ms: 5000 }],
           scenes: [{ id: 'a', body: [{ text: 'a', when: { all: conditions } }], choices: [{ id: 'go', effects: [] }] }],
           prose: { a: 'A.', 'a#go': 'Go' },
         },
@@ -54,6 +56,25 @@ describe('the condition builder', () => {
       { id: 'g', title: 'G' },
     )
     expect(problems).toEqual([])
+  })
+})
+
+describe('timers', () => {
+  it('edits a timer running, and the time left, in a form', () => {
+    expect(conditionForm({ timer: 'phone' })).toBe('timer')
+    expect(conditionForm({ timer: 'phone', lte: 3000 })).toBe('timer')
+    expect(conditionForm({ timer: 'phone', gte: 1000, lte: 3000 })).toBe('json')
+  })
+
+  it('starts, stops and adds to a timer in one form', () => {
+    for (const effect of [
+      { kind: 'timer', timer: 'phone' },
+      { kind: 'timer', timer: 'phone', to: 5000 },
+      { kind: 'timer', timer: 'phone', to: null },
+      { kind: 'timer', timer: 'phone', by: -2000 },
+    ] as const)
+      expect(effectForm(effect)).toBe('timer')
+    expect(newEffect('timer', { ...NO_NAMES, timers: ['bell'] })).toEqual({ kind: 'timer', timer: 'bell' })
   })
 })
 

@@ -12,6 +12,8 @@
  * - `ui.hue` on an entity or a kind: the colour of their spoken lines.
  * - `ui.dice` on a block: the roll under that key is drawn here, as dice that
  *   tumble and settle before the block comes in.
+ * - `ui.timer` on a block: the timer by that id counts down here, after the
+ *   block, while it runs.
  */
 import type { Game, RenderedChoice, Roll, SceneBeat, View } from '@ifloom/engine'
 
@@ -44,6 +46,8 @@ declare module '@ifloom/engine' {
     reveal?: Reveal
     /** Draw the roll the last command made under this kv key here, before this block: `ui: { dice: 'skim' }`. */
     dice?: string
+    /** Draw the running timer by this id here, after this block, as a `Countdown`: `ui: { timer: 'phone' }`. */
+    timer?: string
   }
   interface StatUi {
     /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */

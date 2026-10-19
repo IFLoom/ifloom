@@ -242,9 +242,9 @@ No lock or plugin guard stops it, because changing a setting is the menu's busin
 { type: 'tick', ms: 100 }
 ```
 
-Time passing in the [minigame](/docs/reference/minigames) being played. It adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, the timer's transition is taken, and whatever is left of `ms` carries on into the next state. So one long tick can run out several timers in a row, up to 1,000 transitions, and it stops when the minigame ends. A UI sends it at a steady rate (about every 100 ms) while [`view.minigame.timeLeft`](/docs/reference/minigames#minigameview) isn't `null`.
+Time passing. It takes `ms` off every running [timer](/docs/reference/timers), and adds it to how long the [minigame](/docs/reference/minigames) being played has been in its state. Whatever runs out does so in the order it would have, with its effects (a timer's) or its transition (a minigame state's `after`) run at that moment, and the rest of `ms` carries on. So one long tick can run out several things in a row, up to 1,000 in one tick. A timer started by those effects counts from the moment they ran. A UI sends ticks at a steady rate (about every 100 ms) while [`view.timers`](/docs/reference/view#timers) isn't empty or [`view.minigame.timeLeft`](/docs/reference/minigames#minigameview) isn't `null`, which is what [`startClock`](/docs/browser#startclock) does.
 
-No lock or plugin guard stops it. It's refused with `Nothing is being played.` when no minigame runs, `Nothing is counting down.` when the running state has no timer, and `A tick is a number of milliseconds above 0.` for an `ms` that isn't.
+No lock or plugin guard stops it. It's refused with `Nothing is counting down.` when no timer is running and no minigame has a timer running, and `A tick is a number of milliseconds above 0.` for an `ms` that isn't.
 
 Ticks go in the runner's [log](/docs/reference/runner#commandlog), so [`replay`](/docs/reference/runner#replay) is exact. The runner's undo steps over them, the backlog ignores them, and they don't autosave as commands. See [In the runner](/docs/reference/minigames#in-the-runner).
 

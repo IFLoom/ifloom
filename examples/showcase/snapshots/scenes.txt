@@ -130,6 +130,21 @@ You take the stool by the window. A bus goes by, then a man with a ladder, then 
 You take the stool by the window. A bus goes by, then a man with a ladder, then the same bus the other way.
   [>] Finish your cup
 
+=== flat.ring @ moving-day
+Your phone is ringing on the sill. Ava. Answer before it stops.
+  [>] Answer it
+  [>] Let it ring
+
+=== flat.ring @ first-morning
+Your phone is ringing on the sill. Ava. Answer before it stops.
+  [>] Answer it
+  [>] Let it ring
+
+=== flat.ring @ a-week-in
+Your phone is ringing on the sill. Ava. Answer before it stops.
+  [>] Answer it
+  [>] Let it ring
+
 === intro @ moving-day
 The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.
 

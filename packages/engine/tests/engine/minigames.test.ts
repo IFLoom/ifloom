@@ -167,7 +167,7 @@ describe('minigames', () => {
 
   it('refuse a tick with nothing counting down', () => {
     const game = withMinigames()
-    expect(whyNot(begin(game), game, { type: 'tick', ms: 100 })).toBe('Nothing is being played.')
+    expect(whyNot(begin(game), game, { type: 'tick', ms: 100 })).toBe('Nothing is counting down.')
     const playing = run(begin(game), game, { type: 'activity', id: 'play' })
     expect(whyNot(playing, game, { type: 'tick', ms: 0 })).toBe('A tick is a number of milliseconds above 0.')
     const untimed: Game = withMinigames({

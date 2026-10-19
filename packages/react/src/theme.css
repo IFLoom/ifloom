@@ -260,6 +260,9 @@
     [data-part^="dice"] {
       animation: none !important;
     }
+    [data-part="timer-bar"] > span {
+      transition: none !important;
+    }
     [data-leaving] {
       display: none;
     }

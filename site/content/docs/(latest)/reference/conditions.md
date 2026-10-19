@@ -74,6 +74,7 @@ type Condition =
   | { phase: Phase[] }
   | ({ minigameVar: string } & Range)
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
+  | ({ timer: string } & Range)
   | { custom: string; with?: Record<string, unknown> }
   | PluginCall
 ```
@@ -318,6 +319,22 @@ The total itself is a kv key, so test a number with [`kv`](#kv): `{ kv: 'skim', 
 A roll is kept until another roll under the same key replaces it, across turns and saves. To show an outcome only on the turn of the roll, set a kv key in the same effects and reset it each turn with [`rules.resets`](/docs/reference/rules#resets), as the showcase does with `skimmed`.
 
 [`explain`](#explain) says `roll skim is 9 on 2d6, passed; wants failed`.
+
+### timer
+
+```ts
+{ timer: 'phone' }               // it's running
+{ timer: 'phone', lte: 3000 }    // running, with 3 seconds or less left
+{ not: { timer: 'phone' } }      // not running: never started, stopped, or run out
+```
+
+Asks about one of the game's [timers](/docs/reference/timers). Bare, it asks whether the timer is running. With a range, it asks whether it's running with that many milliseconds left. It's false for a timer that isn't running, whatever the range, so `{ timer: 'phone', lte: 0 }` never holds once the phone has stopped. A timer stops when it runs out, when the [`timer` effect](/docs/reference/effects#timer) stops it with `to: null`, or never, if nothing starts it.
+
+Show a choice only while the phone rings with `when: { timer: 'phone' }`, or a line of prose in the last seconds with `when: { timer: 'phone', lte: 3000 }`. Time passes only on a [`tick`](/docs/reference/commands#tick), so a condition on the time left changes with each tick, and a [trigger](/docs/reference/triggers) on one fires after the tick that crosses it.
+
+The [content checker](/docs/reference/checks) reports a timer the game doesn't declare.
+
+[`explain`](#explain) says `timer phone is running with 4200 ms left; wants running with 3000 or less ms left`.
 
 ### scene
 

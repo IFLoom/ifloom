@@ -4,6 +4,7 @@ import type { UnlockCodes } from '@ifloom/plugin-unlocks'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { FeedSection, MessagesSection } from './sections.tsx'
 import { KeysProvider } from './keys.tsx'
+import { useTicking } from './timers.tsx'
 
 /**
  * A game's own component for a scene panel, an app's panel section or a panel
@@ -94,6 +95,8 @@ export function GameProvider({
     () => runner.view(),
   )
   const send = useCallback((command: Command) => runner.apply(command), [runner])
+  // The game's clock: a tick while any timer counts down, drawn or not.
+  useTicking(runner)
   // Codes start on the runner once it's drawn, and stop when it goes: from then on, every new game and loaded save gets the unlocks the profile remembers.
   const [codes, setCodes] = useState<UnlockCodes | null>(null)
   const start = unlocks?.start

@@ -36,6 +36,7 @@ import type { Icon } from './icon.tsx'
 import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from './pages.tsx'
 import type { MinigameCard } from './minigame.tsx'
 import type { DiceOverlay, DiceRoll } from './dice.tsx'
+import type { Countdown, Timers } from './timers.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
 import type { AchievementList, AchievementsButton, AchievementsPage } from './achievements.tsx'
@@ -158,6 +159,12 @@ export const PART_KEYS = [
   'dice-critical',
   'dice-overlay',
   'dice-dismiss',
+  // Timers
+  'timers',
+  'timer',
+  'timer-label',
+  'timer-bar',
+  'timer-left',
   // Minigames
   'minigame',
   'minigame-title',
@@ -426,6 +433,8 @@ export type Components = Partial<{
   MinigameCard: Override<PropsOf<typeof MinigameCard>>
   DiceRoll: Override<PropsOf<typeof DiceRoll>>
   DiceOverlay: Override<PropsOf<typeof DiceOverlay>>
+  Countdown: Override<PropsOf<typeof Countdown>>
+  Timers: Override<PropsOf<typeof Timers>>
   GameMenu: Override<PropsOf<typeof GameMenu>>
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>

@@ -10,7 +10,7 @@ import { MAX_PIPS, TRANSITIONS } from './hints.ts'
 const KNOWN = {
   scene: ['transition'],
   choice: ['transition'],
-  block: ['reveal', 'dice'],
+  block: ['reveal', 'dice', 'timer'],
   stat: ['display'],
   entity: ['hue'],
   game: ['transition', 'transitionNames'],
@@ -26,13 +26,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * neither built in nor in `game.ui.transitionNames`, a negative `ms`, a reveal
  * `delay` that isn't whole milliseconds, a `display` that isn't `number`, `bar`
  * or `pips`, pips on a stat with a range over 20, a `hue` outside 0 to 360,
- * and a block's `dice` that isn't a roll's key.
+ * a block's `dice` that isn't a roll's key, and a block's `timer` that isn't a
+ * timer the game declares.
  * Hints in `allow` (`['mood']`, say, for another UI's) aren't reported. Empty
  * when all is well.
  */
 export function checkUiHints(game: Game, options: { allow?: readonly string[] } = {}): string[] {
   const out: string[] = []
   const allowed = new Set(options.allow ?? [])
+  const timers = new Set((game.timers ?? []).map((timer) => timer.id))
   const names = new Set<string>([...TRANSITIONS, ...(Array.isArray(game.ui?.transitionNames) ? game.ui.transitionNames : [])])
 
   const transition = (where: string, spec: unknown) => {
@@ -69,6 +71,8 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[] } 
     }
     if (ui.dice !== undefined && !(typeof ui.dice === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(ui.dice)))
       out.push(`${where}: ui.dice names a roll's key: letters, digits and _`)
+    if (ui.timer !== undefined && !(typeof ui.timer === 'string' && timers.has(ui.timer)))
+      out.push(`${where}: ui.timer "${String(ui.timer)}" is not a timer the game has`)
     if (ui.hue !== undefined && !(typeof ui.hue === 'number' && ui.hue >= 0 && ui.hue <= 360)) out.push(`${where}: ui.hue is a number from 0 to 360`)
     if (ui.transitionNames !== undefined) {
       const list = ui.transitionNames

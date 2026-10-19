@@ -49,7 +49,7 @@ function pluginRefs(data: unknown, plugin: string, list: string, kind: string): 
  * The pickers' ids, from the pack: scene ids, stats, things (by reference),
  * kv keys, `scene#choice` pairs, storylet sets, kinds, and the unique entities
  * that can hold things: the pack's own, and the places' locations and the
- * shop's vendors its plugin content declares.
+ * shop's vendors its plugin content declares; and the timers it declares.
  */
 export function namesOf(project: Project): Names {
   const { pack } = project
@@ -68,5 +68,6 @@ export function namesOf(project: Project): Names {
       ...pluginRefs(pack.data, 'places', 'locations', 'location'),
       ...pluginRefs(pack.data, 'shop', 'vendors', 'vendor'),
     ],
+    timers: (pack.timers ?? []).map((timer) => timer.id),
   }
 }

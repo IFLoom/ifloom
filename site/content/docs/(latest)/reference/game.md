@@ -40,6 +40,7 @@ type Game = {
   triggers?: TriggerDef[]
   inputs?: InputDef[]
   minigames?: MinigameDef[]
+  timers?: TimerDef[]
   custom?: Custom
   actions?: ActionDef[]
   packs?: string[]
@@ -76,6 +77,7 @@ type Game = {
 | `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/docs/reference/triggers). |
 | `inputs` | What the player can type or pick, and the kv key each one writes. See [Inputs](/docs/reference/inputs). |
 | `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
+| `timers` | Named countdowns in real time, such as a phone that rings for ten seconds, with the effects that run when one runs out. See [Timers](/docs/reference/timers). |
 | `custom` | The game's [custom functions](/docs/reference/custom): conditions, effects, values and panels that content calls by name. |
 | `actions` | The game's own buttons, such as waiting or checking a map. Each is an [`ActionDef`](/docs/reference/actions#actiondef). They're offered while no scene is open, after every [plugin's buttons](/docs/reference/plugins#buttons) (the [places plugin](/docs/plugins/places#the-buttons)'s room actions among them). They're also hidden while a [lock](/docs/reference/locks) that denies `'*'` is on. The engine adds no button of its own, so a game with no `actions` has none. |
 | `packs` | The ids of the packs (such as mods) the game was loaded with, in order, and nothing for its own content. [`loadGame`](/docs/reference/loader#loadgame) sets it. A save records them, and a save made with a mod this game lacks names it in [`missingPacks`](/docs/reference/saves#loadedsave). |

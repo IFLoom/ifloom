@@ -3,7 +3,7 @@
  * and timed by ticks. A quick-time event, a lock to pick, a round of cards.
  *
  * A minigame has states. Each state can wait (`after`, a timer the `tick`
- * command runs down), listen (`on`, the inputs the `minigame` command sends),
+ * command runs down, beside the named timers of `timers.ts`), listen (`on`, the inputs the `minigame` command sends),
  * move on by itself (`always`), or end the game (`final`). It keeps its own
  * number variables, which transitions set and conditions read, and they are
  * gone when it ends unless `final.copy` writes them out. Every random pick
@@ -42,6 +42,8 @@ export type MinigameStateDef = {
   /**
    * A timer. Once `ms` milliseconds of ticks have passed in this state, the
    * transition is taken. Staying put (no `go` or `to`) starts the timer again.
+   * The same `tick` runs it down as runs the game's named timers, in the order
+   * they run out.
    */
   after?: { ms: number } & MinigameTransition
   /**
@@ -140,12 +142,6 @@ export type MinigamesShape = {
       | { kind: 'minigameVar'; key: string; random: [number, number] }
   }
   commands: {
-    /**
-     * Time passing in the minigame being played: `ms` milliseconds on the
-     * running state's timer. A UI sends it while a timer runs. Refused with no
-     * minigame running, or none counting down.
-     */
-    tick: { type: 'tick'; ms: number }
     /** An input to the minigame being played, by name: `{ type: 'minigame', input: 'up' }`. */
     minigame: { type: 'minigame'; input: string }
   }
@@ -266,25 +262,37 @@ function timerOf(state: GameState, game: Game) {
 }
 
 /**
- * Run the clock down by `ms`. When a timer runs out its transition is taken,
- * and what is left of `ms` goes on to the state after, so one long tick can
- * fire several timers in turn, up to `MOST_STEPS`. It stops when the
- * minigame ends or a new one starts.
+ * How long until the running state's timer runs out, in milliseconds, or
+ * undefined with no minigame or no timer. The `tick` command, which the timers
+ * feature owns, asks this to run the minigame's clock beside the named timers.
  */
-function tick(state: GameState, game: Game, ms: number, cx: FeatureContext): GameState {
-  let next = state
-  let left = ms
-  for (let steps = 0; left > 0 && next.minigame && steps < MOST_STEPS; steps += 1) {
-    const running: MinigameState = next.minigame
-    const timer = timerOf(next, game)
-    const need = timer ? timer.ms - running.elapsed : Infinity
-    if (left < need) return { ...next, minigame: { ...running, elapsed: running.elapsed + left } }
-    left -= Math.max(need, 0)
-    const play = plays(next, running.id)
-    next = take({ ...next, minigame: { ...running, elapsed: timer!.ms } }, game, timer!, 'after', cx, 0)
-    if (!samePlay(next, running.id, play)) break
-  }
-  return next
+export function minigameDue(state: GameState, game: Game): number | undefined {
+  const running = state.minigame
+  const timer = timerOf(state, game)
+  return running && timer ? Math.max(timer.ms - running.elapsed, 0) : undefined
+}
+
+/** The running minigame's clock moved on by `ms`, without taking its timer's transition. */
+export function minigameAdvanced(state: GameState, ms: number): GameState {
+  const running = state.minigame
+  return running && ms > 0 ? { ...state, minigame: { ...running, elapsed: running.elapsed + ms } } : state
+}
+
+/** The running state's timer run out: its transition taken, as a tick that reaches it takes it. */
+export function minigameTimedOut(state: GameState, game: Game, cx: FeatureContext): GameState {
+  const running = state.minigame
+  const timer = timerOf(state, game)
+  if (!running || !timer) return state
+  return take({ ...state, minigame: { ...running, elapsed: timer.ms } }, game, timer, 'after', cx, 0)
+}
+
+/**
+ * Which play of which minigame is running: its id and how many times it has
+ * started, or undefined with none. A tick runs one play's clock: one that
+ * starts part way through a tick starts its clock on the next.
+ */
+export function minigamePlay(state: GameState): string | undefined {
+  return state.minigame ? `${state.minigame.id}#${plays(state, state.minigame.id)}` : undefined
 }
 
 /** The minigame variables a condition reads, looking inside `all`, `any` and `not`. */
@@ -418,17 +426,6 @@ export const minigames = defineFeature<MinigamesShape>({
     },
   },
   commands: {
-    tick: {
-      whyNot: (state, command, game) => {
-        if (!state.minigame) return say(game, 'noMinigame')
-        if (!(Number.isFinite(command.ms) && command.ms > 0)) return say(game, 'tickLength')
-        return timerOf(state, game) ? undefined : say(game, 'noTimer')
-      },
-      run: (state, command, game, cx) => tick(state, game, command.ms, cx),
-      // The minigame is already running: no lock or guard stops its clock.
-      ignoresLocks: () => true,
-      references: () => [],
-    },
     minigame: {
       whyNot: (state, command, game, cx) => {
         if (!state.minigame) return say(game, 'noMinigame')

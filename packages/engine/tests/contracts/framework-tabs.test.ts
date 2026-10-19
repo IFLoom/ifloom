@@ -23,8 +23,13 @@ const PAGES = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
   eager: true,
 }) as Record<string, string>
 
-/** The tabs a UI snippet needs, in this order. */
+/**
+ * The tabs a UI snippet needs, in this order. Svelte tabs are being dropped
+ * from the docs (React first, then Vue; Svelte only if there's demand), so a
+ * group may end after Vue; one that has Svelte keeps it last.
+ */
 const TABS = ['Plain JS', 'React', 'Vue', 'Svelte']
+const REQUIRED = ['Plain JS', 'React', 'Vue']
 const GROUP = 'framework'
 
 /** Pages that may show a UI snippet in one framework only. */
@@ -107,7 +112,7 @@ function groupsOf(blocks: Block[]): Block[][] {
 function groupProblem(group: Block[]): string | null {
   const names: string[] = []
   for (const block of group) if (names.at(-1) !== block.tab) names.push(block.tab!)
-  if (names.join('|') !== TABS.join('|')) return `tabs ${names.join(', ')}, not ${TABS.join(', ')}`
+  if (names.join('|') !== TABS.join('|') && names.join('|') !== REQUIRED.join('|')) return `tabs ${names.join(', ')}, not ${TABS.join(', ')} (Svelte optional)`
   const ungrouped = group.find((block) => block.group !== GROUP)
   if (ungrouped) return `the ${ungrouped.tab} block at line ${ungrouped.line} has no tab-group="${GROUP}"`
   return null
@@ -122,7 +127,7 @@ describe('the docs', () => {
     expect(pages.length).toBeGreaterThan(50)
   })
 
-  it('show every framework group of tabs in full: Plain JS, React, Vue, Svelte, persisted as one group', () => {
+  it('show every framework group of tabs in full: Plain JS, React, Vue (then Svelte, if any), persisted as one group', () => {
     const problems: string[] = []
     let groups = 0
     for (const page of pages) {

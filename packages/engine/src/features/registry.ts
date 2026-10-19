@@ -26,6 +26,7 @@ import { settings, type SettingsShape } from './settings.ts'
 import { stats, type StatsShape } from './stats.ts'
 import { storylines, type StorylinesShape } from './storylines.ts'
 import { triggers, type TriggersShape } from './triggers.ts'
+import { timers, type TimersShape } from './timers.ts'
 import { turns, type TurnsShape } from './turns.ts'
 import { ui, type UiShape } from './ui.ts'
 import { kv, type KvShape } from './kv.ts'
@@ -46,6 +47,7 @@ type Shapes =
   | StatsShape
   | ScenesShape
   | MinigamesShape
+  | TimersShape
   | AudioShape
   | MediaShape
   | UiShape
@@ -58,7 +60,8 @@ type Shapes =
  * fills and runner hooks run. The order is behaviour: triggers come before
  * scenes and audio, so a scene a trigger opens is counted as seen in the same
  * command; minigames straight after scenes, so a scene with a minigame starts
- * it in the command that opens it; settings before audio, which requires it; stats before entities,
+ * it in the command that opens it; timers after minigames, whose clock
+ * their `tick` runs; settings before audio, which requires it; stats before entities,
  * so a loaded save's entities are filled after their stats;
  * panels after the plugins' hooks too, so a turn or scene a hook moves on
  * closes the panel the command found open; holdings anywhere, since it only
@@ -75,6 +78,7 @@ export const FEATURES = [
   triggers,
   scenes,
   minigames,
+  timers,
   activities,
   inputs,
   settings,

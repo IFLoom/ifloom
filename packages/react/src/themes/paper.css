@@ -579,3 +579,25 @@
 [data-part="dice-outcome"][data-passed="true"] {
   color: var(--primary) !important;
 }
+
+/* Timers: a thin rule that shortens, with the seconds in small capitals beside the margin. */
+[data-part="timer"] {
+  gap: 0.35rem;
+  font-family: var(--font-body);
+}
+[data-part="timer-label"] {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+[data-part="timer-bar"] {
+  height: 2px;
+  border-radius: 0;
+  background: var(--border);
+}
+[data-part="timer-bar"] > span {
+  background: var(--foreground);
+}
+[data-part="timer-left"] {
+  font-family: var(--font-body);
+  font-style: italic;
+}

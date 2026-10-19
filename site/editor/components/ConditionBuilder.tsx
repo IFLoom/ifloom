@@ -296,6 +296,16 @@ export function ConditionBuilder({
       )
       break
     }
+    case 'timer':
+      // Bare is "running"; a range asks how many milliseconds are left.
+      fields = (
+        <>
+          <IdPicker noun="timer" aria-label="Timer" value={c.timer as string} options={names.timers ?? []} onChange={(id) => set({ timer: id })} />
+          <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
+          {rangeOf(value)?.op !== 'set' ? <span className="text-xs text-fd-muted-foreground">ms left</span> : null}
+        </>
+      )
+      break
     case 'turn':
       // The range is the condition's value: `{ turn: { gte: 3 } }`.
       fields = <RangeEditor value={c.turn as Condition} onChange={(turn) => onChange({ turn } as Condition)} ops={[...RANGE_OPS]} />

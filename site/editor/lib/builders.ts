@@ -22,9 +22,11 @@ export type Names = {
   sets: string[]
   kinds?: string[]
   holders?: string[]
+  /** The timers the pack declares, by id. */
+  timers?: string[]
 }
 
-export const NO_NAMES: Names = { scenes: [], stats: [], things: [], kv: [], choices: [], sets: [], kinds: [], holders: [] }
+export const NO_NAMES: Names = { scenes: [], stats: [], things: [], kv: [], choices: [], sets: [], kinds: [], holders: [], timers: [] }
 
 /** The keys a `Select` can have that the count form shows: everything but `where`. */
 const SELECT_KEYS = new Set(['of', 'at', 'tag', 'trait'])
@@ -103,6 +105,8 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
       return { turn: { gte: 1 } }
     case 'roll':
       return { roll: names.kv[0] ?? 'climb', passed: true }
+    case 'timer':
+      return { timer: names.timers?.[0] ?? 'phone' }
     case 'plugin':
       return { 'quests/done': { quest: 'errand' } }
     case 'json':
@@ -194,6 +198,9 @@ export function effectForm(effect: EffectRef): EffectForm {
       return typeof effect.dice === 'string' && (effect.plus === undefined || typeof effect.plus === 'number' || typeof effect.plus?.stat === 'string')
         ? 'roll'
         : 'json'
+    case 'timer':
+      // Start (for its own length, or `to` ms), stop (`to: null`) or add time (`by`): all one form.
+      return 'timer'
     case 'move':
     case 'you':
     case 'notify':
@@ -237,6 +244,8 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'audio', channel: 'music', to: 'calm' }
     case 'roll':
       return { kind: 'roll', key: 'climb', dice: '2d6', against: 8 }
+    case 'timer':
+      return { kind: 'timer', timer: names.timers?.[0] ?? 'phone' }
     case 'plugin':
       return { 'quests/start': { quest: 'errand' } }
     case 'json':

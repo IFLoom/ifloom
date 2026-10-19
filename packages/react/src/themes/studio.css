@@ -407,3 +407,29 @@
   border-color: var(--primary);
   color: var(--primary);
 }
+
+/* Timers: a bordered strip with a bold bar and the seconds set right. */
+[data-part="timer"] {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+[data-part="timer-label"] {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  color: var(--foreground);
+}
+[data-part="timer-bar"] {
+  height: 0.4rem;
+}
+[data-part="timer-bar"] > span {
+  border-radius: 999px;
+}
+[data-part="timer"][data-urgent] {
+  border-color: var(--destructive);
+}

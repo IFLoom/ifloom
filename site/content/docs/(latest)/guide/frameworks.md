@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The minigame clock and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share the game and its stylesheet:
+Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The clock for timers and minigames and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share the game and its stylesheet:
 
 - `src/game.ts`, which puts the game together from `src/world/stats.ts` and `src/story/opening.ts` (see [Organising a game](/docs/guide/organising)).
 - `src/styles.css`, a plain stylesheet.
@@ -60,7 +60,7 @@ const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)
-// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
+// Ticks the game's timers and a minigame's, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 
@@ -116,7 +116,7 @@ runner.subscribe(() => {
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
-// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
+// Ticks the game's timers and a minigame's, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 ```
@@ -146,7 +146,7 @@ export const view = readable(runner.view(), (set) => runner.subscribe(() => set(
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
-// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
+// Ticks the game's timers and a minigame's, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 ```
@@ -816,7 +816,7 @@ defineProps<{ minigame: MinigameView }>()
 
 Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
 
-- [`startClock(runner)`](/docs/browser#startclock) sends a `tick` about every 100 ms while a timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
+- [`startClock(runner)`](/docs/browser#startclock) sends a `tick` about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
 - [`startKeys(runner)`](/docs/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
 
 They're plain DOM, so every framework uses them the same way, and the React UI runs the same code. Each returns a function that stops it.

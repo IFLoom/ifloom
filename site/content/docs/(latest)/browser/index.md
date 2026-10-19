@@ -1,8 +1,8 @@
 ---
 title: "Browser helpers"
-description: "@ifloom/browser: the minigame clock, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose, as plain DOM for any framework."
+description: "@ifloom/browser: the clock for timers and minigames, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose, as plain DOM for any framework."
 ---
-The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a clock for minigame timers, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the `vanilla`, `vue` and `svelte` templates start the clock and the keys beside the runner.
+The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a clock for [timers](/docs/reference/timers) and minigames, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the `vanilla`, `vue` and `svelte` templates start the clock and the keys beside the runner.
 
 ```ts
 import {
@@ -22,7 +22,7 @@ function startClock(runner: Runner, options?: ClockOptions): () => void
 type ClockOptions = { every?: number }
 ```
 
-The engine keeps no clock, so a [minigame](/docs/reference/minigames)'s timers need something to send a [`tick`](/docs/reference/commands#tick). While the minigame being played has a timer running and the page is visible, `startClock` sends one about every `every` milliseconds (100 if left out) with the real time that passed since the last.
+The engine keeps no clock, so its [timers](/docs/reference/timers) and a [minigame](/docs/reference/minigames)'s timers need something to send a [`tick`](/docs/reference/commands#tick). While anything counts down (a timer in [`view.timers`](/docs/reference/view#timers), or the minigame's timer) and the page is visible, `startClock` sends one about every `every` milliseconds (100 if left out) with the real time that passed since the last.
 
 ```ts
 import { startClock } from '@ifloom/browser'
@@ -31,7 +31,9 @@ const runner = await browserRunner(game)
 startClock(runner)
 ```
 
-It only runs while a timer does, so it costs nothing the rest of the time. When the player switches to another tab, it sends what passed until then and stops. When they come back, it starts afresh, so the round waits for them. When an input moves the minigame to a new state, that state's clock starts from the input.
+It only runs while something counts down, so it costs nothing the rest of the time. When the player switches to another tab, it sends what passed until then and stops. When they come back, it starts afresh, so a timer waits for them. When a command starts a timer, or an input moves the minigame to a new state, that clock starts from the command rather than from the last tick.
+
+Start it once, when the game starts, rather than only while something is on screen: a timer runs out whether or not your UI draws it.
 
 **Gotcha.** Start one per runner. Two clocks would each send ticks, and the timers would run twice as fast.
 

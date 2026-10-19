@@ -28,6 +28,7 @@ function game(): Game {
         name: 'park',
         stats: [{ id: 'energy', label: 'Energy', start: 60, max: 100 }],
         minigames: [catchBall],
+        timers: [{ id: 'bell', ms: 2000, effects: [{ kind: 'scene', scene: 'missed' }] }],
         scenes: [
           {
             id: 'intro',
@@ -37,6 +38,7 @@ function game(): Game {
               { id: 'play', effects: [{ kind: 'minigame', minigame: 'catch' }] },
               { id: 'rest', effects: [{ kind: 'stat', stat: 'energy', by: 10 }] },
               { id: 'tired', effects: [], blocked: [{ when: { stat: 'energy', lt: 100 }, reason: 'Not yet.' }] },
+              { id: 'bell', effects: [{ kind: 'timer', timer: 'bell' }] },
             ],
           },
           { id: 'caught', title: 'Caught it', body: [{ text: 'caught' }], choices: [] },
@@ -47,6 +49,7 @@ function game(): Game {
           'intro#play': 'Join in',
           'intro#rest': 'Sit on the bench',
           'intro#tired': 'Run home',
+          'intro#bell': 'Wait for the bell',
           caught: 'Got it.',
           missed: 'It rolls away.',
         },
@@ -89,6 +92,19 @@ describe('startClock', () => {
     // The throw ran out after a second, and the clock stopped with it.
     expect(runner.state.sceneId).toBe('missed')
     expect(ticks(runner).reduce((sum, tick) => sum + tick.ms, 0)).toBe(1000)
+    stop()
+  })
+
+  it('ticks while a named timer runs, outside any minigame, and stops when it runs out', () => {
+    const runner = runnerFor()
+    const stop = startClock(runner)
+    runner.apply({ type: 'choose', id: 'bell' })
+    vi.advanceTimersByTime(1000)
+    expect(runner.view().timers).toEqual([{ id: 'bell', label: null, left: 1000, total: 2000 }])
+    vi.advanceTimersByTime(1500)
+    expect(runner.state.sceneId).toBe('missed')
+    expect(runner.view().timers).toEqual([])
+    expect(ticks(runner).reduce((sum, tick) => sum + tick.ms, 0)).toBe(2000)
     stop()
   })
 

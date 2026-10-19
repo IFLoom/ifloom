@@ -88,7 +88,7 @@ The React UI draws a minigame with [`MinigameCard`](/docs/react/components#minig
 - **Starting.** The [`minigame` effect](/docs/reference/effects#minigame) starts one, from a choice, an activity, a trigger or anything else that applies effects. A scene with a `minigame` field starts it when the scene is entered (see [`MinigameSceneFields`](#minigamescenefields)). It starts in its `start` state with its `vars` at their starting values. Starting one while another runs drops the old one.
 - **While it runs.** The view draws it over the open scene or the room. `view.scene` keeps the scene's id, but its title is the minigame's `label` and its body is the running state's words. The scene's choices and the room's buttons are left out. Every command but [`tick`](/docs/reference/commands#tick), [`minigame`](/docs/reference/commands#minigame), [`dismiss`](/docs/reference/commands#dismiss) and [`setting`](/docs/reference/commands#setting) is refused with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debugger](/docs/plugins/debug)'s.
 - **Inputs.** `{ type: 'minigame', input }` takes the running state's first `on` entry for that input whose `when` holds. An input with no such entry isn't live, and is refused with `That does nothing now.` `view.minigame.inputs` lists the live ones.
-- **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends.
+- **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends. See [Minigames and the game's timers](#minigames-and-the-games-timers).
 - **Transitions.** A transition runs its `effects`, then goes to `go`, or to a state drawn from `to`. Entering a state resets its clock to 0. A transition with neither stays where it is: an `on` entry keeps the clock running, and an `after` starts it again.
 - **Moving on by itself.** On entering a state, its first `always` entry whose `when` holds is taken straight away. Use it for a state that only decides where to go, such as counting rounds or checking a score.
 - **Ending.** Entering a state with `final` ends the minigame. Its `copy` is written to the game's [kv store](/docs/reference/state#kv), the minigame closes, and then its `effects` apply. They can be anything, such as a stat, a scene or a [`turn`](/docs/reference/effects#turn). If no final effect opens another scene, the scene that was open shows again with its choices.
@@ -104,6 +104,12 @@ Every variable a minigame uses has to be declared in its `vars`, and the checker
 ### Randomness
 
 A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in the kv key `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
+
+### Minigames and the game's timers
+
+A state's `after` is a timer of its own, kept in the minigame (as `elapsed`) rather than among the game's named [timers](/docs/reference/timers). It's tied to the state: entering another state starts it from 0, and staying put with `after` starts it again. One `tick` runs both kinds down together. Whatever would run out first goes first, and on the same millisecond the minigame's `after` goes before a named timer. The game's timers keep running while a minigame plays, so a phone can ring out in the middle of a round, and a minigame's effects can start, stop or extend a named timer with the [`timer` effect](/docs/reference/effects#timer).
+
+A tick runs the clock of the minigame that was playing when it began. If a transition ends that minigame and starts another, the new one's clock starts on the next tick, as it always has.
 
 ### In the runner
 
@@ -241,7 +247,7 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 | `vars` | Its variables. |
 | `keys` | The keys the game maps to each input, or `{}`. |
 
-A UI sends ticks only while `timeLeft` isn't `null`. A tick with no timer running is refused with `Nothing is counting down.`
+A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
 
 ## minigameDef
 

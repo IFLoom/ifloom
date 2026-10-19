@@ -39,7 +39,7 @@ const runner = await browserRunner(game)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 startAudio(runner)
-// Ticks a minigame's timers, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
+// Ticks the game's timers and a minigame's, and maps the keyboard: 1 to 9 pick the choices, and a minigame's keys press its inputs.
 startClock(runner)
 startKeys(runner)
 ```
@@ -49,7 +49,7 @@ startKeys(runner)
 The three `start…` calls each follow the runner by themselves, so you call them once and forget them:
 
 - [`startAudio`](/docs/browser/audio-player#startaudio) reads `view.audio` after every change and plays what it asks for. Browsers don't allow sound before the player has clicked or pressed a key, so nothing plays until then.
-- [`startClock`](/docs/browser#startclock) sends a [`tick`](/docs/reference/commands#tick) about every 100 ms while a minigame's timer runs. The engine keeps no clock of its own.
+- [`startClock`](/docs/browser#startclock) sends a [`tick`](/docs/reference/commands#tick) about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs. The engine keeps no clock of its own.
 - [`startKeys`](/docs/browser#startkeys) maps the number keys to the choices on screen, and a minigame's keys to its inputs.
 
 Each returns a function that stops it, if you ever need to.
@@ -218,7 +218,7 @@ runner.subscribe(() => draw(runner.view()))
 draw(runner.view())
 ```
 
-That's the whole loop. Every button sends a command, the runner calls the listener when the state changes, and the listener draws the new view. Undo, a load and the minigame clock's ticks go through the same listener.
+That's the whole loop. Every button sends a command, the runner calls the listener when the state changes, and the listener draws the new view. Undo, a load and the clock's ticks go through the same listener.
 
 ## 9. Add undo and saves
 

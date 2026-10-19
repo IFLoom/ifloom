@@ -20,6 +20,7 @@ import {
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
   TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, usePage, useSetting, useProfile,
   Notices, NoticeStrip, QuestLog, useQuests, MinigameCard, useMinigame,
+  Countdown, Timers, useTimer, useTimers, useTicking, timerShare, timerUrgent,
   StatusList, useStatuses, AchievementList, AchievementsButton, AchievementsPage, useAchievements,
   ShopDialog, ShopCounter, useShop, JobBoard, useJobs,
   PanelHost, BUILT_IN_PANELS, PartDialog,
@@ -34,7 +35,7 @@ import {
   type ClockState, type PlacesControls, type QuestsControls, type WardrobeControls, type WardrobeSlotControls,
   type MessagesControls, type FeedControls, type DebugControls, type ShopControls, type JobsControls,
   type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
-  type Classes, type Components, type Override, type PartKey, type UiOptions, type KeyOptions, type MinigameControls,
+  type Classes, type Components, type Override, type PartKey, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
   type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
@@ -1695,6 +1696,76 @@ function useFreshRolls(): { rolls: Roll[]; at: number }
 
 The rolls the last command made, while they're new: those that came with one command more than the view before. Rolls a loaded save or an undo brings back aren't new, so they don't tumble again. `at` counts each new set, so a component can key on it to play afresh. Only inside a [`GameProvider`](#gameprovider). `SceneStage` uses it, and a replacement for it can too.
 
+## Timers
+
+The game's [timers](/docs/reference/timers), from [`view.timers`](/docs/reference/view#timers). [`GameProvider`](#gameprovider) runs the clock that ticks them, so a timer runs out on time whether or not anything draws it. A block with a [`timer`](/docs/react/hints#timer) hint gets a `Countdown` under it, and your layout can put one anywhere else.
+
+### Countdown
+
+```tsx
+function Countdown(props: CountdownProps): JSX.Element | null
+
+type CountdownProps = { timer: string; label?: boolean; className?: string }
+```
+
+One running timer, by id: its `label` (unless `label={false}`), a bar that empties as it runs down, and the seconds left, worded by `ui.timerLeft` (`{seconds}s`). The bar is a `progressbar` labelled with the timer's label (or `ui.timeLeft`), from 0 to its `total`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks. The seconds are a `timer` region. With a quarter or less of it left, the countdown and its bar and seconds carry `data-urgent`, which the presets colour. With [`motion`](#uioptions) off, or the player asking for reduced motion, only the seconds show. It draws nothing while the timer isn't running, so it goes the moment the timer runs out or is stopped.
+
+```tsx
+import { Countdown, Game, SceneStage, Sidebar, Story } from '@ifloom/react'
+
+export function Layout() {
+  return (
+    <Game>
+      <Sidebar>
+        <Countdown timer="flat.ring" label={false} />
+      </Sidebar>
+      <Story>
+        <SceneStage />
+      </Story>
+    </Game>
+  )
+}
+```
+
+Replaceable as `Countdown` in [`components`](#components), which also changes the one `SceneStage` draws for a hint. Parts: `timer` (with `data-timer` and `data-urgent`), `timer-label`, `timer-bar` (with `data-urgent`) and `timer-left` (with `data-urgent`). Paper draws a thin rule, Storybook a fat bar in a card, Studio a bordered strip, and Terminal a text-mode bar with a prompt.
+
+### Timers
+
+```tsx
+function Timers(props: { className?: string }): JSX.Element | null
+```
+
+A `Countdown` for every running timer, in the order they started, in a `timers` part. Nothing while none runs. The default layout doesn't place it, so a timer only shows where a block's hint or your layout puts it. Replaceable as `Timers` in [`components`](#components).
+
+### useTimer and useTimers
+
+```ts
+function useTimer(id: string): TimerView | null
+function useTimers(): TimerView[]
+function timerShare(timer: TimerView): number
+function timerUrgent(timer: TimerView): boolean
+```
+
+`useTimers` is [`view.timers`](/docs/reference/view#timers), and `useTimer` one [`TimerView`](/docs/reference/timers#timerview) from it, or `null` while that timer isn't running. Only inside a [`GameProvider`](#gameprovider). `timerShare` is the share of a timer left, from 0 to 1, and `timerUrgent` whether a quarter or less is left, as `Countdown` marks it. Use them to draw a countdown of your own:
+
+```tsx
+import { timerShare, useTimer } from '@ifloom/react'
+
+function RingingPhone() {
+  const ringing = useTimer('flat.ring')
+  if (!ringing) return null
+  return <span className="phone" style={{ opacity: 0.4 + 0.6 * timerShare(ringing) }}>☎</span>
+}
+```
+
+### useTicking
+
+```ts
+function useTicking(runner: Runner): void
+```
+
+Runs [`startClock`](/docs/browser#startclock) for the runner while the component is mounted, and stops it when the last component using it goes. There's one clock per runner however many components ask, so nothing ticks twice. `GameProvider` and `useMinigame` already call it. Call it yourself only in a UI built on the runner without `GameProvider`.
+
 ## Minigames
 
 ### MinigameCard
@@ -1747,9 +1818,9 @@ type MinigameControls = {
 
 The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/docs/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigameCard`](#minigamecard) does. Only inside a [`GameProvider`](#gameprovider).
 
-While any component that calls it is on screen, it runs the minigame's clock. Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`), it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when the minigame ends or its state has no timer, and starts again when one does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
+While any component that calls it is on screen, it runs the game's clock, as [`GameProvider`](#gameprovider) already does through [`useTicking`](#useticking). Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`) or any of the game's timers runs, it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when nothing counts down, and starts again when something does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
 
-There's one clock per runner however many components call it, so a panel and a HUD that both use it don't tick twice.
+There's one clock per runner however many components call it, so a panel and a HUD that both use it don't tick twice. The same clock ticks the game's [timers](#timers).
 
 **Time while the page is hidden is dropped.** When the player switches tab or minimises the window, the clock sends the time up to that moment and pauses, and when the page shows again it carries on from there. A minigame waits for a player who looked away, instead of running out its timers unseen.
 

@@ -92,6 +92,7 @@ export const UI_STRINGS = {
   menu: 'Menu',
   openSidebar: 'Open the side panel',
   timeLeft: 'Time left',
+  timerLeft: '{seconds}s',
   minigameUp: 'Up',
   minigameDown: 'Down',
   minigameLeft: 'Left',

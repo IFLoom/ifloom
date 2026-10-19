@@ -512,6 +512,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.closeViewer` | `Close` | |
 | `ui.menu` | `Menu` | |
 | `ui.timeLeft` | `Time left` | |
+| `ui.timerLeft` | `{seconds}s` | The seconds left on a [`Countdown`](/docs/react/components#countdown). |
 | `ui.minigameUp` | `Up` | |
 | `ui.minigameDown` | `Down` | |
 | `ui.minigameLeft` | `Left` | |

@@ -721,3 +721,28 @@ body {
   background: var(--background);
   padding: 0.4rem 0.75rem;
 }
+
+/* Timers: a text-mode bar and the seconds as a prompt. */
+[data-part="timer"] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid currentColor;
+}
+[data-part="timer-label"] {
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+[data-part="timer-label"]::before {
+  content: "## ";
+}
+[data-part="timer-bar"] {
+  height: 0.5rem;
+  border-radius: 0;
+  background: transparent;
+  outline: 1px solid currentColor;
+}
+[data-part="timer-bar"] > span {
+  background: currentColor;
+}
+[data-part="timer-left"]::before {
+  content: "> ";
+}

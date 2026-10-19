@@ -10,7 +10,7 @@ import type { Game } from '@ifloom/engine'
 
 Every type on this page comes from the package root: `Game`, `ItemDef`, `StorylineDef` and the rest. `CollectionDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
 
-The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in a pack's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are content in `data.cast.characters`.
+The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in your content's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are content in `data.cast.characters`.
 
 ## Game
 
@@ -73,18 +73,18 @@ type Game = {
 | `scenes` | Every scene. [Data scenes](/docs/reference/scenes#datascene) and hand-written [`Scene`](/docs/reference/scenes#scene)s sit side by side. A data scene is baked into a `Scene` the first time [`sceneById`](#scenebyid) asks for it. |
 | `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
 | `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, make it with [`proseStore`](/docs/reference/prose#prosestore-1). |
-| `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the base's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
+| `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the base's, the content's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
 | `collections` | Named lists the game keeps entries in, such as letters, photos or a ledger. See [Collections](/docs/reference/collections). |
 | `triggers` | Effects that happen by themselves the first time a condition holds. See [Triggers](/docs/reference/triggers). |
 | `inputs` | What the player can type or pick, and the kv key each one writes. See [Inputs](/docs/reference/inputs). |
 | `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
 | `custom` | The game's [custom functions](/docs/reference/custom): conditions, effects, values and panels that content calls by name. |
 | `actions` | The game's own buttons, such as waiting or checking a map. Each is an [`ActionDef`](/docs/reference/actions#actiondef). They're offered while no scene is open, after every [plugin's buttons](/docs/reference/plugins#buttons) (the [places plugin](/docs/plugins/places#the-buttons)'s room actions among them). They're also hidden while a [lock](/docs/reference/locks) that denies `'*'` is on. The engine adds no button of its own, so a game with no `actions` has none. |
-| `packs` | The ids of the packs the game was loaded from, in order. [`loadGame`](/docs/reference/loader#loadgame) sets it. A save records them, and a save made with a mod this game lacks names it in [`missingPacks`](/docs/reference/saves#loadedsave). |
+| `packs` | The ids of the packs (such as mods) the game was loaded with, in order, and nothing for its own content. [`loadGame`](/docs/reference/loader#loadgame) sets it. A save records them, and a save made with a mod this game lacks names it in [`missingPacks`](/docs/reference/saves#loadedsave). |
 | `rules` | The game's own logic. See [Rules and hooks](/docs/reference/rules). |
 | `plugins` | The [plugins](/docs/reference/plugins) the game is built with, in the order their hooks run. You choose them when you build the game, on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). |
-| `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging `base.data` and every pack's `data` by entry id. |
-| `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/docs/reference/audio#gameaudio). `loadGame` merges the base's and every pack's by id. Leave it out and the game is silent. See [Audio](/docs/reference/audio). |
+| `data` | Content for the plugins, by plugin id and then list name, as in `data.quests.quests`. `loadGame` sets it, merging `base.data`, the content's and every pack's `data` by entry id. |
+| `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/docs/reference/audio#gameaudio). `loadGame` merges the base's, the content's and every pack's by id. Leave it out and the game is silent. See [Audio](/docs/reference/audio). |
 | `media` | The game's pools of pictures and videos, which content picks from by tags: `{ pools: { door: [{ src: 'door/red-night.jpg', tags: ['red', 'night'] }] } }`. A [`GameMedia`](/docs/reference/media#gamemedia). `loadGame` merges the base's and every pack's pools by id. Leave it out and there are no pools. See [Media](/docs/reference/media). |
 | `transitions` | How screens come and go when they don't say: `default`, a [`Transition`](/docs/reference/transitions#transition) or a name, for every scene and room, and `names` for transitions of the game's own beyond the built-in ones. Leave it out and screens swap at once. A key of the game only; packs can't set it. See [Transitions](/docs/reference/transitions#gametransitions). |
 
@@ -131,21 +131,21 @@ const { game } = loadGame([letter], {
 
 - **The runner refuses.** [`runner.save`](/docs/reference/runner#the-runners-members) fails with the reason, and an [autosave](/docs/reference/runner#autosaveoptions) that's due is skipped. Loading is never refused.
 - **The view says so first.** [`view.saving`](/docs/reference/view#saving) is `{ allowed, reason, visible }`, so a UI can grey out its Save button with the reason, or leave it off while an entry with `hide` holds. The React UI's [saves menu](/docs/react/components#savesmenu) does this.
-- **It's the game's, not a pack's.** A pack can't set it.
+- **It's the game's, not the content's.** Content and packs can't set it.
 - The [content checker](/docs/reference/checks) checks each `when` as it checks any condition, and reports problems at `saveable`.
 
 **A game with no places.** Without the [places plugin](/docs/plugins/places) there's no room to stand in and no exits, and with the [cast](/docs/plugins/cast) nobody is ever in the room. A linear story passes only `introScene`, and the screen is whatever scene is open. [The Letter](/docs/guide/shapes) works this way.
 
-This is the showcase's base, trimmed. The content comes from the game's packs through [`loadGame`](/docs/reference/loader#loadgame):
+This is the showcase's base, trimmed. The content comes from the game's files through [`loadGame`](/docs/reference/loader#loadgame):
 
 ```ts
 import { loadGame } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { packs } from './packs.ts'
+import { content } from './content.ts'
 
-const { game, problems } = loadGame(packs, {
+const { game, problems } = loadGame(content, {
   id: 'small-town',
   title: 'Small Town',
   introScene: 'intro',
@@ -155,7 +155,7 @@ const { game, problems } = loadGame(packs, {
 })
 ```
 
-The town's locations and people are the plugins' content, in `data.places.locations` and `data.cast.characters`, and `loadGame` fills in `data` from the packs. To build a game from several packs, with mods layered on top, see [Packs and loading](/docs/reference/loader).
+The town's locations and people are the plugins' content, in `data.places.locations` and `data.cast.characters`, and `loadGame` fills in `data` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
 
 ## ItemDef
 

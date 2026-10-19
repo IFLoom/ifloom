@@ -106,7 +106,7 @@ type GameAudio = {
 | `mute` | A `ui` [setting](/docs/reference/settings) of kind `toggle` that mutes everything while it's on. |
 | `default` | What each background channel plays when nothing else says, by channel. |
 
-A [pack](/docs/reference/loader#pack) can carry `audio` too. A later pack's track or channel replaces an earlier one's by id (a channel is merged field by field), and its `mute` and `default` entries win.
+Your [content](/docs/reference/loader#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute` and `default` entries win.
 
 ## TrackDef
 

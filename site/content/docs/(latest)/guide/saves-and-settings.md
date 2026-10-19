@@ -79,12 +79,10 @@ await runner.save(nextSlot(listing))
 
 ## Settings
 
-Settings are what the player can change, such as whether hints are shown or how large the text is. The engine has none of its own, so a pack declares each one:
+Settings are what the player can change, such as whether hints are shown or how large the text is. The engine has none of its own, so your content declares each one:
 
 ```ts
-const story: Pack = {
-  id: 'story',
-  schema: SCHEMA,
+const story: Content = {
   settings: [
     { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
     {

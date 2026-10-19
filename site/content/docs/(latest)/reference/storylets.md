@@ -66,7 +66,7 @@ So:
 - [`replay`](/docs/reference/runner#replay) runs the same commands on the same start and draws the same scenes, because the draw is part of the command.
 
 **Gotchas.**
-- The draw walks the eligible scenes in the order they sit in `game.scenes`. A pack or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
+- The draw walks the eligible scenes in the order they sit in `game.scenes`. Content or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
 - The count is per set, not per place. Two activities that both draw from `'cafe'` share one count.
 - The engine writes `storylet:` keys itself, so don't use that prefix for your own. See [the kv store](/docs/reference/state#kv).
 
@@ -130,7 +130,7 @@ const maybeSomething: CustomEffect = (state, args) =>
 
 ## Adding to a set
 
-A set has no list of members. Every scene that names it in `drawnFrom` is a member, so a [pack](/docs/reference/loader#pack) or a [mod](/docs/reference/mods) adds one by declaring a scene:
+A set has no list of members. Every scene that names it in `drawnFrom` is a member, so another file of your content or a [mod](/docs/reference/mods) adds one by declaring a scene:
 
 ```ts
 import type { Pack } from '@ifloom/engine'
@@ -162,7 +162,7 @@ The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while
 // the cafe location's actions
 { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
 
-// the pack's activities
+// the content's activities
 { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
 ```
 

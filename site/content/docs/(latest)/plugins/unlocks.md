@@ -50,10 +50,10 @@ Builds the plugin, with the id `unlocks`. A new game has nothing unlocked.
 
 ## Writing unlocks
 
-Unlocks are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `unlocks.unlocks`. This is the showcase's one:
+Unlocks are content. They go in your content's [`data`](/docs/reference/loader#content) under `unlocks.unlocks`. This is the showcase's one:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import type { UnlockDef } from '@ifloom/plugin-unlocks'
 
 const supporter: UnlockDef = {
@@ -64,7 +64,7 @@ const supporter: UnlockDef = {
   hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
 }
 
-const town: Pack = { id: 'town', schema: SCHEMA, data: { unlocks: { unlocks: [supporter] } } }
+const town: Content = { data: { unlocks: { unlocks: [supporter] } } }
 ```
 
 ### UnlockDef
@@ -106,7 +106,7 @@ Paste the `hash` it prints into the unlock. The hash is salted with the game's i
 
 ### Locked content
 
-Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per unlock, exporting a pack (or a list of packs) as `default`. It must be data, as a [mod](/docs/reference/mods) is: scenes, prose, plugin content, no functions. `ifloom build` encrypts it under the unlock's code and puts it in the page, and refuses any import of it from your code. [The CLI](/docs/cli#locked-content) has the details.
+Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per unlock, exporting a [pack](/docs/reference/loader#pack) (or a list of packs) as `default`. It's a pack rather than content because it's laid over the game, like a mod: it has an `id`, which saves record, and the `schema` it was written for. It must be data, as a [mod](/docs/reference/mods) is: scenes, prose, plugin content, no functions. `ifloom build` encrypts it under the unlock's code and puts it in the page, and refuses any import of it from your code. [The CLI](/docs/cli#locked-content) has the details.
 
 ```ts
 // src/unlocks/supporter.ts
@@ -138,7 +138,7 @@ export default supporter
 
 The game's own content can't point into a locked pack without a problem when the pack isn't there. Reach locked content from inside it, as this storylet does by joining a deck the base game draws from, or only behind `unlocks/has`. `ifloom check` [lists](/docs/cli#locked-content-in-a-check) any reference into locked content it finds.
 
-Your game module takes the packs as `unlocked`, and loads them after its own:
+Your game module takes the packs as `unlocked`, and passes them to `loadGame` as `packs`, over its content:
 
 ```ts
 // src/game.ts
@@ -147,7 +147,7 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 import { town } from './town.ts'
 
 export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([town, ...unlocked], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] })
+  return loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] }, { packs: unlocked })
 }
 
 export default build
@@ -164,7 +164,7 @@ sequenceDiagram
   participant Runner
   Page->>Profile: unlockedPacks(id, profile)
   Profile-->>Page: proofs of codes entered before
-  Page->>Page: decrypt the page's locked content, loadGame([...packs, ...unlocked])
+  Page->>Page: decrypt the page's locked content, loadGame(content, base, { packs: unlocked })
   Page->>Runner: startUnlocks(runner)
   Note over Runner: records each remembered unlock in the game in play
   Page->>Runner: codes.enter(code)
@@ -279,7 +279,7 @@ function unlockedPacks(
 ): Promise<{ packs: Pack[]; problems: string[] }>
 ```
 
-The content of every unlock the profile remembers a code for, decrypted and upgraded to this engine's schema with [`upgradePack`](/docs/reference/loader#upgradepack), ready to load after the game's own packs. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
+The content of every unlock the profile remembers a code for, decrypted and upgraded to this engine's schema with [`upgradePack`](/docs/reference/loader#upgradepack), ready to pass to `loadGame` as `packs`, over the game's content. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
 
 Call it before you build the game, with the game's id and its profile. [`profile`](/docs/reference/profile#profile) reads only the id, so `profile({ id: 'small-town' }, driver)` opens it before the game exists. Use the same driver the runner will use.
 
@@ -506,7 +506,7 @@ function unlockDefs(game: Game): UnlockDef[]
 | `lockContent` | Encrypts packs under a code. Throws if the code isn't the unlock's, or a pack has a function in it. |
 | `contentScript` | The `<script>` the build puts in the page's head, setting `window.__ifloomUnlocks`. |
 | `lockedContent` | What that script set, by unlock, or `{}` in a page without it. |
-| `unlockDefs` | The game's unlocks, merged from its packs: `game.data.unlocks.unlocks`. |
+| `unlockDefs` | The game's unlocks, merged from its content and packs: `game.data.unlocks.unlocks`. |
 
 ### LockedContent
 
@@ -518,7 +518,7 @@ One unlock's content as the page holds it: the game's and unlock's ids, the nonc
 
 ## Checks
 
-When the game loads, the plugin reports these against the pack each unlock came from, with `where` as `unlocks <id>`:
+When the game loads, the plugin reports these against the content or pack each unlock came from, with `where` as `unlocks <id>`:
 
 - An unlock with an empty label (`has no label`).
 - A hash that isn't 64 hex digits (`its hash isn't one ifloom unlock-hash printed (64 hex digits)`), such as a code pasted in by mistake.

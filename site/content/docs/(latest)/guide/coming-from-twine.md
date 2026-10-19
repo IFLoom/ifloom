@@ -27,11 +27,9 @@ The same scene in IFLoom, in one file to keep it short:
 
 ```ts
 // src/game.ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 
-const cafe: Pack = {
-  id: 'cafe',
-  schema: SCHEMA,
+const cafe: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins' }],
   scenes: [
     {
@@ -69,14 +67,14 @@ It's longer, and it does a few things the passage doesn't:
 
 ### Where passages go
 
-A Twine story is one file of passages. An IFLoom game is a few files, each a [pack](/docs/reference/loader#pack), in the layout every template starts with (see [Organising a game](/docs/guide/organising)):
+A Twine story is one file of passages. An IFLoom game is a few files, each exporting [`Content`](/docs/reference/loader#content), in the layout every template starts with (see [Organising a game](/docs/guide/organising)):
 
 | In Twine | In an IFLoom game |
 |---|---|
 | `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `items.ts`, `cast.ts` for the people |
 | The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
 | Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the rules and the custom functions content calls by name |
-| The story's title and its start passage | `src/game.ts`, which lists the packs for `loadGame` and holds the title and `introScene` |
+| The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title and `introScene` |
 
 So the café above would be `src/story/cafe.ts`, with its scenes and prose, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
@@ -202,7 +200,7 @@ Both are choices. A choice with a `scene` effect moves on, and one without stays
 A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open, and each sends one [command](/docs/reference/commands). When the button does something with a price, it usually runs an [activity](/docs/reference/actions#activitydef), which can refuse with a reason:
 
 ```ts
-// in the pack
+// in the content
 activities: [
   {
     id: 'coffee',
@@ -290,7 +288,7 @@ A set of widgets that keeps its own state, such as a loyalty card or an inventor
 <<set $visits to 0>>
 ```
 
-There's no init passage. You declare what the game keeps, and each declaration carries its starting value. What every part of the story uses goes in `src/world/`, a pack for each kind:
+There's no init passage. You declare what the game keeps, and each declaration carries its starting value. What every part of the story uses goes in `src/world/`, a file for each kind:
 
 ```ts
 // src/world/stats.ts and src/world/items.ts, shown together
@@ -557,7 +555,7 @@ IFLoom has no runtime randomness. Every draw is worked out from the save's seed 
 
 ```ts
 body: [{ text: 'cafe' }, { variants: 'cafe.chatter' }],
-// in the pack
+// in the content
 variants: { 'cafe.chatter': ['cafe.chatter/rain', 'cafe.chatter/market', 'cafe.chatter/cat'] },
 ```
 
@@ -700,10 +698,10 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 ## What's different
 
 - **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is a custom function.
-- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files and [packs](/docs/reference/loader#pack) as you like.
+- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
 - **State is typed and declared.** Stats, items, kinds, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.
-- **Not into TypeScript?** The [editor](/docs/guide/editor) at `/editor` lets you write scenes, choices, stats and items from forms in your browser and play them as you go. When you're done, you export the pack as TypeScript or JSON and drop it into a game.
+- **Not into TypeScript?** The [editor](/docs/guide/editor) at `/editor` lets you write scenes, choices, stats and items from forms in your browser and play them as you go. When you're done, you export it as a TypeScript file and drop it into a game's `src/story/`.
 
 ## Where next
 

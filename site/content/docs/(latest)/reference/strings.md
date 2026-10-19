@@ -153,26 +153,26 @@ strings?: Record<string, string>
 
 Give only the lines you want to change. Every other key keeps its English.
 
-### In a pack
+### In your content
 
-A [`Pack`](/docs/reference/loader#pack) can carry `strings` too. [`loadGame`](/docs/reference/loader#loadgame) starts from the base's `strings`, then lays each pack's over them in order, so a later pack's line wins:
+Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGame`](/docs/reference/loader#loadgame) starts from the base's `strings` and lays your content's over them. Each key is declared once across your content:
 
 ```ts
-import { loadGame, SCHEMA, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 
-const core: Pack = { id: 'core', schema: SCHEMA, data: { places: { locations }, cast: { characters } }, /* ... */ }
-const { game } = loadGame([core], { ...base, strings: { finishFirst: 'Not yet. Finish this first.' } })
+const town: Content = { strings: { finishFirst: 'Not yet. Finish this first.' }, data: { places: { locations }, cast: { characters } } /* ... */ }
+const { game } = loadGame([town], base)
 ```
 
 ### As a translation mod
 
-A translation is a pack with nothing in it but `strings`, plus [`prose`](/docs/reference/prose) for the story itself. Put it after the game's packs:
+A translation is a [pack](/docs/reference/loader#pack) with nothing in it but `strings`, plus [`prose`](/docs/reference/prose) for the story itself. It goes over the game's content, so its lines win, and a later pack wins over an earlier one:
 
 ```ts
 import { loadGame, say, SCHEMA, type Pack } from '@ifloom/engine'
 
 const dutch: Pack = {
-  id: 'nl',
+  id: 'mod:nl',
   schema: SCHEMA,
   strings: {
     finishFirst: 'Eerst dit afmaken.',
@@ -182,11 +182,11 @@ const dutch: Pack = {
     'quests/notDoing': 'Daar ben je niet mee bezig.',
   },
 }
-const fixes: Pack = { id: 'nl-fixes', schema: SCHEMA, strings: { 'calendar/tooEarly': 'Nog te vroeg.' } }
+const fixes: Pack = { id: 'mod:nl-fixes', schema: SCHEMA, strings: { finishFirst: 'Maak dit eerst af.' } }
 
-const { game } = loadGame([core, dutch, fixes], base)
-say(game, 'finishFirst') // 'Eerst dit afmaken.'
-say(game, 'calendar/tooEarly')  // 'Nog te vroeg.' (the later pack wins over the earlier one and the base)
+const { game } = loadGame([town], base, { packs: [dutch, fixes] })
+say(game, 'turnLabel', { turn: 3 }) // 'Beurt 3'
+say(game, 'finishFirst') // 'Maak dit eerst af.' (the later pack wins over the earlier one and the content)
 ```
 
 You override a plugin's lines the same way, by the plugin's id, a `/` and the line's name, as in `'quests/notDoing'`. Each [first-party plugin](/docs/plugins) lists its keys under Strings on its page.
@@ -230,7 +230,7 @@ function say(game: Game | undefined, key: StringKey | (string & {}), vars?: Reco
 
 Returns the words for a key. It looks in this order and takes the first it finds:
 
-1. the game's `strings[key]`, from the base and its packs
+1. the game's `strings[key]`, from the base, its content and its packs
 2. for a `plugin/name` key, the plugin's own default, its `strings[name]`
 3. the engine's `STRINGS`
 4. the key itself
@@ -275,7 +275,7 @@ const kites = definePlugin({
 say(game, 'kites/noWind', { kite: 'the red one' }) // 'There is no wind for the red one.'
 ```
 
-A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game or a pack. A plugin can also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and a game's override covers both.
+A game overrides it as `strings: { 'kites/noWind': 'Flat calm.' }`, in the game's content or a pack. A plugin can also say an engine key, such as `say(game, 'haveNone', { item })`, so its refusals match the engine's and a game's override covers both.
 
 **Gotcha.** The plugin's defaults are only found when the game has the plugin. Without it, `say(game, 'kites/noWind')` returns `'kites/noWind'`.
 

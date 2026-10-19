@@ -16,7 +16,7 @@ Every plugin on this page was read by a person before it went on the list. There
 - **It needs no UI of its own.** A plugin gives the game state, conditions, effects, commands and a [view](/docs/reference/plugins#the-view), and any UI draws that view. A plugin can ship a component for a particular UI as an extra, but the plugin has to work in a game with no UI package at all, such as one drawn with the `vanilla` template.
 - **`@ifloom/engine` is a peer dependency**, named with `^` and a version, so a game keeps one copy of the engine.
 - **It has tests** that play it in a small game, and they pass.
-- **It follows the content rules.** Content it reads lives in a pack's `data`, so a mod can add to it. Its conditions, effects and commands are named the way the [naming rules](/docs/reference/plugins#naming) say.
+- **It follows the content rules.** Content it reads lives in your content's `data`, so a mod can add to it. Its conditions, effects and commands are named the way the [naming rules](/docs/reference/plugins#naming) say.
 - **It has an open-source licence**, such as MIT, in its repository and its `package.json`.
 - **It's on npm**, with a README that says what it adds and how to use it.
 

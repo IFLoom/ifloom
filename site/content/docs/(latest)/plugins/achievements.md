@@ -43,10 +43,10 @@ Builds the plugin, with the id `achievements`. Nothing is earned in a new game.
 
 ## Writing achievements
 
-Achievements are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `achievements.achievements`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
+Achievements are content. They go in your content's [`data`](/docs/reference/loader#content) under `achievements.achievements`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { type AchievementDef } from '@ifloom/plugin-achievements'
 
 const nestEgg: AchievementDef = {
@@ -64,9 +64,7 @@ const river: AchievementDef = {
   when: { seen: 'ava.river' },
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999 }],
   data: { achievements: { achievements: [nestEgg, river] } },
 }
@@ -245,7 +243,7 @@ const grantAchievement: (id: string) => EffectRef
 function achievementDefs(game: Game): AchievementDef[]
 ```
 
-The game's achievements, merged from its packs: `game.data.achievements.achievements`.
+The game's achievements, merged from its content and packs: `game.data.achievements.achievements`.
 
 ### achievementsView
 
@@ -280,7 +278,7 @@ A progress value read now. Anything that isn't a finite number reads 0.
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each achievement came from, with `where` as `achievements <id>`:
+When the game loads, the plugin reports these problems against the content or pack each achievement came from, with `where` as `achievements <id>`:
 
 - Anything `when` names that the game doesn't have (`when: unknown item "…"`).
 - A progress value naming a stat or custom value the game doesn't have (`progress: unknown stat "…"`).

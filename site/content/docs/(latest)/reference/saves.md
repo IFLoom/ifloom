@@ -251,7 +251,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
 | `player` | What [`game.saveName`](/docs/reference/game#savename) returns for the state, or `null` when the game has no `saveName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
-| `packs` | The ids of the packs the game was loaded from ([`game.packs`](/docs/reference/game)). |
+| `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
 | `gameVersion` | The game's own [version](#the-games-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
@@ -269,7 +269,7 @@ type LoadedSave = {
 
 A save read back: its details, and the state carried forward to the current version.
 
-`missingPacks` names the mods (packs whose id starts with `mod:`) the save was made with that this game wasn't loaded with, such as one the player has since turned off or removed. The game's own packs aren't listed, so renaming or splitting your files never warns players. The save still loads, and your game decides whether to warn, refuse or carry on. A state that refers to scenes, items or storylines from a missing mod may not play as it did.
+`missingPacks` names the mods (packs whose id starts with `mod:`) the save was made with that this game wasn't loaded with, such as one the player has since turned off or removed. Unlocked supporter content isn't listed either, since it comes back when the player enters the code. Your own content isn't recorded at all, so renaming or splitting your files never warns players. The save still loads, and your game decides whether to warn, refuse or carry on. A state that refers to scenes, items or storylines from a missing mod may not play as it did.
 
 `missingPlugins` names [plugins](/docs/reference/plugins) the save was made with that this game doesn't have. The save still loads, and the plugin's state is kept in `state.plugins`, unused, so it comes back if a later build adds the plugin again.
 

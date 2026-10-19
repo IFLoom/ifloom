@@ -21,11 +21,9 @@ import { anyOf, bindCurrent, entitiesOf, entityOf, kindById, parseRef, writeEnti
 The Corner Café (`examples/cafe` in the IFLoom repository) keeps staff and dishes. The player has coins and a reputation. Each member of staff has a skill, a morale and a wage, and each dish has a price and a quality.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const corner: Pack = {
-  id: 'corner',
-  schema: SCHEMA,
+const corner: Content = {
   kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }, { id: 'dish', label: 'Dish', plural: 'Menu' }],
   stats: [
     { id: 'coins', label: 'Coins', start: 120, min: -9999, max: 99999, format: '£{n}', spendable: true },
@@ -81,7 +79,7 @@ type KindDef = {
 | `label` | | What the player reads for one, such as "Member of staff". |
 | `plural` | `label` | What the player reads for more than one, such as "Staff". The [React UI](/docs/react/components#entitytable) heads each kind's table with it. |
 
-Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in a [pack](/docs/reference/loader#pack)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id, so a game can redeclare a plugin's kind to reword it.
+Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in your [content](/docs/reference/loader#content)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id, so a game can redeclare a plugin's kind to reword it.
 
 ## EntityDef
 
@@ -105,9 +103,9 @@ One entity that exists from the start of the game.
 | `stats` | Starting values for any of its stats that differ from each stat's `start`. Only stats declared `of` its kind. |
 | `kv` | Its own [kv store](/docs/reference/state#kv) at the start. Read a key with `{ kv, of }` and set it with the `kv` effect's `of`. |
 
-Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in packs. They merge by kind and id (`'staff:ana'`), the base's first. A later pack's entity replaces an earlier one with the same kind and id, whole.
+Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in your content. They merge by kind and id (`'staff:ana'`), the base's first. A pack's entity replaces one with the same kind and id, whole.
 
-A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
+A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the content and packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
 
 ## EntityState
 

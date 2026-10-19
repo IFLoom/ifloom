@@ -47,10 +47,10 @@ Builds the plugin, with the id `jobs`. The player holds no job in a new game.
 
 ## Writing jobs
 
-Jobs are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `jobs.jobs`, and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
+Jobs are content. They go in your content's [`data`](/docs/reference/loader#content) under `jobs.jobs`, and are merged by id, so a mod can add a job or replace one. This is the showcase's café job:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { applyFor, work, type JobDef } from '@ifloom/plugin-jobs'
 
 const weekend: JobDef = {
@@ -69,9 +69,7 @@ const weekend: JobDef = {
   fire: { missed: 2 },
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   data: { jobs: { jobs: [weekend] } },
 }
 
@@ -354,7 +352,7 @@ const openJobs: (jobs?: string[]) => Effect
 function jobDefs(game: Game): JobDef[]
 ```
 
-The game's jobs, merged from its packs: `game.data.jobs.jobs`.
+The game's jobs, merged from its content and packs: `game.data.jobs.jobs`.
 
 ### jobsView
 
@@ -366,7 +364,7 @@ The `JobsView` for a state. The plugin's view is `jobsView(state, context)`.
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each job came from, with `where` as `jobs <id>`:
+When the game loads, the plugin reports these problems against the content or pack each job came from, with `where` as `jobs <id>`:
 
 - No ranks (`has no ranks`), two ranks with one id, or `requires` on the first rank.
 - An unknown stat in the shift's cost or a rank's pay (`rank barista: unknown stat "gold"`).

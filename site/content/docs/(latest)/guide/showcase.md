@@ -27,11 +27,11 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 
 | File | What's in it |
 |---|---|
-| `src/world/` | What the whole town shares, one [pack](/docs/reference/loader#pack) per kind: `stats.ts`, `items.ts` (with the clothes), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
-| `src/story/` | The story, one pack per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its activities, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
+| `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `items.ts` (with the clothes), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `activities.ts` (waiting and the camera), `achievements.ts` and `cheats.ts`. |
+| `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its activities, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
 | `src/rules.ts` | The only code in the content: the rules and locks, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
-| `src/game.ts` | The game put together: the packs in order, the plugins, the phone and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
+| `src/game.ts` | The game put together: the content in order, the plugins, the phone and the strings it rewords. It also exports the `start` and `probes` that the playtest and the snapshot use. |
 | `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
 | `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
 | `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/react)'s `GameShell`, its title screen, its mod manager and its code box. |
@@ -65,11 +65,11 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Mods
 
-`src/main.tsx` and `mods/fog-season.json`. The page keeps the player's [mods](/docs/reference/mods) in IndexedDB, with `mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))`. Before anything else, with a top-level `await`, it passes the packs of the mods that are turned on to `smallTown({ mods })`, which loads them after the town's own pack.
+`src/main.tsx` and `mods/fog-season.json`. The page keeps the player's [mods](/docs/reference/mods) in IndexedDB, with `mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))`. Before anything else, with a top-level `await`, it passes the packs of the mods that are turned on to `smallTown({ mods })`, which loads them over the town's content.
 
 `GameShell` gets `mods={{ store: modStore, problems, onChange: () => location.reload() }}`, so the player's menu has a Mods dialog. There the player can add a file, turn a mod off or remove it, then restart with the mods they've chosen.
 
-`mods/fog-season.json` is a mod to try it with. Its pack adds a fourth line, a fog, to the high street's `street.weather` variants, and rewrites `place.park`. A later pack's variants are appended, and its prose replaces the earlier pack's. Add it from the Mods dialog and restart. The test `takes the example mod: fog in the weather, a quieter park, and no problems` loads it through the store, checks both changes, and checks that the loader finds nothing wrong.
+`mods/fog-season.json` is a mod to try it with. Its pack adds a fourth line, a fog, to the high street's `street.weather` variants, and rewrites `place.park`. A pack's variants are appended, and its prose replaces the town's. Add it from the Mods dialog and restart. The test `takes the example mod: fog in the weather, a quieter park, and no problems` loads it through the store, checks both changes, and checks that the loader finds nothing wrong.
 
 ### Its own art
 
@@ -111,7 +111,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 An activity that belongs somewhere is blocked everywhere else with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
 
-The packs in `story/` pass time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
+The files in `story/` pass time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
 - Wait a while is `effects: [pass(1)]`.
 - A shift at the office passes two periods with `pass(2)`, and a jog passes one.
@@ -147,7 +147,7 @@ The layer has a `when`, and the hotspot names the layer, so both go when Ava doe
 
 ### People and schedules
 
-`world/cast.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, in that pack's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
+`world/cast.ts`, the `characters`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, in that file's `data.cast.characters`. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
 
 Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Monday to Saturday, mornings and afternoons:
 
@@ -161,7 +161,7 @@ The café's body has a line that only shows while Ava is there, `{ text: 'place.
 
 ### Data scenes, variants and once-a-turn choices
 
-`story/ava.ts`, the scene `ava.hi`, and its words in `story/ava.prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the pack's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
+`story/ava.ts`, the scene `ava.hi`, and its words in `story/ava.prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the file's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
 
 Its [choices](/docs/reference/scenes#choice) are:
 
@@ -177,7 +177,7 @@ Her small talk comes straight after that line, so each of the three lines is a n
 
 ### Place variants
 
-`story/high-street.ts`, the `high-street` place. Its body is the street's line, then `{ variants: 'street.weather' }`, which is one of three lines about the weather from the pack's `variants`, like Ava's small talk. A room has no choices to record a draw, so the line is picked from the save's seed and the turn alone. It's dealt afresh each turn (each day, here), and it's the same every time the player looks in that day. Two days running can deal the same line. See the [`variants` block](/docs/reference/scenes#block).
+`story/high-street.ts`, the `high-street` place. Its body is the street's line, then `{ variants: 'street.weather' }`, which is one of three lines about the weather from the file's `variants`, like Ava's small talk. A room has no choices to record a draw, so the line is picked from the save's seed and the turn alone. It's dealt afresh each turn (each day, here), and it's the same every time the player looks in that day. Two days running can deal the same line. See the [`variants` block](/docs/reference/scenes#block).
 
 ### Sit a while at the café
 

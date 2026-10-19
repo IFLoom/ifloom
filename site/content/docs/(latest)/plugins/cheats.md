@@ -44,10 +44,10 @@ Builds the plugin, with the id `cheats`. A new game has used no cheats.
 
 ## Writing cheats
 
-Cheats are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `cheats.cheats`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
+Cheats are content. They go in your content's [`data`](/docs/reference/loader#content) under `cheats.cheats`, and are merged by id, so a mod can add one or replace one. These are the showcase's two:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import type { CheatDef } from '@ifloom/plugin-cheats'
 
 const coins: CheatDef = {
@@ -66,9 +66,7 @@ const energy: CheatDef = {
   effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   data: { cheats: { cheats: [coins, energy] } },
 }
 ```
@@ -345,7 +343,7 @@ const cheatUsed: (cheat?: string) => Condition
 function cheatDefs(game: Game): CheatDef[]
 ```
 
-The game's cheats, merged from its packs: `game.data.cheats.cheats`.
+The game's cheats, merged from its content and packs: `game.data.cheats.cheats`.
 
 ### cheatsView
 
@@ -357,7 +355,7 @@ The plugin's view, as its `view` provider builds it. You need it only inside a p
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each cheat came from, with `where` as `cheats <id>`:
+When the game loads, the plugin reports these problems against the content or pack each cheat came from, with `where` as `cheats <id>`:
 
 - Anything a cheat's effects or `blocked` conditions name that the game doesn't have (`unknown stat "…"`).
 - A cheat with an empty label (`has no label`) or no effects (`has no effects`).

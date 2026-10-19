@@ -28,7 +28,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `wardrobe()` to the game's `plugins`, and put the slots and the clothes in a pack. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `wardrobe()` to the game's `plugins`, and put the slots and the clothes in your content. [Adding one](/docs/plugins#adding-one) has the details.
 
 ## wardrobe
 
@@ -36,7 +36,7 @@ Then add `wardrobe()` to the game's `plugins`, and put the slots and the clothes
 function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView>
 ```
 
-Builds the plugin, with the id `wardrobe`. Call it once, when you build the game. It takes no options: the slots and the clothes are content, in a pack's `data.wardrobe`, so a mod can add either. This is the [showcase](/docs/guide/showcase)'s, where the player starts in a raincoat:
+Builds the plugin, with the id `wardrobe`. Call it once, when you build the game. It takes no options: the slots and the clothes are content, in your content's `data.wardrobe`, so a mod can add either. This is the [showcase](/docs/guide/showcase)'s, where the player starts in a raincoat:
 
 ```ts
 data: {
@@ -62,7 +62,7 @@ type WardrobeSlot = { id: string; label: string; start?: string }
 | `label` | What the player reads. |
 | `start` | What the player has on in it in a new game, an item id. Empty if left out. The player must start owning the item (see [Checks](#checks)). |
 
-Slots are content. List them in a pack's `data.wardrobe.slots`, in the order the UI lists them. They're merged by id, so a mod can add a slot.
+Slots are content. List them in your content's `data.wardrobe.slots`, in the order the UI lists them. They're merged by id, so a mod can add a slot.
 
 ### slotsOf
 
@@ -70,11 +70,11 @@ Slots are content. List them in a pack's `data.wardrobe.slots`, in the order the
 function slotsOf(game: Game): WardrobeSlot[]
 ```
 
-The game's slots, merged from its packs, in order.
+The game's slots, merged from its content and packs, in order.
 
 ## Writing clothes
 
-Clothes are content. List them in a pack's [`data`](/docs/reference/loader#pack) under `wardrobe.clothes`. They're merged by id as scenes are, so a mod can add clothing or move a piece to another slot.
+Clothes are content. List them in your content's [`data`](/docs/reference/loader#content) under `wardrobe.clothes`. They're merged by id as scenes are, so a mod can add clothing or move a piece to another slot.
 
 ### ClothingDef
 
@@ -90,11 +90,9 @@ type ClothingDef = { id: string; slot: string }
 The showcase's clothes are a raincoat and a scarf:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   items: [
     { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
     { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },
@@ -121,7 +119,7 @@ The raincoat has `start: 1`, so the player starts with one, which the coat slot'
 A cut-down Small Town. The player starts in the raincoat, which people in the café notice. A scarf is for sale on the high street, and the bench by the river is too cold without one. The map comes from the [places](/docs/plugins/places) plugin, and there's no calendar, so the café never closes.
 
 ```ts
-import { SCHEMA, need, type Pack } from '@ifloom/engine'
+import { need, type Content } from '@ifloom/engine'
 import { onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { wearing } from '@ifloom/plugin-wardrobe'
 
@@ -129,9 +127,7 @@ const act = (id: string, label: string) => ({ id, label, command: { type: 'activ
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
   items: [
     { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
@@ -173,7 +169,7 @@ const town: Pack = {
 }
 ```
 
-Build the game and play it. `town` is the pack above:
+Build the game and play it. `town` is the content above:
 
 ```ts
 import { apply, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
@@ -324,7 +320,7 @@ const takeOff: (slot: string) => CommandRef
 function clothes(game: Game): ClothingDef[]
 ```
 
-The game's clothes, merged from its packs: `game.data.wardrobe.clothes`.
+The game's clothes, merged from its content and packs: `game.data.wardrobe.clothes`.
 
 ## Checks
 
@@ -335,7 +331,7 @@ When the game loads, the plugin reports:
 - A slot's `start` that isn't clothing for that slot (`slots <slot>`, `starts with "…", which is not clothing for this slot`).
 - A slot's `start` the player doesn't start with (`slots <slot>`, `starts with "…", which the player does not start with`).
 
-Each problem is pinned on the pack that brought the entry. A `wardrobe/wearing` condition or a `wardrobe/wear` command naming an item the game doesn't have gives `unknown item "…"` where it's written.
+Each problem is pinned on the content or pack that brought the entry. A `wardrobe/wearing` condition or a `wardrobe/wear` command naming an item the game doesn't have gives `unknown item "…"` where it's written.
 
 ```text
 mod:winter · clothes gloves · unknown slot "hands"

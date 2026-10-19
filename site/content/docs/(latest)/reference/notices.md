@@ -13,11 +13,9 @@ import { NOTICES_KEPT, dismiss, notify, type Notice } from '@ifloom/engine'
 In the showcase, the rent goes out every Sunday and the player gets a notice about it. The notice has an id, so the next week's replaces it instead of stacking a second one.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   activities: [
     {
       id: 'pay-rent',

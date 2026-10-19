@@ -15,14 +15,12 @@ import type { OpenPanel } from '@ifloom/engine'
 The showcase's café has a Go to the counter action that opens the shop plugin's vendor, and Ava's scene has a choice that opens the job board. The newspaper in your pocket opens the board with only its own ads on it.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 import { openShop } from '@ifloom/plugin-shop'
 import { openJobs } from '@ifloom/plugin-jobs'
 
-export const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+export const town: Content = {
   activities: [
     // { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
     { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },

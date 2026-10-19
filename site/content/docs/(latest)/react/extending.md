@@ -37,7 +37,7 @@ const stall: DataScene = {
   ],
 }
 
-// on the pack or the game
+// in the content or the game
 custom: { panels: { stallPrices: () => ({ loaf: 4 }) } }
 ```
 
@@ -99,7 +99,7 @@ The component is a [`PluginSectionComponent`](/docs/react/components#pluginsecti
 This puts the [loyalty card plugin](/docs/reference/plugins#a-worked-example) in an app on the laptop:
 
 ```ts
-// In a pack, with devices() in the game's plugins.
+// In your content, with devices() in the game's plugins.
 data: {
   devices: {
     devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop', sidebar: true }],

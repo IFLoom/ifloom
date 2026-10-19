@@ -115,7 +115,7 @@ The random draw comes from the save's seed, so the same save always gets the sam
 
 ## Starting it
 
-Add the minigame to your pack, with the two closing scenes and something that starts it. In the park, that's an activity with the [`minigame`](/docs/reference/effects#minigame) effect, offered as one of the park's buttons:
+Add the minigame to your content, with the two closing scenes and something that starts it. In the park, that's an activity with the [`minigame`](/docs/reference/effects#minigame) effect, offered as one of the park's buttons:
 
 ```ts
 export const town: Pack = {

@@ -72,12 +72,12 @@ bun add @ifloom/plugin-quests
 Then add it to the game's `plugins`, on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). This is a cut-down version of the showcase's own setup:
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 
-declare const town: Pack // your content
+declare const town: Content // your content
 
 const { game, problems } = loadGame([town], {
   id: 'small-town',

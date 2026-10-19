@@ -38,12 +38,12 @@ Builds the plugin, with the id `generators`.
 
 ## Writing pools and templates
 
-Pools and templates are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `generators.pools` and `generators.templates`, and are merged by id, so a mod can add names to a pool by replacing it, or add a template.
+Pools and templates are content. They go in your content's [`data`](/docs/reference/loader#content) under `generators.pools` and `generators.templates`, and are merged by id, so a mod can add names to a pool by replacing it, or add a template.
 
 These are the showcase's park visitors. Each day the player first comes to the park, yesterday's go home and two new ones arrive:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 import { generate, type PoolDef, type TemplateDef } from '@ifloom/plugin-generators'
 
@@ -59,9 +59,7 @@ const visitor: TemplateDef = {
   kv: { with: { pool: 'company' }, laps: { between: [1, 3] } },
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   kinds: [{ id: 'visitor', label: 'Visitor', plural: 'Visitors' }],
   triggers: [
     {
@@ -164,11 +162,11 @@ function poolDefs(game: Game): PoolDef[]
 function templateDefs(game: Game): TemplateDef[]
 ```
 
-The game's pools and templates, merged from its packs.
+The game's pools and templates, merged from its content and packs.
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each pool or template came from:
+When the game loads, the plugin reports these problems against the content or pack each pool or template came from:
 
 - A template whose kind the game doesn't have (`templates visitor: unknown kind "…"`), or a stat the kind doesn't have (`no visitor stat named "…"`).
 - A template naming a pool the game doesn't have (`unknown pool "…"`).

@@ -11,11 +11,9 @@ import { inputById, inputRefusal, inputValue, type InputDef } from '@ifloom/engi
 ## A worked example
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   inputs: [
     // The showcase asks for this on moving day.
     { id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } },
@@ -76,7 +74,7 @@ type InputDef = {
 | `min`, `max` | Number only. The range, inclusive. Either may be left out. |
 | `options` | Choice only. The values on offer, each with what the player reads. |
 
-Declare inputs in [`Game.inputs`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `inputs`, or both. They merge by id with the base's first, so a later pack's input replaces an earlier one with the same id.
+Declare inputs in [`Game.inputs`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `inputs`, or both. They merge by id with the base's first, so a later pack's input replaces an earlier one with the same id.
 
 ## inputRefusal
 

@@ -782,7 +782,7 @@ A picture or a clip from the story, shown large over the page. [`Beat`](#beat) o
 Turn it off for the whole game with `viewer: false` in [`UiOptions`](#uioptions):
 
 ```ts
-mountGame(loadGame(packs, base), { viewer: false })
+mountGame(loadGame(content, base), { viewer: false })
 ```
 
 Replaceable as `MediaViewer` in [`components`](#components). Parts: `viewer` (the dialog), `viewer-close` and `dialog-overlay`.

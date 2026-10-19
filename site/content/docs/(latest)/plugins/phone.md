@@ -45,13 +45,13 @@ function phone(options?: PhoneOptions): PhoneKit
 Builds the phone. Call it once, when you build the game, and pass on all three parts of what it returns:
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import { phone } from '@ifloom/phone'
 
-declare const town: Pack // your content
+declare const town: Content // your content
 
 const kit = phone()
 
@@ -137,13 +137,13 @@ This is the [showcase](/docs/guide/showcase#the-phone-kit-with-its-own-apps)'s p
 The phone itself is one `phone()` call and one lock:
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { phone } from '@ifloom/phone'
 
-declare const town: Pack // the showcase's content, below
+declare const town: Content // the showcase's content, below
 
 const kit = phone({
   sidebar: true,
@@ -186,7 +186,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-The rest is content in the town's pack. These are the parts the phone uses (the full packs are in `examples/showcase/src/story/ava.ts` and `story/sam.ts`):
+The rest is the town's content. These are the parts the phone uses (the full files are in `examples/showcase/src/story/ava.ts` and `story/sam.ts`):
 
 ```ts
 import { type ActivityDef } from '@ifloom/engine'

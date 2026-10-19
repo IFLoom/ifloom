@@ -395,7 +395,7 @@ const custom: Custom = {
 effects: [{ custom: 'bumpVisits', with: { by: 1 } }, { kind: 'scene', scene: null }]
 ```
 
-A custom effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own custom effects, which runs in its turn too. `with` is passed as `args`, or `{}` when left out. A [pack](/docs/reference/loader#pack) can ship custom effects in its `custom.effects`. See [Custom functions](/docs/reference/custom) for the other kinds.
+A custom effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own custom effects, which runs in its turn too. `with` is passed as `args`, or `{}` when left out. Your [content](/docs/reference/loader#content) can ship custom effects in its `custom.effects`. See [Custom functions](/docs/reference/custom) for the other kinds.
 
 You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 

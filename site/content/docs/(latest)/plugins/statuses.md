@@ -40,12 +40,12 @@ Builds the plugin, with the id `statuses`. Nothing is active in a new game.
 
 ## Writing statuses
 
-Statuses are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `statuses.statuses`, and are merged by id, so a mod can add one or replace one.
+Statuses are content. They go in your content's [`data`](/docs/reference/loader#content) under `statuses.statuses`, and are merged by id, so a mod can add one or replace one.
 
 This is the showcase's coffee. It adds 10 to energy until the end of the next turn:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { applyStatus, type StatusDef } from '@ifloom/plugin-statuses'
 
 const caffeinated: StatusDef = {
@@ -56,9 +56,7 @@ const caffeinated: StatusDef = {
   modifiers: [{ stat: 'energy', add: 10 }],
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 80, spendable: true }],
   activities: [{ id: 'coffee', effects: [applyStatus('caffeinated')] }],
   data: { statuses: { statuses: [caffeinated] } },
@@ -255,7 +253,7 @@ const removeStatus: (id: string, runEnd?: boolean) => EffectRef
 function statusesOf(game: Game): StatusDef[]
 ```
 
-The game's statuses, merged from its packs: `game.data.statuses.statuses`.
+The game's statuses, merged from its content and packs: `game.data.statuses.statuses`.
 
 ### statusesView
 
@@ -267,7 +265,7 @@ The `StatusesView` for a record. The plugin's view is `statusesView(slice, game)
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each status came from, with `where` as `statuses <id>`:
+When the game loads, the plugin reports these problems against the content or pack each status came from, with `where` as `statuses <id>`:
 
 - `turns` below 1 (`turns must be 1 or more`).
 - `max` on a status that refreshes (`max only applies with reapply: "stack"`), or below 1.

@@ -120,7 +120,7 @@ npm test
 | File | What's in it |
 |---|---|
 | `package.json` | `@ifloom/engine` as a caret peer dependency, and as a dev dependency for the tests, with Vitest and TypeScript. The scripts are `test` (`vitest run`) and `typecheck` (`tsc --noEmit`). |
-| `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in a pack's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, a reference for the [content checker](/docs/reference/checks) and a check. Each has a typed helper, such as `markWeather('bread')`. |
+| `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in your content's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, a reference for the [content checker](/docs/reference/checks) and a check. Each has a typed helper, such as `markWeather('bread')`. |
 | `tests/weather.test.ts` | Vitest tests that play the plugin in a small game: the effect, the command and its refusal, the view, and the checker's problems. |
 | `tsconfig.json` | Complete, extending nothing. |
 | `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/plugins/community) needs before it lists it. |
@@ -241,7 +241,7 @@ A game with [locked content](#locked-content) is checked with it. `check` reads 
 
 - a file in `src/unlocks/` whose name isn't one of the game's unlocks
 - a code that's set (in the environment or a `.env` file) but doesn't match its unlock's hash
-- a module that left the packs out of its game
+- a module that left the packs out of its game. The message says to pass them to `loadGame` as `{ packs: unlocked }`.
 
 An unlock whose code isn't set gets a note, and doesn't count as a problem. The game without its unlocks is checked as well. What it lacks that the locked packs bring, such as a scene only they have, is listed after the problems as references into locked content, skipped. Make sure the game reaches each of those only behind `unlocks/has`.
 
@@ -258,7 +258,7 @@ Export the game as `default` or as `game`, in any of these shapes:
 
 - a [`Game`](/docs/reference/game#game).
 - what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are.
-- a function, called with no arguments, that returns either of those. A game with [locked content](#locked-content-in-a-check) is called with `{ unlocked }` too, the locked packs, to load after its own.
+- a function, called with no arguments, that returns either of those. A game with [locked content](#locked-content-in-a-check) is called with `{ unlocked }` too, the locked packs, to load over its content.
 
 The simplest module returns what `loadGame` gave it:
 
@@ -282,7 +282,7 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 import { story } from './story.ts'
 
 export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([story, ...unlocked], { id: 'my-game', title: 'My Game', introScene: 'start', plugins: [unlocks()] })
+  return loadGame([story], { id: 'my-game', title: 'My Game', introScene: 'start', plugins: [unlocks()] }, { packs: unlocked })
 }
 
 export default build

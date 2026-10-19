@@ -13,7 +13,7 @@ import { minigameDef, type MinigameDef, type MinigameStateDef, type MinigameTran
 The showcase's park has a game of quick feet with the kids. There are five rounds, and each one picks an arrow at random and gives you 1.5 seconds to press it. Three or more right wins five coins and a short scene. Fewer gets a different scene.
 
 ```ts
-import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
+import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 
 const ARROWS = ['up', 'down', 'left', 'right'] as const
@@ -57,9 +57,7 @@ const quickFeet: MinigameDef = {
   },
 }
 
-export const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+export const town: Content = {
   minigames: [quickFeet],
   activities: [{ id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] }],
   // ...
@@ -137,7 +135,7 @@ type MinigameDef = {
 | `keys` | The keys a UI maps to each input, by input name, as `KeyboardEvent.key` names them. A UI uses its own if left out. |
 | `states` | Its states, by id. |
 
-Declare minigames in `Game.minigames`, on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `minigames`. They merge by id, so a later pack's minigame replaces an earlier one with the same id.
+Declare minigames in `Game.minigames`, on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
 
 ## MinigameStateDef
 

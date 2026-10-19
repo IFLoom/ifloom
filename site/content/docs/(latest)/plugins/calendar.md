@@ -57,10 +57,10 @@ function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState, Calen
 Builds the plugin, with the id `calendar`. Call it once, when you build the game. With no options, a day has five periods, a week has seven days, a turn is a day, and the game starts on Monday morning.
 
 ```ts
-import { loadGame, startingState, type Pack } from '@ifloom/engine'
+import { loadGame, startingState, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 
-declare const town: Pack
+declare const town: Content
 
 const clock = calendar()
 const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [clock] })
@@ -165,7 +165,7 @@ When one pass ends several turns, the first turn's rules see the clock where the
 A Monday in Small Town, the [showcase](/docs/guide/showcase)'s world. The player does a shift at the office, finds the café shut by the evening, goes jogging by the river until late, and goes to bed. The office is shut at weekends, and the café only opens in the morning and afternoon.
 
 ```ts
-import { SCHEMA, apply, loadGame, startingState, view, whyNot, type GameState, type Pack } from '@ifloom/engine'
+import { apply, loadGame, startingState, view, whyNot, type GameState, type Content } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { go, onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
 
@@ -173,9 +173,7 @@ const act = (id: string, label: string) => ({ id, label, command: { type: 'activ
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12 }],
   data: {
     places: {

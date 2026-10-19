@@ -6,7 +6,7 @@ description: "Devices such as a phone or a laptop, with apps declared as data, b
 
 You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery already wired up, use the [phone bundle](/docs/plugins/phone) instead, which is built on this plugin.
 
-To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices()` to the game's `plugins`. The devices and their apps are content, in a pack's `data.devices`. [Install](#install) has the details.
+To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices()` to the game's `plugins`. The devices and their apps are content, in your content's `data.devices`. [Install](#install) has the details.
 
 ```ts
 import {
@@ -45,20 +45,18 @@ Add the package beside the engine, then add `devices()` to the game's `plugins`.
 function devices(): DefinedPlugin<DevicesState, DevicesView>
 ```
 
-Builds the plugin, with the id `devices`. Call it once, when you build the game. It takes no options: the devices and the apps on them are content, in a pack's `data.devices`, so a mod can add a device or an app.
+Builds the plugin, with the id `devices`. Call it once, when you build the game. It takes no options: the devices and the apps on them are content, in your content's `data.devices`, so a mod can add a device or an app.
 
 It lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/docs/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
 
 ```ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
 
 declare const notes: AppDef, bank: AppDef, mail: AppDef
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   // … the rest of your content
   data: {
     devices: {
@@ -96,7 +94,7 @@ type DeviceDef = {
 | `sidebar` | Whether to offer it from the sidebar. `false` if you leave it out. |
 | `wallpaper` | A picture behind the home screen, passed through to the UI. |
 
-Devices are content. List them in a pack's `data.devices.devices`, in the order the view lists them. They're merged by id, so a mod can add a device.
+Devices are content. List them in your content's `data.devices.devices`, in the order the view lists them. They're merged by id, so a mod can add a device.
 
 ### devicesOf and appsOf
 
@@ -105,11 +103,11 @@ function devicesOf(game: Game): DeviceDef[]
 function appsOf(game: Game): AppDef[]
 ```
 
-The game's devices and apps, merged from its packs, in order.
+The game's devices and apps, merged from its content and packs, in order.
 
 ## Writing apps
 
-Apps are content, in a pack's [`data`](/docs/reference/loader#pack) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps given in the base game's `data`, as the [phone](/docs/plugins/phone) gives its stock apps, come first, and a pack's app with the same id replaces one.
+Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps given in the base game's `data`, as the [phone](/docs/plugins/phone) gives its stock apps, come first, and a pack's app with the same id replaces one.
 
 ### AppDef
 
@@ -207,7 +205,7 @@ This laptop sits in the player's flat, in a town like the [showcase](/docs/guide
 The laptop stays at home, so a lock refuses it anywhere else.
 
 ```ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
 import { at, places, type LocationDef } from '@ifloom/plugin-places'
 
@@ -243,9 +241,7 @@ const locations: LocationDef[] = [
   { id: 'high-street', name: 'High Street', tag: 'Small Town', art: 'place/high-street', exits: ['flat'], body: [{ text: 'place.high-street' }] },
 ]
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
   items: [
     { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
@@ -385,9 +381,9 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `devices/call` | `Call`, the button on each [contact](#contacts). |
 
 ```ts
-import type { Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const strings: Pack['strings'] = { 'devices/notInstalled': 'You have not got that app.', 'devices/call': 'Ring' }
+const strings: Content['strings'] = { 'devices/notInstalled': 'You have not got that app.', 'devices/call': 'Ring' }
 ```
 
 App and device names aren't strings. They're the game's own, given in each [`AppDef`](#appdef) and [`DeviceDef`](#devicedef).
@@ -429,7 +425,7 @@ type DeviceView = {
 |---|---|
 | `frame` | The device's `frame`, or its `id`. |
 | `badge` | What the sidebar button shows. It's every app's count added up, plus one for each dot. |
-| `apps` | The installed apps, in order: the base game's first, then the ones packs add. |
+| `apps` | The installed apps, in order: the base game's first, then the ones content and packs add. |
 | `open` | The app open on this device, with its sections filled in, or `null` for the home screen. |
 
 ### AppView
@@ -516,7 +512,7 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 The action check catches an unknown scene, activity or item, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
-A problem with an app is pinned on the pack it came from, or on `base` for one in the base game's `data`.
+A problem with an app is pinned on the content or pack it came from, or on `base` for one in the base game's `data`.
 
 ```text
 base · apps mail · no custom value named "messages/unread"

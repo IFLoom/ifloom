@@ -37,7 +37,7 @@ flowchart TB
 
 The engine is a library. Your content goes in, a description of the screen comes out, and the player's commands go back in. It has no DOM and imports no framework, so the same code runs in a browser, in Node, in a test or in a worker.
 
-- **Content in.** A game is one or more packs of plain data: scenes, choices, stats, prose and the content plugins read. [`loadGame`](/docs/reference/loader#loadgame) merges them into a `Game` and checks them.
+- **Content in.** A game is [content](/docs/reference/loader#content-and-packs), plain data split across your files: scenes, choices, stats, prose and the content plugins read. [`loadGame`](/docs/reference/loader#loadgame) merges it into a `Game`, with any packs such as mods on top, and checks the result.
 - **A view out.** The [view](/docs/reference/view) is everything a UI needs to draw: the scene's paragraphs, each button with the command it sends and, if it can't be pressed, the reason why. It also has the stats, inputs, audio and each plugin's part.
 - **Commands in.** When the player presses a button, the UI sends that button's command. The engine checks it and returns the next state, or the reason it was refused.
 

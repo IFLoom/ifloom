@@ -202,7 +202,7 @@ While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the mi
 | `statsById` | `Record<string, `[`StatView`](#statview)`>` | Every one of the player's declared stats, by id, listed or not and visible or not. Read a purse or a gauge your UI draws its own way from here, such as `shown.statsById.coins.text`. |
 | `pack` | `{ id, name, desc, count, useLabel? }[]` | Items the player is carrying (count above 0), in the order the game declares them. A `useLabel` means the item can be used with the `use` command. |
 
-`View.pack` is the player's inventory. It shares a name with the loader's [`Pack`](/docs/reference/loader#pack) type, a bundle of content, but the two are unrelated.
+`View.pack` is the player's inventory. It shares a name with the loader's [`Pack`](/docs/reference/loader#pack) type, content such as a mod laid over the game, but the two are unrelated.
 
 ### collections
 

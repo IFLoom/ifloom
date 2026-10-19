@@ -34,10 +34,10 @@ List the package in your game's `package.json`, beside the engine:
 Then add `quests()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { quests } from '@ifloom/plugin-quests'
 
-declare const town: Pack
+declare const town: Content
 
 const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [quests()] })
 ```
@@ -54,17 +54,15 @@ Builds the plugin, with the id `quests`. Its state starts empty. Call it once, w
 
 ## Writing quests
 
-Quests are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
+Quests are content. They go in your content's [`data`](/docs/reference/loader#content) under `quests.quests`, and are merged by id as scenes are, so a mod can add a quest or replace one.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { type QuestDef } from '@ifloom/plugin-quests'
 
 declare const settle: QuestDef
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   data: { quests: { quests: [settle] } },
 }
 ```
@@ -110,7 +108,7 @@ type QuestStage = { id: string; hint: string; done: Condition }
 Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the game's phase moves from `arrival` to `open`). "Something warm" starts only when an activity says so. The town's map comes from the [places](/docs/plugins/places) plugin.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { at, onlyAt, type LocationDef } from '@ifloom/plugin-places'
 import { startQuest, type QuestDef } from '@ifloom/plugin-quests'
 
@@ -135,9 +133,7 @@ const act = (id: string, label: string) => ({ id, label, command: { type: 'activ
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   items: [{ id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' }],
   activities: [
     { id: 'unpack', blocked: [onlyAt(['flat'])], effects: [{ kind: 'phase', to: 'open' }] },
@@ -355,7 +351,7 @@ const seeQuests: (quest?: string) => CommandRef
 function questDefs(game: Game): QuestDef[]
 ```
 
-The game's quests, merged from its packs: `game.data.quests.quests`.
+The game's quests, merged from its content and packs: `game.data.quests.quests`.
 
 ### advance
 
@@ -375,7 +371,7 @@ The `QuestsView` for a record. The plugin's view is `questsView(advance(record, 
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each quest came from, with `where` as `quests <id>`:
+When the game loads, the plugin reports these problems against the content or pack each quest came from, with `where` as `quests <id>`:
 
 - A quest with no stages (`has no stages`).
 - An unknown `storyline` (`unknown storyline "…"`).

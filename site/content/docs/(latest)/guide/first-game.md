@@ -97,7 +97,7 @@ A block with a `when` only shows while its [condition](/docs/reference/condition
 
 `actions` is the list of buttons the room offers. Here it offers the `coffee` activity you'll declare in step 3. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
-The locations are content. In step 5 they go into the game's pack, under `data.places.locations`. There's more in [Places](/docs/plugins/places#locationdef) and the calendar's [conditions](/docs/plugins/calendar#conditions).
+The locations are content. In step 5 they go into the game's content, under `data.places.locations`. There's more in [Places](/docs/plugins/places#locationdef) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 
@@ -124,7 +124,7 @@ const ruth: CharacterDef = {
 
 A `when` is any [condition](/docs/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
 
-Like the locations, Ruth is content. In step 5 she goes into the game's pack, under `data.cast.characters`. Every field is in [`CharacterDef`](/docs/plugins/cast#characterdef), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
+Like the locations, Ruth is content. In step 5 she goes into the game's content, under `data.cast.characters`. Every field is in [`CharacterDef`](/docs/plugins/cast#characterdef), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
 
 Each character is also an [entity](/docs/reference/entities) of the kind `character`, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
 
@@ -251,7 +251,7 @@ For the odd screen that doesn't fit blocks and choices, a scene can also be a pl
 
 ## 5. The game
 
-The game gathers everything. Content arrives as packs, which [`loadGame`](/docs/reference/loader) merges into one game. Your game is the first pack, and a mod would be another. The locations and Ruth are plugins' content, so they go in the pack's `data`, under the plugin's id and the list's name: `data.places.locations` and `data.cast.characters`.
+The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations and Ruth are plugins' content, so they go in the content's `data`, under the plugin's id and the list's name: `data.places.locations` and `data.cast.characters`.
 
 The second argument holds everything that isn't content, and only `id` and `title` are required. `introScene` is on screen from the first frame. `actions` are buttons offered in every room after the room's own, here the `wait` activity from step 3 and a bed to go to. A story that opens on its room leaves out `introScene`.
 
@@ -264,7 +264,7 @@ The second argument holds everything that isn't content, and only `id` and `titl
 A story with no places leaves out the places plugin, and one with nobody to talk to leaves out the cast.
 
 ```ts
-import { SCHEMA, describeProblem, loadGame } from '@ifloom/engine'
+import { describeProblem, loadGame } from '@ifloom/engine'
 import { calendar, sleep } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -272,8 +272,6 @@ import { cast } from '@ifloom/plugin-cast'
 export const { game, problems } = loadGame(
   [
     {
-      id: 'core',
-      schema: SCHEMA,
       stats,
       activities,
       scenes: [intro, ruthTalk],
@@ -296,7 +294,7 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 ```
 
-The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem comes with the pack it came from, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
+The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem says where it is, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
 
 Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/docs/reference/checks#checkgame) in the same way.
 
@@ -471,7 +469,7 @@ runner.redo()                                      // on the high street again
 
 Undo can't be used to re-roll anything. Every draw is seeded, so the same command from the same state gives the same result.
 
-To see it in a browser, put steps 1 to 5 in `src/game.ts` and export `game` from it. That's fine for a game this size. When it grows, move the packs into `src/world/` and `src/story/` as [Organising a game](/docs/guide/organising) shows. Put the runner in `src/runner.ts`, exported as `runner`. Then draw its view. Each tab below matches one of the templates:
+To see it in a browser, put steps 1 to 5 in `src/game.ts` and export `game` from it. That's fine for a game this size. When it grows, split the content into files in `src/world/` and `src/story/` as [Organising a game](/docs/guide/organising) shows. Put the runner in `src/runner.ts`, exported as `runner`. Then draw its view. Each tab below matches one of the templates:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
@@ -612,7 +610,6 @@ The saves are kept under keys that start with the game's id, `new-in-town`, so a
 
 ```ts
 import {
-  SCHEMA,
   apply,
   createRunner,
   describeProblem,
@@ -746,8 +743,6 @@ const prose: Record<string, string> = {
 export const { game, problems } = loadGame(
   [
     {
-      id: 'core',
-      schema: SCHEMA,
       stats,
       activities,
       scenes: [intro, ruthTalk],

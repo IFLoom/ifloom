@@ -39,16 +39,16 @@ Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-
 function feed(): DefinedPlugin<FeedState, FeedsView>
 ```
 
-Builds the plugin, with the id `feed`. Call it once, when you build the game. It takes no options: the feeds and the posts are content, in a pack's `data.feed`, so a mod can add either.
+Builds the plugin, with the id `feed`. Call it once, when you build the game. It takes no options: the feeds and the posts are content, in your content's `data.feed`, so a mod can add either.
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { feed } from '@ifloom/plugin-feed'
 
-declare const town: Pack // your content
+declare const town: Content // your content
 
 const { game } = loadGame([town], {
   id: 'small-town',
@@ -63,7 +63,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-The feeds go in the pack beside the posts:
+The feeds go in the content beside the posts:
 
 ```ts
 data: {
@@ -90,7 +90,7 @@ type FeedDef = { id: string; name: string }
 | `id` | What posts name the feed by. It's also what the [value](#values) `feed/unread` takes as `feed`. |
 | `name` | What the player reads. |
 
-Feeds are content. List them in a pack's `data.feed.feeds`, in the order the view lists them. They're merged by id, so a mod can add a feed or rename one.
+Feeds are content. List them in your content's `data.feed.feeds`, in the order the view lists them. They're merged by id, so a mod can add a feed or rename one.
 
 ### feedsOf
 
@@ -98,11 +98,11 @@ Feeds are content. List them in a pack's `data.feed.feeds`, in the order the vie
 function feedsOf(game: Game): FeedDef[]
 ```
 
-The game's feeds, merged from its packs, in order.
+The game's feeds, merged from its content and packs, in order.
 
 ## Writing posts
 
-Other people's posts are content. List them in a pack's [`data`](/docs/reference/loader#pack) under `feed.posts`. They're merged by id as scenes are, so a mod can add a post or rewrite one.
+Other people's posts are content. List them in your content's [`data`](/docs/reference/loader#content) under `feed.posts`. They're merged by id as scenes are, so a mod can add a post or rewrite one.
 
 ### PostDef
 
@@ -177,7 +177,7 @@ A cut-down Small Town with a social feed and a notice board on the high street. 
 The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava and Sam from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the feed sees the new day when one begins.
 
 ```ts
-import { SCHEMA, loadGame, roll, type Pack } from '@ifloom/engine'
+import { loadGame, roll, type Content } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
 import { onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -186,9 +186,7 @@ import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   activities: [
     { id: 'wait', effects: [pass(1)] },
     {
@@ -492,11 +490,11 @@ const hasPosted: (gte?: number, feedId?: string) => Condition
 function postDefs(game: Game): PostDef[]
 ```
 
-The game's posts, merged from its packs: `game.data.feed.posts`.
+The game's posts, merged from its content and packs: `game.data.feed.posts`.
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each post came from, with `where` as `posts <id>`:
+When the game loads, the plugin reports these problems against the content or pack each post came from, with `where` as `posts <id>`:
 
 - A feed the game doesn't have (`unknown feed "…"`).
 - Anything `when` names that the game doesn't have, such as `unknown storyline "…"`.

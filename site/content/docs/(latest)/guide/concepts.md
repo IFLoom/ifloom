@@ -125,7 +125,7 @@ See [Locks](/docs/reference/locks).
 
 ## Plugins
 
-A plugin adds a system to the engine, such as a calendar, a map, people or quests. The game lists the plugins it uses in `plugins`, and a pack gives each plugin its content under `data`, by the plugin's id. The places plugin reads `data.places.locations`, for example. A plugin brings its own conditions, effects and commands, its own part of the state and the view, and its own checks of its content.
+A plugin adds a system to the engine, such as a calendar, a map, people or quests. The game lists the plugins it uses in `plugins`, and the game's content gives each plugin its content under `data`, by the plugin's id. The places plugin reads `data.places.locations`, for example. A plugin brings its own conditions, effects and commands, its own part of the state and the view, and its own checks of its content.
 
 First-party plugins don't import each other. One plugin asks another for an answer by name through a query, as the cast asks the places plugin where the player is. A plugin can also list the plugins it `cooperates` with. Content may then name their conditions and effects in a game that leaves them out: the condition is false and the effect does nothing.
 
@@ -133,7 +133,7 @@ The core is the same in every game. It's made of built-in parts, such as scenes,
 
 ```mermaid
 flowchart TD
-  game["your game<br/>packs, mods, the plugins it lists"]
+  game["your game<br/>content, mods, the plugins it lists"]
   subgraph core["the core: apply, view, loadState, checkGame"]
     parts["built-in parts<br/>scenes, stats, items, entities,<br/>triggers, audio, minigames…"]
   end
@@ -174,7 +174,7 @@ See [Running a game](/docs/guide/running-a-game) for the loop, and [The runner](
 
 ## Saves and migrations
 
-A save is a snapshot of the state, with details for a load screen: the turn, the plugins' label for when and where it was, the player's name, the time played and the packs it was made with. `saves(game, driver)` keeps one game's saves in named slots, such as `'auto'`, `'quick'` or `'1'`, under keys that start with the game's id.
+A save is a snapshot of the state, with details for a load screen: the turn, the plugins' label for when and where it was, the player's name, the time played and the mods it was made with. `saves(game, driver)` keeps one game's saves in named slots, such as `'auto'`, `'quick'` or `'1'`, under keys that start with the game's id.
 
 The driver says where saves are kept: `localStorage`, IndexedDB, memory for tests, or one you write for a desktop wrapper. The engine has no default, so the game chooses.
 
@@ -186,7 +186,7 @@ See [Saves and settings](/docs/guide/saves-and-settings), and [Saves](/docs/refe
 
 ## Packs and mods
 
-Content arrives as ordered packs that `loadGame` merges into one game, with any problems reported by the pack that caused them. Your own content is the first pack, and a mod is another one after it.
+Your content arrives as a list, split across your files however you like, and `loadGame` merges it into one game. A mod is a pack, laid over your content. Any problems are reported with where they came from. See [Content and packs](/docs/reference/loader#content-and-packs).
 
 A player can add a mod to a built game as a file. The game keeps it and loads it over its own content at start-up.
 

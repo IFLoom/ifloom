@@ -77,12 +77,10 @@ Each function gets the game state, what content passed it, and a [context](#plug
 List the plugin in the game's `plugins`, then call it from content with `loyalty/` in front of each name:
 
 ```ts
-import { loadGame, SCHEMA, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { loyalty } from './loyalty.ts'
 
-const cafe: Pack = {
-  id: 'cafe',
-  schema: SCHEMA,
+const cafe: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 50 }],
   activities: [
     // Each coffee gives energy and a stamp.
@@ -445,7 +443,7 @@ The ids of plugins this one works with when the game has them. Content written f
 export const loyalty = definePlugin<Card>({
   id: 'loyalty',
   version: 2,
-  // Works with a calendar when there is one: a pack can gate double stamps on `calendar/weekend`.
+  // Works with a calendar when there is one: content can gate double stamps on `calendar/weekend`.
   cooperates: ['calendar'],
   // ...
 })
@@ -689,7 +687,7 @@ The flat offers the buttons, as a location of the [places plugin](/docs/plugins/
 ```ts
 import { onlyAt } from '@ifloom/plugin-places'
 
-// in the pack
+// in the content
 activities: [
   { id: 'cook', blocked: [onlyAt(['flat'])], effects: [{ kind: 'stat', stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
   { id: 'bake', blocked: [onlyAt(['flat'])], effects: [{ kind: 'item', item: 'loaf', by: 1 }, { 'dishes/add': true }] },
@@ -861,7 +859,7 @@ const stall = definePlugin<{ open: boolean }>({
   buttons: () => [{ id: 'haggle', label: 'Haggle', command: { type: 'custom', name: 'stall/haggle' } }],
 })
 
-// in a pack
+// in your content
 prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
 variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
 ```
@@ -957,7 +955,7 @@ const regulars = definePlugin<null>({
   },
 })
 
-// in a pack
+// in your content
 data: { regulars: { people: [{ id: 'mo', name: 'Mo', hue: 200 }] } },
 scenes: [{ id: 'counter', speaker: 'mo', body: [{ text: 'counter' }], choices: [] }],
 ```
@@ -994,8 +992,8 @@ entities?: (game: Game) => readonly EntityDef[]
 
 A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
-- **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in a pack, replaces the plugin's. That's how a game renames one.
-- **`entities(game)`** is called once the game is loaded, with every pack's content merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
+- **`kinds`** are merged by the [loader](/docs/reference/loader#loadgame) before the game's own, plugin by plugin in the order `game.plugins` lists them. A kind the game declares with the same id, on the base or in its content, replaces the plugin's. That's how a game renames one.
+- **`entities(game)`** is called once the game is loaded, with the content and every pack merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
 
 The regulars above, each also an entity with a stat of their own:
 
@@ -1009,7 +1007,7 @@ const regulars = definePlugin<null>({
   // speaker as above
 })
 
-// in a pack
+// in your content
 stats: [{ id: 'fondness', label: 'Fondness', of: 'regular', start: 3 }],
 entities: [{ id: 'mo', of: 'regular', name: 'Mo from next door', stats: { fondness: 8 } }],
 data: { regulars: { people: [{ id: 'mo', name: 'Mo' }, { id: 'sal', name: 'Sal' }] } },
@@ -1021,7 +1019,7 @@ startingState(game).entities.regular
 //   sal: { name: 'Sal', stats: { fondness: 3 }, kv: {} } }
 ```
 
-The pack's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.
+The content's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.
 
 **Gotchas.**
 - **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
@@ -1030,19 +1028,17 @@ The pack's own Mo wins over the plugin's. Sal comes from the plugin, after the d
 
 ## Content and checks
 
-A plugin's content, such as quests or recipes, lives in a pack's `data`, by plugin id and then by list name. Each entry has an `id`:
+A plugin's content, such as quests or recipes, lives in your content's `data`, by plugin id and then by list name. Each entry has an `id`:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   data: { loyalty: { cards: [{ id: 'cafe', stampsToFill: 5 }, { id: 'market', stampsToFill: 8 }] } },
 }
 ```
 
-The [loader](/docs/reference/loader#pack) merges `data` as it merges scenes: a later pack's entry replaces an earlier one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of every pack.
+The [loader](/docs/reference/loader#content) merges `data` as it merges scenes: each entry is declared once across the content, and a pack's entry replaces one with the same id, whole. The result is at `game.data.loyalty.cards`. The base game can carry `data` too, ahead of the content.
 
 ### PluginEntry
 
@@ -1050,7 +1046,7 @@ The [loader](/docs/reference/loader#pack) merges `data` as it merges scenes: a l
 type PluginEntry = { id: string; [field: string]: unknown }
 ```
 
-One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and a pack's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so a pack writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types where it reads them, says what they name in [`references`](#references), and checks its own rules in [`check`](#check).
+One entry in a plugin's content: an `id`, and whatever fields the plugin reads. `game.data` and content's `data` are `Record<string, Record<string, readonly PluginEntry[]>>`, so content writes entries without a cast. The engine reads only `id`. The plugin gives the other fields their types where it reads them, says what they name in [`references`](#references), and checks its own rules in [`check`](#check).
 
 ### References
 
@@ -1068,7 +1064,7 @@ type ContentReferences = { list: string; id: string; refs: readonly Reference[] 
 What the plugin's calls and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
 
 - **`calls`** says what one call to the plugin's conditions, effects or commands names. `kind` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
-- **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the pack that entry came from.
+- **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the content or pack that entry came from.
 
 Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ item }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
 
@@ -1175,7 +1171,7 @@ Each problem is reported where the effect is, such as `activity counter: unknown
 type PluginProblem = { list: string; id: string; what: string }
 ```
 
-Which list, which entry, and what's wrong. The content checker turns it into a [`Problem`](/docs/reference/checks#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the pack that entry came from, or on `base` if it came from no pack:
+Which list, which entry, and what's wrong. The content checker turns it into a [`Problem`](/docs/reference/checks#problem-and-describeproblem) whose `where` is `<list> <id>`, pinned on the content or pack that entry came from, or on `base` if it came from no pack:
 
 ```text
 mod:sunday-market · cards market · unknown storyline "sam"
@@ -1229,11 +1225,11 @@ if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
 
 ## Gotchas
 
-- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
+- **Plugins are chosen when the game is built.** They go on the base you pass to [`loadGame`](/docs/reference/loader#loadgame), not in content or a pack. A mod can bring data for a plugin the game has, but it can't add a plugin.
 - **A plugin's state is part of the save.** Keep it plain JSON. Every shape change needs a version bump and a migration step, or older saves are refused.
 - **Effects can't refuse.** An effect returns a new state. To stop the player, give the command a `whyNot`, give the activity a `blocked` entry, or have a [guard](#guards) refuse any command that would apply the effect.
 - **A plain-effect list takes the long form.** A plugin's `effectsOf` and `applyEffects` take plain [effects](/docs/reference/effects#custom), not `{ custom }` or the short form. There, write `{ kind: 'custom', name: 'loyalty/stamp', with }`, which runs the same way. Every list content writes (a choice's, an activity's, a trigger's, an item's use) takes any form. The [content checker](/docs/reference/checks) reports a name no plugin has.
-- **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every pack that uses it.
+- **Keep names stable.** Content refers to plugin conditions, effects and commands by name, so renaming one breaks every game and mod that uses it.
 
 ## See it in an example
 

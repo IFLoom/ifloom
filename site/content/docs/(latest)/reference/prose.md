@@ -33,7 +33,7 @@ type ProseStore = {
 
 The game's `prose` field, where data scenes read their words. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
 
-You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from its packs' prose and variants, and [`proseStore`](#prosestore-1) builds one from two plain records.
+You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants, and [`proseStore`](#prosestore-1) builds one from two plain records.
 
 **Gotcha.** `line` is sometimes called without a state, when the scene renderer only wants to know whether a key is written. Return the raw text in that case.
 
@@ -70,7 +70,7 @@ import type { VariantMember } from '@ifloom/engine'
 type VariantMember = string | { text: string; weight?: number }
 ```
 
-One member of a variants list, in a [pack](/docs/reference/loader#pack)'s `variants` or `proseStore`'s: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
+One member of a variants list, in your [content](/docs/reference/loader#content)'s `variants` or `proseStore`'s: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
 
 ```ts
 variants: {
@@ -86,7 +86,7 @@ How a list draws depends on its weights:
 
 The members counted are the ones left after a [`variants` block](/docs/reference/scenes#block)'s `gate`, so if every member with a weight is gated out, the rest rotate.
 
-A pack that adds to another pack's list adds its members with their weights. The [content checker](/docs/reference/checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
+Content or a pack that adds to a list adds its members with their weights. The [content checker](/docs/reference/checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
 
 **Gotcha.** The store needs the game, because `{{v:name}}` reads `game.custom.values` and the game's plugins. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 
@@ -503,6 +503,6 @@ mediaKind('place/cafe.webp')  // 'image'
 
 ## See it in an example
 
-- Small Town: each pack in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
+- Small Town: each file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
 - Small Town's intro has a tooltip on "launderette", and the flat's `place.flat.text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
 - The Letter: the `prose` in [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts) prints the reader's name with `{{playerName}}`.

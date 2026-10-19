@@ -35,14 +35,14 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 import { town } from './town.ts'
 
 export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([town, ...unlocked], { id: 'small-town', title: 'Small Town', plugins: [cheats(), unlocks()] })
+  return loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [cheats(), unlocks()] }, { packs: unlocked })
 }
 
 // What `ifloom check` loads. It passes the locked packs as `unlocked`.
 export default build
 ```
 
-`unlocked` is where the supporter content comes in, at runtime and in `ifloom check`.
+`unlocked` is where the supporter content comes in, at runtime and in `ifloom check`. It's a list of [packs](/docs/reference/loader#content-and-packs), laid over the town's content.
 
 ### 2. Make a code and declare the unlock
 
@@ -111,7 +111,7 @@ Add `hide: true` to the `blocked` entry to keep the cheat off the panel until th
 
 ### 4. Lock the content
 
-Put what supporters get in `src/unlocks/supporter.ts`, named after the unlock. It's a pack, as a [mod](/docs/reference/mods) is, so it's data: scenes, prose, plugin content.
+Put what supporters get in `src/unlocks/supporter.ts`, named after the unlock. It's a [pack](/docs/reference/loader#pack), as a [mod](/docs/reference/mods) is, with an `id` and a `schema`, and it's data: scenes, prose, plugin content.
 
 ```ts
 // src/unlocks/supporter.ts

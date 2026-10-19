@@ -95,7 +95,7 @@ type GameMedia = {
 }
 ```
 
-The game's `media` field. A pool is a named list of files content can pick from. [`loadGame`](/docs/reference/loader#pack) merges the base's and every pack's pools by id, and a later pack's pool replaces an earlier one whole. Leave `media` out and the game has no pools.
+The game's `media` field. A pool is a named list of files content can pick from. [`loadGame`](/docs/reference/loader#loadgame) merges the base's, the content's and every pack's pools by id, and a pack's pool replaces one with the same id whole. Leave `media` out and the game has no pools.
 
 ## PoolFile
 

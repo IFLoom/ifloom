@@ -47,10 +47,10 @@ Builds the plugin, with the id `shop`. Nothing has been sold in a new game.
 
 ## Writing vendors
 
-Vendors are content. They go in a pack's [`data`](/docs/reference/loader#pack) under `shop.vendors`, and are merged by id, so a mod can add a vendor or replace one. This is the showcase's café counter:
+Vendors are content. They go in your content's [`data`](/docs/reference/loader#content) under `shop.vendors`, and are merged by id, so a mod can add a vendor or replace one. This is the showcase's café counter:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { buy, type VendorDef } from '@ifloom/plugin-shop'
 
 const counter: VendorDef = {
@@ -66,9 +66,7 @@ const counter: VendorDef = {
   ],
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999, spendable: true, format: '{n} coins' }],
   items: [
     { id: 'sandwich', name: 'sandwich', desc: 'Cheese and pickle.' },
@@ -315,7 +313,7 @@ const openShop: (vendor: string) => Effect
 function vendorDefs(game: Game): VendorDef[]
 ```
 
-The game's vendors, merged from its packs: `game.data.shop.vendors`.
+The game's vendors, merged from its content and packs: `game.data.shop.vendors`.
 
 ### shopView
 
@@ -327,7 +325,7 @@ The `ShopView` for a state. The plugin's view is `shopView(state, slice, context
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each vendor came from, with `where` as `vendors <id>`:
+When the game loads, the plugin reports these problems against the content or pack each vendor came from, with `where` as `vendors <id>`:
 
 - An unknown item, or a price in an unknown stat (`good sandwich: unknown stat "gold"`).
 - A price in a stat that isn't `spendable`, or is derived.

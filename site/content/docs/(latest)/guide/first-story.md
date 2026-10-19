@@ -15,7 +15,7 @@ It's the smallest kind of game you can make with IFLoom. There are no plugins, s
 
 The finished game is three short files, plus a page that draws it: `src/story/opening.ts` holds the scenes and their words, `src/world/stats.ts` the stat, and `src/game.ts` puts them together. The whole thing is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter) is a slightly longer story built the same way, and `--template novel` starts a copy of it.
 
-To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a pack you can bring back to this page.
+To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a file you can bring back to this page.
 
 ## Before you start
 
@@ -57,15 +57,13 @@ You'll replace those three files as you go, and leave the other files as they ar
 
 ## 1. One scene
 
-A game is one or more packs of content that [`loadGame`](/docs/reference/loader#loadgame) merges. Each file in `src/story/` and `src/world/` is a pack. Start with a pack holding one scene, and the words it shows. Replace everything in `src/story/opening.ts` with this:
+A game is [content](/docs/reference/loader#content-and-packs) that [`loadGame`](/docs/reference/loader#loadgame) merges, split across the files in `src/story/` and `src/world/`. Each file exports a `Content` object. Start with one scene, and the words it shows. Replace everything in `src/story/opening.ts` with this:
 
 ```ts
 // src/story/opening.ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const opening: Pack = {
-  id: 'story.opening',
-  schema: SCHEMA,
+export const opening: Content = {
   scenes: [
     {
       id: 'ch1.stop',
@@ -95,7 +93,7 @@ The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a l
 
 Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
 
-`loadGame` takes the packs, in a list, and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts. `schema: SCHEMA` says which version of the pack format you wrote against.
+`loadGame` takes your content, in a list, and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts.
 
 The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check` prints each problem, or `No problems.` when there are none.
 
@@ -137,15 +135,13 @@ If you misspell a scene id or forget a label, `npm run check` says which scene a
 
 ## 3. A stat
 
-A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one. A stat is used all through the story, so it goes in `src/world/stats.ts`, the pack for what the whole game shares. This story keeps one, `warmth`, for how kind the player has been. Replace the template's stat with it:
+A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one. A stat is used all through the story, so it goes in `src/world/stats.ts`, the file for what the whole game shares. This story keeps one, `warmth`, for how kind the player has been. Replace the template's stat with it:
 
 ```ts
 // src/world/stats.ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const stats: Pack = {
-  id: 'world.stats',
-  schema: SCHEMA,
+export const stats: Content = {
   stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
 }
 ```
@@ -404,11 +400,9 @@ export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sa
 
 ```ts
 // src/world/stats.ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const stats: Pack = {
-  id: 'world.stats',
-  schema: SCHEMA,
+export const stats: Content = {
   stats: [{ id: 'warmth', label: 'Warmth', start: 0, max: 3 }],
 }
 ```
@@ -417,11 +411,9 @@ And `src/story/opening.ts` is the story, its scenes beside their words:
 
 ```ts
 // src/story/opening.ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const opening: Pack = {
-  id: 'story.opening',
-  schema: SCHEMA,
+export const opening: Content = {
   inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
@@ -495,11 +487,11 @@ export const opening: Pack = {
 }
 ```
 
-Three chapters fit in one file. When a story grows, give each chapter a file of its own in `src/story/`, add each pack to the list in `game.ts`, and `npm run check` tells you if two of them declare the same scene. The Letter is laid out that way.
+Three chapters fit in one file. When a story grows, give each chapter a file of its own in `src/story/`, add each one to the list in `game.ts`, and `npm run check` tells you if two of them declare the same scene. The Letter is laid out that way.
 
 ## Where next
 
-- [Organising a game](/docs/guide/organising) explains the files: what goes in `world/` and `story/`, when to split one, and how the packs merge.
+- [Organising a game](/docs/guide/organising) explains the files: what goes in `world/` and `story/`, when to split one, and how the files combine.
 - [How the pieces fit](/docs/guide/how-it-fits) shows what you just used: the engine, the UI and the CLI.
 - [A game with a world](/docs/guide/first-game), the second tutorial, adds a calendar, places and a character with plugins.
 - [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

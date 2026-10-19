@@ -1,14 +1,14 @@
 ---
 title: "The editor"
-description: Write scenes, choices, stats and storylets in the browser at /editor, play them in the real React UI as you go, and export the pack as TypeScript or JSON to drop into a game.
+description: Write scenes, choices, stats and storylets in the browser at /editor, play them in the real React UI as you go, and export them as TypeScript content for a game or a JSON pack to share.
 ---
-The [editor](/editor) lets you write a story in your browser and play it as you go, without installing anything. You build scenes and choices from forms, see each change in the React UI beside them, and export the result as a pack. When the story outgrows the editor, you move the pack into a game project and carry on in code.
+The [editor](/editor) lets you write a story in your browser and play it as you go, without installing anything. You build scenes and choices from forms, see each change in the React UI beside them, and export the result as a file of content for a game. When the story outgrows the editor, you move it into a game project and carry on in code.
 
 It runs entirely in the page. Your projects are kept in the browser's storage on your own machine, and nothing is uploaded.
 
 ## What you can make
 
-A project is one [pack](/docs/reference/loader#pack). The outline on the left lists what's in it:
+A project is one file of [content](/docs/reference/loader#content-and-packs). The outline on the left lists what's in it:
 
 - **Scenes**, each a [data scene](/docs/reference/scenes#datascene). You give it a title, a speaker, tags and body blocks, and each block is prose or a picture with an optional condition. A scene with sets in "Drawn from" is a [storylet](/docs/reference/storylets), marked in the outline.
 - **Choices** in each scene. A choice has a label, a cost in stats, a condition for showing it, reasons to grey it out, and its effects.
@@ -40,20 +40,20 @@ The Problems tab lists what [`checkGame`](/docs/reference/checks#checkgame) find
 
 ### Plugins
 
-Project settings has a switch for each first-party plugin, with the options its function is called with as JSON. The preview runs the plugins you switch on. Their content goes in the pack's `data` as JSON, and their conditions and effects are entered as JSON in the builders, such as `{ "quests/done": { "quest": "errand" } }`. Proper forms for plugins come later.
+Project settings has a switch for each first-party plugin, with the options its function is called with as JSON. The preview runs the plugins you switch on. Their content goes in the project's `data` as JSON, and their conditions and effects are entered as JSON in the builders, such as `{ "quests/done": { "quest": "errand" } }`. Proper forms for plugins come later.
 
 ## Export and import
 
-The buttons across the top export the project's pack:
+The buttons across the top export the project two ways:
 
-- **Export TS** downloads a module with `export const <name>: Pack = { … }`, formatted like the examples, with a note of the kv keys it uses and how to load it.
-- **Export JSON** downloads the same pack as JSON, the format a [mod](/docs/reference/mods) uses.
+- **Export TS** downloads a module with `export const <name>: Content = { … }`, [content](/docs/reference/loader#content) for your game's `src/story/` folder. It's formatted like the examples, with a note of the kv keys it uses and how to add it to the game.
+- **Export JSON** downloads the project as a [pack](/docs/reference/loader#pack), with the project's id and the [`SCHEMA`](/docs/reference/loader#schema) it was written for. That's the shape a [mod](/docs/reference/mods)'s pack has, so use it to share the story or to make a mod of it.
 
-Import JSON opens a JSON pack as a new project and lists what `checkGame` makes of it. The editor can't read TypeScript you've written by hand, and it opens only data scenes.
+Import JSON opens either one as a new project and lists what `checkGame` makes of it: a pack, which is upgraded if it was written for an older schema, or content with no id or schema, which takes its id from the file's name. The editor can't read TypeScript, and it opens only data scenes.
 
 ## Moving to a project
 
-When you want a world with places and a clock, hand-written scenes or your own UI, move the pack into a game:
+When you want a world with places and a clock, hand-written scenes or your own UI, move the project into a game:
 
 1. Make a game with `npm create ifloom@latest my-story`, as [Installation](/docs/guide/installation) shows, and run `npm install` in its folder.
 2. Export the project as TypeScript, and save the file in the game's `src/story/` folder, say as `src/story/market-day.ts`. It's part of the story, so it goes beside the template's `opening.ts` (see [Organising a game](/docs/guide/organising)).
@@ -68,7 +68,7 @@ import { marketDay } from './story/market-day.ts'
 export default loadGame([stats, marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })
 ```
 
-Delete `src/story/opening.ts` if you don't want the template's two scenes. If your export declares stats the template's `src/world/stats.ts` declares too, `npm run check` names both packs, so you can keep one.
+Delete `src/story/opening.ts` if you don't want the template's two scenes. If your export declares a stat the template's `src/world/stats.ts` declares too, `npm run check` reports it as declared twice, so you can keep one.
 
 Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-story). Plugins you used in the preview go in the base game's `plugins`, as [A game with a world](/docs/guide/first-game) shows.
 
@@ -80,4 +80,4 @@ Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-s
 
 - **Only part of the engine has forms.** Scenes, choices, stats, kv keys and items do. Activities, triggers, inputs, collections, entities, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
 - **Drafts stay in this browser.** Clearing the site's data deletes them, and they don't follow you to another machine. Export anything you want to keep.
-- **One pack per project.** A game made of several packs is a project you build in code.
+- **One file per project.** A game made of several files is a project you build in code.

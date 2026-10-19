@@ -13,11 +13,9 @@ import { collect, collected, collectionById, discard, type CollectionDef, type C
 In the showcase, Sam leaves a welcome note under the door. The player keeps it in their notes, and the camera fills a gallery of photos.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   collections: [
     { id: 'notes', name: 'Notes' },
     { id: 'gallery', name: 'Photos', max: 30 },
@@ -63,7 +61,7 @@ type CollectionDef = {
 | `name` | What the player sees it called. Passed through to the view. |
 | `max` | Keep at most this many entries. When one more is collected, the oldest go first. No limit if left out. |
 
-Declare collections in [`Game.collections`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `collections`, or both. They merge by id with the base's first, so a later pack's collection replaces an earlier one with the same id.
+Declare collections in [`Game.collections`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `collections`, or both. They merge by id with the base's first, so a later pack's collection replaces an earlier one with the same id.
 
 ## CollectionItem
 
@@ -163,7 +161,7 @@ The declaration with that id, or `undefined`.
   // in an activity: effects: [{ custom: 'logWage' }]
   ```
 
-- **`text` is a prose key.** Write the words in the pack's `prose` and name the key. The [content checker](/docs/reference/checks) reports a key with no prose as `no prose for "…"`.
+- **`text` is a prose key.** Write the words in your content's `prose` and name the key. The [content checker](/docs/reference/checks) reports a key with no prose as `no prose for "…"`.
 - **Declare every collection.** A `collect` into an undeclared id still stores the entries in the state, but the view only lists declared collections, so the UI never sees them. The [content checker](/docs/reference/checks) reports `unknown collection "…"` wherever the effect is.
 - **`max` drops the oldest without telling anyone.** That includes entries a condition may be waiting for. Only ask for an entry by id in a collection without a `max`, or one large enough that it can't have rolled off.
 - **`discard` takes one entry by id.** There's no effect that empties a collection.

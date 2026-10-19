@@ -15,7 +15,7 @@ type StorylineState = {
 
 `StorylineDef` is listed with the rest of the game on [The game](/docs/reference/game#storylinedef). This page is about how storylines behave.
 
-Declare your storylines in `game.storylines`, or in a [pack](/docs/reference/loader#pack)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
+Declare your storylines in `game.storylines`, or in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
 
 | Field | Meaning |
 |---|---|

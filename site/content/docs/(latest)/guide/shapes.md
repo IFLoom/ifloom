@@ -18,7 +18,7 @@ They all use the same core: the turn, scenes and choices, conditions and effects
 
 Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
 
-Each has a `src/game.ts` that puts the game together from its packs in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
+Each has a `src/game.ts` that puts the game together from its content in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
 
 To start a game of your own from one of them, use `--template novel`, `cafe` or `town`:
 

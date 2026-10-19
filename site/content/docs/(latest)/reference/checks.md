@@ -21,7 +21,7 @@ describe('the game', () => {
 })
 ```
 
-A loaded game's problems are already in `loadGame`'s result, each pinned on the pack it came from, so there's no need to check it again. `ifloom check` prints a game's problems once either way.
+A loaded game's problems are already in `loadGame`'s result, each pinned on the content or pack it came from, so there's no need to check it again. `ifloom check` prints a game's problems once either way.
 
 ## checkGame
 
@@ -39,7 +39,7 @@ It never throws on bad content. It returns the problems in the order it found th
 **Gotchas:**
 - A hand-written `Scene` is a function, so the checker can't see inside it. Only its [storylet](/docs/reference/storylets) fields are checked, unless you give it probes.
 - It doesn't run your custom functions. A [custom effect](/docs/reference/custom#effects) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
-- A key a pack can't hold, such as `actions`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `a pack has no "actions", so it was left out`. A hand-built game has no packs, so `checkGame` has nothing to say about it.
+- A key content or a pack can't hold, such as `actions`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "actions", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
 - It doesn't check the tokens in prose, such as `{{v:breadPrice}}`. An unknown one is left on screen as written, so you can see it.
 
 ## Probes
@@ -66,7 +66,7 @@ type Problem = { pack: string; where: string; what: string }
 function describeProblem(problem: Problem): string
 ```
 
-`pack` is the pack the content came from. For a game you built by hand it's `game`. For a loaded game it's the pack that last declared or patched the thing, or `base` for what came with `loadGame`'s `base`. `where` says what the problem is in, such as `scene ava.hi`, and `what` says what's wrong.
+`pack` says where the thing came from. For a game you built by hand it's `game`. For a loaded game it's the pack that last declared or patched the thing, or else the content's `name` (`content` when it has none), or `base` for what came with `loadGame`'s `base`. `where` says what the problem is in, such as `scene ava.hi`, and `what` says what's wrong.
 
 `describeProblem` joins the three with ` · `, so a mod author reads one line:
 
@@ -205,9 +205,9 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `prose <key>` | The tracks named by `[[sound:id]]` and `[[voice:id]]`, and the pools and flags in picture and video markup, in every line of prose. |
 | `version` | `version must be a whole number, 1 or more`, for the game's [`version`](/docs/reference/saves#the-games-own-migrations). |
 | `migration <n>` | `a step is keyed by the version it upgrades from, 1 to …`, for a step keyed outside 1 to `version - 1`. A game with no `version` has no room for steps, so any step is reported. |
-| `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since packs merge by id. |
+| `<list> <id>` for `scene`, `item`, `storyline`, `activity`, `stat`, `kind`, `entity`, `collection`, `trigger`, `input`, `setting`, `minigame` | `two <list>s share this id`. Only a game built without `loadGame` can have these, since `loadGame` merges by id. |
 
-`loadGame` adds a few of its own, about the packs themselves. See [What the loader adds](/docs/reference/loader#what-the-loader-adds).
+`loadGame` adds a few of its own, about the content and packs themselves, such as a key declared twice. See [What the loader adds](/docs/reference/loader#what-the-loader-adds).
 
 ## Audio
 
@@ -378,7 +378,7 @@ references: {
 },
 ```
 
-A problem in an entry is reported as `<list> <id>`, against the pack the entry came from. A rule of the plugin's own that no reference can say, such as an exit to a place that isn't there, goes in its [`check`](/docs/reference/plugins#check).
+A problem in an entry is reported as `<list> <id>`, against the content or pack the entry came from. A rule of the plugin's own that no reference can say, such as an exit to a place that isn't there, goes in its [`check`](/docs/reference/plugins#check).
 
 ## See it in an example
 

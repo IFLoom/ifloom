@@ -192,12 +192,10 @@ In the React UI, draw [`GameShell`](/docs/react#gameshell) with that runner and 
 
 ## Add settings
 
-Declare settings in your pack's `settings`. This declares one of each kind the [showcase](/docs/guide/showcase) uses:
+Declare settings in your content's `settings`. This declares one of each kind the [showcase](/docs/guide/showcase) uses:
 
 ```ts
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   settings: [
     { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
     {

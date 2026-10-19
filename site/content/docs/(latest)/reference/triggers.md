@@ -13,13 +13,11 @@ import { fireTriggers, type TriggerDef } from '@ifloom/engine'
 These are the showcase's two triggers. The first time the player steps onto the high street, Sam's welcome note turns up: a [notice](/docs/reference/notices) says so, and the note goes into the player's [notes](/docs/reference/collections). Every Sunday from the first week on, the rent goes out.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { day, weekday } from '@ifloom/plugin-calendar'
 import { at } from '@ifloom/plugin-places'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   collections: [{ id: 'notes', name: 'Notes' }],
   triggers: [
     {
@@ -68,7 +66,7 @@ type TriggerDef = {
 | `effects` | What happens: plain [effects](/docs/reference/effects), `{ custom }` references and [short plugin calls](/docs/reference/custom#plugincall), as in a data scene choice. |
 | `once` | `'game'` (the default) fires once in the whole game. `'turn'` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. |
 
-Declare triggers in [`Game.triggers`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in a [pack](/docs/reference/loader#pack)'s `triggers`, or both. They merge by id with the base's first, so a later pack's trigger replaces an earlier one with the same id.
+Declare triggers in [`Game.triggers`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `triggers`, or both. They merge by id with the base's first, so a later pack's trigger replaces an earlier one with the same id.
 
 ## When triggers fire
 

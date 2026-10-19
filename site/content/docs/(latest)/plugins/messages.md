@@ -40,16 +40,16 @@ Then add `messages()` to the game's `plugins`. [Adding one](/docs/plugins#adding
 function messages(): DefinedPlugin<MessagesState, MessagesView>
 ```
 
-Builds the plugin, with the id `messages`. Call it once, when you build the game. It takes no options: the channels and the messages are content, in a pack's `data.messages`, so a mod can add either.
+Builds the plugin, with the id `messages`. Call it once, when you build the game. It takes no options: the channels and the messages are content, in your content's `data.messages`, so a mod can add either.
 
 ```ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { messages } from '@ifloom/plugin-messages'
 
-declare const town: Pack // your content
+declare const town: Content // your content
 
 const { game } = loadGame([town], {
   id: 'small-town',
@@ -64,7 +64,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-The channels go in the pack beside the messages:
+The channels go in the content beside the messages:
 
 ```ts
 data: {
@@ -91,7 +91,7 @@ type Channel = { id: string; name: string }
 | `id` | What messages name the channel by, and the `tag` on the notices they raise. It's also what the [value](#values) `messages/unread` takes as `channel`. |
 | `name` | What the player reads. |
 
-Channels are content. List them in a pack's `data.messages.channels`, in the order the view lists them. They're merged by id, so a mod can add a channel or rename one.
+Channels are content. List them in your content's `data.messages.channels`, in the order the view lists them. They're merged by id, so a mod can add a channel or rename one.
 
 ### channelsOf
 
@@ -99,11 +99,11 @@ Channels are content. List them in a pack's `data.messages.channels`, in the ord
 function channelsOf(game: Game): Channel[]
 ```
 
-The game's channels, merged from its packs, in order.
+The game's channels, merged from its content and packs, in order.
 
 ## Writing messages
 
-Messages are content. List them in a pack's [`data`](/docs/reference/loader#pack) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
+Messages are content. List them in your content's [`data`](/docs/reference/loader#content) under `messages.messages`. They're merged by id as scenes are, so a mod can add a message or rewrite one.
 
 ### MessageDef
 
@@ -208,7 +208,7 @@ A cut-down Small Town. The player meets Ava at the café, and she texts the next
 The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
 
 ```ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { calendar, day, pass, period, sleep } from '@ifloom/plugin-calendar'
 import { places, type LocationDef } from '@ifloom/plugin-places'
 import { cast, person, type CharacterDef } from '@ifloom/plugin-cast'
@@ -227,9 +227,7 @@ const ava: CharacterDef = {
   talk: 'ava.hi',
 }
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   activities: [{ id: 'wait', effects: [pass(1)] }],
   scenes: [
@@ -578,11 +576,11 @@ const drawMessage: (pool: string) => EffectRef
 function messageDefs(game: Game): MessageDef[]
 ```
 
-The game's messages, merged from its packs: `game.data.messages.messages`.
+The game's messages, merged from its content and packs: `game.data.messages.messages`.
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the pack each message came from, with `where` as `messages <id>`:
+When the game loads, the plugin reports these problems against the content or pack each message came from, with `where` as `messages <id>`:
 
 - A channel the game doesn't have (`unknown channel "…"`).
 - Anything `when` names that the game doesn't have, such as `unknown storyline "…"`.

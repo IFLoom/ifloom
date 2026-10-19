@@ -66,7 +66,7 @@ my-game/
 ├── vite.config.ts    the Vite preset from @ifloom/cli/vite, with React's and Tailwind's plugins
 ├── .gitignore        leaves out node_modules, dist and playtest
 └── src/
-    ├── game.ts       puts the game together from the packs below
+    ├── game.ts       puts the game together from the files below
     ├── world/
     │   └── stats.ts  what the whole game shares: here, one stat
     ├── story/
@@ -76,7 +76,7 @@ my-game/
     └── styles.css    imports the React UI's styles and a theme preset
 ```
 
-Your content goes in `src/world/` and `src/story/`. Each file there is a [pack](/docs/reference/loader#pack), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/loader#loadgame). Things the whole game shares, such as stats and items, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
+Your content goes in `src/world/` and `src/story/`. Each file there exports [`Content`](/docs/reference/loader#content), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/loader#loadgame). Things the whole game shares, such as stats and items, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
 
 `package.json` depends on `@ifloom/engine`, `@ifloom/react`, React and react-dom. Its dev dependencies are `@ifloom/cli`, `@vitejs/plugin-react`, `@tailwindcss/vite`, `tailwindcss`, `typescript`, `@types/react` and `@types/react-dom`. Its scripts are `dev`, `build`, `check`, `playtest` and `typecheck`, which run the [CLI](/docs/cli) and TypeScript.
 
@@ -110,11 +110,9 @@ A game is one module that exports what [`loadGame`](/docs/reference/loader#loadg
 
 ```ts
 // src/game.ts
-import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 
-const story: Pack = {
-  id: 'story',
-  schema: SCHEMA,
+const story: Content = {
   scenes: [{ id: 'start', title: 'The door', body: [{ text: 'start' }], choices: [] }],
   prose: { start: 'A green door, half open. Someone inside is laughing.' },
 }
@@ -235,7 +233,7 @@ bun run check       # bunx ifloom check in a project without the script
 bun run typecheck
 ```
 
-`check` loads `src/game.ts` and prints `No problems.` when the game loads cleanly. If it lists problems, each one names the pack it came from and the scene or key it's about. `typecheck` runs TypeScript over the game.
+`check` loads `src/game.ts` and prints `No problems.` when the game loads cleanly. If it lists problems, each one names the scene or key it's about. `typecheck` runs TypeScript over the game.
 
 To try IFLoom's latest unreleased code instead, see [Working from the repository](/docs/guide/from-the-repository).
 

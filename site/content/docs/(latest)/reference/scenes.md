@@ -244,7 +244,7 @@ type DataScene = {
 }
 ```
 
-A scene written as data. You build its body from blocks, each with its own prose key, rather than writing one key for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it straight into `game.scenes`, or a [pack](/docs/reference/loader#pack)'s `scenes`, and the engine [bakes](#running-data-scenes) it into a `Scene` when it's first shown.
+A scene written as data. You build its body from blocks, each with its own prose key, rather than writing one key for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it straight into `game.scenes`, or your [content](/docs/reference/loader#content)'s `scenes`, and the engine [bakes](#running-data-scenes) it into a `Scene` when it's first shown.
 
 This is Ava's hello from the showcase:
 

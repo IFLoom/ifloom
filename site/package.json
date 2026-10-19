@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:lean": "next build --webpack",
     "typecheck": "fumadocs-mdx && next typegen && tsc --noEmit",
     "links": "node scripts/check-links.ts"
   },

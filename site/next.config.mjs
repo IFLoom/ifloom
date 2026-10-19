@@ -42,6 +42,13 @@ const config = {
   // The editor uses the engine, the React UI and the plugins straight from the workspace, as TypeScript.
   transpilePackages: PACKAGES.map((name) => `@ifloom/${name}`),
   turbopack: { resolveAlias: Object.fromEntries(PACKAGES.map((name) => [`@ifloom/${name}`, `../packages/${name}/src/index.ts`])) },
+  // `npm run build:lean` builds with webpack, which compiles in well under half the
+  // memory Turbopack takes (about 6 GB against 15), so the checkout's own checks
+  // fit a small machine. It reads the packages' source through their export condition.
+  webpack(config) {
+    config.resolve.conditionNames = ['ifloom-source', '...']
+    return config
+  },
   // TODO(launch): remove, with app/robots.ts and metadata.robots in app/layout.tsx. See ROADMAP "Release readiness".
   async headers() {
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]

@@ -95,8 +95,9 @@ const siteInput = [
 tasks['site:links'] = { command: 'npm run links --silent', cwd: 'site', cache: { input: siteInput, output: [] } }
 // A hit puts back the built site (all `next start` needs) and the MDX collections fumadocs-mdx generates, but not
 // Next's own build cache in .next/cache, which only speeds up the next real build.
+// Built with webpack (build:lean): Turbopack's compile takes most of a 15 GB machine. Vercel builds with Turbopack.
 tasks['site:build'] = {
-  command: 'npm run build --silent',
+  command: 'npm run build:lean --silent',
   cwd: 'site',
   dependsOn: ['site:links'],
   cache: { input: siteInput, output: ['site/.next/**', '!site/.next/cache/**', 'site/.source/**', 'site/next-env.d.ts'] },

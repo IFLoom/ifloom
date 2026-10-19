@@ -112,7 +112,9 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown item "…"` | An item nobody declares, in an `item` condition or effect, or a `use` command. |
 | `unknown stat "…"` | A stat nobody declares, in `stat` or `level`. |
 | `unknown collection "…"` | A collection nobody declares. |
-| `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'` names no kind and isn't checked. |
+| `unknown kind "…"` | A kind nobody declares, in `count`, `entity` or the `of` of a `stat`, `level` or `kv`. `'$'`, `'you'` and `'player'` name no kind and aren't checked. |
+| A holder problem | An `entity` condition's `at`, or a `count`'s `Select`'s. See [Holders](#holders). |
+| `plugin "…" has no trait "…"` | A `count`'s `Select` names a `trait` of a plugin the game has, which that plugin doesn't declare. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
 | `gated on a choice in unknown scene "…"` | A `chose` key, or a `since` naming a `scene#choice`, whose scene doesn't exist. |
 | `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
@@ -136,7 +138,11 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | A stat owner problem | A `stat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
 | `stat "…" is derived: it is worked out, never written` | A `stat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
 | `no <kind> stat named "…"` | A `create` effect gives its entity a stat that isn't declared `of` its kind. |
-| `unknown kind "…"` | A `create`'s or `each`'s `of`, the kind in the `of` of a `stat` or `kv` effect, or in a `remove` effect's `entity`. |
+| `unknown kind "…"` | A `create`'s or `each`'s `of`, the kind in the `of` of a `stat` or `kv` effect, or in a `remove`, `entity` or `move` effect's `entity`. |
+| A holder problem | An `entity` effect's `at`, a `move`'s `from` and `to`, a `create`'s `at`, an `each`'s `at`, and a `you` effect's `to`. See [Holders](#holders). |
+| `unknown entity "…" to be like: name one the game declares` | A `create`'s `like` names an entity nobody declares. |
+| `like names a <kind>, not a <of>` | A `create`'s `like` is of another kind than its `of`. |
+| `plugin "…" has no trait "…"` | An `each`'s `trait`, or a trait in a `create`'s `entity.traits`, of a plugin the game has that doesn't declare it. |
 | `unknown item "…"` | An `item` effect. |
 | `unknown storyline "…"` | A `storylineKv` or `closeStoryline` effect. |
 | `unknown collection "…"` | A `collect` or `discard`. |
@@ -174,6 +180,20 @@ A stat is either the player's or belongs to a [kind](/docs/reference/entities). 
 | `stat "…" is the player's, not <ref>'s` | The player's stat, named with an `of`. |
 | `stat "…" belongs to <kind>, not <other>` | A stat named on an entity of another kind. |
 
+### Holders
+
+Wherever content names a [holder](/docs/reference/entities#holding-things), it has to be one that can hold things: `'player'`, `'you'`, `'$'`, or an entity of a [unique](/docs/reference/entities#kinddef) kind.
+
+| Problem | Means |
+|---|---|
+| `unknown holder "…": a holder is "player", "you" or a unique entity` | Not a holder at all, such as `'pal'`. |
+| `unknown kind "…"` | An entity of a kind nobody declares. |
+| `"…" can't hold things: its kind "…" isn't unique` | An entity whose kind stacks, such as `'food:apple'`. |
+| `"…" can't hold itself` | A `move` whose `to` is the thing it moves. |
+| `"you" is already whoever is played: …` | A `you` effect whose `to` is `'you'`. |
+
+Where things start, in each entity's [`at`](/docs/reference/entities#entitydef), is checked at `entity <kind>:<id>`: see [Where each check runs](#where-each-check-runs).
+
 ### Absent partners
 
 A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/docs/reference/plugins#cooperates). That holds for every form: a condition, a short or long effect, and a command. In play it isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.
@@ -192,7 +212,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
 | `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition, and `display pips needs a range of 20 or less; this one is …` for [`display: 'pips'`](/docs/reference/stats#statdef) on a wide range. For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
-| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. |
+| `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. For its [`at`](/docs/reference/entities#holding-things): `at can't be "you" where a thing starts: …`, `at names the entity itself: nothing can hold itself`, `at names unknown holder "…"` (a holder has to be declared), `at names "…", whose kind isn't unique, so it can't hold things`, `at gives "…" <n>: a count is a whole number above 0`, `a unique thing starts in one place, one of it`, and `holders go round in a cycle: … → …` for unique things that start inside each other. |
 | `kind <id>` | What its `listed` and `marks` conditions name, with `'$'` as any one of the kind. |
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |
 | `trait <id> on <kind>:<id>` | `unknown entity "…"` for a row of the `traits` table that names an entity nobody declares, and whatever the plugin's trait finds in the data with its `check` and `references`. See [Traits](#traits). |

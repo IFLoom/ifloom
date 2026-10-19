@@ -70,6 +70,13 @@ const TARGETS = [
 const DETAILS = [
   // whose, or of which kind
   'of',
+  // who holds it (a holder: 'player', 'you' or a unique entity)
+  'at',
+  // what a thing is made like, and what a selection picks by
+  'like',
+  'trait',
+  // a count of units held, not of distinct things
+  'units',
   // the comparisons
   'is',
   'gte',

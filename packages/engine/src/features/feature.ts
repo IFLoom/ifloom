@@ -10,7 +10,7 @@
  * core's shared code names no feature.
  *
  * A feature is a leaf. It imports types, other features, and at runtime only
- * modules that import nothing back (strings, entities, notices, storylines,
+ * modules that import nothing back (strings, entities, holdings, notices, storylines,
  * collections, context, the scene body). What it needs from the core,
  * such as `holds` or `runEffects`, comes in a `FeatureContext` argument, as a
  * plugin's context does. That keeps the registry free of import cycles. Core

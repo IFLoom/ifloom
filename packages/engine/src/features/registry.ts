@@ -13,6 +13,7 @@ import { activities, type ActivitiesShape } from './activities.ts'
 import { audio, type AudioShape } from './audio.ts'
 import { collections, type CollectionsShape } from './collections.ts'
 import { entities, type EntitiesShape } from './entities.ts'
+import { holdings, type HoldingsShape } from './holdings.ts'
 import { inputs, type InputsShape } from './inputs.ts'
 import { items, type ItemsShape } from './items.ts'
 import { locks } from './locks.ts'
@@ -34,6 +35,7 @@ import { kv, type KvShape } from './kv.ts'
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
 type Shapes =
   | EntitiesShape
+  | HoldingsShape
   | TurnsShape
   | KvShape
   | StorylinesShape
@@ -63,8 +65,9 @@ type Shapes =
  * after the plugins' hooks, since only its after-command step (clearing a
  * `transition` effect's override a command didn't set) depends on order;
  * panels after the plugins' hooks too, so a turn or scene a hook moves on
- * closes the panel the command found open; saving anywhere, since it only
- * views and checks.
+ * closes the panel the command found open; holdings anywhere, since it only
+ * applies, views and checks (it sits beside entities, whose kinds it reads);
+ * saving anywhere, since it only views and checks.
  */
 export const FEATURES = [
   turns,
@@ -85,6 +88,7 @@ export const FEATURES = [
   transitions,
   panels,
   entities,
+  holdings,
   locks,
   saving,
 ] as const

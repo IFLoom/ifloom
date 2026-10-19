@@ -42,6 +42,16 @@ export type Reference =
   | { setting: string; is?: KvValue }
   /** A kind of entity. */
   | { kind: string }
+  /**
+   * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
+   * thing given to it, which can't be the holder itself; `protagonist` for a
+   * `you` effect, which names the one to play.
+   */
+  | { holder: string; holds?: string; protagonist?: boolean }
+  /** The entity a `create` makes a thing like, and the kind it makes, if it says. */
+  | { like: string; of?: string }
+  /** A trait, by id. */
+  | { trait: string }
   | { activity: string }
   | { input: string }
   /** A minigame, by id. */

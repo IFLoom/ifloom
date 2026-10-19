@@ -113,22 +113,33 @@ export { lockOn, lockedBy, lockedOut } from './locks.ts'
 
 // Collections, notices, triggers and input
 export type { CollectionDef, CollectionEntry, CollectionItem } from './collections.ts'
-export type { EntityDef, EntityRef, EntityState, KindDef, TraitData, TraitDef, Traits, TraitTable, TraitTools } from './entities.ts'
+export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitDef, Traits, TraitTable, TraitTools } from './entities.ts'
 export {
+  PLAYER,
+  YOU,
   anyOf,
   bindCurrent,
   entitiesOf,
+  entityImage,
   entityKv,
   entityOf,
   entityTags,
+  entityTrait,
+  everyEntity,
   kindById,
+  ownerOf,
   parseRef,
+  protagonist,
+  resolveHolder,
   setTraitState,
   traitOf,
   traitState,
   withTrait,
   writeEntity,
 } from './entities.ts'
+export type { CreatedEntity, Select } from './features/entities.ts'
+export type { HeldView } from './features/holdings.ts'
+export { canHold, give, heldBy, heldCount, heldTotal, holderOf, holdersOf, holding, move, take } from './holdings.ts'
 export { collect, collected, collectionById, discard } from './collections.ts'
 export type { Notice } from './notices.ts'
 export { NOTICES_KEPT, dismiss, notify } from './notices.ts'

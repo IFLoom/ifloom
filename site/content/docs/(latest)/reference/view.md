@@ -234,6 +234,16 @@ staff.entries.map((entry) => entry.name)       // ['Ana', 'Dev'], once Dev is hi
 staff.entries[0].stats.map((stat) => stat.text) // ['5', '60', '£12']
 ```
 
+### held
+
+| Field | Type | Meaning |
+|---|---|---|
+| `held` | [`HeldView[]`](#heldview) | What you [hold](/docs/reference/entities#holding-things): what the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played holds, then what the player holds. With nobody played, just the player's. Things held by nobody else are never here, so it gives nothing away. |
+
+```ts
+view(state, game).held.map((thing) => `${thing.name} ×${thing.count}`)   // ['Apple ×2', 'A red scarf ×1']
+```
+
 ### notices
 
 | Field | Type | Meaning |
@@ -624,6 +634,22 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 | `kv` | Its kv store as it reads: its declaration's keys with what play set laid over them. |
 
 **Gotcha.** Each entity's `stats` is decided on its own, so two entries of one kind can show different stats. The [React UI](/docs/react/components#entitytable)'s table makes a column for every stat any row shows, and leaves the other rows' cells blank.
+
+## HeldView
+
+```ts
+type HeldView = {
+  ref: EntityRef
+  name: string
+  desc: string | null
+  image: string | null
+  tags: string[]
+  count: number
+  at: Holder
+}
+```
+
+One thing in [`view.held`](#held). `ref` is how content names it. `name` and `desc` are filled in for this save, `image` is its picture through [`artSrc`](/docs/reference/prose#artsrc), and `tags` are its kind's then its own. All of them read through the entity it was made [like](/docs/reference/entities#things-made-like-another). `count` is how many are held, and `at` who holds them: the protagonist's reference, or `'player'`. They come in the game's order of its entities, each holder's in turn. A thing whose `visible` doesn't hold is left out, but its kind's `listed` doesn't matter here.
 
 ## NoticesView and NoticeView
 

@@ -7,6 +7,8 @@ export const prose: Record<string, string> = {
   'ava.smalltalk.beans': 'Ava: "New beans this week. Tell me if they’re awful. Nobody else will."',
   'ava.smalltalk.river': 'Ava: "Walk the river at dusk sometime. It’s the only quiet in town."',
   'ava.hi.regular': 'She has your cup out before you ask.',
+  'ava.hi.shell': 'The river shell sits by the till, holding down the receipts.',
+  'ava.hi#shell': 'Give her the shell from the river',
   'ava.hi#chat': 'Chat for a minute',
   'ava.hi#compliment': 'Tell her the café is the best thing in town',
   'ava.hi#work': 'Ask about weekend work',
@@ -16,6 +18,7 @@ export const prose: Record<string, string> = {
   'ava.river':
     // `[[reveal]]` on a line of its own: what follows comes a moment later.
     'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.\n\n[[reveal:1500|slide-up]]\n\n"I told you it was the only quiet in town." She shuffles up to make room.',
+  'ava.river#shell': 'Pocket a smooth shell from the bank',
   'ava.river#stay': 'Sit with her until the light goes',
   'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',
   'ava.text#yes': 'Deal!',

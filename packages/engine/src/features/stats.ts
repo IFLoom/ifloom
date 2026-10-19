@@ -5,7 +5,7 @@
  */
 import { say } from '../strings.ts'
 import type { Game } from '../game.ts'
-import { entityOf, entityStat, hasEntity, ofKind, statOwnerProblem, writeEntity } from '../entities.ts'
+import { entityOf, entityStat, hasEntity, ofKind, ownerOf, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
 import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
@@ -222,7 +222,8 @@ function evaluate(formula: Formula, read: (id: string, depth: number) => number,
  * `start`. Then the plugins' modifiers, then the stat's `round`, then its
  * range again. An entity that isn't there reads 0.
  */
-export function statValue(state: GameState, game: Game, id: string, of: string | undefined, cx: FeatureContext): number {
+export function statValue(state: GameState, game: Game, id: string, whose: string | undefined, cx: FeatureContext): number {
+  const of = ownerOf(state, whose)
   if (of !== undefined && !hasEntity(state, game, of)) return 0
   // An entity's kept stat reads what play left, then its declaration, then the stat's start.
   const kept = (key: string) => (of === undefined ? state.stats[key] : entityStat(state, game, of, key))
@@ -433,6 +434,7 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
 
 /** What a `stat` effect leaves: held to the stat's range, on the player or an entity, through `rules.onStat`. */
 function writeStat(state: GameState, game: Game, key: StatKey, of: string | undefined, to: (was: number) => number, cx: FeatureContext): GameState {
+  // Written with `of` already made real: `'you'` and `'player'` are read by `ownerOf` first.
   // A derived stat is worked out, never written: the loader reports the effect.
   if (statDef(game, key)?.derive !== undefined) return state
   if (of !== undefined) {
@@ -454,28 +456,32 @@ export const stats = defineFeature<StatsShape>({
   conditions: {
     stat: {
       holds: (state, condition, game, cx) => {
+        const of = ownerOf(state, condition.of)
         // An entity that is not there fails every range, `lt` included.
-        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return false
+        if (of !== undefined && !hasEntity(state, game, of)) return false
         if (!game) return inRange(state.stats[condition.stat] ?? 0, condition)
-        return inRange(statValue(state, game, condition.stat, condition.of, cx), condition)
+        return inRange(statValue(state, game, condition.stat, of, cx), condition)
       },
       explain: (state, condition, game, cx) => {
-        const read = (of?: string) => (game ? statValue(state, game, condition.stat, of, cx) : (state.stats[condition.stat] ?? 0))
-        if (condition.of === undefined) return `stat ${condition.stat} is ${read()}; wants ${wanted(condition)}`
-        if (!hasEntity(state, game, condition.of)) return `${condition.of} is not in the game`
-        return `${condition.of} stat ${condition.stat} is ${read(condition.of)}; wants ${wanted(condition)}`
+        const of = ownerOf(state, condition.of)
+        const read = (whose?: string) => (game ? statValue(state, game, condition.stat, whose, cx) : (state.stats[condition.stat] ?? 0))
+        if (of === undefined) return `stat ${condition.stat} is ${read()}; wants ${wanted(condition)}`
+        if (!hasEntity(state, game, of)) return `${of} is not in the game`
+        return `${of} stat ${condition.stat} is ${read(of)}; wants ${wanted(condition)}`
       },
       references: (condition) => [{ stat: condition.stat, of: condition.of }, ...ofKind(condition.of)],
     },
     level: {
       holds: (state, condition, game, cx) => {
-        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return false
-        return inRange(game ? (statLevel(state, game, condition.level, condition.of, cx)?.level ?? 0) : 0, condition)
+        const of = ownerOf(state, condition.of)
+        if (of !== undefined && !hasEntity(state, game, of)) return false
+        return inRange(game ? (statLevel(state, game, condition.level, of, cx)?.level ?? 0) : 0, condition)
       },
       explain: (state, condition, game, cx) => {
-        if (condition.of !== undefined && !hasEntity(state, game, condition.of)) return `${condition.of} is not in the game`
-        const level = game ? (statLevel(state, game, condition.level, condition.of, cx)?.level ?? 0) : 0
-        return `${condition.of === undefined ? '' : `${condition.of} `}stat ${condition.level} is at level ${level}; wants ${wanted(condition)}`
+        const of = ownerOf(state, condition.of)
+        if (of !== undefined && !hasEntity(state, game, of)) return `${of} is not in the game`
+        const level = game ? (statLevel(state, game, condition.level, of, cx)?.level ?? 0) : 0
+        return `${of === undefined ? '' : `${of} `}stat ${condition.level} is at level ${level}; wants ${wanted(condition)}`
       },
       references: (condition) => [{ stat: condition.level, of: condition.of }, ...ofKind(condition.of)],
     },
@@ -484,8 +490,9 @@ export const stats = defineFeature<StatsShape>({
     stat: {
       apply: (state, effect, game, cx) => {
         const set = 'to' in effect
-        const after = writeStat(state, game, effect.stat, effect.of, (was) => (set ? effect.to : was + effect.by), cx)
-        if (after === state || effect.of !== undefined) return after
+        const of = ownerOf(state, effect.of)
+        const after = writeStat(state, game, effect.stat, of, (was) => (set ? effect.to : was + effect.by), cx)
+        if (after === state || of !== undefined) return after
         const delta = set ? after.stats[effect.stat] - (state.stats[effect.stat] ?? 0) : effect.by
         return game.rules?.onStat?.(state, after, effect.stat, delta) ?? after
       },

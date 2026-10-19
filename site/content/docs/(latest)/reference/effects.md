@@ -52,9 +52,14 @@ type Effect =
   | { kind: 'storylineKv'; storyline: string; key: string; by: number }
   | { kind: 'kv'; key: string; to: KvValue; of?: string }
   | { kind: 'kv'; key: string; by: number; of?: string }
-  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
+  | { kind: 'create'; of: string; like?: string; entity?: CreatedEntity; at?: Placement }
+  | { kind: 'create'; of?: string; like: string; entity?: CreatedEntity; at?: Placement }
   | { kind: 'remove'; entity: string }
-  | { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
+  | ({ kind: 'each'; effects: EffectRef[] } & Select)
+  | { kind: 'entity'; entity: string; at?: string; by: number }
+  | { kind: 'entity'; entity: string; at?: string; to: number }
+  | { kind: 'move'; entity: string; from?: string; to: string; by?: number }
+  | { kind: 'you'; to: string | null }
   | { kind: 'scene'; scene: string | null }
   | { kind: 'scene'; from: string; otherwise?: string }
   | { kind: 'item'; item: string; by: number }
@@ -238,9 +243,27 @@ Takes one entry out of a collection, named by its id in `entry`. It does nothing
 ```ts
 { kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }
 { kind: 'create', of: 'staff', entity: { id: 'cleo', name: 'Cleo' } }
+{ kind: 'create', like: 'food:cake', at: 'you', entity: { stats: { fresh: 3 } } }
 ```
 
-Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. The save keeps a record of it with its `name` and whatever `entity.stats` and `entity.kv` give. Every other stat of its kind reads as that stat's `start`.
+Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. The save keeps a record of it with what `entity` gives:
+
+```ts
+type CreatedEntity = {
+  id?: string
+  name?: string
+  tags?: string[]
+  traits?: Record<string, unknown>
+  stats?: Record<string, number>
+  kv?: Record<string, KvValue>
+}
+```
+
+Every other stat of its kind reads as that stat's `start`.
+
+With `like`, the new entity is [made like](/docs/reference/entities#things-made-like-another) another, and reads whatever it isn't given from that one: name, description, picture, tags, stats, kv and traits. Its kind is the `like`'s if `of` is left out, and `entity` can be left out altogether. `like` names an entity your content declares.
+
+With `at`, it's given to a [holder](/docs/reference/entities#holding-things) once made: one holder for one of it, or how many each holder has, such as `{ 'place:larder': 6 }`.
 
 Without `id`, it gets the next free number of its kind (`#1`, `#2` and so on), recorded in [`state.created`](/docs/reference/state#created). A number is never given again, even once the entity that had it is [removed](#remove). With `id`, it gets that id, unless an entity of that kind already has it. In that case the effect does nothing, and the entity there keeps its name and numbers. An id the game declares counts as taken, unless that entity was removed: then it comes back, with the name the `create` gives.
 
@@ -257,7 +280,7 @@ choices: [
 - The id it was given isn't handed back. To refer to someone created without an id, go through them all with [`each`](#each) or [`entitiesOf`](/docs/reference/entities#entitiesof), or give an `id` of your own.
 - An `id` that's a whole number, such as `'7'`, does nothing, as one that's already taken does. It would otherwise jump to the front of the kind's order. See [Ids](/docs/reference/entities#ids).
 - `entity.stats` is taken as written, not held to range, until an effect next moves it.
-- The [content checker](/docs/reference/checks) reports a kind the game doesn't declare.
+- The [content checker](/docs/reference/checks) reports a kind the game doesn't declare, a `like` it doesn't declare or of another kind than `of`, and a holder in `at` that can't hold things.
 
 ### remove
 
@@ -270,14 +293,19 @@ Takes an [entity](/docs/reference/entities) out of the game, with what the save 
 
 An entity the game declares is also recorded in [`state.removed`](/docs/reference/state#removed). A declared entity is in the game unless it's recorded there, so that's what keeps it gone, in this save and when it [loads](/docs/reference/entities#entities-in-old-saves) again. An entity created in play isn't recorded: once its record goes, it's gone.
 
+Nobody holds it any more, and what it [held](/docs/reference/entities#holding-things) goes to whoever held it. If nobody did, what it held goes with it. If it was the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, `'you'` is the player again.
+
 ### each
 
 ```ts
 { kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] }
 { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
+{ kind: 'each', at: 'you', of: 'food', effects: [{ kind: 'stat', stat: 'fresh', by: -1, of: '$' }] }
 ```
 
 Runs `effects` once for every [entity](/docs/reference/entities) of kind `of`, in the order they arrived, with `'$'` standing for the current one each time. With `where`, it only runs for those the condition holds for, with `'$'` again standing for the current one. Use it for upkeep, wages, a bad week, or everyone who quits.
+
+It picks what it runs over as a [`Select`](/docs/reference/entities#select) does. `at` runs it over what a [holder](/docs/reference/entities#holding-things) holds (once for each thing, however many of it), and `tag` and `trait` narrow it further. With no `of`, it runs over every kind.
 
 - **Who it runs for is fixed before it starts.** One created along the way isn't visited, and one removed along the way by an earlier entity's effects is skipped.
 - **`where` is tested on the state as it is when each entity comes up**, after the effects for the ones before it.
@@ -287,6 +315,41 @@ Runs `effects` once for every [entity](/docs/reference/entities) of kind `of`, i
 An effect inside that doesn't name `'$'` still runs once per entity. `{ kind: 'stat', stat: 'coins', by: -10 }` in an `each` over three members of staff takes 30 coins.
 
 The [content checker](/docs/reference/checks) looks inside an `each`, with `'$'` standing for one of its kind, so a stat named on `'$'` has to belong to that kind.
+
+### entity
+
+```ts
+{ kind: 'entity', entity: 'food:apple', by: 2 }                       // two more apples for you
+{ kind: 'entity', entity: 'food:apple', at: 'place:larder', to: 6 }   // the larder restocked
+{ kind: 'entity', entity: 'gift:scarf', at: 'character:ava', to: 1 }  // Ava has the scarf now
+```
+
+Changes how many of a thing a [holder](/docs/reference/entities#holding-things) holds, `by` an amount or `to` a count. `at` is `'you'` if left out: the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, or the player. It never goes below 0. A unique thing's count is 0 or 1, and giving it to one holder takes it from whoever had it.
+
+It does nothing if the thing isn't in the game, or the holder can't hold things: one that isn't there, or an entity whose kind isn't [unique](/docs/reference/entities#kinddef). Nor does it put a thing inside itself. [`give`](/docs/reference/entities#give-take-move-and-holding) and `take` write it with `by`.
+
+### move
+
+```ts
+{ kind: 'move', entity: 'food:apple', to: 'character:ava', by: 1 }    // hand Ava an apple
+{ kind: 'move', entity: 'food:bread', from: 'place:larder', to: 'you' }
+{ kind: 'move', entity: 'gift:scarf', to: 'gift:box' }               // wrap it
+```
+
+Moves a thing from one [holder](/docs/reference/entities#holding-things) `to` another. `from` is where it comes from: if it's left out, a unique thing moves from wherever it is, and anything else from `'you'`. `by` is how many: all there is, if left out. It moves at most what `from` holds, so asking for 10 apples from someone with 2 moves 2.
+
+It does nothing when `to` can't hold things, when `from` and `to` are the same, or when the thing would end up holding itself, however far round: a box can't go into the scarf it holds. The [content checker](/docs/reference/checks) reports a `to` that names the thing itself.
+
+**Gotcha.** Here `to` names a holder, not a value to set, as in every effect that names two places. [`move`](/docs/reference/entities#give-take-move-and-holding) writes it.
+
+### you
+
+```ts
+{ kind: 'you', to: 'character:sam' }   // play as Sam
+{ kind: 'you', to: null }              // back to the player
+```
+
+Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, a unique entity, kept in [`state.you`](/docs/reference/state#you). `to: null`, or `'player'`, goes back to the player. It does nothing for an entity that isn't there or can't hold things. A game with one protagonist never needs it.
 
 ### notify
 

@@ -27,6 +27,8 @@ type GameState = {
   entities: Record<string, Record<string, EntityState>>
   created: Record<string, number>
   removed: string[]
+  held: Record<Holder, Record<EntityRef, number>>
+  you: EntityRef | null
   storylines: Record<string, StorylineState>
   kv: Record<string, KvValue>
   items: Record<string, number>
@@ -131,11 +133,29 @@ A stat declared `of` a [kind](/docs/reference/entities) isn't here. Each entity 
 entities: Record<string, Record<string, EntityState>>
 ```
 
-What play has changed about the game's [entities](/docs/reference/entities), by kind and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) with only what changed: stats, kv keys, and for one [created](/docs/reference/effects#create) in play, the name it was given. A declared entity has no record until something changes it, so a new game starts with `{}`. Everything else about an entity is read from content.
+What play has changed about the game's [entities](/docs/reference/entities), by kind and then by id, as in `state.entities.staff.ana`. Each is an [`EntityState`](/docs/reference/entities#entitystate) with only what changed: stats, kv keys, and for one [created](/docs/reference/effects#create) in play, what it was given (its name, the entity it was made `like`, tags and trait data). A declared entity has no record until something changes it, so a new game starts with `{}`. Everything else about an entity is read from content.
 
 A record can also hold `traits`: the state of a [trait](/docs/reference/entities#traits) that keeps one, such as the uses left in a torch, once [`setTraitState`](/docs/reference/entities#settraitstate) writes it. Saves made before traits existed have none, and need nothing to load. A trait's data itself is never here, since it's content.
 
 The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove) and [`each`](/docs/reference/effects#each) effects change it, as do `stat` and `kv` with `of`. Read it with [`{ count }`](/docs/reference/conditions#count), [`{ entity }`](/docs/reference/conditions#entity), `{ stat, of }` and `{ kv, of }`, or with [`entitiesOf`](/docs/reference/entities#entitiesof), [`statValue`](/docs/reference/stats#statvalue) and [`entityKv`](/docs/reference/entities#entitykv), which fall back to content. Don't read it directly for a value, since most values aren't here. A save from before version 4 loads with `{}`, and one from before version 15 loses what it copied from content (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
+
+### held
+
+```ts
+held: Record<Holder, Record<EntityRef, number>>
+```
+
+What play has changed about who [holds](/docs/reference/entities#holding-things) what, by holder and then thing, as in `state.held.player['food:apple']`. A holder is `'player'` or a unique entity's reference, never `'you'`, which is resolved before anything is written. A new game starts with `{}`: where things start is read from each entity's [`at`](/docs/reference/entities#entitydef) in content until play changes it. Once a count is written it's kept, 0 included, so a thing placed and then used up stays used up.
+
+Read it with [`heldCount`](/docs/reference/entities#heldcount), [`heldBy`](/docs/reference/entities#heldby) and [`holderOf`](/docs/reference/entities#holderof-and-holdersof), or the [`{ entity, at }`](/docs/reference/conditions#entity) and [`{ count }`](/docs/reference/conditions#count) conditions, which fall back to content. The [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change it, as do `create` with `at` and `remove`. Who holds each thing is worked out from it when asked and kept for that state, never saved. A save from before holdings loads with `{}`. The field came with a load default and no new save version.
+
+### you
+
+```ts
+you: EntityRef | null
+```
+
+The [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, a unique entity's reference, or `null` for the player. `'you'` as a holder and `of: 'you'` read it. The [`you`](/docs/reference/effects#you) effect sets it. A new game starts with `null`, and a game with one protagonist never changes it. A save from before holdings loads with `null`. The field came with a load default and no new save version.
 
 ### created
 

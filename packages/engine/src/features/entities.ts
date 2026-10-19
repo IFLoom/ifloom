@@ -10,25 +10,33 @@ import {
   dropRecord,
   entitiesOf,
   entityDef,
+  entityImage,
   entityKv,
   entityTags,
   entityText,
+  entityTrait,
+  everyEntity,
   hasEntity,
   ofKind,
   parseRef,
   resolveTraits,
   traitDef,
   writeEntity,
+  type CreatedFields,
   type EntityDef,
+  type EntityRef,
   type EntityState,
   type KindDef,
+  type Placement,
   type TraitTable,
 } from '../entities.ts'
+import { heldBy, heldCount, heldTotal, placementCounts, releaseHeld, setHeld } from '../holdings.ts'
 import type { EffectRef } from '../custom.ts'
+import type { Reference } from '../references.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState, Range } from '../types.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
-import { inRange, wanted } from '../range.ts'
+import { bounded, inRange, wanted } from '../range.ts'
 import { statDef, statView, type StatView } from './stats.ts'
 import { artSrc } from '../sceneBody.ts'
 
@@ -62,6 +70,49 @@ export type EntitiesView = {
   entries: EntityView[]
 }
 
+/**
+ * Which entities a `count` or an `each` looks at: those `of` a kind, those a
+ * holder holds (`at`), those with a tag or a trait, and those `where` holds
+ * for, with `'$'` as each one. Every entity in the game if it says none.
+ */
+export type Select = {
+  /** A kind. */
+  of?: string
+  /** A holder: only what it holds (`'you'`, `'player'` or a unique entity). */
+  at?: string
+  /** A tag it has, its kind's or its own. */
+  tag?: string
+  /** A trait it has, by id. */
+  trait?: string
+  /** A condition asked for each, with `'$'` as that one. */
+  where?: Condition
+}
+
+/** What a created entity is given in `create`: a name (or a `like` to read it from), tags, traits, stats and kv. */
+export type CreatedEntity = {
+  /** Its id within its kind: the next free number (`#1`, `#2`) if left out. */
+  id?: string
+  /** What the player reads. The `like`'s, if it is made like one and left out. */
+  name?: string
+  /** Its tags, after its kind's and its `like`'s. */
+  tags?: string[]
+  /** Its trait data, by trait id, over its `like`'s or its kind's. */
+  traits?: Record<string, unknown>
+  /** Where its stats start, over its `like`'s. */
+  stats?: Record<string, number>
+  /** Its kv keys at the start, over its `like`'s. */
+  kv?: Record<string, KvValue>
+}
+
+/** The fields `create` takes besides its kind or `like`. */
+type CreateFields = {
+  kind: 'create'
+  /** What it is given. */
+  entity?: CreatedEntity
+  /** Who holds it once made: a holder for one, or how many each holds. Nobody if left out. */
+  at?: Placement
+}
+
 /** What the entities feature adds, as types. */
 export type EntitiesShape = {
   state: {
@@ -81,24 +132,34 @@ export type EntitiesShape = {
      * How many entities of a kind there are, or with `where`, how many it holds
      * for (`'$'` in it is each one in turn). Bare, at least one:
      * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }`.
+     * With a `Select`, the things it picks: `{ count: { at: 'you', tag: 'fruit' }, gte: 3 }`.
+     * Distinct things, unless `units` adds up how many of each are held.
      */
-    count: { count: string; where?: Condition } & Range
-    /** An entity is in the game: `{ entity: 'staff:ana' }`. */
-    entity: { entity: string }
+    count: { count: string | Select; where?: Condition; units?: true } & Range
+    /**
+     * An entity is in the game: `{ entity: 'staff:ana' }`. With `at`, how
+     * many of it a holder holds, bare at least one:
+     * `{ entity: 'food:apple', at: 'you', gte: 2 }`. With a range and no
+     * `at`, how many are held by everyone together.
+     */
+    entity: { entity: string; at?: string } & Range
   }
   effects: {
     /**
-     * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
-     * left out, never reused; an id already there is left as it is.
+     * A new entity of a kind, or `like` another, which it reads what it isn't
+     * given from (and whose kind it is, if `of` is left out). Its `id` is the
+     * next free number (`#1`, `#2`) if left out, never reused; an id already
+     * there is left as it is. `at` gives it to a holder.
      */
-    create: { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
+    create: (CreateFields & { of: string; like?: string }) | (CreateFields & { of?: string; like: string })
     /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
     remove: { kind: 'remove'; entity: string }
     /**
      * The same effects for every entity of a kind (where `where` holds), one
      * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
+     * `at`, `tag` and `trait` narrow it as a `Select` does: only what a holder holds.
      */
-    each: { kind: 'each'; of: string; where?: Condition; effects: EffectRef[] }
+    each: { kind: 'each'; effects: EffectRef[] } & Select
   }
   game: {
     /** The kinds of thing the game keeps several of, each with its own stats. */
@@ -135,10 +196,76 @@ export type EntitiesShape = {
   lists: 'kind' | 'entity' | 'trait'
 }
 
-/** How many entities of a kind a `count` condition counts. */
+/** The entities a selection picks, in the game's order of its entities, or a holder's order of what it holds. */
+function selected(state: GameState, game: Game | undefined, select: Select, cx: FeatureContext): EntityRef[] {
+  const refs =
+    select.at !== undefined
+      ? heldBy(state, game, select.at).map((entry) => entry.ref)
+      : select.of !== undefined
+        ? entitiesOf(state, game, select.of)
+        : everyEntity(state, game)
+  return refs.filter(
+    (ref) =>
+      (select.of === undefined || parseRef(ref)?.kind === select.of) &&
+      (select.tag === undefined || (game !== undefined && entityTags(state, game, ref).includes(select.tag))) &&
+      (select.trait === undefined || entityTrait(state, game, ref, select.trait) !== undefined) &&
+      (select.where === undefined || cx.holds(state, bindCurrent(select.where, ref), game)),
+  )
+}
+
+/** A `count` condition's selection: a kind's, or the one it gives, with its own `where` and the condition's both asked. */
+function countSelect(condition: EntitiesShape['conditions']['count']): Select {
+  if (typeof condition.count === 'string') return { of: condition.count, where: condition.where }
+  const both = [condition.count.where, condition.where].filter((when): when is Condition => when !== undefined)
+  return { ...condition.count, where: both.length > 1 ? { all: both } : both[0] }
+}
+
+/** How many a `count` condition counts: distinct things, or with `units`, how many of each are held. */
 function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game | undefined, cx: FeatureContext): number {
-  const refs = entitiesOf(state, game, condition.count)
-  return condition.where ? refs.filter((ref) => cx.holds(state, bindCurrent(condition.where, ref), game)).length : refs.length
+  const select = countSelect(condition)
+  const refs = selected(state, game, select, cx)
+  if (!condition.units) return refs.length
+  return refs.reduce((sum, ref) => sum + (select.at !== undefined ? heldCount(state, game, ref, select.at) : heldTotal(state, game, ref)), 0)
+}
+
+/** A selection in words, for `explain`: `staff where it holds`, `entities held by you tagged fruit`. */
+function described(select: Select): string {
+  return [
+    select.of ?? 'entities',
+    select.at !== undefined ? `held by ${select.at}` : '',
+    select.tag !== undefined ? `tagged ${select.tag}` : '',
+    select.trait !== undefined ? `with ${select.trait}` : '',
+    select.where !== undefined ? 'where it holds' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+/** What a selection names: its kind, holder and trait, and its `where` with `'$'` as one of its kind (left as `'$'` with no kind). */
+function selectReferences(select: Select): Reference[] {
+  return [
+    ...(select.of !== undefined ? [{ kind: select.of }] : []),
+    ...(select.at !== undefined ? [{ holder: select.at }] : []),
+    ...(select.trait !== undefined ? [{ trait: select.trait }] : []),
+    { when: select.of !== undefined ? bindCurrent(select.where, anyOf(select.of)) : select.where },
+  ]
+}
+
+/** What an `each` runs over, in words: its kind, as it always was, or its selection. */
+function eachLabel(effect: Select): string {
+  const only = effect.at === undefined && effect.tag === undefined && effect.trait === undefined
+  return only && effect.of !== undefined ? effect.of : described({ ...effect, where: undefined })
+}
+
+/** How many an `entity` condition reads: held by a holder, or by everyone; undefined when it only asks whether the entity is there. */
+function entityCount(state: GameState, condition: EntitiesShape['conditions']['entity'], game: Game | undefined): number | undefined {
+  if (condition.at !== undefined) return heldCount(state, game, condition.entity, condition.at)
+  return bounded(condition) ? heldTotal(state, game, condition.entity) : undefined
+}
+
+/** The kind a `create` makes: its `of`, else its `like`'s. */
+function createdKind(effect: EntitiesShape['effects']['create']): string | undefined {
+  return effect.of ?? (effect.like !== undefined ? parseRef(effect.like)?.kind : undefined)
 }
 
 /** The kinds the game declares, with the ones its plugins bring. */
@@ -240,40 +367,69 @@ export const entities = defineFeature<EntitiesShape>({
     count: {
       holds: (state, condition, game, cx) => inRange(counting(state, condition, game, cx), condition),
       explain: (state, condition, game, cx) =>
-        `${counting(state, condition, game, cx)} ${condition.count}${condition.where ? ' where it holds' : ''}; wants ${wanted(condition)}`,
-      references: (condition) => [{ kind: condition.count }, { when: bindCurrent(condition.where, anyOf(condition.count)) }],
+        `${counting(state, condition, game, cx)}${condition.units ? ' held' : ''} ${described(countSelect(condition))}; wants ${wanted(condition)}`,
+      references: (condition) => selectReferences(countSelect(condition)),
     },
     entity: {
-      holds: (state, condition, game) => hasEntity(state, game, condition.entity),
-      explain: (state, condition, game) => `${condition.entity} is ${hasEntity(state, game, condition.entity) ? '' : 'not '}in the game`,
-      references: (condition) => ofKind(condition.entity),
+      holds: (state, condition, game) => {
+        const count = entityCount(state, condition, game)
+        return count === undefined ? hasEntity(state, game, condition.entity) : inRange(count, condition)
+      },
+      explain: (state, condition, game) => {
+        const count = entityCount(state, condition, game)
+        if (count === undefined) return `${condition.entity} is ${hasEntity(state, game, condition.entity) ? '' : 'not '}in the game`
+        return `${condition.entity}: ${count} held${condition.at !== undefined ? ` by ${condition.at}` : ''}; wants ${wanted(condition)}`
+      },
+      references: (condition) => [...ofKind(condition.entity), ...(condition.at !== undefined ? [{ holder: condition.at }] : [])],
     },
   },
   effects: {
     create: {
       apply: (state, effect, game) => {
-        const made = (id: string) => writeEntity(state, `${effect.of}:${id}`, createdRecord(effect.entity))
+        const kind = createdKind(effect)
+        if (kind === undefined) return state
+        const given: CreatedFields = { ...effect.entity, like: effect.like }
+        // Made, then given to whoever `at` names.
+        const made = (from: GameState, id: string) => {
+          const ref = `${kind}:${id}`
+          let next = writeEntity(from, ref, createdRecord(given))
+          for (const [holder, count] of Object.entries(placementCounts(effect.at)))
+            next = setHeld(next, game, ref, holder, heldCount(next, game, ref, holder) + count)
+          return next
+        }
         // A given id is used as it is, unless it is taken, or a whole number that would sort first.
-        if (effect.entity.id !== undefined) {
-          const ref = `${effect.of}:${effect.entity.id}`
-          if (hasEntity(state, game, ref) || /^\d+$/.test(effect.entity.id)) return state
+        const id = effect.entity?.id
+        if (id !== undefined) {
+          const ref = `${kind}:${id}`
+          if (hasEntity(state, game, ref) || /^\d+$/.test(id)) return state
           // Back after being removed: no longer gone for good.
-          const back = made(effect.entity.id)
-          return back.removed?.includes(ref) ? { ...back, removed: back.removed.filter((entry) => entry !== ref) } : back
+          const back = state.removed?.includes(ref) ? { ...state, removed: state.removed.filter((entry) => entry !== ref) } : state
+          return made(back, id)
         }
         // The next free number, `#1`, `#2`, never reused. Not a bare number: object keys
         // that look like numbers sort before the rest, and entities keep the order they came.
-        let n = state.created?.[effect.of] ?? 0
+        let n = state.created?.[kind] ?? 0
         do n += 1
-        while (hasEntity(state, game, `${effect.of}:#${n}`))
-        return { ...made(`#${n}`), created: { ...state.created, [effect.of]: n } }
+        while (hasEntity(state, game, `${kind}:#${n}`))
+        return made({ ...state, created: { ...state.created, [kind]: n } }, `#${n}`)
       },
-      references: (effect) => [{ kind: effect.of }, ...Object.keys(effect.entity.stats ?? {}).map((stat) => ({ stat, starts: effect.of }))],
+      references: (effect) => {
+        const kind = createdKind(effect)
+        return [
+          ...(kind !== undefined ? [{ kind }] : []),
+          ...(effect.like !== undefined ? [{ like: effect.like, of: effect.of }] : []),
+          ...(kind !== undefined ? Object.keys(effect.entity?.stats ?? {}).map((stat) => ({ stat, starts: kind })) : []),
+          ...Object.keys(placementCounts(effect.at)).map((holder) => ({ holder })),
+          ...Object.keys(effect.entity?.traits ?? {}).map((trait) => ({ trait })),
+        ]
+      },
     },
     remove: {
       apply: (state, effect, game) => {
         if (!hasEntity(state, game, effect.entity)) return state
-        const gone = dropRecord(state, effect.entity)
+        // What it held goes to whoever held it; nobody holds it any more. A protagonist removed is played no more.
+        const released = releaseHeld(state, game, effect.entity)
+        const gone = dropRecord(released.you === effect.entity ? { ...released, you: null } : released, effect.entity)
         // A declared one stays gone: nothing in the save says it was ever there otherwise.
         return entityDef(game, effect.entity) && !(gone.removed ?? []).includes(effect.entity)
           ? { ...gone, removed: [...(gone.removed ?? []), effect.entity] }
@@ -285,7 +441,7 @@ export const entities = defineFeature<EntitiesShape>({
       apply: (state, effect, game, cx) => {
         // Who it runs for is decided before it starts: one created on the way is not visited, one removed is skipped.
         let next = state
-        for (const ref of entitiesOf(state, game, effect.of)) {
+        for (const ref of selected(state, game, { ...effect, where: undefined }, cx)) {
           if (!hasEntity(next, game, ref)) continue
           if (effect.where && !cx.holds(next, bindCurrent(effect.where, ref), game)) continue
           next = cx.runEffects(next, game, cx.buildEffects(next, game, bindCurrent(effect.effects, ref)), cx.ending)
@@ -293,11 +449,12 @@ export const entities = defineFeature<EntitiesShape>({
         return next
       },
       references: (effect) => {
-        // Inside, `'$'` is one of the kind it runs over.
-        const one = anyOf(effect.of)
+        // Inside, `'$'` is one of the kind it runs over; left as `'$'` when it runs over more than one kind.
+        const bind = <T extends Condition | readonly EffectRef[] | undefined>(value: T): T =>
+          effect.of !== undefined ? bindCurrent(value, anyOf(effect.of)) : value
         return [
-          { kind: effect.of },
-          { within: `in each ${effect.of}`, refs: [{ when: bindCurrent(effect.where, one) }, { effects: bindCurrent(effect.effects, one) }] },
+          ...selectReferences({ ...effect, where: undefined }),
+          { within: `in each ${eachLabel(effect)}`, refs: [{ when: bind(effect.where) }, { effects: bind(effect.effects) }] },
         ]
       },
     },
@@ -361,7 +518,7 @@ export const entities = defineFeature<EntitiesShape>({
             .map((ref): EntityView => {
               const id = parseRef(ref)!.id
               const desc = entityText(state, game, ref, 'desc')
-              const image = entityDef(game, ref)?.image
+              const image = entityImage(state, game, ref)
               return {
                 id,
                 ref,
@@ -432,6 +589,10 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
 function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: string, game: Game): EntityState | undefined {
   const next: EntityState = {}
   if (record.name !== undefined && record.name !== def?.name) next.name = record.name
+  // What it was created like and with is only ever written by play.
+  if (record.like !== undefined) next.like = record.like
+  if (record.tags?.length) next.tags = record.tags
+  if (record.traitData && Object.keys(record.traitData).length) next.traitData = record.traitData
   const stats = Object.entries(record.stats ?? {}).filter(([id, value]) => {
     const stat = statDef(game, id)
     if (!stat || stat.of !== kind || stat.derive !== undefined) return true

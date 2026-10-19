@@ -34,7 +34,11 @@
  * `unique`, `listed`, `tags` and `marks`, and `View.entities` lists only what
  * is listed, each `EntityView` with `desc`, `image`, `tags` and `marks`.
  * Traits (phase 3): `Game.traits` and `Pack.traits` (`TraitTable`), and
- * `traits` on `KindDef`, `EntityDef` and `EntityState`.
+ * `traits` on `KindDef`, `EntityDef` and `EntityState`. Holdings (phase 4):
+ * `GameState.held` and `you`, `View.held`, the `entity` condition's `at` and
+ * range, `count`'s `Select` and `units`, the `entity`, `move` and `you`
+ * effects, `each`'s selection, and `create`'s `like` and `at` (its `of` and
+ * `entity` optional with a `like`).
  */
 import type {
   ActionDef,
@@ -60,6 +64,10 @@ import type {
   InputView,
   ItemDef,
   KindDef,
+  HeldView,
+  Placement,
+  Select,
+  CreatedEntity,
   TraitTable,
   MinigameDef,
   MinigameState,
@@ -146,9 +154,9 @@ export type FrozenCondition =
    * for (`'$'` in it is each one in turn). Bare, at least one:
    * `{ count: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, gte: 2 }`.
    */
-  | ({ count: string; where?: FrozenCondition } & FrozenRange)
-  /** An entity is in the game: `{ entity: 'staff:ana' }`. */
-  | { entity: string }
+  | ({ count: string | Select; where?: FrozenCondition; units?: true } & FrozenRange)
+  /** An entity is in the game: `{ entity: 'staff:ana' }`; with `at` or a range, how many are held. */
+  | ({ entity: string; at?: string } & FrozenRange)
   /**
    * The level a stat with `levels` is at: the player's, or with `of`, an
    * entity's. Bare, level 1 or more: `{ level: 'baking', gte: 2 }`. A stat
@@ -235,6 +243,10 @@ export type FrozenGameState = {
    * character, say) unless it is here: gone for good.
    */
   removed: string[]
+  /** What play changed about who holds what, by holder and then thing. */
+  held: Record<string, Record<string, number>>
+  /** The protagonist being played, or null for the player. */
+  you: string | null
   storylines: Record<string, StorylineState>
   kv: Record<string, KvValue>
   items: Record<string, number>
@@ -312,14 +324,22 @@ export type FrozenEffect =
    * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
    * left out, never reused; an id already there is left as it is.
    */
-  | { kind: 'create'; of: string; entity: { id?: string; name: string; stats?: Record<string, number>; kv?: Record<string, KvValue> } }
+  | { kind: 'create'; of: string; like?: string; entity?: CreatedEntity; at?: Placement }
+  | { kind: 'create'; of?: string; like: string; entity?: CreatedEntity; at?: Placement }
   /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
   | { kind: 'remove'; entity: string }
   /**
    * The same effects for every entity of a kind (where `where` holds), one
    * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
    */
-  | { kind: 'each'; of: string; where?: FrozenCondition; effects: EffectRef[] }
+  | ({ kind: 'each'; effects: EffectRef[] } & Select)
+  /** Change how many of a thing a holder (`'you'` if left out) holds, `by` or `to`. */
+  | { kind: 'entity'; entity: string; at?: string; by: number }
+  | { kind: 'entity'; entity: string; at?: string; to: number }
+  /** Move a thing to another holder. */
+  | { kind: 'move'; entity: string; from?: string; to: string; by?: number }
+  /** Play as a protagonist, or `null` for the player. */
+  | { kind: 'you'; to: string | null }
   | { kind: 'scene'; scene: string | null }
   /**
    * Open one scene drawn at random from the scenes whose `drawnFrom` names
@@ -544,6 +564,8 @@ export type FrozenView = {
   collections: Record<string, CollectionView>
   /** Each listed kind's listed, visible entities, by kind id. */
   entities: Record<string, EntitiesView>
+  /** What you hold: the protagonist's things while one is played, then the player's. */
+  held: HeldView[]
   notices: NoticesView
   /** The inputs on offer now, by id, with the value each holds. */
   inputs: Record<string, InputView>

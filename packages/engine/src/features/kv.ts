@@ -2,7 +2,7 @@
  * The kv store: keys with a true/false, number or text value. A key is the
  * player's, or with `of`, an entity's. A storyline's keys are in `storylines.ts`.
  */
-import { entityKv, entityOf, hasEntity, ofKind, writeEntity } from '../entities.ts'
+import { entityKv, entityOf, hasEntity, ofKind, ownerOf, writeEntity } from '../entities.ts'
 import type { KvValue, Range } from '../types.ts'
 import { defineFeature } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
@@ -40,7 +40,8 @@ export const kv = defineFeature<KvShape>({
   conditions: {
     kv: {
       holds: (state, condition, game) => {
-        const store = condition.of === undefined ? state.kv : hasEntity(state, game, condition.of) ? entityKv(state, game, condition.of) : undefined
+        const of = ownerOf(state, condition.of)
+        const store = of === undefined ? state.kv : hasEntity(state, game, of) ? entityKv(state, game, of) : undefined
         // An entity that is not there has no keys to test: false, whatever was asked.
         if (!store) return false
         const value = store[condition.kv]
@@ -49,11 +50,12 @@ export const kv = defineFeature<KvShape>({
         return Boolean(value)
       },
       explain: (state, condition, game) => {
-        const owner = condition.of === undefined ? state.kv : hasEntity(state, game, condition.of) ? entityKv(state, game, condition.of) : undefined
-        if (!owner) return `${condition.of} is not in the game; wants it there`
+        const of = ownerOf(state, condition.of)
+        const owner = of === undefined ? state.kv : hasEntity(state, game, of) ? entityKv(state, game, of) : undefined
+        if (!owner) return `${of} is not in the game; wants it there`
         const value = owner[condition.kv]
         const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : bounded(condition) ? wanted(condition) : 'set'
-        return `${condition.of === undefined ? '' : `${condition.of} `}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
+        return `${of === undefined ? '' : `${of} `}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
       },
       references: (condition) => ofKind(condition.of),
     },
@@ -61,15 +63,16 @@ export const kv = defineFeature<KvShape>({
   effects: {
     kv: {
       apply: (state, effect, game) => {
-        const entity = effect.of === undefined ? undefined : entityOf(state, game, effect.of)
-        if (effect.of !== undefined && !entity) return state
-        const store = entity ? entityKv(state, game, effect.of!) : state.kv
+        const of = ownerOf(state, effect.of)
+        const entity = of === undefined ? undefined : entityOf(state, game, of)
+        if (of !== undefined && !entity) return state
+        const store = entity ? entityKv(state, game, of!) : state.kv
         let value: KvValue
         if ('by' in effect) {
           const was = store[effect.key]
           value = (typeof was === 'number' ? was : 0) + effect.by
         } else value = effect.to
-        if (entity) return writeEntity(state, effect.of!, { ...entity, kv: { ...entity.kv, [effect.key]: value } })
+        if (entity) return writeEntity(state, of!, { ...entity, kv: { ...entity.kv, [effect.key]: value } })
         return { ...state, kv: { ...state.kv, [effect.key]: value } }
       },
       references: (effect) => ofKind(effect.of),

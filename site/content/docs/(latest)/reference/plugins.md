@@ -1036,12 +1036,12 @@ The content's own Mo wins over the plugin's. Sal comes from the plugin, after th
 traits?: readonly TraitDef[]
 ```
 
-A plugin that works on things the game declares, such as clothes to wash or tools to use, reads what it needs from [traits](/docs/reference/entities#traits). Content writes a trait on a kind, an entity or the `traits` table, and the plugin reads it back with [`traitOf`](/docs/reference/entities#traitof) and [`withTrait`](/docs/reference/entities#withtrait). A trait is data only. What it does is the plugin's own conditions, effects and commands.
+A plugin that works on things the game declares, such as clothes to wash or tools to use, reads what it needs from [traits](/docs/reference/entities#traits). Content writes a trait on a kind, an entity or the `traits` table, and the plugin reads it back with [`entityTrait`](/docs/reference/entities#entitytrait), [`traitOf`](/docs/reference/entities#traitof) and [`withTrait`](/docs/reference/entities#withtrait). A trait is data only. What it does is the plugin's own conditions, effects and commands.
 
 Declaring one takes three things: the data's type, added to the engine's `Traits`, the trait in `traits`, and the code that reads it.
 
 ```ts
-import { definePlugin, traitOf, type TraitDef } from '@ifloom/engine'
+import { definePlugin, entityTrait, type TraitDef } from '@ifloom/engine'
 
 declare module '@ifloom/engine' {
   interface Traits {
@@ -1062,7 +1062,7 @@ export function laundry() {
     traits: [washable],
     conditions: {
       // { 'laundry/delicate': { entity: 'clothing:scarf' } }
-      delicate: (_state, args, context) => traitOf(context.game, String(args.entity), 'laundry/washable')?.gentle === true,
+      delicate: (state, args, context) => entityTrait(state, context.game, String(args.entity), 'laundry/washable')?.gentle === true,
     },
   })
 }
@@ -1103,7 +1103,7 @@ What a trait's `check` gets beside the data: the game, and the entity the data i
 **Gotchas.**
 - **Data, never functions.** A trait is written in content, and packs and mods can write it as JSON. Put behaviour in the plugin.
 - **The kind's default comes first.** A trait's data on an entity is the kind's default with the entity's own laid over it, field by field, so make a field optional in `Traits` when a kind is expected to supply it.
-- **Declared entities only.** `withTrait` lists the entities content declares. One [created](/docs/reference/effects#create) in play has its kind's default, which `traitOf` returns.
+- **Things made in play.** `traitOf` and `withTrait(game, id)` read content, so they know the entities content declares. A thing [created](/docs/reference/effects#create) in play has the traits it was given over those of the entity it was made `like`, or its kind's default: read it with [`entityTrait`](/docs/reference/entities#entitytrait), and list them with `withTrait(game, id, state)`.
 
 ## Content and checks
 

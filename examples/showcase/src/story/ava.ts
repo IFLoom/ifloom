@@ -2,7 +2,7 @@
  * Ava's arc: meeting her at the café, her calls and texts, the evening by the
  * river, and the friendship quest. Her words are in `ava.prose.ts`.
  */
-import type { Content } from '@ifloom/engine'
+import { holding, move, give, type Content } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { day } from '@ifloom/plugin-calendar'
 import { person } from '@ifloom/plugin-cast'
@@ -27,13 +27,28 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
 }))
 
 export const ava: Content = {
+  // A keepsake is one particular thing, so whoever has it has the only one. Not listed: what you hold is in `view.held`.
+  kinds: [{ id: 'keepsake', label: 'Keepsake', unique: true, listed: false }],
+  entities: [{ id: 'shell', of: 'keepsake', name: 'A river shell', desc: 'Smooth and grey, from the bank by Ava’s bench.' }],
   scenes: [
     {
       id: 'ava.hi',
       title: 'Ava',
       speaker: 'ava',
-      body: [{ text: 'ava.hi' }, { variants: 'ava.smalltalk' }, { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } }],
+      body: [
+        { text: 'ava.hi' },
+        { variants: 'ava.smalltalk' },
+        { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
+        // Things are held: once the shell is Ava's, it sits by her till.
+        { text: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: person('ava') } },
+      ],
       choices: [
+        // Shown while you hold the shell from the river: giving it moves it to her.
+        {
+          id: 'shell',
+          when: holding('keepsake:shell'),
+          effects: [move('keepsake:shell', person('ava')), { kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }],
+        },
         { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: person('ava') }] },
         {
           id: 'compliment',
@@ -70,6 +85,8 @@ export const ava: Content = {
       speaker: 'ava',
       body: [{ text: 'ava.river' }],
       choices: [
+        // A thing to keep: the shell is an entity, and picking it up gives it to you.
+        { id: 'shell', when: { not: { entity: 'keepsake:shell', gte: 1 } }, effects: [give('keepsake:shell')] },
         {
           id: 'stay',
           effects: [

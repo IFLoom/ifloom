@@ -65,8 +65,8 @@ type Condition =
   | ({ since: string; last?: boolean } & Range)
   | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & Range)
   | ({ stat: StatKey; of?: string } & Range)
-  | ({ count: string; where?: Condition } & Range)
-  | { entity: string }
+  | ({ count: string | Select; where?: Condition; units?: true } & Range)
+  | ({ entity: string; at?: string } & Range)
   | ({ level: StatKey; of?: string } & Range)
   | { storyline: string; open?: boolean }
   | ({ item: string } & Range)
@@ -208,7 +208,7 @@ Tests a [stat](/docs/reference/state#stats) against a range. Coins, energy and e
 
 It reads the stat with [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`. [`holds`](#holds) called without a game can't do either, and reads `state.stats` as it is, with a missing stat as 0.
 
-With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [entity reference](/docs/reference/entities#entityref), or `'$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`.
+With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [entity reference](/docs/reference/entities#entityref), or `'$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. `of: 'you'` is the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, or the player when there's none, and `of: 'player'` is the player.
 
 ```ts
 { stat: 'quality', of: 'dish:soup', lt: 5 }    // the soup could still be better
@@ -225,23 +225,32 @@ With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [en
 { count: 'staff' }                                                        // anyone at all
 { count: 'staff', lt: 4 }                                                 // room for one more
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }   // two happy people
+{ count: { at: 'you', tag: 'fruit' }, gte: 3 }                            // three sorts of fruit on you
+{ count: { of: 'food', at: 'place:larder' }, units: true, lt: 4 }         // fewer than four bits of food in the larder
 ```
 
 How many [entities](/docs/reference/entities) of a kind there are, against a [range](#range). A bare `{ count }` means at least one. With `where`, it counts the ones `where` holds for, testing it once for each with `'$'` as that one. A kind with none, or one the game doesn't declare, has 0.
 
+In place of a kind, `count` takes a [`Select`](/docs/reference/entities#select): `of` a kind, `at` a holder (only what it [holds](/docs/reference/entities#holding-things)), with a `tag`, with a `trait`, and `where`. A `where` beside the `Select` is asked as well as its own. It counts distinct things. With `units: true` it adds up how many of each are held instead: by the `Select`'s holder if it names one, else by everyone.
+
 A `count` binds its own `'$'`. Inside an [`each`](/docs/reference/effects#each)'s `where`, the `'$'` in a `count`'s `where` is the one being counted, not the one the `each` is on.
 
-The [content checker](/docs/reference/checks) checks the kind and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, or `1 staff where it holds; wants more than 0` with a `where`. It doesn't break down what `where` read for each one.
+The [content checker](/docs/reference/checks) checks the kind, the holder, the trait and the `where`. [`explain`](#explain) says `3 staff; wants 2 or more`, `1 staff where it holds; wants more than 0` with a `where`, or `2 entities held by you tagged fruit; wants 3 or more`. It doesn't break down what `where` read for each one.
 
 ### entity
 
 ```ts
-{ entity: 'staff:ana' }
+{ entity: 'staff:ana' }                          // Ana works here
+{ entity: 'food:apple', at: 'you' }              // you have an apple
+{ entity: 'food:apple', at: 'place:larder', lt: 3 }   // fewer than three in the larder
+{ entity: 'gift:scarf', at: 'character:ava' }    // Ava has the scarf
 ```
 
-The [entity](/docs/reference/entities) is in the game, which means it was declared or created and hasn't been removed. [`explain`](#explain) says `staff:ana is in the game` or `staff:ana is not in the game`.
+Bare, the [entity](/docs/reference/entities) is in the game, which means it was declared or created and hasn't been removed. [`explain`](#explain) says `staff:ana is in the game` or `staff:ana is not in the game`.
 
-**Gotcha.** Inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
+With `at`, it's how many of it a [holder](/docs/reference/entities#holding-things) holds, against a [range](#range): `'you'`, `'player'` or a unique entity, and at least one if there's no range. With a range and no `at`, it's how many are held by everyone together. [`explain`](#explain) says `food:apple: 2 held by you; wants 3 or more`. The [`holding`](/docs/reference/entities#give-take-move-and-holding) helper writes `{ entity, at: 'you', gte }`.
+
+**Gotcha.** Inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`, `'$'` is bound here (and in `at`) as it is in an `of`, so `{ entity: '$' }` is the one being looked at and is always true. Anywhere else, `'$'` names nothing and the condition is false.
 
 ### level
 

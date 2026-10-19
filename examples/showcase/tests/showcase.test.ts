@@ -188,6 +188,26 @@ describe('Small Town', () => {
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
   })
 
+  it('keeps a shell from the river, and gives it to Ava at the café', () => {
+    let state = run(startingState(game), { type: 'choose', id: 'unpack' })
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(state, talk('ava'), { type: 'choose', id: 'bye' })
+    state = writeEntity({ ...on(state, 6, 'evening'), stats: { ...state.stats, coins: 40 } }, 'character:ava', {
+      ...entityOf(state, game, 'character:ava'),
+      stats: { friendship: 30 },
+    })
+    state = run(state, go('high-street'), go('park'), talk('ava'), { type: 'choose', id: 'shell' })
+    // What you hold is in the view; the keepsake kind itself isn't listed.
+    expect(view(state, game).held).toEqual([expect.objectContaining({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })])
+    expect(view(state, game).entities.keepsake).toBeUndefined()
+    state = run(state, { type: 'choose', id: 'stay' })
+    // The next morning at the café she takes it, and keeps it by the till.
+    state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
+    expect(holds(state, { entity: 'keepsake:shell', at: 'character:ava' }, game)).toBe(true)
+    expect(view(state, game).held).toEqual([])
+    expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
+  })
+
   it('offers a free cheat on moving day, and keeps the supporter one greyed out until the unlock is recorded', () => {
     let state = startingState(game)
     const coins = state.stats.coins

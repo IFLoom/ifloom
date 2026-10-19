@@ -68,6 +68,7 @@ describe('core features are leaves', () => {
       'features/collections.ts',
       'features/entities.ts',
       'features/feature.ts',
+      'features/holdings.ts',
       'features/inputs.ts',
       'features/items.ts',
       'features/kv.ts',
@@ -143,6 +144,7 @@ describe('the registry', () => {
       transitions: { conditions: [], effects: ['transition'], commands: [] },
       panels: { conditions: [], effects: ['panel'], commands: ['closePanel'] },
       entities: { conditions: ['count', 'entity'], effects: ['create', 'remove', 'each'], commands: [] },
+      holdings: { conditions: [], effects: ['entity', 'move', 'you'], commands: [] },
       locks: { conditions: [], effects: [], commands: [] },
       saving: { conditions: [], effects: [], commands: [] },
     })

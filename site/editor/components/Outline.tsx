@@ -1,26 +1,26 @@
 'use client'
 /**
- * The left pane: the project's scenes (storylets marked), stats, kv keys
- * and things, with a filter and a way to add each.
+ * The left pane: the project's scenes (storylets marked), stats, kv keys,
+ * kinds and things (grouped by kind), with a filter and a way to add each.
  */
 import { useState } from 'react'
 import type { Thing } from '../lib/references'
 import { thingRef } from '../lib/model'
 import { useEditor, type Selection } from './context'
+import { VALID_REF } from './forms/common'
 import { Button, cx, inputClass } from './ui'
 
-type Entry = { id: string; title?: string; badge?: string }
+type Entry = { id: string; title?: string; badge?: string; group?: string }
 
 const SECTIONS: { thing: Thing; title: string; noun: string }[] = [
   { thing: 'scene', title: 'Scenes', noun: 'scene' },
   { thing: 'stat', title: 'Stats', noun: 'stat' },
   { thing: 'kv', title: 'Key–values (kv)', noun: 'kv key' },
+  { thing: 'kind', title: 'Kinds', noun: 'kind' },
   { thing: 'thing', title: 'Things', noun: 'thing' },
 ]
 
 const VALID_ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
-/** A thing's id, with its kind in front if it says one: `bun`, `food:bun`. */
-const VALID_THING = /^(?:[A-Za-z0-9_][A-Za-z0-9_.-]*:)?[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 export function Outline() {
   const { project, selection, select, create, targets } = useEditor()
@@ -28,6 +28,12 @@ export function Outline() {
   const [adding, setAdding] = useState<Thing | null>(null)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const kinds = project.pack.kinds ?? []
+  const kindOrder = (id: string) => {
+    const at = kinds.findIndex((k) => k.id === id)
+    return at === -1 ? kinds.length + project.pack.entities.findIndex((e) => e.of === id) : at
+  }
+  const groupTitle = (id: string) => kinds.find((k) => k.id === id)?.plural ?? kinds.find((k) => k.id === id)?.label ?? id
 
   const entries: Record<Thing, Entry[]> = {
     scene: project.pack.scenes.map((s) => ({
@@ -37,7 +43,11 @@ export function Outline() {
     })),
     stat: project.pack.stats.map((s) => ({ id: s.id, title: s.label })),
     kv: project.kv.map((v) => ({ id: v.name })),
-    thing: project.pack.entities.map((entity) => ({ id: `${entity.of}:${entity.id}`, title: entity.name })),
+    kind: (project.pack.kinds ?? []).map((k) => ({ id: k.id, title: k.plural ?? k.label, badge: k.unique ? 'unique' : undefined })),
+    // Grouped by kind: the declared kinds in order, then any a plugin declares (the cast's characters).
+    thing: [...project.pack.entities]
+      .sort((a, b) => kindOrder(a.of) - kindOrder(b.of))
+      .map((entity) => ({ id: `${entity.of}:${entity.id}`, title: entity.name, group: entity.of })),
   }
   const existing = (thing: Thing) => entries[thing].map((e) => e.id)
   const words = filter.trim().toLowerCase()
@@ -46,7 +56,7 @@ export function Outline() {
 
   function add(thing: Thing) {
     const id = thing === 'thing' ? thingRef(draft.trim()) : draft.trim()
-    if (!(thing === 'thing' ? VALID_THING : VALID_ID).test(id)) return setError('Use letters, numbers, dots, dashes and underscores.')
+    if (!(thing === 'thing' ? VALID_REF : VALID_ID).test(id)) return setError('Use letters, numbers, dots, dashes and underscores.')
     if (existing(thing).includes(id)) return setError(`There's already a ${thing} called ${id}.`)
     create(thing, id)
     select({ thing, id })
@@ -83,7 +93,7 @@ export function Outline() {
                 <input
                   autoFocus
                   className={cx(inputClass, 'font-mono')}
-                  placeholder={`New ${noun} id`}
+                  placeholder={thing === 'thing' ? 'New thing: kind:id' : `New ${noun} id`}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={(event) => {
@@ -104,8 +114,11 @@ export function Outline() {
               </div>
             ) : null}
             <ul className="flex flex-col">
-              {entries[thing].filter(shown).map((entry) => (
+              {entries[thing].filter(shown).map((entry, i, list) => (
                 <li key={entry.id}>
+                  {entry.group !== undefined && entry.group !== list[i - 1]?.group ? (
+                    <div className="px-2 pt-1 text-[11px] font-medium text-fd-muted-foreground">{groupTitle(entry.group)}</div>
+                  ) : null}
                   <OutlineLink
                     selection={{ thing, id: entry.id }}
                     current={selection.thing === thing && 'id' in selection && selection.id === entry.id}

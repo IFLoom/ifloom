@@ -6,6 +6,8 @@ import { useEditor } from '../context'
 import { Button, TextInput } from '../ui'
 
 const VALID_ID = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/
+/** A thing's reference: its id, with its kind in front if it says one: `bun`, `food:bun`. */
+export const VALID_REF = /^(?:[A-Za-z0-9_][A-Za-z0-9_.-]*:)?[A-Za-z0-9_][A-Za-z0-9_.-]*$/
 
 /** The thing's id, renamed everywhere it's named when you press Rename, and a Delete button. */
 export function IdHeader({
@@ -15,7 +17,10 @@ export function IdHeader({
   onRename,
   onDelete,
   extra,
+  pattern = VALID_ID,
 }: {
+  /** What a valid id looks like: a plain id, or a thing's reference. */
+  pattern?: RegExp
   noun: string
   id: string
   taken: string[]
@@ -29,7 +34,7 @@ export function IdHeader({
   const problem =
     to === id
       ? null
-      : !VALID_ID.test(to)
+      : !pattern.test(to)
         ? 'Use letters, numbers, dots, dashes and underscores.'
         : taken.includes(to)
           ? `There's already a ${noun} called ${to}.`

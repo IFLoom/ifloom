@@ -72,6 +72,7 @@ export const CONDITION_FORMS = [
   'stat',
   'kv',
   'entity',
+  'count',
   'chose',
   'seen',
   'since',
@@ -87,7 +88,8 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
   not: 'Not',
   stat: 'Stat',
   kv: 'kv key',
-  entity: 'Things you hold',
+  entity: 'A thing held',
+  count: 'How many things',
   chose: 'Chose',
   seen: 'Seen scene',
   since: 'Turns since scene',
@@ -102,7 +104,19 @@ export const CONDITION_LABELS: Record<ConditionForm, string> = {
  * The effects the builder has a form for. `statTo`, `kvBy` and `draw` are the
  * `to`, `by` and `from` shapes of `stat`, `kv` and `scene`.
  */
-export const EFFECT_FORMS = ['stat', 'kv', 'entity', 'scene', 'notify', 'turn', 'sound', 'audio', 'transition'] as const satisfies readonly Effect['kind'][]
+export const EFFECT_FORMS = [
+  'stat',
+  'kv',
+  'entity',
+  'move',
+  'you',
+  'scene',
+  'notify',
+  'turn',
+  'sound',
+  'audio',
+  'transition',
+] as const satisfies readonly Effect['kind'][]
 export type EffectForm = (typeof EFFECT_FORMS)[number] | 'statTo' | 'kvBy' | 'draw' | 'plugin' | 'json'
 
 export const EFFECT_LABELS: Record<EffectForm, string> = {
@@ -111,6 +125,8 @@ export const EFFECT_LABELS: Record<EffectForm, string> = {
   kv: 'Set a kv key',
   kvBy: 'Change a kv key by',
   entity: 'Give or take a thing',
+  move: 'Move a thing',
+  you: 'Play as',
   scene: 'Go to a scene',
   draw: 'Draw a storylet',
   notify: 'Notify',
@@ -129,6 +145,8 @@ export const EFFECT_MENU = [
   'kv',
   'kvBy',
   'entity',
+  'move',
+  'you',
   'scene',
   'draw',
   'notify',

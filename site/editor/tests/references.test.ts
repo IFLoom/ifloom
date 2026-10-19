@@ -49,6 +49,38 @@ describe('rename', () => {
   })
 })
 
+describe('rename a kind', () => {
+  it('moves its things, their references, counts and holders', () => {
+    const project = sampleProject()
+    project.pack.kinds!.push({ id: 'stall', label: 'Stall', unique: true })
+    project.pack.entities.push({ id: 'bakery', of: 'stall', name: 'The bakery stall' })
+    project.pack.entities[0].at = { 'stall:bakery': 4 }
+    project.pack.scenes[1].body.push({ text: 'home.many', when: { count: { of: 'item', at: 'you' }, gte: 2 } })
+    project.pack.prose['home.many'] = 'Plenty.'
+    project.pack.scenes[1].choices.push({ id: 'give', effects: [{ kind: 'move', entity: 'item:bun', from: 'you', to: 'stall:bakery', by: 1 }] })
+    project.pack.prose['home#give'] = 'Give it back'
+    const next = rename(project, 'kind', 'item', 'food')
+    expect(next.pack.kinds![0].id).toBe('food')
+    expect(next.pack.entities[0]).toMatchObject({ id: 'bun', of: 'food' })
+    expect(next.pack.scenes[0].choices[0].effects[1]).toEqual({ kind: 'entity', entity: 'food:bun', by: 1 })
+    expect(next.pack.scenes[1].body[2].when).toEqual({ count: { of: 'food', at: 'you' }, gte: 2 })
+    expect(problemsOf(next)).toEqual([])
+    const stalls = rename(project, 'kind', 'stall', 'stand')
+    expect(stalls.pack.entities[0].at).toEqual({ 'stand:bakery': 4 })
+    expect(stalls.pack.scenes[1].choices[0].effects[0]).toEqual({ kind: 'move', entity: 'item:bun', from: 'you', to: 'stand:bakery', by: 1 })
+    expect(problemsOf(stalls)).toEqual([])
+  })
+
+  it('walks the conditions and effects in kinds and traits', () => {
+    const project = sampleProject()
+    project.pack.kinds![0].marks = { fresh: { kv: 'heardBusker' } }
+    project.pack.entities[0].traits = { 'inventory/usable': { label: 'Eat it', effects: [{ kind: 'kv', key: 'heardBusker', to: false }] } }
+    const next = rename(project, 'kv', 'heardBusker', 'heardFiddle')
+    expect(next.pack.kinds![0].marks).toEqual({ fresh: { kv: 'heardFiddle' } })
+    expect(next.pack.entities[0].traits).toEqual({ 'inventory/usable': { label: 'Eat it', effects: [{ kind: 'kv', key: 'heardFiddle', to: false }] } })
+  })
+})
+
 describe('renameChoice', () => {
   it('moves the choice, its label and what asks about it', () => {
     const project = sampleProject()
@@ -84,6 +116,8 @@ describe('problemTarget', () => {
     const project = sampleProject()
     expect(problemTarget(project.pack, { pack: 'x', where: 'stat coins', what: 'bad' })).toEqual({ thing: 'stat', id: 'coins' })
     expect(problemTarget(project.pack, { pack: 'base', where: 'introScene', what: 'unknown scene "x"' })).toEqual({ thing: 'project', id: '', field: 'intro' })
+    expect(problemTarget(project.pack, { pack: 'x', where: 'kind item', what: 'bad' })).toEqual({ thing: 'kind', id: 'item' })
+    expect(problemTarget(project.pack, { pack: 'x', where: 'trait wardrobe/wearable on item:bun', what: 'bad' })).toEqual({ thing: 'thing', id: 'item:bun' })
     expect(problemTarget(project.pack, { pack: 'x', where: 'scene home', what: 'unknown entity "item:bun"' })).toEqual({
       thing: 'scene',
       id: 'home',
@@ -99,6 +133,8 @@ describe('the address', () => {
       { thing: 'scene' as const, id: 'market' },
       { thing: 'scene' as const, id: 'market.busker', choice: 'listen' },
       { thing: 'stat' as const, id: 'coins' },
+      { thing: 'kind' as const, id: 'item' },
+      { thing: 'thing' as const, id: 'item:bun' },
     ]
     for (const selection of cases) expect(selectionFromHash(hashOf(selection))).toEqual(selection)
     expect(selectionFromHash('#nothing')).toBeNull()

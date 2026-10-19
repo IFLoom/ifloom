@@ -17,11 +17,26 @@ import {
 import { formatTs } from './format.ts'
 import { CONDITION_FORMS, RANGE_OPS, type ConditionForm, type EffectForm, type RangeOp } from './kinds.ts'
 
-/** The ids the pickers offer. */
-/** The ids the pickers offer. `things` are entities, by reference: `item:bun`. */
-export type Names = { scenes: string[]; stats: string[]; things: string[]; kv: string[]; choices: string[]; sets: string[] }
+/**
+ * The ids the pickers offer. `things` are entities, by reference (`item:bun`),
+ * `kinds` the kinds they can be of, and `holders` the unique entities that can
+ * hold things, besides `'you'` and `'player'`.
+ */
+export type Names = {
+  scenes: string[]
+  stats: string[]
+  things: string[]
+  kv: string[]
+  choices: string[]
+  sets: string[]
+  kinds?: string[]
+  holders?: string[]
+}
 
-export const NO_NAMES: Names = { scenes: [], stats: [], things: [], kv: [], choices: [], sets: [] }
+export const NO_NAMES: Names = { scenes: [], stats: [], things: [], kv: [], choices: [], sets: [], kinds: [], holders: [] }
+
+/** The keys a `Select` can have that the count form shows: everything but `where`. */
+const SELECT_KEYS = new Set(['of', 'at', 'tag', 'trait'])
 
 const isPluginCall = (value: object) => {
   const keys = Object.keys(value)
@@ -35,8 +50,19 @@ export function conditionForm(condition: Condition): ConditionForm {
   const kind = (CONDITION_FORMS as readonly string[]).find((k) => k in condition) as ConditionForm | undefined
   if (!kind) return 'json'
   // Only the keys a form shows: its kind, a range, `is` for kv keys and settings, and what you hold for things.
-  const allowed = new Set<string>([kind, ...RANGE_OPS, ...(kind === 'kv' || kind === 'setting' ? ['is'] : []), ...(kind === 'entity' ? ['at'] : [])])
-  if (kind === 'entity' && (condition as { at?: string }).at !== 'you') return 'json'
+  const allowed = new Set<string>([
+    kind,
+    ...RANGE_OPS,
+    ...(kind === 'kv' || kind === 'setting' ? ['is'] : []),
+    ...(kind === 'entity' ? ['at'] : []),
+    ...(kind === 'count' ? ['units'] : []),
+  ])
+  if (kind === 'entity' && typeof (condition as { entity: unknown }).entity !== 'string') return 'json'
+  // A count of a kind, or of a Select the form can show: no `where`, which only JSON edits.
+  if (kind === 'count') {
+    const count = (condition as { count: unknown }).count
+    if (typeof count !== 'string' && !(typeof count === 'object' && count !== null && Object.keys(count).every((k) => SELECT_KEYS.has(k)))) return 'json'
+  }
   if (kind === 'all' || kind === 'any' || kind === 'not') return keys.length === 1 ? kind : 'json'
   // A turn's range is its value: `{ turn: { gte: 3 } }`.
   if (kind === 'turn') {
@@ -63,6 +89,8 @@ export function newCondition(form: ConditionForm, names: Names = NO_NAMES): Cond
       return { kv: names.kv[0] ?? 'met' }
     case 'entity':
       return { entity: names.things[0] ?? 'item:key', at: 'you', gte: 1 }
+    case 'count':
+      return { count: { of: names.kinds?.[0] ?? 'item', at: 'you' }, gte: 1 }
     case 'chose':
       return { chose: names.choices[0] ?? 'start#go' }
     case 'seen':
@@ -148,7 +176,9 @@ export function effectForm(effect: EffectRef): EffectForm {
     case 'scene':
       return 'from' in effect ? 'draw' : 'scene'
     case 'entity':
-      return 'by' in effect && (effect.at === undefined || effect.at === 'you') ? 'entity' : 'json'
+      return 'by' in effect ? 'entity' : 'json'
+    case 'move':
+    case 'you':
     case 'notify':
     case 'turn':
     case 'sound':
@@ -173,6 +203,10 @@ export function newEffect(form: EffectForm, names: Names = NO_NAMES): EffectRef 
       return { kind: 'kv', key: names.kv[0] ?? 'visits', by: 1 }
     case 'entity':
       return { kind: 'entity', entity: names.things[0] ?? 'item:key', by: 1 }
+    case 'move':
+      return { kind: 'move', entity: names.things[0] ?? 'item:key', to: names.holders?.[0] ?? 'player' }
+    case 'you':
+      return { kind: 'you', to: names.holders?.[0] ?? null }
     case 'scene':
       return { kind: 'scene', scene: names.scenes[0] ?? null }
     case 'draw':

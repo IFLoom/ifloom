@@ -56,6 +56,53 @@ describe('the condition builder', () => {
   })
 })
 
+describe('things and holders', () => {
+  it('edits what is held, and how many, in forms', () => {
+    expect(conditionForm({ entity: 'item:bun', at: 'player', gte: 2 })).toBe('entity')
+    expect(conditionForm({ entity: 'item:bun' })).toBe('entity')
+    expect(conditionForm({ count: 'photo', gte: 3 })).toBe('count')
+    expect(conditionForm({ count: { of: 'item', at: 'you', tag: 'fruit' }, units: true, gte: 3 })).toBe('count')
+    // A Select's `where` is JSON only.
+    expect(conditionForm({ count: { of: 'item', where: { kv: 'ripe', of: '$' } }, gte: 1 })).toBe('json')
+    expect(conditionForm({ count: 'staff', where: { kv: 'ripe', of: '$' }, gte: 1 })).toBe('json')
+    expect(effectForm({ kind: 'entity', entity: 'item:bun', at: 'character:ava', by: 1 })).toBe('entity')
+    expect(effectForm({ kind: 'entity', entity: 'item:bun', to: 2 })).toBe('json')
+    expect(effectForm({ kind: 'move', entity: 'item:bun', from: 'you', to: 'character:ava', by: 1 })).toBe('move')
+    expect(effectForm({ kind: 'you', to: null })).toBe('you')
+  })
+
+  it('makes moves and protagonists a game can run', () => {
+    const names = { scenes: ['a'], stats: [], things: ['item:key'], kv: [], choices: [], sets: [], kinds: ['item'], holders: ['character:sam'] }
+    const { problems } = loadGame(
+      [
+        {
+          name: 'p',
+          kinds: [
+            { id: 'item', label: 'Item' },
+            { id: 'character', label: 'Character', unique: true },
+          ],
+          entities: [
+            { id: 'key', of: 'item', name: 'Key', at: 'player' },
+            { id: 'sam', of: 'character', name: 'Sam' },
+          ],
+          scenes: [
+            {
+              id: 'a',
+              body: [{ text: 'a', when: newCondition('count', names) }],
+              choices: [{ id: 'go', effects: [newEffect('move', names), newEffect('you', names)] }],
+            },
+          ],
+          prose: { a: 'A.', 'a#go': 'Go' },
+        },
+      ],
+      { id: 'g', title: 'G' },
+    )
+    expect(problems).toEqual([])
+    expect(newEffect('move', names)).toEqual({ kind: 'move', entity: 'item:key', to: 'character:sam' })
+    expect(newEffect('you', names)).toEqual({ kind: 'you', to: 'character:sam' })
+  })
+})
+
 describe('the effect builder', () => {
   it('opens every new effect in its own form', () => {
     for (const form of [...EFFECT_FORMS, 'kvBy', 'draw', 'plugin'] as const) expect(effectForm(newEffect(form))).toBe(form)

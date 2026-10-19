@@ -137,6 +137,12 @@ export function newThing(ref: string): EntityDef {
   return { id, of, name: id.charAt(0).toUpperCase() + id.slice(1) }
 }
 
+/**
+ * The first-party plugins' unique kinds, whose entities can hold things: the
+ * cast's characters, the places' locations and the shop's vendors.
+ */
+export const PLUGIN_HOLDER_KINDS = ['character', 'location', 'vendor'] as const
+
 /** A kind for the things the editor makes: unlisted, as what you hold is drawn from `view.held`. */
 export function newKind(id: string): KindDef {
   const label = id.charAt(0).toUpperCase() + id.slice(1)

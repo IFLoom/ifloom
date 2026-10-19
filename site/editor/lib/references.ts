@@ -6,8 +6,8 @@
 import type { Condition, DataScene, EffectRef, Problem } from '@ifloom/engine'
 import type { EditorPack, Project } from './model.ts'
 
-/** What the outline lists: scenes, stats, things (entities, by reference: `item:bun`) and kv keys. */
-export type Thing = 'scene' | 'stat' | 'thing' | 'kv'
+/** What the outline lists: scenes, stats, kinds, things (entities, by reference: `item:bun`) and kv keys. */
+export type Thing = 'scene' | 'stat' | 'kind' | 'thing' | 'kv'
 
 type Visit = {
   condition?: (condition: Record<string, unknown>) => void
@@ -48,12 +48,31 @@ function walkScene(scene: DataScene, visit: Visit) {
   for (const spot of scene.stage?.hotspots ?? []) walkCondition(spot.when, visit)
 }
 
+/** The conditions and effects inside an entity's or a kind's traits: a thing's use, and a person's schedule, talk, call and meeting. */
+function walkTraits(traits: Record<string, unknown> | undefined, visit: Visit) {
+  const usable = traits?.['inventory/usable'] as { effects?: EffectRef[] } | undefined
+  walkEffects(usable?.effects, visit)
+  const person = traits?.['cast/person'] as { schedule?: { when?: Condition }[]; talk?: unknown; call?: { when?: Condition }; met?: Condition } | undefined
+  if (!person) return
+  for (const entry of person.schedule ?? []) walkCondition(entry.when, visit)
+  if (Array.isArray(person.talk)) for (const option of person.talk as { when?: Condition }[]) walkCondition(option.when, visit)
+  walkCondition(person.call?.when, visit)
+  walkCondition(person.met, visit)
+}
+
 /** Every condition and effect in the pack, in order. */
 export function walkPack(pack: EditorPack, visit: Visit) {
   for (const scene of pack.scenes) walkScene(scene, visit)
   for (const stat of pack.stats) walkCondition(stat.visible, visit)
-  // A thing's use, the inventory's trait.
-  for (const entity of pack.entities) walkEffects((entity.traits?.['inventory/usable'] as { effects?: EffectRef[] } | undefined)?.effects, visit)
+  for (const kind of pack.kinds ?? []) {
+    if (typeof kind.listed === 'object') walkCondition(kind.listed, visit)
+    for (const mark of Object.values(kind.marks ?? {})) walkCondition(mark, visit)
+    walkTraits(kind.traits, visit)
+  }
+  for (const entity of pack.entities) {
+    walkCondition(entity.visible, visit)
+    walkTraits(entity.traits, visit)
+  }
 }
 
 /** The kv keys a pack sets or reads, in the order it first names them. */
@@ -139,17 +158,48 @@ export function rename(project: Project, thing: Thing, from: string, to: string)
     visit.effect = (e) => {
       if (e.kind === 'stat' && e.stat === from) e.stat = to
     }
-  } else if (thing === 'thing') {
-    // A thing is named by its reference, `kind:id`.
-    const [of, id] = to.split(':')
+  } else if (thing === 'thing' || thing === 'kind') {
+    // A thing is named by its reference, `kind:id`; renaming a kind moves every reference of that kind.
+    const ref = (value: unknown): unknown => {
+      if (typeof value !== 'string') return value
+      if (thing === 'thing') return value === from ? to : value
+      return value.startsWith(`${from}:`) ? `${to}:${value.slice(from.length + 1)}` : value
+    }
+    if (thing === 'kind') {
+      for (const kind of pack.kinds ?? []) if (kind.id === from) kind.id = to
+      for (const entity of pack.entities) if (entity.of === from) entity.of = to
+      for (const stat of pack.stats) if (stat.of === from) stat.of = to
+    } else {
+      const [of, id] = to.split(':')
+      for (const entity of pack.entities) {
+        if (`${entity.of}:${entity.id}` === from && of && id) Object.assign(entity, { of, id })
+      }
+    }
+    const kindName = (value: unknown) => (thing === 'kind' && value === from ? to : value)
+    // Where things start: a holder, or counts by holder.
     for (const entity of pack.entities) {
-      if (`${entity.of}:${entity.id}` === from && of && id) Object.assign(entity, { of, id })
+      if (typeof entity.at === 'string') entity.at = ref(entity.at) as string
+      else if (entity.at) entity.at = Object.fromEntries(Object.entries(entity.at).map(([holder, n]) => [ref(holder) as string, n]))
+    }
+    const select = (value: unknown): unknown => {
+      if (typeof value === 'string') return kindName(value)
+      if (!value || typeof value !== 'object') return value
+      const s = { ...(value as Record<string, unknown>) }
+      if ('of' in s) s.of = kindName(s.of)
+      if ('at' in s) s.at = ref(s.at)
+      return s
     }
     visit.condition = (c) => {
-      if (c.entity === from) c.entity = to
+      for (const k of ['entity', 'at', 'of'] as const) if (k in c) c[k] = ref(c[k])
+      if ('count' in c) c.count = select(c.count)
     }
     visit.effect = (e) => {
-      if ((e.kind === 'entity' || e.kind === 'move' || e.kind === 'remove') && e.entity === from) e.entity = to
+      for (const k of ['entity', 'at', 'from', 'to', 'like', 'of'] as const) {
+        if (!(k in e)) continue
+        // A `create`'s and an `each`'s `of` is a kind; a stat's or kv's `of` is an entity.
+        e[k] =
+          k === 'of' && (e.kind === 'create' || e.kind === 'each') ? kindName(e[k]) : k === 'to' && e.kind !== 'move' && e.kind !== 'you' ? e[k] : ref(e[k])
+      }
     }
   } else {
     for (const entry of next.kv) if (entry.name === from) entry.name = to
@@ -211,6 +261,9 @@ export function problemTarget(pack: EditorPack, problem: Problem): ProblemTarget
   const id = rest.join(' ')
   if (kind === 'stat') return { thing: kind, id }
   if (kind === 'entity') return { thing: 'thing', id }
+  if (kind === 'kind') return { thing: 'kind', id }
+  // `trait wardrobe/wearable on clothing:scarf`.
+  if (kind === 'trait' && rest[1] === 'on' && rest[2]) return { thing: 'thing', id: rest[2] }
   if (kind === 'introScene') return { thing: 'project', id: '', field: 'intro' }
   if (kind !== 'scene') return { thing: 'project', id: '' }
   const scene = pack.scenes.find((s) => s.id === id)

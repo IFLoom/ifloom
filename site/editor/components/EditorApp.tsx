@@ -133,6 +133,7 @@ export function EditorApp() {
           // Its kind, declared once: the engine reports a thing of a kind nobody declares.
           if (!draft.pack.kinds?.some((k) => k.id === made.of)) draft.pack.kinds = [...(draft.pack.kinds ?? []), newKind(made.of)]
         }
+        if (thing === 'kind' && !draft.pack.kinds?.some((k) => k.id === id)) draft.pack.kinds = [...(draft.pack.kinds ?? []), newKind(id)]
         if (thing === 'kv' && !draft.kv.some((v) => v.name === id)) draft.kv.push({ name: id, note: '' })
       }),
     [update],

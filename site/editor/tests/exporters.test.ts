@@ -91,6 +91,29 @@ describe('JSON', () => {
     expect(back.project.kv.map((v) => v.name)).toEqual(['heardBusker'])
   })
 
+  it('round-trips kinds, holders and traits', () => {
+    const project = sampleProject()
+    project.pack.kinds = [
+      { id: 'item', label: 'Item', plural: 'Items', listed: { entity: '$', at: 'you' }, tags: ['food'], marks: { many: { entity: '$', at: 'you', gte: 2 } } },
+      { id: 'character', label: 'Character', unique: true, listed: false },
+    ]
+    project.pack.entities.push({
+      id: 'ava',
+      of: 'character',
+      name: 'Ava',
+      desc: 'Runs the bakery stall.',
+      image: 'people/ava.png',
+      stats: { coins: 3 },
+      kv: { role: 'baker' },
+      traits: { 'cast/person': { home: 'market', hue: 30 }, 'laundry/washable': { temp: 30 } },
+    })
+    project.pack.entities[0].at = { player: 1, 'character:ava': 6 }
+    project.pack.entities[0].traits = { 'shop/sellable': { price: { coins: 3 } }, 'wardrobe/wearable': { slot: 'hat' } }
+    const back = fromJson(toJson(project))
+    if ('error' in back) throw new Error(back.error)
+    expect(exportPack(back.project)).toEqual(exportPack(project))
+  })
+
   it('leaves empty lists out', () => {
     const pack = JSON.parse(toJson(newProject('Quiet')))
     expect(Object.keys(pack)).toEqual(['id', 'schema', 'scenes', 'prose'])

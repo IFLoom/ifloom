@@ -1,14 +1,15 @@
 'use client'
 /**
- * The fields of a stat, a thing and a setting, as controlled forms. The
- * editor wraps the first two with a rename and delete header; the snippets
- * page uses all three on their own.
+ * The fields of a stat, a kind, a thing and a setting, as controlled forms.
+ * The editor wraps the first three with a rename and delete header; the
+ * snippets page uses the stat, thing and setting on their own.
  */
-import type { EffectRef, EntityDef, Placement, SettingDef, StatDef, StatWords } from '@ifloom/engine'
+import type { Condition, EntityDef, KindDef, Placement, SettingDef, StatDef, StatWords } from '@ifloom/engine'
+import { NO_NAMES, type Names } from '../../lib/builders'
 import { STAT_DISPLAYS, STAT_ROUNDS } from '../../lib/kinds'
-import { OptionalCondition, type BuilderProps } from '../ConditionBuilder'
-import { EffectList } from '../EffectBuilder'
+import { ConditionBuilder, OptionalCondition, type BuilderProps } from '../ConditionBuilder'
 import { Button, Checkbox, Field, JsonField, ListInput, NumberInput, Select, TextInput } from '../ui'
+import { NumberMap, PlacementRows, TraitsEditor } from './TraitFields'
 
 /** A stat's words for any number: the line itself, or its line for numbers other than 1. */
 const anyNumber = (words: StatWords | undefined) => (typeof words === 'object' ? words.other : words)
@@ -132,27 +133,30 @@ export function StatFields({ value, onChange, withId, ...builder }: BuilderProps
   )
 }
 
-/** The inventory plugin's `inventory/usable` trait, as the form edits it. */
-type Usable = { label: string; effects: EffectRef[]; keep?: boolean }
-
-/** How many the player starts with, as a thing's `at` says. */
-function playerStart(at: Placement | undefined): number | undefined {
-  if (at === undefined) return undefined
-  if (typeof at === 'string') return at === 'player' ? 1 : undefined
-  return at.player
+/** A thing's `at` as counts by holder: one holder is one of it. */
+export function placementCounts(at: Placement | undefined): Record<string, number> {
+  if (at === undefined) return {}
+  return typeof at === 'string' ? { [at]: 1 } : { ...at }
 }
 
-/** A thing's `at` with the player's start count changed, and anyone else's kept. */
-function withPlayerStart(at: Placement | undefined, n: number | undefined): Placement | undefined {
-  const others: Record<string, number> = typeof at === 'string' ? (at === 'player' ? {} : { [at]: 1 }) : { ...at }
-  delete others.player
-  const next = n && n > 0 ? { ...others, player: n } : others
-  return Object.keys(next).length ? next : undefined
+/** Counts by holder as the shortest `at` that says them: none, a holder for one, or the counts. */
+export function placementOf(counts: Record<string, number>): Placement | undefined {
+  const entries = Object.entries(counts)
+  if (!entries.length) return undefined
+  if (entries.length === 1 && entries[0][1] === 1) return entries[0][0]
+  return counts
 }
+
+/** The value without the keys a form left undefined, so a cleared field leaves nothing behind. */
+const tidy = <T extends object>(value: T): T => Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T
+
+/** The names a definition's conditions are asked with: `'$'` is the entity itself. */
+const withSelf = (names: Names | undefined): Names => ({ ...(names ?? NO_NAMES), things: ['$', ...(names?.things ?? [])] })
 
 /**
- * A thing: an entity the pack declares. Its use is the inventory plugin's
- * `inventory/usable` trait, so the preview needs the inventory on for its button.
+ * A thing: an entity the pack declares, of any kind. Its name, words and
+ * picture, who holds it at the start, its stats and kv, when the view lists
+ * it, and its traits. A trait does something only with its plugin on.
  */
 export function ThingFields({
   value,
@@ -160,12 +164,8 @@ export function ThingFields({
   withId,
   ...builder
 }: BuilderProps & { value: EntityDef; onChange: (value: EntityDef) => void; withId?: boolean }) {
-  const set = (patch: Partial<EntityDef>) => onChange({ ...value, ...patch })
-  const use = value.traits?.['inventory/usable'] as Usable | undefined
-  const setUse = (next: Usable | undefined) => {
-    const { 'inventory/usable': _old, ...rest } = value.traits ?? {}
-    set({ traits: next ? { ...rest, 'inventory/usable': next } : Object.keys(rest).length ? rest : undefined })
-  }
+  const set = (patch: Partial<EntityDef>) => onChange(tidy({ ...value, ...patch }))
+  const names = builder.names ?? NO_NAMES
   return (
     <div className="flex flex-col gap-3">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -179,37 +179,125 @@ export function ThingFields({
             <TextInput mono value={value.of} onChange={(of) => set({ of: of ?? '' })} />
           </Field>
         ) : null}
-        <Field label="Name">
+        <Field label="Name" hint="Prose tokens are filled in: {{playerName}}.">
           <TextInput value={value.name} onChange={(name) => set({ name: name ?? '' })} />
+        </Field>
+        <Field label="Picture" hint="A path under the game's art, through artSrc.">
+          <TextInput optional mono value={value.image} placeholder="things/umbrella.png" onChange={(image) => set({ image })} />
         </Field>
         <Field label="Tags" hint="Words to sort or style things by, separated by commas. The engine gives them no meaning.">
           <ListInput value={value.tags} placeholder="clothes" onChange={(tags) => set({ tags })} />
-        </Field>
-        <Field label="The player starts with" hint="How many a new game gives the player. None if left empty.">
-          <NumberInput value={playerStart(value.at)} onChange={(n) => set({ at: withPlayerStart(value.at, n) })} />
         </Field>
       </div>
       <Field label="Description">
         <TextInput optional value={value.desc} onChange={(desc) => set({ desc })} />
       </Field>
-      <Field label="Using it" hint="A button in the inventory plugin's card that runs these effects and spends one.">
-        {use ? (
-          <div className="flex flex-col gap-2">
-            <TextInput aria-label="Use label" value={use.label} placeholder="Eat it" onChange={(label) => setUse({ ...use, label: label ?? '' })} />
-            <EffectList {...builder} value={use.effects} onChange={(effects) => setUse({ ...use, effects })} />
-            <div>
-              <Button size="xs" variant="ghost" onClick={() => setUse(undefined)}>
-                It can't be used
-              </Button>
+      <Field label="Who holds it at the start" hint="The player or a unique entity, and how many. Nobody if left empty.">
+        <PlacementRows holders={names.holders ?? []} value={placementCounts(value.at)} onChange={(counts) => set({ at: placementOf(counts) })} />
+      </Field>
+      <Field label="Listed only while" hint="Narrows its kind's listing: $ is this thing.">
+        <OptionalCondition
+          {...builder}
+          names={withSelf(builder.names)}
+          value={value.visible}
+          onChange={(visible) => set({ visible })}
+          add="Only list it while…"
+        />
+      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Stats" hint="Where its stats start, where they differ from each stat's start.">
+          <NumberMap noun="stat" add="Add a stat" options={names.stats} value={value.stats} onChange={(stats) => set({ stats })} />
+        </Field>
+        <Field label="kv at the start" hint={'As JSON: { "role": "cook" }.'}>
+          <JsonField
+            label="kv"
+            rows={2}
+            value={value.kv ?? {}}
+            onChange={(kv) => set({ kv: kv && typeof kv === 'object' && Object.keys(kv).length ? kv : undefined })}
+          />
+        </Field>
+      </div>
+      <Field label="Traits" hint="Data a plugin reads: using it, wearing it, selling it, or a person to meet.">
+        <TraitsEditor {...builder} value={value.traits} onChange={(traits) => set({ traits: traits as EntityDef['traits'] })} />
+      </Field>
+    </div>
+  )
+}
+
+/** How a kind is listed, as the form's menu has it. */
+type Listing = 'yes' | 'no' | 'when'
+const LISTINGS: { value: Listing; label: string }[] = [
+  { value: 'yes', label: 'Listed' },
+  { value: 'no', label: 'Not listed' },
+  { value: 'when', label: 'Listed while a condition holds' },
+]
+
+/**
+ * A kind: what its entities are called, whether each is one particular thing
+ * (`unique`, so it can hold others), whether the view lists them, its tags,
+ * its marks, and traits every one of it starts with.
+ */
+export function KindFields({ value, onChange, ...builder }: BuilderProps & { value: KindDef; onChange: (value: KindDef) => void }) {
+  const set = (patch: Partial<KindDef>) => onChange(tidy({ ...value, ...patch }))
+  const listing: Listing = value.listed === false ? 'no' : typeof value.listed === 'object' ? 'when' : 'yes'
+  const self = withSelf(builder.names)
+  const marks = Object.entries(value.marks ?? {})
+  const setMarks = (next: [string, Condition][]) => set({ marks: next.length ? Object.fromEntries(next) : undefined })
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Label" hint="What the player reads for one: Member of staff.">
+          <TextInput value={value.label} onChange={(label) => set({ label: label ?? '' })} />
+        </Field>
+        <Field label="Plural" hint="For more than one: Staff. The label if left empty.">
+          <TextInput optional value={value.plural} onChange={(plural) => set({ plural })} />
+        </Field>
+        <Field label="Tags" hint="Words every one of the kind has, before its own.">
+          <ListInput value={value.tags} placeholder="food" onChange={(tags) => set({ tags })} />
+        </Field>
+      </div>
+      <Checkbox
+        checked={Boolean(value.unique)}
+        label="Unique: each is one particular thing, such as a person, and can hold things"
+        onChange={(unique) => set({ unique: unique || undefined })}
+      />
+      <Field label="In the view" hint="Whether view.entities lists them. $ is each one. What you hold is in view.held either way.">
+        <Select
+          aria-label="Listed"
+          value={listing}
+          options={LISTINGS}
+          onChange={(next) => set({ listed: next === 'yes' ? undefined : next === 'no' ? false : { entity: '$', at: 'you' } })}
+        />
+        {typeof value.listed === 'object' ? <ConditionBuilder {...builder} names={self} value={value.listed} onChange={(listed) => set({ listed })} /> : null}
+      </Field>
+      <Field label="Marks" hint="Named conditions asked of each listed one, so a UI can split them: met, broken.">
+        <div className="flex flex-col gap-2">
+          {marks.map(([name, condition], i) => (
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <TextInput
+                  aria-label={`Mark ${i + 1}`}
+                  className="w-40"
+                  mono
+                  value={name}
+                  onChange={(next) => setMarks(marks.map((m, j) => (j === i ? [next ?? '', m[1]] : m)))}
+                />
+                <Button size="xs" variant="danger" aria-label={`Remove mark ${i + 1}`} onClick={() => setMarks(marks.filter((_, j) => j !== i))}>
+                  ✕
+                </Button>
+              </div>
+              <ConditionBuilder {...builder} names={self} value={condition} onChange={(next) => setMarks(marks.map((m, j) => (j === i ? [m[0], next] : m)))} />
             </div>
-          </div>
-        ) : (
+          ))}
           <div>
-            <Button size="xs" onClick={() => setUse({ label: 'Use it', effects: [] })}>
-              + Make it usable
+            <Button size="xs" onClick={() => setMarks([...marks, [`mark${marks.length + 1}`, { entity: '$', at: 'you' }]])}>
+              + Add a mark
             </Button>
           </div>
-        )}
+        </div>
+      </Field>
+      <Field label="Traits every one has" hint="Defaults its entities start from, by trait id.">
+        <TraitsEditor {...builder} value={value.traits} onChange={(traits) => set({ traits: traits as KindDef['traits'] })} />
       </Field>
     </div>
   )

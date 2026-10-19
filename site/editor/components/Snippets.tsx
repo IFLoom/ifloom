@@ -31,6 +31,8 @@ const NAMES = {
   kv: ['metAva', 'visits'],
   choices: ['cafe.counter#buy'],
   sets: ['cafe'],
+  kinds: ['item', 'character'],
+  holders: ['character:ava', 'location:cafe'],
 }
 
 export function Snippets() {

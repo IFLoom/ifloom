@@ -6,11 +6,11 @@ import type { Thing } from './references.ts'
 
 export type Selection = { thing: 'project'; field?: string } | { thing: Thing; id: string; choice?: string; field?: string }
 
-/** What `#scene/market/buy` names: a scene and one of its choices, or a stat, thing or kv key. */
+/** What `#scene/market/buy` names: a scene and one of its choices, or a stat, kind, thing or kv key. */
 export function selectionFromHash(hash: string): Selection | null {
   const [thing, id, choice] = decodeURIComponent(hash.replace(/^#/, '')).split('/')
   if (thing === 'project') return { thing: 'project' }
-  if ((thing === 'scene' || thing === 'stat' || thing === 'thing' || thing === 'kv') && id)
+  if ((thing === 'scene' || thing === 'stat' || thing === 'kind' || thing === 'thing' || thing === 'kv') && id)
     return { thing, id, ...(thing === 'scene' && choice ? { choice } : {}) }
   return null
 }

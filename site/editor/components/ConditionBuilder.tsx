@@ -10,6 +10,9 @@ import { CONDITION_FORMS, CONDITION_LABELS, RANGE_LABELS, RANGE_OPS, type Condit
 import type { Thing } from '../lib/references'
 import { Button, Checkbox, IdPicker, JsonField, NumberInput, Select, TextInput, cx } from './ui'
 
+/** What a count looks at, as the form edits it. */
+type CountSelect = { of?: string; at?: string; tag?: string; trait?: string }
+
 export type BuilderProps = {
   names?: Names
   /** Makes what "Add new…" names, in the editor. */
@@ -20,6 +23,43 @@ const FORMS: { value: ConditionForm; label: string }[] = [...CONDITION_FORMS, 'p
   value,
   label: CONDITION_LABELS[value],
 }))
+
+/**
+ * A holder to pick: `'you'`, the player, or a unique entity that can hold
+ * things. With `empty`, a blank choice for leaving the holder out. A holder
+ * the list doesn't have stays shown, so nothing is lost.
+ */
+export function HolderPicker({
+  value,
+  onChange,
+  holders = [],
+  empty,
+  'aria-label': label,
+}: {
+  value: string | undefined
+  onChange: (value: string | undefined) => void
+  holders?: readonly string[]
+  empty?: string
+  'aria-label': string
+}) {
+  const options = [
+    ...(empty !== undefined ? [{ value: '', label: empty }] : []),
+    { value: 'you', label: 'you' },
+    { value: 'player', label: 'the player' },
+    ...holders.map((h) => ({ value: h, label: h })),
+  ]
+  const current = value ?? ''
+  if (!options.some((o) => o.value === current)) options.push({ value: current, label: current || '(none)' })
+  return <Select aria-label={label} className="font-mono" value={current} options={options} onChange={(next) => onChange(next || undefined)} />
+}
+
+/** An object with one key set, or taken out when the value is undefined. */
+export function withKey<T extends object>(value: T, key: string, next: unknown): T {
+  const copy = { ...value } as Record<string, unknown>
+  if (next === undefined) delete copy[key]
+  else copy[key] = next
+  return copy as T
+}
 
 /** An optional condition: a button to add one, or the builder with a remove button. */
 export function OptionalCondition({
@@ -132,10 +172,54 @@ export function ConditionBuilder({
             onChange={(id) => set({ entity: id })}
             onCreate={create('thing')}
           />
+          <span className="text-xs text-fd-muted-foreground">held by</span>
+          <HolderPicker
+            aria-label="Held by"
+            empty="anyone"
+            holders={names.holders}
+            value={c.at as string | undefined}
+            onChange={(at) => onChange(withKey(value, 'at', at))}
+          />
           <RangeEditor value={value} onChange={onChange} ops={['set', ...RANGE_OPS]} />
         </>
       )
       break
+    case 'count': {
+      const select: CountSelect = typeof c.count === 'string' ? { of: c.count } : (c.count as CountSelect)
+      // Only a kind is written as the kind's id; anything more as a Select.
+      const setSelect = (key: keyof CountSelect, next: string | undefined) => {
+        const sel = withKey(select, key, next || undefined)
+        const keys = Object.keys(sel)
+        onChange({ ...c, count: keys.length === 1 && keys[0] === 'of' ? sel.of : sel } as Condition)
+      }
+      const kinds = names.kinds ?? []
+      fields = (
+        <>
+          <Select
+            aria-label="Of kind"
+            className="font-mono"
+            value={select.of ?? ''}
+            options={[{ value: '', label: 'any kind' }, ...[...new Set([...kinds, ...(select.of ? [select.of] : [])])].map((k) => ({ value: k, label: k }))]}
+            onChange={(of) => setSelect('of', of)}
+          />
+          <span className="text-xs text-fd-muted-foreground">held by</span>
+          <HolderPicker aria-label="Held by" empty="anyone" holders={names.holders} value={select.at} onChange={(at) => setSelect('at', at)} />
+          <TextInput aria-label="Tag" className="w-24" mono optional placeholder="tag" value={select.tag} onChange={(tag) => setSelect('tag', tag)} />
+          <TextInput
+            aria-label="Trait"
+            className="w-32"
+            mono
+            optional
+            placeholder="trait"
+            value={select.trait}
+            onChange={(trait) => setSelect('trait', trait)}
+          />
+          <RangeEditor value={value} onChange={onChange} ops={[...RANGE_OPS]} />
+          <Checkbox label="Count units" checked={c.units === true} onChange={(units) => onChange(withKey(value, 'units', units || undefined))} />
+        </>
+      )
+      break
+    }
     case 'chose':
       fields = (
         <>

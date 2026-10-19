@@ -14,9 +14,10 @@ A project is one file of [content](/docs/reference/loader#content-and-packs). Th
 - **Choices** in each scene. A choice has a label, a cost in stats, a condition for showing it, reasons to grey it out, and its effects.
 - **Stats**, with every field of a [`StatDef`](/docs/reference/stats#statdef), including levels, rounding, how it's displayed and a derived formula.
 - **Key–values (kv)**, the keys of the kv store. They need no declaration, so the editor only keeps a note of what each one is for. The note goes into the TypeScript export as a comment.
-- **Things**, the [entities](/docs/reference/entities) the player can hold, each with how many the player starts with and what using one does (the [inventory](/docs/plugins/inventory) plugin's `usable` trait). A thing you add is of the `item` kind unless you name another, as in `food:bun`, and the editor declares its kind.
+- **Kinds**, each a [`KindDef`](/docs/reference/entities#kinddef): its label and plural, whether it's `unique` (each one a particular thing that can hold others), whether the view [lists](/docs/reference/entities#listing) its entities (always, never, or while a condition holds, with `'$'` as each one), its tags, its marks and the traits every one of it starts with.
+- **Things**, the [entities](/docs/reference/entities) of every kind, grouped by kind in the outline. Each has a name, a description, a picture path, tags, who holds how many at the start (its `at`), a condition that narrows its listing, starting stats and kv, and its [traits](/docs/reference/entities#traits). The first-party traits have forms: the [inventory](/docs/plugins/inventory)'s `usable`, the [wardrobe](/docs/plugins/wardrobe)'s `wearable`, the [shop](/docs/plugins/shop)'s `sellable` and the [cast](/docs/plugins/cast)'s `person`. Any other trait, and a person's schedule and calls, are JSON. A thing you add is of the `item` kind unless you name another, as in `food:bun`, and the editor declares its kind if the project doesn't have it.
 
-Conditions and effects come from menus. Wherever a form asks for a scene, a stat, a thing or a kv key, it offers the ones that exist, and "Add new…" makes another. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`.
+Conditions and effects come from menus. Wherever a form asks for a scene, a stat, a thing, a kind or a kv key, it offers the ones that exist, and "Add new…" makes another. The menus for things cover what a holder [holds](/docs/reference/entities#holding-things) (`entity`), how many things match (`count`, with its kind, holder, tag and trait), giving and taking (`entity`), moving a thing between holders (`move`) and who the player plays (`you`). The holders offered are `'you'`, the player, and the unique entities the project has, including the places' locations and the shop's vendors in its plugin content. Renaming anything in the form's header renames it everywhere it's named. That includes the prose keys that follow a scene's id, such as `market#buy`, and every reference to a kind's things when you rename the kind.
 
 ### Choices with a cost
 
@@ -78,6 +79,6 @@ Then run `npm run dev`, and carry on from [Your first story](/docs/guide/first-s
 
 ## What it doesn't do
 
-- **Only part of the engine has forms.** Scenes, choices, stats, kv keys and things do. Activities, triggers, inputs, kinds, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
+- **Only part of the engine has forms.** Scenes, choices, stats, kv keys, kinds and things do. Activities, triggers, inputs, settings and audio tracks don't, so add those in code once you've moved to a project. A choice's `labels` and a block's variants are edited as JSON.
 - **Drafts stay in this browser.** Clearing the site's data deletes them, and they don't follow you to another machine. Export anything you want to keep.
 - **One file per project.** A game made of several files is a project you build in code.

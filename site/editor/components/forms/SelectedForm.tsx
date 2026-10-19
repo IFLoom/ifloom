@@ -5,8 +5,8 @@ import { PLUGINS, PLUGIN_IDS, THEMES, slug, thingRef } from '../../lib/model'
 import { rename, walkPack } from '../../lib/references'
 import { useEditor } from '../context'
 import { Checkbox, Field, IdPicker, JsonField, Section, Select, TextInput } from '../ui'
-import { IdHeader, InlineProblems } from './common'
-import { StatFields, ThingFields } from './DefFields'
+import { IdHeader, InlineProblems, VALID_REF } from './common'
+import { KindFields, StatFields, ThingFields } from './DefFields'
 import { SceneForm } from './SceneForm'
 
 export function SelectedForm() {
@@ -25,6 +25,8 @@ export function SelectedForm() {
       return <SceneForm key={key} id={selection.id} />
     case 'stat':
       return <StatForm key={key} id={selection.id} />
+    case 'kind':
+      return <KindForm key={key} id={selection.id} />
     case 'thing':
       return <ThingForm key={key} id={selection.id} />
     case 'kv':
@@ -78,6 +80,7 @@ function ThingForm({ id }: { id: string }) {
       <IdHeader
         noun="thing"
         id={id}
+        pattern={VALID_REF}
         taken={names.things}
         onRename={(given) => {
           const to = thingRef(given)
@@ -92,6 +95,55 @@ function ThingForm({ id }: { id: string }) {
       <InlineProblems thing="thing" id={id} />
       <Section title="Thing">
         <ThingFields names={names} onCreate={create} value={thing} onChange={(next) => update((draft) => void (draft.pack.entities[index] = next))} />
+      </Section>
+    </div>
+  )
+}
+
+function KindForm({ id }: { id: string }) {
+  const { project, update, replace, select, names, create } = useEditor()
+  const kinds = project.pack.kinds ?? []
+  const index = kinds.findIndex((k) => k.id === id)
+  const kind = kinds[index]
+  if (!kind) return <Missing noun="kind" id={id} />
+  const things = project.pack.entities.filter((e) => e.of === id)
+  return (
+    <div className="flex flex-col gap-3">
+      <IdHeader
+        noun="kind"
+        id={kind.id}
+        taken={kinds.map((k) => k.id)}
+        onRename={(to) => {
+          replace(rename(project, 'kind', kind.id, to))
+          select({ thing: 'kind', id: to })
+        }}
+        onDelete={() => {
+          update((draft) => {
+            draft.pack.kinds?.splice(index, 1)
+            if (!draft.pack.kinds?.length) delete draft.pack.kinds
+          })
+          select({ thing: 'project' })
+        }}
+      />
+      <InlineProblems thing="kind" id={kind.id} />
+      <Section title="Kind">
+        <KindFields names={names} onCreate={create} value={kind} onChange={(next) => update((draft) => void (draft.pack.kinds![index] = next))} />
+      </Section>
+      <Section title={`Its things (${things.length})`}>
+        <div className="flex flex-wrap gap-1 text-xs">
+          {things.length
+            ? things.map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  className="rounded border border-fd-border px-1.5 py-0.5 font-mono text-fd-primary hover:bg-fd-accent"
+                  onClick={() => select({ thing: 'thing', id: `${e.of}:${e.id}` })}
+                >
+                  {e.of}:{e.id}
+                </button>
+              ))
+            : 'None yet. Add one under Things as ' + `${id}:<id>.`}
+        </div>
       </Section>
     </div>
   )

@@ -8,7 +8,7 @@ import type { EffectRef } from '@ifloom/engine'
 import { effectForm, newEffect, NO_NAMES, transitionOptions } from '../lib/builders'
 import { EFFECT_LABELS, EFFECT_MENU, type EffectForm } from '../lib/kinds'
 import type { Thing } from '../lib/references'
-import { parseKvValue, type BuilderProps } from './ConditionBuilder'
+import { HolderPicker, parseKvValue, withKey, type BuilderProps } from './ConditionBuilder'
 import { Button, IdPicker, JsonField, NumberInput, RowTools, Select, TextInput, move } from './ui'
 
 const FORMS: { value: EffectForm; label: string }[] = EFFECT_MENU.map((value) => ({ value, label: EFFECT_LABELS[value] }))
@@ -103,9 +103,50 @@ export function EffectBuilder({
       fields = (
         <>
           <IdPicker noun="thing" aria-label="Thing" value={e.entity} options={names.things} onChange={(entity) => set({ entity })} onCreate={create('thing')} />
+          <span className="text-xs text-fd-muted-foreground">for</span>
+          {/* `at` is 'you' when it's left out, so picking you leaves it out. */}
+          <HolderPicker
+            aria-label="Held by"
+            holders={names.holders}
+            value={e.at ?? 'you'}
+            onChange={(at) => onChange(withKey(value, 'at', at === 'you' ? undefined : at))}
+          />
           <span className="text-xs text-fd-muted-foreground">by</span>
           <NumberInput aria-label="By" value={e.by} onChange={(by) => set({ by: by ?? 0 })} />
         </>
+      )
+      break
+    case 'move':
+      fields = (
+        <>
+          <IdPicker noun="thing" aria-label="Thing" value={e.entity} options={names.things} onChange={(entity) => set({ entity })} onCreate={create('thing')} />
+          <span className="text-xs text-fd-muted-foreground">from</span>
+          <HolderPicker
+            aria-label="From"
+            empty="where it is"
+            holders={names.holders}
+            value={e.from}
+            onChange={(from) => onChange(withKey(value, 'from', from))}
+          />
+          <span className="text-xs text-fd-muted-foreground">to</span>
+          <HolderPicker aria-label="To" holders={names.holders} value={e.to} onChange={(to) => set({ to: to ?? 'player' })} />
+          <span className="text-xs text-fd-muted-foreground">how many</span>
+          <NumberInput aria-label="How many" value={e.by} placeholder="all" onChange={(by) => onChange(withKey(value, 'by', by))} />
+        </>
+      )
+      break
+    case 'you':
+      fields = (
+        <Select
+          aria-label="Play as"
+          className="font-mono"
+          value={e.to === 'player' ? '' : (e.to ?? '')}
+          options={[
+            { value: '', label: 'the player' },
+            ...[...new Set([...(names.holders ?? []), ...(e.to && e.to !== 'player' ? [e.to as string] : [])])].map((h) => ({ value: h, label: h })),
+          ]}
+          onChange={(to) => set({ to: to || null })}
+        />
       )
       break
     case 'scene':

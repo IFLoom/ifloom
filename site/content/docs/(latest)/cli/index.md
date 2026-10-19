@@ -301,20 +301,19 @@ Loads the module as `check` does, then plays the game from its start for `--turn
 It writes two files:
 
 - **The transcript**, to `--out` (default `playtest.txt`). This is every screen as the player would read it, with the command taken on it underneath.
-- **The numbers**, to `<out>.metrics`. There's one row per turn, with each of the player's [declared stats](/docs/reference/stats) as the turn ended, how many [entities](/docs/reference/entities) there were of each kind (a plugin's too, such as the places plugin's `location`), how many scenes were entered and how many commands were refused.
+- **The numbers**, to `<out>.metrics`. There's one row per turn, with each of the player's [declared stats](/docs/reference/stats) as the turn ended, how many [entities](/docs/reference/entities) there were of each kind the game [lists](/docs/reference/entities#listing), how many scenes were entered and how many commands were refused.
 
 Then it prints the numbers, and each refused command with its turn and its reason, as `turn 3: refused {…}: <reason>`. Any folders in `--out` are created for you.
 
 It exits with `1` if any command was refused, so CI fails on a button the game offered and then wouldn't do. Otherwise it exits with `0`. `--turns` takes a whole number, 1 or more. Anything else is refused with `--turns takes a whole number of turns, 1 or more.` and exits with `1` before playing.
 
 ```
-turn	coins	energy	charm	location	character	scenes	refused
-1	12	80	1	5	2	0	0
-2	21	55	2	5	2	2	0
-3	34	55	3	5	2	2	0
-...
-7	16	85	7	5	2	2	0
+turn	coins	energy	charm	character	visitor	scenes	refused
+1	12	80	1	2	0	0	0
+2	1	85	2	2	2	3	0
 ```
+
+This run ends on day 2, before its seven turns are up: the explorer took the park's quick feet, a [minigame](/docs/reference/minigames), and it has no way to play one, so it stops there.
 
 A screen in the transcript is what [`screenText`](#screentext) writes, followed by the JSON command the policy returned:
 
@@ -337,7 +336,7 @@ Wind down the street, rattling the bakery sign.
 
 `[>]` is a button the player can press, `[ ]` is one that's greyed out (with its reason after the dash), and `->` is a way out. A button's price is in brackets after it. A person's buttons carry their name, as in `Sam: Talk`, because otherwise every person's would read `Talk`.
 
-`character` in the numbers is the [cast](/docs/plugins/cast)'s kind. Small Town has two characters. The friendship declared on them is a stat of that kind, so it isn't a column.
+`character` in the numbers is the [cast](/docs/plugins/cast)'s kind. Small Town has two characters. The friendship declared on them is a stat of that kind, so it isn't a column. `visitor` is the kind of the park's visitors, whom the [generators](/docs/plugins/generators) make in play. The places' `location` kind isn't [listed](/docs/reference/entities#listing), so it isn't counted.
 
 **How to use it.** Run it before and after a change to pacing, such as a price, a reward, a door's opening hours or a gate, and read both transcripts. The numbers tell you when things happened, such as the turn the coins stopped climbing or the turn a scene first opened. Only the transcript tells you whether a week of play is worth reading. Look for a line that prints on every screen, a scene dealt the same variant five days running, or a gate meant for the second week that's open on day two. None of those is a wrong value, so no test will find them. Small Town has a weekly rent because its first playtest showed the coins only ever climbing.
 
@@ -738,7 +737,7 @@ type TurnMetrics = { turn: number; stats: Record<string, number>; scenes: string
 One turn's numbers, taken as the turn ended.
 
 - `turn` counts from 1.
-- `stats` has each of the player's [declared stats](/docs/reference/stats), at its `start` if the state has no value yet. Then it has each declared [kind](/docs/reference/entities), by id, with how many entities of it there were. A stat declared `of` a kind isn't included.
+- `stats` has each of the player's [declared stats](/docs/reference/stats), at its `start` if the state has no value yet. Then it has each declared [kind](/docs/reference/entities), by id, with how many entities of it there were. A kind whose `listed` is `false` is left out, such as the places plugin's `location` and the shop's `vendor`, and so are your own unlisted kinds: give one `listed: true`, or a condition, to count it. A kind listed by a condition, such as the cast's `character`, counts all its entities, met or not. A stat declared `of` a kind isn't included.
 - `scenes` is the id of every scene entered that turn, in order. A scene entered twice is there twice.
 - `refused` is the number of commands refused that turn.
 

@@ -196,10 +196,11 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
   let refused = 0
   let refusedLast = false
   const close = (turn: number) => {
-    // The player's stats, then how many there are of each kind of entity.
+    // The player's stats, then how many there are of each kind of entity the game lists. A kind that's never
+    // listed, such as the places' `location` or the shop's `vendor`, is the plugin's bookkeeping, not a number to watch.
     const stats = Object.fromEntries([
       ...(game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, state.stats[stat.id] ?? statDef(game, stat.id)?.start ?? 0]),
-      ...(game.kinds ?? []).map((kind) => [kind.id, entitiesOf(state, game, kind.id).length]),
+      ...(game.kinds ?? []).filter((kind) => kind.listed !== false).map((kind) => [kind.id, entitiesOf(state, game, kind.id).length]),
     ])
     metrics.push({ turn: turn + 1, stats, scenes, refused })
     scenes = []

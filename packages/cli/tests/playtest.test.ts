@@ -66,7 +66,32 @@ describe('playtest', () => {
     expect(carrots.slice(0, 3).every((count, day) => count > (carrots[day - 1] ?? 0))).toBe(true)
     expect(result.transcript).toContain('== Turn 1 · Day 1 · Monday morning · Bedroom')
     expect(result.transcript).toContain('[>] Dig')
-    expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tcarrots\tlocation\tscenes\trefused')
+    // The places' `location` kind isn't listed, so it isn't a column.
+    expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tcarrots\tscenes\trefused')
+  })
+
+  it('counts the kinds the game lists, and leaves out those it never lists', () => {
+    const g = loadGame(
+      [
+        {
+          name: 'shed',
+          kinds: [
+            { id: 'pot', label: 'Pot' },
+            { id: 'seed', label: 'Seed', listed: { entity: '$', at: 'you' } },
+            { id: 'note', label: 'Note', listed: false },
+          ],
+          entities: [
+            { id: 'clay', of: 'pot', name: 'Clay pot' },
+            { id: 'bean', of: 'seed', name: 'Bean' },
+            { id: 'list', of: 'note', name: 'List' },
+          ],
+          activities: [{ id: 'wait', effects: [{ kind: 'turn' }] }],
+        },
+      ],
+      { id: 'shed', title: 'Shed', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
+    ).game
+    const result = playtest(g, startingState(g), explorer(), { turns: 1 })
+    expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tpot\tseed\tscenes\trefused')
   })
 
   it('stops a policy that keeps being refused', () => {

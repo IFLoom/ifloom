@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   applyEffects as applyBuilt,
   buildEffects,
@@ -21,8 +20,7 @@ function house(options: CalendarOptions = {}, rules: GameRules = {}): { game: Ga
   const { game, problems } = loadGame(
     [
       {
-        id: 'house',
-        schema: SCHEMA,
+        name: 'house',
         activities: [
           { id: 'nap', effects: [pass(1)] },
           { id: 'outing', effects: [pass(2), { kind: 'kv', key: 'out', to: true }] },

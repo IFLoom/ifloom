@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { poolPick } from '../../src/features/media.ts'
 import { featureContext } from '../../src/core.ts'
@@ -52,9 +52,8 @@ describe('weighted', () => {
 
 describe('weights in content', () => {
   it('make a heavier variants member come up more often', () => {
-    const pack: Pack = {
-      id: 'street',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'street',
       prose: { 'weather.sun': 'The sun is out.', 'weather.rain': 'It drizzles.', 'street#leave': 'Leave' },
       variants: { 'street.weather': [{ text: 'weather.sun', weight: 9 }, 'weather.rain'] },
       scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] }],
@@ -68,7 +67,7 @@ describe('weights in content', () => {
   })
 
   it('report a variants member weighing 0 or less', () => {
-    const pack: Pack = { id: 'street', schema: SCHEMA, prose: { a: 'A' }, variants: { v: [{ text: 'a', weight: 0 }] } }
+    const pack: Content = { name: 'street', prose: { a: 'A' }, variants: { v: [{ text: 'a', weight: 0 }] } }
     expect(loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)).toContain(
       'street · variants v · "a" has a weight of 0; a weight must be above 0',
     )

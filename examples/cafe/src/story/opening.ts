@@ -1,9 +1,7 @@
 /** The first scene: the café's opening day. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const opening: Pack = {
-  id: 'story.opening',
-  schema: SCHEMA,
+export const opening: Content = {
   scenes: [
     {
       id: 'opening',

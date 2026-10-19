@@ -207,8 +207,8 @@ function proofsIn(stored: unknown): Record<string, Uint8Array> {
 
 /**
  * The content of every unlock the profile remembers, decrypted and upgraded
- * to this engine's schema, to load after the game's own packs. Call it before
- * building the game: `loadGame([...packs, ...unlocked.packs], base)`. An
+ * to this engine's schema, to load over the game's content. Call it before
+ * building the game: `loadGame(content, base, { packs: unlocked.packs })`. An
  * unlock whose code has changed since (a new release with new codes) can't be
  * opened, and is listed in `problems`; the player enters the new code.
  */
@@ -312,7 +312,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, put unlocks in a pack's
+ * The plugin. Add it to the game's `plugins`, put unlocks in its content's
  * `data.unlocks.unlocks`, and start entering codes with `startUnlocks`.
  */
 export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {

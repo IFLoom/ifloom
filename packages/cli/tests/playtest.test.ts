@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
+import { applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
 import { calendar, pass, sleep } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { explorer, metricsText, playtest, snapshot } from '../src/index.ts'
@@ -11,8 +11,7 @@ function game(): Game {
   return loadGame(
     [
       {
-        id: 'row',
-        schema: SCHEMA,
+        name: 'row',
         stats: [{ id: 'carrots', label: 'Carrots' }],
         activities: [
           { id: 'dig', effects: [pass(1), { kind: 'stat', stat: 'carrots', by: 1 }] },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { checkGame, describeProblem } from '../../src/check.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
@@ -36,9 +36,8 @@ describe('checkGame', () => {
   })
 
   it('reports an item in { has } that the game does not have, loaded or hand-built', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       prose: { 'shop#buy': 'Buy one.' },
       scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { item: 'missing' }, effects: [] }] }],
     }
@@ -75,9 +74,8 @@ describe('checkGame', () => {
   })
 
   it('checks an item’s use effects in a loaded game', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       items: [
         {
           id: 'map',
@@ -101,9 +99,8 @@ describe('checkGame', () => {
   })
 
   it('reports the same problems for a game whether it is loaded or checked again', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       prose: { 'shop#buy': 'Buy one.' },
       scenes: [
         { id: 'shop', body: [{ text: 'shop.none' }], choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'item', item: 'roll', by: 1 }] }] },
@@ -159,9 +156,8 @@ describe('a cooperating partner the game does not have', () => {
   }
 
   it('is excused everywhere, in a loaded game and a hand-built one: conditions, effects in either form, and commands', () => {
-    const pack: Pack = {
-      id: 'shore',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'shore',
       prose: { 'shore#wade': 'Wade in.' },
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
       items: [{ id: 'net', name: 'Net', desc: '', start: 1, use: { label: 'Cast', effects: [named.long] } }],

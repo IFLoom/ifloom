@@ -8,11 +8,11 @@
  *
  * ```ts
  * const kit = phone({ sidebar: true })
- * loadGame(packs, { ...base, plugins: [...kit.plugins, quests()], collections: [...kit.collections], data: kit.data })
+ * loadGame(content, { ...base, plugins: [...kit.plugins, quests()], collections: [...kit.collections], data: kit.data })
  * ```
  *
- * The phone, its apps, channels and feeds are content (`data`), so a pack or a
- * mod can add an app, a channel or a feed beside them.
+ * The phone, its apps, channels and feeds are content (`data`), so the game's
+ * content or a mod can add an app, a channel or a feed beside them.
  *
  * Anything more — a camera, a creator app, a bank — is an app the game adds
  * with `apps`, built from the same sections.

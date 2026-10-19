@@ -67,7 +67,7 @@ export interface Mods {
   remove(id: string): Promise<void>
   /** Turn a mod on or off. Nothing happens if it isn't installed. */
   setEnabled(id: string, enabled: boolean): Promise<void>
-  /** The packs of the mods that are on, in name order, to load after the game's own. */
+  /** The packs of the mods that are on, in name order, to load over the game's content as `packs`. */
   packs(): Promise<Pack[]>
 }
 

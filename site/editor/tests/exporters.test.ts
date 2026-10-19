@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import ts from 'typescript'
 import { SCHEMA, checkGame } from '@ifloom/engine'
-import { fromJson, toJson, toTypeScript, exportPack } from '../lib/exporters.ts'
+import { exportContent, fromJson, toJson, toTypeScript, exportPack } from '../lib/exporters.ts'
 import { constName, formatTs, Raw } from '../lib/format.ts'
 import { buildGame, importJson, problemsOf } from '../lib/game.ts'
 import { newItem, newProject, newScene, newStat, sampleProject, type Project } from '../lib/model.ts'
@@ -96,6 +96,15 @@ describe('JSON', () => {
     expect(pack.schema).toBe(SCHEMA)
   })
 
+  it('reads content, with no id or schema, taking its id from the file', () => {
+    const { id: _id, schema: _schema, ...content } = JSON.parse(toJson(sampleProject()))
+    const back = fromJson(JSON.stringify({ name: 'story.market', ...content }), undefined, 'Market Day')
+    if ('error' in back) throw new Error(back.error)
+    expect(back.project.pack.id).toBe('market-day')
+    expect(back.project.pack).not.toHaveProperty('name')
+    expect(exportContent(back.project)).toEqual(exportContent(sampleProject()))
+  })
+
   it('switches on a plugin the pack has content for', () => {
     const back = fromJson(JSON.stringify({ id: 'q', schema: SCHEMA, scenes: [], data: { quests: { quests: [] } } }))
     if ('error' in back) throw new Error(back.error)
@@ -107,6 +116,7 @@ describe('JSON', () => {
     ['[1]', /JSON object/],
     ['{"schema": 4}', /needs an "id"/],
     ['{"id": "x", "schema": 1}', /schema 1/],
+    ['{"schema": 12}', /needs an "id"/],
     ['{"id": "x", "schema": 99}', /schema 99, this engine reads/],
     ['{"id": "x", "scenes": {}}', /should be a list/],
     ['{"id": "x", "scenes": [{"id": "a", "render": 1}]}', /isn't a data scene/],
@@ -132,6 +142,12 @@ describe('importing a file', () => {
     expect(kept.at(-1)?.pack.id).toBe(sampleProject().pack.id)
   })
 
+  it('names content after its file', async () => {
+    const { id: _id, schema: _schema, ...content } = JSON.parse(toJson(sampleProject()))
+    expect(await importJson(file(JSON.stringify(content)), keep)).toBe('Imported market.json.')
+    expect(kept.at(-1)?.pack.id).toBe('market')
+  })
+
   it('says what is wrong with a pack that will not open', async () => {
     expect(await importJson(file('not json'), keep)).toMatch(/^market\.json: That isn't JSON/)
   })
@@ -144,11 +160,12 @@ describe('importing a file', () => {
 })
 
 describe('TypeScript', () => {
-  it('writes an exported Pack that type-checks', () => {
+  it('writes exported Content, with no id or schema, that type-checks', () => {
     const source = toTypeScript(sampleProject())
-    expect(source).toMatch(/^import \{ SCHEMA, type Pack \} from '@ifloom\/engine'/)
-    expect(source).toContain('export const marketDay: Pack = {')
-    expect(source).toContain('  schema: SCHEMA,')
+    expect(source).toMatch(/^import type \{ Content \} from '@ifloom\/engine'/)
+    expect(source).toContain('export const marketDay: Content = {')
+    expect(source).not.toContain('schema')
+    expect(source).toContain(' * Save it as src/story/market-day.ts in your game')
     expect(typeErrors(source)).toEqual([])
   }, 30_000)
 
@@ -162,12 +179,13 @@ describe('TypeScript', () => {
     expect(source).toContain("loadGame([marketDay], { id: 'market-day', title: 'Market day', introScene: 'market' })")
   })
 
-  it('evaluates to the same pack as the JSON', () => {
+  it('evaluates to the JSON pack without its id and schema', () => {
     const project = sampleProject()
     const source = toTypeScript(project)
-    const literal = source.slice(source.indexOf(': Pack = ') + ': Pack = '.length).replace(/SCHEMA/g, String(SCHEMA))
+    const literal = source.slice(source.indexOf(': Content = ') + ': Content = '.length)
+    const { id: _id, schema: _schema, ...content } = JSON.parse(toJson(project))
     // oxlint-disable-next-line typescript/no-implied-eval -- the test runs the exported literal on purpose
-    expect(new Function(`return ${literal}`)()).toEqual(JSON.parse(toJson(project)))
+    expect(new Function(`return ${literal}`)()).toEqual(content)
   })
 })
 

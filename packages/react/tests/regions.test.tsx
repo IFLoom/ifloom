@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Profile } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Profile } from '@ifloom/engine'
 import { at, places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import {
@@ -32,8 +32,7 @@ function town(): Game {
   const { game, problems } = loadGame(
     [
       {
-        id: 'town',
-        schema: SCHEMA,
+        name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
         activities: [
           { id: 'wait', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] },

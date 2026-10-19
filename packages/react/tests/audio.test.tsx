@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import type { AudioLike } from '@ifloom/audio'
 import { GameShell, mountGame, useAudio } from '../src/index.ts'
 
@@ -29,8 +29,7 @@ function cafe(audio = true): Game {
   return loadGame(
     [
       {
-        id: 'cafe',
-        schema: SCHEMA,
+        name: 'cafe',
         scenes: [
           {
             id: 'door',

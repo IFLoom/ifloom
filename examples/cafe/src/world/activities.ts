@@ -1,9 +1,7 @@
 /** What the café can do in a week: end it, feed the staff, improve the soup, hire. The buttons in `game.ts` run these. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const activities: Pack = {
-  id: 'world.activities',
-  schema: SCHEMA,
+export const activities: Content = {
   activities: [
     {
       id: 'endWeek',

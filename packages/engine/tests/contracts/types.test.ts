@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Command, Condition, Effect, Game, GameState, Pack, View } from '../../src/index.ts'
-import type { FrozenCommand, FrozenCondition, FrozenEffect, FrozenGame, FrozenGameState, FrozenPack, FrozenView } from './frozen-types.ts'
+import type { Command, Condition, Content, Effect, Game, GameState, Pack, View } from '../../src/index.ts'
+import type { FrozenCommand, FrozenCondition, FrozenContent, FrozenEffect, FrozenGame, FrozenGameState, FrozenPack, FrozenView } from './frozen-types.ts'
 
 /**
  * The public types are built from the features' pieces now (`features/`), and
@@ -20,6 +20,7 @@ const shapes = {
   state: true as Mutual<GameState, FrozenGameState>,
   game: true as Mutual<Game, FrozenGame>,
   pack: true as Mutual<Pack, FrozenPack>,
+  content: true as Mutual<Content, FrozenContent>,
   view: true as Mutual<View, FrozenView>,
 } satisfies Record<string, true>
 
@@ -38,6 +39,8 @@ describe('the built public types', () => {
     expectTypeOf<FrozenGame>().toExtend<Game>()
     expectTypeOf<Pack>().toExtend<FrozenPack>()
     expectTypeOf<FrozenPack>().toExtend<Pack>()
+    expectTypeOf<Content>().toExtend<FrozenContent>()
+    expectTypeOf<FrozenContent>().toExtend<Content>()
     expectTypeOf<View>().toExtend<FrozenView>()
     expectTypeOf<FrozenView>().toExtend<View>()
   })

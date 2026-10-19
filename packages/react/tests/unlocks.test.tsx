@@ -21,8 +21,6 @@ function game(withPlugin = true): Game {
   return loadGame(
     [
       {
-        id: 'street',
-        schema: SCHEMA,
         scenes: [{ id: 'intro', body: [], choices: [] }],
         ...(withPlugin ? { data: { unlocks: { unlocks: [supporter] } } } : {}),
       },

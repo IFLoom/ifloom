@@ -1,9 +1,7 @@
 /** Interviews: the scene a card in the window opens, where you hire Dev, Fen or nobody. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const hiring: Pack = {
-  id: 'story.hiring',
-  schema: SCHEMA,
+export const hiring: Content = {
   scenes: [
     {
       id: 'hiring',

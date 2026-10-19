@@ -2,11 +2,9 @@
  * Chapter one: the letter on the mat. The reader types their name here, and
  * opens the letter or shelves it.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const ch1: Pack = {
-  id: 'story.ch1',
-  schema: SCHEMA,
+export const ch1: Content = {
   inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { loadGame } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply } from '../../src/reduce.ts'
@@ -165,7 +165,7 @@ describe('the game’s own migrations', () => {
   })
 
   it('report a step keyed outside the versions it could carry', () => {
-    const { problems } = loadGame([{ id: 'town', schema: SCHEMA }], {
+    const { problems } = loadGame([{ name: 'town' }], {
       id: 'g',
       title: 'G',
       version: 2,

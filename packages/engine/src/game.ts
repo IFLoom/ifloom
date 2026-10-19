@@ -226,7 +226,7 @@ export type CarryOver = {
 }
 
 /** The fields of a game the core reads itself. The features' (settings, stats, audio, media) are in `features/`. */
-type GameBase = {
+type CoreGame = {
   id: string
   title: string
   /**
@@ -257,7 +257,7 @@ type GameBase = {
   finished?: Condition
   /** The game's named functions: custom conditions, effects, values and panel data. */
   custom?: Custom
-  /** The packs the game was loaded from, in order. Saves record them. */
+  /** The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. */
   packs?: string[]
   prose?: ProseStore
   rules?: GameRules
@@ -277,7 +277,7 @@ type GameBase = {
 }
 
 /** A game: what the core reads, and what each feature does. */
-export type Game = Flat<GameBase & FeatureGame>
+export type Game = Flat<CoreGame & FeatureGame>
 
 export function itemById(game: Game, id: string) {
   return (game.items ?? []).find((item) => item.id === id)

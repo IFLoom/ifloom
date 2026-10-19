@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   commandOf,
-  SCHEMA,
   apply,
   createRunner,
   holds,
@@ -13,7 +12,7 @@ import {
   whyNot,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
   type Plugin,
   type CommandRef,
 } from '@ifloom/engine'
@@ -47,9 +46,8 @@ const stall: VendorDef = {
 const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const town: Content = {
+    name: 'town',
     stats: [
       { id: 'coins', label: 'Coins', start: 20, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
       { id: 'energy', label: 'Energy', start: 50, spendable: true },
@@ -189,8 +187,7 @@ describe('the shop, on its own', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           stats: [{ id: 'charm', label: 'Charm' }],
           data: {
             shop: {
@@ -282,8 +279,7 @@ describe('the shop panel', () => {
     const loaded = loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           data: { shop: { vendors: [stall] } },
           items: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ id, name: id, desc: '' })),
           stats: [{ id: 'coins', label: 'Coins', spendable: true }],

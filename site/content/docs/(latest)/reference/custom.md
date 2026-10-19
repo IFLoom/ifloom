@@ -72,9 +72,9 @@ type Custom = {
 }
 ```
 
-The type of `game.custom` and of a [pack](/docs/reference/loader#pack)'s `custom`. Every kind is optional.
+The type of `game.custom` and of [content](/docs/reference/loader#content)'s and a pack's `custom`. Every kind is optional.
 
-When packs are loaded, each kind merges by name. A later pack's `conditions.marketDay` replaces an earlier pack's and leaves the rest alone. See [How packs merge](/docs/reference/loader#how-packs-merge).
+When the game is loaded, each kind merges by name. Each name is declared once across your content, and a pack's `conditions.marketDay` replaces the game's and leaves the rest alone. See [Pack](/docs/reference/loader#pack).
 
 ## Conditions
 

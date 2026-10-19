@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import type { Pack } from '../../src/loader.ts'
+import type { Content } from '../../src/loader.ts'
 import { offences, proseOffences } from './ids-rule.ts'
-import { smallTown, packs as town } from '../../../../examples/showcase/src/game.ts'
-import { packs as letter } from '../../../../examples/novel/src/game.ts'
-import { packs as corner } from '../../../../examples/cafe/src/game.ts'
+import { smallTown, content as town } from '../../../../examples/showcase/src/game.ts'
+import { content as letter } from '../../../../examples/novel/src/game.ts'
+import { content as corner } from '../../../../examples/cafe/src/game.ts'
 import fogSeason from '../../../../examples/showcase/mods/fog-season.json'
 
 describe('ids and separators (ADR 0010)', () => {
-  it('holds the examples’ packs and the showcase’s mod to the rule', () => {
-    const packs = [...town, ...letter, ...corner, fogSeason.pack as unknown as Pack]
-    expect(packs.flatMap((pack) => [...offences(pack, pack.id), ...proseOffences(pack)])).toEqual([])
+  it('holds the examples’ content and the showcase’s mod to the rule', () => {
+    const content: [string, Content][] = [
+      ...[...town, ...letter, ...corner].map((piece, index): [string, Content] => [`content[${index}]`, piece]),
+      ['mod:fog-season', fogSeason.pack as unknown as Content],
+    ]
+    expect(content.flatMap(([where, piece]) => [...offences(piece, where), ...proseOffences(piece, where)])).toEqual([])
   })
 
   it('holds the first-party plugins’ content in the showcase to the rule', () => {
@@ -28,6 +31,6 @@ describe('ids and separators (ADR 0010)', () => {
       'x.my.thing/x/y: "my.thing/x/y" is not plugin/name',
       'x.custom: "a/b/c" is not plugin/name',
     ])
-    expect(proseOffences({ id: 'p', schema: 1, prose: { 'a.b': '', 'a#b': '', 'a/b': '' } })).toEqual(['p prose: "a/b" is not an id, or scene#choice'])
+    expect(proseOffences({ prose: { 'a.b': '', 'a#b': '', 'a/b': '' } }, 'p')).toEqual(['p prose: "a/b" is not an id, or scene#choice'])
   })
 })

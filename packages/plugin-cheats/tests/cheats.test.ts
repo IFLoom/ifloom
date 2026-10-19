@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   checkGame,
   createRunner,
@@ -14,7 +13,7 @@ import {
   type CommandRef,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
   type Plugin,
 } from '@ifloom/engine'
 import { cheatDefs, cheatUsed, cheats, runCheat, type CheatDef, type CheatsView } from '../src/index.ts'
@@ -50,10 +49,9 @@ const unlocksStub: Plugin<null> = definePlugin<null>({
   conditions: { has: (state, args) => state.kv[`unlock.${String(args.unlock)}`] === true },
 })
 
-function game(options: { pack?: Partial<Pack>; plugins?: Plugin<any>[] } = {}): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}): Game {
+  const town: Content = {
+    name: 'town',
     stats: [{ id: 'coins', label: 'Coins', start: 5, max: 9999 }],
     scenes: [
       { id: 'intro', body: [], choices: [] },
@@ -167,8 +165,7 @@ describe('cheats', () => {
     const loaded = loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           activities: [{ id: 'peek', blocked: [{ when: cheatUsed('nope'), reason: 'x' }], effects: [] }],
           data: { cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] }] } },
         },

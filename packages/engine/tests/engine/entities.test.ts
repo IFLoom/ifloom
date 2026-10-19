@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 /** The café's staff and its menu: two kinds, each with stats of its own, and one stat of the player's. */
-const cafe: Pack = {
-  id: 'cafe',
-  schema: SCHEMA,
+const cafe: Content = {
+  name: 'cafe',
   kinds: [
     { id: 'staff', label: 'Member of staff', plural: 'Staff' },
     { id: 'dish', label: 'Dish' },

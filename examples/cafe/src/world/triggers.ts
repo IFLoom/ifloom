@@ -1,9 +1,7 @@
 /** What the game watches for after every command: the till, the staff and a good review. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const triggers: Pack = {
-  id: 'world.triggers',
-  schema: SCHEMA,
+export const triggers: Content = {
   triggers: [
     { id: 'overdrawn', once: 'turn', when: { stat: 'coins', lt: 0 }, effects: [{ kind: 'notify', title: 'The bank has written.', tag: 'money' }] },
     { id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ kind: 'notify', title: 'Nobody to open up tomorrow.', tag: 'staff' }] },

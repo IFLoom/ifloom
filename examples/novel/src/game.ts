@@ -9,21 +9,21 @@
  * a name, and endings that start the story over with `newGame`.
  *
  * This file only puts the game together. The stat is in `world/stats.ts`,
- * and each chapter is a pack of its own in `story/`, its prose beside its
+ * and each chapter is a file of its own in `story/`, its prose beside its
  * scenes.
  */
-import { loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
+import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
 import { stats } from './world/stats.ts'
 import { ch1 } from './story/ch1.ts'
 import { ch2 } from './story/ch2.ts'
 import { ch3 } from './story/ch3.ts'
 
-/** The game's packs, in order: what every chapter shares, then the chapters. */
-export const packs: Pack[] = [stats, ch1, ch2, ch3]
+/** The game's content: what every chapter shares, then the chapters. */
+export const content: Content[] = [stats, ch1, ch2, ch3]
 
-/** The game: the packs over a base that names only its first scene. */
+/** The game: its content, with a base that names its first scene and how it saves. */
 export function theLetter(): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame(packs, {
+  const { game, problems } = loadGame(content, {
     id: 'the-letter',
     title: 'The Letter',
     // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried

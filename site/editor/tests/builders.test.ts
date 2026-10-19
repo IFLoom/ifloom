@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, checkGame, inlineMarkup, loadGame, parseBeats } from '@ifloom/engine'
+import { checkGame, inlineMarkup, loadGame, parseBeats } from '@ifloom/engine'
 import {
   conditionForm,
   costOf,
@@ -42,8 +42,7 @@ describe('the condition builder', () => {
     const { problems } = loadGame(
       [
         {
-          id: 'p',
-          schema: SCHEMA,
+          name: 'p',
           stats: [{ id: 'coins', label: 'Coins', levels: { at: [5] } }],
           items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
           scenes: [{ id: 'a', body: [{ text: 'a', when: { all: conditions } }], choices: [{ id: 'go', effects: [] }] }],
@@ -87,8 +86,7 @@ describe('the effect builder', () => {
     const game = loadGame(
       [
         {
-          id: 'p',
-          schema: SCHEMA,
+          name: 'p',
           stats: [{ id: 'coins', label: 'Coins' }],
           items: [{ id: 'key', name: 'Key', desc: 'A key.' }],
           scenes: [

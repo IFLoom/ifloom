@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
 import { Game as Page, GameShell, NoticeStrip, RoomActions, SceneStage, Sidebar, Story, useGame, useMinigame } from '../src/index.ts'
 import { storyOf } from './layouts.tsx'
@@ -31,8 +31,7 @@ function game(): Game {
   const { game, problems } = loadGame(
     [
       {
-        id: 'park',
-        schema: SCHEMA,
+        name: 'park',
         stats: [
           { id: 'energy', label: 'Energy', start: 60, max: 100, display: 'bar' },
           { id: 'hearts', label: 'Hearts', start: 2, max: 5, display: 'pips' },
@@ -404,8 +403,7 @@ describe('the notice strip, with a phone', () => {
     const { game: g, problems } = loadGame(
       [
         {
-          id: 'home',
-          schema: SCHEMA,
+          name: 'home',
           scenes: [{ id: 'intro', title: 'Home', body: [{ text: 'intro' }], choices: [{ id: 'wait', effects: [] }] }],
           prose: { intro: 'The kettle is on.', 'intro#wait': 'Wait', 'mum.hi': 'Did you eat?', 'mum.hi#yes': 'Yes, Mum' },
           data: { messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] } },

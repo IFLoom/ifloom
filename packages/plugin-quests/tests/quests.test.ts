@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
 import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest, type QuestDef, type QuestsView } from '../src/index.ts'
 
 const plugin = quests()
@@ -23,9 +23,8 @@ const letter: QuestDef = {
 const secret: QuestDef = { id: 'secret', title: 'A secret', secret: true, starts: { kv: 'never' }, stages: [{ id: 'x', hint: '', done: { kv: 'never' } }] }
 
 function game(extra: QuestDef[] = []): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const town: Content = {
+    name: 'town',
     activities: [
       { id: 'getHungry', effects: [{ kind: 'kv', key: 'hungry', to: true }] },
       // Out and in again: all the quest asks of where the player is.
@@ -131,7 +130,7 @@ describe('quests', () => {
         { id: 'a', hint: '', done: { kv: 'x' } },
       ],
     }
-    const loaded = loadGame([{ id: 'mod', schema: SCHEMA, data: { quests: { quests: [broken] } } }], { id: 'g', title: 'g', plugins: [plugin] })
+    const loaded = loadGame([{ name: 'mod', data: { quests: { quests: [broken] } } }], { id: 'g', title: 'g', plugins: [plugin] })
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'quests broken', what: 'unknown storyline "nobody"' },
       { pack: 'mod', where: 'quests broken', what: 'stage a: unknown item "moonstone"' },

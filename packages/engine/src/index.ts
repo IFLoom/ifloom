@@ -149,7 +149,7 @@ export { markUsed, oncePerTurn, usedBlock, usedThisTurn } from './once.ts'
 export { chance, hash, pick, roll, weighted } from './random.ts'
 
 // Loading, checking and saving
-export type { Loaded, Pack, Patch } from './loader.ts'
+export type { Content, GameBase, Loaded, LoadOptions, Pack, Patch } from './loader.ts'
 export { SCHEMA, loadGame } from './loader.ts'
 export { upgradePack } from './upgrade.ts'
 export type { Checked, FileRef, Probe, Problem } from './check.ts'

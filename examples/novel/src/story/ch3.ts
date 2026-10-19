@@ -1,11 +1,9 @@
 /** Chapter three: June's sister at the door, and the two endings. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
 const readIt = { kind: 'kv', key: 'readBefore', to: true } as const
 
-export const ch3: Pack = {
-  id: 'story.ch3',
-  schema: SCHEMA,
+export const ch3: Content = {
   scenes: [
     {
       id: 'ch3.door',

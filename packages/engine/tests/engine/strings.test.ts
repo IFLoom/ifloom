@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { whyNot } from '../../src/availability.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply } from '../../src/reduce.ts'
-import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { loadGame } from '../../src/loader.ts'
 import { STRINGS, say } from '../../src/strings.ts'
 import type { Game } from '../../src/game.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -26,9 +26,9 @@ describe('the strings table', () => {
 
   it('come from packs too, so a translation can ship as a mod, later packs winning', () => {
     const { scenes: _s, introScene: _in, items, storylines, activities, stats, ...base } = fixture()
-    const town = { id: 'town', schema: SCHEMA, items, storylines, activities, stats, scenes: _s }
-    const dutch = { id: 'nl', schema: SCHEMA, strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
-    const fixes = { id: 'nl-fixes', schema: SCHEMA, strings: { tooEarly: 'Nog te vroeg.' } }
+    const town = { name: 'town', items, storylines, activities, stats, scenes: _s }
+    const dutch = { name: 'nl', strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
+    const fixes = { name: 'nl-fixes', strings: { tooEarly: 'Nog te vroeg.' } }
     const { game } = loadGame([town, dutch, fixes], { ...base, strings: { tooEarly: 'Too soon.' } })
     expect(say(game, 'finishFirst')).toBe('Eerst dit afmaken.')
     expect(say(game, 'tooEarly')).toBe('Nog te vroeg.')

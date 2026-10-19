@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, loadGame, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
+import { apply, loadGame, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
 import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
@@ -12,8 +12,7 @@ function game(): Game {
   const loaded = loadGame(
     [
       {
-        id: 'office',
-        schema: SCHEMA,
+        name: 'office',
         activities: [
           {
             id: 'setUpMail',

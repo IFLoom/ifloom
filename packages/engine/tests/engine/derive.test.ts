@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain, explainText } from '../../src/explain.ts'
 import type { Game } from '../../src/game.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -73,9 +73,8 @@ describe('derived stats', () => {
       expect(statValue(after, game, 'skill')).toBe(10)
     }
     expect(problemsOf(game)).toEqual(expect.arrayContaining(['activity set: stat "skill" is derived: it is worked out, never written']))
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       stats: [
         { id: 'baking', label: 'Baking' },
         { id: 'skill', label: 'Skill', derive: 'baking', spendable: true, start: 3 },
@@ -117,9 +116,8 @@ describe('derived stats', () => {
   })
 
   it('report unknown stats, another owner’s and cycles', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       kinds: [{ id: 'staff', label: 'Staff' }],
       stats: [
         { id: 'speed', label: 'Speed', of: 'staff' },
@@ -186,9 +184,8 @@ describe('levels', () => {
   })
 
   it('report thresholds out of order or outside the range', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       stats: [
         { id: 'a', label: 'A', levels: { at: [10, 5] } },
         { id: 'b', label: 'B', max: 50, levels: { at: [10, 60] } },

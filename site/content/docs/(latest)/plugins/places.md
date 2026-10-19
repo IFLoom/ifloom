@@ -6,7 +6,7 @@ description: "Locations with exits, walking between them, where the player is, o
 
 You'd want it for any game where the player moves around a world: a town in a life sim, the rooms of a house in a mystery, the floors of a shop in a management game. A linear novel that moves from scene to scene doesn't need it.
 
-The plugin keeps the player's location in its own state, `{ at }`. While no scene is open, it fills the screen with the room's description, offers the room's actions as buttons, and hands the UI the exits. Locations are content, in a pack's `data.places.locations`, so a mod can add a room or change one.
+The plugin keeps the player's location in its own state, `{ at }`. While no scene is open, it fills the screen with the room's description, offers the room's actions as buttons, and hands the UI the exits. Locations are content, in your content's `data.places.locations`, so a mod can add a room or change one.
 
 These are the parts of a game that deal with places, and where each one comes from:
 
@@ -60,11 +60,11 @@ function places(options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
 Builds the plugin, with the id `places`. Call it once, when you build the game. With no options, a new game starts nowhere.
 
 ```ts
-import { loadGame, startingState, type Pack } from '@ifloom/engine'
+import { loadGame, startingState, type Content } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 
-declare const town: Pack
+declare const town: Content
 
 const map = places({ start: 'flat' })
 const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [calendar(), map] })
@@ -147,12 +147,12 @@ What happens as the player walks into a place, such as someone catching them on 
 
 The [content checker](/docs/reference/checks) checks its `when` and its effects as `locations park · arrive: …`.
 
-### In a pack
+### In your content
 
-Locations go in a [pack](/docs/reference/loader#pack)'s `data`, under `places.locations`. This is the [showcase](/docs/guide/showcase)'s map, cut down to what this page needs, in a file `town.ts`:
+Locations go in your [content](/docs/reference/loader#content)'s `data`, under `places.locations`. This is the [showcase](/docs/guide/showcase)'s map, cut down to what this page needs, in a file `town.ts`:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { period, sleep } from '@ifloom/plugin-calendar'
 import { type LocationDef } from '@ifloom/plugin-places'
 
@@ -179,9 +179,7 @@ const locations: LocationDef[] = [
   },
 ]
 
-export const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+export const town: Content = {
   prose: {
     'place.flat': 'Boxes, mostly. The radiator knocks when it feels like it.',
     'place.high-street': 'A bakery, a launderette, a bus stop with a bench nobody sits on.',
@@ -193,7 +191,7 @@ export const town: Pack = {
 }
 ```
 
-The [loader](/docs/reference/loader#pack) merges locations by id, as it merges scenes. A later pack's location with the same id replaces the earlier one whole, so a mod can add a room or rewrite one. The game's places, merged, are [`locationsOf(game)`](#helpers).
+The [loader](/docs/reference/loader#content) merges locations by id, as it merges scenes. A pack's location with the same id replaces the game's own whole, so a mod can add a room or rewrite one. The game's places, merged, are [`locationsOf(game)`](#helpers).
 
 ### Rooms inside rooms
 
@@ -562,7 +560,7 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 
 | Helper | Returns |
 |---|---|
-| `locationsOf` | The game's places: its packs' `data.places.locations`, merged. Empty with none. |
+| `locationsOf` | The game's places: its content's and packs' `data.places.locations`, merged. Empty with none. |
 | `locationById` | The place with this id, or `undefined`. `undefined` for `null`. |
 | `where` | Where the player is, read straight from the state with no game needed: the place's id, or `null`. |
 | `go` | The [`places/go`](#commands) command. |
@@ -582,7 +580,7 @@ When the game loads, the plugin reports two kinds of problem.
 town · activity swim · unknown location "lido"
 ```
 
-**The places themselves.** These are pinned on the pack each place came from, with `where` as `locations <id>`. The `start` option is pinned on `base` as `options start`. The plugin reports:
+**The places themselves.** These are pinned on the content or pack each place came from, with `where` as `locations <id>`. The `start` option is pinned on `base` as `options start`. The plugin reports:
 
 - A `start` the game doesn't have (`options start`, `unknown location "…"`).
 - An exit to a place the game doesn't have (`exit to unknown location "…"`).

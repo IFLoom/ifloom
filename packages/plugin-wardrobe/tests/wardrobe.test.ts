@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
 import { slotFilled, takeOff, wardrobe, wear, wearing, type WardrobeView } from '../src/index.ts'
 
 const plugin = wardrobe()
@@ -13,10 +13,9 @@ const slots = {
   },
 }
 
-function game(extra: Partial<Pack> = {}): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function game(extra: Partial<Content> = {}): Game {
+  const town: Content = {
+    name: 'town',
     items: [
       { id: 'raincoat', name: 'raincoat', desc: '', start: 1 },
       { id: 'boots', name: 'boots', desc: '', start: 1 },
@@ -103,7 +102,7 @@ describe('the wardrobe', () => {
   })
 
   it('reports clothes that are not items or name a slot the game does not have', () => {
-    const loaded = loadGame([{ id: 'mod', schema: SCHEMA, data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }], {
+    const loaded = loadGame([{ name: 'mod', data: { wardrobe: { clothes: [{ id: 'cape', slot: 'back' }] } } }], {
       id: 'g',
       title: 'g',
       plugins: [plugin],
@@ -117,8 +116,7 @@ describe('the wardrobe', () => {
     const unowned = loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           items: [{ id: 'boots', name: 'boots', desc: '' }],
           data: { wardrobe: { clothes: [{ id: 'boots', slot: 'feet' }] } },
         },

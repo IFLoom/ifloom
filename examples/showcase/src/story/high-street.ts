@@ -1,11 +1,9 @@
 /** The high street: the way to everywhere, the weather, and the market's scarves. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
-export const highStreet: Pack = {
-  id: 'story.high-street',
-  schema: SCHEMA,
+export const highStreet: Content = {
   activities: [
     {
       id: 'buyScarf',

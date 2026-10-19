@@ -23,7 +23,7 @@ export type SaveMeta = {
   when: string | null
   /** What `game.saveName` gave for the state, or null. */
   player: string | null
-  /** The packs the game was loaded from; a missing one is reported on load. */
+  /** The ids of the packs the game was loaded with; a missing mod is reported on load. */
   packs: string[]
   /** The plugins the game was built with, and the version of each one's state. */
   plugins: Record<string, number>
@@ -139,7 +139,8 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     const loaded = loadState(data.state, game)
     if (!loaded.ok) return loaded
     const state = loaded.value
-    // Only mods: the game's own packs are its files, and renaming one is not something the player can fix.
+    // Only mods, which the player adds and can add back. An unlocked pack comes back with its code, and a save
+    // from before content and packs were split also lists the game's own files, which the player can't fix.
     const missingPacks = (data.meta.packs ?? []).filter((id) => id.startsWith('mod:') && !(game.packs ?? []).includes(id))
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
     // A save from before game versions says nothing of one: it was version 1.

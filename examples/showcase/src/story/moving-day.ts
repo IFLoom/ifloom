@@ -1,10 +1,8 @@
 /** Moving day: the arrival, the cat's name, the note under the door and settling in. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 
-export const movingDay: Pack = {
-  id: 'story.moving-day',
-  schema: SCHEMA,
+export const movingDay: Content = {
   scenes: [
     {
       id: 'intro',

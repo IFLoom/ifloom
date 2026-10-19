@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Pack } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Content } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
 import { at, go, places } from '@ifloom/plugin-places'
 import { GameShell, LocationCard, Video } from '../src/index.ts'
@@ -20,12 +20,11 @@ beforeEach(() => {
 })
 
 /** The flat in the evening: a picture and a clip in the scene, and a layered stage with two hotspots. */
-function flat(extra: Partial<Pack> = {}): Game {
+function flat(extra: Partial<Content> = {}): Game {
   return loadGame(
     [
       {
-        id: 'flat',
-        schema: SCHEMA,
+        name: 'flat',
         activities: [{ id: 'taxi' }],
         scenes: [
           {
@@ -222,8 +221,7 @@ describe('media in places, messages and posts', () => {
     return loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           prose: {
             'place.flat': 'Home.',
             'place.street': 'Busy.',

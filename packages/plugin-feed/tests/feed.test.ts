@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, loadGame, startingState, view, type Game, type GameState, type Pack } from '@ifloom/engine'
+import { apply, holds, loadGame, startingState, view, type Game, type GameState, type Content } from '@ifloom/engine'
 import { feed, hasPosted, postTo, react, seeFeed, type FeedsView } from '../src/index.ts'
 import { calendar, pass, period, day } from '@ifloom/plugin-calendar'
 
@@ -17,9 +17,8 @@ const feeds = {
 }
 
 function game(): Game {
-  const pack: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const pack: Content = {
+    name: 'town',
     stats: [{ id: 'fans', label: 'Fans' }],
     activities: [
       { id: 'wait', effects: [pass(1)] },
@@ -94,9 +93,8 @@ describe('feeds', () => {
 
 describe('video on a post', () => {
   it('sits beside the picture, on other people’s posts and the player’s own', () => {
-    const pack: Pack = {
-      id: 'town',
-      schema: SCHEMA,
+    const pack: Content = {
+      name: 'town',
       activities: [
         { id: 'wait', effects: [pass(1)] },
         { id: 'film', effects: [postTo('social', 'pond', { text: 'own.pond', video: 'clips/pond.mp4' })] },

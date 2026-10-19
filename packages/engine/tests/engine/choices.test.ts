@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
-import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { loadGame } from '../../src/loader.ts'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
@@ -29,8 +29,7 @@ describe('choices the player made', () => {
     const { problems } = loadGame(
       [
         {
-          id: 'chapter',
-          schema: SCHEMA,
+          name: 'chapter',
           scenes: [
             {
               id: 'ch1.door',

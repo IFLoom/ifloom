@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState } from '@ifloom/engine'
+import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { GameShell } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
@@ -12,8 +12,7 @@ function novel() {
   const { game, problems } = loadGame(
     [
       {
-        id: 'book',
-        schema: SCHEMA,
+        name: 'book',
         stats: [{ id: 'courage', label: 'Courage', start: 1 }],
         scenes: [{ id: 'ch1', title: 'Chapter one', body: [{ text: 'ch1' }], choices: [{ id: 'on', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: { ch1: 'The letter is on the mat.', 'ch1#on': 'Read on' },

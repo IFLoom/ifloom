@@ -10,7 +10,7 @@ The engine's core has no people of its own: no character list, no talk or call c
 
 ## What a character is
 
-A character is a [`CharacterDef`](#characterdef): content in a pack's `data.cast.characters`, so a mod can add someone or change them. Each character is also an [entity](/docs/reference/entities) of the kind `character`, which the plugin declares for you. That means anything your game keeps about a person, such as a friendship, trust or a debt, is a stat you declare with `of: 'character'`, and every character keeps their own:
+A character is a [`CharacterDef`](#characterdef): content in your content's `data.cast.characters`, so a mod can add someone or change them. Each character is also an [entity](/docs/reference/entities) of the kind `character`, which the plugin declares for you. That means anything your game keeps about a person, such as a friendship, trust or a debt, is a stat you declare with `of: 'character'`, and every character keeps their own:
 
 ```ts
 import { type StatDef } from '@ifloom/engine'
@@ -157,11 +157,9 @@ Inside a character's own conditions, `'$'` stands for them. Every `when` in `sch
 To let the player name someone, ask for the name with an [input](/docs/reference/inputs) and give the character a `name` that reads the input's kv key:
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   inputs: [{ id: 'friendName', label: 'Your oldest friend is called', kind: 'text', maxLength: 16 }],
   data: {
     cast: {
@@ -196,12 +194,12 @@ const talk: TalkOption[] = [
 
 `talk: 'ava.hi'` is short for `talk: [{ scene: 'ava.hi' }]`.
 
-### In a pack
+### In your content
 
-Characters go in a [pack](/docs/reference/loader#pack)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/world/cast.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
+Characters go in your [content](/docs/reference/loader#content)'s `data`, under `cast.characters`. These are Ava and Sam from the [showcase](/docs/guide/showcase) (`examples/showcase/src/world/cast.ts`), in a cut-down town with only the places and scenes needed for the [worked example](#a-worked-example):
 
 ```ts
-import { SCHEMA, type DataScene, type Pack } from '@ifloom/engine'
+import type { DataScene, Content } from '@ifloom/engine'
 import { period, weekday } from '@ifloom/plugin-calendar'
 import { at, type LocationDef } from '@ifloom/plugin-places'
 import { person, type CharacterDef } from '@ifloom/plugin-cast'
@@ -243,9 +241,7 @@ const chat = (id: string, who: string, by: number): DataScene => ({
   choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by, of: person(who) }, { kind: 'scene', scene: null }] }],
 })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }, { id: 'sam', name: 'Sam' }],
   scenes: [chat('ava.hi', 'ava', 10), chat('ava.river', 'ava', 5), chat('ava.call', 'ava', 3), chat('sam.hi', 'sam', 5)],
@@ -272,7 +268,7 @@ const town: Pack = {
 }
 ```
 
-The [loader](/docs/reference/loader#pack) merges characters by id, as it merges scenes. A later pack's character with the same id replaces the earlier one whole, so a mod can add someone or rewrite them. The game's characters, merged, are [`charactersOf(game)`](#helpers).
+The [loader](/docs/reference/loader#content) merges characters by id, as it merges scenes. A pack's character with the same id replaces the game's own whole, so a mod can add someone or rewrite them. The game's characters, merged, are [`charactersOf(game)`](#helpers).
 
 ### Each one is an entity
 
@@ -282,7 +278,7 @@ The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kind
 import { startingState, type Condition, type Effect, type Game } from '@ifloom/engine'
 import { person } from '@ifloom/plugin-cast'
 
-declare const game: Game   // built from the pack above
+declare const game: Game   // built from the content above
 
 startingState(game).entities.character
 // { ava: { name: 'Ava', stats: { friendship: 0 }, kv: {} },
@@ -306,7 +302,7 @@ A character is somewhere at every moment, worked out fresh from the state:
 
 A character is here when that place is the one the places plugin's [`places/here`](/docs/plugins/places#queries) query says the player is in. With the player nowhere, or with no places plugin, nobody is ever here.
 
-With the [pack above](#in-a-pack), on a Monday morning Sam is on the high street and Ava is in the café. In the evening, both are in the park.
+With the [content above](#in-your-content), on a Monday morning Sam is on the high street and Ava is in the café. In the evening, both are in the park.
 
 Put exceptions above the rule they break, such as a Sunday entry above the every-day one. A person whose storyline is closed is still here. It's talking to them that's refused, and their Talk button says why.
 
@@ -369,7 +365,7 @@ Met people are listed in the view's [`people`](#castview), and only met people w
 
 ## A worked example
 
-The [pack above](#in-a-pack), with the calendar and places. The game starts on the high street on a Monday morning.
+The [content above](#in-your-content), with the calendar and places. The game starts on the high street on a Monday morning.
 
 ```ts
 import { apply, applyEffects, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
@@ -587,7 +583,7 @@ const person: (who: string, kind?: string) => string
 
 | Helper | Returns |
 |---|---|
-| `charactersOf` | The game's characters: its packs' `data.cast.characters`, merged. Empty with none. |
+| `charactersOf` | The game's characters: its content's and packs' `data.cast.characters`, merged. Empty with none. |
 | `characterById` | The character with this id, or `undefined`. |
 | `talk`, `call` | The [commands](#commands). |
 | `here`, `isAt`, `hasMet` | The [conditions](#conditions). |
@@ -603,7 +599,7 @@ When the game loads, the plugin reports two kinds of problem.
 town · activity wave · unknown character "ghost"
 ```
 
-**The characters themselves.** These are pinned on the pack each came from, with `where` as `characters <id>`. The plugin reports:
+**The characters themselves.** These are pinned on the content or pack each came from, with `where` as `characters <id>`. The plugin reports:
 
 - A `talk` scene the game doesn't have (`talk: opens unknown scene "…"`).
 - A `call.scene` the game doesn't have (`call: opens unknown scene "…"`).

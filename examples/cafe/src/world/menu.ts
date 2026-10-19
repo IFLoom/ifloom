@@ -1,9 +1,7 @@
 /** The menu: dishes as a kind of entity, each with a price and a quality. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const menu: Pack = {
-  id: 'world.menu',
-  schema: SCHEMA,
+export const menu: Content = {
   kinds: [{ id: 'dish', label: 'Dish', plural: 'Menu' }],
   stats: [
     { id: 'price', label: 'Price', of: 'dish', start: 4, min: 1, max: 20, format: '£{n}' },

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState } from '@ifloom/engine'
+import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { GameShell } from '../src/index.ts'
 
 afterEach(cleanup)
@@ -11,8 +11,7 @@ function kitchen(strings: Record<string, string> = {}) {
   const { game, problems } = loadGame(
     [
       {
-        id: 'kitchen',
-        schema: SCHEMA,
+        name: 'kitchen',
         stats: [
           { id: 'cooking', label: 'Cooking', start: 15, levels: { at: [10, 30, 60] } },
           { id: 'coins', label: 'Coins', start: 5 },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -15,10 +15,9 @@ function scene(id: string, extra: Partial<DataScene> = {}): DataScene {
   return { id, body: [{ text: `${id}.text` }], choices: leave, ...extra }
 }
 
-function cafe(scenes: DataScene[], extra: Partial<Pack> = {}) {
-  const pack: Pack = {
-    id: 'cafe',
-    schema: SCHEMA,
+function cafe(scenes: DataScene[], extra: Partial<Content> = {}) {
+  const pack: Content = {
+    name: 'cafe',
     prose: Object.fromEntries(
       scenes.flatMap((entry) => [
         [`${entry.id}.text`, entry.id],

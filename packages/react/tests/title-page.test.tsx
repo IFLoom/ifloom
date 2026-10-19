@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, memoryDriver, profile, saves, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, saves, startingState, type Game } from '@ifloom/engine'
 import { GameShell, usePage, useSetting, type PagesOptions } from '../src/index.ts'
 import { Reading, storyOf } from './layouts.tsx'
 
@@ -11,8 +11,7 @@ function letter(): Game {
   return loadGame(
     [
       {
-        id: 'letter',
-        schema: SCHEMA,
+        name: 'letter',
         settings: [
           { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
           {

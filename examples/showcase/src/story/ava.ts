@@ -2,7 +2,7 @@
  * Ava's arc: meeting her at the café, her calls and texts, the evening by the
  * river, and the friendship quest. Her words are in `ava.prose.ts`.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { day } from '@ifloom/plugin-calendar'
 import { person } from '@ifloom/plugin-cast'
@@ -26,9 +26,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
   ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ kind: 'stat' as const, stat: 'friendship', by: 2, of: person('ava') }] }] } : {}),
 }))
 
-export const ava: Pack = {
-  id: 'story.ava',
-  schema: SCHEMA,
+export const ava: Content = {
   scenes: [
     {
       id: 'ava.hi',

@@ -1,9 +1,7 @@
 /** The staff: a kind of entity, the numbers each of them has, and Ana, there from the start. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const staff: Pack = {
-  id: 'world.staff',
-  schema: SCHEMA,
+export const staff: Content = {
   kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }],
   stats: [
     { id: 'skill', label: 'Skill', of: 'staff', start: 1, min: 1, max: 10 },

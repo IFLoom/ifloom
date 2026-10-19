@@ -8,15 +8,13 @@ A plugin for [IFLoom](https://ifloom.dev). TODO: say what it adds, in a sentence
 npm install {{name}}
 ```
 
-Add it to the game's `plugins`, and give it content in a pack's `data.__id__.entries`:
+Add it to the game's `plugins`, and give it content in `data.__id__.entries`:
 
 ```ts
-import { loadGame, SCHEMA, type Pack } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
 import { __camel__, mark__Pascal__ } from '{{name}}'
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
   activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
   data: { '__id__': { entries: [{ id: 'bread', label: 'A loaf of bread' }] } },
 }
@@ -51,7 +49,7 @@ The docs list plugins other people have written on [Community plugins](https://i
 - it needs no UI of its own: it gives a view, and works in a game with no UI package;
 - `@ifloom/engine` is a peer dependency, named with `^` and a version;
 - it has tests that play it in a small game, and they pass;
-- content it reads lives in a pack's `data`, and its conditions, effects and commands follow the [naming rules](https://ifloom.dev/docs/reference/plugins#naming);
+- content it reads lives in `data`, and its conditions, effects and commands follow the [naming rules](https://ifloom.dev/docs/reference/plugins#naming);
 - it has an open-source licence, in its repository and `package.json`;
 - it's on npm, with this README saying what it adds and how to use it.
 

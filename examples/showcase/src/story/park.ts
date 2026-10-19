@@ -1,5 +1,5 @@
 /** Riverside Park: jogging, quick feet with the kids, the day's visitors and dog walking. */
-import { SCHEMA, type MinigameDef, type MinigameStateDef, type Pack } from '@ifloom/engine'
+import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
 import { generate } from '@ifloom/plugin-generators'
 import { pass } from '@ifloom/plugin-calendar'
 import { at, onlyAt } from '@ifloom/plugin-places'
@@ -54,9 +54,7 @@ const quickFeet: MinigameDef = {
   },
 }
 
-export const park: Pack = {
-  id: 'story.park',
-  schema: SCHEMA,
+export const park: Content = {
   activities: [
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
     { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },

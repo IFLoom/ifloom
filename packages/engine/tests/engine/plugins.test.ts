@@ -8,7 +8,7 @@ import { whyNot } from '../../src/availability.ts'
 import { view } from '../../src/view.ts'
 import { saves } from '../../src/save.ts'
 import { memoryDriver } from '../../src/drivers.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { fillTokens } from '../../src/prose.ts'
 import type { Game } from '../../src/game.ts'
@@ -168,12 +168,11 @@ describe('plugins', () => {
 
   it('take content from packs, merged by id, and check it', () => {
     const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
-    const beach: Pack = {
-      id: 'beach',
-      schema: SCHEMA,
+    const beach: Content = {
+      name: 'beach',
       data: { shells: { spots: [{ id: 'rockpool', when: { storyline: 'tides' } }] } },
     }
-    const kites: Pack = { id: 'kites', schema: SCHEMA, data: { kites: { kites: [{ id: 'red' }] } } }
+    const kites: Content = { name: 'kites', data: { kites: { kites: [{ id: 'red' }] } } }
     const { game, problems } = loadGame([beach, kites], base)
     expect(game.data?.shells?.spots).toEqual([{ id: 'rockpool', when: { storyline: 'tides' } }])
     expect(problems).toEqual([
@@ -212,9 +211,8 @@ describe('plugins working together', () => {
     cooperates: ['tides'],
     view: (_state, { query }) => ({ next: query<string>('tides/next', { suffix: ' tide' }) ?? 'no tides here' }),
   })
-  const pack: Pack = {
-    id: 'shore',
-    schema: SCHEMA,
+  const pack: Content = {
+    name: 'shore',
     activities: [
       { id: 'wade', blocked: [{ when: { not: { 'tides/high': true } }, reason: 'The tide is out.' }], effects: [{ 'tides/turn': true }] },
       { id: 'swim', effects: [{ 'tides/turn': {} }] },
@@ -262,9 +260,8 @@ describe('plugins that bring entities and speakers', () => {
       return singer ? { id, name: singer.name, hue: 280, portrait: null } : undefined
     },
   })
-  const hall: Pack = {
-    id: 'hall',
-    schema: SCHEMA,
+  const hall: Content = {
+    name: 'hall',
     stats: [{ id: 'voice', label: 'Voice', of: 'singer', start: 3 }],
     entities: [{ id: 'bea', of: 'singer', name: 'Bea the soloist', stats: { voice: 9 } }],
     scenes: [{ id: 'hymn', speaker: 'ann', body: [{ text: 'hymn' }], choices: [] }],

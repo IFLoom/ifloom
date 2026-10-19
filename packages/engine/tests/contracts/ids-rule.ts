@@ -1,4 +1,4 @@
-import type { Pack } from '../../src/loader.ts'
+import type { Content } from '../../src/loader.ts'
 
 /**
  * One separator rule for ids (ADR 0010), for the contract tests that hold the
@@ -38,13 +38,13 @@ export function offences(value: unknown, path: string, out: string[] = []): stri
   return out
 }
 
-/** A pack's prose keys and variants' members that break the rule. */
-export function proseOffences(pack: Pack): string[] {
+/** Content's prose keys and variants' members that break the rule, named by where it is. */
+export function proseOffences(pack: Content, where: string): string[] {
   const keys = [
     ...Object.keys(pack.prose ?? {}),
     ...Object.values(pack.variants ?? {})
       .flat()
       .map((member) => (typeof member === 'string' ? member : member.text)),
   ]
-  return keys.filter((key) => !PROSE_KEY.test(key)).map((key) => `${pack.id} prose: "${key}" is not an id, or scene#choice`)
+  return keys.filter((key) => !PROSE_KEY.test(key)).map((key) => `${where} prose: "${key}" is not an id, or scene#choice`)
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Game, type GameState, type Pack, type CommandRef } from '@ifloom/engine'
+import { apply, holds, pluginQuery, loadGame, startingState, view, whyNot, type Game, type GameState, type Content, type CommandRef } from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
 import { go, places } from '@ifloom/plugin-places'
 import { call, cast, hasMet, here, isAt, person, talk, type CastView, type CharacterDef } from '../src/index.ts'
@@ -22,9 +22,8 @@ const sam: CharacterDef = { id: 'sam', name: 'Sam', home: 'park', talk: 'sam.hi'
 
 const scene = (id: string) => ({ id, body: [{ text: id }], choices: [{ id: 'bye', effects: [{ kind: 'scene' as const, scene: null }] }] })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
+  name: 'town',
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }],
   scenes: ['ava.hi', 'ava.river', 'ava.call', 'sam.hi'].map(scene),
@@ -157,7 +156,7 @@ describe('the cast', () => {
 
   it('fill prose tokens in a name wherever it is shown, so the player can name someone', () => {
     // Sam is whoever the player says: an input sets the kv key, the name reads it.
-    const named: Pack = { ...town, data: { ...town.data, cast: { characters: [ava, { ...sam, name: '{{friendName}}', fullName: '{{friendName}} Reed' }] } } }
+    const named: Content = { ...town, data: { ...town.data, cast: { characters: [ava, { ...sam, name: '{{friendName}}', fullName: '{{friendName}} Reed' }] } } }
     const { game: g, problems } = loadGame([named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
     expect(problems).toEqual([])
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'sam.hi' ? { ...entry, speaker: 'sam' } : entry)) }
@@ -180,9 +179,8 @@ describe('the cast', () => {
   })
 
   it('report what their content names that the game does not have', () => {
-    const broken: Pack = {
-      id: 'broken',
-      schema: SCHEMA,
+    const broken: Content = {
+      name: 'broken',
       stats: [{ id: 'trust', label: 'Trust', of: 'character' }],
       activities: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
       data: {

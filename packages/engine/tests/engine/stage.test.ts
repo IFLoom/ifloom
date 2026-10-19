@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { definePlugin } from '../../src/plugin.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
@@ -24,9 +24,8 @@ const stall = definePlugin<{ open: boolean }>({
     problems([{ blocks: [{ text: 'stall.sign' }] }, { command: { type: 'scene', id: 'stall.closing' } }]).map((what) => ({ list: 'stall', id: game.id, what })),
 })
 
-const market: Pack = {
-  id: 'market',
-  schema: SCHEMA,
+const market: Content = {
+  name: 'market',
   prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
   variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
   activities: [

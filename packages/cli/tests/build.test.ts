@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, type Game } from '@ifloom/engine'
+import { loadGame, type Game } from '@ifloom/engine'
 import { checkBuild, checkGame } from '../src/index.ts'
 
 function built(html: string): string {
@@ -56,14 +56,11 @@ describe('inlineAssets', () => {
 
 describe('checkGame', () => {
   it("prints a loader problem in the loader's words", () => {
-    const loaded = loadGame(
-      [{ id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }],
-      {
-        id: 'town',
-        title: 'Town',
-        introScene: 'intro',
-      },
-    )
+    const loaded = loadGame([{ name: 'town', scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }], {
+      id: 'town',
+      title: 'Town',
+      introScene: 'intro',
+    })
     expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 
@@ -78,7 +75,7 @@ describe('checkGame', () => {
     }
     expect(checkGame({ default: game })).toEqual(['game · scene intro · no prose for "intro#go"', 'game · scene intro · goes to unknown scene "nowhere"'])
     // A loaded game's problems come from its loader, and aren't found a second time.
-    const loaded = loadGame([{ id: 'town', schema: SCHEMA, scenes: game.scenes }], { id: 'town', title: 'Town' })
+    const loaded = loadGame([{ name: 'town', scenes: game.scenes }], { id: 'town', title: 'Town' })
     expect(checkGame({ default: loaded })).toEqual(['town · scene intro · no prose for "intro#go"', 'town · scene intro · goes to unknown scene "nowhere"'])
   })
 })
@@ -93,8 +90,7 @@ describe('the files a game names', () => {
     loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           audio: {
             tracks: {
               calm: { src: 'music/calm.ogg', channel: 'music' },

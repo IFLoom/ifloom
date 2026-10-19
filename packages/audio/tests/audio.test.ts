@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type GameAudio, type Pack } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, startingState, type Game, type GameAudio, type Content } from '@ifloom/engine'
 import { startAudio, type AudioLike, type AudioOptions } from '../src/index.ts'
 
 /** An audio element that plays nothing, and says what it was told. */
@@ -49,9 +49,8 @@ const audio: GameAudio = {
   default: { music: 'calm' },
 }
 
-const flat: Pack = {
-  id: 'flat',
-  schema: SCHEMA,
+const flat: Content = {
+  name: 'flat',
   prose: {
     hall: 'The hall of the flat.',
     'hall#knock': 'Knock',

@@ -5,7 +5,7 @@ import { checkGame as checkContent, describeProblem, type FileRef, type Game, ty
 /**
  * What a game module can export: a game, `{ game, problems }`, or a function
  * that returns either. A game with locked content (`src/unlocks/`) exports a
- * function that takes `{ unlocked }`, the packs to load after its own, so
+ * function that takes `{ unlocked }`, the packs to load over its content, so
  * `ifloom check` can check the game with them.
  */
 type Exported = Game | { game: Game; problems?: unknown[] } | ((options?: { unlocked?: Pack[] }) => Game | { game: Game; problems?: unknown[] })

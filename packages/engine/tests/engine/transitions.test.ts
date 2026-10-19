@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -46,8 +46,8 @@ const prose = {
   'hall#out': 'Leave',
 }
 
-function make(extra: Partial<Pack> = {}, base: Partial<Game> = {}) {
-  const pack: Pack = { id: 'house', schema: SCHEMA, prose, scenes: [door, hall], ...extra }
+function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
+  const pack: Content = { name: 'house', prose, scenes: [door, hall], ...extra }
   return loadGame([pack], { id: 'house', title: 'The House', introScene: 'door', ...base })
 }
 
@@ -133,7 +133,7 @@ describe('reveals', () => {
 })
 
 describe('the checker', () => {
-  const problems = (extra: Partial<Pack> = {}, base: Partial<Game> = {}) => make(extra, base).problems.map(describeProblem)
+  const problems = (extra: Partial<Content> = {}, base: Partial<Game> = {}) => make(extra, base).problems.map(describeProblem)
 
   it('reports transition names the game does not know', () => {
     const odd: DataScene = {

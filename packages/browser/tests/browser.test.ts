@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { SCHEMA, createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner, type SceneBeat } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner, type SceneBeat } from '@ifloom/engine'
 import { lastReveal, minigameInput, nextSlot, revealGroups, startClock, startKeys, startMinigameKeys, startRevealSkip } from '../src/index.ts'
 
 /** Catch: wait for the throw, then press space within a second. Left drops it. */
@@ -25,8 +25,7 @@ function game(): Game {
   const { game, problems } = loadGame(
     [
       {
-        id: 'park',
-        schema: SCHEMA,
+        name: 'park',
         stats: [{ id: 'energy', label: 'Energy', start: 60, max: 100 }],
         minigames: [catchBall],
         scenes: [

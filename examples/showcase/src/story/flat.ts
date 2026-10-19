@@ -1,5 +1,5 @@
 /** Your flat: home, bed, the wardrobe, Ava's text on the sill, and the rent every Sunday. */
-import { SCHEMA, type Condition, type Pack } from '@ifloom/engine'
+import type { Condition, Content } from '@ifloom/engine'
 import { day, sleep, weekday } from '@ifloom/plugin-calendar'
 import { onlyAt } from '@ifloom/plugin-places'
 import { openApp } from '@ifloom/plugin-devices'
@@ -10,9 +10,7 @@ const textWaiting: Condition = {
   all: [{ custom: 'messages/arrived', with: { message: 'ava.text' } }, { not: { custom: 'messages/read', with: { message: 'ava.text' } } }],
 }
 
-export const flat: Pack = {
-  id: 'story.flat',
-  schema: SCHEMA,
+export const flat: Content = {
   activities: [{ id: 'openWardrobe', blocked: [onlyAt(['flat'])], effects: [{ kind: 'panel', panel: 'wardrobe' }] }],
   triggers: [
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.

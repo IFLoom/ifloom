@@ -5,7 +5,7 @@
  * effect that rolls how a post did.
  */
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, loadGame, startingState, view, type Game, type GameState, type Pack, type CommandRef } from '@ifloom/engine'
+import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef } from '@ifloom/engine'
 import { closeApp, openApp, type DevicesView } from '@ifloom/plugin-devices'
 import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
@@ -39,9 +39,8 @@ const kit = phone({
   ],
 })
 
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
+  name: 'town',
   stats: [
     { id: 'energy', label: 'Energy', start: 50, spendable: true },
     { id: 'subscribers', label: 'Subscribers' },

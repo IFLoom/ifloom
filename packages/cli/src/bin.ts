@@ -113,7 +113,7 @@ async function check(entry?: string): Promise<number> {
       const left = unlocks.packs.filter((pack) => !(checked.game.packs ?? []).includes(pack.id)).map((pack) => pack.id)
       if (left.length)
         problems.push(
-          `the game module left out the locked packs ${left.join(', ')}: export a function that takes { unlocked } and loads them after the game's own`,
+          `the game module left out the locked packs ${left.join(', ')}: export a function that takes { unlocked } and passes them to loadGame as { packs: unlocked }`,
         )
       // What the game without them lacks is what its unlocks bring: fine while it's reached only behind unlocks/has.
       const without = base.problems.filter((problem) => !checked.problems.includes(problem))

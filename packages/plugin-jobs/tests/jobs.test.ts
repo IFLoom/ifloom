@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   createRunner,
   holds,
@@ -13,7 +12,7 @@ import {
   type Command,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
   type Plugin,
   type CommandRef,
 } from '@ifloom/engine'
@@ -46,9 +45,8 @@ const cafe: JobDef = {
 const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const town: Content = {
+    name: 'town',
     stats: [
       { id: 'coins', label: 'Coins', start: 0, max: 999, spendable: true, format: '{n} coins' },
       { id: 'energy', label: 'Energy', start: 100, spendable: true, lacking: 'Too tired.' },
@@ -182,8 +180,7 @@ describe('jobs, on their own', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           data: {
             jobs: {
               jobs: [
@@ -280,8 +277,7 @@ describe('the jobs panel', () => {
     const loaded = loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
+          name: 'town',
           data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } },
           activities: [
             { id: 'a', effects: [openJobs(['cafe'])] },

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   createRunner,
   entitiesOf,
@@ -12,7 +11,7 @@ import {
   startingState,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
 } from '@ifloom/engine'
 import { drawEntity, generate, generators, templateDefs, type PoolDef, type TemplateDef } from '../src/index.ts'
 
@@ -38,9 +37,8 @@ const visitor: TemplateDef = {
 }
 
 function game(): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const town: Content = {
+    name: 'town',
     kinds: [{ id: 'visitor', label: 'Visitor' }],
     stats: [
       { id: 'mood', label: 'Mood', of: 'visitor', max: 5 },
@@ -125,8 +123,7 @@ describe('generators', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           kinds: [{ id: 'stall', label: 'Stall' }],
           activities: [
             { id: 'x', effects: [generate('nope')] },

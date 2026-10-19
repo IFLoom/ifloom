@@ -1,10 +1,8 @@
 /** What the player can carry, and the clothes among it that the wardrobe puts on. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { openJobs } from '@ifloom/plugin-jobs'
 
-export const items: Pack = {
-  id: 'world.items',
-  schema: SCHEMA,
+export const items: Content = {
   items: [
     { id: 'raincoat', name: 'raincoat', desc: 'Yellow, a size too big.', start: 1 },
     { id: 'scarf', name: 'scarf', desc: 'Knitted by someone who loved you.' },

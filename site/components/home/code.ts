@@ -1,13 +1,11 @@
-// The pack the homepage types out, and a small highlighter for it. It runs as
+// The content the homepage types out, and a small highlighter for it. It runs as
 // written: loadGame([cafe], { id, title, introScene: 'counter' }) reports no
 // problems, and its view is what the output panel beside it shows.
 
 export const LINES = [
-  `import { SCHEMA, type Pack } from '@ifloom/engine'`,
+  `import type { Content } from '@ifloom/engine'`,
   ``,
-  `export const cafe: Pack = {`,
-  `  id: 'cafe',`,
-  `  schema: SCHEMA,`,
+  `export const cafe: Content = {`,
   `  stats: [`,
   `    { id: 'coins', label: 'Coins', start: 3,`,
   `      format: '£{n}', spendable: true },`,
@@ -37,7 +35,7 @@ export const LINES = [
 
 export type Token = { c: string; t: string }
 
-const PATTERN = /('(?:[^'\\]|\\.)*')|\b(import|from|export|const|type)\b|\b(SCHEMA|Pack)\b|(-?\b\d+\b)|\b(true|false)\b|([A-Za-z_]\w*)(?=\s*:)|([{}[\](),:])/g
+const PATTERN = /('(?:[^'\\]|\\.)*')|\b(import|from|export|const|type)\b|\b(Content)\b|(-?\b\d+\b)|\b(true|false)\b|([A-Za-z_]\w*)(?=\s*:)|([{}[\](),:])/g
 const CLASSES = ['str', 'kw', 'ty', 'num', 'bool', 'key', 'pun']
 
 function tokenize(line: string): Token[] {

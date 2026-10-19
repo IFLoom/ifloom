@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { apply } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
@@ -71,10 +71,9 @@ const pools = {
   window: [{ src: 'flat/window-rain.mp4', tags: ['rain'] }],
 }
 
-function town(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}) {
-  const pack: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function town(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}) {
+  const pack: Content = {
+    name: 'town',
     media: { pools },
     prose: {
       'flat.wake': 'You wake to rain.',
@@ -94,7 +93,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}) {
   return loaded
 }
 
-function game(scenes: (Scene | DataScene)[], extra: Partial<Pack> = {}): Game {
+function game(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}): Game {
   const loaded = town(scenes, extra)
   expect(loaded.problems).toEqual([])
   return loaded.game

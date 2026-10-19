@@ -11,7 +11,7 @@
  * kind (stats, staff, the menu, activities, triggers), with its two scenes in
  * `story/` and its sums in `rules.ts`. This file only puts it together.
  */
-import { loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
+import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
 import { custom } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { staff } from './world/staff.ts'
@@ -21,12 +21,12 @@ import { triggers } from './world/triggers.ts'
 import { opening } from './story/opening.ts'
 import { hiring } from './story/hiring.ts'
 
-/** The game's packs, in order: the world, by kind, then the story. */
-export const packs: Pack[] = [stats, staff, menu, activities, triggers, opening, hiring]
+/** The game's content: the world, by kind, then the story. */
+export const content: Content[] = [stats, staff, menu, activities, triggers, opening, hiring]
 
-/** The game: the packs over a base with its own sums and the buttons the café always has. */
+/** The game: its content, with a base that has its own sums and the buttons the café always has. */
 export function cornerCafe(): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame(packs, {
+  const { game, problems } = loadGame(content, {
     id: 'corner-cafe',
     title: 'The Corner Café',
     introScene: 'opening',

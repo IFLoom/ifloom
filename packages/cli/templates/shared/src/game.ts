@@ -1,8 +1,8 @@
 /**
- * The game, put together from its packs. This file only assembles: what the
+ * The game, put together from its content. This file only assembles: what the
  * whole game shares is in `world/`, one file per kind (stats, items, people),
  * and the story is in `story/`, one file per area (a place, a chapter or a
- * character's arc). Add a file's pack to the list when you make one.
+ * character's arc). Add a new file's content to the list when you make one.
  *
  * The docs: https://ifloom.dev/docs/guide/organising
  */

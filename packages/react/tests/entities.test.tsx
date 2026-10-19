@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState } from '@ifloom/engine'
+import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { EntityTable, GameShell } from '../src/index.ts'
 import { storyOf } from './layouts.tsx'
 
@@ -12,8 +12,7 @@ function cafe() {
   const { game, problems } = loadGame(
     [
       {
-        id: 'cafe',
-        schema: SCHEMA,
+        name: 'cafe',
         kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }],
         stats: [
           { id: 'morale', label: 'Morale', of: 'staff', start: 60 },

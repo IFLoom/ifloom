@@ -21,11 +21,9 @@ and an MCP server at `https://ifloom.dev/api/mcp` for AI agents.
 A game is plain data: scenes, choices, stats and the text that goes with them.
 
 ```ts
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const letter: Pack = {
-  id: 'letter',
-  schema: SCHEMA,
+export const letter: Content = {
   stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
   scenes: [
     {

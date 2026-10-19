@@ -41,16 +41,16 @@ describe('mods', () => {
     expect(await store.list()).toEqual([])
   })
 
-  it('load over the game like any pack, and saves record them', async () => {
+  it("load over the game's content as packs, and saves record them, not the content", async () => {
     const store = mods('fixture', memoryDriver())
     await store.add(mod())
     const { game: base } = withCafe()
     const { scenes, items, storylines, activities, stats, packs: _p, ...rest } = base
-    const own = { id: 'town', schema: SCHEMA, scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
-    const { game, problems } = loadGame([own, ...(await store.packs())], rest)
+    const own = { scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
+    const { game, problems } = loadGame([own], rest, { packs: await store.packs() })
     expect(problems.filter((problem) => problem.pack === 'mod:night-market')).toEqual([])
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')
     const meta = await saves(game, memoryDriver()).write('1', startingState(game))
-    expect(meta.packs).toEqual(['town', 'mod:night-market'])
+    expect(meta.packs).toEqual(['mod:night-market'])
   })
 })

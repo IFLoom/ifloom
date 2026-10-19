@@ -1,12 +1,13 @@
 /**
- * A project out as a pack, in JSON or TypeScript, and a JSON pack back in.
+ * A project out as content for a game's `src/story/` (TypeScript), or as a
+ * pack to share or make a mod of (JSON), and JSON back in: a pack, or content.
  */
-import { SCHEMA, upgradePack, type DataScene, type Pack } from '@ifloom/engine'
-import { Raw, constName, formatTs, quote } from './format.ts'
+import { SCHEMA, upgradePack, type Content, type DataScene, type Pack } from '@ifloom/engine'
+import { constName, formatTs, quote } from './format.ts'
 import { defaultPreview, newId, PLUGIN_IDS, PLUGINS, slug, type EditorPack, type PluginId, type Project } from './model.ts'
 import { kvUsed } from './references.ts'
 
-/** The pack as it goes out: the lists it has nothing in left out. */
+/** The project as a pack, with its id and schema: the lists it has nothing in left out. */
 export function exportPack(project: Project): Pack {
   const { id, schema: _schema, scenes, stats, items, prose, ...rest } = project.pack
   // The usual order: id and schema, then stats, items, scenes, anything else, and the prose last.
@@ -19,7 +20,13 @@ export function exportPack(project: Project): Pack {
   return pack
 }
 
-/** The pack as JSON, the shape a mod file has. */
+/** The project as content for a game's own code: the pack without its id and schema. */
+export function exportContent(project: Project): Content {
+  const { id: _id, schema: _schema, ...content } = exportPack(project)
+  return content
+}
+
+/** The pack as JSON, the shape a mod file's pack has. */
 export function toJson(project: Project): string {
   return `${JSON.stringify(exportPack(project), null, 2)}\n`
 }
@@ -32,13 +39,13 @@ function packBreaks(name: string | null, depth: number): boolean {
 }
 
 /**
- * The pack as a TypeScript module: `export const <name>: Pack = { … }`, with a
- * note of the kv keys it uses and how to load it.
+ * The project as a TypeScript module of content for a game's `src/story/`:
+ * `export const <name>: Content = { … }`, with a note of the kv keys it uses
+ * and how to add it to the game.
  */
 export function toTypeScript(project: Project): string {
-  const pack = exportPack(project)
-  const name = constName(pack.id)
-  const body = formatTs({ ...pack, schema: new Raw('SCHEMA') }, { width: 120, alwaysBreak: packBreaks })
+  const name = constName(project.pack.id)
+  const body = formatTs(exportContent(project), { width: 120, alwaysBreak: packBreaks })
   const notes = project.kv.length ? project.kv : kvUsed(project.pack).map((n) => ({ name: n, note: '' }))
   const lines = ['/**', ` * ${project.title}, made in the IFLoom editor.`]
   if (notes.length) {
@@ -47,24 +54,27 @@ export function toTypeScript(project: Project): string {
   }
   lines.push(
     ' *',
-    " * Save it in your game's src/story/ folder, and load it in src/game.ts with:",
-    ` *   loadGame([${name}], { id: ${quote(pack.id)}, title: ${quote(project.title)}${project.intro ? `, introScene: ${quote(project.intro)}` : ''} })`,
+    ` * Save it as src/story/${project.pack.id}.ts in your game, and add it to the content in src/game.ts:`,
+    ` *   loadGame([${name}], { id: ${quote(project.pack.id)}, title: ${quote(project.title)}${project.intro ? `, introScene: ${quote(project.intro)}` : ''} })`,
     ' */',
   )
-  return `import { SCHEMA, type Pack } from '@ifloom/engine'\n\n${lines.join('\n')}\nexport const ${name}: Pack = ${body}\n`
+  return `import type { Content } from '@ifloom/engine'\n\n${lines.join('\n')}\nexport const ${name}: Content = ${body}\n`
 }
 
-/** What reading a JSON pack gave: a project, or why it isn't a pack. */
+/** What reading JSON gave: a project, or why it can't be one. */
 export type Imported = { project: Project } | { error: string }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
 /**
- * A project from a JSON pack. It is refused if it isn't JSON, isn't an object
- * with an `id`, or holds a scene that isn't data. Anything else comes in as it
- * is, and the editor's problems list says what `checkGame` makes of it.
+ * A project from JSON: a pack, with its `id` and `schema`, or content, with
+ * neither. A pack of an older schema is upgraded; content is read as this
+ * engine's, and takes its id from `fallbackId` (the file's name). It is
+ * refused if it isn't JSON, is a pack with no `id`, or holds a scene that isn't
+ * data. Anything else comes in as it is, and the editor's problems list says
+ * what `checkGame` makes of it.
  */
-export function fromJson(text: string, title?: string): Imported {
+export function fromJson(text: string, title?: string, fallbackId = 'story'): Imported {
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
@@ -79,7 +89,11 @@ export function fromJson(text: string, title?: string): Imported {
     if (!upgraded.ok) return { error: `This pack can't be opened: ${upgraded.reason}.` }
     raw = upgraded.value as unknown as Record<string, unknown>
   }
-  if (typeof raw.id !== 'string' || !raw.id) return { error: 'A pack needs an "id".' }
+  if (raw.schema !== undefined && (typeof raw.id !== 'string' || !raw.id)) return { error: 'A pack needs an "id".' }
+  // Content has no id of its own, and its name is only for problems: the project takes the file's name.
+  const { name: _name, ...rest } = raw
+  if (typeof raw.id !== 'string' || !raw.id) raw = { ...rest, id: slug(fallbackId) }
+  const id = raw.id as string
   for (const list of ['scenes', 'stats', 'items'] as const) {
     if (raw[list] !== undefined && !Array.isArray(raw[list])) return { error: `"${list}" should be a list.` }
   }
@@ -97,7 +111,7 @@ export function fromJson(text: string, title?: string): Imported {
   return {
     project: {
       id: newId(),
-      title: title ?? raw.id.replace(/[-_.]+/g, ' ').replace(/^./, (c) => c.toUpperCase()),
+      title: title ?? id.replace(/[-_.]+/g, ' ').replace(/^./, (c) => c.toUpperCase()),
       intro: first,
       pack,
       kv: kvUsed(pack).map((name) => ({ name, note: '' })),

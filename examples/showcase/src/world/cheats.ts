@@ -1,10 +1,8 @@
 /** Cheats for the player, and the supporter code that opens one of them. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { hasUnlock } from '@ifloom/plugin-unlocks'
 
-export const cheats: Pack = {
-  id: 'world.cheats',
-  schema: SCHEMA,
+export const cheats: Content = {
   data: {
     cheats: {
       cheats: [

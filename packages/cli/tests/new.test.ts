@@ -45,15 +45,15 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toContain('# My Story')
   })
 
-  it.each(GAMES)('lays the %s game out as world/ and story/ packs that game.ts assembles', (template) => {
+  it.each(GAMES)('lays the %s game out as world/ and story/ content that game.ts assembles', (template) => {
     const { dir, files } = newGame({ name: 'my-story', template, into: fresh() })
     expect(files.some((file) => file.startsWith('src/world/'))).toBe(true)
     expect(files.some((file) => file.startsWith('src/story/'))).toBe(true)
-    expect(readFileSync(join(dir, 'src/world/stats.ts'), 'utf8')).toContain("id: 'world.stats'")
+    expect(readFileSync(join(dir, 'src/world/stats.ts'), 'utf8')).toContain('export const stats: Content = {')
     // The templates of our own start with one area of story; the examples have their own.
     if (!['novel', 'cafe', 'town'].includes(template)) {
       expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain('loadGame([stats, opening]')
-      expect(readFileSync(join(dir, 'src/story/opening.ts'), 'utf8')).toContain("id: 'story.opening'")
+      expect(readFileSync(join(dir, 'src/story/opening.ts'), 'utf8')).toContain('export const opening: Content = {')
     }
   })
 

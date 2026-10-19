@@ -7,7 +7,7 @@ import { effectsOf, whyNot } from '../../src/availability.ts'
 import { renderAction } from '../../src/screen.ts'
 import { fillTokens } from '../../src/prose.ts'
 import { problemsOf } from '../fixtures/checked.ts'
-import { SCHEMA, loadGame } from '../../src/loader.ts'
+import { loadGame } from '../../src/loader.ts'
 import { proseStore } from '../../src/prose.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
@@ -114,13 +114,13 @@ describe('custom functions belong to their game', () => {
     expect(holds(begin(game), { 'tides/high': ['noon'] } as never, game)).toBe(true)
   })
 
-  it('reports a pack key no pack has, rather than dropping it quietly', () => {
+  it("reports a key content can't hold, rather than dropping it quietly", () => {
     const { scenes: _s, items, storylines, activities, stats, ...rest } = fixture()
-    const { problems } = loadGame([{ id: 'town', schema: SCHEMA, items, storylines, activities, stats, actions: [] } as never], rest)
+    const { problems } = loadGame([{ name: 'town', items, storylines, activities, stats, actions: [] } as never], rest)
     expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain(
-      'town · pack · a pack has no "actions", so it was left out',
+      'town · content · content has no "actions", so it was left out',
     )
-    expect(problems.filter((problem) => problem.where === 'pack')).toHaveLength(1)
+    expect(problems.filter((problem) => problem.where === 'content')).toHaveLength(1)
   })
 
   it('reports a ceiling that names a value nobody declared', () => {
@@ -128,10 +128,10 @@ describe('custom functions belong to their game', () => {
     expect(problemsOf(game)).toContain('stat puff: no custom value named "gone"')
   })
 
-  it('keeps the base game’s functions when packs are loaded over it', () => {
+  it('keeps the base game’s functions when content is loaded over it', () => {
     const base = { ...fixture(), custom: { conditions: { fine: () => true } } }
     const { scenes: _s, items, storylines, activities, stats, ...rest } = base
-    const { game } = loadGame([{ id: 'town', schema: SCHEMA, items, storylines, activities, stats }], rest)
+    const { game } = loadGame([{ name: 'town', items, storylines, activities, stats }], rest)
     expect(holds(begin(game), { custom: 'fine' }, game)).toBe(true)
   })
 

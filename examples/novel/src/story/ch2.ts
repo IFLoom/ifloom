@@ -1,9 +1,7 @@
 /** Chapter two: Mrs Okafor on the stairs, and the first chance to lie. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const ch2: Pack = {
-  id: 'story.ch2',
-  schema: SCHEMA,
+export const ch2: Content = {
   scenes: [
     {
       id: 'ch2.stairs',

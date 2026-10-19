@@ -12,7 +12,7 @@ import { definePlugin, say, type CommandRef, type Condition, type DefinedPlugin,
 
 const ID = '__id__'
 
-/** One entry of the plugin's content, from a pack's `data.__id__.entries`. TODO: the real fields. */
+/** One entry of the plugin's content, from the game's `data.__id__.entries`. TODO: the real fields. */
 export type __Pascal__Entry = {
   id: string
   label: string
@@ -29,7 +29,7 @@ export type __Pascal__View = {
   entries: { id: string; label: string; marked: boolean }[]
 }
 
-/** The game's entries: `data.__id__.entries`, from its packs. */
+/** The game's entries: `data.__id__.entries`, from its content and packs. */
 export function __camel__Entries(game: Game): __Pascal__Entry[] {
   return (game.data?.[ID]?.entries ?? []) as __Pascal__Entry[]
 }
@@ -40,7 +40,7 @@ function entryId(args: Record<string, unknown>): string {
 }
 
 /**
- * The plugin. Add it to the game's `plugins`, and put entries in a pack's
+ * The plugin. Add it to the game's `plugins`, and put entries in its content's
  * `data.__id__.entries`. Anything a mod could add or change is content in
  * `data`, never an option. Hooks are flat members named `onX` (`onTurn`,
  * `onCommand`) and return the next state; providers are nouns (`view`,

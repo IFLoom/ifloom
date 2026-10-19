@@ -1,5 +1,5 @@
 /** The people in town: their storylines, and who they are, where they go and how to talk to them. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { period, weekday } from '@ifloom/plugin-calendar'
 import { at } from '@ifloom/plugin-places'
 import type { CharacterDef } from '@ifloom/plugin-cast'
@@ -37,9 +37,7 @@ const characters: CharacterDef[] = [
   },
 ]
 
-export const cast: Pack = {
-  id: 'world.cast',
-  schema: SCHEMA,
+export const cast: Content = {
   storylines: [
     { id: 'ava', name: 'Ava' },
     { id: 'sam', name: 'Sam' },

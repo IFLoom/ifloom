@@ -1,11 +1,9 @@
 /** Sam from flat 2, out with a dog that isn't theirs. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { day } from '@ifloom/plugin-calendar'
 import { person } from '@ifloom/plugin-cast'
 
-export const sam: Pack = {
-  id: 'story.sam',
-  schema: SCHEMA,
+export const sam: Content = {
   scenes: [
     {
       id: 'sam.hi',

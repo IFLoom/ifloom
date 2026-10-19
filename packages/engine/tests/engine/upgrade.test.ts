@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { mods, readMod } from '../../src/mods.ts'
@@ -27,7 +27,7 @@ afterEach(() => {
 function cafe() {
   const { game } = withCafe()
   const { scenes, items, storylines, activities, stats, packs: _p, ...base } = game
-  const own: Pack = { id: 'town', schema: SCHEMA, scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
+  const own: Content = { name: 'town', scenes, items, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
   return { base, own }
 }
 
@@ -57,7 +57,7 @@ describe('content migrations', () => {
   it('let loadGame load an old pack, and skip a newer one with a problem', () => {
     const { base, own } = cafe()
     const future = { id: 'future', schema: SCHEMA + 1, prose: { 'cafe.counter': 'From the future.' } } as Pack
-    const { game, problems } = loadGame([own, oldPack as unknown as Pack, future], base)
+    const { game, problems } = loadGame([own], base, { packs: [oldPack as unknown as Pack, future] })
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')
     expect(problems.filter((problem) => problem.pack !== 'town').map(describeProblem)).toEqual([
       `future · pack · written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}`,
@@ -70,7 +70,7 @@ describe('content migrations', () => {
     const added = await store.add(file)
     expect(added.ok && added.value.pack).toMatchObject({ id: 'mod:evening', schema: SCHEMA, prose: oldPack.lines })
     const { base, own } = cafe()
-    const { game, problems } = loadGame([own, ...(await store.packs())], base)
+    const { game, problems } = loadGame([own], base, { packs: await store.packs() })
     expect(problems.filter((problem) => problem.pack === 'mod:evening')).toEqual([])
     expect(game.prose?.line('cafe.counter')).toBe('Lanterns over the counter tonight.')
   })

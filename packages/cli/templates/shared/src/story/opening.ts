@@ -3,11 +3,9 @@
  * in `prose`, kept apart from the scenes so they're easy to edit. Once the
  * words grow long, move `prose` to an `opening.prose.ts` beside this file.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const opening: Pack = {
-  id: 'story.opening',
-  schema: SCHEMA,
+export const opening: Content = {
   scenes: [
     {
       id: 'start',

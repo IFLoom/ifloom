@@ -1,19 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  SCHEMA,
-  apply,
-  createRunner,
-  holds,
-  loadGame,
-  loadState,
-  replay,
-  startingState,
-  view,
-  whyNot,
-  type Game,
-  type GameState,
-  type Pack,
-} from '@ifloom/engine'
+import { apply, createRunner, holds, loadGame, loadState, replay, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
 import { cast } from '@ifloom/plugin-cast'
 import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
@@ -31,10 +17,9 @@ const channels = {
   },
 }
 
-function game(extra: Partial<Pack> = {}): Game {
-  const pack: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function game(extra: Partial<Content> = {}): Game {
+  const pack: Content = {
+    name: 'town',
     storylines: [{ id: 'ava', name: 'Ava' }],
     scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
@@ -138,8 +123,7 @@ describe('messages', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           data: {
             messages: {
               messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }],
@@ -298,8 +282,7 @@ describe('pools', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           prose: { m: 'Hi.' },
           activities: [{ id: 'chat', effects: [drawMessage('nobody')] }],
           data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ text: 'm' }] }] } },

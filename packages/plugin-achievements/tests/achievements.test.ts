@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   createRunner,
   holds,
@@ -13,7 +12,7 @@ import {
   view,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
 } from '@ifloom/engine'
 import { achievementEarned, achievements, grantAchievement, progressValue, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
@@ -24,10 +23,9 @@ const defs: AchievementDef[] = [
   { id: 'kind', title: 'A kind word', description: 'Given by a scene.' },
 ]
 
-function game(extra: Partial<Pack> = {}): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function game(extra: Partial<Content> = {}): Game {
+  const town: Content = {
+    name: 'town',
     stats: [
       { id: 'coins', label: 'Coins', start: 10, max: 999 },
       { id: 'charm', label: 'Charm', start: 2 },
@@ -185,8 +183,7 @@ describe('achievements', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           activities: [{ id: 'x', effects: [grantAchievement('nope')] }],
           data: {
             achievements: {

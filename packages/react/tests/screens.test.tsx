@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, memoryDriver, saves, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, saves, startingState, type Game } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { GameShell } from '../src/index.ts'
@@ -12,8 +12,7 @@ function game(): Game {
   return loadGame(
     [
       {
-        id: 'town',
-        schema: SCHEMA,
+        name: 'town',
         items: [
           { id: 'coat', name: 'coat', desc: '', start: 1 },
           { id: 'cape', name: 'cape', desc: '', start: 1 },

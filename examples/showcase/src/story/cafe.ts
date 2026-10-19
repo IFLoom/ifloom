@@ -2,7 +2,7 @@
  * The Corner Café: coffee, the counter, its storylets when you sit a while,
  * and weekend work. Its words are in `cafe.prose.ts`.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { period } from '@ifloom/plugin-calendar'
@@ -12,9 +12,7 @@ import { openShop } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
 import { prose } from './cafe.prose.ts'
 
-export const cafe: Pack = {
-  id: 'story.cafe',
-  schema: SCHEMA,
+export const cafe: Content = {
   activities: [
     {
       id: 'coffee',

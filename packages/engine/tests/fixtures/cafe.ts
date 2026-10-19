@@ -1,4 +1,4 @@
-import { SCHEMA, loadGame, type Loaded, type Pack } from '../../src/loader.ts'
+import { loadGame, type Loaded, type Content } from '../../src/loader.ts'
 import { fixture, townProse } from './town.ts'
 
 /**
@@ -7,9 +7,8 @@ import { fixture, townProse } from './town.ts'
  * data scene needs, loaded the way a game loads, with no runtime written by
  * hand.
  */
-export const cafe: Pack = {
-  id: 'cafe',
-  schema: SCHEMA,
+export const cafe: Content = {
+  name: 'cafe',
   scenes: [
     {
       id: 'cafe.counter',
@@ -46,9 +45,8 @@ export const cafe: Pack = {
 export function withCafe(): Loaded {
   const town = fixture()
   const { scenes, items, storylines, activities, stats, custom, ...base } = town
-  const townPack: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const townPack: Content = {
+    name: 'town',
     scenes,
     items,
     storylines,

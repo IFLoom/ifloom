@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { audioChannels, audioSrc, type GameAudio } from '../../src/features/audio.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply } from '../../src/reduce.ts'
@@ -42,9 +42,8 @@ const audio: GameAudio = {
 }
 
 /** A front door that someone knocks at, Ava's good morning, and a radio. */
-const house: Pack = {
-  id: 'house',
-  schema: SCHEMA,
+const house: Content = {
+  name: 'house',
   prose: {
     'door.knock': 'Someone is at the door.\n\n[[sound:knock]]\n\nAva: "Morning!" [[voice:ava.morning]]\n\n"Morning."',
     'door#open': 'Open it',
@@ -89,7 +88,7 @@ function baseOf() {
   return { ...base, settings }
 }
 
-function game(packs: Pack[] = [house]) {
+function game(packs: Content[] = [house]) {
   const loaded = loadGame(packs, { ...baseOf(), plugins: [street] })
   return loaded
 }
@@ -271,9 +270,8 @@ describe('audio', () => {
   })
 
   describe('checks', () => {
-    const broken: Pack = {
-      id: 'broken',
-      schema: SCHEMA,
+    const broken: Content = {
+      name: 'broken',
       prose: { 'bad.text': 'Hush.\n\n[[sound:calm]]\n\n"Hi." [[voice:nobody]]', 'bad#go': 'Go' },
       scenes: [
         {
@@ -326,7 +324,7 @@ describe('audio', () => {
     })
 
     it('report a mute or volume setting the game does not have', () => {
-      const pack: Pack = { id: 'p', schema: SCHEMA, audio: { tracks: {}, channels: { music: { mode: 'background', volume: 'loud' } }, mute: 'quiet' } }
+      const pack: Content = { name: 'p', audio: { tracks: {}, channels: { music: { mode: 'background', volume: 'loud' } }, mute: 'quiet' } }
       expect(loadGame([pack], baseOf()).problems.map(describeProblem)).toEqual([
         'p · channel music · unknown setting "loud"',
         'p · audio · unknown setting "quiet"',

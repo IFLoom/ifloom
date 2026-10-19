@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { SCHEMA, createRunner, definePlugin, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
+import { createRunner, definePlugin, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { cheats } from '@ifloom/plugin-cheats'
 import { CheatPanel, GameMenu, GameProvider, SceneStage, GameShell, useCheats, type Components } from '../src/index.ts'
 import { storyOf } from './layouts.tsx'
@@ -26,8 +26,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
   return loadGame(
     [
       {
-        id: 'street',
-        schema: SCHEMA,
+        name: 'street',
         stats: [{ id: 'coins', label: 'Coins', start: 5, max: 9999 }],
         data: {
           cheats: {

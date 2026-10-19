@@ -2,13 +2,11 @@
  * Things to do anywhere: wait, and the phone's camera. A place's own
  * activities are in its file in `story/`.
  */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { pass } from '@ifloom/plugin-calendar'
 import { here } from '@ifloom/plugin-cast'
 
-export const activities: Pack = {
-  id: 'world.activities',
-  schema: SCHEMA,
+export const activities: Content = {
   activities: [
     { id: 'wait', effects: [pass(1)] },
     // The camera: one photo of each person, if they're here to take.

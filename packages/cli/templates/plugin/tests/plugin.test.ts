@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, checkGame, holds, loadGame, startingState, view, type Game, type Pack } from '@ifloom/engine'
+import { apply, checkGame, holds, loadGame, startingState, view, type Game, type Content } from '@ifloom/engine'
 import { __camel__, __camel__Marked, mark__Pascal__, mark__Pascal__Command, type __Pascal__Entry } from '../src/index.ts'
 
 const entries: __Pascal__Entry[] = [
@@ -7,10 +7,9 @@ const entries: __Pascal__Entry[] = [
   { id: 'milk', label: 'A pint of milk' },
 ]
 
-function game(extra: Partial<Pack> = {}): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function game(extra: Partial<Content> = {}): Game {
+  const town: Content = {
+    name: 'town',
     activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
     data: { '__id__': { entries } },
     ...extra,
@@ -42,14 +41,15 @@ describe('__id__', () => {
   })
 
   it('reports an entry content names that the game lacks', () => {
-    const loaded = loadGame(
-      [{ id: 'town', schema: SCHEMA, activities: [{ id: 'shop', effects: [mark__Pascal__('cheese')] }], data: { '__id__': { entries } } }],
-      { id: '__id__-town', title: '{{title}} town', plugins: [__camel__()] },
-    )
+    const loaded = loadGame([{ name: 'town', activities: [{ id: 'shop', effects: [mark__Pascal__('cheese')] }], data: { '__id__': { entries } } }], {
+      id: '__id__-town',
+      title: '{{title}} town',
+      plugins: [__camel__()],
+    })
     expect(loaded.problems.map((problem) => problem.what)).toEqual(['unknown entry "cheese"'])
   })
 
-  it('reports two entries with one id in a hand-built game (packs merge by id, so a loaded one has none)', () => {
+  it('reports two entries with one id in a hand-built game (loading merges entries by id)', () => {
     const g = game()
     const doubled = { ...g, data: { '__id__': { entries: [...entries, entries[0]] } } }
     expect(checkGame(doubled).problems.map((problem) => problem.what)).toContain('two entries share this id')

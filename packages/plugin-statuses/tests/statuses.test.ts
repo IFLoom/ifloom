@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SCHEMA,
   apply,
   createRunner,
   holds,
@@ -14,7 +13,7 @@ import {
   type Command,
   type Game,
   type GameState,
-  type Pack,
+  type Content,
 } from '@ifloom/engine'
 import { applyStatus, statusActive, statuses, removeStatus, type StatusDef, type StatusesView } from '../src/index.ts'
 
@@ -40,9 +39,8 @@ const cold: StatusDef = {
 }
 
 function game(extra: StatusDef[] = []): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+  const town: Content = {
+    name: 'town',
     stats: [
       { id: 'energy', label: 'Energy', start: 50, spendable: true },
       { id: 'coins', label: 'Coins', start: 20, max: 999 },
@@ -197,8 +195,7 @@ describe('timed statuses', () => {
     const loaded = loadGame(
       [
         {
-          id: 'mod',
-          schema: SCHEMA,
+          name: 'mod',
           stats: [{ id: 'energy', label: 'Energy' }],
           activities: [{ id: 'x', effects: [applyStatus('flu')] }],
           data: {

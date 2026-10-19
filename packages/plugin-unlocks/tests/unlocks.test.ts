@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, apply, createRunner, holds, loadGame, memoryDriver, profile, replay, startingState, view, type Game, type Pack } from '@ifloom/engine'
+import {
+  SCHEMA,
+  apply,
+  createRunner,
+  holds,
+  loadGame,
+  memoryDriver,
+  profile,
+  replay,
+  startingState,
+  view,
+  type Content,
+  type Game,
+  type Pack,
+} from '@ifloom/engine'
 import {
   ITERATIONS,
   codeFits,
@@ -37,15 +51,13 @@ const supporterPack: Pack = {
   prose: { 'supporter.lounge': 'Behind the bakery a narrow door opens on a room that smells of cinnamon.' },
 }
 
-function build(unlockDefs: UnlockDef[], extra: Pack[] = []): Game {
-  const town: Pack = {
-    id: 'town',
-    schema: SCHEMA,
+function build(unlockDefs: UnlockDef[], packs: Pack[] = []): Game {
+  const town: Content = {
     scenes: [{ id: 'intro', body: [], choices: [] }],
     activities: [{ id: 'rest', effects: [{ kind: 'turn' }] }],
     data: { unlocks: { unlocks: unlockDefs } },
   }
-  const loaded = loadGame([town, ...extra], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] })
+  const loaded = loadGame([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -103,7 +115,7 @@ describe('the plugin', () => {
   })
 
   it('records through a lock, as moving day would deny everything', async () => {
-    const town: Pack = { id: 'town', schema: SCHEMA, scenes: [{ id: 'intro', body: [], choices: [] }], data: { unlocks: { unlocks: [await def()] } } }
+    const town: Content = { scenes: [{ id: 'intro', body: [], choices: [] }], data: { unlocks: { unlocks: [await def()] } } }
     const { game: g } = loadGame([town], {
       id: GAME,
       title: 't',
@@ -118,8 +130,6 @@ describe('the plugin', () => {
     const loaded = loadGame(
       [
         {
-          id: 'town',
-          schema: SCHEMA,
           activities: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }],
           data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
         },

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { SCHEMA, createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { GameShell } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
@@ -16,8 +16,7 @@ function house(): Game {
   return loadGame(
     [
       {
-        id: 'house',
-        schema: SCHEMA,
+        name: 'house',
         scenes: [
           {
             id: 'door',

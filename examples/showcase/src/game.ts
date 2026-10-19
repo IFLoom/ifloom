@@ -1,11 +1,11 @@
 /**
- * Small Town, put together: the packs over a base that says how the game
+ * Small Town, put together: its content, with a base that says how the game
  * runs, with where it starts, its rules and its plugins. This file only
  * assembles. What the whole town shares is in `world/`, one file per kind,
  * and the story is in `story/`, one file per place or arc, its prose beside
  * it. The rules and custom functions are in `rules.ts`.
  */
-import { applyEffects, describeProblem, loadGame, startingState, type Game, type Pack } from '@ifloom/engine'
+import { applyEffects, describeProblem, loadGame, startingState, type Content, type Game, type Pack } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
@@ -24,11 +24,11 @@ import { openApp } from '@ifloom/plugin-devices'
 import { custom, rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { items } from './world/items.ts'
-import { cast as castPack } from './world/cast.ts'
+import { cast as castContent } from './world/cast.ts'
 import { settings } from './world/settings.ts'
 import { activities } from './world/activities.ts'
-import { achievements as achievementsPack } from './world/achievements.ts'
-import { cheats as cheatsPack } from './world/cheats.ts'
+import { achievements as achievementsContent } from './world/achievements.ts'
+import { cheats as cheatsContent } from './world/cheats.ts'
 import { movingDay } from './story/moving-day.ts'
 import { ava } from './story/ava.ts'
 import { flat } from './story/flat.ts'
@@ -39,18 +39,18 @@ import { office } from './story/office.ts'
 import { sam } from './story/sam.ts'
 
 /**
- * The town's packs, in order: what it all shares, then the story by arc and
- * place. The order matters where a list's order does: triggers fire in it,
- * and the quest log, the job board and the places list in it.
+ * The town's content: what it all shares, then the story by arc and place.
+ * Lists keep this order, so triggers fire in it, and the quest log, the job
+ * board and the places list show things in it.
  */
-export const packs: Pack[] = [
+export const content: Content[] = [
   stats,
   items,
-  castPack,
+  castContent,
   settings,
   activities,
-  achievementsPack,
-  cheatsPack,
+  achievementsContent,
+  cheatsContent,
   movingDay,
   ava,
   flat,
@@ -90,42 +90,47 @@ const kit = phone({
  * Build the game. `withDebug` adds the debugger; leave it off in a release
  * build. `unlocked` are the supporter packs the player's codes have opened
  * (from `unlockedPacks`), and `mods` the packs of the player's mods, loaded
- * over the town's own in that order.
+ * over the town's content in that order.
  */
 export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame([...packs, ...unlocked, ...mods], {
-    id: 'small-town',
-    title: 'Small Town',
-    introScene: 'intro',
-    startPhase: 'arrival',
-    custom,
-    collections: kit.collections,
-    // The phone, its apps, the texts and the feed: content, so a mod can add an app.
-    data: kit.data,
-    // The calendar first, so every other plugin sees the new day when one begins.
-    plugins: [
-      clock,
-      // After the calendar, so the header reads "Day 1 · Monday morning · Your flat".
-      places({ start: 'flat' }),
-      cast(),
-      ...kit.plugins,
-      quests(),
-      statuses(),
-      achievements(),
-      shop(),
-      jobs(),
-      generators(),
-      wardrobe(),
-      // Cheats are for players; the debugger below is for the developer.
-      cheats(),
-      // Supporter codes: one opens a cheat and a scene.
-      unlocks(),
-      ...(withDebug ? [debug()] : []),
-    ],
-    actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
-    strings: { 'ui.quests': 'To do' },
-    rules,
-  })
+  const { game, problems } = loadGame(
+    content,
+    {
+      id: 'small-town',
+      title: 'Small Town',
+      introScene: 'intro',
+      startPhase: 'arrival',
+      custom,
+      collections: kit.collections,
+      // The phone, its apps, the texts and the feed: content, so a mod can add an app.
+      data: kit.data,
+      // The calendar first, so every other plugin sees the new day when one begins.
+      plugins: [
+        clock,
+        // After the calendar, so the header reads "Day 1 · Monday morning · Your flat".
+        places({ start: 'flat' }),
+        cast(),
+        ...kit.plugins,
+        quests(),
+        statuses(),
+        achievements(),
+        shop(),
+        jobs(),
+        generators(),
+        wardrobe(),
+        // Cheats are for players; the debugger below is for the developer.
+        cheats(),
+        // Supporter codes: one opens a cheat and a scene.
+        unlocks(),
+        ...(withDebug ? [debug()] : []),
+      ],
+      actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
+      strings: { 'ui.quests': 'To do' },
+      rules,
+    },
+    // Packs go over the content: what the player's codes opened, then their mods.
+    { packs: [...unlocked, ...mods] },
+  )
   return { game, problems: problems.map(describeProblem) }
 }
 

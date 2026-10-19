@@ -1,9 +1,7 @@
 /** What the player can change on the settings page. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const settings: Pack = {
-  id: 'world.settings',
-  schema: SCHEMA,
+export const settings: Content = {
   // What the player can change on the settings page. `hints` is part of the
   // game (the high street reads it); `textSize` only changes how the page looks,
   // and main.tsx puts it on the page root for styles.css.

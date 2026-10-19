@@ -26,7 +26,9 @@
  * `activities` optional on `Game`. Panels: the `panel` effect, the
  * `closePanel` command, `GameState.panel` and `View.panel`. Last-time
  * records: `GameState.lastSeenOn`, `chosenOn` and `lastChosenOn`, and the
- * `since` condition's `last`. Organising a game: `Pack.overrides`.
+ * `since` condition's `last`. Organising a game: `Pack.overrides`. Content
+ * and packs: `Content` (a pack's keys with an optional `name`, and no `id`,
+ * `schema` or `patches`), and `Pack.overrides` gone.
  */
 import type {
   ActionDef,
@@ -440,8 +442,6 @@ export type FrozenPack = {
   id: string
   /** Schema this pack was written against. Refused if it is not ours. */
   schema: number
-  /** Replaces what an earlier pack of the game declared, on purpose. */
-  overrides?: boolean
   scenes?: (Scene | DataScene)[]
   items?: ItemDef[]
   storylines?: StorylineDef[]
@@ -488,6 +488,9 @@ export type FrozenPack = {
   /** Minigames. A later pack's replaces an earlier one's by id. */
   minigames?: MinigameDef[]
 }
+
+/** The game's own content: a pack's keys, with a name for problems and no id, schema or patches. */
+export type FrozenContent = Omit<FrozenPack, 'id' | 'schema' | 'patches'> & { name?: string }
 
 export type FrozenView = {
   title: string

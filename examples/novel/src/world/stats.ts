@@ -1,8 +1,6 @@
 /** What the reader carries through every chapter: their courage. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const stats: Pack = {
-  id: 'world.stats',
-  schema: SCHEMA,
+export const stats: Content = {
   stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
 }

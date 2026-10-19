@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, screen } from '@testing-library/react'
-import { SCHEMA, loadGame, memoryDriver, saves, type Runner } from '@ifloom/engine'
+import { loadGame, memoryDriver, saves, type Runner } from '@ifloom/engine'
 import { mountGame } from '../src/index.ts'
 
 const loaded = () =>
   loadGame(
     [
       {
-        id: 'letter',
-        schema: SCHEMA,
+        name: 'letter',
         scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: { mat: 'A letter on the mat.', 'mat#open': 'Open it' },
       },

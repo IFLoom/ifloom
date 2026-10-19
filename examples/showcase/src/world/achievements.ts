@@ -1,9 +1,7 @@
 /** Achievements that belong to no one place. Ava's is in `story/ava.ts`. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const achievements: Pack = {
-  id: 'world.achievements',
-  schema: SCHEMA,
+export const achievements: Content = {
   data: {
     achievements: {
       achievements: [

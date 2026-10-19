@@ -31,7 +31,7 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     const store = saves(game, driver())
     const state = { ...startingState(game), turn: 4 }
     const meta = await store.write('1', state, { played: 5000, savedAt: 100 })
-    expect(meta).toMatchObject({ game: 'fixture', slot: '1', turn: 4, when: null, played: 5000, packs: ['town', 'cafe'] })
+    expect(meta).toMatchObject({ game: 'fixture', slot: '1', turn: 4, when: null, played: 5000, packs: [] })
     // With no plugin to say when, the turn: counted from 1, as a player would.
     expect(meta.name).toBe('Turn 5')
     const back = await store.read('1')

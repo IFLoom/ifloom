@@ -1,9 +1,7 @@
 /** The player's numbers, and the friendship each character keeps with them. */
-import { SCHEMA, type Pack } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const stats: Pack = {
-  id: 'world.stats',
-  schema: SCHEMA,
+export const stats: Content = {
   stats: [
     // Each person's: the cast's characters are entities of the kind `character`.
     { id: 'friendship', label: 'Friendship', of: 'character' },

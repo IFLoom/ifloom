@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { SCHEMA, createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { jobs, openJobs } from '@ifloom/plugin-jobs'
 import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
@@ -35,8 +35,7 @@ function game(withPlugins = true): Game {
   return loadGame(
     [
       {
-        id: 'street',
-        schema: SCHEMA,
+        name: 'street',
         stats: [
           { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
           { id: 'energy', label: 'Energy', start: 50, max: 100, spendable: true },

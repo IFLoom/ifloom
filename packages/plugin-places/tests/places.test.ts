@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { commandOf, SCHEMA, apply, holds, loadGame, startingState, view, whyNot, type Game, type GameRules, type GameState, type Pack } from '@ifloom/engine'
+import {
+  SCHEMA,
+  commandOf,
+  apply,
+  holds,
+  loadGame,
+  startingState,
+  view,
+  whyNot,
+  type Game,
+  type GameRules,
+  type GameState,
+  type Content,
+  type Pack,
+} from '@ifloom/engine'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
 import { at, go, moveTo, onlyAt, places, where, within, type LocationDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
@@ -14,9 +28,8 @@ const place = (id: string, exits: string[], extra: Partial<LocationDef> = {}): L
 })
 
 /** A house, a street, a café in it with a back room, and a park; a bakery stall in the café. */
-const town: Pack = {
-  id: 'town',
-  schema: SCHEMA,
+const town: Content = {
+  name: 'town',
   prose: {
     'place.house': 'Your house.',
     'place.street': 'The high street.',
@@ -131,7 +144,7 @@ describe('places', () => {
   })
 
   it('run the doorstep on arrival by exit, while its condition holds, and not on a move', () => {
-    const ducks: Pack = {
+    const ducks: Content = {
       ...town,
       data: {
         places: {
@@ -171,7 +184,7 @@ describe('places', () => {
   })
 
   it('give the room its transition, keyed by the place', () => {
-    const fading: Pack = {
+    const fading: Content = {
       ...town,
       data: {
         places: {
@@ -184,16 +197,15 @@ describe('places', () => {
     const house = startingState(g)
     expect(view(house, g).transition).toEqual({ key: 'room:house', in: 'fade', out: 'fade', ms: 300 })
     expect(view(walk(g, house, 'street'), g).transition).toEqual({ key: 'room:street', in: 'slide-left', out: 'none', ms: 400 })
-    const odd: Pack = { id: 'odd', schema: SCHEMA, prose: town.prose, data: { places: { locations: [place('house', [], { transition: 'spin' })] } } }
+    const odd: Content = { name: 'odd', prose: town.prose, data: { places: { locations: [place('house', [], { transition: 'spin' })] } } }
     expect(
       loadGame([odd], { id: 't', title: 'T', plugins: [places({ start: 'house' })] }).problems.map((problem) => `${problem.where}: ${problem.what}`),
     ).toEqual(['locations house: unknown transition "spin"'])
   })
 
   it('report places content names that are not there', () => {
-    const broken: Pack = {
-      id: 'broken',
-      schema: SCHEMA,
+    const broken: Content = {
+      name: 'broken',
       activities: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
       data: {
         places: {
@@ -219,7 +231,6 @@ describe('places', () => {
       const sounds: Pack = {
         id: 'sounds',
         schema: SCHEMA,
-        overrides: true,
         audio: {
           tracks: {
             calm: { src: 'calm.ogg', channel: 'music' },
@@ -234,7 +245,7 @@ describe('places', () => {
         ],
         data: { places: { locations: [place('cafe', ['street'], { audio: { ambience: 'murmur' }, ...extra })] } },
       }
-      const { game: g, problems } = loadGame([town, sounds], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' })] })
+      const { game: g, problems } = loadGame([town], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' })] }, { packs: [sounds] })
       return { g, problems }
     }
 
@@ -278,7 +289,6 @@ describe('places', () => {
       const pictures: Pack = {
         id: 'pictures',
         schema: SCHEMA,
-        overrides: true,
         media: {
           pools: {
             counter: [
@@ -289,7 +299,7 @@ describe('places', () => {
         },
         data: { places: { locations: [place('cafe', ['street', 'back'], { stage })] } },
       }
-      const { game: g, problems } = loadGame([town, pictures], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'cafe' })] })
+      const { game: g, problems } = loadGame([town], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'cafe' })] }, { packs: [pictures] })
       return { g, problems }
     }
 

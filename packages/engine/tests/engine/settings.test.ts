@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { SCHEMA, loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -45,11 +45,10 @@ function game(patch: Partial<Game> = {}): Game {
 }
 
 /** A game loaded from a pack with a scene whose choices read settings. */
-function loaded(scene?: Pack['scenes']) {
+function loaded(scene?: Content['scenes']) {
   const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = fixture()
-  const pack: Pack = {
-    id: 'core',
-    schema: SCHEMA,
+  const pack: Content = {
+    name: 'core',
     settings: SETTINGS,
     prose: { 'bakery#hint': 'Ask about the rye.', 'bakery#leave': 'Leave.' },
     scenes: scene ?? [
@@ -187,22 +186,18 @@ describe('ui settings', () => {
 })
 
 describe('the loader’s settings checks', () => {
-  const problemsOf = (pack: Partial<Pack>, base: Partial<Game> = {}) => {
+  const problemsOf = (pack: Partial<Content>, base: Partial<Game> = {}) => {
     const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
-    return loadGame([{ id: 'core', schema: SCHEMA, ...pack }], { ...rest, ...base }).problems.map(describeProblem)
+    return loadGame([{ name: 'core', ...pack }], { ...rest, ...base }).problems.map(describeProblem)
   }
 
   it('finds two settings with one id in one list, but lets a later pack redeclare one', () => {
     const toggle: SettingDef = { id: 'hints', label: 'Hints', kind: 'toggle', default: true }
     expect(problemsOf({ settings: [toggle, toggle] })).toEqual(['core · setting hints · two settings share this id'])
     const { scenes: _s, introScene: _in, items: _i, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
-    const twice = loadGame(
-      [
-        { id: 'core', schema: SCHEMA, settings: [toggle] },
-        { id: 'mod:hints', schema: SCHEMA, settings: [{ ...toggle, default: false }] },
-      ],
-      rest,
-    )
+    const twice = loadGame([{ name: 'core', settings: [toggle] }], rest, {
+      packs: [{ id: 'mod:hints', schema: SCHEMA, settings: [{ ...toggle, default: false }] }],
+    })
     expect(twice.problems).toEqual([])
     expect(twice.game.settings).toEqual([{ ...toggle, default: false }])
   })

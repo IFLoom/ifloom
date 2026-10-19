@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SCHEMA, loadGame, type Pack } from '../../src/loader.ts'
+import { loadGame, type Content } from '../../src/loader.ts'
 import { checkGame, describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -48,8 +48,8 @@ const prose = {
   'hall#leave': 'Leave',
 }
 
-function make(extra: Partial<Pack> = {}, base: Partial<Game> = {}) {
-  const pack: Pack = { id: 'house', schema: SCHEMA, prose, scenes: [hall], stats: [{ id: 'coins', label: 'Coins', start: 5, spendable: true }], ...extra }
+function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
+  const pack: Content = { name: 'house', prose, scenes: [hall], stats: [{ id: 'coins', label: 'Coins', start: 5, spendable: true }], ...extra }
   return loadGame([pack], {
     id: 'house',
     title: 'The House',

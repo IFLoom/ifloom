@@ -14,7 +14,12 @@ import { join, resolve } from 'node:path'
 const root = join(import.meta.dirname, '..')
 const packs = resolve(process.argv[2] ?? join(root, 'packs'))
 
-execFileSync(join(root, 'node_modules/.bin/vp'), ['run', 'build:all'], { cwd: root, stdio: 'inherit' })
+// vp reads every workspace's vite.config.ts to know the tasks, and the examples' import `@ifloom/cli/vite`.
+// With no dist/ yet (a fresh clone), that resolves only through the source condition, which npm adds from
+// .npmrc to its scripts but plain `node scripts/pack.ts` (as try-templates.sh runs it) doesn't have.
+const conditions = '--conditions=ifloom-source'
+const nodeOptions = process.env.NODE_OPTIONS?.includes(conditions) ? process.env.NODE_OPTIONS : `${process.env.NODE_OPTIONS ?? ''} ${conditions}`.trim()
+execFileSync(join(root, 'node_modules/.bin/vp'), ['run', 'build:all'], { cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: nodeOptions } })
 
 const workspaces = readdirSync(join(root, 'packages'))
   .sort()

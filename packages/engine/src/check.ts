@@ -4,17 +4,7 @@
  * names. `loadGame` runs it on the game it merges; a hand-built game calls
  * `checkGame` itself.
  */
-import {
-  commandOf,
-  customCall,
-  customPanel,
-  customValue,
-  hasCustomEffect,
-  customCondition,
-  shortFormProblem,
-  type CommandRef,
-  type EffectRef,
-} from './custom.ts'
+import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
 import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
@@ -179,7 +169,6 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       return members.length ? [] : [`variants "${ref.variants}" has no lines`]
     }
     if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"`]
-    if ('panel' in ref) return customPanel(game, ref.panel) ? [] : [`no custom panel named "${ref.panel}"`]
     if ('picture' in ref) {
       file(where, 'picture', ref.asWritten ? pagePath(ref.picture) : artSrc(ref.picture))
       return []

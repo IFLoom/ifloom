@@ -699,6 +699,25 @@ describe('content migrations', () => {
     })
   })
 
+  it('open a scene’s panel while it is open at schema 17, and drop its panelData', () => {
+    const v16 = {
+      id: 'stall',
+      schema: 16,
+      scenes: [
+        { id: 'stall', body: [], choices: [], panel: 'prices', panelData: 'stallPrices' },
+        { id: 'quiet', body: [], choices: [] },
+      ],
+    }
+    expect(up(v16)).toEqual({
+      id: 'stall',
+      schema: SCHEMA,
+      scenes: [
+        { id: 'stall', body: [], choices: [], panel: { panel: 'prices' } },
+        { id: 'quiet', body: [], choices: [] },
+      ],
+    })
+  })
+
   it('move presentation into ui hints at schema 16', () => {
     const v15 = {
       id: 'evening',

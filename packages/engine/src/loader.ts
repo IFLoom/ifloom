@@ -178,7 +178,7 @@ const once =
   (content: Content): Declared[] =>
     value(content) === undefined ? [] : [noun]
 
-const CUSTOM_NOUNS = { conditions: 'custom condition', effects: 'custom effect', values: 'custom value', panels: 'custom panel' } as const
+const CUSTOM_NOUNS = { conditions: 'custom condition', effects: 'custom effect', values: 'custom value' } as const
 
 /**
  * What each content key declares, for the report of one thing declared twice
@@ -265,7 +265,6 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     conditions: { ...base.custom?.conditions },
     effects: { ...base.custom?.effects },
     values: { ...base.custom?.values },
-    panels: { ...base.custom?.panels },
   }
   // Plugin content by plugin, then list, then id; the base's own comes first.
   const data = new Map<string, Map<string, Map<string, { value: PluginEntry; from: string }>>>()
@@ -329,7 +328,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
       }
     }
     addData(from, piece.data)
-    for (const kind of ['conditions', 'effects', 'values', 'panels'] as const) {
+    for (const kind of ['conditions', 'effects', 'values'] as const) {
       Object.assign((custom[kind] ??= {}), piece.custom?.[kind] ?? {})
     }
   }

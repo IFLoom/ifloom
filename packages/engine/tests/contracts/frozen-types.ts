@@ -55,7 +55,9 @@
  * record per id, and `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn` are gone.
  * Data into content (API pass P2): `Game.locks` and `Game.resets` (from
  * `rules`), and the pack keys `actions`, `locks`, `resets`, `saveable`,
- * `finished`, `carryOver`, `startPhase`, `introScene` and `ui`.
+ * `finished`, `carryOver`, `startPhase`, `introScene` and `ui`. One panel
+ * model: no `view.scene.panel` or `panelData`; a scene's `panel` is
+ * `view.panel`, with `OpenPanel.scene`.
  */
 import type {
   ActionDef,
@@ -409,7 +411,7 @@ export type FrozenGame = {
   entities?: EntityDef[]
   /** Traits by id and then entity: rows given to `loadGame`, every entity's once loaded. */
   traits?: TraitTable
-  /** The game's named functions: custom conditions, effects, values and panel data. */
+  /** The game's named functions: custom conditions, effects and values. */
   custom?: Custom
   /**
    * Actions offered in every location, after each location's own — waiting,
@@ -551,10 +553,6 @@ export type FrozenView = {
     beats: SceneBeat[]
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
-    /** A bespoke panel to render instead of the choice list, by name. */
-    panel: string | null
-    /** What that panel needs. Opaque here; the panel knows its own shape. */
-    panelData: unknown
     speaker: SpeakerView | null
     stageImage: string | null
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */

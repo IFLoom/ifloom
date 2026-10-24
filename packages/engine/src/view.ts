@@ -30,10 +30,6 @@ type ViewBase = {
     beats: SceneBeat[]
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
-    /** A bespoke panel to render instead of the choice list, by name. */
-    panel: string | null
-    /** What that panel needs. Opaque here; the panel knows its own shape. */
-    panelData: unknown
     speaker: SpeakerView | null
     stageImage: string | null
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */

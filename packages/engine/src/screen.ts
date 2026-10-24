@@ -85,10 +85,6 @@ export type ScreenScene = {
   beats: SceneBeat[]
   /** The scene's tags, for the UI to style it by. */
   tags: string[]
-  /** A bespoke panel to render instead of the choice list, by name. */
-  panel: string | null
-  /** What that panel needs. Opaque here; the panel knows its own shape. */
-  panelData: unknown
   speaker: SpeakerView | null
   stageImage: string | null
   /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
@@ -187,8 +183,6 @@ function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginS
       'blockUi' in rendered ? rendered.blockUi : undefined,
     ),
     tags: [],
-    panel: null,
-    panelData: null,
     speaker: null,
     stageImage: null,
     ...withUi(stage?.ui),
@@ -216,8 +210,6 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
     title: def.label ?? under.title,
     body,
     beats: beatsOf(state, game, owner, body, undefined, drawing.picks),
-    panel: null,
-    panelData: null,
   }
 }
 
@@ -426,8 +418,6 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         body: say(game, 'momentPassed'),
         beats: parseBeats(say(game, 'momentPassed')),
         tags: [],
-        panel: null,
-        panelData: null,
         speaker: null,
         stageImage: null,
       },
@@ -479,8 +469,6 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       body,
       beats: inline.beats,
       tags: rendered.tags ?? scene.tags ?? [],
-      panel: rendered.panel ?? scene.panel ?? null,
-      panelData: rendered.panelData ?? null,
       speaker,
       stageImage: rendered.portrait ?? speaker?.portrait ?? null,
       ...withUi(scene.ui),

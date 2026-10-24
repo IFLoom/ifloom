@@ -9,11 +9,10 @@
  * An app is built from sections, each one a thing the engine already has:
  * prose, actions (the same buttons a room has, with prices and reasons), a list
  * (the things of a kind you hold, or the people the player can call), another plugin's view (a
- * messages channel, a feed), or a panel the game draws itself.
+ * messages channel, a feed), or a panel the UI draws by name.
  */
 import {
   artSrc,
-  customPanel,
   customValue,
   defaultRuntime,
   commandOf,
@@ -75,8 +74,8 @@ export type Section =
   | { contacts: true }
   /** Another plugin's view, for the UI to draw with that plugin's renderer: a channel, a feed. */
   | { plugin: string; with?: Record<string, unknown> }
-  /** A panel the game draws itself, with the data its custom panel function returns. */
-  | { panel: string }
+  /** A panel the UI draws by name, as one the `panel` effect opens is, with what it is opened with. */
+  | { panel: string; with?: Record<string, unknown> }
 
 export type AppDef = {
   id: string
@@ -109,7 +108,7 @@ export type SectionView =
       entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[]
     }
   | { kind: 'plugin'; plugin: string; with: Record<string, unknown> }
-  | { kind: 'panel'; panel: string; data: unknown }
+  | { kind: 'panel'; panel: string; with: Record<string, unknown> }
 
 export type AppView = {
   id: string
@@ -222,7 +221,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
       }
     }
     if ('plugin' in section) return { kind: 'plugin', plugin: section.plugin, with: section.with ?? {} }
-    return { kind: 'panel', panel: section.panel, data: customPanel(game, section.panel)?.(state) ?? null }
+    return { kind: 'panel', panel: section.panel, with: { ...section.with } }
   }
 
   function appView(state: GameState, game: Game, app: AppDef, open: boolean): AppView {
@@ -314,7 +313,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
             ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {
               if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
-              if ('panel' in section) return [{ panel: section.panel }]
+              if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
               if ('prose' in section) return [{ blocks: section.prose }]
               if ('actions' in section) {
                 return section.actions.map((action) => ({

@@ -26,20 +26,8 @@ export { sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
-export type {
-  CommandRef,
-  Custom,
-  CustomCondition,
-  CustomContext,
-  TurnContext,
-  CustomEffect,
-  CustomPanel,
-  CustomValue,
-  EffectRef,
-  PluginCall,
-  ValueRef,
-} from './custom.ts'
-export { buildEffects, commandOf, customCondition, customEffect, customPanel, customValue, hasCustomEffect, previewEffects } from './custom.ts'
+export type { CommandRef, Custom, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, ValueRef } from './custom.ts'
+export { buildEffects, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built
 export type {
@@ -165,7 +153,7 @@ export type { RunningTimer, TimerDef, TimerView } from './features/timers.ts'
 export { timerDef } from './features/timers.ts'
 
 // Panels
-export type { OpenPanel } from './features/panels.ts'
+export type { OpenPanel, ScenePanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
 export { readDice } from './features/rolls.ts'

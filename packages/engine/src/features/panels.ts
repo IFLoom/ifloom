@@ -22,7 +22,16 @@ export type OpenPanel = {
   panel: string
   /** What it was opened with, such as `{ vendor: 'cafe' }`. Empty if the effect gave nothing. */
   with: PluginArgs
+  /**
+   * The scene that holds it open, for a scene's own `panel`: it is open for
+   * as long as the scene is, and `closePanel` doesn't close it. Left out for
+   * one the `panel` effect opened.
+   */
+  scene?: string
 }
+
+/** A panel a scene holds open for as long as it is on screen: its name, and what it is opened with. */
+export type ScenePanel = { panel: string; with?: PluginArgs }
 
 /** What the panels feature adds, as types. */
 export type PanelsShape = {
@@ -42,7 +51,7 @@ export type PanelsShape = {
     closePanel: { type: 'closePanel' }
   }
   view: {
-    /** The panel open over the story, or null. */
+    /** The panel open over the story: one the `panel` effect opened, else the open scene's own, else null. */
     panel: OpenPanel | null
   }
 }
@@ -87,5 +96,10 @@ export const panels = defineFeature<PanelsShape>({
       return (game.plugins ?? []).flatMap((plugin) => plugin.panelProblems?.(ref.openPanel, ref.with ?? {}, game, asked) ?? [])
     },
   }),
-  view: (state) => ({ panel: state.panel }),
+  // One the `panel` effect opened, else the open scene's own, for as long as it is open.
+  view: (state, game, _shown, cx) => {
+    if (state.panel) return { panel: state.panel }
+    const held = state.sceneId ? cx.sceneById(game, state.sceneId)?.panel : undefined
+    return { panel: held ? { panel: held.panel, with: { ...held.with }, scene: state.sceneId! } : null }
+  },
 })

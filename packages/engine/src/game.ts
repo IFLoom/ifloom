@@ -3,6 +3,7 @@ import type { Condition } from './condition.ts'
 import type { Custom, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
+import type { ScenePanel } from './features/panels.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
 import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
@@ -94,18 +95,6 @@ export type SceneView = {
   speaker?: string
   /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
   tags?: string[]
-  /**
-   * A bespoke UI panel to render in place of the choice list, by name. The
-   * panel holds whatever local state it likes — a clock, a selection — and
-   * ends by dispatching one of the choices the scene already declared.
-   */
-  panel?: string
-  /**
-   * Whatever that panel needs, shaped by the content module that owns it. The
-   * engine carries it without looking inside — a mod can ship a panel and its
-   * data together without the engine knowing either.
-   */
-  panelData?: unknown
   portrait?: string
   /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
@@ -142,7 +131,8 @@ export type Scene = StoryletFields &
     speaker?: string
     /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
-    panel?: string
+    /** A panel open for as long as the scene is. See `DataScene.panel`. */
+    panel?: ScenePanel
     /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
     ui?: Ui<SceneUi>
     render: (state: GameState, ctx: SceneCtx) => SceneView

@@ -162,7 +162,7 @@ export function dataSceneReferences(scene: DataScene): Reference[] {
     if (choice.ui !== undefined) out.push({ within: `choice ${choice.id}`, refs: [{ ui: choice.ui }] })
   }
   for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
-  if (scene.panelData !== undefined) out.push({ panel: scene.panelData })
+  if (scene.panel !== undefined) out.push({ openPanel: scene.panel.panel, with: scene.panel.with ?? {} })
   out.push({ stage: scene.stage, choices: scene.choices.map((choice) => choice.id) })
   return out
 }

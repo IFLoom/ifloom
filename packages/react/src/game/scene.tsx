@@ -233,7 +233,9 @@ function speakerHue(view: View): CSSProperties | undefined {
 function SceneArticle({ className, motion, transition, rolls }: { className?: string; motion: boolean; transition: ScreenTransition; rolls: SceneRolls }) {
   const { view, panels } = useGame()
   const scene = view.scene
-  const Panel = scene.panel ? panels[scene.panel] : undefined
+  // A panel the open scene holds is drawn in place of its choices; one the `panel` effect opened, by the PanelHost.
+  const held = view.panel?.scene !== undefined ? view.panel : null
+  const Panel = held ? panels[held.panel] : undefined
   const article = usePart('scene', 'flex flex-col gap-4', className)
   const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
@@ -266,7 +268,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
       </article>
     )
   }
-  const choices = Panel ? <Panel data={scene.panelData} /> : <ChoiceList choices={scene.choices} />
+  const choices = Panel && held ? <Panel data={held.with} /> : <ChoiceList choices={scene.choices} />
   return (
     <article
       {...article}

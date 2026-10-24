@@ -105,3 +105,49 @@ describe('panels', () => {
     ])
   })
 })
+
+describe('a scene’s panel', () => {
+  function withStall(): Game {
+    const town = fixture()
+    return {
+      ...town,
+      scenes: [
+        ...town.scenes,
+        {
+          id: 'stall',
+          body: [],
+          choices: [{ id: 'bye', label: 'stall#bye', effects: [{ kind: 'scene', scene: null }] }],
+          panel: { panel: 'prices', with: { stall: 'bread' } },
+        },
+      ],
+      activities: [...activities, { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] }],
+    }
+  }
+
+  it('is open, as view.panel, for as long as the scene is', () => {
+    const game = withStall()
+    const at = { ...begin(game), sceneId: 'stall' }
+    expect(view(at, game).panel).toEqual({ panel: 'prices', with: { stall: 'bread' }, scene: 'stall' })
+    expect(at.panel).toBeNull()
+    expect(apply(at, game, { type: 'closePanel' }).ok).toBe(false)
+    const left = apply(at, game, { type: 'choose', id: 'bye' }).state
+    expect(view(left, game).panel).toBeNull()
+  })
+
+  it('gives way to one the panel effect opened', () => {
+    const game = withStall()
+    const opened = { ...begin(game), sceneId: 'stall', panel: { panel: 'shop', with: { vendor: 'bakery' } } }
+    expect(view(opened, game).panel).toEqual({ panel: 'shop', with: { vendor: 'bakery' } })
+  })
+
+  it('is checked as the panel effect is', () => {
+    const shop = definePlugin<null>({
+      id: 'shop',
+      version: 1,
+      panelProblems: (panel, args) => (panel === 'prices' && !args.stall ? ['prices needs a stall'] : []),
+    })
+    const town = fixture()
+    const game: Game = { ...town, plugins: [shop], scenes: [...town.scenes, { id: 'stall', body: [], choices: [], panel: { panel: 'prices' } }] }
+    expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toContain('scene stall: prices needs a stall')
+  })
+})

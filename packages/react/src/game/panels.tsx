@@ -53,7 +53,8 @@ function usePanelTitle(open: OpenPanel | null, plugin: (PluginPanel & { from: Pl
 function PanelHostImpl() {
   const { view, panels, send } = useGame()
   const plugins = usePluginUis()
-  const open = view.panel
+  // A panel the open scene holds is drawn in the scene, in place of its choices.
+  const open = view.panel?.scene === undefined ? view.panel : null
   const fromPlugins = pluginPanels(plugins)
   const own = open ? panels[open.panel] : undefined
   const plugin = open ? fromPlugins[open.panel] : undefined

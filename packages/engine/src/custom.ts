@@ -12,7 +12,7 @@ import { customCall, type EffectRef } from './calls.ts'
  * instead, as named functions on the game, and content calls them by name:
  * `{ custom: 'canAffordRent' }` as a condition, `{ custom: 'payRent', with: {} }`
  * as an effect, `{{v:rentDue}}` in prose, `max: { value: 'energyCeiling' }` on
- * a stat, `panelData: 'stallPrices'` on a scene.
+ * a stat.
  *
  * Each game owns its own: two games in one page, or a test next to a game,
  * never see each other's functions.
@@ -29,14 +29,11 @@ export type CustomCondition = (state: GameState, args: PluginArgs, context: Cust
 export type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
 /** A word or a number for prose (`{{v:name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
 export type CustomValue = (state: GameState, args: PluginArgs, context: CustomContext) => string | number
-/** What a scene's or an app's panel draws, shaped by the game. */
-export type CustomPanel = (state: GameState, context: CustomContext) => unknown
 
 export type Custom = {
   conditions?: Record<string, CustomCondition>
   effects?: Record<string, CustomEffect>
   values?: Record<string, CustomValue>
-  panels?: Record<string, CustomPanel>
 }
 
 /**
@@ -113,12 +110,6 @@ export function customValue(game: Game | undefined, name: string): ((state: Game
 /** Does the game or one of its plugins have an effect by this name? */
 export function hasCustomEffect(game: Game | undefined, name: string): boolean {
   return Boolean(pluginEffect(game, name) ?? game?.custom?.effects?.[name])
-}
-
-/** A custom panel by name, ready to draw. */
-export function customPanel(game: Game | undefined, name: string): ((state: GameState) => unknown) | undefined {
-  const fn = game?.custom?.panels?.[name]
-  return fn && game ? (state) => fn(state, customContext(state, game)) : undefined
 }
 
 /**

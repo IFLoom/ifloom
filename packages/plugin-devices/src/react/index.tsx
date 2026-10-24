@@ -147,7 +147,7 @@ function AppSectionImpl({ section }: { section: SectionView }) {
     }
     case 'panel': {
       const Panel = panels[section.panel]
-      return Panel ? <Panel data={section.data} /> : null
+      return Panel ? <Panel data={section.with} /> : null
     }
   }
 }

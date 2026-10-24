@@ -5,7 +5,15 @@ import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src
 const apps: AppDef[] = [
   { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ text: 'notes.intro' }] }] },
   { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
-  { id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop', when: { kv: 'emailSetUp' }, badge: { when: { kv: 'newMail' } }, sections: [{ panel: 'inbox' }] },
+  {
+    id: 'mail',
+    name: 'Mail',
+    icon: 'mail',
+    on: 'laptop',
+    when: { kv: 'emailSetUp' },
+    badge: { when: { kv: 'newMail' } },
+    sections: [{ panel: 'inbox', with: { letters: 2 } }],
+  },
 ]
 
 function game(): Game {
@@ -25,7 +33,6 @@ function game(): Game {
           { id: 'uninstall', effects: [{ kind: 'kv', key: 'emailSetUp', to: false }] },
         ],
         prose: { 'notes.intro': 'Nothing written yet.' },
-        custom: { panels: { inbox: () => ({ letters: 2 }) } },
       },
     ],
     { id: 'desk', title: 'Desk', plugins: [devices()] },
@@ -58,12 +65,12 @@ describe('devices', () => {
     expect(laptop(state, g).apps.every((app) => app.sections.length === 0)).toBe(true)
   })
 
-  it('count a dot badge as one, and hand a panel its data', () => {
+  it('count a dot badge as one, and hand a panel what it is opened with', () => {
     const g = game()
     let state = apply(begin(g), g, { type: 'activity', id: 'setUpMail' }).state
     expect(laptop(state, g).badge).toBe(1)
     state = apply(state, g, openApp('mail')).state
-    expect(laptop(state, g).open?.sections).toEqual([{ kind: 'panel', panel: 'inbox', data: { letters: 2 } }])
+    expect(laptop(state, g).open?.sections).toEqual([{ kind: 'panel', panel: 'inbox', with: { letters: 2 } }])
   })
 
   it('close an app that stops being installed', () => {
@@ -94,7 +101,6 @@ describe('devices', () => {
       'unknown device "watch"',
       'no custom value named "nope/value"',
       'unknown kind "album"',
-      'no custom panel named "nothing"',
       'no prose for "x.none"',
       'the game has no plugin named "radio"',
     ])

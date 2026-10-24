@@ -4,7 +4,8 @@ import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
 import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
-import { buildEffects, customPanel, type EffectRef } from './custom.ts'
+import { buildEffects, type EffectRef } from './custom.ts'
+import type { ScenePanel } from './features/panels.ts'
 import type { Effect, GameState } from './types.ts'
 import { commandOf, type CommandRef } from './calls.ts'
 
@@ -100,17 +101,13 @@ export type DataScene = StoryletFields &
     speaker?: string
     /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
     tags?: string[]
-    /** A bespoke UI panel to render in place of the choice list, by name. */
-    panel?: string
     /**
-     * Whatever that panel needs, as the name of a registered builder.
-     *
-     * A panel usually wants something computed, which used to mean the scene had
-     * to be an assembled `render` and give up blocks, variants and conditions to
-     * get it. Naming the builder keeps the content declarative and serialisable —
-     * the same trade `{ custom: 'name' }` already makes for effects.
+     * A panel open for as long as the scene is: `{ panel: 'counter', with: { vendor: 'cafe' } }`.
+     * It is `view.panel`, as one the `panel` effect opens is, with the scene's
+     * id in `scene`. A panel needing worked-out data reads it from the view or
+     * a value. See `ScenePanel`.
      */
-    panelData?: string
+    panel?: ScenePanel
     /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
     audio?: Record<string, string | null>
     /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
@@ -263,8 +260,6 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     title: scene.title,
     speaker: scene.speaker,
     tags: scene.tags,
-    panel: scene.panel,
-    panelData: scene.panelData ? customPanel(runtime.game, scene.panelData)?.(state) : undefined,
     body: parts.join('\n\n'),
     ...(hinted.length ? { blockUi: hintOffsets(parts, hinted) } : {}),
     media: media.length ? media : undefined,

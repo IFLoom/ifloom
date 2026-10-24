@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 16
+export const SCHEMA = 17
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -86,6 +86,19 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
       : pack,
   // 15 → 16: how things look and move is the UI's, written as `ui` hints. See `toSchema16`.
   15: (pack) => toSchema16(pack),
+  // 16 → 17: one panel model. A scene's `panel: 'shop'` opens that panel while the scene is open,
+  // `panel: { panel: 'shop' }`, and its `panelData` (the name of a custom function) is gone.
+  16: (pack) =>
+    Array.isArray(pack.scenes)
+      ? {
+          ...pack,
+          scenes: pack.scenes.map((scene) => {
+            if (!isRecord(scene) || !('panel' in scene || 'panelData' in scene)) return scene
+            const { panel, panelData: _panelData, ...rest } = scene
+            return typeof panel === 'string' ? { ...rest, panel: { panel } } : panel === undefined ? rest : { ...rest, panel }
+          }),
+        }
+      : pack,
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */

@@ -7,7 +7,7 @@ A panel is a piece of UI that content opens over the story by name: a shop's cou
 Nothing opens a panel by itself. Content opens one with the [`panel` effect](/docs/reference/effects#panel), so a place's action, a person's scene, a thing's use in the [inventory](/docs/plugins/inventory), an app's button, a choice or an inline `[[act:]]` link can each open one. Because it's an effect, saves and replays open it exactly as play did.
 
 ```ts
-import type { OpenPanel } from '@ifloom/engine'
+import type { OpenPanel, ScenePanel } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -60,10 +60,27 @@ The café's location then lists `{ id: 'counter', label: 'Go to the counter', co
 type OpenPanel = {
   panel: string
   with: Record<string, unknown>
+  scene?: string
 }
 ```
 
 The panel that's open: its name and what it was opened with. `with` is `{}` when the effect gave none. It's [`state.panel`](/docs/reference/state#panel) and [`view.panel`](/docs/reference/view#panel), or `null` in both while no panel is open.
+
+`scene` is there when the open scene holds the panel itself (see [A scene's panel](#a-scenes-panel)), and names that scene. A UI usually draws such a panel in the scene, in place of its choices.
+
+## A scene's panel
+
+```ts
+type ScenePanel = { panel: string; with?: Record<string, unknown> }
+```
+
+A [data scene](/docs/reference/scenes#datascene) can hold a panel open for as long as it's on screen, with `panel`:
+
+```ts
+{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ text: 'market.stall' }], choices: [] }
+```
+
+While that scene is open, `view.panel` is `{ panel: 'prices', with: { stall: 'bread' }, scene: 'market.stall' }`, unless the `panel` effect has opened another one, which comes first. `closePanel` doesn't close a scene's panel: it goes when the scene does. A panel that needs numbers worked out from the state reads them from the view, or from a value the game declares.
 
 ## Opening and closing
 

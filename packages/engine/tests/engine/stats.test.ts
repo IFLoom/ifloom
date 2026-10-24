@@ -72,7 +72,7 @@ describe('spending stats', () => {
     ...fixture(),
     stats: [
       { id: 'coins', label: 'Coins', start: 10, max: 999, format: '{n}c', spendable: true, listed: false, lacking: 'Short by a few.' },
-      { id: 'puff', label: 'Puff', start: 5, max: { value: 'puffMax' }, spendable: true, listed: false },
+      { id: 'puff', label: 'Puff', start: 5, max: { value: 'game/puffMax' }, spendable: true, listed: false },
       { id: 'charm', label: 'Charm', start: 1 },
     ],
     activities: [
@@ -100,7 +100,7 @@ describe('spending stats', () => {
   it('works a moving ceiling out from a named value', () => {
     const ceiling: Game = {
       ...game,
-      custom: { values: { puffMax: (state) => 10 + (state.stats.charm ?? 0) } },
+      rules: { values: { puffMax: (state) => 10 + (state.stats.charm ?? 0) } },
     }
     const fit = begin(ceiling, { stats: { coins: 0, puff: 0, charm: 5 } })
     expect(statMax(fit, ceiling, 'puff')).toBe(15)
@@ -125,7 +125,7 @@ describe('checking declared stats', () => {
   it('reports costs, set effects and ceilings that name what is not there', () => {
     const game: Game = {
       ...fixture(),
-      stats: [{ id: 'puff', label: 'Puff', max: { value: 'neverRegistered' } }],
+      stats: [{ id: 'puff', label: 'Puff', max: { value: 'game/neverRegistered' } }],
       activities: [
         { id: 'buy', cost: { stats: { gold: 1 } } },
         { id: 'rest', effects: [{ kind: 'stat', stat: 'sleep', to: 1 }] },
@@ -134,7 +134,7 @@ describe('checking declared stats', () => {
     const problems = problemsOf(game)
     expect(problems).toContain('activity buy: spends unknown stat "gold"')
     expect(problems).toContain('activity rest: unknown stat "sleep"')
-    expect(problems).toContain('stat puff: no custom value named "neverRegistered"')
+    expect(problems).toContain('stat puff: no custom value named "game/neverRegistered"')
   })
 })
 

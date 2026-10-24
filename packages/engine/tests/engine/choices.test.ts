@@ -97,7 +97,7 @@ describe('a new game', () => {
   it('shows a typed value as typed, never reading it as a token', () => {
     const game = fixture()
     const words = proseStore(game, { hello: 'Hello, {{playerName}}.' })
-    expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{v:nothing}}' } })).toBe('Hello, {{v:nothing}}.')
+    expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{v:game/nothing}}' } })).toBe('Hello, {{v:game/nothing}}.')
   })
 
   it('carries a version-1 save’s name into the kv store', () => {

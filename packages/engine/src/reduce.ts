@@ -117,15 +117,9 @@ function run(current: GameState, game: Game, command: Command): GameState {
 }
 
 /**
- * Run a command already allowed: the game's own handler for its type, else its
- * entry's. Also how a choice runs the command it sends. Internal.
+ * Run a command already allowed, by its entry. Also how a choice runs the command it sends. Internal.
  */
 export function runIn(rendered: Rendering, current: GameState, game: Game, command: Command): GameState {
-  const custom = game.rules?.commands?.[command.type]
-  if (custom) {
-    const out = custom(current, command)
-    return typeof out === 'string' ? refuse(out) : out
-  }
   const entry = commandEntry(command)
   if (!entry) return refuse(say(game, 'notSupported'))
   return entry.run(current, command, game, commandContext(rendered))

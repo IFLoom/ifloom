@@ -72,15 +72,17 @@ describe('the game’s own migrations', () => {
     const game = grown({
       version: 3,
       plugins: [clock],
-      migrations: {
-        1: (state) => {
-          // The engine has carried the save to its shape, and the plugin's state is up to date.
-          ran.push(`1:${state.media ? 'media' : 'none'}:${JSON.stringify(state.plugins.clock)}`)
-          return { ...state, kv: { ...state.kv, one: true } }
-        },
-        2: (state) => {
-          ran.push(`2:${String(state.kv.one)}`)
-          return state
+      rules: {
+        migrations: {
+          1: (state) => {
+            // The engine has carried the save to its shape, and the plugin's state is up to date.
+            ran.push(`1:${state.media ? 'media' : 'none'}:${JSON.stringify(state.plugins.clock)}`)
+            return { ...state, kv: { ...state.kv, one: true } }
+          },
+          2: (state) => {
+            ran.push(`2:${String(state.kv.one)}`)
+            return state
+          },
         },
       },
     })
@@ -125,7 +127,7 @@ describe('the game’s own migrations', () => {
     expect(statValue(waited, game, 'patience')).toBe(7)
     expect(view(waited, game).statsById.patience.value).toBe(7)
 
-    const some = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill(['stats', 'settings']) } }))
+    const some = read(grown({ version: 2, rules: { migrations: { 1: (_state, tools) => tools.fill(['stats', 'settings']) } } }))
     expect(some.stats.patience).toBe(7)
     expect(some.settings).toEqual({ hints: true })
 
@@ -142,7 +144,7 @@ describe('the game’s own migrations', () => {
     )
     expect(withCounter.state.plugins.counter).toEqual({ version: 2, state: { patience: 7 } })
 
-    const all = read(grown({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } }))
+    const all = read(grown({ version: 2, rules: { migrations: { 1: (_state, tools) => tools.fill() } } }))
     expect(all.stats.patience).toBe(7)
     // A declared entity needs no filling: Ana is there with no record of her own.
     expect(all.entities.staff).toBeUndefined()
@@ -168,7 +170,7 @@ describe('the game’s own migrations', () => {
       id: 'g',
       title: 'G',
       version: 2,
-      migrations: { 0: (state) => state, 1: (state) => state, 2: (state) => state },
+      rules: { migrations: { 0: (state) => state, 1: (state) => state, 2: (state) => state } },
     })
     expect(problems.map(describeProblem)).toEqual([
       'base · migration 0 · a step is keyed by the version it upgrades from, 1 to 1',

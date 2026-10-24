@@ -50,7 +50,7 @@ function shore(rules: Parameters<typeof fixture>[0] = {}): Game {
     plugins: [tide],
     activities: [
       ...(town.activities ?? []),
-      { id: 'swim', effects: [{ custom: 'tide/rise' }] },
+      { id: 'swim', effects: [{ 'tide/rise': true }] },
       { id: 'dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
     ],
     actions: [

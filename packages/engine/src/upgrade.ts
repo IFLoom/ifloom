@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 17
+export const SCHEMA = 18
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -99,6 +99,42 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
           }),
         }
       : pack,
+  // 17 → 18: the game's own code is its `rules`, and content calls it as it calls a plugin's, with `game` in front.
+  // See `toSchema18`.
+  17: (pack) => toSchema18(pack),
+}
+
+/** The full name a call to the game's own code had before schema 18, by the bare name it was written with. */
+const gameName = (name: string): string => (name.includes('/') ? name : `game/${name}`)
+
+/** A `{{v:name …}}` token written before schema 18 whose name has no plugin in front. */
+const BARE_VALUE = /\{\{v:([A-Za-z0-9_.-]+)(?=[\s}])/g
+
+/**
+ * Schema 17 content as schema 18 writes it, where the game's own code is its
+ * `rules`, called with `game` in front:
+ * - `{ custom: 'tired' }` and `{ custom: 'tired', with }`, as a condition or an
+ *   effect, are the call in short, `{ 'game/tired': true }` or
+ *   `{ 'game/tired': with }`; a plugin's by its full name is its short form;
+ * - an effect `{ kind: 'custom', name: 'tired' }` names `game/tired`;
+ * - a value `{ value: 'payroll' }` names `game/payroll`;
+ * - in prose and strings, `{{v:payroll}}` is `{{v:game/payroll}}`.
+ *
+ * A pack's `custom` functions are the game's code, which a pack can't hold
+ * now; the loader reports it.
+ */
+function toSchema18(pack: RawPack): RawPack {
+  const rewritten = TOOLS.objects(pack, (value) => {
+    if (typeof value.custom === 'string' && Object.keys(value).every((key) => key === 'custom' || key === 'with')) {
+      const args = isRecord(value.with) ? value.with : true
+      return { [gameName(value.custom)]: args }
+    }
+    if (value.kind === 'custom' && typeof value.name === 'string') return { ...value, name: gameName(value.name) }
+    if (typeof value.value === 'string' && Object.keys(value).every((key) => key === 'value' || key === 'with'))
+      return { ...value, value: gameName(value.value) }
+    return value
+  })
+  return TOOLS.words(rewritten, (text) => text.replace(BARE_VALUE, (_match, name: string) => `{{v:${gameName(name)}`))
 }
 
 /** The pack keys that hold words or code, not content a step rewrites. */

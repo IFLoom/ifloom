@@ -150,7 +150,7 @@ describe('the registry', () => {
     })
     // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
     const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))
-    expect(Object.keys(KINDS.conditions).filter((kind) => !owned.has(kind))).toEqual(['all', 'any', 'not', 'custom'])
+    expect(Object.keys(KINDS.conditions).filter((kind) => !owned.has(kind))).toEqual(['all', 'any', 'not'])
     expect(Object.keys(KINDS.effects).filter((kind) => !owned.has(kind))).toEqual(['custom'])
     expect(Object.keys(KINDS.commands).filter((kind) => !owned.has(kind))).toEqual(['start', 'newGame', 'custom'])
     // And the compiler holds the tables to the features' kinds: each is a key of the table the core reads.

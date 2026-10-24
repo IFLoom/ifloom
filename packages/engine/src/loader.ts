@@ -1,7 +1,6 @@
 import type { PluginEntry } from './plugin.ts'
 import type { CarryOver, Game } from './game.ts'
 import type { Condition } from './types.ts'
-import type { Custom } from './custom.ts'
 import { memberKey, proseStore, type VariantMember } from './prose.ts'
 import type { Flat } from './types.ts'
 import { checkContent, type Problem, type Source } from './check.ts'
@@ -34,8 +33,6 @@ type Declarations = {
    * be drawn more or less often than the rest.
    */
   variants?: Record<string, VariantMember[]>
-  /** Named functions content calls. A pack's replaces one by the same name. */
-  custom?: Custom
   /**
    * Content for the game's plugins, by plugin id and then list:
    * `{ quests: { quests: [...] } }`. A pack's entry replaces one with the
@@ -94,7 +91,7 @@ export type Pack = Flat<
  * `title` and `version`) and its code (its plugins and its rules). Anything a
  * mod could change is content, and goes in the content or a pack instead.
  */
-export type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'migrations' | 'saveName' | 'custom' | 'plugins' | 'rules'>
+export type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
 
 /** What else `loadGame` takes. */
 export type LoadOptions = {
@@ -107,7 +104,6 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   strings: true,
   prose: true,
   variants: true,
-  custom: true,
   data: true,
   finished: true,
   carryOver: true,
@@ -145,14 +141,14 @@ const CONTENT_KEYS: { [K in keyof Content]-?: true } = { ...CONTENT_DECLARATION_
 const PACK_KEYS: { [K in keyof Pack]-?: true } = { ...DECLARATION_KEYS, id: true, schema: true, plugins: true }
 const IGNORED_PACK_KEYS = new Set(['overrides'])
 
+/** What the base once held that is the game's code now, in `rules`. */
+const CODE_KEYS = new Set(['custom', 'migrations', 'saveName'])
+
 /** The keys the base can hold. Typed complete, so a key added to `GameBase` has to be listed. */
 const BASE_KEYS: { [K in keyof GameBase]-?: true } = {
   id: true,
   title: true,
   version: true,
-  migrations: true,
-  saveName: true,
-  custom: true,
   plugins: true,
   rules: true,
 }
@@ -178,8 +174,6 @@ const once =
   (content: Content): Declared[] =>
     value(content) === undefined ? [] : [noun]
 
-const CUSTOM_NOUNS = { conditions: 'custom condition', effects: 'custom effect', values: 'custom value' } as const
-
 /**
  * What each content key declares, for the report of one thing declared twice
  * across the game's content. Typed complete, so a new key has to say. Null for
@@ -192,10 +186,6 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   // Content appends to a variants name, so only the same line listed twice is a clash.
   variants: (content) =>
     Object.entries(content.variants ?? {}).flatMap(([name, members]) => members.map((member) => `variants "${name}" line "${memberKey(member)}"`)),
-  custom: (content) =>
-    (Object.keys(CUSTOM_NOUNS) as (keyof typeof CUSTOM_NOUNS)[]).flatMap((kind) =>
-      Object.keys(content.custom?.[kind] ?? {}).map((name) => `${CUSTOM_NOUNS[kind]} "${name}"`),
-    ),
   data: (content) =>
     Object.entries(content.data ?? {}).flatMap(([plugin, lists]) =>
       Object.entries(lists).flatMap(([list, entries]) => entries.map((entry) => `${plugin}/${list} "${entry.id}"`)),
@@ -260,12 +250,6 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   const variants: Record<string, string[]> = {}
   /** The same, with each member's weight where it has one. */
   const weightedVariants: Record<string, VariantMember[]> = {}
-  // The base game's own functions come first; content and packs lay theirs over by name.
-  const custom: Custom = {
-    conditions: { ...base.custom?.conditions },
-    effects: { ...base.custom?.effects },
-    values: { ...base.custom?.values },
-  }
   // Plugin content by plugin, then list, then id; the base's own comes first.
   const data = new Map<string, Map<string, Map<string, { value: PluginEntry; from: string }>>>()
   const addData = (from: string, incoming: Content['data']) => {
@@ -311,7 +295,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     addWords(piece, from)
   }
 
-  /** What the core merges itself from a piece: words, plugin data, the game's own functions, and its single values. */
+  /** What the core merges itself from a piece: words, plugin data and its single values. */
   function addWords(piece: Content | Pack, from: string) {
     if (piece.finished !== undefined) finished = { value: piece.finished, from }
     if (piece.carryOver !== undefined) carryOver = { value: piece.carryOver, from }
@@ -328,14 +312,15 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
       }
     }
     addData(from, piece.data)
-    for (const kind of ['conditions', 'effects', 'values'] as const) {
-      Object.assign((custom[kind] ??= {}), piece.custom?.[kind] ?? {})
-    }
   }
 
   for (const [key, value] of Object.entries(base)) {
     if (Object.hasOwn(BASE_KEYS, key) || value === undefined) continue
-    const why = Object.hasOwn(CONTENT_KEYS, key) ? `; it is content now, so it goes in the game's content` : ''
+    const why = Object.hasOwn(CONTENT_KEYS, key)
+      ? `; it is content now, so it goes in the game's content`
+      : CODE_KEYS.has(key)
+        ? "; it is the game's code, so it goes in `rules`"
+        : ''
     problems.push({ pack: 'base', where: 'base', what: `the base has no "${key}", so it was left out${why}` })
   }
 
@@ -385,7 +370,6 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     scenes: [],
     storylines: [],
     activities: [],
-    custom,
     packs: packs.map((pack) => pack.id),
     strings,
     ...(finished ? { finished: finished.value } : {}),

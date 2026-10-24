@@ -59,7 +59,7 @@ function withShells(): Game {
   return {
     ...fixture(),
     plugins: [shells],
-    activities: [...(fixture().activities ?? []), { id: 'beachcomb', effects: [{ custom: 'shells/find', with: { shell: 'whelk' } }] }],
+    activities: [...(fixture().activities ?? []), { id: 'beachcomb', effects: [{ 'shells/find': { shell: 'whelk' } }] }],
   }
 }
 
@@ -84,16 +84,13 @@ describe('plugins', () => {
     const after = apply(begin(game), game, { type: 'activity', id: 'beachcomb' })
     expect(after.ok).toBe(true)
     expect(shells.read(after.state, game).found).toEqual(['whelk'])
-    expect(holds(after.state, { custom: 'shells/has', with: { shell: 'whelk' } }, game)).toBe(true)
-    expect(holds(after.state, { custom: 'shells/has', with: { shell: 'conch' } }, game)).toBe(false)
+    expect(holds(after.state, { 'shells/has': { shell: 'whelk' } }, game)).toBe(true)
+    expect(holds(after.state, { 'shells/has': { shell: 'conch' } }, game)).toBe(false)
   })
 
   it('apply their effects in order, each on the state the one before left', () => {
     const game = withShells()
-    const both = [
-      { custom: 'shells/find', with: { shell: 'whelk' } },
-      { custom: 'shells/find', with: { shell: 'conch' } },
-    ]
+    const both = [{ 'shells/find': { shell: 'whelk' } }, { 'shells/find': { shell: 'conch' } }]
     const after = apply(begin(game), game, { type: 'activity', id: 'beachcomb' })
     const twice = apply(after.state, { ...game, activities: [{ id: 'two', effects: both }] }, { type: 'activity', id: 'two' })
     expect(shells.read(twice.state, game).found).toEqual(['whelk', 'conch'])
@@ -228,7 +225,7 @@ describe('plugins working together', () => {
     expect(view(state, game).plugins.beach).toEqual({ next: 'high tide' })
     const swum = apply({ ...state, sceneId: null }, game, { type: 'activity', id: 'swim' }).state
     expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
-    expect(holds(swum, { custom: 'tides/high' }, game)).toBe(true)
+    expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
   })
 
   it('let content name a partner the game does not have: the loader passes it, and it is not there', () => {

@@ -61,7 +61,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
 
 /** The same game once it declares a version, with a step that fills everything in. */
 export function oldSavesVersioned(): Game {
-  return oldSavesGame({ version: 2, migrations: { 1: (_state, tools) => tools.fill() } })
+  return oldSavesGame({ version: 2, rules: { migrations: { 1: (_state, tools) => tools.fill() } } })
 }
 
 const v1 = {

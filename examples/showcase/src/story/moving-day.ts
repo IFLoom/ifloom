@@ -53,7 +53,7 @@ export const movingDay: Content = {
           stages: [
             { id: 'out', hint: 'Step out onto the high street.', done: at('high-street') },
             { id: 'ava', hint: 'Somebody runs the café. Say hello.', done: { seen: 'ava.hi' } },
-            { id: 'post', hint: 'Take a photo with someone and post it.', done: { custom: 'feed/posted', with: { gte: 1 } } },
+            { id: 'post', hint: 'Take a photo with someone and post it.', done: { 'feed/posted': { gte: 1 } } },
           ],
         },
       ],

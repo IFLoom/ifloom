@@ -124,7 +124,7 @@ describe('quests', () => {
       id: 'broken',
       title: 'Broken',
       storyline: 'nobody',
-      starts: { custom: 'quests/nope' },
+      starts: { 'quests/nope': true },
       stages: [
         { id: 'a', hint: '', done: { entity: 'thing:moonstone', at: 'you' } },
         { id: 'a', hint: '', done: { kv: 'x' } },

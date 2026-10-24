@@ -32,7 +32,7 @@ function game(modifiers: StatModifier[], more: Partial<Game> = {}): Game {
     kinds: [{ id: 'baker', label: 'Baker' }],
     activities: [
       ...(base.activities ?? []),
-      { id: 'put-on', effects: [{ custom: 'glasses/wear' }] },
+      { id: 'put-on', effects: [{ 'glasses/wear': true }] },
       { id: 'crossword', cost: { stats: { intelligence: 8 } } },
       { id: 'study', effects: [{ kind: 'stat', stat: 'intelligence', by: 1 }] },
       { id: 'reset', effects: [{ kind: 'stat', stat: 'intelligence', to: 2 }] },

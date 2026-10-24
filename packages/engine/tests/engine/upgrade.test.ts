@@ -41,8 +41,8 @@ afterEach(() => {
 /** The cafe fixture's game, split into its base and its own pack. */
 function cafe() {
   const { game } = withCafe()
-  const { id, title, custom, rules, scenes, storylines, activities, stats, introScene, startPhase, actions } = game
-  const base = { id, title, custom, rules }
+  const { id, title, rules, scenes, storylines, activities, stats, introScene, startPhase, actions } = game
+  const base = { id, title, rules }
   const own: Content = {
     name: 'town',
     scenes,
@@ -349,7 +349,7 @@ describe('content migrations', () => {
             { kind: 'minigame', minigame: 'arrows' },
             { kind: 'minigameVar', key: 'score', by: 1 },
             { kind: 'minigameVar', key: 'round', to: 0 },
-            { custom: 'achievements/grant', with: { achievement: 'regular' } },
+            { 'achievements/grant': { achievement: 'regular' } },
             { 'statuses/apply': { status: 'tired' } },
             { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
           ],
@@ -359,7 +359,7 @@ describe('content migrations', () => {
         {
           id: 'cafe',
           body: [{ text: 'cafe', when: { 'cast/at': { character: 'ava', at: ['cafe'] } } }],
-          choices: [{ id: 'sit', when: { custom: 'statuses/active', with: { status: 'tired' } }, effects: [] }],
+          choices: [{ id: 'sit', when: { 'statuses/active': { status: 'tired' } }, effects: [] }],
         },
       ],
       data: {
@@ -417,7 +417,7 @@ describe('content migrations', () => {
     expect(up(v6)).toEqual({
       id: 'phone',
       schema: SCHEMA,
-      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:rentDue}} due.' },
+      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:game/rentDue}} due.' },
       strings: { hint: '{{v:messages/unread channel=post}} letters' },
       activities: [
         {
@@ -425,7 +425,7 @@ describe('content migrations', () => {
           blocked: [
             { when: { not: { 'places/at': { location: ['park', 'river'] } } }, reason: 'Not here.' },
             { when: { 'calendar/period': { period: 'night' } }, reason: 'Too dark.' },
-            { when: { custom: 'cast/here', with: { character: ['ava'] } }, reason: 'Ava is here.' },
+            { when: { 'cast/here': { character: ['ava'] } }, reason: 'Ava is here.' },
             { when: { 'calendar/weekend': true }, reason: 'Weekend.' },
             { when: { 'cast/met': { character: 'sam' } }, reason: 'Met Sam.' },
           ],
@@ -437,7 +437,7 @@ describe('content migrations', () => {
         devices: {
           apps: [
             { id: 'texts', badge: { value: 'messages/unread', with: { channel: 'texts' } } },
-            { id: 'bank', badge: { value: 'rentDue' } },
+            { id: 'bank', badge: { value: 'game/rentDue' } },
             { id: 'news', badge: { when: { kv: 'news' } } },
           ],
         },
@@ -483,7 +483,7 @@ describe('content migrations', () => {
           id: 'cure',
           label: 'Cure',
           command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } },
-          when: { custom: 'statuses/active', with: { status: 'cold' } },
+          when: { 'statuses/active': { status: 'cold' } },
         },
       ],
       data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
@@ -696,6 +696,45 @@ describe('content migrations', () => {
         { id: 'staff', label: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
         { id: 'photo', label: 'Photo' },
       ],
+    })
+  })
+
+  it('call the game’s own code as game/name at schema 18, in short, in values and in tokens', () => {
+    const v17 = {
+      id: 'rent',
+      schema: 17,
+      stats: [{ id: 'energy', label: 'Energy', max: { value: 'ceiling' } }],
+      activities: [
+        {
+          id: 'pay',
+          blocked: [
+            { when: { not: { custom: 'canPay' } }, reason: 'Not enough.' },
+            { when: { custom: 'quests/done', with: { quest: 'rent' } }, reason: 'Paid.' },
+          ],
+          effects: [
+            { custom: 'payRent', with: { weeks: 1 } },
+            { kind: 'custom', name: 'tidy' },
+            { kind: 'custom', name: 'quests/start', with: { quest: 'rent' } },
+          ],
+        },
+      ],
+      prose: { due: 'Rent: {{v:rentDue}}, {{v:messages/unread channel=texts}} texts, {{v:rentDue weeks=2}} later.' },
+    }
+    expect(up(v17)).toEqual({
+      id: 'rent',
+      schema: SCHEMA,
+      stats: [{ id: 'energy', label: 'Energy', max: { value: 'game/ceiling' } }],
+      activities: [
+        {
+          id: 'pay',
+          blocked: [
+            { when: { not: { 'game/canPay': true } }, reason: 'Not enough.' },
+            { when: { 'quests/done': { quest: 'rent' } }, reason: 'Paid.' },
+          ],
+          effects: [{ 'game/payRent': { weeks: 1 } }, { kind: 'custom', name: 'game/tidy' }, { kind: 'custom', name: 'quests/start', with: { quest: 'rent' } }],
+        },
+      ],
+      prose: { due: 'Rent: {{v:game/rentDue}}, {{v:messages/unread channel=texts}} texts, {{v:game/rentDue weeks=2}} later.' },
     })
   })
 
@@ -918,7 +957,7 @@ describe('content migrations', () => {
             {
               id: 'wear',
               command: { type: 'custom', name: 'wardrobe/wear', with: { id: 'item:scarf' } },
-              when: { custom: 'shop/inStock', with: { vendor: 'kiosk', entity: 'item:tea' } },
+              when: { 'shop/inStock': { vendor: 'kiosk', entity: 'item:tea' } },
               effects: [],
             },
           ],

@@ -5,7 +5,7 @@
  * effect that rolls how a post did.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef } from '@ifloom/engine'
+import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef, type GameRules } from '@ifloom/engine'
 import { closeApp, openApp, type DevicesView } from '@ifloom/plugin-devices'
 import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
@@ -67,7 +67,7 @@ const town: Content = {
         pass(1),
         postTo('fans', 'fans.ava-cafe', { text: 'fans.ava-cafe', image: 'art/ava-cafe.jpg' }),
         { kind: 'kv', key: 'postedToday', to: true },
-        { custom: 'fanReaction' },
+        { 'game/fanReaction': true },
       ],
     },
   ],
@@ -81,7 +81,7 @@ const town: Content = {
     'ava.call#bye': 'Hang up',
     'ava.hey': 'Good seeing you today.',
     'ava.hey#reply': 'You too!',
-    'studio.stats': '{{v:subscribersLine}}',
+    'studio.stats': '{{v:game/subscribersLine}}',
     'fans.ava-cafe': 'Coffee with a friend.',
     'fans.nice': 'Love this',
   },
@@ -119,11 +119,13 @@ const town: Content = {
       ],
     },
   },
-  custom: {
-    values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
-    // How a post did: the game's own roll, here a fixed one.
-    effects: { fanReaction: () => [{ kind: 'stat', stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
-  },
+}
+
+/** The game's own code: a line for the subscribers, and how a post did. */
+const rules: GameRules = {
+  values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
+  // How a post did: the game's own roll, here a fixed one.
+  effects: { fanReaction: () => [{ kind: 'stat', stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
 }
 
 function game(): Game {
@@ -132,6 +134,7 @@ function game(): Game {
     {
       id: 'phone-town',
       title: 'Phone town',
+      rules,
 
       plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
     },

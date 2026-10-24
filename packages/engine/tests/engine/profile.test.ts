@@ -229,7 +229,7 @@ describe('the runner and the profile', () => {
     expect(() => books.push('novel')).toThrow()
     expect(await prof.get('shelf')).toEqual(['atlas'])
     // Conditions never see it, and nor does a view built without the runner.
-    holds(runner.state, { custom: 'shelf/remembers' }, g)
+    holds(runner.state, { 'shelf/remembers': true }, g)
     expect(seen.condition).toBeUndefined()
     expect(view(runner.state, g).plugins.shelf).toEqual({ books: null })
     // A write is followed: a new view of the same state, and listeners told.

@@ -8,9 +8,9 @@ import type { PluginArgs } from './plugin.ts'
 import type { Command, Effect } from './types.ts'
 
 /**
- * A plugin's condition, effect or command in short: its full name as the only
- * key, and its arguments as the value. `{ 'quests/done': { quest: 'bakery' } }`
- * is `{ custom: 'quests/done', with: { quest: 'bakery' } }`. The arguments are
+ * A plugin's condition, effect or command in short, or the game's own
+ * (`game/…`, from its `rules`): its full name as the only key, and its
+ * arguments as the value, `{ 'quests/done': { quest: 'bakery' } }`. The arguments are
  * always an object; `true` calls it with none, as in `{ 'calendar/weekend':
  * true }`. Anything else (a list, a string, a number) is a problem the content
  * checker reports, and the call is asked with no arguments.
@@ -24,11 +24,11 @@ export type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
  */
 export type ValueRef = { value: string; with?: PluginArgs }
 
-/** A call by name, in either form, as the engine reads it. */
+/** A call by name, as the engine reads one written in short. */
 export type CustomCall = { custom: string; with?: Record<string, unknown> }
 
-/** An effect as content writes it: a plain effect, or a custom one by name, in either form. */
-export type EffectRef = Effect | CustomCall | PluginCall
+/** An effect as content writes it: a plain effect, or a plugin's or the game's own in short. */
+export type EffectRef = Effect | PluginCall
 
 /** A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`). */
 export type CommandRef = Command | PluginCall
@@ -43,11 +43,10 @@ function shortName(entry: object): string | undefined {
 }
 
 /**
- * The call a condition or effect makes, if it is one: `{ custom }` as written,
- * or the short form read into it. Anything else — a built-in — is undefined.
+ * The call a condition or effect makes, if it is one: the short form read
+ * into its name and arguments. Anything else, a built-in, is undefined.
  */
 export function customCall(entry: object): CustomCall | undefined {
-  if ('custom' in entry && typeof entry.custom === 'string') return entry as CustomCall
   const name = shortName(entry)
   if (!name) return undefined
   const value = (entry as Record<string, unknown>)[name]

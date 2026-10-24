@@ -27,7 +27,7 @@ export const hiring: Content = {
     },
   ],
   prose: {
-    hiring: 'Two people answer the card in the window. Wages are {{v:payroll}} a week already.',
+    hiring: 'Two people answer the card in the window. Wages are {{v:game/payroll}} a week already.',
     'hiring#dev': 'Dev: keen, cheap, still learning',
     'hiring#fen': 'Fen: ten years in kitchens, and knows it',
     'hiring#nobody': 'Not this week',

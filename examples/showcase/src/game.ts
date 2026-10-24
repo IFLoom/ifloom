@@ -3,7 +3,7 @@
  * runs, with where it starts, its rules and its plugins. This file only
  * assembles. What the whole town shares is in `world/`, one file per kind,
  * and the story is in `story/`, one file per place or arc, its prose beside
- * it. The rules and custom functions are in `rules.ts`.
+ * it. The game's own code is in `rules.ts`.
  */
 import { applyEffects, describeProblem, loadGame, startingState, type Content, type Game, type Pack } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
@@ -22,7 +22,7 @@ import { inventory } from '@ifloom/plugin-inventory'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { phone } from '@ifloom/phone'
 import { openApp } from '@ifloom/plugin-devices'
-import { custom, rules } from './rules.ts'
+import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { things } from './world/things.ts'
 import { cast as castContent } from './world/cast.ts'
@@ -103,7 +103,6 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
     {
       id: 'small-town',
       title: 'Small Town',
-      custom,
       // The calendar first, so every other plugin sees the new day when one begins.
       plugins: [
         clock,

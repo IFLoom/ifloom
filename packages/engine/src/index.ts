@@ -9,6 +9,8 @@
 export type {
   Game,
   GameRules,
+  RulesCommand,
+  RulesContext,
   ActionDef,
   Blocked,
   ProseStore,
@@ -26,7 +28,7 @@ export { sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
-export type { CommandRef, Custom, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, ValueRef } from './custom.ts'
+export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, ValueRef } from './custom.ts'
 export { buildEffects, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built

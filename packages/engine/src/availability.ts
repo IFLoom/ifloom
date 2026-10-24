@@ -62,11 +62,6 @@ export function whyNotIn(rendered: Rendering, state: GameState, game: Game, comm
     const refused = pluginGuards(game, state, { command, effects: effectsNow() }).find((entry) => typeof entry === 'string')
     if (refused !== undefined) return refused
   }
-  const custom = game.rules?.commands?.[command.type]
-  if (custom) {
-    const out = custom(state, command)
-    return typeof out === 'string' ? out : undefined
-  }
   const entry = commandEntry(command)
   return entry ? entry.whyNot(state, command, game, commandContext(rendered)) : say(game, 'notSupported')
 }

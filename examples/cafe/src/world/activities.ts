@@ -13,8 +13,8 @@ export const activities: Content = {
     {
       id: 'endWeek',
       effects: [
-        { custom: 'takings' },
-        { custom: 'wages' },
+        { 'game/takings': true },
+        { 'game/wages': true },
         // A week's work wears everyone down a little.
         { kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] },
         // Anyone at the end of their tether hands in their apron.

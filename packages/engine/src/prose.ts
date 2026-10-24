@@ -10,7 +10,7 @@ import { entityText, parseRef, type EntityRef } from './entities.ts'
  * - `{{name}}` — a key in the kv store (a name the player typed is a
  *   key like any other: `{{playerName}}`);
  * - `{{n:storyline.key}}` — a counter on a storyline;
- * - `{{v:name}}` — a custom value, the game's or a plugin's, with any
+ * - `{{v:game/name}}` — a value, a plugin's or the game's own (`game/…`), with any
  *   arguments after the name: `{{v:messages/unread channel=texts}}`.
  *
  * A token naming a value the game does not have is left as it is, so the
@@ -47,7 +47,7 @@ export function entityDesc(state: GameState, game: Game, ref: EntityRef): string
   return desc === undefined ? undefined : fillTokens(desc, state, game)
 }
 
-/** A value token: `{{v:name}}`, or `{{v:name key=value …}}` with arguments. */
+/** A value token: `{{v:game/name}}`, or `{{v:game/name key=value …}}` with arguments. */
 export const VALUE_TOKEN = /\{\{v:((?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
 
 /** A value token's arguments, `channel=texts count=2`, as `with`: numbers and true/false read as such. */

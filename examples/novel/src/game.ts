@@ -29,14 +29,15 @@ export function theLetter(): { game: Game; problems: string[] } {
     // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried
     // forward by the step below when it loads, so a reader mid-story keeps their count.
     version: 2,
-    migrations: {
-      1: (state) => {
-        const { lies, ...kv } = state.kv
-        return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+    rules: {
+      migrations: {
+        1: (state) => {
+          const { lies, ...kv } = state.kv
+          return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+        },
       },
+      saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
     },
-    // Saves are listed under the name the reader typed.
-    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
   })
   return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }

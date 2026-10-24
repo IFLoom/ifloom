@@ -14,7 +14,7 @@ const broken: Content = {
       label: 'Dig',
       cost: { steps: 1 },
       blocked: [{ when: { not: { stat: 'stamina', gte: 5 } }, reason: 'Too tired.' }],
-      effects: [{ custom: 'findTreasure' }],
+      effects: [{ 'game/findTreasure': true }],
     } as never,
   ],
 }
@@ -39,7 +39,7 @@ describe('the loader', () => {
     expect(problems).toEqual(
       expect.arrayContaining([
         'broken · activity dig · unknown stat "stamina"',
-        'broken · activity dig · no custom effect named "findTreasure"',
+        'broken · activity dig · no custom effect named "game/findTreasure"',
         'base · action nap · unknown storyline "dreams"',
       ]),
     )
@@ -57,7 +57,7 @@ describe('the loader', () => {
             { kind: 'create', of: 'drawer', entity: { id: 'a' }, at: 'player' },
             { kind: 'notify', title: 'Post', text: 'post.unwritten' },
             { kind: 'scene', scene: 'nowhere' },
-            { custom: 'shred' },
+            { 'game/shred': true },
           ],
         },
       ],
@@ -73,7 +73,7 @@ describe('the loader', () => {
         'post · trigger parcel · unknown kind "drawer"',
         'post · trigger parcel · no prose for "post.unwritten"',
         'post · trigger parcel · goes to unknown scene "nowhere"',
-        'post · trigger parcel · no custom effect named "shred"',
+        'post · trigger parcel · no custom effect named "game/shred"',
         'post · input colour · a choice with no options',
         'post · input age · min is above max',
         'post · input age · unknown storyline "ghost"',
@@ -101,7 +101,6 @@ describe('one thing declared twice across the content', () => {
     ['kinds', { kinds: [{ id: 'staff', label: 'Staff' }] }, 'kind "staff"'],
     ['entities', { kinds: [], entities: [{ of: 'staff', id: 'ana', name: 'Ana' }] }, 'entity "staff:ana"'],
     ['storylines', { storylines: [{ id: 'ava', name: 'Ava' }] }, 'storyline "ava"'],
-    ['custom functions', { custom: { conditions: { open: () => true } } }, 'custom condition "open"'],
     ['the same line in a variants name', { variants: { 'street.weather': ['cafe.counter'] } }, 'variants "street.weather" line "cafe.counter"'],
     ['plugin content', { data: { notes: { notes: [{ id: 'first' }] } } }, 'notes/notes "first"'],
   ]

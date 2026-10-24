@@ -4,7 +4,7 @@ import { buildEffects, customContext, type CustomContext, type EffectRef } from 
 // A cycle, and a needed one: applying effects runs plugins' effects and hooks, which apply effects.
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
-import type { ActionDef } from './game.ts'
+import type { ActionDef, GameRules } from './game.ts'
 import type { EntityDef, TraitDef } from './entities.ts'
 import type { Content } from './loader.ts'
 import type { Reference } from './references.ts'
@@ -177,8 +177,22 @@ export type Plugin<S = any, V = unknown> = {
    * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
    */
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-  /** A hook: at the start of each turn, after the game's own `rules.onTurn` and before its `rules.onTurnDone`. Returns the next state. */
+  /** A hook: at the start of each turn, after the game's own `rules.onTurn` and before any `onTurnDone`. Returns the next state. */
   onTurn?: (state: GameState, context: PluginContext<S>) => GameState
+  /**
+   * A hook: the end of a turn, once every plugin's `onTurn` has run (and the
+   * game's `rules.onTurnDone`), so it sees what they did: the calendar's new
+   * day, a status worn off. Returns the next state.
+   */
+  onTurnDone?: (state: GameState, context: PluginContext<S>) => GameState
+  /**
+   * A hook: one of the player's stats just changed, by a `stat` effect.
+   * `before` is the state before it, `after` the state with it, `by` how far
+   * it moved. Return `before` to say it did not take, `after` to let it, or
+   * `after` with more besides. Runs after the game's `rules.onStat`, in
+   * plugin order, each seeing what the one before returned.
+   */
+  onStat?: (before: GameState, after: GameState, stat: string, by: number, context: PluginContext<S>) => GameState
   /**
    * A hook: after every command that took, with the state it started from and
    * the state after. The context is the state after. Returns the next state.
@@ -413,6 +427,11 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
   return context
 }
 
+/** The context the game's own hooks are handed, for this state: as a plugin's, with no state of its own. */
+export function rulesContext(state: GameState, game: Game): PluginContext<undefined> {
+  return pluginContext(rulesPlugin(game) ?? { id: GAME_ID, version: 1 }, state, game)
+}
+
 /** A plugin's query by full name, ready to ask. Undefined when the game does not have it. */
 export function pluginQuery(game: Game | undefined, name: string) {
   const found = member(game, name, 'queries')
@@ -445,8 +464,45 @@ export function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugi
   }
 }
 
-/** The plugin with this id, if the game has it. */
+/** The plugin id the game's own code answers to: content calls `rules` as `'game/name'`. No plugin can have it. */
+export const GAME_ID = 'game'
+
+/** The game's rules as the plugin machinery runs them, per rules object. */
+const asPlugins = new WeakMap<GameRules, Plugin>()
+
+/**
+ * The game's own code as a plugin with the id `game`, so content calls it as
+ * it calls a plugin (`{ 'game/tired': true }`), and its hooks and providers run
+ * where a plugin's do. Its turn hooks, stat hook and effects are run by the
+ * engine itself; see `endTurn`, the `stat` effect and `customEffect`.
+ * Undefined for a game with no rules.
+ */
+export function rulesPlugin(game: Game | undefined): Plugin | undefined {
+  const rules = game?.rules
+  if (!rules) return undefined
+  let plugin = asPlugins.get(rules)
+  if (!plugin) {
+    const { onTurn: _onTurn, onTurnDone: _onTurnDone, onStat: _onStat, effects: _effects, migrations: _migrations, saveName: _saveName, ...members } = rules
+    plugin = { ...(members as Omit<Plugin, 'id' | 'version'>), id: GAME_ID, version: 1 }
+    asPlugins.set(rules, plugin)
+  }
+  return plugin
+}
+
+/**
+ * The game's rules, then its plugins, in the order their hooks and
+ * providers run: the game's own code comes first, as if it were the first
+ * plugin.
+ */
+export function pluginsOf(game: Game | undefined): readonly Plugin[] {
+  const rules = rulesPlugin(game)
+  const plugins = game?.plugins ?? []
+  return rules ? [rules, ...plugins] : plugins
+}
+
+/** The plugin with this id, if the game has it; `game` is the game's own rules. */
 export function pluginById(game: Game | undefined, id: string): Plugin | undefined {
+  if (id === GAME_ID) return rulesPlugin(game)
   return game?.plugins?.find((plugin) => plugin.id === id)
 }
 
@@ -514,10 +570,28 @@ export function runTurnHooks(game: Game, state: GameState): GameState {
   return next
 }
 
+/** Every plugin's `onTurnDone` hook, in order, once the turn's `onTurn` hooks have all run. */
+export function runTurnDoneHooks(game: Game, state: GameState): GameState {
+  let next = state
+  for (const plugin of game.plugins ?? []) {
+    if (plugin.onTurnDone) next = plugin.onTurnDone(next, pluginContext(plugin, next, game, { ending: true }))
+  }
+  return next
+}
+
+/** Every plugin's `onStat` hook, in order, on a stat the player just had changed: each gets what the one before returned. */
+export function runStatHooks(game: Game, before: GameState, after: GameState, stat: string, by: number): GameState {
+  let next = after
+  for (const plugin of game.plugins ?? []) {
+    if (plugin.onStat) next = plugin.onStat(before, next, stat, by, pluginContext(plugin, next, game))
+  }
+  return next
+}
+
 /** Every plugin's `onCommand` hook, in order. */
 export function runCommandHooks(game: Game, before: GameState, after: GameState): GameState {
   let next = after
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     if (plugin.onCommand) next = plugin.onCommand(before, next, pluginContext(plugin, next, game))
   }
   return next
@@ -526,7 +600,7 @@ export function runCommandHooks(game: Game, before: GameState, after: GameState)
 /** Every refusal the plugins' guards give this command, hard or soft, in plugin order. */
 export function pluginGuards(game: Game, state: GameState, asked: Asked): Refusal[] {
   const out: Refusal[] = []
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     const refusal = plugin.guard?.(state, asked, pluginContext(plugin, state, game))
     if (refusal !== undefined) out.push(refusal)
   }
@@ -536,7 +610,7 @@ export function pluginGuards(game: Game, state: GameState, asked: Asked): Refusa
 /** Every plugin's stat modifiers for this state, in plugin order. */
 export function pluginStatModifiers(game: Game, state: GameState): StatModifier[] {
   const out: StatModifier[] = []
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     if (plugin.statModifiers) out.push(...(plugin.statModifiers(state, pluginContext(plugin, state, game)) ?? []))
   }
   return out
@@ -544,18 +618,18 @@ export function pluginStatModifiers(game: Game, state: GameState): StatModifier[
 
 /** Every plugin's notes on what these effects cost, in plugin order. */
 export function pluginPrices(game: Game, state: GameState, effects: readonly Effect[]): string[] {
-  return (game.plugins ?? []).flatMap((plugin) => plugin.price?.(state, effects, pluginContext(plugin, state, game)) ?? [])
+  return pluginsOf(game).flatMap((plugin) => plugin.price?.(state, effects, pluginContext(plugin, state, game)) ?? [])
 }
 
 /** Every plugin's label, joined: where the game is, or null if no plugin says. */
 export function pluginLabel(game: Game, state: GameState): string | null {
-  const parts = (game.plugins ?? []).flatMap((plugin) => plugin.label?.(state, pluginContext(plugin, state, game)) || [])
+  const parts = pluginsOf(game).flatMap((plugin) => plugin.label?.(state, pluginContext(plugin, state, game)) || [])
   return parts.length ? parts.join(' · ') : null
 }
 
 /** The first plugin's stage, with the id its blocks are drawn under, or undefined if none answers. */
 export function pluginStage(game: Game, state: GameState): (StageDef & { id: string }) | undefined {
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     const stage = plugin.stage?.(state, pluginContext(plugin, state, game))
     if (stage) return { ...stage, id: stage.id ?? plugin.id }
   }
@@ -564,7 +638,7 @@ export function pluginStage(game: Game, state: GameState): (StageDef & { id: str
 
 /** Who a speaker id is, as the first plugin that knows says; undefined if none does. */
 export function pluginSpeaker(game: Game, state: GameState, id: string): SpeakerView | undefined {
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     const speaker = plugin.speaker?.(id, state, pluginContext(plugin, state, game))
     if (speaker) return speaker
   }
@@ -573,7 +647,7 @@ export function pluginSpeaker(game: Game, state: GameState, id: string): Speaker
 
 /** Every plugin's buttons, in plugin order. */
 export function pluginButtons(game: Game, state: GameState): ActionDef[] {
-  return (game.plugins ?? []).flatMap((plugin) => [...(plugin.buttons?.(state, pluginContext(plugin, state, game)) ?? [])])
+  return pluginsOf(game).flatMap((plugin) => [...(plugin.buttons?.(state, pluginContext(plugin, state, game)) ?? [])])
 }
 
 /** What a plugin says is wrong with how content calls it, by full name; nothing for a name with no plugin behind it. */
@@ -585,13 +659,13 @@ export function pluginArgProblems(game: Game, kind: 'conditions' | 'effects' | '
 
 /** Does any plugin guard or price commands? If none does, nothing needs to know a command's effects. */
 export function pluginsWatch(game: Game): boolean {
-  return (game.plugins ?? []).some((plugin) => plugin.guard || plugin.price)
+  return pluginsOf(game).some((plugin) => plugin.guard || plugin.price)
 }
 
 /** What the plugins put on background channels: for each channel, the first plugin's that names it. */
 export function pluginAudio(game: Game, state: GameState): Record<string, string | null> {
   const out: Record<string, string | null> = {}
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     const audio = plugin.audio?.(state, pluginContext(plugin, state, game))
     for (const [channel, track] of Object.entries(audio ?? {})) {
       if (track !== undefined && !Object.hasOwn(out, channel)) out[channel] = track
@@ -612,7 +686,7 @@ export function pluginViews(
   profile?: Readonly<Record<string, unknown>>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {}
-  for (const plugin of game.plugins ?? []) {
+  for (const plugin of pluginsOf(game)) {
     if (plugin.view) out[plugin.id] = pluginView(plugin, state, game, picks, profile?.[plugin.id])
   }
   return out

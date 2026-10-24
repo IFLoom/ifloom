@@ -1,24 +1,22 @@
 import type { Game } from './game.ts'
-import { pluginCondition, pluginEffect, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
+import { GAME_ID, pluginCondition, pluginEffect, pluginName, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
 import { roll } from './random.ts'
 import type { Effect, GameState } from './types.ts'
 import { customCall, type EffectRef } from './calls.ts'
 
 /**
- * The game's own code, by name.
+ * The game's own code, by name, in `rules`.
  *
- * Content is data — conditions and effects a tool can read, a mod can ship and
- * the loader can check. The few things that are genuinely computed live here
- * instead, as named functions on the game, and content calls them by name:
- * `{ custom: 'canAffordRent' }` as a condition, `{ custom: 'payRent', with: {} }`
- * as an effect, `{{v:rentDue}}` in prose, `max: { value: 'energyCeiling' }` on
- * a stat.
+ * Content is data: conditions and effects a tool can read, a mod can ship and
+ * the loader can check. The few things that are genuinely computed live in
+ * the game's `rules` instead, as named functions, and content calls them by
+ * name with `game` in front, as it calls a plugin's: `{ 'game/canAffordRent':
+ * true }` as a condition, `{ 'game/payRent': {} }` as an effect,
+ * `{{v:game/rentDue}}` in prose, `max: { value: 'game/energyCeiling' }` on a
+ * stat.
  *
  * Each game owns its own: two games in one page, or a test next to a game,
  * never see each other's functions.
- *
- * A name with a `/` in it belongs to a plugin — `quests/done` is the `done`
- * condition of the plugin `quests` — and is looked up there instead.
  */
 export type CustomCondition = (state: GameState, args: PluginArgs, context: CustomContext) => boolean
 /**
@@ -27,14 +25,8 @@ export type CustomCondition = (state: GameState, args: PluginArgs, context: Cust
  * included. It runs in its turn, on the state the effects before it left.
  */
 export type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
-/** A word or a number for prose (`{{v:name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
+/** A word or a number for prose (`{{v:game/name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
 export type CustomValue = (state: GameState, args: PluginArgs, context: CustomContext) => string | number
-
-export type Custom = {
-  conditions?: Record<string, CustomCondition>
-  effects?: Record<string, CustomEffect>
-  values?: Record<string, CustomValue>
-}
 
 /**
  * What a game's own function is handed besides the state and its arguments,
@@ -85,31 +77,26 @@ export function customContext(state: GameState, game: Game): CustomContext {
 
 export { commandOf, customCall, shortFormProblem, type CommandRef, type CustomCall, type EffectRef, type PluginCall, type ValueRef } from './calls.ts'
 
-/** A custom condition by name, a plugin's or the game's own, ready to ask. */
+/** A condition by full name, a plugin's or the game's own (`game/…`), ready to ask. */
 export function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined {
-  const fromPlugin = pluginCondition(game, name)
-  if (fromPlugin) return fromPlugin
-  const fn = game?.custom?.conditions?.[name]
-  return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
+  return pluginCondition(game, name)
 }
 
-/** One of the game's own custom effects by name, ready to work out the effects it stands for. A plugin's isn't one: see `hasCustomEffect`. */
+/** One of the game's own effects by full name (`game/payRent`), ready to work out the effects it stands for. A plugin's isn't one: see `hasCustomEffect`. */
 export function customEffect(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => EffectRef[]) | undefined {
-  const fn = game?.custom?.effects?.[name]
+  const parts = pluginName(name)
+  const fn = parts?.plugin === GAME_ID && game?.rules?.effects && Object.hasOwn(game.rules.effects, parts.name) ? game.rules.effects[parts.name] : undefined
   return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
 }
 
-/** A value by name, a plugin's or the game's own, ready to ask. */
+/** A value by full name, a plugin's or the game's own (`game/…`), ready to ask. */
 export function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined {
-  const fromPlugin = pluginValue(game, name)
-  if (fromPlugin) return fromPlugin
-  const fn = game?.custom?.values?.[name]
-  return fn && game ? (state, args = {}) => fn(state, args, customContext(state, game)) : undefined
+  return pluginValue(game, name)
 }
 
-/** Does the game or one of its plugins have an effect by this name? */
+/** Does the game or one of its plugins have an effect by this full name? */
 export function hasCustomEffect(game: Game | undefined, name: string): boolean {
-  return Boolean(pluginEffect(game, name) ?? game?.custom?.effects?.[name])
+  return Boolean(pluginEffect(game, name) ?? customEffect(game, name))
 }
 
 /**

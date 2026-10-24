@@ -65,7 +65,6 @@ import type {
   AudioState,
   AudioView,
   CarryOver,
-  Custom,
   DataScene,
   EffectRef,
   EntitiesView,
@@ -411,8 +410,6 @@ export type FrozenGame = {
   entities?: EntityDef[]
   /** Traits by id and then entity: rows given to `loadGame`, every entity's once loaded. */
   traits?: TraitTable
-  /** The game's named functions: custom conditions, effects and values. */
-  custom?: Custom
   /**
    * Actions offered in every location, after each location's own — waiting,
    * checking a map. A game with none has none.
@@ -492,8 +489,6 @@ export type FrozenPack = {
    * less often than the rest.
    */
   variants?: Record<string, VariantMember[]>
-  /** Named functions content calls. A later pack's replaces an earlier one's by name. */
-  custom?: Custom
   /** Surgical changes to content an earlier pack declared. */
   patches?: Patch[]
   /**

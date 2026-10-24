@@ -19,14 +19,56 @@ The hooks are named as a [plugin's](/docs/reference/plugins#hooks-and-providers)
 
 ```ts
 type GameRules = {
-  locks?: readonly Lock[]
-  resets?: Record<string, KvValue>
+  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
+  saveName?: (state: GameState) => string | null
   onTurn?: (state: GameState, context: TurnContext) => GameState
   onTurnDone?: (state: GameState, context: TurnContext) => GameState
-  commands?: Partial<Record<Command['type'], (state: GameState, command: Command) => GameState | string>>
-  onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
+  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext) => GameState
+  onCommand?: (before: GameState, after: GameState, context: RulesContext) => GameState
+  conditions?: Record<string, CustomCondition>
+  effects?: Record<string, CustomEffect>
+  values?: Record<string, CustomValue>
+  queries?: Record<string, (state: GameState, args: PluginArgs, context: CustomContext) => unknown>
+  commands?: Record<string, RulesCommand>
+  guard?: (state: GameState, asked: Asked, context: RulesContext) => Refusal | undefined
+  price?: (state: GameState, effects: readonly Effect[], context: RulesContext) => string[] | undefined
+  label?: (state: GameState, context: RulesContext) => string | undefined
+  stage?: (state: GameState, context: RulesContext) => StageDef | undefined
+  buttons?: (state: GameState, context: RulesContext) => readonly ActionDef[] | undefined
+  statModifiers?: (state: GameState, context: RulesContext) => readonly StatModifier[] | undefined
+  audio?: (state: GameState, context: RulesContext) => Record<string, string | null> | undefined
+  view?: (state: GameState, context: RulesContext) => unknown
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext) => unknown
 }
 ```
+
+A plain object you write with no helper. It has what a [plugin](/docs/reference/plugins) can have, for the game itself. Content calls what it declares as it calls a plugin's, with `game` as the plugin id: `{ 'game/tired': true }` as a condition, `{ 'game/payRent': {} }` as an effect, `{{v:game/catName}}` in prose and `{ 'game/rest': true }` as a command. The game's code runs first, before every plugin's, as if it were the first plugin. Its `view` is at `view.plugins.game`.
+
+## RulesContext
+
+```ts
+type RulesContext = CustomContext & {
+  apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  picks?: Record<string, string>
+  profile?: unknown
+}
+```
+
+What the game's hooks, commands and providers are handed besides the state: a [custom function's](/docs/reference/custom#customcontext) context and `apply`, which applies effects as content would. In `view`, `picks` and `profile` are what a plugin's view gets.
+
+## RulesCommand
+
+```ts
+type RulesCommand = {
+  ignoresLocks?: boolean
+  whyNot?: (state: GameState, args: PluginArgs, context: RulesContext) => string | undefined
+  run: (state: GameState, args: PluginArgs, context: RulesContext) => GameState
+  effectsOf?: (state: GameState, args: PluginArgs, context: RulesContext) => Effect[]
+  spends?: (state: GameState, args: PluginArgs, context: RulesContext) => Record<string, number> | undefined
+}
+```
+
+A command of the game's own, as a plugin's [`PluginCommand`](/docs/reference/plugins#plugincommand). A button sends it as `{ 'game/rest': true }`, and logs keep it as `{ type: 'custom', name: 'game/rest' }`.
 
 ## The end of a turn
 

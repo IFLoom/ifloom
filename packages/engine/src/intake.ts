@@ -345,7 +345,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
  */
 export type FillKind = FeatureFill
 
-/** What a step of `game.migrations` is given besides the state. */
+/** What a step of `rules.migrations` is given besides the state. */
 export type MigrationTools = {
   /** The game the save is loading into, for a step that needs its content: which entity an old id now names, say. */
   game: Game
@@ -377,7 +377,7 @@ function carryGame(state: GameState, game: Game): GameState | string {
   if (version > target) return say(game, 'gameNewer')
   let next = state
   while (version < target) {
-    const step = game.migrations?.[version]
+    const step = game.rules?.migrations?.[version]
     if (step) {
       const given = next
       next = step(given, { game, fill: (kinds) => fillDeclared(given, game, kinds) })

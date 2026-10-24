@@ -189,7 +189,7 @@ describe('achievements', () => {
             achievements: {
               achievements: [
                 { id: 'a', title: 'A', when: { entity: 'thing:moonstone', at: 'you' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
-                { id: 'b', title: 'B', progress: { value: { value: 'nothing' }, target: 3 } },
+                { id: 'b', title: 'B', progress: { value: { value: 'game/nothing' }, target: 3 } },
               ],
             },
           },
@@ -201,7 +201,7 @@ describe('achievements', () => {
       'activity x: unknown achievement "nope"',
       'achievements a: when: unknown kind "thing"',
       'achievements a: progress: unknown stat "luck"',
-      'achievements b: progress: no custom value named "nothing"',
+      'achievements b: progress: no custom value named "game/nothing"',
       'achievements a: progress target must be more than 0',
     ])
   })

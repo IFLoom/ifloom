@@ -438,7 +438,7 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
   return next
 }
 
-/** What a `stat` effect leaves: held to the stat's range, on the player or an entity, through `rules.onStat`. */
+/** What a `stat` effect leaves: held to the stat's range, on the player or an entity. */
 function writeStat(state: GameState, game: Game, key: StatKey, of: string | undefined, to: (was: number) => number, cx: FeatureContext): GameState {
   // Written with `of` already made real: `'you'` and `'player'` are read by `ownerOf` first.
   // A derived stat is worked out, never written: the loader reports the effect.
@@ -500,7 +500,7 @@ export const stats = defineFeature<StatsShape>({
         const after = writeStat(state, game, effect.stat, of, (was) => (set ? effect.to : was + effect.by), cx)
         if (after === state || of !== undefined) return after
         const delta = set ? after.stats[effect.stat] - (state.stats[effect.stat] ?? 0) : effect.by
-        return game.rules?.onStat?.(state, after, effect.stat, delta) ?? after
+        return cx.statHooks(state, after, effect.stat, delta, game)
       },
       references: (effect) => [{ stat: effect.stat, of: effect.of, writes: true }, ...ofKind(effect.of)],
     },

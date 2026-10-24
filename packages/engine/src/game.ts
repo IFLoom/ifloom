@@ -1,6 +1,6 @@
-import type { Plugin, PluginEntry } from './plugin.ts'
+import type { Asked, Plugin, PluginArgs, PluginEntry, Refusal, StageDef, StatModifier } from './plugin.ts'
 import type { Condition } from './condition.ts'
-import type { Custom, TurnContext } from './custom.ts'
+import type { CustomCondition, CustomContext, CustomEffect, CustomValue, EffectRef, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
 import type { ScenePanel } from './features/panels.ts'
@@ -11,7 +11,7 @@ import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
-import type { Command, Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
+import type { Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
 
 export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
@@ -159,16 +159,33 @@ export type StorylineDef = {
 }
 
 /**
- * The parts of a game that are code rather than content: what a turn's end
- * does, how a stat may change.
+ * The game's own code: a plain object of the hooks, tables and providers a
+ * plugin can have, for the game itself, with no plugin to write. Content
+ * calls what it declares as it calls a plugin's, with `game` as the plugin's
+ * id: `{ 'game/tired': true }` as a condition, `{ 'game/postLatest': {} }` as
+ * an effect, `{{v:game/catName}}` in prose, `{ 'game/rest': true }` as a
+ * command.
  *
- * The engine calls these instead of importing the game, which is what lets it
- * leave this repo. Every field is optional; leave one out and the engine does
- * the plain thing. The hooks are named as a plugin's are (ADR 0009): `on` and
- * the event, returning the next state. What is locked and what resets each
- * turn are content: `locks` and `resets`.
+ * Every member is optional; leave one out and the engine does the plain
+ * thing. The hooks are named as a plugin's are (ADR 0009): `on` and the
+ * event, returning the next state. The game's code runs first, before every
+ * plugin's, as if it were the first plugin. What is locked and what resets
+ * each turn are content: `locks` and `resets`.
  */
 export type GameRules = {
+  /**
+   * Steps that carry a save from one version of the game to the next, keyed by
+   * the version they upgrade from: step 1 takes a version-1 save to version 2.
+   * They run when an older save loads, after the engine's and plugins' own
+   * migrations. A version with no step is carried forward unchanged. The
+   * version is the base's `version`.
+   */
+  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
+  /**
+   * The name a save is listed under, such as the name the player typed, or
+   * null for none. Saves record it as `SaveMeta.playerName`. Left out, saves have no name.
+   */
+  saveName?: (state: GameState) => string | null
   /**
    * A hook: the end of a turn. Called once the turn counter has moved on and
    * the content's `resets` are back, with the state then and a `TurnContext`, whose
@@ -179,22 +196,80 @@ export type GameRules = {
    */
   onTurn?: (state: GameState, context: TurnContext) => GameState
   /**
-   * A hook: the end of a turn, after every plugin's `onTurn`. The same
-   * arguments as `onTurn`, but the state has the plugins' changes (the
-   * calendar's new day, a status worn off), so it is where "each new day"
-   * goes. `before` is still the state as the turn ended.
+   * A hook: the end of a turn, after every plugin's `onTurn` and before any
+   * plugin's `onTurnDone`. The same arguments as `onTurn`, but the state has
+   * the plugins' changes (the calendar's new day, a status worn off), so it
+   * is where "each new day" goes. `before` is still the state as the turn ended.
    */
   onTurnDone?: (state: GameState, context: TurnContext) => GameState
   /**
-   * Commands the game handles itself, by type. Return the next state, or a
-   * string to refuse with that reason.
+   * A hook: one of the player's stats just changed. Return `before` to say it
+   * did not take, `after` to let it, or `after` with more besides. Runs before
+   * any plugin's `onStat`.
    */
-  commands?: Partial<Record<Command['type'], (state: GameState, command: Command) => GameState | string>>
+  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext) => GameState
+  /** A hook: after every command that took, with the state it started from and the state after. Returns the next state. */
+  onCommand?: (before: GameState, after: GameState, context: RulesContext) => GameState
+  /** Conditions content can test, by name: `{ 'game/tired': true }`. */
+  conditions?: Record<string, CustomCondition>
   /**
-   * A stat just changed. Return `before` to say it did not take, `after` to
-   * let it, or `after` with more besides.
+   * Effects content can apply, by name: `{ 'game/payRent': {} }`. Each works
+   * out the effects it stands for from the state and returns them, so a
+   * button's price and the guards see what it would do. It can return
+   * anything content can write, a plugin's effects and the game's own included.
    */
-  onStat?: (before: GameState, after: GameState, key: StatKey, by: number) => GameState
+  effects?: Record<string, CustomEffect>
+  /** Words and numbers content can read by name: `{{v:game/catName}}`, a stat's `max: { value: 'game/ceiling' }`. */
+  values?: Record<string, CustomValue>
+  /** Answers code can ask by name with `context.query('game/name')`. */
+  queries?: Record<string, (state: GameState, args: PluginArgs, context: CustomContext) => unknown>
+  /** Commands a button can send, by name: `{ 'game/rest': true }`, logged as `{ type: 'custom', name: 'game/rest' }`. */
+  commands?: Record<string, RulesCommand>
+  /** Whether a command may go ahead, given what it would do. As a plugin's `guard`. */
+  guard?: (state: GameState, asked: Asked, context: RulesContext) => Refusal | undefined
+  /** What a button costs that the engine cannot say, in the game's words. As a plugin's `price`. */
+  price?: (state: GameState, effects: readonly Effect[], context: RulesContext) => string[] | undefined
+  /** Where the game is, in a few words for a header or a save, before the plugins'. As a plugin's `label`. */
+  label?: (state: GameState, context: RulesContext) => string | undefined
+  /** What the screen shows while no scene is open, before any plugin's. As a plugin's `stage`. */
+  stage?: (state: GameState, context: RulesContext) => StageDef | undefined
+  /** Buttons offered while no scene is open, before the plugins'. As a plugin's `buttons`. */
+  buttons?: (state: GameState, context: RulesContext) => readonly ActionDef[] | undefined
+  /** Changes to what the player's stats read right now. As a plugin's `statModifiers`. */
+  statModifiers?: (state: GameState, context: RulesContext) => readonly StatModifier[] | undefined
+  /** What plays on background channels, before the plugins'. As a plugin's `audio`. */
+  audio?: (state: GameState, context: RulesContext) => Record<string, string | null> | undefined
+  /** What the UI needs from the game's own code, at `view.plugins.game`. */
+  view?: (state: GameState, context: RulesContext) => unknown
+  /** What the game keeps in the player's profile, under `game`. As a plugin's `profile`. */
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext) => unknown
+}
+
+/**
+ * What the game's own hooks, commands and providers are handed besides the
+ * state: what a game's function gets (`CustomContext`), `apply` for effects,
+ * and in `view` the pool picks and the profile, as a plugin's context has them.
+ */
+export type RulesContext = CustomContext & {
+  /** Apply effects as content would, to the state the function was handed, or to `on`. */
+  apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  /** Only in `view`: where the pool picks it makes are written. See `PluginContext.picks`. */
+  picks?: Record<string, string>
+  /** Only in `view`, with a runner that has a profile: what the profile holds under `game`. */
+  profile?: unknown
+}
+
+/** A command of the game's own, as `rules.commands` declares it: as a plugin's `PluginCommand`, with the game's context. */
+export type RulesCommand = {
+  /** Run even while a lock would stop it. For tools outside the story, never for something the player does in it. */
+  ignoresLocks?: boolean
+  /** Why it cannot be done now, as the player reads it; undefined if it can. */
+  whyNot?: (state: GameState, args: PluginArgs, context: RulesContext) => string | undefined
+  run: (state: GameState, args: PluginArgs, context: RulesContext) => GameState
+  /** The effects running it would apply, for guards, prices and locks to see. */
+  effectsOf?: (state: GameState, args: PluginArgs, context: RulesContext) => Effect[]
+  /** The stats it spends, by id, for its button's price. */
+  spends?: (state: GameState, args: PluginArgs, context: RulesContext) => Record<string, number> | undefined
 }
 
 /** What a New Game+ takes from the game before: player stats, kv keys and what the player holds. */
@@ -217,30 +292,16 @@ type CoreGame = {
    * The game's own version, a whole number from 1. Saves record it, and
    * `migrations` carry an older save forward. Declaring it also stops the
    * engine filling new stats, settings and entities into old saves by itself:
-   * your migration steps fill them with `tools.fill()`. 1 if left out.
+   * your migration steps (`rules.migrations`) fill them with `tools.fill()`. 1 if left out.
    */
   version?: number
-  /**
-   * Steps that carry a save from one version of the game to the next, keyed by
-   * the version they upgrade from: step 1 takes a version-1 save to version 2.
-   * They run when an older save loads, after the engine's and plugins' own
-   * migrations. A version with no step is carried forward unchanged.
-   */
-  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   /** What a New Game+ carries over from the game before. See `startingState`'s `carry`. */
   carryOver?: CarryOver
-  /**
-   * The name a save is listed under, such as the name the player typed, or
-   * null for none. Saves record it as `SaveMeta.playerName`. Left out, saves have no name.
-   */
-  saveName?: (state: GameState) => string | null
   /**
    * When the game counts as finished. The runner records the first time it
    * holds in the profile's `core:finished`, so a title screen can offer New Game+.
    */
   finished?: Condition
-  /** The game's named functions: custom conditions, effects, values and panel data. */
-  custom?: Custom
   /** The ids of the packs the game was loaded with, in order (not its own content, which has none). Saves record them. */
   packs?: string[]
   prose?: ProseStore

@@ -60,7 +60,7 @@ function game(...partners: Plugin[]): Game {
       { id: 'hired', effects: [hire('cafe')] },
       { id: 'sacked', effects: [fire('cafe')] },
       // A week goes by, with the calendar's five periods a day.
-      { id: 'week', effects: [{ custom: 'calendar/pass', with: { by: 35 } }] },
+      { id: 'week', effects: [{ 'calendar/pass': { by: 35 } }] },
     ],
     data: {
       jobs: { jobs: [cafe] },

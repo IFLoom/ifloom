@@ -33,7 +33,7 @@ export const activities: Content = {
         { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
         { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
-      effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
+      effects: [{ 'game/postLatest': true }, { kind: 'kv', key: 'postedToday', to: true }],
     },
   ],
   prose: {

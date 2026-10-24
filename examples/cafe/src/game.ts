@@ -12,7 +12,7 @@
  * `story/` and its sums in `rules.ts`. This file only puts it together.
  */
 import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
-import { custom } from './rules.ts'
+import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { staff } from './world/staff.ts'
 import { menu } from './world/menu.ts'
@@ -29,7 +29,7 @@ export function cornerCafe(): { game: Game; problems: string[] } {
   const { game, problems } = loadGame(content, {
     id: 'corner-cafe',
     title: 'The Corner Café',
-    custom,
+    rules,
   })
   return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }

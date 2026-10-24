@@ -181,7 +181,7 @@ describe('entities', () => {
                   kind: 'each',
                   of: 'staff',
                   where: { stat: 'quality', of: '$', gte: 1 },
-                  effects: [{ kind: 'stat', stat: 'quality', by: 1, of: '$' }, { custom: 'nope' }],
+                  effects: [{ kind: 'stat', stat: 'quality', by: 1, of: '$' }, { 'game/nope': true }],
                 },
               ],
             },
@@ -199,7 +199,7 @@ describe('entities', () => {
       'activity payAna: stat "morale" belongs to staff: say whose with "of"',
       'activity week: in each staff: stat "quality" belongs to dish, not staff',
       'activity week: in each staff: stat "quality" belongs to dish, not staff',
-      'activity week: in each staff: no custom effect named "nope"',
+      'activity week: in each staff: no custom effect named "game/nope"',
     ])
   })
 
@@ -329,11 +329,9 @@ describe('the view of entities', () => {
       { id: 'c', title: 'C' },
     )
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(['kind staff: unknown stat "nerve"', 'kind staff: unknown kind "pig"'])
-    expect(bindCurrent({ all: [{ 'cast/met': { character: '$' } }, { custom: 'fond', with: { who: ['$'] } }, { kv: 'x', is: '$' }] }, 'character:ava')).toEqual(
-      {
-        all: [{ 'cast/met': { character: 'character:ava' } }, { custom: 'fond', with: { who: ['character:ava'] } }, { kv: 'x', is: '$' }],
-      },
-    )
+    expect(bindCurrent({ all: [{ 'cast/met': { character: '$' } }, { 'game/fond': { who: ['$'] } }, { kv: 'x', is: '$' }] }, 'character:ava')).toEqual({
+      all: [{ 'cast/met': { character: 'character:ava' } }, { 'game/fond': { who: ['character:ava'] } }, { kv: 'x', is: '$' }],
+    })
   })
 })
 

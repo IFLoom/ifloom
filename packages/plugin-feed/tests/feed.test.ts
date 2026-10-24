@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, holds, loadGame, startingState, view, type Game, type GameState, type Content } from '@ifloom/engine'
+import { apply, holds, loadGame, startingState, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
 import { feed, hasPosted, postTo, react, seeFeed, type FeedsView } from '../src/index.ts'
 import { calendar, pass, period, day } from '@ifloom/plugin-calendar'
 
@@ -22,7 +22,7 @@ function game(): Game {
     stats: [{ id: 'fans', label: 'Fans' }],
     activities: [
       { id: 'wait', effects: [pass(1)] },
-      { id: 'postSunset', effects: [postTo('social', 'sunset', { text: 'own.sunset', image: 'art/sunset.jpg' }), { custom: 'roll' }] },
+      { id: 'postSunset', effects: [postTo('social', 'sunset', { text: 'own.sunset', image: 'art/sunset.jpg' }), { 'game/roll': true }] },
       { id: 'cheer', effects: [react('ava.cake', { likes: 2, from: 'Sam', text: 'comment.yum' })] },
     ],
     prose: {
@@ -40,12 +40,10 @@ function game(): Game {
         ],
       },
     },
-    custom: {
-      // The game's own roll for how a post does; here, always the same.
-      effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'comment.wow' })] },
-    },
   }
-  const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
+  // The game's own roll for how a post does; here, always the same.
+  const rules: GameRules = { effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'comment.wow' })] } }
+  const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -80,7 +78,7 @@ describe('feeds', () => {
       comments: [{ from: 'Ava', name: 'Ava', text: 'Wow' }],
     })
     expect(holds(state, hasPosted(), g)).toBe(true)
-    expect(holds(state, { custom: 'feed/likes', with: { post: 'sunset', gte: 10 } }, g)).toBe(true)
+    expect(holds(state, { 'feed/likes': { post: 'sunset', gte: 10 } }, g)).toBe(true)
   })
 
   it('add reactions to other people’s posts', () => {

@@ -81,7 +81,7 @@ export function begin(game: Game, patch: Partial<GameState> = {}): GameState {
 export const standAt = (state: GameState, place: string): GameState => ({ ...state, kv: { ...state.kv, at: place } })
 
 /** The keys of a game that `loadGame` takes as its base; the rest are content. */
-const BASE: (keyof GameBase)[] = ['id', 'title', 'version', 'migrations', 'saveName', 'custom', 'plugins', 'rules']
+const BASE: (keyof GameBase)[] = ['id', 'title', 'version', 'plugins', 'rules']
 
 /**
  * `loadGame`, given a game written as one object: what the base holds goes in

@@ -40,7 +40,7 @@ const MEMBERS = {
   // Tables of named functions content and code call, and its words.
   tables: ['conditions', 'effects', 'commands', 'queries', 'values', 'strings'],
   // Hooks: at an event, the next state.
-  hooks: ['onTurn', 'onCommand'],
+  hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
   providers: ['guard', 'price', 'label', 'stage', 'buttons', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'entities'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; and the content it brings, under the game's.
@@ -134,11 +134,27 @@ describe('the plugin shape (ADR 0009)', () => {
     // Every on-name a plugin may have is a hook, and every hook is an on-name.
     expect([...allowed].filter((name) => /^on[A-Z]/.test(name)).sort()).toEqual([...MEMBERS.hooks].sort())
     // The game's rules follow the same rule: its hooks are on-names, and there's no `turn` beside `onTurn`.
-    const rules: Record<keyof GameRules, 'hook' | 'data' | 'table'> = {
+    const rules: Record<keyof GameRules, 'hook' | 'provider' | 'table' | 'upgrade'> = {
+      migrations: 'upgrade',
+      saveName: 'provider',
       onTurn: 'hook',
       onTurnDone: 'hook',
       onStat: 'hook',
+      onCommand: 'hook',
+      conditions: 'table',
+      effects: 'table',
+      values: 'table',
+      queries: 'table',
       commands: 'table',
+      guard: 'provider',
+      price: 'provider',
+      label: 'provider',
+      stage: 'provider',
+      buttons: 'provider',
+      statModifiers: 'provider',
+      audio: 'provider',
+      view: 'provider',
+      profile: 'provider',
     }
     expect(Object.entries(rules).filter(([name, role]) => (role === 'hook') !== /^on[A-Z]/.test(name))).toEqual([])
   })

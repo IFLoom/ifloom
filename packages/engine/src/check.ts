@@ -65,6 +65,8 @@ function shapeProblems(condition: Condition): string[] {
   const kinds = conditionKinds(condition)
   if (kinds.length === 1) return []
   const keys = Object.keys(condition)
+  if (!kinds.length && customCall(condition)) return []
+  if (!kinds.length && typeof (condition as { custom?: unknown }).custom === 'string') return [oldCustom((condition as { custom: string }).custom)]
   if (!kinds.length)
     return [
       `a condition needs one kind, such as kv or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`,
@@ -72,10 +74,17 @@ function shapeProblems(condition: Condition): string[] {
   return [`a condition has one kind, but this one has ${kinds.length}: ${kinds.join(', ')}`]
 }
 
+/** How a call written `{ custom: name }`, as content did before schema 18, is written now. */
+function oldCustom(name: string): string {
+  const full = name.includes('/') ? name : `game/${name}`
+  return `{ custom: "${name}" } is written in short now, as { "${full}": { … } }, or true for no arguments`
+}
+
 /** What is wrong with an effect's kind: one the engine doesn't have does nothing. A custom call by name has none. */
 function kindProblem(effect: EffectRef): string[] {
   const short = shortFormProblem(effect)
   if (short) return [short]
+  if (typeof (effect as { custom?: unknown }).custom === 'string') return [oldCustom((effect as { custom: string }).custom)]
   if (customCall(effect)) return []
   if (!('kind' in effect)) return ['an effect needs a kind, or a custom call by name']
   return (EFFECT_KINDS as string[]).includes(effect.kind) ? [] : [`unknown effect kind "${String(effect.kind)}"`]
@@ -88,6 +97,11 @@ function typeProblem(ref: CommandRef): string[] {
   const command = commandOf(ref)
   if (typeof command.type !== 'string') return ['a command needs a type, or a plugin command in short']
   return (COMMAND_KINDS as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
+}
+
+/** For a name with no plugin in front: how to call the game's own code by that name. */
+function unprefixed(name: string): string {
+  return name.includes('/') ? '' : `; the game's own code is called with "game/" in front, as "game/${name}"`
 }
 
 /** A page path as written (`art/photo/ava.svg`), or null for a URL or nothing. */
@@ -137,7 +151,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       // A cooperating partner the game doesn't have: content may name it, and it is simply not there.
       if (absentPartner(game, name)) return []
       const noun = kind === 'conditions' ? 'custom condition' : kind === 'commands' ? 'plugin command' : long ? 'plugin effect' : 'custom effect'
-      return [`no ${noun} named "${name}"`]
+      return [`no ${noun} named "${name}"${unprefixed(name)}`]
     }
     const parts = pluginName(name)
     const plugin = parts && pluginById(game, parts.plugin)
@@ -168,7 +182,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       for (const key of members) proseNamed.add(key)
       return members.length ? [] : [`variants "${ref.variants}" has no lines`]
     }
-    if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"`]
+    if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"${unprefixed(ref.value)}`]
     if ('picture' in ref) {
       file(where, 'picture', ref.asWritten ? pagePath(ref.picture) : artSrc(ref.picture))
       return []
@@ -194,6 +208,8 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if (!/^[a-z0-9-]+$/i.test(plugin.id)) say(undefined, `plugin ${plugin.id}`, 'a plugin id is letters, digits and "-" only')
     // The profile's `core:` and `ui:` namespaces belong to the engine and the UI.
     if (/^(core|ui)(:|$)/i.test(plugin.id)) say(undefined, `plugin ${plugin.id}`, '"core" and "ui" are reserved for the engine and the UI')
+    // Content calls the game's own code as `game/…`.
+    if (plugin.id === 'game') say(undefined, `plugin ${plugin.id}`, '"game" is reserved for the game\'s own rules')
     if (pluginIds.has(plugin.id)) say(undefined, `plugin ${plugin.id}`, 'two plugins share this id')
     pluginIds.add(plugin.id)
   }
@@ -203,7 +219,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   if (game.version !== undefined && !(Number.isInteger(game.version) && game.version >= 1)) {
     say(undefined, 'version', 'version must be a whole number, 1 or more')
   }
-  for (const key of Object.keys(game.migrations ?? {})) {
+  for (const key of Object.keys(game.rules?.migrations ?? {})) {
     const n = Number(key)
     if (!Number.isInteger(n) || n < 1 || n >= (game.version ?? 1)) {
       say(undefined, `migration ${key}`, `a step is keyed by the version it upgrades from, 1 to ${(game.version ?? 1) - 1}`)

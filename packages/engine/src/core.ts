@@ -17,7 +17,7 @@ import { buildEffects, customCall, customCondition, customContext, customEffect,
 import { sceneById } from './game.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
-import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, runTurnHooks } from './plugin.ts'
+import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, rulesContext, runStatHooks, runTurnDoneHooks, runTurnHooks } from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
 import { roll, weighted } from './random.ts'
@@ -35,6 +35,11 @@ export function featureContext(): FeatureContext {
     holds,
     runEffects,
     turnHooks: (state, game) => runTurnHooks(game, state),
+    turnDoneHooks: (state, game) => runTurnDoneHooks(game, state),
+    statHooks: (before, after, stat, by, game) => {
+      const ruled = game.rules?.onStat ? game.rules.onStat(before, after, stat, by, rulesContext(after, game)) : after
+      return runStatHooks(game, before, ruled, stat, by)
+    },
     turnContext: (state, game, before) => ({
       ...customContext(state, game),
       before,
@@ -94,24 +99,28 @@ const conditions: { [K in keyof CoreConditions]: ConditionEntry<CoreConditions[K
     explain: () => 'not',
     references: (condition) => [{ when: condition.not }],
   },
-  // Also a plugin's call in short, `{ 'quests/done': { quest: 'bakery' } }`, read as `{ custom }`.
-  custom: {
-    // An undeclared custom condition is a content fault the checker reports; here it
-    // simply does not apply, so a broken mod hides content rather than crashing.
-    holds: (state, condition, game) => {
-      const call = customCall(condition)
-      const fn = call && customCondition(game, call.custom)
-      return fn ? fn(state, call.with ?? {}) : false
-    },
-    explain: (_state, condition, game) => {
-      const call = customCall(condition)
-      if (!call) return 'a custom condition with no name'
-      return customCondition(game, call.custom) ? `custom condition ${call.custom}` : `custom condition ${call.custom} is not declared by the game`
-    },
-    references: (condition) => {
-      const call = customCall(condition)
-      return call ? [{ call: 'conditions', name: call.custom, with: call.with }] : []
-    },
+}
+
+/**
+ * A call in short, a plugin's or the game's own: `{ 'quests/done': { quest: 'bakery' } }`,
+ * `{ 'game/tired': true }`. It has no kind key; its one key is the name.
+ */
+const callCondition: ConditionEntry<Condition> = {
+  // An undeclared one is a content fault the checker reports; here it simply
+  // does not apply, so a broken mod hides content rather than crashing.
+  holds: (state, condition, game) => {
+    const call = customCall(condition)
+    const fn = call && customCondition(game, call.custom)
+    return fn ? fn(state, call.with ?? {}) : false
+  },
+  explain: (_state, condition, game) => {
+    const call = customCall(condition)
+    if (!call) return 'a call with no name'
+    return customCondition(game, call.custom) ? `condition ${call.custom}` : `condition ${call.custom} is not declared by the game or a plugin`
+  },
+  references: (condition) => {
+    const call = customCall(condition)
+    return call ? [{ call: 'conditions', name: call.custom, with: call.with }] : []
   },
 }
 
@@ -212,18 +221,17 @@ type CoreCommandType = keyof CoreCommands | keyof FeatureCommands
 
 /**
  * The kind keys a condition has: one for a well-formed one, none or several
- * for one the checker reports. A plugin's short call (`{ 'quests/done': … }`)
- * and `{ custom }` are `custom`.
+ * for one the checker reports. A call in short (`{ 'quests/done': … }`) has none.
  */
 export function conditionKinds(condition: Condition): ConditionKind[] {
-  const kinds = Object.keys(condition).filter((key): key is ConditionKind => Object.hasOwn(KINDS.conditions, key))
-  return !kinds.length && customCall(condition) ? ['custom'] : kinds
+  return Object.keys(condition).filter((key): key is ConditionKind => Object.hasOwn(KINDS.conditions, key))
 }
 
-/** The entry for a condition's one kind, or undefined for a condition with none or several. */
+/** The entry for a condition's one kind, or a call's, or undefined for a condition with neither or several kinds. */
 export function conditionEntry(condition: Condition): ConditionEntry<Condition> | undefined {
   const kinds = conditionKinds(condition)
-  return kinds.length === 1 ? (KINDS.conditions[kinds[0]] as ConditionEntry<Condition>) : undefined
+  if (kinds.length === 1) return KINDS.conditions[kinds[0]] as ConditionEntry<Condition>
+  return !kinds.length && customCall(condition) ? callCondition : undefined
 }
 
 /** The entry for an effect's kind, or undefined for a kind the engine doesn't have. */

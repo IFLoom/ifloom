@@ -79,7 +79,7 @@ export type StartOptions = {
  * Plain nested data, so content stays serialisable and the loader can check it
  * — `{ storyline: 'baker' }` is verifiable against the declared storylines in a way
  * that an arbitrary function never was. Anything genuinely derived escapes
- * through `{ custom: name }`, a custom condition the game declares.
+ * through `{ 'game/name': args }`, a condition the game's `rules` declare.
  */
 export type Range = { gte?: number; gt?: number; lte?: number; lt?: number }
 
@@ -88,14 +88,12 @@ export type CoreConditions = {
   all: { all: Condition[] }
   any: { any: Condition[] }
   not: { not: Condition }
-  /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
-  custom: { custom: string; with?: Record<string, unknown> }
 }
 
 /** Every kind of condition, by the key that tells it apart: the core's and the features'. */
 export type ConditionMap = CoreConditions & FeatureConditions
 
-/** The keys that tell one kind of condition from another. A plugin's short call (`{ 'quests/done': … }`) is read as `custom`. */
+/** The keys that tell one kind of condition from another. A plugin's call in short (`{ 'quests/done': … }`) has none. */
 export type ConditionKind = keyof ConditionMap
 
 /** The condition a key stands for. */
@@ -110,9 +108,9 @@ export type Condition = ConditionMap[ConditionKind] | PluginCall
 /** The effects the core keeps itself, by kind. The features' are in `features/`. */
 export type CoreEffects = {
   /**
-   * A custom effect by name: the game's own, or a plugin's by its full name.
-   * Content writes `{ custom: name, with }` or the short form; the engine
-   * turns either into this. It runs in its turn, on the state the effects
+   * A call by its full name: a plugin's, or the game's own (`game/…`).
+   * Content writes the short form, `{ 'game/payRent': {} }`; the engine
+   * turns it into this. It runs in its turn, on the state the effects
    * before it left.
    */
   custom: { kind: 'custom'; name: string; with?: Record<string, unknown> }

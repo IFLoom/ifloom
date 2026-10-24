@@ -1,8 +1,8 @@
 /**
  * The café's own code: the week's sums, worked out from the state. Content
- * calls them by name, `{ custom: 'takings' }` and `{{v:payroll}}`.
+ * calls them by name, `{ 'game/takings': true }` and `{{v:game/payroll}}`.
  */
-import { entitiesOf, statValue, type Custom, type EffectRef, type Game, type GameState } from '@ifloom/engine'
+import { entitiesOf, statValue, type EffectRef, type Game, type GameRules, type GameState } from '@ifloom/engine'
 
 /** The sum of one stat over every entity of a kind. */
 function total(state: GameState, game: Game, kind: string, stat: string): number {
@@ -10,7 +10,7 @@ function total(state: GameState, game: Game, kind: string, stat: string): number
 }
 
 /** The week's sums: worked out from the state, so they are the game's own code. */
-export const custom: Custom = {
+export const rules: GameRules = {
   effects: {
     // Each dish sells by its price and quality, and the kitchen's skill decides how many go out.
     takings: (state, _args, { game }): EffectRef[] => {

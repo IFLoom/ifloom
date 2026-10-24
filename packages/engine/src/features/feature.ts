@@ -31,6 +31,10 @@ export type FeatureContext = {
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
   /** Every plugin's `onTurn` hook, as a turn ends. */
   turnHooks: (state: GameState, game: Game) => GameState
+  /** Every plugin's `onTurnDone` hook, as a turn ends, after the game's `rules.onTurnDone`. */
+  turnDoneHooks: (state: GameState, game: Game) => GameState
+  /** The game's `rules.onStat`, then every plugin's `onStat`, on a stat of the player's that just changed. */
+  statHooks: (before: GameState, after: GameState, stat: string, by: number, game: Game) => GameState
   /** What `rules.onTurn` is handed: `before` is the state as the turn ended, and its `apply` ends no turn. */
   turnContext: (state: GameState, game: Game, before: GameState) => TurnContext
   /** What a command would apply, worked out before it runs, as `effectsOf` says. */

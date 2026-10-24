@@ -87,8 +87,8 @@ A test worked out from several values rather than read from one. Content calls i
 ```ts
 custom: {
   conditions: {
-    isRegular: (state) => (state.seen['ava.hi'] ?? 0) >= 3,
-    visitedAtLeast: (state, args) => (state.seen['ava.hi'] ?? 0) >= Number(args.times ?? 1),
+    isRegular: (state) => (state.seen['ava.hi']?.n ?? 0) >= 3,
+    visitedAtLeast: (state, args) => (state.seen['ava.hi']?.n ?? 0) >= Number(args.times ?? 1),
   },
 }
 

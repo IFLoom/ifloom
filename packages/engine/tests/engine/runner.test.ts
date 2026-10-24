@@ -285,7 +285,7 @@ describe('starting over from content', () => {
     const at = begin(game, { sceneId: 'end', turn: 9 })
     const first = apply(at, game, { type: 'choose', id: 'again' })
     expect(first).toMatchObject({ ok: true, newGame: true, state: { turn: 0, sceneId: 'start' } })
-    expect(first.state.seen).toEqual({ start: 1 })
+    expect(first.state.seen).toEqual({ start: { n: 1, first: 0, last: 0 } })
     expect(apply(at, game, { type: 'choose', id: 'again' }).state).toEqual(first.state)
     expect(first.state.seed).not.toBe(at.seed)
   })

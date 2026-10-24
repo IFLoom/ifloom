@@ -1,6 +1,5 @@
 import { holds, type Condition } from './condition.ts'
 import type { Blocked, Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
-import { markUsed, usedThisTurn } from './once.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
@@ -62,14 +61,19 @@ export type Choice = {
   /** Reasons it is on screen but cannot be taken (or, with `hide`, left off). First match wins. */
   blocked?: Blocked[]
   /**
-   * A line that only lands once a turn.
+   * A line that only lands once a turn: spent while the choice was last
+   * picked this turn (`state.chosen`).
    * The reason is what the player reads on it afterwards — the line stays on
    * screen rather than vanishing, which is how the caps read as character.
    */
   once?: {
     per: 'turn'
     reason: string
-    /** Override the kv key it records under, to keep an existing save's caps. */
+    /**
+     * The kv key a save from before version 18 kept this cap under, without
+     * its `turn:` prefix, when it wasn't `scene#choice`. Loading such a save
+     * carries a cap it set this turn over to the choice.
+     */
     key?: string
   }
   /** Words the UI can style or filter the choice by. The engine gives them no meaning. */
@@ -132,7 +136,11 @@ export type SceneRuntime = {
   game: Game
   /** Whether a once-a-turn line has already landed this turn. */
   spent: (state: GameState, scene: string, choice: string) => boolean
-  /** What to record when one is taken. */
+  /**
+   * What to record when one is taken, besides the choice being counted in
+   * `state.chosen`. The default runtime records nothing more: `spent` reads
+   * the choice's last turn there.
+   */
   spend: (state: GameState, scene: string, choice: string) => Effect[]
 }
 
@@ -223,7 +231,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   const choices: SceneChoice[] = []
   for (const choice of scene.choices) {
     const visible = holds(state, choice.when, runtime.game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
-    const already = choice.once !== undefined && runtime.spent(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id)
+    const already = choice.once !== undefined && runtime.spent(state, scene.id, choice.id)
     const blocked = choice.blocked?.find((entry) => holds(state, entry.when, runtime.game))
     const chosen = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))
     // A reply written to answer the line she actually gave beats a generic
@@ -247,11 +255,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
         ? buildEffects(state, runtime.game, choice.effects).filter((effect) => effect.kind === 'scene')
-        : [
-            ...buildEffects(state, runtime.game, choice.effects),
-            ...(choice.once ? runtime.spend(state, choice.once.key ?? scene.id, choice.once.key ? '' : choice.id) : []),
-            ...remember,
-          ],
+        : [...buildEffects(state, runtime.game, choice.effects), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
     })
   }
 
@@ -316,10 +320,10 @@ export function drawVariant(
 
 /**
  * How a data scene renders when the game supplies nothing else: the game's
- * prose store, the draw above, and once-a-turn lines recorded per turn (`once.ts`).
+ * prose store, the draw above, and a once-a-turn line spent while the choice
+ * was last picked this turn, as `state.chosen` keeps it.
  */
 export function defaultRuntime(game: Game): SceneRuntime {
-  const id = (scene: string, choice: string) => (choice ? `${scene}#${choice}` : scene)
   return {
     game,
     prose: {
@@ -327,8 +331,8 @@ export function defaultRuntime(game: Game): SceneRuntime {
       variants: (name) => game.prose?.variants(name) ?? [],
       draw: (state, name, members) => drawVariant(state, name, members, (key) => game.prose?.weight?.(name, key)),
     },
-    spent: (state, scene, choice) => usedThisTurn(state, id(scene, choice)),
-    spend: (state, scene, choice) => [markUsed(state, id(scene, choice))],
+    spent: (state, scene, choice) => state.chosen?.[`${scene}#${choice}`]?.last === state.turn,
+    spend: () => [],
   }
 }
 

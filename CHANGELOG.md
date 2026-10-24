@@ -148,6 +148,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** `state.seen` and `state.chosen` keep one record per scene or choice, `{ n, first, last }` (a [`Times`](/docs/reference/state#times)): how many times, and the turn of the first time and the last. They replace the counts and `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`. `{ seen }`, `{ chose }` and `{ since }` read the same as before. Code that reads the state itself reads `state.seen['ava.hi']?.n` for the count. Save version 18 carries old saves forward.
+- **Breaking:** a choice's `once: { per: 'turn' }` reads the choice's record in `chosen`, so it no longer writes a `turn:scene#choice` key into the kv store. An old save's caps for the turn it was made in still hold, under `once.key` too.
+- **Breaking:** a save's `SaveMeta.player` is `SaveMeta.playerName`, so it can't be read as the `'player'` holder. A save written before reads with its name as `playerName`.
 - **Breaking:** `upgradePack(pack, plugins)` takes the game's plugins, so each plugin's own steps run with the engine's. `loadGame` passes the base's plugins for you.
 - **Breaking:** a mod is kept as its file wrote it, and `loadGame` upgrades it each time the game loads, with the game's plugins. So a mod a player installed keeps working when you update a plugin as well as the engine. `readMod` and the mod store's `add` only check that the engine can read its schema, and their `pack` is no longer upgraded. `unlockedPacks` works the same way.
 - The engine's content migrations no longer know any plugin. What they did to a first-party plugin's content (the cast's characters, the shop's goods, the wardrobe's clothes, a place's transition, the statuses plugin's old names and the rest) is each plugin's own step now, and an old pack upgraded with those plugins comes out as it did before. The first-party plugins number their content versions by the engine's schema, so the shop's content is at 13 and the cast's at 16.
@@ -280,6 +283,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- The docs said saves were at version 16 while the engine wrote 17. They're at 18 now, and the docs say so.
 - The React UI's `LocationCard` leaves a gap between the place's line and the things lying there.
 - A stat drawn or written on a thing made `like` another is kept when a save loads, even when it equals the stat's `start`, so it no longer reads the other's value instead.
 - The React UI's debug card sends the place, scene and turn forms with the arguments the debug plugin reads, so they work.

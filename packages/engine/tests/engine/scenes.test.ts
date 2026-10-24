@@ -6,6 +6,8 @@ import { begin, fixture } from '../fixtures/town.ts'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { GameState } from '../../src/types.ts'
+import { loadState } from '../../src/intake.ts'
+import { unwrap } from '../fixtures/result.ts'
 
 describe('data scenes', () => {
   it('load with no runtime written by hand: prose, tokens and a drawn line', () => {
@@ -43,7 +45,7 @@ describe('data scenes', () => {
 
   it('read the game’s own custom conditions', () => {
     const { game } = withCafe()
-    const regular = { ...begin(game), sceneId: 'cafe.counter', seen: { 'cafe.counter': 3 } }
+    const regular = { ...begin(game), sceneId: 'cafe.counter', seen: { 'cafe.counter': { n: 3, first: 0, last: 0 } } }
     expect(view(regular, game).scene.body).toContain('your cup out')
     const stranger = { ...begin(game), sceneId: 'cafe.counter', seen: {} }
     expect(view(stranger, game).scene.body).not.toContain('your cup out')
@@ -65,10 +67,8 @@ describe('the first and last time', () => {
     state = rest(state)
     expect(state.turn).toBe(6)
     expect(state).toMatchObject({
-      seenOn: { 'rosa.hello': 2 },
-      lastSeenOn: { 'rosa.hello': 5 },
-      chosenOn: { 'rosa.hello#bye': 2 },
-      lastChosenOn: { 'rosa.hello#bye': 5 },
+      seen: { 'rosa.hello': { n: 2, first: 2, last: 5 } },
+      chosen: { 'rosa.hello#bye': { n: 2, first: 2, last: 5 } },
     })
     expect(holds(state, { since: 'rosa.hello', gte: 4 }, game)).toBe(true)
     expect(holds(state, { since: 'rosa.hello', last: true, gte: 2 }, game)).toBe(false)
@@ -82,7 +82,9 @@ describe('the first and last time', () => {
 
   it('reads the first time when a save from before kept no latest one', () => {
     const game = fixture()
-    const old = { ...begin(game), turn: 9, seenOn: { 'rosa.hello': 4 }, lastSeenOn: {} }
-    expect(holds(old, { since: 'rosa.hello', last: true, gte: 5 }, game)).toBe(true)
+    const old = { ...begin(game), version: 17, turn: 9, seen: { 'rosa.hello': 1 }, seenOn: { 'rosa.hello': 4 }, lastSeenOn: {} }
+    const loaded = unwrap(loadState(old, game))
+    expect(loaded.seen['rosa.hello']).toEqual({ n: 1, first: 4, last: 4 })
+    expect(holds(loaded, { since: 'rosa.hello', last: true, gte: 5 }, game)).toBe(true)
   })
 })

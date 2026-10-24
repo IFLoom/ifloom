@@ -43,8 +43,8 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     const { game } = withCafe()
     const named = { ...game, saveName: (state: { kv: Record<string, unknown> }) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null) }
     const state = { ...startingState(game), kv: { playerName: 'Robin' } }
-    expect((await saves(named, driver()).write('1', state)).player).toBe('Robin')
-    expect((await saves(game, driver()).write('1', state)).player).toBeNull()
+    expect((await saves(named, driver()).write('1', state)).playerName).toBe('Robin')
+    expect((await saves(game, driver()).write('1', state)).playerName).toBeNull()
   })
 
   it('lists every save newest first, and forgets a removed one', async () => {

@@ -367,7 +367,7 @@ type Choice = {
 | `labels` | Labels that depend on state. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
-| `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. `key` records it under a different name. | unlimited |
+| `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was last picked this turn. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
 | `tags`, `irreversible`, `ui` | Passed through to [`SceneChoice`](#scenechoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'activity', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
@@ -391,7 +391,7 @@ type Choice = {
 ```
 
 **Gotchas.**
-- With the [default runtime](#defaultruntime), `per: 'turn'` is recorded with [`markUsed`](/docs/reference/progress#usedthisturn-and-markused) as the kv key `turn:scene.choice` (or `turn:<once.key>`). The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't.
+- With the [default runtime](#defaultruntime), `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
 - For a once-a-turn limit outside a `DataScene`, see [`oncePerTurn`](/docs/reference/progress#onceperturn).
 
 ### panelData
@@ -491,7 +491,7 @@ The default runtime reads:
 
 - **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame), or by you with [`proseStore`](/docs/reference/prose#prosestore-1)), with tokens filled in for the save
 - **variants** drawn by [`drawVariant`](#drawvariant), which rotates and starts somewhere different each turn, or draws by weight when a member has a [weight](/docs/reference/prose#variantmember)
-- **`once: { per: 'turn' }`** through [`usedThisTurn` and `markUsed`](/docs/reference/progress#usedthisturn-and-markused)
+- **`once: { per: 'turn' }`** from the choice's record in [`chosen`](/docs/reference/state#chosen): spent while it was last picked this turn
 - **conditions, custom effects and panels** from the game
 
 Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#renderscene) yourself when a game needs something different, such as words from another store or its own idea of what "once" counts.
@@ -590,7 +590,7 @@ What a custom runtime supplies. You only need one if [`defaultRuntime`](#default
 
 - `prose` is a [`Prose`](/docs/reference/prose#prose): a [`ProseStore`](/docs/reference/prose#prosestore) plus `draw`, which picks a member and returns an effect that records the pick. [`drawVariant`](#drawvariant) is a ready-made `draw`.
 - `game` is the game, used for conditions, custom effects and panels.
-- `spent` and `spend` back `once`. With a `once.key`, they're called with `(key, '')` instead of `(scene.id, choice.id)`.
+- `spent` and `spend` back `once`, called with `(scene.id, choice.id)`. The default runtime's `spent` reads [`chosen`](/docs/reference/state#chosen) and its `spend` records nothing, since `choose` already counts the choice.
 
 ## See it in an example
 

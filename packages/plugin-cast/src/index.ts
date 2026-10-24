@@ -197,7 +197,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const met = (state: GameState, game: Game, them: One) =>
     them.person.met !== undefined
       ? holdsFor(state, game, them, them.person.met)
-      : [...talkOptions(them.person).map((option) => option.scene), them.person.call?.scene].some((scene) => scene && (state.seen?.[scene] ?? 0) > 0)
+      : [...talkOptions(them.person).map((option) => option.scene), them.person.call?.scene].some((scene) => scene && (state.seen?.[scene]?.n ?? 0) > 0)
   const portraitOf = (state: GameState, game: Game, ref: EntityRef) => {
     const parts = parseRef(ref)!
     return artSrc(entityImage(state, game, ref) ?? `${parts.kind}/${parts.id}`)

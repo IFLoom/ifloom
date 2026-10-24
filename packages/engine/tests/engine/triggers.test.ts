@@ -54,6 +54,6 @@ describe('triggers', () => {
     }
     const state = apply(begin(game), game, { type: 'activity', id: 'ring' }).state
     expect(state.sceneId).toBe('rosa.hello')
-    expect(state.seen['rosa.hello']).toBe(1)
+    expect(state.seen['rosa.hello']?.n).toBe(1)
   })
 })

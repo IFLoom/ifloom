@@ -22,7 +22,7 @@ The engine has one entry point, `@ifloom/engine`. A deep path such as `@ifloom/e
 
 Nothing is promised until 1.0, but two parts already handle change for you:
 
-- **Saves carry their version.** The format is at version 16 (`SAVE_VERSION`). When the format changes, an older save is carried forward a step at a time when it's loaded, so a player's saves survive an engine update. Plugins version their own state the same way. See [Saves](/docs/reference/saves).
+- **Saves carry their version.** The format is at version 18 (`SAVE_VERSION`). When the format changes, an older save is carried forward a step at a time when it's loaded, so a player's saves survive an engine update. Plugins version their own state the same way. See [Saves](/docs/reference/saves).
 - **Packs carry their schema.** A pack, such as a mod, says which version of the content format it was written for with `schema: SCHEMA`. Your own content has none, since it's built with the engine it runs on. The loader upgrades a pack written for an older version, so old packs and mod files keep loading. It leaves out a pack written for a newer version and reports a problem, so it never misreads one. See [Packs and loading](/docs/reference/loader).
 
 Everything else can still change, including function names, option names and the shapes of content. When one does, the reference pages change with it. Known gaps are described on the reference page they affect, usually under its gotchas.

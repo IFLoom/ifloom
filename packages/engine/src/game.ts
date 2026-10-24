@@ -245,7 +245,7 @@ type CoreGame = {
   carryOver?: CarryOver
   /**
    * The name a save is listed under, such as the name the player typed, or
-   * null for none. Saves record it as `SaveMeta.player`. Left out, saves have no name.
+   * null for none. Saves record it as `SaveMeta.playerName`. Left out, saves have no name.
    */
   saveName?: (state: GameState) => string | null
   /**

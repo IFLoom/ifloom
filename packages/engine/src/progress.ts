@@ -73,8 +73,8 @@ export type Stage = {
 
 /** Whole turns since a scene was first entered, or null if it never has been. */
 export function turnsSince(state: GameState, sceneId: string): number | null {
-  const turn = state.seenOn?.[sceneId]
-  return typeof turn === 'number' ? state.turn - turn : null
+  const seen = state.seen?.[sceneId]
+  return seen ? state.turn - seen.first : null
 }
 
 /** Has enough time passed since the stage before this one? */

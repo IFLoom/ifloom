@@ -15,6 +15,7 @@ import { hash } from './random.ts'
 import { featureContext } from './core.ts'
 import type { StateField } from './features/feature.ts'
 import { entityDef } from './entities.ts'
+import type { Times } from './features/scenes.ts'
 import { carrySteps, featureFields, fillSteps, loadSteps, startSteps, type FeatureFill } from './features/registry.ts'
 
 export type { StartOptions } from './types.ts'
@@ -220,7 +221,51 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
   // 16 → 17: how the next screen comes in is the UI's to say, from a choice's `ui` hints, so the
   // save no longer keeps a `transition` effect's override.
   16: ({ transition: _transition, ...state }) => state,
+  // 17 → 18: what the player has seen and chosen is one record per id, `{ n, first, last }`, in
+  // `seen` and `chosen`, from the counts and the four records of turns beside them. A record a save
+  // kept no turn for (one from before they were kept) is dated the turn the save is at. A choice's
+  // once-a-turn cap reads its record's `last`, so the `turn:` kv keys that capped the game's choices
+  // go; one that still caps this turn makes the choice's `last` this turn, `once.key` naming its key.
+  17: ({ seenOn, lastSeenOn, chosenOn, lastChosenOn, ...state }, game) => {
+    const turn = typeof state.turn === 'number' ? state.turn : 0
+    const fold = (counts: unknown, firsts: unknown, lasts: unknown) => {
+      const n = (counts ?? {}) as Record<string, unknown>
+      const first = (firsts ?? {}) as Record<string, number>
+      const last = (lasts ?? {}) as Record<string, number>
+      const out: Record<string, Times> = {}
+      for (const id of new Set([...Object.keys(n), ...Object.keys(first), ...Object.keys(last)])) {
+        const given = n[id]
+        // A record already in this shape (a state written now, with an old version number) is kept.
+        if (given && typeof given === 'object') out[id] = given as Times
+        else {
+          const from = first[id] ?? last[id] ?? turn
+          out[id] = { n: typeof given === 'number' ? given : 0, first: from, last: last[id] ?? from }
+        }
+      }
+      return out
+    }
+    const chosen = fold(state.chosen, chosenOn, lastChosenOn)
+    const kv = { ...(state.kv as Record<string, unknown> | undefined) }
+    for (const scene of game.scenes ?? []) {
+      for (const choice of 'choices' in scene && Array.isArray(scene.choices) ? (scene.choices as SceneChoiceDef[]) : []) {
+        if (!choice.once) continue
+        const key = `turn:${choice.once.key ?? `${scene.id}#${choice.id}`}`
+        if (!(key in kv)) continue
+        const id = `${scene.id}#${choice.id}`
+        if (kv[key] === turn) chosen[id] = { n: chosen[id]?.n ?? 0, first: chosen[id]?.first ?? turn, last: turn }
+      }
+    }
+    for (const scene of game.scenes ?? []) {
+      for (const choice of 'choices' in scene && Array.isArray(scene.choices) ? (scene.choices as SceneChoiceDef[]) : []) {
+        if (choice.once) delete kv[`turn:${choice.once.key ?? `${scene.id}#${choice.id}`}`]
+      }
+    }
+    return { ...state, seen: fold(state.seen, seenOn, lastSeenOn), chosen, ...(state.kv !== undefined ? { kv } : {}) }
+  },
 }
+
+/** A data scene's choice, as far as the version 18 step reads it. */
+type SceneChoiceDef = { id: string; once?: { key?: string } }
 
 /** A collection entry as saves before version 16 kept it. */
 type OldEntry = { id?: unknown; title?: string; text?: string; image?: string; data?: Record<string, unknown> }

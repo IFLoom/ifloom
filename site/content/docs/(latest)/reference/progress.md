@@ -176,7 +176,7 @@ function stagesDone(state: GameState, stages: Stages): number
 function turnsSince(state: GameState, sceneId: string): number | null
 ```
 
-Whole [turns](/docs/reference/state#turn) since a scene was first entered, or `null` if it never has been. The engine records the first turn for every scene in [`state.seenOn`](/docs/reference/state#seenon).
+Whole [turns](/docs/reference/state#turn) since a scene was first entered, or `null` if it never has been. The engine records the first turn for every scene in [`state.seen`](/docs/reference/state#seen), as each record's `first`.
 
 ```ts
 turnsSince(state, 'ava.name') // 4: four turns since you learned her name

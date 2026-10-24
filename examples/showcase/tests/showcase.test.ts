@@ -350,7 +350,11 @@ describe('Small Town', () => {
     for (const id of drawn) expect(['cafe.window', 'cafe.crossword', 'cafe.break']).toContain(id)
     // Every storylet's when has run out: the window seen twice, the crossword done, and Ava off on a Sunday.
     const state = sitDown(1)
-    const spent = { ...on(state, 6, 'afternoon'), sceneId: null, seen: { ...state.seen, 'cafe.window': 2, 'cafe.crossword': 1 } }
+    const spent = {
+      ...on(state, 6, 'afternoon'),
+      sceneId: null,
+      seen: { ...state.seen, 'cafe.window': { n: 2, first: 1, last: 5 }, 'cafe.crossword': { n: 1, first: 4, last: 4 } },
+    }
     const after = run(spent, act('sit'))
     expect(view(after, game).scene.title).toBe('A quiet table')
   })

@@ -10,6 +10,8 @@ import { view } from '../../src/view.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
+import type { Game } from '../../src/game.ts'
+import type { GameState } from '../../src/types.ts'
 
 describe('choices the player made', () => {
   it('are remembered by scene and choice, and `{ chose }` reads them', () => {
@@ -17,7 +19,7 @@ describe('choices the player made', () => {
     const at = { ...begin(game), sceneId: 'cafe.counter' }
     expect(holds(at, { chose: 'cafe.counter#chat' }, game)).toBe(false)
     const after = apply(at, game, { type: 'choose', id: 'chat' }).state
-    expect(after.chosen).toEqual({ 'cafe.counter#chat': 1 })
+    expect(after.chosen).toEqual({ 'cafe.counter#chat': { n: 1, first: at.turn, last: at.turn } })
     expect(holds(after, { chose: 'cafe.counter#chat' }, game)).toBe(true)
     expect(holds(after, { chose: 'cafe.counter#chat', gte: 2 }, game)).toBe(false)
     expect(holds(after, { chose: 'cafe.counter#leave' }, game)).toBe(false)
@@ -194,3 +196,51 @@ describe('storylines', () => {
     expect(explain(closed, { storyline: 'rosa' }, game).why).toBe('storyline rosa is closed; wants it open')
   })
 })
+
+describe('a choice once a turn', () => {
+  const chat = (state: GameState, game: Game) => view(state, game).scene.choices.find((choice) => choice.id === 'chat')
+
+  it('is spent while the choice was last picked this turn, and writes nothing to the kv store', () => {
+    const { game } = withCafe()
+    const at = { ...begin(game), sceneId: 'cafe.counter' }
+    expect(chat(at, game)?.disabled).toBeUndefined()
+    const after = { ...apply(at, game, { type: 'choose', id: 'chat' }).state, sceneId: 'cafe.counter' }
+    expect(after.chosen['cafe.counter#chat']).toEqual({ n: 1, first: at.turn, last: at.turn })
+    expect(Object.keys(after.kv).filter((key) => key.startsWith('turn:'))).toEqual([])
+    expect(chat(after, game)?.disabled).toBe('She has heard enough from you today.')
+    // Picked again it pays nothing, and the line works again the next turn.
+    expect(apply(after, game, { type: 'choose', id: 'chat' }).ok).toBe(false)
+    expect(chat({ ...after, turn: after.turn + 1 }, game)?.disabled).toBeUndefined()
+  })
+
+  it('keeps the cap an older save set this turn, under its own key or under once.key', () => {
+    const { game } = withCafe()
+    const { seen: _seen, chosen: _chosen, ...now } = { ...begin(game), sceneId: 'cafe.counter', turn: 5 }
+    const old = { ...now, version: 17, seen: {}, seenOn: {}, lastSeenOn: {}, chosen: {}, chosenOn: {}, lastChosenOn: {} }
+    const capped = unwrap(loadState({ ...old, kv: { 'turn:cafe.counter#chat': 5, tidy: true } }, game))
+    expect(capped.kv).toEqual({ tidy: true })
+    expect(capped.chosen['cafe.counter#chat']).toEqual({ n: 0, first: 5, last: 5 })
+    expect(chat(capped, game)?.disabled).toBe('She has heard enough from you today.')
+    // A cap from an earlier turn has run out: it goes, and caps nothing.
+    const stale = unwrap(loadState({ ...old, kv: { 'turn:cafe.counter#chat': 4 } }, game))
+    expect(stale.kv).toEqual({})
+    expect(stale.chosen).toEqual({})
+    // A choice that kept its cap under a key of its own.
+    const keyed = withKey(game, 'counter.chat')
+    const moved = unwrap(loadState({ ...old, kv: { 'turn:counter.chat': 5 } }, keyed))
+    expect(moved.kv).toEqual({})
+    expect(chat(moved, keyed)?.disabled).toBe('She has heard enough from you today.')
+  })
+})
+
+/** The cafe game with its chat's cap kept under `key`, as a game renaming the choice would. */
+function withKey(game: Game, key: string): Game {
+  return {
+    ...game,
+    scenes: game.scenes.map((scene) =>
+      scene.id === 'cafe.counter' && 'choices' in scene && Array.isArray(scene.choices)
+        ? { ...scene, choices: scene.choices.map((choice) => (choice.id === 'chat' && choice.once ? { ...choice, once: { ...choice.once, key } } : choice)) }
+        : scene,
+    ),
+  }
+}

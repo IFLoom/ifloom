@@ -17,12 +17,8 @@ type GameState = {
   phase: Phase
   turn: number
   sceneId: string | null
-  seen: Record<string, number>
-  seenOn: Record<string, number>
-  lastSeenOn: Record<string, number>
-  chosen: Record<string, number>
-  chosenOn: Record<string, number>
-  lastChosenOn: Record<string, number>
+  seen: Record<string, Times>
+  chosen: Record<string, Times>
   stats: Stats
   entities: Record<string, Record<string, EntityState>>
   created: Record<string, number>
@@ -81,7 +77,7 @@ turn: number
 
 How many turns have passed. This is the engine's only clock, and a new game starts at 0. Your game decides how long a turn is, whether that's a day, a chapter or a week. The engine moves the counter on when a turn ends, which is when a [`turn`](/docs/reference/effects#turn) effect runs, from a choice, an activity or a plugin. The [calendar plugin](/docs/plugins/calendar#what-a-turn-is) ends turns this way when time passes and when the player sleeps, so with it a turn is a day, a period or a week.
 
-Everything the engine dates is dated in turns: [`seenOn`](#seenon) and [`lastSeenOn`](#lastseenon), [`chosenOn`](#chosenon) and [`lastChosenOn`](#lastchosenon), [`fired`](#fired), [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
+Everything the engine dates is dated in turns: [`seen`](#seen) and [`chosen`](#chosen), [`fired`](#fired), [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
 **There's no time of day in the state.** A game with days and periods keeps them in the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, at `state.plugins.calendar`.
 
@@ -93,27 +89,19 @@ The scene on screen, or `null` for the idle screen. A new game starts on `game.i
 
 ### seen
 
-How many times the player has entered each scene, by id. It's counted once per command, for the scene the command leaves on screen. A scene redrawing itself after a choice isn't a new viewing. The intro scene, if the game has one, starts at 1. Without one, a new game has seen nothing. Read it with [`{ seen }`](/docs/reference/conditions#seen).
-
-### seenOn
-
-The [turn](#turn) each scene was first entered. It's never overwritten. The intro scene is recorded at turn 0. Read it with [`{ since }`](/docs/reference/conditions#since).
-
-### lastSeenOn
-
-The [turn](#turn) each scene was last entered, written each time [`seen`](#seen) counts a viewing. The intro scene starts at turn 0. Read it with [`{ since, last: true }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, and `since` reads `seenOn` for a scene it lacks. The field was added with a load default and no new save version.
+Each scene the player has entered, by id, as a [`Times`](#times): how many times, and the turn of the first time and the last. `{ 'ava.hi': { n: 3, first: 1, last: 6 } }` is a scene entered three times, first on turn 1 and last on turn 6. It's counted once per command, for the scene the command leaves on screen. A scene redrawing itself after a choice isn't a new viewing. The intro scene, if the game has one, starts at `{ n: 1, first: 0, last: 0 }`. Without one, a new game has seen nothing. Read the count with [`{ seen }`](/docs/reference/conditions#seen) and the turns with [`{ since }`](/docs/reference/conditions#since).
 
 ### chosen
 
-How many times each choice has been picked, keyed `scene#choice`, as in `{ 'cafe.counter#buy-bread': 2 }`. The [`choose`](/docs/reference/commands#choose) command adds one for every choice, before the choice's effects run. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read it with [`{ chose }`](/docs/reference/conditions#chose).
+Each choice the player has picked, keyed `scene#choice`, as a [`Times`](#times): `{ 'cafe.counter#buy-bread': { n: 2, first: 3, last: 5 } }`. The [`choose`](/docs/reference/commands#choose) command counts every choice, on the turn it was picked and before the choice's effects run, so a choice that ends the turn is dated the turn it was picked in. That lets content branch on an earlier decision without the choice setting a kv key of its own. A new game starts with `{}`. Read the count with [`{ chose }`](/docs/reference/conditions#chose) and the turns with [`{ since: 'scene#choice' }`](/docs/reference/conditions#since). A choice's [`once`](/docs/reference/scenes#choice) reads `last` too: it's spent while `last` is this turn.
 
-### chosenOn
+### Times
 
-The [turn](#turn) each choice was first picked, keyed `scene#choice` like [`chosen`](#chosen), and never overwritten. It's the turn the choice was picked on, before any turn its effects end. Read it with [`{ since: 'scene#choice' }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, since there's no telling when an earlier choice was picked. Added with a load default and no new save version.
+```ts
+type Times = { n: number; first: number; last: number }
+```
 
-### lastChosenOn
-
-The [turn](#turn) each choice was last picked, keyed `scene#choice`. Read it with [`{ since: 'scene#choice', last: true }`](/docs/reference/conditions#since). A save from before it was kept loads with `{}`, and `since` with `last` falls back to `chosenOn`. Added with a load default and no new save version.
+How many times something happened (`n`), and the [turn](#turn) of the first time and the last. What [`seen`](#seen) keeps for each scene and [`chosen`](#chosen) for each choice. Save version 18 made each one a record, from the counts and the four records of turns beside them that older saves kept (`seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`).
 
 ### stats
 
@@ -204,7 +192,7 @@ Save version 12 renamed it from `flags`, and an older save's flags load here.
 
 The engine writes some keys here itself, so don't use these prefixes for your own:
 
-- `turn:` keys, used by [`oncePerTurn()`](/docs/reference/progress#onceperturn) and a data-scene choice's `once`
+- `turn:` keys, used by [`oncePerTurn()`](/docs/reference/progress#onceperturn) (a data-scene choice's `once` reads [`chosen`](#chosen) instead, since save version 18)
 - `variants:<name>` keys, which count how often a set of [variants](/docs/reference/prose) has been drawn
 - `storylet:<name>` keys, which count how often a set of [storylets](/docs/reference/storylets) has been drawn from
 
@@ -336,7 +324,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 17
+const SAVE_VERSION = 18
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -361,6 +349,7 @@ The versions so far:
 | 15 | Made each record in [`entities`](#entities) keep only what play changed. |
 | 16 | Took out `items` and `collections`: the player's items are counts in [`held`](#held), and collection entries are entities made in play that the player holds. |
 | 17 | Took out `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from [presentation hints](/docs/reference/ui-hints). |
+| 18 | Made [`seen`](#seen) and [`chosen`](#chosen) one [`Times`](#times) record per id, in place of `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`, and dropped the `turn:` kv keys that capped a choice's `once`. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

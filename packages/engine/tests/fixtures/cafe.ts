@@ -37,7 +37,7 @@ export const cafe: Content = {
     'cafe.weather': ['cafe.weather/rain', 'cafe.weather/sun', 'cafe.weather/fog'],
   },
   custom: {
-    conditions: { isRegular: (state) => (state.seen['cafe.counter'] ?? 0) >= 3 },
+    conditions: { isRegular: (state) => (state.seen['cafe.counter']?.n ?? 0) >= 3 },
   },
 }
 

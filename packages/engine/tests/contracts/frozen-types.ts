@@ -51,6 +51,8 @@
  * `Game.timers`, `Pack.timers` and `View.timers` (the `tick` command, now
  * the timers feature's, is unchanged). Plugin-owned migrations:
  * `Pack.plugins`, the version of each plugin's content a pack was written for.
+ * Save shape (save 18): `GameState.seen` and `chosen` are one `{ n, first, last }`
+ * record per id, and `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn` are gone.
  */
 import type {
   ActionDef,
@@ -210,37 +212,14 @@ export type FrozenGameState = {
   /**
    * How many turns have passed: the engine's one clock. What a turn is belongs
    * to the game — a day, an hour, a week, a chapter — and everything the engine
-   * dates (`seenOn`, `fired`, notices) is dated in turns.
+   * dates (`seen`, `fired`, notices) is dated in turns.
    */
   turn: number
   sceneId: string | null
-  /**
-   * How many times each scene has been entered. The engine's own record of what
-   * the player has actually watched, so a chain can say "not until you have seen
-   * the rung before this one" without every link needing a hand-written kv key.
-   *
-   * Re-entering the scene you are already in — a hub redrawing itself after a
-   * choice — is not a viewing and does not count.
-   */
-  seen: Record<string, number>
-  /**
-   * The turn each scene was first entered. The pace half of a ladder: `seen`
-   * says the rung below has happened, this says how long ago, so a rung can
-   * ask for a few turns to have passed however fast the stat behind it came in.
-   */
-  seenOn: Record<string, number>
-  /** The turn each scene was last entered. */
-  lastSeenOn: Record<string, number>
-  /**
-   * How many times each choice has been picked, by `scene/choice`. Kept for
-   * every choice, so content can branch on an earlier decision without each one
-   * needing a kv key of its own.
-   */
-  chosen: Record<string, number>
-  /** The turn each choice was first picked. */
-  chosenOn: Record<string, number>
-  /** The turn each choice was last picked. */
-  lastChosenOn: Record<string, number>
+  /** Each scene entered, by id: how many times, and the turn of the first and the last. */
+  seen: Record<string, { n: number; first: number; last: number }>
+  /** Each choice picked, by `scene#choice`: how many times, and the turn of the first and the last. */
+  chosen: Record<string, { n: number; first: number; last: number }>
   /** The player's stats. An entity's are on the entity. */
   stats: Stats
   /** What play changed about the game's entities, by kind and id: `entities.staff.ana`. */
@@ -406,7 +385,7 @@ export type FrozenGame = {
   carryOver?: CarryOver
   /**
    * The name a save is listed under, such as the name the player typed, or
-   * null for none. Saves record it as `SaveMeta.player`. Left out, saves have no name.
+   * null for none. Saves record it as `SaveMeta.playerName`. Left out, saves have no name.
    */
   saveName?: (state: FrozenGameState) => string | null
   /**

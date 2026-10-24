@@ -170,14 +170,14 @@ export function probes(game: Game) {
         {
           ...clock.write(first, { day: 7, period: 'afternoon' }),
           turn: 7,
-          seen: { ...first.seen, 'ava.hi': 4 },
+          seen: { ...first.seen, 'ava.hi': { n: 4, first: 2, last: 6 } },
           kv: { catName: 'Biscuit' },
           // Only what play changed is saved: Ava's friendship.
           entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
           stats: { ...first.stats, charm: 5 },
           plugins: {
             ...first.plugins,
-            wardrobe: { version: 2, state: { worn: { coat: null, neck: null } } },
+            wardrobe: { version: 3, state: { worn: { player: { coat: null, neck: null } } } },
             // Still buzzing from the morning's coffee.
             statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
           },

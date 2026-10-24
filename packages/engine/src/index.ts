@@ -84,6 +84,7 @@ export { sceneContext } from './context.ts'
 
 // The state
 export type { Command, Effect, KvValue, GameState, Phase, StatKey, Stats, StorylineState } from './types.ts'
+export type { Times } from './features/scenes.ts'
 export { SAVE_VERSION } from './types.ts'
 
 // Player-facing words

@@ -96,7 +96,7 @@ describe('The Letter', () => {
       turn: 2,
       sceneId: 'ch3.door',
       kv: { playerName: 'Robin', lies: 2 },
-      chosen: { 'ch1.mat#open': 1, 'ch2.stairs#blame': 1 },
+      chosen: { 'ch1.mat#open': { n: 1, first: 0, last: 0 }, 'ch2.stairs#blame': { n: 1, first: 1, last: 1 } },
     } as Partial<GameState>
     delete state.gameVersion
     const file = (saved: object) =>
@@ -110,6 +110,7 @@ describe('The Letter', () => {
           played: 0,
           turn: 2,
           when: null,
+          // What a save from before engine save version 18 called `playerName`.
           player: 'Robin',
           packs: ['letter'],
           plugins: {},
@@ -123,6 +124,7 @@ describe('The Letter', () => {
       if (!loadedRead.ok) throw new Error(loadedRead.reason)
       const loaded = loadedRead.value
       expect(loaded.meta.gameVersion).toBe(1)
+      expect(loaded.meta.playerName).toBe('Robin')
       expect(loaded.state.gameVersion).toBe(2)
       expect(loaded.state.kv).toEqual({ playerName: 'Robin', fibs: 2 })
       expect(view(loaded.state, game).scene.body).toContain('she has clearly been talking')
@@ -131,7 +133,7 @@ describe('The Letter', () => {
 
   it('lists a save under the name the reader typed', async () => {
     const store = saves(game, memoryDriver())
-    expect((await store.write('1', startingState(game, { kv: { playerName: 'Robin' } }))).player).toBe('Robin')
-    expect((await store.write('2', startingState(game))).player).toBeNull()
+    expect((await store.write('1', startingState(game, { kv: { playerName: 'Robin' } }))).playerName).toBe('Robin')
+    expect((await store.write('2', startingState(game))).playerName).toBeNull()
   })
 })

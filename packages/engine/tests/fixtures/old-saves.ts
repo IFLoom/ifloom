@@ -1,7 +1,7 @@
 import type { Game } from '../../src/game.ts'
 
 /**
- * A save of every format version the engine has had, 1 to 17, each in the
+ * A save of every format version the engine has had, 1 to 18, each in the
  * shape that version wrote, and a small game to load them into. Tests load
  * them through `loadState` and the save store and compare the result with
  * `old-saves.expected.json`, which the engine wrote before the state intake
@@ -159,6 +159,10 @@ const v16 = {
 const { transition: _transition, ...still } = v16
 const v17 = { ...still, version: 17 }
 
+// What was seen and chosen is one record per id, and a choice's once-a-turn cap reads it.
+const { seenOn: _seenOn, ...undated } = v17
+const v18 = { ...undated, version: 18, seen: { start: { n: 1, first: 0, last: 0 } }, chosen: { 'start#go': { n: 1, first: 2, last: 3 } } }
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -178,4 +182,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   15: v15,
   16: v16,
   17: v17,
+  18: v18,
 }

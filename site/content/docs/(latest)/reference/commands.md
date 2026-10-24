@@ -40,7 +40,7 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 3. **A warning?** If [`warningOf`](/docs/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
 4. **Run it.** If [`rules.commands`](/docs/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
 5. **Triggers.** Each [trigger](/docs/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/docs/reference/triggers#when-triggers-fire).
-6. **Seen.** If the player is now looking at a different scene than before, that scene's [`seen`](/docs/reference/state#seen) count goes up by one, and [`seenOn`](/docs/reference/state#seenon) records the current [turn](/docs/reference/state#turn) if it's the first time. A scene a trigger opened counts.
+6. **Seen.** If the player is now looking at a different scene than before, that scene's record in [`seen`](/docs/reference/state#seen) counts one more, with the current [turn](/docs/reference/state#turn) as its `last` (and its `first`, if it's the first time). A scene a trigger opened counts.
 7. **A scene's minigame.** If that new scene has a [`minigame`](/docs/reference/minigames#minigamescenefields), it starts.
 8. **The scene's sounds.** If a new scene was entered, [`state.audio.shown`](/docs/reference/audio#audiostate) goes up by one, so that scene's sounds get keys of their own and play. See [Sounds and voices](/docs/reference/audio#sounds-and-voices).
 9. **After hooks.** Each plugin's [`onCommand` hook](/docs/reference/plugins#hooks-and-providers) runs, in the order `game.plugins` lists them, with the state from before the command and the state after it.
@@ -118,7 +118,7 @@ let fixed = startingState(game)
 
 **Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/random#roll). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
-The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.player`](/docs/reference/saves#savemeta) shows whatever the game's [`saveName`](/docs/reference/game#savename) makes of it.
+The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`saveName`](/docs/reference/game#savename) makes of it.
 
 ## Command
 
@@ -186,7 +186,7 @@ Opens a scene by id. It's refused with `Finish this first.` if a scene is alread
 
 ### choose
 
-Takes a choice in the scene on screen. The scene is rendered against the current state and the choice is found by id. Its count in [`chosen`](/docs/reference/state#chosen), under `scene#choice`, goes up by one, and then its effects run in order.
+Takes a choice in the scene on screen. The scene is rendered against the current state and the choice is found by id. Its record in [`chosen`](/docs/reference/state#chosen), under `scene#choice`, counts one more on the current turn, and then its effects run in order.
 
 It's refused with, in order:
 

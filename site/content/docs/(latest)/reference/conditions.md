@@ -161,9 +161,9 @@ How many times the player has entered a scene (see [`seen`](/docs/reference/stat
 { since: 'cafe.counter#chat', last: true, gte: 1 }   // picked before, but not this turn
 ```
 
-Whole [turns](/docs/reference/state#turn) since a scene was first entered (see [`seenOn`](/docs/reference/state#seenon)), or since a choice was first picked when the id is `scene#choice` (see [`chosenOn`](/docs/reference/state#chosenon)). With the [calendar](/docs/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
+Whole [turns](/docs/reference/state#turn) since a scene was first entered (its `first` in [`seen`](/docs/reference/state#seen)), or since a choice was first picked when the id is `scene#choice` (its `first` in [`chosen`](/docs/reference/state#chosen)). With the [calendar](/docs/plugins/calendar)'s default, a turn is a day. Use it to gate on pace.
 
-With `last: true` it counts from the latest time instead (see [`lastSeenOn`](/docs/reference/state#lastseenon) and [`lastChosenOn`](/docs/reference/state#lastchosenon)). That's a cooldown: something that can happen again, but not too often.
+With `last: true` it counts from the latest time instead, the record's `last`. That's a cooldown: something that can happen again, but not too often.
 
 **A cooldown.** The bench by the river can be visited again three days after the last time. Put it on whatever opens the scene, here an activity:
 

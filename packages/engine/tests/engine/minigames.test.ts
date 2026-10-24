@@ -186,7 +186,7 @@ describe('minigames', () => {
     expect(state.stats.coins).toBe(8)
     expect(state.kv.bestScore).toBe(3)
     expect(state.sceneId).toBe('rosa.hello')
-    expect(state.seen['rosa.hello']).toBe(1)
+    expect(state.seen['rosa.hello']?.n).toBe(1)
   })
 
   it('end with a turn effect among the final effects', () => {

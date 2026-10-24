@@ -37,40 +37,35 @@ export type StoryletFields = {
   when?: Condition
 }
 
+/**
+ * How many times something happened, and the turn of the first time and the
+ * last: what `GameState.seen` keeps for each scene and `GameState.chosen` for
+ * each choice.
+ */
+export type Times = { n: number; first: number; last: number }
+
 /** What the scenes feature adds, as types. */
 export type ScenesShape = {
   state: {
     sceneId: string | null
     /**
-     * How many times each scene has been entered. The engine's own record of what
-     * the player has actually watched, so a chain can say "not until you have seen
-     * the rung before this one" without every link needing a hand-written kv key.
+     * Each scene the player has entered, by id: how many times, and the turn
+     * of the first time and the last. The engine's own record of what the
+     * player has actually watched, so a chain can say "not until you have seen
+     * the rung before this one", and how long ago, without every link needing
+     * a hand-written kv key.
      *
      * Re-entering the scene you are already in — a hub redrawing itself after a
      * choice — is not a viewing and does not count.
      */
-    seen: Record<string, number>
+    seen: Record<string, Times>
     /**
-     * The turn each scene was first entered. The pace half of a ladder: `seen`
-     * says the rung below has happened, this says how long ago, so a rung can
-     * ask for a few turns to have passed however fast the stat behind it came in.
+     * Each choice the player has picked, by `scene#choice`: how many times, and
+     * the turn of the first time and the last. Kept for every choice, so content
+     * can branch on an earlier decision without each one needing a kv key of its
+     * own, and a choice's `once` reads it.
      */
-    seenOn: Record<string, number>
-    /**
-     * The turn each scene was last entered: `since` with `last: true` counts
-     * from it, for a cooldown. A save from before it was kept reads `seenOn`.
-     */
-    lastSeenOn: Record<string, number>
-    /**
-     * How many times each choice has been picked, by `scene#choice`. Kept for
-     * every choice, so content can branch on an earlier decision without each one
-     * needing a kv key of its own.
-     */
-    chosen: Record<string, number>
-    /** The turn each choice was first picked, by `scene#choice`. */
-    chosenOn: Record<string, number>
-    /** The turn each choice was last picked, by `scene#choice`. */
-    lastChosenOn: Record<string, number>
+    chosen: Record<string, Times>
   }
   conditions: {
     /**
@@ -301,15 +296,16 @@ function inlineMarkupProblems(text: string, where: string, tools: ResolveTools):
 
 /**
  * Whole turns since a scene was entered, or a choice (`scene#choice`) picked,
- * first or `last`; null if it hasn't been. A save from before the latest
- * times were kept has only the first, which is the best it knows.
+ * first or `last`; null if it hasn't been.
  */
 function turnsSince(state: GameState, id: string, last = false): number | null {
-  const choice = id.includes('#')
-  const first = choice ? state.chosenOn?.[id] : state.seenOn?.[id]
-  const latest = last ? (choice ? state.lastChosenOn?.[id] : state.lastSeenOn?.[id]) : undefined
-  const turn = latest ?? first
-  return typeof turn === 'number' ? state.turn - turn : null
+  const times = id.includes('#') ? state.chosen?.[id] : state.seen?.[id]
+  return times ? state.turn - (last ? times.last : times.first) : null
+}
+
+/** Times counted once more, on `turn`: the first time, if there was none. */
+function oneMore(times: Times | undefined, turn: number): Times {
+  return times ? { n: times.n + 1, first: times.first, last: turn } : { n: 1, first: turn, last: turn }
 }
 
 /**
@@ -339,10 +335,7 @@ function drawStorylet(state: GameState, game: Game, from: string, otherwise: str
 function witnessed(before: GameState, after: GameState): GameState {
   const id = after.sceneId
   if (!id || id === before.sceneId) return after
-  const seen = { ...after.seen, [id]: (after.seen[id] ?? 0) + 1 }
-  const lastSeenOn = { ...after.lastSeenOn, [id]: after.turn }
-  if (after.seenOn?.[id] !== undefined) return { ...after, seen, lastSeenOn }
-  return { ...after, seen, lastSeenOn, seenOn: { ...after.seenOn, [id]: after.turn } }
+  return { ...after, seen: { ...after.seen, [id]: oneMore(after.seen[id], after.turn) } }
 }
 
 export const scenes = defineFeature<ScenesShape>({
@@ -351,23 +344,18 @@ export const scenes = defineFeature<ScenesShape>({
     sceneId: { start: (game) => game.introScene ?? null },
     // The opening scene is on screen from the first frame, so it counts as seen
     // without a command ever having been run.
-    seen: { start: (game) => (game.introScene ? { [game.introScene]: 1 } : {}), load: () => ({}) },
-    seenOn: { start: (game) => (game.introScene ? { [game.introScene]: 0 } : {}), load: () => ({}) },
-    // Added without a save step: an older save reads `seenOn` until the scene is entered again.
-    lastSeenOn: { start: (game) => (game.introScene ? { [game.introScene]: 0 } : {}), load: () => ({}) },
+    seen: { start: (game) => (game.introScene ? { [game.introScene]: { n: 1, first: 0, last: 0 } } : {}), load: () => ({}) },
     chosen: { start: () => ({}), load: () => ({}) },
-    chosenOn: { start: () => ({}), load: () => ({}) },
-    lastChosenOn: { start: () => ({}), load: () => ({}) },
   },
   conditions: {
     chose: {
-      holds: (state, condition) => inRange(state.chosen?.[condition.chose] ?? 0, condition),
-      explain: (state, condition) => `choice ${condition.chose} picked ${state.chosen?.[condition.chose] ?? 0} times; wants ${wanted(condition)}`,
+      holds: (state, condition) => inRange(state.chosen?.[condition.chose]?.n ?? 0, condition),
+      explain: (state, condition) => `choice ${condition.chose} picked ${state.chosen?.[condition.chose]?.n ?? 0} times; wants ${wanted(condition)}`,
       references: (condition) => [{ choice: condition.chose }],
     },
     seen: {
-      holds: (state, condition) => inRange(state.seen?.[condition.seen] ?? 0, condition),
-      explain: (state, condition) => `scene ${condition.seen} seen ${state.seen?.[condition.seen] ?? 0} times; wants ${wanted(condition)}`,
+      holds: (state, condition) => inRange(state.seen?.[condition.seen]?.n ?? 0, condition),
+      explain: (state, condition) => `scene ${condition.seen} seen ${state.seen?.[condition.seen]?.n ?? 0} times; wants ${wanted(condition)}`,
       references: (condition) => [{ scene: condition.seen, as: 'gate' }],
     },
     since: {
@@ -430,12 +418,8 @@ export const scenes = defineFeature<ScenesShape>({
         if (!scene) return { ...state, sceneId: null }
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)!
         const key = `${scene.id}#${choice.id}`
-        const marked = {
-          ...state,
-          chosen: { ...state.chosen, [key]: (state.chosen?.[key] ?? 0) + 1 },
-          chosenOn: state.chosenOn?.[key] !== undefined ? state.chosenOn : { ...state.chosenOn, [key]: state.turn },
-          lastChosenOn: { ...state.lastChosenOn, [key]: state.turn },
-        }
+        // Counted on the turn it was picked in, before its effects can end the turn.
+        const marked = { ...state, chosen: { ...state.chosen, [key]: oneMore(state.chosen?.[key], state.turn) } }
         // The command it sends first, then its effects.
         const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
         return cx.runEffects(sent, game, choice.effects, false)

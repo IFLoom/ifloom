@@ -21,8 +21,8 @@ export type SaveMeta = {
   turn: number
   /** When and where the game was, in plugins' words ("Day 3 · Wednesday morning · The café"), or null if none says. */
   when: string | null
-  /** What `game.saveName` gave for the state, or null. */
-  player: string | null
+  /** What `game.saveName` gave for the state, such as the name the player typed, or null. */
+  playerName: string | null
   /** The ids of the packs the game was loaded with; a missing mod is reported on load. */
   packs: string[]
   /** The plugins the game was built with, and the version of each one's state. */
@@ -118,7 +118,7 @@ export function saves(game: Game, driver: SaveDriver): Saves {
       played: extra.played ?? 0,
       turn: state.turn,
       when,
-      player: game.saveName?.(state) ?? null,
+      playerName: game.saveName?.(state) ?? null,
       packs: game.packs ?? [],
       plugins: Object.fromEntries((game.plugins ?? []).map((plugin) => [plugin.id, plugin.version])),
       version: state.version,
@@ -145,7 +145,9 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion
-    const meta = { ...data.meta, gameVersion: data.meta.gameVersion ?? recorded ?? 1 }
+    // A save from before version 18 called the player's name `player`.
+    const { player: oldName, ...given } = data.meta as SaveMeta & { player?: string | null }
+    const meta: SaveMeta = { ...given, playerName: given.playerName ?? oldName ?? null, gameVersion: given.gameVersion ?? recorded ?? 1 }
     return ok({ meta, state, missingPacks, missingPlugins })
   }
 

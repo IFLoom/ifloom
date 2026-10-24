@@ -231,7 +231,7 @@ type SaveMeta = {
   played: number
   turn: number
   when: string | null
-  player: string | null
+  playerName: string | null
   packs: string[]
   plugins: Record<string, number>
   version: number
@@ -250,7 +250,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `played` | Time played, in milliseconds, as the [runner](/docs/reference/runner) counted it. |
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
-| `player` | What [`game.saveName`](/docs/reference/game#savename) returns for the state, or `null` when the game has no `saveName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
+| `playerName` | What [`game.saveName`](/docs/reference/game#savename) returns for the state, or `null` when the game has no `saveName`. A save written before version 18 called it `player`, and reading it gives it as `playerName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
 | `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
@@ -338,6 +338,8 @@ These are the changes to the save format so far, with what loading a save from b
 - **13 → 14** rekeys [`chosen`](/docs/reference/state#chosen) from `scene/choice` to `scene#choice`. A choice's once-a-turn record isn't moved, so in a save made partway through a turn, a `once` choice already taken that turn can be taken once more.
 - **14 → 15** makes each [entity](/docs/reference/entities#entitystate) record keep only what play changed. The step drops empty `stats` and `kv`. Step 5 then drops what equals the game's content: a declared entity's name, and stats and kv keys at their declared start. An older engine can't read the new records, which is why the version changed.
 - **15 → 16** takes items and collections out of the engine, since the things a player has are [entities](/docs/reference/entities#holding-things) they hold. Each count in `items` is written to [`held`](/docs/reference/state#held) for the player, 0s included, under the entity the item became: `item:<id>` if your game declares it, else the one entity your game declares with that id (a raincoat that's `clothing:raincoat` now), else `item:<id>`. Each entry in `collections` becomes an entity made in play, held by the player, of a kind named after the collection, with the entry's id. The phone's `gallery` becomes the `photo` kind. The entry's `title` is the name, its prose is the description (as written, so its tokens are filled when it's read), its `image` the picture and its `data` the kv. A collection's `max` and an entry's `turn` aren't kept. An entry with no id, or one already there, is skipped.
+- **16 → 17** drops `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from a choice's [hints](/docs/reference/ui-hints).
+- **17 → 18** folds what the player has seen and chosen into one record per id, `{ n, first, last }`, in [`seen`](/docs/reference/state#seen) and [`chosen`](/docs/reference/state#chosen). The count comes from the old `seen` or `chosen`, `first` from `seenOn` or `chosenOn`, and `last` from `lastSeenOn` or `lastChosenOn`, falling back to `first`. A record a save kept no turn for, from before the turns were kept, is dated the turn the save is at. A choice's `once` now reads `chosen`, so the `turn:<scene>#<choice>` kv keys that capped the game's choices go (and `turn:<key>` for a choice with a [`once.key`](/docs/reference/scenes#choice)). One that still caps the save's turn makes that choice's `last` the turn, so the cap holds. Other `turn:` keys, such as [`oncePerTurn`](/docs/reference/progress#onceperturn)'s, are kept.
 
 A save from version 0 doesn't load.
 
@@ -346,7 +348,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 17
+const SAVE_VERSION: 18
 ```
 
 The current save format. Every new state carries it in `state.version`.

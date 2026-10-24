@@ -236,7 +236,7 @@ choices: [
 ],
 ```
 
-Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `player` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `src/game.ts`:
+Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `src/game.ts`:
 
 ```ts
 export default loadGame([stats, opening], {

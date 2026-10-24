@@ -1,9 +1,8 @@
 /*
- * The site's palette and type, shared by the homepage, the docs and the
- * editor. The fonts are self-hosted with @fontsource and imported in
- * app/layout.tsx. The homepage reads these through home.css and its CSS
- * modules; the docs and the editor read them through the Fumadocs colours in
- * global.css.
+ * The site's palette and type, shared by the homepage and the docs. The
+ * fonts are self-hosted with @fontsource and imported in app/layout.tsx. The
+ * homepage reads these through home.css and its CSS modules; the docs read
+ * them through the Fumadocs colours in global.css.
  */
 :root {
   --bg: #050505;

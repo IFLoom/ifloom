@@ -62,8 +62,8 @@ tasks['typecheck:site'] = {
 tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', dependsOn: Object.keys(tasks).filter((name) => name.startsWith('typecheck:')) }
 
 // The docs site: the link check, then `next build`. Both are cached by the files the site can read, listed by hand
-// because Next's workers and Turbopack read far more than the build depends on. That's site/ but for what it writes and
-// the editor's tests, the source of each @ifloom package the site depends on (and those packages' own @ifloom peers,
+// because Next's workers and Turbopack read far more than the build depends on. That's site/ but for what it writes,
+// the source of each @ifloom package the site depends on (and those packages' own @ifloom peers,
 // as the React UI's on audio and browser), the changelog the docs include, and the root files that pick dependencies.
 // So an edit to the CLI, the phone bundle, a test, an example or a template skips it.
 // Vercel doesn't use these tasks: it runs `next build` in site/ after a clean install.
@@ -85,7 +85,6 @@ const siteInput = [
   '!site/.source/**',
   '!site/next-env.d.ts',
   '!site/**/*.tsbuildinfo',
-  '!site/editor/tests/**',
   ...[...siteUses].sort().flatMap((dir) => [`packages/${dir}/src/**`, `packages/${dir}/package.json`]),
   'CHANGELOG.md',
   'package.json',
@@ -103,7 +102,7 @@ tasks['site:build'] = {
   cache: { input: siteInput, output: ['site/.next/**', '!site/.next/cache/**', 'site/.source/**', 'site/next-env.d.ts'] },
 }
 
-// Test: one Vitest run over every package, example and the site's editor (vitest.config.ts).
+// Test: one Vitest run over every package and example (vitest.config.ts).
 tasks['test:all'] = {
   command: 'vitest run',
   cache: { input: [{ auto: true }, '!**/dist/**', '!node_modules/.vite/**', '!node_modules/.vite-temp/**', '!node_modules/.vitest-cache/**'], output: [] },

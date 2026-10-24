@@ -14,7 +14,7 @@ This page covers what content and packs are, how they merge, and which piece a p
 
 Your game is **content**: the scenes, stats, things, prose and plugin content in your own files, such as `src/world/stats.ts` and `src/story/cafe.ts`. Split it across as many files as you like, and rename or move them whenever you want. Each file exports a [`Content`](#content) object, and `src/game.ts` passes the list of them to [`loadGame`](#loadgame).
 
-A **pack** is something added on top of the game from outside your code: a player's [mod](/docs/reference/mods), [supporter content](/docs/plugins/unlocks) a code unlocks, or a JSON file exported from the [editor](/docs/guide/editor) to share. A [`Pack`](#pack) is content with an `id` and a `schema`, and it can [patch](#patches) a scene.
+A **pack** is something added on top of the game from outside your code: a player's [mod](/docs/reference/mods), [supporter content](/docs/plugins/unlocks) a code unlocks. A [`Pack`](#pack) is content with an `id` and a `schema`, and it can [patch](#patches) a scene.
 
 The two load differently:
 

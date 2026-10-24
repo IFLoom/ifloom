@@ -16,7 +16,7 @@ html > body[data-scroll-locked] {
 }
 
 /*
- * The docs and the editor in the homepage's palette. Fumadocs draws everything
+ * The docs in the homepage's palette. Fumadocs draws everything
  * from its --color-fd-* colours, so these carry most of the look. They come
  * after the preset, so they win over its light and .dark colours.
  */
@@ -47,9 +47,8 @@ html > body[data-scroll-locked] {
 }
 
 /*
- * Type and surfaces for the pages with a Fumadocs layout: the docs and the
- * editor. Scoped to those, so the homepage and the editor's game preview keep
- * their own fonts. The search dialog and menus open in <body>, so the fonts
+ * Type and surfaces for the pages with a Fumadocs layout: the docs. Scoped to
+ * those, so the homepage keeps its own fonts. The search dialog and menus open in <body>, so the fonts
  * are set there.
  */
 body:has(#nd-docs-layout, #nd-home-layout) {
@@ -370,30 +369,6 @@ body:has(#nd-docs-layout, #nd-home-layout) :where(code, kbd, pre, samp) {
   color: var(--ember-2);
 }
 
-/* The editor's top bar: a floating glass bar with small corners. */
-#nd-nav {
-  padding: 8px 16px 0;
-  height: auto;
-}
-
-#nd-nav > div {
-  border: 1px solid var(--hair);
-  border-radius: 8px;
-  background: rgba(14, 11, 9, 0.55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px -30px rgba(0, 0, 0, 0.9);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
-}
-
-#nd-nav nav {
-  height: 48px;
-  padding-inline: 20px 8px;
-}
-
-#nd-nav nav a[data-active] {
-  border-radius: 6px;
-}
-
 /* The search dialog: a glass panel over a blurred page. */
 .ifl-search-overlay {
   -webkit-backdrop-filter: blur(8px);
@@ -422,7 +397,7 @@ body:has(#nd-docs-layout, #nd-home-layout) :where(code, kbd, pre, samp) {
   color: var(--ink);
 }
 
-/* Menus and popovers (the version list, "Open", the editor's menus). */
+/* Menus and popovers (the version list, "Open"). */
 body:has(#nd-docs-layout, #nd-home-layout) [data-radix-popper-content-wrapper] > * {
   border-color: var(--hair);
   border-radius: 8px;

@@ -318,24 +318,6 @@ export function Home() {
                 </Link>
               </div>
             </Card>
-
-            <Card kind="editor">
-              <span className={s.tag}>08</span>
-              <h3 className={s.h3}>Write in your browser</h3>
-              <p className={s.p}>
-                Not a programmer? The editor lets you write scenes, choices and stats in forms, play them as you go, and export them as TypeScript or JSON for a
-                project. Nothing to install.
-              </p>
-              <div className={cx(s.ctas, s['editor-ctas'])}>
-                <Link className={s.cta} href="/editor">
-                  Open the editor
-                  <Arrow />
-                </Link>
-                <Link className={s.ghost} href="/docs/guide/editor">
-                  How it works
-                </Link>
-              </div>
-            </Card>
           </div>
         </section>
 
@@ -367,7 +349,6 @@ export function Home() {
         <span>IFLoom is open source and MIT licensed.</span>
         <nav aria-label="Footer">
           <Link href="/docs/guide/introduction">Docs</Link>
-          <Link href="/editor">Editor</Link>
           <Link href="/docs/changelog">Changelog</Link>
           <a href="https://github.com/IFLoom/ifloom" rel="noreferrer">
             GitHub

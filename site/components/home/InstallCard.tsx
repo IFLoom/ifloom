@@ -218,9 +218,6 @@ export function InstallCard() {
           It makes a new game in <code>my-game</code>. Then <code>cd my-game</code>, <code>{manager.install}</code> and <code>{manager.dev}</code>.{' '}
           <Link href="/docs/guide/installation">Installation</Link> covers the templates and options.
         </p>
-        <p className={s.note}>
-          <Link href="/editor">Try the editor</Link> to write a story in your browser with nothing to install, and export it when you're ready.
-        </p>
       </div>
     </div>
   )

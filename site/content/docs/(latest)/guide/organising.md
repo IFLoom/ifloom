@@ -135,10 +135,6 @@ describe('the café', () => {
 
 When a test fails, its file names the area, and the area's file is where the fix goes. [Testing your game](/docs/guide/testing) covers playing routes, reaching scenes and replaying saves.
 
-## An editor export
-
-The [editor](/docs/guide/editor)'s TypeScript export is one file of content. It's part of the story, so save it in `story/` and add it to the list in `game.ts`. If it declares stats or things the rest of the game uses too, move those into `world/`, and `npm run check` tells you if you leave a copy behind.
-
 ## Mods are packs
 
 A [mod](/docs/reference/mods) is a [pack](/docs/reference/loader#content-and-packs): content from outside your code, with an id that starts with `mod:`. Packs go in `loadGame`'s third argument, over your content:

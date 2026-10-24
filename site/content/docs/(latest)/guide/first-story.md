@@ -15,8 +15,6 @@ It's the smallest kind of game you can make with IFLoom. There are no plugins, s
 
 The finished game is three short files, plus a page that draws it: `src/story/opening.ts` holds the scenes and their words, `src/world/stats.ts` the stat, and `src/game.ts` puts them together. The whole thing is at the [end of the page](#the-whole-thing). [The Letter](/docs/guide/shapes#a-linear-novel-the-letter) is a slightly longer story built the same way, and `--template novel` starts a copy of it.
 
-To try the same ideas without installing anything, open the [editor](/docs/guide/editor) in your browser. It builds scenes, choices and stats from forms, and exports a file you can bring back to this page.
-
 ## Before you start
 
 Make a new game from the template for the way you want to draw it (see [Installation](/docs/guide/installation) for pnpm, yarn and bun):

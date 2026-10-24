@@ -1,7 +1,0 @@
-/* The React UI inside the editor's preview frame, apart from the docs' theme. */
-@import '@ifloom/react/styles.css';
-
-/* The site keeps room for a scrollbar on every page; the frame doesn't need it. */
-html {
-  scrollbar-gutter: auto;
-}

@@ -37,5 +37,3 @@ Start with [Installation](/docs/guide/installation), then write [your first stor
 - **React UI.** The ready-made [React UI](/docs/react) and how to make it your own.
 - **CLI.** The [`ifloom` command](/docs/cli) and its Vite preset.
 - **Changelog.** [What changed](/docs/changelog) in each release.
-
-To try IFLoom with nothing to install, open the [editor](/editor) in your browser. It builds scenes and choices from forms, plays the game beside them, and exports what you made (see [The editor](/docs/guide/editor)).

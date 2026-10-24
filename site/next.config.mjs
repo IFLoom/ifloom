@@ -1,4 +1,3 @@
-import { readdirSync } from 'node:fs'
 import { createMDX } from 'fumadocs-mdx/next'
 
 const withMDX = createMDX()
@@ -23,13 +22,6 @@ const MOVED = {
   'reference/transitions': 'react/hints',
 }
 
-/**
- * The site reads the @ifloom packages' TypeScript source, as everything in the
- * checkout does (ADR 0012). Turbopack has no setting for export conditions, so
- * each package's entry is aliased to its src/index.ts, which Next compiles.
- */
-const PACKAGES = readdirSync(new URL('../packages', import.meta.url)).filter((name) => name !== 'cli')
-
 /** @type {import('next').NextConfig} */
 const config = {
   // Served by Vercel at https://ifloom.dev, with server routes for search and MCP.
@@ -39,27 +31,23 @@ const config = {
   // Each page-rendering worker takes most of a gigabyte, so a machine with many
   // cores and little memory runs out with one per core. Four is plenty.
   experimental: { cpus: 4 },
-  // The editor uses the engine, the React UI and the plugins straight from the workspace, as TypeScript.
-  transpilePackages: PACKAGES.map((name) => `@ifloom/${name}`),
-  turbopack: { resolveAlias: Object.fromEntries(PACKAGES.map((name) => [`@ifloom/${name}`, `../packages/${name}/src/index.ts`])) },
-  // `npm run build:lean` builds with webpack, which compiles in well under half the
-  // memory Turbopack takes (about 6 GB against 15), so the checkout's own checks
-  // fit a small machine. It reads the packages' source through their export condition.
-  webpack(config) {
-    config.resolve.conditionNames = ['ifloom-source', '...']
-    return config
-  },
   // TODO(launch): remove, with app/robots.ts and metadata.robots in app/layout.tsx. See ROADMAP "Release readiness".
   async headers() {
     return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
   },
   // Pages that moved, so old links still land.
   async redirects() {
-    return Object.entries(MOVED).flatMap(([from, to]) => [
-      { source: `/docs/${from}`, destination: `/docs/${to}`, permanent: true },
-      // A page's Markdown is at /llms.mdx/docs/<page>/content.md.
-      { source: `/llms.mdx/docs/${from}/:rest*`, destination: `/llms.mdx/docs/${to}/:rest*`, permanent: true },
-    ])
+    return Object.entries(MOVED)
+      .flatMap(([from, to]) => [
+        { source: `/docs/${from}`, destination: `/docs/${to}`, permanent: true },
+        // A page's Markdown is at /llms.mdx/docs/<page>/content.md.
+        { source: `/llms.mdx/docs/${from}/:rest*`, destination: `/llms.mdx/docs/${to}/:rest*`, permanent: true },
+      ])
+      .concat(
+        // The editor is away until the content API settles; not permanent, as it's coming back.
+        { source: '/editor/:rest*', destination: '/', permanent: false },
+        { source: '/docs/guide/editor', destination: '/docs/guide/introduction', permanent: false },
+      )
   },
 }
 

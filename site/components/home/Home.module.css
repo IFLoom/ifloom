@@ -341,10 +341,6 @@
   grid-column: span 7;
 }
 
-.editor {
-  grid-column: span 12;
-}
-
 .groups {
   display: flex;
   flex-direction: column;
@@ -405,10 +401,6 @@
 .tool-list .code {
   justify-self: start;
   color: var(--ember-2);
-}
-
-.editor-ctas {
-  margin-top: 8px;
 }
 
 .from {
@@ -633,8 +625,7 @@
     grid-row: auto;
   }
 
-  .shape,
-  .editor {
+  .shape {
     grid-column: span 12;
   }
 
@@ -679,8 +670,7 @@
   .checked,
   .ship,
   .media,
-  .agents,
-  .editor {
+  .agents {
     grid-column: auto;
   }
 

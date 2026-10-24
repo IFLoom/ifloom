@@ -267,7 +267,7 @@ const strings = { 'quests/notDoing': 'That one is not on your list.' }
 
 `view(state, game).plugins.quests` is a `QuestsView`.
 
-The [React UI](/docs/react) draws it with [`QuestLog`](/docs/react/components#questlog), and [`useQuests`](/docs/react/components#usequests) gives the same data and the track and seen commands with no markup.
+Its [React UI](#the-react-ui) draws it with [`QuestLog`](#questlog), and [`useQuests`](#usequests) gives the same data and the track and seen commands with no markup.
 
 ### QuestsView
 
@@ -314,6 +314,80 @@ type QuestEntry = {
 | `startedOn`, `doneOn` | The [turn](/docs/reference/state#turn) it started, and the turn it finished, or `null`. |
 | `tracked` | Pinned with `quests/track`. |
 | `updated` | Started or moved on since the player last looked. |
+
+## The React UI
+
+`@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.quests`, or from [`useQuests`](#usequests) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { questsUi } from '@ifloom/plugin-quests/react'
+
+mountGame(game, { plugins: [questsUi] })
+```
+
+### questsUi
+
+```ts
+const questsUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too.
+
+Its words are in `QUESTS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.questNew': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.questNew` | `New` |
+| `ui.questStage` | `{stage} of {stages}` |
+| `ui.quests` | `Quests` |
+| `ui.track` | `Track` |
+| `ui.untrack` | `Untrack` |
+
+### QuestsSection
+
+```tsx
+function QuestsSection(): JSX.Element
+```
+
+What `questsUi` puts in the side column: a [`Section`](/docs/react/components#section) with the id `quests`, titled `ui.quests`, as a button with the count of news on it that opens the `QuestLog` in a dialog. Draw it in a layout of your own to keep that, or draw `QuestLog` in your own section.
+
+### QuestLog
+
+```tsx
+function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
+```
+
+The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its summary, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
+
+`title` replaces the heading, `ui.quests`, for this one list, and `false` leaves it out with its count. It draws nothing in a game without the plugin.
+
+Replaceable as `QuestLog` in [`components`](/docs/react/components#components). Parts: `quests`, `quests-title`, `quest` (with `data-quest`), `quest-title`, `quest-summary`, `quest-hint`, `quest-stage`, `quests-done`, `quest-done`, `badge` and `button`.
+
+### useQuests
+
+```ts
+function useQuests(): QuestsControls | null
+
+type QuestsControls = QuestsView & {
+  track: (id: string | null) => Result<GameState>
+  seen: () => Result<GameState>
+}
+```
+
+The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind` and `updates`) with its two commands, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. `seen()` sends `quests/seen`. [`QuestLog`](#questlog) is drawn from it.
+
+```tsx
+import { useQuests } from '@ifloom/plugin-quests/react'
+
+function Objective() {
+  const quests = useQuests()
+  const tracked = quests?.active.find((quest) => quest.tracked)
+  return tracked ? <p className="text-sm">{tracked.title}: {tracked.hint}</p> : null
+}
+```
 
 ## The state
 

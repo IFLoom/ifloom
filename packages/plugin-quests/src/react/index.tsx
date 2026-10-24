@@ -1,10 +1,40 @@
+/**
+ * @ifloom/plugin-quests/react: the quests plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `questsUi` in the game's
+ * `plugins` to have the quest log in the side column, behind a button with
+ * the count of news, and as the `quests` panel; or draw it yourself from
+ * `useQuests`.
+ */
+import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
-import type { QuestsView } from '@ifloom/plugin-quests'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { QuestsView } from '../index.ts'
+import { badgeVariants, buttonVariants, overridable, type Override, type PluginUi, Section, useGame, usePart, useWords } from '@ifloom/react'
+
+/** The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const QUESTS_WORDS = {
+  questNew: 'New',
+  questStage: '{stage} of {stages}',
+  quests: 'Quests',
+  track: 'Track',
+  untrack: 'Untrack',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    QuestLog: Override<ComponentProps<typeof QuestLog>>
+  }
+  interface PartNames {
+    'quest': true
+    'quest-done': true
+    'quest-hint': true
+    'quest-stage': true
+    'quest-summary': true
+    'quest-title': true
+    'quests': true
+    'quests-done': true
+    'quests-title': true
+  }
+}
 
 /** What `useQuests` returns: the quests plugin's view, and what the player can do with it. */
 export type QuestsControls = QuestsView & {
@@ -27,7 +57,7 @@ export function useQuests(): QuestsControls | null {
 }
 
 function QuestLogImpl({ className, title }: { className?: string; title?: string | false }) {
-  const words = useWords()
+  const words = useWords(QUESTS_WORDS)
   const log = usePart('quests', 'flex flex-col gap-3', className)
   const heading = usePart('quests-title', 'flex items-center gap-2 font-heading font-semibold')
   const updates = usePart('badge', badgeVariants())
@@ -40,7 +70,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   const tracked = usePart('button', buttonVariants({ size: 'sm', variant: 'secondary' }))
   const untracked = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
   const doneList = usePart('quests-done', 'text-sm text-muted-foreground')
-  const done = usePart('quest-done', 'line-through')
+  const done = usePart('quest-done', '')
   const seen = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
   const quests = useQuests()
   if (!quests) return null
@@ -70,7 +100,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
         <ul {...doneList}>
           {quests.done.map((quest) => (
             <li key={quest.id} {...done}>
-              {quest.title}
+              <s>{quest.title}</s>
             </li>
           ))}
         </ul>
@@ -90,3 +120,27 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
  * A thin default on `useQuests`.
  */
 export const QuestLog = overridable('QuestLog', QuestLogImpl)
+
+/** The default layout's Quests section: a button with the count of news that opens the `QuestLog` in a dialog. */
+export function QuestsSection() {
+  const words = useWords(QUESTS_WORDS)
+  const news = useQuests()?.updates
+  return (
+    <Section id="quests" title={words('quests')} dialog badge={news || null}>
+      <QuestLog title={false} />
+    </Section>
+  )
+}
+
+/**
+ * The quests plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: a Quests section in the side column that opens the
+ * `QuestLog` in a dialog, with the count of news on its button; the `quests`
+ * panel; and the quests' words.
+ */
+export const questsUi: PluginUi = {
+  id: 'quests',
+  words: QUESTS_WORDS,
+  layout: { sidebar: [QuestsSection] },
+  panels: { quests: { component: () => <QuestLog title={false} />, title: 'quests' } },
+}

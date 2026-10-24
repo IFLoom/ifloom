@@ -1,9 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Profile } from '@ifloom/engine'
-import { at, places } from '@ifloom/plugin-places'
-import { quests } from '@ifloom/plugin-quests'
+import { createRunner, definePlugin, loadGame, memoryDriver, profile, startingState, type Condition, type Game, type Profile } from '@ifloom/engine'
 import {
   DefaultLayout,
   Game as Page,
@@ -18,16 +16,43 @@ import {
   Title,
   When,
   useHolds,
+  useGame,
   type Components,
+  type PluginUi,
 } from '../src/index.ts'
 import { storyOf } from './layouts.tsx'
+
+/** Out in the street, or at home: a kv key the street's and the house's actions set. */
+const out: Condition = { kv: 'out' }
+const home: Condition = { not: out }
+
+/** A test plugin with a view: the errands on a list, one once the player has waited. */
+const errands = definePlugin<null, { list: string[] }>({
+  id: 'errands',
+  version: 1,
+  view: (state) => ({ list: state.stats.coins > 3 ? ['Get out of the house'] : [] }),
+})
+
+function ErrandsSection() {
+  const list = (useGame().view.plugins.errands as { list: string[] } | undefined)?.list ?? []
+  return (
+    <Section id="errands" title="Errands" dialog badge={list.length || null}>
+      {list.map((item) => (
+        <p key={item}>{item}</p>
+      ))}
+    </Section>
+  )
+}
+
+/** Its UI, as a plugin's `/react` would give it: a section in the side column. */
+const errandsUi: PluginUi = { id: 'errands', layout: { sidebar: [ErrandsSection] } }
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
 
-/** A house and a street, a stat, a quest, and a scene that opens a panel by name. */
+/** A house and a street, a stat, a list of errands from a plugin, and an action that opens a panel by name. */
 function town(): Game {
   const { game, problems } = loadGame(
     [
@@ -37,26 +62,18 @@ function town(): Game {
         activities: [
           { id: 'wait', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] },
           { id: 'look', effects: [{ kind: 'panel', panel: 'stats' }] },
+          { id: 'street', effects: [{ kind: 'kv', key: 'out', to: true }] },
+          { id: 'house', effects: [{ kind: 'kv', key: 'out', to: false }] },
         ],
-        prose: { 'place.house': 'Quiet.', 'place.street': 'Busy.' },
-        data: {
-          places: {
-            locations: [
-              { id: 'house', name: 'House', tag: 'Home', exits: ['street'], art: '', body: [{ text: 'place.house' }] },
-              { id: 'street', name: 'High Street', tag: 'Out', exits: ['house'], art: '', body: [{ text: 'place.street' }] },
-            ],
-          },
-          quests: {
-            quests: [{ id: 'out', title: 'Get out of the house', starts: at('house', 'street'), stages: [{ id: 'go', hint: 'Go out.', done: at('street') }] }],
-          },
-        },
       },
     ],
     {
       id: 'regions-test',
       title: 'Small Town',
-      plugins: [places({ start: 'house' }), quests()],
+      plugins: [errands],
       actions: [
+        { id: 'street', label: 'High Street', when: home, command: { type: 'activity', id: 'street' } },
+        { id: 'house', label: 'House', when: out, command: { type: 'activity', id: 'house' } },
         { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
         { id: 'look', label: 'Check your pockets', command: { type: 'activity', id: 'look' } },
       ],
@@ -69,7 +86,7 @@ function town(): Game {
 function play(props: Partial<Parameters<typeof GameShell>[0]> = {}, options: { profile?: Profile } = {}) {
   const g = town()
   const runner = createRunner(g, startingState(g), { profile: options.profile })
-  render(<GameShell runner={runner} {...props} />)
+  render(<GameShell runner={runner} plugins={[errandsUi]} {...props} />)
   return runner
 }
 
@@ -193,11 +210,11 @@ describe('sections', () => {
 
   it('open in a dialog and close again', () => {
     play()
-    // The quest starts after the first command.
+    // The errand comes once the player has waited.
     press(/Wait a while/)
-    const button = within(section('quests')!).getByRole('button', { name: /Quests/ })
+    const button = within(section('errands')!).getByRole('button', { name: /Errands/ })
     act(() => void fireEvent.click(button))
-    const dialog = screen.getByRole('dialog', { name: 'Quests' })
+    const dialog = screen.getByRole('dialog', { name: 'Errands' })
     expect(within(dialog).getByText('Get out of the house')).toBeTruthy()
     act(() => void fireEvent.click(within(dialog).getByRole('button', { name: 'Close' })))
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -205,16 +222,18 @@ describe('sections', () => {
 
   it('hide themselves when nothing in them draws anything', () => {
     play()
-    // No cast, no inventory, no wardrobe in this town.
-    for (const id of ['people', 'inventory', 'wardrobe']) expect(section(id)!.hidden, id).toBe(true)
-    for (const id of ['stats', 'quests']) expect(section(id)!.hidden, id).toBe(false)
+    // Nothing held, and no errand yet.
+    for (const id of ['inventory', 'errands']) expect(section(id)!.hidden, id).toBe(true)
+    expect(section('stats')!.hidden).toBe(false)
+    press(/Wait a while/)
+    expect(section('errands')!.hidden).toBe(false)
   })
 })
 
-describe('when, as the location changes', () => {
+describe('when, as the state changes', () => {
   it('shows a section only in some rooms, and `When` and `useHolds` follow it', () => {
     function Out() {
-      return <p data-out={String(useHolds(at('street')))} />
+      return <p data-out={String(useHolds(out))} />
     }
     const g = town()
     const runner = createRunner(g, startingState(g))
@@ -224,10 +243,10 @@ describe('when, as the location changes', () => {
         layout={() => (
           <Page>
             <Sidebar>
-              <Section id="home" title="At home" when={at('house')}>
+              <Section id="home" title="At home" when={home}>
                 <StatList />
               </Section>
-              <When condition={at('street')}>
+              <When condition={out}>
                 <p>Out and about</p>
               </When>
               <Out />
@@ -241,11 +260,11 @@ describe('when, as the location changes', () => {
     )
     expect(section('home')).not.toBeNull()
     expect(screen.queryByText('Out and about')).toBeNull()
-    act(() => void runner.apply({ type: 'custom', name: 'places/go', with: { id: 'street' } }))
+    act(() => void runner.apply({ type: 'activity', id: 'street' }))
     expect(section('home')).toBeNull()
     expect(screen.getByText('Out and about')).toBeTruthy()
     expect(document.querySelector('[data-out]')!.getAttribute('data-out')).toBe('true')
-    act(() => void runner.apply({ type: 'custom', name: 'places/go', with: { id: 'house' } }))
+    act(() => void runner.apply({ type: 'activity', id: 'house' }))
     expect(section('home')).not.toBeNull()
   })
 })

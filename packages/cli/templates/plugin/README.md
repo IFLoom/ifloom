@@ -30,11 +30,24 @@ const { game } = loadGame([town], { id: 'my-game', title: 'My Game', plugins: [_
 
 A UI reads `view.plugins.__id__`, typed as `__Pascal__View`, or `__camel__().viewIn(view)`.
 
+## Its React UI
+
+A game drawn with [`@ifloom/react`](https://ifloom.dev/docs/react) lists the plugin's React UI, from the `{{name}}/react` subpath:
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { __camel__Ui } from '{{name}}/react'
+
+mountGame(game, { plugins: [__camel__Ui] })
+```
+
+It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports and styled by its classes, parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/react/kit) explains each part.
+
 ## Work on it
 
 ```sh
 npm install
-npm test            # vitest
+npm test            # vitest, the plugin's test and its React UI's
 npm run typecheck   # tsc --noEmit
 npm run build       # dist/, what npm publish packs
 ```
@@ -46,7 +59,7 @@ npm run build       # dist/, what npm publish packs
 The docs list plugins other people have written on [Community plugins](https://ifloom.dev/docs/plugins/community). A plugin is listed after someone has read it, when:
 
 - it imports only the public API of `@ifloom/engine`, and reaches other plugins only by name (`cooperates`, their conditions, effects and `query`);
-- it needs no UI of its own: it gives a view, and works in a game with no UI package;
+- its engine side needs no UI: it gives a view, and works in a game with no UI package. A React UI, if it has one, is its `/react` subpath, built only from `@ifloom/react`'s public exports;
 - `@ifloom/engine` is a peer dependency, named with `^` and a version;
 - it has tests that play it in a small game, and they pass;
 - content it reads lives in `data`, and its conditions, effects and commands follow the [naming rules](https://ifloom.dev/docs/reference/plugins#naming);

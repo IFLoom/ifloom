@@ -12,7 +12,9 @@ import { describe, expect, it } from 'vitest'
  * - makes or finds an element: `document.createElement`, `document.querySelector`, `document.getElementById`, or
  * - is a `vue` or `svelte` block.
  *
- * Pages under `react/` document the optional React UI, so they stay React.
+ * Pages under `react/` document the optional React UI, so they stay React,
+ * and so does a plugin page's `## The React UI` section, which documents the
+ * plugin's `/react` subpath.
  * Two more pages are about one framework by design: the guide's worked
  * example of a UI in plain JS (`guide/ui-from-scratch`), whose other
  * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
@@ -47,12 +49,23 @@ type Block = {
   end: number
   /** Only blank lines between it and the next block. */
   adjacentToNext: boolean
+  /** Under a `## The React UI` heading: the plugin's React subpath, React by design. */
+  reactSection: boolean
 }
 
 /** The fenced code blocks of a page, with each block's tab and tab group from its meta. */
 function blocksOf(source: string): Block[] {
   const lines = source.split('\n')
   const blocks: Block[] = []
+  // The `##` heading each line is under, outside code.
+  const section: string[] = []
+  let heading = ''
+  let fenced = false
+  for (const line of lines) {
+    if (/^ {0,3}`{3,}/.test(line)) fenced = !fenced
+    else if (!fenced && line.startsWith('## ')) heading = line.slice(3).trim()
+    section.push(heading)
+  }
   for (let at = 0; at < lines.length; at++) {
     const open = /^ {0,3}(`{3,})(\S*)(.*)$/.exec(lines[at])
     if (!open) continue
@@ -68,6 +81,7 @@ function blocksOf(source: string): Block[] {
       code: lines.slice(at + 1, end).join('\n'),
       end,
       adjacentToNext: false,
+      reactSection: section[at] === 'The React UI',
     })
     at = end
   }
@@ -151,7 +165,7 @@ describe('the docs', () => {
           .flat(),
       )
       for (const block of page.blocks) {
-        if (isUi(block) && !tabbed.has(block)) untabbed.push(`${page.path}:${block.line}: ${block.code.split('\n')[0]}`)
+        if (isUi(block) && !tabbed.has(block) && !block.reactSection) untabbed.push(`${page.path}:${block.line}: ${block.code.split('\n')[0]}`)
       }
     }
     expect(untabbed).toEqual([])

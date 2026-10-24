@@ -392,84 +392,49 @@
   padding-top: 0.75rem;
 }
 
-/* The plugins' defaults: ruled entries, as in a book's index, rather than boxes. */
-[data-part="achievement"],
-[data-part="good"],
-[data-part="job"] {
+/*
+ * The kit's parts, whatever plugin draws them: ruled entries, as in a book's
+ * index, rather than boxes; headings in small capitals; notes in italics.
+ */
+[data-kit="card"] {
   border-width: 0 0 1px;
   border-radius: 0;
   padding-inline: 0;
+  padding-block: 0.5rem;
 }
 
-[data-part="achievements-title"],
-[data-part="jobs-title"],
-[data-part="statuses-title"] {
-  font-variant: small-caps;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
-[data-part="achievement"][data-secret] [data-part="achievement-title"],
-[data-part="status-summary"],
-[data-part="status-turns"],
-[data-part="job-next"] {
-  font-style: italic;
-}
-
-[data-part="achievement-progress"] {
-  height: 2px;
-  border-radius: 0;
-}
-
-[data-part="good-actions"] [data-part="choice"],
-[data-part="job-actions"] [data-part="choice"] {
-  padding-block: 0.15rem;
-}
-
-[data-part="status"] {
+[data-kit="item"] {
   padding-left: 0.75rem;
   border-left: 2px solid var(--primary);
 }
 
-/* Cheats: a ruled list like the other plugins', with the groups in small capitals. */
-[data-part="cheat"] {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-[data-part="cheats-group-title"] {
+[data-kit="heading"] {
   font-variant: small-caps;
   font-weight: 400;
   letter-spacing: 0.04em;
 }
 
-[data-part="cheat-text"] {
+[data-secret] [data-kit="title"],
+[data-kit="note"] {
   font-style: italic;
 }
 
-/* Codes: the box as a ruled line to write on, and the unlocks as a ruled list. */
-[data-part="unlock-input"] {
+[data-kit="meter"] {
+  height: 2px;
+  border-radius: 0;
+}
+
+[data-kit="commands"] [data-part="choice"] {
+  padding-block: 0.15rem;
+}
+
+/* A box to type a code in: a ruled line to write on. */
+[data-kit="input"] {
   border-width: 0 0 1px;
   border-radius: 0;
   background: transparent;
   font-family: var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.08em;
-}
-
-[data-part="unlock"] {
-  border-width: 0 0 1px;
-  border-radius: 0;
-  padding-inline: 0;
-}
-
-[data-part="unlocks-title"] {
-  font-variant: small-caps;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
-[data-part="unlock-text"] {
-  font-style: italic;
 }
 
 /*
@@ -559,12 +524,11 @@
 }
 
 /* What you carry and what's on the counter: a picture framed like a plate, a line about it in italics. */
-[data-part="good-image"] {
+[data-kit="thumb"] {
   border: 1px solid var(--border);
   border-radius: 0;
 }
 
-[data-part="good-desc"],
 [data-part="thing-text"] {
   font-style: italic;
 }
@@ -574,8 +538,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-[data-part="thing-drop"],
-[data-part="wardrobe-slot-name"] {
+[data-kit="label"] {
   font-variant: small-caps;
   letter-spacing: 0.04em;
 }

@@ -174,22 +174,46 @@ describe('ifloom new', () => {
   it('makes a plugin package from the plugin template, named for the plugin', () => {
     const { dir, files, theme } = newGame({ name: 'ifloom-plugin-rainy-day', template: 'plugin', into: fresh() })
     expect(theme).toBeNull()
-    expect(files.sort()).toEqual(['.gitignore', 'README.md', 'package.json', 'src/index.ts', 'tests/rainy-day.test.ts', 'tsconfig.json', 'tsdown.config.ts'])
+    expect(files.sort()).toEqual([
+      '.gitignore',
+      'README.md',
+      'package.json',
+      'src/index.ts',
+      'src/react/index.tsx',
+      'tests/rainy-day.test.ts',
+      'tests/react.test.tsx',
+      'tsconfig.json',
+      'tsdown.config.ts',
+    ])
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg).toMatchObject({
       name: 'ifloom-plugin-rainy-day',
       description: 'Rainy Day: a plugin for IFLoom.',
       license: 'MIT',
-      // Published compiled: ES modules and their types, built into dist/ before it's packed.
-      exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } },
+      // Published compiled: ES modules and their types, built into dist/ before it's packed. Its React UI is the /react subpath.
+      exports: {
+        '.': { types: './dist/index.d.ts', default: './dist/index.js' },
+        './react': { types: './dist/react/index.d.ts', default: './dist/react/index.js' },
+      },
       files: ['dist'],
       scripts: { build: 'tsdown', test: 'vitest run', typecheck: 'tsc --noEmit', prepublishOnly: 'npm run build' },
-      // The engine is the game's: a caret peer, and a dev dependency for the plugin's own tests.
-      peerDependencies: { '@ifloom/engine': '^0.0.0' },
+      // The engine is the game's: a caret peer, and a dev dependency for the plugin's own tests. React and its UI are optional peers.
+      peerDependencies: { '@ifloom/engine': '^0.0.0', '@ifloom/react': '^0.0.0', react: '^19.0.0' },
+      peerDependenciesMeta: { '@ifloom/react': { optional: true }, react: { optional: true } },
     })
     expect(pkg.private).toBeUndefined()
     expect(pkg.dependencies).toBeUndefined()
-    expect(Object.keys(pkg.devDependencies)).toEqual(['@ifloom/engine', 'tsdown', 'typescript', 'vitest'])
+    expect(Object.keys(pkg.devDependencies)).toEqual([
+      '@ifloom/engine',
+      '@ifloom/react',
+      '@types/react',
+      '@types/react-dom',
+      'react',
+      'react-dom',
+      'tsdown',
+      'typescript',
+      'vitest',
+    ])
     // Standalone: the tsconfig extends nothing in the checkout.
     expect(JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')).extends).toBeUndefined()
     const source = readFileSync(join(dir, 'src/index.ts'), 'utf8')
@@ -206,17 +230,29 @@ describe('ifloom new', () => {
       expect(source).toContain(name)
     }
     expect(readFileSync(join(dir, 'tests/rainy-day.test.ts'), 'utf8')).toContain("from '../src/index.ts'")
+    // The React UI: the kit's front door only, a module named for the plugin, and its words as a constant.
+    const ui = readFileSync(join(dir, 'src/react/index.tsx'), 'utf8')
+    for (const name of [
+      "from '@ifloom/react'",
+      'export const rainyDayUi: PluginUi',
+      "id: 'rainy-day'",
+      'export const RAINY_DAY_WORDS',
+      'export function useRainyDay()',
+    ]) {
+      expect(ui).toContain(name)
+    }
+    expect(ui).not.toMatch(/@ifloom\/react\//)
     const readme = readFileSync(join(dir, 'README.md'), 'utf8')
     expect(readme).toContain('# Rainy Day')
     expect(readme).toContain('npm install ifloom-plugin-rainy-day')
     expect(readme).toContain('## Getting it listed')
     // Nothing is left to fill in but the TODOs.
-    for (const file of files) expect(readFileSync(join(dir, file), 'utf8')).not.toMatch(/\{\{\w+\}\}|__(?:id|camel|Pascal)__/)
+    for (const file of files) expect(readFileSync(join(dir, file), 'utf8')).not.toMatch(/\{\{\w+\}\}|__(?:id|camel|Pascal|CONSTANT)__/)
   })
 
   it("takes a plugin's id from its package name, and refuses one that can't be an id", () => {
-    expect(pluginNames('weather')).toEqual({ id: 'weather', camel: 'weather', Pascal: 'Weather', title: 'Weather' })
-    expect(pluginNames('plugin-bus-stops')).toEqual({ id: 'bus-stops', camel: 'busStops', Pascal: 'BusStops', title: 'Bus Stops' })
+    expect(pluginNames('weather')).toEqual({ id: 'weather', camel: 'weather', Pascal: 'Weather', CONSTANT: 'WEATHER', title: 'Weather' })
+    expect(pluginNames('plugin-bus-stops')).toEqual({ id: 'bus-stops', camel: 'busStops', Pascal: 'BusStops', CONSTANT: 'BUS_STOPS', title: 'Bus Stops' })
     expect(pluginNames('ifloom-plugin-tide')).toMatchObject({ id: 'tide' })
     expect(() => newGame({ name: 'ifloom-plugin-2d', template: 'plugin', into: fresh() })).toThrow(/can't be a plugin's id/)
     expect(() => newGame({ name: 'tide.chart', template: 'plugin', into: fresh() })).toThrow(/can't be a plugin's id/)

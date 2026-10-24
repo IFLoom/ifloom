@@ -29,10 +29,9 @@ export function useDialogParts(extra?: string) {
 }
 
 /**
- * A dialog drawn with the UI's `dialog` parts, as the menu's and the devices'
- * are: open while `open` is true, titled `title`, calling `onClose` when the
- * player closes it. The shop, the achievements and `PanelHost` use it, and a
- * layout of your own can too.
+ * A dialog drawn with the UI's `dialog` parts, as the menu's is: open while
+ * `open` is true, titled `title`, calling `onClose` when the player closes it.
+ * `PanelHost` and the plugins' UIs use it, and a layout of your own can too.
  */
 export function PartDialog({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const words = useWords()

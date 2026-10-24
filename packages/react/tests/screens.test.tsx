@@ -2,8 +2,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createRunner, loadGame, memoryDriver, saves, startingState, type Game } from '@ifloom/engine'
-import { places } from '@ifloom/plugin-places'
-import { wardrobe, wearable, type WardrobeView } from '@ifloom/plugin-wardrobe'
 import { GameShell } from '../src/index.ts'
 
 afterEach(cleanup)
@@ -13,11 +11,6 @@ function game(): Game {
     [
       {
         name: 'town',
-        kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
-        entities: [
-          { id: 'coat', of: 'clothing', name: 'coat', at: 'player', traits: { ...wearable('back') } },
-          { id: 'cape', of: 'clothing', name: 'cape', at: 'player', traits: { ...wearable('back') } },
-        ],
         activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
         scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
         inputs: [
@@ -32,18 +25,13 @@ function game(): Game {
             ],
           },
         ],
-        prose: { 'place.house': 'Home.', intro: 'Hi.', 'intro#go': 'Go in' },
-        data: {
-          places: { locations: [{ id: 'house', name: 'House', tag: 'Home', exits: [], art: '', body: [{ text: 'place.house' }] }] },
-          wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'clothing:coat' }] },
-        },
+        prose: { intro: 'Hi.', 'intro#go': 'Go in' },
       },
     ],
     {
       id: 'screens',
       title: 'Screens',
       introScene: 'intro',
-      plugins: [places({ start: 'house' }), wardrobe()],
       actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
     },
   ).game
@@ -59,16 +47,6 @@ function play(options: Parameters<typeof createRunner>[2] = {}) {
 const click = (element: Element) => act(() => void fireEvent.click(element))
 
 describe('the React UI’s screens', () => {
-  it('wears and takes off clothes', () => {
-    const runner = play()
-    const panel = document.querySelector('[data-wardrobe]') as HTMLElement
-    expect(within(panel).getByText('coat')).toBeTruthy()
-    click(within(panel).getByRole('button', { name: 'Wear cape' }))
-    expect((runner.view().plugins.wardrobe as WardrobeView).slots[0].entity).toBe('clothing:cape')
-    click(within(panel).getByRole('button', { name: 'Take off' }))
-    expect((runner.view().plugins.wardrobe as WardrobeView).slots[0].entity).toBeNull()
-  })
-
   it('takes typed and picked input, and shows the refusal for a bad one', () => {
     const runner = play()
     const field = document.querySelector('[data-input="catName"]') as HTMLElement

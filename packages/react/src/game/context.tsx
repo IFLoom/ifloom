@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
 import type { Command, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, View } from '@ifloom/engine'
-import type { UnlockCodes } from '@ifloom/plugin-unlocks'
 import { UiProvider, type UiOptions } from './overrides.tsx'
-import { FeedSection, MessagesSection } from './sections.tsx'
+import { activePlugins, mergedFrom, PluginProviders, type PluginUi } from './plugins.tsx'
 import { KeysProvider } from './keys.tsx'
 import { useTicking } from './timers.tsx'
 
@@ -42,25 +41,9 @@ export type ModsOption = {
   onChange?: () => void
 }
 
-/**
- * Codes the player can enter, for a game with the unlocks plugin: how to
- * start entering them on the runner (`startUnlocks`), what went wrong opening
- * remembered content, and how to start over with new content.
- */
-export type UnlocksOption = {
-  /** `startUnlocks` from `@ifloom/plugin-unlocks`. The provider calls it with its runner, and stops it when it goes. */
-  start: (runner: Runner) => UnlockCodes
-  /** What `unlockedPacks` said it couldn't open, shown under the code box. */
-  problems?: string[]
-  /** Build the game again with the content a code has just opened: usually `() => location.reload()`. */
-  onChange?: () => void
-}
-
 export type GameContextValue = {
   runner: Runner
   mods?: ModsOption
-  /** The provider's `unlocks`, with the codes started on its runner (null until they are). */
-  unlocks?: UnlocksOption & { codes: UnlockCodes | null }
   view: View
   /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
   send: (command: Command) => Result<GameState>
@@ -68,12 +51,22 @@ export type GameContextValue = {
   /** The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. */
   inline: InlineComponents
   sections: Record<string, PluginSectionComponent>
+  /** The plugin UIs from the provider's `plugins` whose plugin the game has, in that order. */
+  plugins: readonly PluginUi[]
 }
 
 const GameContext = createContext<GameContextValue | null>(null)
 
 export type GameProviderProps = UiOptions & {
   runner: Runner
+  /**
+   * The plugin UIs to draw, each from a plugin's `/react` subpath, such as
+   * `shopUi` from `@ifloom/plugin-shop/react`. Their panels, words and the
+   * rest apply, and the default layout places what they bring, in this
+   * order. One for a plugin the game doesn't have does nothing. Leave a
+   * plugin out to draw it yourself.
+   */
+  plugins?: readonly PluginUi[]
   /** The game's own panels, by the name its scenes, apps and `panel` effects give. An open panel's name here goes over a built-in one. */
   panels?: Record<string, PanelComponent>
   /**
@@ -82,12 +75,10 @@ export type GameProviderProps = UiOptions & {
    * `image`); a name nothing draws shows its words.
    */
   inline?: InlineComponents
-  /** Renderers for plugin sections in apps, by plugin id, over the built-in ones. */
+  /** Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). */
   sections?: Record<string, PluginSectionComponent>
   /** Mods the player can add, turn off or remove. Leave out for a game without mods. */
   mods?: ModsOption
-  /** Codes the player can enter. Leave out for a game without the unlocks plugin. */
-  unlocks?: UnlocksOption
   children: ReactNode
 }
 
@@ -97,14 +88,15 @@ export type GameProviderProps = UiOptions & {
  * state changes, or what the plugins' views show of the profile does, and only then.
  */
 const NONE = {}
+const NO_PLUGINS: readonly PluginUi[] = []
 
 export function GameProvider({
   runner,
+  plugins: given = NO_PLUGINS,
   panels = NONE,
   inline = NONE,
   sections = NONE,
   mods,
-  unlocks,
   components,
   classes,
   unstyled,
@@ -116,34 +108,32 @@ export function GameProvider({
   // The view follows the runner. It builds one per state, and a new one when what the plugins'
   // views show of the profile changes, and hands the same object to everything that reads it
   // (the backlog, the audio player), so this builds nothing new.
-  const view = useSyncExternalStore(
-    (listener) => runner.subscribe(() => listener()),
-    () => runner.view(),
-  )
+  // The same view on the server, so a test or a static page can draw the game with renderToString.
+  const current = () => runner.view()
+  const view = useSyncExternalStore((listener) => runner.subscribe(() => listener()), current, current)
   const send = useCallback((command: Command) => runner.apply(command), [runner])
   // The game's clock: a tick while any timer counts down, drawn or not.
   useTicking(runner)
-  // Codes start on the runner once it's drawn, and stop when it goes: from then on, every new game and loaded save gets the unlocks the profile remembers.
-  const [codes, setCodes] = useState<UnlockCodes | null>(null)
-  const start = unlocks?.start
-  useEffect(() => {
-    if (!start) return
-    const started = start(runner)
-    setCodes(started)
-    return () => {
-      started.stop()
-      setCodes(null)
-    }
-  }, [start, runner])
-  const unlocking = useMemo(() => (unlocks ? { ...unlocks, codes } : undefined), [unlocks, codes])
+  const plugins = useMemo(() => activePlugins(runner.game, given), [runner, given])
+  // What the plugin UIs bring, under what the game gives of its own.
+  const merged = useMemo(
+    () => ({
+      sections: { ...mergedFrom(plugins, (ui) => ui.sections), ...sections },
+      inline: { ...mergedFrom(plugins, (ui) => ui.inline as Record<string, InlineComponent<never>>), ...inline } as InlineComponents,
+      components: plugins.some((ui) => ui.components) ? { ...mergedFrom(plugins, (ui) => ui.components), ...components } : components,
+    }),
+    [plugins, sections, inline, components],
+  )
   const value = useMemo(
-    () => ({ runner, view, send, panels, inline, mods, unlocks: unlocking, sections: { messages: MessagesSection, feed: FeedSection, ...sections } }),
-    [runner, view, send, panels, inline, sections, mods, unlocking],
+    () => ({ runner, view, send, panels, inline: merged.inline, mods, sections: merged.sections, plugins }),
+    [runner, view, send, panels, merged, mods, plugins],
   )
   return (
     <GameContext.Provider value={value}>
-      <UiProvider components={components} classes={classes} unstyled={unstyled} viewer={viewer} keys={keys} motion={motion}>
-        <KeysProvider>{children}</KeysProvider>
+      <UiProvider components={merged.components} classes={classes} unstyled={unstyled} viewer={viewer} keys={keys} motion={motion}>
+        <KeysProvider>
+          <PluginProviders plugins={plugins}>{children}</PluginProviders>
+        </KeysProvider>
       </UiProvider>
     </GameContext.Provider>
   )

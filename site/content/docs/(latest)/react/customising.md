@@ -39,7 +39,7 @@ A preset is a stylesheet that changes the fonts, the sizes, the colours and the 
 
 Without a preset, you get the UI's plain default look: a system sans-serif, neutral colours and the side column on the left.
 
-Each preset is plain CSS that sets the [tokens](#2-set-tokens-and-colours) and styles a few [parts](#3-style-parts-with-plain-css). Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
+Each preset is plain CSS that sets the [tokens](#2-set-tokens-and-colours) and styles a few [parts](#3-style-parts-with-plain-css). It styles the React UI's own parts and the [kit's parts](/docs/react/kit#kit_parts), never a plugin's own by name, so every plugin's UI, first-party or not, looks right in each preset. Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
 
 ## 2. Set tokens and colours
 
@@ -175,6 +175,20 @@ Some parts carry a second attribute that says more:
 | `data-revealed` | The `scene` | Present once the player has shown every reveal at once. |
 | `data-speaker-hue` | The `scene` | Present while the speaker has a [`hue`](/docs/react/hints#hue), which is in `--ifloom-speaker-hue`. |
 
+A part that a plugin's UI draws carries `data-kit` too when it's like one of the [kit's parts](/docs/react/kit#kit_parts): a vendor's good, a job and an achievement are each a `card`, their names a `title`. Style the kit's part to restyle all of them at once, whatever plugin drew them:
+
+```css
+[data-kit="card"] {
+  border-radius: 0;
+  border-width: 0 0 1px;
+}
+
+/* An achievement once it's earned, or anything else that's done. */
+[data-kit="card"][data-state="done"] {
+  background: var(--secondary);
+}
+```
+
 The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-thing`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
 ### Why your CSS wins
@@ -230,7 +244,7 @@ With `unstyled`, a string in `classes` is all the part gets, as there's nothing 
 
 ### Bringing your own Tailwind
 
-`@ifloom/react/styles.css` imports Tailwind, the UI's theme, and a little base CSS for the page. If your game has its own Tailwind set-up, import `@ifloom/react/theme.css` instead. It has the tokens, the colours, dark mode and the `@source` line that makes Tailwind scan the UI's components, but no `@import "tailwindcss"`:
+`@ifloom/react/styles.css` imports Tailwind, the UI's theme, and a little base CSS for the page. If your game has its own Tailwind set-up, import `@ifloom/react/theme.css` instead. It has the tokens, the colours, dark mode and the `@source` line that makes Tailwind scan the UI's components, but no `@import "tailwindcss"`. The first-party plugins' UIs use only classes those components use, so they need nothing more. A plugin of someone else's that ships a stylesheet of its own says so; import it after this one.
 
 ```css
 @import "tailwindcss";
@@ -265,7 +279,7 @@ import '@ifloom/react/styles.min.css'
 import '@ifloom/react/themes/paper.min.css'
 ```
 
-Variables, presets and `data-part` rules work as before, from a plain stylesheet of your own imported after them. The `classes` option only has the Tailwind classes the UI already uses, since nothing builds new ones, so restyle with CSS instead.
+The first-party plugins' UIs need no stylesheet of their own here either: every class they use is in `styles.min.css`. Variables, presets, `data-part` and `data-kit` rules work as before, from a plain stylesheet of your own imported after them. The `classes` option only has the Tailwind classes the UI already uses, since nothing builds new ones, so restyle with CSS instead.
 
 ## 5. Rearrange the parts in layout.tsx
 
@@ -273,7 +287,9 @@ The page is a component, the layout. The react and next templates start you with
 
 ```tsx
 // src/layout.tsx
-import { Clock, Exits, Game, GameMenu, Inventory, Notices, Overlay, PanelHost, PeopleHere, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Clock, Game, GameMenu, Inventory, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Exits } from '@ifloom/plugin-places/react'
+import { PeopleHere } from '@ifloom/plugin-cast/react'
 
 export function Layout() {
   return (
@@ -348,9 +364,9 @@ const components: Components = { Beat: TownBeat }
 mountGame(game, { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture` and `Icon`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
 
-A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, each person's buttons and the inventory's Use buttons.
+A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
 
 [`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws the close, back and warning icons, so one component swaps the UI's whole icon set:
 
@@ -457,8 +473,8 @@ The menus have hooks that give you their state and actions without their look, s
 | [`useSaves`](/docs/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
 | [`useBacklog`](/docs/react/components#usebacklog) | The backlog's entries, kept current. |
 | [`useMods`](/docs/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
-| [`useDevices`](/docs/react/components#usedevices) | The devices in the view. |
-| [`useDevice`](/docs/react/components#usedevice) | Which device is open, and how to open and close one. |
+| [`useDevices`](/docs/plugins/devices#usedevices) | The devices in the view. |
+| [`useDevice`](/docs/plugins/devices#usedevice) | Which device is open, and how to open and close one. |
 | [`useWords`](/docs/react/components#usewords) | The UI's words in the game's language. |
 
 Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/react/extending#your-own-components-in-the-system).
@@ -517,31 +533,6 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `stat-bar` | A stat with the hint `ui: { display: 'bar' }`: a `meter` holding one `<span>` as wide as the value is from `min` to `max`. |
 | `stat-pips` | A stat with `ui: { display: 'pips' }`: a `meter` holding a pip for each point. |
 | `stat-pip` | One pip. Carries `data-filled` when it's filled. |
-
-### Where you are, and who's there
-
-| Part | What it is |
-|---|---|
-| `location` | The location card: the place's picture, name and tag. |
-| `location-name` | The location's name. |
-| `location-text` | The location's tag, under its name. |
-| `location-things` | The list of things lying here. |
-| `location-thing` | One of them, with its Pick up button. Carries `data-thing`. |
-| `location-thing-name` | Its name, with how many when there's more than one. |
-| `location-thing-pick` | Its **Pick up** button, greyed out with the reason when it can't be picked up. |
-| `exits` | The row of exit buttons. |
-| `exit` | One exit button. Carries `data-exit`. |
-| `people` | The list of people here. |
-| `people-title` | A heading for the people list. The built-in list doesn't draw one, so it's there for a replacement `PeopleHere` to use. |
-| `person` | One person. Carries `data-person`. |
-| `person-portrait` | Their portrait. |
-| `person-name` | Their name. |
-| `person-desc` | Their `desc`, under the name, such as `Runs the café`. |
-| `person-actions` | Their buttons. |
-| `relationships` | Everyone the player has met, in [`Relationships`](/docs/react/components#relationships). |
-| `relationship` | One of them. Carries `data-person`. Their portrait, name and desc use the `person-` parts. |
-| `relationship-header` | The row with their portrait, name and desc. |
-| `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
 
 ### Scenes
 
@@ -682,98 +673,16 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `mods-restart` | The line and button that appear once a mod has changed. |
 | `mods-changed` | The line saying a restart applies the change. |
 
-### Plugins' cards
-
-These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each draws nothing in a game without its plugin.
+### What you carry, the entities and inputs
 
 | Part | What it is |
 |---|---|
-| `quests` | The quest log. |
-| `quests-title` | Its heading. |
-| `quest` | One active quest. Carries `data-quest`. |
-| `quest-title` | The quest's title. |
-| `quest-stage` | How far it has got (`2 of 3`). |
-| `quest-summary` | Its summary. |
-| `quest-hint` | The hint for what to do next. |
-| `quests-done` | The list of finished quests. |
-| `quest-done` | One finished quest. |
 | `inventory` | What the player carries. |
 | `inventory-title` | Its heading. |
 | `thing` | One thing you hold, carrying `data-thing` and `data-at`. |
 | `thing-name` | Its name. |
 | `thing-count` | How many, when there's more than one. |
 | `thing-text` | Its description. |
-| `thing-drop` | Its drop button, with `drop` on. |
-| `wardrobe` | The wardrobe card. |
-| `wardrobe-title` | Its heading. |
-| `wardrobe-slot` | One slot. Carries `data-slot-id`, and `data-worn` with what's in it. |
-| `wardrobe-slot-name` | The slot's label. |
-| `wardrobe-worn` | What's in the slot. |
-| `statuses` | The list of active statuses. |
-| `statuses-title` | Its heading. |
-| `status` | One status. Carries `data-status`. |
-| `status-label` | Its label, with the stacks and the turns left. |
-| `status-stacks` | How many stacks (`×2`), when there's more than one. |
-| `status-turns` | The turns left. |
-| `status-summary` | Its summary. |
-| `status-modifiers` | What it does to the stats (`+10 Energy`). |
-| `achievements-button` | The sidebar's **Achievements** button, with the count on a `badge`. |
-| `achievements` | The achievement list, in the page or the dialog. |
-| `achievements-title` | Its heading, when it has one. |
-| `achievements-count` | How many are earned, in the heading. |
-| `achievements-empty` | What it says when the game has none. |
-| `achievement` | One achievement. Carries `data-achievement`, and `data-earned` or `data-secret`. |
-| `achievement-image` | Its picture. |
-| `achievement-title` | Its title, or `???`, with the **Earned** `badge`. |
-| `achievement-text` | Its description. |
-| `achievement-progress` | The progress bar. Fill it with `> span`. |
-| `achievement-progress-text` | The count under it (`5 of 20`). |
-| `cheats-button` | The sidebar's **Cheats** button. |
-| `cheats` | The cheat panel, in its dialog. |
-| `cheats-group` | One group of cheats. Carries `data-cheats-group`, empty for the cheats with no group. |
-| `cheats-group-title` | The group's heading. |
-| `cheat` | One cheat: its `choice` button, its description and how often it was used. Carries `data-cheat`, and `data-used` once it has been used. |
-| `cheat-text` | Its description. |
-| `cheat-used` | How many times this save has used it, on a badge. |
-| `unlocks` | The code box and the list of unlocks. |
-| `unlocks-title` | Its **Enter a code** heading. |
-| `unlock-form` | The text box and the **Unlock** button. |
-| `unlock-input` | The text box. |
-| `unlocks-message` | Why the last code didn't work. |
-| `unlocks-entered` | What the last code unlocked. |
-| `unlock-problem` | Content the profile remembers that couldn't be opened. |
-| `unlocks-list` | The list of unlocks. |
-| `unlock` | One unlock. Carries `data-unlock`, and `data-unlocked` once it's unlocked. |
-| `unlock-name` | Its label, with its badge. |
-| `unlock-state` | The **Locked** or **Unlocked** badge. |
-| `unlock-text` | Its description. |
-| `shop` | A vendor's counter, in its dialog. Carries `data-vendor`, and `data-closed` while it's closed. |
-| `shop-closed` | Why it's closed. |
-| `shop-empty` | What it says when nothing is on offer. |
-| `goods` | The list of goods. |
-| `good` | One good. Carries `data-good`. |
-| `good-image` | Its picture, when the thing has one. |
-| `good-name` | Its name. |
-| `good-desc` | Its description, when it has one. |
-| `good-details` | The line under it: the discount, the full price, the stock and how many the player has. |
-| `good-off` | Today's discount (`50% off`). |
-| `good-full-price` | The price before it, struck out. |
-| `good-stock` | How many are left. |
-| `good-owned` | How many the player has. |
-| `good-actions` | The **Buy** and **Sell** buttons, each a `choice`. |
-| `jobs` | The job board. |
-| `jobs-title` | Its heading. |
-| `job` | One job. Carries `data-job`, and `data-hired` or `data-fired`. |
-| `job-title` | Its title, with the rank and **Let go** badges. |
-| `job-rank` | The rank held. |
-| `job-fired` | The **Let go** badge. |
-| `job-text` | Its description. |
-| `job-details` | The lines about pay, the next shift and the next rank. |
-| `job-pay` | What a shift pays. |
-| `job-shift` | When the next shift is. |
-| `job-next` | The next rank, and how far off it is. |
-| `job-record` | The shifts worked and missed. |
-| `job-actions` | The **Apply** or **Work a shift** button (a `choice`) and **Quit** (a `button`). |
 | `entities` | The entity tables, all kinds. |
 | `entity-table` | One kind's table. |
 | `entity-heading` | The kind's heading. |
@@ -792,12 +701,194 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `input-submit` | The **Enter** button. |
 | `input-error` | Why the value was refused. |
 
-### Devices, apps, messages and feeds
+### The plugins' parts
+
+Each plugin's React UI, from its `/react`, draws parts of its own when the game lists it in [`plugins`](/docs/react/kit#the-plugins-option). Importing that `/react` adds its parts to `PartKey`, so `classes` takes them typed. Each one that's like a part of the kit carries `data-kit` too, which is what the presets style: see [Plugin UIs and the kit](/docs/react/kit#kit_parts).
+
+#### Places
+
+From [`@ifloom/plugin-places/react`](/docs/plugins/places#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `location` | The location card: the place's picture, name and tag. |
+| `location-name` | The location's name. |
+| `location-text` | The location's tag, under its name. |
+| `location-things` | The list of things lying here. |
+| `location-thing` | One of them, with its Pick up button. Carries `data-thing`. |
+| `location-thing-name` | Its name, with how many when there's more than one. |
+| `location-thing-pick` | Its **Pick up** button, greyed out with the reason when it can't be picked up. |
+| `exits` | The row of exit buttons. |
+| `exit` | One exit button. Carries `data-exit`. |
+
+#### Cast
+
+From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `people` | The list of people here. |
+| `person` | One person. Carries `data-person`. |
+| `person-portrait` | Their portrait. |
+| `person-name` | Their name. |
+| `person-desc` | Their `desc`, under the name, such as `Runs the café`. |
+| `person-actions` | Their buttons. |
+| `relationships` | Everyone the player has met, in [`Relationships`](/docs/plugins/cast#relationships). |
+| `relationship` | One of them. Carries `data-person`. Their portrait, name and desc use the `person-` parts. |
+| `relationship-header` | The row with their portrait, name and desc. |
+| `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
+
+#### Quests
+
+From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `quests` | The quest log. |
+| `quests-title` | Its heading. |
+| `quest` | One active quest. Carries `data-quest`. |
+| `quest-title` | The quest's title. |
+| `quest-stage` | How far it has got (`2 of 3`). |
+| `quest-summary` | Its summary. |
+| `quest-hint` | The hint for what to do next. |
+| `quests-done` | The list of finished quests. |
+| `quest-done` | One finished quest. |
+
+#### Inventory
+
+From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `thing-drop` | Its drop button, with `drop` on. Kit part: `label`. |
+
+#### Wardrobe
+
+From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `wardrobe` | The wardrobe card. |
+| `wardrobe-title` | Its heading. |
+| `wardrobe-slot` | One slot. Carries `data-slot-id`, and `data-worn` with what's in it. |
+| `wardrobe-slot-name` | The slot's label. Kit part: `label`. |
+| `wardrobe-worn` | What's in the slot. |
+
+#### Statuses
+
+From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `statuses` | The list of active statuses. |
+| `statuses-title` | Its heading. Kit part: `heading`. |
+| `status` | One status. Carries `data-status`. Kit part: `item`. |
+| `status-label` | Its label, with the stacks and the turns left. Kit part: `title`. |
+| `status-stacks` | How many stacks (`×2`), when there's more than one. |
+| `status-turns` | The turns left. Kit part: `note`. |
+| `status-summary` | Its summary. Kit part: `note`. |
+| `status-modifiers` | What it does to the stats (`+10 Energy`). |
+
+#### Achievements
+
+From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `achievements-button` | The sidebar's **Achievements** button, with the count on a `badge`. Kit part: `opener`. |
+| `achievements` | The achievement list, in the page or the dialog. |
+| `achievements-title` | Its heading, when it has one. Kit part: `heading`. |
+| `achievements-count` | How many are earned, in the heading. |
+| `achievements-empty` | What it says when the game has none. |
+| `achievement` | One achievement. Carries `data-achievement`, and `data-earned` or `data-secret`. Kit part: `card`. |
+| `achievement-image` | Its picture. Kit part: `thumb`. |
+| `achievement-title` | Its title, or `???`, with the **Earned** `badge`. Kit part: `title`. |
+| `achievement-text` | Its description. |
+| `achievement-progress` | The progress bar. Fill it with `> span`. Kit part: `meter`. |
+| `achievement-progress-text` | The count under it (`5 of 20`). |
+
+#### Cheats
+
+From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `cheats-button` | The sidebar's **Cheats** button. Kit part: `opener`. |
+| `cheats` | The cheat panel, in its dialog. Kit part: `commands`. |
+| `cheats-group` | One group of cheats. Carries `data-cheats-group`, empty for the cheats with no group. |
+| `cheats-group-title` | The group's heading. Kit part: `heading`. |
+| `cheat` | One cheat: its `choice` button, its description and how often it was used. Carries `data-cheat`, and `data-used` once it has been used. Kit part: `card`. |
+| `cheat-text` | Its description. Kit part: `note`. |
+| `cheat-used` | How many times this save has used it, on a badge. Kit part: `badge`. |
+
+#### Unlocks
+
+From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `unlocks` | The code box and the list of unlocks. |
+| `unlocks-title` | Its **Enter a code** heading. Kit part: `heading`. |
+| `unlock-form` | The text box and the **Unlock** button. Kit part: `form`. |
+| `unlock-input` | The text box. Kit part: `input`. |
+| `unlocks-message` | Why the last code didn't work. |
+| `unlocks-entered` | What the last code unlocked. |
+| `unlock-problem` | Content the profile remembers that couldn't be opened. |
+| `unlocks-list` | The list of unlocks. |
+| `unlock` | One unlock. Carries `data-unlock`, and `data-unlocked` once it's unlocked. Kit part: `card`. |
+| `unlock-name` | Its label, with its badge. Kit part: `title`. |
+| `unlock-state` | The **Locked** or **Unlocked** badge. Kit part: `badge`. |
+| `unlock-text` | Its description. Kit part: `note`. |
+
+#### Shop
+
+From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `shop` | A vendor's counter, in its dialog. Carries `data-vendor`, and `data-closed` while it's closed. |
+| `shop-closed` | Why it's closed. |
+| `shop-empty` | What it says when nothing is on offer. |
+| `goods` | The list of goods. |
+| `good` | One good. Carries `data-good`. Kit part: `card`. |
+| `good-image` | Its picture, when the thing has one. Kit part: `thumb`. |
+| `good-name` | Its name. Kit part: `title`. |
+| `good-desc` | Its description, when it has one. Kit part: `note`. |
+| `good-details` | The line under it: the discount, the full price, the stock and how many the player has. |
+| `good-off` | Today's discount (`50% off`). Kit part: `badge`. |
+| `good-full-price` | The price before it, struck out. |
+| `good-stock` | How many are left. |
+| `good-owned` | How many the player has. |
+| `good-actions` | The **Buy** and **Sell** buttons, each a `choice`. Kit part: `commands`. |
+
+#### Jobs
+
+From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#the-react-ui).
+
+| Part | What it is |
+|---|---|
+| `jobs` | The job board. |
+| `jobs-title` | Its heading. Kit part: `heading`. |
+| `job` | One job. Carries `data-job`, and `data-hired` or `data-fired`. Kit part: `card`. |
+| `job-title` | Its title, with the rank and **Let go** badges. Kit part: `title`. |
+| `job-rank` | The rank held. Kit part: `badge`. |
+| `job-fired` | The **Let go** badge. Kit part: `badge`. |
+| `job-text` | Its description. |
+| `job-details` | The lines about pay, the next shift and the next rank. |
+| `job-pay` | What a shift pays. |
+| `job-shift` | When the next shift is. |
+| `job-next` | The next rank, and how far off it is. Kit part: `note`. |
+| `job-record` | The shifts worked and missed. |
+| `job-actions` | The **Apply** or **Work a shift** button (a `choice`) and **Quit** (a `button`). Kit part: `commands`. |
+
+#### Devices
+
+From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#the-react-ui).
 
 | Part | What it is |
 |---|---|
 | `devices` | The row of device buttons. |
-| `device-button` | One device's button. Carries `data-device`. |
+| `device-button` | One device's button. Carries `data-device`. Kit part: `opener`. |
 | `device-badge` | The badge on it. |
 | `device-screen` | An open device, inside its dialog. |
 | `app` | An open app. Carries `data-app`. |
@@ -814,12 +905,26 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `app-entry-image` | The entry's picture. |
 | `app-entry-title` | Its title. |
 | `app-entry-text` | Its text. |
+
+#### Messages
+
+From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#the-react-ui).
+
+| Part | What it is |
+|---|---|
 | `channel` | A messages channel. Carries `data-channel`. |
 | `thread` | One thread in it. Carries `data-thread`. |
 | `thread-title` | The thread's heading, with the sender's name. |
 | `thread-portrait` | The sender's portrait. |
 | `message` | One message with the reply under it. |
 | `bubble` | A message bubble. Carries `data-from`, `them` or `player`. The message's beats are inside it. |
+
+#### Feed
+
+From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#the-react-ui).
+
+| Part | What it is |
+|---|---|
 | `feed` | A feed. Carries `data-feed`. |
 | `post` | One post. Carries `data-post`. |
 | `post-author` | The poster's name and portrait. |
@@ -830,7 +935,9 @@ These are the plugins' [defaults](/docs/react/components#plugins-defaults). Each
 | `post-comment` | One comment. |
 | `post-comment-name` | The commenter's name. |
 
-### The debug card
+#### Debug
+
+From [`@ifloom/plugin-debug/react`](/docs/plugins/debug#the-react-ui).
 
 | Part | What it is |
 |---|---|

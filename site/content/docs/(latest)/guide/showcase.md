@@ -61,7 +61,7 @@ A second lock, `{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.
 
 ### Things you use
 
-`world/things.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The React UI's [`Inventory`](/docs/react/components#inventory) lists what you hold, with that button and a **Drop** button each. What you drop lies where you dropped it: each place is an entity that [holds things](/docs/plugins/places#things-lying-in-a-place), and the [`LocationCard`](/docs/react/components#locationcard) lists it with a **Pick up** button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both, and `leaves the paper where you drop it` drops the newspaper in the flat and picks it up again.
+`world/things.ts`, the `item:sandwich` entity, the café's `buySandwich` activity in `story/cafe.ts` and the café counter's sandwich (see [The café counter](#the-café-counter)). The things you carry are [entities](/docs/reference/entities) of two kinds: `clothing`, where each is one particular thing, and `item`, which stack. The sandwich has the [inventory](/docs/plugins/inventory)'s `usable` trait and the shop's `sellable` one, 4 coins. Its button, "Eat the sandwich", spends it and puts 25 energy back. The inventory plugin's [`InventoryCard`](/docs/plugins/inventory#inventorycard) lists what you hold, with that button and a **Drop** button each. What you drop lies where you dropped it: each place is an entity that [holds things](/docs/plugins/places#things-lying-in-a-place), and the [`LocationCard`](/docs/plugins/places#locationcard) lists it with a **Pick up** button. The test `names the cat on moving day, and says the name after` buys one, eats it and checks both, and `leaves the paper where you drop it` drops the newspaper in the flat and picks it up again.
 
 ### Mods
 
@@ -113,7 +113,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 `src/game.ts` and the `locations`, one in each place's file in `story/`. The town's map is the [places plugin](/docs/plugins/places), `places({ start: 'flat' })`, listed after `clock` in `plugins` so its label comes after the calendar's. The places themselves are content, in each pack's `data.places.locations`: the flat, the high street, the café, the park and the office. Each has its `exits`, and the flat has its Go to bed action.
 
-An activity that belongs somewhere is blocked everywhere else with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the React UI's [`LocationCard`](/docs/react/components#locationcard) sends from each exit.
+An activity that belongs somewhere is blocked everywhere else with [`onlyAt`](/docs/plugins/places#helpers). `coffee` and `buySandwich` have `blocked: [onlyAt(['cafe'])]`, `work` has `onlyAt(['office'])` and `jog` has `onlyAt(['park'])`. The welcome note is a trigger whose `when` is `at('high-street')`. Walking is the plugin's `go()` command, which the places plugin's React UI sends from each exit, under its [`LocationCard`](/docs/plugins/places#locationcard).
 
 The files in `story/` pass time with the calendar's helpers, imported from `@ifloom/plugin-calendar`:
 
@@ -147,7 +147,7 @@ stage: {
 },
 ```
 
-The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationCard`](/docs/react/components#locationcard) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
+The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationCard`](/docs/plugins/places#locationcard) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
 
 ### People and schedules
 
@@ -227,11 +227,11 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Wardrobe
 
-`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/things.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the raincoat and the scarf as `clothing` entities with the `wearable` trait. The café notices the raincoat with a body line on `wearing('clothing:raincoat')`. The scarf is given on the high street by the `buyScarf` activity, with the engine's `give`. The React UI's [`WardrobeCard`](/docs/react/components#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
+`src/game.ts` adds the [wardrobe](/docs/plugins/wardrobe). `world/things.ts` has its two slots, `coat` and `neck`, in `data.wardrobe`, with the player starting in the raincoat, and the raincoat and the scarf as `clothing` entities with the `wearable` trait. The café notices the raincoat with a body line on `wearing('clothing:raincoat')`. The scarf is given on the high street by the `buyScarf` activity, with the engine's `give`. The React UI's [`WardrobeCard`](/docs/plugins/wardrobe#wardrobecard), at the foot of the sidebar, shows what's on and has the buttons to change it.
 
 ### Timed statuses
 
-`story/cafe.ts`, the `coffee` activity and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/react/components#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ text: 'place.cafe.caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+`story/cafe.ts`, the `coffee` activity and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/plugins/statuses#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ text: 'place.cafe.caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
 
 ### The café counter
 
@@ -239,7 +239,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### A job at the café
 
-`story/cafe.ts` and `story/park.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/react/components#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
+`story/cafe.ts` and `story/park.ts`, `data.jobs`, and `jobs()` in `src/game.ts`. Talking to Ava and choosing "Ask about weekend work" closes her scene and opens the [job board](/docs/plugins/jobs#jobboard) in a panel with `openJobs()`. It lists the weekend job and a dog-walking job in the park. The weekend job's Apply button is greyed out with "Ava doesn't know you well enough yet." until Ava's friendship is 10 or more, and then the player is taken on as weekend help, a [job](/docs/plugins/jobs). The shift is Saturday mornings at the café (`days: [5]`, `hours: ['morning']`), costs 25 energy, takes the morning and pays 12 coins. The board shows the next shift and a "Work a shift" button. After three shifts the player is promoted to barista, at 16. Missing two Saturdays loses the job. The test `takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift` plays a first shift.
 
 You start with a newspaper. Its `usable` trait, "Read the job ads", opens the board with only the paper's ad on it, `openJobs(['dogs'])`. It's kept (`keep: true`), so you can read it again. `opens the newspaper's job ads` in `tests/shell.test.tsx` reads it.
 
@@ -257,7 +257,7 @@ You start with a newspaper. Its `usable` trait, "Read the job ads", opens the bo
 
 ### Achievements
 
-`world/achievements.ts` and `story/ava.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's Achievements button open the React UI's [achievements page](/docs/react/components#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
+`world/achievements.ts` and `story/ava.ts`, `data.achievements`, and `achievements()` in `src/game.ts`. The town has two [achievements](/docs/plugins/achievements). "Nest egg" has no condition, only `progress: { value: 'coins', target: 100 }`, so the list shows the coins on hand out of 100 and it's earned when they reach 100. "Dusk by the river" is `secret`, so it reads `???` until `{ seen: 'ava.river' }` holds. The title screen and the sidebar's Achievements button open the React UI's [achievements page](/docs/plugins/achievements#achievementspage), with a bar for the coins. The test `charges rent on Sundays, and meets Ava by the river once a friendship has had time` checks both, and the notice it raises.
 
 ### Triggers and notices
 

@@ -4,7 +4,8 @@
  * It imports only `@ifloom/engine` and requires no other plugin. To work with
  * one the game may have, list it in `cooperates` and ask it through its
  * conditions, effects and `query`, which answer nothing when the game lacks it.
- * It ships no UI: any UI draws its view from `view.plugins.__id__`.
+ * Any UI draws its view from `view.plugins.__id__`. Its own React UI is in
+ * `src/react/`, the `/react` subpath, which a game drawn another way never loads.
  *
  * How each part is named: https://ifloom.dev/docs/reference/plugins#naming
  */

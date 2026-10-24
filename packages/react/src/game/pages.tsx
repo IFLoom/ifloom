@@ -1,6 +1,6 @@
 /**
  * The pages around the game: an optional gate, the title screen, settings,
- * loading, credits, the achievements (with that plugin) and any page a game adds. A small state
+ * loading, credits, and any page a game or a plugin UI adds. A small state
  * machine: `title` leads to `game`, `load`, `settings`, `credits` or an added
  * page, and the in-game menu leads back to `title`.
  */
@@ -19,16 +19,15 @@ import {
 } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
+import { overridable, usePart, type PartKey } from './overrides.tsx'
 import { Picture } from './picture.tsx'
 import { BrokenSlot, useSaves } from './saves.tsx'
-import { AchievementsPage } from './achievements.tsx'
 import { ModManager } from './mods.tsx'
-import { UnlocksPanel } from './unlocks.tsx'
-import { useWords } from './words.ts'
+import { usePluginUis } from './plugins.tsx'
+import { uiSay, useWords } from './words.ts'
 
 /** A page by name: a built-in one, or the id of one in `PagesOptions.pages`. */
-export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | 'achievements' | (string & {})
+export type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
 /** A page a game or plugin adds, with the title screen's button for it. */
 export type PageDef = {
@@ -64,14 +63,8 @@ export type PagesOptions = {
   credits?: Credit[]
   /** A notice shown before the title screen until the player confirms it. */
   gate?: GateOptions
-  /** Pages a game or plugin adds, by id. One with the id `achievements` replaces the built-in achievements page. */
+  /** Pages the game adds, by id. One with the id of a page a plugin UI adds, such as `achievements`, goes over it. */
   pages?: Record<string, PageDef>
-  /**
-   * The achievements page and its title-screen button, in a game with the
-   * achievements plugin. On unless set false; the `'achievements'` part's
-   * button then opens them in a dialog instead.
-   */
-  achievements?: boolean
 }
 
 /** Where the player is among the pages, and how to move. */
@@ -88,12 +81,26 @@ export type PageState = {
   back: () => void
   /** The options the pages were set up with. */
   options: PagesOptions
+  /** Every page added to the built-in ones, by id: the plugin UIs' (`achievements`, say) and the game's own `pages` over them. */
+  added: Readonly<Record<string, PageDef>>
 }
 
 const ROOTS: readonly Page[] = ['title', 'game', 'gate']
 const NONE: PagesOptions = {}
 const PagesContext = createContext<PageState | null>(null)
-const OFF: PageState = { enabled: false, page: 'game', from: null, go: () => {}, back: () => {}, options: NONE }
+const OFF: PageState = { enabled: false, page: 'game', from: null, go: () => {}, back: () => {}, options: NONE, added: NONE as Record<string, PageDef> }
+
+/** The pages the plugin UIs add, with their labels worded, and the game's own `pages` over them. */
+function useAddedPages(options: PagesOptions): Record<string, PageDef> {
+  const { runner } = useGame()
+  const plugins = usePluginUis()
+  return useMemo(() => {
+    const fromPlugins = plugins.flatMap((ui) =>
+      Object.entries(ui.pages ?? {}).map(([id, page]): [string, PageDef] => [id, { ...page, label: uiSay(runner.game, page.label, {}, ui.words ?? {}) }]),
+    )
+    return { ...Object.fromEntries(fromPlugins), ...options.pages }
+  }, [plugins, runner, options.pages])
+}
 
 /** Where the player is among the pages. Outside pages (`pages` off), `enabled` is false and the page is always `game`. */
 export function usePage(): PageState {
@@ -160,9 +167,10 @@ export function PagesProvider({ options = NONE, children }: { options?: PagesOpt
     })
   }, [])
   const back = useCallback(() => setStack((now) => (now && now.length > 1 ? now.slice(0, -1) : ['title'])), [])
+  const added = useAddedPages(options)
   const value = useMemo<PageState | null>(
-    () => (stack ? { enabled: true, page: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, options } : null),
-    [stack, go, back, options],
+    () => (stack ? { enabled: true, page: stack.at(-1)!, from: stack.at(-2) ?? null, go, back, options, added } : null),
+    [stack, go, back, options, added],
   )
   if (!value) return null
   return <PagesContext.Provider value={value}>{children}</PagesContext.Provider>
@@ -186,7 +194,7 @@ export function WithPages({ pages, children }: { pages?: boolean | PagesOptions;
 
 /** The page showing: `game` draws what it's given, every other page its own component. */
 export function Pages({ game }: { game: ReactNode }) {
-  const { page, options } = usePage()
+  const { page, added } = usePage()
   switch (page) {
     case 'game':
       return <>{game}</>
@@ -201,8 +209,7 @@ export function Pages({ game }: { game: ReactNode }) {
     case 'credits':
       return <CreditsPage />
     default: {
-      if (page === 'achievements' && !options.pages?.achievements && options.achievements !== false) return <AchievementsPage />
-      const Added = options.pages?.[page]?.component
+      const Added = added[page]?.component
       return Added ? <Added /> : <TitlePage />
     }
   }
@@ -213,15 +220,12 @@ function newest(slots: SaveMeta[]): SaveMeta | undefined {
   return slots.reduce<SaveMeta | undefined>((best, meta) => (!best || meta.savedAt > best.savedAt ? meta : best), undefined)
 }
 
-/** The attributes for a page's outer section. Internal: every page uses it. */
-export function usePageParts(
-  className?: string,
-  part: 'title-page' | 'gate-page' | 'settings-page' | 'load-page' | 'credits-page' | 'achievements-page' = 'title-page',
-) {
+/** The attributes for a page's outer section, as every built-in page has: centred, as wide as `--width-reading`. `part` names it. */
+export function usePageParts(className?: string, part: PartKey = 'title-page') {
   return usePart(part, 'mx-auto flex min-h-screen w-full max-w-(--width-reading) flex-col justify-center gap-6 p-6 font-body', className)
 }
 
-/** The page's Back button. Internal. */
+/** The page's Back button, the `page-back` part: `usePage().back()`. */
 export function BackButton() {
   const words = useWords()
   const { back } = usePage()
@@ -233,15 +237,16 @@ export function BackButton() {
   )
 }
 
-/** A page's heading. Internal. */
-export function Heading({ children }: { children: ReactNode }) {
+/** A page's heading, as the built-in pages have: the `page-heading` part. A page a plugin or game adds uses it too. */
+export function PageHeading({ children }: { children: ReactNode }) {
   return <h1 {...usePart('page-heading', 'font-heading text-scene-title font-semibold')}>{children}</h1>
 }
 
 function TitlePageImpl({ className }: { className?: string }) {
-  const { runner, view, unlocks, mods } = useGame()
+  const { runner, view, mods } = useGame()
   const words = useWords()
-  const { go, options } = usePage()
+  const { go, options, added: pages } = usePage()
+  const plugins = usePluginUis()
   const saves = useSaves()
   const finished = useProfile('core:finished')
   const section = usePageParts(className)
@@ -263,8 +268,7 @@ function TitlePageImpl({ className }: { className?: string }) {
     const carry: GameState = save?.ok && save.value ? save.value.state : runner.state
     return runner.newGame({ carry })
   }
-  const added = Object.entries(options.pages ?? {}).filter(([, page]) => page.showOnTitle !== false)
-  const achievements = Boolean(view.plugins.achievements) && options.achievements !== false && !options.pages?.achievements
+  const added = Object.entries(pages).filter(([, page]) => page.showOnTitle !== false)
 
   return (
     <section {...section} data-page="title">
@@ -292,14 +296,9 @@ function TitlePageImpl({ className }: { className?: string }) {
             {words('load')}
           </button>
         ) : null}
-        {view.settings.length || (unlocks && view.plugins.unlocks) || mods ? (
+        {view.settings.length || plugins.some((ui) => ui.settings) || mods ? (
           <button {...button} data-title-button="settings" onClick={() => go('settings')}>
             {words('settings')}
-          </button>
-        ) : null}
-        {achievements ? (
-          <button {...button} data-title-button="achievements" onClick={() => go('achievements')}>
-            {words('achievements')}
           </button>
         ) : null}
         {added.map(([id, page]) => (
@@ -321,8 +320,8 @@ function TitlePageImpl({ className }: { className?: string }) {
  * The title screen: the game's title, the subtitle and art if given, and the
  * buttons Continue (the newest save), New game, New Game+ (once the game has
  * been finished, if it carries anything over), Load, Settings (if the game has
- * any), Achievements (with that plugin), the pages a game adds, and Credits
- * (if given).
+ * any), the pages the plugin UIs and the game add (the achievements plugin's
+ * Achievements, say), and Credits (if given).
  */
 export const TitlePage = overridable('TitlePage', TitlePageImpl)
 
@@ -368,8 +367,9 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
 }
 
 function SettingsPageImpl({ className }: { className?: string }) {
-  const { runner, view, unlocks, mods } = useGame()
+  const { runner, view, mods } = useGame()
   const words = useWords()
+  const settings = usePluginUis().flatMap((ui) => (ui.settings ? [{ id: ui.id, Draw: ui.settings.component }] : []))
   const values = useSyncExternalStore(
     (listener) => runner.subscribe(listener),
     () => runner.settings(),
@@ -392,7 +392,7 @@ function SettingsPageImpl({ className }: { className?: string }) {
 
   return (
     <section {...section} data-page="settings">
-      <Heading>{words('settings')}</Heading>
+      <PageHeading>{words('settings')}</PageHeading>
       {view.settings.length ? (
         <ul {...list}>
           {view.settings.map((setting) => (
@@ -404,11 +404,13 @@ function SettingsPageImpl({ className }: { className?: string }) {
             </li>
           ))}
         </ul>
-      ) : unlocks || mods ? null : (
+      ) : settings.length || mods ? null : (
         <p {...empty}>{words('noSettings')}</p>
       )}
       {said ? <p {...message}>{said}</p> : null}
-      {unlocks ? <UnlocksPanel /> : null}
+      {settings.map(({ id, Draw }) => (
+        <Draw key={id} />
+      ))}
       {mods ? (
         <section {...modsSection} data-settings-mods aria-labelledby="settings-mods-title">
           <h3 {...modsTitle} id="settings-mods-title">
@@ -430,8 +432,8 @@ function SettingsPageImpl({ className }: { className?: string }) {
  * radio buttons for a choice, a slider for a range. Each change goes through
  * `runner.setSetting`: a ui setting is written to the profile, and a play
  * setting changes the game in play and is kept in the profile for the next
- * new game. A refusal is shown under the list. With `unlocks` on the
- * provider, the `UnlocksPanel` follows, for entering a code, and with `mods`,
+ * new game. A refusal is shown under the list. Each plugin UI's `settings`
+ * follow, such as the unlocks plugin's code box, and with `mods`,
  * a Mods section holding the `ModManager`.
  */
 export const SettingsPage = overridable('SettingsPage', SettingsPageImpl)
@@ -461,7 +463,7 @@ function LoadPageImpl({ className }: { className?: string }) {
 
   return (
     <section {...section} data-page="load">
-      <Heading>{words('load')}</Heading>
+      <PageHeading>{words('load')}</PageHeading>
       {saves.message ? <p {...said}>{saves.message}</p> : null}
       {sorted.length || saves.broken.length ? (
         <ul {...list}>
@@ -506,7 +508,7 @@ function CreditsPageImpl({ className }: { className?: string }) {
   const link = usePart('credit-link', 'text-primary underline underline-offset-4')
   return (
     <section {...section} data-page="credits">
-      <Heading>{words('credits')}</Heading>
+      <PageHeading>{words('credits')}</PageHeading>
       <ul {...list}>
         {(options.credits ?? []).map((credit, index) => (
           <li key={index} {...line}>

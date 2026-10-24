@@ -1,13 +1,48 @@
+/**
+ * @ifloom/plugin-cheats/react: the cheats plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `cheatsUi` in the game's
+ * `plugins` to have a Cheats button in the side column, or draw them
+ * yourself from `useCheats`.
+ */
 import type { GameState, Result } from '@ifloom/engine'
-import type { CheatView, CheatsView } from '@ifloom/plugin-cheats'
-import { useState } from 'react'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { ChoiceButton } from './choices.tsx'
-import { useGame } from './context.tsx'
-import { PartDialog } from './dialog.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { CheatView, CheatsView } from '../index.ts'
+import { useState, type ComponentProps } from 'react'
+import {
+  badgeVariants,
+  buttonVariants,
+  ChoiceButton,
+  overridable,
+  type Override,
+  PartDialog,
+  type PluginUi,
+  useGame,
+  useKitPart,
+  usePart,
+  useWords,
+} from '@ifloom/react'
+
+/** The cheats plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const CHEATS_WORDS = {
+  cheatUsedOnce: 'Used once',
+  cheatUsedTimes: 'Used {n} times',
+  cheats: 'Cheats',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    CheatPanel: Override<ComponentProps<typeof CheatPanel>>
+    CheatsButton: Override<ComponentProps<typeof CheatsButton>>
+  }
+  interface PartNames {
+    'cheat': true
+    'cheat-text': true
+    'cheat-used': true
+    'cheats': true
+    'cheats-button': true
+    'cheats-group': true
+    'cheats-group-title': true
+  }
+}
 
 /** A heading of the cheat panel and the cheats under it. `name` is null for the cheats with no group, which come first. */
 export type CheatGroup = { name: string | null; cheats: CheatView[] }
@@ -44,13 +79,13 @@ export function useCheats(): CheatsControls | null {
 }
 
 function CheatPanelImpl({ className }: { className?: string }) {
-  const words = useWords()
-  const panel = usePart('cheats', 'flex flex-col gap-4', className)
+  const words = useWords(CHEATS_WORDS)
+  const panel = useKitPart('commands', 'cheats', 'flex flex-col gap-4', className)
   const section = usePart('cheats-group', 'flex flex-col gap-2')
-  const heading = usePart('cheats-group-title', 'font-heading text-sm font-semibold')
-  const card = usePart('cheat', 'flex flex-col gap-1')
-  const text = usePart('cheat-text', 'text-sm text-muted-foreground')
-  const used = usePart('cheat-used', `${badgeVariants({ variant: 'secondary' })} self-start`)
+  const heading = useKitPart('heading', 'cheats-group-title', 'font-heading text-sm font-semibold')
+  const card = useKitPart('card', 'cheat', 'flex flex-col gap-1')
+  const text = useKitPart('note', 'cheat-text', 'text-sm text-muted-foreground')
+  const used = useKitPart('badge', 'cheat-used', `${badgeVariants({ variant: 'secondary' })} self-start`)
   const cheats = useCheats()
   if (!cheats?.cheats.length) return null
   return (
@@ -80,10 +115,10 @@ function CheatPanelImpl({ className }: { className?: string }) {
 export const CheatPanel = overridable('CheatPanel', CheatPanelImpl)
 
 function CheatsButtonImpl({ className }: { className?: string }) {
-  const words = useWords()
+  const words = useWords(CHEATS_WORDS)
   const cheats = useCheats()
   const [open, setOpen] = useState(false)
-  const button = usePart('cheats-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
+  const button = useKitPart('opener', 'cheats-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
   // Nothing to open in a game without the plugin, or while every cheat is hidden.
   if (!cheats?.cheats.length) return null
   return (
@@ -104,3 +139,14 @@ function CheatsButtonImpl({ className }: { className?: string }) {
  * can see.
  */
 export const CheatsButton = overridable('CheatsButton', CheatsButtonImpl)
+
+/**
+ * The cheats plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `CheatsButton` in the side column, which opens the
+ * `CheatPanel`, and the cheats' words.
+ */
+export const cheatsUi: PluginUi = {
+  id: 'cheats',
+  words: CHEATS_WORDS,
+  layout: { sidebar: [() => <CheatsButton />] },
+}

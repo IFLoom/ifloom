@@ -5,5 +5,7 @@ import './styles.css'
 
 // `layout` is the page, in `layout.tsx`. `pages` opens on a title screen
 // with New game, Continue, Load and Settings. Leave it out to start straight
-// in the story.
-mountGame(game, { layout: Layout, pages: true })
+// in the story. `plugins` lists the UIs of the plugins in game.ts, such as
+// `shopUi` from `@ifloom/plugin-shop/react`; leave one out to draw that
+// plugin yourself.
+mountGame(game, { layout: Layout, pages: true, plugins: [] })

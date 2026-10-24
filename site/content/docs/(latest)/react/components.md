@@ -4,7 +4,7 @@ description: "Every component and hook @ifloom/react exports, from GameShell dow
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
-This page lists everything `@ifloom/react` exports, from the whole shell down to a single button. Each game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it has to sit inside a [`GameProvider`](#gameprovider). [`GameShell`](#gameshell) is one. The [shadcn/ui primitives](#shadcnui-primitives) at the end don't need a provider.
+This page lists everything `@ifloom/react` exports, from the whole shell down to a single button. Each plugin's own React UI, such as the shop's counter, is on that plugin's page, under **The React UI**, and [Plugin UIs and the kit](/docs/react/kit) says how they come into a game. Each game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it has to sit inside a [`GameProvider`](#gameprovider). [`GameShell`](#gameshell) is one. The [shadcn/ui primitives](#shadcnui-primitives) at the end don't need a provider.
 
 Every game component on this page can be replaced by its name in [`components`](#components), everywhere the UI draws it, and each entry lists the main [`data-part`](/docs/react/customising#the-data-part-reference)s it draws. [Make it your own](/docs/react/customising) shows how to use both.
 
@@ -12,30 +12,24 @@ Every game component on this page can be replaced by its name in [`components`](
 import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
-  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions,
-  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
-  Clock, StatList, EntityTable, LocationCard, Exits, PeopleHere, Relationships, Inventory, WardrobeCard,
-  useClock, usePlaces, usePeople, useWardrobe,
+  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
+  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
+  Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
-  TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, usePage, useSetting, useProfile,
-  Notices, NoticeStrip, QuestLog, useQuests, MinigameCard, useMinigame,
+  TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, PageHeading, BackButton, usePageParts, usePage, useSetting, useProfile,
+  Notices, NoticeStrip, MinigameCard, useMinigame,
   Countdown, Timers, useTimer, useTimers, useTicking, timerShare, timerUrgent,
-  StatusList, useStatuses, AchievementList, AchievementsButton, AchievementsPage, useAchievements,
-  ShopDialog, ShopCounter, useShop, JobBoard, useJobs,
-  PanelHost, BUILT_IN_PANELS, PartDialog,
-  DeviceButtons, DeviceDialog, DeviceScreen, AppSection, useDevices, useDevice,
-  MessagesSection, FeedSection, useMessages, useFeed, DebugCard, useDebug,
+  PanelHost, BUILT_IN_PANELS, PartDialog, useDialogParts, DIALOG_CLASSES,
   useAudio,
   UI_STRINGS, uiSay, useWords,
-  PART_KEYS, UiProvider, usePart, overridable,
-  type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption, type UnlocksOption,
-  type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type IconName,
-  type SavesState, type ModsState, type DevicesState, type DeviceState,
-  type ClockState, type PlacesControls, type QuestsControls, type WardrobeControls, type WardrobeSlotControls,
-  type MessagesControls, type FeedControls, type DebugControls, type ShopControls, type JobsControls,
+  PART_KEYS, KIT_PARTS, UiProvider, usePart, useKitPart, overridable, PROSE, ENTRY_CLASSES,
+  type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption,
+  type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type Words, type Say, type IconName,
+  type PluginUi, type PluginPanel, type PluginPage, type PluginSpot,
+  type SavesState, type ModsState, type ClockState, type InventoryProps,
   type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
-  type Classes, type Components, type Override, type PartKey, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
+  type Classes, type Components, type OverridableComponents, type Override, type PartKey, type PartNames, type KitPart, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
   type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
@@ -74,7 +68,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | `data-has-sidebar` | The page, when the layout has a side column. |
 | `data-channel`, `data-thread`, `data-post`, `data-feed` | Messages and feeds. |
 | `data-save-slot`, `data-backlog`, `data-mod` | Each save slot, backlog entry and mod. |
-| `data-inventory`, `data-wardrobe`, `data-menu`, `data-saves`, `data-mods`, `data-quests`, `data-debug`, `data-statuses`, `data-achievements`, `data-shop`, `data-jobs` | Whole panels. |
+| `data-inventory`, `data-menu`, `data-saves`, `data-mods` | Whole panels. A plugin's UI marks its own the same way, such as `data-quests` and `data-shop`. |
 
 ## The game
 
@@ -106,15 +100,13 @@ function DefaultLayout(): JSX.Element
 The React UI's own layout, which a `GameShell` with no `layout` draws, and which the react and next templates copy into `src/layout.tsx`:
 
 - **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock) and the [`GameMenu`](#gamemenu), then these [sections](#section), each titled with a UI word:
-  - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist) and the [`StatusList`](#statuslist)
-  - `quests` (`ui.quests`), a dialog with the [`QuestLog`](#questlog) and a badge counting the quests with news
-  - `people` (`ui.people`), a dialog with [`Relationships`](#relationships)
-  - `inventory` (`ui.inventory`) and `wardrobe` (`ui.wardrobe`), collapsible, with the [`Inventory`](#inventory) and the [`WardrobeCard`](#wardrobecard).
-  Then the [`AchievementsButton`](#achievementsbutton), the [`CheatsButton`](#cheatsbutton) and the [`DeviceButtons`](#devicebuttons).
-- **A [`Story`](#story)** with the [`SceneStage`](#scenestage) and the [`InputFields`](#inputfields), then the bottom of the story: the [`LocationCard`](#locationcard), the [`Exits`](#exits), the [`RoomActions`](#roomactions) and [`PeopleHere`](#peoplehere). The [`DebugCard`](#debugcard) is last.
+  - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist), then what the plugin UIs place at `stats`
+  - `inventory` (`ui.inventory`), collapsible, with the [`Inventory`](#inventory).
+  Then what the plugin UIs place at `sidebar`: a Quests section, a People section, a Wearing section, the Achievements and Cheats buttons and the devices' buttons, for a game that lists those plugins' UIs.
+- **A [`Story`](#story)** with the [`SceneStage`](#scenestage) and the [`InputFields`](#inputfields), then what the plugin UIs place at `room` (where you are and the way out), the [`RoomActions`](#roomactions), and what they place at `story` (who is here, the debug card).
 - **A [`PanelHost`](#panelhost)**, and **an [`Overlay`](#overlay)** with the [`Notices`](#notices).
 
-Every part draws nothing when the game has nothing for it, and every section with nothing in it hides, so it suits any game.
+Each `<Plugins at="…" />` draws what the game's [plugin UIs](/docs/react/kit#where-the-layout-puts-them) bring for that spot, in the order of its `plugins` list. Every part draws nothing when the game has nothing for it, and every section with nothing in it hides, so it suits any game.
 
 ### Game
 
@@ -202,7 +194,8 @@ A titled part of a layout, in the side column or the story. It hides itself when
 - **`when`** is a [condition](/docs/reference/conditions): the section shows only while it holds, as [`When`](#when) does.
 
 ```tsx
-import { Section, WardrobeCard } from '@ifloom/react'
+import { Section } from '@ifloom/react'
+import { WardrobeCard } from '@ifloom/plugin-wardrobe/react'
 import { at } from '@ifloom/plugin-places'
 
 <Section id="wardrobe" title="Wearing" collapsible when={at('flat')}>
@@ -210,7 +203,7 @@ import { at } from '@ifloom/plugin-places'
 </Section>
 ```
 
-**Gotcha.** The cards inside have titles of their own. Pass `title={false}` to [`QuestLog`](#questlog), [`Inventory`](#inventory), [`WardrobeCard`](#wardrobecard) and the rest, or the title is there twice.
+**Gotcha.** The cards inside have titles of their own. Pass `title={false}` to [`QuestLog`](/docs/plugins/quests#questlog), [`Inventory`](#inventory), [`WardrobeCard`](/docs/plugins/wardrobe#wardrobecard) and the rest, or the title is there twice.
 
 Replaceable as `Section` in [`components`](#components). Parts: `section` (with `data-section`, `data-open` when it folds and `data-dialog` when it opens a dialog), `section-title`, `section-toggle`, `section-body` and `section-badge`.
 
@@ -255,11 +248,11 @@ function GameProvider(props: GameProviderProps): JSX.Element
 
 type GameProviderProps = {
   runner: Runner
+  plugins?: readonly PluginUi[]
   panels?: Record<string, PanelComponent>
   inline?: InlineComponents
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
-  unlocks?: UnlocksOption
   components?: Components
   classes?: Classes
   unstyled?: boolean
@@ -271,11 +264,11 @@ type GameProviderProps = {
 
 Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, reads `runner.view()` again only when the state changes or what the plugins' views show of the profile does, and hands both down through [`useGame`](#usegame).
 
-`panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell). The built-in renderers for `messages` and `feed` are added to `sections`, and yours win over them. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `unlocks` turns on the [code box](#unlockspanel): the provider calls its `start` with the runner once it's drawn, and stops what it started when it goes. See [`UnlocksOption`](#unlocksoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
+`plugins` are the [plugin UIs](/docs/react/kit#the-plugins-option) to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. `panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell), and go over what the plugin UIs bring under the same names. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
 Use it on its own to build [your own layout](/docs/react/extending#your-own-layout).
 
-**Gotcha.** Define `panels`, `inline`, `sections`, `mods`, `unlocks`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
+**Gotcha.** Define `plugins`, `panels`, `inline`, `sections`, `mods`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
 
 ### useGame
 
@@ -285,15 +278,16 @@ function useGame(): GameContextValue
 type GameContextValue = {
   runner: Runner
   mods?: ModsOption
-  unlocks?: UnlocksOption & { codes: UnlockCodes | null }
   view: View
   send: (command: Command) => Applied
   panels: Record<string, PanelComponent>
+  inline: InlineComponents
   sections: Record<string, PluginSectionComponent>
+  plugins: readonly PluginUi[]
 }
 ```
 
-Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` and `sections` are what the provider was given, with the built-in sections added. `mods` is the provider's `mods`, if any. `unlocks` is the provider's `unlocks`, if any, with `codes`, the [`UnlockCodes`](/docs/plugins/unlocks#unlockcodes) its `start` gave, or `null` until the provider has started them. It throws outside a `GameProvider`.
+Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -337,41 +331,6 @@ The game's [mods](/docs/reference/mods), for the [mod manager](#modmanager). Pas
 | `problems` | What the [content checker](/docs/reference/checks) found, as [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes it. Each problem that starts `mod:<id> ` is shown under that mod. The rest aren't shown. |
 | `onChange` | Builds the game again with the mods as they now are, usually `() => location.reload()`. Without it, the manager never offers to restart. |
 
-### UnlocksOption
-
-```ts
-type UnlocksOption = {
-  start: (runner: Runner) => UnlockCodes
-  problems?: string[]
-  onChange?: () => void
-}
-```
-
-Codes the player can enter, for a game with the [unlocks plugin](/docs/plugins/unlocks). Pass it as `unlocks` on [`GameShell`](/docs/react#gameshell), [`GameProvider`](#gameprovider) or [`mountGame`](/docs/react#mountgame). The React UI imports no plugin code, so you hand it the plugin's `startUnlocks`:
-
-```tsx
-import { startUnlocks } from '@ifloom/plugin-unlocks'
-
-<GameShell runner={runner} pages={{}} unlocks={{ start: startUnlocks, problems: opened.problems, onChange: () => location.reload() }} />
-```
-
-| Field | What it is |
-|---|---|
-| `start` | [`startUnlocks`](/docs/plugins/unlocks#startunlocks). The provider calls it with its runner. |
-| `problems` | What [`unlockedPacks`](/docs/plugins/unlocks#unlockedpacks) couldn't open, shown under the code box. |
-| `onChange` | Builds the game again with the content a code has just opened, usually `() => location.reload()`. Without it, the box never offers to restart. |
-
-```tsx
-import { indexedDbDriver, mods } from '@ifloom/engine'
-import { GameShell } from '@ifloom/react'
-import { smallTown } from './game.ts'
-
-const store = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const { game, problems } = smallTown({ mods: await store.packs() })
-// … make the runner …
-<GameShell runner={runner} mods={{ store, problems, onChange: () => location.reload() }} />
-```
-
 ### PanelComponent
 
 ```ts
@@ -396,7 +355,7 @@ A game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its 
 type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string, unknown> }>
 ```
 
-Draws a plugin's view inside an app. `data` is that plugin's slice of the view, at [`view.plugins[id]`](/docs/reference/view#plugins), and `with` is the section's `with`. See [Plugin sections](/docs/react/extending#plugin-sections).
+Draws a plugin's view inside an app. `data` is that plugin's slice of the view, at [`view.plugins[id]`](/docs/reference/view#plugins), and `with` is the section's `with`. A plugin UI registers its own in its `sections`, as the messages and feed UIs do. See [Plugin sections](/docs/react/extending#plugin-sections).
 
 ## Customising
 
@@ -448,14 +407,16 @@ While a [minigame](#minigamecard) runs, its own keys come first, and they work w
 ### Components
 
 ```ts
-type Components = Partial<{
+type Components = Partial<OverridableComponents>
+
+interface OverridableComponents {
   Section: Override<SectionProps>
   Beat: Override<{ beat: SceneBeat }>
-  // … one for each name below
-}>
+  // … one for each name below, and each a plugin UI adds
+}
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `LocationCard`, `Exits`, `PeopleHere`, `Relationships`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `QuestLog`, `StatusList`, `AchievementList`, `AchievementsButton`, `AchievementsPage`, `PanelHost`, `ShopDialog`, `ShopCounter`, `JobBoard`, `Inventory`, `WardrobeCard`, `EntityTable`, `InputFields`, `InputField`, `DeviceButtons`, `DeviceDialog`, `DeviceScreen`, `AppSection`, `MessagesSection`, `FeedSection`, `DebugCard`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -501,10 +462,10 @@ const classes: Classes = {
 
 ```ts
 const PART_KEYS: readonly PartKey[]
-type PartKey = 'page' | 'sidebar' | 'story' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'debug-log'
+type PartKey = 'page' | 'sidebar' | 'story' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'gate-decline' | keyof PartNames
 ```
 
-Every `data-part` the UI draws, which is also every key [`Classes`](#classes) takes. `PartKey` is one of them. [The data-part reference](/docs/react/customising#the-data-part-reference) says what each one is.
+Every `data-part` the React UI itself draws, which with the parts the plugin UIs add through [`PartNames`](/docs/react/kit#overridablecomponents-and-partnames) is every key [`Classes`](#classes) takes. `PartKey` is one of them. [The data-part reference](/docs/react/customising#the-data-part-reference) says what each one is.
 
 ### UiProvider
 
@@ -515,7 +476,8 @@ function UiProvider(props: UiOptions & { children: ReactNode }): JSX.Element
 Gives the components under it a game's `components`, `classes` and `unstyled`. [`GameProvider`](#gameprovider) has one inside it, so you only need your own to change one corner of the page. A nested provider adds to the outer one: its `components` and `classes` are merged over the outer ones, and `unstyled` stays on once either turns it on.
 
 ```tsx
-import { QuestLog, UiProvider } from '@ifloom/react'
+import { UiProvider } from '@ifloom/react'
+import { QuestLog } from '@ifloom/plugin-quests/react'
 
 <UiProvider classes={{ quest: 'border-dashed' }}>
   <QuestLog title="To do" />
@@ -638,7 +600,7 @@ import { Beat } from '@ifloom/react'
 <Beat beat={{ kind: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
 ```
 
-The [`Backlog`](#backlog), [`MessagesSection`](#messagessection) and [`FeedSection`](#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
+The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagessection) and [`FeedSection`](/docs/plugins/feed#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
 
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
@@ -755,7 +717,7 @@ type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 
 }
 ```
 
-A video clip. [`Beat`](#beat) draws `video` beats with it, [`Stage`](#stage) draws video layers with it, and [`FeedSection`](#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
+A video clip. [`Beat`](#beat) draws `video` beats with it, [`Stage`](#stage) draws video layers with it, and [`FeedSection`](/docs/plugins/feed#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
 
 ```tsx
 import { Video } from '@ifloom/react'
@@ -783,7 +745,7 @@ Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video
 function Stage(props: { stage: StageView; className?: string }): JSX.Element
 ```
 
-A layered picture with hotspots, from a [`StageView`](/docs/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationCard`](#locationcard) draws a place's `location.stage`.
+A layered picture with hotspots, from a [`StageView`](/docs/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.stage`.
 
 ```tsx
 import { Stage, useGame } from '@ifloom/react'
@@ -849,7 +811,7 @@ assetUrl('art/place/cafe.jpg')   // 'data:image/jpeg;base64,…' in a one-file b
 assetUrl('./art/place/cafe.jpg') // the same
 ```
 
-[`Picture`](#picture) and [`Video`](#video) call it, and so does [`DeviceScreen`](#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
+[`Picture`](#picture) and [`Video`](#video) call it, and so does [`DeviceScreen`](/docs/plugins/devices#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
 
 **Gotcha.** A component of your own that draws a picture from a path, with an `<img>` or a CSS `background-image`, must call `assetUrl` too or use a `Picture`. In a one-file build the `art/` folder is gone, so the bare path points at nothing.
 
@@ -937,7 +899,7 @@ Replaceable as `RoomActions` in [`components`](#components). Parts: `actions`.
 function Clock(): JSX.Element | null
 ```
 
-Where the game is in time: [`view.when`](/docs/reference/view#the-clock-and-the-player), as its plugins wrote it, such as the [calendar](/docs/plugins/calendar#the-label)'s `Day 3 · Wednesday afternoon`. It draws nothing when no plugin says what time it is, as in a game without a calendar. To reword it, change the calendar's `calendar/label` string.
+Where the game is in time: [`view.when`](/docs/reference/view#the-clock-and-the-player), as its plugins wrote it, such as the [calendar](/docs/plugins/calendar#the-label)'s `Day 3 · Wednesday afternoon`. It draws nothing when no plugin says what time it is, as in a game without a calendar. To reword it, change the calendar's `calendar/label` string. The calendar plugin's UI draws its [`CalendarClock`](/docs/plugins/calendar#calendarclock) in this one's place, with the day and the period marked for a stylesheet.
 
 Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
 
@@ -946,17 +908,17 @@ Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
 ```ts
 function useClock(): ClockState
 
-type ClockState = { when: string | null; calendar: CalendarView | null }
+type ClockState = { when: string | null }
 ```
 
-Where the game is in time, with no markup. `when` is [`view.when`](/docs/reference/view#the-clock-and-the-player), or `null` when no plugin says. `calendar` is the [calendar](/docs/plugins/calendar)'s own view, piece by piece ([`CalendarView`](/docs/plugins/calendar#the-view): the day, the weekday, the period and its label, and whether the curfew binds), or `null` in a game without it. [`Clock`](#clock) draws `when`.
+Where the game is in time, with no markup. `when` is [`view.when`](/docs/reference/view#the-clock-and-the-player), or `null` when no plugin says. [`Clock`](#clock) draws it. For the calendar's pieces (the day, the weekday, the period), use the calendar plugin's [`useCalendar`](/docs/plugins/calendar#usecalendar).
 
 ```tsx
 import { useClock } from '@ifloom/react'
 
-function DayBadge() {
-  const { calendar } = useClock()
-  return calendar ? <span className="rounded border px-2 text-xs">{calendar.weekday}</span> : null
+function TopLine() {
+  const { when } = useClock()
+  return when ? <p className="text-xs uppercase">{when}</p> : null
 }
 ```
 
@@ -1010,165 +972,25 @@ import { EntityTable } from '@ifloom/react'
 
 Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, `entity-heading`, `entity-table`, `entity-columns`, `entity-column`, `entity-row` (with `data-entity`), `entity-name`, `entity-image`, `entity-desc` and `entity-value`.
 
-### LocationCard
-
-```tsx
-function LocationCard(): JSX.Element | null
-```
-
-Where the player is: the place's name and tag, and what lies there, each with a small **Pick up** button that sends the thing's [`pickUp`](/docs/plugins/places#things-lying-in-a-place) command. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
-
-A place with a [stage](/docs/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
-
-It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). The exits are [`Exits`](#exits).
-
-Replaceable as `LocationCard` in [`components`](#components). Parts: `location`, `location-name`, `location-text`, `location-things`, `location-thing` (with `data-thing`, the thing's reference), `location-thing-name` and `location-thing-pick`.
-
-### Exits
-
-```tsx
-function Exits(props: { className?: string }): JSX.Element | null
-```
-
-An outline button for each exit from where the player is. Each shows the exit's `label`, sends its own [`command`](/docs/plugins/places#exitview) and carries `data-exit`. An exit the player can't take is greyed out. It draws nothing without the places plugin, or with no exits, as while a scene is open.
-
-**Gotcha.** An exit's reason, or its warning, is in the button's `title` and shows on hover. It isn't printed on the button as a choice's is. An exit that a lock hides isn't in the view at all.
-
-Replaceable as `Exits` in [`components`](#components). Parts: `exits` and `exit` (with `data-exit`).
-
-### usePlaces
-
-```ts
-function usePlaces(): PlacesControls | null
-
-type PlacesControls = PlacesView & {
-  go: (exit: string) => Result<GameState>
-  pickUp: (thing: string) => Result<GameState>
-}
-```
-
-The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location`, `exits` and the `things` lying there) with a way to travel and to pick things up, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. `pickUp(ref)` sends the thing's own pick-up command the same way. [`LocationCard`](#locationcard) and [`Exits`](#exits) are drawn from it.
-
-```tsx
-import { usePlaces } from '@ifloom/react'
-
-function ExitList() {
-  const places = usePlaces()
-  if (!places) return null
-  return (
-    <ul>
-      {places.exits.map((exit) => (
-        <li key={exit.id}>
-          <button disabled={Boolean(exit.disabled)} onClick={() => places.go(exit.id)}>{exit.label}</button>
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
-
-### PeopleHere
-
-```tsx
-function PeopleHere(props: { className?: string }): JSX.Element | null
-```
-
-Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and `desc`, the line under their name (when they have them), and their name, with a [`ChoiceButton`](#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
-
-Replaceable as `PeopleHere` in [`components`](#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-desc` and `person-actions`.
-
-### Relationships
-
-```tsx
-function Relationships(props: { className?: string }): JSX.Element | null
-```
-
-Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `desc`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](#built_in_panels).
-
-Replaceable as `Relationships` in [`components`](#components). Parts: `relationships`, `relationship` (with `data-person`), `relationship-header`, `relationship-stats`, and the `person-` and `stat-` parts inside.
-
-### usePeople
-
-```ts
-function usePeople(): CastView | null
-```
-
-The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their buttons as [`RenderedChoice`](/docs/reference/view#renderedchoice)s, and `people`, everyone the player has met. `null` in a game without the plugin. Send a button's `command` with [`useGame`](#usegame)'s `send`, or draw it with [`ChoiceButton`](#choicebutton). [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) are drawn from it.
-
 ### Inventory
 
 ```tsx
-function Inventory(props: { className?: string; title?: string | false; drop?: boolean }): JSX.Element | null
+function Inventory(props: InventoryProps): JSX.Element | null
+
+type InventoryProps = { className?: string; title?: string | false; drop?: boolean }
 ```
 
-What the player carries. It lists the things you hold, from the [inventory](/docs/plugins/inventory) plugin's view when the game has it, else from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.heldCount`) when there's more than one, and its description. With the plugin, a thing that has a use gets a [`ChoiceButton`](#choicebutton) from its `use` button, such as "Eat the sandwich", greyed out with the reason when it can't be used now. With `drop`, each also gets a **Drop** button (`ui.drop`). Without the plugin there are no buttons.
+What the player carries: the things you hold, from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.heldCount`) when there's more than one, and its description. The [inventory](/docs/plugins/inventory) plugin's UI draws its [`InventoryCard`](/docs/plugins/inventory#inventorycard) in this one's place, with the same props: a thing that has a use gets a button such as "Eat the sandwich", and with `drop` each gets a **Drop** button. This one has no buttons, and ignores `drop`.
 
 The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each thing carries `data-thing` (its reference) and `data-at` (who holds it). It draws nothing when the player carries nothing.
 
 ```tsx
 import { Inventory } from '@ifloom/react'
 
-// In the showcase, a sandwich from the café: "Eat the sandwich" puts 25 energy back.
 <Inventory className="border-t pt-4" />
 ```
 
-Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `thing` (with `data-thing`), `thing-name`, `thing-count`, `thing-text` and `thing-drop`.
-
-### useInventory
-
-```ts
-function useInventory(): InventoryControls | null
-
-type InventoryControls = InventoryView & {
-  use: (ref: string) => Result<GameState>
-  drop: (ref: string) => Result<GameState>
-  give: (ref: string, to: string) => Result<GameState>
-}
-```
-
-The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](#inventory) is drawn from it.
-
-```tsx
-import { useInventory } from '@ifloom/react'
-
-function Snacks() {
-  const bag = useInventory()
-  const food = bag?.things.filter((thing) => thing.ref.startsWith('item:') && thing.use) ?? []
-  return food.map((thing) => <button key={thing.ref} onClick={() => bag!.use(thing.ref)}>{thing.use!.label}</button>)
-}
-```
-
-### WardrobeCard
-
-```tsx
-function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
-```
-
-The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearThing`, with the thing's name as `thing`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
-
-A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
-
-**Gotcha.** As with an exit, the reason is in the `title` and shows on hover. It isn't printed on the button.
-
-Replaceable as `WardrobeCard` in [`components`](#components). Parts: `wardrobe`, `wardrobe-title`, `wardrobe-slot` (with `data-slot-id`), `wardrobe-slot-name`, `wardrobe-worn` and `button`.
-
-### useWardrobe
-
-```ts
-function useWardrobe(): WardrobeControls | null
-
-type WardrobeControls = Omit<WardrobeView, 'slots'> & {
-  slots: WardrobeSlotControls[]
-  wear: (entity: string) => Result<GameState>
-  takeOff: (slot: string) => Result<GameState>
-}
-type WardrobeSlotControls = WardrobeView['slots'][number] & {
-  takeOff: RenderedChoice | null
-  wear: RenderedChoice[]
-}
-```
-
-The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wear(entity)` (a reference, `'clothing:scarf'`) and `takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
+Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `inventory-title`, `thing` (with `data-thing`), `thing-name`, `thing-count` and `thing-text`.
 
 ## Inputs
 
@@ -1219,13 +1041,13 @@ A row of buttons for what the runner offers:
 - **Saves** (`ui.saves`) when the runner was made with `saves`
 - **Backlog** (`ui.backlog`) when [`runner.offers`](/docs/reference/runner#the-runners-members)`.backlog` is on
 - **Mods** (`ui.mods`) when the provider was given [`mods`](#modsoption)
-- **Enter a code** (`ui.enterCode`) when the provider was given [`unlocks`](#unlocksoption), the game has the unlocks plugin and `pages` is off. With pages on, codes are entered on the settings page instead.
+- A button for each plugin UI's [`settings`](/docs/react/kit#pluginui), such as **Enter a code** for the unlocks plugin's, when `pages` is off. With pages on, they're on the settings page instead.
 - **Undo** and **Redo** when `runner.offers.undo` is on. They're greyed out while there's nothing to undo or redo.
-- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), takes codes or has mods.
+- **Settings** (`ui.settings`) and **Title screen** (`ui.titlePage`) when the game was drawn with [`pages`](#pages) on. Settings shows only if the game declares a [setting](/docs/reference/settings), has a plugin UI with settings, or has mods.
 
 With [`keys`](#keyoptions) on, Escape opens the same buttons in a dialog headed **Menu** (`ui.menu`).
 
-Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). Enter a code opens an [`UnlocksPanel`](#unlockspanel) the same way. Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
+Settings and Title screen switch to those [pages](#pages). Settings opened from the game changes the game in play, and its Back button returns to it. Saves, Backlog and Mods each open a [`Dialog`](#dialog), with a close button labelled `ui.close` for screen readers, holding a [`SavesMenu`](#savesmenu), a [`Backlog`](#backlog) or a [`ModManager`](#modmanager). A plugin UI's button opens its settings the same way, titled with its label. Loading a save closes the dialog. The row carries `data-menu`. It draws nothing when there are no buttons to show.
 
 So you choose what the player sees when you make the runner:
 
@@ -1431,7 +1253,7 @@ With `pages` on (see [mountGame](/docs/react#mountgame)), the game opens on a ti
 - `title`, the title screen
 - `game`, the shell with the story
 - `load`, `settings` and `credits`
-- `achievements`, the [`AchievementsPage`](#achievementspage), in a game with the [achievements plugin](/docs/plugins/achievements)
+- any page a plugin UI adds, such as the [achievements plugin](/docs/plugins/achievements)'s `achievements`
 - any page you add in `PagesOptions.pages`, by its id.
 
 The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/docs/recipes/title-screen) walks through setting it up.
@@ -1445,7 +1267,6 @@ type PagesOptions = {
   credits?: Credit[]
   gate?: GateOptions
   pages?: Record<string, PageDef>
-  achievements?: boolean
 }
 
 type Credit = string | { label: string; href: string }
@@ -1461,8 +1282,7 @@ What `pages` takes on [`mountGame`](/docs/react#mountgame) and [`GameShell`](/do
 | `art` | A picture for the title screen, by path. It's drawn with [`Picture`](#picture), so a missing file takes no space. |
 | `credits` | The credits page's lines. A string is a line, and `{ label, href }` is a link that opens in a new tab. Without credits there's no Credits button. |
 | `gate` | A notice shown before the title screen. See [`GatePage`](#gatepage). |
-| `pages` | Pages of your own, by id. Each gets a button on the title screen labelled `label`, unless `showOnTitle` is `false`. Its `component` is drawn with no props as the whole page, and leaves with `usePage().back()`. A page with the id `achievements` takes the place of the built-in one. |
-| `achievements` | The achievements page and its title-screen button, in a game with the [achievements plugin](/docs/plugins/achievements). On unless it's `false`. With it off, the [`AchievementsButton`](#achievementsbutton) opens the list in a dialog instead. |
+| `pages` | Pages of your own, by id. Each gets a button on the title screen labelled `label`, unless `showOnTitle` is `false`. Its `component` is drawn with no props as the whole page, and leaves with `usePage().back()`. A page with the id of one a plugin UI adds, such as `achievements`, takes its place. |
 
 ```tsx
 import { mountGame, usePage } from '@ifloom/react'
@@ -1491,7 +1311,7 @@ mountGame(game, {
 ```ts
 function usePage(): PageState
 
-type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | 'achievements' | (string & {})
+type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
 
 type PageState = {
   enabled: boolean
@@ -1500,6 +1320,7 @@ type PageState = {
   go: (page: Page) => void
   back: () => void
   options: PagesOptions
+  added: Readonly<Record<string, PageDef>>
 }
 ```
 
@@ -1513,6 +1334,7 @@ Where the player is among the pages, and how to move between them.
 | `go(page)` | Shows a page. `title`, `game` and `gate` start afresh, and any other page goes on top of the one showing. |
 | `back()` | Returns to the page under this one, or to the title screen if there's none. |
 | `options` | The `PagesOptions` the pages were set up with. |
+| `added` | Every page added to the built-in ones, by id: the plugin UIs', with their labels worded, and the game's own `pages` over them. |
 
 `go('game')` only switches page. To start a game, call [`runner.newGame`](/docs/reference/runner#newgame) or load a save first, as the title screen does.
 
@@ -1528,9 +1350,8 @@ The game's title (`view.title`), the `subtitle` and `art` if given, and a column
 - **New game** (`ui.newGame`, `new`) calls [`runner.newGame()`](/docs/reference/runner#newgame), which takes the player's stored settings from the profile.
 - **New Game+** (`ui.newGamePlus`, `new-game-plus`) shows when the game declares [`carryOver`](/docs/reference/state#new-game) and the profile's `core:finished` is set. It starts a new game carrying over from the newest save's state, or from the state in play if there's no save.
 - **Load** (`ui.load`, `load`) when the runner has `saves`.
-- **Settings** (`ui.settings`, `settings`) when the game declares any setting, takes codes (with [`unlocks`](#unlocksoption) on the provider) or has [`mods`](#modsoption).
-- **Achievements** (`ui.achievements`, `achievements`) in a game with the [achievements plugin](/docs/plugins/achievements), unless `achievements` is `false` or you added your own page with that id.
-- A button for each of your own pages, by its id.
+- **Settings** (`ui.settings`, `settings`) when the game declares any setting, has a plugin UI with [`settings`](/docs/react/kit#pluginui) (the unlocks plugin's code box) or has [`mods`](#modsoption).
+- A button for each page a plugin UI adds, such as **Achievements**, and each of your own pages, by its id, unless its `showOnTitle` is `false`.
 - **Credits** (`ui.credits`, `credits`) when `credits` are given.
 
 The first button is drawn as the main one: Continue when there's a save, otherwise New game. The section carries `data-page="title"`.
@@ -1552,7 +1373,7 @@ Each value comes from [`runner.settings()`](/docs/reference/runner#settings), an
 
 A refused change shows its reason under the list.
 
-With [`unlocks`](#unlocksoption) on the provider, an [`UnlocksPanel`](#unlockspanel) follows the list, for entering a code. With [`mods`](#modsoption), a Mods section follows that: a heading (`ui.mods`), a line about mods (`ui.modsHint`) and the [`ModManager`](#modmanager), where the player adds, turns on or off and deletes mods and restarts with the change. With either, the page says nothing about having no settings, and the title screen and the menu offer Settings even when the game declares none. The menu keeps its own Mods button.
+Each plugin UI's [`settings`](/docs/react/kit#pluginui) follow the list, such as the unlocks plugin's code box. With [`mods`](#modsoption), a Mods section follows that: a heading (`ui.mods`), a line about mods (`ui.modsHint`) and the [`ModManager`](#modmanager), where the player adds, turns on or off and deletes mods and restarts with the change. With either, the page says nothing about having no settings, and the title screen and the menu offer Settings even when the game declares none. The menu keeps its own Mods button.
 
 Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-page`, `page-heading`, `settings`, `setting` (with `data-setting` and `data-affects`), `setting-label`, `setting-control`, `setting-value`, `settings-empty`, `settings-message`, `settings-mods` (with `data-settings-mods`), `mods-title`, `mods-hint` and `page-back`.
 
@@ -1681,9 +1502,9 @@ function NoticeStrip(props: { className?: string }): JSX.Element | null
 A row of counts for what's waiting for the player, each a button that opens where it is:
 
 - **Notices** (`ui.notices`) with the number of unseen [notices](/docs/reference/notices). It opens them all in a dialog, each a [`Notice`](#notice), with a **Mark all seen** button (`ui.allSeen`) that sends [`dismiss`](/docs/reference/commands#dismiss) with no id.
-- Each app with a badge on any of the game's [devices](/docs/plugins/devices), such as the phone's Messages, with its count (or an empty badge for a badge that's only on or off). It opens the device in a [`DeviceDialog`](#devicedialog) and sends the app's command, so the device opens on that app. A greyed-out app isn't listed.
+- What the plugin UIs place at its `strip` spot: the devices plugin's [`DeviceStrip`](/docs/plugins/devices#devicestrip), a count for each app with a badge, such as the phone's Messages, which opens the device on that app.
 
-It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread. The default layout doesn't include it, so add it to your layout where you want it, such as at the top of the story:
+It's a `<nav>` labelled `ui.unread`, hidden while nothing in it is drawn. The default layout doesn't include it, so add it to your layout where you want it, such as at the top of the story:
 
 ```tsx
 <Story>
@@ -1692,7 +1513,7 @@ It's a `<nav>` labelled `ui.unread`, and it draws nothing when nothing is unread
 </Story>
 ```
 
-Each button carries `data-strip`: `notices`, or the device and app ids as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/recipes/hud) shows how to write your own from the view.
+Each button carries `data-strip`: `notices`, or for the devices' counts the device and app ids, as `phone/texts`. It's kept basic on purpose. [Building your own HUD](/docs/recipes/hud) shows how to write your own from the view.
 
 Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-strip`, `notice-strip-item` (with `data-strip`) and `badge`, plus the dialog's parts.
 
@@ -1885,315 +1706,9 @@ function ArrowPad() {
 
 **Gotcha.** Nothing ticks unless something calls it. [`SceneStage`](#scenestage) does while a minigame runs, so a game with its own root that leaves out `SceneStage` has to call `useMinigame()` somewhere, or the minigame's timers wait for ever.
 
-### QuestLog
+## Panels
 
-```tsx
-function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
-```
-
-The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its summary, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
-
-`title` replaces the heading, `ui.quests`, for this one list, and `false` leaves it out with its count. It draws nothing in a game without the plugin.
-
-Replaceable as `QuestLog` in [`components`](#components). Parts: `quests`, `quests-title`, `quest` (with `data-quest`), `quest-title`, `quest-summary`, `quest-hint`, `quest-stage`, `quests-done`, `quest-done`, `badge` and `button`.
-
-### useQuests
-
-```ts
-function useQuests(): QuestsControls | null
-
-type QuestsControls = QuestsView & {
-  track: (id: string | null) => Result<GameState>
-  seen: () => Result<GameState>
-}
-```
-
-The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind` and `updates`) with its two commands, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. `seen()` sends `quests/seen`. [`QuestLog`](#questlog) is drawn from it.
-
-```tsx
-import { useQuests } from '@ifloom/react'
-
-function Objective() {
-  const quests = useQuests()
-  const tracked = quests?.active.find((quest) => quest.tracked)
-  return tracked ? <p className="text-sm">{tracked.title}: {tracked.hint}</p> : null
-}
-```
-
-### DebugCard
-
-```tsx
-function DebugCard(props: { className?: string }): JSX.Element | null
-```
-
-A panel for the person testing the game, when the game has the [debug plugin](/docs/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/plugins/debug#leave-it-out-of-release-builds) shows no panel.
-
-| Tab | What it has |
-|---|---|
-| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
-| **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
-| **State** | The whole game state, as JSON. |
-| **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
-
-The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
-
-The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Held**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
-
-**Gotchas.**
-
-- **The placeholders are in English.** Each form's placeholders (`stat`, `value`, `key` and the rest) aren't in the strings table.
-- **A number box needs a number.** An empty box, or words that aren't a number, are refused with `debug/notANumber` rather than set to 0.
-
-Replaceable as `DebugCard` in [`components`](#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
-
-### useDebug
-
-```ts
-function useDebug(): DebugControls | null
-
-type DebugControls = DebugView & {
-  greyed: RenderedChoice[]
-  state: GameState
-  log: Command[]
-  canUndo: boolean
-  canRedo: boolean
-  undo: () => void
-  redo: () => void
-  run: (name: string, args?: Record<string, unknown>) => Result<GameState>
-}
-```
-
-The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. `run(name, args)` sends `debug/<name>`, so `run('stat', { stat: 'coins', to: 50 })` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
-
-## Plugins' defaults
-
-Every first-party plugin that has something for the player has a default here, which `GameShell` draws when the game has the plugin, and a hook that gives the same data and actions with no markup. The default is a thin layer on its hook. So you can keep the default, restyle it with its parts, replace it by name in [`components`](#components), take it out of your [layout](/docs/react#layouts), or draw your own from the hook.
-
-| Plugin | Default | Hook | Where `DefaultLayout` puts it |
-|---|---|---|---|
-| [calendar](/docs/plugins/calendar) | [`Clock`](#clock) | [`useClock`](#useclock) | Under the title. |
-| [places](/docs/plugins/places) | [`LocationCard`](#locationcard) and [`Exits`](#exits) | [`usePlaces`](#useplaces) | The bottom of the story. |
-| [cast](/docs/plugins/cast) | [`PeopleHere`](#peoplehere) and [`Relationships`](#relationships) | [`usePeople`](#usepeople) | Who is here, at the bottom of the story, and everyone met, in the People section. |
-| [wardrobe](/docs/plugins/wardrobe) | [`WardrobeCard`](#wardrobecard) | [`useWardrobe`](#usewardrobe) | The side column's Wearing section. |
-| [statuses](/docs/plugins/statuses) | [`StatusList`](#statuslist) | [`useStatuses`](#usestatuses) | The Stats section, under the stats. |
-| [achievements](/docs/plugins/achievements) | [`AchievementList`](#achievementlist), in a page or a dialog | [`useAchievements`](#useachievements) | A button in the side column. |
-| [cheats](/docs/plugins/cheats) | [`CheatPanel`](#cheatpanel), in a dialog | [`useCheats`](#usecheats) | A button in the side column, under the achievements. |
-| [unlocks](/docs/plugins/unlocks) | [`UnlocksPanel`](#unlockspanel) | [`useUnlocks`](#useunlocks) | The settings page, or the menu without pages, when the provider has [`unlocks`](#unlocksoption). |
-| [shop](/docs/plugins/shop) | [`ShopCounter`](#shopcounter), in a dialog | [`useShop`](#useshop) | The `shop` panel, which content opens with `openShop`. |
-| [jobs](/docs/plugins/jobs) | [`JobBoard`](#jobboard), in a dialog | [`useJobs`](#usejobs) | The `jobs` panel, which content opens with `openJobs`. |
-| [quests](/docs/plugins/quests) | [`QuestLog`](#questlog) | [`useQuests`](#usequests) | The Quests section, a dialog. |
-| [devices](/docs/plugins/devices) | [`DeviceButtons`](#devicebuttons) | [`useDevices`](#usedevices) | Buttons in the side column. |
-| [messages](/docs/plugins/messages) | [`MessagesSection`](#messagessection) | [`useMessages`](#usemessages) | In an app. |
-| [feed](/docs/plugins/feed) | [`FeedSection`](#feedsection) | [`useFeed`](#usefeed) | In an app. |
-| [debug](/docs/plugins/debug) | [`DebugCard`](#debugcard) | [`useDebug`](#usedebug) | The foot of the story. |
-
-The [generators](/docs/plugins/generators) plugin has nothing for the player, so it has no default. A contract test in `packages/react` fails if a first-party plugin with a view has neither a default and a hook nor a reason in its list.
-
-Each hook returns `null` in a game without its plugin (`useDevices` returns `[]`, and `useClock` always returns its object). A hook that has commands returns them as functions, each giving back what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. Buttons the plugin's view already carries, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s, have their price and the reason they're greyed out: draw them with [`ChoiceButton`](#choicebutton), or send their `command`.
-
-To turn one off, delete it from your layout. To replace one, name your own in `components`:
-
-```tsx
-import { GameShell, useJobs, type Components } from '@ifloom/react'
-import { Layout } from './layout.tsx'
-
-// Your own line about jobs, which goes in your layout, and a border round every shop counter.
-export function Shifts() {
-  const jobs = useJobs()
-  return <p className="text-sm">Jobs held: {jobs?.held.length ?? 0}</p>
-}
-
-const components: Components = { ShopCounter: ({ Default, ...props }) => <div className="border-t pt-2"><Default {...props} /></div> }
-
-<GameShell runner={runner} layout={Layout} components={components} />
-```
-
-In Vue, Svelte or plain JS, read the same slice from `view.plugins.<id>` by the type the plugin exports. [Building UI for plugins](/docs/recipes/plugin-ui) shows each in every framework.
-
-### StatusList
-
-```tsx
-function StatusList(props: { className?: string; title?: string | false }): JSX.Element | null
-```
-
-The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its label, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
-
-It draws nothing while no status is active, so the side column has no empty box most of the time, and nothing in a game without the plugin.
-
-Replaceable as `StatusList` in [`components`](#components). Parts: `statuses`, `statuses-title`, `status` (with `data-status`), `status-label`, `status-stacks`, `status-turns`, `status-summary` and `status-modifiers`.
-
-### useStatuses
-
-```ts
-function useStatuses(): StatusesView | null
-```
-
-The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `label`, `summary`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
-
-```tsx
-import { useStatuses } from '@ifloom/react'
-
-function StatusIcons() {
-  const active = useStatuses()?.active ?? []
-  return <p>{active.map((status) => `${status.label} (${status.turnsLeft})`).join(', ')}</p>
-}
-```
-
-### AchievementList
-
-```tsx
-function AchievementList(props: { className?: string; title?: string | false }): JSX.Element | null
-```
-
-Every [achievement](/docs/plugins/achievements) the game has, in the order it declares them, under a heading with how many are earned (`ui.achievements` and `ui.achievementsCount`, `1 of 3`). Each one (`data-achievement`) shows its picture, its title and its description. An earned one carries `data-earned` and an **Earned** badge (`ui.achievementEarned`). It counts as earned when this save or any other earned it, since the profile remembers it. A secret one not yet earned carries `data-secret` and shows as `???`, with no description or progress. One with [progress](/docs/plugins/achievements#progress) not yet earned has a bar (a `progressbar` labelled with its title) and `5 of 20` under it (`ui.achievementProgress`).
-
-`title` replaces the heading, and `false` leaves it out, as the page and the dialog do. It draws nothing in a game without the plugin.
-
-Replaceable as `AchievementList` in [`components`](#components). Parts: `achievements`, `achievements-title`, `achievements-count`, `achievements-empty`, `achievement` (with `data-achievement`, `data-earned` and `data-secret`), `achievement-image`, `achievement-title`, `achievement-text`, `achievement-progress`, `achievement-progress-text` and `badge`.
-
-### AchievementsButton
-
-```tsx
-function AchievementsButton(props: { className?: string }): JSX.Element | null
-```
-
-What the `'achievements'` part draws: a button labelled **Achievements** with the count (`1 of 3`) on a badge. With [pages](#pages) on, it goes to the [`AchievementsPage`](#achievementspage). Without them, or with `PagesOptions.achievements` set to `false`, it opens an [`AchievementList`](#achievementlist) in a [`Dialog`](#dialog). Opening it sends no command. It draws nothing in a game without the plugin.
-
-Replaceable as `AchievementsButton` in [`components`](#components). Parts: `achievements-button`, `badge`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
-
-### AchievementsPage
-
-```tsx
-function AchievementsPage(props: { className?: string }): JSX.Element
-```
-
-The `achievements` page, among the [pages](#pages) around the game: a heading (`ui.achievements`), the [`AchievementList`](#achievementlist), and a **Back** button. The title screen has a button for it in a game with the plugin. On the title screen the progress counts come from whatever state the runner holds, and what's earned comes from the profile too, so it's right before a game starts. The section carries `data-page="achievements"`.
-
-Replaceable as `AchievementsPage` in [`components`](#components), or by a page of your own with the id `achievements` in `PagesOptions.pages`. Parts: `achievements-page`, `page-heading` and `page-back`.
-
-### useAchievements
-
-```ts
-function useAchievements(): AchievementsView | null
-```
-
-The achievements plugin's view ([`AchievementsView`](/docs/plugins/achievements#achievementsview): `achievements`, `earned` and `total`), or `null` in a game without the plugin. [`AchievementList`](#achievementlist) and the button are drawn from it.
-
-```tsx
-import { useAchievements } from '@ifloom/react'
-
-function Trophies() {
-  const data = useAchievements()
-  return data ? <span>{data.earned}/{data.total}</span> : null
-}
-```
-
-### CheatPanel
-
-```tsx
-function CheatPanel(props: { className?: string }): JSX.Element | null
-```
-
-The [cheats](/docs/plugins/cheats) the player can see, from [`CheatsView`](/docs/plugins/cheats#cheatsview). The ones with no `group` come first, with no heading, then each group under its name, in the order the groups first appear. Each cheat (`data-cheat`) is a [`ChoiceButton`](#choicebutton) from its `button`, greyed out with its reason while it's refused, such as `For supporters.` or `Already used.` for a `once` cheat. Under it are its description and, once used, a badge saying how often (`ui.cheatUsedOnce`, `ui.cheatUsedTimes`).
-
-It draws nothing in a game without the plugin, or while every cheat is hidden.
-
-Replaceable as `CheatPanel` in [`components`](#components). Parts: `cheats`, `cheats-group` (with `data-cheats-group`), `cheats-group-title`, `cheat` (with `data-cheat` and `data-used`), `cheat-text`, `cheat-used` and `choice`.
-
-### CheatsButton
-
-```tsx
-function CheatsButton(props: { className?: string }): JSX.Element | null
-```
-
-What the `'cheats'` part draws: a **Cheats** button (`ui.cheats`) that opens a [`CheatPanel`](#cheatpanel) in a [`Dialog`](#dialog). Opening it sends no command. It draws nothing in a game without the plugin, or while it has no cheat the player can see, so a game whose cheats all wait hidden for an unlock shows no button until then.
-
-Replaceable as `CheatsButton` in [`components`](#components). Parts: `cheats-button`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
-
-### useCheats
-
-```ts
-function useCheats(): CheatsControls | null
-
-type CheatsControls = CheatsView & {
-  groups: CheatGroup[]
-  use: (cheat: string) => Result<GameState>
-}
-
-type CheatGroup = { name: string | null; cheats: CheatView[] }
-```
-
-The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
-
-```tsx
-import { useCheats } from '@ifloom/react'
-
-function QuickCoins() {
-  const cheats = useCheats()
-  const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
-  if (!coins) return null
-  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.label}</button>
-}
-```
-
-### UnlocksPanel
-
-```tsx
-function UnlocksPanel(props: { className?: string }): JSX.Element | null
-```
-
-Entering a code, and the game's [unlocks](/docs/plugins/unlocks). Under an **Enter a code** heading (`ui.enterCode`) are a text box (`ui.code`) and an **Unlock** button (`ui.unlock`), which says **Checking…** (`ui.checkingCode`) while the code is checked. A wrong code shows the plugin's reason as an alert. One that works says **Unlocked: Supporter edition.** (`ui.unlockedNow`, or `ui.unlockedAlready`), and when it opened content the game in play doesn't have, a **Restart to add it** button (`ui.restartForUnlock`) calls the option's `onChange`. The option's `problems` follow, then each unlock (`data-unlock`, and `data-unlocked` once it's unlocked) with its label, a **Locked** or **Unlocked** badge (`ui.locked`, `ui.unlocked`) and its description.
-
-The box shows only when the provider has [`unlocks`](#unlocksoption) and its codes have started. Without it the list still shows. It draws nothing in a game without the plugin, or with no unlocks. The settings page and the menu draw it for you.
-
-Replaceable as `UnlocksPanel` in [`components`](#components). Parts: `unlocks`, `unlocks-title`, `unlock-form`, `unlock-input`, `button`, `unlocks-message`, `unlocks-entered`, `unlock-problem`, `unlocks-list`, `unlock` (with `data-unlock` and `data-unlocked`), `unlock-name`, `unlock-state` and `unlock-text`.
-
-### useUnlocks
-
-```ts
-function useUnlocks(): UnlocksControls | null
-
-type UnlocksControls = UnlocksView & {
-  available: boolean
-  enter: (code: string) => Promise<boolean>
-  checking: boolean
-  entered: Entered | null
-  message: string | null
-  restart: (() => void) | undefined
-  problems: string[]
-}
-```
-
-The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `unlocks`, `unlocked` and `total`) and the code box's state, or `null` in a game without the plugin.
-
-| Field | What it is |
-|---|---|
-| `available` | Whether codes can be entered: the provider has `unlocks`, and has started them. |
-| `enter` | Tries a code with [`UnlockCodes.enter`](/docs/plugins/unlocks#unlockcodes). Resolves to whether it worked. |
-| `checking` | True while a code is being checked. |
-| `entered` | What the last code that worked unlocked, as [`Entered`](/docs/plugins/unlocks#entered), or `null`. |
-| `message` | Why the last code didn't work, or `null`. |
-| `restart` | The option's `onChange`, when the last code opened content that needs it. Otherwise undefined. |
-| `problems` | The option's `problems`. |
-
-```tsx
-import { useState } from 'react'
-import { useUnlocks } from '@ifloom/react'
-
-function CodeBox() {
-  const unlocks = useUnlocks()
-  const [code, setCode] = useState('')
-  if (!unlocks?.available) return null
-  return (
-    <form onSubmit={(event) => { event.preventDefault(); void unlocks.enter(code) }}>
-      <input value={code} onChange={(event) => setCode(event.target.value)} />
-      <button disabled={unlocks.checking}>Unlock</button>
-      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.label}.` : null)}
-      {unlocks.restart ? <button type="button" onClick={unlocks.restart}>Restart</button> : null}
-    </form>
-  )
-}
-```
+A [panel](/docs/reference/panels) is a named piece of UI that content opens over the story, such as a shop's counter. The React UI draws the ones its own parts have, and each plugin UI the game lists brings its own: `shopUi` the `shop` panel, `jobsUi` the `jobs` panel, and so on. [Plugin UIs and the kit](/docs/react/kit) has the rest of what a plugin's UI brings.
 
 ### PanelHost
 
@@ -2201,11 +1716,11 @@ function CodeBox() {
 function PanelHost(): JSX.Element
 ```
 
-What the `'panel'` part draws: the [panel](/docs/reference/panels) content opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else the one in [`BUILT_IN_PANELS`](#built_in_panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
+What the `'panel'` part draws: the [panel](/docs/reference/panels) content opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else a listed plugin UI's panel of that name, else the one in [`BUILT_IN_PANELS`](#built_in_panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
 
-The dialog is titled with `with.title` when content gave one, the vendor's name for the shop, a built-in panel's word (`ui.jobs`, `ui.people` and so on), or else the panel's name. The panel is drawn inside a `div` with `data-panel` set to its name.
+The dialog is titled with `with.title` when content gave one, else the plugin UI's [title for the panel](/docs/react/kit#pluginpanel) (the vendor's name for the shop, `ui.jobs` for the job board), else a built-in panel's word, or else the panel's name. The panel is drawn inside a `div` with `data-panel` set to its name.
 
-A name that neither `panels` nor `BUILT_IN_PANELS` has draws nothing. The panel stays open in the state until it's closed or the story moves on, so draw every name your content opens.
+A name nothing draws shows nothing. The panel stays open in the state until it's closed or the story moves on, so draw every name your content opens.
 
 ```tsx
 import { mountGame } from '@ifloom/react'
@@ -2226,21 +1741,14 @@ The default layout has it in the overlay. In a layout of your own, put it anywhe
 const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>>
 ```
 
-The panels [`PanelHost`](#panelhost) draws by name. A game's own `panels` of the same name go over them.
+The panels [`PanelHost`](#panelhost) draws by name for what the engine itself keeps. A plugin UI's panels and a game's own `panels` of the same name go over them.
 
-| Name | Draws | With |
-|---|---|---|
-| `shop` | [`ShopCounter`](#shopcounter) for the vendor | `vendor`, required. Write it with [`openShop`](/docs/plugins/shop#opening-a-counter). |
-| `jobs` | [`JobBoard`](#jobboard), without its heading | `job`, an optional list of job ids to show. Write it with [`openJobs`](/docs/plugins/jobs#opening-the-job-board). |
-| `wardrobe` | [`WardrobeCard`](#wardrobecard) | |
-| `inventory` | [`Inventory`](#inventory) | |
-| `quests` | [`QuestLog`](#questlog) | |
-| `people` | [`Relationships`](#relationships), everyone met | |
-| `achievements` | [`AchievementList`](#achievementlist) | |
-| `statuses` | [`StatusList`](#statuslist) | |
-| `stats` | [`StatList`](#statlist) | |
+| Name | Draws |
+|---|---|
+| `inventory` | [`Inventory`](#inventory), without its heading, or the inventory plugin's [`InventoryCard`](/docs/plugins/inventory#inventorycard) when the game lists its UI |
+| `stats` | [`StatList`](#statlist) |
 
-Each card leaves its own heading off under the dialog's title. Like the cards, a panel draws nothing in a game without its plugin, or with nothing to show.
+The first-party plugins' panels are on their pages: `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses`.
 
 ### PartDialog
 
@@ -2248,7 +1756,7 @@ Each card leaves its own heading off under the dialog's title. Like the cards, a
 function PartDialog(props: { open: boolean; onClose: () => void; title: string; children: ReactNode }): JSX.Element
 ```
 
-A [`Dialog`](#dialog) drawn with the UI's `dialog` parts, as the menu's, the shop's, the achievements' and `PanelHost`'s are. It's open while `open` is true, titled `title`, and calls `onClose` when the player closes it. Use it for a dialog of your own that should look like the rest.
+A [`Dialog`](#dialog) drawn with the UI's `dialog` parts, as the menu's, `PanelHost`'s and the plugin UIs' are. It's open while `open` is true, titled `title`, and calls `onClose` when the player closes it. Use it for a dialog of your own that should look like the rest.
 
 ```tsx
 import { useState } from 'react'
@@ -2268,284 +1776,6 @@ function Map() {
 ```
 
 Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
-
-### ShopDialog
-
-```tsx
-function ShopDialog(props: { vendorId: string | null; onClose: () => void }): JSX.Element
-```
-
-The vendor with this id in a [`Dialog`](#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`openShop`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
-
-```tsx
-import { useState } from 'react'
-import { Button, ShopDialog } from '@ifloom/react'
-
-function StallButton() {
-  const [open, setOpen] = useState<string | null>(null)
-  return (
-    <>
-      <Button variant="outline" onClick={() => setOpen('stall')}>The fruit stall</Button>
-      <ShopDialog vendorId={open} onClose={() => setOpen(null)} />
-    </>
-  )
-}
-```
-
-Replaceable as `ShopDialog` in [`components`](#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
-
-### ShopCounter
-
-```tsx
-function ShopCounter(props: { vendor: VendorView; className?: string }): JSX.Element
-```
-
-A vendor's goods, from its [`VendorView`](/docs/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`, the thing's reference) shows its picture when it has one, its name and description, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with a stock, and how many the player has (`ui.owned`). Then:
-
-- **Buy** (`ui.buy`), a [`ChoiceButton`](#choicebutton) built from the good's `buy` button, so it shows today's price and, when it's greyed out, the reason on it: `Sold out.`, `You need 10 coins.` or the vendor's closed line.
-- **Sell for 2 coins** (`ui.sellFor`), from the good's `sell` button, when the vendor buys back and the player has one.
-
-It says `ui.noGoods` when nothing is on offer.
-
-Replaceable as `ShopCounter` in [`components`](#components). Parts: `shop` (with `data-vendor`), `shop-closed`, `shop-empty`, `goods`, `good` (with `data-good`), `good-image`, `good-name`, `good-desc`, `good-details`, `good-off`, `good-full-price`, `good-stock`, `good-owned`, `good-actions` and `choice`.
-
-### useShop
-
-```ts
-function useShop(): ShopControls | null
-
-type ShopControls = ShopView & {
-  here: VendorView[]
-  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
-  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
-}
-```
-
-The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), the vendors at the player's location as `here`, and its commands, or `null` in a game without the plugin. `buy` and `sell` send `shop/buy` and `shop/sell`, one if `count` is left out. [`ShopDialog`](#shopdialog), [`ShopCounter`](#shopcounter) and the `shop` panel are drawn from it. `here` is what a layout of your own can show where the player is.
-
-```tsx
-import { useShop } from '@ifloom/react'
-
-function QuickCoffee() {
-  const shop = useShop()
-  const coffee = shop?.here[0]?.goods.find((good) => good.entity === 'food:coffee')
-  if (!shop || !coffee) return null
-  return <button disabled={Boolean(coffee.buy.disabled)} onClick={() => shop.buy(shop.here[0].id, 'food:coffee')}>Coffee to go</button>
-}
-```
-
-### JobBoard
-
-```tsx
-function JobBoard(props: { className?: string; title?: string | false; jobs?: readonly string[] }): JSX.Element | null
-```
-
-Every [job](/docs/plugins/jobs), held or not, from [`JobView`](/docs/plugins/jobs#jobview)s, under the heading `ui.jobs` or `title` (`false` leaves it out). `jobs` shows only those, by id, as the `jobs` panel does for `with.job`. Each job (`data-job`, with `data-hired` while it's held and `data-fired` once the player was fired) shows its title, the rank held on a badge (unless it has the job's own title), its description, and:
-
-- what a shift pays (`ui.jobPay`, `Pays 12 coins a shift`)
-- the next shift (`ui.shiftToday`, `ui.shiftTomorrow` or `ui.shiftInDays`), for a job held
-- the next rank and how many more shifts it needs (`ui.jobNextRank`, `ui.jobNextRankOne`, or `ui.jobNextRankSoon` when shifts aren't what's missing)
-- the shifts worked and missed (`ui.jobShifts`, `ui.jobMissed`)
-- **Let go** (`ui.jobFired`) on a job the player was fired from.
-
-A job not held has **Apply** (`ui.applyJob`), a [`ChoiceButton`](#choicebutton) from the job's `apply` button, greyed out with the reason of its first `blocked` entry that holds. A job held has **Work a shift** (`ui.workShift`), with the shift's cost as its price and the reason it can't be worked now, such as `No shift today.`, and a **Quit** button (`ui.quitJob`) that sends `jobs/quit`.
-
-It draws nothing in a game without the plugin or with no jobs to show.
-
-Replaceable as `JobBoard` in [`components`](#components). Parts: `jobs`, `jobs-title`, `job` (with `data-job`, `data-hired` and `data-fired`), `job-title`, `job-rank`, `job-fired`, `job-text`, `job-details`, `job-pay`, `job-shift`, `job-next`, `job-record`, `job-actions`, `choice` and `button`.
-
-### useJobs
-
-```ts
-function useJobs(): JobsControls | null
-
-type JobsControls = JobsView & {
-  held: JobView[]
-  apply: (job: string) => Result<GameState>
-  work: (job: string) => Result<GameState>
-  quit: (job: string) => Result<GameState>
-}
-```
-
-The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the jobs held as `held`, and its commands, or `null` in a game without the plugin. `apply`, `work` and `quit` send `jobs/apply`, `jobs/work` and `jobs/quit`. [`JobBoard`](#jobboard) is drawn from it.
-
-```tsx
-import { useJobs } from '@ifloom/react'
-
-function NextShift() {
-  const job = useJobs()?.held[0]
-  if (!job?.nextShift) return null
-  return <p className="text-sm">{job.title}: next shift in {job.nextShift.inDays} days</p>
-}
-```
-
-## Devices
-
-These components draw the [devices plugin](/docs/plugins/devices)'s view, and so a [phone](/docs/plugins/phone). In a game without the plugin they draw nothing.
-
-### DeviceButtons
-
-```tsx
-function DeviceButtons(): JSX.Element | null
-```
-
-A button for each device offered from the sidebar (`sidebar: true`), with its badge. Each button opens the device in a [`DeviceDialog`](#devicedialog) and carries `data-device`. Opening the dialog sends no command and costs nothing.
-
-Replaceable as `DeviceButtons` in [`components`](#components). Parts: `devices`, `device-button` (with `data-device`) and `device-badge`.
-
-### DeviceDialog
-
-```tsx
-function DeviceDialog(props: { deviceId: string | null; onClose: () => void }): JSX.Element
-```
-
-The device with this id in a [`Dialog`](#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). It's closed while `deviceId` is `null` or matches no device. `onClose` is called when the player closes it. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
-
-```tsx
-import { useState } from 'react'
-import { Button, DeviceDialog } from '@ifloom/react'
-
-function LaptopButton() {
-  const [open, setOpen] = useState<string | null>(null)
-  return (
-    <>
-      <Button onClick={() => setOpen('laptop')}>Laptop</Button>
-      <DeviceDialog deviceId={open} onClose={() => setOpen(null)} />
-    </>
-  )
-}
-```
-
-Replaceable as `DeviceDialog` in [`components`](#components). Parts: `dialog` (with `data-frame`), `dialog-overlay`, `dialog-title` and `dialog-close`.
-
-### DeviceScreen
-
-```tsx
-function DeviceScreen(props: { device: DeviceView }): JSX.Element
-```
-
-A device, open. With no app open, it shows the home screen: the wallpaper (through [`assetUrl`](#asseturl)) and a grid of apps. Each app is a button with its name, a badge and an icon square carrying `data-icon`, and it sends the app's command (`devices/open`). A locked app is greyed out, with its reason only in its `title`, shown on hover. Unlike a [`ChoiceButton`](#choicebutton), the icon doesn't print the reason.
-
-With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending `devices/close`), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
-
-`device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/docs/plugins/devices#deviceview).
-
-Replaceable as `DeviceScreen` in [`components`](#components). Parts: `device-screen`, `app` (with `data-app`), `app-header`, `app-back`, `app-title`, `app-launcher`, `app-button` (with `data-open-app`), `app-icon` (with `data-icon`) and `app-badge`.
-
-### AppSection
-
-```tsx
-function AppSection(props: { section: SectionView }): JSX.Element | null
-```
-
-One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by kind:
-
-| Kind | Drawn as |
-|---|---|
-| `prose` | A paragraph, with line breaks kept. |
-| `actions` | A [`ChoiceList`](#choicelist). |
-| `list` | Each entry (`data-entry`) with its picture, title, text and actions. |
-| `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |
-| `panel` | The component in `panels` with the panel's name, given its data. Nothing if there's no component. |
-
-Replaceable as `AppSection` in [`components`](#components). Parts: `app-prose`, `app-entries`, `app-entry` (with `data-entry`), `app-entry-image`, `app-entry-title` and `app-entry-text`.
-
-### useDevices
-
-```ts
-function useDevices(): DevicesState
-
-type DevicesState = DeviceView[]
-```
-
-The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
-
-```tsx
-import { Badge, useDevices } from '@ifloom/react'
-
-function PhoneBadge() {
-  const phone = useDevices().find((device) => device.id === 'phone')
-  if (!phone) return null
-  return <Badge>{phone.badge}</Badge>
-}
-```
-
-### useDevice
-
-```ts
-function useDevice(): DeviceState
-
-type DeviceState = {
-  openId: string | null
-  device: DeviceView | null
-  open: (id: string) => void
-  close: () => void
-}
-```
-
-Which device is open in a dialog, and how to open and close one. `device` is the open device as the view has it, or `null`, also when `openId` no longer names one. Each call keeps its own state, so call it once and share it between your buttons and the dialog. [`DeviceButtons`](#devicebuttons) uses it.
-
-```tsx
-import { DeviceDialog, useDevice } from '@ifloom/react'
-
-function PhoneButton() {
-  const { openId, open, close } = useDevice()
-  return (
-    <>
-      <button onClick={() => open('phone')}>Phone</button>
-      <DeviceDialog deviceId={openId} onClose={close} />
-    </>
-  )
-}
-```
-
-## Plugin sections
-
-These are the two built-in renderers for an app's `{ plugin }` section. [`GameProvider`](#gameprovider) registers them under `messages` and `feed`. Register your own under the same id to replace one.
-
-### MessagesSection
-
-```tsx
-const MessagesSection: PluginSectionComponent
-```
-
-A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
-
-Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, a **Mark all read** button (`ui.allRead`) sends `messages/read` for the channel. It draws nothing if the channel isn't in the view.
-
-Replaceable as `MessagesSection` in [`components`](#components). Parts: `channel`, `thread`, `thread-title`, `thread-portrait`, `message` (with `data-message`), `bubble` (with `data-from`) and `button`.
-
-### useMessages
-
-```ts
-function useMessages(): MessagesControls | null
-
-type MessagesControls = MessagesView & { read: (channel: string) => Result<GameState> }
-```
-
-The [messages](/docs/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`. Send it with [`useGame`](#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
-
-### FeedSection
-
-```tsx
-const FeedSection: PluginSectionComponent
-```
-
-A [feed](/docs/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/docs/plugins/feed#postview), drawn with [`Beat`](#beat), so pictures and clips in them show in order.
-
-Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
-
-Replaceable as `FeedSection` in [`components`](#components). Parts: `feed`, `post`, `post-author`, `post-portrait`, `post-image`, `post-text`, `post-meta`, `post-comment`, `post-comment-name` and `button`.
-
-### useFeed
-
-```ts
-function useFeed(): FeedControls | null
-
-type FeedControls = FeedsView & { seen: (feed: string) => Result<GameState> }
-```
-
-The [feed](/docs/plugins/feed) plugin's view (its feeds, each with posts and an unread count) with its command, or `null` in a game without the plugin. `seen(feed)` sends `feed/seen`. [`FeedSection`](#feedsection) is drawn from it.
 
 ## Sound
 
@@ -2569,42 +1799,49 @@ function App() {
 ### UI_STRINGS
 
 ```ts
-const UI_STRINGS: { quests: string; questNew: string; /* ... */ }
+const UI_STRINGS: { stats: string; inventory: string; /* ... */ }
 type UiStringKey = keyof typeof UI_STRINGS
+type Words = Readonly<Record<string, string>>
+type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string | number>) => string
 ```
 
-The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/docs/react#words). `UiStringKey` is one of its keys.
+The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/docs/react#words). `UiStringKey` is one of its keys. Each plugin UI has a table of its own, a `Words`, such as the shop's `SHOP_WORDS`, on the plugin's page.
 
-Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `heldCount` (`×{n}` after a thing you hold), `wearThing` (`Wear {thing}`), `mailHeader` (`{key}: {value}` for a letter's headers), and the debug panel's form rows, `debugStat` to `debugTurn`.
+Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `heldCount` (`×{n}` after a thing you hold) and `mailHeader` (`{key}: {value}` for a letter's headers).
 
 ### uiSay
 
 ```ts
 function uiSay(game: Game, key: UiStringKey, vars?: Record<string, string | number>): string
+function uiSay<W extends Words>(game: Game, key: keyof W | UiStringKey, vars: Record<string, string | number> | undefined, words: W): string
 ```
 
-Returns the game's word for a key, `game.strings['ui.' + key]`, or the English if the game doesn't set it. Each `{name}` is filled from `vars`. One with no value is left as written.
+Returns the game's word for a key, `game.strings['ui.' + key]`, or the English if the game doesn't set it: from `words`, a plugin UI's table, when given, else the UI's own. Each `{name}` is filled from `vars`. One with no value is left as written, and a key nothing has is said as it is.
 
 ```ts
 import { uiSay } from '@ifloom/react'
+import { QUESTS_WORDS } from '@ifloom/plugin-quests/react'
 
-uiSay(game, 'quests')                              // 'To do' in the showcase, which sets strings: { 'ui.quests': 'To do' }
-uiSay(game, 'questStage', { stage: 1, stages: 3 }) // '1 of 3'
+uiSay(game, 'stats')                                                    // 'Stats'
+uiSay(game, 'quests', {}, QUESTS_WORDS)                                 // 'To do' in the showcase, which sets strings: { 'ui.quests': 'To do' }
+uiSay(game, 'questStage', { stage: 1, stages: 3 }, QUESTS_WORDS)         // '1 of 3'
 ```
 
 ### useWords
 
 ```ts
-function useWords(): (key: UiStringKey, vars?: Record<string, string | number>) => string
+function useWords(): Say
+function useWords<W extends Words>(words: W): Say<keyof W | UiStringKey>
 ```
 
-`uiSay` for the game in context, inside a [`GameProvider`](#gameprovider).
+`uiSay` for the game in context, inside a [`GameProvider`](#gameprovider). Given a plugin UI's table, it says that table's keys too, typed.
 
 ```tsx
 import { useWords } from '@ifloom/react'
+import { QUESTS_WORDS } from '@ifloom/plugin-quests/react'
 
 function JournalHeading() {
-  const words = useWords()
+  const words = useWords(QUESTS_WORDS)
   return <h3>{words('quests')}</h3>
 }
 ```
@@ -2701,7 +1938,7 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
 | `overlayProps` | Attributes for the overlay behind the box, such as a `className` or a `data-part`. |
 | `closeProps` | Attributes for the close button. |
 
-The [`GameMenu`](#gamemenu) and [`DeviceDialog`](#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
+The [`GameMenu`](#gamemenu) and [`DeviceDialog`](/docs/plugins/devices#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
 
 ```tsx
 import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react'

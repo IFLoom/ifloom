@@ -24,7 +24,7 @@ Nothing in the engine depends on this package. The UI only reads the [view](/doc
 
 ## What it shows
 
-The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it.
+The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it. What comes from a plugin shows when the game lists that plugin's UI in [`plugins`](#plugins).
 
 - **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
 - **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
@@ -44,14 +44,27 @@ The default layout, [`DefaultLayout`](#layouts), puts these on the page. A secti
 - **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices) or the [phone](/docs/plugins/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
 - **A debug card**, at the foot of the story, when the game has the [debug plugin](/docs/plugins/debug).
 - **Achievements**: a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
-- **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks) and you pass `unlocks`. It lists the unlocks, and a code that opens new content offers to restart.
+- **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks). It lists the unlocks, and a code that opens new content offers to restart.
 - **Cheats**, in a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
 
-A [layout](#layouts) of your own can move, fold or drop any of them, or show one only in some rooms.
+Everything from a plugin (the shop, the devices, the debug card, the achievements, the code box, the cheats, the quests and the rest) comes from that plugin's own React UI, which you list in [`plugins`](#plugins). A [layout](#layouts) of your own can move, fold or drop any of them, or show one only in some rooms.
 
 When a choice or action is greyed out, the button shows the reason under its label, so the player doesn't have to hover to find out. Its price is on the button too.
 
-The UI reads each plugin's view by its shape and imports no plugin package. If the game doesn't have a plugin, there's no card for it. Each plugin's card is a default built on a hook, such as [`useShop`](/docs/react/components#useshop), which gives the same data and actions with no markup, so you can draw your own instead. [Plugins' defaults](/docs/react/components#plugins-defaults) lists them all.
+## Plugins
+
+`@ifloom/react` names no plugin. Each plugin with something for the player ships its own React UI, in a subpath of its package, and you list the ones you want:
+
+```ts
+import { mountGame } from '@ifloom/react'
+import { placesUi } from '@ifloom/plugin-places/react'
+import { questsUi } from '@ifloom/plugin-quests/react'
+import { shopUi } from '@ifloom/plugin-shop/react'
+
+mountGame(game, { plugins: [placesUi, questsUi, shopUi] })
+```
+
+Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **The React UI**.
 
 ## Install
 
@@ -216,9 +229,9 @@ type GameShellProps = {
   runner: Runner
   panels?: Record<string, PanelComponent>
   inline?: InlineComponents
+  plugins?: readonly PluginUi[]
   sections?: Record<string, PluginSectionComponent>
   mods?: ModsOption
-  unlocks?: UnlocksOption
   components?: Components
   classes?: Classes
   unstyled?: boolean
@@ -234,9 +247,9 @@ type GameShellProps = {
 | `runner` | The game's [runner](/docs/reference/runner). |
 | `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
 | `inline` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name. `modal` and `image` are built in. See [Inline pieces](/docs/react/hints#inline-pieces). |
-| `sections` | Renderers for plugin sections in apps, by plugin id. Messages and feeds are built in. See [Plugin sections](/docs/react/extending#plugin-sections). |
+| `plugins` | The plugin UIs to draw, each from a plugin's `/react` subpath, in the order the layout places them. See [Plugins](#plugins). |
+| `sections` | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). See [Plugin sections](/docs/react/extending#plugin-sections). |
 | `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
-| `unlocks` | Codes the player can enter, for the [unlocks plugin](/docs/plugins/unlocks): its `startUnlocks`, what couldn't be opened, and how to restart. It puts a code box on the settings page, or in the menu without pages. See [`UnlocksOption`](/docs/react/components#unlocksoption). |
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
 | `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
@@ -249,7 +262,7 @@ The layout is the page, written as JSX: what goes in the side column, what goes 
 
 ```tsx
 // src/layout.tsx
-import { Clock, Exits, Game, GameMenu, Inventory, LocationCard, Notices, Overlay, PanelHost, PeopleHere, QuestLog, Relationships, RoomActions, SceneStage, Section, Sidebar, StatList, StatusList, Story, Title, useWords } from '@ifloom/react'
+import { Clock, Game, GameMenu, InputFields, Inventory, Notices, Overlay, PanelHost, Plugins, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
 
 export function Layout() {
   const words = useWords()
@@ -261,24 +274,19 @@ export function Layout() {
         <GameMenu />
         <Section id="stats" title={words('stats')} collapsible open>
           <StatList />
-          <StatusList />
-        </Section>
-        <Section id="quests" title={words('quests')} dialog>
-          <QuestLog title={false} />
-        </Section>
-        <Section id="people" title={words('people')} dialog>
-          <Relationships />
+          <Plugins at="stats" />
         </Section>
         <Section id="inventory" title={words('inventory')} collapsible>
           <Inventory title={false} />
         </Section>
+        <Plugins at="sidebar" />
       </Sidebar>
       <Story>
         <SceneStage />
-        <LocationCard />
-        <Exits />
+        <InputFields />
+        <Plugins at="room" />
         <RoomActions />
-        <PeopleHere />
+        <Plugins at="story" />
       </Story>
       <PanelHost />
       <Overlay>
@@ -295,8 +303,10 @@ import { mountGame } from '@ifloom/react'
 import game from './game.ts'
 import { Layout } from './layout.tsx'
 
-mountGame(game, { layout: Layout, pages: true })
+mountGame(game, { layout: Layout, pages: true, plugins: [] })
 ```
+
+Each [`Plugins`](/docs/react/kit#plugins) is where the plugin UIs in `plugins` put what they bring: the quests' section and the cast's People in the side column, where you are and the way out before the room's actions. Replace one with the plugin's own components, in any order, to place them yourself.
 
 The regions are components:
 
@@ -338,7 +348,7 @@ mountGame(game, {
 
 `pages: true` gives the title screen with nothing extra. With `pages` off or left out, the game starts straight away, as before.
 
-In a game with the [achievements plugin](/docs/plugins/achievements), the title screen also has an Achievements button, which goes to a page listing them. Set `achievements: false` in `pages` to leave it out.
+A plugin UI can add a page of its own: with `achievementsUi` listed, the title screen also has an Achievements button, which goes to a page listing them. List `{ ...achievementsUi, pages: undefined }` instead to leave it out, and the achievements open in a dialog.
 
 The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains Settings and Title screen buttons.
 
@@ -412,7 +422,7 @@ The look comes from a theme preset, CSS variables for the fonts, sizes and colou
 
 ## Words
 
-The UI's own words, such as "Quests", "Track" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. To reword any of them, set it in `game.strings`:
+The UI's own words, such as "Stats", "Saves" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. A plugin's UI has words of its own, listed on that plugin's page under **The React UI**, reworded the same way, such as `ui.quests` for the quests plugin's "Quests". To reword any of them, set it in `game.strings`:
 
 ```ts
 import { loadGame } from '@ifloom/engine'
@@ -432,40 +442,15 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 
 | Key | English | Fills |
 |---|---|---|
-| `ui.quests` | `Quests` | |
-| `ui.people` | `People` | |
 | `ui.stats` | `Stats` | |
 | `ui.statLevel` | `Level {level}` | `level` |
 | `ui.statProgress` | `{label}: {percent}% of the way to level {next}` | `label`, `percent`, `next` |
-| `ui.questNew` | `New` | |
-| `ui.questStage` | `{stage} of {stages}` | `stage`, `stages` |
-| `ui.track` | `Track` | |
-| `ui.untrack` | `Untrack` | |
 | `ui.allSeen` | `Mark all seen` | |
-| `ui.allRead` | `Mark all read` | |
 | `ui.back` | `Back` | |
 | `ui.dismiss` | `Dismiss` | |
-| `ui.likes` | `♥ {n}` | `n` |
-| `ui.debug` | `Debug` | |
-| `ui.seed` | `seed {seed}` | `seed` |
 | `ui.undo` | `Undo` | |
 | `ui.redo` | `Redo` | |
-| `ui.set` | `Set` | |
-| `ui.debugSet` | `Set` | |
-| `ui.debugWhy` | `Why not` | |
-| `ui.debugState` | `State` | |
-| `ui.debugLog` | `Log` | |
-| `ui.locksOn` | `Locks on` | |
-| `ui.greyedOut` | `Greyed out` | |
-| `ui.noneOn` | `None.` | |
-| `ui.nothingGreyed` | `Nothing.` | |
-| `ui.closeScene` | `Close the scene` | |
-| `ui.wardrobe` | `Wearing` | |
 | `ui.inventory` | `Carrying` | |
-| `ui.drop` | `Drop` | |
-| `ui.takeOff` | `Take off` | |
-| `ui.wear` | `Wear` | |
-| `ui.nothingOn` | `Nothing` | |
 | `ui.saves` | `Saves` | |
 | `ui.save` | `Save` | |
 | `ui.saveNew` | `Save in a new slot` | |
@@ -492,16 +477,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.close` | `Close` | |
 | `ui.priceSeparator` | ` · ` | |
 | `ui.heldCount` | `×{n}` | `n` |
-| `ui.wearThing` | `Wear {thing}` | `thing` |
 | `ui.mailHeader` | `{key}: {value}` | `key`, `value` |
-| `ui.debugStat` | `Stat` | |
-| `ui.debugKv` | `kv key` | |
-| `ui.debugHeld` | `Held` | |
-| `ui.debugStatOf` | `Stat of` | |
-| `ui.debugGo` | `Go` | |
-| `ui.debugScene` | `Scene` | |
-| `ui.debugTime` | `Time` | |
-| `ui.debugTurn` | `Turn` | |
 | `ui.newGame` | `New game` | |
 | `ui.continue` | `Continue` | |
 | `ui.newGamePlus` | `New Game+` | |
@@ -533,57 +509,12 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.noticesMore` | `+{n} more` | `n`: the notices hidden on a phone |
 | `ui.noticesFewer` | `Show fewer` | |
 | `ui.unread` | `Unread` | |
-| `ui.achievements` | `Achievements` | |
-| `ui.achievementsCount` | `{earned} of {total}` | `earned`, `total` |
-| `ui.achievementEarned` | `Earned` | |
-| `ui.achievementProgress` | `{value} of {target}` | `value`, `target` |
-| `ui.noAchievements` | `No achievements yet.` | |
-| `ui.cheats` | `Cheats` | |
-| `ui.cheatUsedOnce` | `Used once` | |
-| `ui.cheatUsedTimes` | `Used {n} times` | `n` |
-| `ui.enterCode` | `Enter a code` | |
-| `ui.code` | `Code` | |
-| `ui.unlock` | `Unlock` | |
-| `ui.checkingCode` | `Checking…` | |
-| `ui.unlockedNow` | `Unlocked: {label}.` | `label`: the unlock's |
-| `ui.unlockedAlready` | `{label} was unlocked already.` | `label` |
-| `ui.restartForUnlock` | `Restart to add it` | |
-| `ui.unlocked` | `Unlocked` | |
-| `ui.locked` | `Locked` | |
-| `ui.buy` | `Buy` | |
-| `ui.sellFor` | `Sell for {price}` | `price`: what selling one pays |
-| `ui.stockLeft` | `{n} left` | `n` |
-| `ui.owned` | `You have {n}` | `n` |
-| `ui.percentOff` | `{percent}% off` | `percent` |
-| `ui.noGoods` | `Nothing for sale.` | |
-| `ui.jobs` | `Jobs` | |
-| `ui.applyJob` | `Apply` | |
-| `ui.workShift` | `Work a shift` | |
-| `ui.quitJob` | `Quit` | |
-| `ui.jobPay` | `Pays {pay} a shift` | `pay` |
-| `ui.jobNextRank` | `Next: {title}, after {n} more shifts` | `title`, `n` |
-| `ui.jobNextRankOne` | `Next: {title}, after 1 more shift` | `title` |
-| `ui.jobNextRankSoon` | `Next: {title}` | `title` |
-| `ui.shiftToday` | `Next shift: today` | |
-| `ui.shiftTomorrow` | `Next shift: tomorrow` | |
-| `ui.shiftInDays` | `Next shift: in {n} days` | `n` |
-| `ui.jobShifts` | `Shifts worked: {n}` | `n` |
-| `ui.jobMissed` | `Missed: {n}` | `n` |
-| `ui.jobFired` | `Let go` | |
-| `ui.statuses` | `Statuses` | |
-| `ui.turnsLeft` | `{n} turns left` | `n` |
-| `ui.turnLeft` | `1 turn left` | |
-| `ui.statusStacks` | `×{n}` | `n` |
-| `ui.modifierAdd` | `{n} {stat}` | `n` with its sign, `stat`: its label |
-| `ui.modifierMultiply` | `×{n} {stat}` | `n`, `stat` |
 
 Which component uses which keys:
 
-- **[Debug card](/docs/react/components#debugcard)**: `ui.debug` to `ui.closeScene`, and `ui.debugStat` to `ui.debugTurn` for its form rows. `ui.set` is the button on each of its forms and `ui.debugSet` is the tab they're on. `ui.noneOn` and `ui.nothingGreyed` are what the Why not tab says when no lock is on or nothing is greyed out.
-- **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo` (shared with the debug card), `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on a device's.
-- **[Wardrobe card](/docs/react/components#wardrobecard)**: `ui.wardrobe`, `ui.takeOff` and `ui.nothingOn`, and `ui.wearThing` for each wear button. `ui.wear` is no longer drawn.
+- **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo`, `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on every dialog's.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
-- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, `ui.heldCount` after a thing there's more than one of, and `ui.drop` on its drop buttons.
+- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.heldCount` after a thing there's more than one of.
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
 - **[Beat](/docs/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
@@ -591,26 +522,19 @@ Which component uses which keys:
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
 - **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
 - **[Dice](/docs/react/components#diceroll)**: `ui.dicePassed`, `ui.diceFailed` and `ui.diceNeeds` on a roll's outcome, `ui.diceCriticalMax` and `ui.diceCriticalMin` on a critical, `ui.diceRolled`, `ui.diceRolledPassed` and `ui.diceRolledFailed` in what a screen reader hears, and `ui.diceDismiss` on the overlay's close button.
-- **[Devices](/docs/react/components#devicescreen)**: `ui.back`, the label on an open app's back button.
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
 - **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
 - **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its Delete button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
-- **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings`, `ui.achievements` and `ui.credits`.
-- **[Statuses](/docs/react/components#statuslist)**: `ui.statuses` to `ui.modifierMultiply`, and `ui.priceSeparator` between a status's stat changes.
-- **[Achievements](/docs/react/components#achievementlist)**: `ui.achievements` to `ui.noAchievements`, on the list, its button and its page.
-- **[Cheats](/docs/react/components#cheatpanel)**: `ui.cheats` on the button and the dialog, and `ui.cheatUsedOnce` and `ui.cheatUsedTimes` on a cheat used.
-- **[Codes](/docs/react/components#unlockspanel)**: `ui.enterCode` to `ui.locked`, on the code box and its list, and `ui.enterCode` on the menu's button.
-- **[Shop](/docs/react/components#shopcounter)**: `ui.buy` to `ui.noGoods`.
-- **[Panels](/docs/react/components#panelhost)**: each built-in panel's dialog is titled with its card's heading word (`ui.jobs`, `ui.wardrobe`, `ui.inventory`, `ui.quests`, `ui.achievements`, `ui.statuses`), or `ui.people` and `ui.stats`. The shop's is the vendor's name.
-- **[Job board](/docs/react/components#jobboard)**: `ui.jobs` to `ui.jobFired`.
+- **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`. A page a plugin UI adds has its button labelled by its own word, such as `ui.achievements`.
+- **[Panels](/docs/react/components#panelhost)**: the built-in panels' dialogs are titled `ui.inventory` and `ui.stats`. A plugin UI's panel is titled by its own word, such as `ui.jobs`, and the shop's by the vendor's name.
 - **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/docs/reference/strings) and its plugins' strings.
 
-In code, [`UI_STRINGS`](/docs/react/components#ui_strings) is this table in English, [`uiSay`](/docs/react/components#uisay) reads a word for a game, and [`useWords`](/docs/react/components#usewords) does the same inside a component.
+Each plugin UI's words are on its plugin's page, and in a table it exports, such as the debug card's `DEBUG_WORDS` on the [debug plugin](/docs/plugins/debug#debugui)'s page.
 
-**Gotcha.** The debug card's placeholders (`stat`, `value` and the rest) are always in English and aren't in the table. The card is a tool for the person building the game, not for the player.
+In code, [`UI_STRINGS`](/docs/react/components#ui_strings) is this table in English, [`uiSay`](/docs/react/components#uisay) reads a word for a game, and [`useWords`](/docs/react/components#usewords) does the same inside a component.
 
 ## Next
 

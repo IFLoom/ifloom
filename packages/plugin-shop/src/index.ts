@@ -628,7 +628,7 @@ export const sell = (vendor: string, entity: EntityRef, count?: number): Command
 /**
  * An effect: open the vendor's counter in the `shop` panel, from a place's
  * action, a person's, a thing's use, an app or a choice. The UI draws it;
- * `@ifloom/react` draws a `ShopCounter`.
+ * `shopUi` from `@ifloom/plugin-shop/react` draws it as a `ShopCounter`.
  */
 export const openShop = (vendor: string): Effect => ({ kind: 'panel', panel: PANEL, with: { vendor } })
 /** A condition: the vendor is open now. */

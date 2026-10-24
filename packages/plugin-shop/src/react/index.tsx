@@ -1,11 +1,57 @@
+/**
+ * @ifloom/plugin-shop/react: the shop's React UI, for a game drawn with
+ * `@ifloom/react`. List `shopUi` in the game's `plugins` to have the `shop`
+ * panel drawn as a vendor's counter, or draw it yourself from `useShop`.
+ */
 import type { GameState, Result } from '@ifloom/engine'
-import type { ShopView, VendorView } from '@ifloom/plugin-shop'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { ChoiceButton, usePriceText } from './choices.tsx'
-import { useGame } from './context.tsx'
-import { PartDialog } from './dialog.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import {
+  badgeVariants,
+  ChoiceButton,
+  ENTRY_CLASSES,
+  overridable,
+  type Override,
+  PartDialog,
+  type PluginUi,
+  useGame,
+  useKitPart,
+  usePart,
+  usePriceText,
+  useWords,
+} from '@ifloom/react'
+import type { ShopView, VendorView } from '../index.ts'
+
+/** The shop's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.buy': 'Get' }`. */
+export const SHOP_WORDS = {
+  buy: 'Buy',
+  sellFor: 'Sell for {price}',
+  stockLeft: '{n} left',
+  owned: 'You have {n}',
+  percentOff: '{percent}% off',
+  noGoods: 'Nothing for sale.',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    ShopCounter: Override<ShopCounterProps>
+    ShopDialog: Override<ShopDialogProps>
+  }
+  interface PartNames {
+    'shop': true
+    'shop-closed': true
+    'shop-empty': true
+    'goods': true
+    'good': true
+    'good-name': true
+    'good-desc': true
+    'good-image': true
+    'good-details': true
+    'good-off': true
+    'good-full-price': true
+    'good-stock': true
+    'good-owned': true
+    'good-actions': true
+  }
+}
 
 /** What `useShop` returns: the shop plugin's view, the vendors where the player is, and its commands. */
 export type ShopControls = ShopView & {
@@ -31,23 +77,25 @@ export function useShop(): ShopControls | null {
   }
 }
 
-function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?: string }) {
-  const words = useWords()
+export type ShopCounterProps = { vendor: VendorView; className?: string }
+
+function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
+  const words = useWords(SHOP_WORDS)
   const priceText = usePriceText()
   const box = usePart('shop', 'flex flex-col gap-3', className)
   const closed = usePart('shop-closed', 'text-sm text-muted-foreground')
   const empty = usePart('shop-empty', 'text-sm text-muted-foreground')
   const list = usePart('goods', 'flex flex-col gap-2')
-  const row = usePart('good', 'flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-start')
-  const name = usePart('good-name', 'font-medium')
-  const desc = usePart('good-desc', 'text-xs text-muted-foreground')
-  const image = usePart('good-image', 'size-12 shrink-0 rounded-md object-cover')
+  const row = useKitPart('card', 'good', ENTRY_CLASSES.row)
+  const name = useKitPart('title', 'good-name', 'font-medium')
+  const desc = useKitPart('note', 'good-desc', 'text-xs text-muted-foreground')
+  const image = useKitPart('thumb', 'good-image', 'size-12 shrink-0 rounded-md object-cover')
   const details = usePart('good-details', 'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground')
   const stock = usePart('good-stock', '')
   const owned = usePart('good-owned', '')
-  const off = usePart('good-off', badgeVariants())
-  const full = usePart('good-full-price', 'line-through')
-  const actions = usePart('good-actions', 'flex flex-col gap-1.5 sm:w-44 sm:shrink-0')
+  const off = useKitPart('badge', 'good-off', badgeVariants())
+  const full = usePart('good-full-price', '')
+  const actions = useKitPart('commands', 'good-actions', ENTRY_CLASSES.actions)
   return (
     <div {...box} data-vendor={vendor.id} data-closed={vendor.closed ? '' : undefined}>
       {vendor.closed ? <p {...closed}>{vendor.closed}</p> : null}
@@ -56,7 +104,7 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
           {vendor.goods.map((good) => (
             <li key={good.entity} {...row} data-good={good.entity}>
               {good.image ? <img {...image} src={good.image} alt="" /> : null}
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className={ENTRY_CLASSES.body}>
                 <p {...name}>{good.name}</p>
                 {good.desc ? <p {...desc}>{good.desc}</p> : null}
                 <p {...details}>
@@ -90,7 +138,9 @@ function ShopCounterImpl({ vendor, className }: { vendor: VendorView; className?
  */
 export const ShopCounter = overridable('ShopCounter', ShopCounterImpl)
 
-function ShopDialogImpl({ vendorId, onClose }: { vendorId: string | null; onClose: () => void }) {
+export type ShopDialogProps = { vendorId: string | null; onClose: () => void }
+
+function ShopDialogImpl({ vendorId, onClose }: ShopDialogProps) {
   const vendor = useShop()?.vendors.find((entry) => entry.id === vendorId)
   return (
     <PartDialog open={Boolean(vendor)} onClose={onClose} title={vendor?.name ?? ''}>
@@ -101,3 +151,29 @@ function ShopDialogImpl({ vendorId, onClose }: { vendorId: string | null; onClos
 
 /** The vendor with this id in a dialog, titled with its name and drawn as a `ShopCounter`. Closed while `vendorId` is null or names no vendor. */
 export const ShopDialog = overridable('ShopDialog', ShopDialogImpl)
+
+/** The vendor a `shop` panel was opened for, from its `with.vendor`. */
+function vendorOf(data: unknown, view: { plugins: Record<string, unknown> }): VendorView | undefined {
+  const vendor = data && typeof data === 'object' ? (data as { vendor?: unknown }).vendor : undefined
+  return (view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.id === vendor)
+}
+
+function ShopPanel({ data }: { data: unknown }) {
+  const { view } = useGame()
+  const vendor = vendorOf(data, view)
+  return vendor ? <ShopCounter vendor={vendor} /> : null
+}
+
+/**
+ * The shop's React UI, for `plugins` on `mountGame` or `GameProvider`: the
+ * `shop` panel, which `openShop(vendor)` opens, drawn as that vendor's
+ * `ShopCounter` and titled with its name, and the shop's words. The shop puts
+ * nothing in the layout by itself: content opens a vendor.
+ */
+export const shopUi: PluginUi = {
+  id: 'shop',
+  words: SHOP_WORDS,
+  panels: {
+    shop: { component: ShopPanel, title: (data, view) => vendorOf(data, view)?.name ?? '' },
+  },
+}

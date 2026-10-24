@@ -140,7 +140,8 @@ export function exitList(runner: Runner, view: View): HTMLElement {
 
 ```tsx tab="React" tab-group="framework"
 // src/ExitsWithPeople.tsx
-import { useGame, usePlaces } from '@ifloom/react'
+import { useGame } from '@ifloom/react'
+import { usePlaces } from '@ifloom/plugin-places/react'
 import { whoIsWhere } from './behind.ts'
 
 export function ExitsWithPeople() {

@@ -253,7 +253,7 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.wardrobe` is a `WardrobeView`.
 
-The [React UI](/docs/react) draws it with [`WardrobeCard`](/docs/react/components#wardrobecard), and [`useWardrobe`](/docs/react/components#usewardrobe) gives the same data with a button for each thing the player can do, with no markup.
+Its [React UI](#the-react-ui) draws it with [`WardrobeCard`](#wardrobecard), and [`useWardrobe`](#usewardrobe) gives the same data with a button for each thing the player can do, with no markup.
 
 ### WardrobeView
 
@@ -270,6 +270,76 @@ type WardrobeView = {
 | `spare` | Wearable things they hold and aren't wearing, in the game's order of its entities. `slot` is where each would go. |
 
 What you wear is also in the engine's [`view.held`](/docs/reference/view#held), since you still hold it. A UI that wants the bag without the clothes leaves out the refs in `slots`.
+
+## The React UI
+
+`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.wardrobe`, or from [`useWardrobe`](#usewardrobe) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { wardrobeUi } from '@ifloom/plugin-wardrobe/react'
+
+mountGame(game, { plugins: [wardrobeUi] })
+```
+
+### wardrobeUi
+
+```ts
+const wardrobeUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too.
+
+Its words are in `WARDROBE_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.nothingOn': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.nothingOn` | `Nothing` |
+| `ui.takeOff` | `Take off` |
+| `ui.wardrobe` | `Wearing` |
+| `ui.wearThing` | `Wear {thing}` |
+
+### WardrobeSection
+
+```tsx
+function WardrobeSection(): JSX.Element
+```
+
+What `wardrobeUi` puts in the side column: a folding [`Section`](/docs/react/components#section) with the id `wardrobe`, titled `ui.wardrobe`, holding the `WardrobeCard`. For one that shows only in some rooms, draw your own `Section` with `when` round a `WardrobeCard`, as the showcase does.
+
+### WardrobeCard
+
+```tsx
+function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
+```
+
+The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearThing`, with the thing's name as `thing`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
+
+A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
+
+**Gotcha.** As with an exit, the reason is in the `title` and shows on hover. It isn't printed on the button.
+
+Replaceable as `WardrobeCard` in [`components`](/docs/react/components#components). Parts: `wardrobe`, `wardrobe-title`, `wardrobe-slot` (with `data-slot-id`), `wardrobe-slot-name`, `wardrobe-worn` and `button`.
+
+### useWardrobe
+
+```ts
+function useWardrobe(): WardrobeControls | null
+
+type WardrobeControls = Omit<WardrobeView, 'slots'> & {
+  slots: WardrobeSlotControls[]
+  wear: (entity: string) => Result<GameState>
+  takeOff: (slot: string) => Result<GameState>
+}
+type WardrobeSlotControls = WardrobeView['slots'][number] & {
+  takeOff: RenderedChoice | null
+  wear: RenderedChoice[]
+}
+```
+
+The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wear(entity)` (a reference, `'clothing:scarf'`) and `takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
 
 ## The state
 

@@ -17,7 +17,7 @@ import {
 
 The [debug plugin](/docs/plugins/debug) is for you while you build the game. Its commands set any stat, scene or clock by hand, it has no words for the player, and you leave it out of release builds.
 
-Cheats are part of the game the player gets. You write each one as content, with a label, effects and the reasons it's refused, and the React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
+Cheats are part of the game the player gets. You write each one as content, with a label, effects and the reasons it's refused, and the plugin's React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
 
 ## Install
 
@@ -172,7 +172,7 @@ const honest = {
 
 ## The view
 
-`runner.view().plugins.cheats` is a `CheatsView`. The [React UI](/docs/react) draws it with [`CheatPanel`](/docs/react/components#cheatpanel), in a dialog opened from a Cheats button in the sidebar, and [`useCheats`](/docs/react/components#usecheats) gives this view with no markup.
+`runner.view().plugins.cheats` is a `CheatsView`. Its [React UI](#the-react-ui) draws it with [`CheatPanel`](#cheatpanel), in a dialog opened from a Cheats button in the sidebar, and [`useCheats`](#usecheats) gives this view with no markup.
 
 ### CheatsView
 
@@ -239,7 +239,7 @@ export function cheatPanel(view: View, runner: Runner): HTMLElement | null {
 
 ```tsx tab="React" tab-group="framework"
 // src/hud/Cheats.tsx
-import { useCheats } from '@ifloom/react'
+import { useCheats } from '@ifloom/plugin-cheats/react'
 
 export function Cheats() {
   const cheats = useCheats()
@@ -316,6 +316,83 @@ const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.grou
 ```
 
 [Building UI for plugins](/docs/recipes/plugin-ui) has more pieces built this way.
+
+## The React UI
+
+`@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel).
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.cheats`, or from [`useCheats`](#usecheats) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { cheatsUi } from '@ifloom/plugin-cheats/react'
+
+mountGame(game, { plugins: [cheatsUi] })
+```
+
+### cheatsUi
+
+```ts
+const cheatsUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel).
+
+Its words are in `CHEATS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.cheatUsedOnce': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.cheatUsedOnce` | `Used once` |
+| `ui.cheatUsedTimes` | `Used {n} times` |
+| `ui.cheats` | `Cheats` |
+
+### CheatPanel
+
+```tsx
+function CheatPanel(props: { className?: string }): JSX.Element | null
+```
+
+The [cheats](/docs/plugins/cheats) the player can see, from [`CheatsView`](/docs/plugins/cheats#cheatsview). The ones with no `group` come first, with no heading, then each group under its name, in the order the groups first appear. Each cheat (`data-cheat`) is a [`ChoiceButton`](/docs/react/components#choicebutton) from its `button`, greyed out with its reason while it's refused, such as `For supporters.` or `Already used.` for a `once` cheat. Under it are its description and, once used, a badge saying how often (`ui.cheatUsedOnce`, `ui.cheatUsedTimes`).
+
+It draws nothing in a game without the plugin, or while every cheat is hidden.
+
+Replaceable as `CheatPanel` in [`components`](/docs/react/components#components). Parts: `cheats`, `cheats-group` (with `data-cheats-group`), `cheats-group-title`, `cheat` (with `data-cheat` and `data-used`), `cheat-text`, `cheat-used` and `choice`.
+
+### CheatsButton
+
+```tsx
+function CheatsButton(props: { className?: string }): JSX.Element | null
+```
+
+What the `'cheats'` part draws: a **Cheats** button (`ui.cheats`) that opens a [`CheatPanel`](#cheatpanel) in a [`Dialog`](/docs/react/components#dialog). Opening it sends no command. It draws nothing in a game without the plugin, or while it has no cheat the player can see, so a game whose cheats all wait hidden for an unlock shows no button until then.
+
+Replaceable as `CheatsButton` in [`components`](/docs/react/components#components). Parts: `cheats-button`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### useCheats
+
+```ts
+function useCheats(): CheatsControls | null
+
+type CheatsControls = CheatsView & {
+  groups: CheatGroup[]
+  use: (cheat: string) => Result<GameState>
+}
+
+type CheatGroup = { name: string | null; cheats: CheatView[] }
+```
+
+The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
+
+```tsx
+import { useCheats } from '@ifloom/plugin-cheats/react'
+
+function QuickCoins() {
+  const cheats = useCheats()
+  const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
+  if (!coins) return null
+  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.label}</button>
+}
+```
 
 ## The state
 

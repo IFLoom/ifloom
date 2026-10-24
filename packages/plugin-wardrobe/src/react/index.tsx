@@ -1,9 +1,34 @@
+/**
+ * @ifloom/plugin-wardrobe/react: the wardrobe plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `wardrobeUi` in the game's
+ * `plugins` to have what the player wears in the side column, and as the
+ * `wardrobe` panel; or draw it yourself from `useWardrobe`.
+ */
+import type { ComponentProps } from 'react'
 import { renderAction, type GameState, type RenderedChoice, type Result } from '@ifloom/engine'
-import type { WardrobeView } from '@ifloom/plugin-wardrobe'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { WardrobeView } from '../index.ts'
+import { buttonVariants, overridable, type Override, type PluginUi, Section, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+
+/** The wardrobe plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const WARDROBE_WORDS = {
+  nothingOn: 'Nothing',
+  takeOff: 'Take off',
+  wardrobe: 'Wearing',
+  wearThing: 'Wear {thing}',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    WardrobeCard: Override<ComponentProps<typeof WardrobeCard>>
+  }
+  interface PartNames {
+    'wardrobe': true
+    'wardrobe-slot': true
+    'wardrobe-slot-name': true
+    'wardrobe-title': true
+    'wardrobe-worn': true
+  }
+}
 
 /** A wardrobe slot as `useWardrobe` gives it: what's in it, and buttons to take it off or put something else on. */
 export type WardrobeSlotControls = WardrobeView['slots'][number] & {
@@ -46,11 +71,11 @@ export function useWardrobe(): WardrobeControls | null {
 
 function WardrobeCardImpl({ className, title: titleText }: { className?: string; title?: string | false }) {
   const { send } = useGame()
-  const words = useWords()
+  const words = useWords(WARDROBE_WORDS)
   const section = usePart('wardrobe', 'flex flex-col gap-2 text-sm', className)
   const title = usePart('wardrobe-title', 'font-heading font-semibold')
   const row = usePart('wardrobe-slot', 'flex flex-wrap items-center gap-2')
-  const slotName = usePart('wardrobe-slot-name', 'w-16 text-muted-foreground')
+  const slotName = useKitPart('label', 'wardrobe-slot-name', 'min-w-8 text-muted-foreground')
   const worn = usePart('wardrobe-worn', 'flex-1')
   const buttonAttrs = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
   const data = useWardrobe()
@@ -82,3 +107,25 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
  * `useWardrobe`.
  */
 export const WardrobeCard = overridable('WardrobeCard', WardrobeCardImpl)
+
+/** The default layout's Wearing section: the `WardrobeCard`, folding in place. */
+export function WardrobeSection() {
+  const words = useWords(WARDROBE_WORDS)
+  return (
+    <Section id="wardrobe" title={words('wardrobe')} collapsible>
+      <WardrobeCard title={false} />
+    </Section>
+  )
+}
+
+/**
+ * The wardrobe plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: a Wearing section in the side column with the
+ * `WardrobeCard`, the `wardrobe` panel, and the wardrobe's words.
+ */
+export const wardrobeUi: PluginUi = {
+  id: 'wardrobe',
+  words: WARDROBE_WORDS,
+  layout: { sidebar: [WardrobeSection] },
+  panels: { wardrobe: { component: () => <WardrobeCard title={false} />, title: 'wardrobe' } },
+}

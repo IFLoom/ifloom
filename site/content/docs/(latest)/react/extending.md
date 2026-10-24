@@ -92,7 +92,7 @@ const panels = { StallPanel, inbox: Inbox }
 
 ## Plugin sections
 
-An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The UI has built-in renderers for the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id.
+An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' UIs bring renderers for theirs, when the game lists `messagesUi` and `feedUi` in `plugins`. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id, or your plugin's UI brings it in its [`sections`](/docs/react/kit#pluginui).
 
 The component is a [`PluginSectionComponent`](/docs/react/components#pluginsectioncomponent). It gets `data`, the plugin's whole view at [`view.plugins[id]`](/docs/reference/view#plugins), and `with`, the section's `with`, which says which part to show.
 
@@ -124,7 +124,7 @@ const sections = { loyalty: LoyaltyCard }
 
 Return nothing when `data` is `undefined`. That happens in a game without the plugin.
 
-To draw messages or a feed your own way, register a renderer under `messages` or `feed`. Yours replaces the built-in one, and gets the same `data` and `with` (`{ channel }` or `{ feed }`).
+To draw messages or a feed your own way, register a renderer under `messages` or `feed`. Yours replaces the plugin UI's, and gets the same `data` and `with` (`{ channel }` or `{ feed }`).
 
 ## A plugin's view anywhere
 
@@ -155,7 +155,8 @@ The layout is a component of yours, `src/layout.tsx` in the react and next templ
 
 ```tsx
 // src/layout.tsx
-import { Game, InputFields, Notices, Overlay, PanelHost, QuestLog, RoomActions, SceneStage, Section, StatList, Story, Title } from '@ifloom/react'
+import { Game, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, StatList, Story, Title } from '@ifloom/react'
+import { QuestLog } from '@ifloom/plugin-quests/react'
 
 export function Layout() {
   return (
@@ -185,7 +186,8 @@ You don't have to use the regions at all. Without `GameShell`, wrap your page in
 
 ```tsx
 import { createRoot } from 'react-dom/client'
-import { GameProvider, InputFields, Notices, QuestLog, SceneStage, StatList, TooltipProvider } from '@ifloom/react'
+import { GameProvider, InputFields, Notices, SceneStage, StatList, TooltipProvider } from '@ifloom/react'
+import { QuestLog } from '@ifloom/plugin-quests/react'
 
 function MyPage() {
   return (

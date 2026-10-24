@@ -3,54 +3,21 @@ import { useGame } from './context.tsx'
 
 /**
  * The React UI's own words, in English. A game overrides any of them through
- * `game.strings` with a `ui.` in front — `{ 'ui.quests': 'Journal' }` — the same
- * table the engine's own lines come from.
+ * `game.strings` with a `ui.` in front — `{ 'ui.stats': 'You' }` — the same
+ * table the engine's own lines come from. A plugin's React UI has words of its
+ * own, reworded the same way.
  */
 export const UI_STRINGS = {
-  quests: 'Quests',
-  // the panels' titles that no card already has a word for
-  people: 'People',
   stats: 'Stats',
   statLevel: 'Level {level}',
   statProgress: '{label}: {percent}% of the way to level {next}',
-  questNew: 'New',
-  questStage: '{stage} of {stages}',
-  track: 'Track',
-  untrack: 'Untrack',
   allSeen: 'Mark all seen',
-  allRead: 'Mark all read',
   back: 'Back',
   dismiss: 'Dismiss',
-  likes: '♥ {n}',
-  debug: 'Debug',
-  seed: 'seed {seed}',
   undo: 'Undo',
   redo: 'Redo',
-  set: 'Set',
-  debugSet: 'Set',
-  debugWhy: 'Why not',
-  debugState: 'State',
-  debugLog: 'Log',
-  locksOn: 'Locks on',
-  greyedOut: 'Greyed out',
-  noneOn: 'None.',
-  nothingGreyed: 'Nothing.',
-  closeScene: 'Close the scene',
-  // debug
-  debugStat: 'Stat',
-  debugKv: 'kv key',
-  debugHeld: 'Held',
-  debugStatOf: 'Stat of',
-  debugGo: 'Go',
-  debugScene: 'Scene',
-  debugTime: 'Time',
-  debugTurn: 'Turn',
-  wardrobe: 'Wearing',
+  // the titles of the built-in sections and panels
   inventory: 'Carrying',
-  drop: 'Drop',
-  takeOff: 'Take off',
-  wear: 'Wear',
-  nothingOn: 'Nothing',
   saves: 'Saves',
   save: 'Save',
   saveNew: 'Save in a new slot',
@@ -77,7 +44,6 @@ export const UI_STRINGS = {
   close: 'Close',
   priceSeparator: ' · ',
   heldCount: '×{n}',
-  wearThing: 'Wear {thing}',
   mailHeader: '{key}: {value}',
   newGame: 'New game',
   continue: 'Continue',
@@ -112,67 +78,39 @@ export const UI_STRINGS = {
   noticesMore: '+{n} more',
   noticesFewer: 'Show fewer',
   unread: 'Unread',
-  // achievements
-  achievements: 'Achievements',
-  achievementsCount: '{earned} of {total}',
-  achievementEarned: 'Earned',
-  achievementProgress: '{value} of {target}',
-  noAchievements: 'No achievements yet.',
-  // cheats
-  cheats: 'Cheats',
-  cheatUsedOnce: 'Used once',
-  cheatUsedTimes: 'Used {n} times',
-  // unlocks
-  enterCode: 'Enter a code',
-  code: 'Code',
-  unlock: 'Unlock',
-  checkingCode: 'Checking…',
-  unlockedNow: 'Unlocked: {label}.',
-  unlockedAlready: '{label} was unlocked already.',
-  restartForUnlock: 'Restart to add it',
-  unlocked: 'Unlocked',
-  locked: 'Locked',
-  // the shop
-  buy: 'Buy',
-  sellFor: 'Sell for {price}',
-  stockLeft: '{n} left',
-  owned: 'You have {n}',
-  percentOff: '{percent}% off',
-  noGoods: 'Nothing for sale.',
-  // jobs
-  jobs: 'Jobs',
-  applyJob: 'Apply',
-  workShift: 'Work a shift',
-  quitJob: 'Quit',
-  jobPay: 'Pays {pay} a shift',
-  jobNextRank: 'Next: {title}, after {n} more shifts',
-  jobNextRankOne: 'Next: {title}, after 1 more shift',
-  jobNextRankSoon: 'Next: {title}',
-  shiftToday: 'Next shift: today',
-  shiftTomorrow: 'Next shift: tomorrow',
-  shiftInDays: 'Next shift: in {n} days',
-  jobShifts: 'Shifts worked: {n}',
-  jobMissed: 'Missed: {n}',
-  jobFired: 'Let go',
-  // statuses
-  statuses: 'Statuses',
-  turnsLeft: '{n} turns left',
-  turnLeft: '1 turn left',
-  statusStacks: '×{n}',
-  modifierAdd: '{n} {stat}',
-  modifierMultiply: '×{n} {stat}',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRINGS
 
-/** The UI's words for a key: the game's `ui.<key>`, else the English. `{name}` is filled from `vars`. */
-export function uiSay(game: Game, key: UiStringKey, vars: Record<string, string | number> = {}): string {
-  const text = game.strings?.[`ui.${key}`] ?? UI_STRINGS[key]
+/**
+ * A table of words in English by key, as a plugin's React UI declares its own
+ * (`{ buy: 'Buy' }`). A game rewords any of them the same way as the UI's,
+ * with `ui.<key>` in its strings.
+ */
+export type Words = Readonly<Record<string, string>>
+
+/** How a component says a word: by its key, with `{name}` filled from `vars`. */
+export type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string | number>) => string
+
+/**
+ * The UI's words for a key: the game's `ui.<key>`, else the English in
+ * `words` (a plugin UI's own table), else the UI's own. `{name}` is filled
+ * from `vars`. A key nothing has is said as it is.
+ */
+export function uiSay(game: Game, key: UiStringKey, vars?: Record<string, string | number>): string
+export function uiSay<W extends Words>(game: Game, key: (keyof W & string) | UiStringKey, vars: Record<string, string | number> | undefined, words: W): string
+export function uiSay(game: Game, key: string, vars: Record<string, string | number> = {}, words?: Words): string {
+  const text = game.strings?.[`ui.${key}`] ?? words?.[key] ?? (UI_STRINGS as Words)[key] ?? key
   return text.replace(/\{(\w+)\}/g, (whole: string, name: string) => (name in vars ? String(vars[name]) : whole))
 }
 
-/** `uiSay` for the game in context. */
-export function useWords(): (key: UiStringKey, vars?: Record<string, string | number>) => string {
+/**
+ * `uiSay` for the game in context. Given a plugin UI's own `words`, it says
+ * those keys too, and the UI's own.
+ */
+export function useWords(): Say
+export function useWords<W extends Words>(words: W): Say<(keyof W & string) | UiStringKey>
+export function useWords(words?: Words): Say<string> {
   const { runner } = useGame()
-  return (key, vars) => uiSay(runner.game, key, vars)
+  return (key, vars) => uiSay(runner.game, key as UiStringKey, vars, words ?? {})
 }

@@ -363,7 +363,7 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.feed` is a `FeedsView`.
 
-The [React UI](/docs/react) draws a feed with [`FeedSection`](/docs/react/components#feedsection) in an app, and [`useFeed`](/docs/react/components#usefeed) gives this view and the seen command with no markup.
+Its [React UI](#the-react-ui) draws a feed with [`FeedSection`](#feedsection) in an app, and [`useFeed`](#usefeed) gives this view and the seen command with no markup.
 
 ### FeedsView
 
@@ -414,11 +414,60 @@ type PostView = {
 | `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
 | `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
 | `image` | The image path, or `null`. |
-| `video` | The video path, or `null`. The React UI's [`FeedSection`](/docs/react/components#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
+| `video` | The video path, or `null`. The React UI's [`FeedSection`](#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
 | `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `likes` | The likes it started with, plus every `feed/react` since. |
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |
 | `mine` | The player's own. |
+
+## The React UI
+
+`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.feed`, or from [`useFeed`](#usefeed) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { feedUi } from '@ifloom/plugin-feed/react'
+
+mountGame(game, { plugins: [feedUi] })
+```
+
+### feedUi
+
+```ts
+const feedUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed.
+
+Its words are in `FEED_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.likes': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.likes` | `♥ {n}` |
+
+### FeedSection
+
+```tsx
+const FeedSection: PluginSectionComponent
+```
+
+A [feed](/docs/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](/docs/react/components#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/docs/plugins/feed#postview), drawn with [`Beat`](/docs/react/components#beat), so pictures and clips in them show in order.
+
+Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
+
+Replaceable as `FeedSection` in [`components`](/docs/react/components#components). Parts: `feed`, `post`, `post-author`, `post-portrait`, `post-image`, `post-text`, `post-meta`, `post-comment`, `post-comment-name` and `button`.
+
+### useFeed
+
+```ts
+function useFeed(): FeedControls | null
+
+type FeedControls = FeedsView & { seen: (feed: string) => Result<GameState> }
+```
+
+The [feed](/docs/plugins/feed) plugin's view (its feeds, each with posts and an unread count) with its command, or `null` in a game without the plugin. `seen(feed)` sends `feed/seen`. [`FeedSection`](#feedsection) is drawn from it.
 
 ## The state
 

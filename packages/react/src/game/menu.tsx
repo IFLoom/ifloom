@@ -7,37 +7,39 @@ import { useDialogParts } from './dialog.tsx'
 import { Icon } from './icon.tsx'
 import { useMenuKey } from './keys.tsx'
 import { ModManager } from './mods.tsx'
-import { UnlocksPanel } from './unlocks.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { SavesMenu } from './saves.tsx'
 import { usePage } from './pages.tsx'
-import { useWords } from './words.ts'
+import { usePluginUis } from './plugins.tsx'
+import { uiSay, useWords } from './words.ts'
 
 function GameMenuImpl({ className }: { className?: string }) {
-  const { runner, mods, unlocks, view } = useGame()
+  const { runner, mods, view } = useGame()
   const words = useWords()
   const pages = usePage()
-  const [open, setOpen] = useState<'menu' | 'saves' | 'backlog' | 'mods' | 'unlocks' | null>(null)
+  // Each plugin UI's settings: on the settings page with pages on, and behind a button of their own in the menu without.
+  const settings = usePluginUis().flatMap((ui) =>
+    ui.settings ? [{ id: ui.id, label: uiSay(runner.game, ui.settings.label, {}, ui.words ?? {}), Draw: ui.settings.component }] : [],
+  )
+  const [open, setOpen] = useState<'menu' | 'saves' | 'backlog' | 'mods' | `plugin:${string}` | null>(null)
   const { undo, backlog } = runner.offers
-  // With pages on, codes are entered on the settings page; without, in the menu.
-  const codes = Boolean(unlocks && view.plugins.unlocks)
-  const shown = Boolean(runner.saves || undo || backlog || mods || codes || pages.enabled)
+  const shown = Boolean(runner.saves || undo || backlog || mods || settings.length || pages.enabled)
   useMenuKey(shown ? () => setOpen('menu') : null)
   const menu = usePart('menu', 'flex flex-wrap gap-2', className)
   const opener = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'outline' }))
   const step = usePart('menu-button', buttonVariants({ size: 'sm', variant: 'ghost' }))
   const { dialog, overlay, title, close } = useDialogParts()
   if (!shown) return null
-  const heading =
-    open === 'saves'
+  const plugin = open?.startsWith('plugin:') ? settings.find((entry) => `plugin:${entry.id}` === open) : undefined
+  const heading = plugin
+    ? plugin.label
+    : open === 'saves'
       ? words('saves')
       : open === 'mods'
         ? words('mods')
-        : open === 'unlocks'
-          ? words('enterCode')
-          : open === 'menu'
-            ? words('menu')
-            : words('backlog')
+        : open === 'menu'
+          ? words('menu')
+          : words('backlog')
   const buttons = (
     <>
       {runner.saves ? (
@@ -55,12 +57,14 @@ function GameMenuImpl({ className }: { className?: string }) {
           {words('mods')}
         </button>
       ) : null}
-      {codes && !pages.enabled ? (
-        <button {...opener} onClick={() => setOpen('unlocks')}>
-          {words('enterCode')}
-        </button>
-      ) : null}
-      {pages.enabled && (view.settings.length || codes || mods) ? (
+      {pages.enabled
+        ? null
+        : settings.map((entry) => (
+            <button key={entry.id} {...opener} data-menu-plugin={entry.id} onClick={() => setOpen(`plugin:${entry.id}`)}>
+              {entry.label}
+            </button>
+          ))}
+      {pages.enabled && (view.settings.length || settings.length || mods) ? (
         <button {...opener} onClick={() => pages.go('settings')}>
           {words('settings')}
         </button>
@@ -95,7 +99,7 @@ function GameMenuImpl({ className }: { className?: string }) {
           {open === 'saves' ? <SavesMenu onLoaded={() => setOpen(null)} /> : null}
           {open === 'backlog' ? <Backlog /> : null}
           {open === 'mods' ? <ModManager /> : null}
-          {open === 'unlocks' ? <UnlocksPanel /> : null}
+          {plugin ? <plugin.Draw /> : null}
         </DialogContent>
       </Dialog>
     </div>
@@ -104,10 +108,11 @@ function GameMenuImpl({ className }: { className?: string }) {
 
 /**
  * The player's menu: saves, the backlog, undo and redo — each only if the game
- * turned it on when it made the runner, and mods and codes when the provider
- * has them. With pages on, it also has Settings (if the game has any, or
- * codes or mods, which are there too) and Title screen, which switch to those
- * pages. With
- * `keys` on, Escape opens the same buttons in a dialog.
+ * turned it on when it made the runner, mods when the provider has them, and
+ * each plugin UI's `settings` (the unlocks plugin's code box, say) behind a
+ * button of its own. With pages on, it also has Settings (if the game has
+ * any, or mods or a plugin UI's settings, which are there instead) and Title
+ * screen, which switch to those pages. With `keys` on, Escape opens the same
+ * buttons in a dialog.
  */
 export const GameMenu = overridable('GameMenu', GameMenuImpl)

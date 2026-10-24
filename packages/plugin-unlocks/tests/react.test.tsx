@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Pack, type Runner } from '@ifloom/engine'
-import { lockContent, startUnlocks, unlockHash, unlocks, type LockedContent, type UnlockDef } from '@ifloom/plugin-unlocks'
-import { GameProvider, GameShell, UnlocksPanel, useUnlocks, type UnlocksOption } from '../src/index.ts'
+import { GameProvider, GameShell, type PluginUi } from '@ifloom/react'
+import { lockContent, startUnlocks, unlockHash, unlocks, type LockedContent, type UnlockDef } from '../src/index.ts'
+import { UnlocksPanel, unlocksUi, unlocksUiWith, useUnlocks, type UnlocksUiOptions } from '../src/react/index.tsx'
 
 afterEach(() => {
   cleanup()
@@ -33,7 +34,10 @@ function runnerFor(g = game()): Runner {
   return createRunner(g, { ...startingState(g), sceneId: null }, { profile: profile(g, memoryDriver()) })
 }
 
-const option = (onChange = vi.fn()): UnlocksOption => ({ start: (runner) => startUnlocks(runner, { content }), onChange })
+/** The unlocks UI, its codes started with this file's locked content. */
+const ui = (options: UnlocksUiOptions = {}): PluginUi[] => [
+  unlocksUiWith({ start: (runner) => startUnlocks(runner, { content }), onChange: vi.fn(), ...options }),
+]
 
 async function enter(code: string) {
   const panel = document.querySelector('[data-part="unlocks"]') as HTMLElement
@@ -47,7 +51,7 @@ describe('entering a code', () => {
   it('is on the settings page: a wrong code is refused, the right one unlocks and offers a restart for its content', async () => {
     const onChange = vi.fn()
     const runner = runnerFor()
-    render(<GameShell runner={runner} pages={{}} unlocks={option(onChange)} />)
+    render(<GameShell runner={runner} pages={{}} plugins={ui({ onChange })} />)
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Settings' })))
     expect(screen.getByRole('heading', { name: 'Enter a code' })).toBeTruthy()
     const row = document.querySelector('[data-unlock="supporter"]') as HTMLElement
@@ -68,7 +72,7 @@ describe('entering a code', () => {
   })
 
   it('is in the menu when the game has no pages', async () => {
-    render(<GameShell runner={runnerFor()} unlocks={option()} />)
+    render(<GameShell runner={runnerFor()} plugins={ui()} />)
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Enter a code' })))
     const dialog = screen.getByRole('dialog', { name: 'Enter a code' })
     expect(within(dialog).getByText('Supporter edition')).toBeTruthy()
@@ -79,7 +83,7 @@ describe('entering a code', () => {
       <GameShell
         runner={runnerFor()}
         pages={{}}
-        unlocks={{ ...option(), problems: ['unlock:supporter · its code has changed since it was entered; enter the new one'] }}
+        plugins={ui({ problems: ['unlock:supporter · its code has changed since it was entered; enter the new one'] })}
       />,
     )
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Settings' })))
@@ -88,7 +92,7 @@ describe('entering a code', () => {
     )
   })
 
-  it('is nowhere without unlocks on the provider, and the panel then lists the unlocks with no box', () => {
+  it('is nowhere without the unlocks UI, and the panel then lists the unlocks with no box', () => {
     const runner = runnerFor()
     render(<GameShell runner={runner} />)
     expect(screen.queryByRole('button', { name: 'Enter a code' })).toBeNull()
@@ -104,10 +108,10 @@ describe('entering a code', () => {
 })
 
 describe('useUnlocks', () => {
-  const wrap = (runner: Runner, unlocksOption?: UnlocksOption) =>
+  const wrap = (runner: Runner, plugins?: PluginUi[]) =>
     function Wrapper({ children }: { children: ReactNode }) {
       return (
-        <GameProvider runner={runner} unlocks={unlocksOption}>
+        <GameProvider runner={runner} plugins={plugins}>
           {children}
         </GameProvider>
       )
@@ -120,7 +124,7 @@ describe('useUnlocks', () => {
 
   it('gives the view and enters a code, with no markup', async () => {
     const runner = runnerFor()
-    const { result } = renderHook(() => useUnlocks(), { wrapper: wrap(runner, option()) })
+    const { result } = renderHook(() => useUnlocks(), { wrapper: wrap(runner, ui()) })
     expect(result.current).toMatchObject({ unlocked: 0, total: 1, entered: null, message: null })
     await waitFor(() => expect(result.current?.available).toBe(true))
     let worked = false
@@ -130,5 +134,15 @@ describe('useUnlocks', () => {
     expect(worked).toBe(true)
     expect(result.current).toMatchObject({ unlocked: 1, entered: { unlock: 'supporter', already: false, restart: true } })
     expect(typeof result.current!.restart).toBe('function')
+  })
+})
+
+describe('unlocksUi', () => {
+  it('starts codes with startUnlocks, and offers no restart without onChange', async () => {
+    const runner = runnerFor()
+    render(<GameShell runner={runner} plugins={[unlocksUi]} />)
+    act(() => void fireEvent.click(screen.getByRole('button', { name: 'Enter a code' })))
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toBeTruthy())
+    expect(screen.queryByRole('button', { name: 'Restart to add it' })).toBeNull()
   })
 })

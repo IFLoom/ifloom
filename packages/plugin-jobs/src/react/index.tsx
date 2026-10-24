@@ -1,11 +1,64 @@
+/**
+ * @ifloom/plugin-jobs/react: the jobs plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `jobsUi` in the game's `plugins`
+ * to have the `jobs` panel drawn as a job board, or draw it yourself from
+ * `useJobs`.
+ */
+import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
-import type { JobView, JobsView } from '@ifloom/plugin-jobs'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { ChoiceButton, usePriceText } from './choices.tsx'
-import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { JobView, JobsView } from '../index.ts'
+import {
+  badgeVariants,
+  buttonVariants,
+  ChoiceButton,
+  overridable,
+  type Override,
+  type PluginUi,
+  useGame,
+  useKitPart,
+  usePart,
+  usePriceText,
+  useWords,
+} from '@ifloom/react'
+
+/** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const JOBS_WORDS = {
+  applyJob: 'Apply',
+  jobFired: 'Let go',
+  jobMissed: 'Missed: {n}',
+  jobNextRank: 'Next: {title}, after {n} more shifts',
+  jobNextRankOne: 'Next: {title}, after 1 more shift',
+  jobNextRankSoon: 'Next: {title}',
+  jobPay: 'Pays {pay} a shift',
+  jobShifts: 'Shifts worked: {n}',
+  jobs: 'Jobs',
+  quitJob: 'Quit',
+  shiftInDays: 'Next shift: in {n} days',
+  shiftToday: 'Next shift: today',
+  shiftTomorrow: 'Next shift: tomorrow',
+  workShift: 'Work a shift',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    JobBoard: Override<ComponentProps<typeof JobBoard>>
+  }
+  interface PartNames {
+    'job': true
+    'job-actions': true
+    'job-details': true
+    'job-fired': true
+    'job-next': true
+    'job-pay': true
+    'job-rank': true
+    'job-record': true
+    'job-shift': true
+    'job-text': true
+    'job-title': true
+    'jobs': true
+    'jobs-title': true
+  }
+}
 
 /** What `useJobs` returns: the jobs plugin's view, the jobs held, and its commands. */
 export type JobsControls = JobsView & {
@@ -35,21 +88,21 @@ export function useJobs(): JobsControls | null {
 }
 
 function JobBoardImpl({ className, title, jobs: only }: { className?: string; title?: string | false; jobs?: readonly string[] }) {
-  const words = useWords()
+  const words = useWords(JOBS_WORDS)
   const priceText = usePriceText()
   const board = usePart('jobs', 'flex flex-col gap-3', className)
-  const heading = usePart('jobs-title', 'font-heading font-semibold')
-  const card = usePart('job', 'flex flex-col gap-2 rounded-lg border p-3')
-  const jobTitle = usePart('job-title', 'flex flex-wrap items-center gap-2 font-medium')
-  const rank = usePart('job-rank', badgeVariants({ variant: 'secondary' }))
-  const fired = usePart('job-fired', badgeVariants({ variant: 'outline' }))
+  const heading = useKitPart('heading', 'jobs-title', 'font-heading font-semibold')
+  const card = useKitPart('card', 'job', 'flex flex-col gap-2 rounded-lg border p-3')
+  const jobTitle = useKitPart('title', 'job-title', 'flex flex-wrap items-center gap-2 font-medium')
+  const rank = useKitPart('badge', 'job-rank', badgeVariants({ variant: 'secondary' }))
+  const fired = useKitPart('badge', 'job-fired', badgeVariants({ variant: 'outline' }))
   const text = usePart('job-text', 'text-sm text-muted-foreground')
   const details = usePart('job-details', 'flex flex-col gap-0.5 text-sm')
   const pay = usePart('job-pay', '')
   const shift = usePart('job-shift', '')
-  const next = usePart('job-next', 'text-muted-foreground')
+  const next = useKitPart('note', 'job-next', 'text-muted-foreground')
   const record = usePart('job-record', 'text-xs text-muted-foreground')
-  const actions = usePart('job-actions', 'flex flex-col gap-1.5')
+  const actions = useKitPart('commands', 'job-actions', 'flex flex-col gap-1.5')
   const quit = usePart('button', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
   const jobs = useJobs()
   const shown = only ? (jobs?.jobs ?? []).filter((job) => only.includes(job.id)) : (jobs?.jobs ?? [])
@@ -115,3 +168,20 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
  * off, as the `jobs` panel does under its dialog's title. A thin default on `useJobs`.
  */
 export const JobBoard = overridable('JobBoard', JobBoardImpl)
+
+function JobsPanel({ data }: { data: unknown }) {
+  const only = data && typeof data === 'object' ? (data as { job?: unknown }).job : undefined
+  return <JobBoard title={false} jobs={Array.isArray(only) ? only.filter((id): id is string => typeof id === 'string') : undefined} />
+}
+
+/**
+ * The jobs plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `jobs` panel, which `openJobs()` opens, drawn as the
+ * `JobBoard` (only the jobs it was opened with, if any), and the jobs' words.
+ * It puts nothing in the layout by itself: content opens the board.
+ */
+export const jobsUi: PluginUi = {
+  id: 'jobs',
+  words: JOBS_WORDS,
+  panels: { jobs: { component: JobsPanel, title: 'jobs' } },
+}

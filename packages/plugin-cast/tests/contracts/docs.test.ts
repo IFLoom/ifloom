@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 /**
- * Everything the cast plugin exports is on its docs page. A developer learns
+ * Everything the cast plugin exports is on its docs page, its React UI's too. A developer learns
  * the plugin from the docs site alone, so an export the page does not name is
  * a feature nobody can find.
  */
-const INDEX = import.meta.glob('../../src/index.ts', {
+const INDEX = import.meta.glob(['../../src/index.ts', '../../src/react/index.tsx'], {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -37,7 +37,7 @@ function exportedNames(source: string): string[] {
 
 describe('the docs', () => {
   it('name every export of @ifloom/plugin-cast on its page', () => {
-    const names = exportedNames(Object.values(INDEX)[0])
+    const names = [...new Set(Object.values(INDEX).flatMap(exportedNames))]
     expect(names.length).toBeGreaterThan(5)
     const page = Object.values(PAGE)[0] ?? ''
     expect(page.length).toBeGreaterThan(0)

@@ -168,7 +168,8 @@ export function unread(view: View, redraw: () => void): HTMLElement {
 // src/hud/Unread.tsx
 import { useState } from 'react'
 import type { MessagesView } from '@ifloom/plugin-messages'
-import { DeviceDialog, Notices, useDevice, useGame } from '@ifloom/react'
+import { Notices, useGame } from '@ifloom/react'
+import { DeviceDialog, useDevice } from '@ifloom/plugin-devices/react'
 
 export function Unread() {
   const { view } = useGame()
@@ -232,7 +233,7 @@ const texts = computed(() => (view.value.plugins.messages as MessagesView | unde
 </div>
 ```
 
-A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/react/components#usedevice) and a [`DeviceDialog`](/docs/react/components#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
+A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/plugins/devices#usedevice) and a [`DeviceDialog`](/docs/plugins/devices#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
 
 ## An objective line
 

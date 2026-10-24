@@ -145,15 +145,15 @@ Don't import this file anywhere. `ifloom build` encrypts it into the page, and s
 
 ### 5. Take codes in the game
 
-Open the remembered content before the game is built, and start taking codes once the runner exists. In the React UI that's one prop:
+Open the remembered content before the game is built, and start taking codes once the runner exists. In the React UI that's the unlocks plugin's UI, in `plugins`:
 
 ```ts
 // src/main.tsx (the React UI)
 const stored = profile({ id: 'small-town' }, driver)
 const opened = await unlockedPacks('small-town', stored)
 const { game } = build({ unlocked: opened.packs })
-// … make the runner with `profile: stored`, then:
-// <GameShell runner={runner} pages={{}} unlocks={{ start: startUnlocks, problems: opened.problems, onChange: () => location.reload() }} />
+// … make the runner with `profile: stored`, then, with unlocksUiWith from '@ifloom/plugin-unlocks/react':
+// <GameShell runner={runner} pages={{}} plugins={[unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]} />
 ```
 
 The settings page then has an "Enter a code" box. A code that works records the unlock at once, so the cheat opens. When it has locked content, a "Restart to add it" button reloads the page, which builds the game with the content. [Entering codes](/docs/plugins/unlocks#entering-codes) has the same in plain JS, Vue and Svelte.

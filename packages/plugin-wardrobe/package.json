@@ -11,6 +11,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./react": {
+      "ifloom-source": "./src/react/index.tsx",
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.js"
     }
   },
   "files": [
@@ -21,6 +27,28 @@
     "build": "tsdown"
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.0.0"
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/react": "^0.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@types/react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ifloom/react": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "@types/react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ifloom/react": "^0.0.0",
+    "@types/react": "^19.3.0"
   }
 }

@@ -7,7 +7,7 @@ An IFLoom game is built in four layers. Your first story used three of them: the
 ```mermaid
 flowchart TB
   content["<b>Your content</b><br/>scenes, stats, rules, content for plugins"]
-  plugins["<b>Plugins</b><br/>calendar, places, cast, quests…<br/>no UI of their own"]
+  plugins["<b>Plugins</b><br/>calendar, places, cast, quests…<br/>each with its own React UI, if you want it"]
   subgraph engine["The engine: @ifloom/engine, no DOM"]
     direction LR
     apply["apply(state, game, command)"] --> state["the next state"] --> view["view(state, game)"]
@@ -67,13 +67,13 @@ A plugin adds a system to the engine: the [calendar](/docs/plugins/calendar)'s d
 
 Plugins share the game's things through the engine rather than through each other. A sandwich, a scarf or a person is an [entity](/docs/reference/entities) of a kind, and the engine keeps who [holds](/docs/reference/entities#holding-things) it. A plugin reads the [trait](/docs/reference/entities#traits) it knows on each one, such as the wardrobe's `wardrobe/wearable` or the cast's `cast/person`, so the shop can sell what the wardrobe dresses you in without either knowing the other. [Things: carrying, selling, wearing](/docs/recipes/things) shows them together.
 
-Plugins have no UI. What a plugin wants on screen goes into the view, under `view.plugins.<id>`, and any UI draws it from there. The React UI has a ready-made panel for some of them. In your own UI, you draw the parts you want. [Plugins](/docs/plugins) lists them all, and [Plugin UI](/docs/recipes/plugin-ui) shows how to draw their views.
+A plugin's engine side has no UI. What a plugin wants on screen goes into the view, under `view.plugins.<id>`, and any UI draws it from there. A plugin can ship a React UI beside it, in a `/react` subpath of its package, such as `@ifloom/plugin-shop/react`, which a game drawn with the React UI lists in [`plugins`](/docs/react/kit#the-plugins-option). Every first-party plugin with something for the player does. In your own UI, you draw the parts you want, and that's as much a way to use a plugin as ours. [Plugins](/docs/plugins) lists them all, and [Plugin UI](/docs/recipes/plugin-ui) shows how to draw their views.
 
 ## The UI
 
 A UI does two things. It draws the view, and it sends a command when the player presses something. Anything that can do both can be an IFLoom UI.
 
-- [`@ifloom/react`](/docs/react) is one ready-made UI. It draws the whole game in the browser with React, Tailwind and shadcn/ui: the scene, the choices, the stats, saves, menus, a title screen and settings. [`mountGame`](/docs/react#mountgame) starts it in one call, and you can restyle it with presets and plain CSS or replace any part. Nothing else in IFLoom depends on it.
+- [`@ifloom/react`](/docs/react) is one ready-made UI. It draws the whole game in the browser with React, Tailwind and shadcn/ui: the scene, the choices, the stats, saves, menus, a title screen and settings. [`mountGame`](/docs/react#mountgame) starts it in one call, and you can restyle it with presets and plain CSS or replace any part. It names no plugin: each plugin's React UI comes from that plugin, built from the same [kit](/docs/react/kit) a game's own UI uses. Nothing else in IFLoom depends on it.
 - Your own UI can use any framework, or none. The `vanilla`, `vue` and `svelte` templates each draw the game themselves with no React. [A UI from scratch](/docs/guide/ui-from-scratch) explains the plain JS one line by line, and [Your own UI in any framework](/docs/guide/frameworks) shows the same code in React, Vue and Svelte.
 - [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are helpers for any UI. The first runs a minigame's clock, the keyboard shortcuts, numbers for new save slots and a key that shows held-back prose. The second plays the game's music and sounds. Both are plain DOM, import only the engine, and work the same under every framework. The React UI uses them itself.
 

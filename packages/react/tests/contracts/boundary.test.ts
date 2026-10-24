@@ -21,25 +21,19 @@ describe('the React UI', () => {
     expect(offenders).toEqual([])
   })
 
-  // Every package it imports is one it declares. A plugin it takes only the view's types from, with
-  // `import type`, so nothing of the plugin is bundled, and as an optional peer: a game without it still works.
-  it('imports only what it declares, and plugins only as optional peers, for their types', () => {
+  // Every package it imports is one it declares, and none is a plugin: each plugin's React UI is
+  // in that plugin's `/react`, built from this package's public exports, so the UI names no plugin.
+  it('imports only what it declares, and no plugin at all', () => {
     const declared = new Set([...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.peerDependencies ?? {})])
-    const optional = (pkg as { peerDependenciesMeta?: Record<string, { optional?: boolean }> }).peerDependenciesMeta ?? {}
     const used = Object.entries(SOURCES).flatMap(([file, source]) =>
       [...source.matchAll(/^import( type)?[^'"]*['"]([^'"]+)['"]/gm)]
         .filter((match) => !match[2].startsWith('.'))
-        .map((match) => ({
-          file,
-          typeOnly: Boolean(match[1]),
-          name: match[2].startsWith('@') ? match[2].split('/').slice(0, 2).join('/') : match[2].split('/')[0],
-        })),
+        .map((match) => ({ file, name: match[2].startsWith('@') ? match[2].split('/').slice(0, 2).join('/') : match[2].split('/')[0] })),
     )
     expect(used.filter((entry) => !declared.has(entry.name)).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
-    const plugins = used.filter((entry) => /^@ifloom\/(plugin-|phone$)/.test(entry.name))
-    expect(plugins.length).toBeGreaterThan(0)
-    expect(plugins.filter((entry) => !entry.typeOnly).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
-    expect(plugins.filter((entry) => !optional[entry.name]?.optional).map((entry) => `${entry.name} is not an optional peer`)).toEqual([])
-    expect(Object.keys(pkg.dependencies ?? {}).filter((name) => name.startsWith('@ifloom/plugin-'))).toEqual([])
+    const plugins = /^@ifloom\/(plugin-|phone$)/
+    expect(used.filter((entry) => plugins.test(entry.name)).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
+    const named = Object.keys({ ...pkg.dependencies, ...pkg.peerDependencies, ...pkg.devDependencies }).filter((name) => plugins.test(name))
+    expect(named).toEqual([])
   })
 })

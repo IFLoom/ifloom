@@ -175,18 +175,18 @@ body {
 
 [data-part="button"],
 [data-part="menu-button"],
-[data-part="device-button"] {
+[data-kit="opener"] {
   border-radius: 0;
   text-transform: lowercase;
 }
 
 [data-part="menu-button"]::before,
-[data-part="device-button"]::before {
+[data-kit="opener"]::before {
   content: "[";
 }
 
 [data-part="menu-button"]::after,
-[data-part="device-button"]::after {
+[data-kit="opener"]::after {
   content: "]";
 }
 
@@ -489,128 +489,70 @@ body {
   padding-left: 0.75rem;
 }
 
-/* The plugins' defaults: plain listings, as a text adventure prints them. */
-[data-part="achievement"],
-[data-part="good"],
-[data-part="job"] {
-  border-style: dashed;
+/*
+ * The kit's parts, whatever plugin draws them: plain listings, as a text
+ * adventure prints them. Headings are comments, what can be done has a box
+ * to tick, buttons that do something are commands, and a code is typed at a
+ * prompt.
+ */
+[data-kit="card"] {
+  border: 1px dashed var(--border);
   padding: 0.5rem;
 }
 
-[data-part="achievements-title"],
-[data-part="jobs-title"],
-[data-part="statuses-title"] {
+[data-kit="heading"] {
   text-transform: uppercase;
 }
 
-[data-part="achievement-title"]::before {
+[data-kit="heading"]::before {
+  content: "# ";
+  color: var(--muted-foreground);
+}
+
+[data-state="open"] [data-kit="title"]::before {
   content: "[ ] ";
   color: var(--muted-foreground);
 }
 
-[data-part="achievement"][data-earned] [data-part="achievement-title"]::before {
+[data-state="done"] [data-kit="title"]::before {
   content: "[x] ";
   color: inherit;
 }
 
-[data-part="achievement-progress"] {
+[data-kit="item"] {
+  gap: 0;
+}
+
+[data-kit="item"] [data-kit="title"]::before {
+  content: "* ";
+  color: var(--muted-foreground);
+}
+
+[data-kit="meter"] {
   border: 1px solid currentColor;
   border-radius: 0;
   background: none;
 }
 
-[data-part="achievement-progress"] > span {
+[data-kit="meter"] > span {
   background: currentColor;
 }
 
-/* A counter's and a board's buttons are commands, not numbered choices. */
-[data-part="good-actions"],
-[data-part="job-actions"] {
+/* A counter's, a board's and the cheats' buttons are commands, not numbered choices. */
+[data-kit="commands"] {
   counter-reset: choice;
 }
 
-[data-part="good-actions"] [data-part="choice"] [data-part="choice-label"]::before,
-[data-part="job-actions"] [data-part="choice"] [data-part="choice-label"]::before {
+[data-kit="commands"] [data-part="choice"] [data-part="choice-label"]::before {
   content: "> ";
 }
 
-[data-part="status"] {
-  gap: 0;
-}
-
-[data-part="status-label"]::before {
-  content: "* ";
-  color: var(--muted-foreground);
-}
-
-[data-part="vendor-button"],
-[data-part="achievements-button"] {
-  border-radius: 0;
-  text-transform: lowercase;
-}
-
-[data-part="vendor-button"]::before,
-[data-part="achievements-button"]::before {
-  content: "[";
-}
-
-[data-part="vendor-button"]::after,
-[data-part="achievements-button"]::after {
-  content: "]";
-}
-
-/* Cheats: commands in a listing, as a console prints them. */
-[data-part="cheats-group-title"] {
-  text-transform: uppercase;
-}
-
-[data-part="cheats-group-title"]::before {
-  content: "# ";
-  color: var(--muted-foreground);
-}
-
-[data-part="cheat"] {
-  padding-left: 0.5rem;
-  border-left: 1px dashed var(--border);
-}
-
-[data-part="cheats"] {
-  counter-reset: choice;
-}
-
-[data-part="cheat"] [data-part="choice"] [data-part="choice-label"]::before {
-  content: "> ";
-}
-
-[data-part="cheats-button"] {
-  border-radius: 0;
-  text-transform: lowercase;
-}
-
-[data-part="cheats-button"]::before {
-  content: "[";
-}
-
-[data-part="cheats-button"]::after {
-  content: "]";
-}
-
-/* Codes: a prompt to type at, and the unlocks as a listing. */
-[data-part="unlocks-title"] {
-  text-transform: uppercase;
-}
-
-[data-part="unlocks-title"]::before {
-  content: "# ";
-  color: var(--muted-foreground);
-}
-
-[data-part="unlock-form"]::before {
+[data-kit="form"]::before {
   content: "$";
   color: var(--primary);
 }
 
-[data-part="unlock-input"] {
+[data-kit="input"] {
   border-width: 0 0 1px;
   border-style: dashed;
   border-radius: 0;
@@ -618,13 +560,7 @@ body {
   text-transform: uppercase;
 }
 
-[data-part="unlock"] {
-  border-width: 0 0 0 1px;
-  border-style: dashed;
-  border-radius: 0;
-}
-
-[data-part="unlock-state"] {
+[data-kit="badge"] {
   border-radius: 0;
 }
 
@@ -705,7 +641,7 @@ body {
 }
 
 /* What you carry, listed as a text adventure lists it; pictures square, without corners. */
-[data-part="good-image"] {
+[data-kit="thumb"] {
   border-radius: 0;
   image-rendering: pixelated;
 }
@@ -715,11 +651,7 @@ body {
   color: var(--muted-foreground);
 }
 
-[data-part="thing-drop"] {
-  text-transform: uppercase;
-}
-
-[data-part="wardrobe-slot-name"] {
+[data-kit="label"] {
   text-transform: uppercase;
 }
 

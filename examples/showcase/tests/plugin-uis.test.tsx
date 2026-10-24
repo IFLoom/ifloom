@@ -8,25 +8,31 @@ import { jobs, openJobs } from '@ifloom/plugin-jobs'
 import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
 import { applyStatus, statuses } from '@ifloom/plugin-statuses'
 import { inventory, usable } from '@ifloom/plugin-inventory'
-import {
-  AchievementList,
-  GameProvider,
-  GameShell,
-  Inventory,
-  JobBoard,
-  PanelHost,
-  RoomActions,
-  SceneStage,
-  ShopCounter,
-  StatusList,
-  useAchievements,
-  useInventory,
-  useJobs,
-  useShop,
-  useStatuses,
-  type Components,
-} from '../src/index.ts'
-import { storyOf } from './layouts.tsx'
+import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, SceneStage, type Components, Game as GamePage, Story } from '@ifloom/react'
+import { AchievementList, useAchievements } from '@ifloom/plugin-achievements/react'
+import { useInventory } from '@ifloom/plugin-inventory/react'
+import { JobBoard, useJobs } from '@ifloom/plugin-jobs/react'
+import { ShopCounter, useShop } from '@ifloom/plugin-shop/react'
+import { StatusList, useStatuses } from '@ifloom/plugin-statuses/react'
+import { achievementsUi } from '@ifloom/plugin-achievements/react'
+import { inventoryUi } from '@ifloom/plugin-inventory/react'
+import { jobsUi } from '@ifloom/plugin-jobs/react'
+import { shopUi } from '@ifloom/plugin-shop/react'
+import { statusesUi } from '@ifloom/plugin-statuses/react'
+
+/** The plugin UIs every game here is drawn with. */
+const UIS = [achievementsUi, inventoryUi, jobsUi, shopUi, statusesUi]
+
+/** A layout of just a story with these children, and nothing over it. */
+function storyOf(children: ReactNode) {
+  return function StoryOnly() {
+    return (
+      <GamePage>
+        <Story>{children}</Story>
+      </GamePage>
+    )
+  }
+}
 
 afterEach(() => {
   cleanup()
@@ -134,7 +140,7 @@ function game(withPlugins = true): Game {
 
 function play(props: Partial<Parameters<typeof GameShell>[0]> = {}, g = game()): Runner {
   const runner = createRunner(g, startingState(g))
-  render(<GameShell runner={runner} {...props} />)
+  render(<GameShell plugins={UIS} runner={runner} {...props} />)
   return runner
 }
 
@@ -209,7 +215,7 @@ describe('the inventory', () => {
     const runner = createRunner(g, { ...start, stats: { ...start.stats, coins: 20 } })
     act(() => void runner.apply({ type: 'custom', name: 'shop/buy', with: { vendor: 'counter', entity: 'food:sandwich' } }))
     render(
-      <GameProvider runner={runner}>
+      <GameProvider plugins={UIS} runner={runner}>
         <Inventory drop />
       </GameProvider>,
     )
@@ -228,7 +234,7 @@ describe('the inventory', () => {
     const g = game(false)
     const runner = createRunner(g, { ...startingState(g), held: { player: { 'food:cake': 2 } } })
     render(
-      <GameProvider runner={runner}>
+      <GameProvider plugins={UIS} runner={runner}>
         <Inventory drop />
       </GameProvider>,
     )
@@ -317,7 +323,7 @@ describe('the achievements', () => {
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Back' })))
     expect(document.querySelector('[data-page="title"]')).not.toBeNull()
     cleanup()
-    play({ pages: { achievements: false } })
+    play({ pages: {}, plugins: [...UIS.filter((ui) => ui !== achievementsUi), { ...achievementsUi, pages: undefined }] })
     expect(screen.queryByRole('button', { name: 'Achievements' })).toBeNull()
   })
 })
@@ -385,7 +391,7 @@ describe('the defaults, wired', () => {
   it('say what the game says, through ui. strings', () => {
     const g = game()
     const runner = createRunner({ ...g, strings: { ...g.strings, 'ui.jobs': 'Work', 'ui.buy': 'Take' } }, startingState(g))
-    render(<GameShell runner={runner} />)
+    render(<GameShell plugins={UIS} runner={runner} />)
     press('Read the job board')
     expect(screen.getByRole('dialog', { name: 'Work' })).toBeTruthy()
     press('Close')
@@ -418,7 +424,7 @@ describe('the panels', () => {
     const g = game()
     const runner = createRunner(g, startingState(g))
     render(
-      <GameProvider runner={runner}>
+      <GameProvider plugins={UIS} runner={runner}>
         <PanelHost />
       </GameProvider>,
     )
@@ -429,7 +435,11 @@ describe('the panels', () => {
 
 describe('the hooks', () => {
   function wrapper(runner: Runner) {
-    return ({ children }: { children: ReactNode }) => <GameProvider runner={runner}>{children}</GameProvider>
+    return ({ children }: { children: ReactNode }) => (
+      <GameProvider plugins={UIS} runner={runner}>
+        {children}
+      </GameProvider>
+    )
   }
 
   it('give the data and the actions with no markup', () => {
@@ -475,7 +485,7 @@ describe('the hooks', () => {
     const g = game()
     const runner = createRunner(g, startingState(g))
     render(
-      <GameProvider runner={runner}>
+      <GameProvider plugins={UIS} runner={runner}>
         <Purse />
         <ShopCounter vendor={(runner.view().plugins.shop as ShopView).vendors[0]} />
         <JobBoard />
@@ -485,22 +495,5 @@ describe('the hooks', () => {
     )
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'Grab a flapjack' })))
     expect(heldCount(runner.state, runner.game, 'food:flapjack')).toBe(1)
-  })
-})
-
-describe('the presets', async () => {
-  // Read as text from disk: a stylesheet imported in a test comes back empty. The package has no Node types, hence the loose import.
-  // oxlint-disable-next-line typescript/no-unnecessary-template-expression -- a plain 'node:fs' would make tsc look for Node's types
-  const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync: (path: string, encoding: string) => string }
-  const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd()
-  const read = (name: string) => {
-    // Under jsdom the test's URL can be from the project root rather than a file URL.
-    const path = ['..', 'src', 'themes', `${name}.css`].join('/')
-    const url = new URL(path, import.meta.url)
-    return fs.readFileSync(decodeURIComponent(url.protocol === 'file:' ? url.pathname : cwd + url.pathname), 'utf8')
-  }
-  it.each(['paper', 'storybook', 'studio', 'terminal'])('%s styles each new default', (name) => {
-    const css = read(name)
-    for (const part of ['achievement', 'good', 'job', 'status', 'cheat']) expect(css, part).toContain(`[data-part="${part}"]`)
   })
 })

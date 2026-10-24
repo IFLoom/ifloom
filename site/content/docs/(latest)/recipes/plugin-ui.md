@@ -4,7 +4,9 @@ description: "Draw the achievements, shop and jobs plugins from the view: an ach
 ---
 The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [jobs](/docs/plugins/jobs) plugins are UI-free. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks.
 
-If you use the React UI, you don't have to build any of this. It draws a default for each of these plugins when the game has it: an [achievements page](/docs/react/components#achievementlist), a [shop dialog](/docs/react/components#shopcounter), a [job board](/docs/react/components#jobboard) and the [active statuses](/docs/react/components#statuslist). Each comes with a hook, such as [`useShop`](/docs/react/components#useshop), that gives the same data and actions with no markup. [Plugins' defaults](/docs/react/components#plugins-defaults) lists them all. Read on to build your own: for Vue, Svelte or plain JS, or for a React game that wants a different shape.
+If you use the React UI, you don't have to build any of this. Each of these plugins ships its own React UI, in its `/react` subpath, and you list the ones you want in [`plugins`](/docs/react/kit#the-plugins-option): `achievementsUi` for an [achievements page](/docs/plugins/achievements#achievementlist), `shopUi` for a [shop dialog](/docs/plugins/shop#shopcounter), `jobsUi` for a [job board](/docs/plugins/jobs#jobboard) and `statusesUi` for the [active statuses](/docs/plugins/statuses#statuslist). Each comes with a hook, such as [`useShop`](/docs/plugins/shop#useshop), that gives the same data and actions with no markup. Read on to build your own: for Vue, Svelte or plain JS, or for a React game that wants a different shape. Drawing a plugin yourself is as much a way to use it as ours: leave its UI out of `plugins`, and nothing of ours is drawn for it.
+
+To give a plugin of your own a React UI that games can list the same way, see [Writing a plugin's UI](/docs/react/kit#writing-a-plugins-ui).
 
 This page builds three pieces:
 

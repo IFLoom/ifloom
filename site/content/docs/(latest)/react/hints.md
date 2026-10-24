@@ -195,7 +195,7 @@ stats: [
 ]
 ```
 
-On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/react/components#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of `MAX_PIPS` (20) or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
+On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of `MAX_PIPS` (20) or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
 
 ```ts
 import { type StatDisplay, MAX_PIPS } from '@ifloom/react'

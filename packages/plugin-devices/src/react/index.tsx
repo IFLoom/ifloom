@@ -1,16 +1,63 @@
-import type { DevicesView, DeviceView, SectionView } from '@ifloom/plugin-devices'
-import { useState } from 'react'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog.tsx'
-import { ChoiceList } from './choices.tsx'
-import { useGame } from './context.tsx'
-import { assetUrl } from './assets.ts'
-import { useDialogParts } from './dialog.tsx'
-import { Icon } from './icon.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
-import { Picture } from './picture.tsx'
+/**
+ * @ifloom/plugin-devices/react: the devices plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `devicesUi` in the game's
+ * `plugins` to have a button for each device in the side column and each
+ * app with news in the notice strip; or draw them yourself from
+ * `useDevices`. An app's plugin section is drawn by that plugin's UI, by its
+ * id, so list the messages and feed UIs too.
+ */
+import type { DevicesView, DeviceView, SectionView } from '../index.ts'
+import { useState, type ComponentProps } from 'react'
+import {
+  assetUrl,
+  badgeVariants,
+  buttonVariants,
+  ChoiceList,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  Icon,
+  overridable,
+  type Override,
+  Picture,
+  type PluginUi,
+  useDialogParts,
+  useGame,
+  useKitPart,
+  usePart,
+  useWords,
+} from '@ifloom/react'
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    DeviceButtons: Override<ComponentProps<typeof DeviceButtons>>
+    AppSection: Override<ComponentProps<typeof AppSection>>
+    DeviceScreen: Override<ComponentProps<typeof DeviceScreen>>
+    DeviceDialog: Override<ComponentProps<typeof DeviceDialog>>
+    DeviceStrip: Override<ComponentProps<typeof DeviceStrip>>
+  }
+  interface PartNames {
+    'app': true
+    'app-back': true
+    'app-button': true
+    'app-entries': true
+    'app-entry': true
+    'app-entry-image': true
+    'app-entry-text': true
+    'app-entry-title': true
+    'app-header': true
+    'app-icon': true
+    'app-launcher': true
+    'app-prose': true
+    'app-title': true
+    'device-badge': true
+    'device-button': true
+    'device-screen': true
+    'devices': true
+    'app-badge': true
+  }
+}
 
 /** The devices in the view (an empty list when the game has no devices plugin). */
 export type DevicesState = DeviceView[]
@@ -47,7 +94,7 @@ function DeviceButtonsImpl() {
   const devices = useDevices().filter((device) => device.sidebar)
   const { openId, open, close } = useDevice()
   const row = usePart('devices', 'flex gap-2')
-  const button = usePart('device-button', buttonVariants({ variant: 'outline', size: 'sm' }))
+  const button = useKitPart('opener', 'device-button', buttonVariants({ variant: 'outline', size: 'sm' }))
   const badge = usePart('device-badge', badgeVariants())
   if (!devices.length) return null
   return (
@@ -108,6 +155,9 @@ function AppSectionImpl({ section }: { section: SectionView }) {
 /** One section of an open app, drawn by kind; a plugin section by that plugin's renderer. */
 export const AppSection = overridable('AppSection', AppSectionImpl)
 
+/** The home screen's grid: four apps to a row, over the wallpaper, if any, covering it. */
+const LAUNCHER = { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', backgroundSize: 'cover', backgroundPosition: 'center' } as const
+
 function DeviceScreenImpl({ device }: { device: DeviceView }) {
   const { send } = useGame()
   const words = useWords()
@@ -116,13 +166,13 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
   const header = usePart('app-header', 'flex items-center gap-2')
   const back = usePart('app-back', buttonVariants({ variant: 'ghost', size: 'icon' }))
   const title = usePart('app-title', 'font-heading font-semibold')
-  const launcher = usePart('app-launcher', 'grid grid-cols-4 gap-3 bg-cover bg-center p-2')
+  const launcher = usePart('app-launcher', 'grid gap-3 p-2')
   const appButton = usePart('app-button', 'relative flex flex-col items-center gap-1 rounded-lg p-2 text-xs hover:bg-accent')
-  const appButtonOff = usePart('app-button', 'relative flex flex-col items-center gap-1 rounded-lg p-2 text-xs hover:bg-accent opacity-50')
+  const appButtonOff = usePart('app-button', 'relative flex flex-col items-center gap-1 rounded-lg p-2 text-xs hover:bg-accent opacity-70')
   const icon = usePart('app-icon', 'flex size-10 items-center justify-center rounded-xl bg-secondary font-semibold')
   const badge = usePart(
     'app-badge',
-    'absolute -top-1 -right-1 flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground',
+    'absolute -top-2 -right-2 flex items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold text-destructive-foreground',
   )
   if (device.open) {
     return (
@@ -143,7 +193,7 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
   }
   return (
     <div {...screen}>
-      <div {...launcher} style={device.wallpaper ? { backgroundImage: `url(${assetUrl(device.wallpaper)})` } : undefined}>
+      <div {...launcher} style={{ ...LAUNCHER, ...(device.wallpaper ? { backgroundImage: `url(${assetUrl(device.wallpaper)})` } : {}) }}>
         {device.apps.map((entry) => (
           <button
             key={entry.id}
@@ -198,3 +248,54 @@ function DeviceDialogImpl({ deviceId, onClose }: { deviceId: string | null; onCl
 
 /** A device in a dialog, drawn in its frame (`data-frame` for the theme to style a phone or a laptop). */
 export const DeviceDialog = overridable('DeviceDialog', DeviceDialogImpl)
+
+function DeviceStripImpl() {
+  const { send } = useGame()
+  const words = useWords()
+  const devices = useDevices()
+  const device = useDevice()
+  const item = usePart('notice-strip-item', buttonVariants({ size: 'sm', variant: 'outline' }))
+  const badge = usePart('badge', badgeVariants())
+  // Each app with a badge, on any device: the button opens the device on that app.
+  const apps = devices.flatMap((entry) => entry.apps.filter((app) => app.badge && !app.disabled).map((app) => ({ device: entry, app })))
+  // The device stays open once the news is read.
+  if (!apps.length && !device.openId) return null
+  return (
+    <>
+      {apps.map(({ device: entry, app }) => (
+        <button
+          key={`${entry.id}/${app.id}`}
+          type="button"
+          {...item}
+          data-strip={`${entry.id}/${app.id}`}
+          onClick={() => {
+            device.open(entry.id)
+            send(app.command)
+          }}
+        >
+          {app.name}
+          {typeof app.badge === 'number' ? <span {...badge}>{app.badge}</span> : <span {...badge} aria-label={words('unread')} />}
+        </button>
+      ))}
+      <DeviceDialog deviceId={device.openId} onClose={device.close} />
+    </>
+  )
+}
+
+/**
+ * Each app with news on the game's devices, as a count in the `NoticeStrip`:
+ * a button that opens the device on that app. The devices UI puts it at the
+ * strip's `strip` spot.
+ */
+export const DeviceStrip = overridable('DeviceStrip', DeviceStripImpl)
+
+/**
+ * The devices plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `DeviceButtons` in the side column, and each app with
+ * news in the `NoticeStrip`. An app's plugin sections are drawn by the UI of
+ * the plugin they name, such as `messagesUi` and `feedUi`.
+ */
+export const devicesUi: PluginUi = {
+  id: 'devices',
+  layout: { sidebar: [() => <DeviceButtons />], strip: [() => <DeviceStrip />] },
+}

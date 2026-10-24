@@ -107,7 +107,9 @@ if (quests) {
 ```
 
 ```tsx tab="React" tab-group="framework"
-import { QuestLog, Relationships, Section, useQuests } from '@ifloom/react'
+import { Section } from '@ifloom/react'
+import { QuestLog, useQuests } from '@ifloom/plugin-quests/react'
+import { Relationships } from '@ifloom/plugin-cast/react'
 
 function JournalSections() {
   const news = useQuests()?.updates
@@ -179,7 +181,8 @@ if (holds(runner.state, at('flat'), runner.game)) {
 ```
 
 ```tsx tab="React" tab-group="framework"
-import { Section, When, WardrobeCard } from '@ifloom/react'
+import { Section, When } from '@ifloom/react'
+import { WardrobeCard } from '@ifloom/plugin-wardrobe/react'
 import { at } from '@ifloom/plugin-places'
 
 <Section id="wardrobe" title="Wearing" collapsible when={at('flat')}>
@@ -228,7 +231,7 @@ const atHome = computed(() => view.value && holds(runner.state, at('flat'), runn
 {/if}
 ```
 
-You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/plugins/places) plugin's view through [`usePlaces`](/docs/react/components#useplaces):
+You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/plugins/places) plugin's view through [`usePlaces`](/docs/plugins/places#useplaces):
 
 ```ts tab="Plain JS" tab-group="framework"
 const places = view.plugins.places as PlacesView | undefined
@@ -239,7 +242,7 @@ if (places?.location?.tags.includes('outdoors')) {
 ```
 
 ```tsx tab="React" tab-group="framework"
-import { usePlaces } from '@ifloom/react'
+import { usePlaces } from '@ifloom/plugin-places/react'
 
 function StreetMap() {
   const places = usePlaces()

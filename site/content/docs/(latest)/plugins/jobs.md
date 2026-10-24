@@ -13,7 +13,7 @@ import {
 } from '@ifloom/plugin-jobs'
 ```
 
-The plugin has no UI of its own. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
 
 ## Install
 
@@ -274,7 +274,7 @@ The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`
 
 `view(state, game).plugins.jobs` is a `JobsView`.
 
-The [React UI](/docs/react) draws the `jobs` panel as a [`JobBoard`](/docs/react/components#jobboard) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useJobs`](/docs/react/components#usejobs) gives the same data and the apply, work and quit commands with no markup.
+Its [React UI](#the-react-ui) draws the `jobs` panel as a [`JobBoard`](#jobboard) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useJobs`](#usejobs) gives the same data and the apply, work and quit commands with no markup.
 
 ### JobsView
 
@@ -315,6 +315,91 @@ type RankView = { id: string; title: string; pay: Price | null }
 | `nextShift` | The next day with a shift, the calendar's day or the turn, and how many days away (0 for today). `null` when not hired, or when there's none in the next two weeks. |
 | `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the reason of the first `blocked` entry that holds. |
 | `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
+
+## The React UI
+
+`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`openJobs`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.jobs`, or from [`useJobs`](#usejobs) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { jobsUi } from '@ifloom/plugin-jobs/react'
+
+mountGame(game, { plugins: [jobsUi] })
+```
+
+### jobsUi
+
+```ts
+const jobsUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `jobs` panel, which [`openJobs`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
+
+Its words are in `JOBS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.applyJob': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.applyJob` | `Apply` |
+| `ui.jobFired` | `Let go` |
+| `ui.jobMissed` | `Missed: {n}` |
+| `ui.jobNextRank` | `Next: {title}, after {n} more shifts` |
+| `ui.jobNextRankOne` | `Next: {title}, after 1 more shift` |
+| `ui.jobNextRankSoon` | `Next: {title}` |
+| `ui.jobPay` | `Pays {pay} a shift` |
+| `ui.jobShifts` | `Shifts worked: {n}` |
+| `ui.jobs` | `Jobs` |
+| `ui.quitJob` | `Quit` |
+| `ui.shiftInDays` | `Next shift: in {n} days` |
+| `ui.shiftToday` | `Next shift: today` |
+| `ui.shiftTomorrow` | `Next shift: tomorrow` |
+| `ui.workShift` | `Work a shift` |
+
+### JobBoard
+
+```tsx
+function JobBoard(props: { className?: string; title?: string | false; jobs?: readonly string[] }): JSX.Element | null
+```
+
+Every [job](/docs/plugins/jobs), held or not, from [`JobView`](/docs/plugins/jobs#jobview)s, under the heading `ui.jobs` or `title` (`false` leaves it out). `jobs` shows only those, by id, as the `jobs` panel does for `with.job`. Each job (`data-job`, with `data-hired` while it's held and `data-fired` once the player was fired) shows its title, the rank held on a badge (unless it has the job's own title), its description, and:
+
+- what a shift pays (`ui.jobPay`, `Pays 12 coins a shift`)
+- the next shift (`ui.shiftToday`, `ui.shiftTomorrow` or `ui.shiftInDays`), for a job held
+- the next rank and how many more shifts it needs (`ui.jobNextRank`, `ui.jobNextRankOne`, or `ui.jobNextRankSoon` when shifts aren't what's missing)
+- the shifts worked and missed (`ui.jobShifts`, `ui.jobMissed`)
+- **Let go** (`ui.jobFired`) on a job the player was fired from.
+
+A job not held has **Apply** (`ui.applyJob`), a [`ChoiceButton`](/docs/react/components#choicebutton) from the job's `apply` button, greyed out with the reason of its first `blocked` entry that holds. A job held has **Work a shift** (`ui.workShift`), with the shift's cost as its price and the reason it can't be worked now, such as `No shift today.`, and a **Quit** button (`ui.quitJob`) that sends `jobs/quit`.
+
+It draws nothing in a game without the plugin or with no jobs to show.
+
+Replaceable as `JobBoard` in [`components`](/docs/react/components#components). Parts: `jobs`, `jobs-title`, `job` (with `data-job`, `data-hired` and `data-fired`), `job-title`, `job-rank`, `job-fired`, `job-text`, `job-details`, `job-pay`, `job-shift`, `job-next`, `job-record`, `job-actions`, `choice` and `button`.
+
+### useJobs
+
+```ts
+function useJobs(): JobsControls | null
+
+type JobsControls = JobsView & {
+  held: JobView[]
+  apply: (job: string) => Result<GameState>
+  work: (job: string) => Result<GameState>
+  quit: (job: string) => Result<GameState>
+}
+```
+
+The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the jobs held as `held`, and its commands, or `null` in a game without the plugin. `apply`, `work` and `quit` send `jobs/apply`, `jobs/work` and `jobs/quit`. [`JobBoard`](#jobboard) is drawn from it.
+
+```tsx
+import { useJobs } from '@ifloom/plugin-jobs/react'
+
+function NextShift() {
+  const job = useJobs()?.held[0]
+  if (!job?.nextShift) return null
+  return <p className="text-sm">{job.title}: next shift in {job.nextShift.inDays} days</p>
+}
+```
 
 ## The state
 

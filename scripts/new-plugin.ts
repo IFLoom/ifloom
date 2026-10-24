@@ -1,5 +1,6 @@
 // Scaffolds a first-party plugin, packages/plugin-<name>, modelled on
-// plugin-quests, with its code and test from the CLI's plugin template
+// plugin-quests, with its code, its React UI (the /react subpath) and their
+// tests from the CLI's plugin template
 // (packages/cli/templates/plugin), and adds it to the docs navigation (the plugins
 // folder's meta.json). The root vite.config.ts finds it for npm run build and
 // npm run typecheck by itself.
@@ -21,7 +22,7 @@ if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
   process.exit(1)
 }
 
-const { camel, Pascal, title } = pluginNames(name)
+const { camel, Pascal, CONSTANT, title } = pluginNames(name)
 const pkgDir = join(root, 'packages', `plugin-${name}`)
 const at = (path: string) => relative(root, path)
 
@@ -73,9 +74,11 @@ if (existsSync(pkgDir)) {
 function fromTemplate(file: string): string {
   return readFileSync(join(root, 'packages', 'cli', 'templates', 'plugin', file), 'utf8')
     .replaceAll('{{title}}', title)
+    .replaceAll('{{name}}', `@ifloom/plugin-${name}`)
     .replaceAll('__id__', name)
     .replaceAll('__camel__', camel)
     .replaceAll('__Pascal__', Pascal)
+    .replaceAll('__CONSTANT__', CONSTANT)
     .replaceAll('TODO:', 'TODO(new-plugin):')
 }
 
@@ -91,10 +94,20 @@ const files: Record<string, string> = {
       license: 'MIT',
       description: `TODO(new-plugin): what @ifloom/plugin-${name} adds, in one sentence.`,
       type: 'module',
-      exports: { '.': { 'ifloom-source': './src/index.ts', types: './dist/index.d.ts', import: './dist/index.js', default: './dist/index.js' } },
+      exports: {
+        '.': { 'ifloom-source': './src/index.ts', types: './dist/index.d.ts', import: './dist/index.js', default: './dist/index.js' },
+        './react': {
+          'ifloom-source': './src/react/index.tsx',
+          types: './dist/react/index.d.ts',
+          import: './dist/react/index.js',
+          default: './dist/react/index.js',
+        },
+      },
       files: ['dist', 'src'],
       scripts: { build: 'tsdown' },
-      peerDependencies: { '@ifloom/engine': '^0.0.0' },
+      peerDependencies: { '@ifloom/engine': '^0.0.0', '@ifloom/react': '^0.0.0', react: '^19.0.0', 'react-dom': '^19.0.0', '@types/react': '^19.0.0' },
+      peerDependenciesMeta: Object.fromEntries(['@ifloom/react', 'react', 'react-dom', '@types/react'].map((peer) => [peer, { optional: true }])),
+      devDependencies: { '@ifloom/react': '^0.0.0', '@types/react': '^19.3.0' },
     },
     null,
     2,
@@ -102,12 +115,14 @@ const files: Record<string, string> = {
 
   'tsdown.config.ts': `import { define } from '../../tsdown.base.ts'
 
-export default define(['src/index.ts'])
+export default define(['src/index.ts', 'src/react/index.tsx'])
 `,
 
   'tsconfig.json': `{
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
     "types": ["vite/client"]
   },
   "include": ["src", "tests"]
@@ -118,24 +133,51 @@ export default define(['src/index.ts'])
 
   [`tests/${name}.test.ts`]: fromTemplate('tests/plugin.test.ts'),
 
+  'src/react/index.tsx': fromTemplate('src/react/index.tsx'),
+
+  'tests/react.test.tsx': fromTemplate('tests/react.test.tsx'),
+
   'tests/contracts/boundary.test.ts': `import { describe, expect, it } from 'vitest'
 
-const SOURCES = import.meta.glob(['../../src/**/*.ts'], {
+const SOURCES = import.meta.glob(['../../src/**/*.{ts,tsx}'], {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>
 
+/** Each file's imports, from the source as written. */
+const IMPORTS = Object.entries(SOURCES).map(([file, source]) => ({
+  file,
+  source,
+  ui: file.includes('/src/react/'),
+  specs: [...source.matchAll(/^(?:import|export)[^'"]*\\sfrom\\s['"]([^'"]+)['"]|^import\\s+['"]([^'"]+)['"]/gm)].map((match) => match[1] ?? match[2]),
+}))
+
 describe('the ${name} plugin', () => {
   // A plugin proves the plugin API only if it uses nothing else: the engine's
   // front door, and its own files.
   it('imports only @ifloom/engine and its own files', () => {
-    expect(Object.keys(SOURCES).length).toBeGreaterThan(0)
-    const outside = Object.entries(SOURCES).flatMap(([file, source]) =>
-      [...source.matchAll(/^import[^'"]*['"]([^'"]+)['"]/gm)]
-        .map((match) => match[1])
-        .filter((spec) => !spec.startsWith('./') && spec !== '@ifloom/engine')
-        .map((spec) => \`\${file} → \${spec}\`),
+    expect(IMPORTS.length).toBeGreaterThan(0)
+    const outside = IMPORTS.filter((entry) => !entry.ui).flatMap(({ file, specs }) =>
+      specs.filter((spec) => !(spec.startsWith('./') && !spec.startsWith('./react/')) && spec !== '@ifloom/engine').map((spec) => \`\${file} → \${spec}\`),
+    )
+    expect(outside).toEqual([])
+  })
+
+  // The engine side runs anywhere, so it never reaches for a page.
+  it('uses no browser globals outside its React UI', () => {
+    // Strings and comments aside: a plugin may write a page's script as text, as unlocks does.
+    const code = (source: string) => source.replace(/\`[^\`]*\`|'[^'\\n]*'|"[^"\\n]*"|\\/\\*[\\s\\S]*?\\*\\/|\\/\\/.*$/gm, '')
+    const found = IMPORTS.filter((entry) => !entry.ui && /\\b(window|document)\\./.test(code(entry.source))).map((entry) => entry.file)
+    expect(found).toEqual([])
+  })
+
+  // Its React UI is the \`/react\` subpath. It's built only from the kit, \`@ifloom/react\`'s
+  // front door, as a game's own UI is: never a deep path, and never another plugin.
+  it('keeps React to src/react/, which imports only the engine, React, @ifloom/react and its own files', () => {
+    const allowed = new Set(['@ifloom/engine', '@ifloom/react', 'react', 'react-dom'])
+    const outside = IMPORTS.filter((entry) => entry.ui).flatMap(({ file, specs }) =>
+      specs.filter((spec) => !spec.startsWith('./') && spec !== '../index.ts' && !allowed.has(spec)).map((spec) => \`\${file} → \${spec}\`),
     )
     expect(outside).toEqual([])
   })
@@ -145,11 +187,11 @@ describe('the ${name} plugin', () => {
   'tests/contracts/docs.test.ts': `import { describe, expect, it } from 'vitest'
 
 /**
- * Everything the ${name} plugin exports is on its docs page. A developer learns
+ * Everything the ${name} plugin exports is on its docs page, its React UI's too. A developer learns
  * the plugin from the docs site alone, so an export the page does not name is
  * a feature nobody can find.
  */
-const INDEX = import.meta.glob('../../src/index.ts', {
+const INDEX = import.meta.glob(['../../src/index.ts', '../../src/react/index.tsx'], {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -177,7 +219,7 @@ function exportedNames(source: string): string[] {
 
 describe('the docs', () => {
   it('name every export of @ifloom/plugin-${name} on its page', () => {
-    const names = exportedNames(Object.values(INDEX)[0])
+    const names = [...new Set(Object.values(INDEX).flatMap(exportedNames))]
     expect(names.length).toBeGreaterThan(0)
     const page = Object.values(PAGE)[0] ?? ''
     expect(page.length).toBeGreaterThan(0)

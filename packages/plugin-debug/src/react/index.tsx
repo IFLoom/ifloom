@@ -1,13 +1,71 @@
+/**
+ * @ifloom/plugin-debug/react: the debug plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `debugUi` in the game's `plugins`
+ * to have the debug card at the end of the story in a game built with the
+ * debug plugin, or draw it yourself from `useDebug`.
+ */
 import type { Command, GameState, RenderedChoice, Result } from '@ifloom/engine'
-import type { CastView } from '@ifloom/plugin-cast'
-import type { DebugView } from '@ifloom/plugin-debug'
-import { useState, type SyntheticEvent } from 'react'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { ScrollArea } from '../components/ui/scroll-area.tsx'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.tsx'
-import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { DebugView } from '../index.ts'
+import { useState, type SyntheticEvent, type ComponentProps } from 'react'
+import {
+  buttonVariants,
+  overridable,
+  type Override,
+  type PluginUi,
+  ScrollArea,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useGame,
+  usePart,
+  useWords,
+} from '@ifloom/react'
+
+/** The debug plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const DEBUG_WORDS = {
+  closeScene: 'Close the scene',
+  debug: 'Debug',
+  debugGo: 'Go',
+  debugHeld: 'Held',
+  debugKv: 'kv key',
+  debugLog: 'Log',
+  debugScene: 'Scene',
+  debugSet: 'Set',
+  debugStat: 'Stat',
+  debugStatOf: 'Stat of',
+  debugState: 'State',
+  debugTime: 'Time',
+  debugTurn: 'Turn',
+  debugWhy: 'Why not',
+  greyedOut: 'Greyed out',
+  locksOn: 'Locks on',
+  noneOn: 'None.',
+  nothingGreyed: 'Nothing.',
+  seed: 'seed {seed}',
+  set: 'Set',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    DebugCard: Override<ComponentProps<typeof DebugCard>>
+  }
+  interface PartNames {
+    'debug': true
+    'debug-error': true
+    'debug-field': true
+    'debug-form': true
+    'debug-header': true
+    'debug-heading': true
+    'debug-label': true
+    'debug-list': true
+    'debug-log': true
+    'debug-section': true
+    'debug-seed': true
+    'debug-state': true
+    'debug-title': true
+  }
+}
 
 /** What `useDebug` returns: the debug plugin's view, what's greyed out, the state and the log, and the commands. */
 export type DebugControls = DebugView & {
@@ -33,7 +91,8 @@ export function useDebug(): DebugControls | null {
   const greyed = [
     ...view.actions,
     ...view.scene.choices,
-    ...((view.plugins.cast as CastView | undefined)?.present ?? []).flatMap((person) => person.actions),
+    // The people here and their buttons, read by the cast plugin's id, not its types: debug imports no other plugin.
+    ...((view.plugins.cast as { present?: { actions: RenderedChoice[] }[] } | undefined)?.present ?? []).flatMap((person) => person.actions),
   ].filter((choice) => choice.disabled)
   return {
     ...data,
@@ -53,11 +112,11 @@ const debugCommand = (name: string, args: Record<string, unknown>): Command => (
 /** A one-line form that sends a debug command built from what was typed. */
 function CommandForm({ label, fields, build }: { label: string; fields: string[]; build: (values: string[]) => Command }) {
   const { send } = useGame()
-  const words = useWords()
+  const words = useWords(DEBUG_WORDS)
   const [values, setValues] = useState(fields.map(() => ''))
   const form = usePart('debug-form', 'flex flex-wrap items-center gap-2 text-sm')
-  const name = usePart('debug-label', 'w-20 font-medium')
-  const input = usePart('debug-field', 'h-8 w-28 rounded-md border bg-background px-2')
+  const name = usePart('debug-label', 'min-w-8 font-medium')
+  const input = usePart('debug-field', 'h-8 min-w-0 flex-1 rounded-md border bg-background px-2')
   const button = usePart('button', buttonVariants({ size: 'sm' }))
   const error = usePart('debug-error', 'text-destructive')
   const [said, setSaid] = useState<string | null>(null)
@@ -100,7 +159,7 @@ function parse(value: string): string | number | boolean {
 
 function DebugCardImpl({ className }: { className?: string }) {
   const { view } = useGame()
-  const words = useWords()
+  const words = useWords(DEBUG_WORDS)
   const panel = usePart('debug', 'flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)
   const header = usePart('debug-header', 'flex items-center gap-2')
   const title = usePart('debug-title', 'font-heading font-semibold')
@@ -110,10 +169,10 @@ function DebugCardImpl({ className }: { className?: string }) {
   const setSection = usePart('debug-section', 'flex flex-col gap-2')
   const section = usePart('debug-section', '')
   const heading = usePart('debug-heading', 'font-medium')
-  const locks = usePart('debug-list', 'mb-2 list-disc pl-5')
-  const list = usePart('debug-list', 'list-disc pl-5')
+  const locks = usePart('debug-list', 'flex flex-col gap-1 pl-3')
+  const list = usePart('debug-list', 'flex flex-col gap-1 pl-3')
   const state = usePart('debug-state', 'text-xs')
-  const log = usePart('debug-log', 'list-decimal pl-5 font-mono text-xs')
+  const log = usePart('debug-log', 'flex flex-col gap-1 pl-3 font-mono text-xs')
   const data = useDebug()
   if (!data) return null
   const debug = debugCommand
@@ -123,7 +182,9 @@ function DebugCardImpl({ className }: { className?: string }) {
       <div {...header}>
         <h3 {...title}>{words('debug')}</h3>
         <span {...seed}>{words('seed', { seed: data.seed })}</span>
-        <div className="ml-auto flex gap-1">
+        {/* Undo and redo, at the far end. */}
+        <span className="flex-1" />
+        <div className="flex gap-1">
           <button type="button" {...step} disabled={!data.canUndo} onClick={data.undo}>
             {words('undo')}
           </button>
@@ -185,15 +246,17 @@ function DebugCardImpl({ className }: { className?: string }) {
           </ul>
         </TabsContent>
         <TabsContent value="state" {...section}>
-          <ScrollArea className="h-64">
+          <ScrollArea className="h-96">
             <pre {...state}>{JSON.stringify(data.state, null, 2)}</pre>
           </ScrollArea>
         </TabsContent>
         <TabsContent value="log" {...section}>
-          <ScrollArea className="h-64">
+          <ScrollArea className="h-96">
             <ol {...log}>
               {data.log.map((command, index) => (
-                <li key={index}>{JSON.stringify(command)}</li>
+                <li key={index}>
+                  {index + 1}. {JSON.stringify(command)}
+                </li>
               ))}
             </ol>
           </ScrollArea>
@@ -210,3 +273,15 @@ function DebugCardImpl({ className }: { className?: string }) {
  * game built without the plugin. A thin default on `useDebug`.
  */
 export const DebugCard = overridable('DebugCard', DebugCardImpl)
+
+/**
+ * The debug plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `DebugCard` at the end of the story, and the debug
+ * card's words. It does nothing in a build without the plugin, so it can be
+ * listed in every build.
+ */
+export const debugUi: PluginUi = {
+  id: 'debug',
+  words: DEBUG_WORDS,
+  layout: { story: [() => <DebugCard />] },
+}

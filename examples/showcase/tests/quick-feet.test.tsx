@@ -8,6 +8,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { apply, createRunner, startingState, type GameState, type CommandRef } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
+import { townUi } from '../src/ui.ts'
 import { clock, smallTown } from '../src/game.ts'
 
 const { game } = smallTown()
@@ -38,7 +39,7 @@ describe('quick feet, in the browser', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(clock.write({ ...state, turn: 1 }, { day: 1, period: 'morning' }), go('high-street'), go('park'))
     const runner = createRunner(game, state)
-    render(<GameShell runner={runner} keys />)
+    render(<GameShell runner={runner} plugins={townUi()} keys />)
     const coins = runner.state.stats.coins
 
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Play quick feet with the kids/ })))

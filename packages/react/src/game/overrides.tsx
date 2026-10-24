@@ -11,7 +11,7 @@ import { createContext, useContext, type ComponentType, type ReactNode } from 'r
 import { cn } from '../lib/utils.ts'
 import type { RoomActions, Title } from './layout.tsx'
 import type { Game, Overlay, Section, Sidebar, Story, When } from './regions.tsx'
-import type { Clock, Exits, LocationCard, PeopleHere, Relationships, StatList } from './sidebar.tsx'
+import type { Clock, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
 import type { InlineAction, Tip } from './inline.tsx'
 import type { Hotspot, Stage } from './stage.tsx'
@@ -19,12 +19,7 @@ import type { Video } from './video.tsx'
 import type { MediaViewer } from './viewer.tsx'
 import type { ChoiceButton, ChoiceList, PriceTag } from './choices.tsx'
 import type { Notice, Notices } from './notices.tsx'
-import type { QuestLog } from './quests.tsx'
-import type { AppSection, DeviceButtons, DeviceDialog, DeviceScreen } from './device.tsx'
-import type { FeedSection, MessagesSection } from './sections.tsx'
-import type { DebugCard } from './debug.tsx'
 import type { Picture } from './picture.tsx'
-import type { WardrobeCard } from './wardrobe.tsx'
 import type { Inventory } from './inventory.tsx'
 import type { EntityTable } from './entities.tsx'
 import type { InputField, InputFields } from './inputs.tsx'
@@ -39,13 +34,7 @@ import type { DiceOverlay, DiceRoll } from './dice.tsx'
 import type { Countdown, Timers } from './timers.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
-import type { AchievementList, AchievementsButton, AchievementsPage } from './achievements.tsx'
-import type { CheatPanel, CheatsButton } from './cheats.tsx'
-import type { UnlocksPanel } from './unlocks.tsx'
-import type { ShopCounter, ShopDialog } from './shop.tsx'
 import type { PanelHost } from './panels.tsx'
-import type { JobBoard } from './jobs.tsx'
-import type { StatusList } from './statuses.tsx'
 
 /** Every `data-part` the React UI draws, which is also every key `classes` takes. */
 export const PART_KEYS = [
@@ -77,27 +66,6 @@ export const PART_KEYS = [
   'stat-bar',
   'stat-pips',
   'stat-pip',
-  // Where you are, and who's there
-  'location',
-  'location-name',
-  'location-text',
-  'location-things',
-  'location-thing',
-  'location-thing-name',
-  'location-thing-pick',
-  'exits',
-  'exit',
-  'people',
-  'people-title',
-  'person',
-  'person-portrait',
-  'person-name',
-  'person-desc',
-  'person-actions',
-  'relationships',
-  'relationship',
-  'relationship-header',
-  'relationship-stats',
   // Scenes
   'scene-transition',
   'scene',
@@ -206,93 +174,13 @@ export const PART_KEYS = [
   'mods-empty',
   'mods-restart',
   'mods-changed',
-  // Plugins' cards
-  'quests',
-  'quests-title',
-  'quest',
-  'quest-title',
-  'quest-stage',
-  'quest-summary',
-  'quest-hint',
-  'quests-done',
-  'quest-done',
+  // What you carry, and the entities' tables
   'inventory',
   'inventory-title',
   'thing',
   'thing-name',
   'thing-count',
   'thing-text',
-  'thing-drop',
-  'wardrobe',
-  'wardrobe-title',
-  'wardrobe-slot',
-  'wardrobe-slot-name',
-  'wardrobe-worn',
-  'statuses',
-  'statuses-title',
-  'status',
-  'status-label',
-  'status-stacks',
-  'status-turns',
-  'status-summary',
-  'status-modifiers',
-  'achievements-button',
-  'achievements',
-  'achievements-title',
-  'achievements-count',
-  'achievements-empty',
-  'cheats-button',
-  'cheats',
-  'cheats-group',
-  'cheats-group-title',
-  'cheat',
-  'cheat-text',
-  'cheat-used',
-  'unlocks',
-  'unlocks-title',
-  'unlock-form',
-  'unlock-input',
-  'unlocks-message',
-  'unlocks-entered',
-  'unlocks-list',
-  'unlock',
-  'unlock-name',
-  'unlock-state',
-  'unlock-text',
-  'unlock-problem',
-  'achievement',
-  'achievement-image',
-  'achievement-title',
-  'achievement-text',
-  'achievement-progress',
-  'achievement-progress-text',
-  'shop',
-  'shop-closed',
-  'shop-empty',
-  'goods',
-  'good',
-  'good-name',
-  'good-desc',
-  'good-image',
-  'good-details',
-  'good-off',
-  'good-full-price',
-  'good-stock',
-  'good-owned',
-  'good-actions',
-  'jobs',
-  'jobs-title',
-  'job',
-  'job-title',
-  'job-rank',
-  'job-fired',
-  'job-text',
-  'job-details',
-  'job-pay',
-  'job-shift',
-  'job-next',
-  'job-record',
-  'job-actions',
   'entities',
   'entity-table',
   'entity-heading',
@@ -310,54 +198,6 @@ export const PART_KEYS = [
   'input-options',
   'input-submit',
   'input-error',
-  // Devices, apps, messages and feeds
-  'devices',
-  'device-button',
-  'device-badge',
-  'device-screen',
-  'app',
-  'app-header',
-  'app-title',
-  'app-back',
-  'app-launcher',
-  'app-button',
-  'app-icon',
-  'app-badge',
-  'app-prose',
-  'app-entries',
-  'app-entry',
-  'app-entry-image',
-  'app-entry-title',
-  'app-entry-text',
-  'channel',
-  'thread',
-  'thread-title',
-  'thread-portrait',
-  'message',
-  'bubble',
-  'feed',
-  'post',
-  'post-author',
-  'post-portrait',
-  'post-image',
-  'post-text',
-  'post-meta',
-  'post-comment',
-  'post-comment-name',
-  // The debug card
-  'debug',
-  'debug-header',
-  'debug-title',
-  'debug-seed',
-  'debug-form',
-  'debug-label',
-  'debug-field',
-  'debug-error',
-  'debug-section',
-  'debug-heading',
-  'debug-list',
-  'debug-state',
-  'debug-log',
   // The pages around the game
   'title-page',
   'title-art',
@@ -383,7 +223,6 @@ export const PART_KEYS = [
   'credits',
   'credit',
   'credit-link',
-  'achievements-page',
   'gate-page',
   'gate-title',
   'gate-text',
@@ -392,7 +231,20 @@ export const PART_KEYS = [
   'gate-decline',
 ] as const
 
-export type PartKey = (typeof PART_KEYS)[number]
+/**
+ * The parts a plugin's React UI draws, by name, added by augmenting this
+ * interface so `classes` and `usePart` take them typed:
+ *
+ *   declare module '@ifloom/react' {
+ *     interface PartNames { shop: true; good: true }
+ *   }
+ */
+// oxlint-disable-next-line typescript/no-empty-interface, typescript/no-empty-object-type -- filled by augmentation
+export interface PartNames {}
+
+/** A `data-part` name: one of `PART_KEYS`, or one a plugin's UI adds through `PartNames`. */
+// oxlint-disable-next-line typescript/no-redundant-type-constituents -- `never` here until a plugin's UI augments PartNames
+export type PartKey = (typeof PART_KEYS)[number] | Extract<keyof PartNames, string>
 
 /**
  * Classes for a part. A string is merged over the built-in classes (yours win
@@ -406,8 +258,15 @@ export type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
 
 type PropsOf<T> = T extends ComponentType<infer P> ? P : never
 
-/** The built-in components a game can replace, by name. */
-export type Components = Partial<{
+/**
+ * The built-in components a game can replace, by name, each with the props it
+ * takes. A plugin's React UI adds its own by augmenting this interface:
+ *
+ *   declare module '@ifloom/react' {
+ *     interface OverridableComponents { ShopCounter: Override<ShopCounterProps> }
+ *   }
+ */
+export interface OverridableComponents {
   Game: Override<PropsOf<typeof Game>>
   Sidebar: Override<PropsOf<typeof Sidebar>>
   Story: Override<PropsOf<typeof Story>>
@@ -417,10 +276,6 @@ export type Components = Partial<{
   Title: Override<PropsOf<typeof Title>>
   Clock: Override<PropsOf<typeof Clock>>
   StatList: Override<PropsOf<typeof StatList>>
-  LocationCard: Override<PropsOf<typeof LocationCard>>
-  Exits: Override<PropsOf<typeof Exits>>
-  PeopleHere: Override<PropsOf<typeof PeopleHere>>
-  Relationships: Override<PropsOf<typeof Relationships>>
   RoomActions: Override<PropsOf<typeof RoomActions>>
   SceneStage: Override<PropsOf<typeof SceneStage>>
   Beat: Override<PropsOf<typeof Beat>>
@@ -441,30 +296,11 @@ export type Components = Partial<{
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>
   ModManager: Override<PropsOf<typeof ModManager>>
-  QuestLog: Override<PropsOf<typeof QuestLog>>
   Inventory: Override<PropsOf<typeof Inventory>>
-  WardrobeCard: Override<PropsOf<typeof WardrobeCard>>
-  StatusList: Override<PropsOf<typeof StatusList>>
-  AchievementList: Override<PropsOf<typeof AchievementList>>
-  AchievementsButton: Override<PropsOf<typeof AchievementsButton>>
-  AchievementsPage: Override<PropsOf<typeof AchievementsPage>>
-  CheatPanel: Override<PropsOf<typeof CheatPanel>>
-  CheatsButton: Override<PropsOf<typeof CheatsButton>>
-  UnlocksPanel: Override<PropsOf<typeof UnlocksPanel>>
   PanelHost: Override<PropsOf<typeof PanelHost>>
-  ShopDialog: Override<PropsOf<typeof ShopDialog>>
-  ShopCounter: Override<PropsOf<typeof ShopCounter>>
-  JobBoard: Override<PropsOf<typeof JobBoard>>
   EntityTable: Override<PropsOf<typeof EntityTable>>
   InputFields: Override<PropsOf<typeof InputFields>>
   InputField: Override<PropsOf<typeof InputField>>
-  DeviceButtons: Override<PropsOf<typeof DeviceButtons>>
-  DeviceDialog: Override<PropsOf<typeof DeviceDialog>>
-  DeviceScreen: Override<PropsOf<typeof DeviceScreen>>
-  AppSection: Override<PropsOf<typeof AppSection>>
-  MessagesSection: Override<PropsOf<typeof MessagesSection>>
-  FeedSection: Override<PropsOf<typeof FeedSection>>
-  DebugCard: Override<PropsOf<typeof DebugCard>>
   Picture: Override<PropsOf<typeof Picture>>
   Video: Override<PropsOf<typeof Video>>
   Stage: Override<PropsOf<typeof Stage>>
@@ -476,7 +312,10 @@ export type Components = Partial<{
   LoadPage: Override<PropsOf<typeof LoadPage>>
   CreditsPage: Override<PropsOf<typeof CreditsPage>>
   GatePage: Override<PropsOf<typeof GatePage>>
-}>
+}
+
+/** Replacements for any of the `OverridableComponents`, by name. */
+export type Components = Partial<OverridableComponents>
 
 /** What a game passes to make the UI its own. `GameProvider`, `GameShell` and `mountGame` all take these. */
 export type UiOptions = {
@@ -532,6 +371,36 @@ export function usePart(name: PartKey, defaults: string, extra?: string): { 'dat
   return { 'data-part': name, className }
 }
 
+/**
+ * What a part is like, whatever drew it, carried as `data-kit` beside its own
+ * `data-part`: a plugin's goods, jobs and achievements are all `card`s. The
+ * presets style these and the theme's tokens, never a plugin's own parts, so
+ * a plugin's UI looks right in each preset without a stylesheet of its own,
+ * and a game's stylesheet can restyle every card at once.
+ *
+ * - `card`: an entry in a list, boxed: a vendor's good, a job, an achievement.
+ * - `item`: an entry in a list, not boxed: a status.
+ * - `title`: an entry's name. `heading`: a list's heading.
+ * - `note`: a line about an entry, quieter than its title.
+ * - `meter`: a bar of progress, with a `<span>` inside as wide as it's got.
+ * - `commands`: buttons that do something, not choices the story offers.
+ * - `opener`: a button that opens something over the page, such as a dialog.
+ * - `form` and `input`: where the player types something, such as a code.
+ * - `badge`: a small label on an entry. `thumb`: a small picture of it.
+ * - `label`: a short word beside a value, such as a slot's name.
+ *
+ * An entry that can be done says how it stands in `data-state`: `"done"`, or
+ * `"open"` while it isn't yet. One the player hasn't found yet carries `data-secret`.
+ */
+export const KIT_PARTS = ['card', 'item', 'title', 'heading', 'note', 'meter', 'commands', 'opener', 'form', 'input', 'badge', 'thumb', 'label'] as const
+
+export type KitPart = (typeof KIT_PARTS)[number]
+
+/** `usePart` for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. */
+export function useKitPart(kit: KitPart, name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string } {
+  return { ...usePart(name, defaults, extra), 'data-kit': kit }
+}
+
 /** The `motion` option in effect: true unless the game turned transitions off. See `useMotion` for the player's setting too. */
 export function useMotionOption(): boolean {
   return useContext(UiContext).motion
@@ -548,7 +417,7 @@ export function useKeysOption(): boolean | KeyOptions {
 }
 
 /** A built-in component that a game can replace by `name`. Used for every component the UI exports. */
-export function overridable<P extends object>(name: keyof Components, Default: ComponentType<P>): ComponentType<P> {
+export function overridable<P extends object>(name: keyof OverridableComponents, Default: ComponentType<P>): ComponentType<P> {
   function Overridable(props: P) {
     const Custom = useContext(UiContext).components[name] as Override<P> | undefined
     return Custom ? <Custom {...props} Default={Default} /> : <Default {...props} />

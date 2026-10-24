@@ -16,7 +16,7 @@ import {
 } from '@ifloom/plugin-achievements'
 ```
 
-The plugin has no UI of its own. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
 
 ## Install
 
@@ -176,7 +176,7 @@ It works in any effect list, a thing's use in the [inventory](/docs/plugins/inve
 
 `runner.view().plugins.achievements` is an `AchievementsView`. With a runner that has a profile, an achievement counts as earned if this save earned it or any save did. Without one, as in `view(state, game)`, only this save's count.
 
-The [React UI](/docs/react) draws it with [`AchievementList`](/docs/react/components#achievementlist), on a page or in a dialog opened from the sidebar, and [`useAchievements`](/docs/react/components#useachievements) gives this view with no markup.
+Its [React UI](#the-react-ui) draws it with [`AchievementList`](#achievementlist), on a page or in a dialog opened from the sidebar, and [`useAchievements`](#useachievements) gives this view with no markup.
 
 ### AchievementsView
 
@@ -217,6 +217,86 @@ type AchievementEntry = {
 | `earned` | Whether this save earned it, or any save did, as the profile records. |
 | `earnedOn` | The turn this save earned it, or `null`. Also `null` for one earned only in another save. |
 | `progress` | How far towards it, or `null` if it has no progress or is a secret not yet earned. |
+
+## The React UI
+
+`@ifloom/plugin-achievements/react` draws the achievements, for a game drawn with [`@ifloom/react`](/docs/react). List `achievementsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and an [`AchievementsButton`](#achievementsbutton) goes in the side column, the title screen offers an achievements page when [pages](/docs/react/components#pages) are on, and the `achievements` panel draws the [`AchievementList`](#achievementlist).
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.achievements`, or from [`useAchievements`](#useachievements) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { achievementsUi } from '@ifloom/plugin-achievements/react'
+
+mountGame(game, { plugins: [achievementsUi] })
+```
+
+### achievementsUi
+
+```ts
+const achievementsUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): an [`AchievementsButton`](#achievementsbutton) goes in the side column, the title screen offers an achievements page when [pages](/docs/react/components#pages) are on, and the `achievements` panel draws the [`AchievementList`](#achievementlist).
+
+Its words are in `ACHIEVEMENTS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.achievementEarned': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.achievementEarned` | `Earned` |
+| `ui.achievementProgress` | `{value} of {target}` |
+| `ui.achievements` | `Achievements` |
+| `ui.achievementsCount` | `{earned} of {total}` |
+| `ui.noAchievements` | `No achievements yet.` |
+
+### AchievementList
+
+```tsx
+function AchievementList(props: { className?: string; title?: string | false }): JSX.Element | null
+```
+
+Every [achievement](/docs/plugins/achievements) the game has, in the order it declares them, under a heading with how many are earned (`ui.achievements` and `ui.achievementsCount`, `1 of 3`). Each one (`data-achievement`) shows its picture, its title and its description. An earned one carries `data-earned` and an **Earned** badge (`ui.achievementEarned`). It counts as earned when this save or any other earned it, since the profile remembers it. A secret one not yet earned carries `data-secret` and shows as `???`, with no description or progress. One with [progress](/docs/plugins/achievements#progress) not yet earned has a bar (a `progressbar` labelled with its title) and `5 of 20` under it (`ui.achievementProgress`).
+
+`title` replaces the heading, and `false` leaves it out, as the page and the dialog do. It draws nothing in a game without the plugin.
+
+Replaceable as `AchievementList` in [`components`](/docs/react/components#components). Parts: `achievements`, `achievements-title`, `achievements-count`, `achievements-empty`, `achievement` (with `data-achievement`, `data-earned` and `data-secret`), `achievement-image`, `achievement-title`, `achievement-text`, `achievement-progress`, `achievement-progress-text` and `badge`.
+
+### AchievementsButton
+
+```tsx
+function AchievementsButton(props: { className?: string }): JSX.Element | null
+```
+
+What the `'achievements'` part draws: a button labelled **Achievements** with the count (`1 of 3`) on a badge. With [pages](/docs/react/components#pages) on, it goes to the [`AchievementsPage`](#achievementspage). Without them, or when the game leaves the achievements page out (`{ ...achievementsUi, pages: undefined }`), it opens an [`AchievementList`](#achievementlist) in a [`Dialog`](/docs/react/components#dialog). Opening it sends no command. It draws nothing in a game without the plugin.
+
+Replaceable as `AchievementsButton` in [`components`](/docs/react/components#components). Parts: `achievements-button`, `badge`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### AchievementsPage
+
+```tsx
+function AchievementsPage(props: { className?: string }): JSX.Element
+```
+
+The `achievements` page, among the [pages](/docs/react/components#pages) around the game: a heading (`ui.achievements`), the [`AchievementList`](#achievementlist), and a **Back** button. The title screen has a button for it when the game lists `achievementsUi`. On the title screen the progress counts come from whatever state the runner holds, and what's earned comes from the profile too, so it's right before a game starts. The section carries `data-page="achievements"`.
+
+Replaceable as `AchievementsPage` in [`components`](/docs/react/components#components), or by a page of your own with the id `achievements` in [`PagesOptions.pages`](/docs/react/components#pagesoptions). Parts: `achievements-page`, `page-heading` and `page-back`.
+
+### useAchievements
+
+```ts
+function useAchievements(): AchievementsView | null
+```
+
+The achievements plugin's view ([`AchievementsView`](/docs/plugins/achievements#achievementsview): `achievements`, `earned` and `total`), or `null` in a game without the plugin. [`AchievementList`](#achievementlist) and the button are drawn from it.
+
+```tsx
+import { useAchievements } from '@ifloom/plugin-achievements/react'
+
+function Trophies() {
+  const data = useAchievements()
+  return data ? <span>{data.earned}/{data.total}</span> : null
+}
+```
 
 ## The state
 

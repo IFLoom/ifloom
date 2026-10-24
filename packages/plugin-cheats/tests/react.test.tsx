@@ -3,9 +3,24 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { createRunner, definePlugin, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
-import { cheats } from '@ifloom/plugin-cheats'
-import { CheatPanel, GameMenu, GameProvider, SceneStage, GameShell, useCheats, type Components } from '../src/index.ts'
-import { storyOf } from './layouts.tsx'
+import { cheats } from '../src/index.ts'
+import { GameMenu, GameProvider, SceneStage, GameShell, type Components, Game as GamePage, Story } from '@ifloom/react'
+import { CheatPanel, useCheats } from '../src/react/index.tsx'
+import { cheatsUi } from '../src/react/index.tsx'
+
+/** The plugin UIs every game here is drawn with. */
+const UIS = [cheatsUi]
+
+/** A layout of just a story with these children, and nothing over it. */
+function storyOf(children: ReactNode) {
+  return function StoryOnly() {
+    return (
+      <GamePage>
+        <Story>{children}</Story>
+      </GamePage>
+    )
+  }
+}
 
 afterEach(() => {
   cleanup()
@@ -64,7 +79,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
 
 function play(props: Partial<Parameters<typeof GameShell>[0]> = {}, g = game()): Runner {
   const runner = createRunner(g, startingState(g))
-  render(<GameShell runner={runner} {...props} />)
+  render(<GameShell plugins={UIS} runner={runner} {...props} />)
   return runner
 }
 
@@ -108,7 +123,7 @@ describe('the cheat panel', () => {
     const g = game()
     const start = startingState(g)
     const unlocked = createRunner(g, { ...start, kv: { ...start.kv, 'unlock.supporter': true } })
-    render(<GameShell runner={unlocked} />)
+    render(<GameShell plugins={UIS} runner={unlocked} />)
     const dialog = openPanel()
     const gold = within(dialog.querySelector('[data-cheat="gold"]') as HTMLElement).getByRole('button') as HTMLButtonElement
     expect(gold.disabled).toBe(false)
@@ -144,7 +159,7 @@ describe('the cheat panel', () => {
     expect(screen.getByText('Our own cheats')).toBeTruthy()
     cleanup()
     const g = game()
-    render(<GameShell runner={createRunner({ ...g, strings: { ...g.strings, 'ui.cheats': 'Helpers' } }, startingState(g))} />)
+    render(<GameShell plugins={UIS} runner={createRunner({ ...g, strings: { ...g.strings, 'ui.cheats': 'Helpers' } }, startingState(g))} />)
     expect(screen.getByRole('button', { name: 'Helpers' })).toBeTruthy()
   })
 })
@@ -152,7 +167,11 @@ describe('the cheat panel', () => {
 describe('useCheats', () => {
   const wrapper =
     (runner: Runner) =>
-    ({ children }: { children: ReactNode }) => <GameProvider runner={runner}>{children}</GameProvider>
+    ({ children }: { children: ReactNode }) => (
+      <GameProvider plugins={UIS} runner={runner}>
+        {children}
+      </GameProvider>
+    )
 
   it('gives the cheats by group, and uses one with no markup', () => {
     const g = game()
@@ -178,7 +197,7 @@ describe('useCheats', () => {
   it('draws the panel anywhere inside a provider', () => {
     const g = game()
     render(
-      <GameProvider runner={createRunner(g, startingState(g))}>
+      <GameProvider plugins={UIS} runner={createRunner(g, startingState(g))}>
         <CheatPanel />
       </GameProvider>,
     )

@@ -804,7 +804,7 @@ wash: (_state, _args, { set, apply }) => apply([{ kind: 'turn' }], set({ dirty: 
 
 ## The view
 
-`view(state, context)` returns whatever the plugin's UI needs. The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it, so type it where you read it:
+`view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it, so type it where you read it:
 
 ```ts
 import { view } from '@ifloom/engine'

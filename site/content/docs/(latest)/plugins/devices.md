@@ -395,7 +395,7 @@ App and device names aren't strings. They're the game's own, given in each [`App
 
 `view(state, game).plugins.devices` is a `DevicesView`.
 
-The [React UI](/docs/react) draws it with [`DeviceButtons`](/docs/react/components#devicebuttons) and a [`DeviceDialog`](/docs/react/components#devicedialog), and [`useDevices`](/docs/react/components#usedevices) gives the devices with no markup.
+Its [React UI](#the-react-ui) draws it with [`DeviceButtons`](#devicebuttons) and a [`DeviceDialog`](#devicedialog), and [`useDevices`](#usedevices) gives the devices with no markup.
 
 ### DevicesView
 
@@ -475,6 +475,155 @@ type SectionView =
 | `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, desc, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel }` | What the game's custom panel returned, or `null` if it has none. |
+
+## The React UI
+
+`@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.devices`, or from [`useDevices`](#usedevices) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { devicesUi } from '@ifloom/plugin-devices/react'
+
+mountGame(game, { plugins: [devicesUi] })
+```
+
+### devicesUi
+
+```ts
+const devicesUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
+
+### DeviceStrip
+
+```tsx
+function DeviceStrip(): JSX.Element | null
+```
+
+What `devicesUi` adds to the [`NoticeStrip`](/docs/react/components#noticestrip): a count for each app with a badge, on any device, as a button that opens the device on that app. It draws nothing while no app has news.
+
+Replaceable as `DeviceStrip` in [`components`](/docs/react/components#components). Parts: `notice-strip-item` (with `data-strip`, the device and the app) and `badge`.
+
+### DeviceButtons
+
+```tsx
+function DeviceButtons(): JSX.Element | null
+```
+
+A button for each device offered from the sidebar (`sidebar: true`), with its badge. Each button opens the device in a [`DeviceDialog`](#devicedialog) and carries `data-device`. Opening the dialog sends no command and costs nothing.
+
+Replaceable as `DeviceButtons` in [`components`](/docs/react/components#components). Parts: `devices`, `device-button` (with `data-device`) and `device-badge`.
+
+### DeviceDialog
+
+```tsx
+function DeviceDialog(props: { deviceId: string | null; onClose: () => void }): JSX.Element
+```
+
+The device with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). It's closed while `deviceId` is `null` or matches no device. `onClose` is called when the player closes it. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
+
+```tsx
+import { useState } from 'react'
+import { Button } from '@ifloom/react'
+import { DeviceDialog } from '@ifloom/plugin-devices/react'
+
+function LaptopButton() {
+  const [open, setOpen] = useState<string | null>(null)
+  return (
+    <>
+      <Button onClick={() => setOpen('laptop')}>Laptop</Button>
+      <DeviceDialog deviceId={open} onClose={() => setOpen(null)} />
+    </>
+  )
+}
+```
+
+Replaceable as `DeviceDialog` in [`components`](/docs/react/components#components). Parts: `dialog` (with `data-frame`), `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### DeviceScreen
+
+```tsx
+function DeviceScreen(props: { device: DeviceView }): JSX.Element
+```
+
+A device, open. With no app open, it shows the home screen: the wallpaper (through [`assetUrl`](/docs/react/components#asseturl)) and a grid of apps. Each app is a button with its name, a badge and an icon square carrying `data-icon`, and it sends the app's command (`devices/open`). A locked app is greyed out, with its reason only in its `title`, shown on hover. Unlike a [`ChoiceButton`](/docs/react/components#choicebutton), the icon doesn't print the reason.
+
+With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending `devices/close`), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
+
+`device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/docs/plugins/devices#deviceview).
+
+Replaceable as `DeviceScreen` in [`components`](/docs/react/components#components). Parts: `device-screen`, `app` (with `data-app`), `app-header`, `app-back`, `app-title`, `app-launcher`, `app-button` (with `data-open-app`), `app-icon` (with `data-icon`) and `app-badge`.
+
+### AppSection
+
+```tsx
+function AppSection(props: { section: SectionView }): JSX.Element | null
+```
+
+One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by kind:
+
+| Kind | Drawn as |
+|---|---|
+| `prose` | A paragraph, with line breaks kept. |
+| `actions` | A [`ChoiceList`](/docs/react/components#choicelist). |
+| `list` | Each entry (`data-entry`) with its picture, title, text and actions. |
+| `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |
+| `panel` | The component in `panels` with the panel's name, given its data. Nothing if there's no component. |
+
+Replaceable as `AppSection` in [`components`](/docs/react/components#components). Parts: `app-prose`, `app-entries`, `app-entry` (with `data-entry`), `app-entry-image`, `app-entry-title` and `app-entry-text`.
+
+### useDevices
+
+```ts
+function useDevices(): DevicesState
+
+type DevicesState = DeviceView[]
+```
+
+The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
+
+```tsx
+import { Badge } from '@ifloom/react'
+import { useDevices } from '@ifloom/plugin-devices/react'
+
+function PhoneBadge() {
+  const phone = useDevices().find((device) => device.id === 'phone')
+  if (!phone) return null
+  return <Badge>{phone.badge}</Badge>
+}
+```
+
+### useDevice
+
+```ts
+function useDevice(): DeviceState
+
+type DeviceState = {
+  openId: string | null
+  device: DeviceView | null
+  open: (id: string) => void
+  close: () => void
+}
+```
+
+Which device is open in a dialog, and how to open and close one. `device` is the open device as the view has it, or `null`, also when `openId` no longer names one. Each call keeps its own state, so call it once and share it between your buttons and the dialog. [`DeviceButtons`](#devicebuttons) uses it.
+
+```tsx
+import { DeviceDialog, useDevice } from '@ifloom/plugin-devices/react'
+
+function PhoneButton() {
+  const { openId, open, close } = useDevice()
+  return (
+    <>
+      <button onClick={() => open('phone')}>Phone</button>
+      <DeviceDialog deviceId={openId} onClose={close} />
+    </>
+  )
+}
+```
 
 ## The state
 

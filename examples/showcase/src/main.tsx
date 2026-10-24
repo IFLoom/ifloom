@@ -2,9 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRunner, indexedDbDriver, localStorageDriver, mods, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell, type PagesOptions } from '@ifloom/react'
-import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { smallTown } from './game.ts'
 import { Layout } from './layout.tsx'
+import { townUi } from './ui.ts'
 import './styles.css'
 
 const driver = localStorageDriver(window.localStorage)
@@ -45,14 +46,14 @@ const pages: PagesOptions = {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {/* `keys`: 1 to 9 pick the choices on screen, each showing its number, and Escape opens the menu. */}
-    {/* `unlocks`: a code box on the settings page. A code that opens new content reloads the page to add it, as a mod does. */}
+    {/* `plugins`: the plugins' own UIs. The unlocks UI puts a code box on the settings page; a code that opens new content reloads the page to add it, as a mod does. */}
     <GameShell
       runner={runner}
       pages={pages}
       layout={Layout}
       keys
       mods={{ store: modStore, problems, onChange: () => location.reload() }}
-      unlocks={{ start: startUnlocks, problems: unlocked.problems, onChange: () => location.reload() }}
+      plugins={townUi({ problems: unlocked.problems, onChange: () => location.reload() })}
     />
   </StrictMode>,
 )

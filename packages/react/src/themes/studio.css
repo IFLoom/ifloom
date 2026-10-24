@@ -284,63 +284,44 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The plugins' defaults: cards like the rest of the app. */
-[data-part="achievement"],
-[data-part="good"],
-[data-part="job"] {
-  border-color: var(--border);
+/*
+ * The kit's parts, whatever plugin draws them: cards like the rest of the
+ * app, small capital headings as an interface has, and a code in a
+ * fixed-width face.
+ */
+[data-kit="card"] {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
   background: var(--card);
   box-shadow: var(--shadow-card);
 }
 
-[data-part="achievement"][data-earned] {
+[data-kit="card"][data-state="done"] {
   border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
 }
 
-[data-part="status"] {
+[data-kit="item"] {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) * 0.6);
   background: var(--card);
 }
 
-[data-part="good-actions"] [data-part="choice"],
-[data-part="job-actions"] [data-part="choice"] {
+[data-kit="commands"] [data-part="choice"] {
   padding-block: 0.4rem;
 }
 
-/* Cheats: cards like the rest of the app. */
-[data-part="cheat"] {
-  padding: 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) * 0.6);
-  background: var(--card);
-}
-
-[data-part="cheats-group-title"] {
+[data-kit="heading"] {
   font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
-/* Codes: cards like the rest of the app, the code in a fixed-width face. */
-[data-part="unlock"] {
-  background: var(--card);
-  border-radius: calc(var(--radius) * 0.6);
-}
-
-[data-part="unlock-input"] {
+[data-kit="input"] {
   font-family: var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-[data-part="unlocks-title"] {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
 }
 
 /* The layout: sections divided by hairlines inside the side card, an app bar on phones. */
@@ -398,7 +379,7 @@
 }
 
 /* What you carry: rows like the app's lists, the counter's pictures as thumbnails. */
-[data-part="good-image"] {
+[data-kit="thumb"] {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
 }

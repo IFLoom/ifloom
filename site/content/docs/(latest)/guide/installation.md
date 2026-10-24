@@ -104,7 +104,7 @@ bun add @ifloom/engine
 bun add --dev @ifloom/cli
 ```
 
-In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/react). With any other framework, or none, the engine is all you need, and [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are there when you want a minigame's clock, keyboard shortcuts or sound.
+In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/react/kit#the-plugins-option). With any other framework, or none, the engine is all you need, and [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are there when you want a minigame's clock, keyboard shortcuts or sound.
 
 A game is one module that exports what [`loadGame`](/docs/reference/loader#loadgame) returns:
 

@@ -438,7 +438,7 @@ const { game } = loadGame([town], {
 
 `view(state, game).plugins.messages` is a `MessagesView`.
 
-The [React UI](/docs/react) draws a channel with [`MessagesSection`](/docs/react/components#messagessection) in an app, and [`useMessages`](/docs/react/components#usemessages) gives this view and the read command with no markup.
+Its [React UI](#the-react-ui) draws a channel with [`MessagesSection`](#messagessection) in an app, and [`useMessages`](#usemessages) gives this view and the read command with no markup.
 
 ### MessagesView
 
@@ -524,7 +524,56 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 { id: 'ava.ducks', channel: 'texts', from: 'ava', when: { kv: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
 ```
 
-The React UI's [`MessagesSection`](/docs/react/components#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
+The React UI's [`MessagesSection`](#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
+
+## The React UI
+
+`@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.messages`, or from [`useMessages`](#usemessages) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { messagesUi } from '@ifloom/plugin-messages/react'
+
+mountGame(game, { plugins: [messagesUi] })
+```
+
+### messagesUi
+
+```ts
+const messagesUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
+
+Its words are in `MESSAGES_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.allRead': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.allRead` | `Mark all read` |
+
+### MessagesSection
+
+```tsx
+const MessagesSection: PluginSectionComponent
+```
+
+A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
+
+Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, a **Mark all read** button (`ui.allRead`) sends `messages/read` for the channel. It draws nothing if the channel isn't in the view.
+
+Replaceable as `MessagesSection` in [`components`](/docs/react/components#components). Parts: `channel`, `thread`, `thread-title`, `thread-portrait`, `message` (with `data-message`), `bubble` (with `data-from`) and `button`.
+
+### useMessages
+
+```ts
+function useMessages(): MessagesControls | null
+
+type MessagesControls = MessagesView & { read: (channel: string) => Result<GameState> }
+```
+
+The [messages](/docs/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`. Send it with [`useGame`](/docs/react/components#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
 
 ## The state
 

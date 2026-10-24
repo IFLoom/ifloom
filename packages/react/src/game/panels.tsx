@@ -1,83 +1,64 @@
 import type { OpenPanel } from '@ifloom/engine'
-import { AchievementList } from './achievements.tsx'
 import { useGame, type PanelComponent } from './context.tsx'
 import { PartDialog } from './dialog.tsx'
 import { Inventory } from './inventory.tsx'
-import { JobBoard } from './jobs.tsx'
 import { overridable } from './overrides.tsx'
-import { QuestLog } from './quests.tsx'
-import { ShopCounter, useShop } from './shop.tsx'
-import { Relationships, StatList } from './sidebar.tsx'
-import { StatusList } from './statuses.tsx'
-import { WardrobeCard } from './wardrobe.tsx'
-import { useWords, type UiStringKey } from './words.ts'
-
-/** What a panel was opened with, as an object: a built-in panel's `data`. */
-function args(data: unknown): Record<string, unknown> {
-  return data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-}
-
-function ShopPanel({ data }: { data: unknown }) {
-  const vendor = useShop()?.vendors.find((entry) => entry.id === args(data).vendor)
-  return vendor ? <ShopCounter vendor={vendor} /> : null
-}
-
-function JobsPanel({ data }: { data: unknown }) {
-  const only = args(data).job
-  return <JobBoard title={false} jobs={Array.isArray(only) ? only.filter((id): id is string => typeof id === 'string') : undefined} />
-}
+import { StatList } from './sidebar.tsx'
+import { mergedFrom, usePluginUis, type PluginPanel, type PluginUi } from './plugins.tsx'
+import { uiSay, useWords, type UiStringKey } from './words.ts'
 
 /**
- * The panels the React UI draws by name, for `{ kind: 'panel', panel }`: each
- * gets what the panel was opened with as `data`. A game's own `panels` of the
- * same name go over these.
- *
- * - `shop`: the `ShopCounter` of `data.vendor`.
- * - `jobs`: the `JobBoard`, only the jobs `data.job` lists if it lists any.
- * - `wardrobe`, `inventory`, `quests`, `people`, `achievements`, `statuses`
- *   and `stats`: `WardrobeCard`, `Inventory`, `QuestLog`, `Relationships`,
- *   `AchievementList`, `StatusList` and `StatList`.
+ * The panels the React UI draws by name, for `{ kind: 'panel', panel }`, for
+ * what the engine itself keeps: `stats` (the `StatList`) and `inventory`
+ * (the `Inventory`). A plugin UI in `plugins` adds its own, such as the
+ * shop's `shop`, and a game's own `panels` of the same name go over both.
  */
 export const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>> = {
-  shop: ShopPanel,
-  jobs: JobsPanel,
-  wardrobe: () => <WardrobeCard title={false} />,
   inventory: () => <Inventory title={false} />,
-  quests: () => <QuestLog title={false} />,
-  people: () => <Relationships />,
-  achievements: () => <AchievementList title={false} />,
-  statuses: () => <StatusList title={false} />,
   stats: () => <StatList />,
 }
 
-/** The UI word each built-in panel is titled with. The shop is titled with its vendor's name. */
+/** The UI word each built-in panel is titled with. */
 const TITLES: Record<string, UiStringKey> = {
-  jobs: 'jobs',
-  wardrobe: 'wardrobe',
   inventory: 'inventory',
-  quests: 'quests',
-  people: 'people',
-  achievements: 'achievements',
-  statuses: 'statuses',
   stats: 'stats',
 }
 
-/** The dialog's title: `with.title` if content gave one, the vendor's name for the shop, a built-in panel's word, else its name. */
-function usePanelTitle(open: OpenPanel | null): string {
+/** Each plugin UI's panel by name, with the module it came from, later modules over earlier ones. */
+function pluginPanels(plugins: readonly PluginUi[]): Record<string, PluginPanel & { from: PluginUi }> {
+  return mergedFrom(plugins, (ui) =>
+    ui.panels ? Object.fromEntries(Object.entries(ui.panels).map(([name, panel]) => [name, { ...panel, from: ui }])) : undefined,
+  )
+}
+
+/**
+ * The dialog's title: `with.title` if content gave one, else what the plugin
+ * UI with a panel of that name says (its word, or its function's answer),
+ * even when the game draws the panel itself, else a built-in panel's word,
+ * else the panel's name.
+ */
+function usePanelTitle(open: OpenPanel | null, plugin: (PluginPanel & { from: PluginUi }) | undefined): string {
+  const { runner, view } = useGame()
   const words = useWords()
-  const vendors = useShop()?.vendors
   if (!open) return ''
   if (typeof open.with.title === 'string') return open.with.title
-  if (open.panel === 'shop') return vendors?.find((vendor) => vendor.id === open.with.vendor)?.name ?? ''
+  if (plugin?.title !== undefined) {
+    const title = typeof plugin.title === 'function' ? plugin.title(open.with, view) : uiSay(runner.game, plugin.title, {}, plugin.from.words ?? {})
+    if (title !== undefined) return title
+  }
   const key = TITLES[open.panel]
   return key ? words(key) : open.panel
 }
 
 function PanelHostImpl() {
   const { view, panels, send } = useGame()
+  const plugins = usePluginUis()
   const open = view.panel
-  const title = usePanelTitle(open)
-  const Panel = open ? (panels[open.panel] ?? BUILT_IN_PANELS[open.panel]) : undefined
+  const fromPlugins = pluginPanels(plugins)
+  const own = open ? panels[open.panel] : undefined
+  const plugin = open ? fromPlugins[open.panel] : undefined
+  const title = usePanelTitle(open, plugin)
+  const Panel = open ? (own ?? plugin?.component ?? BUILT_IN_PANELS[open.panel]) : undefined
   // A name nothing draws shows nothing: the panel closes as the story moves on, or with `closePanel`.
   return (
     <PartDialog open={Boolean(open && Panel)} onClose={() => send({ type: 'closePanel' })} title={title}>
@@ -92,8 +73,9 @@ function PanelHostImpl() {
 
 /**
  * Draws the panel content opened (`view.panel`) in a dialog: the game's own
- * `panels` by its name, else one of `BUILT_IN_PANELS`, with what it was opened
- * with as `data`. Closing the dialog sends `closePanel`. The default layout
- * has one; a layout of your own puts it anywhere inside the `GameProvider`.
+ * `panels` by its name, else a plugin UI's panel of that name, else one of
+ * `BUILT_IN_PANELS`, with what it was opened with as `data`. Closing the
+ * dialog sends `closePanel`. The default layout has one; a layout of your own
+ * puts it anywhere inside the `GameProvider`.
  */
 export const PanelHost = overridable('PanelHost', PanelHostImpl)

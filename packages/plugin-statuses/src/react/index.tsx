@@ -1,8 +1,39 @@
+/**
+ * @ifloom/plugin-statuses/react: the statuses plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `statusesUi` in the game's
+ * `plugins` to have the statuses under the stats, and as the `statuses`
+ * panel; or draw them yourself from `useStatuses`.
+ */
+import type { ComponentProps } from 'react'
 import { statDef } from '@ifloom/engine'
-import type { StatusesView } from '@ifloom/plugin-statuses'
-import { useGame } from './context.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { useWords } from './words.ts'
+import type { StatusesView } from '../index.ts'
+import { overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+
+/** The statuses plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const STATUSES_WORDS = {
+  modifierAdd: '{n} {stat}',
+  modifierMultiply: '×{n} {stat}',
+  statusStacks: '×{n}',
+  statuses: 'Statuses',
+  turnLeft: '1 turn left',
+  turnsLeft: '{n} turns left',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    StatusList: Override<ComponentProps<typeof StatusList>>
+  }
+  interface PartNames {
+    'status': true
+    'status-label': true
+    'status-modifiers': true
+    'status-stacks': true
+    'status-summary': true
+    'status-turns': true
+    'statuses': true
+    'statuses-title': true
+  }
+}
 
 /** The statuses plugin's view: the active statuses, each with its turns left and what it does to the stats, or null in a game without the plugin. `StatusList` is drawn from it. */
 export function useStatuses(): StatusesView | null {
@@ -12,14 +43,14 @@ export function useStatuses(): StatusesView | null {
 
 function StatusListImpl({ className, title }: { className?: string; title?: string | false }) {
   const { runner } = useGame()
-  const words = useWords()
+  const words = useWords(STATUSES_WORDS)
   const section = usePart('statuses', 'flex flex-col gap-2 text-sm', className)
-  const heading = usePart('statuses-title', 'font-heading font-semibold')
-  const row = usePart('status', 'flex flex-col gap-0.5')
-  const label = usePart('status-label', 'flex items-baseline gap-1.5 font-medium')
+  const heading = useKitPart('heading', 'statuses-title', 'font-heading font-semibold')
+  const row = useKitPart('item', 'status', 'flex flex-col gap-0.5')
+  const label = useKitPart('title', 'status-label', 'flex items-center gap-1.5 font-medium')
   const stacks = usePart('status-stacks', 'text-xs text-muted-foreground')
-  const turns = usePart('status-turns', 'ml-auto text-xs font-normal text-muted-foreground tabular-nums')
-  const summary = usePart('status-summary', 'text-xs text-muted-foreground')
+  const turns = useKitPart('note', 'status-turns', 'flex-1 text-right text-xs font-normal text-muted-foreground tabular-nums')
+  const summary = useKitPart('note', 'status-summary', 'text-xs text-muted-foreground')
   const modifiers = usePart('status-modifiers', 'text-xs')
   const data = useStatuses()
   if (!data?.active.length) return null
@@ -60,3 +91,15 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
  * `useStatuses`.
  */
 export const StatusList = overridable('StatusList', StatusListImpl)
+
+/**
+ * The statuses plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `StatusList` under the stats in the side column, the
+ * `statuses` panel, and the statuses' words.
+ */
+export const statusesUi: PluginUi = {
+  id: 'statuses',
+  words: STATUSES_WORDS,
+  layout: { stats: [() => <StatusList />] },
+  panels: { statuses: { component: () => <StatusList title={false} />, title: 'statuses' } },
+}

@@ -154,7 +154,7 @@ With all three, the player buys the scarf from the stall, wears it, eats a pie, 
 
 `view(state, game).plugins.inventory` is an `InventoryView`: what you hold, with a button to use each thing that has a use and one to drop it, built with the engine's [`renderAction`](/docs/reference/view#renderaction) so a UI draws them like any other button.
 
-The [React UI](/docs/react)'s [`Inventory`](/docs/react/components#inventory) draws it, and [`useInventory`](/docs/react/components#useinventory) gives the same data and the commands with no markup. Without the plugin, `Inventory` draws `view.held` with no buttons.
+Its [React UI](#the-react-ui) draws it with [`InventoryCard`](#inventorycard), in place of the React UI's own [`Inventory`](/docs/react/components#inventory), and [`useInventory`](#useinventory) gives the same data and the commands with no markup. Without this UI, `Inventory` draws `view.held` with no buttons.
 
 ### InventoryView
 
@@ -195,6 +195,67 @@ data: { inventory: { kinds: [{ id: 'item' }] } }
 ```
 
 The checker reports a kind the game doesn't have.
+
+## The React UI
+
+`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.inventory`, or from [`useInventory`](#useinventory) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { inventoryUi } from '@ifloom/plugin-inventory/react'
+
+mountGame(game, { plugins: [inventoryUi] })
+```
+
+### inventoryUi
+
+```ts
+const inventoryUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing.
+
+Its words are in `INVENTORY_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.drop': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.drop` | `Drop` |
+
+### InventoryCard
+
+```tsx
+function InventoryCard(props: InventoryProps): JSX.Element | null
+```
+
+What the player carries, with this plugin's buttons. It takes the same props as the React UI's own [`Inventory`](/docs/react/components#inventory), and `inventoryUi` draws it in that one's place, in the side column and the `inventory` panel. Each thing you hold (`data-thing`) has a button that uses it when it's [usable](#making-things-usable), greyed out with the engine's reason when it can't be used now. With `drop`, each has a **Drop** button (`ui.drop`) too, which sends `inventory/drop`.
+
+Replaceable as `InventoryCard` in [`components`](/docs/react/components#components). Parts: `inventory`, `inventory-title`, `thing`, `thing-name`, `thing-count`, `thing-text`, `thing-drop` and `choice`.
+
+### useInventory
+
+```ts
+function useInventory(): InventoryControls | null
+
+type InventoryControls = InventoryView & {
+  use: (ref: string) => Result<GameState>
+  drop: (ref: string) => Result<GameState>
+  give: (ref: string, to: string) => Result<GameState>
+}
+```
+
+The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](/docs/react/components#inventory) is drawn from it.
+
+```tsx
+import { useInventory } from '@ifloom/plugin-inventory/react'
+
+function Snacks() {
+  const bag = useInventory()
+  const food = bag?.things.filter((thing) => thing.ref.startsWith('item:') && thing.use) ?? []
+  return food.map((thing) => <button key={thing.ref} onClick={() => bag!.use(thing.ref)}>{thing.use!.label}</button>)
+}
+```
 
 ## For code
 
@@ -247,7 +308,7 @@ When the game loads, the checker reports:
 ## Gotchas
 
 - **The view lists a thing once for each holder.** While a protagonist is played, a thing both they and the player hold is listed twice, and its button uses the protagonist's first.
-- **Dropping is for good, for now.** Without somewhere to put it, a dropped thing leaves the game's holdings. To keep a quest's key, give the player no drop button for it: the React `Inventory` shows drop buttons only with `drop`.
+- **Dropping is for good, for now.** Without somewhere to put it, a dropped thing leaves the game's holdings. To keep a quest's key, give the player no drop button for it: the React `InventoryCard` shows drop buttons only with `drop`.
 
 ## See it in an example
 

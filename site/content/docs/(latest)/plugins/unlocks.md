@@ -203,7 +203,8 @@ form.onsubmit = async (event) => {
 // src/main.tsx
 import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
-import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
 import { createRoot } from 'react-dom/client'
 import { build } from './game.ts'
 
@@ -214,9 +215,8 @@ const { game } = build({ unlocked: opened.packs })
 const runner = createRunner(game, startingState(game), { saves: saves(game, driver), profile: stored })
 
 // A code box on the settings page, and in the menu without pages.
-createRoot(document.getElementById('root')!).render(
-  <GameShell runner={runner} pages={{}} unlocks={{ start: startUnlocks, problems: opened.problems, onChange: () => location.reload() }} />,
-)
+const plugins = [unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]
+createRoot(document.getElementById('root')!).render(<GameShell runner={runner} pages={{}} plugins={plugins} />)
 ```
 
 ```vue tab="Vue" tab-group="framework"
@@ -267,7 +267,7 @@ async function enter() {
 </form>
 ```
 
-The React UI draws the code box for you with [`UnlocksPanel`](/docs/react/components#unlockspanel) when you pass `unlocks` to `GameShell`, `GameProvider` or `mountGame`.
+The plugin's [React UI](#the-react-ui) draws the code box for you with [`UnlocksPanel`](#unlockspanel) when the game lists `unlocksUi`, or `unlocksUiWith(...)` as above, in `plugins` on `GameShell`, `GameProvider` or `mountGame`.
 
 ### unlockedPacks
 
@@ -362,7 +362,7 @@ It checks no code. Anyone who can run commands, from the browser's console say, 
 
 ## The view
 
-`runner.view().plugins.unlocks` is an `UnlocksView`. The [React UI](/docs/react) draws it with [`UnlocksPanel`](/docs/react/components#unlockspanel), and [`useUnlocks`](/docs/react/components#useunlocks) gives it with no markup.
+`runner.view().plugins.unlocks` is an `UnlocksView`. Its [React UI](#the-react-ui) draws it with [`UnlocksPanel`](#unlockspanel), and [`useUnlocks`](#useunlocks) gives it with no markup.
 
 ### UnlocksView
 
@@ -402,7 +402,7 @@ export function unlockList(view: View): HTMLElement | null {
 ```
 
 ```tsx tab="React" tab-group="framework"
-import { useUnlocks } from '@ifloom/react'
+import { useUnlocks } from '@ifloom/plugin-unlocks/react'
 
 export function UnlockList() {
   const unlocks = useUnlocks()
@@ -450,6 +450,136 @@ const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefin
     {/each}
   </ul>
 {/if}
+```
+
+## The React UI
+
+`@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.unlocks`, or from [`useUnlocks`](#useunlocks) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { unlocksUi } from '@ifloom/plugin-unlocks/react'
+
+mountGame(game, { plugins: [unlocksUi] })
+```
+
+### unlocksUi
+
+```ts
+const unlocksUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them.
+
+Its words are in `UNLOCKS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.checkingCode': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.checkingCode` | `Checking…` |
+| `ui.code` | `Code` |
+| `ui.enterCode` | `Enter a code` |
+| `ui.locked` | `Locked` |
+| `ui.restartForUnlock` | `Restart to add it` |
+| `ui.unlock` | `Unlock` |
+| `ui.unlocked` | `Unlocked` |
+| `ui.unlockedAlready` | `{label} was unlocked already.` |
+| `ui.unlockedNow` | `Unlocked: {label}.` |
+
+### unlocksUiWith
+
+```ts
+function unlocksUiWith(options?: UnlocksUiOptions): PluginUi
+
+type UnlocksUiOptions = {
+  problems?: string[]
+  onChange?: () => void
+  start?: (runner: Runner) => UnlockCodes
+}
+```
+
+`unlocksUi` with what the code box shows and does, for a game that opens what the player unlocked before it's built. `unlocksUi` is `unlocksUiWith()`.
+
+| Field | What it is |
+|---|---|
+| `problems` | What [`unlockedPacks`](#unlockedpacks) couldn't open, shown under the code box. |
+| `onChange` | Builds the game again with the content a code has just opened, usually `() => location.reload()`. Without it, the box never offers to restart. |
+| `start` | How codes start on the runner. [`startUnlocks`](#startunlocks) if left out. A test passes its own locked content here. |
+
+```tsx
+import { GameShell } from '@ifloom/react'
+import { unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
+
+const opened = await unlockedPacks('small-town', stored)
+// … build the game with opened.packs, and make the runner …
+<GameShell runner={runner} pages={{}} plugins={[unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]} />
+```
+
+The codes start when the game is drawn, and stop when it goes.
+
+### UnlocksUiOptions
+
+What [`unlocksUiWith`](#unlocksuiwith) takes, above.
+
+### UnlocksPanel
+
+```tsx
+function UnlocksPanel(props: { className?: string }): JSX.Element | null
+```
+
+Entering a code, and the game's [unlocks](/docs/plugins/unlocks). Under an **Enter a code** heading (`ui.enterCode`) are a text box (`ui.code`) and an **Unlock** button (`ui.unlock`), which says **Checking…** (`ui.checkingCode`) while the code is checked. A wrong code shows the plugin's reason as an alert. One that works says **Unlocked: Supporter edition.** (`ui.unlockedNow`, or `ui.unlockedAlready`), and when it opened content the game in play doesn't have, a **Restart to add it** button (`ui.restartForUnlock`) calls `onChange` from [`unlocksUiWith`](#unlocksuiwith). The `problems` it was given follow, then each unlock (`data-unlock`, and `data-unlocked` once it's unlocked) with its label, a **Locked** or **Unlocked** badge (`ui.locked`, `ui.unlocked`) and its description.
+
+The box shows only when the game lists the unlocks UI and its codes have started. Without it the list still shows. It draws nothing in a game without the plugin, or with no unlocks. The settings page and the menu draw it for you.
+
+Replaceable as `UnlocksPanel` in [`components`](/docs/react/components#components). Parts: `unlocks`, `unlocks-title`, `unlock-form`, `unlock-input`, `button`, `unlocks-message`, `unlocks-entered`, `unlock-problem`, `unlocks-list`, `unlock` (with `data-unlock` and `data-unlocked`), `unlock-name`, `unlock-state` and `unlock-text`.
+
+### useUnlocks
+
+```ts
+function useUnlocks(): UnlocksControls | null
+
+type UnlocksControls = UnlocksView & {
+  available: boolean
+  enter: (code: string) => Promise<boolean>
+  checking: boolean
+  entered: Entered | null
+  message: string | null
+  restart: (() => void) | undefined
+  problems: string[]
+}
+```
+
+The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `unlocks`, `unlocked` and `total`) and the code box's state, or `null` in a game without the plugin.
+
+| Field | What it is |
+|---|---|
+| `available` | Whether codes can be entered: the game lists the unlocks UI, and its codes have started. |
+| `enter` | Tries a code with [`UnlockCodes.enter`](/docs/plugins/unlocks#unlockcodes). Resolves to whether it worked. |
+| `checking` | True while a code is being checked. |
+| `entered` | What the last code that worked unlocked, as [`Entered`](/docs/plugins/unlocks#entered), or `null`. |
+| `message` | Why the last code didn't work, or `null`. |
+| `restart` | `onChange` from `unlocksUiWith`, when the last code opened content that needs it. Otherwise undefined. |
+| `problems` | The `problems` given to `unlocksUiWith`. |
+
+```tsx
+import { useState } from 'react'
+import { useUnlocks } from '@ifloom/plugin-unlocks/react'
+
+function CodeBox() {
+  const unlocks = useUnlocks()
+  const [code, setCode] = useState('')
+  if (!unlocks?.available) return null
+  return (
+    <form onSubmit={(event) => { event.preventDefault(); void unlocks.enter(code) }}>
+      <input value={code} onChange={(event) => setCode(event.target.value)} />
+      <button disabled={unlocks.checking}>Unlock</button>
+      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.label}.` : null)}
+      {unlocks.restart ? <button type="button" onClick={unlocks.restart}>Restart</button> : null}
+    </form>
+  )
+}
 ```
 
 ## The state and the profile

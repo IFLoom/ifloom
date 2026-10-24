@@ -194,7 +194,7 @@ Use them for a button the player presses, such as "Shake it off".
 
 `view(state, game).plugins.statuses` is a `StatusesView`.
 
-The [React UI](/docs/react) lists the active statuses under the stats with [`StatusList`](/docs/react/components#statuslist), and [`useStatuses`](/docs/react/components#usestatuses) gives this view with no markup.
+Its [React UI](#the-react-ui) lists the active statuses under the stats with [`StatusList`](#statuslist), and [`useStatuses`](#usestatuses) gives this view with no markup.
 
 ### StatusesView
 
@@ -225,6 +225,67 @@ type ActiveStatus = {
 | `modifiers` | What it does to the stats right now, all its stacks together, one entry per stat. |
 
 The stats in `view.stats` already include the modifiers, so a UI shows the stat as it is and can list the statuses beside it.
+
+## The React UI
+
+`@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.statuses`, or from [`useStatuses`](#usestatuses) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { statusesUi } from '@ifloom/plugin-statuses/react'
+
+mountGame(game, { plugins: [statusesUi] })
+```
+
+### statusesUi
+
+```ts
+const statusesUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too.
+
+Its words are in `STATUSES_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.modifierAdd': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.modifierAdd` | `{n} {stat}` |
+| `ui.modifierMultiply` | `×{n} {stat}` |
+| `ui.statusStacks` | `×{n}` |
+| `ui.statuses` | `Statuses` |
+| `ui.turnLeft` | `1 turn left` |
+| `ui.turnsLeft` | `{n} turns left` |
+
+### StatusList
+
+```tsx
+function StatusList(props: { className?: string; title?: string | false }): JSX.Element | null
+```
+
+The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its label, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
+
+It draws nothing while no status is active, so the side column has no empty box most of the time, and nothing in a game without the plugin.
+
+Replaceable as `StatusList` in [`components`](/docs/react/components#components). Parts: `statuses`, `statuses-title`, `status` (with `data-status`), `status-label`, `status-stacks`, `status-turns`, `status-summary` and `status-modifiers`.
+
+### useStatuses
+
+```ts
+function useStatuses(): StatusesView | null
+```
+
+The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `label`, `summary`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
+
+```tsx
+import { useStatuses } from '@ifloom/plugin-statuses/react'
+
+function StatusIcons() {
+  const active = useStatuses()?.active ?? []
+  return <p>{active.map((status) => `${status.label} (${status.turnsLeft})`).join(', ')}</p>
+}
+```
 
 ## The state
 

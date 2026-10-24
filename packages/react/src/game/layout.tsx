@@ -1,21 +1,15 @@
-import { AchievementsButton } from './achievements.tsx'
-import { CheatsButton } from './cheats.tsx'
 import { ChoiceList } from './choices.tsx'
 import { useGame } from './context.tsx'
-import { DebugCard } from './debug.tsx'
-import { DeviceButtons } from './device.tsx'
 import { InputFields } from './inputs.tsx'
 import { Inventory } from './inventory.tsx'
 import { GameMenu } from './menu.tsx'
 import { Notices } from './notices.tsx'
 import { PanelHost } from './panels.tsx'
 import { overridable, usePart } from './overrides.tsx'
-import { QuestLog, useQuests } from './quests.tsx'
+import { Plugins } from './plugins.tsx'
 import { Game, Overlay, Section, Sidebar, Story } from './regions.tsx'
 import { SceneStage } from './scene.tsx'
-import { StatusList } from './statuses.tsx'
-import { Clock, Exits, LocationCard, PeopleHere, Relationships, StatList } from './sidebar.tsx'
-import { WardrobeCard } from './wardrobe.tsx'
+import { Clock, StatList } from './sidebar.tsx'
 import { useWords } from './words.ts'
 
 function TitleImpl({ className }: { className?: string }) {
@@ -38,12 +32,11 @@ export const RoomActions = overridable('RoomActions', RoomActionsImpl)
  * The React UI's own layout, which `GameShell` and `mountGame` draw when you
  * give them none. The react and next templates start you with a copy of it in
  * `src/layout.tsx`. Each section hides itself when the game has nothing for
- * it, so the same layout suits a novel and a town.
+ * it, so the same layout suits a novel and a town. What the game's plugin UIs
+ * bring goes at each `<Plugins at="…" />`, in the order of its `plugins` list.
  */
 export function DefaultLayout() {
   const words = useWords()
-  // New quest news shows as a count on the Quests button.
-  const news = useQuests()?.updates
   return (
     <Game>
       <Sidebar>
@@ -52,32 +45,19 @@ export function DefaultLayout() {
         <GameMenu />
         <Section id="stats" title={words('stats')} collapsible open>
           <StatList />
-          <StatusList />
-        </Section>
-        <Section id="quests" title={words('quests')} dialog badge={news || null}>
-          <QuestLog title={false} />
-        </Section>
-        <Section id="people" title={words('people')} dialog>
-          <Relationships />
+          <Plugins at="stats" />
         </Section>
         <Section id="inventory" title={words('inventory')} collapsible>
           <Inventory title={false} />
         </Section>
-        <Section id="wardrobe" title={words('wardrobe')} collapsible>
-          <WardrobeCard title={false} />
-        </Section>
-        <AchievementsButton />
-        <CheatsButton />
-        <DeviceButtons />
+        <Plugins at="sidebar" />
       </Sidebar>
       <Story>
         <SceneStage />
         <InputFields />
-        <LocationCard />
-        <Exits />
+        <Plugins at="room" />
         <RoomActions />
-        <PeopleHere />
-        <DebugCard />
+        <Plugins at="story" />
       </Story>
       <PanelHost />
       <Overlay>

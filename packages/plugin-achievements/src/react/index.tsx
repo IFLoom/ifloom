@@ -1,13 +1,60 @@
-import type { AchievementsView } from '@ifloom/plugin-achievements'
-import { useState } from 'react'
-import { badgeVariants } from '../components/ui/badge.tsx'
-import { buttonVariants } from '../components/ui/button.tsx'
-import { useGame } from './context.tsx'
-import { PartDialog } from './dialog.tsx'
-import { overridable, usePart } from './overrides.tsx'
-import { BackButton, Heading, usePage, usePageParts } from './pages.tsx'
-import { Picture } from './picture.tsx'
-import { useWords } from './words.ts'
+/**
+ * @ifloom/plugin-achievements/react: the achievements plugin's React UI, for a game drawn
+ * with `@ifloom/react`. List `achievementsUi` in the
+ * game's `plugins` to have an Achievements button in the side column, an
+ * achievements page with pages on, and the `achievements` panel; or draw
+ * them yourself from `useAchievements`.
+ */
+import type { AchievementsView } from '../index.ts'
+import { useState, type ComponentProps } from 'react'
+import {
+  BackButton,
+  badgeVariants,
+  buttonVariants,
+  overridable,
+  type Override,
+  PageHeading,
+  PartDialog,
+  Picture,
+  type PluginUi,
+  useGame,
+  useKitPart,
+  usePage,
+  usePageParts,
+  usePart,
+  useWords,
+} from '@ifloom/react'
+
+/** The achievements plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
+export const ACHIEVEMENTS_WORDS = {
+  achievementEarned: 'Earned',
+  achievementProgress: '{value} of {target}',
+  achievements: 'Achievements',
+  achievementsCount: '{earned} of {total}',
+  noAchievements: 'No achievements yet.',
+} as const
+
+declare module '@ifloom/react' {
+  interface OverridableComponents {
+    AchievementList: Override<ComponentProps<typeof AchievementList>>
+    AchievementsPage: Override<ComponentProps<typeof AchievementsPage>>
+    AchievementsButton: Override<ComponentProps<typeof AchievementsButton>>
+  }
+  interface PartNames {
+    'achievement': true
+    'achievement-image': true
+    'achievement-progress': true
+    'achievement-progress-text': true
+    'achievement-text': true
+    'achievement-title': true
+    'achievements': true
+    'achievements-button': true
+    'achievements-count': true
+    'achievements-empty': true
+    'achievements-title': true
+    'achievements-page': true
+  }
+}
 
 /**
  * The achievements plugin's view: every achievement in the order the game
@@ -21,16 +68,18 @@ export function useAchievements(): AchievementsView | null {
 }
 
 function AchievementListImpl({ className, title }: { className?: string; title?: string | false }) {
-  const words = useWords()
+  const words = useWords(ACHIEVEMENTS_WORDS)
   const list = usePart('achievements', 'flex flex-col gap-3', className)
-  const heading = usePart('achievements-title', 'flex items-baseline gap-2 font-heading font-semibold')
+  const heading = useKitPart('heading', 'achievements-title', 'flex items-center gap-2 font-heading font-semibold')
   const count = usePart('achievements-count', 'text-sm font-normal text-muted-foreground tabular-nums')
-  const card = usePart('achievement', 'flex items-start gap-3 rounded-lg border p-3 data-[earned]:border-primary/50 [&:not([data-earned])]:opacity-75')
-  const image = usePart('achievement-image', 'size-12 shrink-0 rounded object-cover')
-  const name = usePart('achievement-title', 'flex flex-wrap items-center gap-2 font-medium')
+  // Earned ones edged in the primary colour, the rest faded a little.
+  const earnedCard = useKitPart('card', 'achievement', 'flex items-start gap-3 rounded-lg border border-primary p-3')
+  const openCard = useKitPart('card', 'achievement', 'flex items-start gap-3 rounded-lg border p-3 opacity-70')
+  const image = useKitPart('thumb', 'achievement-image', 'size-12 shrink-0 rounded object-cover')
+  const name = useKitPart('title', 'achievement-title', 'flex flex-wrap items-center gap-2 font-medium')
   const earnedBadge = usePart('badge', badgeVariants())
   const text = usePart('achievement-text', 'text-sm text-muted-foreground')
-  const bar = usePart('achievement-progress', 'mt-1 h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
+  const bar = useKitPart('meter', 'achievement-progress', 'h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
   const barText = usePart('achievement-progress-text', 'text-xs text-muted-foreground tabular-nums')
   const empty = usePart('achievements-empty', 'text-sm text-muted-foreground')
   const data = useAchievements()
@@ -51,9 +100,10 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
             return (
               <li
                 key={entry.id}
-                {...card}
+                {...(entry.earned ? earnedCard : openCard)}
                 data-achievement={entry.id}
                 data-earned={entry.earned ? '' : undefined}
+                data-state={entry.earned ? 'done' : 'open'}
                 data-secret={entry.secret && !entry.earned ? '' : undefined}
               >
                 {entry.image ? <Picture {...image} src={entry.image} alt="" /> : null}
@@ -99,12 +149,12 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
 export const AchievementList = overridable('AchievementList', AchievementListImpl)
 
 function AchievementsPageImpl({ className }: { className?: string }) {
-  const words = useWords()
+  const words = useWords(ACHIEVEMENTS_WORDS)
   const data = useAchievements()
   const section = usePageParts(className, 'achievements-page')
   return (
     <section {...section} data-page="achievements">
-      <Heading>{words('achievements')}</Heading>
+      <PageHeading>{words('achievements')}</PageHeading>
       {data ? <AchievementList title={false} /> : null}
       <div>
         <BackButton />
@@ -117,15 +167,15 @@ function AchievementsPageImpl({ className }: { className?: string }) {
 export const AchievementsPage = overridable('AchievementsPage', AchievementsPageImpl)
 
 function AchievementsButtonImpl({ className }: { className?: string }) {
-  const words = useWords()
+  const words = useWords(ACHIEVEMENTS_WORDS)
   const pages = usePage()
   const data = useAchievements()
   const [open, setOpen] = useState(false)
-  const button = usePart('achievements-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
+  const button = useKitPart('opener', 'achievements-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
   const count = usePart('badge', badgeVariants({ variant: 'secondary' }))
   if (!data) return null
-  // With pages on, the achievements are a page; otherwise they open over the game.
-  const asPage = pages.enabled && pages.options.achievements !== false
+  // With pages on and the achievements page there, they're a page; otherwise they open over the game.
+  const asPage = pages.enabled && Boolean(pages.added.achievements)
   return (
     <>
       <button type="button" {...button} data-achievements-button onClick={() => (asPage ? pages.go('achievements') : setOpen(true))}>
@@ -143,7 +193,23 @@ function AchievementsButtonImpl({ className }: { className?: string }) {
 
 /**
  * The button that shows the achievements, with how many are earned: the
- * `'achievements'` part. With pages on it goes to the achievements page;
- * otherwise it opens them in a dialog. Nothing in a game without the plugin.
+ * `'achievements-button'` part. With pages on it goes to the achievements
+ * page (unless the game left that page out); otherwise it opens them in a
+ * dialog. Nothing in a game without the plugin.
  */
 export const AchievementsButton = overridable('AchievementsButton', AchievementsButtonImpl)
+
+/**
+ * The achievements plugin's React UI, for `plugins` on `mountGame` or
+ * `GameProvider`: the `AchievementsButton` in the side column, the
+ * `achievements` page (with its title-screen button) when pages are on, the
+ * `achievements` panel, and the achievements' words. To keep them in a
+ * dialog with pages on, leave the page out: `{ ...achievementsUi, pages: undefined }`.
+ */
+export const achievementsUi: PluginUi = {
+  id: 'achievements',
+  words: ACHIEVEMENTS_WORDS,
+  layout: { sidebar: [() => <AchievementsButton />] },
+  pages: { achievements: { label: 'achievements', component: () => <AchievementsPage /> } },
+  panels: { achievements: { component: () => <AchievementList title={false} />, title: 'achievements' } },
+}

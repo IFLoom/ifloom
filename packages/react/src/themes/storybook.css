@@ -325,62 +325,42 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The plugins' defaults: soft cards that sit on the page like stickers. */
-[data-part="achievement"],
-[data-part="good"],
-[data-part="job"] {
+/*
+ * The kit's parts, whatever plugin draws them: soft cards that sit on the
+ * page like stickers, rounded buttons that open them, and a rounded box to
+ * type a code in.
+ */
+[data-kit="card"] {
+  padding: 0.6rem 0.75rem;
   border: none;
   border-radius: var(--radius);
   background: var(--card);
   box-shadow: var(--shadow-card);
 }
 
-[data-part="achievement"][data-earned] {
+[data-kit="card"][data-state="done"] {
   background: color-mix(in oklch, var(--secondary) 55%, var(--card));
 }
 
-[data-part="achievement-progress"] {
+[data-kit="meter"] {
   height: 0.6rem;
 }
 
-[data-part="status"] {
+[data-kit="item"] {
   padding: 0.5rem 0.85rem;
   border-radius: var(--radius);
   background: var(--secondary);
 }
 
-[data-part="achievements-button"] {
+[data-kit="opener"],
+[data-kit="form"] [data-part="button"] {
   border-radius: 999px;
 }
 
-/* Cheats: sticker cards, with a rounded button to open them. */
-[data-part="cheat"] {
-  padding: 0.6rem;
-  border-radius: var(--radius);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-}
-
-[data-part="cheats-button"] {
-  border-radius: 999px;
-}
-
-/* Codes: a rounded box and sticker cards. */
-[data-part="unlock-input"] {
+[data-kit="input"] {
   border-radius: 999px;
   padding-inline: 1rem;
   text-transform: uppercase;
-}
-
-[data-part="unlock"] {
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--card);
-  box-shadow: var(--shadow-card);
-}
-
-[data-part="unlock-form"] [data-part="button"] {
-  border-radius: 999px;
 }
 
 /* The layout: sections as soft tabs on the side card, a cheerful top bar on phones. */
@@ -450,7 +430,7 @@
 }
 
 /* What you carry: soft cards, the counter's pictures rounded like stickers. */
-[data-part="good-image"] {
+[data-kit="thumb"] {
   border-radius: 999px;
   box-shadow: var(--shadow-card);
 }

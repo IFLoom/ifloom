@@ -155,7 +155,7 @@ draw(runner.view())
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { AchievementsButton, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
+import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
 
 // No side column: the story is one centred column, like a book.
 export function Layout() {
@@ -168,7 +168,6 @@ export function Layout() {
         <RoomActions />
         <StatList />
         <GameMenu />
-        <AchievementsButton />
       </Story>
       <PanelHost />
       <Overlay>
@@ -561,9 +560,10 @@ A place keeps hours with its `blocked` list and the calendar's conditions. An ac
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 
-The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/react#layouts) with two changes. It puts the [notice strip](/docs/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
+The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/react#layouts) with the plugins' parts placed by hand and two changes. It puts the [notice strip](/docs/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
 
 ```tsx
+// WardrobeCard and WARDROBE_WORDS come from '@ifloom/plugin-wardrobe/react', with const words = useWords(WARDROBE_WORDS)
 <Section id="wardrobe" title={words('wardrobe')} collapsible when={at('flat')}>
   <WardrobeCard title={false} />
 </Section>

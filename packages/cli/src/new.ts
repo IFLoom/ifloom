@@ -117,11 +117,11 @@ function titleOf(name: string): string {
 
 /**
  * The plugin template's names, from its package name: the plugin's id
- * (`weather`), and that id as code names (`weather`, `Weather`) and a title.
- * Its code holds `__id__`, `__camel__` and `__Pascal__`, which TypeScript reads
- * as names, so the template still parses.
+ * (`weather`), and that id as code names (`weather`, `Weather`, `WEATHER`) and
+ * a title. Its code holds `__id__`, `__camel__`, `__Pascal__` and
+ * `__CONSTANT__`, which TypeScript reads as names, so the template still parses.
  */
-export function pluginNames(name: string): { id: string; camel: string; Pascal: string; title: string } {
+export function pluginNames(name: string): { id: string; camel: string; Pascal: string; CONSTANT: string; title: string } {
   const id = name.replace(/^(?:ifloom-)?plugin-/, '')
   if (!/^[a-z][a-z0-9-]*$/.test(id)) {
     throw new Error(`"${id}" can't be a plugin's id: start with a letter and use lower-case letters, digits and dashes, like ifloom-plugin-weather.`)
@@ -133,7 +133,7 @@ export function pluginNames(name: string): { id: string; camel: string; Pascal: 
       .slice(1)
       .map((word) => word[0].toUpperCase() + word.slice(1))
       .join('')
-  return { id, camel, Pascal: camel[0].toUpperCase() + camel.slice(1), title: titleOf(id) }
+  return { id, camel, Pascal: camel[0].toUpperCase() + camel.slice(1), CONSTANT: words.join('_').toUpperCase(), title: titleOf(id) }
 }
 
 /** Every file under a folder, as paths relative to it. */
@@ -221,7 +221,12 @@ export function newGame(options: NewGameOptions): { dir: string; files: string[]
     const path = join(dir, file)
     const text = readFileSync(path, 'utf8')
     let filled = text.replaceAll('{{name}}', name).replaceAll('{{title}}', title)
-    if (plugin) filled = filled.replaceAll('__id__', plugin.id).replaceAll('__camel__', plugin.camel).replaceAll('__Pascal__', plugin.Pascal)
+    if (plugin)
+      filled = filled
+        .replaceAll('__id__', plugin.id)
+        .replaceAll('__camel__', plugin.camel)
+        .replaceAll('__Pascal__', plugin.Pascal)
+        .replaceAll('__CONSTANT__', plugin.CONSTANT)
     if (filled !== text) writeFileSync(path, filled)
   }
 

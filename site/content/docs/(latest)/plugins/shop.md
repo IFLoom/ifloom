@@ -13,7 +13,7 @@ import {
 } from '@ifloom/plugin-shop'
 ```
 
-The plugin has no UI of its own. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as an activity's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as an activity's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
 
 ## Install
 
@@ -266,7 +266,7 @@ An unknown vendor or thing is false.
 
 `view(state, game).plugins.shop` is a `ShopView`. Each good carries ready-made buttons, built with the engine's [`renderAction`](/docs/reference/view#renderaction), so a UI draws them like any other button.
 
-The [React UI](/docs/react) draws the `shop` panel as a [`ShopCounter`](/docs/react/components#shopcounter) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useShop`](/docs/react/components#useshop) gives the same data and the buy and sell commands with no markup, for a counter you place yourself.
+Its [React UI](#the-react-ui) draws the `shop` panel as a [`ShopCounter`](#shopcounter) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useShop`](#useshop) gives the same data and the buy and sell commands with no markup, for a counter you place yourself.
 
 ### ShopView
 
@@ -328,6 +328,108 @@ type GoodView = {
 | `buy` | The button that buys one: `label` (the thing's name), `price` (today's), `disabled` (why not, if it can't be bought), `warning` and `command`. |
 | `sell` | The button that sells one back, or `null` for a vendor that takes nothing back. |
 | `sellFor` | What selling one back pays, or `null`. |
+
+## The React UI
+
+`@ifloom/plugin-shop/react` draws a vendor's counter, for a game drawn with [`@ifloom/react`](/docs/react). List `shopUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `shop` panel, which [`openShop`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.shop`, or from [`useShop`](#useshop) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { shopUi } from '@ifloom/plugin-shop/react'
+
+mountGame(game, { plugins: [shopUi] })
+```
+
+### shopUi
+
+```ts
+const shopUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `shop` panel, which [`openShop`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
+
+Its words are in `SHOP_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.buy': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.buy` | `Buy` |
+| `ui.sellFor` | `Sell for {price}` |
+| `ui.stockLeft` | `{n} left` |
+| `ui.owned` | `You have {n}` |
+| `ui.percentOff` | `{percent}% off` |
+| `ui.noGoods` | `Nothing for sale.` |
+
+### ShopDialog
+
+```tsx
+function ShopDialog(props: ShopDialogProps): JSX.Element
+
+type ShopDialogProps = { vendorId: string | null; onClose: () => void }
+```
+
+The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`openShop`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
+
+```tsx
+import { useState } from 'react'
+import { Button } from '@ifloom/react'
+import { ShopDialog } from '@ifloom/plugin-shop/react'
+
+function StallButton() {
+  const [open, setOpen] = useState<string | null>(null)
+  return (
+    <>
+      <Button variant="outline" onClick={() => setOpen('stall')}>The fruit stall</Button>
+      <ShopDialog vendorId={open} onClose={() => setOpen(null)} />
+    </>
+  )
+}
+```
+
+Replaceable as `ShopDialog` in [`components`](/docs/react/components#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### ShopCounter
+
+```tsx
+function ShopCounter(props: ShopCounterProps): JSX.Element
+
+type ShopCounterProps = { vendor: VendorView; className?: string }
+```
+
+A vendor's goods, from its [`VendorView`](/docs/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`, the thing's reference) shows its picture when it has one, its name and description, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with a stock, and how many the player has (`ui.owned`). Then:
+
+- **Buy** (`ui.buy`), a [`ChoiceButton`](/docs/react/components#choicebutton) built from the good's `buy` button, so it shows today's price and, when it's greyed out, the reason on it: `Sold out.`, `You need 10 coins.` or the vendor's closed line.
+- **Sell for 2 coins** (`ui.sellFor`), from the good's `sell` button, when the vendor buys back and the player has one.
+
+It says `ui.noGoods` when nothing is on offer.
+
+Replaceable as `ShopCounter` in [`components`](/docs/react/components#components). Parts: `shop` (with `data-vendor`), `shop-closed`, `shop-empty`, `goods`, `good` (with `data-good`), `good-image`, `good-name`, `good-desc`, `good-details`, `good-off`, `good-full-price`, `good-stock`, `good-owned`, `good-actions` and `choice`.
+
+### useShop
+
+```ts
+function useShop(): ShopControls | null
+
+type ShopControls = ShopView & {
+  here: VendorView[]
+  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
+  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
+}
+```
+
+The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), the vendors at the player's location as `here`, and its commands, or `null` in a game without the plugin. `buy` and `sell` send `shop/buy` and `shop/sell`, one if `count` is left out. [`ShopDialog`](#shopdialog), [`ShopCounter`](#shopcounter) and the `shop` panel are drawn from it. `here` is what a layout of your own can show where the player is.
+
+```tsx
+import { useShop } from '@ifloom/plugin-shop/react'
+
+function QuickCoffee() {
+  const shop = useShop()
+  const coffee = shop?.here[0]?.goods.find((good) => good.entity === 'food:coffee')
+  if (!shop || !coffee) return null
+  return <button disabled={Boolean(coffee.buy.disabled)} onClick={() => shop.buy(shop.here[0].id, 'food:coffee')}>Coffee to go</button>
+}
+```
 
 ## The state
 

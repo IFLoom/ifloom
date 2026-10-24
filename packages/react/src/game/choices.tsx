@@ -15,7 +15,7 @@ function PriceTagImpl({ price, className }: { price: Price; className?: string }
   return <span {...attrs}>{parts.join(words('priceSeparator'))}</span>
 }
 
-/** A price as one line of text: its stats, then its notes, joined by the `priceSeparator` word. Internal: the shop and the job board use it. */
+/** A price as one line of text: its stats, then its notes, joined by the `priceSeparator` word, as a vendor's full price or a job's pay is shown. */
 export function usePriceText(): (price: Price | null | undefined) => string {
   const words = useWords()
   return (price) => [...(price?.stats ?? []).map((stat) => stat.text), ...(price?.notes ?? [])].join(words('priceSeparator'))

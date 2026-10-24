@@ -17,7 +17,7 @@ import {
 } from '@ifloom/plugin-debug'
 ```
 
-Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. The [React UI](/docs/react) draws a [debug card](/docs/react/components#debugcard) for it when the game has it.
+Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. Its [React UI](#the-react-ui) draws a [debug card](#debugcard) for it when the game has it.
 
 ## Install
 
@@ -189,7 +189,7 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 
 `view(state, game).plugins.debug` is a `DebugView`, with what a debugger wants on screen.
 
-The [React UI](/docs/react) draws it with [`DebugCard`](/docs/react/components#debugcard), and [`useDebug`](/docs/react/components#usedebug) gives the same data and the debug commands with no markup.
+Its [React UI](#the-react-ui) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data and the debug commands with no markup.
 
 ### DebugView
 
@@ -206,6 +206,97 @@ type DebugView = {
 | `locks` | Every [lock](/docs/reference/locks) whose `when` holds now, in the order the game lists them, with its reason and what it denies. A lock with `effect` is listed whenever its `when` holds, even if it stops no command right now. |
 | `fired` | The [triggers](/docs/reference/triggers) that have fired, with the turn each last fired on. It's a copy of [`state.fired`](/docs/reference/state). |
 | `seed` | The save's seed, which every [draw](/docs/reference/random) is hashed from. |
+
+## The React UI
+
+`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build.
+
+It's yours to leave out. Draw the plugin yourself from `view.plugins.debug`, or from [`useDebug`](#usedebug) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+
+```tsx
+import { mountGame } from '@ifloom/react'
+import { debugUi } from '@ifloom/plugin-debug/react'
+
+mountGame(game, { plugins: [debugUi] })
+```
+
+### debugUi
+
+```ts
+const debugUi: PluginUi
+```
+
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build.
+
+Its words are in `DEBUG_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.closeScene': '…' }`.
+
+| Key | English |
+|---|---|
+| `ui.closeScene` | `Close the scene` |
+| `ui.debug` | `Debug` |
+| `ui.debugGo` | `Go` |
+| `ui.debugHeld` | `Held` |
+| `ui.debugKv` | `kv key` |
+| `ui.debugLog` | `Log` |
+| `ui.debugScene` | `Scene` |
+| `ui.debugSet` | `Set` |
+| `ui.debugStat` | `Stat` |
+| `ui.debugStatOf` | `Stat of` |
+| `ui.debugState` | `State` |
+| `ui.debugTime` | `Time` |
+| `ui.debugTurn` | `Turn` |
+| `ui.debugWhy` | `Why not` |
+| `ui.greyedOut` | `Greyed out` |
+| `ui.locksOn` | `Locks on` |
+| `ui.noneOn` | `None.` |
+| `ui.nothingGreyed` | `Nothing.` |
+| `ui.seed` | `seed {seed}` |
+| `ui.set` | `Set` |
+
+### DebugCard
+
+```tsx
+function DebugCard(props: { className?: string }): JSX.Element | null
+```
+
+A panel for the person testing the game, when the game has the [debug plugin](/docs/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/plugins/debug#leave-it-out-of-release-builds) shows no panel.
+
+| Tab | What it has |
+|---|---|
+| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
+| **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
+| **State** | The whole game state, as JSON. |
+| **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
+
+The heading shows the seed, with **Undo** and **Redo** buttons for the runner's history. They're greyed out while there's nothing to undo or redo, and the runner only keeps history when it's made with `history`.
+
+The heading, buttons, tabs, form rows (**Stat**, **kv key**, **Held**, **Stat of**, **Go**, **Scene**, **Time**, **Turn**) and **Why not** headings go through [`useWords`](/docs/react/components#usewords), under the `ui.` keys listed on [The React UI](/docs/react#words).
+
+**Gotchas.**
+
+- **The placeholders are in English.** Each form's placeholders (`stat`, `value`, `key` and the rest) aren't in the strings table.
+- **A number box needs a number.** An empty box, or words that aren't a number, are refused with `debug/notANumber` rather than set to 0.
+
+Replaceable as `DebugCard` in [`components`](/docs/react/components#components). Parts: `debug`, `debug-header`, `debug-title`, `debug-seed`, `debug-section`, `debug-form`, `debug-label`, `debug-field`, `debug-error`, `debug-heading`, `debug-list`, `debug-state`, `debug-log` and `button`.
+
+### useDebug
+
+```ts
+function useDebug(): DebugControls | null
+
+type DebugControls = DebugView & {
+  greyed: RenderedChoice[]
+  state: GameState
+  log: Command[]
+  canUndo: boolean
+  canRedo: boolean
+  undo: () => void
+  redo: () => void
+  run: (name: string, args?: Record<string, unknown>) => Result<GameState>
+}
+```
+
+The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. `run(name, args)` sends `debug/<name>`, so `run('stat', { stat: 'coins', to: 50 })` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
 
 ## Gotchas
 

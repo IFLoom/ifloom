@@ -22,7 +22,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
     id: 'old-saves',
     title: 'Old saves',
     introScene: 'start',
-    startPhase: 'open',
+    kv: { phase: 'open' },
     activities: [{ id: 'wait' }],
     stats: [
       { id: 'coins', label: 'Coins', start: 3 },
@@ -163,6 +163,10 @@ const v17 = { ...still, version: 17 }
 const { seenOn: _seenOn, ...undated } = v17
 const v18 = { ...undated, version: 18, seen: { start: { n: 1, first: 0, last: 0 } }, chosen: { 'start#go': { n: 1, first: 2, last: 3 } } }
 
+// The stretch of the game is the kv key `phase`.
+const { phase: v18Phase, ...phaseless } = v18
+const v19 = { ...phaseless, version: 19, kv: { ...(v18.kv as Record<string, unknown>), phase: v18Phase } }
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -183,4 +187,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   16: v16,
   17: v17,
   18: v18,
+  19: v19,
 }

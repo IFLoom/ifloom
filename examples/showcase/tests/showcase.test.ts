@@ -548,7 +548,12 @@ describe('Small Town', () => {
     expect(modded.problems).toEqual([])
     expect(modded.game.prose?.variants('street.weather')).toContain('street.weather.fog')
     const fresh = startingState(modded.game)
-    const park = { ...fresh, sceneId: null, phase: 'open', plugins: { ...fresh.plugins, places: { version: 1, state: { at: 'park' } satisfies PlacesState } } }
+    const park = {
+      ...fresh,
+      sceneId: null,
+      kv: { ...fresh.kv, phase: 'open' },
+      plugins: { ...fresh.plugins, places: { version: 1, state: { at: 'park' } satisfies PlacesState } },
+    }
     expect(view(park, modded.game).scene.body).toContain('fog')
   })
 

@@ -12,9 +12,8 @@
 import { say } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
-import type { Condition, Effect, GameState, Range } from '../types.ts'
+import type { Condition, Effect, GameState } from '../types.ts'
 import { defineFeature, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
-import { bounded, inRange, wanted } from '../range.ts'
 
 /** A state a transition can go to at random: its id, or its id with a weight (1 if left out). */
 export type MinigameTarget = string | { state: string; weight?: number }
@@ -29,8 +28,8 @@ export type MinigameTransition = {
    */
   to?: MinigameTarget[]
   /**
-   * What it does before it moves: any effect, a `minigameVar` or a turn
-   * among them. A transition with no `go` or `to` stays where it is.
+   * What it does before it moves: any effect, a `kv` one with
+   * `of: 'minigame'` or a turn among them. A transition with no `go` or `to` stays where it is.
    */
   effects?: EffectRef[]
 }
@@ -120,26 +119,9 @@ export type MinigamesShape = {
     /** The minigame being played, or null. */
     minigame: MinigameState | null
   }
-  conditions: {
-    /**
-     * A variable of the minigame being played, read as a number: bare, whether
-     * it is above 0; with a range, whether it is in it. False with no minigame
-     * running. `{ minigameVar: 'score', gte: 3 }`.
-     */
-    minigameVar: { minigameVar: string } & Range
-  }
   effects: {
     /** Start a minigame, in its `start` state. One already running is dropped. */
     minigame: { kind: 'minigame'; minigame: string }
-    /**
-     * Set a variable of the minigame being played `to` a value, change it `by`
-     * an amount, or set it to a whole number drawn from `random: [min, max]`,
-     * both included. Does nothing with no minigame running.
-     */
-    minigameVar:
-      | { kind: 'minigameVar'; key: string; to: number }
-      | { kind: 'minigameVar'; key: string; by: number }
-      | { kind: 'minigameVar'; key: string; random: [number, number] }
   }
   commands: {
     /** An input to the minigame being played, by name: `{ type: 'minigame', input: 'up' }`. */
@@ -295,21 +277,23 @@ export function minigamePlay(state: GameState): string | undefined {
   return state.minigame ? `${state.minigame.id}#${plays(state, state.minigame.id)}` : undefined
 }
 
-/** The minigame variables a condition reads, looking inside `all`, `any` and `not`. */
+/** The minigame's keys a condition reads (`{ kv, of: 'minigame' }`), looking inside `all`, `any` and `not`. */
 function conditionVars(condition: Condition | undefined): string[] {
   if (!condition || typeof condition !== 'object') return []
-  if ('minigameVar' in condition && typeof condition.minigameVar === 'string') return [condition.minigameVar]
+  if ('kv' in condition && typeof condition.kv === 'string' && condition.of === 'minigame') return [condition.kv]
   if ('all' in condition && Array.isArray(condition.all)) return condition.all.flatMap(conditionVars)
   if ('any' in condition && Array.isArray(condition.any)) return condition.any.flatMap(conditionVars)
   if ('not' in condition && condition.not && typeof condition.not === 'object') return conditionVars(condition.not as Condition)
   return []
 }
 
-/** The minigame variables effects write. */
+/** The minigame's keys effects write (`{ kind: 'kv', of: 'minigame' }`). */
 function effectVars(effects: readonly EffectRef[] | undefined): string[] {
-  return (effects ?? []).flatMap((effect) =>
-    'kind' in effect && effect.kind === 'minigameVar' ? [(effect as Extract<Effect, { kind: 'minigameVar' }>).key] : [],
-  )
+  return (effects ?? []).flatMap((effect) => {
+    if (!('kind' in effect) || effect.kind !== 'kv') return []
+    const write = effect as Extract<Effect, { kind: 'kv' }>
+    return write.of === 'minigame' ? [write.key] : []
+  })
 }
 
 /** Everything wrong with one minigame. */
@@ -391,38 +375,10 @@ export const minigames = defineFeature<MinigamesShape>({
   state: {
     minigame: { start: () => null, load: () => null, keeps: (value) => value === null || typeof value === 'object' },
   },
-  conditions: {
-    minigameVar: {
-      holds: (state, condition) => {
-        const value = state.minigame?.vars[condition.minigameVar]
-        return value !== undefined && inRange(value, condition)
-      },
-      explain: (state, condition) => {
-        const want = bounded(condition) ? wanted(condition) : 'more than 0'
-        if (!state.minigame) return `no minigame running; wants minigame variable ${condition.minigameVar} ${want}`
-        return `minigame variable ${condition.minigameVar} is ${state.minigame.vars[condition.minigameVar] ?? 'unset'}; wants ${want}`
-      },
-      references: (condition) => [{ minigameVar: condition.minigameVar }],
-    },
-  },
   effects: {
     minigame: {
       apply: (state, effect, game, cx) => startMinigame(state, game, effect.minigame, cx),
       references: (effect) => [{ minigame: effect.minigame }],
-    },
-    minigameVar: {
-      apply: (state, effect, _game, cx) => {
-        const running = state.minigame
-        if (!running) return state
-        let value: number
-        if ('by' in effect) value = (running.vars[effect.key] ?? 0) + effect.by
-        else if ('random' in effect) {
-          const [low, high] = [Math.min(...effect.random), Math.max(...effect.random)].map(Math.round)
-          value = low + cx.roll(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', effect.key)
-        } else value = effect.to
-        return { ...state, minigame: { ...running, vars: { ...running.vars, [effect.key]: value } } }
-      },
-      references: (effect) => [{ minigameVar: effect.key }],
     },
   },
   commands: {
@@ -467,7 +423,7 @@ export const minigames = defineFeature<MinigamesShape>({
     const vars = new Set((game.minigames ?? []).flatMap((entry) => Object.keys(entry.vars ?? {})))
     return {
       minigame: (ref) => (ids.has(ref.minigame) ? [] : [`unknown minigame "${ref.minigame}"`]),
-      minigameVar: (ref) => (vars.has(ref.minigameVar) ? [] : [`minigame variable "${ref.minigameVar}" is not in any minigame's vars`]),
+      minigameKv: (ref) => (vars.has(ref.minigameKv) ? [] : [`minigame key "${ref.minigameKv}" is not in any minigame's vars`]),
     }
   },
   view: (state, game, _shown, cx) => {

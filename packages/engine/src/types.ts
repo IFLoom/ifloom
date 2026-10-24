@@ -8,17 +8,10 @@ import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState }
  * An added field doesn't: it declares a load default in `FIELDS` or in its
  * feature's `state`, and older saves get that default when they load.
  */
-export const SAVE_VERSION = 18 as const
+export const SAVE_VERSION = 19 as const
 
 /** A value in the kv store: true/false, a number or text. */
 export type KvValue = boolean | number | string
-
-/**
- * Which stretch of the game the player is in, named by the game: an intro, a
- * first day, the open week. The engine gives the names no meaning; locks and
- * conditions that test `{ phase }` do.
- */
-export type Phase = string
 
 /** A stat's id. The game declares its stats; see `StatDef`. */
 export type StatKey = string

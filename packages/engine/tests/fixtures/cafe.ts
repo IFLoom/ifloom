@@ -47,7 +47,7 @@ export const cafeRules: GameRules = {
 /** The town with the café loaded over it. */
 export function withCafe(): Loaded {
   const town = fixture()
-  const { scenes, storylines, activities, stats, introScene, startPhase, actions, ...rest } = town
+  const { scenes, storylines, activities, stats, introScene, kv, actions, ...rest } = town
   const townPack: Content = {
     name: 'town',
     scenes,
@@ -55,7 +55,7 @@ export function withCafe(): Loaded {
     activities,
     stats,
     introScene,
-    startPhase,
+    kv,
     actions,
     prose: townProse,
   }

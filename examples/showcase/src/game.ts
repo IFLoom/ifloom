@@ -154,7 +154,7 @@ export const start = (game: Game) => startingState(game)
  * raincoat off, a coffee inside you and people in the park.
  */
 export function probes(game: Game) {
-  const first = clock.write({ ...start(game), phase: 'open', sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
+  const first = clock.write({ ...start(game), kv: { ...start(game).kv, phase: 'open' }, sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
   return [
     { name: 'moving-day', state: start(game) },
     { name: 'first-morning', state: first },

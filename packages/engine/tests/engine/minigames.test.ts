@@ -26,12 +26,12 @@ const arrows: MinigameDef = {
   states: {
     round: {
       always: [
-        { when: { minigameVar: 'round', gte: 3 }, go: 'tally' },
+        { when: { kv: 'round', of: 'minigame', gte: 3 }, go: 'tally' },
         {
           go: 'show',
           effects: [
-            { kind: 'minigameVar', key: 'round', by: 1 },
-            { kind: 'minigameVar', key: 'arrow', random: [1, 2] },
+            { kind: 'kv', key: 'round', of: 'minigame', by: 1 },
+            { kind: 'kv', key: 'arrow', of: 'minigame', random: [1, 2] },
           ],
         },
       ],
@@ -40,13 +40,13 @@ const arrows: MinigameDef = {
       label: 'arrows.show',
       after: { ms: 1500, go: 'round' },
       on: [
-        { input: 'up', when: { minigameVar: 'arrow', lte: 1 }, go: 'round', effects: [{ kind: 'minigameVar', key: 'score', by: 1 }] },
-        { input: 'down', when: { minigameVar: 'arrow', gte: 2 }, go: 'round', effects: [{ kind: 'minigameVar', key: 'score', by: 1 }] },
+        { input: 'up', when: { kv: 'arrow', of: 'minigame', lte: 1 }, go: 'round', effects: [{ kind: 'kv', key: 'score', of: 'minigame', by: 1 }] },
+        { input: 'down', when: { kv: 'arrow', of: 'minigame', gte: 2 }, go: 'round', effects: [{ kind: 'kv', key: 'score', of: 'minigame', by: 1 }] },
         { input: 'up', go: 'round' },
         { input: 'down', go: 'round' },
       ],
     },
-    tally: { always: [{ when: { minigameVar: 'score', gte: 2 }, go: 'won' }, { go: 'lost' }] },
+    tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 2 }, go: 'won' }, { go: 'lost' }] },
     won: {
       final: {
         copy: { score: 'bestScore' },
@@ -351,12 +351,12 @@ describe('the minigame checks', () => {
     expect(
       broken({
         states: {
-          a: { on: [{ input: 'go', when: { minigameVar: 'score' }, go: 'b', effects: [{ kind: 'minigameVar', key: 'lives', by: -1 }] }] },
+          a: { on: [{ input: 'go', when: { kv: 'score', of: 'minigame' }, go: 'b', effects: [{ kind: 'kv', key: 'lives', of: 'minigame', by: -1 }] }] },
           b: { final: { copy: { streak: 'best' } } },
         },
       }),
     ).toEqual([
-      'minigame bad state a on go · minigame variable "lives" is not in any minigame\'s vars',
+      'minigame bad state a on go · minigame key "lives" is not in any minigame\'s vars',
       'minigame bad · uses variable "score", which is not in its vars',
       'minigame bad · copies variable "streak", which is not in its vars',
     ])

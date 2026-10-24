@@ -262,6 +262,13 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     }
     return { ...state, seen: fold(state.seen, seenOn, lastSeenOn), chosen, ...(state.kv !== undefined ? { kv } : {}) }
   },
+  // 18 → 19: the stretch of the game the player is in is the kv key `phase`, not a field of its own.
+  // A save in no phase (`''`) has no key; one that already has a `phase` key keeps it.
+  18: ({ phase, ...state }) => {
+    const kv = { ...(state.kv as Record<string, unknown> | undefined) }
+    if (typeof phase === 'string' && phase !== '' && kv.phase === undefined) kv.phase = phase
+    return { ...state, kv }
+  },
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

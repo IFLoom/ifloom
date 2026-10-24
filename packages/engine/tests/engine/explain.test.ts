@@ -15,7 +15,7 @@ describe('explain', () => {
           { level: 'intelligence', gte: 1 },
         ],
       },
-      { not: { phase: ['open'] } },
+      { not: { kv: 'phase', is: ['open'] } },
     ],
   }
 
@@ -29,9 +29,9 @@ describe('explain', () => {
 
   it('holds nowhere for a condition with two kinds, rather than picking one, and says why', () => {
     // Before core features registered, `flag` (now `kv`) was asked first here and the condition held.
-    const two = { kv: 'metRosa', phase: ['open'] } as never
+    const two = { kv: 'metRosa', turn: { gte: 0 } } as never
     expect(holds(state, two, game)).toBe(false)
-    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (kv, phase); wants one' })
+    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (kv, turn); wants one' })
     const both = { all: [{ kv: 'metRosa' }], not: { kv: 'metRosa' } } as never
     expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (all, not); wants one' })
   })
@@ -40,7 +40,7 @@ describe('explain', () => {
     const [, either, notOpen] = explain(state, condition, game).parts ?? []
     expect(either.parts?.[0].why).toBe('stat coins is 3; wants 5 or more')
     expect(either.parts?.[1].why).toBe('stat intelligence is at level 1; wants 1 or more')
-    expect(notOpen.parts?.[0].why).toBe('phase is open; wants one of open')
+    expect(notOpen.parts?.[0].why).toBe('kv phase is "open"; wants one of "open"')
   })
 
   it('prints as an indented tree for a log or a debug panel', () => {

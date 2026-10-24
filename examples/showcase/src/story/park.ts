@@ -12,7 +12,7 @@ const ARROWS = ['up', 'down', 'left', 'right'] as const
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   label: `arrows.${arrow}`,
   after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}) })),
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'kv' as const, key: 'score', of: 'minigame', by: 1 }] } : {}) })),
 })
 
 /**
@@ -29,19 +29,19 @@ const quickFeet: MinigameDef = {
     // A new round draws an arrow, or after the fifth, the score is counted.
     round: {
       always: [
-        { when: { minigameVar: 'round', gte: 5 }, go: 'tally' },
+        { when: { kv: 'round', of: 'minigame', gte: 5 }, go: 'tally' },
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', by: 1 },
-            { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
+            { kind: 'kv', key: 'round', of: 'minigame', by: 1 },
+            { kind: 'kv', key: 'arrow', of: 'minigame', random: [1, 4] },
           ],
         },
       ],
     },
-    pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
+    pick: { always: ARROWS.map((arrow, index) => ({ when: { kv: 'arrow', of: 'minigame', gte: index + 1, lte: index + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
-    tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
+    tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 3 }, go: 'won' }, { go: 'lost' }] },
     won: {
       final: {
         effects: [

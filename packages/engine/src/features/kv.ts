@@ -1,11 +1,21 @@
 /**
  * The kv store: keys with a true/false, number or text value. A key is the
- * player's, or with `of`, an entity's. A storyline's keys are in `storylines.ts`.
+ * player's, or with `of`, someone else's: an entity's (`'staff:ana'`), a
+ * storyline's (`'storyline:baker'`), or the running minigame's (`'minigame'`).
  */
 import { entityKv, entityOf, hasEntity, ofKind, ownerOf, writeEntity } from '../entities.ts'
-import type { KvValue, Range } from '../types.ts'
-import { defineFeature, mergedByKey } from './feature.ts'
+import { storylineOf } from '../storylines.ts'
+import type { Game } from '../game.ts'
+import type { Reference } from '../references.ts'
+import type { GameState, KvValue, Range } from '../types.ts'
+import { defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
+
+/** What `of` names for a storyline's keys: `'storyline:baker'`. */
+export const STORYLINE_KV = 'storyline:'
+
+/** What `of` names for the running minigame's keys. */
+export const MINIGAME_KV = 'minigame'
 
 /** What the kv feature adds, as types. */
 export type KvShape = {
@@ -14,92 +24,187 @@ export type KvShape = {
   }
   conditions: {
     /**
-     * A key in the kv store. Bare, it asks whether it is set to anything
-     * truthy; with `is`, whether it equals that; with a range, whether its
-     * number is in it (a value that is not a number counts as 0):
-     * `{ kv: 'lies', gte: 3 }`. With `of`, an entity's key:
-     * `{ kv: 'role', of: '$', is: 'cook' }`.
+     * A key in a kv store. Bare, it asks whether it is set to anything
+     * truthy; with `is`, whether it equals that (or one of a list); with a
+     * range, whether its number is in it (a value that is not a number counts
+     * as 0): `{ kv: 'lies', gte: 3 }`. With `of`, someone else's key: an
+     * entity's (`{ kv: 'role', of: '$', is: 'cook' }`), a storyline's
+     * (`of: 'storyline:baker'`) or the running minigame's (`of: 'minigame'`).
      */
-    kv: { kv: string; is?: KvValue; of?: string } & Range
+    kv: { kv: string; is?: KvValue | readonly KvValue[]; of?: string } & Range
   }
   effects: {
     /**
-     * Set a key `to` a value, or change its number `by` an amount (a value
-     * that is not a number counts as 0). With `of`, the key is an entity's.
+     * Set a key `to` a value, change its number `by` an amount (a value that
+     * is not a number counts as 0), or set it to a whole number drawn from
+     * `random: [min, max]`, both included and seeded by the save. With `of`,
+     * the key is an entity's, a storyline's or the running minigame's.
      */
-    kv: { kind: 'kv'; key: string; to: KvValue; of?: string } | { kind: 'kv'; key: string; by: number; of?: string }
+    kv:
+      | { kind: 'kv'; key: string; to: KvValue; of?: string }
+      | { kind: 'kv'; key: string; by: number; of?: string }
+      | { kind: 'kv'; key: string; random: [number, number]; of?: string }
   }
   game: {
+    /** The kv store a new game starts with, such as the stretch it opens in: `{ phase: 'arrival' }`. */
+    kv?: Record<string, KvValue>
     /** kv keys put back at the start of each turn, with the value each goes back to: what "once this turn" was counting. */
     resets?: Record<string, KvValue>
   }
   pack: {
+    /** The kv store a new game starts with, by key: a later pack's value replaces an earlier one's. */
+    kv?: Record<string, KvValue>
     /** Keys reset each turn, by key: a later pack's value replaces an earlier one's. */
     resets?: Record<string, KvValue>
   }
-  lists: 'reset'
+  lists: 'reset' | 'kv'
   fill: 'kv'
 }
+
+/** One kv store: what it holds, and the state with a key of it set. Undefined for an owner that isn't there. */
+type Store = { read: Readonly<Record<string, KvValue>>; write: (state: GameState, key: string, value: KvValue) => GameState }
+
+/** How many times a minigame has started, as the minigames feature counts it. */
+const plays = (state: GameState, id: string): number => (typeof state.kv[`minigame:${id}`] === 'number' ? (state.kv[`minigame:${id}`] as number) : 0)
+
+/** The store `of` names: the player's with none, else an entity's, a storyline's or the running minigame's. */
+function storeOf(state: GameState, game: Game | undefined, of: string | undefined): Store | undefined {
+  if (of === undefined || of === 'player') return { read: state.kv, write: (on, key, value) => ({ ...on, kv: { ...on.kv, [key]: value } }) }
+  if (of === MINIGAME_KV) {
+    const running = state.minigame
+    if (!running) return undefined
+    return {
+      read: running.vars,
+      // A minigame keeps numbers: anything else counts as 0.
+      write: (on, key, value) => (on.minigame ? { ...on, minigame: { ...on.minigame, vars: { ...on.minigame.vars, [key]: asCount(value) } } } : on),
+    }
+  }
+  if (of.startsWith(STORYLINE_KV)) {
+    const id = of.slice(STORYLINE_KV.length)
+    return {
+      read: storylineOf(state, id).kv,
+      write: (on, key, value) => {
+        const cur = storylineOf(on, id)
+        return { ...on, storylines: { ...on.storylines, [id]: { ...cur, kv: { ...cur.kv, [key]: value } } } }
+      },
+    }
+  }
+  const owner = ownerOf(state, of)
+  if (owner === undefined) return storeOf(state, game, undefined)
+  if (!game || !hasEntity(state, game, owner)) return undefined
+  return {
+    read: entityKv(state, game, owner),
+    write: (on, key, value) => {
+      const entity = entityOf(on, game, owner)
+      return entity ? writeEntity(on, owner, { ...entity, kv: { ...entity.kv, [key]: value } }) : on
+    },
+  }
+}
+
+/** What `of` names, for the content checker: a kind, a storyline, or a minigame's key. */
+function ownerReferences(of: string | undefined, key: string): Reference[] {
+  if (of === MINIGAME_KV) return [{ minigameKv: key }]
+  if (of?.startsWith(STORYLINE_KV)) return [{ storyline: of.slice(STORYLINE_KV.length) }]
+  return ofKind(of)
+}
+
+/** A whole number from `random`, both ends included: the minigame's own draw while one runs, else one seeded by the save, the turn and the key. */
+function drawn(state: GameState, of: string | undefined, key: string, random: [number, number], cx: FeatureContext): number {
+  const [low, high] = [Math.min(...random), Math.max(...random)].map(Math.round)
+  const running = state.minigame
+  if (of === MINIGAME_KV && running)
+    return low + cx.roll(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', key)
+  return low + cx.roll(high - low + 1, 'kv', of ?? '', key, state.seed, state.turn)
+}
+
+/** Whose key a line about it names: nothing for the player's. */
+const whose = (of: string | undefined) => (of === undefined || of === 'player' ? '' : `${of} `)
 
 export const kv = defineFeature<KvShape>({
   name: 'kv',
   state: {
-    kv: { start: (_game, options) => ({ ...options.kv }) },
+    kv: { start: (game, options) => ({ ...game.kv, ...options.kv }) },
   },
   conditions: {
     kv: {
       holds: (state, condition, game) => {
-        const of = ownerOf(state, condition.of)
-        const store = of === undefined ? state.kv : hasEntity(state, game, of) ? entityKv(state, game, of) : undefined
-        // An entity that is not there has no keys to test: false, whatever was asked.
+        // An owner that is not there has no keys to test: false, whatever was asked.
+        const store = storeOf(state, game, condition.of)
         if (!store) return false
-        const value = store[condition.kv]
-        if (condition.is !== undefined) return value === condition.is
+        const value = store.read[condition.kv]
+        if (condition.is !== undefined) return Array.isArray(condition.is) ? (condition.is as KvValue[]).includes(value as KvValue) : value === condition.is
         if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },
       explain: (state, condition, game) => {
-        const of = ownerOf(state, condition.of)
-        const owner = of === undefined ? state.kv : hasEntity(state, game, of) ? entityKv(state, game, of) : undefined
-        if (!owner) return `${of} is not in the game; wants it there`
-        const value = owner[condition.kv]
-        const want = condition.is !== undefined ? `= ${JSON.stringify(condition.is)}` : bounded(condition) ? wanted(condition) : 'set'
-        return `${of === undefined ? '' : `${of} `}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
+        const store = storeOf(state, game, condition.of)
+        if (!store) return `${condition.of} is not there; wants it there`
+        const value = store.read[condition.kv]
+        const want =
+          condition.is !== undefined
+            ? Array.isArray(condition.is)
+              ? `one of ${(condition.is as KvValue[]).map((entry) => JSON.stringify(entry)).join(', ')}`
+              : `= ${JSON.stringify(condition.is)}`
+            : bounded(condition)
+              ? wanted(condition)
+              : 'set'
+        return `${whose(condition.of)}kv ${condition.kv} is ${value === undefined ? 'unset' : JSON.stringify(value)}; wants ${want}`
       },
-      references: (condition) => ofKind(condition.of),
+      references: (condition) => ownerReferences(condition.of, condition.kv),
     },
   },
   effects: {
     kv: {
-      apply: (state, effect, game) => {
-        const of = ownerOf(state, effect.of)
-        const entity = of === undefined ? undefined : entityOf(state, game, of)
-        if (of !== undefined && !entity) return state
-        const store = entity ? entityKv(state, game, of!) : state.kv
+      apply: (state, effect, game, cx) => {
+        const store = storeOf(state, game, effect.of)
+        if (!store) return state
         let value: KvValue
         if ('by' in effect) {
-          const was = store[effect.key]
+          const was = store.read[effect.key]
           value = (typeof was === 'number' ? was : 0) + effect.by
-        } else value = effect.to
-        if (entity) return writeEntity(state, of!, { ...entity, kv: { ...entity.kv, [effect.key]: value } })
-        return { ...state, kv: { ...state.kv, [effect.key]: value } }
+        } else if ('random' in effect) value = drawn(state, effect.of, effect.key, effect.random, cx)
+        else value = effect.to
+        return store.write(state, effect.key, value)
       },
-      references: (effect) => ofKind(effect.of),
+      references: (effect) => ownerReferences(effect.of, effect.key),
     },
   },
-  pack: mergedByKey<KvShape['game'], KvShape['pack'], KvValue>(
-    'reset',
-    (pack) => pack.resets,
-    (game, resets) => {
-      game.resets = resets
+  pack: {
+    merge: () => {
+      const starts = mergedByKey<KvShape['game'], KvShape['pack'], KvValue>(
+        'kv',
+        (pack) => pack.kv,
+        (game, store) => {
+          game.kv = store
+        },
+      ).merge()
+      const resets = mergedByKey<KvShape['game'], KvShape['pack'], KvValue>(
+        'reset',
+        (pack) => pack.resets,
+        (game, store) => {
+          game.resets = store
+        },
+      ).merge()
+      return {
+        base: () => {},
+        add: (pack, from) => {
+          starts.add(pack, from)
+          resets.add(pack, from)
+        },
+        finish: (game) => {
+          starts.finish(game)
+          resets.finish(game)
+        },
+        from: (list, id) => starts.from(list, id) ?? resets.from(list, id),
+      }
     },
-  ),
-  lists: ['reset'],
-  // The keys the game resets each turn, at their reset values, where the save lacks them.
+  },
+  lists: ['reset', 'kv'],
+  // The keys a new game starts with and the ones the game resets each turn, at those values, where the save lacks them.
   fill: {
     kind: 'kv',
     run: (state, game) => {
-      const lacking = Object.entries(game.resets ?? {}).filter(([key]) => state.kv?.[key] === undefined)
+      const lacking = Object.entries({ ...game.kv, ...game.resets }).filter(([key]) => state.kv?.[key] === undefined)
       return lacking.length ? { ...state, kv: { ...state.kv, ...Object.fromEntries(lacking) } } : state
     },
   },

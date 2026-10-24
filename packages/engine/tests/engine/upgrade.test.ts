@@ -41,7 +41,7 @@ afterEach(() => {
 /** The cafe fixture's game, split into its base and its own pack. */
 function cafe() {
   const { game } = withCafe()
-  const { id, title, rules, scenes, storylines, activities, stats, introScene, startPhase, actions } = game
+  const { id, title, rules, scenes, storylines, activities, stats, introScene, kv, actions } = game
   const base = { id, title, rules }
   const own: Content = {
     name: 'town',
@@ -50,7 +50,7 @@ function cafe() {
     activities,
     stats,
     introScene,
-    startPhase,
+    kv,
     actions,
     prose: { 'cafe.counter': 'Rosa wipes the counter.' },
   }
@@ -174,7 +174,17 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'cafe.evening',
-          body: [{ text: 'cafe.evening/back', when: { all: [{ kv: 'visits', gte: 3 }, { storylineKv: { storyline: 'rosa', key: 'met' } }] } }],
+          body: [
+            {
+              text: 'cafe.evening/back',
+              when: {
+                all: [
+                  { kv: 'visits', gte: 3 },
+                  { kv: 'met', of: 'storyline:rosa' },
+                ],
+              },
+            },
+          ],
           choices: [
             {
               id: 'stay',
@@ -182,7 +192,7 @@ describe('content migrations', () => {
               effects: [
                 { kind: 'kv', key: 'metAva', to: true },
                 { kind: 'kv', key: 'visits', by: 1 },
-                { kind: 'storylineKv', storyline: 'rosa', key: 'met', to: true },
+                { kind: 'kv', key: 'met', of: 'storyline:rosa', to: true },
                 { kind: 'create', of: 'staff', entity: { name: 'Bo', kv: { role: 'waiter' } } },
               ],
             },
@@ -330,25 +340,25 @@ describe('content migrations', () => {
             all: [
               { turn: { gte: 3 } },
               { entity: 'item:tea', at: 'you' },
-              { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 },
-              { storylineKv: { storyline: 'rosa', key: 'met' }, is: true },
+              { kv: 'visits', of: 'storyline:rosa', gte: 2 },
+              { kv: 'met', of: 'storyline:rosa', is: true },
             ],
           },
           effects: [
             { kind: 'stat', stat: 'coins', by: -2 },
             { kind: 'entity', entity: 'item:tea', at: 'you', by: 1 },
-            { kind: 'phase', to: 'night' },
+            { kind: 'kv', key: 'phase', to: 'night' },
             { kind: 'scene', scene: null },
             { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' },
-            { kind: 'storylineKv', storyline: 'rosa', key: 'met', to: true },
+            { kind: 'kv', key: 'met', of: 'storyline:rosa', to: true },
             { kind: 'closeStoryline', storyline: 'rosa', turns: 2 },
             { kind: 'create', of: 'notes', entity: { id: 'n1' }, at: 'player' },
             { kind: 'remove', entity: 'notes:n1' },
             { kind: 'each', of: 'staff', where: { entity: 'notes:n1' }, effects: [{ kind: 'remove', entity: '$' }] },
             { kind: 'audio', channel: 'music', to: null },
             { kind: 'minigame', minigame: 'arrows' },
-            { kind: 'minigameVar', key: 'score', by: 1 },
-            { kind: 'minigameVar', key: 'round', to: 0 },
+            { kind: 'kv', key: 'score', of: 'minigame', by: 1 },
+            { kind: 'kv', key: 'round', of: 'minigame', to: 0 },
             { 'achievements/grant': { achievement: 'regular' } },
             { 'statuses/apply': { status: 'tired' } },
             { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
@@ -372,7 +382,7 @@ describe('content migrations', () => {
                 { id: 'drink', label: 'Drink', command: { 'inventory/use': { id: 'item:tea' } } },
                 { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', to: 0 } },
               ],
-              blocked: [{ when: { phase: ['night'] }, reason: 'Shut.', hide: true }],
+              blocked: [{ when: { kv: 'phase', is: ['night'] }, reason: 'Shut.', hide: true }],
             },
           ],
         },
@@ -696,6 +706,73 @@ describe('content migrations', () => {
         { id: 'staff', label: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } },
         { id: 'photo', label: 'Photo' },
       ],
+    })
+  })
+
+  it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
+    const v18 = {
+      id: 'baker',
+      schema: 18,
+      startPhase: 'arrival',
+      locks: [{ when: { phase: ['arrival'] }, deny: ['*'], reason: 'Unpack first.' }],
+      scenes: [
+        {
+          id: 'rosa',
+          body: [{ text: 'rosa', when: { storylineKv: { storyline: 'rosa', key: 'visits' }, gte: 2 } }],
+          choices: [
+            {
+              id: 'hi',
+              effects: [
+                { kind: 'storylineKv', storyline: 'rosa', key: 'visits', by: 1 },
+                { kind: 'phase', to: 'open' },
+              ],
+            },
+          ],
+        },
+      ],
+      minigames: [
+        {
+          id: 'count',
+          start: 'go',
+          vars: { score: 0 },
+          states: { go: { on: [{ input: 'up', when: { minigameVar: 'score', lt: 3 }, effects: [{ kind: 'minigameVar', key: 'score', random: [1, 3] }] }] } },
+        },
+      ],
+      prose: { rosa: 'Visit {{n:rosa.visits}}.' },
+    }
+    expect(up(v18)).toEqual({
+      id: 'baker',
+      schema: SCHEMA,
+      kv: { phase: 'arrival' },
+      locks: [{ when: { kv: 'phase', is: ['arrival'] }, deny: ['*'], reason: 'Unpack first.' }],
+      scenes: [
+        {
+          id: 'rosa',
+          body: [{ text: 'rosa', when: { kv: 'visits', of: 'storyline:rosa', gte: 2 } }],
+          choices: [
+            {
+              id: 'hi',
+              effects: [
+                { kind: 'kv', key: 'visits', of: 'storyline:rosa', by: 1 },
+                { kind: 'kv', key: 'phase', to: 'open' },
+              ],
+            },
+          ],
+        },
+      ],
+      minigames: [
+        {
+          id: 'count',
+          start: 'go',
+          vars: { score: 0 },
+          states: {
+            go: {
+              on: [{ input: 'up', when: { kv: 'score', of: 'minigame', lt: 3 }, effects: [{ kind: 'kv', key: 'score', of: 'minigame', random: [1, 3] }] }],
+            },
+          },
+        },
+      ],
+      prose: { rosa: 'Visit {{kv:visits of=storyline:rosa}}.' },
     })
   })
 

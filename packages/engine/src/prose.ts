@@ -1,15 +1,16 @@
 import { customValue } from './custom.ts'
 import type { Game, ProseStore } from './game.ts'
-import { count } from './progress.ts'
+import { storylineOf } from './storylines.ts'
 import type { GameState } from './types.ts'
-import { entityText, parseRef, type EntityRef } from './entities.ts'
+import { entityKv, entityText, hasEntity, ownerOf, parseRef, type EntityRef } from './entities.ts'
+import type { KvValue } from './types.ts'
 
 /**
  * Fill the tokens a line of prose may carry:
  *
  * - `{{name}}` — a key in the kv store (a name the player typed is a
  *   key like any other: `{{playerName}}`);
- * - `{{n:storyline.key}}` — a counter on a storyline;
+ * - `{{kv:key of=storyline:storyline}}` — a counter on a storyline;
  * - `{{v:game/name}}` — a value, a plugin's or the game's own (`game/…`), with any
  *   arguments after the name: `{{v:messages/unread channel=texts}}`.
  *
@@ -20,7 +21,11 @@ import { entityText, parseRef, type EntityRef } from './entities.ts'
 export function fillTokens(text: string, state: GameState, game: Game): string {
   return (
     text
-      .replace(/\{\{n:([A-Za-z0-9_-]+)\.([A-Za-z0-9_]+)\}\}/g, (_match, storyline, key) => String(count(state, storyline, key)))
+      .replace(KV_TOKEN, (match, key: string, args: string | undefined) => {
+        const of = tokenArgs(args).of
+        const value = readKv(state, game, key, of === undefined ? undefined : String(of))
+        return typeof value === 'string' || typeof value === 'number' ? String(value) : match
+      })
       .replace(VALUE_TOKEN, (match, name, args) => {
         const fn = customValue(game, name)
         return fn ? String(fn(state, tokenArgs(args))) : match
@@ -49,6 +54,19 @@ export function entityDesc(state: GameState, game: Game, ref: EntityRef): string
 
 /** A value token: `{{v:game/name}}`, or `{{v:game/name key=value …}}` with arguments. */
 export const VALUE_TOKEN = /\{\{v:((?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
+
+/** A kv token, `{{kv:key}}` or `{{kv:key of=storyline:baker}}`: the key, and its arguments. */
+export const KV_TOKEN = /\{\{kv:([A-Za-z_][A-Za-z0-9_.:-]*)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
+
+/** A key in the kv store `of` names, as a kv token reads it: the player's, a storyline's, the running minigame's or an entity's. */
+function readKv(state: GameState, game: Game, key: string, of: string | undefined): KvValue | undefined {
+  if (of === undefined || of === 'player') return state.kv[key]
+  if (of === 'minigame') return state.minigame?.vars[key]
+  if (of.startsWith('storyline:')) return storylineOf(state, of.slice('storyline:'.length)).kv[key]
+  const owner = ownerOf(state, of)
+  if (owner === undefined) return state.kv[key]
+  return hasEntity(state, game, owner) ? entityKv(state, game, owner)[key] : undefined
+}
 
 /** A value token's arguments, `channel=texts count=2`, as `with`: numbers and true/false read as such. */
 export function tokenArgs(text: string | undefined): Record<string, string | number | boolean> {

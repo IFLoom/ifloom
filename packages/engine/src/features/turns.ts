@@ -1,16 +1,14 @@
 /**
- * Turns and phases: the engine's one clock, what ending a turn does, and the
- * stretch of the game the player is in.
+ * Turns: the engine's one clock, and what ending a turn does.
  */
 import type { Game } from '../game.ts'
-import type { GameState, Phase, Range } from '../types.ts'
-import { defineFeature, lastWins, type FeatureContext } from './feature.ts'
+import type { GameState, Range } from '../types.ts'
+import { defineFeature, type FeatureContext } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
 
 /** What the turns feature adds, as types. */
 export type TurnsShape = {
   state: {
-    phase: Phase
     /**
      * How many turns have passed: the engine's one clock. What a turn is belongs
      * to the game — a day, an hour, a week, a chapter — and everything the engine
@@ -24,26 +22,12 @@ export type TurnsShape = {
      * is its value. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on.
      */
     turn: { turn: Range }
-    /** The game is in one of these phases. */
-    phase: { phase: Phase[] }
   }
   effects: {
-    /** Move the game `to` a phase. */
-    phase: { kind: 'phase'; to: Phase }
     /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
     turn: { kind: 'turn'; by?: number }
   }
-  game: {
-    /** The stretch a new game opens in. */
-    startPhase?: string
-  }
-  pack: {
-    /** The stretch a new game opens in: a later pack's replaces an earlier one's. */
-    startPhase?: string
-  }
-  lists: 'startPhase'
   view: {
-    phase: Phase
     /** How many turns have passed: 0 on the first. */
     turn: number
   }
@@ -70,7 +54,6 @@ export function endTurn(state: GameState, game: Game, cx: FeatureContext, before
 export const turns = defineFeature<TurnsShape>({
   name: 'turns',
   state: {
-    phase: { start: (game) => game.startPhase ?? '' },
     turn: { start: () => 0, load: () => 0, keeps: (value) => typeof value === 'number' },
   },
   conditions: {
@@ -79,17 +62,8 @@ export const turns = defineFeature<TurnsShape>({
       explain: (state, condition) => `turn ${state.turn}; wants ${wanted(condition.turn)}`,
       references: () => [],
     },
-    phase: {
-      holds: (state, condition) => condition.phase.includes(state.phase),
-      explain: (state, condition) => `phase is ${state.phase || '(none)'}; wants one of ${condition.phase.join(', ')}`,
-      references: () => [],
-    },
   },
   effects: {
-    phase: {
-      apply: (state, effect) => ({ ...state, phase: effect.to }),
-      references: () => [],
-    },
     turn: {
       apply: (state, effect, game, cx) => {
         if (cx.ending) return state
@@ -100,13 +74,5 @@ export const turns = defineFeature<TurnsShape>({
       references: () => [],
     },
   },
-  pack: lastWins<TurnsShape['game'], TurnsShape['pack'], string>(
-    'startPhase',
-    (pack) => pack.startPhase,
-    (game, phase) => {
-      game.startPhase = phase
-    },
-  ),
-  lists: ['startPhase'],
-  view: (state) => ({ phase: state.phase, turn: state.turn }),
+  view: (state) => ({ turn: state.turn }),
 })

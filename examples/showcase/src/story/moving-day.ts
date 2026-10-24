@@ -8,8 +8,8 @@ const WELCOME = 'Welcome to the building! Bins go out Thursday. The radiator kno
 export const movingDay: Content = {
   // The game opens on moving day, and only moves through its scene until you unpack.
   introScene: 'intro',
-  startPhase: 'arrival',
-  locks: [{ id: 'moving-day', when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' }],
+  kv: { phase: 'arrival' },
+  locks: [{ id: 'moving-day', when: { kv: 'phase', is: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' }],
   scenes: [
     {
       id: 'intro',
@@ -24,7 +24,7 @@ export const movingDay: Content = {
           ui: { transition: { in: 'slide-up', ms: 400 } },
           effects: [
             { kind: 'scene', scene: null },
-            { kind: 'phase', to: 'open' },
+            { kind: 'kv', key: 'phase', to: 'open' },
           ],
         },
       ],
@@ -33,7 +33,7 @@ export const movingDay: Content = {
   // Sam's note: the notice says it, and you keep it in the phone's Notes app.
   entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: WELCOME }],
   // On moving day the cat needs a name; the prose says it from then on.
-  inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }],
+  inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } }],
   triggers: [
     // A note under the door the first time the player steps out.
     {
@@ -49,7 +49,7 @@ export const movingDay: Content = {
           id: 'settle',
           title: 'Settle in',
           summary: 'New town, new flat. Find your feet.',
-          starts: { phase: ['open'] },
+          starts: { kv: 'phase', is: ['open'] },
           stages: [
             { id: 'out', hint: 'Step out onto the high street.', done: at('high-street') },
             { id: 'ava', hint: 'Somebody runs the café. Say hello.', done: { seen: 'ava.hi' } },

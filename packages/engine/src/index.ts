@@ -73,7 +73,7 @@ export { audioChannels, audioSrc } from './features/audio.ts'
 export { sceneContext } from './context.ts'
 
 // The state
-export type { Command, Effect, KvValue, GameState, Phase, StatKey, Stats, StorylineState } from './types.ts'
+export type { Command, Effect, KvValue, GameState, StatKey, Stats, StorylineState } from './types.ts'
 export type { Times } from './features/scenes.ts'
 export { SAVE_VERSION } from './types.ts'
 

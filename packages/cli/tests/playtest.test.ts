@@ -112,7 +112,7 @@ describe('snapshot', () => {
   it("reads as the engine's view does: a choice a lock refuses is greyed out with its reason", () => {
     const plain = game()
     const start = startingState(plain)
-    const g: Game = { ...plain, rules: { ...plain.rules }, locks: [{ when: { phase: [start.phase] }, deny: ['choose'], reason: 'Too sleepy.' }] }
+    const g: Game = { ...plain, rules: { ...plain.rules }, locks: [{ when: { all: [] }, deny: ['choose'], reason: 'Too sleepy.' }] }
     const text = snapshot(g, [{ name: 'start', state: start }])
     expect(text).toContain('=== wake @ start\nYou wake.\n  [ ] Get up — Too sleepy.')
     // The same words and choices the player's screen gets, scene and room.

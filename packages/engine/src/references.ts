@@ -55,8 +55,8 @@ export type Reference =
   | { input: string }
   /** A minigame, by id. */
   | { minigame: string }
-  /** A variable some minigame declares in its `vars`. */
-  | { minigameVar: string }
+  /** A key some minigame declares in its `vars`, as `{ kv, of: 'minigame' }` names it. */
+  | { minigameKv: string }
   /** A timer, by id, with a `timer` effect's `to` and `by`, which must be milliseconds. */
   | { timer: string; to?: unknown; by?: unknown }
   /** A prose key that needs words. */

@@ -126,7 +126,7 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   locks: true,
   resets: true,
   saveable: true,
-  startPhase: true,
+  kv: true,
   introScene: true,
   ui: true,
 }
@@ -211,7 +211,7 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   locks: (content) => (content.locks ?? []).flatMap((lock) => (lock.id === undefined ? [] : [`lock "${lock.id}"`])),
   saveable: null,
   resets: byKey('reset', (content) => content.resets),
-  startPhase: once('startPhase', (content) => content.startPhase),
+  kv: byKey('kv', (content) => content.kv),
   introScene: once('introScene', (content) => content.introScene),
   ui: byKey('ui hint', (content) => content.ui),
 }

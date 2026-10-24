@@ -126,13 +126,13 @@ describe('the registry', () => {
         expect(KINDS.commands[kind as keyof typeof KINDS.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
     }
     expect(featureKinds).toEqual({
-      turns: { conditions: ['turn', 'phase'], effects: ['phase', 'turn'], commands: [] },
+      turns: { conditions: ['turn'], effects: ['turn'], commands: [] },
       kv: { conditions: ['kv'], effects: ['kv'], commands: [] },
-      storylines: { conditions: ['storylineKv', 'storyline'], effects: ['storylineKv', 'closeStoryline'], commands: [] },
+      storylines: { conditions: ['storyline'], effects: ['closeStoryline'], commands: [] },
       notices: { conditions: [], effects: ['notify'], commands: ['dismiss'] },
       triggers: { conditions: [], effects: [], commands: [] },
       scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
-      minigames: { conditions: ['minigameVar'], effects: ['minigame', 'minigameVar'], commands: ['minigame'] },
+      minigames: { conditions: [], effects: ['minigame'], commands: ['minigame'] },
       timers: { conditions: ['timer'], effects: ['timer'], commands: ['tick'] },
       activities: { conditions: [], effects: [], commands: ['activity'] },
       inputs: { conditions: [], effects: [], commands: ['input'] },

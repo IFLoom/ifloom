@@ -43,7 +43,7 @@ describe('New Game+', () => {
     const g = game({ stats: ['intelligence'], kv: ['readTheLetter'], held: ['thing:bun'] })
     const plus = startingState(g, { carry: played(g) })
     expect(plus.stats).toEqual({ intelligence: 40, coins: 3, luck: 0 })
-    expect(plus.kv).toEqual({ readTheLetter: true })
+    expect(plus.kv).toEqual({ phase: 'open', readTheLetter: true })
     expect(heldBy(plus, g, 'player')).toEqual([
       { ref: 'thing:umbrella', count: 1 },
       { ref: 'thing:bun', count: 3 },
@@ -66,9 +66,9 @@ describe('New Game+', () => {
   })
 
   it('copies nothing from a game with no carryOver, and lets given kv keys win', () => {
-    expect(startingState(game(undefined), { carry: played(game(undefined)) }).kv).toEqual({})
+    expect(startingState(game(undefined), { carry: played(game(undefined)) }).kv).toEqual({ phase: 'open' })
     const g = game({ kv: ['metRosa'] })
-    expect(startingState(g, { carry: played(g), kv: { metRosa: 'never' } }).kv).toEqual({ metRosa: 'never' })
+    expect(startingState(g, { carry: played(g), kv: { metRosa: 'never' } }).kv).toEqual({ phase: 'open', metRosa: 'never' })
   })
 
   it('is checked by the loader: unknown stats and kinds, and stats that are not the player’s', () => {

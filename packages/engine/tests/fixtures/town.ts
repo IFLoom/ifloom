@@ -36,7 +36,7 @@ export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 
     id: 'fixture',
     title: 'Fixture',
     introScene: 'start',
-    startPhase: 'open',
+    kv: { phase: 'open' },
     activities,
     stats: [
       { id: 'intelligence', label: 'Intelligence', start: 5, levels: { at: [10, 20], hidden: true } },
@@ -73,7 +73,7 @@ export function begin(game: Game, patch: Partial<GameState> = {}): GameState {
     sceneId: null,
     turn: 2,
     ...patch,
-    kv: { at: 'house', ...patch.kv },
+    kv: { ...state.kv, at: 'house', ...patch.kv },
   }
 }
 

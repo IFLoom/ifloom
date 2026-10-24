@@ -16,7 +16,7 @@ function buttons(state: GameState, game: Game) {
 }
 
 describe('one answer to "can I do this?"', () => {
-  const town = fixture({ locks: [{ when: { phase: ['night'] }, deny: ['activity'], except: [], reason: 'Shut for the night.' }] })
+  const town = fixture({ locks: [{ when: { kv: 'phase', is: ['night'] }, deny: ['activity'], except: [], reason: 'Shut for the night.' }] })
   const game: Game = {
     ...town,
     actions: [
@@ -30,7 +30,7 @@ describe('one answer to "can I do this?"', () => {
   const closed = { rosa: { closedUntil: 9, kv: {} } }
   const states: GameState[] = [
     begin(game),
-    begin(game, { phase: 'night' }),
+    begin(game, { kv: { phase: 'night' } }),
     begin(game, { kv: { at: 'street' } }),
     begin(game, { kv: { at: 'shop' }, turn: 5 }),
     begin(game, { kv: { at: 'shop' }, storylines: closed }),

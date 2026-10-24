@@ -52,8 +52,6 @@ const TARGETS = [
   'track',
   'key',
   'kv',
-  'storylineKv',
-  'minigameVar',
   'setting',
   'chose',
   'seen',
@@ -61,7 +59,6 @@ const TARGETS = [
   'count',
   'level',
   'turn',
-  'phase',
   'panel',
   // the latest roll under a key, for the roll condition
   'roll',

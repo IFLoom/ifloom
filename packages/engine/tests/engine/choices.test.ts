@@ -79,7 +79,8 @@ describe('a new game', () => {
   it('has no name unless the game gives one, and its words read the kv store', () => {
     const game = fixture()
     const state = startingState(game)
-    expect(state.kv).toEqual({})
+    // The kv store a new game starts with is the content's: the town opens in its open phase.
+    expect(state.kv).toEqual({ phase: 'open' })
     expect(startingState(game, { kv: { playerName: 'Robin' } }).kv.playerName).toBe('Robin')
     const words = proseStore(game, { hello: 'Hello, {{playerName}}. Day {{visits}}.' })
     expect(words.line('hello', { ...state, kv: { playerName: 'Robin', visits: 3 } })).toBe('Hello, Robin. Day 3.')

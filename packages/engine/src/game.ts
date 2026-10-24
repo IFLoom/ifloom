@@ -114,8 +114,8 @@ export type SceneView = {
 
 /** What a hand-built scene's `render` can read besides the state. */
 export type SceneCtx = {
-  kv: (key: string) => KvValue | undefined
-  storylineKv: (storylineId: string, key: string) => KvValue | undefined
+  /** A key in the player's kv store, or with `of: 'storyline:<id>'`, a storyline's. */
+  kv: (key: string, of?: string) => KvValue | undefined
   /**
    * Where the render's new pool picks go, when the engine is drawing a screen
    * and wants them recorded. Pass it to `renderScene` when a hand-built scene

@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 18
+export const SCHEMA = 19
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -102,6 +102,55 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   // 17 → 18: the game's own code is its `rules`, and content calls it as it calls a plugin's, with `game` in front.
   // See `toSchema18`.
   17: (pack) => toSchema18(pack),
+  // 18 → 19: one kv vocabulary, with whose store in `of`. See `toSchema19`.
+  18: (pack) => toSchema19(pack),
+}
+
+/** The range keys a kv condition can carry. */
+const RANGE_KEYS = ['gte', 'gt', 'lte', 'lt']
+
+/**
+ * Schema 18 content as schema 19 writes it, where every kv store is read and
+ * written the one way, with whose it is in `of`:
+ * - `{ storylineKv: { storyline: 'baker', key: 'visits' }, gte: 3 }` is
+ *   `{ kv: 'visits', of: 'storyline:baker', gte: 3 }`, and the effect
+ *   `{ kind: 'storylineKv', storyline, key, to }` is `{ kind: 'kv', key, of: 'storyline:baker', to }`;
+ * - `{ minigameVar: 'score', gte: 3 }` is `{ kv: 'score', of: 'minigame', gte: 3 }`,
+ *   and the `minigameVar` effect (with `to`, `by` or `random`) is a `kv` one with `of: 'minigame'`;
+ * - the stretch of the game is the kv key `phase`: `{ phase: ['open'] }` is
+ *   `{ kv: 'phase', is: ['open'] }`, `{ kind: 'phase', to }` is
+ *   `{ kind: 'kv', key: 'phase', to }`, and `startPhase: 'arrival'` is the
+ *   starting kv `kv: { phase: 'arrival' }`;
+ * - in prose and strings, `{{n:baker.visits}}` is `{{kv:visits of=storyline:baker}}`.
+ */
+function toSchema19(pack: RawPack): RawPack {
+  const { startPhase, ...rest } = pack
+  let out = rest as RawPack
+  if (typeof startPhase === 'string' && startPhase !== '') {
+    const kv = isRecord(out.kv) ? out.kv : {}
+    out = { ...out, kv: { phase: startPhase, ...kv } }
+  }
+  out = TOOLS.objects(out, (value) => {
+    if (isRecord(value.storylineKv) && typeof value.storylineKv.storyline === 'string' && typeof value.storylineKv.key === 'string') {
+      const { storylineKv, ...range } = value
+      return { kv: storylineKv.key, of: `storyline:${String(storylineKv.storyline)}`, ...range }
+    }
+    if (value.kind === 'storylineKv' && typeof value.storyline === 'string') {
+      const { storyline, key, kind: _kind, ...write } = value
+      return { kind: 'kv', key, of: `storyline:${storyline}`, ...write }
+    }
+    if (typeof value.minigameVar === 'string' && Object.keys(value).every((key) => key === 'minigameVar' || RANGE_KEYS.includes(key))) {
+      const { minigameVar, ...range } = value
+      return { kv: minigameVar, of: 'minigame', ...range }
+    }
+    if (value.kind === 'minigameVar') return { ...value, kind: 'kv', of: 'minigame' }
+    if (Array.isArray(value.phase) && Object.keys(value).length === 1) return { kv: 'phase', is: value.phase }
+    if (value.kind === 'phase' && 'to' in value) return { kind: 'kv', key: 'phase', to: value.to }
+    return value
+  })
+  return TOOLS.words(out, (text) =>
+    text.replace(/\{\{n:([A-Za-z0-9_-]+)\.([A-Za-z0-9_]+)\}\}/g, (_match, storyline: string, key: string) => `{{kv:${key} of=storyline:${storyline}}}`),
+  )
 }
 
 /** The full name a call to the game's own code had before schema 18, by the bare name it was written with. */

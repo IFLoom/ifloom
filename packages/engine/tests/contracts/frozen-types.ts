@@ -55,9 +55,13 @@
  * record per id, and `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn` are gone.
  * Data into content (API pass P2): `Game.locks` and `Game.resets` (from
  * `rules`), and the pack keys `actions`, `locks`, `resets`, `saveable`,
- * `finished`, `carryOver`, `startPhase`, `introScene` and `ui`. One panel
+ * `finished`, `carryOver`, `startPhase` (now `kv`), `introScene` and `ui`. One panel
  * model: no `view.scene.panel` or `panelData`; a scene's `panel` is
- * `view.panel`, with `OpenPanel.scene`.
+ * `view.panel`, with `OpenPanel.scene`. One kv vocabulary (save 19): no
+ * `storylineKv`, `minigameVar` or `phase` condition or effect, `GameState.phase`,
+ * `View.phase` or `Phase`; the `kv` condition's `is` takes a list, the `kv`
+ * effect takes `random`, `of` names a storyline or the minigame, and
+ * `Game.kv` and `Pack.kv` are the kv store a new game starts with.
  */
 import type {
   ActionDef,
@@ -100,7 +104,6 @@ import type {
   Notice,
   NoticesView,
   Patch,
-  Phase,
   Plugin,
   PluginCall,
   PluginEntry,
@@ -140,7 +143,7 @@ export type FrozenCondition =
    * `{ kv: 'lies', gte: 3 }`. With `of`, an entity's key:
    * `{ kv: 'role', of: '$', is: 'cook' }`.
    */
-  | ({ kv: string; is?: KvValue; of?: string } & FrozenRange)
+  | ({ kv: string; is?: KvValue | readonly KvValue[]; of?: string } & FrozenRange)
   /**
    * A `play` setting, read as a kv key is: bare, whether it is truthy
    * (`{ setting: 'hints' }`); with `is`, whether it equals that; with a range,
@@ -165,8 +168,6 @@ export type FrozenCondition =
    * since" is not true of something that has not happened.
    */
   | ({ since: string; last?: boolean } & FrozenRange)
-  /** A key in a storyline's kv store, read as `kv` reads one. */
-  | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & FrozenRange)
   /** A stat: the player's, or with `of`, an entity's (`'staff:ana'`, or `'$'` in an `each` or `where`). */
   | ({ stat: StatKey; of?: string } & FrozenRange)
   /**
@@ -192,19 +193,10 @@ export type FrozenCondition =
   | { scene: string[] }
   /** How many turns have passed. Turn 0 is the first, so `{ turn: { gte: 3 } }` is the fourth on. */
   | { turn: FrozenRange }
-  | { phase: Phase[] }
-  /**
-   * A variable of the minigame being played, read as a number: bare, whether
-   * it is above 0; with a range, whether it is in it. False with no minigame
-   * running. `{ minigameVar: 'score', gte: 3 }`.
-   */
-  | ({ minigameVar: string } & FrozenRange)
   /** A timer: bare, whether it is running; with a range, its milliseconds left. */
   | ({ timer: string } & FrozenRange)
   /** The latest roll under a key: made, passed or failed, critical. */
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
-  /** A custom condition the game declares by this name, or a plugin's (`quests/done`), with what it is asked. */
-  | { custom: string; with?: Record<string, unknown> }
   /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`. */
   | PluginCall
 
@@ -213,7 +205,6 @@ export type FrozenGameState = {
   version: typeof SAVE_VERSION
   /** Fixed per save. Keeps variant variants from dealing identically every run. */
   seed: number
-  phase: Phase
   /**
    * How many turns have passed: the engine's one clock. What a turn is belongs
    * to the game — a day, an hour, a week, a chapter — and everything the engine
@@ -304,14 +295,13 @@ export type FrozenEffect =
   | { kind: 'stat'; stat: StatKey; to: number; of?: string }
   /** A plugin's effect, by its full name. Content writes `{ custom: name, with }`; the engine turns it into this. */
   | { kind: 'custom'; name: string; with?: Record<string, unknown> }
-  | { kind: 'storylineKv'; storyline: string; key: string; to: KvValue }
-  | { kind: 'storylineKv'; storyline: string; key: string; by: number }
   /**
    * Set a key `to` a value, or change its number `by` an amount (a value
    * that is not a number counts as 0). With `of`, the key is an entity's.
    */
   | { kind: 'kv'; key: string; to: KvValue; of?: string }
   | { kind: 'kv'; key: string; by: number; of?: string }
+  | { kind: 'kv'; key: string; random: [number, number]; of?: string }
   /**
    * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
    * left out, never reused; an id already there is left as it is.
@@ -339,7 +329,6 @@ export type FrozenEffect =
    * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
    */
   | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'phase'; to: Phase }
   | { kind: 'closeStoryline'; storyline: string; turns: number }
   /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
   | { kind: 'turn'; by?: number }
@@ -354,10 +343,6 @@ export type FrozenEffect =
   | { kind: 'sound'; track: string }
   /** Start a minigame, in its `start` state. One already running is dropped. */
   | { kind: 'minigame'; minigame: string }
-  /** Set a variable of the minigame being played, change it, or draw it at random. */
-  | { kind: 'minigameVar'; key: string; to: number }
-  | { kind: 'minigameVar'; key: string; by: number }
-  | { kind: 'minigameVar'; key: string; random: [number, number] }
   /** Start a timer (for its `ms` or `to`), stop it (`to: null`), or add time (`by`). */
   | { kind: 'timer'; timer: string; to?: number | null }
   | { kind: 'timer'; timer: string; by: number }
@@ -399,7 +384,7 @@ export type FrozenGame = {
    */
   finished?: FrozenCondition
   /** The stretch a new game opens in. */
-  startPhase?: string
+  kv?: Record<string, KvValue>
   /** When saving is refused, and why. Always allowed if left out. */
   saveable?: Blocked[]
   /** Every stat the game keeps. The engine has none of its own. */
@@ -522,7 +507,7 @@ export type FrozenPack = {
   /** What a New Game+ carries over. A later pack's replaces an earlier one's. */
   carryOver?: CarryOver
   /** The stretch a new game opens in. A later pack's replaces an earlier one's. */
-  startPhase?: string
+  kv?: Record<string, KvValue>
   /** The scene on screen on the first frame. A later pack's replaces an earlier one's. */
   introScene?: string
   /** Presentation hints for the whole game, hint by hint. */
@@ -534,7 +519,6 @@ export type FrozenContent = Omit<FrozenPack, 'id' | 'schema' | 'plugins' | 'patc
 
 export type FrozenView = {
   title: string
-  phase: FrozenGameState['phase']
   /** How many turns have passed: 0 on the first. */
   turn: number
   /** Where the game is in time, in plugins' words ("Day 3 · Wednesday morning"), or null if none says. */

@@ -26,6 +26,7 @@ import {
   type Reference,
   type ValueRef,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**
  * Where a progress count comes from: a formula over the player's stats (a
@@ -196,6 +197,8 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
   return definePlugin<AchievementsState, AchievementsView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {

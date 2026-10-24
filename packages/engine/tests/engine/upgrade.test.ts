@@ -3,7 +3,22 @@ import { loadGame, type Content, type Pack } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { mods, readMod } from '../../src/mods.ts'
-import { PACK_STEPS, SCHEMA, upgradeCommand, upgradePack, type RawPack } from '../../src/upgrade.ts'
+import { PACK_STEPS, SCHEMA, commandUpgrade, upgradePack, type RawPack } from '../../src/upgrade.ts'
+import type { Plugin } from '../../src/plugin.ts'
+import { achievements } from '@ifloom/plugin-achievements'
+import { calendar } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { debug } from '@ifloom/plugin-debug'
+import { devices } from '@ifloom/plugin-devices'
+import { feed } from '@ifloom/plugin-feed'
+import { inventory } from '@ifloom/plugin-inventory'
+import { jobs } from '@ifloom/plugin-jobs'
+import { messages } from '@ifloom/plugin-messages'
+import { places } from '@ifloom/plugin-places'
+import { quests } from '@ifloom/plugin-quests'
+import { shop } from '@ifloom/plugin-shop'
+import { statuses } from '@ifloom/plugin-statuses'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { withCafe } from '../fixtures/cafe.ts'
 import { unwrap } from '../fixtures/result.ts'
 
@@ -31,11 +46,39 @@ function cafe() {
   return { base, own }
 }
 
+/**
+ * Every first-party plugin whose content the engine once carried forward
+ * itself. Each carries its own forward now, so these tests hold that an old
+ * pack still upgrades exactly as it did when the engine did it all.
+ */
+const PLUGINS: Plugin[] = [
+  achievements(),
+  calendar(),
+  cast(),
+  debug(),
+  devices(),
+  feed(),
+  inventory(),
+  jobs(),
+  messages(),
+  places(),
+  quests(),
+  shop(),
+  statuses(),
+  wardrobe(),
+]
+
+/** A pack upgraded with every first-party plugin, without the plugin versions it now records. */
+function up(pack: { schema: number }): Record<string, unknown> {
+  const { plugins: _plugins, ...rest } = unwrap(upgradePack(pack, PLUGINS)) as unknown as Record<string, unknown>
+  return rest
+}
+
 const oldPack = { id: 'mod:evening', schema: OLD, lines: { 'cafe.counter': 'Lanterns over the counter tonight.' } }
 
 describe('content migrations', () => {
   it('bring an old pack up to this schema, step by step, without changing it', () => {
-    const upgraded = upgradePack(oldPack)
+    const upgraded = upgradePack(oldPack, PLUGINS)
     expect(upgraded.ok && upgraded.value.schema).toBe(SCHEMA)
     expect(upgraded.ok && upgraded.value.prose).toEqual(oldPack.lines)
     expect(oldPack.schema).toBe(OLD)
@@ -43,12 +86,12 @@ describe('content migrations', () => {
 
   it('leave a pack at this schema as it is', () => {
     const pack: Pack = { id: 'now', schema: SCHEMA, prose: { a: 'A.' } }
-    expect(unwrap(upgradePack(pack))).toBe(pack)
+    expect(unwrap(upgradePack(pack, PLUGINS))).toBe(pack)
   })
 
   it('refuse a pack from a newer engine, or one older than any step', () => {
-    expect(upgradePack({ schema: SCHEMA + 1 })).toEqual({ ok: false, reason: `written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}` })
-    expect(upgradePack({ schema: OLD - 1 })).toEqual({
+    expect(upgradePack({ schema: SCHEMA + 1 }, PLUGINS)).toEqual({ ok: false, reason: `written for schema ${SCHEMA + 1}, this engine reads ${SCHEMA}` })
+    expect(upgradePack({ schema: OLD - 1 }, PLUGINS)).toEqual({
       ok: false,
       reason: `written for schema ${OLD - 1}, too old for this engine to read (it reads ${SCHEMA})`,
     })
@@ -64,11 +107,11 @@ describe('content migrations', () => {
     ])
   })
 
-  it('let a player install an old mod, kept at this schema', async () => {
+  it('let a player install an old mod, kept as its file wrote it and upgraded as the game loads it', async () => {
     const file = JSON.stringify({ ifloomMod: 1, id: 'evening', name: 'Evening', game: 'fixture', pack: oldPack })
     const store = mods('fixture', memoryDriver())
     const added = await store.add(file)
-    expect(added.ok && added.value.pack).toMatchObject({ id: 'mod:evening', schema: SCHEMA, prose: oldPack.lines })
+    expect(added.ok && added.value.pack).toEqual({ ...oldPack, id: 'mod:evening' })
     const { base, own } = cafe()
     const { game, problems } = loadGame([own], base, { packs: await store.packs() })
     expect(problems.filter((problem) => problem.pack === 'mod:evening')).toEqual([])
@@ -107,7 +150,7 @@ describe('content migrations', () => {
       ],
       data: { cast: { characters: [{ id: 'rosa', name: 'Rosa', flags: { mood: 'calm' } }] } },
     }
-    const pack = unwrap(upgradePack(v4)) as unknown as Record<string, unknown>
+    const pack = up(v4)
     expect(pack).toEqual({
       id: 'evening',
       schema: SCHEMA,
@@ -153,7 +196,8 @@ describe('content migrations', () => {
       },
     })
     const added = await mods('fixture', memoryDriver()).add(file)
-    expect(added.ok && added.value.pack).toEqual({
+    expect(added.ok && added.value.pack.schema).toBe(4)
+    expect(added.ok && up(added.value.pack)).toEqual({
       id: 'mod:regulars',
       schema: SCHEMA,
       triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kind: 'kv', key: 'regular', to: true }] }],
@@ -236,7 +280,7 @@ describe('content migrations', () => {
         },
       },
     }
-    expect(unwrap(upgradePack(v5))).toEqual({
+    expect(up(v5)).toEqual({
       id: 'evening',
       schema: SCHEMA,
       prose: { has: 'Words are left alone.' },
@@ -359,7 +403,7 @@ describe('content migrations', () => {
         },
       },
     }
-    expect(unwrap(upgradePack(v6))).toEqual({
+    expect(up(v6)).toEqual({
       id: 'phone',
       schema: SCHEMA,
       prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:rentDue}} due.' },
@@ -412,7 +456,7 @@ describe('content migrations', () => {
       ],
       data: { effects: { effects: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'effects/apply': { effect: 'tired' } }] }] }, quests: { quests: [] } },
     }
-    expect(unwrap(upgradePack(v7))).toEqual({
+    expect(up(v7)).toEqual({
       id: 'colds',
       schema: SCHEMA,
       strings: { 'statuses/unknown': 'No such thing.', 'quests/done': 'Done.' },
@@ -446,7 +490,7 @@ describe('content migrations', () => {
       ],
       data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', kind: 'street', exits: [], art: '', body: [] }] } },
     }
-    expect(unwrap(upgradePack(v8))).toEqual({
+    expect(up(v8)).toEqual({
       id: 'town',
       schema: SCHEMA,
       // And at schema 13 they are things: a start of one is the player's from the start.
@@ -473,7 +517,7 @@ describe('content migrations', () => {
         },
       ],
     }
-    expect(unwrap(upgradePack(v9))).toEqual({
+    expect(up(v9)).toEqual({
       id: 'letter',
       schema: SCHEMA,
       prose: { 'ch2.stairs/opened': 'You think of the postcard.' },
@@ -497,7 +541,7 @@ describe('content migrations', () => {
       ],
       activities: [{ id: 'flirt', blocked: [{ when: { not: { tier: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
     }
-    expect(unwrap(upgradePack(v10))).toEqual({
+    expect(up(v10)).toEqual({
       id: 'town',
       schema: SCHEMA,
       stats: [
@@ -524,7 +568,7 @@ describe('content migrations', () => {
         },
       },
     }
-    expect(unwrap(upgradePack(v11))).toEqual({
+    expect(up(v11)).toEqual({
       id: 'phone',
       schema: SCHEMA,
       prose: { badge: '{{v:feed/unread}} new, {{v:feed/unread feed=social}} on social; {{v:feed/unseenish}} stays.' },
@@ -554,7 +598,8 @@ describe('content migrations', () => {
       },
     })
     const added = await mods('fixture', memoryDriver()).add(file)
-    expect(added.ok && added.value.pack).toEqual({
+    expect(added.ok && added.value.pack.schema).toBe(5)
+    expect(added.ok && up(added.value.pack)).toEqual({
       id: 'mod:naps',
       schema: SCHEMA,
       activities: [
@@ -595,7 +640,7 @@ describe('content migrations', () => {
         places: { locations: [] },
       },
     }
-    expect(unwrap(upgradePack(v13))).toEqual({
+    expect(up(v13)).toEqual({
       id: 'neighbours',
       schema: SCHEMA,
       entities: [
@@ -621,7 +666,7 @@ describe('content migrations', () => {
     })
     // A pack with no characters is left as it was.
     const plain: RawPack = { id: 'x', schema: 13, prose: { a: 'A' } }
-    expect(unwrap(upgradePack(plain))).toEqual({ id: 'x', schema: SCHEMA, prose: { a: 'A' } })
+    expect(up(plain)).toEqual({ id: 'x', schema: SCHEMA, prose: { a: 'A' } })
   })
 
   it('rename a kind’s marks to flags at schema 15', () => {
@@ -633,7 +678,7 @@ describe('content migrations', () => {
         { id: 'photo', label: 'Photo' },
       ],
     }
-    expect(unwrap(upgradePack(v14))).toEqual({
+    expect(up(v14)).toEqual({
       id: 'staffroom',
       schema: SCHEMA,
       kinds: [
@@ -692,7 +737,7 @@ describe('content migrations', () => {
       traits: { 'cast/person': { 'character:tom': { hue: 300, home: 'shop' }, 'character:ann': { hue: 10 } } },
       data: { places: { locations: [{ id: 'garden', name: 'Garden', transition: 'slide-left', body: [{ text: 'garden', reveal: { as: 'zoom' } }] }] } },
     }
-    expect(unwrap(upgradePack(v15))).toEqual({
+    expect(up(v15)).toEqual({
       id: 'evening',
       schema: SCHEMA,
       scenes: [
@@ -792,7 +837,7 @@ describe('content migrations', () => {
       strings: { haveNone: 'No {item} on you.', 'wardrobe/haveNone': 'Not in your bag.', doesNothing: 'The {item} just sits there.' },
       prose: { 'photo.pier': 'Gulls, and the end of the pier.' },
     }
-    expect(unwrap(upgradePack(v12))).toEqual({
+    expect(up(v12)).toEqual({
       id: 'town',
       schema: SCHEMA,
       kinds: [
@@ -859,6 +904,8 @@ describe('content migrations', () => {
   })
 
   it('upgrade an old command log’s commands as replay reads them', () => {
+    // A log from before logs kept versions is read as the oldest, so every step runs.
+    const upgradeCommand = unwrap(commandUpgrade(PLUGINS))
     // Using an item is the inventory's command since schema 13, on the thing the item became.
     expect(upgradeCommand({ type: 'use', itemId: 'tea' })).toEqual({ type: 'custom', name: 'inventory/use', with: { id: 'item:tea' } })
     expect(upgradeCommand({ type: 'custom', name: 'debug/item', with: { item: 'tea', to: 2 } })).toEqual({
@@ -880,5 +927,113 @@ describe('content migrations', () => {
     })
     const now = { type: 'custom', name: 'inventory/use', with: { id: 'item:tea' } }
     expect(upgradeCommand(now)).toEqual(now)
+  })
+})
+
+/**
+ * A community plugin whose content and commands changed once. Version 1
+ * named a bell `bell` in its calls and gave each bell a `tone`; version 2
+ * names it `id` and calls it a `sound`.
+ */
+function bells(): Plugin<{ rung: string[] }> {
+  const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+  const sound = (entry: unknown) => {
+    if (!isRecord(entry) || !('tone' in entry)) return entry
+    const { tone, ...rest } = entry
+    return { ...rest, sound: tone }
+  }
+  return {
+    id: 'bells',
+    version: 1,
+    start: () => ({ rung: [] }),
+    contentVersion: 2,
+    contentMigrations: {
+      1: (pack, tools) => {
+        const data = isRecord(pack.data) ? pack.data : {}
+        const list = isRecord(data.bells) && Array.isArray(data.bells.bells) ? data.bells.bells : undefined
+        const moved = list ? { ...pack, data: { ...data, bells: { bells: list.map(sound) } } } : pack
+        return tools.calls(moved, (call) =>
+          call.name.startsWith('bells/') && isRecord(call.with) && 'bell' in call.with ? { name: call.name, with: { id: call.with.bell } } : call,
+        )
+      },
+    },
+    commandVersion: 2,
+    commandMigrations: {
+      1: (command) =>
+        command.type === 'custom' && command.name === 'bells/ring' && isRecord(command.with) && 'bell' in command.with
+          ? { ...command, with: { id: command.with.bell } }
+          : command,
+    },
+    commands: {
+      ring: { run: (_state, args, context) => context.set({ rung: [...context.slice.rung, String(args.id)] }) },
+    },
+  }
+}
+
+describe('plugin-owned migrations', () => {
+  const written = {
+    id: 'mod:chimes',
+    schema: SCHEMA,
+    plugins: { bells: 1 },
+    data: { bells: { bells: [{ id: 'chapel', tone: 'low' }] } },
+    activities: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { bell: 'chapel' } } }],
+  }
+  const base = { id: 'chimes', title: 'Chimes', plugins: [bells()] }
+
+  it('run a plugin’s own content steps from the version a pack records, and record where it got to', () => {
+    expect(unwrap(upgradePack(written, [bells()]))).toEqual({
+      id: 'mod:chimes',
+      schema: SCHEMA,
+      plugins: { bells: 2 },
+      data: { bells: { bells: [{ id: 'chapel', sound: 'low' }] } },
+      activities: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { id: 'chapel' } } }],
+    })
+    // At the plugin's version, nothing is done.
+    const now = { ...written, plugins: { bells: 2 } }
+    expect(unwrap(upgradePack(now, [bells()]))).toBe(now)
+  })
+
+  it('read a pack that records no version as written for its schema, or the plugin’s own version if lower', () => {
+    // Written now without a record: read as the plugin's current version, so left alone.
+    const { plugins: _plugins, ...unrecorded } = written
+    expect(unwrap(upgradePack(unrecorded, [bells()]))).toBe(unrecorded)
+    // From before plugins kept versions: the first-party plugins' versions follow the schema.
+    const v12 = { id: 'mod:old', schema: 12, data: { shop: { vendors: [{ id: 'kiosk', goods: [{ item: 'paper', price: 1 }] }] } } }
+    const upgraded = unwrap(upgradePack(v12, [shop(), wardrobe()]))
+    expect(upgraded.plugins).toEqual({ shop: 13, wardrobe: 13 })
+    expect(upgraded.data).toEqual({ shop: { vendors: [{ id: 'kiosk', goods: [{ entity: 'item:paper', price: 1 }] }] } })
+    // A schema 13 pack is past the shop's step, so a good it names the old way stays as written.
+    const v13 = { ...v12, schema: 13 }
+    expect(unwrap(upgradePack(v13, [shop()])).data).toEqual(v13.data)
+  })
+
+  it('refuse a pack written for a newer version of a plugin than the game has', () => {
+    const newer = { ...written, plugins: { bells: 3 } }
+    expect(upgradePack(newer, [bells()])).toEqual({ ok: false, reason: "written for version 3 of the bells plugin's content, this game's reads 2" })
+    const { problems } = loadGame([{ name: 'town' }], base, { packs: [newer] })
+    expect(problems.map(describeProblem)).toContain("mod:chimes · pack · written for version 3 of the bells plugin's content, this game's reads 2")
+  })
+
+  it('let loadGame run a mod’s plugin steps, so an installed mod keeps working after a plugin changes', async () => {
+    const file = JSON.stringify({ ifloomMod: 1, id: 'chimes', name: 'Chimes', game: 'chimes', pack: written })
+    const store = mods('chimes', memoryDriver())
+    expect((await store.add(file)).ok).toBe(true)
+    const { game, problems } = loadGame([{ name: 'town' }], base, { packs: await store.packs() })
+    expect(problems.filter((problem) => problem.pack === 'mod:chimes')).toEqual([])
+    expect((game.activities?.[0] as { command?: unknown } | undefined)?.command).toEqual({ 'bells/ring': { id: 'chapel' } })
+  })
+
+  it('run only the command steps a log’s versions need', () => {
+    const wear = { type: 'custom', name: 'wardrobe/wear', with: { id: 'scarf' } }
+    // An old log: every step runs, and an item's id names the thing it became.
+    expect(unwrap(commandUpgrade([wardrobe()]))(wear)).toEqual({ ...wear, with: { id: 'item:scarf' } })
+    // A log written at the wardrobe's current version: a bare id is left as it is.
+    expect(unwrap(commandUpgrade([wardrobe()], { schema: SCHEMA, plugins: { wardrobe: 13 } }))(wear)).toEqual(wear)
+    const ring = { type: 'custom', name: 'bells/ring', with: { bell: 'chapel' } }
+    expect(unwrap(commandUpgrade([bells()], { schema: SCHEMA, plugins: { bells: 1 } }))(ring)).toEqual({ ...ring, with: { id: 'chapel' } })
+    expect(commandUpgrade([bells()], { schema: SCHEMA, plugins: { bells: 3 } })).toEqual({
+      ok: false,
+      reason: "written for version 3 of the bells plugin's commands, this game's reads 2",
+    })
   })
 })

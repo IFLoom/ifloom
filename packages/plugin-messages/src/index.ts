@@ -38,6 +38,7 @@ import {
   type SceneBeat,
   weighted,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** Where messages go: texts, email, the doormat. */
 export type Channel = { id: string; name: string }
@@ -223,6 +224,10 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
   const plugin = definePlugin<MessagesState, MessagesView>({
     id: ID,
     version: 2,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     // Senders are the cast's characters when the game has the cast: a name and a face.
     // An arrival's day is the calendar's when the game has it.
     cooperates: ['cast', 'calendar'],

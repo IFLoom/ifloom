@@ -45,6 +45,7 @@ import {
   type TraitDef,
   artSrc,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `inventory/usable` trait holds: the button's label, what using one does, and whether it is kept. */
 export type Usable = {
@@ -223,6 +224,10 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
   return definePlugin<null, InventoryView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     cooperates: ['places'],
     traits: [usableTrait],
     strings: {

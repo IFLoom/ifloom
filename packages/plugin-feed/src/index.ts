@@ -27,6 +27,7 @@ import {
   type Reference,
   type SceneBeat,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 export type FeedDef = { id: string; name: string }
 
@@ -140,6 +141,10 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
   return definePlugin<FeedState, FeedsView>({
     id: ID,
     version: 2,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     // Posters are the cast's characters when the game has the cast: a name and a face.
     cooperates: ['cast'],
     migrations: {

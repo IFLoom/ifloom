@@ -136,6 +136,7 @@ Packs written before traits existed have no `traits` key, so they need no upgrad
 type Pack = Omit<Content, 'name'> & {
   id: string
   schema: number
+  plugins?: Record<string, number>
   patches?: Patch[]
 }
 ```
@@ -146,6 +147,7 @@ Content from outside your code, laid over the game. It has everything [`Content`
 |---|---|
 | `id` | Names the pack in problems and saves, such as `'supporter'` or `'mod:sunday-market'`. A [mod](/docs/reference/mods)'s is always `mod:<id>`. |
 | `schema` | The [`SCHEMA`](#schema) it was written for. An older pack is [upgraded](#upgradepack) as it loads. A newer one is skipped whole, with a problem. |
+| `plugins` | The version of each plugin's content it was written for, by plugin id: `{ shop: 13 }`. A plugin's own steps carry an older one forward as it loads, and a newer one is skipped whole, with a problem. A plugin left out is read as written for the pack's `schema`, or for the plugin's own version if that's lower. See [Content and command migrations](/docs/reference/plugins#content-and-command-migrations). |
 | `patches` | Small changes to scenes the content or an earlier pack declared, applied straight away, in order. See [Patches](#patches). |
 
 A pack merges as content does, except that it may repeat any key. Its scene, entity, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings` and custom functions replace the ones with the same key or name, and the rest are kept. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
@@ -174,15 +176,17 @@ const SCHEMA = 16
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) and [`readMod`](/docs/reference/mods#readmod) upgrade it first with [`upgradePack`](#upgradepack), so a mod file made for an earlier version of your game keeps working after you update the engine. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 17, this engine reads 16`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 17, this engine reads 16`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
 ```ts
-function upgradePack(pack: { schema: number }): Result<Pack>
+function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[]): Result<Pack>
 ```
 
-Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says why it can't, as a [`Result`](/docs/reference/runner#result). The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
+Brings a pack written for an older [`SCHEMA`](#schema) up to this one, and for older versions of the game's plugins up to theirs, or says why it can't, as a [`Result`](/docs/reference/runner#result). Pass the game's plugins, the same list as the base's `plugins`. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
+
+What a plugin reads (its `data`, its calls' arguments, its strings and its traits) is that plugin's to carry forward, with its own [`contentMigrations`](/docs/reference/plugins#content-and-command-migrations). The engine runs them alongside its own steps: before its step from each schema, every plugin's steps keyed by that schema or below, and after its last, the rest. The table below lists what both rewrite at each schema, the first-party plugins' steps included, so an old pack upgraded with those plugins comes out as described. Without a plugin in the list, its content is left as it was.
 
 | Step | What it rewrites |
 |---|---|
@@ -201,21 +205,24 @@ Brings a pack written for an older [`SCHEMA`](#schema) up to this one, or says w
 
 Schema 4 is the oldest a pack can be.
 
-It returns the pack at `SCHEMA`, or one of these reasons:
+It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version, or one of these reasons:
 
 | When | Returns |
 |---|---|
 | `schema` is newer than `SCHEMA` | `written for schema 17, this engine reads 16` |
 | `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 16)` |
+| `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 
-A pack already at `SCHEMA` comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
+A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 
 ```ts
 import { upgradePack } from '@ifloom/engine'
 
-const upgraded = upgradePack(JSON.parse(text))
+const upgraded = upgradePack(JSON.parse(text), game.plugins ?? [])
 if (!upgraded.ok) console.warn(`old-pack.json: ${upgraded.reason}`)
 ```
+
+You rarely call it yourself: [`loadGame`](#loadgame) upgrades every pack in `packs` with the base's plugins, mods included.
 
 You rarely call it yourself, because `loadGame` and `readMod` do. Use it when you read a pack some other way, for example a tool that edits packs and writes them back at the current schema.
 

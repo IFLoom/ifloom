@@ -279,7 +279,7 @@ function unlockedPacks(
 ): Promise<{ packs: Pack[]; problems: string[] }>
 ```
 
-The content of every unlock the profile remembers a code for, decrypted and upgraded to this engine's schema with [`upgradePack`](/docs/reference/loader#upgradepack), ready to pass to `loadGame` as `packs`, over the game's content. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
+The content of every unlock the profile remembers a code for, decrypted and checked that this engine can read its schema, ready to pass to `loadGame` as `packs`, over the game's content. `loadGame` upgrades it with [`upgradePack`](/docs/reference/loader#upgradepack), with the game's plugins. `content` is the page's, from [`lockedContent`](#lockedcontent), unless you pass it (in a test, say).
 
 Call it before you build the game, with the game's id and its profile. [`profile`](/docs/reference/profile#profile) reads only the id, so `profile({ id: 'small-town' }, driver)` opens it before the game exists. Use the same driver the runner will use.
 

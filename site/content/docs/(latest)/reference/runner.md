@@ -347,10 +347,18 @@ After a command, the runner also gives each plugin with a [`profile`](/docs/refe
 ## CommandLog
 
 ```ts
-type CommandLog = { game: string; start: GameState; commands: Command[] }
+type CommandLog = {
+  game: string
+  start: GameState
+  commands: Command[]
+  schema?: number
+  plugins?: Record<string, number>
+}
 ```
 
 Everything you need to play a game back exactly: the game's id, the state it started from and every command that took since. Undo takes commands off the end, so the log always leads to the current state.
+
+`schema` and `plugins` say what the commands were written for: the engine's [`SCHEMA`](/docs/reference/loader#schema), and each plugin's [`commandVersion`](/docs/reference/plugins#content-and-command-migrations) by plugin id. A runner writes both. A log from before logs kept them has neither, and [`replay`](#replay) reads it as the oldest.
 
 ## replay
 
@@ -360,7 +368,7 @@ function replay(game: Game, log: CommandLog): Result<GameState>
 
 Plays a command log back and returns the state it leads to, as a [`Result`](#result). The engine is deterministic, so the same log against the same game gives the same state every time.
 
-The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Commands written with names an older engine used are read with today's names: `{ type: 'use', itemId: 'tea' }`, from when items were the engine's, is the [inventory plugin](/docs/plugins/inventory)'s `inventory/use` on `item:tea`. If the start can't be loaded, `replay` fails with the reason.
+The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Its commands are carried forward from the versions the log records: the engine's own steps from its `schema`, and each plugin's [`commandMigrations`](/docs/reference/plugins#content-and-command-migrations) from its version, so only the steps the log needs run. A log with no versions is read as the oldest, so every step runs, and commands written with names an older engine used are read with today's: `{ type: 'use', itemId: 'tea' }`, from when items were the engine's, is the [inventory plugin](/docs/plugins/inventory)'s `inventory/use` on `item:tea`. If the start can't be loaded, or the log was written for a newer engine or a newer version of a plugin than the game has, `replay` fails with the reason, such as `written for version 7 of the cast plugin's commands, this game's reads 6`.
 
 ```ts
 import { replay, type CommandLog } from '@ifloom/engine'

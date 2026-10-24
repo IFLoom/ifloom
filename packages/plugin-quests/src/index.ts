@@ -21,6 +21,7 @@ import {
   type GameState,
   type PluginProblem,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One step of a quest. */
 export type QuestStage = {
@@ -216,6 +217,10 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
   return definePlugin<QuestsState, QuestsView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     start: emptyState,
     strings: { notDoing: 'You are not doing that.' },
     conditions: {

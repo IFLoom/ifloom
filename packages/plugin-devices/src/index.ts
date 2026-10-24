@@ -44,6 +44,7 @@ import {
   type RenderedChoice,
   type ValueRef,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
 type Contact = { id: string; name: string; desc: string | null; portrait: string | null; command: Command }
@@ -240,6 +241,10 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
   return definePlugin<DevicesState, DevicesView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     // The contacts section lists the cast's characters when the game has the cast.
     cooperates: ['cast'],
     strings: {

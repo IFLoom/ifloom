@@ -38,6 +38,7 @@ import {
   type PluginProblem,
   type TraitDef,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `wardrobe/wearable` trait holds: the slot a thing is worn in. */
 export type Wearable = {
@@ -132,6 +133,10 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
   return definePlugin<WardrobeState, WardrobeView>({
     id: ID,
     version: 3,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     migrations: {
       1: (old, { game }) => fromItems(old, game),
       // Whoever was played when the save was made was the one wearing it.

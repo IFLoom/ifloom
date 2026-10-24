@@ -51,6 +51,7 @@ import {
   type TraitDef,
   type Ui,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One way a conversation can open: the scene, while `when` holds, with its button's label. */
 export type TalkOption = { scene: string; when?: Condition; label?: string }
@@ -282,6 +283,10 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   return definePlugin<null, CastView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     // Where the player is comes from places; a schedule may ask the calendar.
     cooperates: ['places', 'calendar'],
     traits: [personTrait],

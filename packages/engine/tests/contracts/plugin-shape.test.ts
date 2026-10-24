@@ -35,6 +35,8 @@ import { inventory } from '@ifloom/plugin-inventory'
 const MEMBERS = {
   // Who it is, and its state.
   identity: ['id', 'version', 'start', 'migrations', 'cooperates'],
+  // How content and command logs written for an older version are carried forward.
+  upgrades: ['contentVersion', 'contentMigrations', 'commandVersion', 'commandMigrations'],
   // Tables of named functions content and code call, and its words.
   tables: ['conditions', 'effects', 'commands', 'queries', 'values', 'strings'],
   // Hooks: at an event, the next state.

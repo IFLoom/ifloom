@@ -50,11 +50,11 @@ export function readMod(text: string, gameId: string): Result<ModFile> {
     return fail('That is not a mod file.')
   }
   if (mod.game !== gameId) return fail(`That mod is for another game (${mod.game}).`)
-  // An older pack is upgraded now, so the store keeps it in this engine's schema.
-  const pack = upgradePack(mod.pack)
-  if (!pack.ok) return fail(`That mod was written for a version this game cannot read (schema ${mod.pack.schema}).`)
+  // The pack is kept as the file wrote it, and `loadGame` upgrades it with the rest of the game's packs, so
+  // the plugins' own steps run on it too. Here it is only checked that this engine can read its schema.
+  if (!upgradePack(mod.pack, []).ok) return fail(`That mod was written for a version this game cannot read (schema ${mod.pack.schema}).`)
   // The pack is named after the mod, so problems and saves point at it.
-  return ok({ ...(mod as ModFile), pack: { ...pack.value, id: `mod:${mod.id}` } })
+  return ok({ ...(mod as ModFile), pack: { ...mod.pack, id: `mod:${mod.id}` } })
 }
 
 /** One game's installed mods, as `mods` gives them. */

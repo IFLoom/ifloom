@@ -10,6 +10,7 @@ import { begin, fixture } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 import { apply } from '../../src/reduce.ts'
 import { checkGame } from '../../src/check.ts'
+import { SCHEMA } from '../../src/upgrade.ts'
 
 describe('the runner', () => {
   it('runs commands and tells listeners, with nothing else on by default', () => {
@@ -271,7 +272,7 @@ describe('starting over from content', () => {
     expect(started.ok).toBe(true)
     expect(runner.state).toMatchObject({ turn: 0, sceneId: 'start' })
     expect(runner.state.kv.after).toBeUndefined()
-    expect(runner.log()).toEqual({ game: game.id, start: runner.state, commands: [] })
+    expect(runner.log()).toEqual({ game: game.id, start: runner.state, commands: [], schema: SCHEMA, plugins: {} })
     expect(runner.canUndo).toBe(false)
     expect(runner.backlog()).toEqual([])
     runner.apply({ type: 'activity', id: 'read' })

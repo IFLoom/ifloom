@@ -206,8 +206,9 @@ function proofsIn(stored: unknown): Record<string, Uint8Array> {
 }
 
 /**
- * The content of every unlock the profile remembers, decrypted and upgraded
- * to this engine's schema, to load over the game's content. Call it before
+ * The content of every unlock the profile remembers, decrypted and checked
+ * that this engine can read it, to load over the game's content (which
+ * upgrades it). Call it before
  * building the game: `loadGame(content, base, { packs: unlocked.packs })`. An
  * unlock whose code has changed since (a new release with new codes) can't be
  * opened, and is listed in `problems`; the player enters the new code.
@@ -229,9 +230,10 @@ export async function unlockedPacks(
       continue
     }
     for (const pack of opened) {
-      const upgraded = upgradePack(pack)
-      if (upgraded.ok) packs.push(upgraded.value)
-      else problems.push(`unlock:${id} · ${upgraded.reason}`)
+      // Only checked here: `loadGame` upgrades it, with the game's plugins' steps.
+      const readable = upgradePack(pack, [])
+      if (readable.ok) packs.push(pack)
+      else problems.push(`unlock:${id} · ${readable.reason}`)
     }
   }
   return { packs, problems }

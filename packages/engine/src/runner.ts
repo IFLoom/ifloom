@@ -15,7 +15,7 @@ import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
 import { inlineChoices, pastBeats } from './screen.ts'
-import { upgradeCommand } from './upgrade.ts'
+import { commandUpgrade, commandVersions } from './upgrade.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 
 /**
@@ -86,19 +86,34 @@ export type BacklogEntry = {
  * state every time — a bug report a developer can step through, or two
  * versions of a game played the same way and compared.
  */
-export type CommandLog = { game: string; start: GameState; commands: Command[] }
+export type CommandLog = {
+  game: string
+  start: GameState
+  commands: Command[]
+  /**
+   * The engine's `SCHEMA` the commands were written in. A log from before
+   * logs kept it has none, and is read as the oldest.
+   */
+  schema?: number
+  /** Each plugin's `commandVersion` the commands were written in, by plugin id. */
+  plugins?: Record<string, number>
+}
 
 /**
  * Play a command log back against a game. Its start comes in through
- * `loadState`, and its commands through `upgradeCommand`, so a log from an
- * older engine or game still plays; the reason comes back when it can't.
- * Commands that are refused are skipped, as they were then.
+ * `loadState`, and its commands are carried forward from the versions the
+ * log records, by the engine's command steps and each plugin's
+ * `commandMigrations`, so a log from an older engine, plugin or game still
+ * plays; the reason comes back when it can't. Commands that are refused are
+ * skipped, as they were then.
  */
 export function replay(game: Game, log: CommandLog): Result<GameState> {
+  const upgrade = commandUpgrade(game.plugins ?? [], { schema: log.schema, plugins: log.plugins })
+  if (!upgrade.ok) return upgrade
   const start = loadState(log.start, game)
   if (!start.ok) return start
   let state = start.value
-  for (const command of log.commands) state = apply(state, game, upgradeCommand(command)).state
+  for (const command of log.commands) state = apply(state, game, upgrade.value(command)).state
   return ok(state)
 }
 
@@ -219,7 +234,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   const backlogLimit = options.backlog === true ? 200 : options.backlog ? (options.backlog.limit ?? 200) : 0
 
   let state = start
-  let log: CommandLog = { game: game.id, start, commands: [] }
+  const versions = commandVersions(game.plugins ?? [])
+  let log: CommandLog = { game: game.id, start, commands: [], ...versions }
   let backlog: BacklogEntry[] = []
   let undoStack: Step[] = []
   let redoStack: Step[] = []
@@ -375,7 +391,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   function begin(next: GameState, playedAlready: number): void {
     const before = state
     state = next
-    log = { game: game.id, start: state, commands: [] }
+    log = { game: game.id, start: state, commands: [], ...versions }
     backlog = []
     undoStack = []
     redoStack = []

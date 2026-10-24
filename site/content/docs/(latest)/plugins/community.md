@@ -29,3 +29,5 @@ Open a [plugin submission](https://github.com/IFLoom/ifloom/issues/new?template=
 ## Writing one
 
 `npm create ifloom@latest ifloom-plugin-<name> -- --template plugin` starts a plugin package with the engine as a peer dependency, a condition, an effect and a command, a test, and a README with these criteria. See [A plugin package](/docs/reference/plugins#a-plugin-package). [Writing a plugin](/docs/reference/plugins) explains every part a plugin can have.
+
+When a release of your plugin changes what content writes for it, such as an argument's name or a field of an entry in its `data`, give it a step in `contentMigrations` and bump `contentVersion`, so packs and mods written for the last release still load. A renamed command gets a step in `commandMigrations` too, so old command logs still replay. The engine knows nothing about your plugin's content, so it runs your steps as it upgrades each pack. See [Content and command migrations](/docs/reference/plugins#content-and-command-migrations).

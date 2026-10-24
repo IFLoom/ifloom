@@ -49,7 +49,8 @@
  * `roll` effect and condition, `GameState.rolls` and `View.rolls`.
  * Timers: the `timer` condition and effect, `GameState.timers`,
  * `Game.timers`, `Pack.timers` and `View.timers` (the `tick` command, now
- * the timers feature's, is unchanged).
+ * the timers feature's, is unchanged). Plugin-owned migrations:
+ * `Pack.plugins`, the version of each plugin's content a pack was written for.
  */
 import type {
   ActionDef,
@@ -475,6 +476,8 @@ export type FrozenPack = {
   id: string
   /** Schema this pack was written against. Refused if it is not ours. */
   schema: number
+  /** The version of each plugin's content it was written for. */
+  plugins?: Record<string, number>
   scenes?: (Scene | DataScene)[]
   storylines?: StorylineDef[]
   activities?: ActivityDef[]
@@ -525,7 +528,7 @@ export type FrozenPack = {
 }
 
 /** The game's own content: a pack's keys, with a name for problems and no id, schema or patches. */
-export type FrozenContent = Omit<FrozenPack, 'id' | 'schema' | 'patches'> & { name?: string }
+export type FrozenContent = Omit<FrozenPack, 'id' | 'schema' | 'plugins' | 'patches'> & { name?: string }
 
 export type FrozenView = {
   title: string

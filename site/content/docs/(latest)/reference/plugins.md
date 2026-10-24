@@ -198,7 +198,8 @@ import {
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
   type PluginReferences, type ContentReferences, type StatModifier,
-  type TraitDef, type TraitTools,
+  type TraitDef, type TraitTools, type ContentStep, type ContentTools,
+  type CommandStep, type RawPack, type RawCommand,
 } from '@ifloom/engine'
 
 type Plugin<S = any> = {
@@ -206,6 +207,10 @@ type Plugin<S = any> = {
   version: number
   start?: (game: Game) => S
   migrations?: Record<number, (state: unknown, tools: MigrationTools) => unknown>
+  contentVersion?: number
+  contentMigrations?: Record<number, ContentStep>
+  commandVersion?: number
+  commandMigrations?: Record<number, CommandStep>
   conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
   effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
   commands?: Record<string, PluginCommand<S>>
@@ -243,6 +248,10 @@ type Plugin<S = any> = {
 | `version` | The version of its state's shape. Bump it when the shape changes, and add a step to `migrations`. Saves record it. |
 | `start` | Its state in a new game. A plugin with no state leaves this out. |
 | `migrations` | One step per version, keyed by the version it upgrades from. See [State and migrations](#state-and-migrations). |
+| `contentVersion` | The version of what content and packs write for it: its `data`, its calls' arguments, its strings and its traits. 1 if left out. Packs record it. See [Content and command migrations](#content-and-command-migrations). |
+| `contentMigrations` | One step per content version, keyed by the version it upgrades from, which [`upgradePack`](/docs/reference/loader#upgradepack) runs on every pack the game loads. |
+| `commandVersion` | The version of its commands' arguments. 1 if left out. [Command logs](/docs/reference/runner#commandlog) record it. |
+| `commandMigrations` | One step per command version, which [`replay`](/docs/reference/runner#replay) runs on an older log's commands. |
 | `conditions` | Tests that content can use anywhere a [condition](/docs/reference/conditions#custom) goes, by name without the prefix. |
 | `effects` | Changes that content can make in a choice's, an activity's or a trigger's effects. Each takes the game state and returns the next one. |
 | `commands` | Commands a button can send. See [`PluginCommand`](#plugincommand). |
@@ -508,6 +517,110 @@ A save it can't carry forward is refused with one of these reasons:
 | `That save's <id> is from a version this game cannot read.` | A step on the way is missing. |
 
 Both are the engine's [`pluginNewer` and `pluginUnreadable`](/docs/reference/strings#saves) strings, so a game can reword them. The [save store](/docs/reference/saves#saves), the runner and [`replay`](/docs/reference/runner#replay) all load through `loadState`, so a plugin never sees a state it couldn't read.
+
+## Content and command migrations
+
+What content writes for a plugin can change shape too: a call's argument is renamed, an entry in its `data` gains a field, a string gets a new key. A pack written for the old shape (a mod a player installed, say) should still load, and a [command log](/docs/reference/runner#commandlog) from before the change should still replay. A plugin carries both forward itself, the way it carries its saved state.
+
+Say version 1 of the card's `loyalty/stamp` effect took `{ count }`, and version 2 takes `{ by }` as the [naming rule](#naming) asks, while `loyalty/redeem` took the card as `{ card }` and now takes `{ id }`:
+
+```ts
+import { definePlugin, type RawPack } from '@ifloom/engine'
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export const loyalty = definePlugin<Card>({
+  id: 'loyalty',
+  version: 2,
+  // ...
+  contentVersion: 2,
+  contentMigrations: {
+    // Version 1's stamp effect counted with `count`.
+    1: (pack, tools) =>
+      tools.calls(pack, (call) => {
+        if (call.name !== 'loyalty/stamp' || !isRecord(call.with) || !('count' in call.with)) return call
+        const { count, ...rest } = call.with
+        return { name: call.name, with: { ...rest, by: count } }
+      }),
+  },
+  commandVersion: 2,
+  commandMigrations: {
+    // Version 1's redeem named the card `card`.
+    1: (command) => {
+      if (command.type !== 'custom' || command.name !== 'loyalty/redeem' || !isRecord(command.with)) return command
+      const { card, ...rest } = command.with
+      return { ...command, with: { ...rest, id: card } }
+    },
+  },
+})
+```
+
+Bump `contentVersion` when what content writes for the plugin changes, and add the step keyed by the version it upgrades from. Do the same with `commandVersion` and `commandMigrations` when a command or its arguments change. A command's arguments in content (a button's `command`) are content, so a change to a command usually needs both: the content step for packs, and the command step for logs. A version with no step changed nothing, so the steps can have gaps.
+
+Write each step so it rewrites only the old shape and leaves anything else as it was. A step is run once per pack, but a pack that doesn't say which version it was written for is read as a guess (see below), and a careful step makes that guess harmless.
+
+### Which version a pack was written for
+
+A pack records the version of each plugin's content it was written for in [`plugins`](/docs/reference/loader#pack), beside its `schema`:
+
+```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
+const pack: Pack = { id: 'mod:double-stamps', schema: SCHEMA, plugins: { loyalty: 2 }, /* ... */ }
+```
+
+Write it in any pack that has content for your plugin, and ask the people making mods for your game to do the same. [`upgradePack`](/docs/reference/loader#upgradepack) runs the plugin's steps from that version up to the plugin's own, and records where it got to.
+
+A pack that doesn't record a version for a plugin is read as written for its `schema`, or for the plugin's own version if that's lower, and at least version 1. For a pack written today without a record, that's the plugin's current version, so nothing runs. The first-party plugins number their content versions by the engine's schema, because the engine used to carry their content forward itself: the shop's content is at version 13 because it last changed when the engine went from schema 12 to 13. So a pack from before packs recorded versions lines up with their steps.
+
+A pack written for a newer version of a plugin than the game has is refused, as one for a newer engine is: `loadGame` skips it with the problem `written for version 3 of the loyalty plugin's content, this game's reads 2`.
+
+### When a pack loads
+
+`upgradePack` takes the game's plugins and runs, for each schema the pack is behind:
+
+1. every plugin's steps keyed by that schema or below, in the order of the game's `plugins`;
+2. then the engine's own step from that schema.
+
+Then each plugin's remaining steps run. A plugin's step for schema 12 therefore meets the pack as the engine had it at schema 12, which is what the first-party plugins' history needs. A plugin that numbers its versions from 1 has its steps run early in an old pack, and then on its way.
+
+[`loadGame`](/docs/reference/loader#loadgame) upgrades every pack it's given with the game's plugins, and that includes installed [mods](/docs/reference/mods), which the store keeps as their files wrote them. So when you release a new version of a plugin with a content step, every mod your players have installed is carried forward the next time the game loads.
+
+### ContentStep
+
+```ts
+type RawPack = Record<string, unknown> & { schema: number }
+type ContentStep = (pack: RawPack, tools: ContentTools) => RawPack
+```
+
+A step is given the whole pack, as the version it upgrades from wrote it, and returns the pack as the next version writes it. It usually changes only the plugin's own `data`, calls, strings and traits. A `RawPack` is some version's shape, not necessarily this engine's, so its fields are `unknown` until you check them. Return a new pack and never change the one you were given.
+
+### ContentTools
+
+```ts
+type ContentTools = {
+  objects: (pack: RawPack, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) => RawPack
+  calls: (pack: RawPack, rewrite: (call: { name: string; with: unknown; form: 'short' | 'long' | 'command' }) => { name: string; with: unknown }) => RawPack
+  words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
+}
+```
+
+Ways to rewrite a pack without walking it by hand. Each returns a new pack.
+
+| Tool | What it rewrites |
+|---|---|
+| `objects` | Every object the pack's content holds, from the innermost out. It skips `prose`, `strings`, `variants` and `custom`, which hold words and code. |
+| `calls` | Every call by name, however it's written. `short` is `{ 'loyalty/stamp': { by: 1 } }`, and it is handed every key with a `/` in it, so check the name. `long` is `{ custom: 'loyalty/stamp', with }` or `{ kind: 'custom', name, with }`. `command` is `{ type: 'custom', name, with }`. Return the call's name and arguments; give a call back as it came and it stays as it was. It skips the same keys as `objects`. A value, `{ value: 'loyalty/stamps', with }`, isn't a call: reach it with `objects`. |
+| `words` | Every line of the pack's `prose` and `strings`, handed with its key, for a token such as <code v-pre>{{v:loyalty/stamps}}</code> that changed. |
+
+### CommandStep
+
+```ts
+type RawCommand = Record<string, unknown> & { type: string }
+type CommandStep = (command: RawCommand) => RawCommand
+```
+
+A step of `commandMigrations` is given every command in an older log, the engine's and other plugins' too, so check the `type` and `name` and give back the ones that aren't yours as they came. A log records each plugin's `commandVersion` (see [`CommandLog`](/docs/reference/runner#commandlog)), and [`replay`](/docs/reference/runner#replay) runs only the steps from there. A log from before logs kept versions is read as the oldest, so every step runs on it.
 
 ## Hooks and providers
 

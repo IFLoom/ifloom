@@ -9,6 +9,7 @@ import type { EntityDef, KindDef, TraitDef } from './entities.ts'
 import type { Reference } from './references.ts'
 import type { EntityUi, SceneUi, Ui } from './features/ui.ts'
 import type { MigrationTools } from './intake.ts'
+import type { CommandStep, ContentStep } from './upgrade.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -108,6 +109,32 @@ export type Plugin<S = any, V = unknown> = {
    * game's migration gets, and returns the plugin's new state.
    */
   migrations?: Record<number, (state: unknown, tools: MigrationTools) => unknown>
+  /**
+   * The version of the shape of what content and packs write for it: its
+   * `data`, its calls' arguments, its strings and its traits. 1 if left out.
+   * Bump it when that shape changes, and add the step that carries a pack
+   * of the previous version forward to `contentMigrations`. Packs record the
+   * version they were written for in `plugins`.
+   */
+  contentVersion?: number
+  /**
+   * One step per content version, keyed by the version it upgrades *from*.
+   * `upgradePack` runs them on every pack the game loads, mods included,
+   * after the engine's own steps for the same schema. A version with no step
+   * changed nothing a pack holds. See `ContentStep` and `ContentTools`.
+   */
+  contentMigrations?: Record<number, ContentStep>
+  /**
+   * The version of its commands' arguments, as command logs record them.
+   * 1 if left out. Bump it when a command is renamed or its arguments change,
+   * and add the step to `commandMigrations`, so an old log still replays.
+   */
+  commandVersion?: number
+  /**
+   * One step per command version, keyed by the version it upgrades *from*:
+   * what `replay` plays an older log's commands through. See `CommandStep`.
+   */
+  commandMigrations?: Record<number, CommandStep>
   /** Conditions content can test, by name, without the prefix. */
   conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
   /**

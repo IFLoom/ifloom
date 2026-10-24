@@ -49,6 +49,7 @@ import {
   type Ui,
   YOU,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** A place, as content declares it in `data.places.locations`. */
 export type LocationDef = {
@@ -223,6 +224,10 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
   return definePlugin<PlacesState, PlacesView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     strings: {
       noSuchPlace: 'There is no such place.',
       alreadyHere: 'You are already here.',

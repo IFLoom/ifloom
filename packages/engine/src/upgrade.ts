@@ -1,11 +1,19 @@
 /**
  * Content migrations: a pack written for an older `SCHEMA` is carried forward
  * one step at a time until it is a pack of this one, the way `STEPS` in
- * `intake.ts` carries a save. `loadGame` and `readMod` both go through
- * `upgradePack`, so an old pack and an old mod file still load.
+ * `intake.ts` carries a save. `loadGame` goes through `upgradePack`, so an old
+ * pack and an old mod file still load.
+ *
+ * The engine's steps reshape only what the engine reads. What a plugin reads
+ * (its `data`, its calls' arguments, its strings, its traits) is the plugin's
+ * to carry forward, with its own `contentMigrations`, and a pack records
+ * which version of each plugin's content it was written for in `plugins`.
+ * Commands in a command log are carried forward the same way, by the engine's
+ * `COMMAND_STEPS` and each plugin's `commandMigrations`.
  */
 import { fail, ok, type Result } from './result.ts'
 import type { Pack } from './loader.ts'
+import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
 export const SCHEMA = 16
@@ -37,53 +45,17 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   // 5 → 6: one naming rule (ADR 0008) and one gating shape, wherever content
   // can hold them. Words and code are left as they are.
   5: (pack) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, toSchema6)])) as RawPack,
-  // 6 → 7: a plugin call's arguments are always named (ADR 0009). The
-  // first-party calls that took a bare value (`{ 'places/at': ['cafe'] }`,
-  // read as `{ value }`) name it, and values take arguments instead of
-  // encoding them in the name: `messages/unread-texts` is `messages/unread`
-  // with `{ channel: 'texts' }`, in a badge and in prose.
-  6: (pack) =>
-    Object.fromEntries(
-      Object.entries(pack).map(([key, value]) => {
-        if (key === 'prose' || key === 'strings')
-          return [
-            key,
-            isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? valueTokens(text) : text])) : value,
-          ]
-        return [key, WORDS.has(key) ? value : deep(value, toSchema7)]
-      }),
-    ) as RawPack,
-  // 7 → 8: the timed-effects plugin is the statuses plugin, so its calls don't
-  // read like the engine's effects: `effects/apply` with `{ effect }` is
-  // `statuses/apply` with `{ status }`, its content moves from
-  // `data.effects.effects` to `data.statuses.statuses`, and its strings from
-  // `effects/…` to `statuses/…`.
-  7: (pack) =>
-    Object.fromEntries(
-      Object.entries(pack).map(([key, value]) => {
-        if (key === 'strings')
-          return [key, isRecord(value) ? Object.fromEntries(Object.entries(value).map(([id, text]) => [STATUS_STRINGS[id] ?? id, text])) : value]
-        if (key === 'data' && isRecord(value) && isRecord(value.effects) && !('statuses' in value)) {
-          const { effects, ...rest } = value
-          const { effects: list, ...other } = effects
-          value = { ...rest, statuses: list === undefined ? other : { ...other, statuses: list } }
-        }
-        return [key, WORDS.has(key) ? value : deep(value, toSchema8)]
-      }),
-    ) as RawPack,
-  // 8 → 9: an item's and a place's `kind` meant a genre the engine shouldn't
-  // know, so it's gone. It becomes a tag, and gear's one at the start becomes
-  // the item's `start`: `{ kind: 'gear' }` is `{ tags: ['gear'], start: 1 }`.
-  8: (pack) => {
-    const out: RawPack = { ...pack }
-    if (Array.isArray(pack.items)) out.items = pack.items.map((item) => (isRecord(item) ? kindToTags(item, ['gear', 'stuff']) : item))
-    const data = pack.data
-    if (isRecord(data) && isRecord(data.places) && Array.isArray(data.places.locations)) {
-      const locations = data.places.locations.map((location) => (isRecord(location) ? kindToTags(location, ['street', 'venue', 'room']) : location))
-      out.data = { ...data, places: { ...data.places, locations } }
-    }
-    return out
-  },
+  // 6 → 7: a plugin call's arguments are always named (ADR 0009). Every
+  // change was to a plugin's calls, values or tokens, so each plugin carries
+  // its own content forward.
+  6: (pack) => pack,
+  // 7 → 8: the timed-effects plugin is the statuses plugin; its own steps move its calls, content and strings.
+  7: (pack) => pack,
+  // 8 → 9: an item's `kind` meant a genre the engine shouldn't know, so it's
+  // gone. It becomes a tag, and gear's one at the start becomes the item's
+  // `start`: `{ kind: 'gear' }` is `{ tags: ['gear'], start: 1 }`. (A place's
+  // `kind` is the places plugin's to move.)
+  8: (pack) => (Array.isArray(pack.items) ? { ...pack, items: pack.items.map((item) => (isRecord(item) ? kindToTags(item) : item)) } : pack),
   // 9 → 10: one separator rule for ids (ADR 0010): a choice in a scene is
   // `scene#choice`, as its label's prose key already was, so `/` only ever
   // names a plugin. `{ chose: 'ch1.mat/open' }` is `{ chose: 'ch1.mat#open' }`.
@@ -101,32 +73,12 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
         return [key, WORDS.has(key) ? value : deep(value, toSchema11)]
       }),
     ) as RawPack,
-  // 11 → 12: the feed plugin counts news as `unread`, as its view and the
-  // messages plugin do, so its value `feed/unseen` is `feed/unread`: in a
-  // value's name (a badge, a stat's `max`, an achievement's progress) and in
-  // prose and strings tokens, `{{v:feed/unseen feed=social}}`.
-  11: (pack) =>
-    Object.fromEntries(
-      Object.entries(pack).map(([key, value]) => {
-        if (key === 'prose' || key === 'strings')
-          return [
-            key,
-            isRecord(value)
-              ? Object.fromEntries(
-                  Object.entries(value).map(([id, text]) => [
-                    id,
-                    typeof text === 'string' ? text.replace(/\{\{v:feed\/unseen(?=[\s}])/g, '{{v:feed/unread') : text,
-                  ]),
-                )
-              : value,
-          ]
-        return [key, WORDS.has(key) ? value : deep(value, (inner) => (inner.value === 'feed/unseen' ? { ...inner, value: 'feed/unread' } : inner))]
-      }),
-    ) as RawPack,
+  // 11 → 12: the feed plugin's value `feed/unseen` is `feed/unread`, which its own steps rename.
+  11: (pack) => pack,
   // 12 → 13: items and collections leave the engine; things are entities. See `toSchema13`.
   12: (pack) => toSchema13(pack),
-  // 13 → 14: the cast's characters are entities with the `cast/person` trait. See `toSchema14`.
-  13: (pack) => toSchema14(pack),
+  // 13 → 14: the cast's characters are entities with the `cast/person` trait, which the cast's own steps move.
+  13: (pack) => pack,
   // 14 → 15: a kind's named conditions are its `flags`, no longer its `marks`.
   14: (pack) =>
     Array.isArray(pack.kinds)
@@ -196,46 +148,7 @@ const COMMAND_FIELDS: Record<string, Record<string, string>> = {
   input: { value: 'to' },
 }
 
-/** The first-party plugins' conditions and effects whose arguments were renamed at schema 6, by full name. */
-const PLUGIN_CALL_FIELDS: Record<string, Record<string, string>> = {
-  'achievements/earned': { id: 'achievement' },
-  'achievements/grant': { id: 'achievement' },
-  'effects/active': { id: 'effect' },
-  'effects/apply': { id: 'effect' },
-  'effects/remove': { id: 'effect' },
-  'cast/at': { who: 'character' },
-  'feed/post': { id: 'post' },
-  'calendar/pass': { periods: 'by' },
-}
-
-/** The first-party plugins' commands whose arguments were renamed at schema 6: one target is `id`. */
-const PLUGIN_COMMAND_FIELDS: Record<string, Record<string, string>> = {
-  'cast/talk': { who: 'id' },
-  'cast/call': { who: 'id' },
-  'places/go': { to: 'id' },
-  'quests/track': { quest: 'id' },
-  'quests/seen': { quest: 'id' },
-  'jobs/apply': { job: 'id' },
-  'jobs/work': { job: 'id' },
-  'jobs/quit': { job: 'id' },
-  'wardrobe/wear': { item: 'id' },
-  'wardrobe/takeOff': { slot: 'id' },
-  'devices/open': { app: 'id' },
-  'devices/close': { device: 'id' },
-  'feed/seen': { feed: 'id' },
-  'messages/read': { thread: 'id' },
-  'debug/item': { count: 'to' },
-  'debug/turn': { turn: 'to' },
-  'debug/scene': { scene: 'id' },
-  'debug/go': { location: 'id' },
-}
-
 const RANGE = ['gte', 'gt', 'lte', 'lt']
-
-/** Arguments renamed by a table, if the table has them; anything else as it is. */
-function renamedArgs(args: unknown, names: Record<string, string> | undefined): unknown {
-  return names && isRecord(args) ? renamed(args, names) : args
-}
 
 /** A `when` turned the other way round, without stacking `not`s. */
 function negated(when: unknown): unknown {
@@ -246,7 +159,6 @@ function negated(when: unknown): unknown {
  * Schema 5 content in one object, as schema 6 writes it:
  * - effects' targets by their noun, `to` and `by` (`setStat` is `stat` with `to`);
  * - `use`'s `itemId`, and `setting` and `input`'s `value` (`to`);
- * - the first-party plugins' renamed arguments, long or short;
  * - conditions: `{ has }` is `{ item }`, `{ turn: true, gte }` is `{ turn: { gte } }`,
  *   `{ counter }` and `storylineKv`'s inner `is` are one `storylineKv`, a
  *   collection's `id` is `entry`;
@@ -255,20 +167,14 @@ function negated(when: unknown): unknown {
  */
 function toSchema6(value: Record<string, unknown>): Record<string, unknown> {
   let out = value
+  // A plugin's calls (`kind` or `type` 'custom', `custom`, or a key with a `/`) are the plugin's to rename.
   if (typeof out.kind === 'string') {
-    if (out.kind === 'custom' && typeof out.name === 'string') out = { ...out, with: renamedArgs(out.with, PLUGIN_CALL_FIELDS[out.name]) }
-    else if (EFFECT_FIELDS[out.kind] && !(out.kind === 'scene' && 'from' in out)) {
+    if (EFFECT_FIELDS[out.kind] && !(out.kind === 'scene' && 'from' in out)) {
       out = renamed(out.kind === 'setStat' ? { ...out, kind: 'stat' } : out, EFFECT_FIELDS[out.kind])
     }
   } else if (typeof out.type === 'string') {
-    if (out.type === 'custom' && typeof out.name === 'string') out = { ...out, with: renamedArgs(out.with, PLUGIN_COMMAND_FIELDS[out.name]) }
-    else if (COMMAND_FIELDS[out.type]) out = renamed(out, COMMAND_FIELDS[out.type])
+    if (COMMAND_FIELDS[out.type]) out = renamed(out, COMMAND_FIELDS[out.type])
   } else {
-    if (typeof out.custom === 'string') out = { ...out, with: renamedArgs(out.with, PLUGIN_CALL_FIELDS[out.custom]) }
-    // A plugin call in short: `{ 'cast/at': { who, at } }`.
-    for (const [key, inner] of Object.entries(out)) {
-      if (key.includes('/') && PLUGIN_CALL_FIELDS[key]) out = { ...out, [key]: renamedArgs(inner, PLUGIN_CALL_FIELDS[key]) }
-    }
     if (typeof out.has === 'string' && !('item' in out)) out = renamed(out, { has: 'item' })
     if (out.turn === true) {
       const range = Object.fromEntries(RANGE.filter((key) => key in out).map((key) => [key, out[key]]))
@@ -293,71 +199,9 @@ function toSchema6(value: Record<string, unknown>): Record<string, unknown> {
   return out
 }
 
-/**
- * The first-party calls that took one bare value at schema 6, and what that
- * value is named now. A short call's value that isn't an object was read as
- * `{ value }`, and some read `id` as well.
- */
-const NAMED_VALUE: Record<string, string> = {
-  'calendar/period': 'period',
-  'calendar/weekday': 'day',
-  'calendar/pass': 'by',
-  'cast/here': 'character',
-  'cast/met': 'character',
-  'places/at': 'location',
-  'places/within': 'location',
-  'places/move': 'location',
-}
-
-/** Arguments with the bare `value` (or `id`) named by the call's noun. */
-function namedValue(args: unknown, noun: string): unknown {
-  if (!isRecord(args)) return args
-  const from = 'value' in args ? 'value' : 'id' in args ? 'id' : undefined
-  return from && !(noun in args) ? renamed(args, { [from]: noun }) : args
-}
-
-/** A value that encoded its argument in its name, as schema 7 asks it: `{ value, with }`. */
-function valueCall(name: string): { value: string; with?: Record<string, unknown> } {
-  const unread = /^messages\/unread-(.+)$/.exec(name)
-  if (unread) return { value: 'messages/unread', with: { channel: unread[1] } }
-  const unseen = /^feed\/unseen-(.+)$/.exec(name)
-  if (unseen) return { value: 'feed/unseen', with: { feed: unseen[1] } }
-  return { value: name }
-}
-
-/** Prose and strings with schema 6's value names in their tokens, as schema 7 writes them. */
-function valueTokens(text: string): string {
-  return text.replace(
-    /\{\{v:(messages\/unread|feed\/unseen)-([A-Za-z0-9_-]+)\}\}/g,
-    (_match, name: string, id: string) => `{{v:${name} ${name === 'messages/unread' ? 'channel' : 'feed'}=${id}}}`,
-  )
-}
-
-/**
- * Schema 6 content in one object, as schema 7 writes it: a first-party call's
- * bare value named, in short or long form, and an app's badge `{ count }` as
- * a value with its arguments.
- */
-function toSchema7(value: Record<string, unknown>): Record<string, unknown> {
-  let out = value
-  if (out.kind === 'custom' && typeof out.name === 'string' && NAMED_VALUE[out.name]) out = { ...out, with: namedValue(out.with, NAMED_VALUE[out.name]) }
-  if (typeof out.custom === 'string' && NAMED_VALUE[out.custom]) out = { ...out, with: namedValue(out.with, NAMED_VALUE[out.custom]) }
-  const keys = Object.keys(out)
-  if (keys.length === 1 && NAMED_VALUE[keys[0]]) {
-    const inner = out[keys[0]]
-    const noun = NAMED_VALUE[keys[0]]
-    if (inner !== true && inner !== undefined) out = { [keys[0]]: isRecord(inner) ? namedValue(inner, noun) : { [noun]: inner } }
-  }
-  if (isRecord(out.badge) && typeof out.badge.count === 'string') {
-    const { count, ...rest } = out.badge
-    out = { ...out, badge: { ...rest, ...valueCall(count as string) } }
-  }
-  return out
-}
-
-/** An item or a place with its old `kind` as a tag; gear without a `start` starts with one. */
-function kindToTags(value: Record<string, unknown>, kinds: readonly string[]): Record<string, unknown> {
-  if (typeof value.kind !== 'string' || !kinds.includes(value.kind)) return value
+/** An item with its old `kind` as a tag; gear without a `start` starts with one. */
+function kindToTags(value: Record<string, unknown>): Record<string, unknown> {
+  if (typeof value.kind !== 'string' || !['gear', 'stuff'].includes(value.kind)) return value
   const { kind, ...rest } = value
   const tags = Array.isArray(rest.tags) ? (rest.tags.includes(kind) ? rest.tags : [...rest.tags, kind]) : [kind]
   return { ...rest, tags, ...(kind === 'gear' && rest.start === undefined ? { start: 1 } : {}) }
@@ -389,29 +233,6 @@ function toSchema11(value: Record<string, unknown>): Record<string, unknown> {
   return { level: tier, ...rest }
 }
 
-/** The statuses plugin's calls, by the timed-effects plugin's names. */
-const STATUS_CALLS: Record<string, string> = { 'effects/active': 'statuses/active', 'effects/apply': 'statuses/apply', 'effects/remove': 'statuses/remove' }
-
-/** The statuses plugin's strings, by the timed-effects plugin's ids. */
-const STATUS_STRINGS: Record<string, string> = { 'effects/unknown': 'statuses/unknown', 'effects/notActive': 'statuses/notActive' }
-
-/**
- * Schema 7 content in one object, as schema 8 writes it: the timed-effects
- * plugin's calls as the statuses plugin's, long or short, with a condition's
- * or an effect's `effect` named `status`. A command keeps its `id`.
- */
-function toSchema8(value: Record<string, unknown>): Record<string, unknown> {
-  let out = value
-  const status = (args: unknown) => (isRecord(args) && 'effect' in args && !('status' in args) ? renamed(args, { effect: 'status' }) : args)
-  if (out.kind === 'custom' && typeof out.name === 'string' && STATUS_CALLS[out.name]) out = { ...out, name: STATUS_CALLS[out.name], with: status(out.with) }
-  if (out.type === 'custom' && typeof out.name === 'string' && STATUS_CALLS[out.name]) out = { ...out, name: STATUS_CALLS[out.name] }
-  if (typeof out.custom === 'string' && STATUS_CALLS[out.custom]) out = { ...out, custom: STATUS_CALLS[out.custom], with: status(out.with) }
-  if (Object.keys(out).some((key) => STATUS_CALLS[key])) {
-    out = Object.fromEntries(Object.entries(out).map(([key, inner]) => (STATUS_CALLS[key] ? [STATUS_CALLS[key], status(inner)] : [key, inner])))
-  }
-  return out
-}
-
 /** The kind a collection's entries became, by the collection's id: its own id, except the phone's `gallery`, whose entries are `photo` things. */
 export function collectionKind(collection: string): string {
   return collection === 'gallery' ? 'photo' : collection
@@ -420,55 +241,26 @@ export function collectionKind(collection: string): string {
 /** An item's id as the entity it became: `item:<id>`. An id that is already a reference is left as it is. */
 const itemRef = (id: unknown): unknown => (typeof id === 'string' && !id.includes(':') ? `item:${id}` : id)
 
-/**
- * The first-party plugin calls that named an item at schema 12, and what each
- * names now: the argument that held the item's id, and the one that holds the
- * entity. `debug/item` is `debug/held`.
- */
-const ITEM_CALLS: Record<string, { from: string; to: string; name?: string }> = {
-  'shop/buy': { from: 'item', to: 'entity' },
-  'shop/sell': { from: 'item', to: 'entity' },
-  'shop/inStock': { from: 'item', to: 'entity' },
-  'wardrobe/wearing': { from: 'item', to: 'entity' },
-  'wardrobe/wear': { from: 'id', to: 'id' },
-  'debug/item': { from: 'item', to: 'entity', name: 'debug/held' },
-}
-
-/** A plugin call's name and arguments, as schema 13 has them. */
-function itemCall(name: string, args: unknown): [string, unknown] {
-  const call = ITEM_CALLS[name]
-  if (!call) return [name, args]
-  if (!isRecord(args) || !(call.from in args)) return [call.name ?? name, args]
-  const { [call.from]: item, ...rest } = args
-  return [call.name ?? name, { ...rest, [call.to]: itemRef(item) }]
-}
-
-/** Strings the engine said for items, as the plugins that say them now: by the old key, the new ones. */
-const ITEM_STRINGS: Record<string, string[]> = {
-  doesNothing: ['inventory/doesNothing'],
-  haveNone: ['inventory/haveNone', 'wardrobe/haveNone'],
-}
-
-/** Strings whose `{item}` is `{thing}` now. */
-const THING_STRINGS = new Set(['inventory/doesNothing', 'inventory/haveNone', 'wardrobe/haveNone', 'wardrobe/notClothing', 'wardrobe/alreadyWearing'])
+/** Strings the engine said for items, which plugins say now (their own steps copy them to their keys first). */
+const ITEM_STRINGS = new Set(['doesNothing', 'haveNone'])
 
 /**
  * Schema 12 content as schema 13 writes it, where items and collections
  * leave the engine and things are entities:
  * - `items` are entities of an `item` kind (declared unlisted unless the pack
  *   declares it), held by the player from the start where they had a `start`,
- *   with their `use` as the inventory's `inventory/usable` trait;
+ *   with the item's `traits` where a plugin's step gave it some (the
+ *   inventory's turns its `use` into one);
  * - `collections` are kinds, unlisted, named by `collectionKind`;
  * - `{ item, …range }` is `{ entity: 'item:<id>', at: 'you', …range }`, and the
  *   `item` effect the `entity` effect, held by `'you'`;
- * - the `use` command is `inventory/use`, with the entity;
  * - `collect` is `create` (given to the player), `discard` is `remove`, and
  *   `{ collection, entry }` asks for the entity, `{ collection, …range }`
  *   counts what the player holds of the kind;
- * - shop goods, the shop's and wardrobe's calls and `debug/item` name the
- *   entity; the wardrobe's `clothes` are the `wardrobe/wearable` trait, and a
- *   slot's `start` names the entity;
- * - strings the engine said for items are the plugins'.
+ * - the strings the engine said for items are gone.
+ *
+ * A plugin call's arguments are the plugin's: its own steps, which run
+ * before this one, rename what its calls named.
  */
 function toSchema13(pack: RawPack): RawPack {
   const { items, collections, ...rest } = pack
@@ -476,7 +268,6 @@ function toSchema13(pack: RawPack): RawPack {
   const out: RawPack = { ...rest } as RawPack
   const kinds = Array.isArray(rest.kinds) ? [...rest.kinds] : []
   const entities = Array.isArray(rest.entities) ? [...rest.entities] : []
-  const traits: Record<string, unknown> = isRecord(rest.traits) ? { ...rest.traits } : {}
   const declares = (id: string) => kinds.some((kind) => isRecord(kind) && kind.id === id)
   if (Array.isArray(items) && items.length) {
     if (!declares('item')) kinds.push({ id: 'item', label: 'Item', plural: 'Items', listed: false })
@@ -490,7 +281,7 @@ function toSchema13(pack: RawPack): RawPack {
         ...(item.desc !== undefined ? { desc: item.desc } : {}),
         ...(Array.isArray(item.tags) ? { tags: item.tags } : {}),
         ...(start !== undefined ? { at: { player: start } } : {}),
-        ...(isRecord(item.use) ? { traits: { 'inventory/usable': item.use } } : {}),
+        ...(isRecord(item.traits) && Object.keys(item.traits).length ? { traits: item.traits } : {}),
       })
     }
   }
@@ -499,55 +290,9 @@ function toSchema13(pack: RawPack): RawPack {
     const kind = collectionKind(collection.id)
     if (!declares(kind)) kinds.push({ id: kind, label: collection.name ?? kind, plural: collection.name ?? kind, listed: false })
   }
-  if (isRecord(rest.data)) {
-    const data: Record<string, unknown> = { ...rest.data }
-    const shop = data.shop
-    if (isRecord(shop) && Array.isArray(shop.vendors)) {
-      data.shop = {
-        ...shop,
-        vendors: shop.vendors.map((vendor) =>
-          isRecord(vendor) && Array.isArray(vendor.goods)
-            ? {
-                ...vendor,
-                goods: vendor.goods.map((good) => {
-                  if (!isRecord(good) || !('item' in good) || 'entity' in good) return good
-                  const { item, ...other } = good
-                  return { entity: itemRef(item), ...other }
-                }),
-              }
-            : vendor,
-        ),
-      }
-    }
-    const wardrobe = data.wardrobe
-    if (isRecord(wardrobe)) {
-      const { clothes, ...kept } = wardrobe
-      const wearable: Record<string, unknown> = isRecord(traits['wardrobe/wearable']) ? { ...traits['wardrobe/wearable'] } : {}
-      for (const entry of Array.isArray(clothes) ? clothes : []) {
-        if (isRecord(entry) && typeof entry.id === 'string') wearable[itemRef(entry.id) as string] = { slot: entry.slot }
-      }
-      if (Object.keys(wearable).length) traits['wardrobe/wearable'] = wearable
-      data.wardrobe = Array.isArray(kept.slots)
-        ? { ...kept, slots: kept.slots.map((slot) => (isRecord(slot) && slot.start !== undefined ? { ...slot, start: itemRef(slot.start) } : slot)) }
-        : kept
-    }
-    out.data = data
-  }
   if (kinds.length) out.kinds = kinds
   if (entities.length) out.entities = entities
-  if (Object.keys(traits).length) out.traits = traits
-  if (isRecord(rest.strings)) {
-    const strings: Record<string, unknown> = {}
-    const given = rest.strings
-    for (const [id, text] of Object.entries(given)) {
-      if (!ITEM_STRINGS[id]) strings[id] = text
-      // The plugins' own key, where the pack gives it too, wins.
-      else for (const key of ITEM_STRINGS[id]) if (!(key in given)) strings[key] = text
-    }
-    out.strings = Object.fromEntries(
-      Object.entries(strings).map(([id, text]) => [id, THING_STRINGS.has(id) && typeof text === 'string' ? text.replaceAll('{item}', '{thing}') : text]),
-    )
-  }
+  if (isRecord(rest.strings)) out.strings = Object.fromEntries(Object.entries(rest.strings).filter(([id]) => !ITEM_STRINGS.has(id)))
   return Object.fromEntries(Object.entries(out).map(([key, value]) => [key, WORDS.has(key) ? value : thingsIn(value, prose, false)])) as RawPack
 }
 
@@ -559,26 +304,13 @@ function toSchema13(pack: RawPack): RawPack {
 function thingsIn(value: unknown, prose: Record<string, unknown>, args: boolean): unknown {
   if (Array.isArray(value)) return value.map((inner) => thingsIn(inner, prose, false))
   if (!isRecord(value)) return value
-  const long =
-    typeof value.custom === 'string'
-      ? value.custom
-      : (value.kind === 'custom' || value.type === 'custom') && typeof value.name === 'string'
-        ? value.name
-        : undefined
-  let out: Record<string, unknown> = {}
-  for (const [key, inner] of Object.entries(value)) {
-    if (key.includes('/')) {
-      const [name, given] = itemCall(key, inner)
-      out[name] = thingsIn(given, prose, true)
-    } else if (key === 'with' && long !== undefined) {
-      out.with = thingsIn(itemCall(long, inner)[1], prose, true)
-    } else out[key] = thingsIn(inner, prose, false)
-  }
-  if (long !== undefined && ITEM_CALLS[long]?.name) out = { ...out, [typeof value.custom === 'string' ? 'custom' : 'name']: ITEM_CALLS[long].name }
+  const long = typeof value.custom === 'string' || ((value.kind === 'custom' || value.type === 'custom') && typeof value.name === 'string')
+  const out: Record<string, unknown> = {}
+  for (const [key, inner] of Object.entries(value)) out[key] = thingsIn(inner, prose, key.includes('/') || (key === 'with' && long))
   return args ? out : thingTo13(out, prose)
 }
 
-/** One condition, effect or command of schema 12 that named an item or a collection, as schema 13 writes it. */
+/** One condition or effect of schema 12 that named an item or a collection, as schema 13 writes it. */
 function thingTo13(value: Record<string, unknown>, prose: Record<string, unknown>): Record<string, unknown> {
   const rangeOf = (from: Record<string, unknown>) => Object.fromEntries(RANGE.filter((key) => key in from).map((key) => [key, from[key]]))
   const only = (allowed: string[]) => Object.keys(value).every((key) => allowed.includes(key) || RANGE.includes(key))
@@ -601,7 +333,6 @@ function thingTo13(value: Record<string, unknown>, prose: Record<string, unknown
   if (value.kind === 'discard' && typeof value.collection === 'string' && typeof value.entry === 'string') {
     return { kind: 'remove', entity: `${collectionKind(value.collection)}:${value.entry}` }
   }
-  if (value.type === 'use' && typeof value.id === 'string') return { 'inventory/use': { id: itemRef(value.id) } }
   if (value.kind === undefined && value.type === undefined) {
     if (typeof value.item === 'string' && only(['item'])) return { entity: itemRef(value.item), at: 'you', ...rangeOf(value) }
     if (typeof value.collection === 'string' && only(['collection', 'entry'])) {
@@ -611,59 +342,6 @@ function thingTo13(value: Record<string, unknown>, prose: Record<string, unknown
     }
   }
   return value
-}
-
-/** A command of schema 12 that named an item, as a command of this engine: `use` is the inventory's, and a plugin's calls name the entity. */
-function commandToSchema13(command: Record<string, unknown>): Record<string, unknown> {
-  if (command.type === 'use' && typeof command.id === 'string') return { type: 'custom', name: 'inventory/use', with: { id: itemRef(command.id) } }
-  if (command.type === 'custom' && typeof command.name === 'string' && ITEM_CALLS[command.name]) {
-    const [name, args] = itemCall(command.name, command.with)
-    return { ...command, name, with: args }
-  }
-  return command
-}
-
-/**
- * A command from an older engine, as this one takes it: what `replay` plays an
- * old command log with. A command already in this shape comes back as it is.
- */
-export function upgradeCommand<C>(command: C): C {
-  return isRecord(command) && typeof command.type === 'string' ? (commandToSchema13(toSchema8(toSchema6(command))) as C) : command
-}
-
-/** What a character's fields became: the trait's, as written; `role` is the entity's `desc` and `portrait` its `image`. */
-const ENTITY_FIELDS: Record<string, string> = { id: 'id', name: 'name', role: 'desc', portrait: 'image', tags: 'tags', stats: 'stats', kv: 'kv' }
-
-/**
- * 13 → 14: a character in `data.cast.characters` is an entity of the kind
- * `character` (the cast's own) carrying the `cast/person` trait. Its `role`
- * is the entity's `desc`, its `portrait` its `image`, its `tags`, `stats`
- * and `kv` the entity's; the rest (schedule, talk, call and so on) is the
- * trait. The characters follow the pack's own entities.
- */
-function toSchema14(pack: RawPack): RawPack {
-  const data = isRecord(pack.data) ? pack.data : undefined
-  const castData = data && isRecord(data.cast) ? data.cast : undefined
-  if (!castData || !Array.isArray(castData.characters)) return pack
-  const people = castData.characters.filter(isRecord).map((character) => {
-    const entity: Record<string, unknown> = { of: 'character' }
-    const person: Record<string, unknown> = {}
-    for (const [field, value] of Object.entries(character)) {
-      if (value === undefined) continue
-      if (field in ENTITY_FIELDS) entity[ENTITY_FIELDS[field]] = value
-      else person[field] = value
-    }
-    return { ...entity, traits: { 'cast/person': person } }
-  })
-  const { characters: _moved, ...restCast } = castData
-  const { cast: _cast, ...restData } = data!
-  const nextData = Object.keys(restCast).length ? { ...restData, cast: restCast } : restData
-  const { data: _data, ...rest } = pack
-  return {
-    ...rest,
-    entities: [...(Array.isArray(pack.entities) ? pack.entities : []), ...people],
-    ...(Object.keys(nextData).length ? { data: nextData } : {}),
-  } as RawPack
 }
 
 /** `[[reveal]]` markup on a block of its own: its delay and its transition. */
@@ -698,11 +376,11 @@ function hinted(value: Record<string, unknown>, hints: Record<string, unknown>):
  * engine into `ui` hints, which the engine carries to the view as written,
  * in the React UI's words:
  *
- * - a scene's and a place's `transition` is `ui.transition`, and a scene's
- *   `frame` is gone (nothing read it);
+ * - a scene's `transition` is `ui.transition`, and its `frame` is gone
+ *   (nothing read it);
  * - a block's `reveal` is `ui.reveal`;
- * - `[[reveal]]` markup on a line of its own, in the prose of a scene's or a
- *   place's `{ text }` block, splits that prose: the words before it keep the
+ * - `[[reveal]]` markup on a line of its own, in the prose of a scene's
+ *   `{ text }` block, splits that prose: the words before it keep the
  *   key, and each part after it gets a key of its own (`<key>.2`, `<key>.3`)
  *   and a block of its own with `ui.reveal`, under the same `when`. Anywhere
  *   else, such as inside a paragraph or in a variants member, the markup is
@@ -710,10 +388,11 @@ function hinted(value: Record<string, unknown>, hints: Record<string, unknown>):
  * - a `transition` effect in a choice's effects is the choice's
  *   `ui.transition` (`{ in, ms }`), which the React UI plays for the screen the
  *   choice leads to; anywhere else it is dropped;
- * - a stat's `display` is `ui.display`;
- * - the cast's `hue` on a person (an entity's or a kind's `cast/person`
- *   trait) is the entity's or kind's `ui.hue`; a `traits` table row's `hue`
- *   moves to the pack's own entity of that reference, else it is dropped.
+ * - a stat's `display` is `ui.display`.
+ *
+ * What plugins drew (a place's transition and blocks, a person's hue) is
+ * moved by their own steps, which run before this one, so a place's prose
+ * still has its markup to split.
  */
 function toSchema16(pack: RawPack): RawPack {
   const prose: Record<string, unknown> = isRecord(pack.prose) ? { ...pack.prose } : {}
@@ -767,51 +446,12 @@ function toSchema16(pack: RawPack): RawPack {
       return next
     })
   }
-  if (isRecord(pack.data) && isRecord(pack.data.places) && Array.isArray(pack.data.places.locations)) {
-    const places = pack.data.places
-    out.data = {
-      ...pack.data,
-      places: {
-        ...places,
-        locations: (places.locations as unknown[]).map((location) => {
-          if (!isRecord(location)) return location
-          const { transition, ...rest } = location
-          const next = transition !== undefined ? hinted(rest, { transition }) : rest
-          return Array.isArray(next.body) ? { ...next, body: splitBlocks(next.body) } : next
-        }),
-      },
-    }
-  }
   if (Array.isArray(pack.stats))
     out.stats = pack.stats.map((stat) => {
       if (!isRecord(stat) || !('display' in stat)) return stat
       const { display, ...rest } = stat
       return hinted(rest, { display })
     })
-  /** An entity or a kind with its person's `hue` as its own `ui.hue`. */
-  const hueOut = (holder: unknown): unknown => {
-    if (!isRecord(holder) || !isRecord(holder.traits) || !isRecord(holder.traits['cast/person']) || !('hue' in holder.traits['cast/person'])) return holder
-    const { hue, ...person } = holder.traits['cast/person']
-    return hinted({ ...holder, traits: { ...holder.traits, 'cast/person': person } }, { hue })
-  }
-  if (Array.isArray(pack.kinds)) out.kinds = pack.kinds.map(hueOut)
-  if (Array.isArray(pack.entities)) out.entities = pack.entities.map(hueOut)
-  if (isRecord(pack.traits) && isRecord(pack.traits['cast/person'])) {
-    const rows: Record<string, unknown> = {}
-    for (const [ref, row] of Object.entries(pack.traits['cast/person'])) {
-      if (!isRecord(row) || !('hue' in row)) {
-        rows[ref] = row
-        continue
-      }
-      const { hue, ...rest } = row
-      rows[ref] = rest
-      if (Array.isArray(out.entities))
-        out.entities = out.entities.map((entity) =>
-          isRecord(entity) && `${String(entity.of)}:${String(entity.id)}` === ref ? hinted(entity, { hue }) : entity,
-        )
-    }
-    out.traits = { ...pack.traits, 'cast/person': rows }
-  }
   // Blocks' `reveal` everywhere else, and `transition` effects that no choice took, the deep way. Words and code are left as they are.
   for (const [key, value] of Object.entries(out)) {
     if (WORDS.has(key)) continue
@@ -845,20 +485,248 @@ function deepArrays(value: unknown): unknown {
   return inner
 }
 
+/** How a plugin call is written in content: `short`, `long` or as a `command`. See `ContentTools.calls`. */
+type CallForm = 'short' | 'long' | 'command'
+
+/** A plugin call as `ContentTools.calls` hands it over: its full name, its arguments as written, and how it was written. */
+type RawCall = { name: string; with: unknown; form: CallForm }
+
 /**
- * A pack brought up to `SCHEMA`, step by step, or why it can't be: it was
- * written for a newer engine, or for one so old there is no step from it. A
- * pack already at `SCHEMA` comes back as it is.
+ * What a plugin's content step is given besides the pack: ways to rewrite
+ * what a pack holds without walking it by hand. Each returns a new pack.
+ * `objects` and `calls` leave words and code (`prose`, `strings`,
+ * `variants`, `custom`) as they are, and `words` rewrites only those words.
  */
-export function upgradePack(pack: { schema: number }): Result<Pack> {
+export type ContentTools = {
+  /** Every object the pack's content holds, rewritten from the innermost out. */
+  objects: (pack: RawPack, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) => RawPack
+  /**
+   * Every call to a condition, effect or command by name, however it is
+   * written: `short`, `{ 'places/at': { location } }` (any key with a `/`,
+   * so check the name); `long`, `{ custom: 'places/at', with }` or
+   * `{ kind: 'custom', name, with }`; or a `command`,
+   * `{ type: 'custom', name, with }`. Return its name and arguments: a call
+   * given back as it came stays as it was. A value (`{ value, with }`) is
+   * not a call; reach it with `objects`.
+   */
+  calls: (pack: RawPack, rewrite: (call: RawCall) => { name: string; with: unknown }) => RawPack
+  /** Every line of the pack's `prose` and `strings`, given with its key. */
+  words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
+}
+
+/**
+ * One step of a plugin's `contentMigrations`: the whole pack as the version
+ * it upgrades from wrote it, as the next version writes it. It usually
+ * changes only the plugin's own `data`, calls, strings and traits. It returns
+ * a new pack and never changes the one it was given.
+ */
+export type ContentStep = (pack: RawPack, tools: ContentTools) => RawPack
+
+/** A command as a log from an older engine or plugin kept it: some version's shape, with its `type`. */
+export type RawCommand = Record<string, unknown> & { type: string }
+
+/**
+ * One step of a plugin's `commandMigrations`: a command from a log, as the
+ * version it upgrades from wrote it, as the next version takes it. It is
+ * given every command, the engine's and other plugins' too, so it checks the
+ * type and name and gives back the ones that aren't its own as they came.
+ */
+export type CommandStep = (command: RawCommand) => RawCommand
+
+/** One plugin call in one object, rewritten. */
+function callsIn(value: Record<string, unknown>, rewrite: (call: RawCall) => { name: string; with: unknown }): Record<string, unknown> {
+  let out = value
+  const long = (field: 'name' | 'custom', form: CallForm) => {
+    const next = rewrite({ name: out[field] as string, with: out.with, form })
+    if (next.name === out[field] && next.with === out.with) return
+    const { with: _with, ...rest } = out
+    out = { ...rest, [field]: next.name, ...(next.with !== undefined ? { with: next.with } : {}) }
+  }
+  if (out.kind === 'custom' && typeof out.name === 'string') long('name', 'long')
+  else if (out.type === 'custom' && typeof out.name === 'string') long('name', 'command')
+  if (typeof out.custom === 'string') long('custom', 'long')
+  if (Object.keys(out).some((key) => key.includes('/'))) {
+    let changed = false
+    const entries = Object.entries(out).map(([key, inner]): [string, unknown] => {
+      if (!key.includes('/')) return [key, inner]
+      const next = rewrite({ name: key, with: inner, form: 'short' })
+      if (next.name !== key || next.with !== inner) changed = true
+      return [next.name, next.with]
+    })
+    if (changed) out = Object.fromEntries(entries)
+  }
+  return out
+}
+
+/** The tools every plugin's content step is given. */
+const TOOLS: ContentTools = {
+  objects: (pack, rewrite) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, rewrite)])) as RawPack,
+  calls: (pack, rewrite) => TOOLS.objects(pack, (value) => callsIn(value, rewrite)),
+  words: (pack, rewrite) =>
+    Object.fromEntries(
+      Object.entries(pack).map(([key, value]) => [
+        key,
+        (key === 'prose' || key === 'strings') && isRecord(value)
+          ? Object.fromEntries(Object.entries(value).map(([id, text]) => [id, typeof text === 'string' ? rewrite(text, id) : text]))
+          : value,
+      ]),
+    ) as RawPack,
+}
+
+/**
+ * The engine's steps that reshape a command from a command log, keyed by the
+ * schema each upgrades *from*, as `PACK_STEPS` are. Sparse: a schema with no
+ * step changed no command. A plugin's commands are its own to carry forward,
+ * with its `commandMigrations`.
+ */
+export const COMMAND_STEPS: Record<number, (command: RawCommand) => RawCommand> = {
+  // 5 → 6: the naming rule. `use`'s `itemId` is `id`, and `setting` and `input` set with `to`.
+  5: (command) => (COMMAND_FIELDS[command.type] ? (renamed(command, COMMAND_FIELDS[command.type]) as RawCommand) : command),
+}
+
+/**
+ * The version of a plugin's content a pack was written for, or of its
+ * commands a log was, where it doesn't record one: its schema, or the
+ * plugin's own version if that is lower, and at least 1. The first-party
+ * plugins number their versions by the engine's schema, since the engine
+ * once carried their content forward itself, so a pack from before plugins
+ * kept versions lines up with their steps; for any plugin, a pack written
+ * now without a record is read as its current version.
+ */
+function guessed(schema: number, current: number): number {
+  return Math.max(1, Math.min(schema, current))
+}
+
+/** Each plugin's version as a pack or a log records it, or guessed from its schema; or why one can't be read. */
+function startingVersions(
+  plugins: readonly Plugin[],
+  recorded: Record<string, unknown>,
+  schema: number,
+  current: (plugin: Plugin) => number,
+  what: string,
+): Result<Record<string, number>> {
+  const out: Record<string, number> = {}
+  for (const plugin of plugins) {
+    const target = current(plugin)
+    const given = recorded[plugin.id]
+    if (given === undefined) {
+      out[plugin.id] = guessed(schema, target)
+      continue
+    }
+    if (typeof given !== 'number' || !Number.isInteger(given) || given < 1)
+      return fail(`records "${String(given)}" as the ${plugin.id} plugin's ${what} version`)
+    if (given > target) return fail(`written for version ${given} of the ${plugin.id} plugin's ${what}, this game's reads ${target}`)
+    out[plugin.id] = given
+  }
+  return ok(out)
+}
+
+/**
+ * Bring every plugin's version in `at` up to `upTo` (or its own version, if
+ * lower), running its steps in order, the game's plugins in their order.
+ * Returns whether any version moved.
+ */
+function catchUp<T>(
+  plugins: readonly Plugin[],
+  at: Record<string, number>,
+  upTo: number,
+  current: (plugin: Plugin) => number,
+  stepOf: (plugin: Plugin, version: number) => ((value: T) => T) | undefined,
+  value: { now: T },
+): boolean {
+  let moved = false
+  for (const plugin of plugins) {
+    const target = Math.min(upTo, current(plugin))
+    while (at[plugin.id] < target) {
+      const step = stepOf(plugin, at[plugin.id])
+      if (step) value.now = step(value.now)
+      at[plugin.id] += 1
+      moved = true
+    }
+  }
+  return moved
+}
+
+const contentVersion = (plugin: Plugin) => plugin.contentVersion ?? 1
+const commandVersion = (plugin: Plugin) => plugin.commandVersion ?? 1
+
+/**
+ * A pack brought up to `SCHEMA` and to each of `plugins`' content versions,
+ * step by step, or why it can't be: it was written for a newer engine or a
+ * newer version of a plugin, or for an engine so old there is no step from
+ * it. Pass the game's plugins (`game.plugins`, or the base's), so what each
+ * one reads is carried forward with the rest.
+ *
+ * The engine's step from each schema runs after every plugin step keyed by
+ * that schema or below, so a first-party plugin's step meets the pack as the
+ * engine had it then. Then each plugin's later steps run. A pack that records
+ * no version for a plugin is read as written for its schema, or for the
+ * plugin's own version if that is lower. The result records every plugin's
+ * version in `plugins`. A pack with nothing to do comes back as it is.
+ */
+export function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[]): Result<Pack> {
   const from = pack.schema
   if (!Number.isInteger(from)) return fail(`has no schema number`)
   if (from > SCHEMA) return fail(`written for schema ${from}, this engine reads ${SCHEMA}`)
-  let raw = pack as RawPack
   for (let version = from; version < SCHEMA; version += 1) {
-    const step = PACK_STEPS[version]
-    if (!step) return fail(`written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`)
-    raw = { ...step(raw), schema: version + 1 }
+    if (!PACK_STEPS[version]) return fail(`written for schema ${from}, too old for this engine to read (it reads ${SCHEMA})`)
   }
-  return ok(raw as unknown as Pack)
+  const recorded = isRecord(pack.plugins) ? pack.plugins : {}
+  const versions = startingVersions(plugins, recorded, from, contentVersion, 'content')
+  if (!versions.ok) return versions
+  const at = versions.value
+  const raw = { now: pack as RawPack }
+  const stepOf = (plugin: Plugin, version: number) => {
+    const step = plugin.contentMigrations?.[version]
+    return step ? (value: RawPack): RawPack => ({ ...step(value, TOOLS), schema: value.schema }) : undefined
+  }
+  let changed = false
+  for (let version = from; version < SCHEMA; version += 1) {
+    catchUp(plugins, at, version + 1, contentVersion, stepOf, raw)
+    raw.now = { ...PACK_STEPS[version](raw.now), schema: version + 1 }
+    changed = true
+  }
+  if (catchUp(plugins, at, Infinity, contentVersion, stepOf, raw)) changed = true
+  if (!changed) return ok(pack as unknown as Pack)
+  const out: RawPack = { ...raw.now }
+  if (plugins.length || pack.plugins !== undefined) out.plugins = { ...recorded, ...at }
+  return ok(out as unknown as Pack)
+}
+
+/** What a command log records of the versions it was written with: the engine's `SCHEMA`, and each plugin's command version. */
+export type CommandVersions = { schema: number; plugins: Record<string, number> }
+
+/** The versions a command log made now records, for a game with these plugins. */
+export function commandVersions(plugins: readonly Plugin[]): CommandVersions {
+  return { schema: SCHEMA, plugins: Object.fromEntries(plugins.map((plugin) => [plugin.id, commandVersion(plugin)])) }
+}
+
+/**
+ * How to bring a log's commands up to this engine and these plugins, given
+ * the versions the log records (none, for a log from before logs kept them,
+ * which is read as the oldest, so every step runs), or why its commands can't
+ * be read. Each command goes through the engine's `COMMAND_STEPS` from the
+ * log's schema and each plugin's `commandMigrations` from its version,
+ * interleaved as `upgradePack` interleaves content. A command already in
+ * this shape comes back as it is.
+ */
+export function commandUpgrade(plugins: readonly Plugin[], from: Partial<CommandVersions> = {}): Result<<C>(command: C) => C> {
+  const schema = from.schema ?? 1
+  if (!Number.isInteger(schema)) return fail(`has no schema number`)
+  if (schema > SCHEMA) return fail(`written for schema ${schema}, this engine reads ${SCHEMA}`)
+  const versions = startingVersions(plugins, isRecord(from.plugins) ? from.plugins : {}, schema, commandVersion, 'commands')
+  if (!versions.ok) return versions
+  const stepOf = (plugin: Plugin, version: number) => plugin.commandMigrations?.[version]
+  return ok(<C>(command: C): C => {
+    if (!isRecord(command) || typeof command.type !== 'string') return command
+    const at = { ...versions.value }
+    const value = { now: command as RawCommand }
+    for (let version = schema; version < SCHEMA; version += 1) {
+      catchUp(plugins, at, version + 1, commandVersion, stepOf, value)
+      const step = COMMAND_STEPS[version]
+      if (step) value.now = step(value.now)
+    }
+    catchUp(plugins, at, Infinity, commandVersion, stepOf, value)
+    return value.now as C
+  })
 }

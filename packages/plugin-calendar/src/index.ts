@@ -21,6 +21,7 @@ import {
   type PluginProblem,
   type Range,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** A period of the day: its id, and what the player reads (the id, if left out). */
 export type PeriodDef = { id: string; label?: string }
@@ -146,6 +147,8 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
   return definePlugin<CalendarState, CalendarView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
     strings,
     start: () => ({ day: startDay, period: options.start?.period ?? ids[0] }),
     conditions: {

@@ -30,6 +30,7 @@ import {
   type KvValue,
   type PluginCommand,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 export type DebugView = {
   /** Every lock whose `when` holds now, with what it stops and why. */
@@ -55,6 +56,10 @@ export function debug(): DefinedPlugin<null, DebugView> {
   return definePlugin<null, DebugView>({
     id: 'debug',
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     // The clock is the calendar's and the map is the places plugin's: debug/time and debug/go set them when the game has them.
     cooperates: ['calendar', 'places'],
     strings: {

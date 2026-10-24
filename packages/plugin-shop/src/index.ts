@@ -53,6 +53,7 @@ import {
   type RenderedChoice,
   type TraitDef,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `shop/sellable` trait holds: what one is worth, by stat. */
 export type Sellable = {
@@ -493,6 +494,10 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
   return definePlugin<ShopState, ShopView>({
     id: ID,
     version: 2,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     start: emptyState,
     migrations: { 1: (old, { game }) => fromSold(old, game) },
     cooperates: ['calendar', 'places'],

@@ -36,7 +36,7 @@ A mod as a file. It's JSON that says what the mod is, which game it's for, and t
 | `version` | Shown beside the name. Optional, and never compared. |
 | `game` | The [`game.id`](/docs/reference/game#game) it was made for. Any other game refuses it. |
 | `description` | A line under the name. Optional. |
-| `pack` | The [pack](/docs/reference/loader#pack). Its `schema` may be the game's [`SCHEMA`](/docs/reference/loader#schema) or an older one, which is [upgraded](/docs/reference/loader#upgradepack) when the mod is added. Its `id` is replaced. |
+| `pack` | The [pack](/docs/reference/loader#pack). Its `schema` may be the game's [`SCHEMA`](/docs/reference/loader#schema) or an older one, which is [upgraded](/docs/reference/loader#upgradepack) each time the game loads it. It may record the version of each plugin's content it was written for in `plugins`. Its `id` is replaced. |
 
 This is a whole mod, as the showcase ships it in `examples/showcase/mods/fog-season.json`:
 
@@ -72,7 +72,7 @@ A pack in a file has only what JSON can hold: scenes, storylines, activities, st
 function readMod(text: string, gameId: string): Result<ModFile>
 ```
 
-Reads a mod file's text for the game `gameId`. It returns a [`Result`](/docs/reference/runner#result): the mod with its pack upgraded to [`SCHEMA`](/docs/reference/loader#schema) by [`upgradePack`](/docs/reference/loader#upgradepack) and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player:
+Reads a mod file's text for the game `gameId`. It returns a [`Result`](/docs/reference/runner#result): the mod with its pack as the file wrote it and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player. The pack isn't upgraded here: [`loadGame`](/docs/reference/loader#loadgame) upgrades it with the game's other packs each time it loads, so the game's plugins carry their own content in it forward too, and a mod a player installed keeps working after you update a plugin. Here it's only checked that this engine can read its schema.
 
 | When | Reason |
 |---|---|

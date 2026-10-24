@@ -39,6 +39,7 @@ import {
   type Reference,
   type RenderedChoice,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What working one shift takes. */
 export type ShiftDef = {
@@ -362,6 +363,10 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
   return definePlugin<JobsState, JobsView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     start: emptyState,
     cooperates: ['calendar', 'places'],
     strings: {

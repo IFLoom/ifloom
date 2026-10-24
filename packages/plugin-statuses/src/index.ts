@@ -23,6 +23,7 @@ import {
   type Range,
   type StatModifier,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What applying a status that is already active does: start its turns again, or add another stack. */
 export type Reapply = 'refresh' | 'stack'
@@ -215,6 +216,10 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
   return definePlugin<StatusesState, StatusesView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
+    commandVersion: COMMAND_VERSION,
+    commandMigrations,
     start: emptyState,
     strings: { unknown: 'Nothing like that can happen.', notActive: 'That isn’t affecting you.' },
     conditions: {

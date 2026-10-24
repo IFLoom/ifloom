@@ -68,6 +68,14 @@ export type Pack = Flat<
     id: string
     /** Schema this pack was written against. An older one is upgraded as it loads; a newer one is refused. */
     schema: number
+    /**
+     * The version of each plugin's content this pack was written for, by
+     * plugin id (`{ shop: 13 }`), as `Plugin.contentVersion` numbers them.
+     * An older one is upgraded by that plugin's own steps as it loads. A
+     * plugin left out is read as written for the pack's `schema`, or the
+     * plugin's own version if that is lower.
+     */
+    plugins?: Record<string, number>
   } & Declarations &
     FeaturePack
 >
@@ -113,7 +121,7 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
  */
 const { patches: _patches, ...CONTENT_DECLARATION_KEYS } = DECLARATION_KEYS
 const CONTENT_KEYS: { [K in keyof Content]-?: true } = { ...CONTENT_DECLARATION_KEYS, name: true }
-const PACK_KEYS: { [K in keyof Pack]-?: true } = { ...DECLARATION_KEYS, id: true, schema: true }
+const PACK_KEYS: { [K in keyof Pack]-?: true } = { ...DECLARATION_KEYS, id: true, schema: true, plugins: true }
 const IGNORED_PACK_KEYS = new Set(['overrides'])
 
 /** One thing content declares, as a problem names it: `scene "cafe.counter"`. */
@@ -272,7 +280,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     const from = contentName(piece)
     for (const key of Object.keys(piece)) {
       if (Object.hasOwn(CONTENT_KEYS, key)) continue
-      const why = key === 'id' || key === 'schema' || key === 'patches' ? `; a pack has one, and goes in \`packs\`` : ''
+      const why = key === 'id' || key === 'schema' || key === 'plugins' || key === 'patches' ? `; a pack has one, and goes in \`packs\`` : ''
       problems.push({ pack: from, where: 'content', what: `content has no "${key}", so it was left out${why}` })
     }
     declaredTwice(piece, index)
@@ -284,7 +292,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   // Then the packs over it, each over the ones before.
   for (const written of packs) {
     // An older pack is carried forward to this schema; one that can't be is skipped whole.
-    const upgraded = upgradePack(written)
+    const upgraded = upgradePack(written, base.plugins ?? [])
     if (!upgraded.ok) {
       problems.push({ pack: written.id, where: 'pack', what: upgraded.reason })
       continue

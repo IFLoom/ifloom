@@ -54,7 +54,9 @@ function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
     ...extra,
   }
   const actions: Game['actions'] = [{ id: 'nap', label: 'Nap', command: { type: 'leave' }, ui: { icon: 'moon' } }]
-  return loadGame([content], { id: 'house', title: 'The House', introScene: 'porch', actions, ...base })
+  // The scene it opens on, unless `base` says none.
+  const { introScene, ...rest } = 'introScene' in base ? base : { ...base, introScene: 'porch' }
+  return loadGame([{ name: 'base', ...(introScene ? { introScene } : {}), actions }, content], { id: 'house', title: 'The House', ...rest })
 }
 
 describe('ui hints', () => {
@@ -120,7 +122,7 @@ describe('ui hints', () => {
       body: [{ text: 'porch.text', ui: 'fade' as unknown as DataScene['ui'] }],
       choices: [{ id: 'in', ui: { list: [1, new Date(0)] }, effects: [] }],
     }
-    const problems = make({ scenes: [odd] }, { ui: { fine: true } }).problems.map(describeProblem)
+    const problems = make({ scenes: [odd], ui: { fine: true } }).problems.map(describeProblem)
     expect(problems).toEqual([
       'house · scene porch · ui must be an object of hints',
       'house · scene porch · choice in: ui.list[1] is not plain data; ui hints are objects, arrays, text, numbers and true/false',

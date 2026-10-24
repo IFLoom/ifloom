@@ -29,6 +29,7 @@ const catchBall: MinigameDef = {
 function game(): Game {
   const { game, problems } = loadGame(
     [
+      { name: 'base', introScene: 'intro', actions: [{ id: 'wave', label: 'Wave', command: { type: 'activity', id: 'wave' } }] },
       {
         name: 'park',
         stats: [
@@ -66,7 +67,7 @@ function game(): Game {
         },
       },
     ],
-    { id: 'park-test', title: 'The Park', introScene: 'intro', actions: [{ id: 'wave', label: 'Wave', command: { type: 'activity', id: 'wave' } }] },
+    { id: 'park-test', title: 'The Park' },
   )
   expect(problems).toEqual([])
   return game

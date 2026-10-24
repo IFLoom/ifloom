@@ -63,12 +63,13 @@ const weatherUi: PluginUi = {
 function game(plugins = [garden, weather]): Game {
   return loadGame(
     [
+      { name: 'base', actions: [{ id: 'beds', label: 'Look at the beds', command: { type: 'activity', id: 'beds' } }] },
       {
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
         activities: [{ id: 'beds', effects: [{ kind: 'panel', panel: 'beds', with: { rows: 2 } }] }],
       },
     ],
-    { id: 'plugins-test', title: 'Allotment', plugins, actions: [{ id: 'beds', label: 'Look at the beds', command: { type: 'activity', id: 'beds' } }] },
+    { id: 'plugins-test', title: 'Allotment', plugins },
   ).game
 }
 

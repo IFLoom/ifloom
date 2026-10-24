@@ -9,6 +9,7 @@ afterEach(cleanup)
 function game(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'intro', actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }] },
       {
         name: 'town',
         activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
@@ -31,8 +32,6 @@ function game(): Game {
     {
       id: 'screens',
       title: 'Screens',
-      introScene: 'intro',
-      actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
     },
   ).game
 }

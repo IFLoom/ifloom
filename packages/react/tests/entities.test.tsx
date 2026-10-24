@@ -11,6 +11,7 @@ afterEach(cleanup)
 function cafe() {
   const { game, problems } = loadGame(
     [
+      { name: 'base', actions: [{ id: 'hire', label: 'Hire someone', command: { type: 'activity', id: 'hire' } }] },
       {
         name: 'cafe',
         kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }],
@@ -25,7 +26,7 @@ function cafe() {
         activities: [{ id: 'hire', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { morale: 90 } } }] }],
       },
     ],
-    { id: 'cafe', title: 'The Café', actions: [{ id: 'hire', label: 'Hire someone', command: { type: 'activity', id: 'hire' } }] },
+    { id: 'cafe', title: 'The Café' },
   )
   expect(problems).toEqual([])
   return game

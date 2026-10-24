@@ -16,6 +16,7 @@ afterEach(() => {
 function river(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'bank' },
       {
         name: 'river',
         scenes: [
@@ -44,7 +45,7 @@ function river(): Game {
         },
       },
     ],
-    { id: 'river', title: 'The River', introScene: 'bank' },
+    { id: 'river', title: 'The River' },
   ).game
 }
 

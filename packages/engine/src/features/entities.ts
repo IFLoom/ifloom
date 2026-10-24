@@ -279,7 +279,7 @@ function createdKind(effect: EntitiesShape['effects']['create']): string | undef
 
 /** The kinds the game declares, with the ones its plugins bring. */
 function kindIds(game: Game): Set<string> {
-  return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.kinds ?? [])].map((kind) => kind.id))
+  return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.content?.kinds ?? [])].map((kind) => kind.id))
 }
 
 /**
@@ -311,18 +311,16 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
   // Where each worked-out trait came from, by `id` and by `id ref`, for problems.
   const traitFrom = new Map<string, string>()
   return {
-    base: (game) => {
-      // The base is the whole game as declared, plugins and all.
-      for (const plugin of (game as Pick<Game, 'plugins'>).plugins ?? []) {
-        for (const kind of plugin.kinds ?? []) {
-          const unlisted = { ...kind, listed: kind.listed ?? false }
-          plugged.set(kind.id, unlisted)
-          kinds.set(kind.id, { value: unlisted, from: plugin.id })
-        }
+    base: () => {},
+    // A plugin's own content: its kinds unlisted unless it says, which a game that redeclares one keeps.
+    plugin: (content, plugin) => {
+      for (const kind of content.kinds ?? []) {
+        const unlisted = { ...kind, listed: kind.listed ?? false }
+        plugged.set(kind.id, unlisted)
+        kinds.set(kind.id, { value: unlisted, from: plugin })
       }
-      addKinds(game.kinds, 'base')
-      addEntities(game.entities, 'base')
-      addTraits(game.traits, 'base')
+      addEntities(content.entities, plugin)
+      addTraits(content.traits, plugin)
     },
     add: (pack, from) => {
       addKinds(pack.kinds, from)

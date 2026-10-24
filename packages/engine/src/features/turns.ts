@@ -4,7 +4,7 @@
  */
 import type { Game } from '../game.ts'
 import type { GameState, Phase, Range } from '../types.ts'
-import { defineFeature, type FeatureContext } from './feature.ts'
+import { defineFeature, lastWins, type FeatureContext } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
 
 /** What the turns feature adds, as types. */
@@ -37,6 +37,11 @@ export type TurnsShape = {
     /** The stretch a new game opens in. */
     startPhase?: string
   }
+  pack: {
+    /** The stretch a new game opens in: a later pack's replaces an earlier one's. */
+    startPhase?: string
+  }
+  lists: 'startPhase'
   view: {
     phase: Phase
     /** How many turns have passed: 0 on the first. */
@@ -55,7 +60,7 @@ export type TurnsShape = {
  * ending inside a turn's end would end the turn again, and again.
  */
 export function endTurn(state: GameState, game: Game, cx: FeatureContext, before: GameState = state): GameState {
-  const begun = { ...state, turn: state.turn + 1, kv: { ...state.kv, ...game.rules?.resets } }
+  const begun = { ...state, turn: state.turn + 1, kv: { ...state.kv, ...game.resets } }
   const ruled = game.rules?.onTurn ? game.rules.onTurn(begun, cx.turnContext(begun, game, before)) : begun
   const hooked = cx.turnHooks(ruled, game)
   return game.rules?.onTurnDone ? game.rules.onTurnDone(hooked, cx.turnContext(hooked, game, before)) : hooked
@@ -94,5 +99,13 @@ export const turns = defineFeature<TurnsShape>({
       references: () => [],
     },
   },
+  pack: lastWins<TurnsShape['game'], TurnsShape['pack'], string>(
+    'startPhase',
+    (pack) => pack.startPhase,
+    (game, phase) => {
+      game.startPhase = phase
+    },
+  ),
+  lists: ['startPhase'],
   view: (state) => ({ phase: state.phase, turn: state.turn }),
 })

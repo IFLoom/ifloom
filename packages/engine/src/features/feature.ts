@@ -148,6 +148,11 @@ export type FeatureCheckTools = {
 export type PackMerge<G, P> = {
   /** What the base game declares itself, before any pack. */
   base: (game: G) => void
+  /**
+   * A plugin's own content (`Plugin.content`), merged before the game's
+   * content and packs. Left out, it is merged as a pack is, with `add`.
+   */
+  plugin?: (content: P, plugin: string) => void
   /** One pack's, laid over what came before. */
   add: (pack: P, from: string) => void
   /** Write the merged result onto the game. */
@@ -307,6 +312,7 @@ export function mergedById<G, P, T>(
   read: { base?: (game: G) => readonly T[] | undefined; pack: (pack: P) => readonly T[] | undefined },
   write: (game: Game, entries: T[]) => void,
   key: (entry: T) => string = (entry) => (entry as { id: string }).id,
+  list?: string,
 ): { merge: () => PackMerge<G, P> } {
   return {
     merge: () => {
@@ -322,7 +328,122 @@ export function mergedById<G, P, T>(
             game,
             [...merged.values()].map((entry) => entry.value),
           ),
-        from: (_list, id) => (id === undefined ? undefined : merged.get(id)?.from),
+        // With `list`, only that list's entries: a feature with two lists by id merges each apart.
+        from: (asked, id) => (id === undefined || (list !== undefined && asked !== list) ? undefined : merged.get(id)?.from),
+      }
+    },
+  }
+}
+
+/**
+ * A pack key that holds one value, such as the scene a game opens on: a
+ * later pack's replaces an earlier one's whole. `list` names it for the
+ * problems it is pinned on.
+ */
+export function lastWins<G, P, T>(list: string, read: (pack: P) => T | undefined, write: (game: Game, value: T) => void): { merge: () => PackMerge<G, P> } {
+  return {
+    merge: () => {
+      let kept: { value: T; from: string } | undefined
+      return {
+        base: () => {},
+        add: (pack, from) => {
+          const value = read(pack)
+          if (value !== undefined) kept = { value, from }
+        },
+        finish: (game) => {
+          if (kept) write(game, kept.value)
+        },
+        from: (asked) => (asked === list ? kept?.from : undefined),
+      }
+    },
+  }
+}
+
+/**
+ * A pack key that is a record: each key a later pack gives replaces an
+ * earlier one's, and the rest are kept. `list` names it for the problems it
+ * is pinned on.
+ */
+export function mergedByKey<G, P, T>(
+  list: string,
+  read: (pack: P) => Readonly<Record<string, T>> | undefined,
+  write: (game: Game, record: Record<string, T>) => void,
+): { merge: () => PackMerge<G, P> } {
+  return {
+    merge: () => {
+      const merged = new Map<string, { value: T; from: string }>()
+      return {
+        base: () => {},
+        add: (pack, from) => {
+          for (const [key, value] of Object.entries(read(pack) ?? {})) merged.set(key, { value, from })
+        },
+        finish: (game) => {
+          if (merged.size) write(game, Object.fromEntries([...merged].map(([key, entry]) => [key, entry.value])))
+        },
+        from: (asked, key) => (asked === list && key !== undefined ? merged.get(key)?.from : undefined),
+      }
+    },
+  }
+}
+
+/**
+ * A pack key that is a list with no ids, such as `saveable`: each pack's
+ * entries go after the ones before. `list` names it for the problems it is pinned on. An entry with an `id` replaces an earlier
+ * one with that id, in its place, so a pack can change one it didn't write.
+ */
+export function appended<G, P, T extends { id?: string }>(
+  list: string,
+  read: (pack: P) => readonly T[] | undefined,
+  write: (game: Game, entries: T[]) => void,
+): { merge: () => PackMerge<G, P> } {
+  return {
+    merge: () => {
+      const merged: { value: T; from: string }[] = []
+      return {
+        base: () => {},
+        add: (pack, from) => {
+          for (const entry of read(pack) ?? []) {
+            const at = entry.id === undefined ? -1 : merged.findIndex((earlier) => earlier.value.id === entry.id)
+            if (at >= 0) merged[at] = { value: entry, from }
+            else merged.push({ value: entry, from })
+          }
+        },
+        finish: (game) => {
+          if (merged.length)
+            write(
+              game,
+              merged.map((entry) => entry.value),
+            )
+        },
+        // By its id, or by its place in the list for one with none.
+        from: (asked, id) => {
+          if (asked !== list || id === undefined) return undefined
+          return (merged.find((entry) => entry.value.id === id) ?? (/^\d+$/.test(id) ? merged[Number(id)] : undefined))?.from
+        },
+      }
+    },
+  }
+}
+
+/** Several pack keys of one feature, merged as one: each part merges its own key. */
+export function together<G, P>(
+  ...parts: { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<G, P> }[]
+): { merge: (problem: (from: string, where: string, what: string) => void) => PackMerge<G, P> } {
+  return {
+    merge: (problem) => {
+      const merges = parts.map((part) => part.merge(problem))
+      return {
+        base: (game) => merges.forEach((merge) => merge.base(game)),
+        plugin: (content, plugin) => merges.forEach((merge) => (merge.plugin ?? merge.add)(content, plugin)),
+        add: (pack, from) => merges.forEach((merge) => merge.add(pack, from)),
+        finish: (game) => merges.forEach((merge) => merge.finish(game)),
+        from: (list, id) => {
+          for (const merge of merges) {
+            const found = merge.from(list, id)
+            if (found !== undefined) return found
+          }
+          return undefined
+        },
       }
     },
   }

@@ -34,6 +34,7 @@ describe('media in places, messages and posts', () => {
   function town(): Game {
     return loadGame(
       [
+        kit.content,
         {
           name: 'town',
           prose: {
@@ -67,7 +68,7 @@ describe('media in places, messages and posts', () => {
           },
         },
       ],
-      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), ...kit.plugins], kinds: kit.kinds, data: kit.data },
+      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), ...kit.plugins] },
     ).game
   }
 

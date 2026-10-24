@@ -13,6 +13,7 @@ afterEach(() => {
 function letter(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'mat' },
       {
         name: 'letter',
         scenes: [
@@ -35,7 +36,7 @@ function letter(): Game {
         },
       },
     ],
-    { id: 'letter', title: 'The Letter', introScene: 'mat' },
+    { id: 'letter', title: 'The Letter' },
   ).game
 }
 

@@ -164,7 +164,7 @@ function checkStarts(game: Game, tools: FeatureCheckTools): void {
 
 /** The kinds the game declares, with its plugins'. */
 function kindIds(game: Game): Set<string> {
-  return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.kinds ?? [])].map((kind) => kind.id))
+  return new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.content?.kinds ?? [])].map((kind) => kind.id))
 }
 
 export const holdings = defineFeature<HoldingsShape>({
@@ -229,8 +229,8 @@ export const holdings = defineFeature<HoldingsShape>({
       const kinds = kindIds(game)
       for (const ref of game.carryOver.held) {
         const kind = parseRef(ref)?.kind
-        if (kind === undefined) tools.problem(undefined, 'carryOver', `unknown entity "${ref}": name one as "kind:id"`)
-        else if (!kinds.has(kind)) tools.problem(undefined, 'carryOver', `unknown kind "${kind}"`)
+        if (kind === undefined) tools.problem({ list: 'carryOver' }, 'carryOver', `unknown entity "${ref}": name one as "kind:id"`)
+        else if (!kinds.has(kind)) tools.problem({ list: 'carryOver' }, 'carryOver', `unknown kind "${kind}"`)
       }
     },
   },

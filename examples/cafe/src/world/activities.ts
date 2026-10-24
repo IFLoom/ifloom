@@ -1,7 +1,14 @@
-/** What the café can do in a week: end it, feed the staff, improve the soup, hire. The buttons in `game.ts` run these. */
+/** What the café can do in a week: end it, feed the staff, improve the soup, hire. The buttons run the activities. */
 import type { Content } from '@ifloom/engine'
 
 export const activities: Content = {
+  // The buttons the café always has.
+  actions: [
+    { id: 'end-week', label: 'Count the till and end the week', command: { type: 'activity', id: 'endWeek' } },
+    { id: 'lunch', label: 'Buy the staff lunch', command: { type: 'activity', id: 'staffLunch' } },
+    { id: 'soup', label: 'Better ingredients for the soup', command: { type: 'activity', id: 'improveSoup' } },
+    { id: 'hire', label: 'Put a card in the window', command: { type: 'activity', id: 'interview' } },
+  ],
   activities: [
     {
       id: 'endWeek',

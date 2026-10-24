@@ -56,7 +56,7 @@ function game(extra: Partial<Content> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin], data: channels })
+  const loaded = loadGame([{ name: 'base', data: channels }, pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -122,6 +122,7 @@ describe('messages', () => {
   it('report messages with no channel, no prose, or a bad condition', () => {
     const loaded = loadGame(
       [
+        { name: 'base', data: channels },
         {
           name: 'mod',
           data: {
@@ -131,7 +132,7 @@ describe('messages', () => {
           },
         },
       ],
-      { id: 'g', title: 'g', plugins: [plugin], data: channels },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(loaded.problems).toEqual(
       expect.arrayContaining([
@@ -281,6 +282,7 @@ describe('pools', () => {
   it('report a draw from a pool no message is in, and a weight below 0', () => {
     const loaded = loadGame(
       [
+        { name: 'base', data: channels },
         {
           name: 'mod',
           prose: { m: 'Hi.' },
@@ -288,7 +290,7 @@ describe('pools', () => {
           data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ text: 'm' }] }] } },
         },
       ],
-      { id: 'g', title: 'g', plugins: [plugin], data: channels },
+      { id: 'g', title: 'g', plugins: [plugin] },
     )
     expect(loaded.problems).toEqual(
       expect.arrayContaining([

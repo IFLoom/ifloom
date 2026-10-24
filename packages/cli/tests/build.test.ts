@@ -56,11 +56,16 @@ describe('inlineAssets', () => {
 
 describe('checkGame', () => {
   it("prints a loader problem in the loader's words", () => {
-    const loaded = loadGame([{ name: 'town', scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] }], {
-      id: 'town',
-      title: 'Town',
-      introScene: 'intro',
-    })
+    const loaded = loadGame(
+      [
+        { name: 'base', introScene: 'intro' },
+        { name: 'town', scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }] },
+      ],
+      {
+        id: 'town',
+        title: 'Town',
+      },
+    )
     expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 
@@ -88,6 +93,7 @@ describe('the files a game names', () => {
   const game = () =>
     loadGame(
       [
+        { name: 'base', introScene: 'knock' },
         {
           name: 'town',
           audio: {
@@ -130,7 +136,7 @@ describe('the files a game names', () => {
           },
         },
       ],
-      { id: 'town', title: 'Town', introScene: 'knock', plugins: [feed()] },
+      { id: 'town', title: 'Town', plugins: [feed()] },
     )
   const files = () => checkContent(game().game).files
 

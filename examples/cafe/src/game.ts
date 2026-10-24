@@ -24,19 +24,12 @@ import { hiring } from './story/hiring.ts'
 /** The game's content: the world, by kind, then the story. */
 export const content: Content[] = [stats, staff, menu, activities, triggers, opening, hiring]
 
-/** The game: its content, with a base that has its own sums and the buttons the café always has. */
+/** The game: its content, with a base that has its own sums. */
 export function cornerCafe(): { game: Game; problems: string[] } {
   const { game, problems } = loadGame(content, {
     id: 'corner-cafe',
     title: 'The Corner Café',
-    introScene: 'opening',
     custom,
-    actions: [
-      { id: 'end-week', label: 'Count the till and end the week', command: { type: 'activity', id: 'endWeek' } },
-      { id: 'lunch', label: 'Buy the staff lunch', command: { type: 'activity', id: 'staffLunch' } },
-      { id: 'soup', label: 'Better ingredients for the soup', command: { type: 'activity', id: 'improveSoup' } },
-      { id: 'hire', label: 'Put a card in the window', command: { type: 'activity', id: 'interview' } },
-    ],
   })
   return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }

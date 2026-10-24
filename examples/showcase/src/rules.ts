@@ -4,20 +4,11 @@
  */
 import { artSrc, entityImage, heldBy, parseRef, PLAYER, roll, type Custom, type GameRules } from '@ifloom/engine'
 import { postTo, react } from '@ifloom/plugin-feed'
-import { at } from '@ifloom/plugin-places'
 
-/** How the town runs: what a new day resets, energy back overnight, and what's locked when. */
+/** How the town runs: energy back overnight. What's locked when, and what each day resets, are content, in the story. */
 export const rules: GameRules = {
-  // A coffee, a post and a skimmed stone a day; each new day (a turn, here) resets them.
-  resets: { hadCoffee: false, postedToday: false, skimmed: false },
   // Energy back to full overnight.
   onTurn: (_state, { apply }) => apply([{ kind: 'stat', stat: 'energy', to: 100 }]),
-  locks: [
-    // Moving day only moves through its scene.
-    { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
-    // No phone at work.
-    { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
-  ],
 }
 
 /**

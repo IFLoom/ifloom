@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { holds } from '../../src/condition.ts'
 import { explain } from '../../src/explain.ts'
 import type { Game, SettingDef } from '../../src/game.ts'
-import { SCHEMA, loadGame, type Content } from '../../src/loader.ts'
+import { SCHEMA, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
@@ -10,7 +10,7 @@ import { createRunner, replay } from '../../src/runner.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { settingValue } from '../../src/features/settings.ts'
 import { view } from '../../src/view.ts'
-import { begin, fixture } from '../fixtures/town.ts'
+import { begin, fixture, loadWhole } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 const SETTINGS: SettingDef[] = [
@@ -62,7 +62,7 @@ function loaded(scene?: Content['scenes']) {
       },
     ],
   }
-  return loadGame([pack], base)
+  return loadWhole([pack], base)
 }
 
 describe('settings at the start', () => {
@@ -113,7 +113,7 @@ describe('the setting command', () => {
   })
 
   it('ignores locks', () => {
-    const g = game({ rules: { locks: [{ when: { turn: { gte: 0 } }, deny: ['*'], reason: 'Not now.' }] } })
+    const g = game({ locks: [{ when: { turn: { gte: 0 } }, deny: ['*'], reason: 'Not now.' }] })
     expect(apply(startingState(g), g, { type: 'activity', id: 'wait' }).reason).toBe('Not now.')
     expect(apply(startingState(g), g, { type: 'setting', id: 'hints', to: false }).ok).toBe(true)
   })
@@ -188,14 +188,14 @@ describe('ui settings', () => {
 describe('the loader’s settings checks', () => {
   const problemsOf = (pack: Partial<Content>, base: Partial<Game> = {}) => {
     const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
-    return loadGame([{ name: 'core', ...pack }], { ...rest, ...base }).problems.map(describeProblem)
+    return loadWhole([{ name: 'core', ...pack }], { ...rest, ...base }).problems.map(describeProblem)
   }
 
   it('finds two settings with one id in one list, but lets a later pack redeclare one', () => {
     const toggle: SettingDef = { id: 'hints', label: 'Hints', kind: 'toggle', default: true }
     expect(problemsOf({ settings: [toggle, toggle] })).toEqual(['core · setting hints · two settings share this id'])
     const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
-    const twice = loadGame([{ name: 'core', settings: [toggle] }], rest, {
+    const twice = loadWhole([{ name: 'core', settings: [toggle] }], rest, {
       packs: [{ id: 'mod:hints', schema: SCHEMA, settings: [{ ...toggle, default: false }] }],
     })
     expect(twice.problems).toEqual([])

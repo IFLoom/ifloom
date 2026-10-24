@@ -7,7 +7,7 @@ import { say } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { ActionDef, Blocked, Game } from '../game.ts'
 import type { Condition, Effect, GameState } from '../types.ts'
-import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
+import { defineFeature, mergedById, together, type FeatureContext } from './feature.ts'
 import { lockedBy } from './locks.ts'
 import { clampStat, lackingLine, statDef, statValue } from './stats.ts'
 
@@ -51,8 +51,10 @@ export type ActivitiesShape = {
   }
   pack: {
     activities?: ActivityDef[]
+    /** Actions offered in every location, by id: a later pack's replaces an earlier one's. */
+    actions?: ActionDef[]
   }
-  lists: 'activity'
+  lists: 'activity' | 'action'
 }
 
 /**
@@ -127,11 +129,26 @@ export const activities = defineFeature<ActivitiesShape>({
       references: (command) => [{ activity: command.id }],
     },
   },
-  // What the base game declares isn't merged: its activities come from packs.
-  pack: mergedById<ActivitiesShape['game'], ActivitiesShape['pack'], ActivityDef>({ pack: (pack) => pack.activities }, (game, list) => {
-    game.activities = list
-  }),
-  lists: ['activity'],
+  // What the base game declares isn't merged: its activities and actions come from its content and packs.
+  pack: together(
+    mergedById<ActivitiesShape['game'], ActivitiesShape['pack'], ActivityDef>(
+      { pack: (pack) => pack.activities },
+      (game, list) => {
+        game.activities = list
+      },
+      undefined,
+      'activity',
+    ),
+    mergedById<ActivitiesShape['game'], ActivitiesShape['pack'], ActionDef>(
+      { pack: (pack) => pack.actions },
+      (game, list) => {
+        if (list.length) game.actions = list
+      },
+      undefined,
+      'action',
+    ),
+  ),
+  lists: ['activity', 'action'],
   check: (game, tools) => {
     tools.twice(
       'activity',
@@ -149,8 +166,13 @@ export const activities = defineFeature<ActivitiesShape>({
         else if (def.derive !== undefined) tools.problem(source, where, `spends stat "${id}", which is derived and never written`)
       }
     }
+    tools.twice(
+      'action',
+      'actions',
+      (game.actions ?? []).map((entry) => entry.id),
+    )
     for (const action of game.actions ?? []) {
-      tools.check(undefined, `action ${action.id}`, [
+      tools.check({ list: 'action', id: action.id }, `action ${action.id}`, [
         { when: action.when },
         ...(action.blocked ?? []).map((entry) => ({ when: entry.when })),
         { command: action.command },

@@ -127,19 +127,15 @@ const town: Content = {
 }
 
 function game(): Game {
-  const loaded = loadGame([town], {
-    id: 'phone-town',
-    title: 'Phone town',
+  const loaded = loadGame(
+    [kit.content, { name: 'base', resets: { postedToday: false }, locks: [{ when: at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
+    {
+      id: 'phone-town',
+      title: 'Phone town',
 
-    plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
-    kinds: kit.kinds,
-    data: kit.data,
-    rules: {
-      resets: { postedToday: false },
-      // No phone at work.
-      locks: [{ when: at('work'), deny: ['devices/*'], reason: 'Not at work.' }],
+      plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
     },
-  })
+  )
   expect(loaded.problems).toEqual([])
   return loaded.game
 }

@@ -64,12 +64,10 @@ function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}
     data: { cheats: { cheats: defs } },
     ...options.pack,
   }
-  const loaded = loadGame([town], {
+  const loaded = loadGame([{ name: 'base', locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }] }, town], {
     id: 'g',
     title: 'g',
     plugins: [cheats(), ...(options.plugins ?? [])],
-    // A scene that stops everything: cheats still work.
-    rules: { locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }] },
   })
   expect(loaded.problems).toEqual([])
   return loaded.game

@@ -30,7 +30,7 @@ function game(): Game {
     stats: [{ id: 'luck', label: 'Luck', max: 10 }],
     plugins: [clock, places({ start: 'house' }), debug()],
     // An intro that stops everything: the debugger still works.
-    rules: { locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }] },
+    locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }],
   }
 }
 

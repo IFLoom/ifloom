@@ -53,6 +53,9 @@
  * `Pack.plugins`, the version of each plugin's content a pack was written for.
  * Save shape (save 18): `GameState.seen` and `chosen` are one `{ n, first, last }`
  * record per id, and `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn` are gone.
+ * Data into content (API pass P2): `Game.locks` and `Game.resets` (from
+ * `rules`), and the pack keys `actions`, `locks`, `resets`, `saveable`,
+ * `finished`, `carryOver`, `startPhase`, `introScene` and `ui`.
  */
 import type {
   ActionDef,
@@ -73,6 +76,7 @@ import type {
   InputDef,
   InputView,
   KindDef,
+  Lock,
   HeldView,
   Placement,
   Select,
@@ -449,6 +453,10 @@ export type FrozenGame = {
   timers?: TimerDef[]
   /** Presentation hints for the whole game, carried as written. */
   ui?: Ui<GameUi>
+  /** What the player cannot do for now, and why. */
+  locks?: Lock[]
+  /** kv keys put back at the start of each turn. */
+  resets?: Record<string, KvValue>
 }
 
 export type FrozenPack = {
@@ -504,6 +512,24 @@ export type FrozenPack = {
   minigames?: MinigameDef[]
   /** Timers. A later pack's replaces an earlier one's by id. */
   timers?: TimerDef[]
+  /** Actions offered in every location. A later pack's replaces an earlier one's by id. */
+  actions?: ActionDef[]
+  /** Locks after the ones before; one with an earlier one's `id` takes its place. */
+  locks?: Lock[]
+  /** kv keys reset each turn. A later pack's value replaces an earlier one's by key. */
+  resets?: Record<string, KvValue>
+  /** When saving is refused, after the entries before. */
+  saveable?: Blocked[]
+  /** When the game counts as finished. A later pack's replaces an earlier one's. */
+  finished?: FrozenCondition
+  /** What a New Game+ carries over. A later pack's replaces an earlier one's. */
+  carryOver?: CarryOver
+  /** The stretch a new game opens in. A later pack's replaces an earlier one's. */
+  startPhase?: string
+  /** The scene on screen on the first frame. A later pack's replaces an earlier one's. */
+  introScene?: string
+  /** Presentation hints for the whole game, hint by hint. */
+  ui?: Ui<GameUi>
 }
 
 /** The game's own content: a pack's keys, with a name for problems and no id, schema or patches. */

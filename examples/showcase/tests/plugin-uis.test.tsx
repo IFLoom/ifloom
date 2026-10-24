@@ -44,6 +44,21 @@ function game(withPlugins = true): Game {
   return loadGame(
     [
       {
+        name: 'base',
+        actions: [
+          { id: 'coffee', label: 'Have a coffee', command: { type: 'activity', id: 'coffee' } },
+          { id: 'sleep', label: 'Sleep', command: { type: 'activity', id: 'sleep' } },
+          ...(withPlugins
+            ? [
+                { id: 'counter', label: 'Go to the counter', command: { type: 'activity' as const, id: 'counter' } },
+                { id: 'board', label: 'Read the job board', command: { type: 'activity' as const, id: 'board' } },
+                { id: 'paper', label: 'Read the paper', command: { type: 'activity' as const, id: 'paper' } },
+              ]
+            : []),
+          { id: 'pockets', label: 'Check your pockets', command: { type: 'activity', id: 'pockets' } },
+        ],
+      },
+      {
         name: 'street',
         stats: [
           { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
@@ -122,18 +137,6 @@ function game(withPlugins = true): Game {
       id: 'plugin-ui',
       title: 'High Street',
       plugins: withPlugins ? [statuses(), achievements(), shop(), jobs(), inventory()] : [],
-      actions: [
-        { id: 'coffee', label: 'Have a coffee', command: { type: 'activity', id: 'coffee' } },
-        { id: 'sleep', label: 'Sleep', command: { type: 'activity', id: 'sleep' } },
-        ...(withPlugins
-          ? [
-              { id: 'counter', label: 'Go to the counter', command: { type: 'activity' as const, id: 'counter' } },
-              { id: 'board', label: 'Read the job board', command: { type: 'activity' as const, id: 'board' } },
-              { id: 'paper', label: 'Read the paper', command: { type: 'activity' as const, id: 'paper' } },
-            ]
-          : []),
-        { id: 'pockets', label: 'Check your pockets', command: { type: 'activity', id: 'pockets' } },
-      ],
     },
   ).game
 }

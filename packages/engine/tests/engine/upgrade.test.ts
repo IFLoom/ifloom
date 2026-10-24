@@ -41,8 +41,19 @@ afterEach(() => {
 /** The cafe fixture's game, split into its base and its own pack. */
 function cafe() {
   const { game } = withCafe()
-  const { scenes, storylines, activities, stats, packs: _p, ...base } = game
-  const own: Content = { name: 'town', scenes, storylines, activities, stats, prose: { 'cafe.counter': 'Rosa wipes the counter.' } }
+  const { id, title, custom, rules, scenes, storylines, activities, stats, introScene, startPhase, actions } = game
+  const base = { id, title, custom, rules }
+  const own: Content = {
+    name: 'town',
+    scenes,
+    storylines,
+    activities,
+    stats,
+    introScene,
+    startPhase,
+    actions,
+    prose: { 'cafe.counter': 'Rosa wipes the counter.' },
+  }
   return { base, own }
 }
 

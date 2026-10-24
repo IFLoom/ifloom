@@ -199,6 +199,7 @@ describe('the shop, on its own', () => {
   it('reports vendors that name what the game does not have, and its own mistakes', () => {
     const loaded = loadGame(
       [
+        { name: 'base', actions: [{ id: 'y', label: 'Y', command: buy('kiosk', 'fruit:apple') }] },
         {
           name: 'mod',
           stats: [{ id: 'charm', label: 'Charm' }],
@@ -222,7 +223,7 @@ describe('the shop, on its own', () => {
           },
         },
       ],
-      { id: 'g', title: 'g', plugins: [shop()], actions: [{ id: 'y', label: 'Y', command: buy('kiosk', 'fruit:apple') }] },
+      { id: 'g', title: 'g', plugins: [shop()] },
     )
     // A location on the places map is only checked when the game has places.
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([

@@ -14,7 +14,7 @@ import { audio, type AudioShape } from './audio.ts'
 import { entities, type EntitiesShape } from './entities.ts'
 import { holdings, type HoldingsShape } from './holdings.ts'
 import { inputs, type InputsShape } from './inputs.ts'
-import { locks } from './locks.ts'
+import { locks, type LocksShape } from './locks.ts'
 import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
 import { minigames, type MinigamesShape } from './minigames.ts'
@@ -53,6 +53,7 @@ type Shapes =
   | UiShape
   | PanelsShape
   | SavingShape
+  | LocksShape
   | RollsShape
 
 /**

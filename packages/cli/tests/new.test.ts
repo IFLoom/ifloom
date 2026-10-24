@@ -86,7 +86,7 @@ describe('ifloom new', () => {
 
   it('fills in the react game with its name and title', () => {
     const { dir } = newGame({ name: 'the-door', into: fresh() })
-    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
+    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door' }")
     expect(readFileSync(join(dir, 'index.html'), 'utf8')).toContain('<title>The Door</title>')
   })
 
@@ -122,7 +122,7 @@ describe('ifloom new', () => {
     expect(pkg).toContain('@ifloom/browser')
     expect(files).toEqual(expect.arrayContaining(['src/main.ts', 'src/game.ts', 'src/styles.css']))
     expect(files).not.toContain('src/minigame.ts')
-    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
+    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door' }")
     // Each starts the audio player and the minigame clock beside its runner.
     const runner = readFileSync(join(dir, template === 'vanilla' ? 'src/main.ts' : 'src/runner.ts'), 'utf8')
     for (const call of [
@@ -160,7 +160,7 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('layout={Layout}')
     expect(readFileSync(join(dir, 'src/layout.tsx'), 'utf8')).toContain('<Sidebar>')
     expect(readFileSync(join(dir, 'app/layout.tsx'), 'utf8')).toContain("title: 'The Door'")
-    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door', introScene: 'start' }")
+    expect(readFileSync(join(dir, 'src/game.ts'), 'utf8')).toContain("{ id: 'the-door', title: 'The Door' }")
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toContain('# The Door')
     expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toContain('.next')
   })

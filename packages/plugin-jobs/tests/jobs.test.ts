@@ -179,6 +179,7 @@ describe('jobs, on their own', () => {
   it('report jobs that name what the game does not have, and their own mistakes', () => {
     const loaded = loadGame(
       [
+        { name: 'base', actions: [{ id: 'y', label: 'Y', command: work('nope') }] },
         {
           name: 'mod',
           data: {
@@ -200,7 +201,7 @@ describe('jobs, on their own', () => {
           },
         },
       ],
-      { id: 'g', title: 'g', plugins: [jobs()], actions: [{ id: 'y', label: 'Y', command: work('nope') }] },
+      { id: 'g', title: 'g', plugins: [jobs()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action y: unknown job "nope"',

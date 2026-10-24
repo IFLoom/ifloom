@@ -7,7 +7,7 @@
  */
 import type { Blocked, Game } from '../game.ts'
 import type { Condition, GameState } from '../types.ts'
-import { defineFeature } from './feature.ts'
+import { appended, defineFeature } from './feature.ts'
 
 /** Whether the player can save now, and why not: what `view.saving` holds. */
 export type SavingView = {
@@ -29,10 +29,15 @@ export type SavingShape = {
      */
     saveable?: Blocked[]
   }
+  pack: {
+    /** When saving is refused, after the entries before; one with the `id` of an earlier one takes its place. */
+    saveable?: Blocked[]
+  }
   view: {
     /** Whether the player can save now, for a Save button. */
     saving: SavingView
   }
+  lists: 'saveable'
 }
 
 const ALLOWED: SavingView = Object.freeze({ allowed: true, reason: null, visible: true })
@@ -45,12 +50,16 @@ export function savingIn(state: GameState, game: Game, holds: (state: GameState,
 
 export const saving = defineFeature<SavingShape>({
   name: 'saving',
+  pack: appended<SavingShape['game'], SavingShape['pack'], Blocked & { id?: string }>(
+    'saveable',
+    (pack) => pack.saveable,
+    (game, list) => {
+      game.saveable = list
+    },
+  ),
+  lists: ['saveable'],
   check: (game, tools) => {
-    tools.check(
-      undefined,
-      'saveable',
-      (game.saveable ?? []).map((entry) => ({ when: entry.when })),
-    )
+    ;(game.saveable ?? []).forEach((entry, index) => tools.check({ list: 'saveable', id: String(index) }, 'saveable', [{ when: entry.when }]))
   },
   view: (state, game, _shown, cx) => ({ saving: savingIn(state, game, cx.holds) }),
 })

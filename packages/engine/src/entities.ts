@@ -199,7 +199,7 @@ export function kindById(game: Game, id: string): KindDef | undefined {
 
 /** A kind the game or one of its plugins declares: a game that isn't loaded yet has its plugins' kinds only on them. */
 export function kindOf(game: Pick<Game, 'kinds' | 'plugins'> | undefined, id: string): KindDef | undefined {
-  return game?.kinds?.find((kind) => kind.id === id) ?? game?.plugins?.flatMap((plugin) => plugin.kinds ?? []).find((kind) => kind.id === id)
+  return game?.kinds?.find((kind) => kind.id === id) ?? game?.plugins?.flatMap((plugin) => plugin.content?.kinds ?? []).find((kind) => kind.id === id)
 }
 
 /** Whether an entity's kind is `unique`: each one is one particular thing, which can hold others. */

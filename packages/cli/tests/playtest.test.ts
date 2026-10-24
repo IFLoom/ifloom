@@ -10,6 +10,7 @@ const clock = calendar()
 function game(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'wake', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
       {
         name: 'row',
         stats: [{ id: 'carrots', label: 'Carrots' }],
@@ -49,9 +50,7 @@ function game(): Game {
     {
       id: 'row',
       title: 'Row',
-      introScene: 'wake',
       plugins: [clock, places({ start: 'bedroom' })],
-      actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }],
     },
   ).game
 }
@@ -73,6 +72,7 @@ describe('playtest', () => {
   it('counts the kinds the game lists, and leaves out those it never lists', () => {
     const g = loadGame(
       [
+        { name: 'base', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
         {
           name: 'shed',
           kinds: [
@@ -88,7 +88,7 @@ describe('playtest', () => {
           activities: [{ id: 'wait', effects: [{ kind: 'turn' }] }],
         },
       ],
-      { id: 'shed', title: 'Shed', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
+      { id: 'shed', title: 'Shed' },
     ).game
     const result = playtest(g, startingState(g), explorer(), { turns: 1 })
     expect(metricsText(result.turns).split('\n')[0]).toBe('turn\tpot\tseed\tscenes\trefused')
@@ -112,7 +112,7 @@ describe('snapshot', () => {
   it("reads as the engine's view does: a choice a lock refuses is greyed out with its reason", () => {
     const plain = game()
     const start = startingState(plain)
-    const g: Game = { ...plain, rules: { ...plain.rules, locks: [{ when: { phase: [start.phase] }, deny: ['choose'], reason: 'Too sleepy.' }] } }
+    const g: Game = { ...plain, rules: { ...plain.rules }, locks: [{ when: { phase: [start.phase] }, deny: ['choose'], reason: 'Too sleepy.' }] }
     const text = snapshot(g, [{ name: 'start', state: start }])
     expect(text).toContain('=== wake @ start\nYou wake.\n  [ ] Get up — Too sleepy.')
     // The same words and choices the player's screen gets, scene and room.

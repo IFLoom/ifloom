@@ -1,6 +1,5 @@
 import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
-import type { Lock } from './locks.ts'
 import type { Custom, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
@@ -170,22 +169,19 @@ export type StorylineDef = {
 }
 
 /**
- * The parts of a game that are rules rather than content: what a turn's end
- * does, what is locked, how a stat may change.
+ * The parts of a game that are code rather than content: what a turn's end
+ * does, how a stat may change.
  *
  * The engine calls these instead of importing the game, which is what lets it
  * leave this repo. Every field is optional; leave one out and the engine does
  * the plain thing. The hooks are named as a plugin's are (ADR 0009): `on` and
- * the event, returning the next state.
+ * the event, returning the next state. What is locked and what resets each
+ * turn are content: `locks` and `resets`.
  */
 export type GameRules = {
-  /** What the player cannot do for now, and why. Checked in order. */
-  locks?: readonly Lock[]
-  /** kv keys put back at the start of each turn: what "once this turn" was counting. */
-  resets?: Record<string, KvValue>
   /**
    * A hook: the end of a turn. Called once the turn counter has moved on and
-   * `resets` are back, with the state then and a `TurnContext`, whose
+   * the content's `resets` are back, with the state then and a `TurnContext`, whose
    * `before` is the state as the turn ended. Return the next state: apply
    * effects with `context.apply`, in order, each seeing the ones before it.
    * Runs before every plugin's `onTurn`, so a plugin's clock still reads the

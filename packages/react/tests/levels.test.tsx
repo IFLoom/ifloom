@@ -10,6 +10,7 @@ afterEach(cleanup)
 function kitchen(strings: Record<string, string> = {}) {
   const { game, problems } = loadGame(
     [
+      { name: 'base', strings, actions: [{ id: 'cook', label: 'Cook', command: { type: 'activity', id: 'cook' } }] },
       {
         name: 'kitchen',
         stats: [
@@ -19,7 +20,7 @@ function kitchen(strings: Record<string, string> = {}) {
         activities: [{ id: 'cook', effects: [{ kind: 'stat', stat: 'cooking', by: 50 }] }],
       },
     ],
-    { id: 'kitchen', title: 'The Kitchen', strings, actions: [{ id: 'cook', label: 'Cook', command: { type: 'activity', id: 'cook' } }] },
+    { id: 'kitchen', title: 'The Kitchen' },
   )
   expect(problems).toEqual([])
   return game

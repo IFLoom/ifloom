@@ -128,6 +128,7 @@ describe('the inventory alone', () => {
   it('reports what content gets wrong', () => {
     const loaded = loadGame(
       [
+        { name: 'base', actions: [{ id: 'x', label: 'x', command: useThing('food:plum') }] },
         picnic,
         {
           name: 'broken',
@@ -136,7 +137,7 @@ describe('the inventory alone', () => {
           data: { inventory: { kinds: [{ id: 'drink' }] } },
         },
       ],
-      { id: 'picnic', title: 'Picnic', plugins: [inventory()], actions: [{ id: 'x', label: 'x', command: useThing('food:plum') }] },
+      { id: 'picnic', title: 'Picnic', plugins: [inventory()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(
       expect.arrayContaining([

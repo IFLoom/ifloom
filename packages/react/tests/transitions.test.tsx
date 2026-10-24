@@ -15,6 +15,7 @@ afterEach(() => {
 function house(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'door' },
       {
         name: 'house',
         scenes: [
@@ -52,7 +53,6 @@ function house(): Game {
     {
       id: 'house',
       title: 'The House',
-      introScene: 'door',
       // Ann, who speaks in the hall, has a colour for her lines.
       plugins: [
         definePlugin<null>({ id: 'voices', version: 1, speaker: (id) => (id === 'ann' ? { id, name: 'Ann', portrait: null, ui: { hue: 280 } } : undefined) }),
@@ -200,6 +200,7 @@ describe('checkUiHints', () => {
   it("reports a hint the React UI doesn't read, and values it can't draw", () => {
     const { game } = loadGame(
       [
+        { name: 'base', introScene: 'door', ui: { transitionNames: ['curtain'] } },
         {
           name: 'odd',
           scenes: [
@@ -218,7 +219,7 @@ describe('checkUiHints', () => {
           kinds: [{ id: 'cat', label: 'Cat', ui: { hue: 400 } }],
         },
       ],
-      { id: 'odd', title: 'Odd', introScene: 'door', ui: { transitionNames: ['curtain'] } },
+      { id: 'odd', title: 'Odd' },
     )
     expect(checkUiHints(game, { allow: ['mood'] })).toEqual([
       'scene door: ui.transiton is not a hint the React UI reads',

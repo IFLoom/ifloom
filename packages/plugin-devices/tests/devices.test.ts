@@ -11,6 +11,7 @@ const apps: AppDef[] = [
 function game(): Game {
   const loaded = loadGame(
     [
+      { name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps } } },
       {
         name: 'office',
         activities: [
@@ -27,7 +28,7 @@ function game(): Game {
         custom: { panels: { inbox: () => ({ letters: 2 }) } },
       },
     ],
-    { id: 'desk', title: 'Desk', plugins: [devices()], data: { devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps } } },
+    { id: 'desk', title: 'Desk', plugins: [devices()] },
   )
   expect(loaded.problems).toEqual([])
   return loaded.game
@@ -84,7 +85,11 @@ describe('devices', () => {
         sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
       },
     ]
-    const loaded = loadGame([], { id: 'g', title: 'g', plugins: [devices()], data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } })
+    const loaded = loadGame([{ name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } }], {
+      id: 'g',
+      title: 'g',
+      plugins: [devices()],
+    })
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
       'unknown device "watch"',
       'no custom value named "nope/value"',

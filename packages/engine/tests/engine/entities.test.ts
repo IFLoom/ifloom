@@ -300,10 +300,12 @@ describe('the view of entities', () => {
     const plugin = {
       id: 'choir',
       version: 1,
-      kinds: [
-        { id: 'singer', label: 'Singer' },
-        { id: 'song', label: 'Song', listed: true },
-      ],
+      content: {
+        kinds: [
+          { id: 'singer', label: 'Singer' },
+          { id: 'song', label: 'Song', listed: true },
+        ],
+      },
     }
     const { game } = loadGame(
       [

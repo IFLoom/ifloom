@@ -13,7 +13,7 @@ const town: Content = {
 }
 
 export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([town], { id: 'locked-fixture', title: 'Locked', introScene: 'intro', plugins: [unlocks()] }, { packs: unlocked })
+  return loadGame([{ name: 'base', introScene: 'intro' }, town], { id: 'locked-fixture', title: 'Locked', plugins: [unlocks()] }, { packs: unlocked })
 }
 
 export default build

@@ -13,6 +13,8 @@ import { place } from '../place.ts'
 import { prose } from './cafe.prose.ts'
 
 export const cafe: Content = {
+  // One coffee a day: each new day resets it.
+  resets: { hadCoffee: false },
   activities: [
     {
       id: 'coffee',

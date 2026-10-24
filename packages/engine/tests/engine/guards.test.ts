@@ -43,7 +43,7 @@ const tide = definePlugin<{ height: number }>({
   label: (_state, { slice }) => `Tide ${slice.height}`,
 })
 
-function shore(rules: Game['rules'] = {}): Game {
+function shore(rules: Parameters<typeof fixture>[0] = {}): Game {
   const town = fixture(rules)
   return {
     ...town,
@@ -141,7 +141,7 @@ describe('locks by effect', () => {
 describe('scene choices', () => {
   it('are greyed out by a lock or a guard, as the reducer will refuse them', () => {
     const { game } = withCafe()
-    const locked = { ...game, rules: { ...game.rules, locks: [{ when: { kv: 'rush' }, deny: ['choose' as const], except: [], reason: 'Not in the rush.' }] } }
+    const locked = { ...game, rules: { ...game.rules }, locks: [{ when: { kv: 'rush' }, deny: ['choose' as const], except: [], reason: 'Not in the rush.' }] }
     const state = { ...begin(locked), sceneId: 'cafe.counter', kv: { rush: true } }
     const chat = view(state, locked).scene.choices.find((choice) => choice.id === 'chat')!
     expect(chat.disabled).toBe('Not in the rush.')

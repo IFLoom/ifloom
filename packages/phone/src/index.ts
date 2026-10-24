@@ -4,24 +4,26 @@
  * `phone()` wires the devices, messages and feed plugins together and puts the
  * usual apps on the phone: one for each message channel and each feed, with
  * badges; contacts, from the people the player can call; and a gallery of the
- * `photo` things you hold, a kind it declares. Spread what it returns into the
- * game:
+ * `photo` things you hold, a kind it declares. It returns plugins and content,
+ * as a bundle does: the plugins go in the game's `plugins`, and the content
+ * beside the game's own.
  *
  * ```ts
  * const kit = phone({ sidebar: true })
- * loadGame(content, { ...base, plugins: [...kit.plugins, quests()], kinds: kit.kinds, data: kit.data })
+ * loadGame([...content, kit.content], { id, title, plugins: [...kit.plugins, quests()] })
  * ```
  *
  * A photo is made in play with `create`:
  * `{ kind: 'create', of: 'photo', entity: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }`.
  *
  * The phone, its apps, channels and feeds are content (`data`), so the game's
- * content or a mod can add an app, a channel or a feed beside them.
+ * content or a mod can add an app, a channel or a feed beside them, or replace
+ * one by id.
  *
  * Anything more — a camera, a creator app, a bank — is an app the game adds
  * with `apps`, built from the same sections.
  */
-import type { KindDef, Plugin, PluginEntry } from '@ifloom/engine'
+import type { Content, Plugin } from '@ifloom/engine'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
 import { feed, type FeedDef } from '@ifloom/plugin-feed'
 import { messages, type Channel } from '@ifloom/plugin-messages'
@@ -48,14 +50,13 @@ export type PhoneOptions = {
 export type PhoneKit = {
   /** The devices, messages and feed plugins, ready for `game.plugins`. */
   plugins: Plugin[]
-  /** The `photo` kind, unlisted, ready for the base game's `kinds`; empty without a gallery. */
-  kinds: KindDef[]
   /**
-   * The phone, its apps, the channels and the feeds, as plugin content, ready
-   * for the base game's `data` (`loadGame`'s second argument). A pack's
+   * The phone as content, named `phone`, to load beside the game's own: the
+   * `photo` kind, unlisted (none without a gallery), and the phone, its apps,
+   * the channels and the feeds as plugin `data`. A pack's
    * `data.devices.apps` adds apps beside them, and replaces one by id.
    */
-  data: Record<string, Record<string, readonly PluginEntry[]>>
+  content: Content
 }
 
 export function phone(options: PhoneOptions = {}): PhoneKit {
@@ -92,11 +93,14 @@ export function phone(options: PhoneOptions = {}): PhoneKit {
   }
   return {
     plugins: [devices(), messages(), ...(feeds.length ? [feed()] : [])],
-    kinds: options.gallery === false ? [] : [{ id: 'photo', label: 'Photo', plural: 'Photos', listed: false }],
-    data: {
-      devices: { devices: [device], apps },
-      messages: { channels },
-      ...(feeds.length ? { feed: { feeds } } : {}),
+    content: {
+      name: 'phone',
+      ...(options.gallery === false ? {} : { kinds: [{ id: 'photo', label: 'Photo', plural: 'Photos', listed: false }] }),
+      data: {
+        devices: { devices: [device], apps },
+        messages: { channels },
+        ...(feeds.length ? { feed: { feeds } } : {}),
+      },
     },
   }
 }

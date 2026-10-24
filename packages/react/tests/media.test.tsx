@@ -21,6 +21,7 @@ beforeEach(() => {
 function flat(extra: Partial<Content> = {}): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'evening' },
       {
         name: 'flat',
         activities: [{ id: 'taxi' }],
@@ -54,7 +55,7 @@ function flat(extra: Partial<Content> = {}): Game {
         ...extra,
       },
     ],
-    { id: 'flat', title: 'The Flat', introScene: 'evening' },
+    { id: 'flat', title: 'The Flat' },
   ).game
 }
 

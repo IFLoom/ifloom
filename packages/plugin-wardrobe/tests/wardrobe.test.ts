@@ -49,7 +49,7 @@ const town: Content = {
 }
 
 function game(extra: Content[] = []): Game {
-  const loaded = loadGame([town, ...extra], { id: 'wet', title: 'Wet', plugins: [plugin], data: slots })
+  const loaded = loadGame([{ name: 'base', data: slots }, town, ...extra], { id: 'wet', title: 'Wet', plugins: [plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -149,6 +149,18 @@ describe('the wardrobe, on its own', () => {
   it('reports wearables in a slot the game does not have, and slots that start with the wrong thing', () => {
     const loaded = loadGame(
       [
+        {
+          name: 'base',
+          data: {
+            wardrobe: {
+              slots: [
+                { id: 'coat', label: 'Coat', start: 'clothing:boots' },
+                { id: 'neck', label: 'Neck', start: 'clothing:scarf' },
+              ],
+            },
+          },
+          actions: [{ id: 'y', label: 'Y', command: wear('clothing:cloak') }],
+        },
         town,
         {
           name: 'mod',
@@ -160,15 +172,6 @@ describe('the wardrobe, on its own', () => {
         id: 'g',
         title: 'g',
         plugins: [plugin],
-        data: {
-          wardrobe: {
-            slots: [
-              { id: 'coat', label: 'Coat', start: 'clothing:boots' },
-              { id: 'neck', label: 'Neck', start: 'clothing:scarf' },
-            ],
-          },
-        },
-        actions: [{ id: 'y', label: 'Y', command: wear('clothing:cloak') }],
       },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(
@@ -179,12 +182,17 @@ describe('the wardrobe, on its own', () => {
         'slots coat: starts with "clothing:boots", which is not worn in this slot',
       ]),
     )
-    const unheld = loadGame([{ ...town, entities: [{ id: 'boots', of: 'clothing', name: 'boots', traits: { ...wearable('feet') } }] }], {
-      id: 'g',
-      title: 'g',
-      plugins: [plugin],
-      data: slots,
-    })
+    const unheld = loadGame(
+      [
+        { name: 'base', data: slots },
+        { ...town, entities: [{ id: 'boots', of: 'clothing', name: 'boots', traits: { ...wearable('feet') } }] },
+      ],
+      {
+        id: 'g',
+        title: 'g',
+        plugins: [plugin],
+      },
+    )
     expect(unheld.problems.map((problem) => problem.what)).toContain('starts with "clothing:boots", which the player does not start holding')
   })
 })

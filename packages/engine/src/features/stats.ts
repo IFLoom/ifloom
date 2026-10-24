@@ -544,8 +544,8 @@ export const stats = defineFeature<StatsShape>({
       const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
       for (const id of game.carryOver?.stats ?? []) {
         const def = statOf.get(id)
-        if (!def) tools.problem(undefined, 'carryOver', `unknown stat "${id}"`)
-        else if (def.of !== undefined) tools.problem(undefined, 'carryOver', `stat "${id}" belongs to ${def.of}, not the player`)
+        if (!def) tools.problem({ list: 'carryOver' }, 'carryOver', `unknown stat "${id}"`)
+        else if (def.of !== undefined) tools.problem({ list: 'carryOver' }, 'carryOver', `stat "${id}" belongs to ${def.of}, not the player`)
       }
     },
   },
@@ -555,7 +555,7 @@ export const stats = defineFeature<StatsShape>({
       'stats',
       (game.stats ?? []).map((entry) => entry.id),
     )
-    const kindIds = new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.kinds ?? [])].map((kind) => kind.id))
+    const kindIds = new Set([...(game.kinds ?? []), ...(game.plugins ?? []).flatMap((plugin) => plugin.content?.kinds ?? [])].map((kind) => kind.id))
     for (const stat of game.stats ?? []) {
       const source = { list: 'stat', id: stat.id }
       const where = `stat ${stat.id}`

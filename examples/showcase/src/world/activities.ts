@@ -7,6 +7,10 @@ import { pass } from '@ifloom/plugin-calendar'
 import { here } from '@ifloom/plugin-cast'
 
 export const activities: Content = {
+  // Offered wherever you are.
+  actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
+  // One post a day: each new day (a turn, here) resets it.
+  resets: { postedToday: false },
   activities: [
     { id: 'wait', effects: [pass(1)] },
     // The camera: one photo of each person, if they're here to take. A photo is a thing the camera makes, kept by the player.

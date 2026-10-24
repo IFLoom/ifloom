@@ -6,6 +6,8 @@
 import type { Content } from '@ifloom/engine'
 
 export const opening: Content = {
+  // The story opens on this scene.
+  introScene: 'start',
   scenes: [
     {
       id: 'start',

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
-import { loadGame } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { heldBy, heldCount } from '../../src/holdings.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
-import { fixture } from '../fixtures/town.ts'
+import { fixture, loadWhole } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 function game(carryOver: Game['carryOver']): Game {
@@ -74,11 +73,19 @@ describe('New Game+', () => {
 
   it('is checked by the loader: unknown stats and kinds, and stats that are not the player’s', () => {
     const { scenes: _s, introScene: _in, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
-    const problems = loadGame([{ name: 'core', stats }], {
-      ...base,
-      kinds: [{ id: 'staff', label: 'Staff', plural: 'Staff' }],
-      carryOver: { stats: ['intelligence', 'charm'], held: ['umbrella', 'staff:ana', 'thing:umbrella'] },
-    }).problems.map(describeProblem)
+    const problems = loadWhole(
+      [
+        {
+          name: 'base',
+          kinds: [{ id: 'staff', label: 'Staff', plural: 'Staff' }],
+          carryOver: { stats: ['intelligence', 'charm'], held: ['umbrella', 'staff:ana', 'thing:umbrella'] },
+        },
+        { name: 'core', stats },
+      ],
+      {
+        ...base,
+      },
+    ).problems.map(describeProblem)
     expect(problems).toEqual([
       'base · carryOver · unknown stat "charm"',
       'base · carryOver · unknown entity "umbrella": name one as "kind:id"',

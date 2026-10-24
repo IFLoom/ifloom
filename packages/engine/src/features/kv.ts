@@ -4,7 +4,7 @@
  */
 import { entityKv, entityOf, hasEntity, ofKind, ownerOf, writeEntity } from '../entities.ts'
 import type { KvValue, Range } from '../types.ts'
-import { defineFeature } from './feature.ts'
+import { defineFeature, mergedByKey } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
 /** What the kv feature adds, as types. */
@@ -29,6 +29,15 @@ export type KvShape = {
      */
     kv: { kind: 'kv'; key: string; to: KvValue; of?: string } | { kind: 'kv'; key: string; by: number; of?: string }
   }
+  game: {
+    /** kv keys put back at the start of each turn, with the value each goes back to: what "once this turn" was counting. */
+    resets?: Record<string, KvValue>
+  }
+  pack: {
+    /** Keys reset each turn, by key: a later pack's value replaces an earlier one's. */
+    resets?: Record<string, KvValue>
+  }
+  lists: 'reset'
   fill: 'kv'
 }
 
@@ -78,11 +87,19 @@ export const kv = defineFeature<KvShape>({
       references: (effect) => ofKind(effect.of),
     },
   },
+  pack: mergedByKey<KvShape['game'], KvShape['pack'], KvValue>(
+    'reset',
+    (pack) => pack.resets,
+    (game, resets) => {
+      game.resets = resets
+    },
+  ),
+  lists: ['reset'],
   // The keys the game resets each turn, at their reset values, where the save lacks them.
   fill: {
     kind: 'kv',
     run: (state, game) => {
-      const lacking = Object.entries(game.rules?.resets ?? {}).filter(([key]) => state.kv?.[key] === undefined)
+      const lacking = Object.entries(game.resets ?? {}).filter(([key]) => state.kv?.[key] === undefined)
       return lacking.length ? { ...state, kv: { ...state.kv, ...Object.fromEntries(lacking) } } : state
     },
   },

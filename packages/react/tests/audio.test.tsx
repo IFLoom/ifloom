@@ -28,6 +28,7 @@ class FakeAudio implements AudioLike {
 function cafe(audio = true): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'door' },
       {
         name: 'cafe',
         scenes: [
@@ -55,7 +56,7 @@ function cafe(audio = true): Game {
         ...(audio ? { audio: { tracks: { bell: { src: 'bell.ogg' }, 'ava.morning': { src: 'voice/ava-morning.ogg', channel: 'voice' } } } } : {}),
       },
     ],
-    { id: 'cafe', title: 'The Café', introScene: 'door' },
+    { id: 'cafe', title: 'The Café' },
   ).game
 }
 

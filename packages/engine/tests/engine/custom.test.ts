@@ -7,11 +7,10 @@ import { effectsOf, whyNot } from '../../src/availability.ts'
 import { renderAction } from '../../src/screen.ts'
 import { fillTokens } from '../../src/prose.ts'
 import { problemsOf } from '../fixtures/checked.ts'
-import { loadGame } from '../../src/loader.ts'
 import { proseStore } from '../../src/prose.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
-import { begin, fixture } from '../fixtures/town.ts'
+import { begin, fixture, loadWhole } from '../fixtures/town.ts'
 
 describe('custom functions belong to their game', () => {
   const sunny = { ...fixture(), custom: { conditions: { fine: () => true } } }
@@ -116,9 +115,9 @@ describe('custom functions belong to their game', () => {
 
   it("reports a key content can't hold, rather than dropping it quietly", () => {
     const { scenes: _s, storylines, activities, stats, ...rest } = fixture()
-    const { problems } = loadGame([{ name: 'town', storylines, activities, stats, actions: [] } as never], rest)
+    const { problems } = loadWhole([{ name: 'town', storylines, activities, stats, rules: {} } as never], rest)
     expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain(
-      'town · content · content has no "actions", so it was left out',
+      'town · content · content has no "rules", so it was left out',
     )
     expect(problems.filter((problem) => problem.where === 'content')).toHaveLength(1)
   })
@@ -131,7 +130,7 @@ describe('custom functions belong to their game', () => {
   it('keeps the base game’s functions when content is loaded over it', () => {
     const base = { ...fixture(), custom: { conditions: { fine: () => true } } }
     const { scenes: _s, storylines, activities, stats, ...rest } = base
-    const { game } = loadGame([{ name: 'town', storylines, activities, stats }], rest)
+    const { game } = loadWhole([{ name: 'town', storylines, activities, stats }], rest)
     expect(holds(begin(game), { custom: 'fine' }, game)).toBe(true)
   })
 

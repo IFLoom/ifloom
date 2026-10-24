@@ -8,11 +8,11 @@ import { whyNot } from '../../src/availability.ts'
 import { view } from '../../src/view.ts'
 import { saves } from '../../src/save.ts'
 import { memoryDriver } from '../../src/drivers.ts'
-import { loadGame, type Content } from '../../src/loader.ts'
+import type { Content } from '../../src/loader.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { fillTokens } from '../../src/prose.ts'
 import type { Game } from '../../src/game.ts'
-import { begin, fixture } from '../fixtures/town.ts'
+import { begin, fixture, loadWhole } from '../fixtures/town.ts'
 
 /**
  * Shells found on the beach. Version 2 keeps which ones; version 1 only
@@ -120,10 +120,10 @@ describe('plugins', () => {
     const drop = { type: 'custom' as const, name: 'shells/drop', with: { shell: 'whelk' } }
     const found = (game: Game) => apply(begin(game), game, { type: 'activity', id: 'beachcomb' }).state
     for (const deny of [['shells/drop'], ['shells/*'], ['custom']] as const) {
-      const game = { ...withShells(), rules: { locks: [{ when: { all: [] }, deny, reason: 'Not now.' }] } }
+      const game = { ...withShells(), locks: [{ when: { all: [] }, deny, reason: 'Not now.' }] }
       expect(whyNot(found(game), game, drop)).toBe('Not now.')
     }
-    const other = { ...withShells(), rules: { locks: [{ when: { all: [] }, deny: ['kites/*' as const], reason: 'Not now.' }] } }
+    const other = { ...withShells(), locks: [{ when: { all: [] }, deny: ['kites/*' as const], reason: 'Not now.' }] }
     expect(whyNot(found(other), other, drop)).toBeUndefined()
   })
 
@@ -173,7 +173,7 @@ describe('plugins', () => {
       data: { shells: { spots: [{ id: 'rockpool', when: { storyline: 'tides' } }] } },
     }
     const kites: Content = { name: 'kites', data: { kites: { kites: [{ id: 'red' }] } } }
-    const { game, problems } = loadGame([beach, kites], base)
+    const { game, problems } = loadWhole([beach, kites], base)
     expect(game.data?.shells?.spots).toEqual([{ id: 'rockpool', when: { storyline: 'tides' } }])
     expect(problems).toEqual([
       { pack: 'kites', where: 'data kites', what: 'the game has no plugin named "kites"' },
@@ -221,7 +221,7 @@ describe('plugins working together', () => {
   const { id, title } = fixture()
 
   it('call each other in short, and answer queries', () => {
-    const { game, problems } = loadGame([pack], { id, title, plugins: [tides, beach] })
+    const { game, problems } = loadWhole([pack], { id, title, plugins: [tides, beach] })
     expect(problems).toEqual([])
     const state = startingState(game)
     expect(holds(state, { 'tides/high': true }, game)).toBe(false)
@@ -232,7 +232,7 @@ describe('plugins working together', () => {
   })
 
   it('let content name a partner the game does not have: the loader passes it, and it is not there', () => {
-    const { game, problems } = loadGame([pack], { id, title, plugins: [beach] })
+    const { game, problems } = loadWhole([pack], { id, title, plugins: [beach] })
     expect(problems).toEqual([])
     const state = { ...startingState(game), sceneId: null }
     expect(view(state, game).plugins.beach).toEqual({ next: 'no tides here' })
@@ -241,7 +241,7 @@ describe('plugins working together', () => {
   })
 
   it('still report a plugin nobody cooperates with', () => {
-    const { problems } = loadGame([pack], { id, title })
+    const { problems } = loadWhole([pack], { id, title })
     expect(problems.map((problem) => problem.what)).toContain('no custom condition named "tides/high"')
     expect(problems.map((problem) => problem.what)).toContain('no custom effect named "tides/turn"')
   })
@@ -252,7 +252,7 @@ describe('plugins that bring entities and speakers', () => {
   const choir = definePlugin<null>({
     id: 'choir',
     version: 1,
-    kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true }],
+    content: { kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true }] },
     entities: (game) =>
       ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).map((singer) => ({ id: singer.id, of: 'singer', name: singer.name })),
     speaker: (id, _state, { game }) => {
@@ -277,7 +277,7 @@ describe('plugins that bring entities and speakers', () => {
   }
 
   it('start with the plugin’s kinds and entities, a game’s own declaration winning', () => {
-    const { game, problems } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [choir] })
+    const { game, problems } = loadWhole([{ name: 'base', introScene: 'hymn' }, hall], { id: 'hall', title: 'Hall', plugins: [choir] })
     expect(problems).toEqual([])
     const state = startingState(game)
     expect(state.entities).toEqual({})
@@ -290,9 +290,9 @@ describe('plugins that bring entities and speakers', () => {
   })
 
   it('say who is speaking', () => {
-    const { game } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [choir] })
+    const { game } = loadWhole([{ name: 'base', introScene: 'hymn' }, hall], { id: 'hall', title: 'Hall', plugins: [choir] })
     expect(view(startingState(game), game).scene.speaker).toEqual({ id: 'ann', name: 'Ann', portrait: null, ui: { hue: 280 } })
-    const { game: plain } = loadGame([hall], { id: 'hall', title: 'Hall', introScene: 'hymn', plugins: [] })
+    const { game: plain } = loadWhole([{ name: 'base', introScene: 'hymn' }, hall], { id: 'hall', title: 'Hall', plugins: [] })
     expect(view(startingState(plain), plain).scene.speaker).toBeNull()
   })
 })

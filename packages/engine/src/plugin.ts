@@ -5,7 +5,8 @@ import { buildEffects, customContext, type CustomContext, type EffectRef } from 
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef } from './game.ts'
-import type { EntityDef, KindDef, TraitDef } from './entities.ts'
+import type { EntityDef, TraitDef } from './entities.ts'
+import type { Content } from './loader.ts'
 import type { Reference } from './references.ts'
 import type { EntityUi, SceneUi, Ui } from './features/ui.ts'
 import type { MigrationTools } from './intake.ts'
@@ -212,11 +213,13 @@ export type Plugin<S = any, V = unknown> = {
    */
   speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
   /**
-   * Kinds of entity this plugin brings: the people of a cast. Unlisted in the
-   * view unless the kind sets `listed`. A game may redeclare one by id, and
-   * keeps what it leaves out.
+   * Content the plugin brings, merged first, under the game's content and
+   * packs, which can replace anything in it by id: its kinds of entity (the
+   * people of a cast, unlisted in the view unless the kind sets `listed`; a
+   * game that redeclares one keeps what it leaves out), and any scenes,
+   * prose, actions or `data` it ships with.
    */
-  kinds?: readonly KindDef[]
+  content?: Content
   /**
    * Entities there at the start, made from the plugin's content when the game
    * is loaded. One the game declares itself, with the same kind and id, wins.

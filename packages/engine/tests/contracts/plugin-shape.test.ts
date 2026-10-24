@@ -42,9 +42,9 @@ const MEMBERS = {
   // Hooks: at an event, the next state.
   hooks: ['onTurn', 'onCommand'],
   // Providers: answers, never a change to the state.
-  providers: ['guard', 'price', 'label', 'stage', 'buttons', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'kinds', 'entities'],
-  // What entities carry that it gives meaning to: data, each named `<id>/<name>`.
-  declares: ['traits'],
+  providers: ['guard', 'price', 'label', 'stage', 'buttons', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'entities'],
+  // What entities carry that it gives meaning to: data, each named `<id>/<name>`; and the content it brings, under the game's.
+  declares: ['traits', 'content'],
   // What the content checker asks.
   checks: ['references', 'check', 'argProblems', 'panelProblems'],
   // What `definePlugin` adds for code outside the plugin.
@@ -135,8 +135,6 @@ describe('the plugin shape (ADR 0009)', () => {
     expect([...allowed].filter((name) => /^on[A-Z]/.test(name)).sort()).toEqual([...MEMBERS.hooks].sort())
     // The game's rules follow the same rule: its hooks are on-names, and there's no `turn` beside `onTurn`.
     const rules: Record<keyof GameRules, 'hook' | 'data' | 'table'> = {
-      locks: 'data',
-      resets: 'data',
       onTurn: 'hook',
       onTurnDone: 'hook',
       onStat: 'hook',

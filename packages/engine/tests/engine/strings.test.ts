@@ -29,7 +29,7 @@ describe('the strings table', () => {
     const town = { name: 'town', storylines, activities, stats, scenes: _s }
     const dutch = { name: 'nl', strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
     const fixes = { name: 'nl-fixes', strings: { tooEarly: 'Nog te vroeg.' } }
-    const { game } = loadGame([town, dutch, fixes], { ...base, strings: { tooEarly: 'Too soon.' } })
+    const { game } = loadGame([{ name: 'base', strings: { tooEarly: 'Too soon.' } }, town, dutch, fixes], { ...base })
     expect(say(game, 'finishFirst')).toBe('Eerst dit afmaken.')
     expect(say(game, 'tooEarly')).toBe('Nog te vroeg.')
   })

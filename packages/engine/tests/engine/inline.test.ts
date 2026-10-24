@@ -50,12 +50,13 @@ const prose = {
 
 function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
   const pack: Content = { name: 'house', prose, scenes: [hall], stats: [{ id: 'coins', label: 'Coins', start: 5, spendable: true }], ...extra }
-  return loadGame([pack], {
+  // The scene it opens on, unless `base` says none.
+  const { introScene, ...rest } = 'introScene' in base ? base : { ...base, introScene: 'hall' }
+  return loadGame([{ name: 'base', ...(introScene ? { introScene } : {}) }, pack], {
     id: 'house',
     title: 'The House',
-    introScene: 'hall',
     plugins: [phone],
-    ...base,
+    ...rest,
   })
 }
 

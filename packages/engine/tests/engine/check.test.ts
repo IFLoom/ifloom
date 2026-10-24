@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { checkGame, describeProblem } from '../../src/check.ts'
-import { loadGame, type Content } from '../../src/loader.ts'
+import type { Content } from '../../src/loader.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
 import type { Game } from '../../src/game.ts'
-import { fixture } from '../fixtures/town.ts'
+import { fixture, loadWhole } from '../fixtures/town.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 
 /** The fixture's base, for loading packs over: its content comes from the packs. */
@@ -42,7 +42,7 @@ describe('checkGame', () => {
       prose: { 'shop#buy': 'Buy one.' },
       scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { entity: 'thing:missing', at: 'you' }, effects: [] }] }],
     }
-    expect(loadGame([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown kind "thing"'])
+    expect(loadWhole([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown kind "thing"'])
     expect(
       problemsOf({
         ...fixture(),
@@ -89,7 +89,7 @@ describe('checkGame', () => {
         },
       ],
     }
-    const { game, problems } = loadGame([pack], base())
+    const { game, problems } = loadWhole([pack], base())
     const again = checkGame(game).problems
     expect(again.map((problem) => `${problem.where} · ${problem.what}`)).toEqual(problems.map((problem) => `${problem.where} · ${problem.what}`))
     expect(problems.map((problem) => problem.what)).toEqual(['no prose for "shop.none"', 'unknown stat "grit"', 'unknown kind "thing"'])
@@ -145,7 +145,7 @@ describe('a cooperating partner the game does not have', () => {
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
       activities: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
-    const loaded = loadGame([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
+    const loaded = loadWhole([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
     expect(loaded.problems).toEqual([])
     expect(checkGame(loaded.game).problems).toEqual([])
   })

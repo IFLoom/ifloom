@@ -5,6 +5,10 @@
 import type { Content } from '@ifloom/engine'
 
 export const ch1: Content = {
+  // The story opens on the mat.
+  introScene: 'ch1.mat',
+  // No saving on the first page until the reader has typed a name, so every save has one.
+  saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
   inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {

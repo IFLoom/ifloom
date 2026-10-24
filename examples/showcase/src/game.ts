@@ -30,6 +30,7 @@ import { settings } from './world/settings.ts'
 import { activities } from './world/activities.ts'
 import { achievements as achievementsContent } from './world/achievements.ts'
 import { cheats as cheatsContent } from './world/cheats.ts'
+import { strings } from './world/strings.ts'
 import { movingDay } from './story/moving-day.ts'
 import { ava } from './story/ava.ts'
 import { flat } from './story/flat.ts'
@@ -45,6 +46,7 @@ import { sam } from './story/sam.ts'
  * board and the places list show things in it.
  */
 export const content: Content[] = [
+  strings,
   stats,
   things,
   castContent,
@@ -66,7 +68,7 @@ export const content: Content[] = [
 export const clock = calendar({ start: { day: 0, period: 'night' } })
 
 /** The phone: texts and a social feed, plus the game's own camera, with buttons for each photo. */
-const kit = phone({
+export const kit = phone({
   sidebar: true,
   apps: [
     {
@@ -95,17 +97,13 @@ const kit = phone({
  */
 export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
   const { game, problems } = loadGame(
-    content,
+    // The phone's content before the town's: its `photo` kind, for the camera's photos, and the phone, its apps,
+    // the texts and the feed, so the town's content or a mod can add an app.
+    [kit.content, ...content],
     {
       id: 'small-town',
       title: 'Small Town',
-      introScene: 'intro',
-      startPhase: 'arrival',
       custom,
-      // The phone's `photo` kind, for the camera's photos.
-      kinds: kit.kinds,
-      // The phone, its apps, the texts and the feed: content, so a mod can add an app.
-      data: kit.data,
       // The calendar first, so every other plugin sees the new day when one begins.
       plugins: [
         clock,
@@ -128,8 +126,6 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
         unlocks(),
         ...(withDebug ? [debug()] : []),
       ],
-      actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
-      strings: { 'ui.quests': 'To do' },
       rules,
     },
     // Packs go over the content: what the player's codes opened, then their mods.

@@ -116,11 +116,10 @@ describe('the plugin', () => {
 
   it('records through a lock, as moving day would deny everything', async () => {
     const town: Content = { scenes: [{ id: 'intro', body: [], choices: [] }], data: { unlocks: { unlocks: [await def()] } } }
-    const { game: g } = loadGame([town], {
+    const { game: g } = loadGame([{ name: 'base', locks: [{ when: { not: { phase: ['never'] } }, deny: ['*'], reason: 'Not now.' }] }, town], {
       id: GAME,
       title: 't',
       plugins: [unlocks()],
-      rules: { locks: [{ when: { not: { phase: ['never'] } }, deny: ['*'], reason: 'Not now.' }] },
     })
     expect(apply({ ...startingState(g), sceneId: null }, g, recordUnlock('supporter')).reason).toBeUndefined()
   })

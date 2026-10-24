@@ -1,11 +1,11 @@
 /**
- * Locks: what the player can't do for now, and why. The game lists them in
- * `rules.locks`; a command a lock stops is refused with its reason, and its
- * button greyed out with the same line.
+ * Locks: what the player can't do for now, and why. Content lists them in
+ * `locks`; a command a lock stops is refused with its reason, and its button
+ * greyed out with the same line.
  */
 import type { Game } from '../game.ts'
 import type { Command, Condition, Effect, GameState } from '../types.ts'
-import { defineFeature, type FeatureContext } from './feature.ts'
+import { appended, defineFeature, type FeatureContext } from './feature.ts'
 
 /**
  * Something the player cannot do for now, and why.
@@ -17,6 +17,11 @@ import { defineFeature, type FeatureContext } from './feature.ts'
  * line, so the two cannot disagree.
  */
 export type Lock = {
+  /**
+   * A name for it, so a later pack can replace it: a pack's lock with the
+   * same id takes its place. Left out, a lock is simply added.
+   */
+  id?: string
   /** While this holds, the lock is on. */
   when: Condition
   /**
@@ -40,6 +45,19 @@ export type Lock = {
   reason: string
 }
 
+/** What the locks feature adds, as types. */
+export type LocksShape = {
+  game: {
+    /** What the player cannot do for now, and why. Checked in order; the first that stops a command gives the reason. */
+    locks?: Lock[]
+  }
+  pack: {
+    /** Locks after the ones before; one with the `id` of an earlier one takes its place. */
+    locks?: Lock[]
+  }
+  lists: 'lock'
+}
+
 /** What a lock's `deny` and `except` can name: a command type, `'*'`, or a plugin command or plugin. */
 export type LockTarget = Command['type'] | '*' | `${string}/${string}`
 
@@ -61,7 +79,7 @@ function covers(lock: Lock, command: Command): boolean {
  * command's effects from `effects`, asked only when a lock names an effect.
  */
 export function lockIn(state: GameState, game: Game, command: Command, effects: () => readonly Effect[], cx: FeatureContext): Lock | undefined {
-  for (const lock of game.rules?.locks ?? []) {
+  for (const lock of game.locks ?? []) {
     if (!covers(lock, command)) continue
     if (!cx.holds(state, lock.when, game)) continue
     if (lock.effect !== undefined) {
@@ -81,14 +99,25 @@ export function lockedBy(state: GameState, game: Game, command: Command, cx: Fea
 
 /** Is a lock on that stops everything? */
 export function lockedOut(state: GameState, game: Game, cx: FeatureContext): boolean {
-  return (game.rules?.locks ?? []).some((lock) => lock.deny.includes('*') && cx.holds(state, lock.when, game))
+  return (game.locks ?? []).some((lock) => lock.deny.includes('*') && cx.holds(state, lock.when, game))
 }
 
-export const locks = defineFeature({
+export const locks = defineFeature<LocksShape>({
   name: 'locks',
   // A lock is the first thing that stops a command: before the plugins' guards and what the command itself needs.
   refuses: (state, command, game, effects, cx) => lockIn(state, game, command, effects, cx)?.reason,
+  pack: appended<LocksShape['game'], LocksShape['pack'], Lock>(
+    'lock',
+    (pack) => pack.locks,
+    (game, list) => {
+      game.locks = list
+    },
+  ),
+  lists: ['lock'],
   check: (game, tools) => {
-    ;(game.rules?.locks ?? []).forEach((lock, index) => tools.check(undefined, `lock ${index}`, [{ when: lock.when }]))
+    ;(game.locks ?? []).forEach((lock, index) => {
+      const id = lock.id ?? String(index)
+      tools.check({ list: 'lock', id }, `lock ${id}`, [{ when: lock.when }])
+    })
   },
 })

@@ -84,15 +84,23 @@ const flat: Content = {
 }
 
 function makeGame(change: (game: Game) => Game = (game) => game): Game {
-  const { game, problems } = loadGame([flat], {
-    id: 'flat',
-    title: 'The Flat',
-    introScene: 'hall',
-    settings: [
-      { id: 'musicVolume', label: 'Music', affects: 'ui', kind: 'range', min: 0, max: 100, default: 80 },
-      { id: 'muted', label: 'Mute', affects: 'ui', kind: 'toggle', default: false },
+  const { game, problems } = loadGame(
+    [
+      {
+        name: 'base',
+        settings: [
+          { id: 'musicVolume', label: 'Music', affects: 'ui', kind: 'range', min: 0, max: 100, default: 80 },
+          { id: 'muted', label: 'Mute', affects: 'ui', kind: 'toggle', default: false },
+        ],
+      },
+      { name: 'base', introScene: 'hall' },
+      flat,
     ],
-  })
+    {
+      id: 'flat',
+      title: 'The Flat',
+    },
+  )
   expect(problems).toEqual([])
   return change(game)
 }

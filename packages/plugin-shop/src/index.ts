@@ -501,7 +501,7 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
     start: emptyState,
     migrations: { 1: (old, { game }) => fromSold(old, game) },
     cooperates: ['calendar', 'places'],
-    kinds: [{ id: KIND, label: 'Vendor', plural: 'Vendors', unique: true, listed: false }],
+    content: { kinds: [{ id: KIND, label: 'Vendor', plural: 'Vendors', unique: true, listed: false }] },
     entities: (game) => vendorDefs(game).map((vendor) => ({ id: vendor.id, of: KIND, name: vendor.name })),
     traits: [sellableTrait],
     strings: {

@@ -6,6 +6,10 @@ import { at } from '@ifloom/plugin-places'
 const WELCOME = 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. — Sam, flat 2'
 
 export const movingDay: Content = {
+  // The game opens on moving day, and only moves through its scene until you unpack.
+  introScene: 'intro',
+  startPhase: 'arrival',
+  locks: [{ id: 'moving-day', when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' }],
   scenes: [
     {
       id: 'intro',

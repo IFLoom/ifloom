@@ -21,7 +21,7 @@ import { ch3 } from './story/ch3.ts'
 /** The game's content: what every chapter shares, then the chapters. */
 export const content: Content[] = [stats, ch1, ch2, ch3]
 
-/** The game: its content, with a base that names its first scene and how it saves. */
+/** The game: its content, with a base that says what it is and how its saves are named and carried forward. */
 export function theLetter(): { game: Game; problems: string[] } {
   const { game, problems } = loadGame(content, {
     id: 'the-letter',
@@ -35,13 +35,6 @@ export function theLetter(): { game: Game; problems: string[] } {
         return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
       },
     },
-    introScene: 'ch1.mat',
-    // Reaching either ending finishes the game, and the title screen then offers New Game+.
-    finished: { scene: ['end.kept', 'end.posted'] },
-    // A New Game+ keeps only this: that the reader has been through it once.
-    carryOver: { kv: ['readBefore'] },
-    // No saving on the first page until the reader has typed a name, so every save has one.
-    saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
     // Saves are listed under the name the reader typed.
     saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
   })

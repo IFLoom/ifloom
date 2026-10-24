@@ -7,13 +7,14 @@ import { mountGame } from '../src/index.ts'
 const loaded = () =>
   loadGame(
     [
+      { name: 'base', introScene: 'mat' },
       {
         name: 'letter',
         scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: { mat: 'A letter on the mat.', 'mat#open': 'Open it' },
       },
     ],
-    { id: 'letter', title: 'The Letter', introScene: 'mat' },
+    { id: 'letter', title: 'The Letter' },
   )
 
 afterEach(() => {

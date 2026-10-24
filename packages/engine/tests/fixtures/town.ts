@@ -1,5 +1,6 @@
 import type { ActivityDef } from '../../src/activity.ts'
 import type { Game } from '../../src/game.ts'
+import { loadGame, type Content, type GameBase, type LoadOptions } from '../../src/loader.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
 import type { GameState } from '../../src/types.ts'
@@ -27,8 +28,11 @@ export const activities: ActivityDef[] = [
   })),
 ]
 
-export function fixture(rules: Game['rules'] = {}): Game {
+/** The town, with the rules given, and the locks and resets among them as the content's. */
+export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 'locks' | 'resets'> = {}): Game {
   const game: Game = {
+    ...(locks ? { locks } : {}),
+    ...(resets ? { resets } : {}),
     id: 'fixture',
     title: 'Fixture',
     introScene: 'start',
@@ -75,3 +79,23 @@ export function begin(game: Game, patch: Partial<GameState> = {}): GameState {
 
 /** Be somewhere, as the stand-in for places reads it. */
 export const standAt = (state: GameState, place: string): GameState => ({ ...state, kv: { ...state.kv, at: place } })
+
+/** The keys of a game that `loadGame` takes as its base; the rest are content. */
+const BASE: (keyof GameBase)[] = ['id', 'title', 'version', 'migrations', 'saveName', 'custom', 'plugins', 'rules']
+
+/**
+ * `loadGame`, given a game written as one object: what the base holds goes in
+ * the base, and the rest goes in a piece of content named `base`, before the
+ * content given. What a loaded game works out for itself (its prose store, its
+ * packs) is left out.
+ */
+export function loadWhole(content: readonly Content[], whole: Partial<Game> & Pick<Game, 'id' | 'title'>, options?: LoadOptions) {
+  const base: Record<string, unknown> = {}
+  const own: Record<string, unknown> = { name: 'base' }
+  for (const [key, value] of Object.entries(whole)) {
+    if (value === undefined || key === 'prose' || key === 'packs') continue
+    if ((BASE as string[]).includes(key)) base[key] = value
+    else own[key] = value
+  }
+  return loadGame([own as Content, ...content], base as GameBase, options)
+}

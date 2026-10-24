@@ -10,6 +10,7 @@ afterEach(cleanup)
 function letter(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'mat', carryOver: { kv: ['readBefore'] }, finished: { kv: 'readBefore' } },
       {
         name: 'letter',
         settings: [
@@ -40,7 +41,7 @@ function letter(): Game {
         prose: { mat: 'A letter on the mat.', again: 'You have read it before.', 'mat#open': 'Open it', 'mat#leave': 'Leave it' },
       },
     ],
-    { id: 'letter', title: 'The Letter', introScene: 'mat', carryOver: { kv: ['readBefore'] }, finished: { kv: 'readBefore' } },
+    { id: 'letter', title: 'The Letter' },
   ).game
 }
 

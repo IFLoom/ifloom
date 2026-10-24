@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, loadGame, type Content, type Pack } from '../../src/loader.ts'
+import type { Plugin } from '../../src/plugin.ts'
 import { describeProblem } from '../../src/check.ts'
 import { withCafe } from '../fixtures/cafe.ts'
-import { fixture } from '../fixtures/town.ts'
+import { fixture, loadWhole } from '../fixtures/town.ts'
 
 /** Content whose activities name things that are not there. (Places and characters are checked by their plugins.) */
 const broken: Content = {
@@ -34,7 +35,7 @@ describe('the loader', () => {
       ...baseOf(),
       actions: [{ id: 'nap', label: 'Nap', command: { type: 'activity' as const, id: 'rest' }, when: { storyline: 'dreams' } }],
     }
-    const problems = loadGame([broken], base).problems.map(describeProblem)
+    const problems = loadWhole([broken], base).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
         'broken · activity dig · unknown stat "stamina"',
@@ -65,7 +66,7 @@ describe('the loader', () => {
         { id: 'age', label: 'Age', kind: 'number', min: 10, max: 5, when: { storyline: 'ghost' } },
       ],
     }
-    const problems = loadGame([pack], baseOf()).problems.map(describeProblem)
+    const problems = loadWhole([pack], baseOf()).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
         'post · trigger parcel · unknown kind "parcel"',
@@ -84,7 +85,7 @@ describe('the loader', () => {
 describe('one thing declared twice across the content', () => {
   /** The problems about things declared twice, as lines, from loading this content over the town's base with a plugin `notes`. */
   const twice = (content: Content[], packs: Pack[] = []) =>
-    loadGame(content, { ...baseOf(), plugins: [{ id: 'notes', version: 1 }] }, { packs })
+    loadWhole(content, { ...baseOf(), plugins: [{ id: 'notes', version: 1 }] }, { packs })
       .problems.map(describeProblem)
       .filter((line) => line.includes('declared twice'))
   const named = (name: string, rest: Content): Content => ({ name, ...rest })
@@ -118,7 +119,7 @@ describe('one thing declared twice across the content', () => {
   })
 
   it('makes it a problem, so a check fails on it', () => {
-    const { problems } = loadGame([{ prose: { 'cafe.counter': 'One.' } }, { prose: { 'cafe.counter': 'Two.' } }], baseOf())
+    const { problems } = loadWhole([{ prose: { 'cafe.counter': 'One.' } }, { prose: { 'cafe.counter': 'Two.' } }], baseOf())
     expect(problems.map(describeProblem)).toContain('content · prose "cafe.counter" · declared twice')
   })
 })
@@ -130,7 +131,7 @@ describe('packs over the content', () => {
   it('replace what the content declares, and each other, last one winning, without a word', () => {
     const evening: Pack = { id: 'mod:evening', schema: SCHEMA, prose: { 'cafe.counter': 'Lanterns.' } }
     const late: Pack = { id: 'mod:late', schema: SCHEMA, prose: { 'cafe.counter': 'Late.' }, scenes: [scene('cafe.counter', 'cafe.late')] }
-    const { game, prose, problems } = loadGame(content, baseOf(), { packs: [evening, late] })
+    const { game, prose, problems } = loadWhole(content, baseOf(), { packs: [evening, late] })
     expect(prose['cafe.counter']).toBe('Late.')
     expect(game.scenes.find((one) => one.id === 'cafe.counter')).toMatchObject({ body: [{ text: 'cafe.late' }] })
     expect(problems.filter((problem) => problem.what.includes('twice'))).toEqual([])
@@ -138,19 +139,19 @@ describe('packs over the content', () => {
 
   it('patch the content’s scenes', () => {
     const patch: Pack = { id: 'mod:patch', schema: SCHEMA, patches: [{ scene: 'cafe.counter', addChoice: { id: 'wave', label: 'Wave', effects: [] } }] }
-    const { game } = loadGame(content, baseOf(), { packs: [patch] })
+    const { game } = loadWhole(content, baseOf(), { packs: [patch] })
     expect(game.scenes.find((one) => one.id === 'cafe.counter')).toMatchObject({ choices: [{ id: 'wave' }] })
   })
 
   it('are what `game.packs` lists, by id; the content has none', () => {
-    const { game } = loadGame(content, baseOf(), { packs: [{ id: 'supporter', schema: SCHEMA }] })
+    const { game } = loadWhole(content, baseOf(), { packs: [{ id: 'supporter', schema: SCHEMA }] })
     expect(game.packs).toEqual(['supporter'])
-    expect(loadGame(content, baseOf()).game.packs).toEqual([])
+    expect(loadWhole(content, baseOf()).game.packs).toEqual([])
   })
 
   it('still load when they say `overrides`, which packs no longer need', () => {
     const old = { id: 'mod:old', schema: SCHEMA, overrides: true, prose: { 'cafe.counter': 'Old.' } } as Pack
-    const { prose, problems } = loadGame(content, baseOf(), { packs: [old] })
+    const { prose, problems } = loadWhole(content, baseOf(), { packs: [old] })
     expect(prose['cafe.counter']).toBe('Old.')
     expect(problems.filter((problem) => problem.pack === 'mod:old')).toEqual([])
   })
@@ -159,7 +160,7 @@ describe('packs over the content', () => {
 describe('content given what only a pack has', () => {
   it('reports the id, schema and patches, and leaves them out', () => {
     const asPack = { id: 'story.cafe', schema: SCHEMA, patches: [{ scene: 'cafe.counter', dropChoice: 'x' }], prose: { a: 'A.' } } as Content
-    const { prose, problems } = loadGame([asPack], baseOf())
+    const { prose, problems } = loadWhole([asPack], baseOf())
     expect(prose.a).toBe('A.')
     expect(problems.map(describeProblem)).toEqual(
       expect.arrayContaining([
@@ -168,5 +169,121 @@ describe('content given what only a pack has', () => {
         'content · content · content has no "patches", so it was left out; a pack has one, and goes in `packs`',
       ]),
     )
+  })
+})
+
+describe('what a mod can reach', () => {
+  const scenes: Content['scenes'] = [
+    { id: 'door', body: [], choices: [{ id: 'in', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'gate', body: [], choices: [{ id: 'in', effects: [{ kind: 'scene', scene: null }] }] },
+  ]
+  const base = { id: 'yard', title: 'The Yard' }
+  const own: Content = {
+    name: 'story.yard',
+    scenes,
+    introScene: 'door',
+    actions: [{ id: 'sweep', label: 'Sweep', command: { type: 'leave' } }],
+    locks: [
+      { id: 'night', when: { kv: 'night' }, deny: ['leave'], reason: 'Too dark.' },
+      { when: { kv: 'rain' }, deny: ['leave'], reason: 'Too wet.' },
+    ],
+    resets: { swept: false },
+    saveable: [{ when: { kv: 'busy' }, reason: 'Busy.' }],
+    finished: { seen: 'gate' },
+    carryOver: { kv: ['swept'] },
+    ui: { mood: 'calm' },
+    prose: { 'door#in': 'In', 'gate#in': 'In' },
+  }
+
+  it('is content: actions, locks, resets, saveable, finished, carryOver, startPhase, introScene and ui', () => {
+    const { game, problems } = loadGame([own], base)
+    expect(problems).toEqual([])
+    expect(game).toMatchObject({ introScene: 'door', resets: { swept: false }, finished: { seen: 'gate' }, carryOver: { kv: ['swept'] }, ui: { mood: 'calm' } })
+    expect(game.actions?.map((action) => action.id)).toEqual(['sweep'])
+    expect(game.locks?.map((lock) => lock.reason)).toEqual(['Too dark.', 'Too wet.'])
+  })
+
+  it('is laid over by a pack: a lock by its id, the rest by id, by key or whole', () => {
+    const mod: Pack = {
+      id: 'mod:dawn',
+      schema: SCHEMA,
+      introScene: 'gate',
+      actions: [{ id: 'sweep', label: 'Sweep up', command: { type: 'leave' } }],
+      locks: [
+        { id: 'night', when: { kv: 'night' }, deny: ['leave'], reason: 'Wait for dawn.' },
+        { when: { kv: 'fog' }, deny: ['leave'], reason: 'Foggy.' },
+      ],
+      resets: { raked: false },
+      saveable: [{ when: { kv: 'asleep' }, reason: 'Asleep.' }],
+      ui: { colour: 'grey' },
+    }
+    const { game, problems } = loadGame([own], base, { packs: [mod] })
+    expect(problems).toEqual([])
+    expect(game.introScene).toBe('gate')
+    expect(game.actions?.map((action) => action.label)).toEqual(['Sweep up'])
+    expect(game.locks?.map((lock) => lock.reason)).toEqual(['Wait for dawn.', 'Too wet.', 'Foggy.'])
+    expect(game.resets).toEqual({ swept: false, raked: false })
+    expect(game.saveable?.map((entry) => entry.reason)).toEqual(['Busy.', 'Asleep.'])
+    expect(game.ui).toEqual({ mood: 'calm', colour: 'grey' })
+  })
+
+  it('is declared once across the content', () => {
+    const again: Content = {
+      name: 'story.gate',
+      introScene: 'gate',
+      locks: [{ id: 'night', when: { kv: 'night' }, deny: ['leave'], reason: 'Dark.' }],
+      resets: { swept: true },
+    }
+    const { problems } = loadGame([own, again], base)
+    expect(problems.map(describeProblem).sort()).toEqual([
+      'story.gate · introScene · declared twice, in story.yard and story.gate',
+      'story.gate · lock "night" · declared twice, in story.yard and story.gate',
+      'story.gate · reset "swept" · declared twice, in story.yard and story.gate',
+    ])
+  })
+
+  it('pins a problem on the content or pack that brought it', () => {
+    const mod: Pack = { id: 'mod:lost', schema: SCHEMA, introScene: 'cellar', locks: [{ when: { gone: 1 } as never, deny: ['leave'], reason: 'No.' }] }
+    const { problems } = loadGame([own], base, { packs: [mod] })
+    expect(problems.map(describeProblem)).toEqual(
+      expect.arrayContaining(['mod:lost · introScene · unknown scene "cellar"', expect.stringMatching(/^mod:lost · lock 2 · /)]),
+    )
+  })
+
+  it('reports what the base can no longer hold', () => {
+    const { problems } = loadGame([own], { ...base, introScene: 'door' } as never)
+    expect(problems.map(describeProblem)).toEqual([
+      'base · base · the base has no "introScene", so it was left out; it is content now, so it goes in the game\'s content',
+    ])
+  })
+})
+
+describe('a plugin’s content', () => {
+  const lamps = {
+    id: 'lamps',
+    version: 1,
+    content: {
+      kinds: [{ id: 'lamp', label: 'Lamp' }],
+      entities: [{ id: 'hall', of: 'lamp', name: 'Hall lamp' }],
+      actions: [{ id: 'light', label: 'Light the lamps', command: { type: 'leave' } }],
+      prose: { 'lamps.lit': 'The lamps are lit.' },
+    },
+  } satisfies Plugin
+
+  it('is merged first, under the game’s content and packs', () => {
+    const own: Content = { name: 'story', prose: { 'lamps.lit': 'Every lamp is lit.' } }
+    const mod: Pack = { id: 'mod:dim', schema: SCHEMA, actions: [{ id: 'light', label: 'Light one lamp', command: { type: 'leave' } }] }
+    const { game, prose, problems } = loadGame([own], { id: 'house', title: 'House', plugins: [lamps] }, { packs: [mod] })
+    expect(problems).toEqual([])
+    expect(prose['lamps.lit']).toBe('Every lamp is lit.')
+    expect(game.actions?.map((action) => action.label)).toEqual(['Light one lamp'])
+    expect(game.entities?.map((entity) => entity.name)).toEqual(['Hall lamp'])
+    // A plugin's kinds are unlisted unless it says, as a plugin's always were.
+    expect(game.kinds?.find((kind) => kind.id === 'lamp')?.listed).toBe(false)
+  })
+
+  it('is not counted as the game declaring a key twice', () => {
+    const own: Content = { name: 'story', actions: [{ id: 'light', label: 'Light it', command: { type: 'leave' } }] }
+    expect(loadGame([own], { id: 'house', title: 'House', plugins: [lamps] }).problems).toEqual([])
   })
 })

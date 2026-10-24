@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { audioChannels, audioSrc, type GameAudio } from '../../src/features/audio.ts'
-import { loadGame, type Content } from '../../src/loader.ts'
+import type { Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply } from '../../src/reduce.ts'
@@ -10,7 +10,7 @@ import { parseBeats } from '../../src/sceneBody.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
-import { fixture } from '../fixtures/town.ts'
+import { fixture, loadWhole } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 /** Somewhere to stand in for places: the street hums while the `at` kv key says you're there. */
@@ -89,7 +89,7 @@ function baseOf() {
 }
 
 function game(packs: Content[] = [house]) {
-  const loaded = loadGame(packs, { ...baseOf(), plugins: [street] })
+  const loaded = loadWhole(packs, { ...baseOf(), plugins: [street] })
   return loaded
 }
 
@@ -325,7 +325,7 @@ describe('audio', () => {
 
     it('report a mute or volume setting the game does not have', () => {
       const pack: Content = { name: 'p', audio: { tracks: {}, channels: { music: { mode: 'background', volume: 'loud' } }, mute: 'quiet' } }
-      expect(loadGame([pack], baseOf()).problems.map(describeProblem)).toEqual([
+      expect(loadWhole([pack], baseOf()).problems.map(describeProblem)).toEqual([
         'p · channel music · unknown setting "loud"',
         'p · audio · unknown setting "quiet"',
       ])

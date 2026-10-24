@@ -9,16 +9,31 @@ import {
   view,
   whyNot,
   type Game,
+  type Content,
   type GameRules,
   type GameState,
 } from '@ifloom/engine'
 import { calendar, day, pass, period, sleep, weekday, weekend, type CalendarOptions, type CalendarView } from '../src/index.ts'
 
 /** A house with no map: a nap, an afternoon out, a long walk, and bed. */
-function house(options: CalendarOptions = {}, rules: GameRules = {}): { game: Game; clock: ReturnType<typeof calendar> } {
+function house(
+  options: CalendarOptions = {},
+  { locks, ...rules }: GameRules & Pick<Content, 'locks'> = {},
+): { game: Game; clock: ReturnType<typeof calendar> } {
   const clock = calendar(options)
   const { game, problems } = loadGame(
     [
+      {
+        name: 'base',
+        actions: [
+          { id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } },
+          { id: 'outing', label: 'Go out', command: { type: 'activity', id: 'outing' } },
+          { id: 'walk', label: 'Long walk', command: { type: 'activity', id: 'walk' } },
+          // A calendar with no sleep has no bed to offer.
+          ...(options.sleep === false ? [] : [{ id: 'bed', label: 'Bed', command: sleep() }]),
+        ],
+        ...(locks ? { locks } : {}),
+      },
       {
         name: 'house',
         activities: [
@@ -35,13 +50,6 @@ function house(options: CalendarOptions = {}, rules: GameRules = {}): { game: Ga
       title: 'The House',
       plugins: [clock],
       rules,
-      actions: [
-        { id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } },
-        { id: 'outing', label: 'Go out', command: { type: 'activity', id: 'outing' } },
-        { id: 'walk', label: 'Long walk', command: { type: 'activity', id: 'walk' } },
-        // A calendar with no sleep has no bed to offer.
-        ...(options.sleep === false ? [] : [{ id: 'bed', label: 'Bed', command: sleep() }]),
-      ],
     },
   )
   expect(problems).toEqual([])

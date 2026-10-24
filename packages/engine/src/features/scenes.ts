@@ -11,7 +11,7 @@ import type { Block, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
-import { defineFeature, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
+import { defineFeature, lastWins, together, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
@@ -118,11 +118,13 @@ export type ScenesShape = {
     scenes?: (Scene | DataScene)[]
     /** Surgical changes to content an earlier pack declared. */
     patches?: Patch[]
+    /** The scene on screen on the first frame: a later pack's replaces an earlier one's. */
+    introScene?: string
   }
   view: {
     inScene: boolean
   }
-  lists: 'scene'
+  lists: 'scene' | 'introScene'
 }
 
 function isDataScene(scene: Scene | DataScene): scene is DataScene {
@@ -438,11 +440,20 @@ export const scenes = defineFeature<ScenesShape>({
       references: () => [],
     },
   },
-  pack: { merge },
-  lists: ['scene'],
+  pack: together(
+    { merge },
+    lastWins<ScenesShape['game'], ScenesShape['pack'], string>(
+      'introScene',
+      (pack) => pack.introScene,
+      (game, scene) => {
+        game.introScene = scene
+      },
+    ),
+  ),
+  lists: ['scene', 'introScene'],
   check: (game, tools) => {
     if (game.introScene !== undefined && !game.scenes.some((scene) => scene.id === game.introScene)) {
-      tools.problem(undefined, 'introScene', `unknown scene "${game.introScene}"`)
+      tools.problem({ list: 'introScene' }, 'introScene', `unknown scene "${game.introScene}"`)
     }
     tools.twice(
       'scene',

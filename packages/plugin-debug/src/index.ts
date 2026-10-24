@@ -165,7 +165,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       }),
     },
     view: (state, { game }): DebugView => ({
-      locks: (game.rules?.locks ?? []).filter((lock) => holds(state, lock.when, game)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
+      locks: (game.locks ?? []).filter((lock) => holds(state, lock.when, game)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
       fired: { ...state.fired },
       seed: state.seed,
     }),

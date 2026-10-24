@@ -236,7 +236,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       notLyingHere: 'There is no {thing} here.',
     },
     // Each location is a unique entity, so it can hold things: what lies there. Not listed: the places are the plugin's to show.
-    kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }],
+    content: { kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }] },
     entities: (game) =>
       locationsOf(game).map((def) => ({
         id: def.id,

@@ -4,6 +4,10 @@ import type { Content } from '@ifloom/engine'
 const readIt = { kind: 'kv', key: 'readBefore', to: true } as const
 
 export const ch3: Content = {
+  // Reaching either ending finishes the game, and the title screen then offers New Game+.
+  finished: { scene: ['end.kept', 'end.posted'] },
+  // A New Game+ keeps only this: that the reader has been through it once.
+  carryOver: { kv: ['readBefore'] },
   scenes: [
     {
       id: 'ch3.door',

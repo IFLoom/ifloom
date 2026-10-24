@@ -2,6 +2,8 @@
 import type { Content } from '@ifloom/engine'
 
 export const opening: Content = {
+  // The game opens on the café's first day.
+  introScene: 'opening',
   scenes: [
     {
       id: 'opening',

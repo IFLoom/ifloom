@@ -19,7 +19,7 @@
  * file could hold, with no functions in it.
  */
 import { INLINE_MARKUP, UI_NAME, uiParts } from '../sceneBody.ts'
-import { defineFeature } from './feature.ts'
+import { defineFeature, mergedByKey } from './feature.ts'
 
 /** Hints on a scene, and on a room's stage (a place), for the UI that draws it. Empty here; a UI package augments it. */
 export interface SceneUi {}
@@ -66,6 +66,11 @@ export type UiShape = {
     /** Hints for the whole game, such as how every screen comes in. Carried as written; the engine gives them no meaning. */
     ui?: Ui<GameUi>
   }
+  pack: {
+    /** Hints for the whole game, hint by hint: a later pack's hint replaces an earlier one's, and the rest are kept. */
+    ui?: Ui<GameUi>
+  }
+  lists: 'ui'
 }
 
 /** Is it a plain object, as a hint is written? */
@@ -129,7 +134,15 @@ function inlineUiProblems(text: string): string[] {
 
 export const ui = defineFeature<UiShape>({
   name: 'ui',
-  check: (game, tools) => tools.check(undefined, 'ui', [{ ui: game.ui }]),
+  pack: mergedByKey<UiShape['game'], UiShape['pack'], unknown>(
+    'ui',
+    (pack) => pack.ui,
+    (game, hints) => {
+      game.ui = hints as Ui<GameUi>
+    },
+  ),
+  lists: ['ui'],
+  check: (game, tools) => tools.check({ list: 'ui' }, 'ui', [{ ui: game.ui }]),
   resolve: () => ({ ui: (ref) => uiProblems(ref.ui) }),
   // `[[reveal]]` was prose markup once. It is a block's hint now, so one left in prose would be shown as written.
   markup: (_game, text) => [

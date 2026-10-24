@@ -9,7 +9,7 @@ import type { Command, GameState } from '../../src/types.ts'
 import { activities, begin, fixture } from '../fixtures/town.ts'
 
 /** The town with a counter and a notice board that open panels, one of them as the turn ends. */
-function withPanels(rules: Game['rules'] = {}): Game {
+function withPanels(rules: Parameters<typeof fixture>[0] = {}): Game {
   return {
     ...fixture(rules),
     activities: [

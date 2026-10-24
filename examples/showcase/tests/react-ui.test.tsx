@@ -26,6 +26,16 @@ const kit = phone({ feeds: [] })
 function game(strings: Record<string, string> = {}): Game {
   const loaded = loadGame(
     [
+      kit.content,
+      {
+        name: 'base',
+        introScene: 'intro',
+        actions: [
+          { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
+          { id: 'cake', label: 'Buy a cake', command: { type: 'activity', id: 'cake' } },
+        ],
+        strings,
+      },
       {
         name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3, format: '{n}c', spendable: true }],
@@ -57,15 +67,7 @@ function game(strings: Record<string, string> = {}): Game {
     {
       id: 'ui-test',
       title: 'Small Town',
-      introScene: 'intro',
       plugins: [calendar(), places({ start: 'house' }), ...kit.plugins, quests(), debug()],
-      kinds: kit.kinds,
-      data: kit.data,
-      actions: [
-        { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-        { id: 'cake', label: 'Buy a cake', command: { type: 'activity', id: 'cake' } },
-      ],
-      strings,
     },
   )
   return loaded.game

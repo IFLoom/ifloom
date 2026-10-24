@@ -300,7 +300,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       notPickingUp: '{name} does not pick up.',
     },
     // Each of the cast's kind is one particular person, listed in the view once the player has met them.
-    kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People', unique: true, listed: { [`${ID}/met`]: { character: '$' } } }],
+    content: {
+      kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People', unique: true, listed: { [`${ID}/met`]: { character: '$' } } }],
+    },
     conditions: {
       /** `{ 'cast/here': { character: 'ava' } }`: in the room with the player; with a list, any of them. */
       here: (state, args, context) =>

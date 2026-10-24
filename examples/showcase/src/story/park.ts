@@ -63,6 +63,8 @@ const quickFeet: MinigameDef = {
 const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
 
 export const park: Content = {
+  // One skimmed stone a day: each new day resets it.
+  resets: { skimmed: false },
   activities: [
     { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
     { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },

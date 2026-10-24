@@ -57,6 +57,15 @@ function town(): Game {
   const { game, problems } = loadGame(
     [
       {
+        name: 'base',
+        actions: [
+          { id: 'street', label: 'High Street', when: home, command: { type: 'activity', id: 'street' } },
+          { id: 'house', label: 'House', when: out, command: { type: 'activity', id: 'house' } },
+          { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
+          { id: 'look', label: 'Check your pockets', command: { type: 'activity', id: 'look' } },
+        ],
+      },
+      {
         name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
         activities: [
@@ -71,12 +80,6 @@ function town(): Game {
       id: 'regions-test',
       title: 'Small Town',
       plugins: [errands],
-      actions: [
-        { id: 'street', label: 'High Street', when: home, command: { type: 'activity', id: 'street' } },
-        { id: 'house', label: 'House', when: out, command: { type: 'activity', id: 'house' } },
-        { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-        { id: 'look', label: 'Check your pockets', command: { type: 'activity', id: 'look' } },
-      ],
     },
   )
   expect(problems).toEqual([])

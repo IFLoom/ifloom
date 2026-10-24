@@ -45,7 +45,7 @@ function game(): Game {
       effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'comment.wow' })] },
     },
   }
-  const loaded = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], data: feeds })
+  const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
   expect(loaded.problems).toEqual([])
   return loaded.game
 }
@@ -116,7 +116,7 @@ describe('video on a post', () => {
         },
       },
     }
-    const { game: g, problems } = loadGame([pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], data: feeds })
+    const { game: g, problems } = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
     expect(problems).toEqual([])
     let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
     state = apply(state, g, { type: 'activity', id: 'film' }).state

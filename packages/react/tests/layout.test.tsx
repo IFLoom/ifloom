@@ -11,6 +11,7 @@ afterEach(cleanup)
 function novel() {
   const { game, problems } = loadGame(
     [
+      { name: 'base', introScene: 'ch1' },
       {
         name: 'book',
         stats: [{ id: 'courage', label: 'Courage', start: 1 }],
@@ -18,7 +19,7 @@ function novel() {
         prose: { ch1: 'The letter is on the mat.', 'ch1#on': 'Read on' },
       },
     ],
-    { id: 'book', title: 'The Letter', introScene: 'ch1' },
+    { id: 'book', title: 'The Letter' },
   )
   expect(problems).toEqual([])
   return game

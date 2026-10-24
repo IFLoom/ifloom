@@ -13,6 +13,7 @@ afterEach(() => {
 function house(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'hall' },
       {
         name: 'house',
         scenes: [
@@ -36,7 +37,7 @@ function house(): Game {
         },
       },
     ],
-    { id: 'house', title: 'The House', introScene: 'hall' },
+    { id: 'house', title: 'The House' },
   ).game
 }
 
@@ -137,6 +138,7 @@ describe('bold and italics', () => {
 function hallway(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'hall' },
       {
         name: 'hallway',
         scenes: [{ id: 'hall', title: 'The hall', body: [{ text: 'hall' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] }],
@@ -147,7 +149,7 @@ function hallway(): Game {
         },
       },
     ],
-    { id: 'house', title: 'The House', introScene: 'hall' },
+    { id: 'house', title: 'The House' },
   ).game
 }
 

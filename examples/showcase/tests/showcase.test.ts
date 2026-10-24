@@ -527,7 +527,7 @@ describe('Small Town', () => {
     // The line under the dice carries the React UI's hint.
     expect(view(state, game).scene.beats.find((beat) => beat.kind === 'text' && beat.text.startsWith(line))?.ui).toEqual({ dice: 'skim' })
     // A new day resets `skimmed`, and the outcome is gone until you skim again.
-    expect(game.rules?.resets?.skimmed).toBe(false)
+    expect(game.resets?.skimmed).toBe(false)
     expect(view({ ...state, kv: { ...state.kv, skimmed: false } }, game).scene.body).not.toContain(line)
   })
 

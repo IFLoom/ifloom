@@ -11,7 +11,6 @@ import {
   view,
   whyNot,
   type Game,
-  type GameRules,
   type GameState,
   type Content,
   type Pack,
@@ -60,14 +59,12 @@ const town: Content = {
   },
 }
 
-function game(options: PlacesOptions = { start: 'house' }, rules: GameRules = {}) {
+function game(options: PlacesOptions = { start: 'house' }, locks: Content['locks'] = []) {
   const clock = calendar()
-  const { game, problems } = loadGame([town], {
+  const { game, problems } = loadGame([{ name: 'base', actions: [{ id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } }], locks }, town], {
     id: 'town',
     title: 'Town',
     plugins: [clock, places(options)],
-    rules,
-    actions: [{ id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } }],
   })
   expect(problems).toEqual([])
   return { game, clock }
@@ -126,7 +123,7 @@ describe('places', () => {
     expect(shown(cafe, g).exits.map((exit) => exit.id)).toEqual(['street'])
     const staff = { ...cafe, kv: { staff: true } }
     expect(shown(staff, g).exits.map((exit) => exit.id)).toEqual(['street', 'back'])
-    const locked = game({ start: 'house' }, { locks: [{ when: { kv: 'grounded' }, deny: ['places/go'], hide: true, reason: 'Grounded.' }] }).game
+    const locked = game({ start: 'house' }, [{ when: { kv: 'grounded' }, deny: ['places/go'], hide: true, reason: 'Grounded.' }]).game
     expect(shown({ ...startingState(locked), kv: { grounded: true } }, locked).exits).toEqual([])
   })
 

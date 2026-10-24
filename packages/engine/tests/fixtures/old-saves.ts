@@ -46,7 +46,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
       { id: 'apple', of: 'item', name: 'Apple', desc: 'Red.', at: { player: 2 } },
     ],
     settings: [{ id: 'hints', label: 'Hints', kind: 'toggle', default: true }],
-    rules: { resets: { tidied: false } },
+    resets: { tidied: false },
     plugins: [
       {
         id: 'clock',

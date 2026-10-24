@@ -44,7 +44,7 @@ export const cafe: Content = {
 /** The town with the café loaded over it. */
 export function withCafe(): Loaded {
   const town = fixture()
-  const { scenes, storylines, activities, stats, custom, ...base } = town
+  const { scenes, storylines, activities, stats, custom, introScene, startPhase, actions, ...rest } = town
   const townPack: Content = {
     name: 'town',
     scenes,
@@ -52,7 +52,11 @@ export function withCafe(): Loaded {
     activities,
     stats,
     custom,
+    introScene,
+    startPhase,
+    actions,
     prose: townProse,
   }
-  return loadGame([townPack, cafe], base)
+  const { id, title, rules } = rest
+  return loadGame([townPack, cafe], { id, title, rules })
 }

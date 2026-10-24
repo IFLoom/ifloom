@@ -15,6 +15,7 @@ afterEach(() => {
 function hallway(): Game {
   return loadGame(
     [
+      { name: 'base', introScene: 'hall' },
       {
         name: 'hallway',
         timers: [{ id: 'phone', label: 'The phone', ms: 10_000, effects: [{ kind: 'scene', scene: 'missed' }] }],
@@ -39,7 +40,7 @@ function hallway(): Game {
         },
       },
     ],
-    { id: 'hallway', title: 'The Hallway', introScene: 'hall' },
+    { id: 'hallway', title: 'The Hallway' },
   ).game
 }
 

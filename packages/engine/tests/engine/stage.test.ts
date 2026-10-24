@@ -3,7 +3,6 @@ import { definePlugin } from '../../src/plugin.ts'
 import { loadGame, type Content } from '../../src/loader.ts'
 import { startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
-import type { Game } from '../../src/game.ts'
 
 /**
  * A market stall: it fills the screen when no scene is open, offers a button
@@ -34,13 +33,11 @@ const market: Content = {
   ],
 }
 
-function game(rules: Game['rules'] = {}) {
-  return loadGame([market], {
+function game(locks: Content['locks'] = []) {
+  return loadGame([{ name: 'base', actions: [{ id: 'buy', label: 'Buy bread', command: { type: 'activity', id: 'buy' } }], locks }, market], {
     id: 'market',
     title: 'Market Day',
     plugins: [stall],
-    rules,
-    actions: [{ id: 'buy', label: 'Buy bread', command: { type: 'activity', id: 'buy' } }],
   })
 }
 
@@ -66,7 +63,7 @@ describe('a plugin’s buttons', () => {
   })
 
   it('are left off the screen, like any button, by a lock that hides', () => {
-    const { game: g } = game({ locks: [{ when: { kv: 'rain' }, deny: ['stall/*'], hide: true, reason: 'Packed up.' }] })
+    const { game: g } = game([{ when: { kv: 'rain' }, deny: ['stall/*'], hide: true, reason: 'Packed up.' }])
     const raining = { ...startingState(g), kv: { rain: true } }
     expect(view(raining, g).actions.map((action) => action.id)).toEqual(['buy'])
   })

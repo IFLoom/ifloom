@@ -2,7 +2,7 @@ import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import { apply } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
-import { pluginContext, pluginView } from './plugin.ts'
+import { pluginContext, pluginView, pluginsOf } from './plugin.ts'
 import type { Profile } from './profile.ts'
 import { settingAffects, settingOf, settingRefusal, settingValue } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
@@ -249,7 +249,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   let cached: { state: GameState; view: View } | null = null
   // What the plugins' views are shown of the profile, by plugin id: each namespace as last read or
   // written, frozen. Only plugins with a view, and only with a profile.
-  const viewers = new Map((options.profile ? (game.plugins ?? []) : []).filter((plugin) => plugin.view).map((plugin) => [plugin.id, plugin]))
+  const viewers = new Map((options.profile ? pluginsOf(game) : []).filter((plugin) => plugin.view).map((plugin) => [plugin.id, plugin]))
   let shownProfile: Readonly<Record<string, unknown>> = {}
   // The profile's `core:settings` as last read or written, and `settings()` as last built.
   let storedSettings: Record<string, unknown> | undefined
@@ -379,7 +379,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       const at = now()
       remember((profile) => profile.update('core:finished', (stored) => stored ?? { at }))
     }
-    for (const plugin of game.plugins ?? []) {
+    // The game's own rules first, under `game`, then each plugin under its id.
+    for (const plugin of pluginsOf(game)) {
       const keep = plugin.profile
       if (!keep) continue
       remember((profile) => profile.update(plugin.id, (stored) => keep(after, before, stored, pluginContext(plugin, after, game))))

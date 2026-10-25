@@ -86,8 +86,10 @@ describe('panels', () => {
     const counter = definePlugin({
       id: 'counter',
       version: 1,
-      panelProblems: (panel, args, _game, tools) =>
-        panel !== 'shop' ? [] : args.vendor === undefined ? ['the shop panel needs a vendor'] : tools.problems([{ entity: String(args.vendor) }]),
+      references: {
+        panels: (panel, args) =>
+          panel !== 'shop' ? [] : args.vendor === undefined ? [{ problem: 'the shop panel needs a vendor' }] : [{ entity: String(args.vendor) }],
+      },
     })
     const game: Game = {
       ...withPanels(),
@@ -144,7 +146,7 @@ describe('a scene’s panel', () => {
     const shop = definePlugin<null>({
       id: 'shop',
       version: 1,
-      panelProblems: (panel, args) => (panel === 'prices' && !args.stall ? ['prices needs a stall'] : []),
+      references: { panels: (panel, args) => (panel === 'prices' && !args.stall ? [{ problem: 'prices needs a stall' }] : []) },
     })
     const town = fixture()
     const game: Game = { ...town, plugins: [shop], scenes: [...town.scenes, { id: 'stall', body: [], choices: [], panel: { panel: 'prices' } }] }

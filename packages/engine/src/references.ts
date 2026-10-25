@@ -81,13 +81,15 @@ export type Reference =
   | { words: string | undefined; field: string; oldKey?: string }
   /** Something content writes the way an older schema did, with how to write it now. */
   | { outdated: string }
+  /** Something a plugin's own rule finds wrong, as it reads: `{ problem: 'count must be a whole number, 1 or more' }`. */
+  | { problem: string }
   /** A variants list that needs lines. */
   | { variants: string }
   /** A custom value. */
   | { value: string }
   /** An `Amount`, which must be well formed, with what it reads looked inside: a stat, a kv key's owner, a value, a count. */
   | { amount: unknown }
-  /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `panelProblems`. */
+  /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `references.panels`. */
   | { openPanel: string; with?: PluginArgs }
   /** Background audio: a track (or silence) on a channel. */
   | { channel: string; track: string | null | undefined }

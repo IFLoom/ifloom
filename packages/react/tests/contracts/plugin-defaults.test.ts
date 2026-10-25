@@ -95,7 +95,7 @@ describe('the React UI for first-party plugins', () => {
     for (const plugin of PLUGINS.filter((entry) => DEFAULTS[entry.id])) {
       const { panel } = DEFAULTS[plugin.id]
       // A plugin that answers for a panel's `with` has its panel drawn by name, and is listed with it.
-      expect(Boolean(panel), `${plugin.id}: panel`).toBe(plugin.source.includes('panelProblems:'))
+      expect(Boolean(panel), `${plugin.id}: panel`).toBe(plugin.source.includes('panels: (panel'))
       if (panel) expect(typeof (plugin.ui![`${plugin.id}Ui`] as PluginUi).panels?.[panel]?.component, `${plugin.id}: the ${panel} panel`).toBe('function')
     }
   })

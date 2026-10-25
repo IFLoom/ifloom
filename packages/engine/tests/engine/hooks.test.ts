@@ -8,6 +8,7 @@ import { fillTokens } from '../../src/prose.ts'
 import { whyNot } from '../../src/availability.ts'
 import { checkGame } from '../../src/check.ts'
 import { view } from '../../src/view.ts'
+import type { Game } from '../../src/game.ts'
 
 describe('the game’s hooks', () => {
   it('ends the turn: resets put back, then onTurn, with the state the turn ended on and effects in order', () => {
@@ -153,6 +154,41 @@ describe('the game’s own code, as a plugin’s', () => {
     }
     apply(begin(game), game, { type: 'action', id: 'wait' })
     expect(seen).toEqual(['game', 'plugin:true'])
+  })
+
+  it('keeps a state of its own in saves, read and written as a plugin’s slice is', () => {
+    const game = fixture({
+      start: () => ({ naps: 0 }),
+      commands: { nap: { run: (_state, _args, { slice, set }) => set({ naps: slice.naps + 1 }) } },
+      view: (_state, { slice }) => slice,
+    })
+    const state = begin(game)
+    expect(state.plugins.game).toEqual({ version: 1, state: { naps: 0 } })
+    const napped = apply(state, game, { 'game/nap': true })
+    expect(napped.ok && view(napped.state, game).plugins.game).toEqual({ naps: 1 })
+  })
+
+  it('declares its own traits, checks and references, as a plugin does', () => {
+    const game: Game = {
+      ...fixture({
+        traits: [
+          { id: 'cosy', check: (data) => (typeof (data as { warmth?: unknown })?.warmth === 'number' ? [] : ['cosy needs a warmth']), words: { label: true } },
+        ],
+        check: () => [{ list: 'town', id: 'square', what: 'the square needs a bench' }],
+        references: { calls: (_table, name, args) => (name === 'tip' && args.by === undefined ? [{ problem: 'a tip says by how much' }] : []) },
+        effects: { tip: (_state, args) => [{ stat: 'coins', by: Number(args.by ?? 1) }] },
+      }),
+      kinds: [{ id: 'thing', label: 'Thing' }],
+      entities: [{ of: 'thing', id: 'rug', name: 'Rug', traits: { cosy: { label: 'Soft' } } }],
+      actions: [{ id: 'tipping', effects: [{ 'game/tip': {} }] }],
+    }
+    expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(
+      expect.arrayContaining([
+        'trait cosy on thing:rug: cosy needs a warmth',
+        'town square: the square needs a bench',
+        'action tipping: a tip says by how much',
+      ]),
+    )
   })
 
   it('reports a plugin that takes the game’s id, and a call with no plugin in front', () => {

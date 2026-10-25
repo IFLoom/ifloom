@@ -105,7 +105,7 @@ describe('one kind of button', () => {
     const stall = definePlugin<null>({
       id: 'stall',
       version: 1,
-      buttons: () => [{ id: 'bun', label: 'Buy a bun', cost: { stats: { coins: 1 } }, effects: [{ kv: 'bun', to: true }] }],
+      actions: () => [{ id: 'bun', label: 'Buy a bun', cost: { stats: { coins: 1 } }, effects: [{ kv: 'bun', to: true }] }],
       action: (_state, id) => (id === 'pie' ? { id: 'pie', effects: [{ kv: 'pie', to: true }] } : undefined),
     })
     const game = { ...town(), plugins: [stall] }
@@ -132,7 +132,7 @@ describe('one kind of button', () => {
     const stall = definePlugin<null>({
       id: 'stall',
       version: 1,
-      buttons: () => [{ id: 'bun', label: 'Buy a bun', effects: [{ kv: 'bun', to: true }] }],
+      actions: () => [{ id: 'bun', label: 'Buy a bun', effects: [{ kv: 'bun', to: true }] }],
     })
     const game: Game = { ...town(), plugins: [stall], locks: [{ when: { kv: 'closed' }, deny: ['stall/*'], reason: 'The stall is shut.' }] }
     const closed = { ...begin(game), kv: { ...begin(game).kv, closed: true } }

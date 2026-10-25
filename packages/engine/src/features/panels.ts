@@ -91,10 +91,12 @@ export const panels = defineFeature<PanelsShape>({
     run: (before, after) => (after.panel && after.panel === before.panel && movedOn(before, after) ? { ...after, panel: null } : after),
   },
   resolve: (game, tools) => ({
-    openPanel: (ref, where) => {
-      const asked = { problems: (refs: Parameters<typeof tools.resolve>[0]) => tools.resolve(refs, where) }
-      return (game.plugins ?? []).flatMap((plugin) => plugin.panelProblems?.(ref.openPanel, ref.with ?? {}, game, asked) ?? [])
-    },
+    openPanel: (ref, where) =>
+      tools.resolve(
+        // The game's own rules first, then its plugins, as everywhere else.
+        [game.rules, ...(game.plugins ?? [])].flatMap((owner) => owner?.references?.panels?.(ref.openPanel, ref.with ?? {}, game) ?? []),
+        where,
+      ),
   }),
   // One the `panel` effect opened, else the open scene's own, for as long as it is open.
   view: (state, game, _shown, cx) => {

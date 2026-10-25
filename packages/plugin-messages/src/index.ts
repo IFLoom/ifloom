@@ -32,6 +32,7 @@ import {
   type PluginContext,
   type PluginProblem,
   type Range,
+  type Reference,
   type RenderedChoice,
   type SceneBeat,
   weighted,
@@ -438,8 +439,13 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
     },
     references: {
       // The message a condition or a reply names; a reply may name a later arrival's key.
-      calls: (_kind, _name, args) =>
-        args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }],
+      calls: (table, name, args, game): Reference[] => [
+        ...(args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }]),
+        // A draw names a pool some message is drawn from.
+        ...(table === 'effects' && name === 'draw' && !messagesOf(game).some((message) => message.drawnFrom?.includes(String(args.pool ?? '')))
+          ? [{ problem: `draws from "${String(args.pool ?? '')}", but no message is drawn from it` }]
+          : []),
+      ],
       content: (game) =>
         messagesOf(game).map((message) => ({
           list: 'messages',
@@ -467,12 +473,6 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
         }
       }
       return problems
-    },
-    // A draw names a pool some message is drawn from.
-    argProblems: (table, name, args, game) => {
-      if (table !== 'effects' || name !== 'draw') return []
-      const pool = String(args.pool ?? '')
-      return messagesOf(game).some((message) => message.drawnFrom?.includes(pool)) ? [] : [`draws from "${pool}", but no message is drawn from it`]
     },
   })
   return plugin

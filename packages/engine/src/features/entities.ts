@@ -592,6 +592,13 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
       seen.add(trait.id)
     }
   }
+  // The game's own traits are named without a `/`, which marks a plugin's.
+  const own = new Set<string>()
+  for (const trait of game.rules?.traits ?? []) {
+    if (trait.id.includes('/') || !trait.id) tools.problem(undefined, 'rules', `trait "${trait.id}" is the game's own, so its id has no "/"`)
+    if (own.has(trait.id)) tools.problem(undefined, 'rules', `two traits share the id "${trait.id}"`)
+    own.add(trait.id)
+  }
   const table = resolveTraits(game)
   // A plugin the game has that doesn't declare the trait: most likely a typo.
   const unknownTrait = (id: string): string | undefined => {

@@ -497,6 +497,12 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     view: (state, context) => jobsView(state, context),
     references: {
       calls: (table, _name, args) => jobRef(table === 'commands' ? args.id : args.job),
+      // The `jobs` panel shows the job board, or only the jobs `with.job` lists.
+      panels: (panel, args): Reference[] => {
+        if (panel !== PANEL || args.job === undefined) return []
+        if (!Array.isArray(args.job) || !args.job.every((job) => typeof job === 'string')) return [{ problem: "the jobs panel's job is a list of job ids" }]
+        return args.job.map((job: string): Reference => ({ entry: job, plugin: ID, list: 'jobs', noun: 'job' }))
+      },
       content: (game) =>
         jobsOf(game).map((job) => ({
           list: 'jobs',
@@ -519,12 +525,6 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
             { within: 'fire', refs: [{ when: job.fire?.when }] },
           ],
         })),
-    },
-    // The `jobs` panel shows the job board, or only the jobs `with.job` lists.
-    panelProblems: (panel, args, _game, tools) => {
-      if (panel !== PANEL || args.job === undefined) return []
-      if (!Array.isArray(args.job) || !args.job.every((job) => typeof job === 'string')) return ["the jobs panel's job is a list of job ids"]
-      return tools.problems(args.job.map((job: string): Reference => ({ entry: job, plugin: ID, list: 'jobs', noun: 'job' })))
     },
     check: (game) => {
       const problems: PluginProblem[] = []

@@ -42,12 +42,12 @@ const MEMBERS = {
   // Hooks: at an event, the next state.
   hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
-  providers: ['guard', 'price', 'label', 'stage', 'buttons', 'action', 'speaker', 'audio', 'statModifiers', 'view', 'profile'],
+  providers: ['guard', 'price', 'label', 'stage', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
   // and which fields of its content are words a translation can replace.
   declares: ['traits', 'content', 'words'],
   // What the content checker asks.
-  checks: ['references', 'check', 'argProblems', 'panelProblems'],
+  checks: ['references', 'check'],
   // What `definePlugin` adds for code outside the plugin.
   defined: ['read', 'write', 'viewIn'],
 } as const
@@ -94,8 +94,6 @@ const OPTIONS: Record<string, Record<string, string>> = {
   },
   cast: {
     kind: 'the kind of entity characters are',
-    label: 'that kind’s label',
-    plural: 'that kind’s plural',
   },
   places: {
     start: 'where a new game starts',
@@ -135,8 +133,12 @@ describe('the plugin shape (ADR 0009)', () => {
     // Every on-name a plugin may have is a hook, and every hook is an on-name.
     expect([...allowed].filter((name) => /^on[A-Z]/.test(name)).sort()).toEqual([...MEMBERS.hooks].sort())
     // The game's rules follow the same rule: its hooks are on-names, and there's no `turn` beside `onTurn`.
-    const rules: Record<keyof GameRules, 'hook' | 'provider' | 'table' | 'upgrade'> = {
+    const rules: Record<keyof GameRules, 'hook' | 'provider' | 'table' | 'upgrade' | 'identity' | 'declares' | 'checks'> = {
       migrations: 'upgrade',
+      start: 'identity',
+      traits: 'declares',
+      references: 'checks',
+      check: 'checks',
       saveName: 'provider',
       onTurn: 'hook',
       onTurnDone: 'hook',
@@ -151,7 +153,7 @@ describe('the plugin shape (ADR 0009)', () => {
       price: 'provider',
       label: 'provider',
       stage: 'provider',
-      buttons: 'provider',
+      actions: 'provider',
       action: 'provider',
       statModifiers: 'provider',
       audio: 'provider',
@@ -159,6 +161,8 @@ describe('the plugin shape (ADR 0009)', () => {
       profile: 'provider',
     }
     expect(Object.entries(rules).filter(([name, role]) => (role === 'hook') !== /^on[A-Z]/.test(name))).toEqual([])
+    // The game's rules declare what a plugin can, by the same names, besides the name a save is listed under.
+    expect(Object.keys(rules).filter((name) => !allowed.has(name))).toEqual(['saveName'])
   })
 
   it('keeps content out of options: each option is a setting, and none is a list of entries', () => {

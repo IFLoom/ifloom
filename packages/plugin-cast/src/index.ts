@@ -99,10 +99,6 @@ export type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 export type CastOptions = {
   /** The kind the plugin brings for its people, and the kind a bare id names (`'ava'` is `'character:ava'`). `character` if left out. */
   kind?: string
-  /** What one of them is called, for the kind's label. `Person` if left out. */
-  label?: string
-  /** For more than one. `People` if left out. */
-  plural?: string
 }
 
 /** One person as the UI draws them. */
@@ -347,9 +343,10 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       cannotCall: 'You cannot reach {name} from here.',
       notPickingUp: '{name} does not pick up.',
     },
-    // Each of the cast's kind is one particular person, listed in the view once the player has met them.
+    // Each of the cast's kind is one particular person, listed in the view once the player has met them. A game
+    // that calls them something else redeclares the kind with its own label and plural, and keeps the rest.
     content: {
-      kinds: [{ id: kind, label: options.label ?? 'Person', plural: options.plural ?? 'People', unique: true, listed: { [`${ID}/met`]: { character: '$' } } }],
+      kinds: [{ id: kind, label: 'Person', plural: 'People', unique: true, listed: { [`${ID}/met`]: { character: '$' } } }],
     },
     conditions: {
       /** `{ 'cast/here': { character: 'ava' } }`: in the room with the player; with a list, any of them. */

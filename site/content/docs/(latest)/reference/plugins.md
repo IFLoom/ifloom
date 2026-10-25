@@ -224,7 +224,7 @@ type Plugin<S = any, V = unknown> = {
   price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
   label?: (state: GameState, context: PluginContext<S>) => string | undefined
   stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
-  buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
+  actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   content?: Content
   traits?: readonly TraitDef[]
@@ -234,8 +234,6 @@ type Plugin<S = any, V = unknown> = {
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
-  argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
-  panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
 }
 ```
 
@@ -267,18 +265,16 @@ type Plugin<S = any, V = unknown> = {
 | `price` | What a button costs that the engine can't say, in the plugin's words. See [Prices](#prices). |
 | `label` | Where the game is, in a few words, for [`view.when`](/docs/reference/view#the-clock-and-the-player). See [Labels](#labels). |
 | `stage` | What the screen shows while no scene is open: a title and prose blocks. See [Stage](#stage). |
-| `buttons` | Buttons offered while no scene is open, before the content's `actions`. See [Buttons](#buttons). |
-| `action` | One of its actions that isn't among its buttons right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Buttons](#buttons). |
+| `actions` | Actions offered as buttons while no scene is open, before the content's `actions`. See [Actions](#actions). |
+| `action` | One of its actions that isn't among its `actions` right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Actions](#actions). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
 | `words` | Which fields of each list of its `data` are words a player reads, for a translation's words table. See [Words](#words). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/docs/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
-| `references` | What its calls and content name, for the [content checker](/docs/reference/checks) to resolve. See [References](#references). |
+| `references` | What its calls, its panels and its content name, for the [content checker](/docs/reference/checks) to resolve, and any rule of its own about a call's arguments. See [References](#references). |
 | `check` | Rules of its own about its content, checked with the rest of the game. See [check](#check). |
-| `argProblems` | What's wrong with what content passes to one of its conditions, effects or commands, by a rule of its own. See [Checking calls](#checking-calls). |
-| `panelProblems` | What's wrong with what content opens one of its [panels](/docs/reference/panels) with. See [Checking panels](#checking-panels). |
 
 ## PluginContext
 
@@ -326,7 +322,7 @@ return set({ ...slice, stamps: slice.stamps + 1 }, moved)
 type PluginArgs = Record<string, unknown>
 ```
 
-What content passes in `with`, unchecked. It's `{}` when `with` is left out. Read it defensively, for example `Number(args.atLeast ?? 1)` or `String(args.quest ?? '')`, because content is data and a mod can pass anything. To have the names it passes checked when the game loads, give the plugin [`references`](#references), and for rules of its own, [`argProblems`](#checking-calls).
+What content passes in `with`, unchecked. It's `{}` when `with` is left out. Read it defensively, for example `Number(args.atLeast ?? 1)` or `String(args.quest ?? '')`, because content is data and a mod can pass anything. To have the names it passes checked when the game loads, give the plugin [`references`](#references), with a `{ problem }` among them for a rule of its own.
 
 ## PluginCommand
 
@@ -389,7 +385,7 @@ Content calls a plugin by its full name: the plugin's id, a `/`, and the name in
 |---|---|
 | condition | `{ 'loyalty/stamps': { atLeast: 3 } }` |
 | effect | `{ 'loyalty/stamp': true }`, in a data scene choice's, an action's or a trigger's effects |
-| command | `{ 'loyalty/redeem': {...} }`, or written out, `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef)'s or a choice's `command`: a place's action, one of the content's actions or a plugin's [button](#buttons) |
+| command | `{ 'loyalty/redeem': {...} }`, or written out, `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef)'s or a choice's `command`: a place's action, one of the content's actions or a plugin's [action](#actions) |
 | value | `{{v:loyalty/stamps}}` in prose, `{{v:loyalty/stamps card=gold}}` with arguments, or `{ value: 'loyalty/stamps', with: { card: 'gold' } }` as a badge or a stat's ceiling |
 
 The short form has the plugin's full name as its only key, and the call's arguments as an object as the value, or `true` for none. See [`PluginCall`](/docs/reference/custom#plugincall).
@@ -469,7 +465,7 @@ export const rules: GameRules = {
 Small Town declares its `game/postLatest` this way, and the café its `game/takings` and `game/wages`.
 
 **Gotchas.**
-- The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, through [`argProblems`](#checking-calls) and the plugin's `references`.
+- The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, through the plugin's [`references`](#references).
 - A plugin's own functions still get their arguments as [`PluginArgs`](#pluginargs), since a mod can pass them anything. Read each one as you would unchecked data.
 - A plugin sees only the declarations of the packages it imports. It can't rely on a partner's, since it never imports the partner, so its calls to a partner are loose in its own code and checked in a game that has both.
 - Keep each entry true to what the plugin reads. A game that imports the plugin is checked against it, so a field you forget to declare fails to compile there.
@@ -738,7 +734,7 @@ A step of `commandMigrations` is given every command in an older log, the engine
 A plugin's members follow one naming rule, as the game's [rules](/docs/reference/rules) do:
 
 - **A hook** runs at an event and returns the next state. It's named `on` and the event: `onTurn`, `onTurnDone`, `onStat`, `onCommand`.
-- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `action`, `audio`, `statModifiers`, `view`, `profile`.
+- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `actions`, `action`, `audio`, `statModifiers`, `view`, `profile`.
 - **A table** of named functions content calls is a plural noun: `conditions`, `effects`, `commands`, `queries`, `values`.
 - **Data** is named by its noun too: `content`, `traits`, `strings`.
 
@@ -1105,7 +1101,7 @@ const stall = definePlugin<{ open: boolean }>({
     slice.open
       ? { id: 'market', title: 'The market stall', body: [{ prose: 'stall.open' }, { variants: 'stall.cries' }] }
       : undefined,
-  buttons: () => [{ id: 'haggle', label: 'Haggle', command: { 'stall/haggle': true } }],
+  actions: () => [{ id: 'haggle', label: 'Haggle', command: { 'stall/haggle': true } }],
 })
 
 // in your content
@@ -1127,13 +1123,13 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 - Only `view.scene` changes. In a game with the [places plugin](/docs/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
 - The content checker doesn't see a stage's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
 
-## Buttons
+## Actions
 
 ```ts
-buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
+actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
 ```
 
-Buttons the plugin offers while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/docs/reference/actions#actiondef), the same shape as the content's actions, so a button can carry a cost and effects of its own. The view puts the game's own `rules.buttons` first, then every plugin's, in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef). The [places plugin](/docs/plugins/places#the-buttons)'s buttons are the current location's `actions`. All of them are drawn alike with [`renderAction`](/docs/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/docs/reference/actions#whynot)'s reason.
+Actions the plugin offers as buttons while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/docs/reference/actions#actiondef), the same shape as the content's actions, so a button can carry a cost and effects of its own. The view puts the game's own `rules.actions` first, then every plugin's, in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef). The [places plugin](/docs/plugins/places#the-buttons)'s are the current location's `actions`. All of them are drawn alike with [`renderAction`](/docs/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/docs/reference/actions#whynot)'s reason.
 
 ```ts
 // The stall above, with an action of the content's to buy bread:
@@ -1144,7 +1140,7 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 - A button whose `when` doesn't hold is left out, and so is one whose command is stopped by a [lock](/docs/reference/locks) with `hide: true`. Any other lock greys it out with its line, like any button.
 - Like the content's actions, they aren't offered while a scene is open or while a lock that stops everything is on ([`lockedOut`](/docs/reference/locks#lockedout)).
 - The content checker doesn't see them. Say what they name in [`references`](#references), with [`actionReferences`](/docs/reference/actions#actionreferences).
-- A button that only sends a command is that command. One with a cost, effects or `once` sends `{ type: 'action', id: '<plugin>/<id>' }`, and the engine finds it again among the plugin's buttons in that state, or by asking its [`action`](#action).
+- A button that only sends a command is that command. One with a cost, effects or `once` sends `{ type: 'action', id: '<plugin>/<id>' }`, and the engine finds it again among the plugin's `actions` in that state, or by asking its [`action`](#action).
 
 ### action
 
@@ -1152,7 +1148,7 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
 ```
 
-One of the plugin's actions by id, for `{ type: 'action', id: '<plugin>/<id>' }`, when it isn't among the plugin's `buttons` in this state. The [devices plugin](/docs/plugins/devices) answers this way for an app's buttons, which it draws in the app rather than in the room. Return `undefined` for an id that isn't yours. Without it, only the plugin's current buttons can be done as actions.
+One of the plugin's actions by id, for `{ type: 'action', id: '<plugin>/<id>' }`, when it isn't among the plugin's `actions` in this state. The [devices plugin](/docs/plugins/devices) answers this way for an app's buttons, which it draws in the app rather than in the room. Return `undefined` for an id that isn't yours. Without it, only the plugin's current `actions` can be done.
 
 ```ts
 // An app's button, found by its id whether or not the app is open.
@@ -1367,15 +1363,19 @@ references?: PluginReferences
 
 type PluginReferences = {
   calls?: (table: CallTable, name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  panels?: (panel: string, args: PluginArgs, game: Game) => readonly Reference[]
   content?: (game: Game) => readonly ContentReferences[]
 }
+
+type CallTable = 'conditions' | 'effects' | 'commands'
 
 type ContentReferences = { list: string; id: string; refs: readonly Reference[] }
 ```
 
-What the plugin's calls and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Both are optional.
+What the plugin's calls, panels and content name, so the [content checker](/docs/reference/checks) checks them as it checks the engine's own, in the same words. Each is optional.
 
-- **`calls`** says what one call to the plugin's conditions, effects or commands names. `table` says which ([`CallTable`](#checking-calls)), `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
+- **`calls`** says what one call to the plugin's conditions, effects or commands names. `table` says which, `name` is the name without the prefix, and `args` is what the call passes in `with`. It's `{}` if nothing is passed, or if a [short call](/docs/reference/custom#plugincall)'s value isn't an object (which the checker reports). The checker asks it about every call it finds, wherever the call is.
+- **`panels`** says what opening one of the [panels](/docs/reference/panels) the plugin's UI draws names, from what it's opened with: a [`panel` effect](/docs/reference/effects#panel)'s `with`, or a scene's `panel`. The checker asks every plugin about every panel it finds, so answer `[]` for a name that isn't yours. A name no plugin answers for is allowed, because the UI decides what it draws.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the content or pack that entry came from.
 
 Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ entity }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
@@ -1391,6 +1391,23 @@ references: {
 },
 // mod:sunday-market · cards market · unknown storyline "sam"
 // town · action buy · unknown card "bakery"
+```
+
+A rule of the plugin's own about what a call or a panel is given, which no id can say, is a `{ problem }` reference: the checker reports its words where the call is. The stall says it sells only bread, eggs and cheese, and the shop needs a vendor for its panel:
+
+```ts
+references: {
+  calls: (table, name, args) =>
+    table === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
+      ? [{ problem: `nobody sells "${String(args.item)}"` }]
+      : [],
+  panels: (panel, args) => {
+    if (panel !== 'shop') return []
+    return typeof args.vendor === 'string' ? [{ entity: `vendor:${args.vendor}`, carrying: 'shop/vendor' }] : [{ problem: 'the shop panel needs a vendor: { vendor: "<id>" }' }]
+  },
+},
+// town · action ask · nobody sells "fish"
+// town · action counter · unknown entity "vendor:kiosk"
 ```
 
 A field of the plugin's own that takes an [`Amount`](/docs/reference/amounts), such as a badge or a target, is named as `{ amount: field }`: the checker reads its shape and what it names, as it does an effect's `by`. Read it in play with [`amountOf`](/docs/reference/amounts#amountof).
@@ -1437,32 +1454,6 @@ check: (game, { problems }) =>
 // mod:sunday-market · signs early · opens unknown scene "stall.closing"
 ```
 
-### Checking calls
-
-```ts
-import type { CallTable } from '@ifloom/engine'
-
-type CallTable = 'conditions' | 'effects' | 'commands'
-
-argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
-```
-
-What's wrong with how content calls one of this plugin's conditions, effects or commands, by a rule of the plugin's own. It takes what `references.calls` takes. Return the problems, worded for the author, or `[]`. A name the call gives, such as a location, belongs in `references.calls` instead.
-
-```ts
-argProblems: (table, name, args) =>
-  table === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
-    ? [`nobody sells "${String(args.item)}"`]
-    : [],
-```
-
-```ts
-actions: [{ id: 'ask', label: 'Ask for fish', blocked: [{ when: { not: { 'stall/sells': { item: 'fish' } } }, reason: 'Not today.' }] }]
-// town · action ask · nobody sells "fish"
-```
-
-The checker asks it about every call it finds and reports each problem as the call's own, where the call is.
-
 ### callOf
 
 ```ts
@@ -1477,26 +1468,6 @@ The name and arguments of a call written in short, or `undefined` for one of the
 callOf({ 'calendar/pass': { by: 2 } }) // { name: 'calendar/pass', with: { by: 2 } }
 callOf({ stat: 'coins', by: -2 })      // undefined
 ```
-
-### Checking panels
-
-```ts
-panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
-```
-
-What's wrong with the `with` of a [`panel` effect](/docs/reference/effects#panel), for a panel the plugin's UI draws. The checker asks every plugin about every `panel` effect it finds, so answer `[]` for a name that isn't yours. A name no plugin answers for is allowed, because the UI decides what it draws. `tools.problems` words the ids it names as the checker does.
-
-The shop plugin checks its `shop` panel like this:
-
-```ts
-panelProblems: (panel, args, _game, tools) => {
-  if (panel !== 'shop') return []
-  if (typeof args.vendor !== 'string') return ['the shop panel needs a vendor: { vendor: "<id>" }']
-  return tools.problems([{ entry: args.vendor, plugin: 'shop', list: 'vendors', noun: 'vendor' }])
-}
-```
-
-Each problem is reported where the effect is, such as `action counter · unknown vendor "kiosk"`.
 
 ### PluginProblem
 

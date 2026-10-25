@@ -39,7 +39,8 @@ export type TraitTools = { game: Game; ref: EntityRef }
 /**
  * A trait a plugin declares, in its `traits`: a named piece of data entities
  * carry, which the plugin gives meaning. Its id is the plugin's own id, `/`
- * and a name. Name `K` to have the data typed, as `TraitRegistry` says for it:
+ * and a name. The game declares its own in `rules.traits`, with ids that
+ * have no `/`. Name `K` to have the data typed, as `TraitRegistry` says for it:
  * `const washable: TraitDef<'laundry/washable'> = { id: 'laundry/washable', ... }`.
  */
 export type TraitDef<K extends string = string, S = unknown> = {
@@ -635,10 +636,11 @@ export function everyEntity(state: GameState, game: Game | undefined): EntityRef
   return [...first, ...created]
 }
 
-/** The trait a plugin of the game declares by this id, if any. */
-export function traitDef(game: Pick<Game, 'plugins'> | undefined, id: string): TraitDef<string, unknown> | undefined {
+/** The trait declared by this id, if any: a plugin's of the game, or the game's own in its `rules.traits` for an id with no `/`. */
+export function traitDef(game: Pick<Game, 'plugins' | 'rules'> | undefined, id: string): TraitDef<string, unknown> | undefined {
   const at = id.indexOf('/')
-  if (at <= 0) return undefined
+  if (at < 0) return game?.rules?.traits?.find((trait) => trait.id === id)
+  if (at === 0) return undefined
   const plugin = game?.plugins?.find((entry) => entry.id === id.slice(0, at))
   return plugin?.traits?.find((trait) => trait.id === id)
 }

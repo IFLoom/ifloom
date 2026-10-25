@@ -209,6 +209,7 @@ function sceneWords(walk: Walk, scene: DataScene, index: number) {
 /** The shapes of the traits the game's plugins declare words for, by trait id. */
 function traitShapes(game: Game): Map<string, WordShape> {
   const out = new Map<string, WordShape>()
+  for (const trait of game.rules?.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
   for (const plugin of game.plugins ?? []) for (const trait of plugin.traits ?? []) if (trait.words) out.set(trait.id, trait.words)
   return out
 }

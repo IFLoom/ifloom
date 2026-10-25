@@ -121,7 +121,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown setting "…"` | A `setting` the game doesn't declare. |
 | `setting "…" is a ui setting; conditions read only play settings` | A `ui` [setting](/docs/reference/settings), which isn't in the state. |
 | `<value> for setting "…" is not …` | An `is` the setting can't take: not `true` or `false` for a toggle, not one of a choice's options, or out of a range's bounds or steps. |
-| Whatever the plugin says | For a call to a plugin's condition, what its [references](#plugin-references) name and its [`argProblems`](/docs/reference/plugins#checking-calls). |
+| Whatever the plugin says | For a call to a plugin's condition, what its [references](#plugin-references) name, and any `{ problem }` among them. |
 
 ### In an effect
 
@@ -155,8 +155,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `unknown stat "…"` | A `roll` effect's `plus: { stat }`. |
 | `unknown timer "…"` | A [`timer`](/docs/reference/effects#timer) effect naming a timer the game doesn't declare. The effect does nothing. |
 | `a timer’s to must be a number of milliseconds above 0, or null to stop it`, `a timer’s by must be a number of milliseconds` | A `timer` effect's `to` and `by`. |
-| Whatever the plugin says | For a call to a plugin's effect, what its references name and its `argProblems`. |
-| Whatever the plugins say | For a `panel` effect, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. Any panel name is allowed. |
+| Whatever the plugin says | For a call to a plugin's effect, what its references name, and any `{ problem }` among them. |
+| Whatever the plugins say | For a `panel` effect, what each plugin's [`references.panels`](/docs/reference/plugins#references) says its `with` names. Any panel name is allowed. |
 | `jumps to point "…", but a jump only works as a choice's effect in the scene that has that point` | A [`point`](/docs/reference/effects#point) effect anywhere but a choice of a data scene. In a choice, its scene's [flow checks](/docs/reference/flows#the-checks) read it instead. |
 
 Inside an `each`, its `where` is checked as a condition and its `effects` as effects, with `'$'` standing for one of its kind. A problem from inside starts `in each <kind>: `, such as `in each staff: stat "quality" belongs to dish, not staff`.
@@ -169,7 +169,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `action` | `unknown action "…"`, for one the game's content doesn't declare. A plugin's action (`places/coffee`) is the plugin's to answer for in play, so it isn't checked. |
 | `input` | `unknown input "…"` |
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
-| `custom`, or a call in short (a plugin's or the game's own) | `no plugin command named "…"`, then what the plugin's references name and its `argProblems`. |
+| `custom`, or a call in short (a plugin's or the game's own) | `no plugin command named "…"`, then what the plugin's references name, and any `{ problem }` among them. |
 
 `start`, `newGame`, `choose`, `leave`, `dismiss`, `tick`, `minigame` and `closePanel` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
@@ -218,7 +218,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 
 | `where` | Checked |
 |---|---|
-| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `image` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
+| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `image` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, what each plugin's [`references.panels`](/docs/reference/plugins#references) says its `with` names. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `action <id>` | The content's [`actions`](/docs/reference/actions#actiondef): each one's `when`, `blocked`, `effects` and `command`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. `an action's command can't be a choice`, and `an action's command can't be the action itself; give it the effects`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
@@ -434,13 +434,15 @@ type Reference =
 | `{ setting, is }` | A play setting, and a value it has to be able to take. |
 | `{ prose }`, `{ variants }` | A prose key that needs words, a variants list that needs lines. |
 | `{ value }` | A [value](/docs/reference/custom#values), the game's own (`game/…`) or a plugin's. |
-| `{ openPanel, with }` | A panel opened by name. Any name is allowed, and each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) is asked about its `with`. |
+| `{ openPanel, with }` | A panel opened by name. Any name is allowed, and each plugin's [`references.panels`](/docs/reference/plugins#references) is asked what its `with` names. |
 | `{ dice, key, plus, against }`, `{ ui }` | A roll that has to be well formed, and [presentation hints](#presentation-hints) that have to be data. |
 | `{ channel, track }`, `{ sound }` | A background placement, or a sound played once. |
 | `{ pool, tags }` | A pool and the tags asked of it. |
-| `{ call }` | A call by name to a plugin's or the game's own condition, effect or command, in the table `call` names (a [`CallTable`](/docs/reference/plugins#checking-calls)). |
+| `{ call }` | A call by name to a plugin's or the game's own condition, effect or command, in the table `call` names (a `CallTable`, [`'conditions'`, `'effects'` or `'commands'`](/docs/reference/plugins#references)). |
 | `{ entry, plugin, list, noun }` | An entry in a plugin's content, such as a location: `unknown location "…"`. Not checked when the game doesn't have that plugin. |
-| `{ picture }`, `{ video }`, `{ audio }` | A file, listed in [`files`](#fileref). A picture or video goes through `artSrc` unless it's `asWritten`, a path from the page. |
+| `{ picture }`, `{ video }`, `{ audio }` | A file, listed in [`files`](#fileref). A picture or video goes through `artSrc`, and a URL isn't listed. |
+| `{ reason }` | A refusal's [`Reason`](/docs/reference/actions#reason). One by key has to name a string: `no string named "…"`. |
+| `{ problem }` | A plugin's own rule, broken: its words are reported as they are. |
 | `{ markup }` | Prose with markup in it. |
 | `{ actionsIn, offers }` | The `[[act:]]` links in a body or a line of prose, each naming one of `offers`, the choices on offer. |
 | `{ when }`, `{ effects }`, `{ command }`, `{ blocks }`, `{ media }`, `{ stage }` | Content to look inside, checked as the engine's own is. A stage with `choices: null` has no scene, such as a place's. |

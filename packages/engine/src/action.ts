@@ -23,7 +23,7 @@ export function actionOf(state: GameState, game: Game, id: string): ActionDef | 
   const plugin = pluginOf(game, parts.plugin)
   if (!plugin) return undefined
   const context = pluginContext(plugin, state, game)
-  return plugin.action?.(state, parts.name, context) ?? plugin.buttons?.(state, context)?.find((action) => action.id === parts.name)
+  return plugin.action?.(state, parts.name, context) ?? plugin.actions?.(state, context)?.find((action) => action.id === parts.name)
 }
 
 /**

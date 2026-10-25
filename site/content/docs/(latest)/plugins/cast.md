@@ -95,24 +95,23 @@ Builds the plugin, with the id `cast`. Call it once, when you build the game. It
 ```ts
 type CastOptions = {
   kind?: string
-  label?: string
-  plural?: string
 }
 ```
 
 | Field | What it is | If left out |
 |---|---|---|
 | `kind` | The id of the [kind](/docs/reference/entities#kinddef) the plugin declares for its people, and the kind a bare id names: with `kind: 'neighbour'`, `cast.talk('ava')` means `'neighbour:ava'`. Write your people `of` it with `cast.person({ of: 'neighbour', ... })`. | `character` |
-| `label` | What one of them is called, used as the kind's `label`. | `Person` |
-| `plural` | What more than one are called, used as the kind's `plural`. | `People` |
+
+The kind is unique, labelled `Person` and `People`, and listed once the player has met someone. To call them something else, declare the kind yourself with the same id. Yours is laid over the plugin's (see [Kinds and entities](/docs/reference/plugins#kinds-and-entities)), so what you leave out stays the plugin's, and a mod or a translation can reword it:
 
 ```ts
 import { cast } from '@ifloom/plugin-cast'
 
-cast({ kind: 'neighbour', label: 'Neighbour', plural: 'Neighbours' })
-```
+cast({ kind: 'neighbour' })
 
-A kind that the game declares itself with the same id is laid over the plugin's (see [Kinds and entities](/docs/reference/plugins#kinds-and-entities)), so that's another way to rename it. The options are code, not content, so a mod can't change them.
+// In your content:
+kinds: [{ id: 'neighbour', label: 'Neighbour', plural: 'Neighbours' }]
+```
 
 Anyone with the `cast/person` trait is a person, whatever their kind. A café game whose staff are entities of its own `staff` kind can give one the trait, and the cast finds them; content names them in full, as in `cast.talk('staff:ana')`.
 

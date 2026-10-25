@@ -81,6 +81,22 @@ describe('the profile', () => {
 })
 
 describe('the runner and the profile', () => {
+  it('keeps what the game’s own rules keep in the profile under game, and shows it to their view', async () => {
+    const g = game({
+      rules: {
+        ...fixture().rules,
+        profile: (state, _previous, stored) => ({ waits: Number((stored as { waits?: number } | undefined)?.waits ?? 0) + (state.turn > 0 ? 1 : 0) }),
+        view: (_state, { profile }) => ({ ever: profile }),
+      },
+    })
+    const prof = profile(g, memoryDriver())
+    const runner = createRunner(g, begin(g), { profile: prof })
+    runner.apply({ type: 'action', id: 'wait' })
+    await runner.settled()
+    expect(await prof.get('game')).toEqual({ waits: 1 })
+    expect(runner.view().plugins.game).toEqual({ ever: { waits: 1 } })
+  })
+
   it('writes a play setting to the profile when the setting command takes', async () => {
     const g = game()
     const prof = profile(g, memoryDriver())

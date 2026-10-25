@@ -7,7 +7,7 @@
 import { amountProblems, amountReferences } from './amount.ts'
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
-import { absentPartner, pluginArgProblems, pluginOf, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
+import { absentPartner, pluginOf, pluginCommand, pluginName, pluginsOf, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
@@ -172,7 +172,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     const parts = pluginName(name)
     const plugin = parts && pluginOf(game, parts.plugin)
     if (!plugin || !parts) return []
-    return [...resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where), ...pluginArgProblems(game, table, name, args)]
+    return resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where)
   }
 
   /**
@@ -210,6 +210,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     }
     if ('words' in ref) return oldWords(ref.words, ref.field, ref.oldKey)
     if ('outdated' in ref) return [ref.outdated]
+    if ('problem' in ref) return [ref.problem]
     if ('prose' in ref) {
       proseNamed.add(ref.prose)
       return game.prose?.line(ref.prose) === undefined ? [`no prose for "${ref.prose}"`] : []
@@ -293,8 +294,8 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   // What a New Game+ carries, in the order the game lists it, each key checked by the feature that carries it.
   for (const key of Object.keys(game.carryOver ?? {})) carryChecks[key as keyof typeof carryChecks]?.(game, tools)
 
-  // Plugins: what their content names, then their own rules.
-  for (const plugin of plugins) checkPlugin(plugin)
+  // Plugins, the game's own rules first: what their content names, then their own rules.
+  for (const plugin of pluginsOf(game)) checkPlugin(plugin)
 
   function checkPlugin(plugin: Plugin) {
     for (const entry of plugin.references?.content?.(game) ?? []) {

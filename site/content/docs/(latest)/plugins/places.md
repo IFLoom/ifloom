@@ -518,7 +518,7 @@ The plugin draws it into its view as `location.stage`, next to `image`, with the
 
 ### The buttons
 
-The room's `actions` are offered as plugin [buttons](/docs/reference/plugins#buttons). They're drawn while no scene is open, before the game's own `actions`, and priced and greyed out exactly like them. In the café of the example, `view.actions` lists the café's `coffee` button first, then the game's buttons.
+The room's `actions` are offered as the plugin's [`actions`](/docs/reference/plugins#actions). They're drawn while no scene is open, before the game's own `actions`, and priced and greyed out exactly like them. In the café of the example, `view.actions` lists the café's `coffee` button first, then the game's buttons.
 
 ### The label
 

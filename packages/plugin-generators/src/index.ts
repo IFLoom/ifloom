@@ -222,13 +222,13 @@ function generatorsPlugin(): DefinedPlugin<null> {
         return next
       },
     },
-    argProblems: (table, name, args) => {
-      if (table !== 'effects' || name !== 'generate' || args.count === undefined) return []
-      const count = Number(args.count)
-      return Number.isInteger(count) && count >= 1 ? [] : ['count must be a whole number, 1 or more']
-    },
     references: {
-      calls: (_kind, _name, args) => (args.template === undefined ? [] : [{ entry: String(args.template), plugin: ID, list: 'templates', noun: 'template' }]),
+      calls: (table, name, args): Reference[] => [
+        ...(args.template === undefined ? [] : [{ entry: String(args.template), plugin: ID, list: 'templates', noun: 'template' }]),
+        ...(table === 'effects' && name === 'generate' && args.count !== undefined && !(Number.isInteger(Number(args.count)) && Number(args.count) >= 1)
+          ? [{ problem: 'count must be a whole number, 1 or more' }]
+          : []),
+      ],
       content: (game) => [
         ...templatesOf(game).map((template) => ({
           list: 'templates',

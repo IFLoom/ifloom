@@ -9,7 +9,7 @@
  */
 import { amountOf } from './amount.ts'
 import { reasonOf, stringOf } from './strings.ts'
-import { pluginButtons, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
+import { pluginActions, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
 import { lineSpeakers, speakerOf, type SpeakerView } from './speakers.ts'
@@ -343,7 +343,7 @@ function hidden(state: GameState, game: Game, action: Action, rendered: Renderin
 function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoice[] {
   // The game's own actions with a label are its buttons; one with none is done only by a command.
   const own = (game.actions ?? []).filter((action) => action.label !== undefined).map((action) => asAction(state, game, action))
-  return [...pluginButtons(game, state).map(({ action, owner }) => asAction(state, game, action, owner)), ...own]
+  return [...pluginActions(game, state).map(({ action, owner }) => asAction(state, game, action, owner)), ...own]
     .filter((action) => holds(state, game, action.when) && !hidden(state, game, action, drawing.rendered))
     .map((action) => {
       const effects = effectsIn(drawing.rendered, state, game, action.command)

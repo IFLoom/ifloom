@@ -233,15 +233,15 @@ export type Plugin<S = any, V = unknown> = {
    */
   stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
   /**
-   * Buttons offered while no scene is open, drawn before the game's own
-   * `actions` and exactly like them: a room's things to do, say.
+   * Actions offered while no scene is open, drawn as buttons before the
+   * game's own `actions` and exactly like them: a room's things to do, say.
    */
-  buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
+  actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
   /**
-   * One of this plugin's actions that isn't among its buttons now, by id
+   * One of this plugin's actions that isn't among its `actions` now, by id
    * without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }`
    * does it, as for a button with a cost or effects, which is looked up
-   * among the buttons when this has none. Undefined when there is none.
+   * among the `actions` when this has none. Undefined when there is none.
    */
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   /**
@@ -295,21 +295,6 @@ export type Plugin<S = any, V = unknown> = {
    * references; `tools` words anything else the plugin names as the checker does.
    */
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
-  /**
-   * What is wrong with how content calls one of this plugin's conditions,
-   * effects or commands, by name without the prefix, by a rule of the
-   * plugin's own: `['nobody sells "fish"']`. Names it can say as references
-   * belong in `references.calls` instead. Asked of every call the checker finds.
-   */
-  argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
-  /**
-   * What is wrong with what content opens a panel with (`{ panel,
-   * with }`), for the panels this plugin's UI draws: `['unknown vendor
-   * "fish"']` for `panel: 'shop'`. Answer `[]` for a panel that isn't this
-   * plugin's; a panel no plugin knows is the UI's business. `tools` words the
-   * ids it names as the checker does. Asked of every panel effect the checker finds.
-   */
-  panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
 }
 
 /**
@@ -349,9 +334,19 @@ export type PluginReferences = {
   /**
    * What a call to one of its conditions, effects or commands names, by name
    * without the prefix, from what content passes in `with`: a location, a
-   * character, a prose key. Asked of every call the checker finds.
+   * character, a prose key. Asked of every call the checker finds. A rule of
+   * the plugin's own about the arguments is a `{ problem }`: `{ problem:
+   * 'count must be a whole number' }`.
    */
   calls?: (table: CallTable, name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  /**
+   * What content opening one of the panels this plugin's UI draws names,
+   * from what it is opened with (`{ panel, with }`): `[{ entity:
+   * 'vendor:fish', carrying: 'shop/vendor' }]` for `panel: 'shop'`. Answer
+   * nothing for a panel that isn't this plugin's; a panel no plugin knows is
+   * the UI's business. Asked of every panel the checker finds.
+   */
+  panels?: (panel: string, args: PluginArgs, game: Game) => readonly Reference[]
   /**
    * What its content names, entry by entry: `{ list: 'locations', id: 'cafe',
    * refs: [...] }`. A problem is reported against `<list> <id>`, and pinned
@@ -647,18 +642,11 @@ export function pluginStage(game: Game, state: GameState): (StageDef & { id: str
   return undefined
 }
 
-/** Every plugin's buttons, in plugin order, with the id of the plugin that offers each. */
-export function pluginButtons(game: Game, state: GameState): { action: ActionDef; owner: string }[] {
+/** Every plugin's actions, in plugin order, with the id of the plugin that offers each. */
+export function pluginActions(game: Game, state: GameState): { action: ActionDef; owner: string }[] {
   return pluginsOf(game).flatMap((plugin) =>
-    (plugin.buttons?.(state, pluginContext(plugin, state, game)) ?? []).map((action) => ({ action, owner: plugin.id })),
+    (plugin.actions?.(state, pluginContext(plugin, state, game)) ?? []).map((action) => ({ action, owner: plugin.id })),
   )
-}
-
-/** What a plugin says is wrong with how content calls it, by full name; nothing for a name with no plugin behind it. */
-export function pluginArgProblems(game: Game, table: CallTable, full: string, args: PluginArgs): string[] {
-  const parts = pluginName(full)
-  if (!parts) return []
-  return pluginOf(game, parts.plugin)?.argProblems?.(table, parts.name, args, game) ?? []
 }
 
 /** Does any plugin guard or price commands? If none does, nothing needs to know a command's effects. */

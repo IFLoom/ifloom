@@ -448,7 +448,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       if (!place || slice.at === null) return undefined
       return { id: slice.at, title: entityName(state, game, locationRef(slice.at)), body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) }
     },
-    buttons: (state, { slice, game }) => locationOf(state, game, slice.at)?.actions,
+    actions: (state, { slice, game }) => locationOf(state, game, slice.at)?.actions,
     audio: (state, { slice, game }) => locationOf(state, game, slice.at)?.audio,
     view: (state, { slice, game, picks }): PlacesView => {
       const here = locationOf(state, game, slice.at)

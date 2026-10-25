@@ -51,7 +51,7 @@ type Lock = {
 | `deny` | What it stops. Name [command](/docs/reference/commands#command) types, `'*'` for every type not in `except`, a [plugin](/docs/reference/plugins) command by its full name (`'places/go'`), or all of one plugin's commands (`'places/*'`). `'custom'` stops every plugin command. |
 | `except` | What it never stops, even under `'*'`. It names things the same way as `deny`. |
 | `effect` | Only stop commands that would apply this effect. Give a built-in effect's key, such as `'turn'`, or a plugin's effect by its full name, such as `'calendar/pass'` for everything that passes time. What a command would apply comes from [`effectsOf`](/docs/reference/actions#effectsof). |
-| `hide` | Leave a stopped button off the screen instead of greying it out. This works for a [places](/docs/plugins/places#the-view) exit, a room's action, one of your content's [actions](/docs/reference/actions#actiondef) and a plugin's [button](/docs/reference/plugins#buttons). Scene choices, the [cast](/docs/plugins/cast#personview)'s Talk buttons and buttons a plugin draws elsewhere, such as a [device](/docs/plugins/devices)'s actions, are still greyed out. |
+| `hide` | Leave a stopped button off the screen instead of greying it out. This works for a [places](/docs/plugins/places#the-view) exit, a room's action, one of your content's [actions](/docs/reference/actions#actiondef) and a plugin's [button](/docs/reference/plugins#actions). Scene choices, the [cast](/docs/plugins/cast#personview)'s Talk buttons and buttons a plugin draws elsewhere, such as a [device](/docs/plugins/devices)'s actions, are still greyed out. |
 | `reason` | The refusal and the disabled text, written for the player. |
 
 **Gotchas.**

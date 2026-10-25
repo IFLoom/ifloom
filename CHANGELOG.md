@@ -10,6 +10,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- Your game's `rules` can keep a state of its own, as a plugin does: `start: () => ({ entries: [] })` begins it, saves keep it at `state.plugins.game`, and its hooks, commands and providers read `context.slice` and write `context.set(next)`. Type it as `GameRules<Diary>`. See [The game's own state](/docs/reference/rules#the-games-own-state).
+- `rules` can also declare the game's own `traits` (ids without a `/`, with their `check`, `references` and `words`), `references` for its `game/…` calls and panels, and a `check` of its own, which the content checker runs as it runs a plugin's.
+- A plugin's `references.panels(panel, args, game)` says what a panel its UI draws is opened with, and `references.calls` can return `{ problem: '…' }` for a rule of its own about a call's arguments.
+
 - A refusal's words can come from the strings table: a `blocked` entry's or a `once`'s `reason` is a [`Reason`](/docs/reference/actions#reason), words written in place or a line by key, `{ string: 'shop/closed' }`, so a game rewords it once for everywhere it's used. [`reasonOf(game, reason)`](/docs/reference/strings#reasonof) reads one. The checker reports `no string named "…"` for a key nobody has.
 - A button can be once in the whole game: `once: { per: 'game' }`, beside `{ per: 'turn' }`, on a choice, an action or a cheat. Its `reason` is optional, and the engine's new `done` string, `Already done.`, is used without one.
 - [`shop.hours(periods, reason?)`](/docs/plugins/shop#opening-hours) writes a vendor's opening hours as a `blocked` entry, and the `shop/outside` condition (`shop.outside('evening')`) holds while the calendar's period is none of these.
@@ -190,6 +194,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** a plugin's `buttons` provider is [`actions`](/docs/reference/plugins#actions), since it gives `ActionDef`s, and `rules.buttons` is `rules.actions`.
+- **Breaking:** a plugin's `argProblems` and `panelProblems` are gone. Return a `{ problem }` reference from `references.calls` for what was an argument problem, and say what a panel names in `references.panels`.
+- **Breaking:** the cast plugin's `label` and `plural` options are gone. To call the cast's people something else, declare the `character` kind (or your `kind`) in your content with your own `label` and `plural`; the rest stays the plugin's.
 
 - **Breaking:** one `once` shape, the [`Once`](/docs/reference/actions#once) type `{ per: 'game' | 'turn', reason? }`, for choices, actions, triggers and cheats. A trigger's `once: 'turn'` is `once: { per: 'turn' }`, and a cheat's `once: true` is `once: { per: 'game' }`. A cheat's view gives `once` as `'game'`, `'turn'` or `null`. An older pack is rewritten when it loads.
 - **Breaking:** a vendor is closed by its `blocked` entries, the gating everything else the player can be refused uses. Its `hours`, `open` and `closed` are gone: write `blocked: [shop.hours(['morning', 'afternoon'])]`, and add an entry for anything else, such as `{ when: calendar.weekend(), reason: 'Closed at weekends.' }`. An older pack is rewritten when it loads, a translation of its `closed` line included. A vendor's `at`, where it stands, stays.
@@ -403,6 +411,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - The built-in "Wait a while" action. A game declares the actions it offers everywhere in `Game.actions`.
 
 ### Fixed
+
+- `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.
 
 - The docs said saves were at version 16 while the engine wrote 17. They're at 18 now, and the docs say so.
 - The React UI's `LocationCard` leaves a gap between the place's line and the things lying there.

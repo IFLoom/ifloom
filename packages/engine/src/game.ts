@@ -1,4 +1,4 @@
-import type { Asked, Plugin, PluginArgs, PluginEntry, Refusal, StageDef, StatModifier } from './plugin.ts'
+import type { Asked, CheckTools, Plugin, PluginArgs, PluginEntry, PluginProblem, PluginReferences, Refusal, StageDef, StatModifier } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { CustomCondition, CustomContext, CustomEffect, CustomValue, EffectRef, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
@@ -13,6 +13,7 @@ import type { SceneBeat, VideoFlags } from './sceneBody.ts'
 import { bakeScene, isDataScene, type Block, type DataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
 import type { Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
+import type { TraitDef } from './entities.ts'
 
 export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
@@ -241,7 +242,7 @@ export type StorylineDef = {
  * plugin's, as if it were the first plugin. What is locked and what resets
  * each turn are content: `locks` and `resets`.
  */
-export type GameRules = {
+export type GameRules<S = any> = {
   /**
    * Steps that carry a save from one version of the game to the next, keyed by
    * the version they upgrade from: step 1 takes a version-1 save to version 2.
@@ -276,9 +277,9 @@ export type GameRules = {
    * did not take, `after` to let it, or `after` with more besides. Runs before
    * any plugin's `onStat`.
    */
-  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext) => GameState
+  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext<S>) => GameState
   /** A hook: after every command that took, with the state it started from and the state after. Returns the next state. */
-  onCommand?: (before: GameState, after: GameState, context: RulesContext) => GameState
+  onCommand?: (before: GameState, after: GameState, context: RulesContext<S>) => GameState
   /** Conditions content can test, by name: `{ 'game/tired': true }`. */
   conditions?: Record<string, CustomCondition>
   /**
@@ -293,27 +294,49 @@ export type GameRules = {
   /** Answers code can ask by name with `context.query('game/name')`. */
   queries?: Record<string, (state: GameState, args: PluginArgs, context: CustomContext) => unknown>
   /** Commands a button can send, by name: `{ 'game/rest': true }`, logged as `{ type: 'custom', name: 'game/rest' }`. */
-  commands?: Record<string, RulesCommand>
+  commands?: Record<string, RulesCommand<S>>
   /** Whether a command may go ahead, given what it would do. As a plugin's `guard`. */
-  guard?: (state: GameState, asked: Asked, context: RulesContext) => Refusal | undefined
+  guard?: (state: GameState, asked: Asked, context: RulesContext<S>) => Refusal | undefined
   /** What a button costs that the engine cannot say, in the game's words. As a plugin's `price`. */
-  price?: (state: GameState, effects: readonly Effect[], context: RulesContext) => string[] | undefined
+  price?: (state: GameState, effects: readonly Effect[], context: RulesContext<S>) => string[] | undefined
   /** Where the game is, in a few words for a header or a save, before the plugins'. As a plugin's `label`. */
-  label?: (state: GameState, context: RulesContext) => string | undefined
+  label?: (state: GameState, context: RulesContext<S>) => string | undefined
   /** What the screen shows while no scene is open, before any plugin's. As a plugin's `stage`. */
-  stage?: (state: GameState, context: RulesContext) => StageDef | undefined
-  /** Buttons offered while no scene is open, before the plugins'. As a plugin's `buttons`. */
-  buttons?: (state: GameState, context: RulesContext) => readonly ActionDef[] | undefined
+  stage?: (state: GameState, context: RulesContext<S>) => StageDef | undefined
+  /** Actions offered while no scene is open, before the plugins'. As a plugin's `actions`. */
+  actions?: (state: GameState, context: RulesContext<S>) => readonly ActionDef[] | undefined
   /** One of the game's actions that isn't in content, by id: `{ type: 'action', id: 'game/<id>' }` does it. As a plugin's `action`. */
-  action?: (state: GameState, id: string, context: RulesContext) => ActionDef | undefined
+  action?: (state: GameState, id: string, context: RulesContext<S>) => ActionDef | undefined
   /** Changes to what the player's stats read right now. As a plugin's `statModifiers`. */
-  statModifiers?: (state: GameState, context: RulesContext) => readonly StatModifier[] | undefined
+  statModifiers?: (state: GameState, context: RulesContext<S>) => readonly StatModifier[] | undefined
   /** What plays on background channels, before the plugins'. As a plugin's `audio`. */
-  audio?: (state: GameState, context: RulesContext) => Record<string, string | null> | undefined
+  audio?: (state: GameState, context: RulesContext<S>) => Record<string, string | null> | undefined
   /** What the UI needs from the game's own code, at `view.plugins.game`. */
-  view?: (state: GameState, context: RulesContext) => unknown
+  view?: (state: GameState, context: RulesContext<S>) => unknown
   /** What the game keeps in the player's profile, under `game`. As a plugin's `profile`. */
-  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext) => unknown
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext<S>) => unknown
+  /**
+   * The game's own state, as a plugin's is: what a new game starts with,
+   * kept in saves at `state.plugins.game` and read in the game's functions as
+   * `context.slice`, written with `context.set`. For what the game's code
+   * keeps that isn't a stat, a kv key or an entity. A save from before the
+   * game had one starts it fresh; reshape it in `migrations`.
+   */
+  start?: (game: Game) => S
+  /**
+   * The game's own traits, as a plugin declares its: each id without a `/`
+   * (`cosy`), with the `check`, `references` and `words` the checker and a
+   * translation's `words` table read for every entity that carries it.
+   */
+  traits?: readonly TraitDef<any, any>[]
+  /**
+   * What the game's own calls name (`references.calls`, asked of every
+   * `game/…` call the checker finds) and the panels its UI draws
+   * (`references.panels`), as a plugin's `references` say.
+   */
+  references?: PluginReferences
+  /** Rules of the game's own for the content checker, as a plugin's `check`. Its problems are reported against the base. */
+  check?: (game: Game, tools: CheckTools) => PluginProblem[]
 }
 
 /**
@@ -321,9 +344,13 @@ export type GameRules = {
  * state: what a game's function gets (`CustomContext`), `apply` for effects,
  * and in `view` the pool picks and the profile, as a plugin's context has them.
  */
-export type RulesContext = CustomContext & {
+export type RulesContext<S = any> = CustomContext & {
   /** Apply effects as content would, to the state the function was handed, or to `on`. */
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  /** The game's own state, as `rules.start` began it and `set` last wrote it. Undefined with no `start`. */
+  slice: S
+  /** The state with the game's own state replaced. */
+  set: (next: S) => GameState
   /** Only in `view`: where the pool picks it makes are written. See `PluginContext.picks`. */
   picks?: Record<string, string>
   /** Blocks drawn as beats, as a scene's body is. See `PluginContext.beats`. */
@@ -333,16 +360,16 @@ export type RulesContext = CustomContext & {
 }
 
 /** A command of the game's own, as `rules.commands` declares it: as a plugin's `PluginCommand`, with the game's context. */
-export type RulesCommand = {
+export type RulesCommand<S = any> = {
   /** Run even while a lock would stop it. For tools outside the story, never for something the player does in it. */
   ignoresLocks?: boolean
   /** Why it cannot be done now, as the player reads it; undefined if it can. */
-  whyNot?: (state: GameState, args: PluginArgs, context: RulesContext) => string | undefined
-  run: (state: GameState, args: PluginArgs, context: RulesContext) => GameState
+  whyNot?: (state: GameState, args: PluginArgs, context: RulesContext<S>) => string | undefined
+  run: (state: GameState, args: PluginArgs, context: RulesContext<S>) => GameState
   /** The effects running it would apply, for guards, prices and locks to see. */
-  effectsOf?: (state: GameState, args: PluginArgs, context: RulesContext) => Effect[]
+  effectsOf?: (state: GameState, args: PluginArgs, context: RulesContext<S>) => Effect[]
   /** The stats it spends, by id, for its button's price. */
-  spends?: (state: GameState, args: PluginArgs, context: RulesContext) => Record<string, number> | undefined
+  spends?: (state: GameState, args: PluginArgs, context: RulesContext<S>) => Record<string, number> | undefined
 }
 
 /** What a New Game+ takes from the game before: player stats, kv keys and what the player holds. */

@@ -20,28 +20,32 @@ What is data stays out of `rules`, so a mod can reach it: what's locked is conte
 ## GameRules
 
 ```ts
-type GameRules = {
+type GameRules<S = any> = {
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
   saveName?: (state: GameState) => string | null
   onTurn?: (state: GameState, context: TurnContext) => GameState
   onTurnDone?: (state: GameState, context: TurnContext) => GameState
-  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext) => GameState
-  onCommand?: (before: GameState, after: GameState, context: RulesContext) => GameState
+  onStat?: (before: GameState, after: GameState, stat: StatKey, by: number, context: RulesContext<S>) => GameState
+  onCommand?: (before: GameState, after: GameState, context: RulesContext<S>) => GameState
   conditions?: Record<string, CustomCondition>
   effects?: Record<string, CustomEffect>
   values?: Record<string, CustomValue>
   queries?: Record<string, (state: GameState, args: PluginArgs, context: CustomContext) => unknown>
-  commands?: Record<string, RulesCommand>
-  guard?: (state: GameState, asked: Asked, context: RulesContext) => Refusal | undefined
-  price?: (state: GameState, effects: readonly Effect[], context: RulesContext) => string[] | undefined
-  label?: (state: GameState, context: RulesContext) => string | undefined
-  stage?: (state: GameState, context: RulesContext) => StageDef | undefined
-  buttons?: (state: GameState, context: RulesContext) => readonly ActionDef[] | undefined
-  action?: (state: GameState, id: string, context: RulesContext) => ActionDef | undefined
-  statModifiers?: (state: GameState, context: RulesContext) => readonly StatModifier[] | undefined
-  audio?: (state: GameState, context: RulesContext) => Record<string, string | null> | undefined
-  view?: (state: GameState, context: RulesContext) => unknown
-  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext) => unknown
+  commands?: Record<string, RulesCommand<S>>
+  guard?: (state: GameState, asked: Asked, context: RulesContext<S>) => Refusal | undefined
+  price?: (state: GameState, effects: readonly Effect[], context: RulesContext<S>) => string[] | undefined
+  label?: (state: GameState, context: RulesContext<S>) => string | undefined
+  stage?: (state: GameState, context: RulesContext<S>) => StageDef | undefined
+  actions?: (state: GameState, context: RulesContext<S>) => readonly ActionDef[] | undefined
+  action?: (state: GameState, id: string, context: RulesContext<S>) => ActionDef | undefined
+  statModifiers?: (state: GameState, context: RulesContext<S>) => readonly StatModifier[] | undefined
+  audio?: (state: GameState, context: RulesContext<S>) => Record<string, string | null> | undefined
+  view?: (state: GameState, context: RulesContext<S>) => unknown
+  profile?: (state: GameState, previous: GameState, stored: unknown, context: RulesContext<S>) => unknown
+  start?: (game: Game) => S
+  traits?: readonly TraitDef[]
+  references?: PluginReferences
+  check?: (game: Game, tools: CheckTools) => PluginProblem[]
 }
 ```
 
@@ -57,27 +61,56 @@ type GameRules = {
 | `commands` | Commands of the game's own, sent as `{ 'game/rest': true }`. See [`commands`](#commands). |
 | `guard`, `price`, `label` | As a plugin's: whether a command may go ahead, what a button costs in the game's words, and where the game is in a few words. See [Guards, prices and labels](/docs/reference/plugins#guards-prices-and-labels). |
 | `stage` | What the screen shows while no scene is open. See [Stage](/docs/reference/plugins#stage). |
-| `buttons`, `action` | Buttons offered while no scene is open, and an action that isn't in content, by id, done with `{ type: 'action', id: 'game/<id>' }`. See [Buttons](/docs/reference/plugins#buttons). |
+| `actions`, `action` | Actions offered as buttons while no scene is open, and an action that isn't in content, by id, done with `{ type: 'action', id: 'game/<id>' }`. See [Actions](/docs/reference/plugins#actions). |
 | `statModifiers` | Changes to what the player's stats read right now. See [Stat modifiers](/docs/reference/plugins#stat-modifiers). |
 | `audio` | What plays on background channels. See [Audio](/docs/reference/plugins#audio). |
 | `view` | What the UI needs from the game's own code, at `view.plugins.game`. See [The view](/docs/reference/plugins#the-view). |
 | `profile` | What the game keeps in the player's [profile](/docs/reference/profile), under `game`. See [The profile](/docs/reference/plugins#the-profile). |
+| `start` | The game's own state in a new game, kept in saves at `state.plugins.game`. See [The game's own state](#the-games-own-state). |
+| `traits` | The game's own [traits](/docs/reference/entities#traits), each with an id that has no `/`, with the `check`, `references` and `words` a plugin's trait has. See [Traits](/docs/reference/plugins#traits). |
+| `references`, `check` | What the game's own calls and panels name, and rules of its own, for the [content checker](/docs/reference/checks), as a plugin's [`references`](/docs/reference/plugins#references) and [`check`](/docs/reference/plugins#check) are. Their problems are reported against the base. |
 
 To have content written in code checked against your functions, declare what each `game/` call takes, as a plugin does: see [The game's own calls](/docs/reference/plugins#the-games-own-calls).
 
 The engine runs the game's code as a plugin whose id is `game`, which is why no plugin can have that id. It comes first, before every plugin, so its providers answer before theirs and its hooks run before theirs.
 
+## The game's own state
+
+```ts
+start?: (game: Game) => S
+```
+
+Something your code keeps that isn't a stat, a kv key or an entity, such as a history it builds up, goes in the game's own state, as a plugin keeps its. `start` gives what a new game begins with. The engine keeps it in saves at `state.plugins.game`, and each of your hooks, commands and providers reads it as `context.slice` and writes it with `context.set`. Name its type as `GameRules<S>`:
+
+```ts
+import type { GameRules } from '@ifloom/engine'
+
+type Diary = { entries: string[] }
+
+export const rules: GameRules<Diary> = {
+  start: () => ({ entries: [] }),
+  commands: {
+    write: { run: (state, args, { slice, set }) => set({ entries: [...slice.entries, String(args.text ?? '')] }) },
+  },
+  view: (_state, { slice }) => ({ entries: slice.entries.length }),
+}
+```
+
+A save from before the game had a `start` loads with it fresh. To reshape it later, rewrite `state.plugins.game.state` in one of your [migrations](/docs/reference/saves#the-games-own-migrations). Your conditions, effects and values are handed a [`CustomContext`](/docs/reference/custom#customcontext), which has no `slice`, so they read `state.plugins.game?.state`.
+
 ## RulesContext
 
 ```ts
-type RulesContext = CustomContext & {
+type RulesContext<S = any> = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
+  slice: S
+  set: (next: S) => GameState
   picks?: Record<string, string>
   profile?: unknown
 }
 ```
 
-What the game's hooks, commands and providers are handed besides the state: a [called function's](/docs/reference/custom#customcontext) context (`game`, `query`, `value` and a seeded `roll`) and `apply`, which applies effects as content would. In `view`, `picks` and `profile` are what a plugin's view gets.
+What the game's hooks, commands and providers are handed besides the state: a [called function's](/docs/reference/custom#customcontext) context (`game`, `query`, `value` and a seeded `roll`) and `apply`, which applies effects as content would. `slice` and `set` read and write the game's [own state](#the-games-own-state), as a plugin's context does its own. In `view`, `picks` and `profile` are what a plugin's view gets.
 
 ## commands
 

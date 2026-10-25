@@ -100,6 +100,14 @@ describe('the cast', () => {
     expect(view(met, g).entities.character.entries.map((entry) => [entry.ref, entry.name])).toEqual([['character:ava', 'Ava']])
   })
 
+  it('are called what the game calls them, by redeclaring the kind', () => {
+    const named: Content = { name: 'names', kinds: [{ id: 'character', label: 'Neighbour', plural: 'Neighbours' }] }
+    const { game: g, problems } = loadGame([town, map, named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' }), cast()] })
+    expect(problems).toEqual([])
+    // The game's words, and the cast's own rule that each is one particular person, listed once met.
+    expect(view(startingState(g), g).entities.character).toMatchObject({ label: 'Neighbour', plural: 'Neighbours', unique: true, entries: [] })
+  })
+
   it('are written as entities with the person trait, by cast.person()', () => {
     expect(sam).toEqual({ id: 'sam', name: 'Sam', of: 'character', stats: { friendship: 5 }, traits: { 'cast/person': { home: 'park', talk: 'sam.hi' } } })
     const { game: g } = game()

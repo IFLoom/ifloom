@@ -699,12 +699,11 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
         ...(args.vendor === undefined ? [] : [vendorEntry(String(args.vendor))]),
         ...(args.entity === undefined ? [] : [{ entity: String(args.entity) }]),
       ],
-    },
-    // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.
-    panelProblems: (panel, args, _game, tools) => {
-      if (panel !== PANEL) return []
-      if (typeof args.vendor !== 'string') return ['the shop panel needs a vendor: { vendor: "<id>" }']
-      return tools.problems([vendorEntry(args.vendor)])
+      // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.
+      panels: (panel, args): Reference[] => {
+        if (panel !== PANEL) return []
+        return typeof args.vendor === 'string' ? [vendorEntry(args.vendor)] : [{ problem: 'the shop panel needs a vendor: { vendor: "<id>" }' }]
+      },
     },
     check: (game) => {
       const problems: PluginProblem[] = []

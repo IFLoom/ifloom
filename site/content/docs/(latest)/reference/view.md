@@ -156,7 +156,7 @@ While no scene is open, the screen is the idle screen. It shows the [stage](#the
 
 A button the room's prose draws inline with `[[act:id]]` is left out of `actions`, and is in `scene.beats` instead (see [inline actions](/docs/reference/prose#inline-actions-and-tooltips)).
 
-Otherwise `actions` is the game's own [`rules.buttons`](/docs/reference/rules#gamerules), then every plugin's [`buttons`](/docs/reference/plugins#buttons), in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef) that have a `label`. A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in its content's `actions`.
+Otherwise `actions` is the game's own [`rules.actions`](/docs/reference/rules#gamerules), then every plugin's [`actions`](/docs/reference/plugins#actions), in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef) that have a `label`. A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in its content's `actions`.
 
 The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the stage.
 
@@ -428,7 +428,7 @@ badge.textContent = String(journal?.updates ?? 0)
 
 A slice nobody declares is `unknown`, so give it its type where you read it.
 
-Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#actiondef) whose `command` is the call, so the button carries `{ type: 'custom', name }`. They're greyed out with the plugin's `whyNot` line, like any other. A plugin can offer them itself while no scene is open, with [`buttons`](/docs/reference/plugins#buttons).
+Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#actiondef) whose `command` is the call, so the button carries `{ type: 'custom', name }`. They're greyed out with the plugin's `whyNot` line, like any other. A plugin can offer them itself while no scene is open, with [`buttons`](/docs/reference/plugins#actions).
 
 ## RenderedChoice
 

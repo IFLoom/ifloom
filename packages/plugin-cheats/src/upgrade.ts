@@ -18,7 +18,7 @@ const wordKey = (key: string, list: string, names: Record<string, string>): stri
 }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 26
+export const CONTENT_VERSION = 27
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
@@ -32,4 +32,11 @@ export const contentMigrations: Record<number, ContentStep> = {
       (key) => wordKey(key, 'cheats/cheats', names),
     )
   },
+  // 26 → 27: `once` has one shape, as a button's has: `once: true` is `{ per: 'game' }`, and `false` goes.
+  26: (pack, tools) =>
+    tools.entries(pack, 'cheats/cheats', (cheat) => {
+      if (typeof cheat.once !== 'boolean') return cheat
+      const { once, ...rest } = cheat
+      return once ? { ...rest, once: { per: 'game' } } : rest
+    }),
 }

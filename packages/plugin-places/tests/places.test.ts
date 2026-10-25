@@ -58,6 +58,7 @@ const town: Content = {
     { id: 'coffee', blocked: [places.onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kv: 'coffee', to: true }] },
     { id: 'nap', label: 'Nap', effects: [calendar.pass(1)] },
     { id: 'hop', effects: [places.move('park')] },
+    { id: 'feed', blocked: [places.onlyAt(['park'])], effects: [{ kv: 'fed', to: true }] },
   ],
   entities: townPlaces(),
 }
@@ -116,6 +117,10 @@ describe('places', () => {
     expect(view(state, g).actions.map((action) => action.id)).toEqual(['coffee', 'nap'])
     expect(apply(state, g, { type: 'action', id: 'coffee' }).state.kv.coffee).toBe(true)
     expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'action', id: 'coffee' })).toBe('There is no coffee here.')
+    // With no reason of its own, the plugin's `places/notHere` string, which a game can reword.
+    expect(places.onlyAt(['park'])).toEqual({ when: { not: places.at('park') }, reason: { string: 'places/notHere' } })
+    expect(whyNot(state, g, { type: 'action', id: 'feed' })).toBe('Not here.')
+    expect(whyNot(state, { ...g, strings: { ...g.strings, 'places/notHere': 'Only in the park.' } }, { type: 'action', id: 'feed' })).toBe('Only in the park.')
   })
 
   it('say why a journey is refused', () => {

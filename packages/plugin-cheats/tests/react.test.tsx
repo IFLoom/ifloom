@@ -56,7 +56,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
               {
                 id: 'map',
                 name: 'Show the map',
-                once: true,
+                once: 'game',
                 group: 'Story',
                 effects: [{ kv: 'map', to: true }],
                 ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),

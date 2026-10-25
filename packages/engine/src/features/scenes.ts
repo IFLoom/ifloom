@@ -176,7 +176,8 @@ function choiceReferences(choice: Choice, oldKey?: string): Reference[] {
   out.push({ words: choice.label, field: 'label', ...(choice.label === undefined && oldKey !== undefined ? { oldKey } : {}) })
   for (const entry of choice.labels ?? []) out.push({ words: entry.label, field: 'label' }, { when: entry.when })
   out.push({ when: choice.when })
-  for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
+  for (const entry of choice.blocked ?? []) out.push({ when: entry.when }, { reason: entry.reason })
+  out.push({ reason: choice.once?.reason })
   out.push({ effects: withoutJump(choice.effects) })
   if (choice.ui !== undefined) out.push({ ui: choice.ui })
   return out

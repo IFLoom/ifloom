@@ -206,7 +206,7 @@ What the game has told the player outside scenes, oldest first, whether seen or 
 fired: Record<string, number>
 ```
 
-The [turn](#turn) each [trigger](/docs/reference/triggers) last fired, by trigger id. A trigger with an entry here doesn't fire again, unless it's `once: 'turn'` and the turn has moved on.
+The [turn](#turn) each [trigger](/docs/reference/triggers) last fired, by trigger id. A trigger with an entry here doesn't fire again, unless it's `once: { per: 'turn' }` and the turn has moved on.
 
 ### plugins
 

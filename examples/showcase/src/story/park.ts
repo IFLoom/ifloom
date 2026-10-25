@@ -92,12 +92,12 @@ export const park: Content = {
     // The first time each day the player is in the park: yesterday's visitors go home and two new ones come.
     {
       id: 'visitors',
-      once: 'turn',
+      once: { per: 'turn' },
       when: places.at('park'),
       effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generators.generate('visitor', 2)],
     },
     // And the ducks come to see what you brought: a roll no line of prose hints, so the React UI shows it over the scene.
-    { id: 'ducks', once: 'turn', when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
+    { id: 'ducks', once: { per: 'turn' }, when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
   ],
   entities: [
     place({

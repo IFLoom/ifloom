@@ -8,7 +8,7 @@
  * about it.
  */
 import { amountOf } from './amount.ts'
-import { stringOf } from './strings.ts'
+import { reasonOf, stringOf } from './strings.ts'
 import { pluginButtons, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
@@ -132,6 +132,12 @@ export type Screen = {
  * the profile.
  */
 export type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
+
+/** The words of the first of these that holds, or undefined. */
+function blockedReason(state: GameState, game: Game, blocked: readonly Blocked[] | undefined): string | undefined {
+  const entry = blocked?.find((one) => holds(state, game, one.when))
+  return entry ? reasonOf(game, entry.reason) : undefined
+}
 
 /** What one screen shares while it is drawn: the open scene, rendered once, and the picks made. */
 type Drawing = { rendered: Rendering; picks: Record<string, string> }
@@ -389,7 +395,7 @@ function actionButton(state: GameState, game: Game, action: Action, rendered: Re
     id: action.id,
     label: action.label,
     price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state, featureContext()) }, watched ? effects : []),
-    disabled: action.blocked?.find((entry) => holds(state, game, entry.when))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
+    disabled: blockedReason(state, game, action.blocked) ?? whyNotIn(rendered, state, game, action.command, effects),
     ...(action.tags ? { tags: action.tags } : {}),
     ...(action.irreversible !== undefined ? { irreversible: action.irreversible } : {}),
     command: action.command,

@@ -203,7 +203,7 @@ The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-s
 
 ```ts
 type Choice = ButtonDef & {
-  once?: { per: 'turn'; reason: string; key?: string }
+  once?: Once & { key?: string }
 }
 ```
 
@@ -215,7 +215,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 | `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
-| `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was last picked this turn. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
+| `once` | The choice pays once, as a [`Once`](/docs/reference/actions#once) says: `{ per: 'turn' }` once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default, or `{ per: 'game' }` once in the game. Afterwards the choice stays on screen, disabled with `reason` (`Already done.` if left out), and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was picked this turn, or at all. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
 | `tags`, `irreversible`, `ui` | Passed through to the view's [`RenderedChoice`](/docs/reference/view#renderedchoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
 | `cost` | The stats it spends, as an action's [`cost`](/docs/reference/actions#actioncost): listed on the button as its price, checked when it's chosen (greyed out with `reasons` or the stat's own line while there's too little), and paid after its command, before its effects. | free |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
@@ -346,7 +346,7 @@ A data scene reads:
 
 - **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame)), with tokens filled in for the save
 - **variants** drawn as described below
-- **`once: { per: 'turn' }`** from the choice's record in [`chosen`](/docs/reference/state#chosen): spent while it was last picked this turn
+- **`once`** from the choice's record in [`chosen`](/docs/reference/state#chosen): with `per: 'turn'`, spent while it was last picked this turn, and with `per: 'game'`, once it has been picked
 - **conditions and the game's own effects** from the game
 
 ### How variants are drawn

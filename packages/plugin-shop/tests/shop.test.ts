@@ -10,6 +10,8 @@ import {
   loadState,
   replay,
   startingState,
+  translatableFields,
+  upgradePack,
   view,
   whyNot,
   type Game,
@@ -27,8 +29,7 @@ const counter = shop.vendor({
   id: 'counter',
   name: 'The counter',
   at: ['cafe'],
-  hours: ['morning', 'afternoon'],
-  closed: 'The shutter is down.',
+  blocked: [shop.hours(['morning', 'afternoon'], 'The shutter is down.')],
   buysBack: 0.5,
   goods: [
     { entity: 'food:coffee', price: { coins: 3 } },
@@ -420,7 +421,13 @@ describe('a vendor is an entity with the vendor trait', () => {
       of: 'vendor',
       id: 'kiosk',
       name: 'Kiosk',
-      traits: { 'shop/vendor': { hours: ['morning'], goods: [{ entity: 'food:coffee', price: { coins: 2 } }] } },
+      // Its hours are a blocked entry since schema 27, closed outside them in the plugin's words.
+      traits: {
+        'shop/vendor': {
+          goods: [{ entity: 'food:coffee', price: { coins: 2 } }],
+          blocked: [{ when: { 'shop/outside': { period: ['morning'] } }, reason: { string: 'shop/closed' } }],
+        },
+      },
     })
     expect(loaded.game.data?.shop).toBeUndefined()
   })
@@ -469,6 +476,51 @@ describe('the shop with the calendar', () => {
     // The next morning: open, and stocked again.
     state = clock.write(state, { day: 1, period: 'morning' })
     expect(goods(state, g).find((good) => good.entity === 'food:biscuit')).toMatchObject({ stock: 3, buy: { disabled: undefined } })
+  })
+})
+
+describe('the shop’s opening hours', () => {
+  it('close a vendor in the plugin’s words when it gives none, which the game can reword', () => {
+    const clock = calendar({ turn: 'period' })
+    const kiosk = shop.vendor({ id: 'kiosk', name: 'Kiosk', blocked: [shop.hours(['morning'])], goods: [{ entity: 'food:coffee', price: { coins: 2 } }] })
+    const { game: g, problems } = loadGame(
+      [
+        {
+          name: 'town',
+          ...things,
+          stats: [{ id: 'coins', label: 'Coins', start: 9, spendable: true }],
+          entities: [...things.entities!, kiosk],
+          strings: { 'shop/closed': 'Shut.' },
+        },
+      ],
+      {
+        id: 'g',
+        title: 'g',
+        plugins: [clock, shop()],
+      },
+    )
+    expect(problems).toEqual([])
+    const evening = clock.write(fresh(g), { day: 0, period: 'evening' })
+    expect(whyNot(evening, g, shop.buy('kiosk', 'food:coffee'))).toBe('Shut.')
+    expect(holds(evening, g, shop.vendorOpen('kiosk'))).toBe(false)
+  })
+
+  it('carry a translation of an older vendor’s closed line to its blocked entries', () => {
+    const v26 = {
+      id: 'mod:old',
+      schema: 26,
+      entities: [{ of: 'vendor', id: 'kiosk', name: 'Kiosk', traits: { 'shop/vendor': { hours: ['morning'], closed: 'Back at nine.', goods: [] } } }],
+      words: { 'entity.vendor:kiosk.traits.shop/vendor.closed': 'Retour à neuf heures.' },
+    }
+    const out = upgradePack(v26, [shop()])
+    if (!out.ok) throw new Error(out.reason)
+    const { game: g } = loadGame(
+      [{ name: 'town', ...things, stats: [{ id: 'coins', label: 'Coins', spendable: true }] }],
+      { id: 'g', title: 'g', plugins: [calendar(), shop()] },
+      { packs: [{ ...out.value, words: {} }] },
+    )
+    const keys = translatableFields(g).map((field) => field.key)
+    expect(keys).toContain(Object.keys(out.value.words!)[0])
   })
 })
 

@@ -168,7 +168,7 @@ const text: MessageDef = {
 
 A message the story sends arrives once. For one that keeps coming, such as Ava's small talk, put it in a pool with `drawnFrom` and draw from the pool with the effect `messages/draw`. Each draw picks one message whose `when` holds, by `weight`, and delivers it as a new arrival, with its own replies and its own read mark. The same message can be drawn again later.
 
-Something has to run the draw. A [trigger](/docs/reference/triggers) with `once: 'turn'` draws once a turn, which in the showcase is once a day:
+Something has to run the draw. A [trigger](/docs/reference/triggers) with `once: { per: 'turn' }` draws once a turn, which in the showcase is once a day:
 
 ```ts
 import type { Condition, TriggerDef } from '@ifloom/engine'
@@ -187,7 +187,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
 }))
 
 // Once a day, after she's had a reply to her first text.
-const chat: TriggerDef = { id: 'ava.chat', once: 'turn', when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] }
+const chat: TriggerDef = { id: 'ava.chat', once: { per: 'turn' }, when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] }
 ```
 
 `messages.since(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.

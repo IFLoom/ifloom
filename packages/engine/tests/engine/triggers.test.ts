@@ -16,7 +16,7 @@ function withTriggers(): Game {
       // Fires off the one before it, in the same pass.
       { id: 'read', when: { kv: 'note' }, effects: [{ stat: 'intelligence', by: 1 }] },
       // Every turn the player is in the shop, once a turn.
-      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ stat: 'luck', by: 1 }] },
+      { id: 'smell', once: { per: 'turn' }, when: { kv: 'at', is: 'shop' }, effects: [{ stat: 'luck', by: 1 }] },
       // Opens a scene, which counts as seen.
       { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ scene: 'rosa.hello' }] },
     ],

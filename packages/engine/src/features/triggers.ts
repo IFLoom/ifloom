@@ -18,8 +18,8 @@ export type TriggerDef = {
   id: string
   when: Condition
   effects: EffectRef[]
-  /** Fire once in the whole game (the default), or at most once a turn. */
-  once?: 'game' | 'turn'
+  /** Fire once in the whole game (`{ per: 'game' }`, the default), or at most once a turn (`{ per: 'turn' }`). */
+  once?: { per: 'game' | 'turn' }
 }
 
 /** What the triggers feature adds, as types. */
@@ -48,7 +48,7 @@ export function fireTriggers(state: GameState, game: Game, apply: (state: GameSt
   let next = state
   for (const trigger of game.triggers ?? []) {
     const last = next.fired?.[trigger.id]
-    if (last !== undefined && (trigger.once !== 'turn' || last === next.turn)) continue
+    if (last !== undefined && (trigger.once?.per !== 'turn' || last === next.turn)) continue
     if (!cx.holds(next, game, trigger.when)) continue
     const effects = cx.buildEffects(game, trigger.effects)
     next = apply({ ...next, fired: { ...next.fired, [trigger.id]: next.turn } }, effects)

@@ -22,7 +22,7 @@ type ButtonDef = {
   cost?: ActionCost
   effects?: EffectRef[]
   command?: CommandRef
-  once?: { per: 'turn'; reason: string }
+  once?: Once
   tags?: string[]
   irreversible?: string
   ui?: Ui<ChoiceUi>
@@ -47,7 +47,7 @@ type ActionDef = ButtonDef
 | `cost` | The stats it spends. See [`ActionCost`](#actioncost). |
 | `effects` | [Effects](/docs/reference/effects) applied in order after the cost is paid. A plugin's effect or one of the game's own is written [in short](/docs/reference/custom#plugincall), as in `{ 'game/countCoffee': true }`. |
 | `command` | A [command](/docs/reference/commands) it sends, before its cost and effects: a plugin's in short, such as `{ 'places/go': { id: 'cafe' } }`, or the engine's. Any command but `choose`. |
-| `once` | Once a turn. It's refused with `reason`, which shows on its button, once it's been done this turn. It's counted in [`state.chosen`](/docs/reference/state#chosen) under its id. |
+| `once` | Once in the game or once a turn, as a [`Once`](#once): `{ per: 'turn', reason: 'Once a day is plenty.' }`. Once it's spent it's refused with `reason`, which shows on its button. It's counted in [`state.chosen`](/docs/reference/state#chosen) under its id. |
 | `tags` | Words the UI can style or filter the button by, passed to its [`RenderedChoice`](/docs/reference/view#renderedchoice). The engine gives them no meaning. |
 | `irreversible` | A warning that it can't be undone, which the UI shows on it. |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the button as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. |
@@ -122,7 +122,7 @@ The cost shows on the button before it's pressed, as its [`Price`](/docs/referen
 ```ts
 type Blocked = {
   when: Condition
-  reason: string
+  reason: Reason
   hide?: boolean
 }
 ```
@@ -132,7 +132,7 @@ Why something the player could do is refused for now. Everything that can be ref
 | Field | What it does |
 |---|---|
 | `when` | Refused while this holds. |
-| `reason` | What the player reads, on the greyed-out button and as the refusal. |
+| `reason` | What the player reads, on the greyed-out button and as the refusal: words written in place, or a line of the strings table by key. See [`Reason`](#reason). |
 | `hide` | Leave the button off the screen while `when` holds, rather than greyed out. |
 
 The reducer refuses an action on its `blocked` list and the view greys the button out with it, so the two can't disagree.
@@ -146,12 +146,35 @@ blocked: [
 ]
 ```
 
+### Reason
+
+```ts
+type Reason = string | { string: string }
+```
+
+The words a player reads when something is refused. Most are written in place, such as `'Too tired.'`. A reason can also name a line of the [strings table](/docs/reference/strings) by its key, `{ string: 'shop/closed' }`, so a game rewords it once for everywhere it's used. The helpers that write a `blocked` entry for you do this: [`places.onlyAt()`](/docs/plugins/places#helpers)'s is `{ string: 'places/notHere' }` and [`shop.hours()`](/docs/plugins/shop#helpers)'s is `{ string: 'shop/closed' }` unless you give one. The [checker](/docs/reference/checks) reports `no string named "…"` for a key that no table has. Read one yourself with [`reasonOf`](/docs/reference/strings#reasonof).
+
+### Once
+
+```ts
+type Once = { per: 'game' | 'turn'; reason?: Reason }
+```
+
+How often something can happen: once in the whole game, or once a turn. A choice, an action and a [cheat](/docs/plugins/cheats#cheatdef) take one as `once`, and a [trigger](/docs/reference/triggers#triggerdef) takes its `per`.
+
+| Field | What it does |
+|---|---|
+| `per` | `'game'`: spent for good once it's been pressed. `'turn'`: spent until the turn ends. |
+| `reason` | What the player reads on the button once it's spent. The engine's `done` string, `Already done.`, if left out. |
+
+A button counts in [`state.chosen`](/docs/reference/state#chosen), so `per: 'game'` reads its count and `per: 'turn'` the turn it was last pressed.
+
 A [lock](/docs/reference/locks) in your content's `locks` is the other way to refuse things. Use a lock for a rule that spans many commands at once, such as a stretch of the game where the player can't leave the house, and `blocked` for a reason that belongs to one thing.
 
 ### need
 
 ```ts
-function need(reason: string, when: Condition): Blocked
+function need(reason: Reason, when: Condition): Blocked
 ```
 
 A `blocked` entry written the other way round: refused with `reason` unless `when` holds. It's `{ when: { not: when }, reason }`, for when it reads better to say what the action needs.
@@ -180,7 +203,7 @@ An action the player can't do right now is refused with one line, which is also 
 2. Its `when` doesn't hold: `That is not on offer.`
 3. A [lock](/docs/reference/locks) stops `{ type: 'action', id }`: the lock's `reason`.
 4. Each entry in `blocked`, in order, whose `when` holds: its `reason`.
-5. It has `once` and has been done this turn: `once.reason`.
+5. It has `once` and it's spent, done once in the game or this turn: `once.reason`, or `Already done.`.
 6. Each stat in `cost.stats`, in the order written, that the player has less of than the cost: `cost.reasons[id]`, or the stat's [`lackingLine`](/docs/reference/stats#lackingline).
 7. Its `command` would be refused: that command's reason.
 

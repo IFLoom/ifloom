@@ -3,8 +3,8 @@ import type { Content } from '@ifloom/engine'
 
 export const triggers: Content = {
   triggers: [
-    { id: 'overdrawn', once: 'turn', when: { stat: 'coins', lt: 0 }, effects: [{ notify: 'The bank has written.', tag: 'money' }] },
-    { id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
+    { id: 'overdrawn', once: { per: 'turn' }, when: { stat: 'coins', lt: 0 }, effects: [{ notify: 'The bank has written.', tag: 'money' }] },
+    { id: 'empty', once: { per: 'turn' }, when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
     // A happy team is a good review: once, the first week two of them are glad to be there.
     {
       id: 'review',

@@ -18,6 +18,7 @@
 import {
   definePlugin,
   holds,
+  reasonOf,
   renderAction,
   stringOf,
   type Blocked,
@@ -27,6 +28,7 @@ import {
   type EffectRef,
   type Game,
   type GameState,
+  type Once,
   type PluginArgs,
   type PluginContext,
   type PluginProblem,
@@ -70,8 +72,12 @@ export type CheatDef = {
   blocked?: Blocked[]
   /** The heading it is listed under in the panel. Cheats with none come first. */
   group?: string
-  /** Usable once in a save. */
-  once?: boolean
+  /**
+   * Usable once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`),
+   * as a button's `once` is. `reason` is what the button reads once it's
+   * used: the plugin's `cheats/usedOnce` string, "Already used.", if left out.
+   */
+  once?: Once
 }
 
 /** One use of a cheat: which, and on which turn. */
@@ -90,7 +96,8 @@ export type CheatView = {
   description: string
   /** The heading it goes under, or null. */
   group: string | null
-  once: boolean
+  /** How often it can be used, as its `once` says: `'game'`, `'turn'`, or null for any number of times. */
+  once: 'game' | 'turn' | null
   /** How many times this save has used it. */
   used: number
   /** The button that uses it: greyed out with its reason while blocked or, for a `once` cheat, after its use. */
@@ -129,6 +136,11 @@ function timesUsed(slice: CheatsState, cheat?: string): number {
   return cheat === undefined ? slice.used.length : slice.used.filter((use) => use.cheat === cheat).length
 }
 
+/** Has a cheat with `once` been used as often as it can: ever, or this turn? */
+function spent(state: GameState, slice: CheatsState, cheat: CheatDef): boolean {
+  return slice.used.some((use) => use.cheat === cheat.id && (cheat.once?.per !== 'turn' || use.turn === state.turn))
+}
+
 /** The first `blocked` entry that holds now, or undefined. */
 function blockedBy(cheat: CheatDef, state: GameState, game: Game): Blocked | undefined {
   return (cheat.blocked ?? []).find((entry) => holds(state, game, entry.when))
@@ -140,8 +152,8 @@ function cantUse(state: GameState, args: PluginArgs, context: PluginContext<Chea
   const cheat = cheatIn(game, args.id)
   if (!cheat) return stringOf(game, 'cheats/unknown')
   const blocked = blockedBy(cheat, state, game)
-  if (blocked) return blocked.reason
-  if (cheat.once && timesUsed(slice, cheat.id) > 0) return stringOf(game, 'cheats/usedOnce')
+  if (blocked) return reasonOf(game, blocked.reason)
+  if (cheat.once && spent(state, slice, cheat)) return reasonOf(game, cheat.once.reason ?? { string: 'cheats/usedOnce' })
   return undefined
 }
 
@@ -155,7 +167,7 @@ function cheatsView(state: GameState, context: PluginContext<CheatsState>): Chea
       name: cheat.name,
       description: cheat.description ?? '',
       group: cheat.group ?? null,
-      once: Boolean(cheat.once),
+      once: cheat.once?.per ?? null,
       used: timesUsed(slice, cheat.id),
       button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.name, command: runCheat(cheat.id) }),
     })),
@@ -217,7 +229,11 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
         cheatsOf(game).map((cheat) => ({
           list: 'cheats',
           id: cheat.id,
-          refs: [{ effects: cheat.effects }, ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] }))],
+          refs: [
+            { effects: cheat.effects },
+            { reason: cheat.once?.reason },
+            ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
+          ],
         })),
     },
     check: (game) => {
@@ -229,7 +245,8 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
         seen.add(cheat.id)
         if (typeof cheat.name !== 'string' || !cheat.name.trim()) problem('has no name')
         if (!Array.isArray(cheat.effects) || !cheat.effects.length) problem('has no effects')
-        for (const entry of cheat.blocked ?? []) if (typeof entry.reason !== 'string' || !entry.reason.trim()) problem('a blocked entry has no reason')
+        for (const entry of cheat.blocked ?? [])
+          if (typeof entry.reason === 'string' ? !entry.reason.trim() : typeof entry.reason?.string !== 'string') problem('a blocked entry has no reason')
       }
       return problems
     },

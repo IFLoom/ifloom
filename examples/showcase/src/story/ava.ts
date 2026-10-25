@@ -126,7 +126,7 @@ export const ava: Content = {
   ],
   triggers: [
     // Once a day after you've answered Ava's first text, a line of her small talk from the pool.
-    { id: 'ava.chat', once: 'turn', when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] },
+    { id: 'ava.chat', once: { per: 'turn' }, when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] },
   ],
   variants: {
     'ava.smalltalk': ['ava.smalltalk.rain', 'ava.smalltalk.beans', 'ava.smalltalk.river'],

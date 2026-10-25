@@ -70,6 +70,27 @@ describe('one kind of button', () => {
     expect(whyNot(tomorrow, game, { type: 'action', id: 'pray' })).toBeUndefined()
   })
 
+  it('is once in the game with once per game, refused in the engine’s words when it gives none', () => {
+    const game = town([{ id: 'vow', label: 'Make a vow', once: { per: 'game' }, effects: [{ kv: 'vowed', to: true }] }])
+    const once = apply(begin(game), game, { type: 'action', id: 'vow' }).state
+    const later = apply(once, game, { type: 'action', id: 'rest' }).state
+    expect(later.turn).toBeGreaterThan(once.turn)
+    expect(whyNot(later, game, { type: 'action', id: 'vow' })).toBe('Already done.')
+  })
+
+  it('reads a reason by key from the strings, and the checker reports a key nobody has', () => {
+    const game = {
+      ...town([
+        { id: 'swim', label: 'Swim', blocked: [{ when: { all: [] }, reason: { string: 'tooCold' } }] },
+        { id: 'dive', label: 'Dive', blocked: [{ when: { all: [] }, reason: { string: 'noSuchLine' } }] },
+      ]),
+      strings: { tooCold: 'The water is too cold.' },
+    } as Game
+    expect(whyNot(begin(game), game, { type: 'action', id: 'swim' })).toBe('The water is too cold.')
+    expect(view(begin(game), game).actions.find((action) => action.id === 'swim')?.disabled).toBe('The water is too cold.')
+    expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toContain('action dive: no string named "noSuchLine"')
+  })
+
   it('is refused while its when fails, and leaves out a command that is itself', () => {
     const game = town([
       { id: 'night', label: 'Look at the stars', when: { kv: 'dark' }, effects: [] },

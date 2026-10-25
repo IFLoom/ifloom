@@ -27,10 +27,10 @@ Then add `shop()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one
 
 The plugin works on its own, and needs neither the [inventory](/docs/plugins/inventory) nor the [wardrobe](/docs/plugins/wardrobe): what it sells is held by the engine. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
 
-- **Calendar.** A vendor's `hours` are the calendar's periods, and "a day" for restocking and discounts is the calendar's day.
+- **Calendar.** A vendor's opening hours, written with [`shop.hours()`](#opening-hours), are the calendar's periods, and "a day" for restocking and discounts is the calendar's day.
 - **Places.** A vendor's `at` lists the locations it stands at, and the player can only buy there.
 
-Without the calendar, a vendor with `hours` is always open and a day is a turn. Without places, a vendor with `at` is everywhere.
+Without the calendar, a vendor with opening hours is always open and a day is a turn. Without places, a vendor with `at` is everywhere.
 
 ## shop
 
@@ -52,7 +52,7 @@ const counter = shop.vendor({
   id: 'counter',
   name: 'The counter',
   at: ['cafe'],
-  hours: ['morning', 'afternoon'],
+  blocked: [shop.hours(['morning', 'afternoon'])],
   buysBack: 0.5,
   discounts: { off: 0.5 },
   goods: [
@@ -111,26 +111,43 @@ The entity's other fields work as on any entity. `at` is left out because a vend
 ```ts
 type Vendor = {
   at?: string[]
-  hours?: string[]
-  open?: Condition
-  closed?: string
+  blocked?: Blocked[]
   goods: GoodDef[]
   buysBack?: number
   discounts?: DiscountDef
 }
 ```
 
-What the `shop/vendor` trait holds. The plugin declares the trait and types it, so `traitOf(game, 'vendor:counter', 'shop/vendor')` reads a `Vendor`.
+What the `shop/vendor` trait holds. The plugin declares the trait and types it, so `traitOf(state, game, 'vendor:counter', 'shop/vendor')` reads a `Vendor`.
 
 | Field | What it is |
 |---|---|
 | `at` | The [places](/docs/plugins/places) locations it stands at. Checked when the game has places. Everywhere if left out. |
-| `hours` | The [calendar](/docs/plugins/calendar)'s periods it's open in, such as `['morning', 'afternoon']`. Always open if left out. |
-| `open` | A [condition](/docs/reference/conditions) it's only open while, on top of `hours`, such as `calendar.weekday(0, 1, 2, 3, 4)`. |
-| `closed` | What the player reads while it's closed. `Closed.` (the [`shop/closed`](#strings) string) if left out. |
+| `blocked` | When it's closed, as a list of [`Blocked`](/docs/reference/actions#blocked) entries: the first whose `when` holds closes it, and its `reason` is what the player reads, on the counter and as the refusal. [`shop.hours()`](#opening-hours) writes one for opening hours. Always open if left out. |
 | `goods` | What it sells, in the order it lists them. |
 | `buysBack` | The fraction of a thing's price it pays to take one back, from 0 to 1. It takes nothing back if left out. |
 | `discounts` | Goods marked down each day. See [Discounts](#discounts). |
+
+### Opening hours
+
+```ts
+const shop: {
+  hours(periods: readonly string[], reason?: Reason): Blocked
+}
+```
+
+A `blocked` entry that closes a vendor outside these periods of the [calendar](/docs/plugins/calendar)'s day. Its reason is `reason`, or the [`shop/closed`](#strings) string, `Closed.`, so a game rewords every closed counter in its strings at once. It's `{ when: shop.outside(...periods), reason }`.
+
+```ts
+shop.vendor({
+  id: 'stall',
+  name: 'The fruit stall',
+  blocked: [shop.hours(['morning'], 'The stall packs up at noon.'), { when: calendar.weekend(), reason: 'No market at weekends.' }],
+  goods: [{ entity: 'food:apple', price: { coins: 1 } }],
+})
+```
+
+Without the calendar there is no period of the day, so the vendor is never closed by its hours.
 
 ### GoodDef
 
@@ -211,7 +228,7 @@ Each day, `count` of the vendor's goods (1 if left out) are marked down by `off`
 
 1. `That isn’t for sale here.` for a vendor or thing that doesn't exist, or a good whose `when` doesn't hold.
 2. `You aren’t at that shop.` when the game has places and the player isn't at one of the vendor's `at`.
-3. The vendor's `closed` line, or `Closed.`, outside its `hours` or while its `open` doesn't hold.
+3. The `reason` of the vendor's first `blocked` entry that holds, such as `Closed.` outside the hours [`shop.hours()`](#opening-hours) wrote.
 4. `Sold out.` when the vendor has fewer left than `count`.
 5. The stat's own [`lacking`](/docs/reference/stats#statdef) line when the player has too little of it, such as `You need 4 coins.`
 
@@ -264,7 +281,8 @@ The checker reports an `shop.open` for a vendor the game doesn't have (`unknown 
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now. Where the player is doesn't matter. |
+| `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now: none of its `blocked` entries holds. Where the player is doesn't matter. |
+| `{ 'shop/outside': { period } }` | `shop.outside(...periods)` | The [calendar](/docs/plugins/calendar)'s period of the day is none of these. Never, in a game without the calendar. [`shop.hours()`](#opening-hours) closes a vendor with it. |
 | `{ 'shop/inStock': { vendor, entity } }` | `shop.inStock(vendor, entity)` | The vendor offers the thing now and has at least one left. Always, for a good that never runs out. |
 
 An unknown vendor or thing is false.
@@ -475,12 +493,14 @@ const shop: {
   sell(vendor: string, entity: EntityRef, count?: number): CommandRef
   vendorOpen(vendor: string): Condition
   inStock(vendor: string, entity: EntityRef): Condition
+  outside(...periods: string[]): Condition
+  hours(periods: readonly string[], reason?: Reason): Blocked
   open(vendor: string): Effect
   sellable(price: Record<string, number>): { 'shop/sellable': Sellable }
 }
 ```
 
-`shop.open` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter).
+`shop.open` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter). `shop.hours` writes a vendor's opening hours. See [Opening hours](#opening-hours).
 
 ### vendorsOf, vendorOf and vendorRef
 
@@ -527,9 +547,9 @@ Vendors still written as a list in `data.shop.vendors`, as content did before sc
 
 ## Gotchas
 
-- **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `at` and `hours` included.
-- **The calendar's `hours` and the places map's opening hours are separate.** A location's [`blocked`](/docs/plugins/places#the-location-trait) stops the player getting in, and a vendor's `hours` stops it selling. The showcase sets both, so the café and its counter close together.
-- **A vendor's `hours` are asked of the calendar.** They're period ids, not a condition. For days of the week, add `open: weekday(…)`.
+- **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `at` and `blocked` included.
+- **A place's opening hours and a vendor's are separate.** A location's [`blocked`](/docs/plugins/places#the-location-trait) stops the player getting in, and a vendor's `blocked` stops it selling. The showcase sets both, so the café and its counter close together.
+- **For days of the week, add an entry.** `shop.hours()` reads the period of the day. A counter shut at weekends adds `{ when: calendar.weekend(), reason: 'Closed at weekends.' }` beside it.
 - **The price on a button is today's.** A discount drawn for today changes the price on the button, and tomorrow it may be back to full.
 - **Selling back pays from the full price,** not today's discounted one.
 - **Selling back a good that never runs out takes it from you,** and no vendor holds it after.

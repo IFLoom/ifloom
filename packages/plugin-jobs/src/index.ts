@@ -12,6 +12,7 @@
  * map. Without them, a shift can be worked anywhere, once a turn.
  */
 import {
+  reasonOf,
   definePlugin,
   formatStat,
   holds,
@@ -242,7 +243,7 @@ function cantApply(state: GameState, args: PluginArgs, context: PluginContext<Jo
   if (!job) return stringOf(game, 'jobs/unknown')
   if (slice.held[job.id]) return stringOf(game, 'jobs/alreadyHired')
   if (slice.fired[job.id] !== undefined) return stringOf(game, 'jobs/wasFired')
-  for (const entry of job.blocked ?? []) if (holds(state, game, entry.when)) return entry.reason
+  for (const entry of job.blocked ?? []) if (holds(state, game, entry.when)) return reasonOf(game, entry.reason)
   return undefined
 }
 
@@ -506,7 +507,7 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
               entity: location.includes(':') ? location : `location:${location}`,
               carrying: 'places/location',
             })),
-            ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] })),
+            ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
             {
               within: 'shift',
               refs: [...Object.keys(job.shift?.cost ?? {}).map((stat): Reference => ({ stat, writes: true })), { effects: job.shift?.effects }],

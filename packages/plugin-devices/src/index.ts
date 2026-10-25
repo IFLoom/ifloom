@@ -12,6 +12,7 @@
  * messages channel, a feed), or a panel the UI draws by name.
  */
 import {
+  reasonOf,
   actionReferences,
   artSrc,
   amountOf,
@@ -188,7 +189,8 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
   function refusal(state: GameState, game: Game, app: AppDef | undefined): string | undefined {
     if (!app) return stringOf(game, 'devices/noSuchApp')
     if (!holds(state, game, app.when)) return stringOf(game, 'devices/notInstalled')
-    return app.blocked?.find((entry) => holds(state, game, entry.when))?.reason
+    const blocked = app.blocked?.find((entry) => holds(state, game, entry.when))
+    return blocked ? reasonOf(game, blocked.reason) : undefined
   }
 
   /** Is something left off the screen by one of its `blocked` entries that hides? */
@@ -345,7 +347,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
           refs: [
             { entry: app.on, plugin: ID, list: 'devices', noun: 'device' },
             { when: app.when },
-            ...(app.blocked ?? []).map((entry) => ({ when: entry.when })),
+            ...(app.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
             ...(app.badge !== undefined && !(typeof app.badge === 'object' && 'when' in app.badge) ? [{ amount: app.badge }] : []),
             ...(typeof app.badge === 'object' && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {

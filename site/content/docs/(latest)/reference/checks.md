@@ -206,6 +206,10 @@ A spoken line written under an id, `@ava: "…"` in [prose](/docs/reference/pros
 | `a spoken line is under "…", which names no entity` | No entity has that id, or that reference. |
 | `a spoken line is under "…", which more than one kind has: name it as "kind:…"` | A bare id two kinds share, and neither is a `character`. Write the full reference, `@staff:jo`. |
 
+### Reasons by key
+
+A [`Reason`](/docs/reference/actions#reason) written by key, `{ string: 'shop/closed' }`, in a `blocked` entry or a `once`, must name a line the game's strings, a plugin's strings or the engine's have. One that doesn't gives `no string named "…"` where it's written. Most come from a helper, such as [`places.onlyAt()`](/docs/plugins/places#helpers), whose key is its plugin's own.
+
 ### Absent partners
 
 A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/docs/reference/plugins#cooperates). That holds for a condition, an effect and a command. In play it isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.

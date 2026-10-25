@@ -10,6 +10,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A refusal's words can come from the strings table: a `blocked` entry's or a `once`'s `reason` is a [`Reason`](/docs/reference/actions#reason), words written in place or a line by key, `{ string: 'shop/closed' }`, so a game rewords it once for everywhere it's used. [`reasonOf(game, reason)`](/docs/reference/strings#reasonof) reads one. The checker reports `no string named "…"` for a key nobody has.
+- A button can be once in the whole game: `once: { per: 'game' }`, beside `{ per: 'turn' }`, on a choice, an action or a cheat. Its `reason` is optional, and the engine's new `done` string, `Already done.`, is used without one.
+- [`shop.hours(periods, reason?)`](/docs/plugins/shop#opening-hours) writes a vendor's opening hours as a `blocked` entry, and the `shop/outside` condition (`shop.outside('evening')`) holds while the calendar's period is none of these.
+
 - A person can have a face for avatars beside their picture: the `cast/person` trait's [`portrait`](/docs/plugins/cast#person), written in `cast.person({ ..., image: 'character/ava.jpg', portrait: 'faces/ava.png' })`. The cast's cards, message threads, posts and contacts draw it, and it falls back to the entity's `image`. Other plugins ask for it with the `cast/portrait` query.
 
 - [`ifloom words`](/docs/cli#ifloom-words) lists every field a player reads, by its key in a translation's `words` table, with its words and where it is. `ifloom words --out words.en.json` writes them as a table to translate from. It builds the game with no translation, from its game module.
@@ -186,6 +190,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** one `once` shape, the [`Once`](/docs/reference/actions#once) type `{ per: 'game' | 'turn', reason? }`, for choices, actions, triggers and cheats. A trigger's `once: 'turn'` is `once: { per: 'turn' }`, and a cheat's `once: true` is `once: { per: 'game' }`. A cheat's view gives `once` as `'game'`, `'turn'` or `null`. An older pack is rewritten when it loads.
+- **Breaking:** a vendor is closed by its `blocked` entries, the gating everything else the player can be refused uses. Its `hours`, `open` and `closed` are gone: write `blocked: [shop.hours(['morning', 'afternoon'])]`, and add an entry for anything else, such as `{ when: calendar.weekend(), reason: 'Closed at weekends.' }`. An older pack is rewritten when it loads, a translation of its `closed` line included. A vendor's `at`, where it stands, stays.
+- [`places.onlyAt()`](/docs/plugins/places#helpers) with no reason refuses with the plugin's new `places/notHere` string, `Not here.`, which a game can reword, where it wrote the English words into the entry.
 
 - **Breaking:** every picture and video in the view has been through [`artSrc`](/docs/reference/prose#artsrc), so a UI draws each path as it comes and never resolves one itself. A notice's `image`, an achievement's, and a feed post's `image` and `video` are written as a path in the game's `art/` folder, as an entity's `image` is, where they used to be passed through as written: `'photo/park.jpg'` and `'art/photo/park.jpg'` both give `'art/photo/park.jpg'`. `artSrc` leaves a URL (`https:`, `data:`) as it is.
 - **Breaking:** a `variants` block's `art`, the variants each member's picture is drawn from, is `image`. An older pack is rewritten when it loads.

@@ -72,7 +72,7 @@ Notation can carry its own number too, `'2d6+1'`, and `plus` adds on top. The ro
 Any effect list can roll, so the game can roll by itself. Small Town counts the ducks as you arrive at the park, with a [trigger](/docs/reference/triggers):
 
 ```ts
-triggers: [{ id: 'ducks', once: 'turn', when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] }],
+triggers: [{ id: 'ducks', once: { per: 'turn' }, when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] }],
 // 'place.park.ducks': '{{ducks}} of them paddle over at once, in case you brought bread.'
 ```
 

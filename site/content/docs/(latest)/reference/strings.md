@@ -115,6 +115,7 @@ Why a [setting](/docs/reference/settings) can't be changed to a value. A setting
 |---|---|---|
 | `lookAround` | `Look around` | The way out of a scene the game no longer has. |
 | `momentPassed` | `The moment has passed.` | The body of a scene the game no longer has. |
+| `done` | `Already done.` | A button with [`once`](/docs/reference/actions#once) once it's spent, when the `once` gives no `reason`. |
 | `you` | `You` | The name the player's [spoken lines](/docs/reference/prose#speech), `@you: "Hi."`, show when [`rules.saveName`](/docs/reference/rules#savename) gives the player none. A game in another language sets its own word. |
 
 ### Saves
@@ -250,6 +251,21 @@ Use it in your own UI for the words it shares with the engine, and in a plugin f
 - **A missing key shows itself.** A key nobody wrote comes back as the key, such as `'kites/noWind'`, so it's easy to spot on screen.
 - **A placeholder with no value stays as written.** `stringOf(game, 'notEnough')` gives `'Not enough {stat}.'`. A translation that uses a placeholder the engine doesn't give for that key prints it as written too.
 - **Plain substitution only.** There are no plurals, and no way to move a word that a line builds into a different spot. For example, the calendar's `{period}` is always one word from its `calendar/period.*` keys, and `calendar/tomorrow` puts "tomorrow" next to it. Full translation into languages that need more isn't covered yet. See [API status](/docs/guide/status).
+
+## reasonOf
+
+```ts
+function reasonOf(game: Game | undefined, reason: Reason): string
+```
+
+The words of a [`Reason`](/docs/reference/actions#reason), a refusal's: one written in place is returned as it is, and one by key, `{ string: 'shop/closed' }`, is read with `stringOf`. Use it in a plugin or a UI of your own that reads a [`Blocked`](/docs/reference/actions#blocked) entry or a [`Once`](/docs/reference/actions#once) itself; the engine's own refusals and the view already give the words.
+
+```ts
+import { reasonOf } from '@ifloom/engine'
+
+reasonOf(game, 'Too tired.')                // 'Too tired.'
+reasonOf(game, { string: 'places/notHere' })  // 'Not here.', or the game's own words for it
+```
 
 ## Plugins' strings
 

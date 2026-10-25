@@ -4,8 +4,8 @@
  * buttons (a place's) or answered by its `action` (an app's). One with a
  * cost, effects or `once` is run by the `action` command, by its id.
  */
-import { stringOf } from '../strings.ts'
-import type { ActionDef, Blocked, Game } from '../game.ts'
+import { reasonOf, stringOf } from '../strings.ts'
+import type { ActionDef, Blocked, Game, Once, Reason } from '../game.ts'
 import type { Command, Condition, Effect, GameState } from '../types.ts'
 import { commandOf } from '../calls.ts'
 import type { Reference } from '../references.ts'
@@ -49,7 +49,7 @@ export type ActionsShape = {
  * A `blocked` entry written the other way round: refused with `reason` unless
  * `when` holds. `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
  */
-export function need(reason: string, when: Condition): Blocked {
+export function need(reason: Reason, when: Condition): Blocked {
   return { when: { not: when }, reason }
 }
 
@@ -65,9 +65,15 @@ function countedOnce(state: GameState, id: string): GameState {
   return { ...state, chosen: { ...state.chosen, [id]: times } }
 }
 
-/** Has the action been done this turn, as its `once` counts it? */
-export function doneThisTurn(state: GameState, id: string): boolean {
-  return state.chosen?.[id]?.last === state.turn
+/**
+ * Is a button with this `once` spent, as `state.chosen` counts it under its
+ * key (an action's id, a choice's `<scene>#<id>`): pressed this turn, or
+ * ever? Never, with no `once`.
+ */
+export function onceSpent(state: GameState, key: string, once: Once | undefined): boolean {
+  const chosen = state.chosen?.[key]
+  if (!once || !chosen) return false
+  return once.per === 'game' ? chosen.n > 0 : chosen.last === state.turn
 }
 
 /**
@@ -88,9 +94,9 @@ export function actionBlocked(
   const locked = lockedBy(state, game, { type: 'action', id }, cx)
   if (locked) return locked
   for (const entry of action.blocked ?? []) {
-    if (cx.holds(state, game, entry.when)) return entry.reason
+    if (cx.holds(state, game, entry.when)) return reasonOf(game, entry.reason)
   }
-  if (action.once && doneThisTurn(state, id)) return action.once.reason
+  if (onceSpent(state, id, action.once)) return reasonOf(game, action.once!.reason ?? { string: 'done' })
   const short = costRefusal(state, game, action.cost, cx)
   if (short) return short
   if (action.command && commandOf(action.command).type === 'choose') return stringOf(game, 'notOnOffer')
@@ -230,7 +236,8 @@ export function actionReferences(action: ActionDef): Reference[] {
     { words: action.label, field: 'label' },
     ...(action.labels ?? []).flatMap((entry) => [{ words: entry.label, field: 'label' }, { when: entry.when }]),
     { when: action.when },
-    ...(action.blocked ?? []).map((entry) => ({ when: entry.when })),
+    ...(action.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
+    { reason: action.once?.reason },
     { effects: action.effects },
     { command: action.command },
     { ui: action.ui },

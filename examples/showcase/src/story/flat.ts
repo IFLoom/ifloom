@@ -53,7 +53,7 @@ export const flat: Content = {
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.
     {
       id: 'rent',
-      once: 'turn',
+      once: { per: 'turn' },
       when: { all: [calendar.weekday(6), calendar.day({ gte: 6 })] },
       effects: [
         { stat: 'coins', by: -30 },

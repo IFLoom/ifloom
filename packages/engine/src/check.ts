@@ -11,6 +11,7 @@ import { absentPartner, pluginArgProblems, pluginOf, pluginCommand, pluginName, 
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
+import { stringOf } from './strings.ts'
 import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, type FeatureList } from './features/registry.ts'
 import type { FeatureCheckTools, ResolveTools, Resolvers } from './features/feature.ts'
 import { COMMAND_TYPES, conditionKeys, effectKeys, featureContext } from './core.ts'
@@ -219,6 +220,10 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       return members.length ? [] : [`variants "${ref.variants}" has no lines`]
     }
     if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"${unprefixed(ref.value)}`]
+    if ('reason' in ref) {
+      const key = typeof ref.reason === 'object' && ref.reason !== null ? ref.reason.string : undefined
+      return key === undefined || stringOf(game, key) !== key ? [] : [`no string named "${key}"`]
+    }
     if ('picture' in ref) {
       file(where, 'picture', pagePath(artSrc(ref.picture)))
       return []

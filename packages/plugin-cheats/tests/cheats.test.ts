@@ -22,7 +22,7 @@ const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 
 const defs: CheatDef[] = [
   { id: 'coins', name: '+20 coins', description: 'A little help.', effects: [{ stat: 'coins', by: 20 }] },
-  { id: 'map', name: 'Show the map', group: 'Story', once: true, effects: [{ kv: 'map', to: true }] },
+  { id: 'map', name: 'Show the map', group: 'Story', once: { per: 'game' }, effects: [{ kv: 'map', to: true }] },
   {
     id: 'gold',
     name: '+500 coins',
@@ -119,7 +119,7 @@ describe('cheats', () => {
     const g = game()
     const before = shown(g, fresh(g))
     expect(before.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold'])
-    expect(before.cheats[0]).toMatchObject({ name: '+20 coins', description: 'A little help.', group: null, once: false, used: 0 })
+    expect(before.cheats[0]).toMatchObject({ name: '+20 coins', description: 'A little help.', group: null, once: null, used: 0 })
     expect(before.cheats[0].button).toMatchObject({
       id: 'cheat.coins',
       label: '+20 coins',
@@ -127,10 +127,18 @@ describe('cheats', () => {
     })
     expect(before.cheats[0].button.disabled).toBeUndefined()
     expect(before.cheats[0].button.price).toBeUndefined()
-    expect(before.cheats[1]).toMatchObject({ group: 'Story', once: true })
+    expect(before.cheats[1]).toMatchObject({ group: 'Story', once: 'game' })
     const used = run(fresh(g), g, cheats.use('map'))
     expect(shown(g, used).cheats[1].button.disabled).toBe('Already used.')
     expect(apply(used, g, cheats.use('map')).reason).toBe('Already used.')
+  })
+
+  it('refuses a cheat once a turn until the turn ends, with its own reason', () => {
+    const daily: CheatDef = { id: 'nap', name: 'Nap', once: { per: 'turn', reason: 'Once a day.' }, effects: [{ stat: 'coins', by: 1 }] }
+    const g = game({ pack: { data: { cheats: { cheats: [...defs, daily] } } } })
+    const used = run(fresh(g), g, cheats.use('nap'))
+    expect(apply(used, g, cheats.use('nap')).reason).toBe('Once a day.')
+    expect(apply(apply(used, g, { type: 'action', id: 'rest' }).state, g, cheats.use('nap')).ok).toBe(true)
   })
 
   it('refuses a cheat that isn’t there', () => {

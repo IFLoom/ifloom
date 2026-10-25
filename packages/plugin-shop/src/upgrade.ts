@@ -4,7 +4,7 @@
  * engine once carried this plugin's content forward itself: each step is
  * keyed by the schema it upgrades from.
  */
-import type { CommandStep, ContentStep, RawPack } from '@ifloom/engine'
+import { hash, type CommandStep, type ContentStep, type RawPack } from '@ifloom/engine'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -65,14 +65,65 @@ function vendorsToEntities(pack: RawPack): RawPack {
   } as RawPack
 }
 
+/**
+ * A vendor's trait as schema 27 has it: its `hours`, `open` and `closed` are
+ * `blocked` entries, closed outside its hours (`shop/outside`, as
+ * `shop.hours()` writes it) and while `open` doesn't hold,
+ * with `closed` (else the plugin's `shop/closed` string) as their reason.
+ */
+function gatingToBlocked(vendor: Record<string, unknown>): Record<string, unknown> {
+  if (!('hours' in vendor) && !('open' in vendor) && !('closed' in vendor)) return vendor
+  const { hours, open, closed, ...rest } = vendor
+  const reason = typeof closed === 'string' ? closed : { string: 'shop/closed' }
+  const blocked = [
+    ...(Array.isArray(hours) ? [{ when: { 'shop/outside': { period: hours } }, reason }] : []),
+    ...(open !== undefined ? [{ when: { not: open }, reason }] : []),
+    ...(Array.isArray(rest.blocked) ? rest.blocked : []),
+  ]
+  return { ...rest, ...(blocked.length ? { blocked } : {}) }
+}
+
+/** How the words table names a blocked entry, which has no id: a short hash of its reason as written, as the engine names it. */
+const entryKey = (text: string) => hash(text).toString(16).padStart(8, '0').slice(0, 6)
+
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 24
+export const CONTENT_VERSION = 27
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 12 → 13: items leave the engine; what a vendor sells is an entity, and the shop's calls name it.
   12: (pack, tools) => tools.calls(goodsToThings(pack), (call) => (ITEM_CALLS.has(call.name) ? { name: call.name, with: itemArgs(call.with) } : call)),
   // 23 → 24: a vendor is an entity with the `shop/vendor` trait, its name the entity's.
   23: (pack) => vendorsToEntities(pack),
+  // 26 → 27: a vendor's `hours`, `open` and `closed` are its `blocked` entries, wherever the trait is written,
+  // and a translation's words for `closed` are its entries' reason.
+  26: (pack, tools) =>
+    tools.wordKeys(
+      tools.objects(pack, (value) => {
+        const vendor = value['shop/vendor']
+        if (!isRecord(vendor)) return value
+        // On an entity or a kind, the trait's data; in a `traits` table, its rows by reference.
+        const rows = Object.keys(vendor).length > 0 && Object.keys(vendor).every((key) => key.includes(':'))
+        const next = rows
+          ? Object.fromEntries(Object.entries(vendor).map(([ref, row]) => [ref, isRecord(row) ? gatingToBlocked(row) : row]))
+          : gatingToBlocked(vendor)
+        return { ...value, 'shop/vendor': next }
+      }),
+      (key) => {
+        // Named by its words as written, so only a pack that has the vendor can say what they were.
+        const name = key.endsWith('.traits.shop/vendor.closed') ? closedKey(pack, key) : undefined
+        return name ? `${key.slice(0, -'closed'.length)}blocked.${name}.reason` : key
+      },
+    ),
+}
+
+/** The written `closed` of the vendor a words key names, which its blocked entries are named by. */
+function closedKey(pack: RawPack, key: string): string | undefined {
+  const ref = key.slice('entity.'.length, -'.traits.shop/vendor.closed'.length)
+  const entity = (Array.isArray(pack.entities) ? pack.entities : []).find((one) => isRecord(one) && `${String(one.of)}:${String(one.id)}` === ref) as
+    | Record<string, unknown>
+    | undefined
+  const closed = isRecord(entity?.traits) && isRecord(entity.traits['shop/vendor']) ? entity.traits['shop/vendor'].closed : undefined
+  return typeof closed === 'string' ? entryKey(closed) : undefined
 }
 
 /** The version of this plugin's commands. */

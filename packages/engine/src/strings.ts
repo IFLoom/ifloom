@@ -48,6 +48,8 @@ export const STRINGS = {
   /** The name the player's spoken lines show (`@you: "Hi."`) when the game's `rules.saveName` gives none. A game in another language sets its own. */
   you: 'You',
   momentPassed: 'The moment has passed.',
+  /** On a button that can be pressed only once, a game or a turn, once it has been. */
+  done: 'Already done.',
   // Saves.
   notASave: 'That is not a save file.',
   otherGame: 'That save belongs to another game ({game}).',
@@ -84,4 +86,12 @@ export function stringOf(game: Game | undefined, key: StringKey | (string & {}),
   }
   text ??= (STRINGS as Record<string, string>)[key] ?? key
   return text.replace(/\{(\w+)\}/g, (whole: string, name: string) => (name in vars ? String(vars[name]) : whole))
+}
+
+/**
+ * A refusal's words: a `Reason` written in place as it is, or one by key
+ * (`{ string: 'shop/closed' }`) from the game's strings, through `stringOf`.
+ */
+export function reasonOf(game: Game | undefined, reason: string | { string: string }): string {
+  return typeof reason === 'string' ? reason : stringOf(game, reason.string)
 }

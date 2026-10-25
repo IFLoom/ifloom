@@ -263,7 +263,7 @@ You start with a newspaper. Its `usable` trait, "Read the job ads", opens the bo
 
 `story/moving-day.ts`, `triggers`. `welcome` [fires](/docs/reference/triggers) the first time the player is on the high street. It raises a [notice](/docs/reference/notices), a note under the door, and gives the player the note itself, `note:welcome`, with the engine's `give`.
 
-`rent` repeats, because it's `once: 'turn'`. Its condition is Sunday from day 6 on, `{ all: [calendar.weekday(6), calendar.day({ gte: 6 })] }` with the calendar's conditions, so it fires on the first command of every Sunday. It takes 30 coins and raises the notice `Rent paid: 30 coins` with the fixed id `rent`, so each week's notice replaces the last one rather than piling up. It's the town's one bill, so the coins the player earns have somewhere to go.
+`rent` repeats, because it's `once: { per: 'turn' }`. Its condition is Sunday from day 6 on, `{ all: [calendar.weekday(6), calendar.day({ gte: 6 })] }` with the calendar's conditions, so it fires on the first command of every Sunday. It takes 30 coins and raises the notice `Rent paid: 30 coins` with the fixed id `rent`, so each week's notice replaces the last one rather than piling up. It's the town's one bill, so the coins the player earns have somewhere to go.
 
 ### Notes and photos
 

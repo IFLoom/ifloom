@@ -19,6 +19,21 @@ export type { StoryletFields } from './features/scenes.ts'
 export type { MinigameSceneFields } from './features/minigames.ts'
 
 /**
+ * Words a player reads when something is refused: written in place
+ * (`'Closed.'`), or a line of the strings table by its key (`{ string:
+ * 'shop/closed' }`), so a game rewords it once for every place it is used.
+ * Read it with `reasonOf`.
+ */
+export type Reason = string | { string: string }
+
+/**
+ * How often something can happen: once in the whole game, or once a turn.
+ * `reason` is what the player reads on a button once it is spent; the
+ * engine's `done` string ("Already done.") if left out.
+ */
+export type Once = { per: 'game' | 'turn'; reason?: Reason }
+
+/**
  * Why something the player could do is refused for now: a choice, an action,
  * a place, an app. Each entry is checked in order, and the first
  * whose `when` holds refuses it with its `reason`, which the button shows
@@ -28,7 +43,7 @@ export type Blocked = {
   /** Refused while this holds. */
   when: Condition
   /** What the player reads on the greyed-out button, and the refusal. */
-  reason: string
+  reason: Reason
   /** Leave it off the screen while `when` holds, rather than greyed out. */
   hide?: boolean
 }
@@ -74,11 +89,12 @@ export type ButtonDef = {
    */
   command?: CommandRef
   /**
-   * Once a turn: spent once it has been pressed this turn, as `state.chosen`
-   * counts it. `reason` is what the player reads on it afterwards: a choice
-   * stays on screen and pays nothing more, an action is refused.
+   * Once in the game (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`):
+   * spent once it has been pressed, as `state.chosen` counts it. `reason` is
+   * what the player reads on it afterwards: a choice stays on screen and pays
+   * nothing more, an action is refused.
    */
-  once?: { per: 'turn'; reason: string }
+  once?: Once
   /** Words the UI can style or filter it by. The engine gives them no meaning. */
   tags?: string[]
   /** A warning that it can't be undone, which the UI shows on it. */

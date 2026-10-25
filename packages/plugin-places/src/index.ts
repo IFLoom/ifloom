@@ -35,6 +35,7 @@ import {
   lockOn,
   lockedOut,
   parseRef,
+  reasonOf,
   stringOf,
   renderAction,
   stageView,
@@ -43,6 +44,7 @@ import {
   withTrait,
   type ActionDef,
   type Blocked,
+  type Reason,
   type Block,
   type CommandRef,
   type Condition,
@@ -324,7 +326,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     if (!place) return stringOf(game, `${ID}/noSuchPlace`)
     if (to === at) return stringOf(game, `${ID}/alreadyHere`)
     const blocked = place.blocked?.find((entry) => holds(state, game, entry.when))
-    if (blocked) return blocked.reason
+    if (blocked) return reasonOf(game, blocked.reason)
     if (at === null || !placeIds(locationOf(state, game, at)?.exits).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
     return undefined
   }
@@ -361,7 +363,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       { within: 'audio', refs: Object.entries(place?.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
       { stage: place?.stage, choices: null },
       { ui: place?.ui },
-      ...(place?.blocked ?? []).map((entry) => ({ when: entry.when })),
+      ...(place?.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
       ...(place?.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
       ...(place?.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
     ],
@@ -381,6 +383,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       cannotGetThere: 'You cannot get there from here.',
       pickUp: 'Pick up',
       notLyingHere: 'There is no {thing} here.',
+      notHere: 'Not here.',
     },
     // Each location is a unique entity, so it can hold things: what lies there. Not listed: the places are the plugin's to show.
     content: { kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }] },
@@ -559,8 +562,8 @@ const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: plac
 const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { location: places } })
 /** The effect that puts the player somewhere at once. */
 const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
-/** A `blocked` entry: refused anywhere but these places. Its reason is plain text, "Not here." if left out. */
-const onlyAt = (places: string[], reason?: string): Blocked => ({ when: { not: at(...places) }, reason: reason ?? 'Not here.' })
+/** A `blocked` entry: refused anywhere but these places, with `reason` (the plugin's `places/notHere` string, "Not here.", if left out). */
+const onlyAt = (places: string[], reason?: Reason): Blocked => ({ when: { not: at(...places) }, reason: reason ?? { string: `${ID}/notHere` } })
 
 /**
  * The plugin, with its helpers on it: `places()` makes the plugin for the

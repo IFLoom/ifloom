@@ -6,6 +6,7 @@
  * runner refuses `save` and skips its autosave while it holds.
  */
 import type { Blocked, Game } from '../game.ts'
+import { reasonOf } from '../strings.ts'
 import type { Condition, GameState } from '../types.ts'
 import { appended, defineFeature } from './feature.ts'
 
@@ -45,7 +46,7 @@ const ALLOWED: SavingView = Object.freeze({ allowed: true, reason: null, visible
 /** Whether the player can save in this state, by the game's `saveable`. */
 export function savingIn(state: GameState, game: Game, holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean): SavingView {
   const entry = game.saveable?.find((blocked) => holds(state, game, blocked.when))
-  return entry ? { allowed: false, reason: entry.reason, visible: !entry.hide } : ALLOWED
+  return entry ? { allowed: false, reason: reasonOf(game, entry.reason), visible: !entry.hide } : ALLOWED
 }
 
 export const saving = defineFeature<SavingShape>({

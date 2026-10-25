@@ -110,7 +110,7 @@ Every choice that moves on to the next chapter ends a turn before it changes the
 { id: 'truth', effects: [{ stat: 'courage', by: 1 }, { turn: true }, { scene: 'ch3.door' }] },
 ```
 
-So `state.turn` is the chapter the reader has reached, counting from 0. Anything dated is dated in chapters, such as `{ since }`, a [trigger](/docs/reference/triggers) set to fire `once: 'turn'`, or a choice marked `once: { per: 'turn' }`. The Letter has no calendar, so there are no periods and no bed.
+So `state.turn` is the chapter the reader has reached, counting from 0. Anything dated is dated in chapters, such as `{ since }`, a [trigger](/docs/reference/triggers) set to fire `once: { per: 'turn' }`, or a choice marked `once: { per: 'turn' }`. The Letter has no calendar, so there are no periods and no bed.
 
 ### Playing it
 
@@ -367,7 +367,7 @@ In the first week there's only Ana. The kitchen gets out 24 covers, and the menu
 [Triggers](/docs/reference/triggers) watch a condition and act the first time it holds. With `{ count }`, a trigger can watch a kind:
 
 ```ts
-{ id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
+{ id: 'empty', once: { per: 'turn' }, when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
 {
   id: 'review',
   when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },

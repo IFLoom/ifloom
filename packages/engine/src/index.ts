@@ -14,6 +14,8 @@ export type {
   ActionDef,
   ButtonDef,
   Blocked,
+  Once,
+  Reason,
   ProseStore,
   SceneMedia,
   CarryOver,
@@ -89,7 +91,7 @@ export { SAVE_VERSION } from './types.ts'
 
 // Player-facing words
 export type { StringKey, Strings } from './strings.ts'
-export { STRINGS, stringOf } from './strings.ts'
+export { STRINGS, reasonOf, stringOf } from './strings.ts'
 
 // Running the game
 export type { Result } from './result.ts'

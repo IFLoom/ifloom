@@ -107,6 +107,8 @@ export type Reference =
    * the game doesn't have that plugin.
    */
   | { entry: string; plugin: string; list: string; noun: string }
+  /** A refusal's words: one by key (`{ string: 'shop/closed' }`) must be a string the game, a plugin or the engine has. */
+  | { reason: string | { string: string } | undefined }
   /** A picture file, through `artSrc`. */
   | { picture: string }
   /** A video file, through `artSrc`. */

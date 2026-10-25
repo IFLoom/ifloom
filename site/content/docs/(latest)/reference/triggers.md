@@ -31,7 +31,7 @@ const town: Content = {
     },
     {
       id: 'rent',
-      once: 'turn',
+      once: { per: 'turn' },
       when: { all: [calendar.weekday(6), calendar.day({ gte: 6 })] },
       effects: [
         { stat: 'coins', by: -30 },
@@ -56,7 +56,7 @@ type TriggerDef = {
   id: string
   when: Condition
   effects: EffectRef[]
-  once?: 'game' | 'turn'
+  once?: { per: 'game' | 'turn' }
 }
 ```
 
@@ -65,7 +65,7 @@ type TriggerDef = {
 | `id` | Names it in [`state.fired`](/docs/reference/state#fired) and in the loader's problems. |
 | `when` | A [condition](/docs/reference/conditions). The trigger fires when this holds and it hasn't already fired. |
 | `effects` | What happens: [effects](/docs/reference/effects), calls to a plugin's or the game's own (`{ 'game/payRent': {} }`, see [Calls by name](/docs/reference/custom#plugincall)), as in a data scene choice. |
-| `once` | `'game'` (the default) fires once in the whole game. `'turn'` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. |
+| `once` | `{ per: 'game' }` (the default) fires once in the whole game. `{ per: 'turn' }` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. It's the `per` of a button's [`Once`](/docs/reference/actions#once). |
 
 Declare triggers in your [content](/docs/reference/loader#content)'s `triggers`. They merge by id, so a pack's trigger replaces one with the same id.
 
@@ -84,12 +84,12 @@ There's one pass per command. A trigger that an earlier trigger makes true fires
 
 - **Triggers don't fire on `start`.** A new game is built, not run, so a trigger whose condition already holds on the first frame fires after the player's first command. To open the game with something, put it in the intro scene.
 - **They don't fire on a refused command.** Nor do they fire under [`applyEffects`](/docs/reference/effects#applyeffects), or when a game sets the state by hand.
-- **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or action that does X.
-- **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
+- **Fired is fired.** A trigger with `once: { per: 'game' }`, or none, never fires again, even when its condition stops holding and holds again. Only `once: { per: 'turn' }` repeats, at most once a turn. For "every time X happens", put the effects on the choice or action that does X.
+- **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: { per: 'turn' }` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
 - **A scene effect cuts in.** A trigger with a `{ scene: 'id' }` effect puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
 - **`text` in a `notify` effect is its words.** It's written out, with tokens filled as it's shown, as its title is.
 
 ## See it in an example
 
-- Small Town: the park's `visitors` trigger in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) runs `once: 'turn'`, `welcome` in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) runs once, and `rent` in [`examples/showcase/src/story/flat.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/flat.ts) charges 30 coins on Sundays.
+- Small Town: the park's `visitors` trigger in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) runs `once: { per: 'turn' }`, `welcome` in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) runs once, and `rent` in [`examples/showcase/src/story/flat.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/flat.ts) charges 30 coins on Sundays.
 - The Corner Café: [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) watches the till and the staff with `overdrawn`, `empty` and `review`.

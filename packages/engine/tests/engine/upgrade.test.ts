@@ -961,13 +961,64 @@ describe('content migrations', () => {
       id: 'mod:p9b',
       schema: 26,
       scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', art: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+      triggers: [
+        { id: 'ducks', once: 'turn', when: { kv: 'park' }, effects: [] },
+        { id: 'welcome', once: 'game', when: { kv: 'home' }, effects: [] },
+      ],
+      entities: [
+        {
+          of: 'vendor',
+          id: 'counter',
+          name: 'The counter',
+          traits: { 'shop/vendor': { hours: ['morning'], open: { kv: 'weekday' }, closed: 'The shutter is down.', goods: [] } },
+        },
+        { of: 'vendor', id: 'stall', name: 'The stall', traits: { 'shop/vendor': { hours: ['morning'], goods: [] } } },
+      ],
+      data: {
+        cheats: {
+          cheats: [
+            { id: 'map', name: 'Map', once: true, effects: [] },
+            { id: 'rich', name: 'Rich', once: false, effects: [] },
+          ],
+        },
+      },
+      words: { 'entity.vendor:counter.traits.shop/vendor.closed': 'Le rideau est baissé.' },
     }
     const plugins = [places(), cast(), shop(), cheats(), feed(), devices()] as Plugin[]
     const out = unwrap(upgradePack(v26, plugins)) as unknown as Record<string, unknown>
     expect(out).toMatchObject({
       schema: SCHEMA,
       scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', image: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+      triggers: [
+        { id: 'ducks', once: { per: 'turn' } },
+        { id: 'welcome', once: { per: 'game' } },
+      ],
+      entities: [
+        {
+          id: 'counter',
+          traits: {
+            'shop/vendor': {
+              goods: [],
+              blocked: [
+                { when: { 'shop/outside': { period: ['morning'] } }, reason: 'The shutter is down.' },
+                { when: { not: { kv: 'weekday' } }, reason: 'The shutter is down.' },
+              ],
+            },
+          },
+        },
+        {
+          id: 'stall',
+          traits: { 'shop/vendor': { goods: [], blocked: [{ when: { 'shop/outside': { period: ['morning'] } }, reason: { string: 'shop/closed' } }] } },
+        },
+      ],
+      data: { cheats: { cheats: [{ id: 'map', once: { per: 'game' } }, { id: 'rich' }] } },
     })
+    const counter = (out.entities as { traits: { 'shop/vendor': Record<string, unknown> } }[])[0].traits['shop/vendor']
+    expect(counter).not.toHaveProperty('hours')
+    expect(counter).not.toHaveProperty('closed')
+    expect((out.data as { cheats: { cheats: Record<string, unknown>[] } }).cheats.cheats[1]).not.toHaveProperty('once')
+    // The closed line's translation is the blocked entries' reason now, named by its words as written.
+    expect(Object.keys(out.words as Record<string, string>)[0]).toMatch(/^entity\.vendor:counter\.traits\.shop\/vendor\.blocked\.[0-9a-f]{6}\.reason$/)
   })
 
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
@@ -1416,7 +1467,7 @@ describe('plugin-owned migrations', () => {
     // From before plugins kept versions: the first-party plugins' versions follow the schema.
     const v12 = { id: 'mod:old', schema: 12, data: { shop: { vendors: [{ id: 'kiosk', goods: [{ item: 'paper', price: 1 }] }] } } }
     const upgraded = unwrap(upgradePack(v12, [shop(), wardrobe()]))
-    expect(upgraded.plugins).toEqual({ shop: 24, wardrobe: 13 })
+    expect(upgraded.plugins).toEqual({ shop: 27, wardrobe: 13 })
     // And at schema 24 the vendor is an entity with the shop's trait.
     const kiosk = (goods: unknown[]) => [{ of: 'vendor', id: 'kiosk', traits: { 'shop/vendor': { goods } } }]
     expect(upgraded.entities).toEqual(kiosk([{ entity: 'item:paper', price: 1 }]))

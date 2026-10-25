@@ -14,9 +14,10 @@
  *
  * A thing's price is the good's, else its `shop/sellable` trait's.
  *
- * It works with the calendar and places when the game has them: a vendor's
- * `hours` are the calendar's periods, and its `at` is where on the places
- * map it stands. Without them, every vendor is open and everywhere.
+ * A vendor is closed while one of its `blocked` entries holds, such as the
+ * opening hours `shop.hours(['morning'])` writes, which ask the calendar. With the
+ * places plugin, its `at` is where on the map it stands; without it, every
+ * vendor is everywhere.
  */
 import {
   definePlugin,
@@ -33,6 +34,7 @@ import {
   isUnique,
   lackingLine,
   parseRef,
+  reasonOf,
   renderAction,
   stringOf,
   statOf,
@@ -42,6 +44,7 @@ import {
   withTrait,
   artSrc,
   YOU,
+  type Blocked,
   type CommandRef,
   type Condition,
   type DefinedPlugin,
@@ -54,6 +57,7 @@ import {
   type PluginContext,
   type PluginProblem,
   type Price,
+  type Reason,
   type Reference,
   type RenderedChoice,
   type TraitDef,
@@ -103,12 +107,13 @@ export type DiscountDef = {
 export type Vendor = {
   /** Where it is, with the places plugin: the location ids it stands at. Everywhere if left out. */
   at?: string[]
-  /** When it is open, with the calendar plugin: the periods of the day. Always, if left out. */
-  hours?: string[]
-  /** Open only while this holds too, such as weekdays. */
-  open?: Condition
-  /** What the player reads while it's closed. The plugin's `Closed.` if left out. */
-  closed?: string
+  /**
+   * Closed while one of these holds, with its reason: what the player reads,
+   * and what buying and selling are refused with. The first that holds wins.
+   * `shop.hours(['morning', 'afternoon'])` writes opening hours as one, with
+   * the calendar. Always open if left out.
+   */
+  blocked?: Blocked[]
   goods: GoodDef[]
   /** The fraction of a thing's price it pays to take one back. It takes nothing back if left out. */
   buysBack?: number
@@ -201,6 +206,7 @@ export type ShopView = {
 declare module '@ifloom/engine' {
   interface ConditionRegistry {
     'shop/open': { vendor: string }
+    'shop/outside': { period: string | readonly string[] }
     'shop/inStock': { vendor: string; entity: EntityRef }
   }
   interface CommandRegistry {
@@ -394,16 +400,10 @@ function isHere(one: One, cx: Ctx): boolean {
   return here === undefined || (here !== null && one.vendor.at.includes(here))
 }
 
-/** Why the vendor is closed, or undefined if it's open. */
+/** Why the vendor is closed, its first `blocked` entry that holds, or undefined if it's open. */
 function closedReason(state: GameState, one: One, cx: Ctx): string | undefined {
-  const { vendor } = one
-  const reason = () => vendor.closed ?? stringOf(cx.game, 'shop/closed')
-  if (vendor.hours) {
-    const period = cx.query<{ period: string }>('calendar/now')?.period
-    if (period !== undefined && !vendor.hours.includes(period)) return reason()
-  }
-  if (vendor.open && !holds(state, cx.game, vendor.open)) return reason()
-  return undefined
+  const entry = one.vendor.blocked?.find((blocked) => holds(state, cx.game, blocked.when))
+  return entry ? reasonOf(cx.game, entry.reason) : undefined
 }
 
 function countOf(args: PluginArgs): number {
@@ -591,7 +591,7 @@ function vendorProblems(vendor: Vendor | undefined, game: Game): string[] {
 
 const vendorTrait: TraitDef<'shop/vendor'> = {
   id: VENDOR,
-  words: { closed: true },
+  words: { blocked: [{ reason: true }] },
   check: (data, { game }) => vendorProblems(data, game),
   references: (vendor, { game }) => {
     // Where a vendor stands is the places plugin's to know, by name; without it there is no map to check against.
@@ -600,7 +600,7 @@ const vendorTrait: TraitDef<'shop/vendor'> = {
       ...(places
         ? (vendor?.at ?? []).map((location): Reference => ({ entity: location.includes(':') ? location : `location:${location}`, carrying: 'places/location' }))
         : []),
-      { within: 'open', refs: [{ when: vendor?.open }] },
+      { within: 'blocked', refs: (vendor?.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry?.when }, { reason: entry?.reason }]) },
       ...(Array.isArray(vendor?.goods) ? vendor.goods : [])
         .filter((good) => typeof good?.entity === 'string')
         .map((good): Reference => ({
@@ -640,6 +640,16 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
       notOwned: 'You don’t have that.',
     },
     conditions: {
+      /**
+       * `{ 'shop/outside': { period: ['morning', 'afternoon'] } }`: the
+       * calendar's period of the day is none of these. Never, without the
+       * calendar. What `shop.hours()` closes a vendor by.
+       */
+      outside: (_state, args, { query }) => {
+        const period = query<{ period: string }>('calendar/now')?.period
+        const periods = Array.isArray(args.period) ? args.period.map(String) : [String(args.period)]
+        return period !== undefined && !periods.includes(period)
+      },
       /** `{ 'shop/open': { vendor } }`: open now. Where the player is doesn't matter. */
       open: (state, args, context) => {
         const one = oneOf(state, context.game, args.vendor)
@@ -711,7 +721,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
   })
 }
 
-const VENDOR_FIELDS = ['at', 'hours', 'open', 'closed', 'goods', 'buysBack', 'discounts'] as const
+const VENDOR_FIELDS = ['at', 'blocked', 'goods', 'buysBack', 'discounts'] as const
 
 /**
  * A vendor, for content's `entities`: an entity of the kind `vendor` (or
@@ -755,6 +765,21 @@ const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef => 
  * `shopUi` from `@ifloom/plugin-shop/react` draws it as a `ShopCounter`.
  */
 const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
+/** A condition, with the calendar: its period of the day is none of these. Never without the calendar. */
+const outside = (...periods: string[]): Condition => ({ [`${ID}/outside`]: { period: periods } })
+/**
+ * A `blocked` entry for a vendor's opening hours, with the calendar: closed
+ * outside these periods of the day, with `reason` (the plugin's `shop/closed`
+ * string, "Closed.", if left out).
+ *
+ * ```ts
+ * shop.vendor({ id: 'counter', name: 'The counter', blocked: [shop.hours(['morning', 'afternoon'])], goods: [...] })
+ * ```
+ */
+const hours = (periods: readonly string[], reason?: Reason): Blocked => ({
+  when: outside(...periods),
+  reason: reason ?? { string: `${ID}/closed` },
+})
 /** A condition: the vendor is open now. */
 const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
 /** A condition: the vendor offers the thing now and has one left. */
@@ -764,4 +789,4 @@ const inStock = (vendor: string, entity: EntityRef): Condition => ({ 'shop/inSto
  * The plugin, with its helpers on it: `shop()` makes the plugin for the
  * game's `plugins`, and content is written with `shop.vendor({ ... })` and `shop.buy('counter', 'food:bun')`.
  */
-export const shop = Object.assign(shopPlugin, { vendor, vendorRef, sellable, buy, sell, open: openShop, vendorOpen, inStock })
+export const shop = Object.assign(shopPlugin, { vendor, vendorRef, sellable, buy, sell, open: openShop, vendorOpen, inStock, outside, hours })

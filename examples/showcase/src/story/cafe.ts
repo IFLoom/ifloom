@@ -111,7 +111,7 @@ export const cafe: Content = {
       id: 'counter',
       name: 'The counter',
       at: ['cafe'],
-      hours: ['morning', 'afternoon'],
+      blocked: [shop.hours(['morning', 'afternoon'])],
       // Ava will take an unopened sandwich back for half.
       buysBack: 0.5,
       // One thing on the board is half price each day.

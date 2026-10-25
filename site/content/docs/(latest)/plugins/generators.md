@@ -61,7 +61,7 @@ const town: Content = {
   triggers: [
     {
       id: 'visitors',
-      once: 'turn',
+      once: { per: 'turn' },
       when: places.at('park'),
       effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generators.generate('visitor', 2)],
     },

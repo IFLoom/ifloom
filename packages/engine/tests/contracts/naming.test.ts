@@ -227,6 +227,7 @@ const SAMPLES: Record<string, Call> = {
   'commands:quests/track': quests.track('settle'),
   'commands:quests/seen': quests.seen('settle'),
   'conditions:shop/open': shop.vendorOpen('baker'),
+  'conditions:shop/outside': shop.outside('morning'),
   'conditions:shop/inStock': shop.inStock('baker', 'food:bun'),
   'commands:shop/buy': shop.buy('baker', 'food:bun', 2),
   'commands:shop/sell': shop.sell('baker', 'food:bun', 2),

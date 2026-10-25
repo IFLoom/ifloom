@@ -78,7 +78,7 @@ type CheatDef = {
   effects: EffectRef[]
   blocked?: Blocked[]
   group?: string
-  once?: boolean
+  once?: Once
 }
 ```
 
@@ -90,7 +90,7 @@ type CheatDef = {
 | `effects` | What it does, as any [effect list](/docs/reference/effects) runs, in order. Plugins' effects in their short form work too. |
 | `blocked` | Why it's refused. The first entry whose `when` holds greys the button out with its `reason`, or leaves it off the panel with `hide`. See [Supporter cheats](#supporter-cheats). |
 | `group` | The heading it's listed under. Cheats with no group come first, with no heading. |
-| `once` | Usable once in a save. After that its button is greyed out with `Already used.` |
+| `once` | How often it can be used, as a button's [`Once`](/docs/reference/actions#once) says: `{ per: 'game' }` once in a save, `{ per: 'turn' }` once a turn. Once it's spent its button is greyed out with `once.reason`, or `Already used.` (the [`cheats/usedOnce`](#strings) string). Any number of times if left out. |
 
 `blocked` is the same [`Blocked`](/docs/reference/actions#blocked) shape choices, actions, places and jobs use, refused while `when` holds.
 
@@ -129,7 +129,7 @@ When it takes, the cheat's effects run on the current state, then the plugin add
 - **ignores locks.** It sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in an intro that only moves through its scenes, and no plugin guard stops it.
 - **costs nothing.** Its button has no price.
 - **ends no turn** unless its effects do. A cheat with `{ turn: true }` or `calendar/pass` among its effects passes time as written.
-- **is refused** with `There's no such cheat.` for an id the game doesn't have, with the reason of its first `blocked` entry that holds, and with `Already used.` for a `once` cheat used before.
+- **is refused** with `There's no such cheat.` for an id the game doesn't have, with the reason of its first `blocked` entry that holds, and with its `once.reason`, else `Already used.`, for a `once` cheat that's spent.
 
 Plugins' `onCommand` hooks run after it as after any command, so an achievement whose condition a cheat meets is earned. A cheat is recorded in the command log like any other command, and [`replay`](/docs/reference/runner#replay) plays it back exactly.
 
@@ -193,7 +193,7 @@ type CheatView = {
   name: string
   description: string
   group: string | null
-  once: boolean
+  once: 'game' | 'turn' | null
   used: number
   button: RenderedChoice
 }
@@ -203,6 +203,7 @@ type CheatView = {
 |---|---|
 | `description` | Its description, or `''`. |
 | `group` | Its group, or `null`. |
+| `once` | Its `once`'s `per`, or `null` for a cheat with no limit. |
 | `used` | How many times this save has used it. |
 | `button` | A [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `cheats/use`. Its `disabled` is the reason it's refused now. |
 

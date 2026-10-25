@@ -150,13 +150,23 @@ function wordKeys(pack: RawPack, rename: (key: string) => string): RawPack {
 /**
  * 26 → 27:
  * - a `variants` block's `art`, the variants each member's picture is drawn
- *   from, is `image`.
+ *   from, is `image`;
+ * - a trigger's `once` is `{ per: 'game' }` or `{ per: 'turn' }`, the one
+ *   shape a button's `once` has, where it was `'game'` or `'turn'`.
  * The plugins' own steps rename their content's fields.
  */
 function toSchema27(pack: RawPack): RawPack {
-  return TOOLS.objects(pack, (value) =>
+  let out = TOOLS.objects(pack, (value) =>
     typeof value.variants === 'string' && isRecord(value.art) && !('image' in value) ? renamed(value, { art: 'image' }) : value,
   )
+  if (Array.isArray(out.triggers))
+    out = {
+      ...out,
+      triggers: out.triggers.map((trigger) =>
+        isRecord(trigger) && (trigger.once === 'game' || trigger.once === 'turn') ? { ...trigger, once: { per: trigger.once } } : trigger,
+      ),
+    }
+  return out
 }
 
 /**

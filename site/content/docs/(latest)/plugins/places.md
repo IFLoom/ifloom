@@ -748,10 +748,11 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `places/cannotGetThere` | `You cannot get there from here.` |
 | `places/pickUp` | `Pick up` |
 | `places/notLyingHere` | `There is no {thing} here.` |
+| `places/notHere` | `Not here.`, the reason [`places.onlyAt()`](#helpers) writes when you give none. |
 
 `places/go` also uses the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too.
 
-[`onlyAt`](#helpers)'s reason is plain text written into the `blocked` entry (`Not here.` if left out), not a string a game can override.
+[`onlyAt`](#helpers) given no reason writes `{ string: 'places/notHere' }`, a [`Reason`](/docs/reference/actions#reason) by key, so rewording `places/notHere` rewords every one.
 
 ## For code
 
@@ -767,7 +768,7 @@ const places: {
   at(...places: string[]): Condition
   within(...places: string[]): Condition
   move(place: string): EffectRef
-  onlyAt(places: string[], reason?: string): Blocked
+  onlyAt(places: string[], reason?: Reason): Blocked
 }
 
 function locationsOf(state: GameState, game: Game): EntityRef[]
@@ -787,7 +788,7 @@ const LOCATION = 'location'
 | `LOCATION` | The kind every place's entity is, `'location'`. |
 | `places.at`, `places.within` | The [conditions](#conditions). |
 | `places.move` | The [`places/move`](#effects) effect. |
-| `places.onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: places.at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
+| `places.onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: places.at(...places) }, reason }`, which refuses it anywhere else. The reason is the [`places/notHere`](#strings) string, `Not here.`, if left out. |
 
 `places.where` reads the state alone.
 
